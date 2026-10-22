@@ -1,0 +1,45 @@
+{
+  "_note": "Рантаймы серверов Mobius: официальные ZIP и их контрольные суммы с сайтов поставщиков (2026-10-21). Ставит runtimes.install в paths.RUNTIME/<dir>, без верхней папки архива. Те же версии, что у автора с 2026-10-16 (docs/PLAN.md, «Окружение для фазы 1»).",
+  "jdk": {
+    "title": "Java 27 (Eclipse Temurin 27+35)",
+    "dir": "jdk-27",
+    "check": "bin/java.exe",
+    "url": "https://github.com/adoptium/temurin27-binaries/releases/download/jdk-27%2B35/OpenJDK27U-jdk_x64_windows_hotspot_27_35.zip",
+    "size": 142734675,
+    "sha256": "2031c9c5c624737ed29a0624caaf5bcc25e74235834c28b4bfa88f7ba7a40e4a"
+  },
+  "mariadb": {
+    "title": "MariaDB 13.0.2",
+    "dir": "mariadb",
+    "check": "bin/mariadbd.exe",
+    "url": "https://archive.mariadb.org/mariadb-13.0.2/winx64-packages/mariadb-13.0.2-winx64.zip",
+    "size": 104263573,
+    "sha256": "ba9cefd6674b3f2f7bc67334c05305dc7c919643d76836e10767e70db0b5fb74"
+  },
+  "node": {
+    "title": "Node.js 24.19.0 (для C4 — L2Solo)",
+    "dir": "node",
+    "check": "node.exe",
+    "url": "https://nodejs.org/dist/v24.19.0/node-v24.19.0-win-x64.zip",
+    "size": 37304352,
+    "sha256": "57f71ab3652e797d84acddc79c81cc9ff1c6ddb2a1974cdb83f00fee9bff4c73",
+    "only": "l2solo"
+  },
+  "l2mapconv": {
+    "title": "l2mapconv p542-preview-20261005 (геодата из карт клиента, MIT)",
+    "dir": "l2mapconv",
+    "check": "l2mapconv.exe",
+    "url": "https://github.com/m49n/l2mapconv-public/releases/download/p542-preview-20261005/l2mapconv-p542-preview-20261005-win-x64.zip",
+    "size": 50965485,
+    "sha256": "6ca9990ab4346d73d1e38f3dec8192a5203be7fd13ac183d196a8b2fa331464d",
+    "only": "geodata"
+  },
+  "ant": {
+    "title": "Apache Ant 1.10.18",
+    "dir": "ant",
+    "check": "bin/ant.bat",
+    "url": "https://archive.apache.org/dist/ant/binaries/apache-ant-1.10.18-bin.zip",
+    "size": 10413759,
+    "sha512": "f86d7b263bc7c6903a91532943f1c8ecccc17dd999851a796617e79795908d7a666cbe999b9ecf06735cc7e830f50dca9f49b37bb5f6f02a0a3803cd22b558b0"
+  }
+}

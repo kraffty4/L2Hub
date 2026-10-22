@@ -1,0 +1,1960 @@
+diff --git a/dist/game/config/Custom/PhantomHunters.ini b/dist/game/config/Custom/PhantomHunters.ini
+index 8d41721..bbc7212 100644
+--- a/dist/game/config/Custom/PhantomHunters.ini
++++ b/dist/game/config/Custom/PhantomHunters.ini
+@@ -22,8 +22,31 @@ HuntersIdleTimeout = 300
+ # Сколько секунд лежит убитый охотник, прежде чем вернуться в город.
+ HunterRespawnDelay = 20
+ 
+-# Сосов своего грейда у охотника не меньше этого (добираются сами).
++# ---------------------------------------------------------------------------
++# Экономика x1 (docs/PHANTOMS.md, раздел 4.2): всё за свою адену, как у живого игрока.
++# ---------------------------------------------------------------------------
++# Запас сосов своего грейда, который охотник покупает в городе по цене магазина (на сосы — не больше половины адены).
+ HunterShotCount = 2000
+ 
++# Запас стрел или болтов у лучников (покупаются первыми: без них лук не стреляет).
++HunterAmmoCount = 3000
++
++# Плата за телепорт в город и обратно с 40 уровня (до 40 — бесплатно, как у новичков).
++HunterTeleportFee = 15000
++
++# Раз в столько минут охотник заходит в город, даже если сосов и места хватает.
++HunterTownInterval = 120
++
++# Вещи дороже этого (цена магазина, адена) охотник не сдаёт NPC, а выставляет в своей лавке в Гиране.
++HunterStoreMinPrice = 20000
++
++# Не больше стольких лавок охотников одновременно; сколько минут сидит лавка.
++HunterMaxStores = 4
++HunterStoreMinMinutes = 20
++HunterStoreMaxMinutes = 40
++
++# Охотники слышат «лфм / нужен хил / танк / дд» в общем, торговом и крик-чате и просятся в пати.
++HunterLfm = True
++
+ # Больше стольких охотников на один спот не ставится, пока есть свободные споты того же уровня.
+ HuntersPerSpot = 2
+diff --git a/dist/game/data/scripts/handlers/chat/channels/ChatGeneral.java b/dist/game/data/scripts/handlers/chat/channels/ChatGeneral.java
+index 65829bd..c4607a9 100644
+--- a/dist/game/data/scripts/handlers/chat/channels/ChatGeneral.java
++++ b/dist/game/data/scripts/handlers/chat/channels/ChatGeneral.java
+@@ -28,6 +28,7 @@ import org.l2jmobius.gameserver.handler.IChatHandler;
+ import org.l2jmobius.gameserver.handler.IVoicedCommandHandler;
+ import org.l2jmobius.gameserver.handler.VoicedCommandHandler;
+ import org.l2jmobius.gameserver.managers.FakePlayerChatManager;
++import org.l2jmobius.gameserver.managers.phantom.PhantomHunterManager;
+ import org.l2jmobius.gameserver.network.SystemMessageId;
+ import org.l2jmobius.gameserver.network.enums.ChatType;
+ import org.l2jmobius.gameserver.network.serverpackets.CreatureSay;
+@@ -127,6 +128,9 @@ public class ChatGeneral implements IChatHandler
+ 			{
+ 				FakePlayerChatManager.getInstance().manageSay(activeChar, text);
+ 			}
++
++			// L2Hub: охотники-фантомы рядом слышат «лфм», «нужен хил» и просятся в пати.
++			PhantomHunterManager.getInstance().onLfm(activeChar, type, text);
+ 		}
+ 	}
+ 	
+diff --git a/dist/game/data/scripts/handlers/chat/channels/ChatShout.java b/dist/game/data/scripts/handlers/chat/channels/ChatShout.java
+index c873249..28f6ba2 100644
+--- a/dist/game/data/scripts/handlers/chat/channels/ChatShout.java
++++ b/dist/game/data/scripts/handlers/chat/channels/ChatShout.java
+@@ -24,6 +24,7 @@ import org.l2jmobius.gameserver.entity.actor.Player;
+ import org.l2jmobius.gameserver.entity.actor.enums.player.ChatBroadcastType;
+ import org.l2jmobius.gameserver.entity.actor.holders.player.BlockList;
+ import org.l2jmobius.gameserver.handler.IChatHandler;
++import org.l2jmobius.gameserver.managers.phantom.PhantomHunterManager;
+ import org.l2jmobius.gameserver.network.SystemMessageId;
+ import org.l2jmobius.gameserver.network.enums.ChatType;
+ import org.l2jmobius.gameserver.network.serverpackets.CreatureSay;
+@@ -61,6 +62,9 @@ public class ChatShout implements IChatHandler
+ 		}
+ 		
+ 		final CreatureSay cs = new CreatureSay(activeChar, type, activeChar.getName(), text);
++
++		// L2Hub: охотники-фантомы слышат «лфм», «нужен хил» и просятся в пати.
++		PhantomHunterManager.getInstance().onLfm(activeChar, type, text);
+ 		if ((GeneralConfig.DEFAULT_GLOBAL_CHAT == ChatBroadcastType.ON) || ((GeneralConfig.DEFAULT_GLOBAL_CHAT == ChatBroadcastType.GM) && activeChar.isGM()))
+ 		{
+ 			final int region = MapRegionData.getInstance().getMapRegionLocId(activeChar);
+diff --git a/dist/game/data/scripts/handlers/chat/channels/ChatTrade.java b/dist/game/data/scripts/handlers/chat/channels/ChatTrade.java
+index c01c7a8..69f810e 100644
+--- a/dist/game/data/scripts/handlers/chat/channels/ChatTrade.java
++++ b/dist/game/data/scripts/handlers/chat/channels/ChatTrade.java
+@@ -24,6 +24,7 @@ import org.l2jmobius.gameserver.entity.actor.Player;
+ import org.l2jmobius.gameserver.entity.actor.enums.player.ChatBroadcastType;
+ import org.l2jmobius.gameserver.entity.actor.holders.player.BlockList;
+ import org.l2jmobius.gameserver.handler.IChatHandler;
++import org.l2jmobius.gameserver.managers.phantom.PhantomHunterManager;
+ import org.l2jmobius.gameserver.network.SystemMessageId;
+ import org.l2jmobius.gameserver.network.enums.ChatType;
+ import org.l2jmobius.gameserver.network.serverpackets.CreatureSay;
+@@ -61,6 +62,9 @@ public class ChatTrade implements IChatHandler
+ 		}
+ 		
+ 		final CreatureSay cs = new CreatureSay(activeChar, type, activeChar.getName(), text);
++
++		// L2Hub: охотники-фантомы слышат «лфм», «нужен хил» и просятся в пати.
++		PhantomHunterManager.getInstance().onLfm(activeChar, type, text);
+ 		if ((GeneralConfig.DEFAULT_TRADE_CHAT == ChatBroadcastType.ON) || ((GeneralConfig.DEFAULT_TRADE_CHAT == ChatBroadcastType.GM) && activeChar.isGM()))
+ 		{
+ 			final int region = MapRegionData.getInstance().getMapRegionLocId(activeChar);
+diff --git a/java/org/l2jmobius/gameserver/config/custom/PhantomHuntersConfig.java b/java/org/l2jmobius/gameserver/config/custom/PhantomHuntersConfig.java
+index 56875c3..55c46bf 100644
+--- a/java/org/l2jmobius/gameserver/config/custom/PhantomHuntersConfig.java
++++ b/java/org/l2jmobius/gameserver/config/custom/PhantomHuntersConfig.java
+@@ -18,6 +18,14 @@ public class PhantomHuntersConfig
+ 	public static int HUNTER_RESPAWN_DELAY;
+ 	public static int HUNTER_SHOT_COUNT;
+ 	public static int HUNTERS_PER_SPOT;
++	public static int HUNTER_AMMO_COUNT;
++	public static int HUNTER_TELEPORT_FEE;
++	public static int HUNTER_TOWN_INTERVAL;
++	public static int HUNTER_STORE_MIN_PRICE;
++	public static int HUNTER_MAX_STORES;
++	public static int HUNTER_STORE_MIN_MINUTES;
++	public static int HUNTER_STORE_MAX_MINUTES;
++	public static boolean HUNTER_LFM;
+ 
+ 	public static void load()
+ 	{
+@@ -29,5 +37,13 @@ public class PhantomHuntersConfig
+ 		HUNTER_RESPAWN_DELAY = config.getInt("HunterRespawnDelay", 20);
+ 		HUNTER_SHOT_COUNT = config.getInt("HunterShotCount", 2000);
+ 		HUNTERS_PER_SPOT = config.getInt("HuntersPerSpot", 2);
++		HUNTER_AMMO_COUNT = config.getInt("HunterAmmoCount", 3000);
++		HUNTER_TELEPORT_FEE = config.getInt("HunterTeleportFee", 15000);
++		HUNTER_TOWN_INTERVAL = config.getInt("HunterTownInterval", 120);
++		HUNTER_STORE_MIN_PRICE = config.getInt("HunterStoreMinPrice", 20000);
++		HUNTER_MAX_STORES = config.getInt("HunterMaxStores", 4);
++		HUNTER_STORE_MIN_MINUTES = config.getInt("HunterStoreMinMinutes", 20);
++		HUNTER_STORE_MAX_MINUTES = Math.max(HUNTER_STORE_MIN_MINUTES, config.getInt("HunterStoreMaxMinutes", 40));
++		HUNTER_LFM = config.getBoolean("HunterLfm", true);
+ 	}
+ }
+diff --git a/java/org/l2jmobius/gameserver/data/sql/OfflineTraderTable.java b/java/org/l2jmobius/gameserver/data/sql/OfflineTraderTable.java
+index 7f37bec..0651b73 100644
+--- a/java/org/l2jmobius/gameserver/data/sql/OfflineTraderTable.java
++++ b/java/org/l2jmobius/gameserver/data/sql/OfflineTraderTable.java
+@@ -40,6 +40,7 @@ import org.l2jmobius.gameserver.entity.actor.enums.player.PrivateStoreType;
+ import org.l2jmobius.gameserver.entity.item.recipe.ManufactureItem;
+ import org.l2jmobius.gameserver.entity.zone.ZoneId;
+ import org.l2jmobius.gameserver.managers.AntiFeedManager;
++import org.l2jmobius.gameserver.managers.phantom.PhantomManager;
+ import org.l2jmobius.gameserver.mechanics.olympiad.OlympiadManager;
+ import org.l2jmobius.gameserver.network.Disconnection;
+ import org.l2jmobius.gameserver.network.GameClient;
+@@ -80,7 +81,8 @@ public class OfflineTraderTable
+ 			{
+ 				try
+ 				{
+-					if (pc.isInStoreMode() && ((pc.getClient() == null) || pc.getClient().isDetached()))
++					// L2Hub: охотник-фантом на лавке — не офлайн-торговец (при старте его поднимает PhantomHunterManager).
++					if (pc.isInStoreMode() && ((pc.getClient() == null) || pc.getClient().isDetached()) && !PhantomManager.getInstance().isPhantom(pc))
+ 					{
+ 						stm3.setInt(1, pc.getObjectId()); // Char Id
+ 						stm3.setLong(2, pc.getOfflineStartTime());
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java
+index ad48511..60c3dd6 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java
+@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
+ import java.util.List;
+ import java.util.Map;
+ import java.util.concurrent.ConcurrentHashMap;
++import java.util.function.Consumer;
+ import java.util.logging.Logger;
+ import java.util.regex.Matcher;
+ import java.util.regex.Pattern;
+@@ -295,6 +296,20 @@ public class PhantomChat
+ 	 * @param cooldown не чаще, мс
+ 	 */
+ 	public void hunterEvent(Player hunter, Player other, String kind, String what, String fallback, long cooldown)
++	{
++		hunterEvent(hunter, other, kind, what, fallback, cooldown, false);
++	}
++
++	/**
++	 * @param hunter охотник
++	 * @param other игрок, о котором речь
++	 * @param kind вид события
++	 * @param what что случилось — от лица охотника
++	 * @param fallback заготовка или {@code null}
++	 * @param cooldown не чаще, мс
++	 * @param whisper ответить игроку шёпотом (пати по крику), а не в общий чат рядом
++	 */
++	public void hunterEvent(Player hunter, Player other, String kind, String what, String fallback, long cooldown, boolean whisper)
+ 	{
+ 		final long now = System.currentTimeMillis();
+ 		final String key = "h" + hunter.getObjectId() + ":" + other.getObjectId() + ":" + kind;
+@@ -306,11 +321,12 @@ public class PhantomChat
+ 		_eventCooldowns.put(key, now + cooldown);
+ 
+ 		final PhantomTemplate template = PhantomData.getInstance().getTemplate(hunter.getName());
++		final Consumer<String> out = text -> sayHunter(hunter, other, text, whisper);
+ 		if ((template == null) || !brainEnabled() || !eventBudget(now))
+ 		{
+ 			if (fallback != null)
+ 			{
+-				sayNear(hunter, fallback);
++				out.accept(fallback);
+ 			}
+ 			return;
+ 		}
+@@ -320,17 +336,30 @@ public class PhantomChat
+ 			final String text = TAG.matcher(reply).replaceAll("").strip();
+ 			if (!text.isEmpty())
+ 			{
+-				sayNear(hunter, text);
++				out.accept(text);
+ 			}
+ 		}, () ->
+ 		{
+ 			if (fallback != null)
+ 			{
+-				sayNear(hunter, fallback);
++				out.accept(fallback);
+ 			}
+ 		});
+ 	}
+ 
++	private static void sayHunter(Player hunter, Player other, String text, boolean whisper)
++	{
++		if (whisper)
++		{
++			if (other.isOnline())
++			{
++				other.sendPacket(new CreatureSay(hunter, ChatType.WHISPER, hunter.getName(), text));
++			}
++			return;
++		}
++		sayNear(hunter, text);
++	}
++
+ 	private static void sayNear(Player speaker, String text)
+ 	{
+ 		final CreatureSay say = new CreatureSay(speaker, ChatType.GENERAL, speaker.getName(), text);
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java
+index 5cce375..efcf4ba 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java
+@@ -83,6 +83,8 @@ public class PhantomCompanionManager
+ 		boolean selfDead;
+ 		/** Владелец получил уровень — подтянуться до него, когда бой кончится. */
+ 		int relevelTo;
++		/** Охотник, пришедший по крику (или принявший инвайт на споте): уровень свой, отпустили — назад на кач, а не из мира. */
++		boolean hunter;
+ 
+ 		Companion(String name)
+ 		{
+@@ -194,6 +196,13 @@ public class PhantomCompanionManager
+ 			return template.getName() + " ходит с " + other.getName() + ", отпустить его может только он.";
+ 		}
+ 
++		if ((companion != null) && companion.hunter)
++		{
++			release(template, quiet);
++			LOGGER.info(getClass().getSimpleName() + ": " + owner.getName() + " released the hunter " + template.getName() + ".");
++			return null;
++		}
++
+ 		_companions.remove(key(template.getName()));
+ 		final Player phantom = PhantomManager.getInstance().getPhantom(template);
+ 		if (phantom == null)
+@@ -214,6 +223,34 @@ public class PhantomCompanionManager
+ 		return null;
+ 	}
+ 
++	/**
++	 * Охотник уходит из пати и из напарников: дальше его ведёт {@link PhantomHunterManager} (назад на кач). Из мира не уходит.
++	 * @param template охотник
++	 * @param quiet без «ушёл» в чат пати
++	 */
++	public synchronized void release(PhantomTemplate template, boolean quiet)
++	{
++		_companions.remove(key(template.getName()));
++		final Player phantom = PhantomManager.getInstance().getPhantom(template);
++		if ((phantom != null) && phantom.isInParty())
++		{
++			if (!quiet)
++			{
++				partySay(phantom, "ладно, я дальше качаться, удачи");
++			}
++			phantom.leaveParty();
++		}
++	}
++
++	/**
++	 * @param template фантом
++	 * @return ходит ли он сейчас напарником (для охотника — в пати по крику)
++	 */
++	public boolean isCompanion(PhantomTemplate template)
++	{
++		return _companions.containsKey(key(template.getName()));
++	}
++
+ 	/**
+ 	 * Взять в пати позванного напарника (кнопка «В пати» в .buddy) — то же, что /invite.
+ 	 * @param owner владелец
+@@ -277,8 +314,9 @@ public class PhantomCompanionManager
+ 			return;
+ 		}
+ 
+-		// Охотник качается соло (сбор пати по крику — следующим этапом).
+-		if (template.isHunter())
++		// Охотник идёт, если звал криком именно этот игрок или если он свободен, уровень близкий и не обидчик; уровень остаётся свой.
++		final boolean hunter = template.isHunter();
++		if (hunter && !PhantomHunterManager.getInstance().acceptsInvite(template, requestor))
+ 		{
+ 			whisper(phantom, requestor, "сорри, я соло качаюсь)");
+ 			return;
+@@ -329,7 +367,7 @@ public class PhantomCompanionManager
+ 
+ 		// Уровень подтягивается до уровня пригласившего (профа, скиллы и шмот собираются заново на месте).
+ 		Player member = phantom;
+-		if (phantom.getLevel() != requestor.getLevel())
++		if (!hunter && (phantom.getLevel() != requestor.getLevel()))
+ 		{
+ 			member = PhantomManager.getInstance().spawn(template, new Location(phantom.getX(), phantom.getY(), phantom.getZ(), phantom.getHeading()), requestor.getLevel());
+ 			if (member == null)
+@@ -355,7 +393,12 @@ public class PhantomCompanionManager
+ 		companion.stayAt = null;
+ 		companion.lastDestination = null;
+ 		companion.ownerLevel = 0;
++		companion.hunter = hunter;
+ 		_companions.put(key(template.getName()), companion);
++		if (hunter)
++		{
++			PhantomHunterManager.getInstance().joinedParty(template);
++		}
+ 		startTicking();
+ 		final String greeting = template.getRole() == PhantomTemplate.Role.HEALER ? "в пати, хилю" : template.getRole() == PhantomTemplate.Role.BUFFER ? "в пати, ща бафну" : "в пати, иду за тобой и бью твою цель";
+ 		PhantomChat.getInstance().event(member, requestor, Event.JOINED, "тебя только что приняли в пати к " + requestor.getName() + ": поздоровайся и коротко скажи, что будешь делать", greeting);
+@@ -515,7 +558,7 @@ public class PhantomCompanionManager
+ 	 */
+ 	public String stateForBrain(PhantomTemplate template)
+ 	{
+-		if (template.isHunter())
++		if (template.isHunter() && !isCompanion(template))
+ 		{
+ 			return PhantomHunterManager.getInstance().stateForBrain(template);
+ 		}
+@@ -621,6 +664,13 @@ public class PhantomCompanionManager
+ 			}
+ 			else if ((now - companion.ownerAwaySince) > (PhantomPartyConfig.PHANTOM_OWNER_LOGOUT_GRACE * 1000L))
+ 			{
++				if (companion.hunter)
++				{
++					release(template, true);
++					LOGGER.info(getClass().getSimpleName() + ": " + companion.name + " goes back to hunting, the party leader is offline.");
++					return;
++				}
++
+ 				_companions.remove(key(companion.name));
+ 				if (phantom.isInParty())
+ 				{
+@@ -653,6 +703,13 @@ public class PhantomCompanionManager
+ 		final Party party = phantom.getParty();
+ 		if ((party == null) || !party.containsPlayer(owner))
+ 		{
++			// Охотника выгнали или пати распалась — назад на кач.
++			if (companion.hunter)
++			{
++				release(template, true);
++				return;
++			}
++
+ 			if (party != null)
+ 			{
+ 				phantom.leaveParty();
+@@ -667,7 +724,7 @@ public class PhantomCompanionManager
+ 		}
+ 
+ 		// Владелец получил уровень — подтянуться до него, но не посреди драки: шмот и скиллы собираются заново.
+-		if (companion.relevelTo > phantom.getLevel())
++		if (!companion.hunter && (companion.relevelTo > phantom.getLevel()))
+ 		{
+ 			if (!owner.isInCombat() && !phantom.isCastingNow() && !phantom.isInCombat())
+ 			{
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+index 74c432a..01d8a50 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+@@ -2,13 +2,16 @@ package org.l2jmobius.gameserver.managers.phantom;
+ 
+ import java.io.File;
+ import java.util.ArrayList;
++import java.util.Collections;
+ import java.util.EnumMap;
+ import java.util.List;
++import java.util.Locale;
+ import java.util.Map;
+ import java.util.concurrent.ConcurrentHashMap;
+ import java.util.concurrent.ScheduledFuture;
+ import java.util.logging.Level;
+ import java.util.logging.Logger;
++import java.util.regex.Pattern;
+ 
+ import org.l2jmobius.commons.threads.ThreadPool;
+ import org.l2jmobius.commons.util.Rnd;
+@@ -24,9 +27,12 @@ import org.l2jmobius.gameserver.entity.actor.Creature;
+ import org.l2jmobius.gameserver.entity.actor.Player;
+ import org.l2jmobius.gameserver.entity.actor.Summon;
+ import org.l2jmobius.gameserver.entity.actor.enums.creature.Race;
++import org.l2jmobius.gameserver.entity.actor.enums.player.PrivateStoreType;
+ import org.l2jmobius.gameserver.entity.actor.enums.player.TeleportWhereType;
+ import org.l2jmobius.gameserver.entity.actor.holders.npc.BuffSkillHolder;
+ import org.l2jmobius.gameserver.entity.actor.instance.Monster;
++import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
++import org.l2jmobius.gameserver.entity.item.instance.Item;
+ import org.l2jmobius.gameserver.geoengine.GeoEngine;
+ import org.l2jmobius.gameserver.managers.GlobalVariablesManager;
+ import org.l2jmobius.gameserver.managers.phantom.HuntSpotData.HuntSpot;
+@@ -35,6 +41,9 @@ import org.l2jmobius.gameserver.mechanics.events.holders.actor.creature.OnCreatu
+ import org.l2jmobius.gameserver.mechanics.events.holders.actor.creature.OnCreatureDeath;
+ import org.l2jmobius.gameserver.mechanics.events.listeners.ConsumerEventListener;
+ import org.l2jmobius.gameserver.mechanics.skill.Skill;
++import org.l2jmobius.gameserver.network.enums.ChatType;
++import org.l2jmobius.gameserver.network.holders.TradeList;
++import org.l2jmobius.gameserver.network.serverpackets.PrivateStoreMsgSell;
+ import org.l2jmobius.gameserver.taskmanagers.AutoPlayTaskManager;
+ import org.l2jmobius.gameserver.taskmanagers.AutoUseTaskManager;
+ 
+@@ -45,7 +54,9 @@ import org.l2jmobius.gameserver.taskmanagers.AutoUseTaskManager;
+  * <li>спот по уровню из {@link HuntSpotData} (до 20-го — в родной зоне расы, не больше {@link PhantomHuntersConfig#HUNTERS_PER_SPOT} на спот), телепорт туда, бафы как у городского баффера;</li>
+  * <li>поводок к споту, прогулка, если мобов рядом нет, отдых сидя по HP и MP;</li>
+  * <li>смерть: через {@link PhantomHuntersConfig#HUNTER_RESPAWN_DELAY} — в город (как «в деревню» у игрока), потом снова на спот;</li>
+- * <li>новый уровень: профессия на 20, 40 и 76, новые скиллы, шмот грейда; спот перерос — следующий;</li>
++ * <li>новый уровень: профессия на 20, 40 и 76, новые скиллы; спот перерос — следующий;</li>
++ * <li>экономика x1 (раздел 4.2 docs/PHANTOMS.md): кончились сосы или стрелы, полон инвентарь, есть ценный дроп или просто давно не был — в город: хлам NPC, покупки за свою адену; ценное — в лавку в Гиране;</li>
++ * <li>пати по крику: «лфм», «нужен хил» в общем, торговом чате и в крике — свободный охотник своей роли и уровня просится в пати и ходит там как напарник;</li>
+  * <li>режим (выключены, всегда, только при живых игроках) и сброс прогресса — из PhantomHunters.ini, который сервер перечитывает на ходу.</li>
+  * </ul>
+  */
+@@ -56,7 +67,6 @@ public class PhantomHunterManager
+ 	private static final long TICK = 2000;
+ 	private static final long CONTROL_INTERVAL = 10000;
+ 	private static final long STORE_INTERVAL = 300000;
+-	private static final long SHOTS_INTERVAL = 180000;
+ 	/** Не дрался и не шёл столько — мобов рядом нет: прогуляться по споту. */
+ 	private static final long IDLE_ROAM = 45000;
+ 	/** Столько прогулок подряд без боя — спот пустой: сменить. */
+@@ -66,6 +76,45 @@ public class PhantomHunterManager
+ 	/** Обиды охотника: кто и сколько раз его убивал (переменная персонажа). */
+ 	static final String GRUDGE_VARIABLE = "L2HubGrudges";
+ 
++	// Экономика.
++	/** Между походами в город не меньше этого; по сосам и ценному дропу — не чаще {@link #TOWN_SOFT_COOLDOWN}. */
++	private static final long TOWN_COOLDOWN = 60000;
++	private static final long TOWN_SOFT_COOLDOWN = 600000;
++	/** С прошлой лавки прошло столько — ценный дроп снова повод идти в город. */
++	private static final long STORE_COOLDOWN = 1800000;
++	/** Площадь Гирана у гейткипера: тут охотники ставят лавки. */
++	private static final Location GIRAN_SQUARE = new Location(82698, 148638, -3470);
++	private static final int STORE_SPACING = 80;
++	private static final int STORE_TRIES = 6;
++	/** Убитый в пати ждёт реса столько, потом уходит из пати в город. */
++	private static final long PARTY_DEATH_WAIT = 120000;
++	/** Сколько ждёт инвайта, позванный криком. */
++	private static final long RECRUIT_WAIT = 180000;
++	private static final long LFM_COOLDOWN = 60000;
++	private static final int LFM_LEVEL_GAP = 5;
++
++	// Крик «ищу людей»: «лфм», «lfm», «нужен хил», «ищем танка», «го в пати» … и роль, если названа. Короткие слова (ее, дд, тк) — только целиком.
++	private static final String END = "(?![\\p{L}])";
++	private static final String START = "(^|[^\\p{L}])";
++	private static final Pattern LFM = Pattern.compile(START + "(лфм|lfm|lf\\d|нужен|нужна|нужны|нужно|ищу|ищем|need|го в пати|кто в пати|в пати к|возьму|берём|берем)", Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
++	private static final Pattern WANT_HEALER = Pattern.compile(START + "(хил|heal|биш|bish|епископ|шилен|саппорт|support|(ee|ее|se|бп|bp)" + END + ")", Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
++	private static final Pattern WANT_TANK = Pattern.compile(START + "(танк|tank|паладин|(тк|tk|pal|da|дав)" + END + ")", Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
++	private static final Pattern WANT_DAMAGE = Pattern.compile(START + "(дамаг|damage|нюкер|nuker|лучник|archer|даггер|дагер|dagger|(дд|dd|dps|маг|мага|магов|mage|лук)" + END + ")", Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
++	private static final Pattern WANT_PARTY = Pattern.compile(START + "(пати|party|pt|людей|народ|кто|кого)" + END, Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
++
++	/** Заготовки названий лавок (до 29 знаков). */
++	private static final String[] STORE_TITLES =
++	{
++		"Дроп с охоты, недорого",
++		"Продам с кача",
++		"Шмот и ресы, налетай",
++		"Распродажа лута",
++		"Дёшево, торг уместен",
++		"Всё с фарма, по чесноку",
++		"Продаю лишнее",
++		"Лут по сходной цене"
++	};
++
+ 	/** Родная зона расы: до 20-го уровня охотник качается там, если есть подходящий спот. */
+ 	private static final Map<Race, String> HOME_REGIONS = new EnumMap<>(Race.class);
+ 	static
+@@ -78,6 +127,20 @@ public class PhantomHunterManager
+ 		HOME_REGIONS.put(Race.KAMAEL, "Kamael");
+ 	}
+ 
++	private enum Phase
++	{
++		/** На споте: бой AutoPlay, отдых, поводок. */
++		HUNT,
++		/** В городе: дела (хлам, покупки), потом обратно. */
++		TOWN,
++		/** В Гиране на своей лавке. */
++		STORE,
++		/** Позвали криком: бежит к позвавшему и ждёт инвайта. */
++		RECRUIT,
++		/** В пати: ведёт {@link PhantomCompanionManager}, как напарника. */
++		PARTY
++	}
++
+ 	private static class Hunter
+ 	{
+ 		final PhantomTemplate template;
+@@ -86,13 +149,25 @@ public class PhantomHunterManager
+ 		long deadSince;
+ 		boolean needBuff;
+ 		long lastStore;
+-		long lastShots;
+ 		long lastActive;
+ 		int roams;
+ 		long retryAt;
+ 		/** Живой игрок, который на него напал (ПвП): охотник бьёт его, пока тот рядом. */
+ 		volatile int enemyId;
+ 		volatile long enemySeen;
++		// Экономика и пати.
++		volatile Phase phase = Phase.HUNT;
++		long phaseUntil;
++		boolean choresDone;
++		long lastTown;
++		long lastStoreSession;
++		boolean storeOpen;
++		int storeTries;
++		/** Сколько раз вещь (objectId) не продалась в лавке: после двух — NPC. */
++		final Map<Integer, Integer> unsold = new ConcurrentHashMap<>();
++		volatile int recruiterId;
++		volatile long recruitArriveAt;
++		boolean recruitArrived;
+ 
+ 		Hunter(PhantomTemplate template)
+ 		{
+@@ -101,6 +176,7 @@ public class PhantomHunterManager
+ 	}
+ 
+ 	private final Map<String, Hunter> _hunters = new ConcurrentHashMap<>();
++	private final Map<Integer, Long> _lfmCooldowns = new ConcurrentHashMap<>();
+ 	private volatile boolean _wanted;
+ 	private long _lastControl;
+ 	private long _configModified;
+@@ -155,8 +231,37 @@ public class PhantomHunterManager
+ 			return "тебя только что убили, лежишь и скоро вернёшься в город";
+ 		}
+ 
+-		final String where = hunter.spot != null ? "качаешься на споте " + hunter.spot.name + " (мобы " + hunter.spot.min + "-" + hunter.spot.max + " ур.)" : "только вышел в игру и выбираешь, где качаться";
+-		return where + (player.isSitting() ? ", сейчас сидишь отдыхаешь" : "") + "; соло, ни с кем не ходишь";
++		final String wallet = "; в кармане " + money(player.getAdena()) + " адены";
++		switch (hunter.phase)
++		{
++			case TOWN:
++			{
++				return "зашёл в город " + MapRegionData.getInstance().getClosestTownName(player) + ": сдать хлам, купить сосы и шмот, потом обратно на кач" + wallet;
++			}
++			case STORE:
++			{
++				return "сидишь на своей лавке в Гиране, продаёшь дроп с охоты" + wallet;
++			}
++			case RECRUIT:
++			{
++				final Player recruiter = World.getPlayer(hunter.recruiterId);
++				return "идёшь в пати к " + (recruiter != null ? recruiter.getName() : "тому, кто звал в чате") + ", ждёшь инвайта" + wallet;
++			}
++			default:
++			{
++				final String where = hunter.spot != null ? "качаешься на споте " + hunter.spot.name + " (мобы " + hunter.spot.min + "-" + hunter.spot.max + " ур.)" : "только вышел в игру и выбираешь, где качаться";
++				return where + (player.isSitting() ? ", сейчас сидишь отдыхаешь" : "") + "; соло, ни с кем не ходишь" + wallet;
++			}
++		}
++	}
++
++	private static String money(long adena)
++	{
++		if (adena >= 1000000)
++		{
++			return String.format(Locale.ROOT, "%.1fкк", adena / 1000000.0);
++		}
++		return adena >= 1000 ? (adena / 1000) + "к" : String.valueOf(adena);
+ 	}
+ 
+ 	// ---------- Тик ----------
+@@ -196,6 +301,11 @@ public class PhantomHunterManager
+ 
+ 				if (!_wanted)
+ 				{
++					if (hunter.phase == Phase.PARTY)
++					{
++						PhantomCompanionManager.getInstance().release(hunter.template, false);
++					}
++					closeStore(hunter, player);
+ 					PhantomManager.getInstance().despawnHunter(hunter.template);
+ 					continue;
+ 				}
+@@ -292,10 +402,21 @@ public class PhantomHunterManager
+ 		{
+ 			if (all || list.contains(hunter.template.getName().toLowerCase()))
+ 			{
++				if (hunter.phase == Phase.PARTY)
++				{
++					PhantomCompanionManager.getInstance().release(hunter.template, false);
++				}
++				final Player player = PhantomManager.getInstance().getPhantom(hunter.template);
++				if (player != null)
++				{
++					closeStore(hunter, player);
++				}
+ 				PhantomManager.getInstance().resetHunter(hunter.template);
+ 				hunter.spot = null;
+ 				hunter.level = -1;
+ 				hunter.deadSince = 0;
++				hunter.phase = Phase.HUNT;
++				hunter.unsold.clear();
+ 				count++;
+ 			}
+ 		}
+@@ -316,12 +437,14 @@ public class PhantomHunterManager
+ 		hunter.deadSince = 0;
+ 		hunter.needBuff = true;
+ 		hunter.enemyId = 0;
++		hunter.phase = Phase.HUNT;
++		hunter.storeOpen = false;
+ 		// ПвП: кто ударил и кто убил — события приходят от сервера (асинхронно).
+ 		player.addListener(new ConsumerEventListener(player, EventType.ON_CREATURE_DAMAGE_RECEIVED, (OnCreatureDamageReceived event) -> onDamaged(hunter, player, event.getAttacker()), this));
+ 		player.addListener(new ConsumerEventListener(player, EventType.ON_CREATURE_DEATH, (OnCreatureDeath event) -> onKilled(hunter, player, event.getAttacker()), this));
+ 		hunter.lastStore = now;
+-		hunter.lastShots = now;
+ 		hunter.lastActive = now;
++		hunter.lastTown = now;
+ 		hunter.roams = 0;
+ 	}
+ 
+@@ -344,28 +467,55 @@ public class PhantomHunterManager
+ 			leveled(hunter, player);
+ 		}
+ 
+-		if ((hunter.spot == null) || outgrown(hunter.spot, player.getLevel()))
++		if ((now - hunter.lastStore) > STORE_INTERVAL)
+ 		{
+-			goToSpot(hunter, player, null);
+-			return;
++			hunter.lastStore = now;
++			player.storeMe();
+ 		}
+ 
+-		if (hunter.needBuff)
++		switch (hunter.phase)
+ 		{
+-			hunter.needBuff = false;
+-			buff(player);
++			case PARTY:
++			{
++				// Распустили, выгнали, лидер ушёл — назад на кач.
++				if (!PhantomCompanionManager.getInstance().isCompanion(hunter.template))
++				{
++					LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " left the party, back to hunting.");
++					backToHunt(hunter, player);
++				}
++				return;
++			}
++			case RECRUIT:
++			{
++				recruit(hunter, player, now);
++				return;
++			}
++			case TOWN:
++			{
++				town(hunter, player, now);
++				return;
++			}
++			case STORE:
++			{
++				store(hunter, player, now);
++				return;
++			}
++			default:
++			{
++				break;
++			}
+ 		}
+ 
+-		if ((now - hunter.lastShots) > SHOTS_INTERVAL)
++		if ((hunter.spot == null) || outgrown(hunter.spot, player.getLevel()))
+ 		{
+-			hunter.lastShots = now;
+-			PhantomHunterOutfit.refillShots(player, hunter.template);
++			goToSpot(hunter, player, null);
++			return;
+ 		}
+ 
+-		if ((now - hunter.lastStore) > STORE_INTERVAL)
++		if (hunter.needBuff)
+ 		{
+-			hunter.lastStore = now;
+-			player.storeMe();
++			hunter.needBuff = false;
++			buff(player);
+ 		}
+ 
+ 		// ПвП: пока обидчик рядом — драка с ним, без отдыха и поводка.
+@@ -376,6 +526,12 @@ public class PhantomHunterManager
+ 		}
+ 		noticeGrudges(player);
+ 
++		if (!player.isInCombat() && !player.isAttackingNow() && !player.isCastingNow() && needsTown(hunter, player, now))
++		{
++			goToTown(hunter, player, now);
++			return;
++		}
++
+ 		if (rest(player))
+ 		{
+ 			hunter.lastActive = now;
+@@ -405,7 +561,10 @@ public class PhantomHunterManager
+ 		{
+ 			hunter.deadSince = now;
+ 			endFight(hunter, player);
+-			stop(player);
++			if (hunter.phase != Phase.PARTY)
++			{
++				stop(player);
++			}
+ 			return;
+ 		}
+ 
+@@ -417,12 +576,18 @@ public class PhantomHunterManager
+ 			return;
+ 		}
+ 
+-		if ((now - hunter.deadSince) < (PhantomHuntersConfig.HUNTER_RESPAWN_DELAY * 1000L))
++		// В пати ждёт реса дольше; не дождался — уходит из пати в город.
++		if ((now - hunter.deadSince) < (hunter.phase == Phase.PARTY ? PARTY_DEATH_WAIT : (PhantomHuntersConfig.HUNTER_RESPAWN_DELAY * 1000L)))
+ 		{
+ 			return;
+ 		}
+ 
+-		// Как «в деревню» у игрока (RequestRestartPoint): телепорт в ближайший город с ресом по прилёту.
++		if (hunter.phase == Phase.PARTY)
++		{
++			PhantomCompanionManager.getInstance().release(hunter.template, true);
++		}
++
++		// Как «в деревню» у игрока (RequestRestartPoint): телепорт в ближайший город с ресом по прилёту, там — дела.
+ 		hunter.deadSince = 0;
+ 		hunter.spot = null;
+ 		hunter.needBuff = true;
+@@ -430,6 +595,7 @@ public class PhantomHunterManager
+ 		player.setInstanceId(0);
+ 		player.setIsPendingRevive(true);
+ 		player.teleToLocation(town, true);
++		enterTown(hunter, now);
+ 	}
+ 
+ 	// ---------- Уровень и спот ----------
+@@ -442,7 +608,7 @@ public class PhantomHunterManager
+ 		player.storeMe();
+ 		if (up)
+ 		{
+-			LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " reached level " + player.getLevel() + " (" + player.getPlayerClass().name() + ").");
++			LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " reached level " + player.getLevel() + " (" + player.getPlayerClass().name() + ", " + player.getAdena() + " adena).");
+ 		}
+ 	}
+ 
+@@ -473,10 +639,26 @@ public class PhantomHunterManager
+ 		{
+ 			player.standUp();
+ 		}
++		payTeleport(player);
+ 		player.teleToLocation(spot.entry, true);
+ 		LOGGER.fine(getClass().getSimpleName() + ": " + player.getName() + " (" + player.getLevel() + ") goes to " + spot + ".");
+ 	}
+ 
++	/**
++	 * Телепорт у гейткипера: до 40-го — бесплатно, как у новичков; дальше — {@link PhantomHuntersConfig#HUNTER_TELEPORT_FEE} (сколько есть).
++	 */
++	private static void payTeleport(Player player)
++	{
++		if (player.getLevel() >= 40)
++		{
++			final long fee = Math.min(player.getAdena(), PhantomHuntersConfig.HUNTER_TELEPORT_FEE);
++			if (fee > 0)
++			{
++				player.reduceAdena(ItemProcessType.FEE, fee, player, false);
++			}
++		}
++	}
++
+ 	private HuntSpot pickSpot(Player player, HuntSpot avoid)
+ 	{
+ 		final int level = player.getLevel();
+@@ -559,6 +741,459 @@ public class PhantomHunterManager
+ 		}
+ 	}
+ 
++	// ---------- Город ----------
++
++	/**
++	 * Повод идти в город: стрелы кончились; сосов меньше 20 % (и есть на что купить); инвентарь заполнен на 70 %; ценный дроп, а с прошлой лавки прошло 30 минут; или просто давно не был.
++	 */
++	private static boolean needsTown(Hunter hunter, Player player, long now)
++	{
++		final long since = now - hunter.lastTown;
++		if (since < TOWN_COOLDOWN)
++		{
++			return false;
++		}
++
++		if (PhantomHunterOutfit.outOfAmmo(player) || (player.getInventory().getSize() >= (player.getInventoryLimit() * 0.7)))
++		{
++			return true;
++		}
++
++		if (since >= (PhantomHuntersConfig.HUNTER_TOWN_INTERVAL * 60000L))
++		{
++			return true;
++		}
++
++		if (since < TOWN_SOFT_COOLDOWN)
++		{
++			return false;
++		}
++
++		if ((PhantomHunterOutfit.suppliesLeft(player) < 0.2) && PhantomHunterOutfit.canRestock(player))
++		{
++			return true;
++		}
++
++		return ((now - hunter.lastStoreSession) >= STORE_COOLDOWN) && !PhantomHunterOutfit.storeGoods(player).isEmpty();
++	}
++
++	private static void goToTown(Hunter hunter, Player player, long now)
++	{
++		stop(player);
++		AutoUseTaskManager.getInstance().stopAutoUseTask(player);
++		if (player.isSitting())
++		{
++			player.standUp();
++		}
++
++		// Как свиток возврата: в ближайший город.
++		player.teleToLocation(MapRegionData.getInstance().getTeleToLocation(player, TeleportWhereType.TOWN), true);
++		enterTown(hunter, now);
++	}
++
++	private static void enterTown(Hunter hunter, long now)
++	{
++		hunter.phase = Phase.TOWN;
++		hunter.choresDone = false;
++		hunter.phaseUntil = now + Rnd.get(20000, 45000);
++		hunter.lastTown = now;
++		hunter.recruitArrived = false;
++	}
++
++	/**
++	 * В городе: пройтись (как до торговца), сделать дела, постоять; с ценным дропом — в лавку, иначе назад на кач.
++	 */
++	private void town(Hunter hunter, Player player, long now)
++	{
++		if (!hunter.choresDone)
++		{
++			if (!player.isMoving() && (Rnd.get(100) < 25))
++			{
++				wander(player, 150, 450);
++			}
++
++			if (now < hunter.phaseUntil)
++			{
++				return;
++			}
++
++			hunter.choresDone = true;
++			final List<String> done = PhantomHunterOutfit.townChores(player, hunter.template, hunter.unsold);
++			player.storeMe();
++			LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " (" + player.getLevel() + ") in " + MapRegionData.getInstance().getClosestTownName(player) + ": " + (done.isEmpty() ? "nothing to do" : String.join(", ", done)) + "; " + player.getAdena() + " adena.");
++			if (wantsStore(hunter, player, now))
++			{
++				goToStore(hunter, player);
++				return;
++			}
++			hunter.phaseUntil = now + Rnd.get(5000, 15000);
++			return;
++		}
++
++		if (now >= hunter.phaseUntil)
++		{
++			backToHunt(hunter, player);
++		}
++	}
++
++	/**
++	 * Из города, лавки, пати — обратно: на свой спот, если он ещё по уровню, иначе — выбрать новый.
++	 */
++	private void backToHunt(Hunter hunter, Player player)
++	{
++		hunter.phase = Phase.HUNT;
++		hunter.needBuff = true;
++		hunter.recruiterId = 0;
++		hunter.lastActive = System.currentTimeMillis();
++		hunter.roams = 0;
++		closeStore(hunter, player);
++		if ((hunter.spot != null) && !outgrown(hunter.spot, player.getLevel()))
++		{
++			stop(player);
++			if (player.isSitting())
++			{
++				player.standUp();
++			}
++			payTeleport(player);
++			player.teleToLocation(hunter.spot.entry, true);
++			return;
++		}
++		hunter.spot = null;
++	}
++
++	private static void wander(Player player, int min, int max)
++	{
++		final double angle = Rnd.nextDouble() * 2 * Math.PI;
++		final int r = Rnd.get(min, max);
++		final int x = player.getX() + (int) (Math.cos(angle) * r);
++		final int y = player.getY() + (int) (Math.sin(angle) * r);
++		final int z = GeoEngine.getInstance().getHeight(x, y, player.getZ());
++		if (GeoEngine.getInstance().canMoveToTarget(player.getX(), player.getY(), player.getZ(), x, y, z, player.getInstanceId()))
++		{
++			player.getAI().setIntentionMoveTo(new Location(x, y, z));
++		}
++	}
++
++	// ---------- Лавка ----------
++
++	private boolean wantsStore(Hunter hunter, Player player, long now)
++	{
++		if (((now - hunter.lastStoreSession) < STORE_COOLDOWN) || PhantomHunterOutfit.storeGoods(player).isEmpty())
++		{
++			return false;
++		}
++
++		int stores = 0;
++		for (Hunter other : _hunters.values())
++		{
++			if (other.phase == Phase.STORE)
++			{
++				stores++;
++			}
++		}
++		return stores < PhantomHuntersConfig.HUNTER_MAX_STORES;
++	}
++
++	/**
++	 * На площадь Гирана: точка в кольце вокруг гейткипера, по геодате; проверку зоны и соседей делает {@link #store} по прилёту.
++	 */
++	private static void goToStore(Hunter hunter, Player player)
++	{
++		hunter.phase = Phase.STORE;
++		hunter.storeOpen = false;
++		hunter.storeTries++;
++		final double angle = Rnd.nextDouble() * 2 * Math.PI;
++		final int r = Rnd.get(250, 800);
++		final int x = GIRAN_SQUARE.getX() + (int) (Math.cos(angle) * r);
++		final int y = GIRAN_SQUARE.getY() + (int) (Math.sin(angle) * r);
++		final int z = GeoEngine.getInstance().getHeight(x, y, GIRAN_SQUARE.getZ());
++		stop(player);
++		if (player.isSitting())
++		{
++			player.standUp();
++		}
++		player.teleToLocation(new Location(x, y, z, Rnd.get(65536)), false);
++	}
++
++	private void store(Hunter hunter, Player player, long now)
++	{
++		if (!hunter.storeOpen)
++		{
++			if (!openStore(hunter, player, now))
++			{
++				if (hunter.storeTries >= STORE_TRIES)
++				{
++					hunter.storeTries = 0;
++					hunter.lastStoreSession = now;
++					backToHunt(hunter, player);
++				}
++				else
++				{
++					goToStore(hunter, player);
++				}
++			}
++			return;
++		}
++
++		// Время вышло, всё раскупили или кто-то закрыл — свернуться и обратно на кач.
++		if ((now >= hunter.phaseUntil) || (player.getPrivateStoreType() != PrivateStoreType.SELL) || (player.getSellList().getItemCount() == 0))
++		{
++			LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " closes the store; " + player.getAdena() + " adena.");
++			backToHunt(hunter, player);
++		}
++	}
++
++	/**
++	 * Настоящая личная лавка (как {@code SetPrivateStoreListSell}): ценное по цене магазина × характер, название — заготовка.
++	 * @return открыл ли
++	 */
++	private boolean openStore(Hunter hunter, Player player, long now)
++	{
++		if (!player.canOpenPrivateStore() || (World.getFirstVisibleObject(player, Player.class, other -> other.isInStoreMode() && (player.calculateDistance2D(other) < STORE_SPACING)) != null))
++		{
++			return false;
++		}
++
++		final List<Item> goods = PhantomHunterOutfit.storeGoods(player);
++		if (goods.isEmpty())
++		{
++			hunter.storeTries = STORE_TRIES;
++			return false;
++		}
++
++		final double factor = priceFactor(hunter.template);
++		final TradeList list = player.getSellList();
++		list.clear();
++		list.setPackaged(false);
++		for (Item item : goods.subList(0, Math.min(goods.size(), player.getPrivateSellStoreLimit())))
++		{
++			final long price = Math.max(1, Math.round(item.getTemplate().getReferencePrice() * factor));
++			list.addItem(item.getObjectId(), item.getCount(), price);
++		}
++		if (list.getItemCount() == 0)
++		{
++			hunter.storeTries = STORE_TRIES;
++			return false;
++		}
++
++		list.setTitle(STORE_TITLES[Rnd.get(STORE_TITLES.length)]);
++		player.sitDown();
++		player.setPrivateStoreType(PrivateStoreType.SELL);
++		player.broadcastUserInfo();
++		player.broadcastPacket(new PrivateStoreMsgSell(player));
++		hunter.storeOpen = true;
++		hunter.storeTries = 0;
++		hunter.lastStoreSession = now;
++		hunter.phaseUntil = now + (Rnd.get(PhantomHuntersConfig.HUNTER_STORE_MIN_MINUTES, PhantomHuntersConfig.HUNTER_STORE_MAX_MINUTES) * 60000L);
++		LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " opens a store in Giran: " + list.getItemCount() + " items, price x" + String.format(Locale.ROOT, "%.2f", factor) + ".");
++		return true;
++	}
++
++	/**
++	 * Свернуть лавку; что не продалось — отметить (после двух лавок уйдёт NPC).
++	 */
++	private static void closeStore(Hunter hunter, Player player)
++	{
++		if (!hunter.storeOpen)
++		{
++			return;
++		}
++
++		hunter.storeOpen = false;
++		for (Item item : PhantomHunterOutfit.storeGoods(player))
++		{
++			if (player.getSellList().getItems().stream().anyMatch(trade -> trade.getObjectId() == item.getObjectId()))
++			{
++				hunter.unsold.merge(item.getObjectId(), 1, Integer::sum);
++			}
++		}
++		player.getSellList().clear();
++		if (player.getPrivateStoreType() != PrivateStoreType.NONE)
++		{
++			player.setPrivateStoreType(PrivateStoreType.NONE);
++			player.broadcastUserInfo();
++		}
++		if (player.isSitting())
++		{
++			player.standUp();
++		}
++	}
++
++	/**
++	 * Характер в цене: 0,8–1,5 от цены магазина, у каждого своя (по имени).
++	 */
++	private static double priceFactor(PhantomTemplate template)
++	{
++		return 0.8 + ((Math.abs(template.getName().toLowerCase().hashCode()) % 71) / 100.0);
++	}
++
++	// ---------- Пати по крику ----------
++
++	/**
++	 * Живой игрок написал в общий, торговый чат или крикнул (из {@code ChatGeneral}, {@code ChatTrade}, {@code ChatShout}): если это «ищу людей», свободные охотники его уровня и нужной роли просятся в пати.
++	 * @param shouter кто написал
++	 * @param type канал
++	 * @param text что написал
++	 */
++	public void onLfm(Player shouter, ChatType type, String text)
++	{
++		if (!PhantomHuntersConfig.HUNTER_LFM || !_wanted || (shouter == null) || (text == null) || PhantomManager.getInstance().isPhantom(shouter) || !LFM.matcher(text).find())
++		{
++			return;
++		}
++
++		final boolean healer = WANT_HEALER.matcher(text).find();
++		final boolean tank = WANT_TANK.matcher(text).find();
++		final boolean damage = WANT_DAMAGE.matcher(text).find();
++		if (!healer && !tank && !damage && !WANT_PARTY.matcher(text).find() && !text.toLowerCase().contains("лфм") && !text.toLowerCase().contains("lfm"))
++		{
++			return; // «нужен совет» — не про пати
++		}
++
++		if (shouter.isInParty() && (!shouter.getParty().isLeader(shouter) || (shouter.getParty().getMemberCount() >= 9)))
++		{
++			return;
++		}
++
++		final long now = System.currentTimeMillis();
++		final Long until = _lfmCooldowns.get(shouter.getObjectId());
++		if ((until != null) && (now < until))
++		{
++			return;
++		}
++
++		final List<Hunter> candidates = new ArrayList<>();
++		for (Hunter hunter : _hunters.values())
++		{
++			final Player player = PhantomManager.getInstance().getPhantom(hunter.template);
++			if ((player == null) || (hunter.phase != Phase.HUNT) || player.isDead() || (hunter.enemyId != 0) || (Math.abs(player.getLevel() - shouter.getLevel()) > LFM_LEVEL_GAP) || (grudge(player, shouter) > 0))
++			{
++				continue;
++			}
++
++			final PhantomTemplate.Role role = hunter.template.getRole();
++			final boolean fits = (!healer && !tank && !damage) || (healer && (role == PhantomTemplate.Role.HEALER)) || (tank && (role == PhantomTemplate.Role.TANK)) || (damage && (role == PhantomTemplate.Role.DAMAGE));
++			if (!fits || ((type == ChatType.GENERAL) && (player.calculateDistance2D(shouter) > 1250)))
++			{
++				continue;
++			}
++			candidates.add(hunter);
++		}
++
++		if (candidates.isEmpty())
++		{
++			return;
++		}
++
++		_lfmCooldowns.put(shouter.getObjectId(), now + LFM_COOLDOWN);
++		Collections.shuffle(candidates);
++		final int wanted = (healer ? 1 : 0) + (tank ? 1 : 0) + (damage ? 1 : 0);
++		for (Hunter hunter : candidates.subList(0, Math.min(candidates.size(), Math.max(wanted, 2))))
++		{
++			final Player player = PhantomManager.getInstance().getPhantom(hunter.template);
++			hunter.recruiterId = shouter.getObjectId();
++			hunter.recruitArrived = false;
++			hunter.recruitArriveAt = now + Rnd.get(8000, 25000);
++			hunter.phaseUntil = now + RECRUIT_WAIT;
++			hunter.phase = Phase.RECRUIT;
++			final String who = player.getPlayerClass().name().replace('_', ' ').toLowerCase() + " " + player.getLevel();
++			PhantomChat.getInstance().hunterEvent(player, shouter, "LFM", shouter.getName() + " (" + shouter.getLevel() + " ур.) пишет в чат: «" + text + "». Ты свободен и подходишь — напиши ему в личку коротко, что идёшь к нему в пати (ты " + who + ")", "го, я " + who + ", кинь пати", 60000, true);
++			LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " answers the LFM of " + shouter.getName() + ".");
++		}
++	}
++
++	/**
++	 * Позвали криком: через несколько секунд — рядом с позвавшим (как телепорт к нему), ждёт инвайта; не дождался — назад.
++	 */
++	private void recruit(Hunter hunter, Player player, long now)
++	{
++		final Player recruiter = World.getPlayer(hunter.recruiterId);
++		if ((recruiter == null) || !recruiter.isOnline() || (now >= hunter.phaseUntil) || (recruiter.isInParty() && (recruiter.getParty().getMemberCount() >= 9)))
++		{
++			LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " got no invite, back to hunting.");
++			backToHunt(hunter, player);
++			return;
++		}
++
++		if (!hunter.recruitArrived)
++		{
++			if ((now < hunter.recruitArriveAt) || (recruiter.getInstanceId() != 0) || recruiter.isTeleporting())
++			{
++				return;
++			}
++
++			hunter.recruitArrived = true;
++			stop(player);
++			AutoUseTaskManager.getInstance().stopAutoUseTask(player);
++			if (player.isSitting())
++			{
++				player.standUp();
++			}
++			if (player.calculateDistance2D(recruiter) > 1500)
++			{
++				final double angle = Rnd.nextDouble() * 2 * Math.PI;
++				final int x = recruiter.getX() + (int) (Math.cos(angle) * 250);
++				final int y = recruiter.getY() + (int) (Math.sin(angle) * 250);
++				final int z = GeoEngine.getInstance().getHeight(x, y, recruiter.getZ());
++				final boolean reachable = GeoEngine.getInstance().canMoveToTarget(recruiter.getX(), recruiter.getY(), recruiter.getZ(), x, y, z, recruiter.getInstanceId());
++				player.teleToLocation(reachable ? new Location(x, y, z) : new Location(recruiter.getX(), recruiter.getY(), recruiter.getZ()), false);
++			}
++			return;
++		}
++
++		if ((player.calculateDistance2D(recruiter) > 200) && !player.isMoving())
++		{
++			player.setRunning();
++			player.getAI().setIntentionMoveTo(new Location(recruiter.getX(), recruiter.getY(), recruiter.getZ()));
++		}
++	}
++
++	/**
++	 * Инвайт охотнику (из {@link PhantomCompanionManager#onInvited}): позвал криком именно он — да; свободен, уровень близкий, не обидчик — тоже да.
++	 * @param template охотник
++	 * @param requestor кто приглашает
++	 * @return пойдёт ли в пати
++	 */
++	public boolean acceptsInvite(PhantomTemplate template, Player requestor)
++	{
++		final Hunter hunter = _hunters.get(template.getName().toLowerCase());
++		final Player player = PhantomManager.getInstance().getPhantom(template);
++		if ((hunter == null) || (player == null) || player.isDead())
++		{
++			return false;
++		}
++
++		if (hunter.phase == Phase.RECRUIT)
++		{
++			return hunter.recruiterId == requestor.getObjectId();
++		}
++		return (hunter.phase == Phase.HUNT) && (hunter.enemyId == 0) && (Math.abs(player.getLevel() - requestor.getLevel()) <= LFM_LEVEL_GAP) && (grudge(player, requestor) == 0);
++	}
++
++	/**
++	 * Охотник вступил в пати: дальше его ведёт {@link PhantomCompanionManager}, AutoPlay выключен.
++	 * @param template охотник
++	 */
++	public void joinedParty(PhantomTemplate template)
++	{
++		final Hunter hunter = _hunters.get(template.getName().toLowerCase());
++		final Player player = PhantomManager.getInstance().getPhantom(template);
++		if ((hunter == null) || (player == null))
++		{
++			return;
++		}
++
++		hunter.phase = Phase.PARTY;
++		hunter.recruiterId = 0;
++		closeStore(hunter, player);
++		AutoPlayTaskManager.getInstance().stopAutoPlay(player);
++		AutoUseTaskManager.getInstance().stopAutoUseTask(player);
++		if (player.isSitting())
++		{
++			player.standUp();
++		}
++	}
++
+ 	// ---------- ПвП ----------
+ 
+ 	/**
+@@ -567,7 +1202,7 @@ public class PhantomHunterManager
+ 	private void onDamaged(Hunter hunter, Player player, Creature attacker)
+ 	{
+ 		final Player enemy = actingPlayer(attacker);
+-		if ((enemy == null) || (enemy == player) || PhantomManager.getInstance().isPhantom(enemy) || player.isDead())
++		if ((enemy == null) || (enemy == player) || PhantomManager.getInstance().isPhantom(enemy) || player.isDead() || (hunter.phase == Phase.PARTY))
+ 		{
+ 			return;
+ 		}
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterOutfit.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterOutfit.java
+index 8daf499..d7b3229 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterOutfit.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterOutfit.java
+@@ -1,37 +1,105 @@
+ package org.l2jmobius.gameserver.managers.phantom;
+ 
+ import java.util.ArrayList;
+-import java.util.HashSet;
+ import java.util.List;
++import java.util.Map;
+ import java.util.Set;
+ 
+ import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
++import org.l2jmobius.gameserver.data.xml.ItemData;
+ import org.l2jmobius.gameserver.entity.actor.Player;
+ import org.l2jmobius.gameserver.entity.actor.holders.player.AutoPlaySettingsHolder;
+ import org.l2jmobius.gameserver.entity.actor.holders.player.AutoUseSettingsHolder;
++import org.l2jmobius.gameserver.entity.item.ItemTemplate;
++import org.l2jmobius.gameserver.entity.item.enums.BodyPart;
+ import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
+ import org.l2jmobius.gameserver.entity.item.instance.Item;
++import org.l2jmobius.gameserver.entity.item.type.WeaponType;
+ import org.l2jmobius.gameserver.entity.itemcontainer.Inventory;
+ import org.l2jmobius.gameserver.mechanics.effects.EffectType;
+ import org.l2jmobius.gameserver.mechanics.skill.Skill;
+ import org.l2jmobius.gameserver.mechanics.skill.targets.TargetType;
+ 
+ /**
+- * L2Hub: профессия, скиллы и снаряжение охотника — как у живого игрока: инвентарь (лут, адена) не трогается.<br>
+- * Профессия ветки — на 20, 40 и 76; новые скиллы — после каждого уровня (старые остаются); шмот — при смене грейда (меняется только свой набор); сосы своего грейда добираются до {@link PhantomHuntersConfig#HUNTER_SHOT_COUNT}.
++ * L2Hub: профессия, скиллы и хозяйство охотника — как у живого игрока на x1 (раздел 4.2 docs/PHANTOMS.md).<br>
++ * Профессия ветки — на 20, 40 и 76; новые скиллы — после каждого уровня. Стартовый шмот — бесплатно, как при создании персонажа; дальше всё за свою адену:
++ * стрелы и сосы под грейд надетого оружия, шмот по частям (оружие, потом броня) по цене магазина и GM-шопа, на что не хватает — грейдом ниже. Удачный дроп надевает сам, хлам сдаёт NPC за полцены, ценное — в лавку.
+  */
+ final class PhantomHunterOutfit
+ {
+ 	/** Автоатака в AutoUse (как в AutoPlayTaskManager): без неё AutoPlay считает игрока кастером и не бьёт оружием. */
+ 	private static final Integer AUTO_ATTACK_ACTION = 2;
+ 	private static final Set<TargetType> ATTACK_TARGETS = Set.of(TargetType.ONE, TargetType.AREA, TargetType.FRONT_AREA, TargetType.AURA, TargetType.FRONT_AURA, TargetType.BEHIND_AREA, TargetType.BEHIND_AURA);
++	/** Сосы, BSS, стрелы и болты по уровню грейда оружия (CrystalType.getLevel: NONE 0, D 1 … S 5, S80 6, S84 7; у S80 и S84 — S-грейдовые). */
++	private static final int[] SOULSHOTS =
++	{
++		1835,
++		1463,
++		1464,
++		1465,
++		1466,
++		1467,
++		1467,
++		1467
++	};
++	private static final int[] SPIRITSHOTS =
++	{
++		3947,
++		3948,
++		3949,
++		3950,
++		3951,
++		3952,
++		3952,
++		3952
++	};
++	private static final int[] ARROWS =
++	{
++		17,
++		1341,
++		1342,
++		1343,
++		1344,
++		1345,
++		1345,
++		1345
++	};
++	private static final int[] BOLTS =
++	{
++		9632,
++		9633,
++		9634,
++		9635,
++		9636,
++		9637,
++		9637,
++		9637
++	};
++	/** Порядок покупки шмота: сначала оружие. */
++	private static final int[] SLOTS =
++	{
++		Inventory.PAPERDOLL_RHAND,
++		Inventory.PAPERDOLL_CHEST,
++		Inventory.PAPERDOLL_LEGS,
++		Inventory.PAPERDOLL_HEAD,
++		Inventory.PAPERDOLL_GLOVES,
++		Inventory.PAPERDOLL_FEET,
++		Inventory.PAPERDOLL_LHAND
++	};
++	private static final Set<BodyPart> JEWELS = Set.of(BodyPart.NECK, BodyPart.R_EAR, BodyPart.L_EAR, BodyPart.LR_EAR, BodyPart.R_FINGER, BodyPart.L_FINGER, BodyPart.LR_FINGER);
++	/** Сколько сосов и стрел держать в запасе при покупке шмота: новая вещь не оставит охотника без них. */
++	private static final int SHOT_RESERVE = 300;
++	private static final int AMMO_RESERVE = 500;
++	private static final int AMMO_LOAN = 300;
++	/** Идти в город за сосами есть смысл, если хватает хотя бы на столько. */
++	private static final int RESTOCK_MIN = 100;
+ 
+ 	private PhantomHunterOutfit()
+ 	{
+ 	}
+ 
+ 	/**
+-	 * После входа в мир и после каждого нового уровня.
++	 * После входа в мир и после каждого нового уровня: профессия, скиллы, стартовый шмот новичку, бой, автососки.
+ 	 * @param player охотник
+ 	 * @param template его описание
+ 	 */
+@@ -47,80 +115,496 @@ final class PhantomHunterOutfit
+ 		}
+ 		player.giveAvailableSkills(true, true, true);
+ 
+-		final PhantomTemplate.Gear gear = template.getGear(player.getLevel());
+-		upgradeGear(player, template, gear);
+-		refillShots(player, gear);
++		// Только что созданный — без оружия: одеть, как при создании персонажа (стартовое снаряжение класса).
++		if (player.getInventory().getPaperdollItem(Inventory.PAPERDOLL_RHAND) == null)
++		{
++			final List<PhantomTemplate.Gear> all = template.getAllGear();
++			if (!all.isEmpty() && (all.get(0).minLevel <= 1))
++			{
++				PhantomOutfit.dress(player, all.get(0));
++			}
++		}
++
+ 		setupCombat(player);
++		syncShots(player);
++	}
++
++	// ---------- Расходники ----------
++
++	private static int weaponGrade(Player player)
++	{
++		final Item weapon = player.getInventory().getPaperdollItem(Inventory.PAPERDOLL_RHAND);
++		return weapon == null ? 0 : Math.min(7, weapon.getTemplate().getCrystalType().getLevel());
+ 	}
+ 
+ 	/**
+-	 * Шмот своего грейда: уже надет — ничего; иначе снять и уничтожить надетые вещи своего набора (других грейдов) и надеть новые. Остальное (лут) не трогается.
++	 * @return id сосов под надетое оружие: BSS у магов, соулшоты у воинов
+ 	 */
+-	private static void upgradeGear(Player player, PhantomTemplate template, PhantomTemplate.Gear gear)
++	static int shotId(Player player)
+ 	{
+-		if (gear == null)
++		return player.isMageClass() ? SPIRITSHOTS[weaponGrade(player)] : SOULSHOTS[weaponGrade(player)];
++	}
++
++	/**
++	 * @return id стрел или болтов под надетый лук или арбалет, 0 — оружию они не нужны
++	 */
++	static int ammoId(Player player)
++	{
++		final Item weapon = player.getInventory().getPaperdollItem(Inventory.PAPERDOLL_RHAND);
++		if ((weapon == null) || !weapon.isWeapon())
+ 		{
+-			return;
++			return 0;
+ 		}
+ 
+-		final Item weapon = player.getInventory().getPaperdollItem(Inventory.PAPERDOLL_RHAND);
+-		if ((weapon != null) && (weapon.getId() == gear.rhand))
++		final WeaponType type = (WeaponType) weapon.getTemplate().getItemType();
++		return type == WeaponType.BOW ? ARROWS[weaponGrade(player)] : type == WeaponType.CROSSBOW ? BOLTS[weaponGrade(player)] : 0;
++	}
++
++	private static long count(Player player, int itemId)
++	{
++		final Item item = itemId > 0 ? player.getInventory().getItemByItemId(itemId) : null;
++		return item == null ? 0 : item.getCount();
++	}
++
++	/**
++	 * @return доля запаса сосов (и стрел у лучника), что ещё осталась: 0…1 — по меньшему из двух
++	 */
++	static double suppliesLeft(Player player)
++	{
++		double left = Math.min(1, count(player, shotId(player)) / (double) Math.max(1, PhantomHuntersConfig.HUNTER_SHOT_COUNT));
++		final int ammo = ammoId(player);
++		if (ammo > 0)
++		{
++			left = Math.min(left, count(player, ammo) / (double) Math.max(1, PhantomHuntersConfig.HUNTER_AMMO_COUNT));
++		}
++		return left;
++	}
++
++	/**
++	 * @return хватит ли адены хотя бы на {@value #RESTOCK_MIN} сосов (или стрел у лучника): нет — бьёт без них, в город за ними не идёт
++	 */
++	static boolean canRestock(Player player)
++	{
++		final long need = Math.min(price(shotId(player)), ammoId(player) > 0 ? price(ammoId(player)) : Long.MAX_VALUE);
++		return player.getAdena() >= (need * RESTOCK_MIN);
++	}
++
++	/**
++	 * @return нужны ли оружию стрелы, а их нет: такой охотник стоять будет, а не бить
++	 */
++	static boolean outOfAmmo(Player player)
++	{
++		final int ammo = ammoId(player);
++		return (ammo > 0) && (count(player, ammo) <= 0);
++	}
++
++	/**
++	 * Автососки — на сосы своего грейда, если они есть.
++	 */
++	static void syncShots(Player player)
++	{
++		player.getAutoSoulShot().clear();
++		final int shotId = shotId(player);
++		if (count(player, shotId) > 0)
++		{
++			player.addAutoSoulShot(shotId);
++			player.rechargeShots(true, true);
++		}
++	}
++
++	// ---------- Город ----------
++
++	/**
++	 * Дела в городе: надеть удачный дроп, сдать хлам, купить шмот, стрелы и сосы.
++	 * @param player охотник
++	 * @param template его описание
++	 * @param unsold сколько раз вещь (objectId) не продалась в лавке: после двух — NPC
++	 * @return что сделал — для лога
++	 */
++	static List<String> townChores(Player player, PhantomTemplate template, Map<Integer, Integer> unsold)
++	{
++		final List<String> done = new ArrayList<>();
++		final int equipped = equipBetterDrops(player);
++		if (equipped > 0)
++		{
++			done.add("надел дроп: " + equipped);
++		}
++
++		final long sold = sellJunk(player, unsold);
++		if (sold > 0)
++		{
++			done.add("сдал хлам на " + sold);
++		}
++
++		done.addAll(buyGear(player, template));
++
++		// Стрелы — первыми: без них лук не стреляет. На сосы — не больше половины того, что осталось.
++		final long arrows = buy(player, ammoId(player), PhantomHuntersConfig.HUNTER_AMMO_COUNT, player.getAdena());
++		if (arrows > 0)
++		{
++			done.add("купил стрел: " + arrows);
++		}
++		else if (outOfAmmo(player))
++		{
++			// Совсем без денег и без стрел лучник стоял бы столбом: пачка стрел в долг (единственная поблажка экономики).
++			player.getInventory().addItem(ItemProcessType.REWARD, ammoId(player), AMMO_LOAN, player, null);
++			done.add("взял стрел в долг: " + AMMO_LOAN);
++		}
++
++		final long shots = buy(player, shotId(player), PhantomHuntersConfig.HUNTER_SHOT_COUNT, player.getAdena() / 2);
++		if (shots > 0)
+ 		{
+-			return;
++			done.add("купил сосов: " + shots);
+ 		}
+ 
+-		final Set<Integer> own = new HashSet<>();
+-		for (PhantomTemplate.Gear any : template.getAllGear())
++		syncShots(player);
++		return done;
++	}
++
++	/**
++	 * Докупить расходник до запаса по цене магазина.
++	 * @return сколько купил
++	 */
++	private static long buy(Player player, int itemId, int stock, long budget)
++	{
++		final long price = Math.max(1, price(itemId));
++		final long want = itemId <= 0 ? 0 : Math.min(stock - count(player, itemId), budget / price);
++		if ((want <= 0) || !player.reduceAdena(ItemProcessType.BUY, want * price, player, false))
+ 		{
+-			for (int itemId : any.items())
++			return 0;
++		}
++
++		player.getInventory().addItem(ItemProcessType.BUY, itemId, want, player, null);
++		return want;
++	}
++
++	private static long price(int itemId)
++	{
++		final ItemTemplate template = itemId > 0 ? ItemData.getInstance().getTemplate(itemId) : null;
++		return template == null ? 0 : template.getReferencePrice();
++	}
++
++	/**
++	 * Шмот по частям: оружие, потом броня. Для каждой части — лучший разрешённый грейд из своего набора, на который хватает адены (с запасом на сосы, стрелы и телепорт); не хватает — грейдом ниже, если это лучше надетого. Старое — NPC за полцены.
++	 * @return что купил — для лога
++	 */
++	private static List<String> buyGear(Player player, PhantomTemplate template)
++	{
++		final List<String> bought = new ArrayList<>();
++		final int expertise = player.getExpertiseLevel();
++		final List<PhantomTemplate.Gear> grades = new ArrayList<>();
++		for (PhantomTemplate.Gear gear : template.getAllGear())
++		{
++			if ((gear.minLevel <= player.getLevel()) && (grade(gear.rhand) <= expertise))
++			{
++				grades.add(0, gear); // лучший грейд — первым
++			}
++		}
++
++		for (int slot : SLOTS)
++		{
++			// Штаны к цельному доспеху и щит к двуручу не покупаются: надев их, он снял бы доспех или оружие.
++			if (((slot == Inventory.PAPERDOLL_LEGS) && (wornBodyPart(player, Inventory.PAPERDOLL_CHEST) == BodyPart.FULL_ARMOR)) || ((slot == Inventory.PAPERDOLL_LHAND) && (wornBodyPart(player, Inventory.PAPERDOLL_RHAND) == BodyPart.LR_HAND)))
+ 			{
+-				if (itemId > 0)
++				continue;
++			}
++
++			final Item current = player.getInventory().getPaperdollItem(slot);
++			final int currentGrade = (current == null) || current.isEtcItem() ? -1 : current.getTemplate().getCrystalType().getLevel();
++			for (PhantomTemplate.Gear gear : grades)
++			{
++				final int itemId = itemFor(gear, slot);
++				if (itemId <= 0)
+ 				{
+-					own.add(itemId);
++					continue;
+ 				}
++
++				final ItemTemplate item = ItemData.getInstance().getTemplate(itemId);
++				if ((item == null) || (item.getCrystalType().getLevel() <= currentGrade) || ((current != null) && (current.getId() == itemId)))
++				{
++					break; // надетое не хуже этого грейда, ниже искать нечего
++				}
++
++				// Запас на расходники того грейда, под который покупается (новое оружие меняет грейд сосов).
++				final int g = Math.min(7, grade(gear.rhand));
++				final long ammoReserve = (slot == Inventory.PAPERDOLL_RHAND ? isRanged(gear.rhand) : ammoId(player) > 0) ? price(ARROWS[g]) * AMMO_RESERVE : 0;
++				final long reserve = (price(player.isMageClass() ? SPIRITSHOTS[g] : SOULSHOTS[g]) * SHOT_RESERVE) + ammoReserve + (player.getLevel() >= 40 ? PhantomHuntersConfig.HUNTER_TELEPORT_FEE : 0);
++				if ((player.getAdena() - reserve) < item.getReferencePrice())
++				{
++					continue; // не хватает — посмотреть грейд ниже
++				}
++
++				if (!player.reduceAdena(ItemProcessType.BUY, item.getReferencePrice(), player, false))
++				{
++					break;
++				}
++
++				final Item added = player.getInventory().addItem(ItemProcessType.BUY, itemId, 1, player, null);
++				if ((added != null) && added.isEquipable())
++				{
++					player.getInventory().equipItem(added);
++					if ((current != null) && !current.isEquipped() && !current.isEtcItem())
++					{
++						sell(player, current);
++					}
++					bought.add(item.getName());
++				}
++				break;
+ 			}
+ 		}
+ 
+-		for (Item item : new ArrayList<>(player.getInventory().getPaperdollItems()))
++		if (!bought.isEmpty())
+ 		{
+-			if (own.contains(item.getId()))
++			player.refreshExpertisePenalty();
++			player.broadcastUserInfo();
++		}
++		return bought;
++	}
++
++	/**
++	 * @return место надетой в слоте вещи или {@code null}
++	 */
++	private static BodyPart wornBodyPart(Player player, int slot)
++	{
++		final Item item = slot < 0 ? null : player.getInventory().getPaperdollItem(slot);
++		return item == null ? null : item.getTemplate().getBodyPart();
++	}
++
++	private static boolean isRanged(int itemId)
++	{
++		final ItemTemplate item = itemId > 0 ? ItemData.getInstance().getTemplate(itemId) : null;
++		return (item != null) && item.isWeapon() && ((item.getItemType() == WeaponType.BOW) || (item.getItemType() == WeaponType.CROSSBOW));
++	}
++
++	/**
++	 * Удачный дроп: разрешённого грейда и дороже надетого. Оружие — того же вида и хвата (и магическое у мага), броня — того же типа и места; бижутерия — в пустой слот или вместо самой дешёвой. Старое потом уйдёт NPC как хлам.
++	 * @return сколько вещей надел
++	 */
++	private static int equipBetterDrops(Player player)
++	{
++		final int expertise = player.getExpertiseLevel();
++		int count = 0;
++		for (Item item : new ArrayList<>(player.getInventory().getItems()))
++		{
++			if (item.isEquipped() || !item.isEquipable() || (!item.isWeapon() && !item.isArmor()) || (item.getTemplate().getCrystalType().getLevel() > expertise))
++			{
++				continue;
++			}
++
++			final ItemTemplate drop = item.getTemplate();
++			if (JEWELS.contains(drop.getBodyPart()))
++			{
++				if (equipJewel(player, item))
++				{
++					count++;
++				}
++				continue;
++			}
++
++			final int slot = Inventory.getPaperdollIndex(drop.getBodyPart());
++			final Item current = slot < 0 ? null : player.getInventory().getPaperdollItem(slot);
++			if ((current == null) || current.isEtcItem() || (current.getTemplate().getItemType() != drop.getItemType()) || (current.getTemplate().getBodyPart() != drop.getBodyPart()) || (drop.getReferencePrice() <= current.getTemplate().getReferencePrice()))
+ 			{
+-				player.getInventory().unEquipItemInSlot(item.getLocationSlot());
+-				player.destroyItem(ItemProcessType.DESTROY, item, player, false);
++				continue;
+ 			}
++
++			if (item.isWeapon() && (drop.isMagicWeapon() != current.getTemplate().isMagicWeapon()))
++			{
++				continue;
++			}
++
++			player.getInventory().equipItem(item);
++			count++;
+ 		}
+ 
+-		PhantomOutfit.dress(player, gear);
++		if (count > 0)
++		{
++			player.refreshExpertisePenalty();
++			player.broadcastUserInfo();
++		}
++		return count;
+ 	}
+ 
+-	private static void refillShots(Player player, PhantomTemplate.Gear gear)
++	private static boolean equipJewel(Player player, Item item)
+ 	{
+-		player.getAutoSoulShot().clear();
+-		if ((gear == null) || (gear.shots <= 0))
++		final int[] slots;
++		switch (item.getTemplate().getBodyPart())
+ 		{
+-			return;
++			case NECK:
++			{
++				slots = new int[]
++				{
++					Inventory.PAPERDOLL_NECK
++				};
++				break;
++			}
++			case R_EAR:
++			case L_EAR:
++			case LR_EAR:
++			{
++				slots = new int[]
++				{
++					Inventory.PAPERDOLL_REAR,
++					Inventory.PAPERDOLL_LEAR
++				};
++				break;
++			}
++			default:
++			{
++				slots = new int[]
++				{
++					Inventory.PAPERDOLL_RFINGER,
++					Inventory.PAPERDOLL_LFINGER
++				};
++				break;
++			}
+ 		}
+ 
+-		final Item shots = player.getInventory().getItemByItemId(gear.shots);
+-		final long have = shots == null ? 0 : shots.getCount();
+-		if (have < (PhantomHuntersConfig.HUNTER_SHOT_COUNT / 2))
++		Item cheapest = null;
++		for (int slot : slots)
+ 		{
+-			player.getInventory().addItem(ItemProcessType.REWARD, gear.shots, PhantomHuntersConfig.HUNTER_SHOT_COUNT - have, player, null);
++			final Item worn = player.getInventory().getPaperdollItem(slot);
++			if (worn == null)
++			{
++				player.getInventory().equipItem(item);
++				return true;
++			}
++			if ((cheapest == null) || (worn.getTemplate().getReferencePrice() < cheapest.getTemplate().getReferencePrice()))
++			{
++				cheapest = worn;
++			}
+ 		}
+-		player.addAutoSoulShot(gear.shots);
+-		player.rechargeShots(true, true);
++
++		if ((cheapest == null) || (cheapest.getTemplate().getReferencePrice() >= item.getTemplate().getReferencePrice()))
++		{
++			return false;
++		}
++
++		player.getInventory().unEquipItemInSlot(cheapest.getLocationSlot());
++		player.getInventory().equipItem(item);
++		return true;
+ 	}
+ 
+ 	/**
+-	 * Сосы своего грейда — раз в несколько минут, между уровнями тоже тратятся.
+-	 * @param player охотник
+-	 * @param template его описание
++	 * Хлам — NPC за полцены: всё ненадетое, что продаётся и дешевле порога лавки, и то, что дважды не продалось в лавке. Адена, сосы и стрелы своего грейда, квестовое не трогаются.
++	 * @return сколько адены выручил
+ 	 */
+-	static void refillShots(Player player, PhantomTemplate template)
++	private static long sellJunk(Player player, Map<Integer, Integer> unsold)
+ 	{
+-		refillShots(player, template.getGear(player.getLevel()));
++		long total = 0;
++		for (Item item : new ArrayList<>(player.getInventory().getItems()))
++		{
++			if (!junk(player, item) || (isStoreGood(item) && (unsold.getOrDefault(item.getObjectId(), 0) < 2)))
++			{
++				continue;
++			}
++
++			total += sell(player, item);
++			unsold.remove(item.getObjectId());
++		}
++		return total;
++	}
++
++	/**
++	 * @return ценное для лавки: ненадетое, продаваемое, не дешевле порога; дорогое — первым
++	 */
++	static List<Item> storeGoods(Player player)
++	{
++		final List<Item> goods = new ArrayList<>();
++		for (Item item : player.getInventory().getItems())
++		{
++			if (junk(player, item) && isStoreGood(item) && item.isTradeable())
++			{
++				goods.add(item);
++			}
++		}
++		goods.sort((a, b) -> Long.compare(b.getTemplate().getReferencePrice() * b.getCount(), a.getTemplate().getReferencePrice() * a.getCount()));
++		return goods;
++	}
++
++	/**
++	 * То, что охотник может отдать: не надето, не адена, не квестовое, продаётся NPC; сосы и стрелы — только чужого грейда (остались от прошлого оружия).
++	 */
++	private static boolean junk(Player player, Item item)
++	{
++		final int id = item.getId();
++		if (item.isEquipped() || (id == 57) || item.isQuestItem() || !item.isSellable() || (item.getTemplate().getReferencePrice() <= 0))
++		{
++			return false;
++		}
++		return (id != shotId(player)) && (id != ammoId(player));
++	}
++
++	static boolean isStoreGood(Item item)
++	{
++		return item.getTemplate().getReferencePrice() >= PhantomHuntersConfig.HUNTER_STORE_MIN_PRICE;
++	}
++
++	/**
++	 * Продать NPC за полцены (как у торговца).
++	 * @return выручка
++	 */
++	private static long sell(Player player, Item item)
++	{
++		final long price = (item.getTemplate().getReferencePrice() / 2L) * item.getCount();
++		if (item.isEquipped())
++		{
++			player.getInventory().unEquipItemInSlot(item.getLocationSlot());
++		}
++		if (!player.destroyItem(ItemProcessType.SELL, item, player, false))
++		{
++			return 0;
++		}
++		if (price > 0)
++		{
++			player.addAdena(ItemProcessType.SELL, price, player, false);
++		}
++		return price;
+ 	}
+ 
++	private static int itemFor(PhantomTemplate.Gear gear, int slot)
++	{
++		switch (slot)
++		{
++			case Inventory.PAPERDOLL_RHAND:
++			{
++				return gear.rhand;
++			}
++			case Inventory.PAPERDOLL_LHAND:
++			{
++				return gear.lhand;
++			}
++			case Inventory.PAPERDOLL_HEAD:
++			{
++				return gear.head;
++			}
++			case Inventory.PAPERDOLL_CHEST:
++			{
++				return gear.chest;
++			}
++			case Inventory.PAPERDOLL_LEGS:
++			{
++				return gear.legs;
++			}
++			case Inventory.PAPERDOLL_GLOVES:
++			{
++				return gear.gloves;
++			}
++			default:
++			{
++				return gear.feet;
++			}
++		}
++	}
++
++	private static int grade(int itemId)
++	{
++		final ItemTemplate item = itemId > 0 ? ItemData.getInstance().getTemplate(itemId) : null;
++		return item == null ? 0 : item.getCrystalType().getLevel();
++	}
++
++	// ---------- Бой ----------
++
+ 	/**
+ 	 * AutoPlay и AutoUse: цель — мобы рядом, не отбивать чужих мобов, подбирать лут; два-три самых сильных атакующих скилла класса. Воин бьёт ещё и оружием; кастер без атакующих скиллов (хилер) — тоже.
+ 	 */
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomPartyRules.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomPartyRules.java
+index 1bc0c1b..04ea8e8 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomPartyRules.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomPartyRules.java
+@@ -11,7 +11,7 @@ import org.l2jmobius.gameserver.entity.groups.Party;
+ import org.l2jmobius.gameserver.util.LocationUtil;
+ 
+ /**
+- * L2Hub: доля фантомов в пати. По умолчанию опыт, SP, лут и адена достаются только живым игрокам (PhantomParty.ini).
++ * L2Hub: доля фантомов в пати. По умолчанию опыт, SP, лут и адена достаются только живым игрокам (PhantomParty.ini). Охотники — как живые: качаются и копят на шмот сами.
+  */
+ public final class PhantomPartyRules
+ {
+@@ -25,7 +25,7 @@ public final class PhantomPartyRules
+ 	 */
+ 	public static boolean takesLoot(Player member)
+ 	{
+-		return PhantomPartyConfig.PHANTOM_PARTY_LOOT_SHARE || !PhantomManager.getInstance().isPhantom(member);
++		return PhantomPartyConfig.PHANTOM_PARTY_LOOT_SHARE || !isCompanion(member);
+ 	}
+ 
+ 	/**
+@@ -42,7 +42,7 @@ public final class PhantomPartyRules
+ 		final List<Player> result = new ArrayList<>(members.size());
+ 		for (Player member : members)
+ 		{
+-			if (!PhantomManager.getInstance().isPhantom(member))
++			if (!isCompanion(member))
+ 			{
+ 				result.add(member);
+ 			}
+@@ -50,6 +50,20 @@ public final class PhantomPartyRules
+ 		return result;
+ 	}
+ 
++	/**
++	 * @return напарник-фантом (не охотник): ему доля не положена
++	 */
++	private static boolean isCompanion(Player member)
++	{
++		if (!PhantomManager.getInstance().isPhantom(member))
++		{
++			return false;
++		}
++
++		final PhantomTemplate template = PhantomData.getInstance().getTemplate(member.getName());
++		return (template == null) || !template.isHunter();
++	}
++
+ 	/**
+ 	 * Лут, который достался бы фантому (например, при «Нашедшему» он сам подобрал или убил), уходит живому участнику рядом.
+ 	 * @param party пати

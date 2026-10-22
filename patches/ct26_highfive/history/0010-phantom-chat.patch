@@ -1,0 +1,1722 @@
+diff --git a/dist/game/config/Custom/PhantomParty.ini b/dist/game/config/Custom/PhantomParty.ini
+index bdf4ead..fa1d548 100644
+--- a/dist/game/config/Custom/PhantomParty.ini
++++ b/dist/game/config/Custom/PhantomParty.ini
+@@ -21,3 +21,15 @@ PhantomDefendRange = 900
+ 
+ # Сколько секунд ждать вышедшего из игры владельца, потом напарник уходит из мира.
+ PhantomOwnerLogoutGrace = 60
++
++# Болтовня: шёпот и чат пати напарнику уходят в мозги фейков (FakePlayerBrain, FakePlayerBrainUrl в FakePlayers.ini).
++# Приказы («за мной», «стой», «бафни», «хил», «рес», «сядь», «встань», «пока») выполняются и без мозгов.
++# False — напарники отвечают только заготовками.
++PhantomBrain = True
++
++# Реплика на событие (вступил в пати, твой новый уровень, смерть, рес, сел на MP) — не чаще раза в столько секунд
++# на одно событие (у одного напарника или у всей пати владельца).
++PhantomEventCooldown = 60
++
++# И не больше стольких реплик на события в минуту на всех напарников; сверх — заготовки или молчание.
++PhantomEventsPerMinute = 6
+diff --git a/dist/game/data/L2HubPhantomPersonas.json b/dist/game/data/L2HubPhantomPersonas.json
+index 692bd5f..c54d49e 100644
+--- a/dist/game/data/L2HubPhantomPersonas.json
++++ b/dist/game/data/L2HubPhantomPersonas.json
+@@ -12,7 +12,7 @@
+    "traits": "раскрепощённая, уверенная и игривая хилка-напарница; сама начинает флирт, любит взаимные подколы и легко принимает ответный флирт; в опасности собранна и внимательна к пати",
+    "style": "коротко, живо и по-свойски; смело флиртует, шутит с двусмысленностью, мягко дразнит, иногда ругается к месту; реагирует на слова собеседника и ситуацию, без заученных фраз и флирта в каждой реплике",
+    "bio": "Заботится о своих, после спасения любит игриво подколоть. Ей нравятся смелые и остроумные собеседники; охотно поддерживает взаимный флирт, а если его не поддерживают — спокойно общается по-дружески.",
+-   "aliases": "весна;веснушка"
++   "aliases": "весна;веснушка;vesnushka"
+   },
+   "Mityai": {
+    "race": "Человек",
+@@ -25,7 +25,7 @@
+    "traits": "весёлый бафер-балагур, бафает всех подряд и знает тайминги бафов наизусть",
+    "style": "по-свойски: «братишка», «бафнул», «ща всё будет»",
+    "bio": "Хиерофант, на сервере всем свой; считает, что без хорошего бафа фармить — грех.",
+-   "aliases": "митяй;митя;мить"
++   "aliases": "митяй;митя;мить;mityay;mitya;mitia"
+   }
+  }
+ }
+diff --git a/dist/game/data/L2HubPhantoms.xml b/dist/game/data/L2HubPhantoms.xml
+index 48810f7..d2a18b0 100644
+--- a/dist/game/data/L2HubPhantoms.xml
++++ b/dist/game/data/L2HubPhantoms.xml
+@@ -2,7 +2,7 @@
+ <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="xsd/L2HubPhantoms.xsd">
+ 	<!-- L2Hub: напарники-фантомы. Сгенерировано tools/fake_players.py, правки — в таблице COMPANIONS. -->
+ 	<!-- Vesna: хилер, Human Mystic, Cleric, Bishop, Cardinal -->
+-	<phantom name="Vesna" role="HEALER" female="true" face="0" hairStyle="3" hairColor="0" classes="10,15,16,97" x="83208" y="148132" z="-3408">
++	<phantom name="Vesna" role="HEALER" female="true" face="0" hairStyle="3" hairColor="0" classes="10,15,16,97" aliases="весна;веснушка;vesnushka" x="83208" y="148132" z="-3408">
+ 		<gear grade="NONE" minLevel="1" rhand="7" shots="3947" /> <!-- Apprentice's Rod -->
+ 		<gear grade="D" minLevel="20" rhand="180" chest="436" legs="469" gloves="2447" shots="3948" /> <!-- Mace of Judgment, Tunic of Knowledge, Stockings of Knowledge, Gloves of Knowledge -->
+ 		<gear grade="C" minLevel="40" rhand="174" chest="441" legs="472" gloves="2459" shots="3949" /> <!-- Nirvana Axe, Demon's Tunic, Demon's Stockings, Demon's Gloves -->
+@@ -13,7 +13,7 @@
+ 		<gear grade="S84" minLevel="84" rhand="15892" head="13139" chest="13434" legs="13444" gloves="13445" feet="13446" shots="3952" /> <!-- Sacredium - Mana Up, Vesper Circlet, Vesper Tunic, Vesper Stockings, Vesper Gloves, Vesper Shoes -->
+ 	</phantom>
+ 	<!-- Mityai: баффер, Human Mystic, Cleric, Prophet, Hierophant -->
+-	<phantom name="Mityai" role="BUFFER" female="false" face="0" hairStyle="3" hairColor="0" classes="10,15,17,98" x="83374" y="148422" z="-3400">
++	<phantom name="Mityai" role="BUFFER" female="false" face="0" hairStyle="3" hairColor="0" classes="10,15,17,98" aliases="митяй;митя;мить;mityay;mitya;mitia" x="83374" y="148422" z="-3400">
+ 		<gear grade="NONE" minLevel="1" rhand="7816" shots="3947" /> <!-- Apprentice Adventurer's Staff -->
+ 		<gear grade="D" minLevel="20" rhand="7825" chest="436" legs="469" gloves="2447" shots="3948" /> <!-- Traveler's Staff, Tunic of Knowledge, Stockings of Knowledge, Gloves of Knowledge -->
+ 		<gear grade="C" minLevel="40" rhand="195" chest="441" legs="472" gloves="2459" shots="3949" /> <!-- Cursed Staff, Demon's Tunic, Demon's Stockings, Demon's Gloves -->
+diff --git a/dist/game/data/scripts/handlers/chat/channels/ChatParty.java b/dist/game/data/scripts/handlers/chat/channels/ChatParty.java
+index f223ae3..442d31b 100644
+--- a/dist/game/data/scripts/handlers/chat/channels/ChatParty.java
++++ b/dist/game/data/scripts/handlers/chat/channels/ChatParty.java
+@@ -19,6 +19,7 @@ package handlers.chat.channels;
+ import org.l2jmobius.gameserver.config.GeneralConfig;
+ import org.l2jmobius.gameserver.entity.actor.Player;
+ import org.l2jmobius.gameserver.handler.IChatHandler;
++import org.l2jmobius.gameserver.managers.phantom.PhantomChat;
+ import org.l2jmobius.gameserver.network.SystemMessageId;
+ import org.l2jmobius.gameserver.network.enums.ChatType;
+ import org.l2jmobius.gameserver.network.serverpackets.CreatureSay;
+@@ -56,6 +57,9 @@ public class ChatParty implements IChatHandler
+ 		}
+ 		
+ 		activeChar.getParty().broadcastCreatureSay(new CreatureSay(activeChar, type, activeChar.getName(), text), activeChar);
++
++		// L2Hub: напарники в пати слышат чат пати и отвечают (PhantomChat).
++		PhantomChat.getInstance().onPartyChat(activeChar, text);
+ 	}
+ 	
+ 	@Override
+diff --git a/dist/game/data/scripts/handlers/chat/channels/ChatWhisper.java b/dist/game/data/scripts/handlers/chat/channels/ChatWhisper.java
+index fb930a0..e191193 100644
+--- a/dist/game/data/scripts/handlers/chat/channels/ChatWhisper.java
++++ b/dist/game/data/scripts/handlers/chat/channels/ChatWhisper.java
+@@ -26,6 +26,8 @@ import org.l2jmobius.gameserver.entity.actor.Player;
+ import org.l2jmobius.gameserver.entity.actor.holders.player.BlockList;
+ import org.l2jmobius.gameserver.handler.IChatHandler;
+ import org.l2jmobius.gameserver.managers.FakePlayerChatManager;
++import org.l2jmobius.gameserver.managers.phantom.PhantomChat;
++import org.l2jmobius.gameserver.managers.phantom.PhantomManager;
+ import org.l2jmobius.gameserver.network.SystemMessageId;
+ import org.l2jmobius.gameserver.network.enums.ChatType;
+ import org.l2jmobius.gameserver.network.serverpackets.CreatureSay;
+@@ -99,6 +101,14 @@ public class ChatWhisper implements IChatHandler
+ 				return;
+ 			}
+ 			
++			// L2Hub: напарнику-фантому клиент не нужен, отвечает он сам (PhantomChat).
++			if (PhantomManager.getInstance().isPhantom(receiver))
++			{
++				activeChar.sendPacket(new CreatureSay(activeChar, type, "->" + receiver.getName(), text));
++				PhantomChat.getInstance().onWhisper(activeChar, receiver, text);
++				return;
++			}
++
+ 			if ((receiver.getClient() == null) || receiver.getClient().isDetached())
+ 			{
+ 				activeChar.sendMessage("Player is in offline mode.");
+diff --git a/dist/game/data/scripts/handlers/chat/commands/voiced/Buddy.java b/dist/game/data/scripts/handlers/chat/commands/voiced/Buddy.java
+index 8f446f9..b520600 100644
+--- a/dist/game/data/scripts/handlers/chat/commands/voiced/Buddy.java
++++ b/dist/game/data/scripts/handlers/chat/commands/voiced/Buddy.java
+@@ -138,7 +138,8 @@ public class Buddy implements IVoicedCommandHandler
+ 			}
+ 			sb.append("</table><br>");
+ 		}
+-		sb.append("<font color=\"808080\">Позвал — пригласи в пати: /invite имя. Напарник идёт следом, отставший телепортируется к тебе. Хилер лечит и поднимает, баффер держит бафы, оба садятся на MP. Опыт и лут — тебе.</font>");
++		sb.append("<font color=\"808080\">Позвал — пригласи в пати: /invite имя. Напарник идёт следом, отставший телепортируется к тебе. Хилер лечит и поднимает, баффер держит бафы, оба садятся на MP. Опыт и лут — тебе.</font><br1>");
++		sb.append("<font color=\"808080\">С ними можно говорить в чате пати и шёпотом. Приказы: «за мной», «стой», «бафни», «хил», «рес», «сядь», «встань», «пока»; по имени — только одному: «Митяй, бафни».</font>");
+ 		sb.append("</center></body></html>");
+ 		player.sendPacket(new NpcHtmlMessage(sb.toString()));
+ 	}
+diff --git a/dist/game/data/xsd/L2HubPhantoms.xsd b/dist/game/data/xsd/L2HubPhantoms.xsd
+index 1b9f534..299155b 100644
+--- a/dist/game/data/xsd/L2HubPhantoms.xsd
++++ b/dist/game/data/xsd/L2HubPhantoms.xsd
+@@ -38,6 +38,8 @@
+ 						<xs:attribute name="hairStyle" type="xs:nonNegativeInteger" use="required" />
+ 						<xs:attribute name="hairColor" type="xs:nonNegativeInteger" use="required" />
+ 						<xs:attribute name="classes" type="xs:string" use="required" />
++						<!-- Прозвища для чата пати через «;» (имя учитывается и так). -->
++						<xs:attribute name="aliases" type="xs:string" />
+ 						<xs:attribute name="x" type="xs:integer" use="required" />
+ 						<xs:attribute name="y" type="xs:integer" use="required" />
+ 						<xs:attribute name="z" type="xs:integer" use="required" />
+diff --git a/java/org/l2jmobius/gameserver/config/custom/PhantomPartyConfig.java b/java/org/l2jmobius/gameserver/config/custom/PhantomPartyConfig.java
+index 3df2e28..d70dd14 100644
+--- a/java/org/l2jmobius/gameserver/config/custom/PhantomPartyConfig.java
++++ b/java/org/l2jmobius/gameserver/config/custom/PhantomPartyConfig.java
+@@ -17,6 +17,9 @@ public class PhantomPartyConfig
+ 	public static int PHANTOM_ASSIST_RANGE;
+ 	public static int PHANTOM_DEFEND_RANGE;
+ 	public static int PHANTOM_OWNER_LOGOUT_GRACE;
++	public static boolean PHANTOM_BRAIN;
++	public static int PHANTOM_EVENT_COOLDOWN;
++	public static int PHANTOM_EVENTS_PER_MINUTE;
+ 
+ 	public static void load()
+ 	{
+@@ -27,5 +30,8 @@ public class PhantomPartyConfig
+ 		PHANTOM_ASSIST_RANGE = config.getInt("PhantomAssistRange", 1500);
+ 		PHANTOM_DEFEND_RANGE = config.getInt("PhantomDefendRange", 900);
+ 		PHANTOM_OWNER_LOGOUT_GRACE = config.getInt("PhantomOwnerLogoutGrace", 60);
++		PHANTOM_BRAIN = config.getBoolean("PhantomBrain", true);
++		PHANTOM_EVENT_COOLDOWN = config.getInt("PhantomEventCooldown", 60);
++		PHANTOM_EVENTS_PER_MINUTE = config.getInt("PhantomEventsPerMinute", 6);
+ 	}
+ }
+diff --git a/java/org/l2jmobius/gameserver/managers/FakePlayerBrain.java b/java/org/l2jmobius/gameserver/managers/FakePlayerBrain.java
+index d4a08e5..b4ec33d 100644
+--- a/java/org/l2jmobius/gameserver/managers/FakePlayerBrain.java
++++ b/java/org/l2jmobius/gameserver/managers/FakePlayerBrain.java
+@@ -43,12 +43,28 @@ public class FakePlayerBrain
+ 	 * @param onFail что сделать, если сервис мозгов не ответил
+ 	 */
+ 	public void ask(Player player, Npc npc, String channel, String message, Consumer<String> onReply, Runnable onFail)
++	{
++		post(buildRequest(player, npc, channel, message), onReply, onFail, false);
++	}
++
++	/**
++	 * Запрос с готовым JSON (L2Hub: напарники-фантомы, патч 0010). В отличие от {@link #ask}, пустой ответ тоже отдаётся в onReply — сразу, без задержки.
++	 * @param json тело запроса POST /chat
++	 * @param onReply куда отдать реплику (пустая строка — промолчал)
++	 * @param onFail что сделать, если сервис мозгов не ответил
++	 */
++	public void send(String json, Consumer<String> onReply, Runnable onFail)
++	{
++		post(json, onReply, onFail, true);
++	}
++
++	private void post(String json, Consumer<String> onReply, Runnable onFail, boolean replyEmpty)
+ 	{
+ 		final long start = System.currentTimeMillis();
+ 		final HttpRequest request;
+ 		try
+ 		{
+-			request = HttpRequest.newBuilder(URI.create(FakePlayersConfig.FAKE_PLAYER_BRAIN_URL + "/chat")).timeout(Duration.ofSeconds(FakePlayersConfig.FAKE_PLAYER_BRAIN_TIMEOUT)).header("Content-Type", "application/json; charset=utf-8").POST(HttpRequest.BodyPublishers.ofString(buildRequest(player, npc, channel, message), StandardCharsets.UTF_8)).build();
++			request = HttpRequest.newBuilder(URI.create(FakePlayersConfig.FAKE_PLAYER_BRAIN_URL + "/chat")).timeout(Duration.ofSeconds(FakePlayersConfig.FAKE_PLAYER_BRAIN_TIMEOUT)).header("Content-Type", "application/json; charset=utf-8").POST(HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8)).build();
+ 		}
+ 		catch (Exception e)
+ 		{
+@@ -69,6 +85,10 @@ public class FakePlayerBrain
+ 			final String reply = response.body().strip();
+ 			if (reply.isEmpty())
+ 			{
++				if (replyEmpty)
++				{
++					onReply.accept(reply);
++				}
+ 				return;
+ 			}
+ 
+@@ -120,7 +140,10 @@ public class FakePlayerBrain
+ 		return sb.toString();
+ 	}
+ 
+-	private static StringBuilder field(StringBuilder sb, String key, String value)
++	/**
++	 * Строковое поле JSON {@code "key":"value"} с экранированием.
++	 */
++	public static StringBuilder field(StringBuilder sb, String key, String value)
+ 	{
+ 		sb.append('"').append(key).append("\":\"");
+ 		final String text = value == null ? "" : value;
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java
+new file mode 100644
+index 0000000..e90f6c4
+--- /dev/null
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java
+@@ -0,0 +1,505 @@
++package org.l2jmobius.gameserver.managers.phantom;
++
++import java.util.ArrayDeque;
++import java.util.ArrayList;
++import java.util.Deque;
++import java.util.EnumMap;
++import java.util.LinkedHashMap;
++import java.util.List;
++import java.util.Map;
++import java.util.concurrent.ConcurrentHashMap;
++import java.util.logging.Logger;
++import java.util.regex.Matcher;
++import java.util.regex.Pattern;
++
++import org.l2jmobius.commons.util.Rnd;
++import org.l2jmobius.gameserver.config.custom.FakePlayersConfig;
++import org.l2jmobius.gameserver.config.custom.PhantomPartyConfig;
++import org.l2jmobius.gameserver.config.custom.PhantomsConfig;
++import org.l2jmobius.gameserver.data.xml.MapRegionData;
++import org.l2jmobius.gameserver.entity.WorldObject;
++import org.l2jmobius.gameserver.entity.actor.Creature;
++import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.managers.FakePlayerBrain;
++import org.l2jmobius.gameserver.managers.phantom.PhantomOrders.Order;
++import org.l2jmobius.gameserver.network.enums.ChatType;
++import org.l2jmobius.gameserver.network.serverpackets.CreatureSay;
++import org.l2jmobius.gameserver.taskmanagers.GameTimeTaskManager;
++
++/**
++ * L2Hub: болтовня напарников (этап 4) — шёпот и чат пати, приказы словами, реплики на события.<br>
++ * Шёпот напарнику ({@code ChatWhisper}) и чат пати с напарником ({@code ChatParty}) приходят сюда. Сначала {@link PhantomOrders}: понятный приказ своего владельца выполняется сразу, мозги ({@code launcher/l2hub/brain.py}) только отвечают в характере.
++ * Остальное — в мозги; тег приказа в их ответе ({@code [[STAY]]}) выполняется, если говорил владелец.<br>
++ * В чате пати без имени отвечает тот напарник, с которым игрок уже говорит, а если в пати кроме него только напарники — любой; с именем или прозвищем — названный.<br>
++ * События (вступил в пати, новый уровень владельца, смерть, рес, отдых) — реплика с кулдауном и общим бюджетом в минуту; мозги недоступны — заготовка.
++ */
++public class PhantomChat
++{
++	private static final Logger LOGGER = Logger.getLogger(PhantomChat.class.getName());
++
++	/** Сообщение без имени в чате пати — продолжение разговора с напарником, который отвечал этому игроку не раньше этого. */
++	private static final long CONVERSATION_WINDOW = 120000;
++	private static final Pattern TAG = Pattern.compile("\\[\\[([A-Z]+)\\]\\]");
++
++	public enum Event
++	{
++		/** Вступил в пати. */
++		JOINED(false, 1),
++		/** Владелец получил уровень. */
++		OWNER_LEVEL_UP(true, 1),
++		/** Владелец погиб. */
++		OWNER_DIED(true, 1),
++		/** У владельца мало HP (говорит хилер). */
++		OWNER_LOW_HP(true, 3),
++		/** Напарника убили. */
++		DIED(false, 1),
++		/** Напарника подняли. */
++		REVIVED(false, 1),
++		/** Сел на MP. */
++		REST(false, 2);
++
++		/** Общее для пати владельца: из напарников говорит один. */
++		final boolean partyWide;
++		/** Кулдаун события — столько {@link PhantomPartyConfig#PHANTOM_EVENT_COOLDOWN}. */
++		final int cooldownFactor;
++
++		Event(boolean partyWide, int cooldownFactor)
++		{
++			this.partyWide = partyWide;
++			this.cooldownFactor = cooldownFactor;
++		}
++	}
++
++	private static final String[] CHAT_FALLBACK =
++	{
++		"ага",
++		"угу",
++		"щас, погоди",
++		")"
++	};
++
++	private static final Map<Order, String> ORDER_FALLBACK = new EnumMap<>(Order.class);
++	static
++	{
++		ORDER_FALLBACK.put(Order.FOLLOW, "иду");
++		ORDER_FALLBACK.put(Order.STAY, "стою");
++		ORDER_FALLBACK.put(Order.ASSIST, "понял");
++		ORDER_FALLBACK.put(Order.BUFF, "бафаю");
++		ORDER_FALLBACK.put(Order.HEAL, "хилю");
++		ORDER_FALLBACK.put(Order.RES, "ща подниму");
++		ORDER_FALLBACK.put(Order.SIT, "сажусь");
++		ORDER_FALLBACK.put(Order.STAND, "встаю");
++		ORDER_FALLBACK.put(Order.LEAVE, "ну пока, зови если что");
++	}
++
++	/** Кто кому последним отвечал: (фантом, игрок) → время. */
++	private final Map<Long, Long> _lastReply = new ConcurrentHashMap<>();
++	/** Событие → не раньше чем. */
++	private final Map<String, Long> _eventCooldowns = new ConcurrentHashMap<>();
++	/** Запросы к мозгам на события за последнюю минуту. */
++	private final Deque<Long> _eventCalls = new ArrayDeque<>();
++
++	protected PhantomChat()
++	{
++	}
++
++	/**
++	 * Шёпот напарнику (из {@code ChatWhisper}): у фантома нет клиента, отвечает этот класс.
++	 * @param speaker кто пишет
++	 * @param phantom напарник
++	 * @param text что написал
++	 */
++	public void onWhisper(Player speaker, Player phantom, String text)
++	{
++		final PhantomTemplate template = PhantomData.getInstance().getTemplate(phantom.getName());
++		if (template == null)
++		{
++			return;
++		}
++
++		final boolean owner = PhantomCompanionManager.getInstance().isOwner(speaker, template);
++		final List<Order> orders = owner ? PhantomOrders.parse(text) : List.of();
++		final String note = execute(speaker, template, orders);
++		talk(speaker, phantom, template, "whisper", text, orders, note, owner);
++	}
++
++	/**
++	 * Сообщение в чат пати (из {@code ChatParty}): отвечает и выполняет приказы кто-то из напарников в этой пати.
++	 * @param speaker кто пишет (живой игрок)
++	 * @param text что написал
++	 */
++	public void onPartyChat(Player speaker, String text)
++	{
++		if (!PhantomsConfig.PHANTOMS_ENABLED || !speaker.isInParty() || PhantomManager.getInstance().isPhantom(speaker))
++		{
++			return;
++		}
++
++		final Map<PhantomTemplate, Player> phantoms = new LinkedHashMap<>();
++		boolean othersHuman = false;
++		for (Player member : speaker.getParty().getMembers())
++		{
++			if (member == speaker)
++			{
++				continue;
++			}
++
++			final PhantomTemplate template = PhantomManager.getInstance().isPhantom(member) ? PhantomData.getInstance().getTemplate(member.getName()) : null;
++			if (template != null)
++			{
++				phantoms.put(template, member);
++			}
++			else
++			{
++				othersHuman = true;
++			}
++		}
++
++		if (phantoms.isEmpty())
++		{
++			return;
++		}
++
++		final List<PhantomTemplate> addressed = PhantomOrders.addressed(text, phantoms.keySet());
++
++		// Приказы — только своим напарникам: названным, а без имени — тем, чья это работа (баф — бафферу, хил и рес — хилеру).
++		final List<Order> orders = PhantomOrders.parse(text);
++		if (!orders.isEmpty())
++		{
++			final List<PhantomTemplate> mine = new ArrayList<>();
++			for (PhantomTemplate template : addressed.isEmpty() ? phantoms.keySet() : addressed)
++			{
++				if (PhantomCompanionManager.getInstance().isOwner(speaker, template))
++				{
++					mine.add(template);
++				}
++			}
++
++			if (!mine.isEmpty())
++			{
++				final Map<PhantomTemplate, List<Order>> assigned = new LinkedHashMap<>();
++				for (Order order : orders)
++				{
++					for (PhantomTemplate template : addressed.isEmpty() ? executors(order, mine) : mine)
++					{
++						assigned.computeIfAbsent(template, t -> new ArrayList<>()).add(order);
++					}
++				}
++
++				boolean replied = false;
++				for (Map.Entry<PhantomTemplate, List<Order>> entry : assigned.entrySet())
++				{
++					final String note = execute(speaker, entry.getKey(), entry.getValue());
++					if (!replied)
++					{
++						// Отвечает один — первый исполнитель; остальные выполняют молча.
++						replied = true;
++						talk(speaker, phantoms.get(entry.getKey()), entry.getKey(), "party", text, entry.getValue(), note, true);
++					}
++				}
++				return;
++			}
++		}
++
++		PhantomTemplate replier = addressed.isEmpty() ? null : addressed.get(0);
++		if (replier == null)
++		{
++			replier = recentPartner(speaker, phantoms);
++		}
++		if ((replier == null) && !othersHuman)
++		{
++			final List<PhantomTemplate> all = new ArrayList<>(phantoms.keySet());
++			replier = all.get(Rnd.get(all.size()));
++		}
++		if (replier == null)
++		{
++			return;
++		}
++
++		talk(speaker, phantoms.get(replier), replier, "party", text, List.of(), null, PhantomCompanionManager.getInstance().isOwner(speaker, replier));
++	}
++
++	/**
++	 * Реплика напарника на событие: с кулдауном и бюджетом в минуту; без мозгов — заготовка.
++	 * @param phantom напарник
++	 * @param owner владелец
++	 * @param event событие
++	 * @param what что случилось — для мозгов, от лица напарника («у тебя кончается MP, ты садишься отдохнуть»)
++	 * @param fallback заготовка, если мозги недоступны; {@code null} — промолчать
++	 */
++	public void event(Player phantom, Player owner, Event event, String what, String fallback)
++	{
++		final long now = System.currentTimeMillis();
++		final String key = (event.partyWide ? "o" + owner.getObjectId() : "p" + phantom.getObjectId()) + ":" + event;
++		final Long until = _eventCooldowns.get(key);
++		if ((until != null) && (now < until))
++		{
++			return;
++		}
++		_eventCooldowns.put(key, now + (PhantomPartyConfig.PHANTOM_EVENT_COOLDOWN * 1000L * event.cooldownFactor));
++
++		final PhantomTemplate template = PhantomData.getInstance().getTemplate(phantom.getName());
++		if ((template == null) || !brainEnabled() || !eventBudget(now))
++		{
++			if (fallback != null)
++			{
++				say(phantom, owner, "event", fallback);
++			}
++			return;
++		}
++
++		final boolean isOwner = PhantomCompanionManager.getInstance().isOwner(owner, template);
++		FakePlayerBrain.getInstance().send(request(owner, phantom, template, "event", what, null, isOwner), reply ->
++		{
++			final String text = TAG.matcher(reply).replaceAll("").strip();
++			if (!text.isEmpty())
++			{
++				say(phantom, owner, "event", text);
++			}
++		}, () ->
++		{
++			if (fallback != null)
++			{
++				say(phantom, owner, "event", fallback);
++			}
++		});
++	}
++
++	// ---------- Разговор ----------
++
++	/**
++	 * Выполнить приказы.
++	 * @return что сделано — для мозгов («сделано: идёшь за ним следом; нельзя: у тебя нет хила»); {@code null}, если приказов нет
++	 */
++	private static String execute(Player owner, PhantomTemplate template, List<Order> orders)
++	{
++		if (orders.isEmpty())
++		{
++			return null;
++		}
++
++		final StringBuilder note = new StringBuilder();
++		for (Order order : orders)
++		{
++			final String result = PhantomCompanionManager.getInstance().order(owner, template, order);
++			if (note.length() > 0)
++			{
++				note.append("; ");
++			}
++			note.append(result);
++			LOGGER.info(PhantomChat.class.getSimpleName() + ": " + owner.getName() + " -> " + template.getName() + ": " + order + " (" + result + ")");
++		}
++		return note.toString();
++	}
++
++	/**
++	 * Без имени приказ получает тот, чья это работа: баф — баффер, хил и рес — хилер; такого в пати нет — все.
++	 */
++	private static List<PhantomTemplate> executors(Order order, List<PhantomTemplate> mine)
++	{
++		final PhantomTemplate.Role role = order == Order.BUFF ? PhantomTemplate.Role.BUFFER : (order == Order.HEAL) || (order == Order.RES) ? PhantomTemplate.Role.HEALER : null;
++		if (role == null)
++		{
++			return mine;
++		}
++
++		final List<PhantomTemplate> result = new ArrayList<>();
++		for (PhantomTemplate template : mine)
++		{
++			if (template.getRole() == role)
++			{
++				result.add(template);
++			}
++		}
++		return result.isEmpty() ? mine : result;
++	}
++
++	private PhantomTemplate recentPartner(Player speaker, Map<PhantomTemplate, Player> phantoms)
++	{
++		final long now = System.currentTimeMillis();
++		PhantomTemplate best = null;
++		long bestTime = 0;
++		for (Map.Entry<PhantomTemplate, Player> entry : phantoms.entrySet())
++		{
++			final Long time = _lastReply.get(pair(entry.getValue(), speaker));
++			if ((time != null) && ((now - time) <= CONVERSATION_WINDOW) && (time > bestTime))
++			{
++				best = entry.getKey();
++				bestTime = time;
++			}
++		}
++		return best;
++	}
++
++	private void talk(Player speaker, Player phantom, PhantomTemplate template, String channel, String text, List<Order> orders, String note, boolean owner)
++	{
++		_lastReply.put(pair(phantom, speaker), System.currentTimeMillis());
++		if (!brainEnabled())
++		{
++			fallback(speaker, phantom, channel, orders);
++			return;
++		}
++
++		FakePlayerBrain.getInstance().send(request(speaker, phantom, template, channel, text, note, owner), reply ->
++		{
++			// Тег приказа из ответа мозгов: только от владельца, только если правила приказ не нашли, LEAVE — только при прощании.
++			final Matcher matcher = TAG.matcher(reply);
++			final Order tagged = matcher.find() ? PhantomOrders.fromTag(matcher.group(1)) : null;
++			if (owner && orders.isEmpty() && (tagged != null) && ((tagged != Order.LEAVE) || PhantomOrders.confirmsLeave(text)))
++			{
++				execute(speaker, template, List.of(tagged));
++			}
++
++			final String line = TAG.matcher(reply).replaceAll("").strip();
++			if (!line.isEmpty())
++			{
++				_lastReply.put(pair(phantom, speaker), System.currentTimeMillis());
++				say(phantom, speaker, channel, line);
++			}
++		}, () -> fallback(speaker, phantom, channel, orders));
++	}
++
++	private static void fallback(Player speaker, Player phantom, String channel, List<Order> orders)
++	{
++		if (!orders.isEmpty())
++		{
++			say(phantom, speaker, channel, ORDER_FALLBACK.get(orders.get(0)));
++		}
++		else if ("whisper".equals(channel))
++		{
++			say(phantom, speaker, channel, CHAT_FALLBACK[Rnd.get(CHAT_FALLBACK.length)]);
++		}
++	}
++
++	/**
++	 * Ответ туда, откуда спросили: шёпот — шёпотом, пати и события — в чат пати (не в пати — шёпотом).
++	 */
++	private static void say(Player phantom, Player listener, String channel, String text)
++	{
++		if (!"whisper".equals(channel) && phantom.isInParty())
++		{
++			phantom.getParty().broadcastCreatureSay(new CreatureSay(phantom, ChatType.PARTY, phantom.getName(), text), phantom);
++		}
++		else if ((listener != null) && listener.isOnline())
++		{
++			listener.sendPacket(new CreatureSay(phantom, ChatType.WHISPER, phantom.getName(), text));
++		}
++	}
++
++	private static boolean brainEnabled()
++	{
++		return PhantomPartyConfig.PHANTOM_BRAIN && FakePlayersConfig.FAKE_PLAYER_BRAIN;
++	}
++
++	private boolean eventBudget(long now)
++	{
++		synchronized (_eventCalls)
++		{
++			while (!_eventCalls.isEmpty() && ((now - _eventCalls.peekFirst()) > 60000))
++			{
++				_eventCalls.pollFirst();
++			}
++
++			if (_eventCalls.size() >= PhantomPartyConfig.PHANTOM_EVENTS_PER_MINUTE)
++			{
++				return false;
++			}
++			_eventCalls.addLast(now);
++			return true;
++		}
++	}
++
++	// ---------- Запрос к мозгам ----------
++
++	/**
++	 * Тело POST /chat для brain.py: {@code "kind":"phantom"}, кто говорит, состояние напарника и пати.
++	 */
++	private static String request(Player player, Player phantom, PhantomTemplate template, String channel, String message, String note, boolean owner)
++	{
++		final StringBuilder sb = new StringBuilder(1536);
++		sb.append('{');
++		FakePlayerBrain.field(sb, "kind", "phantom").append(',');
++		FakePlayerBrain.field(sb, "fpc", phantom.getName()).append(',');
++		sb.append("\"npcId\":").append(phantom.getObjectId()).append(',');
++		FakePlayerBrain.field(sb, "channel", channel).append(',');
++		FakePlayerBrain.field(sb, "message", message).append(',');
++		FakePlayerBrain.field(sb, "order", note != null ? note : "").append(',');
++		sb.append("\"player\":{");
++		FakePlayerBrain.field(sb, "name", player.getName()).append(',');
++		sb.append("\"level\":").append(player.getLevel()).append(',');
++		FakePlayerBrain.field(sb, "class", player.getPlayerClass().name()).append(',');
++		FakePlayerBrain.field(sb, "race", player.getRace().name()).append(',');
++		sb.append("\"female\":").append(player.getAppearance().isFemale()).append(',');
++		FakePlayerBrain.field(sb, "clan", player.getClan() != null ? player.getClan().getName() : "").append(',');
++		sb.append("\"gm\":").append(player.isGM()).append(',');
++		sb.append("\"owner\":").append(owner).append(',');
++		sb.append("\"hpPct\":").append(percent(player.getCurrentHp(), player.getMaxHp())).append(',');
++		sb.append("\"dead\":").append(player.isDead()).append(',');
++		sb.append("\"distance\":").append((int) phantom.calculateDistance2D(player));
++		sb.append("},\"phantom\":{");
++		FakePlayerBrain.field(sb, "role", template.getRole().name()).append(',');
++		FakePlayerBrain.field(sb, "state", PhantomCompanionManager.getInstance().stateForBrain(template)).append(',');
++		sb.append("\"level\":").append(phantom.getLevel()).append(',');
++		FakePlayerBrain.field(sb, "class", phantom.getPlayerClass().name()).append(',');
++		sb.append("\"hpPct\":").append(percent(phantom.getCurrentHp(), phantom.getMaxHp())).append(',');
++		sb.append("\"mpPct\":").append(percent(phantom.getCurrentMp(), phantom.getMaxMp())).append(',');
++		sb.append("\"inCombat\":").append(phantom.isInCombat()).append(',');
++		sb.append("\"sitting\":").append(phantom.isSitting()).append(',');
++		sb.append("\"dead\":").append(phantom.isDead()).append(',');
++		final WorldObject target = phantom.getTarget();
++		FakePlayerBrain.field(sb, "target", (target instanceof Creature) && (target != phantom) && !(target instanceof Player) ? target.getName() : "").append(',');
++		FakePlayerBrain.field(sb, "town", MapRegionData.getInstance().getClosestTownName(phantom)).append(',');
++		sb.append("\"party\":[");
++		if (phantom.isInParty())
++		{
++			boolean first = true;
++			for (Player member : phantom.getParty().getMembers())
++			{
++				if (member == phantom)
++				{
++					continue;
++				}
++
++				if (!first)
++				{
++					sb.append(',');
++				}
++				first = false;
++				sb.append('{');
++				FakePlayerBrain.field(sb, "name", member.getName()).append(',');
++				sb.append("\"level\":").append(member.getLevel()).append(',');
++				FakePlayerBrain.field(sb, "class", member.getPlayerClass().name()).append(',');
++				sb.append("\"hpPct\":").append(percent(member.getCurrentHp(), member.getMaxHp())).append(',');
++				sb.append("\"dead\":").append(member.isDead()).append(',');
++				sb.append("\"phantom\":").append(PhantomManager.getInstance().isPhantom(member));
++				sb.append('}');
++			}
++		}
++		sb.append("]},");
++		final int time = GameTimeTaskManager.getInstance().getGameTime();
++		FakePlayerBrain.field(sb, "gameTime", String.format("%02d:%02d", (time / 60) % 24, time % 60)).append(',');
++		sb.append("\"night\":").append(GameTimeTaskManager.getInstance().isNight());
++		sb.append('}');
++		return sb.toString();
++	}
++
++	private static int percent(double current, double max)
++	{
++		return (int) ((current * 100) / Math.max(1, max));
++	}
++
++	private static long pair(Player phantom, Player player)
++	{
++		return ((long) phantom.getObjectId() << 32) | (player.getObjectId() & 0xffffffffL);
++	}
++
++	public static PhantomChat getInstance()
++	{
++		return SingletonHolder.INSTANCE;
++	}
++
++	private static class SingletonHolder
++	{
++		protected static final PhantomChat INSTANCE = new PhantomChat();
++	}
++}
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java
+index 4a528f4..aa80227 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java
+@@ -20,6 +20,8 @@ import org.l2jmobius.gameserver.entity.groups.Party;
+ import org.l2jmobius.gameserver.entity.groups.PartyDistributionType;
+ import org.l2jmobius.gameserver.entity.zone.ZoneId;
+ import org.l2jmobius.gameserver.geoengine.GeoEngine;
++import org.l2jmobius.gameserver.managers.phantom.PhantomChat.Event;
++import org.l2jmobius.gameserver.managers.phantom.PhantomOrders.Order;
+ import org.l2jmobius.gameserver.network.SystemMessageId;
+ import org.l2jmobius.gameserver.network.enums.ChatType;
+ import org.l2jmobius.gameserver.network.serverpackets.CreatureSay;
+@@ -49,6 +51,10 @@ public class PhantomCompanionManager
+ 	private static final int STAY_LEASH = 250;
+ 	/** Противник дальше этого от владельца — бросить и вернуться к владельцу. */
+ 	private static final int CHASE_LEASH = 1800;
++	/** Отпустили словами («пока») — уходит через столько миллисекунд, успев попрощаться. */
++	private static final long LEAVE_DELAY = 8000;
++	/** У владельца в бою меньше этого HP (%) — хилер говорит «держись». */
++	private static final int OWNER_LOW_HP = 30;
+ 
+ 	public enum Mode
+ 	{
+@@ -71,6 +77,10 @@ public class PhantomCompanionManager
+ 		int lastX;
+ 		int lastY;
+ 		int stuckTicks;
++		// События для реплик (этап 4): что было в прошлый тик.
++		int ownerLevel;
++		boolean ownerDead;
++		boolean selfDead;
+ 
+ 		Companion(String name)
+ 		{
+@@ -118,6 +128,7 @@ public class PhantomCompanionManager
+ 		companion.stayAt = null;
+ 		companion.lastDestination = null;
+ 		companion.stuckTicks = 0;
++		companion.ownerLevel = 0;
+ 		_companions.put(key(template.getName()), companion);
+ 
+ 		final Player phantom = PhantomManager.getInstance().spawn(template, slot(owner, slotIndex(companion)), owner.getLevel());
+@@ -151,7 +162,18 @@ public class PhantomCompanionManager
+ 	 * @param template напарник
+ 	 * @return текст ошибки для игрока или {@code null}
+ 	 */
+-	public synchronized String dismiss(Player owner, PhantomTemplate template)
++	public String dismiss(Player owner, PhantomTemplate template)
++	{
++		return dismiss(owner, template, false);
++	}
++
++	/**
++	 * @param owner кто отпускает
++	 * @param template напарник
++	 * @param quiet без заготовки «ушёл» в чат пати (попрощался сам, через мозги)
++	 * @return текст ошибки для игрока или {@code null}
++	 */
++	public synchronized String dismiss(Player owner, PhantomTemplate template, boolean quiet)
+ 	{
+ 		final Companion companion = _companions.get(key(template.getName()));
+ 		final Player other = companion == null ? null : World.getPlayer(companion.ownerId);
+@@ -169,7 +191,10 @@ public class PhantomCompanionManager
+ 
+ 		if (phantom.isInParty())
+ 		{
+-			partySay(phantom, "ушёл, зови если что");
++			if (!quiet)
++			{
++				partySay(phantom, "ушёл, зови если что");
++			}
+ 			phantom.leaveParty();
+ 		}
+ 		PhantomManager.getInstance().despawn(template);
+@@ -287,9 +312,11 @@ public class PhantomCompanionManager
+ 		companion.ownerAwaySince = 0;
+ 		companion.stayAt = null;
+ 		companion.lastDestination = null;
++		companion.ownerLevel = 0;
+ 		_companions.put(key(template.getName()), companion);
+ 		startTicking();
+-		partySay(member, template.getRole() == PhantomTemplate.Role.HEALER ? "в пати, хилю" : template.getRole() == PhantomTemplate.Role.BUFFER ? "в пати, ща бафну" : "в пати, иду за тобой и бью твою цель");
++		final String greeting = template.getRole() == PhantomTemplate.Role.HEALER ? "в пати, хилю" : template.getRole() == PhantomTemplate.Role.BUFFER ? "в пати, ща бафну" : "в пати, иду за тобой и бью твою цель";
++		PhantomChat.getInstance().event(member, requestor, Event.JOINED, "тебя только что приняли в пати к " + requestor.getName() + ": поздоровайся и коротко скажи, что будешь делать", greeting);
+ 		LOGGER.info(getClass().getSimpleName() + ": " + template.getName() + " joined the party of " + requestor.getName() + ".");
+ 	}
+ 
+@@ -345,6 +372,137 @@ public class PhantomCompanionManager
+ 		return phantom.isInParty() && phantom.getParty().containsPlayer(viewer);
+ 	}
+ 
++	/**
++	 * @param player игрок
++	 * @param template напарник
++	 * @return {@code true}, если игрок позвал этого напарника: только его приказы напарник выполняет
++	 */
++	public boolean isOwner(Player player, PhantomTemplate template)
++	{
++		final Companion companion = _companions.get(key(template.getName()));
++		return (companion != null) && (companion.ownerId == player.getObjectId());
++	}
++
++	/**
++	 * Приказ словами (из {@link PhantomChat}). Хил, рес, баф и отдых здесь только отмечаются — выполняет их тик.
++	 * @param owner владелец
++	 * @param template напарник
++	 * @param order приказ
++	 * @return что сделано — для мозгов: «сделано: …» или «нельзя: …»
++	 */
++	public String order(Player owner, PhantomTemplate template, Order order)
++	{
++		final Companion companion = _companions.get(key(template.getName()));
++		final Player phantom = PhantomManager.getInstance().getPhantom(template);
++		if ((companion == null) || (companion.ownerId != owner.getObjectId()) || (phantom == null))
++		{
++			return "нельзя: ты сейчас не ходишь с " + owner.getName();
++		}
++
++		if (order == Order.LEAVE)
++		{
++			// Прощается сам (ответ мозгов или заготовка), потом уходит.
++			ThreadPool.schedule(() -> dismiss(owner, template, true), LEAVE_DELAY);
++			return "сделано: он тебя отпустил, ты прощаешься и через пару секунд уходишь из пати";
++		}
++
++		if (!isPartiedWith(owner, phantom))
++		{
++			return "нельзя: ты ещё не в пати с ним — пусть пригласит: /invite " + template.getName();
++		}
++
++		final boolean support = PhantomSupport.isSupport(template);
++		final String job = template.getRole() == PhantomTemplate.Role.HEALER ? "лечишь" : "бафаешь";
++		switch (order)
++		{
++			case FOLLOW:
++			{
++				PhantomSupport.clearSit(phantom);
++				setMode(owner, template, support ? Mode.ASSIST : Mode.FOLLOW);
++				return support ? "сделано: идёшь за ним следом и " + job : "сделано: идёшь за ним следом, только защищаешься";
++			}
++			case STAY:
++			{
++				PhantomSupport.clearSit(phantom);
++				setMode(owner, template, Mode.STAY);
++				return support ? "сделано: стоишь на месте и " + job + " тех, до кого достаёшь" : "сделано: стоишь на месте";
++			}
++			case ASSIST:
++			{
++				PhantomSupport.clearSit(phantom);
++				setMode(owner, template, Mode.ASSIST);
++				return support ? "нельзя: ты саппорт и в драку не лезешь — идёшь следом и " + job : "сделано: бьёшь его цель";
++			}
++			default:
++			{
++				if (!support)
++				{
++					return "нельзя: ты так не умеешь";
++				}
++
++				switch (order)
++				{
++					case BUFF:
++					{
++						return PhantomSupport.orderBuff(phantom);
++					}
++					case HEAL:
++					{
++						return PhantomSupport.orderHeal(phantom, owner);
++					}
++					case RES:
++					{
++						return PhantomSupport.orderRes(phantom, owner);
++					}
++					case SIT:
++					{
++						return PhantomSupport.orderSit(phantom, true);
++					}
++					default:
++					{
++						return PhantomSupport.orderSit(phantom, false);
++					}
++				}
++			}
++		}
++	}
++
++	/**
++	 * @param template напарник
++	 * @return чем напарник сейчас занят — для мозгов, от его лица
++	 */
++	public String stateForBrain(PhantomTemplate template)
++	{
++		final Companion companion = _companions.get(key(template.getName()));
++		final Player phantom = PhantomManager.getInstance().getPhantom(template);
++		final Player owner = companion == null ? null : World.getPlayer(companion.ownerId);
++		if ((phantom == null) || (owner == null) || !owner.isOnline())
++		{
++			return "свободен, ни с кем не ходишь";
++		}
++
++		if (!isPartiedWith(owner, phantom))
++		{
++			return "тебя позвал " + owner.getName() + ", ждёшь, когда он пригласит в пати";
++		}
++
++		final String where = companion.mode == Mode.STAY ? "по его приказу стоишь на месте" : "идёшь за ним следом";
++		final String doing;
++		if (template.getRole() == PhantomTemplate.Role.HEALER)
++		{
++			doing = "лечишь и поднимаешь пати, в драку не лезешь";
++		}
++		else if (template.getRole() == PhantomTemplate.Role.BUFFER)
++		{
++			doing = "держишь бафы на пати, в драку не лезешь";
++		}
++		else
++		{
++			doing = companion.mode == Mode.ASSIST ? "бьёшь его цель" : "только защищаешься";
++		}
++		return "в пати с " + owner.getName() + ": " + where + ", " + doing + (PhantomSupport.isSitOrdered(phantom) ? ", по его просьбе сидишь отдыхаешь" : "");
++	}
++
+ 	private static String supportLabel(PhantomTemplate.Role role, Mode mode)
+ 	{
+ 		final String job = role == PhantomTemplate.Role.HEALER ? "лечит и поднимает" : "держит бафы на пати";
+@@ -427,6 +585,7 @@ public class PhantomCompanionManager
+ 			return;
+ 		}
+ 		companion.ownerAwaySince = 0;
++		observe(companion, template, phantom, owner);
+ 
+ 		// Мёртвому фантому рес предлагают окном «воскресить?», ответить некому — соглашаемся за него.
+ 		if (phantom.isDead())
+@@ -510,6 +669,63 @@ public class PhantomCompanionManager
+ 		}
+ 	}
+ 
++	/**
++	 * События для реплик (этап 4): новый уровень и смерть владельца, своя смерть и рес, мало HP у владельца (говорит хилер).
++	 */
++	private static void observe(Companion companion, PhantomTemplate template, Player phantom, Player owner)
++	{
++		if (!isPartiedWith(owner, phantom))
++		{
++			companion.ownerLevel = owner.getLevel();
++			companion.ownerDead = owner.isDead();
++			companion.selfDead = phantom.isDead();
++			return;
++		}
++
++		final PhantomChat chat = PhantomChat.getInstance();
++		final boolean healer = template.getRole() == PhantomTemplate.Role.HEALER;
++		if ((companion.ownerLevel > 0) && (owner.getLevel() > companion.ownerLevel))
++		{
++			chat.event(phantom, owner, Event.OWNER_LEVEL_UP, owner.getName() + " только что получил " + owner.getLevel() + " уровень", "грац с " + owner.getLevel() + "!");
++		}
++		companion.ownerLevel = owner.getLevel();
++
++		// О смерти владельца говорит хилер (он и поднимет), без хилера в пати — любой.
++		if (owner.isDead() && !companion.ownerDead && (healer || !partyHasHealer(phantom)))
++		{
++			chat.event(phantom, owner, Event.OWNER_DIED, owner.getName() + " погиб" + (healer ? ", ты сейчас его поднимешь" : ""), healer ? "ща подниму" : null);
++		}
++		companion.ownerDead = owner.isDead();
++
++		if (phantom.isDead() && !companion.selfDead)
++		{
++			chat.event(phantom, owner, Event.DIED, "тебя убили, лежишь и ждёшь реса", null);
++		}
++		else if (!phantom.isDead() && companion.selfDead)
++		{
++			chat.event(phantom, owner, Event.REVIVED, "тебя подняли, ты снова на ногах", "спс за рес");
++		}
++		companion.selfDead = phantom.isDead();
++
++		if (healer && !owner.isDead() && owner.isInCombat() && ((owner.getCurrentHp() * 100) < (owner.getMaxHp() * OWNER_LOW_HP)))
++		{
++			chat.event(phantom, owner, Event.OWNER_LOW_HP, "у " + owner.getName() + " в бою осталось " + (int) ((owner.getCurrentHp() * 100) / Math.max(1, owner.getMaxHp())) + "% HP, ты его лечишь", "держись!");
++		}
++	}
++
++	private static boolean partyHasHealer(Player phantom)
++	{
++		for (Player member : phantom.getParty().getMembers())
++		{
++			final PhantomTemplate template = PhantomManager.getInstance().isPhantom(member) ? PhantomData.getInstance().getTemplate(member.getName()) : null;
++			if ((template != null) && (template.getRole() == PhantomTemplate.Role.HEALER))
++			{
++				return true;
++			}
++		}
++		return false;
++	}
++
+ 	/**
+ 	 * Кого бить: цель владельца (режим ASSIST, владелец в бою), затем текущего противника, затем ближайшего моба, который бьёт нас.
+ 	 */
+@@ -703,7 +919,7 @@ public class PhantomCompanionManager
+ 		return index;
+ 	}
+ 
+-	// ---------- Реплики (этап 2 — заготовки; мозги — этап 4) ----------
++	// ---------- Служебные реплики-заготовки (кидай пати, ушёл); болтовня и события — PhantomChat ----------
+ 
+ 	private static void whisper(Player phantom, Player owner, String text)
+ 	{
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomData.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomData.java
+index a2ac66c..de88593 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomData.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomData.java
+@@ -68,7 +68,7 @@ public class PhantomData implements IXmlReader
+ 					gear.add(new PhantomTemplate.Gear(g.getString("grade"), g.getInt("minLevel"), g.getInt("rhand", 0), g.getInt("lhand", 0), g.getInt("head", 0), g.getInt("chest", 0), g.getInt("legs", 0), g.getInt("gloves", 0), g.getInt("feet", 0), g.getInt("shots", 0)));
+ 				});
+ 
+-				final PhantomTemplate template = new PhantomTemplate(name, PhantomTemplate.Role.valueOf(set.getString("role")), set.getBoolean("female"), (byte) set.getInt("face"), (byte) set.getInt("hairStyle"), (byte) set.getInt("hairColor"), classes, new Location(set.getInt("x"), set.getInt("y"), set.getInt("z")), gear);
++				final PhantomTemplate template = new PhantomTemplate(name, PhantomTemplate.Role.valueOf(set.getString("role")), set.getBoolean("female"), (byte) set.getInt("face"), (byte) set.getInt("hairStyle"), (byte) set.getInt("hairColor"), classes, new Location(set.getInt("x"), set.getInt("y"), set.getInt("z")), gear, set.getString("aliases", ""));
+ 				_loading.put(name.toLowerCase(), template);
+ 			}
+ 			catch (Exception e)
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomOrders.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomOrders.java
+new file mode 100644
+index 0000000..ac51006
+--- /dev/null
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomOrders.java
+@@ -0,0 +1,262 @@
++package org.l2jmobius.gameserver.managers.phantom;
++
++import java.util.ArrayList;
++import java.util.Collection;
++import java.util.EnumMap;
++import java.util.List;
++import java.util.Map;
++import java.util.Set;
++import java.util.regex.Matcher;
++import java.util.regex.Pattern;
++
++/**
++ * L2Hub: приказы напарникам словами — по-русски, транслитом и по-английски.<br>
++ * Приказ — короткая фраза без вопроса и без отрицания: «за мной», «Митяй, бафни», «весна рес», «stay». Понятный приказ выполняется сразу, без мозгов; мозги только отвечают в характере.
++ * Длинное, вопрос («у тебя есть баф?») или отрицание («не ходи за мной») уходят в мозги: они могут ответить тегом приказа ({@code [[STAY]]}), сервер его проверит и выполнит.
++ */
++public class PhantomOrders
++{
++	public enum Order
++	{
++		/** Идти следом (воин — только защищается). */
++		FOLLOW,
++		/** Стоять на месте. */
++		STAY,
++		/** Бить цель владельца (саппорт просто идёт следом). */
++		ASSIST,
++		/** Перебафать пати. */
++		BUFF,
++		/** Подлечить того, кто просит. */
++		HEAL,
++		/** Поднять павшего. */
++		RES,
++		/** Сесть отдохнуть. */
++		SIT,
++		/** Встать. */
++		STAND,
++		/** Уйти из пати и из мира. */
++		LEAVE
++	}
++
++	/** Длиннее этого (слов без имён напарников) — уже разговор, его разбирают мозги. */
++	private static final int MAX_WORDS = 5;
++
++	private static final Set<String> NEGATIONS = Set.of("не", "ни", "нет", "ne", "net", "not", "dont", "don", "no");
++
++	/** Фразы где угодно в сообщении: целые слова через пробел; «*» в конце — любое окончание. */
++	private static final Map<Order, Pattern> ANYWHERE = new EnumMap<>(Order.class);
++	/** Сообщение целиком (после имён напарников). */
++	private static final Map<Order, Set<String>> WHOLE = new EnumMap<>(Order.class);
++	static
++	{
++		ANYWHERE.put(Order.FOLLOW, phrases("за мной", "иди за мной", "ко мне", "иди сюда", "давай сюда", "следуй*", "держись рядом", "follow*", "come here", "za mnoy", "za mnoi", "za mnoj", "ko mne", "idi syuda", "idi suda"));
++		ANYWHERE.put(Order.STAY, phrases("стой", "стойте", "стоять", "стоп", "жди", "ждите", "подожди", "подождите", "останься", "оставайся", "stay", "stop", "wait", "hold", "stoi", "stoy", "stoj", "zhdi", "jdi", "podozhdi"));
++		ANYWHERE.put(Order.ASSIST, phrases("бей", "бейте", "атакуй", "атакуйте", "мочи", "асист*", "ассист*", "attack", "assist", "fight", "kill", "bei", "bey", "atakuy", "asist*"));
++		ANYWHERE.put(Order.BUFF, phrases("баф*", "ребаф*", "перебаф*", "buf*", "baf*", "rebaf*", "rebuf*", "perebaf*"));
++		ANYWHERE.put(Order.HEAL, Pattern.compile("(?:^| )(?:хил(?!ер|к)\\S*|подлеч\\S*|полеч\\S*|лечи|хп|heal(?!er)\\S*|hil(?!er|k)\\S*|podlech\\S*|polechi|lechi|hp)(?= |$)"));
++		ANYWHERE.put(Order.RES, Pattern.compile("(?:^| )(?:рес(?!урс|тарт|торан)\\S*|подними|поднимай|воскреси|res(?!t|pect)\\S*|rez|revive|podnimi|voskresi)(?= |$)"));
++		ANYWHERE.put(Order.SIT, phrases("сядь", "сиди", "садись", "присядь", "отдохни", "отдыхай", "передохни", "sit", "sit down", "rest", "syad", "sadis", "sidi", "otdohni", "otdyhay"));
++		ANYWHERE.put(Order.STAND, phrases("встань", "вставай", "встать", "подъем", "поднимайся", "stand", "stand up", "vstan", "vstavai", "vstavay"));
++		ANYWHERE.put(Order.LEAVE, phrases("отпускаю", "свободен", "свободна", "свободны", "иди домой", "можешь идти", "можешь уходить", "уходи", "dismiss", "otpuskayu", "svoboden", "svobodna"));
++		WHOLE.put(Order.FOLLOW, Set.of("го", "пошли", "пойдем", "погнали", "идем", "go", "poshli", "pognali", "idem"));
++		WHOLE.put(Order.LEAVE, Set.of("пока", "бб", "bb", "bye", "bye bye", "poka", "ну пока", "всем пока", "пока пока", "отбой", "otboy"));
++	}
++
++	/** Чтобы мозги не распустили напарника по ошибке: тег LEAVE выполняется, только если в сообщении есть прощание. */
++	private static final Pattern FAREWELL = Pattern.compile("(?:^| )(?:пока\\S*|бб|bb|bye\\S*|poka|свобод\\S*|отпуска\\S*|домой|уход\\S*|уйди|отбой|dismiss\\S*|svobod\\S*|otpuska\\S*|domoy)(?= |$)");
++
++	private PhantomOrders()
++	{
++	}
++
++	/**
++	 * @param text что сказал игрок
++	 * @return приказы в порядке упоминания; пусто — это не приказ (вопрос, отрицание, длинная фраза)
++	 */
++	public static List<Order> parse(String text)
++	{
++		final List<Order> result = new ArrayList<>();
++		if (text.indexOf('?') >= 0)
++		{
++			return result;
++		}
++
++		final String clean = withoutNames(normalize(text));
++		if (clean.isEmpty())
++		{
++			return result;
++		}
++
++		final String[] words = clean.split(" ");
++		if (words.length > MAX_WORDS)
++		{
++			return result;
++		}
++
++		for (String word : words)
++		{
++			if (NEGATIONS.contains(word))
++			{
++				return result;
++			}
++		}
++
++		final List<int[]> found = new ArrayList<>(); // {позиция, приказ}
++		for (Map.Entry<Order, Set<String>> entry : WHOLE.entrySet())
++		{
++			if (entry.getValue().contains(clean))
++			{
++				found.add(new int[]
++				{
++					0,
++					entry.getKey().ordinal()
++				});
++			}
++		}
++
++		for (Map.Entry<Order, Pattern> entry : ANYWHERE.entrySet())
++		{
++			final Matcher matcher = entry.getValue().matcher(clean);
++			if (matcher.find())
++			{
++				found.add(new int[]
++				{
++					matcher.start(),
++					entry.getKey().ordinal()
++				});
++			}
++		}
++
++		found.sort((a, b) -> Integer.compare(a[0], b[0]));
++		for (int[] item : found)
++		{
++			final Order order = Order.values()[item[1]];
++			if (!result.contains(order))
++			{
++				result.add(order);
++			}
++		}
++		return result;
++	}
++
++	/**
++	 * @param text что сказал игрок
++	 * @param templates среди кого искать
++	 * @return напарники, к которым обратились по имени или прозвищу
++	 */
++	public static List<PhantomTemplate> addressed(String text, Collection<PhantomTemplate> templates)
++	{
++		final String clean = " " + normalize(text) + " ";
++		final List<PhantomTemplate> result = new ArrayList<>();
++		for (PhantomTemplate template : templates)
++		{
++			for (String alias : template.getAliases())
++			{
++				if (clean.contains(" " + alias + " "))
++				{
++					result.add(template);
++					break;
++				}
++			}
++		}
++		return result;
++	}
++
++	/**
++	 * @param tag тег из ответа мозгов без скобок
++	 * @return приказ или {@code null}
++	 */
++	public static Order fromTag(String tag)
++	{
++		for (Order order : Order.values())
++		{
++			if (order.name().equals(tag))
++			{
++				return order;
++			}
++		}
++		return null;
++	}
++
++	/**
++	 * @param text что сказал игрок
++	 * @return {@code true}, если игрок прощается или отпускает: только тогда тег LEAVE из ответа мозгов выполняется
++	 */
++	public static boolean confirmsLeave(String text)
++	{
++		return FAREWELL.matcher(normalize(text)).find();
++	}
++
++	/**
++	 * Нижний регистр, «ё» → «е», всё, кроме букв и цифр, — пробел, пробелы схлопнуты.
++	 */
++	private static String normalize(String text)
++	{
++		final StringBuilder sb = new StringBuilder(text.length());
++		boolean space = true;
++		for (char c : text.toLowerCase().replace('ё', 'е').toCharArray())
++		{
++			if (Character.isLetterOrDigit(c))
++			{
++				sb.append(c);
++				space = false;
++			}
++			else if (!space)
++			{
++				sb.append(' ');
++				space = true;
++			}
++		}
++		return sb.toString().strip();
++	}
++
++	/**
++	 * Без имён и прозвищ напарников: «Митяй, бафни» → «бафни».
++	 */
++	private static String withoutNames(String clean)
++	{
++		final List<String> words = new ArrayList<>();
++		for (String word : clean.split(" "))
++		{
++			boolean name = false;
++			for (PhantomTemplate template : PhantomData.getInstance().getTemplates())
++			{
++				if (template.getAliases().contains(word))
++				{
++					name = true;
++					break;
++				}
++			}
++			if (!name)
++			{
++				words.add(word);
++			}
++		}
++		return String.join(" ", words);
++	}
++
++	/**
++	 * Фразы целыми словами; «*» в конце фразы — любое окончание последнего слова.
++	 */
++	private static Pattern phrases(String... phrases)
++	{
++		final StringBuilder sb = new StringBuilder("(?:^| )(?:");
++		for (int i = 0; i < phrases.length; i++)
++		{
++			if (i > 0)
++			{
++				sb.append('|');
++			}
++			final String phrase = phrases[i];
++			if (phrase.endsWith("*"))
++			{
++				sb.append(Pattern.quote(phrase.substring(0, phrase.length() - 1))).append("\\S*");
++			}
++			else
++			{
++				sb.append(Pattern.quote(phrase));
++			}
++		}
++		return Pattern.compile(sb.append(")(?= |$)").toString());
++	}
++}
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomSupport.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomSupport.java
+index 6f0a59d..025cbb0 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomSupport.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomSupport.java
+@@ -22,7 +22,8 @@ import org.l2jmobius.gameserver.network.serverpackets.CreatureSay;
+ /**
+  * L2Hub: саппорты в пати (этап 3). Хилер лечит и поднимает, баффер держит бафы на всей пати; оба отдыхают по MP и не дерутся.<br>
+  * Каждый тик напарника (1 с) выбирается одно действие: отдых, хил или рес, баф. Скиллы — по id из таблиц ниже; берутся только выученные на текущем уровне, поэтому одна таблица годится для всей ветки (Cleric → Bishop → Cardinal,
+- * Cleric → Prophet → Hierophant).
++ * Cleric → Prophet → Hierophant).<br>
++ * Приказы словами (этап 4, {@link PhantomChat}): «хил» и «рес» выполняются раньше всего, «бафни» перекидывает свои бафы заново, «сядь» и «встань» — поверх отдыха по MP.
+  */
+ final class PhantomSupport
+ {
+@@ -112,11 +113,27 @@ final class PhantomSupport
+ 	private static final long BUFF_SETTLE = 8000;
+ 	private static final long BUFF_GIVE_UP = 600000;
+ 
++	/** Приказ «хил» или «рес» ждёт выполнения не дольше этого. */
++	private static final long ORDER_TIMEOUT = 20000;
++	/** Приказ «бафни»: свои бафы перекидываются заново в течение этого времени. */
++	private static final long REFRESH_TIME = 60000;
++	/** Приказ «встань»: столько не садится на MP сам. */
++	private static final long NO_REST_TIME = 60000;
++
+ 	private static class State
+ 	{
+ 		long castSince;
+ 		boolean restAnnounced;
+ 		final Map<Long, long[]> buffAttempts = new ConcurrentHashMap<>(); // ключ цель+скилл → {попыток подряд, не раньше чем}
++		// Приказы словами (этап 4): ставит PhantomChat, выполняет тик.
++		volatile int healTarget;
++		volatile long healUntil;
++		volatile int resTarget;
++		volatile long resUntil;
++		volatile long refreshUntil;
++		final Set<Long> refreshed = ConcurrentHashMap.newKeySet(); // цель+скилл, перекинутые по приказу «бафни»
++		volatile boolean sitOrdered;
++		volatile long noRestUntil;
+ 	}
+ 
+ 	private static final Map<Integer, State> STATES = new ConcurrentHashMap<>();
+@@ -160,10 +177,15 @@ final class PhantomSupport
+ 		}
+ 		state.castSince = 0;
+ 
++		if (orders(state, phantom, now))
++		{
++			return true;
++		}
++
+ 		final List<Player> members = partyNearby(phantom);
+ 		final boolean danger = inDanger(phantom);
+ 		final boolean urgent = (role == PhantomTemplate.Role.HEALER) && someoneBelow(members, 50);
+-		if (rest(state, phantom, owner, danger, urgent))
++		if (rest(state, phantom, owner, danger, urgent, now))
+ 		{
+ 			return true;
+ 		}
+@@ -175,6 +197,200 @@ final class PhantomSupport
+ 		return buff(state, phantom, members, now);
+ 	}
+ 
++	// ---------- Приказы словами (этап 4) ----------
++
++	/**
++	 * «Хильни»: подлечить того, кто просит, даже если до порога автохила ещё далеко. Мёртвого — поднять.
++	 * @return что сделано — для мозгов
++	 */
++	static String orderHeal(Player phantom, Player target)
++	{
++		if (target.isDead())
++		{
++			return orderRes(phantom, target);
++		}
++
++		if ((known(phantom, STRONG_HEALS) == null) && (known(phantom, FAST_HEALS) == null))
++		{
++			return "нельзя: у тебя нет хила";
++		}
++
++		if (hpPercent(target) >= 95)
++		{
++			return "нельзя: у " + target.getName() + " и так почти полное HP, лечить нечего";
++		}
++
++		final State state = state(phantom);
++		state.healTarget = target.getObjectId();
++		state.healUntil = System.currentTimeMillis() + ORDER_TIMEOUT;
++		return "сделано: лечишь " + target.getName();
++	}
++
++	/**
++	 * «Рес»: поднять того, кто просит (если лежит), иначе первого павшего рядом.
++	 * @return что сделано — для мозгов
++	 */
++	static String orderRes(Player phantom, Player speaker)
++	{
++		if (phantom.getKnownSkill(RESURRECTION) == null)
++		{
++			return "нельзя: ты не умеешь ресать";
++		}
++
++		Player dead = speaker.isDead() ? speaker : null;
++		if (dead == null)
++		{
++			for (Player member : partyNearby(phantom))
++			{
++				if (member.isDead())
++				{
++					dead = member;
++					break;
++				}
++			}
++		}
++
++		if (dead == null)
++		{
++			return "нельзя: никто не лежит, поднимать некого";
++		}
++
++		if (dead.isReviveRequested())
++		{
++			return "сделано: " + dead.getName() + " уже предложили рес, пусть примет";
++		}
++
++		final State state = state(phantom);
++		state.resTarget = dead.getObjectId();
++		state.resUntil = System.currentTimeMillis() + ORDER_TIMEOUT;
++		return "сделано: поднимаешь " + dead.getName();
++	}
++
++	/**
++	 * «Бафни»: свои бафы на пати перекидываются заново, отложенные после неудач — пробуются снова.
++	 * @return что сделано — для мозгов
++	 */
++	static String orderBuff(Player phantom)
++	{
++		if ((known(phantom, FIGHTER_BUFFS) == null) && (known(phantom, MAGE_BUFFS) == null))
++		{
++			return "нельзя: у тебя нет бафов, ты хилер — бафы у баффера";
++		}
++
++		final State state = state(phantom);
++		state.buffAttempts.clear();
++		state.refreshed.clear();
++		state.refreshUntil = System.currentTimeMillis() + REFRESH_TIME;
++		return "сделано: перебафываешь пати";
++	}
++
++	/**
++	 * «Сядь» — сидит, пока не скажут встать или не начнётся драка (после неё садится снова); владелец ушёл дальше {@link #REST_LEASH} — встаёт и идёт следом.<br>
++	 * «Встань» — встаёт и минуту не садится на MP сам.
++	 * @return что сделано — для мозгов
++	 */
++	static String orderSit(Player phantom, boolean sit)
++	{
++		final State state = state(phantom);
++		state.sitOrdered = sit;
++		if (sit)
++		{
++			return inDanger(phantom) ? "сделано: сядешь, как только отобьётесь — сейчас бьют пати" : "сделано: садишься отдохнуть";
++		}
++
++		state.noRestUntil = System.currentTimeMillis() + NO_REST_TIME;
++		return "сделано: встаёшь";
++	}
++
++	/**
++	 * Новый приказ движения («за мной», «стой») отменяет «сядь».
++	 */
++	static void clearSit(Player phantom)
++	{
++		state(phantom).sitOrdered = false;
++	}
++
++	static boolean isSitOrdered(Player phantom)
++	{
++		final State state = STATES.get(phantom.getObjectId());
++		return (state != null) && state.sitOrdered;
++	}
++
++	/**
++	 * Приказанные хил и рес — раньше всего остального.
++	 * @return {@code true}, если занят приказом в этот тик
++	 */
++	private static boolean orders(State state, Player phantom, long now)
++	{
++		// Сидя cast() только встаёт; сам каст — в следующий тик, приказ остаётся.
++		final boolean sitting = phantom.isSitting();
++		if (state.resTarget != 0)
++		{
++			final Player dead = World.getPlayer(state.resTarget);
++			if ((now > state.resUntil) || (dead == null) || !dead.isDead() || dead.isReviveRequested())
++			{
++				state.resTarget = 0;
++			}
++			else if ((phantom.calculateDistance2D(dead) <= SUPPORT_RANGE) && cast(state, phantom, usable(phantom, RESURRECTION), dead, now))
++			{
++				if (!sitting)
++				{
++					state.resTarget = 0;
++					partySay(phantom, "ресаю " + dead.getName());
++				}
++				return true;
++			}
++		}
++
++		if (state.healTarget != 0)
++		{
++			final Player target = World.getPlayer(state.healTarget);
++			if ((now > state.healUntil) || (target == null) || target.isDead() || (hpPercent(target) >= 95))
++			{
++				state.healTarget = 0;
++			}
++			else if (phantom.calculateDistance2D(target) <= SUPPORT_RANGE)
++			{
++				Skill heal = firstUsable(phantom, STRONG_HEALS, null);
++				if (heal == null)
++				{
++					heal = firstUsable(phantom, FAST_HEALS, null);
++				}
++
++				if (cast(state, phantom, heal, target, now))
++				{
++					if (!sitting)
++					{
++						state.healTarget = 0;
++					}
++					return true;
++				}
++			}
++		}
++		return false;
++	}
++
++	/**
++	 * @return первый выученный скилл из списка (откат и MP не важны) или {@code null}
++	 */
++	private static Skill known(Player phantom, int[] skillIds)
++	{
++		for (int skillId : skillIds)
++		{
++			final Skill skill = phantom.getKnownSkill(skillId);
++			if (skill != null)
++			{
++				return skill;
++			}
++		}
++		return null;
++	}
++
++	private static State state(Player phantom)
++	{
++		return STATES.computeIfAbsent(phantom.getObjectId(), id -> new State());
++	}
++
+ 	// ---------- Хил и рес ----------
+ 
+ 	private static boolean heal(State state, Player phantom, List<Player> members, long now)
+@@ -289,23 +505,31 @@ final class PhantomSupport
+ 					continue;
+ 				}
+ 
++				final boolean wasSitting = phantom.isSitting();
+ 				if (cast(state, phantom, skill, member, now))
+ 				{
+ 					final long key = ((long) member.getObjectId() << 32) | skillId;
+ 					final long[] attempt = state.buffAttempts.computeIfAbsent(key, k -> new long[2]);
+ 					attempt[0]++;
+ 					attempt[1] = now + (attempt[0] >= 3 ? BUFF_GIVE_UP : BUFF_SETTLE);
++					if ((now < state.refreshUntil) && !wasSitting)
++					{
++						state.refreshed.add(key);
++					}
+ 					return true;
+ 				}
+ 			}
+ 		}
++
++		// Перекидывать по приказу «бафни» больше нечего.
++		state.refreshUntil = 0;
+ 		return false;
+ 	}
+ 
+ 	private static boolean needsBuff(State state, Player member, Skill skill, long now)
+ 	{
+ 		final long key = ((long) member.getObjectId() << 32) | skill.getId();
+-		if (covered(member, skill))
++		if (covered(member, skill) && !refreshing(state, member, skill, key, now))
+ 		{
+ 			state.buffAttempts.remove(key);
+ 			return false;
+@@ -315,6 +539,20 @@ final class PhantomSupport
+ 		return (attempt == null) || (now >= attempt[1]);
+ 	}
+ 
++	/**
++	 * Приказ «бафни»: висящий свой баф перекидывается заново, один раз на цель за приказ. Чужой баф того же типа не трогаем.
++	 */
++	private static boolean refreshing(State state, Player member, Skill skill, long key, long now)
++	{
++		if ((now >= state.refreshUntil) || state.refreshed.contains(key))
++		{
++			return false;
++		}
++
++		final BuffInfo info = member.getEffectList().getBuffInfoByAbnormalType(skill.getAbnormalType());
++		return (info != null) && (info.getSkill().getId() == skill.getId());
++	}
++
+ 	/**
+ 	 * Баф этого типа уже висит: свой — пока не подходит к концу, чужой (другой скилл того же типа, например с баффера в городе) — пока не спадёт. Improved Combat и Improved Condition закрывают свои слоты.
+ 	 */
+@@ -336,12 +574,19 @@ final class PhantomSupport
+ 
+ 	// ---------- Отдых ----------
+ 
+-	private static boolean rest(State state, Player phantom, Player owner, boolean danger, boolean urgent)
++	private static boolean rest(State state, Player phantom, Player owner, boolean danger, boolean urgent, long now)
+ 	{
+ 		final double mp = mpPercent(phantom);
++		final boolean far = phantom.calculateDistance2D(owner) > REST_LEASH;
++		if (far)
++		{
++			state.sitOrdered = false;
++		}
++
+ 		if (phantom.isSitting())
+ 		{
+-			if (danger || urgent || (mp >= REST_UNTIL_MP) || (phantom.calculateDistance2D(owner) > REST_LEASH))
++			// По приказу «сядь» сидит и с полным MP.
++			if (danger || urgent || far || (now < state.noRestUntil) || ((mp >= REST_UNTIL_MP) && !state.sitOrdered))
+ 			{
+ 				phantom.standUp();
+ 				state.restAnnounced = false;
+@@ -349,13 +594,21 @@ final class PhantomSupport
+ 			return true;
+ 		}
+ 
+-		if ((mp < REST_BELOW_MP) && !danger && !urgent && !phantom.isInCombat() && !phantom.isMoving() && (phantom.calculateDistance2D(owner) <= REST_OWNER_RANGE))
++		if (now < state.noRestUntil)
++		{
++			return false;
++		}
++
++		if (((mp < REST_BELOW_MP) || state.sitOrdered) && !danger && !urgent && !phantom.isInCombat() && !phantom.isMoving() && (phantom.calculateDistance2D(owner) <= (state.sitOrdered ? REST_LEASH : REST_OWNER_RANGE)))
+ 		{
+ 			phantom.sitDown();
+ 			if (!state.restAnnounced)
+ 			{
+ 				state.restAnnounced = true;
+-				partySay(phantom, "сяду на мп");
++				if (!state.sitOrdered)
++				{
++					PhantomChat.getInstance().event(phantom, owner, PhantomChat.Event.REST, "у тебя кончается MP (" + (int) mp + "%), ты садишься отдохнуть", "сяду на мп");
++				}
+ 			}
+ 			return true;
+ 		}
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomTemplate.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomTemplate.java
+index 1f1c69d..0bdd216 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomTemplate.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomTemplate.java
+@@ -83,10 +83,21 @@ public class PhantomTemplate
+ 	private final int[] _classes;
+ 	private final Location _home;
+ 	private final List<Gear> _gear;
++	private final List<String> _aliases;
+ 
+-	public PhantomTemplate(String name, Role role, boolean female, byte face, byte hairStyle, byte hairColor, int[] classes, Location home, List<Gear> gear)
++	public PhantomTemplate(String name, Role role, boolean female, byte face, byte hairStyle, byte hairColor, int[] classes, Location home, List<Gear> gear, String aliases)
+ 	{
+ 		_name = name;
++		final List<String> names = new ArrayList<>();
++		names.add(name.toLowerCase());
++		for (String alias : aliases.toLowerCase().replace('ё', 'е').split(";"))
++		{
++			if (!alias.isBlank())
++			{
++				names.add(alias.strip());
++			}
++		}
++		_aliases = Collections.unmodifiableList(names);
+ 		_role = role;
+ 		_female = female;
+ 		_face = face;
+@@ -109,6 +120,14 @@ public class PhantomTemplate
+ 		return _role;
+ 	}
+ 
++	/**
++	 * @return имя и прозвища в нижнем регистре, «ё» заменена на «е»: по ним в чате понятно, к кому обращаются
++	 */
++	public List<String> getAliases()
++	{
++		return _aliases;
++	}
++
+ 	public boolean isFemale()
+ 	{
+ 		return _female;

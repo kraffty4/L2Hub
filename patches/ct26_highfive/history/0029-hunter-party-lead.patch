@@ -1,0 +1,204 @@
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java
+index f22f586..cf6ea48 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java
+@@ -104,6 +104,7 @@ public class PhantomChat
+ 		ORDER_FALLBACK.put(Order.STAND, "встаю");
+ 		ORDER_FALLBACK.put(Order.LEAVE, "ну пока, зови если что");
+ 		ORDER_FALLBACK.put(Order.HUNT, "го, мочим всех");
++		ORDER_FALLBACK.put(Order.LEAD, "го за мной, щас натаскаем");
+ 	}
+ 
+ 	/** Кто кому последним отвечал: (фантом, игрок) → время. */
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java
+index 12f3ff8..0a27744 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java
+@@ -30,6 +30,8 @@ import org.l2jmobius.gameserver.network.enums.ChatType;
+ import org.l2jmobius.gameserver.network.serverpackets.CreatureSay;
+ import org.l2jmobius.gameserver.network.serverpackets.JoinParty;
+ import org.l2jmobius.gameserver.network.serverpackets.SystemMessage;
++import org.l2jmobius.gameserver.taskmanagers.AutoPlayTaskManager;
++import org.l2jmobius.gameserver.taskmanagers.AutoUseTaskManager;
+ 
+ /**
+  * L2Hub: напарники — фантомы в пати с живым игроком (этап 2: пати, follow, assist, защита, догоняющий телепорт).<br>
+@@ -62,15 +64,19 @@ public class PhantomCompanionManager
+ 	/** Охотник в пати подбирает, что лежит ближе этого (адену, брошенную игроком, и вещи на земле). */
+ 	private static final int PICKUP_RANGE = 300;
+ 	// «Кач тут» (патч 0028). Опыт пати делится в AltPartyRange (1500) от моба — держаться ближе.
+-	/** Владелец стоит: бить свободных мобов в этом радиусе вокруг него. */
+-	private static final int HUNT_RADIUS = 900;
++	/** Владелец стоит или сидит («сижу, качай»): бить свободных мобов в этом радиусе вокруг него — почти на всю дистанцию опыта (патч 0029, было 900). */
++	private static final int HUNT_RADIUS = 1300;
+ 	/** Владелец бежит: только тех, кто у него под ногами. */
+ 	private static final int HUNT_RUN_RADIUS = 450;
+ 	/** Дальше этого от владельца — бросить цель и догнать; владелец бежит — короче. */
+-	private static final int HUNT_LEASH = 1100;
++	private static final int HUNT_LEASH = 1450;
+ 	private static final int HUNT_RUN_LEASH = 700;
+ 	/** Мобы сильнее владельца больше чем на столько уровней — не трогать самим (на них — только по его цели). */
+ 	private static final int HUNT_LEVEL_UP = 6;
++	/** «Паровозик»: владелец отстал дальше этого — новых мобов не брать, идти к нему (моб охотника рядом — опыт пати в 1500 от моба). */
++	private static final int LEAD_WAIT = 900;
++	/** «Паровозик»: цель дальше этого от владельца — бросить, AutoPlay возьмёт ближе. */
++	private static final int LEAD_TARGET_RANGE = 1400;
+ 
+ 	public enum Mode
+ 	{
+@@ -81,7 +87,9 @@ public class PhantomCompanionManager
+ 		/** Стоит на месте, защищает только себя. */
+ 		STAY,
+ 		/** «Кач тут» (патч 0028): сам бьёт и добивает мобов вокруг владельца, держась рядом с ним; владелец бежит — догоняет и бьёт только тех, кто рядом с ним. */
+-		HUNT
++		HUNT,
++		/** «Паровозик» (патч 0029): охотник качается сам, родным AutoPlay, как на своём споте; владелец идёт следом. */
++		LEAD
+ 	}
+ 
+ 	private static class Companion
+@@ -306,11 +314,17 @@ public class PhantomCompanionManager
+ 			return template.getName() + " не с тобой — сначала позови его.";
+ 		}
+ 
++		final Mode previous = companion.mode;
+ 		companion.mode = mode;
+ 		companion.lastDestination = null;
+ 		final Player phantom = PhantomManager.getInstance().getPhantom(template);
++		// Из «паровозика» — AutoPlay выключить: дальше снова ведёт этот менеджер.
++		if ((previous == Mode.LEAD) && (mode != Mode.LEAD) && (phantom != null))
++		{
++			AutoPlayTaskManager.getInstance().stopAutoPlay(phantom);
++		}
+ 		companion.stayAt = (mode == Mode.STAY) && (phantom != null) ? new Location(phantom.getX(), phantom.getY(), phantom.getZ()) : null;
+-		if ((phantom != null) && (mode != Mode.ASSIST) && (mode != Mode.HUNT) && (phantom.getAI().getIntention() == Intention.ATTACK))
++		if ((phantom != null) && (mode != Mode.ASSIST) && (mode != Mode.HUNT) && (mode != Mode.LEAD) && (phantom.getAI().getIntention() == Intention.ATTACK))
+ 		{
+ 			calmDown(phantom);
+ 		}
+@@ -542,6 +556,12 @@ public class PhantomCompanionManager
+ 				setMode(owner, template, support ? Mode.ASSIST : Mode.HUNT);
+ 				return support ? "нельзя: ты саппорт и в драку не лезешь — идёшь следом и " + job : "сделано: качаешься рядом с ним — сам бьёшь и добиваешь всех мобов вокруг, держишься недалеко";
+ 			}
++			case LEAD:
++			{
++				PhantomSupport.clearSit(phantom);
++				setMode(owner, template, support ? Mode.ASSIST : Mode.LEAD);
++				return support ? "нельзя: ты саппорт и в драку не лезешь — идёшь следом и " + job : "сделано: ведёшь кач сам — качаешься как на своём споте, он идёт за тобой; отстанет — подождёшь";
++			}
+ 			default:
+ 			{
+ 				if (!support)
+@@ -612,7 +632,8 @@ public class PhantomCompanionManager
+ 		}
+ 		else
+ 		{
+-			doing = companion.mode == Mode.HUNT ? "качаешься рядом с ним: сам бьёшь всех мобов вокруг" : companion.mode == Mode.ASSIST ? "бьёшь его цель" : "только защищаешься";
++			doing = companion.mode == Mode.LEAD ? "ведёшь кач: сам качаешься, он идёт за тобой" : companion.mode == Mode.HUNT ? "качаешься рядом с ним: сам бьёшь всех мобов вокруг"
++				: companion.mode == Mode.ASSIST ? "бьёшь его цель" : "только защищаешься";
+ 		}
+ 		return "в пати с " + owner.getName() + ": " + where + ", " + doing + (PhantomSupport.isSitOrdered(phantom) ? ", по его просьбе сидишь отдыхаешь" : "");
+ 	}
+@@ -788,6 +809,13 @@ public class PhantomCompanionManager
+ 		}
+ 		else
+ 		{
++			// «Паровозик»: качается сам родным AutoPlay, владелец идёт следом.
++			if (companion.mode == Mode.LEAD)
++			{
++				lead(phantom, owner);
++				return;
++			}
++
+ 			if (phantom.isCastingNow())
+ 			{
+ 				return;
+@@ -1037,6 +1065,47 @@ public class PhantomCompanionManager
+ 		}
+ 	}
+ 
++	/**
++	 * «Паровозик» (патч 0029): охотник качается сам родным AutoPlay, как на споте — свои цели (дальний поиск), скиллы AutoUse, подбор; маг под ударами отмахивается.
++	 * В пати AutoPlay не тянется за лидером ({@code AssistLeader = False}). Владелец отстал дальше {@link #LEAD_WAIT} — новых мобов не берёт, идёт к нему;
++	 * отстал дальше {@code PhantomCatchUpRange} — телепорт к нему (как у всех напарников, в {@link #think}).
++	 */
++	private static void lead(Player phantom, Player owner)
++	{
++		if (phantom.calculateDistance2D(owner) > LEAD_WAIT)
++		{
++			if (phantom.isAutoPlaying())
++			{
++				AutoPlayTaskManager.getInstance().stopAutoPlay(phantom);
++			}
++			if (!phantom.isAttackingNow() && !phantom.isCastingNow() && !phantom.isMoving())
++			{
++				phantom.setRunning();
++				phantom.getAI().setIntentionMoveTo(new Location(owner.getX(), owner.getY(), owner.getZ()));
++			}
++			return;
++		}
++
++		// Цель далеко от владельца — опыт пати мимо: пусть AutoPlay возьмёт ближе.
++		final WorldObject target = phantom.getTarget();
++		if ((target instanceof Monster) && !phantom.isAttackingNow() && !phantom.isCastingNow() && (owner.calculateDistance2D(target) > LEAD_TARGET_RANGE))
++		{
++			phantom.setTarget(null);
++		}
++
++		if (!phantom.isAutoPlaying())
++		{
++			if (phantom.isSitting())
++			{
++				phantom.standUp();
++			}
++			phantom.getAutoPlaySettings().setNextTargetMode(1); // мобы
++			AutoPlayTaskManager.getInstance().startAutoPlay(phantom);
++			AutoUseTaskManager.getInstance().startAutoUseTask(phantom);
++		}
++		PhantomHunterOutfit.syncMelee(phantom);
++	}
++
+ 	/**
+ 	 * Атакующий скилл охотника из его AutoUse (сильные первыми), если он готов сейчас: хватает MP, не на откате, условия выполнены.
+ 	 * До дистанции каста AI игрока подводит сам. У напарников из .buddy таких скиллов нет — они бьют оружием, как раньше.
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomOrders.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomOrders.java
+index b4ce785..8ec056b 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomOrders.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomOrders.java
+@@ -37,7 +37,9 @@ public class PhantomOrders
+ 		/** Уйти из пати и из мира. */
+ 		LEAVE,
+ 		/** Качаться тут (патч 0028): бить всех мобов вокруг владельца и добивать, держась рядом с ним. */
+-		HUNT
++		HUNT,
++		/** «Паровозик» (патч 0029): вести кач самому, как на своём споте, — владелец идёт следом. */
++		LEAD
+ 	}
+ 
+ 	/** Длиннее этого (слов без имён напарников) — уже разговор, его разбирают мозги. */
+@@ -61,7 +63,10 @@ public class PhantomOrders
+ 		ANYWHERE.put(Order.STAND, phrases("встань", "вставай", "встать", "подъем", "поднимайся", "stand", "stand up", "vstan", "vstavai", "vstavay"));
+ 		ANYWHERE.put(Order.LEAVE, phrases("отпускаю", "свободен", "свободна", "свободны", "иди домой", "можешь идти", "можешь уходить", "уходи", "dismiss", "otpuskayu", "svoboden", "svobodna"));
+ 		ANYWHERE.put(Order.HUNT, phrases("кач тут", "кач здесь", "качаемся тут", "качаемся здесь", "качайся тут", "качайтесь тут", "фарм тут", "фарм здесь", "фармим тут", "фармим здесь", "фарми тут",
+-			"бей всех", "бейте всех", "мочи всех", "мочите всех", "убивай всех", "зачищай*", "зачисти*", "чисти тут", "kach tut", "kach zdes", "farm tut", "farm here", "farm zdes", "hunt here", "kill all", "kill everything", "bei vseh", "mochi vseh"));
++			"бей всех", "бейте всех", "мочи всех", "мочите всех", "убивай всех", "зачищай*", "зачисти*", "чисти тут", "качай меня", "покачай меня", "покачай", "кач меня",
++			"kach tut", "kach zdes", "farm tut", "farm here", "farm zdes", "hunt here", "kill all", "kill everything", "bei vseh", "mochi vseh", "kachai menya", "pokachai"));
++		ANYWHERE.put(Order.LEAD, phrases("веди", "веди меня", "веди на кач", "паровоз*", "я за тобой", "иду за тобой", "пойду за тобой", "показывай дорогу",
++			"vedi", "vedi menya", "parovoz*", "lead", "lead me", "lead the way"));
+ 		WHOLE.put(Order.FOLLOW, Set.of("го", "пошли", "пойдем", "погнали", "идем", "go", "poshli", "pognali", "idem"));
+ 		WHOLE.put(Order.LEAVE, Set.of("пока", "бб", "bb", "bye", "bye bye", "poka", "ну пока", "всем пока", "пока пока", "отбой", "otboy"));
+ 		WHOLE.put(Order.HUNT, Set.of("кач", "фарм", "качаемся", "фармим", "kach", "farm", "kachaemsya", "farmim"));
+@@ -141,10 +146,11 @@ public class PhantomOrders
+ 				result.add(order);
+ 			}
+ 		}
+-		// «Бей всех» — это «качаемся тут», а не «бей мою цель».
+-		if (result.contains(Order.HUNT))
++		// «Бей всех» — это «качаемся тут», а не «бей мою цель»; «веди, я за тобой» — паровоз, а не «за мной».
++		if (result.contains(Order.HUNT) || result.contains(Order.LEAD))
+ 		{
+ 			result.remove(Order.ASSIST);
++			result.remove(Order.FOLLOW);
+ 		}
+ 		return result;
+ 	}

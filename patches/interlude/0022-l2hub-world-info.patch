@@ -1,0 +1,701 @@
+diff --git a/dist/game/data/html/CommunityBoard/Custom/navigation.html b/dist/game/data/html/CommunityBoard/Custom/navigation.html
+index 7185ca67e0960a079645290049be21f260dafa6f..a2e254d954f430d1f549e5d5b6a7b7a263e463a6 100644
+--- a/dist/game/data/html/CommunityBoard/Custom/navigation.html
++++ b/dist/game/data/html/CommunityBoard/Custom/navigation.html
+@@ -7,5 +7,6 @@
+ <button value="Охотники" action="bypass _bbshubhunters" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
+ <button value="Поручения" action="bypass voice .daily" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
+ <button value="Рейд" action="bypass voice .raid" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
++<button value="Мир" action="bypass voice .world" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
+ <button value="Поиск дропа" action="bypass _bbstop;dropsearch/main.html" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
+ </td><td height=440></td></tr></table>
+\ No newline at end of file
+diff --git a/dist/game/data/scripts/custom/L2HubWorldInfo/L2HubWorldInfo.java b/dist/game/data/scripts/custom/L2HubWorldInfo/L2HubWorldInfo.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..8a9dc12d377340b756f4c284f49924002f35de8a
+--- /dev/null
++++ b/dist/game/data/scripts/custom/L2HubWorldInfo/L2HubWorldInfo.java
+@@ -0,0 +1,683 @@
++/*
++ * This file is part of the L2J Mobius project.
++ *
++ * This program is free software: you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation, either version 3 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
++ * General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program. If not, see <http://www.gnu.org/licenses/>.
++ */
++package custom.L2HubWorldInfo;
++
++import java.io.Reader;
++import java.lang.reflect.Field;
++import java.nio.charset.StandardCharsets;
++import java.nio.file.Files;
++import java.nio.file.Path;
++import java.nio.file.Paths;
++import java.nio.file.StandardCopyOption;
++import java.text.SimpleDateFormat;
++import java.util.ArrayList;
++import java.util.Comparator;
++import java.util.Date;
++import java.util.HashSet;
++import java.util.List;
++import java.util.Map;
++import java.util.Properties;
++import java.util.Set;
++import java.util.concurrent.ConcurrentHashMap;
++import java.util.logging.Logger;
++
++import org.l2jmobius.commons.threads.ThreadPool;
++import org.l2jmobius.commons.time.SchedulingPattern;
++import org.l2jmobius.gameserver.config.custom.ChampionMonstersConfig;
++import org.l2jmobius.gameserver.data.xml.MapRegionData;
++import org.l2jmobius.gameserver.data.xml.NpcData;
++import org.l2jmobius.gameserver.entity.actor.Attackable;
++import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.entity.actor.SuperChampion;
++import org.l2jmobius.gameserver.entity.actor.enums.npc.RaidBossStatus;
++import org.l2jmobius.gameserver.entity.actor.instance.GrandBoss;
++import org.l2jmobius.gameserver.entity.actor.instance.RaidBoss;
++import org.l2jmobius.gameserver.entity.actor.templates.NpcTemplate;
++import org.l2jmobius.gameserver.entity.spawns.Spawn;
++import org.l2jmobius.gameserver.handler.IVoicedCommandHandler;
++import org.l2jmobius.gameserver.handler.VoicedCommandHandler;
++import org.l2jmobius.gameserver.managers.GrandBossManager;
++import org.l2jmobius.gameserver.managers.RaidBossSpawnManager;
++import org.l2jmobius.gameserver.managers.ScriptManager;
++import org.l2jmobius.gameserver.mechanics.script.LongTimeEvent;
++import org.l2jmobius.gameserver.mechanics.script.Quest;
++import org.l2jmobius.gameserver.network.serverpackets.NpcHtmlMessage;
++import org.l2jmobius.gameserver.util.StatSet;
++
++/**
++ * L2Hub: «Мир сейчас» — окно .world (кнопка «Мир» на доске Alt+B) и log/L2HubWorld.json для лаунчера раз в минуту.
++ * Живые суперчемпионы (SuperChampion, ChampionMonsters.ini), рейд-боссы и эпики — кто жив и когда встанет (RaidBossSpawnManager,
++ * GrandBossManager), сезонные события (LongTimeEvent, календарь L2HubEvents.ini), ближайшие старты PvP-ивентов и нашествия
++ * эльпи по крону из config/Custom/L2HubEvents.ini. Только показывает: ничего не запускает. «С каких пор» у суперчемпиона —
++ * с первой выгрузки, где он есть (точность — минута, после старта сервера — старт).
++ * @author L2Hub
++ */
++public class L2HubWorldInfo implements IVoicedCommandHandler
++{
++	private static final Logger LOGGER = Logger.getLogger(L2HubWorldInfo.class.getName());
++	private static final Path CONFIG = Paths.get("./config/Custom/L2HubEvents.ini");
++	private static final Path STATUS_FILE = Paths.get("./log/L2HubWorld.json");
++	private static final long STATUS_PERIOD = 60000;
++	private static final String[] COMMANDS =
++	{
++		"world"
++	};
++	private static final int SHOWN = 8;
++	private static final Map<String, String> SEASONAL = Map.of(
++		"L2Day", "L2 Day: буквы с монстров, призы у менеджеров события",
++		"HeavyMedal", "Медали: кот Рой и кошка Винни в городах",
++		"Christmas", "Рождество: ученик Санты в городах");
++	private static final String[][] PVP =
++	{
++		{
++			"TvT",
++			"TvT, команда на команду"
++		},
++		{
++			"Deathmatch",
++			"Deathmatch, каждый за себя"
++		},
++		{
++			"CtF",
++			"CtF, захват флага"
++		}
++	};
++	/** objectId суперчемпиона → когда он впервые попал в выгрузку. */
++	private static final Map<Integer, Long> SINCE = new ConcurrentHashMap<>();
++	/** В окне — живые РБ от «уровень − RAID_BELOW» до «уровень + RAID_ABOVE». */
++	private static final int RAID_BELOW = 5;
++	private static final int RAID_ABOVE = 8;
++
++	/**
++	 * Рейд-босс или эпик: жив ли, когда встанет (0 — неизвестно или жив), где (живой — где стоит, иначе точка спавна).
++	 */
++	private record Raid(int npcId, String name, int level, boolean alive, long respawnAt, int x, int y, int z, String town, boolean grand)
++	{
++	}
++
++	/**
++	 * Олимпиада: включена ли, идут ли соревнования, окно дня «ЧЧ:ММ–ЧЧ:ММ», конец периода (мс, 0 — неизвестно), дворян и
++	 * записавшихся (-1 — неизвестно), имена героев.
++	 */
++	private record Oly(boolean enabled, boolean competition, String daily, long periodEnd, int nobles, int registered, List<String> heroes)
++	{
++	}
++
++	@Override
++	public boolean onCommand(String command, Player player, String params)
++	{
++		player.sendPacket(new NpcHtmlMessage(html(player)));
++		return true;
++	}
++
++	// ---------- Окно .world ----------
++
++	private static String html(Player player)
++	{
++		final StringBuilder sb = new StringBuilder("<html><title>Мир сейчас</title><body><center><font color=\"LEVEL\">Мир сейчас</font></center><br>");
++		superChampions(sb, player);
++		raidBosses(sb, player);
++		olympiad(sb);
++		seasonal(sb);
++		schedule(sb);
++		sb.append("</body></html>");
++		return sb.toString();
++	}
++
++	// ---------- Рейд-боссы ----------
++
++	/**
++	 * Все рейд-боссы из RaidBossSpawnManager и эпики из GrandBossManager.
++	 */
++	private static List<Raid> raids()
++	{
++		final long now = System.currentTimeMillis();
++		final List<Raid> out = new ArrayList<>();
++		final RaidBossSpawnManager manager = RaidBossSpawnManager.getInstance();
++		for (Map.Entry<Integer, Spawn> entry : manager.getSpawns().entrySet())
++		{
++			final NpcTemplate template = NpcData.getInstance().getTemplate(entry.getKey());
++			if (template == null)
++			{
++				continue;
++			}
++			final RaidBoss boss = manager.getBosses().get(entry.getKey());
++			final boolean alive = (boss != null) && !boss.isDead() && (boss.getRaidStatus() == RaidBossStatus.ALIVE);
++			final StatSet info = manager.getStoredInfo().get(entry.getKey());
++			final long respawn = info == null ? 0 : info.getLong("respawnTime", 0);
++			final Spawn spawn = entry.getValue();
++			final int x = alive ? boss.getX() : spawn.getX();
++			final int y = alive ? boss.getY() : spawn.getY();
++			out.add(new Raid(template.getId(), template.getName(), template.getLevel(), alive, !alive && (respawn > now) ? respawn : 0, x, y, alive ? boss.getZ() : spawn.getZ(), town(x, y), false));
++		}
++		for (int id : grandIds())
++		{
++			final NpcTemplate template = NpcData.getInstance().getTemplate(id);
++			final StatSet info = GrandBossManager.getInstance().getStatSet(id);
++			if ((template == null) || (info == null))
++			{
++				continue;
++			}
++			final GrandBoss boss = GrandBossManager.getInstance().getBoss(id);
++			final boolean alive = (boss != null) && !boss.isDead() && boss.isSpawned();
++			final long respawn = info.getLong("respawn_time", 0);
++			final int x = alive ? boss.getX() : info.getInt("loc_x", 0);
++			final int y = alive ? boss.getY() : info.getInt("loc_y", 0);
++			out.add(new Raid(id, template.getName(), template.getLevel(), alive, !alive && (respawn > now) ? respawn : 0, x, y, alive ? boss.getZ() : info.getInt("loc_z", 0), town(x, y), true));
++		}
++		return out;
++	}
++
++	/**
++	 * Эпики из таблицы grandboss_data: у GrandBossManager список закрыт — поле _storedInfo.
++	 */
++	private static List<Integer> grandIds()
++	{
++		try
++		{
++			final Field field = GrandBossManager.class.getDeclaredField("_storedInfo");
++			field.setAccessible(true);
++			return new ArrayList<>(((Map<Integer, ?>) field.get(null)).keySet());
++		}
++		catch (Exception e)
++		{
++			return List.of();
++		}
++	}
++
++	/**
++	 * Ближайший город региона карты по координатам (у MapRegionData по точке — только закрытый RegionData, отсюда рефлексия).
++	 */
++	private static String town(int x, int y)
++	{
++		if ((x == 0) && (y == 0))
++		{
++			return null; // точки нет (Frintezza у Interlude — в инстансе, в grandboss_data 0, 0, 0)
++		}
++
++		try
++		{
++			final Object region = MapRegionData.class.getMethod("getMapRegion", int.class, int.class).invoke(MapRegionData.getInstance(), x, y);
++			if (region == null)
++			{
++				return null;
++			}
++			final Field field = region.getClass().getDeclaredField("town");
++			field.setAccessible(true);
++			return (String) field.get(region);
++		}
++		catch (Exception e)
++		{
++			return null;
++		}
++	}
++
++	private static void raidBosses(StringBuilder sb, Player player)
++	{
++		final int level = player.getLevel();
++		final List<Raid> near = new ArrayList<>();
++		final List<Raid> soon = new ArrayList<>();
++		for (Raid raid : raids())
++		{
++			if (raid.grand() || (raid.level() < (level - RAID_BELOW)) || (raid.level() > (level + RAID_ABOVE)))
++			{
++				continue;
++			}
++			if (raid.alive())
++			{
++				near.add(raid);
++			}
++			else if (raid.respawnAt() > 0)
++			{
++				soon.add(raid);
++			}
++		}
++		sb.append("<font color=\"LEVEL\">Рейд-боссы ").append(Math.max(1, level - RAID_BELOW)).append("–").append(level + RAID_ABOVE).append(" уровня</font><br1>");
++		if (near.isEmpty() && soon.isEmpty())
++		{
++			sb.append("<font color=\"808080\">Рядом с твоим уровнем — ни одного.</font><br><br>");
++			return;
++		}
++
++		near.sort(Comparator.comparingInt((Raid raid) -> Math.abs(raid.level() - level)).thenComparingLong(raid -> distance(player, raid.x(), raid.y())));
++		soon.sort(Comparator.comparingLong(Raid::respawnAt));
++		sb.append("<font color=\"B09878\">Живы: ").append(near.size()).append(soon.isEmpty() ? "" : ", скоро встанут: " + soon.size()).append(".</font><br1><table width=280>");
++		for (Raid raid : near.subList(0, Math.min(SHOWN, near.size())))
++		{
++			sb.append("<tr><td width=170>").append(raid.name()).append(" (").append(raid.level()).append(")</td>");
++			sb.append("<td width=110 align=right><font color=\"A0A0A0\">").append(raid.town() == null ? "" : raid.town()).append("</font></td></tr>");
++		}
++		for (Raid raid : soon.subList(0, Math.min(3, soon.size())))
++		{
++			sb.append("<tr><td width=170><font color=\"808080\">").append(raid.name()).append(" (").append(raid.level()).append(")</font></td>");
++			sb.append("<td width=110 align=right><font color=\"808080\">встанет ").append(when(raid.respawnAt())).append("</font></td></tr>");
++		}
++		sb.append("</table><br>");
++	}
++
++	private static boolean superChampionsOn()
++	{
++		return ChampionMonstersConfig.CHAMPION_ENABLE && ChampionMonstersConfig.SUPER_CHAMPION_ENABLE;
++	}
++
++	private static void superChampions(StringBuilder sb, Player player)
++	{
++		sb.append("<font color=\"LEVEL\">Суперчемпионы</font><br1>");
++		if (!superChampionsOn())
++		{
++			sb.append("<font color=\"808080\">Выключены (ChampionMonsters.ini).</font><br><br>");
++			return;
++		}
++
++		final List<Attackable> alive = SuperChampion.alive();
++		if (alive.isEmpty())
++		{
++			sb.append("<font color=\"808080\">Сейчас ни одного. Появляются у мобов ").append(ChampionMonstersConfig.CHAMP_MIN_LEVEL).append("–").append(ChampionMonstersConfig.CHAMP_MAX_LEVEL).append(" уровня; о новом объявят в регионе.</font><br><br>");
++			return;
++		}
++
++		final int level = player.getLevel();
++		alive.sort(Comparator.comparingInt((Attackable npc) -> Math.abs(npc.getLevel() - level)).thenComparingLong(npc -> distance(player, npc)));
++		sb.append("<font color=\"B09878\">В мире: ").append(alive.size()).append(". Ближе всего к твоему уровню:</font><br1><table width=280>");
++		for (Attackable npc : alive.subList(0, Math.min(SHOWN, alive.size())))
++		{
++			sb.append("<tr><td width=170>").append(npc.getName()).append(" (").append(npc.getLevel()).append(")</td>");
++			sb.append("<td width=110 align=right><font color=\"A0A0A0\">").append(MapRegionData.getInstance().getClosestTownName(npc)).append("</font></td></tr>");
++		}
++		sb.append("</table><br>");
++	}
++
++	private static long distance(Player player, Attackable npc)
++	{
++		return distance(player, npc.getX(), npc.getY());
++	}
++
++	private static long distance(Player player, int x, int y)
++	{
++		final long dx = x - player.getX();
++		final long dy = y - player.getY();
++		return (dx * dx) + (dy * dy);
++	}
++
++	// ---------- Олимпиада ----------
++
++	/**
++	 * Олимпиада — рефлексией (у хроник API разный, а без олимпиады скрипт не должен ломаться) и по config/Olympiad.ini.
++	 */
++	private static Oly oly()
++	{
++		final Properties config = new Properties();
++		try (Reader reader = Files.newBufferedReader(Paths.get("./config/Olympiad.ini"), StandardCharsets.UTF_8))
++		{
++			config.load(reader);
++		}
++		catch (Exception e)
++		{
++			// нет файла — значения по умолчанию ниже
++		}
++		final boolean enabled = on(config, "OlympiadEnabled", true);
++		String daily = "";
++		try
++		{
++			final int start = Integer.parseInt(config.getProperty("OlympiadStartTime", "18").trim());
++			final int minute = Integer.parseInt(config.getProperty("OlympiadMin", "0").trim());
++			final long length = Long.parseLong(config.getProperty("OlympiadCPeriod", "21600000").trim()) / 60000;
++			final long end = ((start * 60L) + minute + length) % (24 * 60);
++			daily = String.format("%02d:%02d–%02d:%02d", start, minute, end / 60, end % 60);
++		}
++		catch (Exception e)
++		{
++			// окно дня не разобрать — без него
++		}
++
++		boolean competition = false;
++		long periodEnd = 0;
++		int nobles = -1;
++		int registered = -1;
++		final List<String> heroes = new ArrayList<>();
++		try
++		{
++			final Class<?> type = Class.forName("org.l2jmobius.gameserver.mechanics.olympiad.Olympiad");
++			final Object olympiad = type.getMethod("getInstance").invoke(null);
++			competition = Boolean.TRUE.equals(type.getMethod("inCompPeriod").invoke(olympiad));
++			periodEnd = System.currentTimeMillis() + ((Number) type.getMethod("getMillisToOlympiadEnd").invoke(olympiad)).longValue();
++			if (type.getMethod("getWaitingList").invoke(olympiad) instanceof int[] waiting)
++			{
++				registered = waiting[0] + waiting[1];
++			}
++			final Field field = type.getDeclaredField("NOBLES");
++			field.setAccessible(true);
++			if (field.get(null) instanceof Map<?, ?> map)
++			{
++				nobles = map.size();
++			}
++			final Class<?> heroType = Class.forName("org.l2jmobius.gameserver.mechanics.olympiad.Hero");
++			if (heroType.getMethod("getHeroes").invoke(heroType.getMethod("getInstance").invoke(null)) instanceof Map<?, ?> map)
++			{
++				for (Object set : map.values())
++				{
++					final Object name = set.getClass().getMethod("getString", String.class, String.class).invoke(set, "char_name", null);
++					if (name != null)
++					{
++						heroes.add(name.toString());
++					}
++				}
++			}
++		}
++		catch (Exception e)
++		{
++			// у хроники олимпиада устроена иначе — что успели узнать
++		}
++		return new Oly(enabled, competition, daily, periodEnd, nobles, registered, heroes);
++	}
++
++	private static void olympiad(StringBuilder sb)
++	{
++		final Oly oly = oly();
++		sb.append("<font color=\"LEVEL\">Олимпиада</font><br1>");
++		if (!oly.enabled())
++		{
++			sb.append("<font color=\"808080\">Выключена (Olympiad.ini).</font><br><br>");
++			return;
++		}
++		sb.append(oly.competition() ? "<font color=\"6E8B3D\">Соревнования идут</font>" : "Соревнования").append(oly.daily().isEmpty() ? "" : " каждый день " + oly.daily());
++		if (oly.periodEnd() > 0)
++		{
++			sb.append(", период до ").append(new SimpleDateFormat("dd.MM").format(new Date(oly.periodEnd())));
++		}
++		sb.append("<br1>");
++		if (oly.nobles() >= 0)
++		{
++			sb.append("<font color=\"A0A0A0\">Дворян: ").append(oly.nobles()).append(oly.registered() > 0 ? ", записались: " + oly.registered() : "").append(oly.nobles() == 0 ? " — участвуют только дворяне" : "").append("</font><br1>");
++		}
++		if (!oly.heroes().isEmpty())
++		{
++			sb.append("Герои: ").append(String.join(", ", oly.heroes())).append("<br1>");
++		}
++		sb.append("<br>");
++	}
++
++	/**
++	 * @return сезонные события, которые идут или ещё будут (окно не прошло), по дате начала
++	 */
++	private static List<LongTimeEvent> seasonalEvents()
++	{
++		final Date now = new Date();
++		final List<LongTimeEvent> events = new ArrayList<>();
++		for (Quest quest : ScriptManager.getInstance().getScripts().values())
++		{
++			if ((quest instanceof LongTimeEvent event) && (event.getStartDate() != null) && (event.getEndDate() != null) && event.getEndDate().after(now))
++			{
++				events.add(event);
++			}
++		}
++		events.sort(Comparator.comparing(LongTimeEvent::getStartDate));
++		return events;
++	}
++
++	private static void seasonal(StringBuilder sb)
++	{
++		final SimpleDateFormat day = new SimpleDateFormat("dd.MM");
++		final List<LongTimeEvent> events = seasonalEvents();
++		sb.append("<font color=\"LEVEL\">Сезонные события</font><br1>");
++		if (events.isEmpty())
++		{
++			sb.append("<font color=\"808080\">Сейчас нет и не ожидается (календарь L2HubEvents.ini).</font><br><br>");
++			return;
++		}
++
++		for (LongTimeEvent event : events)
++		{
++			final String title = SEASONAL.getOrDefault(event.getName(), event.getName());
++			// Конец окна у Mobius — начало дня после последнего (01.12 — значит, по 30.11 включительно), как пишет и лаунчер.
++			sb.append(event.isEventPeriod() ? "<font color=\"6E8B3D\">Идёт</font> по " + day.format(new Date(event.getEndDate().getTime() - 1)) : "С " + day.format(event.getStartDate())).append(": ").append(title).append("<br1>");
++		}
++		sb.append("<br>");
++	}
++
++	private static void schedule(StringBuilder sb)
++	{
++		final Properties config = config();
++		sb.append("<font color=\"LEVEL\">Ивенты по расписанию</font><br1>");
++		if (on(config, "PvpEvents", false))
++		{
++			for (String[] pvp : PVP)
++			{
++				final long next = next(config.getProperty(pvp[0], ""));
++				if (next > 0)
++				{
++					sb.append(when(next)).append(": ").append(pvp[1]).append("<br1>");
++				}
++			}
++			sb.append("<font color=\"808080\">Регистрация 10 минут у менеджера в Гиране (у Deathmatch — 1 минута), охотники записываются сами.</font><br1>");
++		}
++		else
++		{
++			sb.append("<font color=\"808080\">PvP-ивенты выключены (PvpEvents в L2HubEvents.ini).</font><br1>");
++		}
++
++		final long elpies = on(config, "Elpies", false) ? next(config.getProperty("ElpiesSchedule", "")) : 0;
++		if (elpies > 0)
++		{
++			sb.append(when(elpies)).append(": нашествие эльпи на ").append(minutes(config)).append(" мин, в городе рядом с тобой<br1>");
++		}
++		if (on(config, "PvpOnlyWithPlayers", true) || on(config, "ElpiesOnlyWithPlayers", true))
++		{
++			sb.append("<font color=\"808080\">Стартуют, только когда ты в игре.</font>");
++		}
++	}
++
++	/**
++	 * @param pattern крон «минуты часы день месяц день_недели»
++	 * @return ближайший старт, мс от эпохи; 0 — пусто или не крон
++	 */
++	private static long next(String pattern)
++	{
++		if ((pattern == null) || pattern.isBlank())
++		{
++			return 0;
++		}
++
++		try
++		{
++			// Крон стартует ровно в минуту, а задержка у Mobius приходит на доли секунды короче — округлить до минуты.
++			final long at = System.currentTimeMillis() + new SchedulingPattern(pattern.trim()).getDelayToNextFromNow();
++			return ((at + 30000) / 60000) * 60000;
++		}
++		catch (Exception e)
++		{
++			return 0;
++		}
++	}
++
++	/**
++	 * @return «ЧЧ:ММ», не сегодня — «дд.ММ ЧЧ:ММ»
++	 */
++	private static String when(long at)
++	{
++		final boolean today = new SimpleDateFormat("yyyyMMdd").format(new Date(at)).equals(new SimpleDateFormat("yyyyMMdd").format(new Date()));
++		return new SimpleDateFormat(today ? "HH:mm" : "dd.MM HH:mm").format(new Date(at));
++	}
++
++	private static int minutes(Properties config)
++	{
++		try
++		{
++			return Math.max(1, Integer.parseInt(config.getProperty("ElpiesMinutes", "10").trim()));
++		}
++		catch (NumberFormatException e)
++		{
++			return 10;
++		}
++	}
++
++	private static boolean on(Properties config, String key, boolean defaultValue)
++	{
++		return Boolean.parseBoolean(config.getProperty(key, String.valueOf(defaultValue)).trim());
++	}
++
++	private static Properties config()
++	{
++		final Properties properties = new Properties();
++		if (Files.isRegularFile(CONFIG))
++		{
++			try (Reader reader = Files.newBufferedReader(CONFIG, StandardCharsets.UTF_8))
++			{
++				properties.load(reader);
++			}
++			catch (Exception e)
++			{
++				LOGGER.warning("L2HubWorldInfo: " + CONFIG + ": " + e.getMessage());
++			}
++		}
++		return properties;
++	}
++
++	// ---------- log/L2HubWorld.json для лаунчера ----------
++
++	/**
++	 * То же, что в окне, — для «Моего мира» в лаунчере. Время — мс от эпохи (time, since, start, end, next).
++	 */
++	private static void writeStatus()
++	{
++		try
++		{
++			final long now = System.currentTimeMillis();
++			final Properties config = config();
++			final StringBuilder sb = new StringBuilder("{\"version\":1,\"time\":").append(now);
++
++			sb.append(",\"superChampions\":{\"enabled\":").append(superChampionsOn());
++			sb.append(",\"chance\":").append(ChampionMonstersConfig.CHAMPION_SUPER == null ? 0 : ChampionMonstersConfig.CHAMPION_SUPER.frequency());
++			sb.append(",\"minLevel\":").append(ChampionMonstersConfig.CHAMP_MIN_LEVEL).append(",\"maxLevel\":").append(ChampionMonstersConfig.CHAMP_MAX_LEVEL).append(",\"alive\":[");
++			final Set<Integer> seen = new HashSet<>();
++			boolean first = true;
++			for (Attackable npc : superChampionsOn() ? SuperChampion.alive() : List.<Attackable> of())
++			{
++				seen.add(npc.getObjectId());
++				final long since = SINCE.computeIfAbsent(npc.getObjectId(), id -> now);
++				sb.append(first ? "" : ",").append("{\"objectId\":").append(npc.getObjectId()).append(",\"npcId\":").append(npc.getId());
++				first = false;
++				field(sb.append(','), "name", npc.getName()).append(",\"level\":").append(npc.getLevel());
++				field(sb.append(','), "town", MapRegionData.getInstance().getClosestTownName(npc));
++				sb.append(",\"x\":").append(npc.getX()).append(",\"y\":").append(npc.getY()).append(",\"z\":").append(npc.getZ()).append(",\"since\":").append(since).append('}');
++			}
++			SINCE.keySet().retainAll(seen);
++
++			sb.append("]},\"raidBosses\":[");
++			first = true;
++			for (Raid raid : raids())
++			{
++				sb.append(first ? "{" : ",{").append("\"npcId\":").append(raid.npcId());
++				first = false;
++				field(sb.append(','), "name", raid.name()).append(",\"level\":").append(raid.level()).append(",\"alive\":").append(raid.alive());
++				sb.append(",\"respawnAt\":").append(raid.respawnAt() > 0 ? String.valueOf(raid.respawnAt()) : "null");
++				if (raid.town() == null)
++				{
++					sb.append(",\"town\":null");
++				}
++				else
++				{
++					field(sb.append(','), "town", raid.town());
++				}
++				sb.append(",\"x\":").append(raid.x()).append(",\"y\":").append(raid.y()).append(",\"z\":").append(raid.z()).append(",\"grand\":").append(raid.grand()).append('}');
++			}
++
++			final Oly oly = oly();
++			sb.append("],\"olympiad\":{\"enabled\":").append(oly.enabled()).append(",\"competition\":").append(oly.competition());
++			field(sb.append(','), "daily", oly.daily());
++			sb.append(",\"periodEnd\":").append(oly.periodEnd() > 0 ? String.valueOf(oly.periodEnd()) : "null");
++			sb.append(",\"nobles\":").append(oly.nobles() >= 0 ? String.valueOf(oly.nobles()) : "null");
++			sb.append(",\"registered\":").append(oly.registered() >= 0 ? String.valueOf(oly.registered()) : "null").append(",\"heroes\":[");
++			first = true;
++			for (String hero : oly.heroes())
++			{
++				quoted(sb.append(first ? "" : ","), hero);
++				first = false;
++			}
++			sb.append("]}");
++
++			sb.append(",\"seasonal\":[");
++			first = true;
++			for (LongTimeEvent event : seasonalEvents())
++			{
++				field(sb.append(first ? "{" : ",{"), "id", event.getName());
++				first = false;
++				field(sb.append(','), "title", SEASONAL.getOrDefault(event.getName(), event.getName()));
++				sb.append(",\"start\":").append(event.getStartDate().getTime()).append(",\"end\":").append(event.getEndDate().getTime()).append(",\"active\":").append(event.isEventPeriod()).append('}');
++			}
++
++			final boolean pvp = on(config, "PvpEvents", false);
++			sb.append("],\"schedule\":{\"pvp\":{\"enabled\":").append(pvp).append(",\"onlyWithPlayers\":").append(on(config, "PvpOnlyWithPlayers", true)).append(",\"events\":[");
++			first = true;
++			for (String[] event : PVP)
++			{
++				final long next = pvp ? next(config.getProperty(event[0], "")) : 0;
++				field(sb.append(first ? "{" : ",{"), "id", event[0]);
++				first = false;
++				field(sb.append(','), "title", event[1]).append(",\"next\":").append(next > 0 ? String.valueOf(next) : "null").append('}');
++			}
++			final boolean elpies = on(config, "Elpies", false);
++			final long elpiesNext = elpies ? next(config.getProperty("ElpiesSchedule", "")) : 0;
++			sb.append("]},\"elpies\":{\"enabled\":").append(elpies).append(",\"onlyWithPlayers\":").append(on(config, "ElpiesOnlyWithPlayers", true));
++			sb.append(",\"minutes\":").append(minutes(config)).append(",\"next\":").append(elpiesNext > 0 ? String.valueOf(elpiesNext) : "null").append("}}}");
++
++			final Path tmp = STATUS_FILE.resolveSibling(STATUS_FILE.getFileName() + ".tmp");
++			Files.writeString(tmp, sb, StandardCharsets.UTF_8);
++			Files.move(tmp, STATUS_FILE, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
++		}
++		catch (Exception e)
++		{
++			LOGGER.warning("L2HubWorldInfo: " + STATUS_FILE + ": " + e.getMessage());
++		}
++	}
++
++	private static StringBuilder field(StringBuilder sb, String name, String value)
++	{
++		return quoted(sb.append('"').append(name).append("\":"), value);
++	}
++
++	private static StringBuilder quoted(StringBuilder sb, String value)
++	{
++		sb.append('"');
++		for (char c : String.valueOf(value).toCharArray())
++		{
++			switch (c)
++			{
++				case '"' -> sb.append("\\\"");
++				case '\\' -> sb.append("\\\\");
++				case '\n' -> sb.append("\\n");
++				case '\r' -> sb.append("\\r");
++				case '\t' -> sb.append("\\t");
++				default -> sb.append(c < 0x20 ? String.format("\\u%04x", (int) c) : String.valueOf(c));
++			}
++		}
++		return sb.append('"');
++	}
++
++	@Override
++	public String[] getCommandList()
++	{
++		return COMMANDS;
++	}
++
++	public static void main(String[] args)
++	{
++		VoicedCommandHandler.getInstance().registerHandler(new L2HubWorldInfo());
++		ThreadPool.scheduleAtFixedRate(L2HubWorldInfo::writeStatus, 30000, STATUS_PERIOD);
++		LOGGER.info("L2HubWorldInfo: .world — мир сейчас (суперчемпионы, сезонные события, расписание ивентов), " + STATUS_FILE + " раз в минуту.");
++	}
++}

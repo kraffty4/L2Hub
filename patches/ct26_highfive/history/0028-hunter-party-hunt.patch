@@ -1,0 +1,385 @@
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java
+index f6aaf16..f22f586 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java
+@@ -103,6 +103,7 @@ public class PhantomChat
+ 		ORDER_FALLBACK.put(Order.SIT, "сажусь");
+ 		ORDER_FALLBACK.put(Order.STAND, "встаю");
+ 		ORDER_FALLBACK.put(Order.LEAVE, "ну пока, зови если что");
++		ORDER_FALLBACK.put(Order.HUNT, "го, мочим всех");
+ 	}
+ 
+ 	/** Кто кому последним отвечал: (фантом, игрок) → время. */
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java
+index ff6c8c9..12f3ff8 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java
+@@ -61,6 +61,16 @@ public class PhantomCompanionManager
+ 	private static final int OWNER_LOW_HP = 30;
+ 	/** Охотник в пати подбирает, что лежит ближе этого (адену, брошенную игроком, и вещи на земле). */
+ 	private static final int PICKUP_RANGE = 300;
++	// «Кач тут» (патч 0028). Опыт пати делится в AltPartyRange (1500) от моба — держаться ближе.
++	/** Владелец стоит: бить свободных мобов в этом радиусе вокруг него. */
++	private static final int HUNT_RADIUS = 900;
++	/** Владелец бежит: только тех, кто у него под ногами. */
++	private static final int HUNT_RUN_RADIUS = 450;
++	/** Дальше этого от владельца — бросить цель и догнать; владелец бежит — короче. */
++	private static final int HUNT_LEASH = 1100;
++	private static final int HUNT_RUN_LEASH = 700;
++	/** Мобы сильнее владельца больше чем на столько уровней — не трогать самим (на них — только по его цели). */
++	private static final int HUNT_LEVEL_UP = 6;
+ 
+ 	public enum Mode
+ 	{
+@@ -69,7 +79,9 @@ public class PhantomCompanionManager
+ 		/** Идёт за владельцем, только защищается и защищает пати. */
+ 		FOLLOW,
+ 		/** Стоит на месте, защищает только себя. */
+-		STAY
++		STAY,
++		/** «Кач тут» (патч 0028): сам бьёт и добивает мобов вокруг владельца, держась рядом с ним; владелец бежит — догоняет и бьёт только тех, кто рядом с ним. */
++		HUNT
+ 	}
+ 
+ 	private static class Companion
+@@ -298,7 +310,7 @@ public class PhantomCompanionManager
+ 		companion.lastDestination = null;
+ 		final Player phantom = PhantomManager.getInstance().getPhantom(template);
+ 		companion.stayAt = (mode == Mode.STAY) && (phantom != null) ? new Location(phantom.getX(), phantom.getY(), phantom.getZ()) : null;
+-		if ((phantom != null) && (mode != Mode.ASSIST) && (phantom.getAI().getIntention() == Intention.ATTACK))
++		if ((phantom != null) && (mode != Mode.ASSIST) && (mode != Mode.HUNT) && (phantom.getAI().getIntention() == Intention.ATTACK))
+ 		{
+ 			calmDown(phantom);
+ 		}
+@@ -524,6 +536,12 @@ public class PhantomCompanionManager
+ 				setMode(owner, template, Mode.ASSIST);
+ 				return support ? "нельзя: ты саппорт и в драку не лезешь — идёшь следом и " + job : "сделано: бьёшь его цель";
+ 			}
++			case HUNT:
++			{
++				PhantomSupport.clearSit(phantom);
++				setMode(owner, template, support ? Mode.ASSIST : Mode.HUNT);
++				return support ? "нельзя: ты саппорт и в драку не лезешь — идёшь следом и " + job : "сделано: качаешься рядом с ним — сам бьёшь и добиваешь всех мобов вокруг, держишься недалеко";
++			}
+ 			default:
+ 			{
+ 				if (!support)
+@@ -594,7 +612,7 @@ public class PhantomCompanionManager
+ 		}
+ 		else
+ 		{
+-			doing = companion.mode == Mode.ASSIST ? "бьёшь его цель" : "только защищаешься";
++			doing = companion.mode == Mode.HUNT ? "качаешься рядом с ним: сам бьёшь всех мобов вокруг" : companion.mode == Mode.ASSIST ? "бьёшь его цель" : "только защищаешься";
+ 		}
+ 		return "в пати с " + owner.getName() + ": " + where + ", " + doing + (PhantomSupport.isSitOrdered(phantom) ? ", по его просьбе сидишь отдыхаешь" : "");
+ 	}
+@@ -863,11 +881,19 @@ public class PhantomCompanionManager
+ 	}
+ 
+ 	/**
+-	 * Кого бить: цель владельца (режим ASSIST, владелец в бою), затем текущего противника, затем ближайшего моба, который бьёт нас.
++	 * Кого бить: цель владельца (режимы ASSIST и HUNT, владелец в бою), затем текущего противника, затем ближайшего моба, который бьёт нас;
++	 * в режиме HUNT — ещё и свободного моба вокруг владельца. Владелец убежал дальше поводка «кач тут» — никого: догнать.
+ 	 */
+ 	private static Creature chooseEnemy(Companion companion, Player phantom, Player owner)
+ 	{
+-		if ((companion.mode == Mode.ASSIST) && !owner.isDead())
++		final boolean hunt = companion.mode == Mode.HUNT;
++		final int leash = hunt ? (owner.isMoving() ? HUNT_RUN_LEASH : HUNT_LEASH) : CHASE_LEASH;
++		if (hunt && (phantom.calculateDistance2D(owner) > leash))
++		{
++			return null;
++		}
++
++		if (((companion.mode == Mode.ASSIST) || hunt) && !owner.isDead())
+ 		{
+ 			final WorldObject target = owner.getTarget();
+ 			if ((target instanceof Monster) && isEnemy(phantom, (Monster) target) && (owner.calculateDistance2D(target) <= PhantomPartyConfig.PHANTOM_ASSIST_RANGE) && (owner.isInCombat() || (((Monster) target).getTarget() == owner)))
+@@ -876,8 +902,9 @@ public class PhantomCompanionManager
+ 			}
+ 		}
+ 
++		// Своего противника держит; в «кач тут» — добивает, даже если моб бьёт не его.
+ 		final WorldObject current = phantom.getTarget();
+-		if ((current instanceof Monster) && isEnemy(phantom, (Monster) current) && attacksUs((Monster) current, companion, phantom, owner) && (owner.calculateDistance2D(current) <= CHASE_LEASH))
++		if ((current instanceof Monster) && isEnemy(phantom, (Monster) current) && (hunt ? !takenByOthers((Monster) current, phantom) : attacksUs((Monster) current, companion, phantom, owner)) && (owner.calculateDistance2D(current) <= leash))
+ 		{
+ 			return (Monster) current;
+ 		}
+@@ -898,9 +925,40 @@ public class PhantomCompanionManager
+ 				nearestDistance = distance;
+ 			}
+ 		}
++		if ((nearest != null) || !hunt)
++		{
++			return nearest;
++		}
++
++		// «Кач тут»: свободный моб вокруг владельца — стоит: HUNT_RADIUS, бежит: HUNT_RUN_RADIUS (только тех, кто у него под ногами).
++		// Не РБ, не сильнее владельца больше чем на HUNT_LEVEL_UP, не чужой (бьёт не нашу пати).
++		final int radius = owner.isMoving() ? HUNT_RUN_RADIUS : HUNT_RADIUS;
++		for (Monster monster : World.getVisibleObjectsInRange(owner, Monster.class, radius))
++		{
++			if (!isEnemy(phantom, monster) || monster.isRaid() || (monster.getLevel() > (owner.getLevel() + HUNT_LEVEL_UP)) || takenByOthers(monster, phantom))
++			{
++				continue;
++			}
++
++			final double distance = phantom.calculateDistance2D(monster);
++			if (distance < nearestDistance)
++			{
++				nearest = monster;
++				nearestDistance = distance;
++			}
++		}
+ 		return nearest;
+ 	}
+ 
++	/**
++	 * @return моб дерётся с кем-то не из нашей пати — чужой, не трогать
++	 */
++	private static boolean takenByOthers(Monster monster, Player phantom)
++	{
++		final WorldObject target = monster.getTarget();
++		return (target instanceof Player) && (target != phantom) && (!phantom.isInParty() || !phantom.getParty().containsPlayer((Player) target));
++	}
++
+ 	private static boolean isEnemy(Player phantom, Monster monster)
+ 	{
+ 		return !monster.isAlikeDead() && !monster.isFakePlayer() && monster.isAutoAttackable(phantom) && !monster.isInsideZone(ZoneId.PEACE) && GeoEngine.getInstance().canSeeTarget(phantom, monster);
+@@ -939,19 +997,29 @@ public class PhantomCompanionManager
+ 			return;
+ 		}
+ 
+-		if (phantom.getTarget() != enemy)
++		// Маг, которого бьют вплотную (удар сбивает каст, AltGameCancelByHit), или без маны отмахивается оружием от того, кто бьёт, пока не отобьётся (патч 0028).
++		Creature target = enemy;
++		final boolean caster = PhantomHunterOutfit.isCaster(phantom);
++		final Monster attacker = caster ? PhantomHunterOutfit.meleeAttacker(phantom) : null;
++		final boolean melee = caster && ((attacker != null) || PhantomHunterOutfit.outOfMana(phantom));
++		if (attacker != null)
++		{
++			target = attacker;
++		}
++
++		if (phantom.getTarget() != target)
+ 		{
+-			phantom.setTarget(enemy);
++			phantom.setTarget(target);
+ 		}
+ 
+ 		// Охотник бьёт своими скиллами, как на споте: AutoUse без AutoPlay атакующие скиллы не кастует, поэтому — отсюда.
+-		if (castSkill(phantom, enemy))
++		if (!melee && castSkill(phantom, target))
+ 		{
+ 			return;
+ 		}
+ 
+-		// Маг оружием не машет: цель держит, ждёт MP и отката.
+-		if (PhantomHunterOutfit.isCaster(phantom))
++		// Маг оружием не машет, пока может кастовать: цель держит, ждёт отката.
++		if (caster && !melee)
+ 		{
+ 			if (phantom.getAI().getIntention() == Intention.ATTACK)
+ 			{
+@@ -965,7 +1033,7 @@ public class PhantomCompanionManager
+ 		if ((phantom.getAI().getIntention() != Intention.ATTACK) || (!phantom.isAttackingNow() && !phantom.isMoving()))
+ 		{
+ 			phantom.setRunning();
+-			phantom.getAI().setIntentionAttack(enemy);
++			phantom.getAI().setIntentionAttack(target);
+ 		}
+ 	}
+ 
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+index 3f4a800..0afff23 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+@@ -834,6 +834,8 @@ public class PhantomHunterManager
+ 			AutoPlayTaskManager.getInstance().startAutoPlay(player);
+ 			AutoUseTaskManager.getInstance().startAutoUseTask(player);
+ 		}
++		// Маг под ударами вплотную или без маны — отмахивается оружием (патч 0028).
++		PhantomHunterOutfit.syncMelee(player);
+ 
+ 		if (player.isInCombat() || player.isAttackingNow() || player.isCastingNow() || player.isMoving())
+ 		{
+@@ -1000,7 +1002,8 @@ public class PhantomHunterManager
+ 	}
+ 
+ 	/**
+-	 * Ближайший гейткипер (NPC-телепортер) в {@link #GATEKEEPER_RANGE}, до которого можно дойти.
++	 * Ближайший гейткипер (NPC-телепортер) в {@link #GATEKEEPER_RANGE}. Путь по прямой не проверяется (патч 0028): в городе прямую режут дома,
++	 * а бег идёт с поиском пути; застрял — через {@link #GATEKEEPER_TIMEOUT} телепорт с места.
+ 	 */
+ 	private static Npc nearestGatekeeper(Player player)
+ 	{
+@@ -1009,7 +1012,7 @@ public class PhantomHunterManager
+ 		for (Teleporter npc : World.getVisibleObjectsInRange(player, Teleporter.class, GATEKEEPER_RANGE))
+ 		{
+ 			final double distance = player.calculateDistance2D(npc);
+-			if ((distance < nearestDistance) && npc.isSpawned() && GeoEngine.getInstance().canMoveToTarget(player.getX(), player.getY(), player.getZ(), npc.getX(), npc.getY(), npc.getZ(), player.getInstanceId()))
++			if ((distance < nearestDistance) && npc.isSpawned())
+ 			{
+ 				nearest = npc;
+ 				nearestDistance = distance;
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterOutfit.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterOutfit.java
+index 97417ff..9df9aae 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterOutfit.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterOutfit.java
+@@ -6,12 +6,15 @@ import java.util.Map;
+ import java.util.Set;
+ import java.util.regex.Pattern;
+ 
++import org.l2jmobius.gameserver.ai.Intention;
+ import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
+ import org.l2jmobius.gameserver.data.xml.ItemData;
++import org.l2jmobius.gameserver.entity.World;
+ import org.l2jmobius.gameserver.entity.actor.Player;
+ import org.l2jmobius.gameserver.entity.actor.enums.player.PlayerClass;
+ import org.l2jmobius.gameserver.entity.actor.holders.player.AutoPlaySettingsHolder;
+ import org.l2jmobius.gameserver.entity.actor.holders.player.AutoUseSettingsHolder;
++import org.l2jmobius.gameserver.entity.actor.instance.Monster;
+ import org.l2jmobius.gameserver.entity.item.ItemTemplate;
+ import org.l2jmobius.gameserver.entity.item.enums.BodyPart;
+ import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
+@@ -31,6 +34,8 @@ final class PhantomHunterOutfit
+ {
+ 	/** Автоатака в AutoUse (как в AutoPlayTaskManager): без неё AutoPlay считает игрока кастером и не бьёт оружием. */
+ 	private static final Integer AUTO_ATTACK_ACTION = 2;
++	/** Моб ближе этого и бьёт мага — каст собьют, отмахнуться оружием. */
++	private static final int MELEE_RANGE = 150;
+ 	private static final Set<TargetType> ATTACK_TARGETS = Set.of(TargetType.ONE, TargetType.AREA, TargetType.FRONT_AREA, TargetType.AURA, TargetType.FRONT_AURA, TargetType.BEHIND_AREA, TargetType.BEHIND_AURA);
+ 	/** Сосы, BSS, стрелы и болты по уровню грейда оружия (CrystalType.getLevel: NONE 0, D 1 … S 5, S80 6, S84 7; у S80 и S84 — S-грейдовые). */
+ 	private static final int[] SOULSHOTS =
+@@ -1071,17 +1076,88 @@ final class PhantomHunterOutfit
+ 
+ 		final AutoPlaySettingsHolder play = player.getAutoPlaySettings();
+ 		play.setNextTargetMode(1); // мобы
+-		play.setShortRange(true);
++		// Дальний поиск (LongRange, 1400): споты — по 1500 в радиусе; с ближним (600) охотник стоял и ждал, пока моб подойдёт (патч 0028).
++		play.setShortRange(false);
+ 		play.setRespectfulHunting(true);
+ 		play.setPickup(true);
+ 	}
+ 
+ 	/**
+ 	 * @param player охотник
+-	 * @return кастер: бьёт атакующими скиллами из AutoUse, а не оружием ({@link #setupCombat})
++	 * @return кастер: маг с атакующими скиллами в AutoUse — бьёт ими, а не оружием ({@link #setupCombat}). По классу, а не по автоатаке: её включает {@link #syncMelee}.
+ 	 */
+ 	static boolean isCaster(Player player)
+ 	{
+-		return !player.getAutoUseSettings().getAutoActions().contains(AUTO_ATTACK_ACTION) && !player.getAutoUseSettings().getAutoSkills().isEmpty();
++		return player.isMageClass() && !player.getAutoUseSettings().getAutoSkills().isEmpty();
++	}
++
++	/**
++	 * @param player охотник
++	 * @return моб, который бьёт его вплотную (ближе {@link #MELEE_RANGE}): кастовать бесполезно — удар сбивает каст ({@code AltGameCancelByHit}); {@code null} — никто
++	 */
++	static Monster meleeAttacker(Player player)
++	{
++		Monster nearest = null;
++		double nearestDistance = Double.MAX_VALUE;
++		for (Monster monster : World.getVisibleObjectsInRange(player, Monster.class, MELEE_RANGE))
++		{
++			if (monster.isAlikeDead() || (monster.getTarget() != player) || (!monster.isInCombat() && (monster.getAI().getIntention() != Intention.ATTACK)))
++			{
++				continue;
++			}
++
++			final double distance = player.calculateDistance2D(monster);
++			if (distance < nearestDistance)
++			{
++				nearest = monster;
++				nearestDistance = distance;
++			}
++		}
++		return nearest;
++	}
++
++	/**
++	 * @param player охотник
++	 * @return маны не хватает ни на один атакующий скилл из AutoUse
++	 */
++	static boolean outOfMana(Player player)
++	{
++		for (Integer skillId : player.getAutoUseSettings().getAutoSkills())
++		{
++			final Skill skill = player.getKnownSkill(skillId);
++			if ((skill != null) && (player.getCurrentMp() >= (skill.getMpInitialConsume() + skill.getMpConsume())))
++			{
++				return false;
++			}
++		}
++		return true;
++	}
++
++	/**
++	 * На споте (патч 0028): маг, которого бьют вплотную, или без маны — с автоатакой, AutoPlay бьёт оружием; отбился — снова кастер.
++	 * @param player охотник
++	 */
++	static void syncMelee(Player player)
++	{
++		if (!isCaster(player))
++		{
++			return;
++		}
++
++		final boolean melee = (meleeAttacker(player) != null) || outOfMana(player);
++		final AutoUseSettingsHolder use = player.getAutoUseSettings();
++		if (melee && !use.getAutoActions().contains(AUTO_ATTACK_ACTION))
++		{
++			use.getAutoActions().add(AUTO_ATTACK_ACTION);
++		}
++		else if (!melee && use.getAutoActions().contains(AUTO_ATTACK_ACTION))
++		{
++			use.getAutoActions().remove(AUTO_ATTACK_ACTION);
++			if (player.getAI().getIntention() == Intention.ATTACK)
++			{
++				player.abortAttack();
++				player.getAI().setIntentionActive();
++			}
++		}
+ 	}
+ }
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomOrders.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomOrders.java
+index ac51006..b4ce785 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomOrders.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomOrders.java
+@@ -35,7 +35,9 @@ public class PhantomOrders
+ 		/** Встать. */
+ 		STAND,
+ 		/** Уйти из пати и из мира. */
+-		LEAVE
++		LEAVE,
++		/** Качаться тут (патч 0028): бить всех мобов вокруг владельца и добивать, держась рядом с ним. */
++		HUNT
+ 	}
+ 
+ 	/** Длиннее этого (слов без имён напарников) — уже разговор, его разбирают мозги. */
+@@ -58,8 +60,11 @@ public class PhantomOrders
+ 		ANYWHERE.put(Order.SIT, phrases("сядь", "сиди", "садись", "присядь", "отдохни", "отдыхай", "передохни", "sit", "sit down", "rest", "syad", "sadis", "sidi", "otdohni", "otdyhay"));
+ 		ANYWHERE.put(Order.STAND, phrases("встань", "вставай", "встать", "подъем", "поднимайся", "stand", "stand up", "vstan", "vstavai", "vstavay"));
+ 		ANYWHERE.put(Order.LEAVE, phrases("отпускаю", "свободен", "свободна", "свободны", "иди домой", "можешь идти", "можешь уходить", "уходи", "dismiss", "otpuskayu", "svoboden", "svobodna"));
++		ANYWHERE.put(Order.HUNT, phrases("кач тут", "кач здесь", "качаемся тут", "качаемся здесь", "качайся тут", "качайтесь тут", "фарм тут", "фарм здесь", "фармим тут", "фармим здесь", "фарми тут",
++			"бей всех", "бейте всех", "мочи всех", "мочите всех", "убивай всех", "зачищай*", "зачисти*", "чисти тут", "kach tut", "kach zdes", "farm tut", "farm here", "farm zdes", "hunt here", "kill all", "kill everything", "bei vseh", "mochi vseh"));
+ 		WHOLE.put(Order.FOLLOW, Set.of("го", "пошли", "пойдем", "погнали", "идем", "go", "poshli", "pognali", "idem"));
+ 		WHOLE.put(Order.LEAVE, Set.of("пока", "бб", "bb", "bye", "bye bye", "poka", "ну пока", "всем пока", "пока пока", "отбой", "otboy"));
++		WHOLE.put(Order.HUNT, Set.of("кач", "фарм", "качаемся", "фармим", "kach", "farm", "kachaemsya", "farmim"));
+ 	}
+ 
+ 	/** Чтобы мозги не распустили напарника по ошибке: тег LEAVE выполняется, только если в сообщении есть прощание. */
+@@ -136,6 +141,11 @@ public class PhantomOrders
+ 				result.add(order);
+ 			}
+ 		}
++		// «Бей всех» — это «качаемся тут», а не «бей мою цель».
++		if (result.contains(Order.HUNT))
++		{
++			result.remove(Order.ASSIST);
++		}
+ 		return result;
+ 	}
+ 

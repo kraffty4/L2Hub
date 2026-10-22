@@ -1,0 +1,808 @@
+diff --git a/dist/game/config/Custom/L2HubEvents.ini b/dist/game/config/Custom/L2HubEvents.ini
+new file mode 100644
+index 0000000000000000000000000000000000000000..8098f4451b766c260b194e1ee1c3e54a901d1880
+--- /dev/null
++++ b/dist/game/config/Custom/L2HubEvents.ini
+@@ -0,0 +1,27 @@
++# ---------------------------------------------------------------------------
++# L2Hub: календарь сезонных событий Mobius (data/scripts/events)
++# ---------------------------------------------------------------------------
++# У Mobius даты событий в config.xml — 2006–2016, поэтому они выключены («has passed... Ignored»).
++# Здесь — окно каждого события (ключ — папка события):
++#   дд ММ-дд ММ            — каждый год; конец не позже начала — окно переходит через Новый год
++#                            («01 12-01 01» — весь декабрь с 31-м, «01 01-01 01» — весь год);
++#   дд ММ гггг-дд ММ гггг  — один раз;
++#   Off                    — выключено;
++#   пусто                  — как в config.xml события.
++# Конец окна — начало указанного дня: чтобы захватить 31 декабря, конец — «01 01». Новое окно действует со следующего
++# запуска сервера.
++# По умолчанию круглый год идёт одно событие: Heavy Medal (январь–апрель), L2 Day (май–ноябрь), Рождество (декабрь).
++
++# Календарь целиком: False — всё как в config.xml событий (у Mobius — выключено).
++# Default: True
++Enabled = True
++
++# Heavy Medal: медали с монстров (45%, блестящие — 5%) — значки у котов события (Roy) в городах, «орёл или решка» на улучшение значка.
++HeavyMedal = 01 01-01 05
++
++# L2 Day: буквы с монстров (по 1%) — слова NCSOFT, CHRONICLE, LINEAGE II у менеджеров в стартовых деревнях:
++# шляпы, свитки, лайфстоуны 76-го уровня, малый шанс на бижутерию РБ (Queen Ant, Orfen, Core).
++L2Day = 01 05-01 12
++
++# Рождество: части ёлки и эхо-кристаллы с колядками с монстров — подарки у ученика Санты в городах.
++Christmas = 01 12-01 01
+diff --git a/dist/game/data/scripts/events/Christmas/31863.htm b/dist/game/data/scripts/events/Christmas/31863.htm
+index 6cd2596eb54ea68a5a1b2af55407e78c7e3b676a..be691390d3af0367b4f56664e7b024b41417353d 100644
+--- a/dist/game/data/scripts/events/Christmas/31863.htm
++++ b/dist/game/data/scripts/events/Christmas/31863.htm
+@@ -1,7 +1,7 @@
+-<html><body>Santa Trainee:<br>
+-Ho-ho-ho!<br>
+-Greetings, my festive friend!<br>
+-Have you been good this year?<br1>
+-Let the magic of Christmas bring joy to your heart!<br>
+-<a action="bypass -h npc_%objectId%_multisell 3186301">"Show me your presents Santa!"</a>
++<html><body>Ученик Санты:<br>
++Хо-хо-хо!<br>
++С праздником, друг!<br>
++Как прошёл твой год — без проказ?<br1>
++Пусть Рождество принесёт радость!<br>
++<a action="bypass -h npc_%objectId%_multisell 3186301">«Покажи подарки, Санта!»</a>
+ </body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/scripts/events/Christmas/config.xml b/dist/game/data/scripts/events/Christmas/config.xml
+index 115e747bd35585913e30e3994f118e8627232734..cea53e9a9927c57fc0e1e407eb4c3d9e8415447a 100644
+--- a/dist/game/data/scripts/events/Christmas/config.xml
++++ b/dist/game/data/scripts/events/Christmas/config.xml
+@@ -223,7 +223,7 @@
+ 		<add npc="13006" x="84308" y="145932" z="-3531" heading="0" />
+ 	</spawnlist>
+ 	<messages>
+-		<add type="onEnd" text="Christmas Event: Event end!" />
+-		<add type="onEnter" text="Christmas Event: All monsters have a chance of dropping Christmas tree parts and Holiday carol Echo Crystals. See a Santa's Trainee in every town to trade your Christmas tree parts!" />
++		<add type="onEnd" text="Рождество: событие окончено!" />
++		<add type="onEnter" text="Рождество: с монстров падают части ёлки и эхо-кристаллы с колядками. Неси части ёлки ученику Санты в любом городе!" />
+ 	</messages>
+ </event>
+\ No newline at end of file
+diff --git a/dist/game/data/scripts/events/HeavyMedal/31228-1.htm b/dist/game/data/scripts/events/HeavyMedal/31228-1.htm
+index 7d95e17e0e415595baf0f359beaa5c8bf04deb92..8abe465057da540820dd5121b04051a51cbe5d9e 100644
+--- a/dist/game/data/scripts/events/HeavyMedal/31228-1.htm
++++ b/dist/game/data/scripts/events/HeavyMedal/31228-1.htm
+@@ -1,7 +1,7 @@
+-<html><body>Event Manager Roy the Cat:<br>
+-<font color="LEVEL">1 - Medals and Prizes</font><br>
+-Hunting the monsters that dwell outside the village will yield medals. Bring them to me and I'll reward you with a fabulous prize, personally selected for you by Collector Bashtal! You'll find two types of medals: Regular medals and glittering medals. Glittering medals are quite rare, and therefore most valuable, especially for your future.<br><br>
+-<font color="LEVEL">2 - Advancing Levels</font><br>
+-A collector's level reflects that player's contribution to the medal collection and collecting skill. Meow! Higher levels are eligible for a greater selection of prizes. Winnie over there can tell you more about raising your level.<br>
+-<a action="bypass Script HeavyMedal 31228.htm">Back</a>
++<html><body>Кот Рой, менеджер события:<br>
++<font color="LEVEL">1 — Медали и призы</font><br>
++Монстры за пределами городов роняют медали. Принеси их мне — получишь приз, который лично отобрал коллекционер Баштал! Медали бывают двух видов: обычные и блестящие. Блестящие редкие, а потому самые ценные — особенно на будущее.<br><br>
++<font color="LEVEL">2 — Уровень коллекционера</font><br>
++Уровень коллекционера показывает вклад в коллекцию и умение собирать. Мяу! Чем выше уровень, тем больше выбор призов. Как его поднять, расскажет кошка Винни — вон она.<br>
++<a action="bypass Script HeavyMedal 31228.htm">Назад</a>
+ </body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/scripts/events/HeavyMedal/31228-2.htm b/dist/game/data/scripts/events/HeavyMedal/31228-2.htm
+index c500f17f99a1ee6098af7e855bbbe04d77014a51..2ce8b2c3da604b6910c82c373e900a94cf4370b7 100644
+--- a/dist/game/data/scripts/events/HeavyMedal/31228-2.htm
++++ b/dist/game/data/scripts/events/HeavyMedal/31228-2.htm
+@@ -1,5 +1,5 @@
+-<html><body>Event Manager Roy the Cat:<br>
+-These are the <font color="LEVEL">prizes</font> that were selected by my Lord Bashtal: <font color="LEVEL">Greater Haste Potion, Greater Swift Attack Potion, Greater Magic Haste Potion, Quick Healing Potion, Blessed Scroll of Escape, Blessed Scroll of Resurrection, Scroll: Enchant Armor (All Grades), Scroll: Enchant Weapon (All Grades), Red Party Mask, Soul Crystal (All Colors) - Stage 11, Soul Crystal (All Colors) - Stage 12, Sealed Majestic Necklace, Sealed Majestic Earring, and Sealed Majestic Ring</font>.<br>
+-You'll need to raise your collector level to be eligible for some of these items. If you wish to raise your level, go see Winnie the Cat!<br>
+-<a action="bypass Script HeavyMedal 31228.htm">Back</a>
++<html><body>Кот Рой, менеджер события:<br>
++Вот <font color="LEVEL">призы</font>, которые выбрал мой господин Баштал: <font color="LEVEL">Greater Haste Potion, Greater Swift Attack Potion, Greater Magic Haste Potion, Quick Healing Potion, Blessed Scroll of Escape, Blessed Scroll of Resurrection, Scroll: Enchant Armor (все грейды), Scroll: Enchant Weapon (все грейды), Red Party Mask, Soul Crystal (все цвета) — Stage 11, Soul Crystal (все цвета) — Stage 12, Sealed Majestic Necklace, Sealed Majestic Earring и Sealed Majestic Ring</font>.<br>
++Часть призов — только с определённого уровня коллекционера. Поднять уровень поможет кошка Винни!<br>
++<a action="bypass Script HeavyMedal 31228.htm">Назад</a>
+ </body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/scripts/events/HeavyMedal/31228-lvl-0.htm b/dist/game/data/scripts/events/HeavyMedal/31228-lvl-0.htm
+index 5a6d910d31c20206c83d5f90d304293880df2b45..9d6b399b5be990929fea95299a59af0f53abe748 100644
+--- a/dist/game/data/scripts/events/HeavyMedal/31228-lvl-0.htm
++++ b/dist/game/data/scripts/events/HeavyMedal/31228-lvl-0.htm
+@@ -1,5 +1,5 @@
+-<html><body>Event Manager:<br>
+-Raise your level as a collector, newbie! You can exchange medals for more valuable prizes! Meeow!<br>
+-Here are the prizes you can choose from!<br>
+-<a action="bypass -h npc_%objectId%_multisell 3122800">"I want to trade a medal for a prize."</a>
++<html><body>Менеджер события:<br>
++Подними уровень коллекционера, новичок! Тогда медали можно менять на призы ценнее! Мяу-у!<br>
++Вот что можно выбрать!<br>
++<a action="bypass -h npc_%objectId%_multisell 3122800">«Хочу обменять медали на приз.»</a>
+ </body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/scripts/events/HeavyMedal/31228-lvl-1.htm b/dist/game/data/scripts/events/HeavyMedal/31228-lvl-1.htm
+index 17ecd3ae13553cf766965221e104926e53411c5f..c34188d3d8fbeee2d48381ee50a5894393b1390e 100644
+--- a/dist/game/data/scripts/events/HeavyMedal/31228-lvl-1.htm
++++ b/dist/game/data/scripts/events/HeavyMedal/31228-lvl-1.htm
+@@ -1,5 +1,5 @@
+-<html><body>Event Manager Roy the Cat:<br>
+-A rabbit, eh? You still have a long way to go! Don't get discouraged, just raise your level!<br>
+-Here are the prizes you can choose from! Meow!<br>
+-<a action="bypass -h npc_%objectId%_multisell 3122801">"I want to trade a medal for a prize."</a>
++<html><body>Кот Рой, менеджер события:<br>
++Кролик, значит? Тебе ещё расти и расти! Не унывай, поднимай уровень!<br>
++Вот что можно выбрать! Мяу!<br>
++<a action="bypass -h npc_%objectId%_multisell 3122801">«Хочу обменять медали на приз.»</a>
+ </body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/scripts/events/HeavyMedal/31228-lvl-2.htm b/dist/game/data/scripts/events/HeavyMedal/31228-lvl-2.htm
+index a1a28f94db386947d5e6796beedbc1b8961c68f1..0fbf81707d57ae2d840ae87cf00124809647bd32 100644
+--- a/dist/game/data/scripts/events/HeavyMedal/31228-lvl-2.htm
++++ b/dist/game/data/scripts/events/HeavyMedal/31228-lvl-2.htm
+@@ -1,4 +1,4 @@
+-<html><body>Event Manager Roy the Cat:<br>
+-Ah, a hyena! Meow! Very impressive! Thanks for all the medals! Meow!<br>
+-<a action="bypass -h npc_%objectId%_multisell 3122802">"I want to trade a medal for a prize."</a>
++<html><body>Кот Рой, менеджер события:<br>
++О, гиена! Мяу! Впечатляет! Спасибо за все медали! Мяу!<br>
++<a action="bypass -h npc_%objectId%_multisell 3122802">«Хочу обменять медали на приз.»</a>
+ </body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/scripts/events/HeavyMedal/31228-lvl-3.htm b/dist/game/data/scripts/events/HeavyMedal/31228-lvl-3.htm
+index 8e7690c0d44d60d4914d3a5ec5b1f34144e50cef..c4fe35b304beee332c63f70effe1953517a03dee 100644
+--- a/dist/game/data/scripts/events/HeavyMedal/31228-lvl-3.htm
++++ b/dist/game/data/scripts/events/HeavyMedal/31228-lvl-3.htm
+@@ -1,5 +1,5 @@
+-<html><body>Event Manager Roy the Cat:<br>
+-Ah, a fox, eh? Meow! Thanks for all the medals! Thank you!<br>
+-Here are the prizes you can choose from! Meow!<br>
+-<a action="bypass -h npc_%objectId%_multisell 3122803">"I want to trade a medal for a prize."</a>
++<html><body>Кот Рой, менеджер события:<br>
++О, лиса? Мяу! Спасибо за все медали! Спасибо!<br>
++Вот что можно выбрать! Мяу!<br>
++<a action="bypass -h npc_%objectId%_multisell 3122803">«Хочу обменять медали на приз.»</a>
+ </body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/scripts/events/HeavyMedal/31228-lvl-4.htm b/dist/game/data/scripts/events/HeavyMedal/31228-lvl-4.htm
+index 4522cb790600da5ed605a7f6aaa17b91e5bf88c3..75cd9821be557cee6950a65c9c7d94cb5a4c7e70 100644
+--- a/dist/game/data/scripts/events/HeavyMedal/31228-lvl-4.htm
++++ b/dist/game/data/scripts/events/HeavyMedal/31228-lvl-4.htm
+@@ -1,5 +1,5 @@
+-<html><body>Event Manager Roy the Cat:<br>
+-Ah, a wolf, eh? It's been too long since I've had the pleasure of meeting a collector of your character!<br>
+-Here are the prizes you can choose from!<br>
+-<a action="bypass -h npc_%objectId%_multisell 3122804">"I want to trade a medal for a prize."</a>
++<html><body>Кот Рой, менеджер события:<br>
++О, волк? Давно мне не встречался коллекционер такого уровня!<br>
++Вот что можно выбрать!<br>
++<a action="bypass -h npc_%objectId%_multisell 3122804">«Хочу обменять медали на приз.»</a>
+ </body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/scripts/events/HeavyMedal/31228.htm b/dist/game/data/scripts/events/HeavyMedal/31228.htm
+index 593f5bbd06249031b8a7c21fdb8bef6760ffa9c2..288bd9bd8b181f31159019a1cff3e4606b959897 100644
+--- a/dist/game/data/scripts/events/HeavyMedal/31228.htm
++++ b/dist/game/data/scripts/events/HeavyMedal/31228.htm
+@@ -1,8 +1,8 @@
+-<html><body>Event Manager Roy the Cat:<br>
+-Meow! Greetings! I'm Roy the Cat!<br>
+-My master, the great collector Bashtal from the Bronze Key guild, has asked me and my friends to collect medals that were scattered throughout the world. The search has brought me to this village!<br>
+-I'm organizing an event I'm calling the <font color="LEVEL">Medal Collecting Event</font>! Anyone who brings medals will receive fabulous prizes! Meow!<br>
+-<a action="bypass -h Script HeavyMedal talk">"I want to trade medals for prizes."</a><br>
+-<a action="bypass Script HeavyMedal 31228-1.htm">"Tell me more about the event."</a><br>
+-<a action="bypass Script HeavyMedal 31228-2.htm">"What are the prizes?"</a>
++<html><body>Кот Рой, менеджер события:<br>
++Мяу! Привет! Я кот Рой!<br>
++Мой хозяин, великий коллекционер Баштал из гильдии Бронзового Ключа, попросил меня и моих друзей собрать медали, рассыпанные по всему миру. Поиски привели меня в этот город!<br>
++Я провожу <font color="LEVEL">сбор медалей</font>! Кто принесёт медали, получит отличные призы! Мяу!<br>
++<a action="bypass -h Script HeavyMedal talk">«Хочу обменять медали на призы.»</a><br>
++<a action="bypass Script HeavyMedal 31228-1.htm">«Расскажи о событии подробнее.»</a><br>
++<a action="bypass Script HeavyMedal 31228-2.htm">«Какие призы?»</a>
+ </body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/scripts/events/HeavyMedal/31229-1.htm b/dist/game/data/scripts/events/HeavyMedal/31229-1.htm
+index c11aebb8f999f08964ccc2b50624ee1fdcda44de..178b1d0ae17727067ad28f0b16c490f4c735738c 100644
+--- a/dist/game/data/scripts/events/HeavyMedal/31229-1.htm
++++ b/dist/game/data/scripts/events/HeavyMedal/31229-1.htm
+@@ -1,7 +1,7 @@
+-<html><body>Event Manager Winnie the Cat:<br>
+-<font color="LEVEL">1 - Medals and Prizes</font><br>
+-Hunting the monsters that dwell outside the village will yield medals. Bring them to me and I'll reward you with a fabulous prize, personally selected for you by Collector Bashtal!<br><br>
+-<font color="LEVEL">2 - Advancing Levels</font><br>
+-A collector's level reflects that player's contribution to the medal collection and collecting skill. You should raise your level as high as you can! Meow!! To raise your level, just bring me glittering medals and pass a simple test. Meow~!<br>
+-<a action="bypass Script HeavyMedal 31229.htm">Back</a>
++<html><body>Кошка Винни, менеджер события:<br>
++<font color="LEVEL">1 — Медали и призы</font><br>
++Монстры за пределами городов роняют медали. Неси их коту Рою — получишь приз, который лично отобрал коллекционер Баштал!<br><br>
++<font color="LEVEL">2 — Уровень коллекционера</font><br>
++Уровень коллекционера показывает вклад в коллекцию и умение собирать. Поднимай его как можно выше! Мяу!! Для этого просто принеси мне блестящие медали и пройди простое испытание. Мяу~!<br>
++<a action="bypass Script HeavyMedal 31229.htm">Назад</a>
+ </body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/scripts/events/HeavyMedal/31229-2.htm b/dist/game/data/scripts/events/HeavyMedal/31229-2.htm
+index 3218885dba015a9c11d9e08369d00faf65cf0e55..a4f3dd09dccbf5f922e61d56e70141ab5dd4d437 100644
+--- a/dist/game/data/scripts/events/HeavyMedal/31229-2.htm
++++ b/dist/game/data/scripts/events/HeavyMedal/31229-2.htm
+@@ -1,5 +1,5 @@
+-<html><body>Event Manager Winnie the Cat:<br>
+-Here are the <font color="LEVEL">event prizes</font> that have been prepared by my Lord Bashtal: <font color="LEVEL">Greater Haste Potion, Greater Swift Attack Potion, Greater Magic Haste Potion, Quick Healing Potion, Blessed Scroll of Escape, Blessed Scroll of Resurrection, Scroll: Enchant Armor (All Grades), Scroll: Enchant Weapon (All Grades), Red Party Mask, Soul Crystal (All Colors) - Stage 11, Soul Crystal (All Colors) - Stage 12, Sealed Majestic Necklace, Sealed Majestic Earring, and Sealed Majestic Ring</font>. Whew! An impressive list, eh? Meow!<br>
+-I don't think I missed anything. Roy the Cat over there will trade medals for prizes. Meow~!<br>
+-<a action="bypass Script HeavyMedal 31229.htm">Back</a>
++<html><body>Кошка Винни, менеджер события:<br>
++Вот <font color="LEVEL">призы события</font>, которые приготовил мой господин Баштал: <font color="LEVEL">Greater Haste Potion, Greater Swift Attack Potion, Greater Magic Haste Potion, Quick Healing Potion, Blessed Scroll of Escape, Blessed Scroll of Resurrection, Scroll: Enchant Armor (все грейды), Scroll: Enchant Weapon (все грейды), Red Party Mask, Soul Crystal (все цвета) — Stage 11, Soul Crystal (все цвета) — Stage 12, Sealed Majestic Necklace, Sealed Majestic Earring и Sealed Majestic Ring</font>. Ух! Внушительный список, а? Мяу!<br>
++Вроде ничего не забыла. Медали на призы меняет кот Рой — вон он. Мяу~!<br>
++<a action="bypass Script HeavyMedal 31229.htm">Назад</a>
+ </body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/scripts/events/HeavyMedal/31229-game.htm b/dist/game/data/scripts/events/HeavyMedal/31229-game.htm
+index 3eeb73d0e5a0bc1ad98f43717d7ed05033dd2ec1..7e13df3687262a47fc9dfc84cfe70256e84aef3c 100644
+--- a/dist/game/data/scripts/events/HeavyMedal/31229-game.htm
++++ b/dist/game/data/scripts/events/HeavyMedal/31229-game.htm
+@@ -1,7 +1,7 @@
+-<html><body>Event Manager Winnie the Cat:<br>
+-I'll toss a coin, and you call either heads or tails. Meow! <font color="LEVEL">When you guess correctly, I'll raise your level!!</font><br>
+-Now! Then... Fling! Whirl... whirl... whirl... slap!<br>
+-Meow~ What's it gonna be? Heads or tails?<br>
+-<a action="bypass -h Script HeavyMedal heads">"Heads!"</a><br>
+-<a action="bypass -h Script HeavyMedal tails">"Tails!"</a>
++<html><body>Кошка Винни, менеджер события:<br>
++Я подброшу монетку, а ты угадай: орёл или решка. Мяу! <font color="LEVEL">Угадаешь — подниму тебе уровень!!</font><br>
++Ну! Раз... Вжух! Кручу... кручу... кручу... шлёп!<br>
++Мяу~ Что выбираешь? Орёл или решка?<br>
++<a action="bypass -h Script HeavyMedal heads">«Орёл!»</a><br>
++<a action="bypass -h Script HeavyMedal tails">«Решка!»</a>
+ </body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/scripts/events/HeavyMedal/31229-heads-0.htm b/dist/game/data/scripts/events/HeavyMedal/31229-heads-0.htm
+index 7b7a215163951cdee26d2f6f2c07814c9ecfb02d..a14444c9ed9fe87f120ef35f954db7d9dd04e4fc 100644
+--- a/dist/game/data/scripts/events/HeavyMedal/31229-heads-0.htm
++++ b/dist/game/data/scripts/events/HeavyMedal/31229-heads-0.htm
+@@ -1,4 +1,4 @@
+-<html><body>Event Manager Winnie the Cat:<br>
+-Heads, eh? Let's see...<br>
+-Sorry, you lose! It's tails! Bring more glittering medals and I'll play the game with you again!
++<html><body>Кошка Винни, менеджер события:<br>
++Орёл, говоришь? Посмотрим...<br>
++Увы, мимо! Выпала решка! Принеси ещё блестящих медалей — сыграем снова!
+ </body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/scripts/events/HeavyMedal/31229-heads-1.htm b/dist/game/data/scripts/events/HeavyMedal/31229-heads-1.htm
+index 543a31f445563ab45d5b2d6beb761148263b84d2..31caaedea0c49a41f49ad064e9cc2cdcc574985f 100644
+--- a/dist/game/data/scripts/events/HeavyMedal/31229-heads-1.htm
++++ b/dist/game/data/scripts/events/HeavyMedal/31229-heads-1.htm
+@@ -1,5 +1,5 @@
+-<html><body>Event Manager Winnie the Cat:<br>
+-Heads? Let's see...<br>
+-Heads it is!!! Congratulations!<br>
+-<font color="LEVEL">Here is the token for rabbit!</font> Carry this mark with you to prove that you belong to the rabbit level. If you lose it, you won't be able to prove your level. Be careful with it!
++<html><body>Кошка Винни, менеджер события:<br>
++Орёл? Посмотрим...<br>
++Орёл!!! Поздравляю!<br>
++<font color="LEVEL">Вот знак уровня «Кролик»!</font> Носи его с собой — он доказывает твой уровень. Потеряешь — доказать уровень будет нечем. Береги его!
+ </body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/scripts/events/HeavyMedal/31229-heads-10.htm b/dist/game/data/scripts/events/HeavyMedal/31229-heads-10.htm
+index 6db3dc4352b7436602f1cb1f6d07a923d4ae335f..b1fadd71f52374479f15a77fbe7e12cc8fd11e6a 100644
+--- a/dist/game/data/scripts/events/HeavyMedal/31229-heads-10.htm
++++ b/dist/game/data/scripts/events/HeavyMedal/31229-heads-10.htm
+@@ -1,3 +1,3 @@
+-<html><body>Event Manager Winnie the Cat:<br>
+-You don't have enough glittering medals. Hmm, I thought you had enough... I suppose I was mistaken. Collect more glittering medals and bring them to me! Meow!!
++<html><body>Кошка Винни, менеджер события:<br>
++Блестящих медалей не хватает. Хм, мне казалось, что хватает... Видимо, ошиблась. Собери ещё блестящих медалей и приходи! Мяу!!
+ </body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/scripts/events/HeavyMedal/31229-heads-2.htm b/dist/game/data/scripts/events/HeavyMedal/31229-heads-2.htm
+index 4b12ee6e3b36e879f0c6c4cfc0be0025055f4882..a891d472c57b027633ae31134ae8ee254abe5c69 100644
+--- a/dist/game/data/scripts/events/HeavyMedal/31229-heads-2.htm
++++ b/dist/game/data/scripts/events/HeavyMedal/31229-heads-2.htm
+@@ -1,5 +1,5 @@
+-<html><body>Event Manager Winnie the Cat:<br>
+-Heads? Let's see...<br>
+-Heads it is!!! Congratulations!<br>
+-<font color="LEVEL">Here is the token for hyena!</font> Carry this mark with you to prove that you belong to the hyena level. If you lose it, you won't be able to prove your level. Be careful with it!
++<html><body>Кошка Винни, менеджер события:<br>
++Орёл? Посмотрим...<br>
++Орёл!!! Поздравляю!<br>
++<font color="LEVEL">Вот знак уровня «Гиена»!</font> Носи его с собой — он доказывает твой уровень. Потеряешь — доказать уровень будет нечем. Береги его!
+ </body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/scripts/events/HeavyMedal/31229-heads-3.htm b/dist/game/data/scripts/events/HeavyMedal/31229-heads-3.htm
+index fc38c6979a342cf8bf5ec0c1f3e3438533913e7f..b1c04844ab74f216cddf8d508d3e16fd262071d0 100644
+--- a/dist/game/data/scripts/events/HeavyMedal/31229-heads-3.htm
++++ b/dist/game/data/scripts/events/HeavyMedal/31229-heads-3.htm
+@@ -1,5 +1,5 @@
+-<html><body>Event Manager Winnie the Cat:<br>
+-Heads? Let's see...<br>
+-Heads it is!!! Congratulations!<br>
+-<font color="LEVEL">Here is the token for fox!</font> Carry this mark with you to prove that you belong to the fox level. If you lose it, you won't be able to prove your level. Be careful with it!
++<html><body>Кошка Винни, менеджер события:<br>
++Орёл? Посмотрим...<br>
++Орёл!!! Поздравляю!<br>
++<font color="LEVEL">Вот знак уровня «Лиса»!</font> Носи его с собой — он доказывает твой уровень. Потеряешь — доказать уровень будет нечем. Береги его!
+ </body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/scripts/events/HeavyMedal/31229-heads-4.htm b/dist/game/data/scripts/events/HeavyMedal/31229-heads-4.htm
+index b1ec212652c97223d7a359da38b70c8a2ede394b..988e63287d99f0098259a0792fca9f3e65c4aadf 100644
+--- a/dist/game/data/scripts/events/HeavyMedal/31229-heads-4.htm
++++ b/dist/game/data/scripts/events/HeavyMedal/31229-heads-4.htm
+@@ -1,5 +1,5 @@
+-<html><body>Event Manager Winnie the Cat:<br>
+-Heads? Let's see...<br>
+-Heads it is!!! Congratulations!<br>
+-<font color="LEVEL">Here is the token for wolf!</font> Carry this mark with you to prove that you belong to the wolf level. If you lose it, you won't be able to prove your level. Be careful with it!
++<html><body>Кошка Винни, менеджер события:<br>
++Орёл? Посмотрим...<br>
++Орёл!!! Поздравляю!<br>
++<font color="LEVEL">Вот знак уровня «Волк»!</font> Носи его с собой — он доказывает твой уровень. Потеряешь — доказать уровень будет нечем. Береги его!
+ </body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/scripts/events/HeavyMedal/31229-lvl-0.htm b/dist/game/data/scripts/events/HeavyMedal/31229-lvl-0.htm
+index 6ef7ff773163fefbdb6efa1caa1892eff98c1c5a..abeac09708683a403d9b2edd0c9fc25e64cbff4a 100644
+--- a/dist/game/data/scripts/events/HeavyMedal/31229-lvl-0.htm
++++ b/dist/game/data/scripts/events/HeavyMedal/31229-lvl-0.htm
+@@ -1,7 +1,7 @@
+-<html><body>Event Manager Winnie the Cat:<br>
+-A <font color="LEVEL">no level collector</font>, eh?<br>
+-<font color="LEVEL">If you'd like to try to raise your level, give me 5 glittering medals and I'll play a game with you! Meow!</font> If you lose, you can always try again!<br>
+-The game will help you develop the qualities you'll need as a collector. Meow! Your abilities are evaluated by the number of glittering medals you collect and your luck is tested by the number of times you win the game.<br>
+-You can play as long as you have glittering medals! Meow!! Would you like to give it a try?<br>
+-<a action="bypass -h Script HeavyMedal game">"I want to play the coin-toss game."</a>
++<html><body>Кошка Винни, менеджер события:<br>
++<font color="LEVEL">Коллекционер без уровня</font>, значит?<br>
++<font color="LEVEL">Хочешь поднять уровень — отдай мне 5 блестящих медалей, и сыграем! Мяу!</font> Проиграешь — всегда можно попробовать снова!<br>
++Игра развивает качества настоящего коллекционера. Мяу! Умение оценивается по числу собранных блестящих медалей, а удача — по числу побед в игре.<br>
++Играть можно, пока есть блестящие медали! Мяу!! Попробуешь?<br>
++<a action="bypass -h Script HeavyMedal game">«Хочу сыграть в монетку.»</a>
+ </body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/scripts/events/HeavyMedal/31229-lvl-1.htm b/dist/game/data/scripts/events/HeavyMedal/31229-lvl-1.htm
+index dec600ad39479682e1843d5c39465d8d10891051..588222c7a31a308b92d7eb59dacce6f0a0d6fa01 100644
+--- a/dist/game/data/scripts/events/HeavyMedal/31229-lvl-1.htm
++++ b/dist/game/data/scripts/events/HeavyMedal/31229-lvl-1.htm
+@@ -1,7 +1,7 @@
+-<html><body>Event Manager Winnie the Cat:<br>
+-Ah, a <font color="LEVEL">rabbit</font>, eh?<br>
+-<font color="LEVEL">To raise your level to hyena, pay me 10 glittering medals and I'll play a game with you! </font>Meow!<br>
+-The game is a test of both your luck and skill, the two essential qualities of a collector. Meow! Your abilities are evaluated by the number of glittering medals you collect, and your luck is tested by how often you win the game.<br>
+-If you lose, pay 10 more glittering medals and try again! You'll eventually win. Meow!! Would you like to give it a try?<br>
+-<a action="bypass -h Script HeavyMedal game">"I want to play the coin-toss game."</a>
++<html><body>Кошка Винни, менеджер события:<br>
++А, <font color="LEVEL">кролик</font>, значит?<br>
++<font color="LEVEL">Чтобы дорасти до гиены, отдай мне 10 блестящих медалей — и сыграем! </font>Мяу!<br>
++Игра проверяет и удачу, и умение — два главных качества коллекционера. Мяу! Умение оценивается по числу собранных блестящих медалей, удача — по тому, как часто ты выигрываешь.<br>
++Проиграешь — отдай ещё 10 блестящих медалей и пробуй снова! Рано или поздно выйдет. Мяу!! Попробуешь?<br>
++<a action="bypass -h Script HeavyMedal game">«Хочу сыграть в монетку.»</a>
+ </body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/scripts/events/HeavyMedal/31229-lvl-2.htm b/dist/game/data/scripts/events/HeavyMedal/31229-lvl-2.htm
+index 00ebf0605420fbcbd21400415b798677afff0ba9..7ba94d2b1f7056abf3e2133678852150feda61d5 100644
+--- a/dist/game/data/scripts/events/HeavyMedal/31229-lvl-2.htm
++++ b/dist/game/data/scripts/events/HeavyMedal/31229-lvl-2.htm
+@@ -1,6 +1,6 @@
+-<html><body>Event Manager Winnie the Cat:<br>
+-Ah, a <font color="LEVEL">hyena</font>, eh? I know you've been working hard, so I'll keep the explanation brief.<br>
+-<font color="LEVEL">If you wish to become a fox level collector, pay me 20 glittering medals and I'll play a game with you! Meow!</font> You can play as many times as you want, as long as you have enough glittering medals<br>
+-This game tests your ablities as well as your luck. Meow! Your abilities are evaluated by the number of glittering medals you collect and your luck is tested by the number of times you win the game!<br>
+-<a action="bypass -h Script HeavyMedal game">"I want to play the coin-toss game."</a>
++<html><body>Кошка Винни, менеджер события:<br>
++А, <font color="LEVEL">гиена</font>, значит? Знаю, как ты стараешься, так что коротко.<br>
++<font color="LEVEL">Хочешь стать лисой — отдай мне 20 блестящих медалей, и сыграем! Мяу!</font> Играть можно сколько угодно, пока хватает блестящих медалей.<br>
++Игра проверяет и умение, и удачу. Мяу! Умение — по числу собранных блестящих медалей, удача — по числу побед!<br>
++<a action="bypass -h Script HeavyMedal game">«Хочу сыграть в монетку.»</a>
+ </body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/scripts/events/HeavyMedal/31229-lvl-3.htm b/dist/game/data/scripts/events/HeavyMedal/31229-lvl-3.htm
+index cf1af8919a36d7f7f65c1a38699568e55d50c610..a8a99b6948de822764a853618f73c61d8fd6aa2a 100644
+--- a/dist/game/data/scripts/events/HeavyMedal/31229-lvl-3.htm
++++ b/dist/game/data/scripts/events/HeavyMedal/31229-lvl-3.htm
+@@ -1,6 +1,6 @@
+-<html><body>Event Manager Winnie the Cat:<br>
+-Wow! <font color="LEVEL">Are you really a fox level collector?</font> Meow! I wouldn't have known at first glance, but now that I get a closer look at you, I can see it in your eyes! I'm sure your'e already familiar with the game, so I'll keep the explanation brief...<br>
+-<font color="LEVEL">If you wish to become a wolf level collector, pay me 40 glittering medals and I'll play a game with you! Meow!</font> You can play as many times as you want, as long as you have enough glittering medals.<br>
+-The game tests both your abilities and your luck, the two essential qualities of a collector! Meow!<br>
+-<a action="bypass -h Script HeavyMedal game">"I want to play the coin-toss game."</a>
++<html><body>Кошка Винни, менеджер события:<br>
++Ого! <font color="LEVEL">Неужели лиса?</font> Мяу! С первого взгляда и не скажешь, но присмотрелась — по глазам видно! Правила ты наверняка знаешь, так что коротко...<br>
++<font color="LEVEL">Хочешь стать волком — отдай мне 40 блестящих медалей, и сыграем! Мяу!</font> Играть можно сколько угодно, пока хватает блестящих медалей.<br>
++Игра проверяет и умение, и удачу — два главных качества коллекционера! Мяу!<br>
++<a action="bypass -h Script HeavyMedal game">«Хочу сыграть в монетку.»</a>
+ </body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/scripts/events/HeavyMedal/31229-lvl-4.htm b/dist/game/data/scripts/events/HeavyMedal/31229-lvl-4.htm
+index 63ad7873d118463b9629d3fe2c5d0fbe9e69dc1e..6e9959fa1d0af6617c5bce5a33c3f9634b6f7607 100644
+--- a/dist/game/data/scripts/events/HeavyMedal/31229-lvl-4.htm
++++ b/dist/game/data/scripts/events/HeavyMedal/31229-lvl-4.htm
+@@ -1,3 +1,3 @@
+-<html><body>Event Manager Winnie the Cat:<br>
+-<font color="LEVEL">Wow, a wolf?!</font> I can't remember the last time I met a wolf level collector! You've reached the highest level possible! Great job! Meow!!!
++<html><body>Кошка Винни, менеджер события:<br>
++<font color="LEVEL">Ого, волк?!</font> Не помню, когда последний раз видела коллекционера-волка! Это высший уровень! Молодчина! Мяу!!!
+ </body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/scripts/events/HeavyMedal/31229-no.htm b/dist/game/data/scripts/events/HeavyMedal/31229-no.htm
+index 542a52936b89ddc30549086b631f99f88af304c8..06407f4315a72ec154016923fc09c86890927d8a 100644
+--- a/dist/game/data/scripts/events/HeavyMedal/31229-no.htm
++++ b/dist/game/data/scripts/events/HeavyMedal/31229-no.htm
+@@ -1,3 +1,3 @@
+-<html><body>Event Manager Winnie the Cat:<br>
+-You don't have enough glittering medals to play the coin-toss game. Collect some more medals and come back. Meow!!
++<html><body>Кошка Винни, менеджер события:<br>
++Блестящих медалей на игру в монетку не хватает. Собери ещё и приходи. Мяу!!
+ </body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/scripts/events/HeavyMedal/31229-tails-0.htm b/dist/game/data/scripts/events/HeavyMedal/31229-tails-0.htm
+index 3552caf1f0ea1b89a742b605b97153c1ad0e9da3..fd5b1b0eae2fc3803a6e96ea159a8c8e66cf202d 100644
+--- a/dist/game/data/scripts/events/HeavyMedal/31229-tails-0.htm
++++ b/dist/game/data/scripts/events/HeavyMedal/31229-tails-0.htm
+@@ -1,4 +1,4 @@
+-<html><body>Event Manager Winnie the Cat:<br>
+-Tails? Let's see...<br>
+-Sorry, you lose! Go collect more glittering medals and try again. Meow!
++<html><body>Кошка Винни, менеджер события:<br>
++Решка? Посмотрим...<br>
++Увы, мимо! Собери ещё блестящих медалей и попробуй снова. Мяу!
+ </body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/scripts/events/HeavyMedal/31229-tails-1.htm b/dist/game/data/scripts/events/HeavyMedal/31229-tails-1.htm
+index 1480e396ba73d575b3f1ee134179e93f7034f35e..19b98bd2392635584fa5970f5086f615246c1c86 100644
+--- a/dist/game/data/scripts/events/HeavyMedal/31229-tails-1.htm
++++ b/dist/game/data/scripts/events/HeavyMedal/31229-tails-1.htm
+@@ -1,4 +1,4 @@
+-<html><body>Event Manager Winnie the Cat:<br>
+-Tails? Let's see...<br>
+-Tails it is! Congratulations, you've reached <font color="LEVEL">rabbit level</font>! Keep this mark with you to prove it.
++<html><body>Кошка Винни, менеджер события:<br>
++Решка? Посмотрим...<br>
++Решка! Поздравляю, теперь у тебя уровень <font color="LEVEL">«Кролик»</font>! Носи этот знак с собой — он это доказывает.
+ </body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/scripts/events/HeavyMedal/31229-tails-10.htm b/dist/game/data/scripts/events/HeavyMedal/31229-tails-10.htm
+index 6db3dc4352b7436602f1cb1f6d07a923d4ae335f..b1fadd71f52374479f15a77fbe7e12cc8fd11e6a 100644
+--- a/dist/game/data/scripts/events/HeavyMedal/31229-tails-10.htm
++++ b/dist/game/data/scripts/events/HeavyMedal/31229-tails-10.htm
+@@ -1,3 +1,3 @@
+-<html><body>Event Manager Winnie the Cat:<br>
+-You don't have enough glittering medals. Hmm, I thought you had enough... I suppose I was mistaken. Collect more glittering medals and bring them to me! Meow!!
++<html><body>Кошка Винни, менеджер события:<br>
++Блестящих медалей не хватает. Хм, мне казалось, что хватает... Видимо, ошиблась. Собери ещё блестящих медалей и приходи! Мяу!!
+ </body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/scripts/events/HeavyMedal/31229-tails-2.htm b/dist/game/data/scripts/events/HeavyMedal/31229-tails-2.htm
+index d212467da59de31102bef4513d757bbc07125cfc..dd41a2384e253ebcc721b37c4429c056ca10cf6c 100644
+--- a/dist/game/data/scripts/events/HeavyMedal/31229-tails-2.htm
++++ b/dist/game/data/scripts/events/HeavyMedal/31229-tails-2.htm
+@@ -1,4 +1,4 @@
+-<html><body>Event Manager Winnie the Cat:<br>
+-Tails? Let me see...<br>
+-Tails it is! Congratulations, you've reached <font color="LEVEL">hyena level</font>! Keep this mark with you to prove it.
++<html><body>Кошка Винни, менеджер события:<br>
++Решка? Посмотрим...<br>
++Решка! Поздравляю, теперь у тебя уровень <font color="LEVEL">«Гиена»</font>! Носи этот знак с собой — он это доказывает.
+ </body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/scripts/events/HeavyMedal/31229-tails-3.htm b/dist/game/data/scripts/events/HeavyMedal/31229-tails-3.htm
+index 9ef9b95e03f9de3385d6df52a7935cbb4076b0e5..c2a34c7bf38969c0efdf7e848c0bc7acac70dcd1 100644
+--- a/dist/game/data/scripts/events/HeavyMedal/31229-tails-3.htm
++++ b/dist/game/data/scripts/events/HeavyMedal/31229-tails-3.htm
+@@ -1,4 +1,4 @@
+-<html><body>Event Manager Winnie the Cat:<br>
+-Tails? Let's see...<br>
+-Tails it is! Congratulations, you've reached <font color="LEVEL">fox level</font>! Keep this mark with you to prove it.
++<html><body>Кошка Винни, менеджер события:<br>
++Решка? Посмотрим...<br>
++Решка! Поздравляю, теперь у тебя уровень <font color="LEVEL">«Лиса»</font>! Носи этот знак с собой — он это доказывает.
+ </body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/scripts/events/HeavyMedal/31229-tails-4.htm b/dist/game/data/scripts/events/HeavyMedal/31229-tails-4.htm
+index ccc0fc8d7ba7cc57ed56aa07706e4fe885c9c5b7..0a280498b790da199f7981e1b0ca0b35389e092e 100644
+--- a/dist/game/data/scripts/events/HeavyMedal/31229-tails-4.htm
++++ b/dist/game/data/scripts/events/HeavyMedal/31229-tails-4.htm
+@@ -1,4 +1,4 @@
+-<html><body>Event Manager Winnie the Cat:<br>
+-Tails? Let's see...<br>
+-Tails it is! Congratulations, you've reached <font color="LEVEL">wolf level</font>! Keep this mark with you to prove it.
++<html><body>Кошка Винни, менеджер события:<br>
++Решка? Посмотрим...<br>
++Решка! Поздравляю, теперь у тебя уровень <font color="LEVEL">«Волк»</font>! Носи этот знак с собой — он это доказывает.
+ </body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/scripts/events/HeavyMedal/31229.htm b/dist/game/data/scripts/events/HeavyMedal/31229.htm
+index f063c164bb67ed9803e7906a3216e0f75a04d80e..182278f413ffd8b5be6407713a7083c3bdd6db2f 100644
+--- a/dist/game/data/scripts/events/HeavyMedal/31229.htm
++++ b/dist/game/data/scripts/events/HeavyMedal/31229.htm
+@@ -1,9 +1,9 @@
+-<html><body>Event Manager Winnie the Cat:<br>
+-Meow! Greetings! I'm Winnie the Cat!<br>
+-Our master, Collector Bashtal, formerly of the Bronze Key guild, has asked us to collect medals that were scattered throughout the world. We've come to this village as his personal emmissaries!<br>
+-We're organizing a <font color="LEVEL">Medal Collecting Event</font>! Would you like to participate? Collect medals and take them to Roy the Cat over there!<br>
+-There's so much to do, but I need a nap!! Meow!!<br>
+-<a action="bypass -h Script HeavyMedal talk">"I want to raise my level."</a><br>
+-<a action="bypass Script HeavyMedal 31229-1.htm">"Tell me more about the event."</a><br>
+-<a action="bypass Script HeavyMedal 31229-2.htm">"What are the prizes?"</a>
++<html><body>Кошка Винни, менеджер события:<br>
++Мяу! Привет! Я кошка Винни!<br>
++Наш хозяин, коллекционер Баштал, когда-то из гильдии Бронзового Ключа, попросил нас собрать медали, рассыпанные по всему миру. Мы пришли в этот город как его личные посланники!<br>
++Мы проводим <font color="LEVEL">сбор медалей</font>! Хочешь поучаствовать? Собирай медали и неси их коту Рою — вон он!<br>
++Дел столько, а мне бы вздремнуть!! Мяу!!<br>
++<a action="bypass -h Script HeavyMedal talk">«Хочу поднять уровень.»</a><br>
++<a action="bypass Script HeavyMedal 31229-1.htm">«Расскажи о событии подробнее.»</a><br>
++<a action="bypass Script HeavyMedal 31229-2.htm">«Какие призы?»</a>
+ </body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/scripts/events/HeavyMedal/config.xml b/dist/game/data/scripts/events/HeavyMedal/config.xml
+index e76f5d5388f483e0190e88948dd1813ffc03b64a..1b082ff99d183ad0ef09f1a213f24f14454e86d0 100644
+--- a/dist/game/data/scripts/events/HeavyMedal/config.xml
++++ b/dist/game/data/scripts/events/HeavyMedal/config.xml
+@@ -87,7 +87,7 @@
+ 		<add npc="31229" x="44294" y="-47642" z="-792" heading="50000" />
+ 	</spawnlist>
+ 	<messages>
+-		<add type="onEnd" text="Heavy Medal: Event end!" />
+-		<add type="onEnter" text="Heavy Medal Event: Collect Medals and trade them for prizes at Event Cats in every town! Hurry up, since the event will end at Feb 28th!" />
++		<add type="onEnd" text="Heavy Medal: событие окончено!" />
++		<add type="onEnter" text="Heavy Medal: с монстров падают медали. Меняй их на значки у котов события в каждом городе!" />
+ 	</messages>
+ </event>
+\ No newline at end of file
+diff --git a/dist/game/data/scripts/events/L2Day/config.xml b/dist/game/data/scripts/events/L2Day/config.xml
+index 581ce960281060576c9ed51d7fdd970364dc7d66..6aed3cced558e25ef12031e689e7227a40ecf218 100644
+--- a/dist/game/data/scripts/events/L2Day/config.xml
++++ b/dist/game/data/scripts/events/L2Day/config.xml
+@@ -24,7 +24,7 @@
+ 		<add npc="31858" x="-44810" y="-113388" z="-192" heading="15527" />
+ 	</spawnlist>
+ 	<messages>
+-		<add type="onEnd" text="L2 Day: Event end!" />
+-		<add type="onEnter" text="L2 Day Event: Collect letters from monsters. Create the words NCSOFT, CHRONICLE and LINEAGE II. Turn these letters to the Event Manager in the villages and win great prizes!" />
++		<add type="onEnd" text="L2 Day: событие окончено!" />
++		<add type="onEnter" text="L2 Day: с монстров падают буквы. Собери слова NCSOFT, CHRONICLE и LINEAGE II и отнеси менеджеру события в стартовых деревнях — там призы!" />
+ 	</messages>
+ </event>
+\ No newline at end of file
+diff --git a/dist/game/data/scripts/events/L2Day/manager-1.htm b/dist/game/data/scripts/events/L2Day/manager-1.htm
+index f1aacb4aa7a1a44e790993d2c2aebef82673839c..2845b28b95fbdb6c2c78632ed39e4db57b2c88e6 100644
+--- a/dist/game/data/scripts/events/L2Day/manager-1.htm
++++ b/dist/game/data/scripts/events/L2Day/manager-1.htm
+@@ -1,9 +1,9 @@
+-<html><body>Event Manager:<br>
+-Welcome!<br>
+-We are in the midst of the <font color="LEVEL">L2 Day Event</font>!<br>
+-How may I help you??<br>
+-<a action="bypass Script L2Day manager-2.htm">Ask about the event.</a><br>
+-<a action="bypass -h Script L2Day collect_l2">I've collected LINEAGEII!</a><br>
+-<a action="bypass -h Script L2Day collect_nc">I've collected NCSOFT!</a><br>
+-<a action="bypass -h Script L2Day collect_ch">I've collected CHRONICLE!</a>
++<html><body>Менеджер события:<br>
++Привет!<br>
++Сейчас идёт <font color="LEVEL">L2 Day</font>!<br>
++Чем помочь?<br>
++<a action="bypass Script L2Day manager-2.htm">Расскажи о событии.</a><br>
++<a action="bypass -h Script L2Day collect_l2">У меня есть LINEAGEII!</a><br>
++<a action="bypass -h Script L2Day collect_nc">У меня есть NCSOFT!</a><br>
++<a action="bypass -h Script L2Day collect_ch">У меня есть CHRONICLE!</a>
+ </body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/scripts/events/L2Day/manager-2.htm b/dist/game/data/scripts/events/L2Day/manager-2.htm
+index d73f596e2ff507542b6392c0d5e011ca624c54d0..f9c159c4f7edf5d757838490cba1be09881e392a 100644
+--- a/dist/game/data/scripts/events/L2Day/manager-2.htm
++++ b/dist/game/data/scripts/events/L2Day/manager-2.htm
+@@ -1,45 +1,30 @@
+-<html><body>Event Manager:<br>
+-<font color="LEVEL">Event Participation Method:</font><br>
+-While hunting monsters in Lineage 2, you have a chance of obtaining items marked with letters or numbers. Collect a certain combination of them and bring them to me, and I will exchange them for prizes!<br>
+-There are a total of 14 letters and numbers:<br1>
+-<font color="LEVEL">A</font>, <font color="LEVEL">C</font>, <font color="LEVEL">E</font>, <font color="LEVEL">F</font>, <font color="LEVEL">G</font>, <font color="LEVEL">H</font>, <font color="LEVEL">I</font>, <font color="LEVEL">L</font>, <font color="LEVEL">N</font>, <font color="LEVEL">O</font>, <font color="LEVEL">R</font>, <font color="LEVEL">S</font>, <font color="LEVEL">T</font> and <font color="LEVEL">II</font>.<br>
+-These letters and numbers can be combined to make the words <font color="LEVEL">LINEAGEII</font>, <font color="LEVEL">NCSOFT</font> and <font color="LEVEL">CHRONICLE</font>. The prizes are different for each combination. Different prizes may be awarded even for the same combinations.<br>
+-<font color="LEVEL">Event Prize Information:</font><br>
+-If you collect <font color="LEVEL">LINEAGEII</font>, you can receive one of the following prizes:<br1>
+-- 1 Ring of Queen Ant<br1>
+-- 1 Top-Grade Life Stone: level 76<br1>
+-- 2 High-Grade Life Stones: level 76<br1>
+-- 2 Blessed Scrolls of Resurrection<br1>
+-- 2 Blessed Scrolls of Escape<br1>
+-- 1 Rabbit Ears<br1>
+-- 1 Little Angel Wings<br1>
+-- 1 Fairy Antennae<br1>
+-- 2 Village Scrolls of Escape<br1>
+-- 2 Attribute Stones<br1>
+-- 3 Enhancement Drinks<br>
+-If you collect <font color="LEVEL">NCSOFT</font>, you can receive one of the following prizes:<br1>
+-- 1 Earring of Orfen<br1>
+-- 1 High-Grade Life Stone: level 76<br1>
+-- 2 Mid-Grade Life Stones: level 76<br1>
+-- 1 Blessed Scroll of Resurrection<br1>
+-- 1 Blessed Scroll of Escape<br1>
+-- 1 Little Angel Wings<br1>
+-- 1 Fairy Antennae<br1>
+-- 1 Feathered Hat<br1>
+-- 1 Village Scroll of Escape<br1>
+-- 1 Attribute Stone<br1>
+-- 2 Enhancement Drinks<br>
+-If you collect <font color="LEVEL">CHRONICLE</font>, you can receive one of the following prizes:<br1>
+-- 1 Ring of Core<br1>
+-- 1 High-Grade Life Stone: level 76<br1>
+-- 1 Mid-Grade Life Stone: level 76<br1>
+-- 1 Blessed Scroll of Resurrection<br1>
+-- 1 Blessed Scroll of Escape<br1>
+-- 1 Fairy Antennae<br1>
+-- 1 Feathered Hat<br1>
+-- 1 Artisan's Goggles<br1>
+-- 1 Village Scroll of Escape<br1>
+-- 1 Attribute Stone<br1>
+-- 1 Enhancement Drink<br>
+-<a action="bypass Script L2Day manager-1.htm">Back</a>
++<html><body>Менеджер события:<br>
++<font color="LEVEL">Как участвовать:</font><br>
++С монстров по всему миру падают буквы и цифра. Сложи из них слово и принеси мне — обменяю на приз.<br>
++Всего 14 знаков:<br1>
++<font color="LEVEL">A</font>, <font color="LEVEL">C</font>, <font color="LEVEL">E</font>, <font color="LEVEL">F</font>, <font color="LEVEL">G</font>, <font color="LEVEL">H</font>, <font color="LEVEL">I</font>, <font color="LEVEL">L</font>, <font color="LEVEL">N</font>, <font color="LEVEL">O</font>, <font color="LEVEL">R</font>, <font color="LEVEL">S</font>, <font color="LEVEL">T</font> и <font color="LEVEL">II</font>.<br>
++Из них складываются слова <font color="LEVEL">LINEAGEII</font> (две E), <font color="LEVEL">NCSOFT</font> и <font color="LEVEL">CHRONICLE</font> (две C). За каждое слово — свой набор призов, приз выпадает случайно.<br>
++<font color="LEVEL">Призы:</font><br>
++За <font color="LEVEL">LINEAGEII</font>:<br1>
++- чаще всего — Rabbit Ears<br1>
++- 2 Village Scroll of Escape<br1>
++- Little Angel Wings, Fairy Antennae<br1>
++- 2 Blessed Scroll of Resurrection, 2 Blessed Scroll of Escape<br1>
++- 2 High-Grade Life Stone: level 76, Top-Grade Life Stone: level 76<br1>
++- изредка — Ring of Queen Ant<br>
++За <font color="LEVEL">NCSOFT</font>:<br1>
++- чаще всего — Little Angel Wings<br1>
++- Village Scroll of Escape<br1>
++- Fairy Antennae, Feathered Hat<br1>
++- Blessed Scroll of Resurrection, Blessed Scroll of Escape<br1>
++- 2 Mid-Grade Life Stone: level 76, High-Grade Life Stone: level 76<br1>
++- изредка — Earring of Orfen<br>
++За <font color="LEVEL">CHRONICLE</font>:<br1>
++- чаще всего — Fairy Antennae<br1>
++- Village Scroll of Escape<br1>
++- Feathered Hat, Artisan's Goggles<br1>
++- Blessed Scroll of Resurrection, Blessed Scroll of Escape<br1>
++- Mid-Grade Life Stone: level 76, High-Grade Life Stone: level 76<br1>
++- изредка — Ring of Core<br>
++<a action="bypass Script L2Day manager-1.htm">Назад</a>
+ </body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/scripts/events/L2Day/manager-no.htm b/dist/game/data/scripts/events/L2Day/manager-no.htm
+index d35f53b9aac03a9b2fdb0ae382fc9aba7fef248f..0405a08943df285ab35495bc05bcb3e9fcbabcb4 100644
+--- a/dist/game/data/scripts/events/L2Day/manager-no.htm
++++ b/dist/game/data/scripts/events/L2Day/manager-no.htm
+@@ -1,6 +1,6 @@
+-<html><body>Event Manager:<br>
+-Oh no!<br>
+-You don't have enough letters to make a word.<br>
+-Collect more letters and come back.<br>
+-<a action="bypass Script L2Day manager-1.htm">Back</a>
++<html><body>Менеджер события:<br>
++Ой!<br>
++Букв не хватает, чтобы сложить слово.<br>
++Собери ещё и приходи.<br>
++<a action="bypass Script L2Day manager-1.htm">Назад</a>
+ </body></html>
+\ No newline at end of file
+diff --git a/java/org/l2jmobius/gameserver/mechanics/script/LongTimeEvent.java b/java/org/l2jmobius/gameserver/mechanics/script/LongTimeEvent.java
+index 4dceca4c47decb802ad9bb99a672d10973ebd3d6..50dde7add5e89f5501cfc229a2644f06adcfdb7d 100644
+--- a/java/org/l2jmobius/gameserver/mechanics/script/LongTimeEvent.java
++++ b/java/org/l2jmobius/gameserver/mechanics/script/LongTimeEvent.java
+@@ -21,6 +21,9 @@
+ package org.l2jmobius.gameserver.mechanics.script;
+ 
+ import java.io.File;
++import java.io.Reader;
++import java.nio.charset.StandardCharsets;
++import java.nio.file.Files;
+ import java.sql.Connection;
+ import java.sql.PreparedStatement;
+ import java.sql.SQLException;
+@@ -33,6 +36,7 @@ import java.util.Date;
+ import java.util.HashSet;
+ import java.util.List;
+ import java.util.Locale;
++import java.util.Properties;
+ import java.util.Set;
+ import java.util.function.Consumer;
+ 
+@@ -187,6 +191,91 @@ public class LongTimeEvent extends Script
+ 		return null;
+ 	}
+ 	
++	/**
++	 * L2Hub: окно события из config/Custom/L2HubEvents.ini — «дд ММ-дд ММ» (каждый год; конец не позже начала — через Новый год),
++	 * «дд ММ гггг-дд ММ гггг» или Off.<br>
++	 * Нет файла, Enabled = False, нет ключа или значение не по формату — окно из config.xml события, как в Mobius.
++	 * @param name имя скрипта события (папка в data/scripts/events)
++	 * @return окно, «Off» или {@code null}
++	 */
++	private static String l2hubCalendar(String name)
++	{
++		final File file = new File("./config/Custom/L2HubEvents.ini");
++		if (!file.isFile())
++		{
++			return null;
++		}
++		
++		final Properties properties = new Properties();
++		try (Reader reader = Files.newBufferedReader(file.toPath(), StandardCharsets.UTF_8))
++		{
++			properties.load(reader);
++		}
++		catch (Exception e)
++		{
++			LOGGER.warning("L2HubEvents.ini: " + e.getMessage());
++			return null;
++		}
++		
++		if ("false".equalsIgnoreCase(properties.getProperty("Enabled", "True").trim()))
++		{
++			return null;
++		}
++		
++		final String value = properties.getProperty(name, "").trim();
++		if (value.equalsIgnoreCase("off") || (value.length() == 21))
++		{
++			return value;
++		}
++		
++		if (value.length() == 11)
++		{
++			return l2hubAnnual(name, value);
++		}
++		
++		if (!value.isEmpty())
++		{
++			LOGGER.warning("L2HubEvents.ini: " + name + " = " + value + " — not «dd MM-dd MM» or «dd MM yyyy-dd MM yyyy», using config.xml.");
++		}
++		return null;
++	}
++	
++	/**
++	 * L2Hub: ежегодное окно «дд ММ-дд ММ» → «дд ММ гггг-дд ММ гггг». Конец — начало указанного дня, как у Mobius; конец не позже
++	 * начала — окно переходит через Новый год: «01 12-01 01» — весь декабрь с 31-м, «01 01-01 01» — весь год.
++	 * @param name имя скрипта события
++	 * @param value окно «дд ММ-дд ММ»
++	 * @return окно с годами или {@code null}, если даты не разобрать
++	 */
++	private static String l2hubAnnual(String name, String value)
++	{
++		try
++		{
++			final String[] parts = value.split("-");
++			final LocalDate today = LocalDate.now();
++			LocalDate start = LocalDate.parse(parts[0].trim() + " " + today.getYear(), DATE_FORMAT);
++			LocalDate end = LocalDate.parse(parts[1].trim() + " " + today.getYear(), DATE_FORMAT);
++			if (!end.isAfter(start))
++			{
++				// Через Новый год: сегодня ещё до конца — окно началось в прошлом году, иначе кончится в следующем.
++				if (today.isBefore(end))
++				{
++					start = start.minusYears(1);
++				}
++				else
++				{
++					end = end.plusYears(1);
++				}
++			}
++			return start.format(DATE_FORMAT) + "-" + end.format(DATE_FORMAT);
++		}
++		catch (Exception e)
++		{
++			LOGGER.warning("L2HubEvents.ini: " + name + " = " + value + " — " + e.getMessage() + ", using config.xml.");
++			return null;
++		}
++	}
++	
+ 	/**
+ 	 * Load event configuration file
+ 	 */
+@@ -210,8 +299,16 @@ public class LongTimeEvent extends Script
+ 				
+ 				_eventName = document.getDocumentElement().getAttributes().getNamedItem("name").getNodeValue();
+ 				final String currentYear = String.valueOf(Calendar.getInstance().get(Calendar.YEAR));
+-				final String period = document.getDocumentElement().getAttributes().getNamedItem("active").getNodeValue();
+-				String dropPeriod = document.getDocumentElement().getAttributes().getNamedItem("dropPeriod") != null ? document.getDocumentElement().getAttributes().getNamedItem("dropPeriod").getNodeValue() : null;
++				// L2Hub: календарь событий — окно из config/Custom/L2HubEvents.ini (ключ — имя скрипта события), Off — выключено.
++				final String calendar = l2hubCalendar(getName());
++				if ("off".equalsIgnoreCase(calendar))
++				{
++					LOGGER.info("Event " + _eventName + " is turned off in L2HubEvents.ini.");
++					return;
++				}
++				
++				final String period = calendar != null ? calendar : document.getDocumentElement().getAttributes().getNamedItem("active").getNodeValue();
++				String dropPeriod = (calendar == null) && (document.getDocumentElement().getAttributes().getNamedItem("dropPeriod") != null) ? document.getDocumentElement().getAttributes().getNamedItem("dropPeriod").getNodeValue() : null;
+ 				
+ 				// If no drop period is defined, use the active period as the drop period.
+ 				if ((dropPeriod == null) || dropPeriod.isEmpty())

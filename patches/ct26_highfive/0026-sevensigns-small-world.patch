@@ -1,0 +1,27 @@
+diff --git a/dist/game/config/Feature.ini b/dist/game/config/Feature.ini
+index 519d5345c2ff631f404e727856cbd6d489f93cf8..a1233ee82ae8ad6e11e9e0e5b83d4be1e7151ffe 100644
+--- a/dist/game/config/Feature.ini
++++ b/dist/game/config/Feature.ini
+@@ -207,8 +207,10 @@ FortressMaximumOwnTime = 168
+ # ---------------------------------------------------------------------------
+ # Determine any player can use Necropoils and catacoms independing seal status or period.
+ # Default: False
+-AltOpenCatacumbs = False
+-AltOpenNecropolis = False
++# L2Hub (малый мир): было False — катакомбы открыты всем: одиночке не набрать голосов за Печать Гнозиса.
++AltOpenCatacumbs = True
++# L2Hub (малый мир): было False — некрополи открыты всем: одиночке не набрать голосов за Печать Алчности.
++AltOpenNecropolis = True
+ 
+ # Determines whether castle ownership is determined by clan or by alliance.
+ # Default is by alliance, as on official servers.
+@@ -226,7 +228,8 @@ AltCastleForDusk = True
+ 
+ # Minimum Players for participate in SevenSigns Festival.
+ # Default: 5
+-AltFestivalMinPlayer = 5
++# L2Hub (малый мир): было 5 — Фестиваль тьмы для игрока с напарником (без пати не пускают).
++AltFestivalMinPlayer = 2
+ 
+ # Maximum seal stone contribution per player during festival.
+ # Default: 1000000

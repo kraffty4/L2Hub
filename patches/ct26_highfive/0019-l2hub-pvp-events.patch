@@ -1,0 +1,357 @@
+diff --git a/dist/game/config/Custom/L2HubEvents.ini b/dist/game/config/Custom/L2HubEvents.ini
+index 127843bb103bda69b32a8dd388c1f9d06983cc45..2fff926ff38475682164fd637271bd8971b0566b 100644
+--- a/dist/game/config/Custom/L2HubEvents.ini
++++ b/dist/game/config/Custom/L2HubEvents.ini
+@@ -42,3 +42,27 @@ MasterOfEnchanting = 07 10-15 11
+ 
+ # Freya Celebration: праздник Фреи — подарки у NPC события.
+ FreyaCelebration = 16 11-01 01
++
++# ---------------------------------------------------------------------------
++# PvP-ивенты Mobius (custom/events: TvT, Deathmatch, CtF) по расписанию — data/scripts/custom/L2HubPvpEvents
++# ---------------------------------------------------------------------------
++# Для охотников-фантомов: ядро фантомов записывает их на открытую регистрацию (HunterPvpEvents в PhantomHunters.ini).
++# Без охотников в одиночку ивент не набирает участников (от 4), и Mobius отменяет его сам.
++# False — расписания нет, порог уровня в скриптах ивентов прежний (76, у Deathmatch в H5 и Epilogue — 85).
++# Default: False
++PvpEvents = False
++
++# Старт только при живом игроке в мире (с клиентом; фантомы и офлайн-торговцы не считаются).
++# Default: True
++PvpOnlyWithPlayers = True
++
++# Порог уровня участника вместо зашитого в скриптах — действует, пока PvpEvents = True. 1 — любой уровень: на свежем
++# мире охотники долго ходят ниже 20-го (прогон Interlude 2026-10-21 — все 7–10-го), и порог 20 не пускал ни одного.
++# Default: 1
++PvpMinLevel = 1
++
++# Расписание — крон «минуты часы день месяц день_недели», как schedule у Mobius; пусто — не запускать.
++# Пока идёт один PvP-ивент (менеджер в мире), следующий не стартует. Регистрация 10 мин, бой 20 мин (Deathmatch — 1 и 3).
++TvT = 0 */3 * * *
++Deathmatch = 0 1-23/3 * * *
++CtF = 0 2-23/3 * * *
+diff --git a/dist/game/data/scripts/custom/L2HubPvpEvents/L2HubPvpEvents.java b/dist/game/data/scripts/custom/L2HubPvpEvents/L2HubPvpEvents.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..8e736b97f4fc3ee461ad9d94c5c576eaeeb911db
+--- /dev/null
++++ b/dist/game/data/scripts/custom/L2HubPvpEvents/L2HubPvpEvents.java
+@@ -0,0 +1,217 @@
++/*
++ * This file is part of the L2J Mobius project.
++ *
++ * This program is free software: you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation, either version 3 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
++ * General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program. If not, see <http://www.gnu.org/licenses/>.
++ */
++package custom.L2HubPvpEvents;
++
++import java.io.Reader;
++import java.nio.charset.StandardCharsets;
++import java.nio.file.Files;
++import java.nio.file.Path;
++import java.nio.file.Paths;
++import java.util.Properties;
++import java.util.Set;
++import java.util.logging.Logger;
++
++import org.l2jmobius.commons.threads.ThreadPool;
++import org.l2jmobius.commons.time.SchedulingPattern;
++import org.l2jmobius.commons.time.TimeUtil;
++import org.l2jmobius.gameserver.entity.World;
++import org.l2jmobius.gameserver.entity.WorldObject;
++import org.l2jmobius.gameserver.entity.actor.Npc;
++import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.managers.ScriptManager;
++import org.l2jmobius.gameserver.mechanics.script.Event;
++import org.l2jmobius.gameserver.mechanics.script.Quest;
++
++/**
++ * L2Hub: PvP-ивенты Mobius (custom/events: TvT, Deathmatch, CtF) по расписанию из config/Custom/L2HubEvents.ini — для
++ * охотников-фантомов, которых ядро фантомов записывает на открытую регистрацию; без них в одиночку ивент не набирает
++ * участников и Mobius отменяет его сам.<br>
++ * PvpEvents = False (по умолчанию) — расписания нет и порог уровня в скриптах прежний. Ключи TvT, Deathmatch, CtF — крон
++ * «минуты часы день месяц день_недели» (SchedulingPattern Mobius), пусто — не запускать. PvpOnlyWithPlayers — старт только
++ * при живом игроке в мире (с клиентом, не фантом и не офлайн-торговец). PvpMinLevel — порог уровня вместо зашитого в
++ * скриптах (их константа MINIMUM_PARTICIPANT_LEVEL берёт его через minLevel). Пока идёт любой из трёх ивентов (в мире
++ * стоит его менеджер или кто-то записан либо на арене), следующий не стартует: у Deathmatch на арене менеджера нет.
++ * Перед ареной скрипты выкидывают вышедших из игры через offline: фантомы без клиента остаются в списке.
++ * Скрипт хронико-независимый: Interlude, Gracia Epilogue, High Five.
++ * @author L2Hub
++ */
++public class L2HubPvpEvents
++{
++	private static final Logger LOGGER = Logger.getLogger(L2HubPvpEvents.class.getName());
++	private static final Path CONFIG = Paths.get("./config/Custom/L2HubEvents.ini");
++	private static final String[] EVENTS =
++	{
++		"TvT",
++		"Deathmatch",
++		"CtF"
++	};
++	private static final Set<Integer> MANAGERS = Set.of(70010, 70011, 70012);
++
++	private final boolean _onlyWithPlayers;
++
++	private L2HubPvpEvents(Properties config)
++	{
++		_onlyWithPlayers = !"false".equalsIgnoreCase(config.getProperty("PvpOnlyWithPlayers", "True").trim());
++		for (String name : EVENTS)
++		{
++			final String pattern = config.getProperty(name, "").trim();
++			if (pattern.isEmpty())
++			{
++				continue;
++			}
++			try
++			{
++				schedule(name, new SchedulingPattern(pattern));
++			}
++			catch (Exception e)
++			{
++				LOGGER.warning("L2HubPvpEvents: " + name + " = " + pattern + " — не крон: " + e.getMessage());
++			}
++		}
++	}
++
++	private void schedule(String name, SchedulingPattern pattern)
++	{
++		final long delay = pattern.getDelayToNextFromNow();
++		ThreadPool.schedule(() ->
++		{
++			fire(name);
++			schedule(name, pattern);
++		}, delay + 5000); // +5 с, как у Mobius: не попасть в ту же минуту повторно
++		LOGGER.info("L2HubPvpEvents: " + name + " — следующий старт " + TimeUtil.getDateTimeString(System.currentTimeMillis() + delay));
++	}
++
++	private void fire(String name)
++	{
++		if (_onlyWithPlayers && !livePlayerOnline())
++		{
++			LOGGER.info("L2HubPvpEvents: " + name + " пропущен — в мире нет живого игрока.");
++			return;
++		}
++		if (eventRunning())
++		{
++			LOGGER.info("L2HubPvpEvents: " + name + " пропущен — идёт PvP-ивент.");
++			return;
++		}
++		final Quest script = ScriptManager.getInstance().getScript(name);
++		if (!(script instanceof Event event))
++		{
++			LOGGER.warning("L2HubPvpEvents: нет ивента " + name + " среди скриптов.");
++			return;
++		}
++		LOGGER.info("L2HubPvpEvents: " + (event.eventStart(null) ? "старт " + name + "." : name + " не стартовал — уже идёт."));
++	}
++
++	private static boolean livePlayerOnline()
++	{
++		for (Player player : World.getPlayers())
++		{
++			if ((player.getClient() != null) && !player.getClient().isDetached() && !player.isInOfflineMode())
++			{
++				return true;
++			}
++		}
++		return false;
++	}
++
++	private static boolean eventRunning()
++	{
++		for (Player player : World.getPlayers())
++		{
++			if (player.isRegisteredOnEvent() || player.isOnEvent())
++			{
++				return true;
++			}
++		}
++		for (WorldObject object : World.getVisibleObjects())
++		{
++			if ((object instanceof Npc npc) && MANAGERS.contains(npc.getId()))
++			{
++				return true;
++			}
++		}
++		return false;
++	}
++
++	/**
++	 * Участник вышел из игры — скрипт ивента убирает его перед ареной. У Mobius там isOnlineInt() != 1, а это и фантомы
++	 * (персонажи без клиента): их выкидывало, ивент отменялся «мало участников», флаг записи у них оставался.
++	 * @param player участник
++	 * @return не в игре или офлайн-торговец
++	 */
++	public static boolean offline(Player player)
++	{
++		return (player == null) || !player.isOnline() || (player.isOnlineInt() == 2);
++	}
++
++	private static Properties config()
++	{
++		final Properties properties = new Properties();
++		if (Files.isRegularFile(CONFIG))
++		{
++			try (Reader reader = Files.newBufferedReader(CONFIG, StandardCharsets.UTF_8))
++			{
++				properties.load(reader);
++			}
++			catch (Exception e)
++			{
++				LOGGER.warning("L2HubPvpEvents: " + CONFIG + ": " + e.getMessage());
++			}
++		}
++		return properties;
++	}
++
++	private static boolean enabled(Properties config)
++	{
++		return "true".equalsIgnoreCase(config.getProperty("PvpEvents", "False").trim());
++	}
++
++	/**
++	 * Порог уровня участника PvP-ивента: PvpMinLevel из L2HubEvents.ini, если PvpEvents = True, иначе прежний порог скрипта.
++	 * @param original порог, зашитый в скрипте ивента
++	 * @return порог уровня
++	 */
++	public static int minLevel(int original)
++	{
++		final Properties config = config();
++		if (!enabled(config))
++		{
++			return original;
++		}
++		try
++		{
++			return Math.max(1, Integer.parseInt(config.getProperty("PvpMinLevel", String.valueOf(original)).trim()));
++		}
++		catch (NumberFormatException e)
++		{
++			return original;
++		}
++	}
++
++	public static void main(String[] args)
++	{
++		final Properties config = config();
++		if (enabled(config))
++		{
++			new L2HubPvpEvents(config);
++		}
++		else
++		{
++			LOGGER.info("L2HubPvpEvents: PvP-ивенты по расписанию выключены (PvpEvents = False в L2HubEvents.ini).");
++		}
++	}
++}
+diff --git a/dist/game/data/scripts/custom/events/CaptureTheFlag/CtF.java b/dist/game/data/scripts/custom/events/CaptureTheFlag/CtF.java
+index 076dab61ff54b89338249c92ec851b8aaccdfb06..9c60b0cfc3538b404739b24c4a160e8c803048e5 100644
+--- a/dist/game/data/scripts/custom/events/CaptureTheFlag/CtF.java
++++ b/dist/game/data/scripts/custom/events/CaptureTheFlag/CtF.java
+@@ -179,7 +179,7 @@ public class CtF extends Event
+ 	private static final int WAIT_TIME = 1; // Minutes
+ 	private static final int FIGHT_TIME = 20; // Minutes
+ 	private static final int INACTIVITY_TIME = 2; // Minutes
+-	private static final int MINIMUM_PARTICIPANT_LEVEL = 76;
++	private static final int MINIMUM_PARTICIPANT_LEVEL = custom.L2HubPvpEvents.L2HubPvpEvents.minLevel(76); // L2Hub: PvpMinLevel
+ 	private static final int MAXIMUM_PARTICIPANT_LEVEL = 200;
+ 	private static final int MINIMUM_PARTICIPANT_COUNT = 4;
+ 	private static final int MAXIMUM_PARTICIPANT_COUNT = 24; // Scoreboard has 25 slots
+@@ -367,7 +367,7 @@ public class CtF extends Event
+ 				// Remove offline players.
+ 				for (Player participant : PLAYER_LIST)
+ 				{
+-					if ((participant == null) || (participant.isOnlineInt() != 1))
++					if (custom.L2HubPvpEvents.L2HubPvpEvents.offline(participant)) // L2Hub: фантомы без клиента — в игре
+ 					{
+ 						PLAYER_LIST.remove(participant);
+ 						PLAYER_SCORES.remove(participant);
+@@ -978,7 +978,7 @@ public class CtF extends Event
+ 		if (creature.isPlayable())
+ 		{
+ 			final Player player = creature.asPlayer();
+-			if (player.isOnEvent())
++			if (player.isOnEvent() && (PVP_WORLD != null) && PLAYER_LIST.contains(player)) // L2Hub: зоны Колизея общие у TvT и CtF — только свои участники
+ 			{
+ 				// Kick enemy players.
+ 				if ((zone == BLUE_PEACE_ZONE) && (creature.getTeam() == Team.RED))
+@@ -1024,7 +1024,7 @@ public class CtF extends Event
+ 		if (creature.isPlayer())
+ 		{
+ 			final Player player = creature.asPlayer();
+-			if (player.isOnEvent())
++			if (player.isOnEvent() && (PVP_WORLD != null) && PLAYER_LIST.contains(player)) // L2Hub: зоны Колизея общие у TvT и CtF — только свои участники
+ 			{
+ 				cancelQuestTimer("KickPlayer" + player.getObjectId(), null, player);
+ 				cancelQuestTimer("KickPlayerWarning" + player.getObjectId(), null, player);
+diff --git a/dist/game/data/scripts/custom/events/Deathmatch/Deathmatch.java b/dist/game/data/scripts/custom/events/Deathmatch/Deathmatch.java
+index 9c789eb5236bec6eb6a149169a935576c965dce2..0d31bf529c14327a9a336726051ee47cf75c1895 100644
+--- a/dist/game/data/scripts/custom/events/Deathmatch/Deathmatch.java
++++ b/dist/game/data/scripts/custom/events/Deathmatch/Deathmatch.java
+@@ -115,7 +115,7 @@ public class Deathmatch extends Event
+ 	private static final int WAIT_TIME = 20; // Seconds
+ 	private static final int FIGHT_TIME = 3; // Minutes
+ 	private static final int INACTIVITY_TIME = 2; // Minutes
+-	private static final int MINIMUM_PARTICIPANT_LEVEL = 85;
++	private static final int MINIMUM_PARTICIPANT_LEVEL = custom.L2HubPvpEvents.L2HubPvpEvents.minLevel(85); // L2Hub: PvpMinLevel
+ 	private static final int MAXIMUM_PARTICIPANT_LEVEL = 200;
+ 	private static final int MINIMUM_PARTICIPANT_COUNT = 4;
+ 	private static final int MAXIMUM_PARTICIPANT_COUNT = 24; // Scoreboard has 25 slots
+@@ -288,7 +288,7 @@ public class Deathmatch extends Event
+ 				// Remove offline players.
+ 				for (Player participant : PLAYER_LIST)
+ 				{
+-					if ((participant == null) || (participant.isOnlineInt() != 1))
++					if (custom.L2HubPvpEvents.L2HubPvpEvents.offline(participant)) // L2Hub: фантомы без клиента — в игре
+ 					{
+ 						PLAYER_LIST.remove(participant);
+ 						PLAYER_SCORES.remove(participant);
+diff --git a/dist/game/data/scripts/custom/events/TeamVsTeam/TvT.java b/dist/game/data/scripts/custom/events/TeamVsTeam/TvT.java
+index ee48b0324e11750776f2410d2bc5c6a0b780d10f..cd759acd43932817a15eab589092dbc9626f34d0 100644
+--- a/dist/game/data/scripts/custom/events/TeamVsTeam/TvT.java
++++ b/dist/game/data/scripts/custom/events/TeamVsTeam/TvT.java
+@@ -140,7 +140,7 @@ public class TvT extends Event
+ 	private static final int WAIT_TIME = 1; // Minutes
+ 	private static final int FIGHT_TIME = 20; // Minutes
+ 	private static final int INACTIVITY_TIME = 2; // Minutes
+-	private static final int MINIMUM_PARTICIPANT_LEVEL = 76;
++	private static final int MINIMUM_PARTICIPANT_LEVEL = custom.L2HubPvpEvents.L2HubPvpEvents.minLevel(76); // L2Hub: PvpMinLevel
+ 	private static final int MAXIMUM_PARTICIPANT_LEVEL = 200;
+ 	private static final int MINIMUM_PARTICIPANT_COUNT = 4;
+ 	private static final int MAXIMUM_PARTICIPANT_COUNT = 24; // Scoreboard has 25 slots
+@@ -326,7 +326,7 @@ public class TvT extends Event
+ 				// Remove offline players.
+ 				for (Player participant : PLAYER_LIST)
+ 				{
+-					if ((participant == null) || (participant.isOnlineInt() != 1))
++					if (custom.L2HubPvpEvents.L2HubPvpEvents.offline(participant)) // L2Hub: фантомы без клиента — в игре
+ 					{
+ 						PLAYER_LIST.remove(participant);
+ 						PLAYER_SCORES.remove(participant);
+@@ -797,7 +797,7 @@ public class TvT extends Event
+ 		if (creature.isPlayable())
+ 		{
+ 			final Player player = creature.asPlayer();
+-			if (player.isOnEvent())
++			if (player.isOnEvent() && (PVP_WORLD != null) && PLAYER_LIST.contains(player)) // L2Hub: зоны Колизея общие у TvT и CtF — только свои участники
+ 			{
+ 				// Kick enemy players.
+ 				if ((zone == BLUE_PEACE_ZONE) && (creature.getTeam() == Team.RED))
+@@ -829,7 +829,7 @@ public class TvT extends Event
+ 		if (creature.isPlayer())
+ 		{
+ 			final Player player = creature.asPlayer();
+-			if (player.isOnEvent())
++			if (player.isOnEvent() && (PVP_WORLD != null) && PLAYER_LIST.contains(player)) // L2Hub: зоны Колизея общие у TvT и CtF — только свои участники
+ 			{
+ 				cancelQuestTimer("KickPlayer" + player.getObjectId(), null, player);
+ 				cancelQuestTimer("KickPlayerWarning" + player.getObjectId(), null, player);

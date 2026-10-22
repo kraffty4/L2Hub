@@ -1,0 +1,13 @@
+diff --git a/dist/game/data/html/CommunityBoard/Custom/navigation.html b/dist/game/data/html/CommunityBoard/Custom/navigation.html
+index f8886abe35ff7925bf7ac79633d6dc963c43fe9d..7185ca67e0960a079645290049be21f260dafa6f 100644
+--- a/dist/game/data/html/CommunityBoard/Custom/navigation.html
++++ b/dist/game/data/html/CommunityBoard/Custom/navigation.html
+@@ -5,5 +5,7 @@
+ <button value="Телепорт" action="bypass _bbstop;gatekeeper/main.html" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
+ <button value="Напарники" action="bypass _bbshubbuddy" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
+ <button value="Охотники" action="bypass _bbshubhunters" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
++<button value="Поручения" action="bypass voice .daily" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
++<button value="Рейд" action="bypass voice .raid" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
+ <button value="Поиск дропа" action="bypass _bbstop;dropsearch/main.html" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
+ </td><td height=440></td></tr></table>
+\ No newline at end of file

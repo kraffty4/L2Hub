@@ -1,0 +1,2036 @@
+object Form1: TForm1
+  Left = 0
+  Top = 0
+  BorderIcons = '[biSystemMenu, biMinimize]'
+  BorderStyle = 'bsSingle'
+  Caption = 'La2offline 4.0 Gracia Final'
+  ClientHeight = 508
+  ClientWidth = 738
+  Color = 'clBtnFace'
+  Font.Charset = 'DEFAULT_CHARSET'
+  Font.Color = 'clWindowText'
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = '[]'
+  OldCreateOrder = False
+  Position = 'poDesktopCenter'
+  OnCreate = 'FormCreate'
+  PixelsPerInch = 96
+  TextHeight = 13
+  object sGroupBox41: TsGroupBox
+    Left = 5
+    Top = 333
+    Width = 100
+    Height = 85
+    Caption = 'Сайт'
+    TabOrder = 11
+    CaptionLayout = 'clTopCenter'
+    SkinData.SkinSection = 'GROUPBOX'
+  end
+  object sGroupBox34: TsGroupBox
+    Left = 5
+    Top = 198
+    Width = 100
+    Height = 129
+    Caption = 'Остановить'
+    TabOrder = 7
+    CaptionLayout = 'clTopCenter'
+    SkinData.SkinSection = 'GROUPBOX'
+  end
+  object sGroupBox33: TsGroupBox
+    Left = 5
+    Top = 48
+    Width = 100
+    Height = 129
+    Caption = 'Запустить'
+    TabOrder = 6
+    CaptionLayout = 'clTopCenter'
+    SkinData.SkinSection = 'GROUPBOX'
+  end
+  object sPageControl1: TsPageControl
+    Left = 112
+    Top = 0
+    Width = 625
+    Height = 481
+    ActivePage = 'РЎРµСЂРІРµСЂ'
+    TabOrder = 5
+    SkinData.SkinSection = 'PAGECONTROL'
+    object РЎРµСЂРІРµСЂ: TsTabSheet
+      Caption = 'Сервер'
+      SkinData.CustomColor = False
+      SkinData.CustomFont = False
+      object Image1: TImage
+        Left = 272
+        Top = 144
+        Width = 257
+        Height = 279
+        ParentShowHint = False
+        Picture.Data = '<binary 63371 bytes>'
+        ShowHint = False
+      end
+      object sGroupBox35: TsGroupBox
+        Left = 29
+        Top = 3
+        Width = 150
+        Height = 135
+        Caption = 'Статус'
+        TabOrder = 13
+        SkinData.SkinSection = 'GROUPBOX'
+        object Label2: TLabel
+          Left = 24
+          Top = 65
+          Width = 29
+          Height = 13
+          Caption = 'Login:'
+        end
+        object sLabel4: TLabel
+          Left = 64
+          Top = 65
+          Width = 16
+          Height = 13
+          Caption = '----'
+        end
+        object sLabel2: TLabel
+          Left = 64
+          Top = 42
+          Width = 16
+          Height = 13
+          Caption = '----'
+        end
+        object Label1: TLabel
+          Left = 22
+          Top = 42
+          Width = 32
+          Height = 13
+          Caption = 'MySql:'
+        end
+        object Label3: TLabel
+          Left = 22
+          Top = 90
+          Width = 31
+          Height = 13
+          Caption = 'Game:'
+        end
+        object sLabel6: TLabel
+          Left = 64
+          Top = 90
+          Width = 16
+          Height = 13
+          Caption = '----'
+        end
+        object sGauge1: TsGauge
+          Left = 15
+          Top = 107
+          Width = 120
+          Height = 18
+          SkinData.SkinSection = 'GAUGE'
+          ForeColor = 'clBlack'
+          MaxValue = 506000
+          Progress = 0
+          Suffix = '%'
+        end
+        object Label4: TLabel
+          Left = 24
+          Top = 23
+          Width = 29
+          Height = 13
+          Caption = 'Сайт:'
+        end
+        object Label5: TLabel
+          Left = 64
+          Top = 23
+          Width = 16
+          Height = 13
+          Caption = '----'
+        end
+      end
+      object sGroupBox30: TsGroupBox
+        Left = 29
+        Top = 146
+        Width = 150
+        Height = 76
+        Caption = 'Показвать окно запуска:'
+        TabOrder = 12
+        SkinData.SkinSection = 'GROUPBOX'
+      end
+      object sGroupBox28: TsGroupBox
+        Left = 29
+        Top = 379
+        Width = 150
+        Height = 57
+        Caption = 'L2.ini  IP'
+        TabOrder = 9
+        SkinData.SkinSection = 'GROUPBOX'
+        object sGroupBox29: TsGroupBox
+          Left = 152
+          Top = 24
+          Width = 185
+          Height = 105
+          Caption = 'sGroupBox27'
+          TabOrder = 0
+          SkinData.SkinSection = 'GROUPBOX'
+        end
+      end
+      object sGroupBox26: TsGroupBox
+        Left = 29
+        Top = 232
+        Width = 150
+        Height = 57
+        Caption = 'INET IP \\ Hamachi IP'
+        TabOrder = 8
+        SkinData.SkinSection = 'GROUPBOX'
+      end
+      object sGroupBox25: TsGroupBox
+        Left = 29
+        Top = 295
+        Width = 150
+        Height = 57
+        Caption = 'LAN IP'
+        TabOrder = 7
+        SkinData.SkinSection = 'GROUPBOX'
+        object sGroupBox27: TsGroupBox
+          Left = 152
+          Top = 24
+          Width = 185
+          Height = 105
+          Caption = 'sGroupBox27'
+          TabOrder = 0
+          SkinData.SkinSection = 'GROUPBOX'
+        end
+      end
+      object Memo1: TsMemo
+        Left = 205
+        Top = 41
+        Width = 374
+        Height = 64
+        Color = 1710618
+        Font.Charset = 'DEFAULT_CHARSET'
+        Font.Color = 'clGray'
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = '[]'
+        ParentFont = False
+        ReadOnly = True
+        ScrollBars = 'ssVertical'
+        TabOrder = 0
+        BoundLabel.Indent = 0
+        BoundLabel.Font.Charset = 'DEFAULT_CHARSET'
+        BoundLabel.Font.Color = 'clWindowText'
+        BoundLabel.Font.Height = -11
+        BoundLabel.Font.Name = 'Tahoma'
+        BoundLabel.Font.Style = '[]'
+        BoundLabel.Layout = 'sclLeft'
+        BoundLabel.MaxWidth = 0
+        BoundLabel.UseSkinColor = True
+        SkinData.SkinSection = 'EDIT'
+      end
+      object sEdit1: TsEdit
+        Left = 43
+        Top = 255
+        Width = 94
+        Height = 21
+        Hint = 'Внешний IP либо IP Hamchi'
+        Color = 1710618
+        Font.Charset = 'DEFAULT_CHARSET'
+        Font.Color = 'clGray'
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = '[]'
+        ParentFont = False
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 1
+        SkinData.SkinSection = 'EDIT'
+        BoundLabel.Indent = 0
+        BoundLabel.Font.Charset = 'DEFAULT_CHARSET'
+        BoundLabel.Font.Color = 'clWindowText'
+        BoundLabel.Font.Height = -11
+        BoundLabel.Font.Name = 'Tahoma'
+        BoundLabel.Font.Style = '[]'
+        BoundLabel.Layout = 'sclLeft'
+        BoundLabel.MaxWidth = 0
+        BoundLabel.UseSkinColor = True
+      end
+      object sEdit2: TsEdit
+        Left = 44
+        Top = 318
+        Width = 94
+        Height = 21
+        Hint = 'ваш сетевой IP (127.0.0.1 если будете играть на том же компе, где и сервер)'
+        Color = 1710618
+        Font.Charset = 'DEFAULT_CHARSET'
+        Font.Color = 'clGray'
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = '[]'
+        ParentFont = False
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 2
+        SkinData.SkinSection = 'EDIT'
+        BoundLabel.Indent = 0
+        BoundLabel.Font.Charset = 'DEFAULT_CHARSET'
+        BoundLabel.Font.Color = 'clWindowText'
+        BoundLabel.Font.Height = -11
+        BoundLabel.Font.Name = 'Tahoma'
+        BoundLabel.Font.Style = '[]'
+        BoundLabel.Layout = 'sclLeft'
+        BoundLabel.MaxWidth = 0
+        BoundLabel.UseSkinColor = True
+      end
+      object sButton6: TsButton
+        Left = 143
+        Top = 253
+        Width = 25
+        Height = 25
+        Caption = 'ok'
+        TabOrder = 3
+        OnClick = 'sButton6Click'
+        SkinData.SkinSection = 'BUTTON'
+      end
+      object sButton7: TsButton
+        Left = 144
+        Top = 316
+        Width = 25
+        Height = 25
+        Caption = 'ok'
+        TabOrder = 4
+        OnClick = 'sButton7Click'
+        SkinData.SkinSection = 'BUTTON'
+      end
+      object sEdit3: TsEdit
+        Left = 43
+        Top = 402
+        Width = 94
+        Height = 21
+        Hint = 'IP к которому будет подключаться La2'
+        Color = 1710618
+        Font.Charset = 'DEFAULT_CHARSET'
+        Font.Color = 'clGray'
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = '[]'
+        ParentFont = False
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 5
+        SkinData.SkinSection = 'EDIT'
+        BoundLabel.Indent = 0
+        BoundLabel.Font.Charset = 'DEFAULT_CHARSET'
+        BoundLabel.Font.Color = 'clWindowText'
+        BoundLabel.Font.Height = -11
+        BoundLabel.Font.Name = 'Tahoma'
+        BoundLabel.Font.Style = '[]'
+        BoundLabel.Layout = 'sclLeft'
+        BoundLabel.MaxWidth = 0
+        BoundLabel.UseSkinColor = True
+      end
+      object sButton8: TsButton
+        Left = 143
+        Top = 400
+        Width = 25
+        Height = 25
+        Caption = 'ok'
+        TabOrder = 6
+        OnClick = 'sButton8Click'
+        SkinData.SkinSection = 'BUTTON'
+      end
+      object gamesvr: TsCheckBox
+        Left = 50
+        Top = 168
+        Width = 89
+        Height = 20
+        Caption = 'Game server'
+        TabOrder = 10
+        SkinData.SkinSection = 'CHECKBOX'
+        ImgChecked = 0
+        ImgUnchecked = 0
+      end
+      object loginsvr: TsCheckBox
+        Left = 50
+        Top = 193
+        Width = 87
+        Height = 20
+        Caption = 'Login server'
+        TabOrder = 11
+        SkinData.SkinSection = 'CHECKBOX'
+        ImgChecked = 0
+        ImgUnchecked = 0
+      end
+      object sButton21: TsButton
+        Left = 542
+        Top = 0
+        Width = 75
+        Height = 18
+        Caption = 'Помощник'
+        TabOrder = 14
+        OnClick = 'sButton21Click'
+        SkinData.SkinSection = 'BUTTON'
+      end
+    end
+    object sTabSheet1: TsTabSheet
+      Caption = 'Рейты'
+      SkinData.CustomColor = False
+      SkinData.CustomFont = False
+      object sPanel2: TsPanel
+        Left = 359
+        Top = 127
+        Width = 255
+        Height = 240
+        TabOrder = 23
+        SkinData.SkinSection = 'PANEL'
+        object sGroupBox24: TsGroupBox
+          Left = 16
+          Top = 16
+          Width = 225
+          Height = 209
+          Caption = 'Хербы'
+          TabOrder = 6
+          CaptionLayout = 'clTopCenter'
+          SkinData.SkinSection = 'GROUPBOX'
+        end
+        object sGroupBox15: TsGroupBox
+          Left = 28
+          Top = 39
+          Width = 88
+          Height = 56
+          Caption = 'Обычные'
+          TabOrder = 0
+          SkinData.SkinSection = 'GROUPBOX'
+        end
+        object sGroupBox16: TsGroupBox
+          Left = 28
+          Top = 100
+          Width = 88
+          Height = 52
+          Caption = 'HP / MP'
+          TabOrder = 1
+          SkinData.SkinSection = 'GROUPBOX'
+        end
+        object sGroupBox17: TsGroupBox
+          Left = 28
+          Top = 161
+          Width = 88
+          Height = 50
+          Caption = 'Среднии HPMP'
+          TabOrder = 2
+          SkinData.SkinSection = 'GROUPBOX'
+        end
+        object sGroupBox18: TsGroupBox
+          Left = 138
+          Top = 101
+          Width = 88
+          Height = 51
+          Caption = 'Большие HPMP'
+          TabOrder = 3
+          SkinData.SkinSection = 'GROUPBOX'
+        end
+        object sGroupBox19: TsGroupBox
+          Left = 138
+          Top = 40
+          Width = 88
+          Height = 55
+          Caption = 'Special'
+          TabOrder = 4
+          SkinData.SkinSection = 'GROUPBOX'
+        end
+        object sGroupBox20: TsGroupBox
+          Left = 138
+          Top = 162
+          Width = 88
+          Height = 49
+          Caption = 'Vitality'
+          TabOrder = 5
+          SkinData.SkinSection = 'GROUPBOX'
+        end
+      end
+      object sPanel1: TsPanel
+        Left = 3
+        Top = 64
+        Width = 350
+        Height = 305
+        TabOrder = 22
+        SkinData.SkinSection = 'PANEL'
+        object sGroupBox1: TsGroupBox
+          Left = 19
+          Top = 43
+          Width = 65
+          Height = 55
+          Caption = 'XP'
+          TabOrder = 0
+          SkinData.SkinSection = 'GROUPBOX'
+        end
+        object sGroupBox2: TsGroupBox
+          Left = 91
+          Top = 44
+          Width = 65
+          Height = 55
+          Caption = 'SP'
+          TabOrder = 1
+          SkinData.SkinSection = 'GROUPBOX'
+        end
+        object sGroupBox3: TsGroupBox
+          Left = 19
+          Top = 103
+          Width = 65
+          Height = 55
+          Caption = 'PartyXP'
+          TabOrder = 2
+          SkinData.SkinSection = 'GROUPBOX'
+        end
+        object sGroupBox4: TsGroupBox
+          Left = 19
+          Top = 160
+          Width = 65
+          Height = 55
+          Caption = 'PetXP'
+          TabOrder = 3
+          SkinData.SkinSection = 'GROUPBOX'
+        end
+        object sGroupBox5: TsGroupBox
+          Left = 19
+          Top = 218
+          Width = 65
+          Height = 55
+          Caption = 'Adena'
+          TabOrder = 4
+          SkinData.SkinSection = 'GROUPBOX'
+        end
+        object sGroupBox6: TsGroupBox
+          Left = 91
+          Top = 103
+          Width = 65
+          Height = 55
+          Caption = 'PartySP'
+          TabOrder = 5
+          SkinData.SkinSection = 'GROUPBOX'
+        end
+        object sGroupBox7: TsGroupBox
+          Left = 91
+          Top = 158
+          Width = 65
+          Height = 57
+          Caption = 'SinEaterXp'
+          TabOrder = 6
+          SkinData.SkinSection = 'GROUPBOX'
+        end
+        object sGroupBox8: TsGroupBox
+          Left = 91
+          Top = 219
+          Width = 65
+          Height = 55
+          Caption = 'Предметы'
+          TabOrder = 7
+          SkinData.SkinSection = 'GROUPBOX'
+        end
+        object sGroupBox9: TsGroupBox
+          Left = 162
+          Top = 103
+          Width = 65
+          Height = 55
+          Caption = 'Манор'
+          TabOrder = 8
+          SkinData.SkinSection = 'GROUPBOX'
+        end
+        object sGroupBox10: TsGroupBox
+          Left = 162
+          Top = 160
+          Width = 65
+          Height = 55
+          Caption = 'RaidDrop'
+          TabOrder = 9
+          SkinData.SkinSection = 'GROUPBOX'
+        end
+        object sGroupBox11: TsGroupBox
+          Left = 162
+          Top = 219
+          Width = 65
+          Height = 55
+          Caption = 'Spoil'
+          TabOrder = 10
+          SkinData.SkinSection = 'GROUPBOX'
+        end
+        object sGroupBox12: TsGroupBox
+          Left = 233
+          Top = 160
+          Width = 65
+          Height = 55
+          Caption = 'КвестДроп'
+          TabOrder = 11
+          SkinData.SkinSection = 'GROUPBOX'
+        end
+        object sGroupBox13: TsGroupBox
+          Left = 233
+          Top = 219
+          Width = 77
+          Height = 55
+          Caption = 'КвестНаграда'
+          TabOrder = 12
+          SkinData.SkinSection = 'GROUPBOX'
+        end
+        object sGroupBox14: TsGroupBox
+          Left = 233
+          Top = 103
+          Width = 65
+          Height = 55
+          Caption = 'Рыбалка'
+          TabOrder = 13
+          SkinData.SkinSection = 'GROUPBOX'
+        end
+      end
+      object Xp: TsEdit
+        Left = 32
+        Top = 127
+        Width = 40
+        Height = 21
+        Color = 1710618
+        Font.Charset = 'DEFAULT_CHARSET'
+        Font.Color = 'clGray'
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = '[]'
+        MaxLength = 4
+        ParentFont = False
+        TabOrder = 0
+        SkinData.SkinSection = 'EDIT'
+        BoundLabel.Indent = 0
+        BoundLabel.Font.Charset = 'DEFAULT_CHARSET'
+        BoundLabel.Font.Color = 'clWindowText'
+        BoundLabel.Font.Height = -11
+        BoundLabel.Font.Name = 'Tahoma'
+        BoundLabel.Font.Style = '[]'
+        BoundLabel.Layout = 'sclLeft'
+        BoundLabel.MaxWidth = 0
+        BoundLabel.UseSkinColor = True
+      end
+      object Sp: TsEdit
+        Left = 104
+        Top = 127
+        Width = 40
+        Height = 21
+        Color = 1710618
+        Font.Charset = 'DEFAULT_CHARSET'
+        Font.Color = 'clGray'
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = '[]'
+        MaxLength = 4
+        ParentFont = False
+        TabOrder = 1
+        SkinData.SkinSection = 'EDIT'
+        BoundLabel.Indent = 0
+        BoundLabel.Font.Charset = 'DEFAULT_CHARSET'
+        BoundLabel.Font.Color = 'clWindowText'
+        BoundLabel.Font.Height = -11
+        BoundLabel.Font.Name = 'Tahoma'
+        BoundLabel.Font.Style = '[]'
+        BoundLabel.Layout = 'sclLeft'
+        BoundLabel.MaxWidth = 0
+        BoundLabel.UseSkinColor = True
+      end
+      object PartyXp: TsEdit
+        Left = 32
+        Top = 187
+        Width = 40
+        Height = 21
+        Color = 1710618
+        Font.Charset = 'DEFAULT_CHARSET'
+        Font.Color = 'clGray'
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = '[]'
+        MaxLength = 4
+        ParentFont = False
+        TabOrder = 2
+        SkinData.SkinSection = 'EDIT'
+        BoundLabel.Indent = 0
+        BoundLabel.Font.Charset = 'DEFAULT_CHARSET'
+        BoundLabel.Font.Color = 'clWindowText'
+        BoundLabel.Font.Height = -11
+        BoundLabel.Font.Name = 'Tahoma'
+        BoundLabel.Font.Style = '[]'
+        BoundLabel.Layout = 'sclLeft'
+        BoundLabel.MaxWidth = 0
+        BoundLabel.UseSkinColor = True
+      end
+      object PartySp: TsEdit
+        Left = 104
+        Top = 187
+        Width = 40
+        Height = 21
+        Color = 1710618
+        Font.Charset = 'DEFAULT_CHARSET'
+        Font.Color = 'clGray'
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = '[]'
+        MaxLength = 4
+        ParentFont = False
+        TabOrder = 3
+        SkinData.SkinSection = 'EDIT'
+        BoundLabel.Indent = 0
+        BoundLabel.Font.Charset = 'DEFAULT_CHARSET'
+        BoundLabel.Font.Color = 'clWindowText'
+        BoundLabel.Font.Height = -11
+        BoundLabel.Font.Name = 'Tahoma'
+        BoundLabel.Font.Style = '[]'
+        BoundLabel.Layout = 'sclLeft'
+        BoundLabel.MaxWidth = 0
+        BoundLabel.UseSkinColor = True
+      end
+      object Adena: TsEdit
+        Left = 32
+        Top = 303
+        Width = 40
+        Height = 21
+        Color = 1710618
+        Font.Charset = 'DEFAULT_CHARSET'
+        Font.Color = 'clGray'
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = '[]'
+        MaxLength = 4
+        ParentFont = False
+        TabOrder = 4
+        SkinData.SkinSection = 'EDIT'
+        BoundLabel.Indent = 0
+        BoundLabel.Font.Charset = 'DEFAULT_CHARSET'
+        BoundLabel.Font.Color = 'clWindowText'
+        BoundLabel.Font.Height = -11
+        BoundLabel.Font.Name = 'Tahoma'
+        BoundLabel.Font.Style = '[]'
+        BoundLabel.Layout = 'sclLeft'
+        BoundLabel.MaxWidth = 0
+        BoundLabel.UseSkinColor = True
+      end
+      object Items: TsEdit
+        Left = 104
+        Top = 303
+        Width = 40
+        Height = 21
+        Color = 1710618
+        Font.Charset = 'DEFAULT_CHARSET'
+        Font.Color = 'clGray'
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = '[]'
+        MaxLength = 4
+        ParentFont = False
+        TabOrder = 5
+        SkinData.SkinSection = 'EDIT'
+        BoundLabel.Indent = 0
+        BoundLabel.Font.Charset = 'DEFAULT_CHARSET'
+        BoundLabel.Font.Color = 'clWindowText'
+        BoundLabel.Font.Height = -11
+        BoundLabel.Font.Name = 'Tahoma'
+        BoundLabel.Font.Style = '[]'
+        BoundLabel.Layout = 'sclLeft'
+        BoundLabel.MaxWidth = 0
+        BoundLabel.UseSkinColor = True
+      end
+      object RaidDrop: TsEdit
+        Left = 180
+        Top = 245
+        Width = 40
+        Height = 21
+        Color = 1710618
+        Font.Charset = 'DEFAULT_CHARSET'
+        Font.Color = 'clGray'
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = '[]'
+        MaxLength = 4
+        ParentFont = False
+        TabOrder = 6
+        SkinData.SkinSection = 'EDIT'
+        BoundLabel.Indent = 0
+        BoundLabel.Font.Charset = 'DEFAULT_CHARSET'
+        BoundLabel.Font.Color = 'clWindowText'
+        BoundLabel.Font.Height = -11
+        BoundLabel.Font.Name = 'Tahoma'
+        BoundLabel.Font.Style = '[]'
+        BoundLabel.Layout = 'sclLeft'
+        BoundLabel.MaxWidth = 0
+        BoundLabel.UseSkinColor = True
+      end
+      object Spoil: TsEdit
+        Left = 180
+        Top = 303
+        Width = 40
+        Height = 21
+        Color = 1710618
+        Font.Charset = 'DEFAULT_CHARSET'
+        Font.Color = 'clGray'
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = '[]'
+        MaxLength = 4
+        ParentFont = False
+        TabOrder = 7
+        SkinData.SkinSection = 'EDIT'
+        BoundLabel.Indent = 0
+        BoundLabel.Font.Charset = 'DEFAULT_CHARSET'
+        BoundLabel.Font.Color = 'clWindowText'
+        BoundLabel.Font.Height = -11
+        BoundLabel.Font.Name = 'Tahoma'
+        BoundLabel.Font.Style = '[]'
+        BoundLabel.Layout = 'sclLeft'
+        BoundLabel.MaxWidth = 0
+        BoundLabel.UseSkinColor = True
+      end
+      object Manor: TsEdit
+        Left = 180
+        Top = 187
+        Width = 40
+        Height = 21
+        Color = 1710618
+        Font.Charset = 'DEFAULT_CHARSET'
+        Font.Color = 'clGray'
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = '[]'
+        MaxLength = 4
+        ParentFont = False
+        TabOrder = 8
+        SkinData.SkinSection = 'EDIT'
+        BoundLabel.Indent = 0
+        BoundLabel.Font.Charset = 'DEFAULT_CHARSET'
+        BoundLabel.Font.Color = 'clWindowText'
+        BoundLabel.Font.Height = -11
+        BoundLabel.Font.Name = 'Tahoma'
+        BoundLabel.Font.Style = '[]'
+        BoundLabel.Layout = 'sclLeft'
+        BoundLabel.MaxWidth = 0
+        BoundLabel.UseSkinColor = True
+      end
+      object Fish: TsEdit
+        Left = 252
+        Top = 187
+        Width = 40
+        Height = 21
+        Color = 1710618
+        Font.Charset = 'DEFAULT_CHARSET'
+        Font.Color = 'clGray'
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = '[]'
+        MaxLength = 4
+        ParentFont = False
+        TabOrder = 9
+        SkinData.SkinSection = 'EDIT'
+        BoundLabel.Indent = 0
+        BoundLabel.Font.Charset = 'DEFAULT_CHARSET'
+        BoundLabel.Font.Color = 'clWindowText'
+        BoundLabel.Font.Height = -11
+        BoundLabel.Font.Name = 'Tahoma'
+        BoundLabel.Font.Style = '[]'
+        BoundLabel.Layout = 'sclLeft'
+        BoundLabel.MaxWidth = 0
+        BoundLabel.UseSkinColor = True
+      end
+      object QReward: TsEdit
+        Left = 252
+        Top = 303
+        Width = 40
+        Height = 21
+        Color = 1710618
+        Font.Charset = 'DEFAULT_CHARSET'
+        Font.Color = 'clGray'
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = '[]'
+        MaxLength = 4
+        ParentFont = False
+        TabOrder = 10
+        SkinData.SkinSection = 'EDIT'
+        BoundLabel.Indent = 0
+        BoundLabel.Font.Charset = 'DEFAULT_CHARSET'
+        BoundLabel.Font.Color = 'clWindowText'
+        BoundLabel.Font.Height = -11
+        BoundLabel.Font.Name = 'Tahoma'
+        BoundLabel.Font.Style = '[]'
+        BoundLabel.Layout = 'sclLeft'
+        BoundLabel.MaxWidth = 0
+        BoundLabel.UseSkinColor = True
+      end
+      object PetXp: TsEdit
+        Left = 32
+        Top = 245
+        Width = 40
+        Height = 21
+        Color = 1710618
+        Font.Charset = 'DEFAULT_CHARSET'
+        Font.Color = 'clGray'
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = '[]'
+        MaxLength = 4
+        ParentFont = False
+        TabOrder = 11
+        SkinData.SkinSection = 'EDIT'
+        BoundLabel.Indent = 0
+        BoundLabel.Font.Charset = 'DEFAULT_CHARSET'
+        BoundLabel.Font.Color = 'clWindowText'
+        BoundLabel.Font.Height = -11
+        BoundLabel.Font.Name = 'Tahoma'
+        BoundLabel.Font.Style = '[]'
+        BoundLabel.Layout = 'sclLeft'
+        BoundLabel.MaxWidth = 0
+        BoundLabel.UseSkinColor = True
+      end
+      object Quest: TsEdit
+        Left = 252
+        Top = 245
+        Width = 40
+        Height = 21
+        Color = 1710618
+        Font.Charset = 'DEFAULT_CHARSET'
+        Font.Color = 'clGray'
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = '[]'
+        MaxLength = 4
+        ParentFont = False
+        TabOrder = 12
+        SkinData.SkinSection = 'EDIT'
+        BoundLabel.Indent = 0
+        BoundLabel.Font.Charset = 'DEFAULT_CHARSET'
+        BoundLabel.Font.Color = 'clWindowText'
+        BoundLabel.Font.Height = -11
+        BoundLabel.Font.Name = 'Tahoma'
+        BoundLabel.Font.Style = '[]'
+        BoundLabel.Layout = 'sclLeft'
+        BoundLabel.MaxWidth = 0
+        BoundLabel.UseSkinColor = True
+      end
+      object SinEaterXp: TsEdit
+        Left = 104
+        Top = 245
+        Width = 40
+        Height = 21
+        Color = 1710618
+        Font.Charset = 'DEFAULT_CHARSET'
+        Font.Color = 'clGray'
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = '[]'
+        MaxLength = 4
+        ParentFont = False
+        TabOrder = 13
+        SkinData.SkinSection = 'EDIT'
+        BoundLabel.Indent = 0
+        BoundLabel.Font.Charset = 'DEFAULT_CHARSET'
+        BoundLabel.Font.Color = 'clWindowText'
+        BoundLabel.Font.Height = -11
+        BoundLabel.Font.Name = 'Tahoma'
+        BoundLabel.Font.Style = '[]'
+        BoundLabel.Layout = 'sclLeft'
+        BoundLabel.MaxWidth = 0
+        BoundLabel.UseSkinColor = True
+      end
+      object Common: TsEdit
+        Left = 425
+        Top = 185
+        Width = 40
+        Height = 21
+        Color = 1710618
+        Font.Charset = 'DEFAULT_CHARSET'
+        Font.Color = 'clGray'
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = '[]'
+        MaxLength = 4
+        ParentFont = False
+        TabOrder = 14
+        SkinData.SkinSection = 'EDIT'
+        BoundLabel.Indent = 0
+        BoundLabel.Font.Charset = 'DEFAULT_CHARSET'
+        BoundLabel.Font.Color = 'clWindowText'
+        BoundLabel.Font.Height = -11
+        BoundLabel.Font.Name = 'Tahoma'
+        BoundLabel.Font.Style = '[]'
+        BoundLabel.Layout = 'sclLeft'
+        BoundLabel.MaxWidth = 0
+        BoundLabel.UseSkinColor = True
+      end
+      object HpMp: TsEdit
+        Left = 425
+        Top = 245
+        Width = 40
+        Height = 21
+        Color = 1710618
+        Font.Charset = 'DEFAULT_CHARSET'
+        Font.Color = 'clGray'
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = '[]'
+        MaxLength = 4
+        ParentFont = False
+        TabOrder = 15
+        SkinData.SkinSection = 'EDIT'
+        BoundLabel.Indent = 0
+        BoundLabel.Font.Charset = 'DEFAULT_CHARSET'
+        BoundLabel.Font.Color = 'clWindowText'
+        BoundLabel.Font.Height = -11
+        BoundLabel.Font.Name = 'Tahoma'
+        BoundLabel.Font.Style = '[]'
+        BoundLabel.Layout = 'sclLeft'
+        BoundLabel.MaxWidth = 0
+        BoundLabel.UseSkinColor = True
+      end
+      object Greater: TsEdit
+        Left = 425
+        Top = 303
+        Width = 40
+        Height = 21
+        Color = 1710618
+        Font.Charset = 'DEFAULT_CHARSET'
+        Font.Color = 'clGray'
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = '[]'
+        MaxLength = 4
+        ParentFont = False
+        TabOrder = 16
+        SkinData.SkinSection = 'EDIT'
+        BoundLabel.Indent = 0
+        BoundLabel.Font.Charset = 'DEFAULT_CHARSET'
+        BoundLabel.Font.Color = 'clWindowText'
+        BoundLabel.Font.Height = -11
+        BoundLabel.Font.Name = 'Tahoma'
+        BoundLabel.Font.Style = '[]'
+        BoundLabel.Layout = 'sclLeft'
+        BoundLabel.MaxWidth = 0
+        BoundLabel.UseSkinColor = True
+      end
+      object Superior: TsEdit
+        Left = 505
+        Top = 245
+        Width = 40
+        Height = 21
+        Color = 1710618
+        Font.Charset = 'DEFAULT_CHARSET'
+        Font.Color = 'clGray'
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = '[]'
+        MaxLength = 4
+        ParentFont = False
+        TabOrder = 17
+        SkinData.SkinSection = 'EDIT'
+        BoundLabel.Indent = 0
+        BoundLabel.Font.Charset = 'DEFAULT_CHARSET'
+        BoundLabel.Font.Color = 'clWindowText'
+        BoundLabel.Font.Height = -11
+        BoundLabel.Font.Name = 'Tahoma'
+        BoundLabel.Font.Style = '[]'
+        BoundLabel.Layout = 'sclLeft'
+        BoundLabel.MaxWidth = 0
+        BoundLabel.UseSkinColor = True
+      end
+      object Special: TsEdit
+        Left = 505
+        Top = 185
+        Width = 40
+        Height = 21
+        Color = 1710618
+        Font.Charset = 'DEFAULT_CHARSET'
+        Font.Color = 'clGray'
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = '[]'
+        MaxLength = 4
+        ParentFont = False
+        TabOrder = 18
+        SkinData.SkinSection = 'EDIT'
+        BoundLabel.Indent = 0
+        BoundLabel.Font.Charset = 'DEFAULT_CHARSET'
+        BoundLabel.Font.Color = 'clWindowText'
+        BoundLabel.Font.Height = -11
+        BoundLabel.Font.Name = 'Tahoma'
+        BoundLabel.Font.Style = '[]'
+        BoundLabel.Layout = 'sclLeft'
+        BoundLabel.MaxWidth = 0
+        BoundLabel.UseSkinColor = True
+      end
+      object Vitality: TsEdit
+        Left = 505
+        Top = 303
+        Width = 40
+        Height = 21
+        Color = 1710618
+        Font.Charset = 'DEFAULT_CHARSET'
+        Font.Color = 'clGray'
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = '[]'
+        MaxLength = 4
+        ParentFont = False
+        TabOrder = 19
+        SkinData.SkinSection = 'EDIT'
+        BoundLabel.Indent = 0
+        BoundLabel.Font.Charset = 'DEFAULT_CHARSET'
+        BoundLabel.Font.Color = 'clWindowText'
+        BoundLabel.Font.Height = -11
+        BoundLabel.Font.Name = 'Tahoma'
+        BoundLabel.Font.Style = '[]'
+        BoundLabel.Layout = 'sclLeft'
+        BoundLabel.MaxWidth = 0
+        BoundLabel.UseSkinColor = True
+      end
+      object sButton9: TsButton
+        Left = 375
+        Top = 400
+        Width = 75
+        Height = 25
+        Caption = 'Применить'
+        TabOrder = 20
+        OnClick = 'sButton9Click'
+        SkinData.SkinSection = 'BUTTON'
+      end
+      object sButton10: TsButton
+        Left = 493
+        Top = 400
+        Width = 75
+        Height = 25
+        Caption = 'Сбросить'
+        Enabled = False
+        TabOrder = 21
+        Visible = False
+        OnClick = 'sButton10Click'
+        SkinData.SkinSection = 'BUTTON'
+      end
+    end
+    object sTabSheet2: TsTabSheet
+      Caption = 'Основные'
+      SkinData.CustomColor = False
+      SkinData.CustomFont = False
+      object sPanel6: TsPanel
+        Left = 250
+        Top = 192
+        Width = 351
+        Height = 96
+        TabOrder = 10
+        SkinData.SkinSection = 'PANEL'
+        object sLabel1: TsLabel
+          Left = 16
+          Top = 5
+          Width = 188
+          Height = 13
+          Caption = 'Сообщение при входе в игру в чате:'
+          ParentFont = False
+          Font.Charset = 'DEFAULT_CHARSET'
+          Font.Color = 'clGray'
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = '[]'
+        end
+        object sButton13: TsButton
+          Left = 262
+          Top = 62
+          Width = 75
+          Height = 18
+          Caption = 'Стереть'
+          TabOrder = 0
+          OnClick = 'sButton13Click'
+          SkinData.SkinSection = 'BUTTON'
+        end
+        object sButton12: TsButton
+          Left = 262
+          Top = 24
+          Width = 75
+          Height = 18
+          Caption = 'Применить'
+          TabOrder = 1
+          OnClick = 'sButton12Click'
+          SkinData.SkinSection = 'BUTTON'
+        end
+        object sMemo2: TsMemo
+          Left = 16
+          Top = 24
+          Width = 234
+          Height = 56
+          Color = 1710618
+          Font.Charset = 'DEFAULT_CHARSET'
+          Font.Color = 'clGray'
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = '[]'
+          ParentFont = False
+          TabOrder = 2
+          BoundLabel.Indent = 0
+          BoundLabel.Font.Charset = 'DEFAULT_CHARSET'
+          BoundLabel.Font.Color = 'clWindowText'
+          BoundLabel.Font.Height = -11
+          BoundLabel.Font.Name = 'Tahoma'
+          BoundLabel.Font.Style = '[]'
+          BoundLabel.Layout = 'sclLeft'
+          BoundLabel.MaxWidth = 0
+          BoundLabel.UseSkinColor = True
+          SkinData.SkinSection = 'EDIT'
+        end
+      end
+      object sPanel5: TsPanel
+        Left = 250
+        Top = 21
+        Width = 351
+        Height = 167
+        TabOrder = 9
+        SkinData.SkinSection = 'PANEL'
+        object sGroupBox37: TsGroupBox
+          Left = 160
+          Top = 114
+          Width = 89
+          Height = 46
+          Caption = 'Анонс ПК'
+          TabOrder = 12
+          SkinData.SkinSection = 'GROUPBOX'
+        end
+        object sGroupBox36: TsGroupBox
+          Left = 8
+          Top = 114
+          Width = 121
+          Height = 46
+          Caption = 'ПвП Зоны:'
+          TabOrder = 11
+          SkinData.SkinSection = 'GROUPBOX'
+        end
+        object sGroupBox32: TsGroupBox
+          Left = 7
+          Top = 65
+          Width = 114
+          Height = 47
+          Caption = 'Удалять чара дней:'
+          TabOrder = 5
+          SkinData.SkinSection = 'GROUPBOX'
+        end
+        object sGroupBox31: TsGroupBox
+          Left = 8
+          Top = 14
+          Width = 121
+          Height = 49
+          Caption = 'начальные адены'
+          TabOrder = 3
+          SkinData.SkinSection = 'GROUPBOX'
+        end
+        object GlobalChat: TsCheckBox
+          Left = 143
+          Top = 10
+          Width = 112
+          Height = 20
+          Hint = 'При включении," Громкий" чат(!) виден во всем мире'
+          Caption = 'Глобальный Чат'
+          Color = 'clBtnFace'
+          ParentColor = False
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 0
+          OnClick = 'GlobalChatClick'
+          SkinData.SkinSection = 'CHECKBOX'
+          ImgChecked = 0
+          ImgUnchecked = 0
+        end
+        object sEdit4: TsEdit
+          Left = 16
+          Top = 32
+          Width = 73
+          Height = 21
+          Color = 1710618
+          Font.Charset = 'DEFAULT_CHARSET'
+          Font.Color = 'clGray'
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = '[]'
+          ParentFont = False
+          TabOrder = 1
+          SkinData.SkinSection = 'EDIT'
+          BoundLabel.Indent = 0
+          BoundLabel.Font.Charset = 'DEFAULT_CHARSET'
+          BoundLabel.Font.Color = 'clWindowText'
+          BoundLabel.Font.Height = -11
+          BoundLabel.Font.Name = 'Tahoma'
+          BoundLabel.Font.Style = '[]'
+          BoundLabel.Layout = 'sclLeft'
+          BoundLabel.MaxWidth = 0
+          BoundLabel.UseSkinColor = True
+        end
+        object sButton14: TsButton
+          Left = 95
+          Top = 34
+          Width = 25
+          Height = 18
+          Caption = 'ok'
+          TabOrder = 2
+          OnClick = 'sButton14Click'
+          SkinData.SkinSection = 'BUTTON'
+        end
+        object sComboBox1: TsComboBox
+          Left = 41
+          Top = 83
+          Width = 33
+          Height = 21
+          Hint = 'Через сколько дней удалится чар, поставленный на удаление. 0 - отключит удаление чаров.'
+          Alignment = 'taLeftJustify'
+          BoundLabel.Indent = 0
+          BoundLabel.Font.Charset = 'DEFAULT_CHARSET'
+          BoundLabel.Font.Color = 'clWindowText'
+          BoundLabel.Font.Height = -11
+          BoundLabel.Font.Name = 'Tahoma'
+          BoundLabel.Font.Style = '[]'
+          BoundLabel.Layout = 'sclLeft'
+          BoundLabel.MaxWidth = 0
+          BoundLabel.UseSkinColor = True
+          SkinData.SkinSection = 'COMBOBOX'
+          Color = 1710618
+          Font.Charset = 'DEFAULT_CHARSET'
+          Font.Color = 'clGray'
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = '[]'
+          ItemHeight = 13
+          ItemIndex = -1
+          ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 4
+          Text = '--'
+          OnChange = 'sComboBox1Change'
+          Items.Strings = ('0' | '1' | '2' | '3' | '4' | '5' | '6' | '7')
+        end
+        object AutoSkills: TsCheckBox
+          Left = 199
+          Top = 65
+          Width = 138
+          Height = 20
+          Caption = 'Автоизучени скиллов'
+          TabOrder = 6
+          OnClick = 'AutoSkillsClick'
+          SkinData.SkinSection = 'CHECKBOX'
+          ImgChecked = 0
+          ImgUnchecked = 0
+        end
+        object Sub: TsCheckBox
+          Left = 199
+          Top = 88
+          Width = 109
+          Height = 20
+          Hint = 'Разрешать игрокам брать саб-класс без выполнения квеста.'
+          Caption = 'Саб. без квеста'
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 7
+          OnClick = 'SubClick'
+          SkinData.SkinSection = 'CHECKBOX'
+          ImgChecked = 0
+          ImgUnchecked = 0
+        end
+        object classMaster: TsCheckBox
+          Left = 199
+          Top = 40
+          Width = 122
+          Height = 20
+          Hint = 'В начальный городах появятся коты раздающие профессии'
+          Caption = 'Мастер профеcсий'
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 8
+          OnClick = 'classMasterClick'
+          SkinData.SkinSection = 'CHECKBOX'
+          ImgChecked = 0
+          ImgUnchecked = 0
+        end
+        object sComboBox2: TsComboBox
+          Left = 176
+          Top = 131
+          Width = 57
+          Height = 21
+          Hint = 'Обьявление о совершении ПК (в какой зоне)'
+          Alignment = 'taLeftJustify'
+          BoundLabel.Indent = 0
+          BoundLabel.Font.Charset = 'DEFAULT_CHARSET'
+          BoundLabel.Font.Color = 'clWindowText'
+          BoundLabel.Font.Height = -11
+          BoundLabel.Font.Name = 'Tahoma'
+          BoundLabel.Font.Style = '[]'
+          BoundLabel.Layout = 'sclLeft'
+          BoundLabel.MaxWidth = 0
+          BoundLabel.UseSkinColor = True
+          SkinData.SkinSection = 'COMBOBOX'
+          Color = 1710618
+          Font.Charset = 'DEFAULT_CHARSET'
+          Font.Color = 'clGray'
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = '[]'
+          ItemHeight = 13
+          ItemIndex = -1
+          ParentFont = False
+          ParentShowHint = False
+          ShowHint = True
+          TabOrder = 9
+          Text = 'Аннонс ПК'
+          OnChange = 'sComboBox2Change'
+          Items.Strings = ('Выкл.' | 'Вкл.')
+        end
+        object sComboBox3: TsComboBox
+          Left = 13
+          Top = 131
+          Width = 109
+          Height = 21
+          Alignment = 'taLeftJustify'
+          BoundLabel.Indent = 0
+          BoundLabel.Font.Charset = 'DEFAULT_CHARSET'
+          BoundLabel.Font.Color = 'clWindowText'
+          BoundLabel.Font.Height = -11
+          BoundLabel.Font.Name = 'Tahoma'
+          BoundLabel.Font.Style = '[]'
+          BoundLabel.Layout = 'sclLeft'
+          BoundLabel.MaxWidth = 0
+          BoundLabel.UseSkinColor = True
+          SkinData.SkinSection = 'COMBOBOX'
+          Color = 1710618
+          Font.Charset = 'DEFAULT_CHARSET'
+          Font.Color = 'clGray'
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = '[]'
+          ItemHeight = 13
+          ItemIndex = -1
+          ParentFont = False
+          ParentShowHint = False
+          ShowHint = False
+          TabOrder = 10
+          Text = 'ПвП Зоны'
+          OnChange = 'sComboBox3Change'
+          Items.Strings = ('Везде Мир' | 'ПвП на Осаде' | 'ПвП везде')
+        end
+      end
+      object sPanel4: TsPanel
+        Left = 250
+        Top = 292
+        Width = 351
+        Height = 141
+        TabOrder = 8
+        SkinData.SkinSection = 'PANEL'
+        object sMemo1: TsMemo
+          Left = 16
+          Top = 26
+          Width = 319
+          Height = 89
+          Color = 1710618
+          Font.Charset = 'DEFAULT_CHARSET'
+          Font.Color = 'clGray'
+          Font.Height = -11
+          Font.Name = 'Tahoma'
+          Font.Style = '[]'
+          ParentFont = False
+          TabOrder = 0
+          BoundLabel.Indent = 0
+          BoundLabel.Font.Charset = 'DEFAULT_CHARSET'
+          BoundLabel.Font.Color = 'clWindowText'
+          BoundLabel.Font.Height = -11
+          BoundLabel.Font.Name = 'Tahoma'
+          BoundLabel.Font.Style = '[]'
+          BoundLabel.Layout = 'sclLeft'
+          BoundLabel.MaxWidth = 0
+          BoundLabel.UseSkinColor = True
+          SkinData.SkinSection = 'EDIT'
+        end
+        object sButton11: TsButton
+          Left = 262
+          Top = 118
+          Width = 73
+          Height = 18
+          Caption = 'Применить'
+          TabOrder = 1
+          OnClick = 'sButton11Click'
+          SkinData.SkinSection = 'BUTTON'
+        end
+        object News: TsCheckBox
+          Left = 19
+          Top = 5
+          Width = 219
+          Height = 20
+          Caption = 'Сообщение  при входе в игру в окне:'
+          TabOrder = 2
+          OnClick = 'NewsClick'
+          SkinData.SkinSection = 'CHECKBOX'
+          ImgChecked = 0
+          ImgUnchecked = 0
+        end
+      end
+      object sPanel3: TsPanel
+        Left = 1
+        Top = 21
+        Width = 233
+        Height = 412
+        TabOrder = 7
+        SkinData.SkinSection = 'PANEL'
+        object sGroupBox21: TsGroupBox
+          Left = 56
+          Top = 159
+          Width = 113
+          Height = 106
+          Caption = 'Админ:'
+          TabOrder = 0
+          SkinData.SkinSection = 'GROUPBOX'
+        end
+        object sGroupBox22: TsGroupBox
+          Left = 24
+          Top = 285
+          Width = 185
+          Height = 105
+          Caption = 'Вкл. ограничения Админу  на:'
+          TabOrder = 1
+          SkinData.SkinSection = 'GROUPBOX'
+        end
+        object sGroupBox23: TsGroupBox
+          Left = 56
+          Top = 48
+          Width = 101
+          Height = 105
+          Caption = 'меню Админа:'
+          TabOrder = 2
+          SkinData.SkinSection = 'GROUPBOX'
+        end
+        object AllAdmin: TsCheckBox
+          Left = 24
+          Top = 16
+          Width = 193
+          Height = 20
+          Caption = 'Все игроки имеют права Админа'
+          TabOrder = 3
+          OnClick = 'AllAdminClick'
+          SkinData.SkinSection = 'CHECKBOX'
+          ImgChecked = 0
+          ImgUnchecked = 0
+        end
+        object Hero: TsCheckBox
+          Left = 71
+          Top = 234
+          Width = 64
+          Height = 20
+          Caption = 'Герой*'
+          TabOrder = 4
+          OnClick = 'HeroClick'
+          SkinData.SkinSection = 'CHECKBOX'
+          ImgChecked = 0
+          ImgUnchecked = 0
+        end
+      end
+      object Invul: TsCheckBox
+        Left = 72
+        Top = 201
+        Width = 86
+        Height = 20
+        Caption = 'Бессмертен'
+        TabOrder = 0
+        OnClick = 'InvulClick'
+        SkinData.SkinSection = 'CHECKBOX'
+        ImgChecked = 0
+        ImgUnchecked = 0
+      end
+      object Invis: TsCheckBox
+        Left = 72
+        Top = 228
+        Width = 86
+        Height = 20
+        Caption = 'Невидимый'
+        TabOrder = 1
+        OnClick = 'InvisClick'
+        SkinData.SkinSection = 'CHECKBOX'
+        ImgChecked = 0
+        ImgUnchecked = 0
+      end
+      object Diet: TsCheckBox
+        Left = 75
+        Top = 377
+        Width = 45
+        Height = 20
+        Caption = 'Вес'
+        TabOrder = 2
+        OnClick = 'DietClick'
+        SkinData.SkinSection = 'CHECKBOX'
+        ImgChecked = 0
+        ImgUnchecked = 0
+      end
+      object la2offmenu: TsRadioButton
+        Left = 73
+        Top = 95
+        Width = 70
+        Height = 19
+        Caption = 'la2offline'
+        Enabled = False
+        TabOrder = 3
+        OnClick = 'la2offmenuClick'
+        SkinData.SkinSection = 'RADIOBUTTON'
+      end
+      object simpleMenu: TsRadioButton
+        Left = 73
+        Top = 132
+        Width = 72
+        Height = 19
+        Caption = 'Обычное'
+        TabOrder = 4
+        OnClick = 'simpleMenuClick'
+        SkinData.SkinSection = 'RADIOBUTTON'
+      end
+      object GMitems: TsCheckBox
+        Left = 75
+        Top = 325
+        Width = 80
+        Height = 20
+        Caption = 'Предметы'
+        TabOrder = 5
+        OnClick = 'GMitemsClick'
+        SkinData.SkinSection = 'CHECKBOX'
+        ImgChecked = 0
+        ImgUnchecked = 0
+      end
+      object GMskills: TsCheckBox
+        Left = 75
+        Top = 351
+        Width = 70
+        Height = 20
+        Caption = 'Скиллы '
+        TabOrder = 6
+        OnClick = 'GMskillsClick'
+        SkinData.SkinSection = 'CHECKBOX'
+        ImgChecked = 0
+        ImgUnchecked = 0
+      end
+    end
+    object sTabSheet3: TsTabSheet
+      Caption = 'Особые'
+      Font.Charset = 'DEFAULT_CHARSET'
+      Font.Color = 'clWindowText'
+      Font.Height = -11
+      Font.Name = 'Tahoma'
+      Font.Style = '[]'
+      ParentFont = False
+      SkinData.CustomColor = False
+      SkinData.CustomFont = False
+      object sLabelFX1: TsLabelFX
+        Left = 11
+        Top = 11
+        Width = 254
+        Height = 24
+        Caption = 'Внимание!  Требуется запущенный MySql'
+        Color = 'clBlack'
+        ParentColor = False
+        ParentFont = False
+        Font.Charset = 'DEFAULT_CHARSET'
+        Font.Color = 'clGray'
+        Font.Height = -13
+        Font.Name = 'Tahoma'
+        Font.Style = '[]'
+      end
+      object sGroupBox40: TsGroupBox
+        Left = 184
+        Top = 143
+        Width = 145
+        Height = 82
+        Caption = 'Права Админа:'
+        TabOrder = 7
+        SkinData.SkinSection = 'GROUPBOX'
+        object sButton22: TsButton
+          Left = 11
+          Top = 48
+          Width = 46
+          Height = 25
+          Caption = 'Дать'
+          TabOrder = 0
+          OnClick = 'sButton22Click'
+          SkinData.SkinSection = 'BUTTON'
+        end
+      end
+      object sGroupBox39: TsGroupBox
+        Left = 344
+        Top = 64
+        Width = 257
+        Height = 161
+        Caption = 'Игроки с правами Админа:'
+        TabOrder = 6
+        SkinData.SkinSection = 'GROUPBOX'
+      end
+      object sGroupBox38: TsGroupBox
+        Left = 182
+        Top = 65
+        Width = 145
+        Height = 55
+        Caption = 'Новые персонажи в:'
+        TabOrder = 5
+        SkinData.SkinSection = 'GROUPBOX'
+      end
+      object sButton15: TsButton
+        Left = 510
+        Top = 198
+        Width = 75
+        Height = 18
+        Caption = 'Показать'
+        Font.Charset = 'DEFAULT_CHARSET'
+        Font.Color = 'clWindowText'
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = '[]'
+        ParentFont = False
+        TabOrder = 0
+        OnClick = 'sButton15Click'
+        SkinData.SkinSection = 'BUTTON'
+      end
+      object sComboBox4: TsComboBox
+        Left = 192
+        Top = 87
+        Width = 121
+        Height = 21
+        Hint = 'Новые созданные персонажи будут появляться в указаном месте'
+        Alignment = 'taLeftJustify'
+        BoundLabel.Indent = 0
+        BoundLabel.Font.Charset = 'DEFAULT_CHARSET'
+        BoundLabel.Font.Color = 'clWindowText'
+        BoundLabel.Font.Height = -11
+        BoundLabel.Font.Name = 'Tahoma'
+        BoundLabel.Font.Style = '[]'
+        BoundLabel.Layout = 'sclLeft'
+        BoundLabel.MaxWidth = 0
+        BoundLabel.UseSkinColor = True
+        SkinData.SkinSection = 'COMBOBOX'
+        Color = 1710618
+        Font.Charset = 'DEFAULT_CHARSET'
+        Font.Color = 'clGray'
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = '[]'
+        ItemHeight = 13
+        ItemIndex = -1
+        ParentFont = False
+        ParentShowHint = False
+        ShowHint = True
+        TabOrder = 1
+        Text = 'Начальная зона'
+        OnChange = 'sComboBox4Change'
+        Items.Strings = ('Центр Гирана' | 'Начальный Город')
+      end
+      object sMemo3: TsMemo
+        Left = 360
+        Top = 87
+        Width = 225
+        Height = 105
+        Color = 1710618
+        Font.Charset = 'DEFAULT_CHARSET'
+        Font.Color = 'clGray'
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = '[]'
+        ParentFont = False
+        ScrollBars = 'ssVertical'
+        TabOrder = 2
+        BoundLabel.Indent = 0
+        BoundLabel.Font.Charset = 'DEFAULT_CHARSET'
+        BoundLabel.Font.Color = 'clWindowText'
+        BoundLabel.Font.Height = -11
+        BoundLabel.Font.Name = 'Tahoma'
+        BoundLabel.Font.Style = '[]'
+        BoundLabel.Layout = 'sclLeft'
+        BoundLabel.MaxWidth = 0
+        BoundLabel.UseSkinColor = True
+        SkinData.SkinSection = 'EDIT'
+      end
+      object sEdit5: TsEdit
+        Left = 192
+        Top = 164
+        Width = 129
+        Height = 21
+        Color = 1710618
+        Font.Charset = 'DEFAULT_CHARSET'
+        Font.Color = 'clGray'
+        Font.Height = -11
+        Font.Name = 'Tahoma'
+        Font.Style = '[]'
+        ParentFont = False
+        TabOrder = 3
+        SkinData.SkinSection = 'EDIT'
+        BoundLabel.Indent = 0
+        BoundLabel.Font.Charset = 'DEFAULT_CHARSET'
+        BoundLabel.Font.Color = 'clWindowText'
+        BoundLabel.Font.Height = -11
+        BoundLabel.Font.Name = 'Tahoma'
+        BoundLabel.Font.Style = '[]'
+        BoundLabel.Layout = 'sclLeft'
+        BoundLabel.MaxWidth = 0
+        BoundLabel.UseSkinColor = True
+      end
+      object sButton16: TsButton
+        Left = 11
+        Top = 432
+        Width = 62
+        Height = 18
+        Caption = 'bag_copy17'
+        Enabled = False
+        TabOrder = 4
+        Visible = False
+        OnClick = 'sButton16Click'
+        SkinData.SkinSection = 'BUTTON'
+      end
+      object sButton17: TsButton
+        Left = 263
+        Top = 191
+        Width = 58
+        Height = 25
+        Caption = 'Забрать'
+        TabOrder = 8
+        OnClick = 'sButton16Click'
+        SkinData.SkinSection = 'BUTTON'
+      end
+    end
+  end
+  object sButton1: TsButton
+    Left = 17
+    Top = 80
+    Width = 75
+    Height = 25
+    Hint = 'Запустить Базу данных Сервера'
+    Caption = 'Start MySql'
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 0
+    OnClick = 'sButton1Click'
+    SkinData.SkinSection = 'BUTTON'
+  end
+  object sButton2: TsButton
+    Left = 17
+    Top = 282
+    Width = 75
+    Height = 25
+    Hint = 'Выключить Базу данных Сервера'
+    Caption = 'Stop MySql'
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 1
+    OnClick = 'sButton2Click'
+    SkinData.SkinSection = 'BUTTON'
+  end
+  object sButton3: TsButton
+    Left = 17
+    Top = 130
+    Width = 75
+    Height = 25
+    Hint = 'Запустить Сервер'
+    Caption = 'Start Server'
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 2
+    OnClick = 'sButton3Click'
+    SkinData.SkinSection = 'BUTTON'
+  end
+  object sButton4: TsButton
+    Left = 17
+    Top = 232
+    Width = 75
+    Height = 25
+    Hint = 'Выключить Сервер'
+    Caption = 'Stop Server'
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 3
+    OnClick = 'sButton4Click'
+    SkinData.SkinSection = 'BUTTON'
+  end
+  object sButton5: TsButton
+    Left = 17
+    Top = 440
+    Width = 75
+    Height = 25
+    Hint = 'использовать только при зависании сервера или  возникновении  проблем '
+    Caption = 'Kill All'
+    Font.Charset = 'DEFAULT_CHARSET'
+    Font.Color = 'clWindowText'
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = '[]'
+    ParentFont = False
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 4
+    OnClick = 'sButton5Click'
+    SkinData.SkinSection = 'BUTTON'
+  end
+  object sButton18: TsButton
+    Left = 17
+    Top = 357
+    Width = 75
+    Height = 18
+    Hint = 'Запустить сайт'
+    Caption = 'Start WEB'
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 8
+    OnClick = 'sButton18Click'
+    SkinData.SkinSection = 'BUTTON'
+  end
+  object sButton19: TsButton
+    Left = 17
+    Top = 382
+    Width = 75
+    Height = 18
+    Hint = 'Остановить сайт'
+    Caption = 'Stop WEB'
+    ParentShowHint = False
+    ShowHint = True
+    TabOrder = 9
+    OnClick = 'sButton19Click'
+    SkinData.SkinSection = 'BUTTON'
+  end
+  object sPanel7: TsPanel
+    Left = 3
+    Top = 483
+    Width = 734
+    Height = 24
+    TabOrder = 10
+    SkinData.SkinSection = 'PANEL'
+    object Label6: TLabel
+      Left = 14
+      Top = 6
+      Width = 126
+      Height = 13
+      Caption = 'Copyright jmaniac © 2009'
+      Color = 2236962
+      Font.Charset = 'DEFAULT_CHARSET'
+      Font.Color = 3092271
+      Font.Height = -11
+      Font.Name = 'Tahoma'
+      Font.Style = '[]'
+      ParentColor = False
+      ParentFont = False
+    end
+    object sButton20: TsButton
+      Left = 655
+      Top = 4
+      Width = 75
+      Height = 18
+      Caption = 'О программе'
+      TabOrder = 0
+      OnClick = 'sButton20Click'
+      SkinData.SkinSection = 'BUTTON'
+    end
+  end
+  object sSkinManager1: TsSkinManager
+    ExtendedBorders = True
+    InternalSkins = <collection 1>
+      item 0: Name='TV-b (internal)'; GeneralData=('collection', []); Images=('collection', []); Patterns=('collection', []); Shadow1Color='clBlack'; Shadow1Offset=0; Shadow1Transparency=0; Data='<binary 62567 bytes>'
+    MenuSupport.IcoLineSkin = 'ICOLINE'
+    MenuSupport.ExtraLineFont.Charset = 'DEFAULT_CHARSET'
+    MenuSupport.ExtraLineFont.Color = 'clWindowText'
+    MenuSupport.ExtraLineFont.Height = -11
+    MenuSupport.ExtraLineFont.Name = 'Tahoma'
+    MenuSupport.ExtraLineFont.Style = '[]'
+    SkinDirectory = 'c:\\Skins'
+    SkinName = 'TV-b (internal)'
+    SkinInfo = '6.4'
+    ThirdParty.ThirdEdits = ' '
+    ThirdParty.ThirdButtons = 'TButton'
+    ThirdParty.ThirdBitBtns = ' '
+    ThirdParty.ThirdCheckBoxes = ' '
+    ThirdParty.ThirdGroupBoxes = ' '
+    ThirdParty.ThirdListViews = ' '
+    ThirdParty.ThirdPanels = ' '
+    ThirdParty.ThirdGrids = ' '
+    ThirdParty.ThirdTreeViews = ' '
+    ThirdParty.ThirdComboBoxes = ' '
+    ThirdParty.ThirdWWEdits = ' '
+    ThirdParty.ThirdVirtualTrees = ' '
+    ThirdParty.ThirdGridEh = ' '
+    ThirdParty.ThirdPageControl = ' '
+    ThirdParty.ThirdTabControl = ' '
+    ThirdParty.ThirdToolBar = ' '
+    ThirdParty.ThirdStatusBar = ' '
+    ThirdParty.ThirdSpeedButton = ' '
+    Left = 808
+    Top = 536
+  end
+  object Timer1: TTimer
+    Interval = 3000
+    OnTimer = 'Timer1Timer'
+    Left = 736
+    Top = 536
+  end
+  object IdTCPClient1: TIdTCPClient
+    ConnectTimeout = 0
+    IPVersion = 'Id_IPv4'
+    Port = 0
+    ReadTimeout = -1
+    Left = 688
+    Top = 536
+  end
+  object Timer2: TTimer
+    Enabled = False
+    Interval = 3000
+    OnTimer = 'Timer2Timer'
+    Left = 632
+    Top = 536
+  end
+  object Timer3: TTimer
+    Enabled = False
+    Interval = 3500
+    OnTimer = 'Timer3Timer'
+    Left = 592
+    Top = 536
+  end
+  object Timer4: TTimer
+    Enabled = False
+    Interval = 3500
+    OnTimer = 'Timer4Timer'
+    Left = 552
+    Top = 536
+  end
+  object sHintManager1: TsHintManager
+    HintKind.Style = 'hsComics'
+    HintKind.Bevel = 0
+    HintKind.Color = 12124159
+    HintKind.ColorBorderTop = 'clBlack'
+    HintKind.ColorBorderBottom = 'clBlack'
+    HintKind.Transparency = 0
+    HintKind.ShadowBlur = 0
+    HintKind.ShadowEnabled = False
+    HintKind.ShadowOffset = 3
+    HintKind.ShadowTransparency = 0
+    HintKind.Font.Charset = 'DEFAULT_CHARSET'
+    HintKind.Font.Color = 'clWindowText'
+    HintKind.Font.Height = -11
+    HintKind.Font.Name = 'Tahoma'
+    HintKind.Font.Style = '[]'
+    Predefinitions = 'shCustom'
+    SkinSection = 'HINT'
+    Left = 416
+    Top = 528
+  end
+  object MyQuery1: TMyQuery
+    Connection = 'MyConnection1'
+    Left = 128
+    Top = 528
+  end
+  object MyConnection1: TMyConnection
+    Database = 'l2rt'
+    Port = 3305
+    Options.Charset = 'utf8'
+    Username = 'root'
+    Server = '127.0.0.1'
+    Left = 64
+    Top = 528
+  end
+  object SaveDialog1: TsSaveDialog
+    DefaultExt = 'ini'
+    FileName = 'L2'
+    Filter = 'ini|ini'
+    Title = 'Сохранение L2.ini'
+    Left = 336
+    Top = 528
+  end
+  object Timer5: TTimer
+    Enabled = False
+    Interval = 3000
+    OnTimer = 'Timer5Timer'
+    Left = 504
+    Top = 536
+  end
+end

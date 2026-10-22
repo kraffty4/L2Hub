@@ -1,0 +1,331 @@
+diff --git a/dist/game/config/Custom/PhantomParty.ini b/dist/game/config/Custom/PhantomParty.ini
+index fa1d548..3e67a63 100644
+--- a/dist/game/config/Custom/PhantomParty.ini
++++ b/dist/game/config/Custom/PhantomParty.ini
+@@ -33,3 +33,16 @@ PhantomEventCooldown = 60
+ 
+ # И не больше стольких реплик на события в минуту на всех напарников; сверх — заготовки или молчание.
+ PhantomEventsPerMinute = 6
++
++# Общий (белый) чат рядом: напарники из твоей пати, кто стоит рядом, слышат его как чат пати — отвечают вслух и слушаются приказов;
++# охотник рядом отвечает, если назвать его по имени. Говоришь в белый чат с фейком по имени или кричишь «лфм» — фантомы молчат.
++# False — с фантомами только шёпот и чат пати.
++PhantomGeneralChat = True
++
++# Без имени охотник рядом сам встревает в разговор с таким шансом, %. Только если рядом нет других живых игроков:
++# при друзьях охотники в чужой разговор не лезут. 0 — только по имени.
++PhantomOverhearChance = 25
++
++# Встревает не чаще раза в столько секунд — один охотник и на одного игрока. Реплики считаются в PhantomEventsPerMinute.
++PhantomOverhearCooldown = 90
++PhantomOverhearPlayerCooldown = 30
+diff --git a/dist/game/data/scripts/handlers/chat/channels/ChatGeneral.java b/dist/game/data/scripts/handlers/chat/channels/ChatGeneral.java
+index c4607a9..8c105cd 100644
+--- a/dist/game/data/scripts/handlers/chat/channels/ChatGeneral.java
++++ b/dist/game/data/scripts/handlers/chat/channels/ChatGeneral.java
+@@ -28,6 +28,7 @@ import org.l2jmobius.gameserver.handler.IChatHandler;
+ import org.l2jmobius.gameserver.handler.IVoicedCommandHandler;
+ import org.l2jmobius.gameserver.handler.VoicedCommandHandler;
+ import org.l2jmobius.gameserver.managers.FakePlayerChatManager;
++import org.l2jmobius.gameserver.managers.phantom.PhantomChat;
+ import org.l2jmobius.gameserver.managers.phantom.PhantomHunterManager;
+ import org.l2jmobius.gameserver.network.SystemMessageId;
+ import org.l2jmobius.gameserver.network.enums.ChatType;
+@@ -124,13 +125,20 @@ public class ChatGeneral implements IChatHandler
+ 			activeChar.sendPacket(cs);
+ 
+ 			// L2Hub: фейки рядом слышат, когда к ним обращаются по имени.
++			boolean answered = false;
+ 			if (FakePlayersConfig.FAKE_PLAYERS_ENABLED && FakePlayersConfig.FAKE_PLAYER_CHAT)
+ 			{
+-				FakePlayerChatManager.getInstance().manageSay(activeChar, text);
++				answered = FakePlayerChatManager.getInstance().manageSay(activeChar, text);
+ 			}
+ 
+ 			// L2Hub: охотники-фантомы рядом слышат «лфм», «нужен хил» и просятся в пати.
+-			PhantomHunterManager.getInstance().onLfm(activeChar, type, text);
++			answered |= PhantomHunterManager.getInstance().onLfm(activeChar, type, text);
++
++			// L2Hub: остальное слышат фантомы рядом — напарники из пати отвечают вслух, охотник — если назвали или есть что сказать.
++			if (!answered)
++			{
++				PhantomChat.getInstance().onGeneralChat(activeChar, text);
++			}
+ 		}
+ 	}
+ 	
+diff --git a/java/org/l2jmobius/gameserver/config/custom/PhantomPartyConfig.java b/java/org/l2jmobius/gameserver/config/custom/PhantomPartyConfig.java
+index d70dd14..2ad9c34 100644
+--- a/java/org/l2jmobius/gameserver/config/custom/PhantomPartyConfig.java
++++ b/java/org/l2jmobius/gameserver/config/custom/PhantomPartyConfig.java
+@@ -20,6 +20,10 @@ public class PhantomPartyConfig
+ 	public static boolean PHANTOM_BRAIN;
+ 	public static int PHANTOM_EVENT_COOLDOWN;
+ 	public static int PHANTOM_EVENTS_PER_MINUTE;
++	public static boolean PHANTOM_GENERAL_CHAT;
++	public static int PHANTOM_OVERHEAR_CHANCE;
++	public static int PHANTOM_OVERHEAR_COOLDOWN;
++	public static int PHANTOM_OVERHEAR_PLAYER_COOLDOWN;
+ 
+ 	public static void load()
+ 	{
+@@ -33,5 +37,9 @@ public class PhantomPartyConfig
+ 		PHANTOM_BRAIN = config.getBoolean("PhantomBrain", true);
+ 		PHANTOM_EVENT_COOLDOWN = config.getInt("PhantomEventCooldown", 60);
+ 		PHANTOM_EVENTS_PER_MINUTE = config.getInt("PhantomEventsPerMinute", 6);
++		PHANTOM_GENERAL_CHAT = config.getBoolean("PhantomGeneralChat", true);
++		PHANTOM_OVERHEAR_CHANCE = config.getInt("PhantomOverhearChance", 25);
++		PHANTOM_OVERHEAR_COOLDOWN = config.getInt("PhantomOverhearCooldown", 90);
++		PHANTOM_OVERHEAR_PLAYER_COOLDOWN = config.getInt("PhantomOverhearPlayerCooldown", 30);
+ 	}
+ }
+diff --git a/java/org/l2jmobius/gameserver/managers/FakePlayerChatManager.java b/java/org/l2jmobius/gameserver/managers/FakePlayerChatManager.java
+index c1485e0..4c36480 100644
+--- a/java/org/l2jmobius/gameserver/managers/FakePlayerChatManager.java
++++ b/java/org/l2jmobius/gameserver/managers/FakePlayerChatManager.java
+@@ -104,12 +104,13 @@ public class FakePlayerChatManager implements IXmlReader
+ 	 * L2Hub: фейк рядом отвечает в общий чат, если игрок назвал его по имени. Отвечает ближайший из названных.
+ 	 * @param player игрок
+ 	 * @param message что он сказал в общий чат
++	 * @return {@code true}, если обратились к фейку и он отвечает
+ 	 */
+-	public void manageSay(Player player, String message)
++	public boolean manageSay(Player player, String message)
+ 	{
+ 		if (!FakePlayersConfig.FAKE_PLAYER_BRAIN || (FakePlayersConfig.FAKE_PLAYER_BRAIN_SAY_RANGE <= 0))
+ 		{
+-			return;
++			return false;
+ 		}
+ 
+ 		final String text = message.toLowerCase();
+@@ -137,6 +138,7 @@ public class FakePlayerChatManager implements IXmlReader
+ 			{
+ 			});
+ 		}
++		return nearest != null;
+ 	}
+ 
+ 	/**
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java
+index 6461635..57b5026 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java
+@@ -36,6 +36,7 @@ import org.l2jmobius.gameserver.taskmanagers.GameTimeTaskManager;
+  * Шёпот напарнику ({@code ChatWhisper}) и чат пати с напарником ({@code ChatParty}) приходят сюда. Сначала {@link PhantomOrders}: понятный приказ своего владельца выполняется сразу, мозги ({@code launcher/l2hub/brain.py}) только отвечают в характере.
+  * Остальное — в мозги; тег приказа в их ответе ({@code [[STAY]]}) выполняется, если говорил владелец.<br>
+  * В чате пати без имени отвечает тот напарник, с которым игрок уже говорит, а если в пати кроме него только напарники — любой; с именем или прозвищем — названный.<br>
++ * Общий (белый) чат рядом ({@code ChatGeneral}): напарники из пати, кто стоит рядом, слышат его так же, как чат пати, и отвечают вслух; охотник рядом — если назвали, а без имени изредка встревает сам.<br>
+  * События (вступил в пати, новый уровень владельца, смерть, рес, отдых) — реплика с кулдауном и общим бюджетом в минуту; мозги недоступны — заготовка.
+  */
+ public class PhantomChat
+@@ -44,6 +45,8 @@ public class PhantomChat
+ 
+ 	/** Сообщение без имени в чате пати — продолжение разговора с напарником, который отвечал этому игроку не раньше этого. */
+ 	private static final long CONVERSATION_WINDOW = 120000;
++	/** Сколько слышно общий чат — как у игроков. */
++	private static final int SAY_RANGE = 1250;
+ 	private static final Pattern TAG = Pattern.compile("\\[\\[([A-Z]+)\\]\\]");
+ 
+ 	public enum Event
+@@ -160,14 +163,110 @@ public class PhantomChat
+ 			}
+ 		}
+ 
+-		if (phantoms.isEmpty())
++		route(speaker, text, phantoms, othersHuman, "party");
++	}
++
++	/**
++	 * Сообщение в общий чат рядом (из {@code ChatGeneral}, если к нему не взялись фейки и «лфм»).<br>
++	 * Напарники из пати говорящего, кто стоит рядом, слышат его как чат пати: слушаются приказов и отвечают вслух.
++	 * Охотник рядом отвечает, если его назвали или он уже говорит с этим игроком; без этого изредка встревает сам — только когда рядом нет других живых игроков.
++	 * @param speaker кто пишет (живой игрок)
++	 * @param text что написал
++	 */
++	public void onGeneralChat(Player speaker, String text)
++	{
++		if (!PhantomsConfig.PHANTOMS_ENABLED || !PhantomPartyConfig.PHANTOM_GENERAL_CHAT || PhantomManager.getInstance().isPhantom(speaker))
+ 		{
+ 			return;
+ 		}
+ 
++		final Map<PhantomTemplate, Player> mates = new LinkedHashMap<>();
++		final Map<PhantomTemplate, Player> strangers = new LinkedHashMap<>();
++		boolean othersHuman = false;
++		for (Player player : World.getVisibleObjectsInRange(speaker, Player.class, SAY_RANGE))
++		{
++			if (player == speaker)
++			{
++				continue;
++			}
++
++			final PhantomTemplate template = PhantomManager.getInstance().isPhantom(player) ? PhantomData.getInstance().getTemplate(player.getName()) : null;
++			if (template == null)
++			{
++				othersHuman |= player.isOnline() && !player.isInOfflineMode();
++			}
++			else if (speaker.isInParty() && (player.getParty() == speaker.getParty()))
++			{
++				mates.put(template, player);
++			}
++			else
++			{
++				strangers.put(template, player);
++			}
++		}
++
++		// Назван только кто-то чужой — отвечает он, а не напарники.
++		final List<PhantomTemplate> named = PhantomOrders.addressed(text, strangers.keySet());
++		if ((named.isEmpty() || !PhantomOrders.addressed(text, mates.keySet()).isEmpty()) && route(speaker, text, mates, othersHuman, "say"))
++		{
++			return;
++		}
++		if (strangers.isEmpty())
++		{
++			return;
++		}
++
++		PhantomTemplate replier = named.isEmpty() ? recentPartner(speaker, strangers) : named.get(0);
++		if (replier != null)
++		{
++			talk(speaker, strangers.get(replier), replier, "say", text, List.of(), null, PhantomCompanionManager.getInstance().isOwner(speaker, replier));
++			return;
++		}
++
++		// Без имени: изредка встревает кто-то свободный, если рядом нет других живых — в чужой разговор охотники не лезут.
++		final long now = System.currentTimeMillis();
++		final String speakerKey = "say:" + speaker.getObjectId();
++		if (othersHuman || (Rnd.get(100) >= PhantomPartyConfig.PHANTOM_OVERHEAR_CHANCE) || !brainEnabled() || !cooled(speakerKey, now))
++		{
++			return;
++		}
++
++		final List<PhantomTemplate> free = new ArrayList<>();
++		for (Map.Entry<PhantomTemplate, Player> entry : strangers.entrySet())
++		{
++			final Player phantom = entry.getValue();
++			if (!phantom.isDead() && !phantom.isInCombat() && cooled("overhear:" + phantom.getObjectId(), now))
++			{
++				free.add(entry.getKey());
++			}
++		}
++		if (free.isEmpty() || !eventBudget(now))
++		{
++			return;
++		}
++
++		replier = free.get(Rnd.get(free.size()));
++		final Player phantom = strangers.get(replier);
++		_eventCooldowns.put(speakerKey, now + (PhantomPartyConfig.PHANTOM_OVERHEAR_PLAYER_COOLDOWN * 1000L));
++		_eventCooldowns.put("overhear:" + phantom.getObjectId(), now + (PhantomPartyConfig.PHANTOM_OVERHEAR_COOLDOWN * 1000L));
++		talk(speaker, phantom, replier, "overheard", text, List.of(), null, false);
++	}
++
++	/**
++	 * Кто из фантомов отвечает и что выполняет. Приказы — только своим напарникам: названным, а без имени — тем, чья это работа (баф — бафферу, хил и рес — хилеру).
++	 * Разговор — названному, без имени — тому, с кем игрок уже говорит, а если других живых рядом нет — любому.
++	 * @param channel куда отвечать: {@code party} — в чат пати, {@code say} — вслух рядом
++	 * @return {@code true}, если кто-то взялся ответить
++	 */
++	private boolean route(Player speaker, String text, Map<PhantomTemplate, Player> phantoms, boolean othersHuman, String channel)
++	{
++		if (phantoms.isEmpty())
++		{
++			return false;
++		}
++
+ 		final List<PhantomTemplate> addressed = PhantomOrders.addressed(text, phantoms.keySet());
+ 
+-		// Приказы — только своим напарникам: названным, а без имени — тем, чья это работа (баф — бафферу, хил и рес — хилеру).
+ 		final List<Order> orders = PhantomOrders.parse(text);
+ 		if (!orders.isEmpty())
+ 		{
+@@ -199,10 +298,10 @@ public class PhantomChat
+ 					{
+ 						// Отвечает один — первый исполнитель; остальные выполняют молча.
+ 						replied = true;
+-						talk(speaker, phantoms.get(entry.getKey()), entry.getKey(), "party", text, entry.getValue(), note, true);
++						talk(speaker, phantoms.get(entry.getKey()), entry.getKey(), channel, text, entry.getValue(), note, true);
+ 					}
+ 				}
+-				return;
++				return true;
+ 			}
+ 		}
+ 
+@@ -218,10 +317,11 @@ public class PhantomChat
+ 		}
+ 		if (replier == null)
+ 		{
+-			return;
++			return false;
+ 		}
+ 
+-		talk(speaker, phantoms.get(replier), replier, "party", text, List.of(), null, PhantomCompanionManager.getInstance().isOwner(speaker, replier));
++		talk(speaker, phantoms.get(replier), replier, channel, text, List.of(), null, PhantomCompanionManager.getInstance().isOwner(speaker, replier));
++		return true;
+ 	}
+ 
+ 	/**
+@@ -474,7 +574,10 @@ public class PhantomChat
+ 
+ 	private void talk(Player speaker, Player phantom, PhantomTemplate template, String channel, String text, List<Order> orders, String note, boolean owner)
+ 	{
+-		_lastReply.put(pair(phantom, speaker), System.currentTimeMillis());
++		if (!"overheard".equals(channel))
++		{
++			_lastReply.put(pair(phantom, speaker), System.currentTimeMillis());
++		}
+ 		if (!brainEnabled())
+ 		{
+ 			fallback(speaker, phantom, channel, orders);
+@@ -513,11 +616,15 @@ public class PhantomChat
+ 	}
+ 
+ 	/**
+-	 * Ответ туда, откуда спросили: шёпот — шёпотом, пати и события — в чат пати (не в пати — шёпотом).
++	 * Ответ туда, откуда спросили: шёпот — шёпотом, общий чат — вслух рядом, пати и события — в чат пати (не в пати — шёпотом).
+ 	 */
+ 	private static void say(Player phantom, Player listener, String channel, String text)
+ 	{
+-		if (!"whisper".equals(channel) && phantom.isInParty())
++		if ("say".equals(channel) || "overheard".equals(channel))
++		{
++			sayNear(phantom, text);
++		}
++		else if (!"whisper".equals(channel) && phantom.isInParty())
+ 		{
+ 			phantom.getParty().broadcastCreatureSay(new CreatureSay(phantom, ChatType.PARTY, phantom.getName(), text), phantom);
+ 		}
+@@ -532,6 +639,12 @@ public class PhantomChat
+ 		return PhantomPartyConfig.PHANTOM_BRAIN && FakePlayersConfig.FAKE_PLAYER_BRAIN;
+ 	}
+ 
++	private boolean cooled(String key, long now)
++	{
++		final Long until = _eventCooldowns.get(key);
++		return (until == null) || (now >= until);
++	}
++
+ 	private boolean eventBudget(long now)
+ 	{
+ 		synchronized (_eventCalls)
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+index 0476272..e8e5e8c 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+@@ -1356,10 +1356,11 @@ public class PhantomHunterManager
+ 	 * @param shouter кто написал
+ 	 * @param type канал
+ 	 * @param text что написал
++	 * @return {@code true}, если кто-то откликнулся
+ 	 */
+-	public void onLfm(Player shouter, ChatType type, String text)
++	public boolean onLfm(Player shouter, ChatType type, String text)
+ 	{
+-		lfm(shouter, type, text, false);
++		return !lfm(shouter, type, text, false).isEmpty();
+ 	}
+ 
+ 	/**

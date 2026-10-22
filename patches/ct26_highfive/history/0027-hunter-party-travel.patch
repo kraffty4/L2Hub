@@ -1,0 +1,550 @@
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java
+index efcf4ba..ff6c8c9 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java
+@@ -8,6 +8,7 @@ import java.util.logging.Logger;
+ 
+ import org.l2jmobius.commons.threads.ThreadPool;
+ import org.l2jmobius.gameserver.ai.Intention;
++import org.l2jmobius.gameserver.config.custom.AutoPlayConfig;
+ import org.l2jmobius.gameserver.config.custom.PhantomPartyConfig;
+ import org.l2jmobius.gameserver.config.custom.PhantomsConfig;
+ import org.l2jmobius.gameserver.entity.Location;
+@@ -18,10 +19,12 @@ import org.l2jmobius.gameserver.entity.actor.Player;
+ import org.l2jmobius.gameserver.entity.actor.instance.Monster;
+ import org.l2jmobius.gameserver.entity.groups.Party;
+ import org.l2jmobius.gameserver.entity.groups.PartyDistributionType;
++import org.l2jmobius.gameserver.entity.item.instance.Item;
+ import org.l2jmobius.gameserver.entity.zone.ZoneId;
+ import org.l2jmobius.gameserver.geoengine.GeoEngine;
+ import org.l2jmobius.gameserver.managers.phantom.PhantomChat.Event;
+ import org.l2jmobius.gameserver.managers.phantom.PhantomOrders.Order;
++import org.l2jmobius.gameserver.mechanics.skill.Skill;
+ import org.l2jmobius.gameserver.network.SystemMessageId;
+ import org.l2jmobius.gameserver.network.enums.ChatType;
+ import org.l2jmobius.gameserver.network.serverpackets.CreatureSay;
+@@ -32,7 +35,8 @@ import org.l2jmobius.gameserver.network.serverpackets.SystemMessage;
+  * L2Hub: напарники — фантомы в пати с живым игроком (этап 2: пати, follow, assist, защита, догоняющий телепорт).<br>
+  * Владелец зовёт напарника через .buddy — тот сразу вступает в пати (или по /invite: приглашение принимает сервер, {@code RequestJoinParty}). В пати напарник держится сзади-сбоку от владельца, бьёт цель владельца, когда тот в бою, защищает себя и пати,
+  * а отставшего или застрявшего телепортирует к владельцу. Владелец вышел из игры — через {@link PhantomPartyConfig#PHANTOM_OWNER_LOGOUT_GRACE} секунд напарник уходит из мира.<br>
+- * Бой — родным AI игрока (намерения ATTACK и MOVE_TO), без AutoPlay: он для живых игроков выключен ({@code EnableAutoPlay = False}).
++ * Бой — родным AI игрока (намерения ATTACK и MOVE_TO), без AutoPlay: он для живых игроков выключен ({@code EnableAutoPlay = False}).<br>
++ * Охотник в пати (патч 0027) бьёт и своими скиллами из AutoUse, маг — только ими; AutoUse в пати работает ради банок. Подбирает вещи на земле рядом.
+  */
+ public class PhantomCompanionManager
+ {
+@@ -55,6 +59,8 @@ public class PhantomCompanionManager
+ 	private static final long LEAVE_DELAY = 8000;
+ 	/** У владельца в бою меньше этого HP (%) — хилер говорит «держись». */
+ 	private static final int OWNER_LOW_HP = 30;
++	/** Охотник в пати подбирает, что лежит ближе этого (адену, брошенную игроком, и вещи на земле). */
++	private static final int PICKUP_RANGE = 300;
+ 
+ 	public enum Mode
+ 	{
+@@ -782,6 +788,12 @@ public class PhantomCompanionManager
+ 			}
+ 		}
+ 
++		// Охотник подбирает, что лежит рядом: адену и вещи, брошенные игроком (лут с мобов по автолуту и так делит пати).
++		if (companion.hunter && pickUp(phantom))
++		{
++			return;
++		}
++
+ 		if (companion.mode == Mode.STAY)
+ 		{
+ 			hold(companion, phantom);
+@@ -932,6 +944,23 @@ public class PhantomCompanionManager
+ 			phantom.setTarget(enemy);
+ 		}
+ 
++		// Охотник бьёт своими скиллами, как на споте: AutoUse без AutoPlay атакующие скиллы не кастует, поэтому — отсюда.
++		if (castSkill(phantom, enemy))
++		{
++			return;
++		}
++
++		// Маг оружием не машет: цель держит, ждёт MP и отката.
++		if (PhantomHunterOutfit.isCaster(phantom))
++		{
++			if (phantom.getAI().getIntention() == Intention.ATTACK)
++			{
++				phantom.abortAttack();
++				phantom.getAI().setIntentionActive();
++			}
++			return;
++		}
++
+ 		// Повтор намерения раз в тик оживляет застрявшую атаку (так же делает AutoPlay Mobius).
+ 		if ((phantom.getAI().getIntention() != Intention.ATTACK) || (!phantom.isAttackingNow() && !phantom.isMoving()))
+ 		{
+@@ -940,6 +969,77 @@ public class PhantomCompanionManager
+ 		}
+ 	}
+ 
++	/**
++	 * Атакующий скилл охотника из его AutoUse (сильные первыми), если он готов сейчас: хватает MP, не на откате, условия выполнены.
++	 * До дистанции каста AI игрока подводит сам. У напарников из .buddy таких скиллов нет — они бьют оружием, как раньше.
++	 * @return начал каст
++	 */
++	private static boolean castSkill(Player phantom, Creature enemy)
++	{
++		for (Integer skillId : phantom.getAutoUseSettings().getAutoSkills())
++		{
++			final Skill skill = phantom.getKnownSkill(skillId);
++			if ((skill == null) || phantom.isSkillDisabled(skill) || (phantom.getCurrentMp() < (skill.getMpInitialConsume() + skill.getMpConsume())) || !skill.checkCondition(phantom, enemy, false))
++			{
++				continue;
++			}
++
++			phantom.setRunning();
++			if (phantom.useMagic(skill, true, false))
++			{
++				return true;
++			}
++		}
++		return false;
++	}
++
++	/**
++	 * Вещь на земле в {@link #PICKUP_RANGE}: далеко — подбежать, рядом — подобрать. Подобранное делится по правилам лута пати, как у живого игрока.
++	 * Чужой защищённый дроп (не наш и не нашей пати) не трогает: иначе стоял бы над ним, пока не снимется защита.
++	 * @return занят подбором
++	 */
++	private static boolean pickUp(Player phantom)
++	{
++		if (phantom.isCastingNow() || phantom.isAttackingNow() || !phantom.isInventoryUnder90(false))
++		{
++			return false;
++		}
++
++		Item nearest = null;
++		double nearestDistance = Double.MAX_VALUE;
++		for (Item item : World.getVisibleObjectsInRange(phantom, Item.class, PICKUP_RANGE))
++		{
++			if (!item.isSpawned() || AutoPlayConfig.IGNORED_AUTO_PICK_ITEMS.contains(item.getId()) || !item.getDropProtection().tryPickUp(phantom) || !GeoEngine.getInstance().canMoveToTarget(phantom.getX(), phantom.getY(), phantom.getZ(), item.getX(), item.getY(), item.getZ(), phantom.getInstanceId()))
++			{
++				continue;
++			}
++
++			final double distance = phantom.calculateDistance2D(item);
++			if (distance < nearestDistance)
++			{
++				nearest = item;
++				nearestDistance = distance;
++			}
++		}
++		if (nearest == null)
++		{
++			return false;
++		}
++
++		if (nearestDistance > 70)
++		{
++			if (!phantom.isMoving())
++			{
++				phantom.setRunning();
++				phantom.getAI().setIntentionMoveTo(nearest);
++			}
++			return true;
++		}
++
++		phantom.doPickupItem(nearest);
++		return true;
++	}
++
+ 	private static void calmDown(Player phantom)
+ 	{
+ 		phantom.abortAttack();
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+index df3ff79..3f4a800 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+@@ -31,6 +31,7 @@ import org.l2jmobius.gameserver.entity.Location;
+ import org.l2jmobius.gameserver.entity.World;
+ import org.l2jmobius.gameserver.entity.WorldObject;
+ import org.l2jmobius.gameserver.entity.actor.Creature;
++import org.l2jmobius.gameserver.entity.actor.Npc;
+ import org.l2jmobius.gameserver.entity.actor.Player;
+ import org.l2jmobius.gameserver.entity.actor.Summon;
+ import org.l2jmobius.gameserver.entity.actor.enums.creature.Race;
+@@ -38,8 +39,10 @@ import org.l2jmobius.gameserver.entity.actor.enums.player.PrivateStoreType;
+ import org.l2jmobius.gameserver.entity.actor.enums.player.TeleportWhereType;
+ import org.l2jmobius.gameserver.entity.actor.holders.npc.BuffSkillHolder;
+ import org.l2jmobius.gameserver.entity.actor.instance.Monster;
++import org.l2jmobius.gameserver.entity.actor.instance.Teleporter;
+ import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
+ import org.l2jmobius.gameserver.entity.item.instance.Item;
++import org.l2jmobius.gameserver.entity.zone.ZoneId;
+ import org.l2jmobius.gameserver.geoengine.GeoEngine;
+ import org.l2jmobius.gameserver.managers.FakePlayerBrain;
+ import org.l2jmobius.gameserver.managers.GlobalVariablesManager;
+@@ -88,8 +91,18 @@ public class PhantomHunterManager
+ 	private static final int DANGER_RANGE = 900;
+ 	/** Спот ближе этого — к нему ногами (поводок, возврат на кач из пати и города), дальше — телепорт. */
+ 	private static final int WALK_RANGE = 6000;
+-	/** Шёл к споту ногами столько и не дошёл (застрял в геодате) — телепорт. */
++	/** Шёл к споту ногами столько и не дошёл (застрял в геодате) — телепорт; на дальнюю дорогу — больше, по расстоянию ({@link #walkTime}). */
+ 	private static final long WALK_BACK_TIMEOUT = 90000;
++	/** Скорость для расчёта времени в пути ногами: бег новичка — около 115–130, с запасом. */
++	private static final int WALK_SPEED = 90;
++	/** Отпустили из пати — спот рядом годится, даже если мобы до стольких уровней выше своего: игрок привёл туда, бафы ещё висят. */
++	private static final int NEARBY_LEVEL_UP = 5;
++	/** Из города: гейткипер не дальше этого; дальше или нет — телепорт с места. */
++	private static final int GATEKEEPER_RANGE = 5000;
++	/** Ближе этого к гейткиперу — «поговорил» с ним. */
++	private static final int GATEKEEPER_REACH = 150;
++	/** Бежал к гейткиперу столько и не добежал — телепорт с места. */
++	private static final long GATEKEEPER_TIMEOUT = 90000;
+ 	private static final String RESET_VARIABLE = "L2HubHuntersResetId";
+ 	private static final String SELF_TEST_VARIABLE = "L2HubHuntersSelfTestId";
+ 	/** Состояние охотников для лаунчера (от папки game). */
+@@ -200,8 +213,14 @@ public class PhantomHunterManager
+ 		long lastActive;
+ 		int roams;
+ 		long retryAt;
+-		/** Идёт на спот ногами до этого времени; не дошёл — телепорт. 0 — не идёт. */
++		/** Идёт на спот ногами до этого времени; не дошёл — другой спот рядом или телепорт. 0 — не идёт. */
+ 		long walkBackUntil;
++		/** Сколько раз подряд не дошёл до спота ногами (застрял в геодате). */
++		int walkFails;
++		/** Из города на далёкий спот: бежит к гейткиперу, у него — телепорт на этот спот. {@code null} — не бежит. */
++		HuntSpot gatekeeperSpot;
++		Location gatekeeperAt;
++		long gatekeeperUntil;
+ 		// Квесты-симуляция: какой взял (уровень, 0 — никакого), когда сделает, сделал — несёт сдавать.
+ 		int questLevel;
+ 		long questUntil;
+@@ -734,7 +753,7 @@ public class PhantomHunterManager
+ 				if (!PhantomCompanionManager.getInstance().isCompanion(hunter.template))
+ 				{
+ 					LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " left the party, back to hunting.");
+-					backToHunt(hunter, player);
++					backToHuntNearby(hunter, player);
+ 				}
+ 				return;
+ 			}
+@@ -759,6 +778,13 @@ public class PhantomHunterManager
+ 			}
+ 		}
+ 
++		// Из города бежит к гейткиперу (патч 0027): у него — телепорт на спот.
++		if (hunter.gatekeeperSpot != null)
++		{
++			gatekeeper(hunter, player, now);
++			return;
++		}
++
+ 		if ((hunter.spot == null) || outgrown(hunter.spot, player.getLevel()))
+ 		{
+ 			goToSpot(hunter, player, null);
+@@ -902,7 +928,7 @@ public class PhantomHunterManager
+ 	}
+ 
+ 	/**
+-	 * Телепорт на этот спот (у гейткипера, с платой с 40-го уровня).
++	 * Телепорт на этот спот (у гейткипера, с платой с 40-го уровня); в городе — сначала бегом к гейткиперу.
+ 	 */
+ 	private static void moveToSpot(Hunter hunter, Player player, HuntSpot spot)
+ 	{
+@@ -916,9 +942,80 @@ public class PhantomHunterManager
+ 		{
+ 			player.standUp();
+ 		}
++		LOGGER.fine(PhantomHunterManager.class.getSimpleName() + ": " + player.getName() + " (" + player.getLevel() + ") goes to " + spot + ".");
++		travel(hunter, player, spot);
++	}
++
++	/**
++	 * Телепорт на спот (патч 0027): в городе — как живой, бегом к ближайшему гейткиперу и телепорт у него ({@link #gatekeeper}); вне города или гейткипера рядом нет — с места.
++	 */
++	private static void travel(Hunter hunter, Player player, HuntSpot spot)
++	{
++		final Npc gatekeeper = player.isInsideZone(ZoneId.TOWN) ? nearestGatekeeper(player) : null;
++		if (gatekeeper == null)
++		{
++			payTeleport(player);
++			player.teleToLocation(spot.entry, true);
++			return;
++		}
++
++		// Точка перед гейткипером со стороны охотника: в самого NPC не упираться.
++		final double angle = Math.atan2(player.getY() - gatekeeper.getY(), player.getX() - gatekeeper.getX());
++		final int x = gatekeeper.getX() + (int) (Math.cos(angle) * 60);
++		final int y = gatekeeper.getY() + (int) (Math.sin(angle) * 60);
++		hunter.gatekeeperSpot = spot;
++		hunter.gatekeeperAt = new Location(x, y, GeoEngine.getInstance().getHeight(x, y, gatekeeper.getZ()));
++		hunter.gatekeeperUntil = System.currentTimeMillis() + GATEKEEPER_TIMEOUT;
++		player.setRunning();
++		player.getAI().setIntentionMoveTo(hunter.gatekeeperAt);
++		LOGGER.info(PhantomHunterManager.class.getSimpleName() + ": " + player.getName() + " runs to gatekeeper " + gatekeeper.getName() + " (" + (int) player.calculateDistance2D(gatekeeper) + ") for " + spot.name + ".");
++	}
++
++	/**
++	 * Бежит к гейткиперу: добежал — телепорт на спот у него; застрял дольше {@link #GATEKEEPER_TIMEOUT} — телепорт с места.
++	 */
++	private static void gatekeeper(Hunter hunter, Player player, long now)
++	{
++		final HuntSpot spot = hunter.gatekeeperSpot;
++		final double distance = player.calculateDistance2D(hunter.gatekeeperAt);
++		if ((distance > GATEKEEPER_REACH) && (now < hunter.gatekeeperUntil))
++		{
++			if (!player.isMoving())
++			{
++				player.setRunning();
++				player.getAI().setIntentionMoveTo(hunter.gatekeeperAt);
++			}
++			return;
++		}
++
++		hunter.gatekeeperSpot = null;
++		hunter.gatekeeperAt = null;
++		if (distance > GATEKEEPER_REACH)
++		{
++			LOGGER.info(PhantomHunterManager.class.getSimpleName() + ": " + player.getName() + " did not reach the gatekeeper (" + (int) distance + "), teleports.");
++		}
++		stop(player);
+ 		payTeleport(player);
+ 		player.teleToLocation(spot.entry, true);
+-		LOGGER.fine(PhantomHunterManager.class.getSimpleName() + ": " + player.getName() + " (" + player.getLevel() + ") goes to " + spot + ".");
++	}
++
++	/**
++	 * Ближайший гейткипер (NPC-телепортер) в {@link #GATEKEEPER_RANGE}, до которого можно дойти.
++	 */
++	private static Npc nearestGatekeeper(Player player)
++	{
++		Npc nearest = null;
++		double nearestDistance = Double.MAX_VALUE;
++		for (Teleporter npc : World.getVisibleObjectsInRange(player, Teleporter.class, GATEKEEPER_RANGE))
++		{
++			final double distance = player.calculateDistance2D(npc);
++			if ((distance < nearestDistance) && npc.isSpawned() && GeoEngine.getInstance().canMoveToTarget(player.getX(), player.getY(), player.getZ(), npc.getX(), npc.getY(), npc.getZ(), player.getInstanceId()))
++			{
++				nearest = npc;
++				nearestDistance = distance;
++			}
++		}
++		return nearest;
+ 	}
+ 
+ 	/**
+@@ -1207,8 +1304,8 @@ public class PhantomHunterManager
+ 	}
+ 
+ 	/**
+-	 * Из города, лавки, пати — обратно: на свой спот, если он ещё по уровню, иначе — выбрать новый.
+-	 * Спот рядом — бежит ногами, как живой (дальше дорогу ведёт {@link #leash}); далеко — телепорт за адену.
++	 * Из города и лавки — обратно: на свой спот, если он ещё по уровню, иначе — выбрать новый.
++	 * Спот рядом — бежит ногами, как живой (дальше дорогу ведёт {@link #leash}); далеко — телепорт за адену, в городе — у гейткипера ({@link #travel}).
+ 	 */
+ 	private void backToHunt(Hunter hunter, Player player)
+ 	{
+@@ -1219,6 +1316,7 @@ public class PhantomHunterManager
+ 		hunter.lastActive = now;
+ 		hunter.roams = 0;
+ 		hunter.walkBackUntil = 0;
++		hunter.walkFails = 0;
+ 		closeStore(hunter, player);
+ 		if ((hunter.spot != null) && !outgrown(hunter.spot, player.getLevel()))
+ 		{
+@@ -1236,13 +1334,103 @@ public class PhantomHunterManager
+ 				return;
+ 			}
+ 			LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " teleports back to " + hunter.spot.name + " (" + distance + ").");
+-			payTeleport(player);
+-			player.teleToLocation(hunter.spot.entry, true);
++			travel(hunter, player, hunter.spot);
+ 			return;
+ 		}
+ 		hunter.spot = null;
+ 	}
+ 
++	/**
++	 * Отпустили из пати или не дождался инвайта (патч 0027): ближайший спот по силам — ногами, без телепорта, как живой игрок, которого отпустили посреди локации.
++	 * Мобы до {@link #NEARBY_LEVEL_UP} уровней выше своего годятся: игрок мог привести на спот посильнее, бафы ещё висят. Новых бафов не берёт — пати-бафы лучше.
++	 */
++	private void backToHuntNearby(Hunter hunter, Player player)
++	{
++		final long now = System.currentTimeMillis();
++		hunter.phase = Phase.HUNT;
++		hunter.recruiterId = 0;
++		hunter.lastActive = now;
++		hunter.roams = 0;
++		hunter.walkBackUntil = 0;
++		hunter.walkFails = 0;
++		hunter.gatekeeperSpot = null;
++		closeStore(hunter, player);
++		final HuntSpot spot = nearestSpot(player, null);
++		if (spot == null)
++		{
++			// Ничего по силам вокруг — выберет спот как обычно.
++			hunter.spot = null;
++			return;
++		}
++		walkTo(hunter, player, spot);
++	}
++
++	/**
++	 * Ближайший к охотнику спот, на котором он не перерос мобов, а мобы не сильнее {@link #NEARBY_LEVEL_UP} уровней.
++	 * @param avoid этот не брать или {@code null}
++	 */
++	private static HuntSpot nearestSpot(Player player, HuntSpot avoid)
++	{
++		final int level = player.getLevel();
++		HuntSpot nearest = null;
++		double nearestDistance = Double.MAX_VALUE;
++		for (HuntSpot spot : HuntSpotData.getInstance().getSpots())
++		{
++			if ((spot == avoid) || outgrown(spot, level) || (spot.level > (level + NEARBY_LEVEL_UP)) || (spot.level < (level - 9)))
++			{
++				continue;
++			}
++
++			final double distance = player.calculateDistance2D(spot.entry);
++			if (distance < nearestDistance)
++			{
++				nearest = spot;
++				nearestDistance = distance;
++			}
++		}
++		return nearest;
++	}
++
++	/**
++	 * Новый спот — ногами (без телепорта); уже на нём — просто качается дальше. Время в пути — по расстоянию.
++	 */
++	private static void walkTo(Hunter hunter, Player player, HuntSpot spot)
++	{
++		final long now = System.currentTimeMillis();
++		final boolean same = hunter.spot == spot;
++		hunter.spot = spot;
++		if (!same)
++		{
++			hunter.spotSince = now;
++			hunter.spotExp = player.getExp();
++		}
++		stop(player);
++		if (player.isSitting())
++		{
++			player.standUp();
++		}
++
++		final int distance = (int) player.calculateDistance2D(spot.entry);
++		if (distance <= (spot.radius * 1.3))
++		{
++			LOGGER.info(PhantomHunterManager.class.getSimpleName() + ": " + player.getName() + " stays at " + spot.name + " (мобы " + spot.min + "-" + spot.max + ").");
++			return;
++		}
++
++		LOGGER.info(PhantomHunterManager.class.getSimpleName() + ": " + player.getName() + " walks to " + spot.name + " (мобы " + spot.min + "-" + spot.max + ", " + distance + ").");
++		hunter.walkBackUntil = now + walkTime(distance);
++		player.setRunning();
++		player.getAI().setIntentionMoveTo(spot.entry);
++	}
++
++	/**
++	 * @return сколько ждать, пока дойдёт ногами: по расстоянию с запасом, не меньше {@link #WALK_BACK_TIMEOUT}
++	 */
++	private static long walkTime(int distance)
++	{
++		return Math.max(WALK_BACK_TIMEOUT, ((distance * 1000L) / WALK_SPEED) + 30000);
++	}
++
+ 	private static void wander(Player player, int min, int max)
+ 	{
+ 		final double angle = Rnd.nextDouble() * 2 * Math.PI;
+@@ -1615,7 +1803,7 @@ public class PhantomHunterManager
+ 		if ((recruiter == null) || !recruiter.isOnline() || (now >= hunter.phaseUntil) || (recruiter.isInParty() && (recruiter.getParty().getMemberCount() >= 9)))
+ 		{
+ 			LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " got no invite, back to hunting.");
+-			backToHunt(hunter, player);
++			backToHuntNearby(hunter, player);
+ 			return;
+ 		}
+ 
+@@ -1691,6 +1879,7 @@ public class PhantomHunterManager
+ 
+ 	/**
+ 	 * Охотник вступил в пати: дальше его ведёт {@link PhantomCompanionManager}, AutoPlay выключен.
++	 * AutoUse работает (патч 0027): без AutoPlay он не бьёт скиллами, но пьёт банки; скиллы в бою кастует менеджер напарников.
+ 	 * @param template охотник
+ 	 */
+ 	public void joinedParty(PhantomTemplate template)
+@@ -1704,9 +1893,10 @@ public class PhantomHunterManager
+ 
+ 		hunter.phase = Phase.PARTY;
+ 		hunter.recruiterId = 0;
++		hunter.gatekeeperSpot = null;
+ 		closeStore(hunter, player);
+ 		AutoPlayTaskManager.getInstance().stopAutoPlay(player);
+-		AutoUseTaskManager.getInstance().stopAutoUseTask(player);
++		AutoUseTaskManager.getInstance().startAutoUseTask(player);
+ 		if (player.isSitting())
+ 		{
+ 			player.standUp();
+@@ -2295,18 +2485,29 @@ public class PhantomHunterManager
+ 			if (hunter.walkBackUntil != 0)
+ 			{
+ 				hunter.walkBackUntil = 0;
++				hunter.walkFails = 0;
+ 				LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " reached " + spot.name + " on foot.");
+ 			}
+ 		}
+ 		else if ((hunter.walkBackUntil != 0) && (now > hunter.walkBackUntil))
+ 		{
+ 			hunter.walkBackUntil = 0; // шёл и не дошёл — застрял в геодате
++			// Сначала — другой спот поблизости, тоже ногами; второй раз подряд не вышло — телепорт, как раньше.
++			final HuntSpot other = hunter.walkFails++ == 0 ? nearestSpot(player, spot) : null;
++			if (other != null)
++			{
++				LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " got stuck walking to " + spot.name + " (" + (int) distance + "), tries " + other.name + ".");
++				walkTo(hunter, player, other);
++				return;
++			}
++			hunter.walkFails = 0;
+ 			LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " got stuck walking back to " + spot.name + " (" + (int) distance + "), teleports.");
+ 			stop(player);
+ 			player.teleToLocation(spot.entry, true);
+ 			return;
+ 		}
+-		if (distance > WALK_RANGE)
++		// Далеко от спота — телепорт; кроме дороги ногами: её ведёт таймер выше.
++		if ((distance > WALK_RANGE) && (hunter.walkBackUntil == 0))
+ 		{
+ 			hunter.walkBackUntil = 0;
+ 			stop(player);
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterOutfit.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterOutfit.java
+index 955615d..97417ff 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterOutfit.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterOutfit.java
+@@ -1075,4 +1075,13 @@ final class PhantomHunterOutfit
+ 		play.setRespectfulHunting(true);
+ 		play.setPickup(true);
+ 	}
++
++	/**
++	 * @param player охотник
++	 * @return кастер: бьёт атакующими скиллами из AutoUse, а не оружием ({@link #setupCombat})
++	 */
++	static boolean isCaster(Player player)
++	{
++		return !player.getAutoUseSettings().getAutoActions().contains(AUTO_ATTACK_ACTION) && !player.getAutoUseSettings().getAutoSkills().isEmpty();
++	}
+ }
+diff --git a/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTaskManager.java b/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTaskManager.java
+index c520eb7..5aa138b 100644
+--- a/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTaskManager.java
++++ b/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTaskManager.java
+@@ -242,7 +242,9 @@ public class AutoPlayTaskManager
+ 							return true;
+ 						}
+ 						// Close item: must be unprotected or owned by player.
+-						return !item.isProtected() || (item.getOwnerId() == player.getObjectId());
++						// L2Hub: isProtected() — защита от автоудаления, её получает всё, что бросил игрок (DestroyPlayerDroppedItem = False); охотник-фантом такое берёт —
++						// это подарок. Настоящая защита дропа — DropProtection: чужое защищённое не трогает.
++						return !item.isProtected() || (item.getOwnerId() == player.getObjectId()) || (PhantomManager.getInstance().isPhantom(player) && item.getDropProtection().tryPickUp(player));
+ 					});
+ 					
+ 					if (droppedItem != null)

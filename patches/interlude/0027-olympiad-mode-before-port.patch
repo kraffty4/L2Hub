@@ -1,0 +1,36 @@
+diff --git a/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGame.java b/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGame.java
+index 6a21fc1bac449c15be6f05495d6cae5e380aa234..a013e20e960003428ba35783dc5227edb1f53465 100644
+--- a/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGame.java
++++ b/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGame.java
+@@ -358,14 +358,8 @@ class OlympiadGame
+ 			
+ 			_gamestarted = true;
+ 			
+-			_playerOne.setInstanceId(0);
+-			_playerOne.teleToLocation(_stadiumPort[0] + 900, _stadiumPort[1], _stadiumPort[2], false);
+-			_playerTwo.setInstanceId(0);
+-			_playerTwo.teleToLocation(_stadiumPort[0] - 900, _stadiumPort[1], _stadiumPort[2], false);
+-			
+-			_playerOne.sendPacket(new ExOlympiadMode(2));
+-			_playerTwo.sendPacket(new ExOlympiadMode(2));
+-			
++			// L2Hub: режим олимпиады и сторона — до телепорта: фантом без клиента входит в зону стадиона прямо в teleToLocation,
++			// и OlympiadStadiumZone без режима отправила бы его в город (tools/l2hub_olympiad_port.py).
+ 			_playerOne.setInOlympiadMode(true);
+ 			_playerOne.setOlympiadStart(false);
+ 			_playerOne.setOlympiadSide(1);
+@@ -374,6 +368,14 @@ class OlympiadGame
+ 			_playerTwo.setOlympiadStart(false);
+ 			_playerTwo.setOlympiadSide(2);
+ 			
++			_playerOne.setInstanceId(0);
++			_playerOne.teleToLocation(_stadiumPort[0] + 900, _stadiumPort[1], _stadiumPort[2], false);
++			_playerTwo.setInstanceId(0);
++			_playerTwo.teleToLocation(_stadiumPort[0] - 900, _stadiumPort[1], _stadiumPort[2], false);
++			
++			_playerOne.sendPacket(new ExOlympiadMode(2));
++			_playerTwo.sendPacket(new ExOlympiadMode(2));
++			
+ 			_gameIsStarted = false;
+ 		}
+ 		catch (NullPointerException e)

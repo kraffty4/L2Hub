@@ -1,0 +1,4 @@
+{
+  "_note": "Откуда L2Hub узнаёт о новых версиях (l2hub/updates.py): GitHub Releases этого репозитория — тег vX.Y.Z, установщик *-setup.exe и SHA256SUMS.txt (.github/workflows/release.yml). Пусто — проверки нет. Репозиторий — по плану docs/GITHUB.md; пока его нет, проверка пишет «Релизов пока нет».",
+  "repo": "kraffty4/L2Hub"
+}

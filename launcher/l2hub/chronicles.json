@@ -1,0 +1,69 @@
+{
+  "eras": [
+    { "name": "Chaotic Chronicle", "items": [
+      { "id": "prelude", "name": "Prelude", "short": "P", "server": "none" },
+      { "id": "c1", "name": "Harbingers of War", "short": "C1", "server": "mobius", "build": "L2J_Mobius_C1_HarbingersOfWar" },
+      { "id": "c2", "name": "Age of Splendor", "short": "C2", "server": "none" },
+      { "id": "c3", "name": "Rise of Darkness", "short": "C3", "server": "none" },
+      { "id": "c4", "plan": true, "name": "Scions of Destiny", "short": "C4", "server": "l2solo", "build": "L2Solo", "cover": "c4_login" },
+      { "id": "c5", "name": "Oath of Blood", "short": "C5", "server": "none" },
+      { "id": "interlude", "plan": true, "name": "Interlude", "short": "IL", "server": "mobius", "build": "L2J_Mobius_CT_0_Interlude", "cover": "interlude_login" }
+    ]},
+    { "name": "Chaotic Throne", "items": [
+      { "id": "kamael", "name": "The Kamael", "short": "TK", "server": "none" },
+      { "id": "hellbound", "name": "Hellbound", "short": "HB", "server": "none" },
+      { "id": "gracia1", "name": "Gracia Part 1", "short": "GP1", "server": "none" },
+      { "id": "gracia2", "name": "Gracia Part 2", "short": "GP2", "server": "none" },
+      { "id": "gracia_final", "plan": true, "name": "Gracia Final", "short": "GF", "server": "own", "cover": "gracia_final_login" },
+      { "id": "epilogue", "plan": true, "name": "Gracia Epilogue", "short": "GE", "server": "mobius", "build": "L2J_Mobius_CT_2.4_Epilogue", "cover": "epilogue_login" },
+      { "id": "freya", "name": "Freya", "short": "FR", "server": "none" },
+      { "id": "ct26_highfive", "plan": true, "name": "High Five", "short": "H5", "server": "mobius", "build": "L2J_Mobius_CT_2.6_HighFive", "cover": "ct26_highfive_login" }
+    ]},
+    { "name": "Goddess of Destruction", "items": [
+      { "id": "awakening", "name": "Awakening", "short": "AW", "server": "none" },
+      { "id": "harmony", "name": "Harmony", "short": "HM", "server": "none" },
+      { "id": "tauti", "name": "Tauti", "short": "TT", "server": "none" },
+      { "id": "glory_days", "name": "Glory Days", "short": "GD", "server": "none" },
+      { "id": "lindvior", "name": "Lindvior", "short": "LV", "server": "none" },
+      { "id": "valiance", "name": "Valiance", "short": "VL", "server": "none" }
+    ]},
+    { "name": "После GoD", "items": [
+      { "id": "ertheia", "name": "Ertheia", "short": "ER", "server": "mobius", "build": "L2J_Mobius_01.0_Ertheia", "cover": "ertheia" },
+      { "id": "underground", "name": "Underground", "short": "UG", "server": "mobius", "build": "L2J_Mobius_02.5_Underground" },
+      { "id": "helios", "name": "Helios", "short": "HE", "server": "mobius", "build": "L2J_Mobius_03.0_Helios" },
+      { "id": "grand_crusade", "name": "Grand Crusade", "short": "GC", "server": "mobius", "build": "L2J_Mobius_04.0_GrandCrusade" },
+      { "id": "salvation", "name": "Salvation", "short": "SV", "server": "mobius", "build": "L2J_Mobius_05.0_Salvation" },
+      { "id": "fafurion", "name": "Fafurion", "short": "FF", "server": "mobius", "build": "L2J_Mobius_06.0_Fafurion" },
+      { "id": "prelude_of_war", "name": "Prelude of War", "short": "PW", "server": "mobius", "build": "L2J_Mobius_07.0_PreludeOfWar" },
+      { "id": "homunculus", "name": "Homunculus", "short": "HO", "server": "mobius", "build": "L2J_Mobius_08.2_Homunculus" },
+      { "id": "queen_ant", "name": "Return of the Queen Ant", "short": "QA", "server": "mobius", "build": "L2J_Mobius_09.2_ReturnOfTheQueenAnt" },
+      { "id": "master_class", "name": "Master Class", "short": "MC", "server": "mobius", "build": "L2J_Mobius_10.3_MasterClass" },
+      { "id": "shinemaker", "name": "Shinemaker", "short": "SM", "server": "mobius", "build": "L2J_Mobius_11.3_Shinemaker" },
+      { "id": "superion", "name": "Superion", "short": "SU", "server": "mobius", "build": "L2J_Mobius_12.3_Superion" },
+      { "id": "orc_village", "name": "Orc Village", "short": "OV", "server": "mobius", "build": "L2J_Mobius_13.1_OrcVillage" },
+      { "id": "wolf_waker", "name": "Wolf Waker", "short": "WW", "server": "mobius", "build": "L2J_Mobius_13.2_WolfWaker" },
+      { "id": "samurai_crow", "name": "Samurai Crow", "short": "SC", "server": "mobius", "build": "L2J_Mobius_14.1_SamuraiCrow" }
+    ]},
+    { "name": "Classic", "items": [
+      { "id": "classic_10", "name": "Classic 1.0", "short": "CL", "server": "mobius", "build": "L2J_Mobius_Classic_1.0", "cover": "classic_login" },
+      { "id": "classic_aos", "name": "Age of Splendor", "short": "AoS", "server": "mobius", "build": "L2J_Mobius_Classic_1.5_AgeOfSplendor" },
+      { "id": "classic_saviors", "name": "Saviors", "short": "SV", "server": "mobius", "build": "L2J_Mobius_Classic_2.0_Saviors" },
+      { "id": "classic_zaken", "name": "Zaken", "short": "ZK", "server": "mobius", "build": "L2J_Mobius_Classic_2.5_Zaken" },
+      { "id": "classic_antharas", "name": "Antharas", "short": "AN", "server": "mobius", "build": "L2J_Mobius_Classic_2.7_Antharas" },
+      { "id": "classic_soe", "name": "Secret of Empire", "short": "SoE", "server": "mobius", "build": "L2J_Mobius_Classic_2.9_SecretOfEmpire" },
+      { "id": "classic_saviors2", "name": "Saviors 2.9.5", "short": "SV2", "server": "mobius", "build": "L2J_Mobius_Classic_2.9.5_Saviors" },
+      { "id": "classic_kamael", "name": "The Kamael", "short": "TK", "server": "mobius", "build": "L2J_Mobius_Classic_3.0_TheKamael" },
+      { "id": "classic_tales", "plan": true, "name": "Tales Untold", "short": "TU", "server": "mobius", "build": "L2J_Mobius_Classic_3.5_TalesUntold", "cover": "classic_login" }
+    ]},
+    { "name": "Essence", "items": [
+      { "id": "ess_dos", "name": "Dwelling of Spirits", "short": "DoS", "server": "mobius", "build": "L2J_Mobius_Essence_04.2_DwellingOfSpirits", "cover": "essence_login" },
+      { "id": "ess_frost", "name": "Frost Lord", "short": "FL", "server": "mobius", "build": "L2J_Mobius_Essence_05.2_FrostLord", "cover": "essence_login" },
+      { "id": "ess_crusader", "name": "Crusader", "short": "CR", "server": "mobius", "build": "L2J_Mobius_Essence_06.3_Crusader", "cover": "essence_login" },
+      { "id": "ess_seven", "name": "Seven Signs", "short": "7S", "server": "mobius", "build": "L2J_Mobius_Essence_07.3_SevenSigns", "cover": "essence_login" },
+      { "id": "ess_guardians", "name": "Guardians", "short": "GU", "server": "mobius", "build": "L2J_Mobius_Essence_08.3_Guardians", "cover": "essence_login" },
+      { "id": "ess_warg", "name": "Warg", "short": "WG", "server": "mobius", "build": "L2J_Mobius_Essence_09.1_Warg", "cover": "essence_login" },
+      { "id": "ess_rose", "name": "Rose Vain", "short": "RV", "server": "mobius", "build": "L2J_Mobius_Essence_09.2_RoseVain", "cover": "essence_login" },
+      { "id": "ess_crow", "plan": true, "name": "Samurai Crow", "short": "SC", "server": "mobius", "build": "L2J_Mobius_Essence_10.1_SamuraiCrow", "cover": "essence_login" }
+    ]}
+  ]
+}

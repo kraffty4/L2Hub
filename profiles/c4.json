@@ -1,0 +1,32 @@
+{
+  "id": "c4",
+  "type": "l2solo",
+  "build": "L2Solo (Node.js, C4 Scions of Destiny)",
+  "server": "servers/c4",
+  "database": "nodel2",
+  "ports": { "login": 2106, "game": 7777, "map": 8088 },
+  "progression": "x1",
+  "botLanguage": "en",
+  "llm": { "enabled": true, "apiUrl": "https://api.deepseek.com/chat/completions", "model": "deepseek-flash", "keyFile": "deepseek.key" },
+  "config": {
+    "BotPopulation": {
+      "globalChatMinIntervalMs": 90000,
+      "globalChatTopicIntervalMs": 600000,
+      "globalChatChance": 0.006,
+      "chatReactionChance": 0.2,
+      "marketTradeChatIntervalMs": 1200000,
+      "marketTradeChatGlobalMinIntervalMs": 300000,
+      "partyRecruitmentChatIntervalMs": 1800000,
+      "partyRecruitmentChatGlobalMinIntervalMs": 300000,
+      "clanChatMinIntervalMs": 60000,
+      "ambientSceneCooldownMs": 600000,
+      "ambientPairCooldownMs": 300000
+    }
+  },
+  "client": {
+    "path": "C:\\Games\\Lineage2-C4",
+    "exe": "system\\L2.exe",
+    "system": "чистый C4 от L2Solo (репак La2base.ru) и L2Solo client mod",
+    "protocol": 656
+  }
+}

@@ -1,0 +1,124 @@
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+--- a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+@@ -65,11 +65,11 @@
+ 		final String html;
+ 		if (args[0].equalsIgnoreCase(BUFF))
+ 		{
+-			html = buffer(player, args);
++			html = townOn("TownBuffer") ? buffer(player, args) : page(player, "Баффер", "<br><font color=\"808080\">Баффер выключен в настройках сервера (L2HubTown.ini, TownBuffer).</font>");
+ 		}
+ 		else if (args[0].equalsIgnoreCase(SHOP))
+ 		{
+-			html = shop(player, args);
++			html = townOn("TownGmShop") ? shop(player, args) : page(player, "GM-шоп", "<br><font color=\"808080\">GM-шоп выключен в настройках сервера (L2HubTown.ini, TownGmShop).</font>");
+ 		}
+ 		else if (args[0].equalsIgnoreCase(BUDDY))
+ 		{
+@@ -89,6 +89,30 @@
+ 			CommunityBoardHandler.separateAndSend(html, player);
+ 		}
+ 		return false;
++	}
++
++	/**
++	 * Выключатели городских NPC (config/Custom/L2HubTown.ini, мод 0003): баффер и GM-шоп доски выключаются вместе с NPC у гейткиперов.
++	 * @param key TownBuffer или TownGmShop
++	 * @return включено (нет файла или ключа — включено)
++	 */
++	private static boolean townOn(String key)
++	{
++		final java.io.File file = new java.io.File("./config/Custom/L2HubTown.ini");
++		if (!file.isFile())
++		{
++			return true;
++		}
++		try (java.io.Reader reader = java.nio.file.Files.newBufferedReader(file.toPath(), java.nio.charset.StandardCharsets.UTF_8))
++		{
++			final java.util.Properties properties = new java.util.Properties();
++			properties.load(reader);
++			return !"false".equalsIgnoreCase(properties.getProperty(key, "True").trim());
++		}
++		catch (Exception e)
++		{
++			return true;
++		}
+ 	}
+ 
+ 	// ---------- Баффер ----------
+diff --git a/dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java b/dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java
+--- a/dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java
++++ b/dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java
+@@ -103,7 +103,7 @@
+ 	private void run(int attempt)
+ 	{
+ 		// Спавны поднимаются после скриптов: ждём, пока в мире появятся наши городские NPC.
+-		if ((SpawnTable.getInstance().getSpawnCount(TOWN_BUFFER) == 0) && (attempt < ATTEMPTS))
++		if ((SpawnTable.getInstance().getSpawnCount(TOWN_BUFFER) == 0) && townOn("TownBuffer") && (attempt < ATTEMPTS))
+ 		{
+ 			ThreadPool.schedule(() -> run(attempt + 1), RETRY_DELAY);
+ 			return;
+@@ -157,8 +157,37 @@
+ 		}
+ 	}
+ 
++	/**
++	 * @param key TownBuffer или TownGmShop
++	 * @return включено в config/Custom/L2HubTown.ini (нет файла или ключа — включено)
++	 */
++	private static boolean townOn(String key)
++	{
++		final Path town = Paths.get("./config/Custom/L2HubTown.ini");
++		if (!Files.isRegularFile(town))
++		{
++			return true;
++		}
++		final Properties properties = new Properties();
++		try (Reader reader = Files.newBufferedReader(town, StandardCharsets.UTF_8))
++		{
++			properties.load(reader);
++		}
++		catch (Exception e)
++		{
++			return true;
++		}
++		return !"false".equalsIgnoreCase(properties.getProperty(key, "True").trim());
++	}
++
+ 	private static Check townNpc(int npcId) throws Exception
+ 	{
++		// Выключено в L2HubTown.ini (мод 0003) — NPC не спавнились нарочно, это не ошибка.
++		final String key = npcId == TOWN_BUFFER ? "TownBuffer" : "TownGmShop";
++		if (!townOn(key))
++		{
++			return new Check("", true, "выключен (" + key + " = False в L2HubTown.ini), в мире " + SpawnTable.getInstance().getSpawnCount(npcId));
++		}
+ 		final int expected = count(Files.readString(TOWN_SPAWNS, StandardCharsets.UTF_8), "id=\"" + npcId + "\"");
+ 		final int spawned = SpawnTable.getInstance().getSpawnCount(npcId);
+ 		final boolean template = NpcData.getInstance().getTemplate(npcId) != null;
+@@ -214,9 +243,13 @@
+ 	private static Check buffDurations()
+ 	{
+ 		final TreeSet<Integer> ids = bufferSkills();
+-		if (!PlayerConfig.ENABLE_MODIFY_SKILL_DURATION || (PlayerConfig.SKILL_DURATION_LIST == null))
+-		{
+-			return new Check("", false, "EnableModifySkillDuration выключен в Player.ini — бафы стандартной длины");
++		if (!PlayerConfig.ENABLE_MODIFY_SKILL_DURATION)
++		{
++			return new Check("", true, "выключены (EnableModifySkillDuration = False в Player.ini) — бафы стандартной длины");
++		}
++		if (PlayerConfig.SKILL_DURATION_LIST == null)
++		{
++			return new Check("", false, "SkillDurationList пуст в Player.ini");
+ 		}
+ 		final List<Integer> missing = ids.stream().filter(id -> PlayerConfig.SKILL_DURATION_LIST.getOrDefault(id, 0) < BUFF_DURATION).toList();
+ 		return new Check("", missing.isEmpty(), "в SkillDurationList " + PlayerConfig.SKILL_DURATION_LIST.size() + " скиллов" + (missing.isEmpty() ? ", все бафы баффера — 3 часа" : ", бафы баффера короче 3 часов: " + missing));
+@@ -257,7 +290,7 @@
+ 		}
+ 		if (!ChampionMonstersConfig.CHAMPION_ENABLE)
+ 		{
+-			return new Check("", false, "ChampionEnable выключен в ChampionMonsters.ini");
++			return new Check("", true, "выключены (ChampionEnable = False в ChampionMonsters.ini)");
+ 		}
+ 		return new Check("", (blue + red) > 0, "монстров в мире " + monsters + ", синих " + blue + ", красных " + red);
+ 	}

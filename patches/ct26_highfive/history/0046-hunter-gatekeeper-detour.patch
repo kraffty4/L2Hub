@@ -1,0 +1,50 @@
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+index c1c26d6..62b5991 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+@@ -263,7 +263,7 @@ public class PhantomHunterManager
+ 		long walkBackUntil;
+ 		/** Сколько раз подряд не дошёл до спота ногами (застрял в геодате). */
+ 		int walkFails;
+-		/** Обход в дороге (патч 0045): номер поворота из {@link #WALK_TURNS} и расстояние до спота на прошлом тике. */
++		/** Обход в дороге (патч 0045): номер поворота из {@link #WALK_TURNS} и расстояние до спота (в городе — до гейткипера, патч 0046) на прошлом тике. */
+ 		int walkTurn;
+ 		double walkLastDistance;
+ 		/** Последняя проверка дороги и расстояние до спота тогда (патч 0044). */
+@@ -1131,6 +1131,8 @@ public class PhantomHunterManager
+ 		hunter.gatekeeperSpot = spot;
+ 		hunter.gatekeeperAt = new Location(x, y, GeoEngine.getInstance().getHeight(x, y, gatekeeper.getZ()));
+ 		hunter.gatekeeperUntil = System.currentTimeMillis() + GATEKEEPER_TIMEOUT;
++		hunter.walkTurn = 0;
++		hunter.walkLastDistance = player.calculateDistance2D(hunter.gatekeeperAt);
+ 		player.setRunning();
+ 		runTo(player, hunter.gatekeeperAt);
+ 		LOGGER.info(PhantomHunterManager.class.getSimpleName() + ": " + player.getName() + " runs to gatekeeper " + gatekeeper.getName() + " (" + (int) player.calculateDistance2D(gatekeeper) + ") for " + spot.name + ".");
+@@ -1138,6 +1140,8 @@ public class PhantomHunterManager
+ 
+ 	/**
+ 	 * Бежит к гейткиперу: добежал — телепорт на спот у него; застрял дольше {@link #GATEKEEPER_TIMEOUT} — телепорт с места.
++	 * Встал и не приблизился с прошлой команды — следующий отрезок с поворотом из {@link #WALK_TURNS}, как в дороге на спот (патч 0046): в Глудио прямую от точек
++	 * респа к Bella режет препятствие около (-13750, 122940), путь по геодате Mobius оттуда не находит, и охотник стоял у стены до таймаута.
+ 	 */
+ 	private static void gatekeeper(Hunter hunter, Player player, long now)
+ 	{
+@@ -1147,8 +1151,17 @@ public class PhantomHunterManager
+ 		{
+ 			if (!player.isMoving())
+ 			{
++				if (distance < (hunter.walkLastDistance - 50))
++				{
++					hunter.walkTurn = 0;
++				}
++				else
++				{
++					hunter.walkTurn++;
++				}
++				hunter.walkLastDistance = distance;
+ 				player.setRunning();
+-				runTo(player, hunter.gatekeeperAt);
++				runTo(player, hunter.gatekeeperAt, WALK_TURNS[hunter.walkTurn % WALK_TURNS.length]);
+ 			}
+ 			return;
+ 		}

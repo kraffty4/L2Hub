@@ -1,0 +1,13 @@
+diff --git a/java/org/l2jmobius/gameserver/GameServer.java b/java/org/l2jmobius/gameserver/GameServer.java
+index e5adaf1..db3440c 100644
+--- a/java/org/l2jmobius/gameserver/GameServer.java
++++ b/java/org/l2jmobius/gameserver/GameServer.java
+@@ -565,7 +565,7 @@ public class GameServer
+ 		LOGGER.info(StringUtil.concat(getClass().getSimpleName(), ": Maximum number of connected players is ", ServerConfig.MAXIMUM_ONLINE_USERS, "."));
+ 		LOGGER.info(StringUtil.concat(getClass().getSimpleName(), ": Server loaded in ", ((System.currentTimeMillis() - START_TIME) / 1000), " seconds."));
+ 		
+-		new ConnectionManager<>(new InetSocketAddress(ServerConfig.PORT_GAME), GameClient::new, new GamePacketHandler());
++		new ConnectionManager<>(new InetSocketAddress(ServerConfig.GAMESERVER_HOSTNAME, ServerConfig.PORT_GAME), GameClient::new, new GamePacketHandler());
+ 		
+ 		LoginServerThread.getInstance().start();
+ 		

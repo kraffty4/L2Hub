@@ -1,0 +1,25 @@
+{
+  "id": "c4_lisvus",
+  "type": "bundle",
+  "bundle": "lisvus",
+  "build": "L2JLisvus",
+  "server": "servers/c4_lisvus/server",
+  "database": "l2hub_c4_lisvus",
+  "ports": {
+    "db": 3306,
+    "login": 2106,
+    "game": 7777
+  },
+  "client": {
+    "path": "C:\\Games\\Lineage2-C4",
+    "exe": "system\\L2.exe",
+    "system": "",
+    "protocol": 656
+  },
+  "source": {
+    "imported": "<рабочая папка>\\L2Hub_lisvus_c4",
+    "kind": "lisvus",
+    "java": 25
+  },
+  "chronicle": "c4"
+}

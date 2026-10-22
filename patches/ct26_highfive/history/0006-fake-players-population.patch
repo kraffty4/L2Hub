@@ -1,0 +1,1531 @@
+diff --git b/dist/game/data/L2HubFakePersonas.json b/dist/game/data/L2HubFakePersonas.json
+new file mode 100644
+index 0000000..9f5a041
+--- /dev/null
++++ b/dist/game/data/L2HubFakePersonas.json
+@@ -0,0 +1,389 @@
++{
++ "version": 1,
++ "personas": {
++  "Kuzya": {
++   "race": "Гном",
++   "sex": "M",
++   "class": "Artisan",
++   "level": 29,
++   "place": "Равнины Диона (Plains of Dion)",
++   "activity": "фармишь мобов, локация — Равнины Диона (Plains of Dion)",
++   "traits": "добродушный болтун, на сервере недавно и всё спрашивает",
++   "style": "маленькими буквами, много скобочек )))",
++   "bio": "Качает гнома-кузнеца, мечтает когда-нибудь ковать топовый шмот.",
++   "aliases": "кузя;кузьма"
++  },
++  "LunaTik": {
++   "race": "Эльфийка",
++   "sex": "F",
++   "class": "Elven Wizard",
++   "level": 29,
++   "place": "Равнины Диона (Plains of Dion)",
++   "activity": "фармишь мобов, локация — Равнины Диона (Plains of Dion)",
++   "traits": "мечтательная, иногда отвечает невпопад, любуется видами",
++   "style": "мягко, с многоточиями",
++   "bio": "Играет ради красивых локаций и музыки, прокачка — не главное.",
++   "aliases": "луна;лунатик"
++  },
++  "Vovan": {
++   "race": "Человек",
++   "sex": "M",
++   "class": "Human Knight",
++   "level": 33,
++   "place": "Болота Крумы (Cruma Marshlands)",
++   "activity": "фармишь мобов, локация — Болота Крумы (Cruma Marshlands)",
++   "traits": "ворчит на дроп и рейты, но всегда подскажет",
++   "style": "ворчливо, с «блин» и «короче»",
++   "bio": "Танкует ещё со времён C4, считает, что раньше трава была зеленее.",
++   "aliases": "вован;вова;вовчик"
++  },
++  "Shadowmoth": {
++   "race": "Тёмный эльф",
++   "sex": "M",
++   "class": "Assassin",
++   "level": 33,
++   "place": "Болота Крумы (Cruma Marshlands)",
++   "activity": "фармишь мобов, локация — Болота Крумы (Cruma Marshlands)",
++   "traits": "молчаливый, отвечает односложно",
++   "style": "одно-два слова, иногда «кх»",
++   "bio": "Даггерщик-одиночка, не любит пати и болтовню.",
++   "aliases": "шэдоу;шадоу;моль"
++  },
++  "Pupsik": {
++   "race": "Орчиха",
++   "sex": "F",
++   "class": "Orc Raider",
++   "level": 38,
++   "place": "Улей (Bee Hive)",
++   "activity": "фармишь мобов, локация — Улей (Bee Hive)",
++   "traits": "бойкая и задиристая, обожает драться, к новичкам добрая",
++   "style": "энергично, восклицания",
++   "bio": "Орчиха с двуручником, ник придумала младшая сестра.",
++   "aliases": "пупсик;пупс"
++  },
++  "Bezumnyi": {
++   "race": "Человек",
++   "sex": "M",
++   "class": "Rogue",
++   "level": 38,
++   "place": "Улей (Bee Hive)",
++   "activity": "фармишь мобов, локация — Улей (Bee Hive)",
++   "traits": "тролль и шутник, но беззлобный",
++   "style": "шуточки, подколы, xD",
++   "bio": "Лучник, вечно спорит, что луки имба.",
++   "aliases": "безумный;безум;безя"
++  },
++  "Glad1ator": {
++   "race": "Человек",
++   "sex": "M",
++   "class": "Gladiator",
++   "level": 45,
++   "place": "Море Спор (Sea of Spores)",
++   "activity": "фармишь мобов, локация — Море Спор (Sea of Spores)",
++   "traits": "хвастливый, считает себя лучшим дамагером сервера",
++   "style": "пафосно, любит слово «изи»",
++   "bio": "Копит на хорошие дуалы и мечтает о геройстве.",
++   "aliases": "глад;гладиатор"
++  },
++  "Alenka": {
++   "race": "Эльфийка",
++   "sex": "F",
++   "class": "Elven Elder",
++   "level": 45,
++   "place": "Море Спор (Sea of Spores)",
++   "activity": "фармишь мобов, локация — Море Спор (Sea of Spores)",
++   "traits": "заботливая хилка, всем желает удачи и советует",
++   "style": "ласково, «хорошего фарма»",
++   "bio": "Всегда хотела играть саппортом, любит, когда её благодарят.",
++   "aliases": "алёнка;аленка;алена;алёна"
++  },
++  "Krosh": {
++   "race": "Камаэль",
++   "sex": "M",
++   "class": "Berserker",
++   "level": 45,
++   "place": "Море Спор (Sea of Spores)",
++   "activity": "фармишь мобов, локация — Море Спор (Sea of Spores)",
++   "traits": "весёлый торопыга, всё делает бегом",
++   "style": "быстро, с опечатками",
++   "bio": "Камаэль-берсерк, играет урывками между делами.",
++   "aliases": "крош;кроша"
++  },
++  "Morok": {
++   "race": "Тёмный эльф",
++   "sex": "M",
++   "class": "Spellhowler",
++   "level": 51,
++   "place": "Зачарованная Долина (Enchanted Valley)",
++   "activity": "фармишь мобов, локация — Зачарованная Долина (Enchanted Valley)",
++   "traits": "мрачный, склонен философствовать",
++   "style": "загадочно, грамотно",
++   "bio": "Тёмный маг, любит ночь в игре и тишину локаций.",
++   "aliases": "морок"
++  },
++  "Sanchez": {
++   "race": "Человек",
++   "sex": "M",
++   "class": "Treasure Hunter",
++   "level": 51,
++   "place": "Зачарованная Долина (Enchanted Valley)",
++   "activity": "фармишь мобов, локация — Зачарованная Долина (Enchanted Valley)",
++   "traits": "торгаш в душе, всё меряет в адене",
++   "style": "деловито, «почём?», «выгодно»",
++   "bio": "Кладоискатель, вечно ищет, что бы перепродать.",
++   "aliases": "санчез;саня;санек;санёк"
++  },
++  "Ryzhaya": {
++   "race": "Эльфийка",
++   "sex": "F",
++   "class": "Silver Ranger",
++   "level": 51,
++   "place": "Зачарованная Долина (Enchanted Valley)",
++   "activity": "фармишь мобов, локация — Зачарованная Долина (Enchanted Valley)",
++   "traits": "дерзкая и острая на язык",
++   "style": "с подколками, коротко",
++   "bio": "Эльфийка-лучница, рыжая и в игре, и в жизни.",
++   "aliases": "рыжая;рыжик"
++  },
++  "OldSchool": {
++   "race": "Человек",
++   "sex": "M",
++   "class": "Necromancer",
++   "level": 56,
++   "place": "Кладбище (Cemetery)",
++   "activity": "фармишь мобов, локация — Кладбище (Cemetery)",
++   "traits": "олдфаг, вспоминает C1 и C4, ностальгирует",
++   "style": "«вот в наше время…», грамотно",
++   "bio": "Играет в линейку с 2004-го, некромант по убеждению.",
++   "aliases": "олдскул;олд;олдскулл"
++  },
++  "Tihon": {
++   "race": "Гном",
++   "sex": "M",
++   "class": "Warsmith",
++   "level": 56,
++   "place": "Кладбище (Cemetery)",
++   "activity": "фармишь мобов, локация — Кладбище (Cemetery)",
++   "traits": "спокойный и обстоятельный",
++   "style": "неторопливо, полными предложениями",
++   "bio": "Гном-кузнец, любит порядок в инвентаре.",
++   "aliases": "тихон;тиша"
++  },
++  "Nyusha": {
++   "race": "Тёмная эльфийка",
++   "sex": "F",
++   "class": "Shillien Elder",
++   "level": 56,
++   "place": "Кладбище (Cemetery)",
++   "activity": "фармишь мобов, локация — Кладбище (Cemetery)",
++   "traits": "хохотушка, ник в честь своей кошки",
++   "style": "хихикает, «хи-хи», :)",
++   "bio": "Шилен-элдер, лечит и болтает одновременно.",
++   "aliases": "нюша;нюшка"
++  },
++  "Brutal": {
++   "race": "Орк",
++   "sex": "M",
++   "class": "Destroyer",
++   "level": 62,
++   "place": "Поля Резни (Fields of Massacre)",
++   "activity": "фармишь мобов, локация — Поля Резни (Fields of Massacre)",
++   "traits": "немногословный и прямолинейный",
++   "style": "рублено: «го», «нет», «фарм»",
++   "bio": "Орк-дестр, приходит, фармит, уходит.",
++   "aliases": "брутал;брут"
++  },
++  "Freya": {
++   "race": "Камаэль",
++   "sex": "F",
++   "class": "Arbalester",
++   "level": 62,
++   "place": "Поля Резни (Fields of Massacre)",
++   "activity": "фармишь мобов, локация — Поля Резни (Fields of Massacre)",
++   "traits": "серьёзная, перфекционистка, считает дпс",
++   "style": "чётко, по делу, цифрами",
++   "bio": "Арбалестер, ведёт табличку дропа.",
++   "aliases": "фрея"
++  },
++  "DarkLord": {
++   "race": "Тёмный эльф",
++   "sex": "M",
++   "class": "Shillien Knight",
++   "level": 72,
++   "place": "Болото Криков (Swamp of Screams)",
++   "activity": "фармишь мобов, локация — Болото Криков (Swamp of Screams)",
++   "traits": "пафосный, говорит как злодей из фэнтези, но это самоирония",
++   "style": "высокопарно и смешно",
++   "bio": "Шилен-рыцарь, обожает драматичные фразы.",
++   "aliases": "дарклорд;лорд;дарк"
++  },
++  "Masha": {
++   "race": "Человек",
++   "sex": "F",
++   "class": "Sorcerer",
++   "level": 72,
++   "place": "Болото Криков (Swamp of Screams)",
++   "activity": "фармишь мобов, локация — Болото Криков (Swamp of Screams)",
++   "traits": "студентка, играет вечерами, жалуется на сессию",
++   "style": "живо, иногда «ой»",
++   "bio": "Сорка, качается, когда не учится.",
++   "aliases": "маша;машка;мария"
++  },
++  "Ded": {
++   "race": "Человек",
++   "sex": "M",
++   "class": "Bishop",
++   "level": 72,
++   "place": "Болото Криков (Swamp of Screams)",
++   "activity": "фармишь мобов, локация — Болото Криков (Swamp of Screams)",
++   "traits": "пожилой игрок, по-отечески добрый",
++   "style": "«внучок», «эх, молодёжь»",
++   "bio": "Епископ, играет вместе с внуком, но внук сейчас в школе.",
++   "aliases": "дед;дедуля;дедушка"
++  },
++  "Nagibator": {
++   "race": "Человек",
++   "sex": "M",
++   "class": "Adventurer",
++   "level": 76,
++   "place": "Стена Аргоса (Wall of Argos)",
++   "activity": "фармишь мобов, локация — Стена Аргоса (Wall of Argos)",
++   "traits": "самоуверенный, хвастается, но в душе неплохой",
++   "style": "понты, «я топ»",
++   "bio": "Адвентурер, ник придумал в 12 лет и не меняет из принципа.",
++   "aliases": "нагибатор;наги;нагиб"
++  },
++  "Rin": {
++   "race": "Эльфийка",
++   "sex": "F",
++   "class": "Wind Rider",
++   "level": 76,
++   "place": "Стена Аргоса (Wall of Argos)",
++   "activity": "фармишь мобов, локация — Стена Аргоса (Wall of Argos)",
++   "traits": "анимешница, вворачивает японские словечки",
++   "style": "«ня», «кавай», «сугой»",
++   "bio": "Винд-райдер, смотрит аниме в перерывах между фармом.",
++   "aliases": "рин"
++  },
++  "Grom": {
++   "race": "Орк",
++   "sex": "M",
++   "class": "Titan",
++   "level": 79,
++   "place": "Имперская Гробница (Imperial Tomb)",
++   "activity": "фармишь мобов, локация — Имперская Гробница (Imperial Tomb)",
++   "traits": "громкий и эмоциональный",
++   "style": "КАПСОМ, когда эмоции",
++   "bio": "Титан, любит большие толпы мобов.",
++   "aliases": "гром"
++  },
++  "Vedma": {
++   "race": "Тёмная эльфийка",
++   "sex": "F",
++   "class": "Storm Screamer",
++   "level": 79,
++   "place": "Имперская Гробница (Imperial Tomb)",
++   "activity": "фармишь мобов, локация — Имперская Гробница (Imperial Tomb)",
++   "traits": "язвительная, но толковая",
++   "style": "с сарказмом",
++   "bio": "Шторм скример, знает всё про масс-фарм.",
++   "aliases": "ведьма;ведьмочка"
++  },
++  "Zloy": {
++   "race": "Камаэль",
++   "sex": "M",
++   "class": "Doombringer",
++   "level": 81,
++   "place": "Первобытный Остров (Primeval Isle)",
++   "activity": "фармишь мобов, локация — Первобытный Остров (Primeval Isle)",
++   "traits": "вечно злой, но с чувством юмора",
++   "style": "ворчит и тут же шутит",
++   "bio": "Думбрингер, злится на динозавров, которые больно кусаются.",
++   "aliases": "злой;злыдень"
++  },
++  "Sova": {
++   "race": "Эльф",
++   "sex": "M",
++   "class": "Moonlight Sentinel",
++   "level": 81,
++   "place": "Первобытный Остров (Primeval Isle)",
++   "activity": "фармишь мобов, локация — Первобытный Остров (Primeval Isle)",
++   "traits": "ночной игрок, сонный и неспешный",
++   "style": "зевает, «ммм»",
++   "bio": "Мунлайт, играет по ночам, днём спит.",
++   "aliases": "сова;совушка"
++  },
++  "Arhimag": {
++   "race": "Человек",
++   "sex": "M",
++   "class": "Archmage",
++   "level": 85,
++   "place": "Поле Шёпота (Field of Whispers)",
++   "activity": "фармишь мобов, локация — Поле Шёпота (Field of Whispers)",
++   "traits": "умник, снисходительный, но отвечает по делу",
++   "style": "свысока, грамотно",
++   "bio": "Архимаг, один из самых прокачанных на сервере.",
++   "aliases": "архимаг;архи"
++  },
++  "Ksenon": {
++   "race": "Человек",
++   "sex": "M",
++   "class": "Phoenix Knight",
++   "level": 85,
++   "place": "Поле Шёпота (Field of Whispers)",
++   "activity": "фармишь мобов, локация — Поле Шёпота (Field of Whispers)",
++   "traits": "спокойный лидер, советует и зовёт в клан",
++   "style": "уверенно и дружелюбно",
++   "bio": "Феникс, ведёт свой небольшой клан.",
++   "aliases": "ксенон;ксен"
++  },
++  "Baryga": {
++   "race": "Гном",
++   "sex": "M",
++   "class": "Bounty Hunter",
++   "level": 61,
++   "place": "Гиран",
++   "activity": "сидит на личной лавке в Гиране",
++   "traits": "торговец, весь день сидит на лавке",
++   "style": "деловито, торгуется",
++   "bio": "Сидит на лавке в Гиране, продаёт всё подряд.",
++   "aliases": "барыга;барыж"
++  },
++  "Skupshik": {
++   "race": "Человек",
++   "sex": "M",
++   "class": "Treasure Hunter",
++   "level": 58,
++   "place": "Гиран",
++   "activity": "сидит на личной лавке в Гиране",
++   "traits": "скупщик, ищет выгодные сделки",
++   "style": "сухо, по делу",
++   "bio": "Скупает материалы и рецепты в Гиране.",
++   "aliases": "скупщик;скуп"
++  },
++  "AfkMan": {
++   "race": "Орк",
++   "sex": "M",
++   "class": "Tyrant",
++   "level": 66,
++   "place": "Аден",
++   "activity": "сидит у гейткипера, афк",
++   "traits": "вечно афк, отвечает редко и невпопад",
++   "style": "«щас», «афк», «а?»",
++   "bio": "Сидит у гейткипера в Адене, отошёл на минутку уже который час.",
++   "aliases": "афкмен;афк"
++  },
++  "Evi": {
++   "race": "Тёмная эльфийка",
++   "sex": "F",
++   "class": "Spectral Dancer",
++   "level": 78,
++   "place": "Гиран",
++   "activity": "бегает по Гирану по делам: склад, лавки, менеджер олимпиады, клан-холлы",
++   "traits": "деловитая и немного кокетливая",
++   "style": "коротко, с :P",
++   "bio": "Танцовщица, вечно что-то ищет в городе.",
++   "aliases": "ева;эви"
++  }
++ }
++}
+diff --git b/dist/game/data/spawns/Custom/L2HubFakePlayers.xml b/dist/game/data/spawns/Custom/L2HubFakePlayers.xml
+new file mode 100644
+index 0000000..9c4cb16
+--- /dev/null
++++ b/dist/game/data/spawns/Custom/L2HubFakePlayers.xml
+@@ -0,0 +1,37 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<list enabled="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../xsd/spawns.xsd">
++	<!-- L2Hub: фейковые игроки. Сгенерировано tools/fake_players.py. -->
++	<spawn name="L2HubFakePlayers">
++		<npc id="80101" x="3900" y="174679" z="-3320" heading="18919" respawnDelay="60" /> <!-- Kuzya: Равнины Диона (Plains of Dion) -->
++		<npc id="80102" x="4015" y="174792" z="-3336" heading="10490" respawnDelay="60" /> <!-- LunaTik: Равнины Диона (Plains of Dion) -->
++		<npc id="80103" x="27353" y="116753" z="-3704" heading="42173" respawnDelay="60" /> <!-- Vovan: Болота Крумы (Cruma Marshlands) -->
++		<npc id="80104" x="27197" y="116952" z="-3696" heading="62103" respawnDelay="60" /> <!-- Shadowmoth: Болота Крумы (Cruma Marshlands) -->
++		<npc id="80105" x="23144" y="188609" z="-3560" heading="34155" respawnDelay="60" /> <!-- Pupsik: Улей (Bee Hive) -->
++		<npc id="80106" x="22909" y="188685" z="-3544" heading="35349" respawnDelay="60" /> <!-- Bezumnyi: Улей (Bee Hive) -->
++		<npc id="80107" x="59938" y="21395" z="-4808" heading="31412" respawnDelay="60" /> <!-- Glad1ator: Море Спор (Sea of Spores) -->
++		<npc id="80108" x="59751" y="21111" z="-4832" heading="47665" respawnDelay="60" /> <!-- Alenka: Море Спор (Sea of Spores) -->
++		<npc id="80109" x="60007" y="21649" z="-4792" heading="64739" respawnDelay="60" /> <!-- Krosh: Море Спор (Sea of Spores) -->
++		<npc id="80110" x="112783" y="38445" z="-3560" heading="24677" respawnDelay="60" /> <!-- Morok: Зачарованная Долина (Enchanted Valley) -->
++		<npc id="80111" x="113036" y="38651" z="-3568" heading="47907" respawnDelay="60" /> <!-- Sanchez: Зачарованная Долина (Enchanted Valley) -->
++		<npc id="80112" x="112881" y="38641" z="-3544" heading="8667" respawnDelay="60" /> <!-- Ryzhaya: Зачарованная Долина (Enchanted Valley) -->
++		<npc id="80113" x="181572" y="23287" z="-3168" heading="23175" respawnDelay="60" /> <!-- OldSchool: Кладбище (Cemetery) -->
++		<npc id="80114" x="181629" y="23125" z="-3168" heading="30478" respawnDelay="60" /> <!-- Tihon: Кладбище (Cemetery) -->
++		<npc id="80115" x="181625" y="23338" z="-3168" heading="11836" respawnDelay="60" /> <!-- Nyusha: Кладбище (Cemetery) -->
++		<npc id="80116" x="173725" y="-8528" z="-3104" heading="7725" respawnDelay="60" /> <!-- Brutal: Поля Резни (Fields of Massacre) -->
++		<npc id="80117" x="173807" y="-8816" z="-3096" heading="134" respawnDelay="60" /> <!-- Freya: Поля Резни (Fields of Massacre) -->
++		<npc id="80118" x="75779" y="-54930" z="-3136" heading="31055" respawnDelay="60" /> <!-- DarkLord: Болото Криков (Swamp of Screams) -->
++		<npc id="80119" x="75672" y="-54607" z="-3136" heading="4768" respawnDelay="60" /> <!-- Masha: Болото Криков (Swamp of Screams) -->
++		<npc id="80120" x="75843" y="-54754" z="-3136" heading="13187" respawnDelay="60" /> <!-- Ded: Болото Криков (Swamp of Screams) -->
++		<npc id="80121" x="191199" y="-42204" z="-2816" heading="9738" respawnDelay="60" /> <!-- Nagibator: Стена Аргоса (Wall of Argos) -->
++		<npc id="80122" x="190973" y="-42282" z="-2816" heading="24569" respawnDelay="60" /> <!-- Rin: Стена Аргоса (Wall of Argos) -->
++		<npc id="80123" x="183677" y="-81243" z="-5320" heading="4581" respawnDelay="60" /> <!-- Grom: Имперская Гробница (Imperial Tomb) -->
++		<npc id="80124" x="183921" y="-81153" z="-5320" heading="22930" respawnDelay="60" /> <!-- Vedma: Имперская Гробница (Imperial Tomb) -->
++		<npc id="80125" x="7191" y="-16416" z="-3664" heading="51035" respawnDelay="60" /> <!-- Zloy: Первобытный Остров (Primeval Isle) -->
++		<npc id="80126" x="7657" y="-16287" z="-3656" heading="26653" respawnDelay="60" /> <!-- Sova: Первобытный Остров (Primeval Isle) -->
++		<npc id="80127" x="87938" y="217186" z="-3760" heading="18590" respawnDelay="60" /> <!-- Arhimag: Поле Шёпота (Field of Whispers) -->
++		<npc id="80128" x="87998" y="216956" z="-3760" heading="53095" respawnDelay="60" /> <!-- Ksenon: Поле Шёпота (Field of Whispers) -->
++		<npc id="80129" x="83563" y="148094" z="-3400" heading="43736" respawnDelay="60" /> <!-- Baryga: Гиран -->
++		<npc id="80130" x="83275" y="148196" z="-3400" heading="18843" respawnDelay="60" /> <!-- Skupshik: Гиран -->
++		<npc id="80131" x="146407" y="25688" z="-2008" heading="30511" respawnDelay="60" /> <!-- AfkMan: Аден -->
++	</spawn>
++</list>
+diff --git a/dist/game/data/stats/npcs/custom/fpc_passive.xml b/dist/game/data/stats/npcs/custom/fpc_passive.xml
+index 9737ae4..841c647 100644
+--- a/dist/game/data/stats/npcs/custom/fpc_passive.xml
++++ b/dist/game/data/stats/npcs/custom/fpc_passive.xml
+@@ -23,5 +23,8 @@
+ 			<radius normal="7.5" />
+ 			<height normal="24" />
+ 		</collision>
++		<parameters>
++			<param name="aliases" value="ева;эви" />
++		</parameters>
+ 	</npc>
+ </list>
+\ No newline at end of file
+diff --git b/dist/game/data/stats/npcs/custom/l2hub_fpc.xml b/dist/game/data/stats/npcs/custom/l2hub_fpc.xml
+new file mode 100644
+index 0000000..6c29282
+--- /dev/null
++++ b/dist/game/data/stats/npcs/custom/l2hub_fpc.xml
+@@ -0,0 +1,1073 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../xsd/npcs.xsd">
++	<!-- L2Hub: фейковые игроки. Сгенерировано tools/fake_players.py, правки — в таблице PERSONAS. -->
++	<!-- Kuzya: Artisan 29, Равнины Диона (Plains of Dion) -->
++	<npc id="80101" level="29" type="Monster" name="Kuzya">
++		<race>DWARF</race>
++		<sex>MALE</sex>
++		<stats str="88" int="39" dex="55" wit="39" con="82" men="38">
++			<vitals hp="1383" hpRegen="7.0" mp="800" mpRegen="3.0" />
++			<attack physical="91" magical="44" random="30" critical="8" accuracy="10" attackSpeed="430" type="BLUNT" range="40" distance="80" width="120" />
++			<defence physical="132" magical="88" />
++			<speed>
++				<walk ground="80" />
++				<run ground="138" />
++			</speed>
++		</stats>
++		<status talkable="false" attackable="true" />
++		<fakePlayer classId="56" hair="0" hairColor="3" face="0" equipRHand="157" equipHead="2411" equipChest="352" equipLegs="2378" weaponEnchantLevel="0" armorEnchantLevel="0" />
++		<ai type="FIGHTER" clanHelpRange="800" aggroRange="600" isAggressive="true">
++			<clanList>
++				<clan>FAKE_PLAYER</clan>
++			</clanList>
++		</ai>
++		<collision>
++			<radius normal="9" />
++			<height normal="18" />
++		</collision>
++		<parameters>
++			<param name="aliases" value="кузя;кузьма" />
++			<skill name="Skill01_ID" id="100" level="9" />
++		</parameters>
++		<skillList>
++			<skill id="100" level="9" /> <!-- Stun Attack -->
++		</skillList>
++	</npc>
++	<!-- LunaTik: Elven Wizard 29, Равнины Диона (Plains of Dion) -->
++	<npc id="80102" level="29" type="Monster" name="LunaTik">
++		<race>ELF</race>
++		<sex>FEMALE</sex>
++		<stats str="22" int="41" dex="21" wit="43" con="27" men="39">
++			<vitals hp="1383" hpRegen="7.0" mp="800" mpRegen="3.0" />
++			<attack physical="39" magical="84" random="30" critical="4" accuracy="10" attackSpeed="333" type="BLUNT" range="40" distance="80" width="120" />
++			<defence physical="132" magical="88" />
++			<speed>
++				<walk ground="80" />
++				<run ground="130" />
++			</speed>
++		</stats>
++		<status talkable="false" attackable="true" />
++		<fakePlayer classId="26" hair="3" hairColor="0" face="0" equipRHand="13169" equipChest="436" equipLegs="469" equipGloves="2447" weaponEnchantLevel="0" armorEnchantLevel="0" />
++		<ai type="MAGE" clanHelpRange="800" aggroRange="600" isAggressive="true">
++			<clanList>
++				<clan>FAKE_PLAYER</clan>
++			</clanList>
++		</ai>
++		<collision>
++			<radius normal="7.5" />
++			<height normal="23" />
++		</collision>
++		<parameters>
++			<param name="aliases" value="луна;лунатик" />
++			<skill name="Skill01_ID" id="1264" level="1" />
++			<skill name="Skill02_ID" id="1274" level="2" />
++			<skill name="Skill03_ID" id="1181" level="2" />
++		</parameters>
++		<skillList>
++			<skill id="1264" level="1" /> <!-- Solar Spark -->
++			<skill id="1274" level="2" /> <!-- Energy Bolt -->
++			<skill id="1181" level="2" /> <!-- Flame Strike -->
++		</skillList>
++	</npc>
++	<!-- Vovan: Human Knight 33, Болота Крумы (Cruma Marshlands) -->
++	<npc id="80103" level="33" type="Monster" name="Vovan">
++		<race>HUMAN</race>
++		<sex>MALE</sex>
++		<stats str="88" int="39" dex="55" wit="39" con="82" men="38">
++			<vitals hp="1907" hpRegen="9.0" mp="800" mpRegen="3.0" />
++			<attack physical="139" magical="68" random="30" critical="8" accuracy="14" attackSpeed="450" type="SWORD" range="40" distance="80" width="120" />
++			<defence physical="159" magical="106" />
++			<speed>
++				<walk ground="80" />
++				<run ground="138" />
++			</speed>
++		</stats>
++		<status talkable="false" attackable="true" />
++		<fakePlayer classId="4" hair="2" hairColor="0" face="1" equipRHand="130" equipHead="2411" equipChest="352" equipLegs="2378" equipLHand="2493" weaponEnchantLevel="0" armorEnchantLevel="0" />
++		<ai type="FIGHTER" clanHelpRange="800" aggroRange="600" isAggressive="true">
++			<clanList>
++				<clan>FAKE_PLAYER</clan>
++			</clanList>
++		</ai>
++		<collision>
++			<radius normal="9" />
++			<height normal="23" />
++		</collision>
++		<parameters>
++			<param name="aliases" value="вован;вова;вовчик" />
++			<skill name="Skill01_ID" id="70" level="10" />
++			<skill name="Skill02_ID" id="3" level="9" />
++		</parameters>
++		<skillList>
++			<skill id="70" level="10" /> <!-- Drain Health -->
++			<skill id="3" level="9" /> <!-- Power Strike -->
++		</skillList>
++	</npc>
++	<!-- Shadowmoth: Assassin 33, Болота Крумы (Cruma Marshlands) -->
++	<npc id="80104" level="33" type="Monster" name="Shadowmoth">
++		<race>DARK_ELF</race>
++		<sex>MALE</sex>
++		<stats str="88" int="39" dex="55" wit="39" con="82" men="38">
++			<vitals hp="1907" hpRegen="9.0" mp="800" mpRegen="3.0" />
++			<attack physical="139" magical="68" random="30" critical="30" accuracy="14" attackSpeed="600" type="DAGGER" range="40" distance="80" width="120" />
++			<defence physical="159" magical="106" />
++			<speed>
++				<walk ground="80" />
++				<run ground="150" />
++			</speed>
++		</stats>
++		<status talkable="false" attackable="true" />
++		<fakePlayer classId="35" hair="2" hairColor="0" face="0" equipRHand="224" equipChest="395" equipLegs="417" equipFeet="2424" weaponEnchantLevel="0" armorEnchantLevel="0" />
++		<ai type="FIGHTER" clanHelpRange="800" aggroRange="600" isAggressive="true">
++			<clanList>
++				<clan>FAKE_PLAYER</clan>
++			</clanList>
++		</ai>
++		<collision>
++			<radius normal="7.5" />
++			<height normal="24" />
++		</collision>
++		<parameters>
++			<param name="aliases" value="шэдоу;шадоу;моль" />
++			<skill name="Skill01_ID" id="223" level="9" />
++			<skill name="Skill02_ID" id="70" level="13" />
++			<skill name="Skill03_ID" id="16" level="21" />
++		</parameters>
++		<skillList>
++			<skill id="223" level="9" /> <!-- Sting -->
++			<skill id="70" level="13" /> <!-- Drain Health -->
++			<skill id="16" level="21" /> <!-- Mortal Blow -->
++		</skillList>
++	</npc>
++	<!-- Pupsik: Orc Raider 38, Улей (Bee Hive) -->
++	<npc id="80105" level="38" type="Monster" name="Pupsik">
++		<race>ORC</race>
++		<sex>FEMALE</sex>
++		<stats str="88" int="39" dex="55" wit="39" con="82" men="38">
++			<vitals hp="2211" hpRegen="9.0" mp="800" mpRegen="3.0" />
++			<attack physical="170" magical="83" random="30" critical="8" accuracy="14" attackSpeed="420" type="SWORD" range="40" distance="80" width="120" />
++			<defence physical="173" magical="115" />
++			<speed>
++				<walk ground="80" />
++				<run ground="138" />
++			</speed>
++		</stats>
++		<status talkable="false" attackable="true" />
++		<fakePlayer classId="45" hair="1" hairColor="2" face="0" equipRHand="13164" equipHead="2411" equipChest="352" equipLegs="2378" weaponEnchantLevel="0" armorEnchantLevel="0" />
++		<ai type="FIGHTER" clanHelpRange="800" aggroRange="600" isAggressive="true">
++			<clanList>
++				<clan>FAKE_PLAYER</clan>
++			</clanList>
++		</ai>
++		<collision>
++			<radius normal="7" />
++			<height normal="27" />
++		</collision>
++		<parameters>
++			<param name="aliases" value="пупсик;пупс" />
++			<skill name="Skill01_ID" id="255" level="15" />
++			<skill name="Skill02_ID" id="3" level="9" />
++		</parameters>
++		<skillList>
++			<skill id="255" level="15" /> <!-- Power Smash -->
++			<skill id="3" level="9" /> <!-- Power Strike -->
++		</skillList>
++	</npc>
++	<!-- Bezumnyi: Rogue 38, Улей (Bee Hive) -->
++	<npc id="80106" level="38" type="Monster" name="Bezumnyi">
++		<race>HUMAN</race>
++		<sex>MALE</sex>
++		<stats str="88" int="39" dex="55" wit="39" con="82" men="38">
++			<vitals hp="2211" hpRegen="9.0" mp="800" mpRegen="3.0" />
++			<attack physical="170" magical="83" random="30" critical="8" accuracy="14" attackSpeed="330" type="BOW" range="500" distance="80" width="120" />
++			<defence physical="173" magical="115" />
++			<speed>
++				<walk ground="80" />
++				<run ground="150" />
++			</speed>
++		</stats>
++		<status talkable="false" attackable="true" />
++		<fakePlayer classId="7" hair="1" hairColor="1" face="2" equipRHand="276" equipChest="394" equipLegs="416" equipFeet="2422" weaponEnchantLevel="0" armorEnchantLevel="0" />
++		<ai type="ARCHER" clanHelpRange="800" aggroRange="600" isAggressive="true">
++			<clanList>
++				<clan>FAKE_PLAYER</clan>
++			</clanList>
++		</ai>
++		<collision>
++			<radius normal="9" />
++			<height normal="23" />
++		</collision>
++		<parameters>
++			<param name="aliases" value="безумный;безум;безя" />
++			<skill name="Skill01_ID" id="101" level="3" />
++			<skill name="Skill02_ID" id="56" level="24" />
++		</parameters>
++		<skillList>
++			<skill id="101" level="3" /> <!-- Stun Shot -->
++			<skill id="56" level="24" /> <!-- Power Shot -->
++		</skillList>
++	</npc>
++	<!-- Glad1ator: Gladiator 45, Море Спор (Sea of Spores) -->
++	<npc id="80107" level="45" type="Monster" name="Glad1ator">
++		<race>HUMAN</race>
++		<sex>MALE</sex>
++		<stats str="88" int="39" dex="55" wit="39" con="82" men="38">
++			<vitals hp="3152" hpRegen="11.0" mp="1062" mpRegen="3.0" />
++			<attack physical="278" magical="135" random="30" critical="8" accuracy="10" attackSpeed="520" type="DUAL" range="40" distance="80" width="120" />
++			<defence physical="214" magical="143" />
++			<speed>
++				<walk ground="80" />
++				<run ground="138" />
++			</speed>
++		</stats>
++		<status talkable="false" attackable="true" />
++		<fakePlayer classId="2" hair="3" hairColor="3" face="1" equipRHand="2554" equipHead="2414" equipChest="356" weaponEnchantLevel="3" armorEnchantLevel="3" />
++		<ai type="FIGHTER" clanHelpRange="800" aggroRange="600" isAggressive="true">
++			<clanList>
++				<clan>FAKE_PLAYER</clan>
++			</clanList>
++		</ai>
++		<collision>
++			<radius normal="9" />
++			<height normal="23" />
++		</collision>
++		<parameters>
++			<param name="aliases" value="глад;гладиатор" />
++			<skill name="Skill01_ID" id="1" level="6" />
++		</parameters>
++		<skillList>
++			<skill id="1" level="6" /> <!-- Triple Slash -->
++		</skillList>
++	</npc>
++	<!-- Alenka: Elven Elder 45, Море Спор (Sea of Spores) -->
++	<npc id="80108" level="45" type="Monster" name="Alenka">
++		<race>ELF</race>
++		<sex>FEMALE</sex>
++		<stats str="22" int="41" dex="21" wit="43" con="27" men="39">
++			<vitals hp="3152" hpRegen="11.0" mp="1062" mpRegen="3.0" />
++			<attack physical="119" magical="257" random="30" critical="4" accuracy="10" attackSpeed="333" type="BLUNT" range="40" distance="80" width="120" />
++			<defence physical="214" magical="143" />
++			<speed>
++				<walk ground="80" />
++				<run ground="130" />
++			</speed>
++		</stats>
++		<status talkable="false" attackable="true" />
++		<fakePlayer classId="30" hair="6" hairColor="3" face="2" equipRHand="7701" equipChest="441" equipLegs="472" equipGloves="2459" weaponEnchantLevel="2" armorEnchantLevel="2" />
++		<ai type="HEALER" clanHelpRange="800" aggroRange="600" isAggressive="true">
++			<clanList>
++				<clan>FAKE_PLAYER</clan>
++			</clanList>
++		</ai>
++		<collision>
++			<radius normal="7.5" />
++			<height normal="23" />
++		</collision>
++		<parameters>
++			<param name="aliases" value="алёнка;аленка;алена;алёна" />
++			<skill name="Skill01_ID" id="1217" level="6" />
++			<skill name="Skill02_ID" id="1027" level="15" />
++			<skill name="Skill03_ID" id="1028" level="4" />
++			<skill name="Skill04_ID" id="1031" level="8" />
++		</parameters>
++		<skillList>
++			<skill id="1217" level="6" /> <!-- Greater Heal -->
++			<skill id="1027" level="15" /> <!-- Group Heal -->
++			<skill id="1028" level="4" /> <!-- Might of Heaven -->
++			<skill id="1031" level="8" /> <!-- Disrupt Undead -->
++		</skillList>
++	</npc>
++	<!-- Krosh: Berserker 45, Море Спор (Sea of Spores) -->
++	<npc id="80109" level="45" type="Monster" name="Krosh">
++		<race>KAMAEL</race>
++		<sex>MALE</sex>
++		<stats str="88" int="39" dex="55" wit="39" con="82" men="38">
++			<vitals hp="3152" hpRegen="11.0" mp="1062" mpRegen="3.0" />
++			<attack physical="278" magical="135" random="30" critical="8" accuracy="10" attackSpeed="450" type="ANCIENTSWORD" range="40" distance="80" width="120" />
++			<defence physical="214" magical="143" />
++			<speed>
++				<walk ground="80" />
++				<run ground="150" />
++			</speed>
++		</stats>
++		<status talkable="false" attackable="true" />
++		<fakePlayer classId="127" hair="2" hairColor="0" face="1" equipRHand="9287" equipChest="397" equipLegs="2387" equipFeet="62" weaponEnchantLevel="0" armorEnchantLevel="0" />
++		<ai type="FIGHTER" clanHelpRange="800" aggroRange="600" isAggressive="true">
++			<clanList>
++				<clan>FAKE_PLAYER</clan>
++			</clanList>
++		</ai>
++		<collision>
++			<radius normal="8" />
++			<height normal="25.2" />
++		</collision>
++		<parameters>
++			<param name="aliases" value="крош;кроша" />
++			<skill name="Skill01_ID" id="477" level="6" />
++			<skill name="Skill02_ID" id="1434" level="4" />
++			<skill name="Skill03_ID" id="1433" level="10" />
++		</parameters>
++		<skillList>
++			<skill id="477" level="6" /> <!-- Dark Smash -->
++			<skill id="1434" level="4" /> <!-- Dark Explosion -->
++			<skill id="1433" level="10" /> <!-- Abyssal Blaze -->
++		</skillList>
++	</npc>
++	<!-- Morok: Spellhowler 51, Зачарованная Долина (Enchanted Valley) -->
++	<npc id="80110" level="51" type="Monster" name="Morok">
++		<race>DARK_ELF</race>
++		<sex>MALE</sex>
++		<stats str="22" int="41" dex="21" wit="43" con="27" men="39">
++			<vitals hp="4117" hpRegen="11.0" mp="1440" mpRegen="3.0" />
++			<attack physical="174" magical="377" random="30" critical="4" accuracy="10" attackSpeed="333" type="BLUNT" range="40" distance="80" width="120" />
++			<defence physical="254" magical="169" />
++			<speed>
++				<walk ground="80" />
++				<run ground="130" />
++			</speed>
++		</stats>
++		<status talkable="false" attackable="true" />
++		<fakePlayer classId="40" hair="3" hairColor="1" face="0" equipRHand="13181" equipChest="439" equipLegs="471" equipGloves="2454" weaponEnchantLevel="0" armorEnchantLevel="0" />
++		<ai type="MAGE" clanHelpRange="800" aggroRange="600" isAggressive="true">
++			<clanList>
++				<clan>FAKE_PLAYER</clan>
++			</clanList>
++		</ai>
++		<collision>
++			<radius normal="7.5" />
++			<height normal="24" />
++		</collision>
++		<parameters>
++			<param name="aliases" value="морок" />
++			<skill name="Skill01_ID" id="1176" level="2" />
++			<skill name="Skill02_ID" id="1148" level="2" />
++			<skill name="Skill03_ID" id="1267" level="3" />
++		</parameters>
++		<skillList>
++			<skill id="1176" level="2" /> <!-- Tempest -->
++			<skill id="1148" level="2" /> <!-- Death Spike -->
++			<skill id="1267" level="3" /> <!-- Shadow Flare -->
++		</skillList>
++	</npc>
++	<!-- Sanchez: Treasure Hunter 51, Зачарованная Долина (Enchanted Valley) -->
++	<npc id="80111" level="51" type="Monster" name="Sanchez">
++		<race>HUMAN</race>
++		<sex>MALE</sex>
++		<stats str="88" int="39" dex="55" wit="39" con="82" men="38">
++			<vitals hp="4117" hpRegen="11.0" mp="1440" mpRegen="3.0" />
++			<attack physical="407" magical="198" random="30" critical="30" accuracy="10" attackSpeed="600" type="DAGGER" range="40" distance="80" width="120" />
++			<defence physical="254" magical="169" />
++			<speed>
++				<walk ground="80" />
++				<run ground="150" />
++			</speed>
++		</stats>
++		<status talkable="false" attackable="true" />
++		<fakePlayer classId="8" hair="4" hairColor="0" face="1" equipRHand="4759" equipChest="400" equipLegs="420" equipFeet="2436" weaponEnchantLevel="0" armorEnchantLevel="0" />
++		<ai type="FIGHTER" clanHelpRange="800" aggroRange="600" isAggressive="true">
++			<clanList>
++				<clan>FAKE_PLAYER</clan>
++			</clanList>
++		</ai>
++		<collision>
++			<radius normal="9" />
++			<height normal="23" />
++		</collision>
++		<parameters>
++			<param name="aliases" value="санчез;саня;санек;санёк" />
++			<skill name="Skill01_ID" id="263" level="12" />
++			<skill name="Skill02_ID" id="30" level="12" />
++			<skill name="Skill03_ID" id="16" level="24" />
++		</parameters>
++		<skillList>
++			<skill id="263" level="12" /> <!-- Deadly Blow -->
++			<skill id="30" level="12" /> <!-- Backstab -->
++			<skill id="16" level="24" /> <!-- Mortal Blow -->
++		</skillList>
++	</npc>
++	<!-- Ryzhaya: Silver Ranger 51, Зачарованная Долина (Enchanted Valley) -->
++	<npc id="80112" level="51" type="Monster" name="Ryzhaya">
++		<race>ELF</race>
++		<sex>FEMALE</sex>
++		<stats str="88" int="39" dex="55" wit="39" con="82" men="38">
++			<vitals hp="4117" hpRegen="11.0" mp="1440" mpRegen="3.0" />
++			<attack physical="407" magical="198" random="30" critical="8" accuracy="10" attackSpeed="330" type="BOW" range="500" distance="80" width="120" />
++			<defence physical="254" magical="169" />
++			<speed>
++				<walk ground="80" />
++				<run ground="150" />
++			</speed>
++		</stats>
++		<status talkable="false" attackable="true" />
++		<fakePlayer classId="24" hair="6" hairColor="2" face="2" equipRHand="4823" equipChest="401" equipFeet="2437" weaponEnchantLevel="2" armorEnchantLevel="2" />
++		<ai type="ARCHER" clanHelpRange="800" aggroRange="600" isAggressive="true">
++			<clanList>
++				<clan>FAKE_PLAYER</clan>
++			</clanList>
++		</ai>
++		<collision>
++			<radius normal="7.5" />
++			<height normal="23" />
++		</collision>
++		<parameters>
++			<param name="aliases" value="рыжая;рыжик" />
++			<skill name="Skill01_ID" id="24" level="6" />
++			<skill name="Skill02_ID" id="19" level="12" />
++			<skill name="Skill03_ID" id="101" level="15" />
++		</parameters>
++		<skillList>
++			<skill id="24" level="6" /> <!-- Burst Shot -->
++			<skill id="19" level="12" /> <!-- Double Shot -->
++			<skill id="101" level="15" /> <!-- Stun Shot -->
++		</skillList>
++	</npc>
++	<!-- OldSchool: Necromancer 56, Кладбище (Cemetery) -->
++	<npc id="80113" level="56" type="Monster" name="OldSchool">
++		<race>HUMAN</race>
++		<sex>MALE</sex>
++		<stats str="22" int="41" dex="21" wit="43" con="27" men="39">
++			<vitals hp="4865" hpRegen="13.0" mp="1722" mpRegen="3.0" />
++			<attack physical="222" magical="481" random="30" critical="4" accuracy="10" attackSpeed="333" type="BLUNT" range="40" distance="80" width="120" />
++			<defence physical="285" magical="189" />
++			<speed>
++				<walk ground="80" />
++				<run ground="130" />
++			</speed>
++		</stats>
++		<status talkable="false" attackable="true" />
++		<fakePlayer classId="13" hair="4" hairColor="2" face="2" equipRHand="210" equipHead="2417" equipChest="2399" equipLegs="2404" equipGloves="5724" equipFeet="5740" weaponEnchantLevel="0" armorEnchantLevel="0" />
++		<ai type="MAGE" clanHelpRange="800" aggroRange="600" isAggressive="true">
++			<clanList>
++				<clan>FAKE_PLAYER</clan>
++			</clanList>
++		</ai>
++		<collision>
++			<radius normal="9" />
++			<height normal="23" />
++		</collision>
++		<parameters>
++			<param name="aliases" value="олдскул;олд;олдскулл" />
++			<skill name="Skill01_ID" id="1159" level="4" />
++			<skill name="Skill02_ID" id="1263" level="4" />
++			<skill name="Skill03_ID" id="1148" level="4" />
++		</parameters>
++		<skillList>
++			<skill id="1159" level="4" /> <!-- Curse Death Link -->
++			<skill id="1263" level="4" /> <!-- Curse Gloom -->
++			<skill id="1148" level="4" /> <!-- Death Spike -->
++		</skillList>
++	</npc>
++	<!-- Tihon: Warsmith 56, Кладбище (Cemetery) -->
++	<npc id="80114" level="56" type="Monster" name="Tihon">
++		<race>DWARF</race>
++		<sex>MALE</sex>
++		<stats str="88" int="39" dex="55" wit="39" con="82" men="38">
++			<vitals hp="4865" hpRegen="13.0" mp="1722" mpRegen="3.0" />
++			<attack physical="519" magical="253" random="30" critical="8" accuracy="10" attackSpeed="430" type="BLUNT" range="40" distance="80" width="120" />
++			<defence physical="285" magical="189" />
++			<speed>
++				<walk ground="80" />
++				<run ground="138" />
++			</speed>
++		</stats>
++		<status talkable="false" attackable="true" />
++		<fakePlayer classId="57" hair="3" hairColor="0" face="1" equipRHand="10980" equipHead="503" equipChest="357" equipLegs="383" equipGloves="5710" equipFeet="5726" weaponEnchantLevel="3" armorEnchantLevel="3" />
++		<ai type="FIGHTER" clanHelpRange="800" aggroRange="600" isAggressive="true">
++			<clanList>
++				<clan>FAKE_PLAYER</clan>
++			</clanList>
++		</ai>
++		<collision>
++			<radius normal="9" />
++			<height normal="18" />
++		</collision>
++		<parameters>
++			<param name="aliases" value="тихон;тиша" />
++			<skill name="Skill01_ID" id="260" level="18" />
++			<skill name="Skill02_ID" id="190" level="18" />
++			<skill name="Skill03_ID" id="100" level="15" />
++		</parameters>
++		<skillList>
++			<skill id="260" level="18" /> <!-- Hammer Crush -->
++			<skill id="190" level="18" /> <!-- Fatal Strike -->
++			<skill id="100" level="15" /> <!-- Stun Attack -->
++		</skillList>
++	</npc>
++	<!-- Nyusha: Shillien Elder 56, Кладбище (Cemetery) -->
++	<npc id="80115" level="56" type="Monster" name="Nyusha">
++		<race>DARK_ELF</race>
++		<sex>FEMALE</sex>
++		<stats str="22" int="41" dex="21" wit="43" con="27" men="39">
++			<vitals hp="4865" hpRegen="13.0" mp="1722" mpRegen="3.0" />
++			<attack physical="222" magical="481" random="30" critical="4" accuracy="10" attackSpeed="333" type="BLUNT" range="40" distance="80" width="120" />
++			<defence physical="285" magical="189" />
++			<speed>
++				<walk ground="80" />
++				<run ground="130" />
++			</speed>
++		</stats>
++		<status talkable="false" attackable="true" />
++		<fakePlayer classId="43" hair="6" hairColor="0" face="0" equipRHand="10898" equipHead="503" equipChest="2397" equipLegs="2402" equipGloves="5712" equipFeet="5728" weaponEnchantLevel="2" armorEnchantLevel="2" />
++		<ai type="HEALER" clanHelpRange="800" aggroRange="600" isAggressive="true">
++			<clanList>
++				<clan>FAKE_PLAYER</clan>
++			</clanList>
++		</ai>
++		<collision>
++			<radius normal="7" />
++			<height normal="23.5" />
++		</collision>
++		<parameters>
++			<param name="aliases" value="нюша;нюшка" />
++			<skill name="Skill01_ID" id="1219" level="9" />
++			<skill name="Skill02_ID" id="1217" level="15" />
++			<skill name="Skill03_ID" id="1398" level="1" />
++			<skill name="Skill04_ID" id="1031" level="8" />
++		</parameters>
++		<skillList>
++			<skill id="1219" level="9" /> <!-- Greater Group Heal -->
++			<skill id="1217" level="15" /> <!-- Greater Heal -->
++			<skill id="1398" level="1" /> <!-- Mana Burn -->
++			<skill id="1031" level="8" /> <!-- Disrupt Undead -->
++		</skillList>
++	</npc>
++	<!-- Brutal: Destroyer 62, Поля Резни (Fields of Massacre) -->
++	<npc id="80116" level="62" type="Monster" name="Brutal">
++		<race>ORC</race>
++		<sex>MALE</sex>
++		<stats str="88" int="39" dex="55" wit="39" con="82" men="38">
++			<vitals hp="5643" hpRegen="13.0" mp="2014" mpRegen="3.0" />
++			<attack physical="647" magical="315" random="30" critical="8" accuracy="10" attackSpeed="420" type="SWORD" range="40" distance="80" width="120" />
++			<defence physical="316" magical="210" />
++			<speed>
++				<walk ground="80" />
++				<run ground="138" />
++			</speed>
++		</stats>
++		<status talkable="false" attackable="true" />
++		<fakePlayer classId="46" hair="3" hairColor="0" face="2" equipRHand="13044" equipHead="2419" equipChest="2383" equipGloves="5774" equipFeet="5786" weaponEnchantLevel="7" armorEnchantLevel="6" />
++		<ai type="FIGHTER" clanHelpRange="800" aggroRange="600" isAggressive="true">
++			<clanList>
++				<clan>FAKE_PLAYER</clan>
++			</clanList>
++		</ai>
++		<collision>
++			<radius normal="11" />
++			<height normal="28" />
++		</collision>
++		<parameters>
++			<param name="aliases" value="брутал;брут" />
++			<skill name="Skill01_ID" id="315" level="4" />
++			<skill name="Skill02_ID" id="190" level="25" />
++			<skill name="Skill03_ID" id="255" level="15" />
++		</parameters>
++		<skillList>
++			<skill id="315" level="4" /> <!-- Crush of Doom -->
++			<skill id="190" level="25" /> <!-- Fatal Strike -->
++			<skill id="255" level="15" /> <!-- Power Smash -->
++		</skillList>
++	</npc>
++	<!-- Freya: Arbalester 62, Поля Резни (Fields of Massacre) -->
++	<npc id="80117" level="62" type="Monster" name="Freya">
++		<race>KAMAEL</race>
++		<sex>FEMALE</sex>
++		<stats str="88" int="39" dex="55" wit="39" con="82" men="38">
++			<vitals hp="5643" hpRegen="13.0" mp="2014" mpRegen="3.0" />
++			<attack physical="647" magical="315" random="30" critical="8" accuracy="10" attackSpeed="360" type="CROSSBOW" range="450" distance="80" width="120" />
++			<defence physical="316" magical="210" />
++			<speed>
++				<walk ground="80" />
++				<run ground="150" />
++			</speed>
++		</stats>
++		<status talkable="false" attackable="true" />
++		<fakePlayer classId="130" hair="5" hairColor="3" face="1" equipRHand="9351" equipHead="547" equipChest="2393" equipGloves="5769" equipFeet="5781" weaponEnchantLevel="5" armorEnchantLevel="5" />
++		<ai type="ARCHER" clanHelpRange="800" aggroRange="600" isAggressive="true">
++			<clanList>
++				<clan>FAKE_PLAYER</clan>
++			</clanList>
++		</ai>
++		<collision>
++			<radius normal="7" />
++			<height normal="22.6" />
++		</collision>
++		<parameters>
++			<param name="aliases" value="фрея" />
++			<skill name="Skill01_ID" id="508" level="19" />
++			<skill name="Skill02_ID" id="507" level="25" />
++			<skill name="Skill03_ID" id="627" level="28" />
++		</parameters>
++		<skillList>
++			<skill id="508" level="19" /> <!-- Rising Shot -->
++			<skill id="507" level="25" /> <!-- Twin Shot -->
++			<skill id="627" level="28" /> <!-- Soul Shock -->
++		</skillList>
++	</npc>
++	<!-- DarkLord: Shillien Knight 72, Болото Криков (Swamp of Screams) -->
++	<npc id="80118" level="72" type="Monster" name="DarkLord">
++		<race>DARK_ELF</race>
++		<sex>MALE</sex>
++		<stats str="88" int="39" dex="55" wit="39" con="82" men="38">
++			<vitals hp="6886" hpRegen="15.0" mp="2502" mpRegen="3.0" />
++			<attack physical="875" magical="427" random="30" critical="8" accuracy="10" attackSpeed="450" type="SWORD" range="40" distance="80" width="120" />
++			<defence physical="366" magical="268" />
++			<speed>
++				<walk ground="80" />
++				<run ground="138" />
++			</speed>
++		</stats>
++		<status talkable="false" attackable="true" />
++		<fakePlayer classId="33" hair="0" hairColor="3" face="2" equipRHand="13881" equipHead="512" equipChest="365" equipLegs="388" equipGloves="5765" equipFeet="5777" equipLHand="641" weaponEnchantLevel="0" armorEnchantLevel="0" />
++		<ai type="FIGHTER" clanHelpRange="800" aggroRange="600" isAggressive="true">
++			<clanList>
++				<clan>FAKE_PLAYER</clan>
++			</clanList>
++		</ai>
++		<collision>
++			<radius normal="7.5" />
++			<height normal="24" />
++		</collision>
++		<parameters>
++			<param name="aliases" value="дарклорд;лорд;дарк" />
++			<skill name="Skill01_ID" id="279" level="4" />
++			<skill name="Skill02_ID" id="401" level="9" />
++			<skill name="Skill03_ID" id="984" level="14" />
++		</parameters>
++		<skillList>
++			<skill id="279" level="4" /> <!-- Lightning Strike -->
++			<skill id="401" level="9" /> <!-- Judgment -->
++			<skill id="984" level="14" /> <!-- Shield Strike -->
++		</skillList>
++	</npc>
++	<!-- Masha: Sorcerer 72, Болото Криков (Swamp of Screams) -->
++	<npc id="80119" level="72" type="Monster" name="Masha">
++		<race>HUMAN</race>
++		<sex>FEMALE</sex>
++		<stats str="22" int="41" dex="21" wit="43" con="27" men="39">
++			<vitals hp="6886" hpRegen="15.0" mp="2502" mpRegen="3.0" />
++			<attack physical="375" magical="811" random="30" critical="4" accuracy="10" attackSpeed="333" type="BLUNT" range="40" distance="80" width="120" />
++			<defence physical="366" magical="268" />
++			<speed>
++				<walk ground="80" />
++				<run ground="130" />
++			</speed>
++		</stats>
++		<status talkable="false" attackable="true" />
++		<fakePlayer classId="12" hair="4" hairColor="3" face="0" equipRHand="5596" equipHead="2419" equipChest="2409" equipGloves="5776" equipFeet="5788" weaponEnchantLevel="6" armorEnchantLevel="6" />
++		<ai type="MAGE" clanHelpRange="800" aggroRange="600" isAggressive="true">
++			<clanList>
++				<clan>FAKE_PLAYER</clan>
++			</clanList>
++		</ai>
++		<collision>
++			<radius normal="8" />
++			<height normal="23.5" />
++		</collision>
++		<parameters>
++			<param name="aliases" value="маша;машка;мария" />
++			<skill name="Skill01_ID" id="1292" level="1" />
++			<skill name="Skill02_ID" id="1289" level="1" />
++			<skill name="Skill03_ID" id="1288" level="1" />
++		</parameters>
++		<skillList>
++			<skill id="1292" level="1" /> <!-- Elemental Assault -->
++			<skill id="1289" level="1" /> <!-- Inferno -->
++			<skill id="1288" level="1" /> <!-- Aura Symphony -->
++		</skillList>
++	</npc>
++	<!-- Ded: Bishop 72, Болото Криков (Swamp of Screams) -->
++	<npc id="80120" level="72" type="Monster" name="Ded">
++		<race>HUMAN</race>
++		<sex>MALE</sex>
++		<stats str="22" int="41" dex="21" wit="43" con="27" men="39">
++			<vitals hp="6886" hpRegen="15.0" mp="2502" mpRegen="3.0" />
++			<attack physical="375" magical="811" random="30" critical="4" accuracy="10" attackSpeed="333" type="BLUNT" range="40" distance="80" width="120" />
++			<defence physical="366" magical="268" />
++			<speed>
++				<walk ground="80" />
++				<run ground="130" />
++			</speed>
++		</stats>
++		<status talkable="false" attackable="true" />
++		<fakePlayer classId="16" hair="2" hairColor="3" face="2" equipRHand="11045" equipHead="2419" equipChest="2409" equipGloves="5776" equipFeet="5788" weaponEnchantLevel="4" armorEnchantLevel="4" />
++		<ai type="HEALER" clanHelpRange="800" aggroRange="600" isAggressive="true">
++			<clanList>
++				<clan>FAKE_PLAYER</clan>
++			</clanList>
++		</ai>
++		<collision>
++			<radius normal="9" />
++			<height normal="23" />
++		</collision>
++		<parameters>
++			<param name="aliases" value="дед;дедуля;дедушка" />
++			<skill name="Skill01_ID" id="1271" level="1" />
++			<skill name="Skill02_ID" id="1020" level="25" />
++			<skill name="Skill03_ID" id="1399" level="4" />
++			<skill name="Skill04_ID" id="1398" level="9" />
++		</parameters>
++		<skillList>
++			<skill id="1271" level="1" /> <!-- Benediction -->
++			<skill id="1020" level="25" /> <!-- Vitalize -->
++			<skill id="1399" level="4" /> <!-- Mana Storm -->
++			<skill id="1398" level="9" /> <!-- Mana Burn -->
++		</skillList>
++	</npc>
++	<!-- Nagibator: Adventurer 76, Стена Аргоса (Wall of Argos) -->
++	<npc id="80121" level="76" type="Monster" name="Nagibator">
++		<race>HUMAN</race>
++		<sex>MALE</sex>
++		<stats str="88" int="39" dex="55" wit="39" con="82" men="38">
++			<vitals hp="8160" hpRegen="17.0" mp="3082" mpRegen="3.0" />
++			<attack physical="1142" magical="557" random="30" critical="30" accuracy="14" attackSpeed="600" type="DAGGER" range="40" distance="80" width="120" />
++			<defence physical="421" magical="280" />
++			<speed>
++				<walk ground="80" />
++				<run ground="150" />
++			</speed>
++		</stats>
++		<status talkable="false" attackable="true" />
++		<fakePlayer classId="93" hair="1" hairColor="3" face="2" equipRHand="11249" equipHead="6382" equipChest="6379" equipGloves="6380" equipFeet="6381" weaponEnchantLevel="3" armorEnchantLevel="3" />
++		<ai type="FIGHTER" clanHelpRange="800" aggroRange="600" isAggressive="true">
++			<clanList>
++				<clan>FAKE_PLAYER</clan>
++			</clanList>
++		</ai>
++		<collision>
++			<radius normal="9" />
++			<height normal="23" />
++		</collision>
++		<parameters>
++			<param name="aliases" value="нагибатор;наги;нагиб" />
++			<skill name="Skill01_ID" id="344" level="1" />
++			<skill name="Skill02_ID" id="263" level="37" />
++			<skill name="Skill03_ID" id="30" level="37" />
++		</parameters>
++		<skillList>
++			<skill id="344" level="1" /> <!-- Lethal Blow -->
++			<skill id="263" level="37" /> <!-- Deadly Blow -->
++			<skill id="30" level="37" /> <!-- Backstab -->
++		</skillList>
++	</npc>
++	<!-- Rin: Wind Rider 76, Стена Аргоса (Wall of Argos) -->
++	<npc id="80122" level="76" type="Monster" name="Rin">
++		<race>ELF</race>
++		<sex>FEMALE</sex>
++		<stats str="88" int="39" dex="55" wit="39" con="82" men="38">
++			<vitals hp="8160" hpRegen="17.0" mp="3082" mpRegen="3.0" />
++			<attack physical="1142" magical="557" random="30" critical="30" accuracy="14" attackSpeed="600" type="DAGGER" range="40" distance="80" width="120" />
++			<defence physical="421" magical="280" />
++			<speed>
++				<walk ground="80" />
++				<run ground="150" />
++			</speed>
++		</stats>
++		<status talkable="false" attackable="true" />
++		<fakePlayer classId="101" hair="6" hairColor="0" face="1" equipRHand="6591" equipHead="6382" equipChest="6379" equipGloves="6380" equipFeet="6381" weaponEnchantLevel="9" armorEnchantLevel="6" />
++		<ai type="FIGHTER" clanHelpRange="800" aggroRange="600" isAggressive="true">
++			<clanList>
++				<clan>FAKE_PLAYER</clan>
++			</clanList>
++		</ai>
++		<collision>
++			<radius normal="7.5" />
++			<height normal="23" />
++		</collision>
++		<parameters>
++			<param name="aliases" value="рин" />
++			<skill name="Skill01_ID" id="344" level="1" />
++			<skill name="Skill02_ID" id="263" level="37" />
++			<skill name="Skill03_ID" id="30" level="37" />
++		</parameters>
++		<skillList>
++			<skill id="344" level="1" /> <!-- Lethal Blow -->
++			<skill id="263" level="37" /> <!-- Deadly Blow -->
++			<skill id="30" level="37" /> <!-- Backstab -->
++		</skillList>
++	</npc>
++	<!-- Grom: Titan 79, Имперская Гробница (Imperial Tomb) -->
++	<npc id="80123" level="79" type="Monster" name="Grom">
++		<race>ORC</race>
++		<sex>MALE</sex>
++		<stats str="88" int="39" dex="55" wit="39" con="82" men="38">
++			<vitals hp="9033" hpRegen="17.5" mp="3556" mpRegen="3.1" />
++			<attack physical="1347" magical="678" random="30" critical="8" accuracy="14" attackSpeed="420" type="SWORD" range="40" distance="80" width="120" />
++			<defence physical="469" magical="320" />
++			<speed>
++				<walk ground="80" />
++				<run ground="138" />
++			</speed>
++		</stats>
++		<status talkable="false" attackable="true" />
++		<fakePlayer classId="113" hair="0" hairColor="0" face="0" equipRHand="6605" equipHead="6378" equipChest="6373" equipLegs="6374" equipGloves="6375" equipFeet="6376" weaponEnchantLevel="4" armorEnchantLevel="4" />
++		<ai type="FIGHTER" clanHelpRange="800" aggroRange="600" isAggressive="true">
++			<clanList>
++				<clan>FAKE_PLAYER</clan>
++			</clanList>
++		</ai>
++		<collision>
++			<radius normal="11" />
++			<height normal="28" />
++		</collision>
++		<parameters>
++			<param name="aliases" value="гром" />
++			<skill name="Skill01_ID" id="362" level="1" />
++			<skill name="Skill02_ID" id="315" level="16" />
++			<skill name="Skill03_ID" id="190" level="37" />
++		</parameters>
++		<skillList>
++			<skill id="362" level="1" /> <!-- Armor Crush -->
++			<skill id="315" level="16" /> <!-- Crush of Doom -->
++			<skill id="190" level="37" /> <!-- Fatal Strike -->
++		</skillList>
++	</npc>
++	<!-- Vedma: Storm Screamer 79, Имперская Гробница (Imperial Tomb) -->
++	<npc id="80124" level="79" type="Monster" name="Vedma">
++		<race>DARK_ELF</race>
++		<sex>FEMALE</sex>
++		<stats str="22" int="41" dex="21" wit="43" con="27" men="39">
++			<vitals hp="9033" hpRegen="17.5" mp="3556" mpRegen="3.1" />
++			<attack physical="577" magical="1288" random="30" critical="4" accuracy="14" attackSpeed="333" type="BLUNT" range="40" distance="80" width="120" />
++			<defence physical="469" magical="320" />
++			<speed>
++				<walk ground="80" />
++				<run ground="130" />
++			</speed>
++		</stats>
++		<status talkable="false" attackable="true" />
++		<fakePlayer classId="110" hair="5" hairColor="3" face="1" equipRHand="6587" equipHead="6386" equipChest="6383" equipGloves="6384" equipFeet="6385" weaponEnchantLevel="0" armorEnchantLevel="0" />
++		<ai type="MAGE" clanHelpRange="800" aggroRange="600" isAggressive="true">
++			<clanList>
++				<clan>FAKE_PLAYER</clan>
++			</clanList>
++		</ai>
++		<collision>
++			<radius normal="7" />
++			<height normal="23.5" />
++		</collision>
++		<parameters>
++			<param name="aliases" value="ведьма;ведьмочка" />
++			<skill name="Skill01_ID" id="1456" level="1" />
++			<skill name="Skill02_ID" id="1341" level="1" />
++			<skill name="Skill03_ID" id="1343" level="1" />
++		</parameters>
++		<skillList>
++			<skill id="1456" level="1" /> <!-- Wind Vortex Slug -->
++			<skill id="1341" level="1" /> <!-- Wind Vortex -->
++			<skill id="1343" level="1" /> <!-- Dark Vortex -->
++		</skillList>
++	</npc>
++	<!-- Zloy: Doombringer 81, Первобытный Остров (Primeval Isle) -->
++	<npc id="80125" level="81" type="Monster" name="Zloy">
++		<race>KAMAEL</race>
++		<sex>MALE</sex>
++		<stats str="88" int="39" dex="55" wit="39" con="82" men="38">
++			<vitals hp="9870" hpRegen="17.0" mp="3350" mpRegen="3.0" />
++			<attack physical="1359" magical="663" random="30" critical="8" accuracy="14" attackSpeed="450" type="ANCIENTSWORD" range="40" distance="80" width="120" />
++			<defence physical="444" magical="325" />
++			<speed>
++				<walk ground="80" />
++				<run ground="150" />
++			</speed>
++		</stats>
++		<status talkable="false" attackable="true" />
++		<fakePlayer classId="131" hair="0" hairColor="0" face="0" equipRHand="11328" equipHead="9429" equipChest="10127" equipLegs="9428" equipGloves="9430" equipFeet="9431" weaponEnchantLevel="2" armorEnchantLevel="2" />
++		<ai type="FIGHTER" clanHelpRange="800" aggroRange="600" isAggressive="true">
++			<clanList>
++				<clan>FAKE_PLAYER</clan>
++			</clanList>
++		</ai>
++		<collision>
++			<radius normal="8" />
++			<height normal="25.2" />
++		</collision>
++		<parameters>
++			<param name="aliases" value="злой;злыдень" />
++			<skill name="Skill01_ID" id="939" level="1" />
++			<skill name="Skill02_ID" id="526" level="1" />
++			<skill name="Skill03_ID" id="498" level="12" />
++		</parameters>
++		<skillList>
++			<skill id="939" level="1" /> <!-- Soul Rage -->
++			<skill id="526" level="1" /> <!-- Enuma Elish -->
++			<skill id="498" level="12" /> <!-- Contagion -->
++		</skillList>
++	</npc>
++	<!-- Sova: Moonlight Sentinel 81, Первобытный Остров (Primeval Isle) -->
++	<npc id="80126" level="81" type="Monster" name="Sova">
++		<race>ELF</race>
++		<sex>MALE</sex>
++		<stats str="88" int="39" dex="55" wit="39" con="82" men="38">
++			<vitals hp="9870" hpRegen="17.0" mp="3350" mpRegen="3.0" />
++			<attack physical="1359" magical="663" random="30" critical="8" accuracy="14" attackSpeed="330" type="BOW" range="500" distance="80" width="120" />
++			<defence physical="444" magical="325" />
++			<speed>
++				<walk ground="80" />
++				<run ground="150" />
++			</speed>
++		</stats>
++		<status talkable="false" attackable="true" />
++		<fakePlayer classId="102" hair="4" hairColor="0" face="2" equipRHand="15302" equipHead="9429" equipChest="10126" equipLegs="9428" equipGloves="9430" equipFeet="9431" weaponEnchantLevel="7" armorEnchantLevel="6" />
++		<ai type="ARCHER" clanHelpRange="800" aggroRange="600" isAggressive="true">
++			<clanList>
++				<clan>FAKE_PLAYER</clan>
++			</clanList>
++		</ai>
++		<collision>
++			<radius normal="7.5" />
++			<height normal="24" />
++		</collision>
++		<parameters>
++			<param name="aliases" value="сова;совушка" />
++			<skill name="Skill01_ID" id="354" level="1" />
++			<skill name="Skill02_ID" id="343" level="1" />
++			<skill name="Skill03_ID" id="24" level="31" />
++		</parameters>
++		<skillList>
++			<skill id="354" level="1" /> <!-- Hamstring Shot -->
++			<skill id="343" level="1" /> <!-- Lethal Shot -->
++			<skill id="24" level="31" /> <!-- Burst Shot -->
++		</skillList>
++	</npc>
++	<!-- Arhimag: Archmage 85, Поле Шёпота (Field of Whispers) -->
++	<npc id="80127" level="85" type="Monster" name="Arhimag">
++		<race>HUMAN</race>
++		<sex>MALE</sex>
++		<stats str="22" int="41" dex="21" wit="43" con="27" men="39">
++			<vitals hp="11507" hpRegen="17.0" mp="3555" mpRegen="3.0" />
++			<attack physical="660" magical="1426" random="30" critical="4" accuracy="10" attackSpeed="333" type="BLUNT" range="40" distance="80" width="120" />
++			<defence physical="460" magical="337" />
++			<speed>
++				<walk ground="80" />
++				<run ground="130" />
++			</speed>
++		</stats>
++		<status talkable="false" attackable="true" />
++		<fakePlayer classId="94" hair="4" hairColor="0" face="1" equipRHand="16083" equipHead="13139" equipChest="13434" equipLegs="13444" equipGloves="13445" equipFeet="13446" weaponEnchantLevel="5" armorEnchantLevel="5" />
++		<ai type="MAGE" clanHelpRange="800" aggroRange="600" isAggressive="true">
++			<clanList>
++				<clan>FAKE_PLAYER</clan>
++			</clanList>
++		</ai>
++		<collision>
++			<radius normal="9" />
++			<height normal="23" />
++		</collision>
++		<parameters>
++			<param name="aliases" value="архимаг;архи" />
++			<skill name="Skill01_ID" id="1555" level="1" />
++			<skill name="Skill02_ID" id="1554" level="1" />
++			<skill name="Skill03_ID" id="1467" level="1" />
++		</parameters>
++		<skillList>
++			<skill id="1555" level="1" /> <!-- Aura Cannon -->
++			<skill id="1554" level="1" /> <!-- Aura Blast -->
++			<skill id="1467" level="1" /> <!-- Meteor -->
++		</skillList>
++	</npc>
++	<!-- Ksenon: Phoenix Knight 85, Поле Шёпота (Field of Whispers) -->
++	<npc id="80128" level="85" type="Monster" name="Ksenon" title="Leader">
++		<race>HUMAN</race>
++		<sex>MALE</sex>
++		<stats str="88" int="39" dex="55" wit="39" con="82" men="38">
++			<vitals hp="11507" hpRegen="17.0" mp="3555" mpRegen="3.0" />
++			<attack physical="1539" magical="751" random="30" critical="8" accuracy="10" attackSpeed="450" type="SWORD" range="40" distance="80" width="120" />
++			<defence physical="460" magical="337" />
++			<speed>
++				<walk ground="80" />
++				<run ground="138" />
++			</speed>
++		</stats>
++		<status talkable="false" attackable="true" />
++		<fakePlayer classId="90" hair="2" hairColor="3" face="0" equipRHand="13457" equipHead="13140" equipChest="13435" equipLegs="13448" equipGloves="13449" equipFeet="13450" equipLHand="13471" weaponEnchantLevel="10" armorEnchantLevel="6" />
++		<ai type="FIGHTER" clanHelpRange="800" aggroRange="600" isAggressive="true">
++			<clanList>
++				<clan>FAKE_PLAYER</clan>
++			</clanList>
++		</ai>
++		<collision>
++			<radius normal="9" />
++			<height normal="23" />
++		</collision>
++		<parameters>
++			<param name="aliases" value="ксенон;ксен" />
++			<skill name="Skill01_ID" id="400" level="10" />
++			<skill name="Skill02_ID" id="49" level="26" />
++			<skill name="Skill03_ID" id="984" level="25" />
++		</parameters>
++		<skillList>
++			<skill id="400" level="10" /> <!-- Tribunal -->
++			<skill id="49" level="26" /> <!-- Divine Strike -->
++			<skill id="984" level="25" /> <!-- Shield Strike -->
++		</skillList>
++	</npc>
++	<!-- Baryga: Bounty Hunter 61, Гиран -->
++	<npc id="80129" level="61" type="Folk" name="Baryga">
++		<race>DWARF</race>
++		<sex>MALE</sex>
++		<stats str="88" int="39" dex="55" wit="39" con="82" men="38">
++			<vitals hp="2900" hpRegen="9.0" mp="958" mpRegen="3.0" />
++			<attack physical="247" magical="120" random="30" critical="8" accuracy="10" attackSpeed="430" type="BLUNT" range="40" distance="80" width="120" />
++			<defence physical="204" magical="136" />
++			<speed>
++				<walk ground="80" />
++				<run ground="138" />
++			</speed>
++		</stats>
++		<status talkable="false" undying="true" attackable="false" />
++		<fakePlayer classId="55" hair="0" hairColor="2" face="1" equipRHand="4756" equipHead="547" equipChest="2382" equipGloves="5768" equipFeet="5780" weaponEnchantLevel="7" armorEnchantLevel="6" sitting="true" privateStoreType="1" privateStoreMessage="WTS cheap B grade" />
++		<collision>
++			<radius normal="9" />
++			<height normal="18" />
++		</collision>
++		<parameters>
++			<param name="aliases" value="барыга;барыж" />
++		</parameters>
++	</npc>
++	<!-- Skupshik: Treasure Hunter 58, Гиран -->
++	<npc id="80130" level="58" type="Folk" name="Skupshik">
++		<race>HUMAN</race>
++		<sex>MALE</sex>
++		<stats str="88" int="39" dex="55" wit="39" con="82" men="38">
++			<vitals hp="2900" hpRegen="9.0" mp="958" mpRegen="3.0" />
++			<attack physical="247" magical="120" random="30" critical="30" accuracy="10" attackSpeed="600" type="DAGGER" range="40" distance="80" width="120" />
++			<defence physical="204" magical="136" />
++			<speed>
++				<walk ground="80" />
++				<run ground="150" />
++			</speed>
++		</stats>
++		<status talkable="false" undying="true" attackable="false" />
++		<fakePlayer classId="8" hair="0" hairColor="2" face="1" equipRHand="10996" equipHead="2417" equipChest="2392" equipGloves="5723" equipFeet="5739" weaponEnchantLevel="2" armorEnchantLevel="2" sitting="true" privateStoreType="3" privateStoreMessage="WTB mats and recipes" />
++		<collision>
++			<radius normal="9" />
++			<height normal="23" />
++		</collision>
++		<parameters>
++			<param name="aliases" value="скупщик;скуп" />
++		</parameters>
++	</npc>
++	<!-- AfkMan: Tyrant 66, Аден -->
++	<npc id="80131" level="66" type="Folk" name="AfkMan">
++		<race>ORC</race>
++		<sex>MALE</sex>
++		<stats str="88" int="39" dex="55" wit="39" con="82" men="38">
++			<vitals hp="2900" hpRegen="9.0" mp="958" mpRegen="3.0" />
++			<attack physical="247" magical="120" random="30" critical="8" accuracy="10" attackSpeed="430" type="BLUNT" range="40" distance="80" width="120" />
++			<defence physical="204" magical="136" />
++			<speed>
++				<walk ground="80" />
++				<run ground="138" />
++			</speed>
++		</stats>
++		<status talkable="false" undying="true" attackable="false" />
++		<fakePlayer classId="48" hair="0" hairColor="1" face="1" equipRHand="5604" equipHead="547" equipChest="2382" equipGloves="5768" equipFeet="5780" weaponEnchantLevel="0" armorEnchantLevel="0" sitting="true" />
++		<collision>
++			<radius normal="11" />
++			<height normal="28" />
++		</collision>
++		<parameters>
++			<param name="aliases" value="афкмен;афк" />
++		</parameters>
++	</npc>
++</list>

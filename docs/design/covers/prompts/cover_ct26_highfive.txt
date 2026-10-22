@@ -1,0 +1,12 @@
+Use your built-in image generation tool to create exactly ONE image. Do not run any shell commands and do not write any files; just generate the image and reply with one short sentence describing it.
+
+The image is a cover banner for one era ("chronicle") of a classic dark-fantasy MMORPG, shown in a desktop game launcher. Format: ultra-wide panoramic landscape, aspect ratio 12:5 (about 1942 x 809 px).
+
+Style (same series as the other covers): cinematic painterly digital fantasy illustration, rich detail, dramatic atmospheric lighting, depth haze, warm bronze-and-gold accents, epic scale, matte-painting quality.
+
+Composition rules: the key subject sits in the middle horizontal band (between 20 % and 75 % of the height), because the launcher crops the top and bottom; the lower-left quarter stays calm and darker (UI chips are placed there); the silhouette of the key subject must still read when the banner is shrunk to a 46 x 30 px thumbnail.
+
+Strict rules: completely original designs; do not copy any existing game's official artwork, characters, creature designs or logos; no text, letters, numbers, logos, watermarks, signatures or UI anywhere in the image.
+
+Scene:
+A vast rocky canyon valley at sunset with ancient ruined stone pillars and broken arches, dust and golden haze. An immense earth dragon rises from a cavern lair carved into the canyon wall: stone-like brown-green scales, horns like broken rock, heavy wings half spread (original design). In the foreground on a high ledge a party of six fantasy races faces it: a human paladin with a shield, a light elf, a dark elf, an orc, a dwarf, and a warrior with a single asymmetric dark wing growing from one shoulder. Palette: ochre, dust and sunset gold.

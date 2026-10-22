@@ -1,0 +1,25 @@
+{
+  "_note": "Откуда брать геодату хроник (docs/RELEASE.md, «Ненаш контент»; ядро — l2hub/geodata.py, кнопка — карточка «Геодата» в «Обзоре»). download — архив проекта L2J Geodata на закреплённом коммите, из него берутся geodata/XX_YY.l2j; client — строится из Maps/*.unr клиента пользователя утилитой l2mapconv (MIT, runtimes.json). В релиз геодату не кладём: лаунчер берёт её у источника или строит у пользователя по кнопке. Epilogue — геодата H5: границы мира те же, проверено (docs/EPILOGUE.md).",
+  "sources": {
+    "l2jgeo_h5": {
+      "title": "L2J Geodata, ветка master — High Five (Bitbucket l2jgeo/l2j_geodata, GPL-3.0)",
+      "url": "https://bitbucket.org/l2jgeo/l2j_geodata/get/378672ee9bff.zip",
+      "size": 226561666,
+      "sha256": "b0cb80156f49b88f1291a71e181514c97f86de56101f45c8eea57c04b2eaab6a",
+      "regions": 203
+    },
+    "l2jgeo_interlude": {
+      "title": "L2J Geodata Project, ветка Interlude (GitHub ChaosPaladin/l2j-geodata-project)",
+      "url": "https://github.com/ChaosPaladin/l2j-geodata-project/archive/fcd5c637821154a0a7aefc52760b7678e9a34d16.zip",
+      "size": 168680935,
+      "regions": 166
+    }
+  },
+  "chronicles": {
+    "ct26_highfive": "l2jgeo_h5",
+    "epilogue": "l2jgeo_h5",
+    "interlude": "l2jgeo_interlude",
+    "classic_tales": "client",
+    "ess_crow": "client"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "id": "ct26_highfive",
+  "type": "mobius",
+  "build": "L2J_Mobius_CT_2.6_HighFive",
+  "server": "servers/ct26_highfive/server",
+  "database": "l2jmobiush5",
+  "ports": { "db": 3306, "login": 2106, "game": 7777 },
+  "brain": { "port": 8771, "model": "deepseek-flash", "alphabet": "cyrillic" },
+  "client": {
+    "path": "C:\\Games\\LA2 H5",
+    "exe": "system_ru\\L2.exe",
+    "system": "R.C-TEAM HF5 Rev 273, язык Russia",
+    "protocol": 273
+  }
+}

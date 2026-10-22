@@ -1,0 +1,17 @@
+diff --git a/dist/game/data/html/CommunityBoard/Custom/navigation.html b/dist/game/data/html/CommunityBoard/Custom/navigation.html
+index f925f986048dbe3d75ddf9154cb1767bc060e92f..74f908723e8f94c3723d9450e8a9d3d974988c1a 100644
+--- a/dist/game/data/html/CommunityBoard/Custom/navigation.html
++++ b/dist/game/data/html/CommunityBoard/Custom/navigation.html
+@@ -20,6 +20,12 @@
+ <tr>
+ 	<td><button value="Охотники" action="bypass _bbshubhunters" width=200 height=30 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td></tr>
+ </tr>
++<tr>
++	<td><button value="Поручения дня" action="bypass voice .daily" width=200 height=30 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td></tr>
++</tr>
++<tr>
++	<td><button value="Рейд охотников" action="bypass voice .raid" width=200 height=30 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td></tr>
++</tr>
+ <tr>
+ 	<td><button value="Поиск дропа" action="bypass _bbstop;dropsearch/main.html" width=200 height=30 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+ </tr>

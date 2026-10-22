@@ -1,0 +1,1288 @@
+diff --git a/dist/game/config/Custom/PhantomHunters.ini b/dist/game/config/Custom/PhantomHunters.ini
+index 5f76f05..3b3167f 100644
+--- a/dist/game/config/Custom/PhantomHunters.ini
++++ b/dist/game/config/Custom/PhantomHunters.ini
+@@ -18,6 +18,9 @@ HuntersResetId = 0
+ 
+ # Самопроверка без клиента (для разработки): LFM — охотник «кричит» «лфм нужен дд», откликнувшийся приходит,
+ # принимает инвайт, минуту ходит в пати и возвращается на кач; шаги — в логе с пометкой SelfTest.
++# STRATEGY — 10 минут мозги-стратег думает и без живых игроков: все охотники на спотах спрашивают модель
++# в ближайшие 3 минуты (в пределах HunterStrategyPerMinute); первый ответ — нарочно мусор (проверка отката
++# на правила), следующие шесть — случайный вариант без модели (проверка выполнения), остальные — модель.
+ # Выполняется один раз — когда меняется HuntersSelfTestId.
+ HuntersSelfTest =
+ HuntersSelfTestId = 0
+@@ -59,3 +62,25 @@ HunterLfm = True
+ 
+ # Больше стольких охотников на один спот не ставится, пока есть свободные споты того же уровня.
+ HuntersPerSpot = 2
++
++# ---------------------------------------------------------------------------
++# Мозги-стратег (docs/PHANTOMS.md, раздел 4.3): охотник на споте время от времени спрашивает модель
++# (сервис мозгов launcher/l2hub/brain.py, та модель, что выбрана в лаунчере), что делать дальше: качаться,
++# сменить спот выше или ниже, сходить в город, сесть в лавку, поискать пати, отдохнуть в городе.
++# Модель не ответила, ответила мусором или бюджет исчерпан — охотник живёт по правилам, как без стратега.
++# ---------------------------------------------------------------------------
++HunterStrategy = True
++
++# Когда думать: WITH_PLAYERS — только пока в игре есть живой игрок (без игроков — правила, запросы не тратятся);
++# ALWAYS — всегда.
++HunterStrategyWhen = WITH_PLAYERS
++
++# Сколько решений в час на одного охотника. Промежуток между решениями случайный — от половины до полутора
++# среднего (при 6 — от 5 до 15 минут), у каждого охотника свой.
++HunterStrategyPerHour = 6
++
++# Не больше стольких запросов стратега в минуту на всех охотников; сверх — решают правила.
++HunterStrategyPerMinute = 6
++
++# С такой вероятностью (%) охотник говорит свою мысль вслух в общий чат рядом — если рядом есть живой игрок.
++HunterStrategySayChance = 20
+diff --git a/java/org/l2jmobius/gameserver/config/custom/PhantomHuntersConfig.java b/java/org/l2jmobius/gameserver/config/custom/PhantomHuntersConfig.java
+index 66f5dd6..6dd3730 100644
+--- a/java/org/l2jmobius/gameserver/config/custom/PhantomHuntersConfig.java
++++ b/java/org/l2jmobius/gameserver/config/custom/PhantomHuntersConfig.java
+@@ -29,6 +29,11 @@ public class PhantomHuntersConfig
+ 	public static int HUNTER_STORE_MIN_MINUTES;
+ 	public static int HUNTER_STORE_MAX_MINUTES;
+ 	public static boolean HUNTER_LFM;
++	public static boolean HUNTER_STRATEGY;
++	public static String HUNTER_STRATEGY_WHEN;
++	public static int HUNTER_STRATEGY_PER_HOUR;
++	public static int HUNTER_STRATEGY_PER_MINUTE;
++	public static int HUNTER_STRATEGY_SAY_CHANCE;
+ 
+ 	public static void load()
+ 	{
+@@ -51,5 +56,10 @@ public class PhantomHuntersConfig
+ 		HUNTER_STORE_MIN_MINUTES = config.getInt("HunterStoreMinMinutes", 20);
+ 		HUNTER_STORE_MAX_MINUTES = Math.max(HUNTER_STORE_MIN_MINUTES, config.getInt("HunterStoreMaxMinutes", 40));
+ 		HUNTER_LFM = config.getBoolean("HunterLfm", true);
++		HUNTER_STRATEGY = config.getBoolean("HunterStrategy", true);
++		HUNTER_STRATEGY_WHEN = config.getString("HunterStrategyWhen", "WITH_PLAYERS").strip().toUpperCase();
++		HUNTER_STRATEGY_PER_HOUR = Math.max(1, config.getInt("HunterStrategyPerHour", 6));
++		HUNTER_STRATEGY_PER_MINUTE = config.getInt("HunterStrategyPerMinute", 6);
++		HUNTER_STRATEGY_SAY_CHANCE = config.getInt("HunterStrategySayChance", 20);
+ 	}
+ }
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java
+index 60c3dd6..6461635 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java
+@@ -14,6 +14,7 @@ import java.util.regex.Matcher;
+ import java.util.regex.Pattern;
+ 
+ import org.l2jmobius.commons.util.Rnd;
++import org.l2jmobius.gameserver.config.GeneralConfig;
+ import org.l2jmobius.gameserver.config.custom.FakePlayersConfig;
+ import org.l2jmobius.gameserver.config.custom.PhantomPartyConfig;
+ import org.l2jmobius.gameserver.config.custom.PhantomsConfig;
+@@ -22,6 +23,8 @@ import org.l2jmobius.gameserver.entity.World;
+ import org.l2jmobius.gameserver.entity.WorldObject;
+ import org.l2jmobius.gameserver.entity.actor.Creature;
+ import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.entity.actor.enums.player.ChatBroadcastType;
++import org.l2jmobius.gameserver.entity.actor.holders.player.BlockList;
+ import org.l2jmobius.gameserver.managers.FakePlayerBrain;
+ import org.l2jmobius.gameserver.managers.phantom.PhantomOrders.Order;
+ import org.l2jmobius.gameserver.network.enums.ChatType;
+@@ -366,6 +369,43 @@ public class PhantomChat
+ 		World.forEachVisibleObjectInRange(speaker, Player.class, 1250, player -> player.sendPacket(say));
+ 	}
+ 
++	/**
++	 * Мысль охотника вслух (мозги-стратег) — в общий чат рядом.
++	 * @param hunter охотник
++	 * @param text что сказал
++	 */
++	public void hunterSay(Player hunter, String text)
++	{
++		sayNear(hunter, text);
++	}
++
++	/**
++	 * Охотник ищет пати (мозги-стратег): с 20-го уровня — в торговый чат, как у игроков (свой регион или весь мир — по TradeChat в General.ini), младше — в общий чат рядом.
++	 * @param hunter охотник
++	 * @param text крик
++	 * @return куда ушло — для лога
++	 */
++	public String hunterShout(Player hunter, String text)
++	{
++		final ChatBroadcastType trade = GeneralConfig.DEFAULT_TRADE_CHAT;
++		if ((hunter.getLevel() < 20) || ((trade != ChatBroadcastType.ON) && (trade != ChatBroadcastType.GLOBAL)))
++		{
++			sayNear(hunter, text);
++			return "general";
++		}
++
++		final CreatureSay say = new CreatureSay(hunter, ChatType.TRADE, hunter.getName(), text);
++		final int region = MapRegionData.getInstance().getMapRegionLocId(hunter);
++		for (Player player : World.getPlayers())
++		{
++			if ((player != hunter) && !BlockList.isBlocked(player, hunter) && ((trade == ChatBroadcastType.GLOBAL) || ((region == MapRegionData.getInstance().getMapRegionLocId(player)) && (player.getInstanceId() == hunter.getInstanceId()))))
++			{
++				player.sendPacket(say);
++			}
++		}
++		return "trade";
++	}
++
+ 	// ---------- Разговор ----------
+ 
+ 	/**
+@@ -487,7 +527,7 @@ public class PhantomChat
+ 		}
+ 	}
+ 
+-	private static boolean brainEnabled()
++	static boolean brainEnabled()
+ 	{
+ 		return PhantomPartyConfig.PHANTOM_BRAIN && FakePlayersConfig.FAKE_PLAYER_BRAIN;
+ 	}
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+index 35398fc..3fc3c2c 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+@@ -5,9 +5,12 @@ import java.nio.charset.StandardCharsets;
+ import java.nio.file.Files;
+ import java.nio.file.Path;
+ import java.nio.file.StandardCopyOption;
++import java.util.ArrayDeque;
+ import java.util.ArrayList;
+ import java.util.Collections;
++import java.util.Deque;
+ import java.util.EnumMap;
++import java.util.LinkedHashMap;
+ import java.util.List;
+ import java.util.Locale;
+ import java.util.Map;
+@@ -41,6 +44,9 @@ import org.l2jmobius.gameserver.geoengine.GeoEngine;
+ import org.l2jmobius.gameserver.managers.FakePlayerBrain;
+ import org.l2jmobius.gameserver.managers.GlobalVariablesManager;
+ import org.l2jmobius.gameserver.managers.phantom.HuntSpotData.HuntSpot;
++import org.l2jmobius.gameserver.managers.phantom.PhantomHunterStrategy.Choice;
++import org.l2jmobius.gameserver.managers.phantom.PhantomHunterStrategy.Decision;
++import org.l2jmobius.gameserver.managers.phantom.PhantomHunterStrategy.Facts;
+ import org.l2jmobius.gameserver.mechanics.events.EventType;
+ import org.l2jmobius.gameserver.mechanics.events.holders.actor.creature.OnCreatureDamageReceived;
+ import org.l2jmobius.gameserver.mechanics.events.holders.actor.creature.OnCreatureDeath;
+@@ -63,6 +69,7 @@ import org.l2jmobius.gameserver.taskmanagers.AutoUseTaskManager;
+  * <li>новый уровень: профессия на 20, 40 и 76, новые скиллы; спот перерос — следующий;</li>
+  * <li>экономика x1 (раздел 4.2 docs/PHANTOMS.md): кончились сосы или стрелы, полон инвентарь, есть ценный дроп или просто давно не был — в город: хлам NPC, покупки за свою адену; ценное — в лавку в Гиране;</li>
+  * <li>пати по крику: «лфм», «нужен хил» в общем, торговом чате и в крике — свободный охотник своей роли и уровня просится в пати и ходит там как напарник;</li>
++ * <li>мозги-стратег ({@link PhantomHunterStrategy}): раз в несколько минут охотник на споте спрашивает модель, что делать дальше, и выполняет ответ через те же фазы; нет ответа — правила выше;</li>
+  * <li>режим (выключены, всегда, только при живых игроках) и сброс прогресса — из PhantomHunters.ini, который сервер перечитывает на ходу.</li>
+  * </ul>
+  */
+@@ -111,6 +118,27 @@ public class PhantomHunterManager
+ 	private static final Pattern WANT_DAMAGE = Pattern.compile(START + "(дамаг|damage|нюкер|nuker|лучник|archer|даггер|дагер|dagger|(дд|dd|dps|маг|мага|магов|mage|лук)" + END + ")", Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+ 	private static final Pattern WANT_PARTY = Pattern.compile(START + "(пати|party|pt|людей|народ|кто|кого)" + END, Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+ 
++	// Мозги-стратег.
++	/** Крик «ищу пати» (роль, уровень). */
++	private static final String[] LFP_SHOUTS =
++	{
++		"лфп %s %d, возьмите в пати",
++		"ищу пати, %s %d ур",
++		"кто на кач? %s %d, кидайте инвайт",
++		"lfp %s %d",
++		"го в пати кто-нибудь, %s %d"
++	};
++	/** Один охотник кричит «лфп» не чаще, все вместе — не чаще: торговый чат не для спама. */
++	private static final long LFP_COOLDOWN = 1200000;
++	private static final long LFP_GLOBAL_COOLDOWN = 120000;
++	/** Столько после крика охотник «ищет пати» (так и говорит в чате). */
++	private static final long LFP_WINDOW = 300000;
++	/** Самопроверка STRATEGY: столько стратег думает и без живых игроков. */
++	private static final long STRATEGY_TEST_DURATION = 600000;
++	/** Ответа мозгов нет столько — запрос считается потерянным. */
++	private static final long THINK_TIMEOUT = 60000;
++	private static final long STRATEGY_LOG_INTERVAL = 60000;
++
+ 	/** Заготовки названий лавок (до 29 знаков). */
+ 	private static final String[] STORE_TITLES =
+ 	{
+@@ -177,6 +205,23 @@ public class PhantomHunterManager
+ 		volatile int recruiterId;
+ 		volatile long recruitArriveAt;
+ 		boolean recruitArrived;
++		// Мозги-стратег.
++		long nextThink;
++		volatile long thinkingSince;
++		/** Ответ модели ждёт выполнения на тике (ответ приходит из потока HTTP). */
++		volatile Choice choice;
++		volatile Choice lastChoice;
++		/** Куда вели бы смены спота — посчитано при вопросе, модель видит названия. */
++		HuntSpot upSpot;
++		HuntSpot downSpot;
++		long spotSince;
++		long spotExp;
++		long afkUntil;
++		long lfpUntil;
++		long lastLfp;
++		/** Стратег решил сесть в лавку: в городе — в лавку, даже если с прошлой не прошло 30 минут. */
++		boolean wantStore;
++		final Deque<Long> deaths = new ArrayDeque<>();
+ 
+ 		Hunter(PhantomTemplate template)
+ 		{
+@@ -187,6 +232,13 @@ public class PhantomHunterManager
+ 	private final Map<String, Hunter> _hunters = new ConcurrentHashMap<>();
+ 	private final Map<Integer, Long> _lfmCooldowns = new ConcurrentHashMap<>();
+ 	private volatile boolean _wanted;
++	/** Живых игроков в игре (раз в 10 с). */
++	private volatile int _realPlayers;
++	private volatile long _strategyTestUntil;
++	private int _strategyTestCount;
++	private volatile long _lastLfp;
++	private volatile long _lastStrategyLog;
++	private volatile long _lastStrategyFailLog;
+ 	private long _lastControl;
+ 	private long _configModified;
+ 	private long _lastRealPlayer;
+@@ -245,6 +297,11 @@ public class PhantomHunterManager
+ 		{
+ 			case TOWN:
+ 			{
++				final long afk = hunter.afkUntil - System.currentTimeMillis();
++				if (afk > 0)
++				{
++					return "отдыхаешь в городе " + MapRegionData.getInstance().getClosestTownName(player) + ", сидишь афк ещё минут " + Math.max(1, afk / 60000) + ", потом снова на кач" + wallet;
++				}
+ 				return "зашёл в город " + MapRegionData.getInstance().getClosestTownName(player) + ": сдать хлам, купить сосы и шмот, потом обратно на кач" + wallet;
+ 			}
+ 			case STORE:
+@@ -259,12 +316,16 @@ public class PhantomHunterManager
+ 			default:
+ 			{
+ 				final String where = hunter.spot != null ? "качаешься на споте " + hunter.spot.name + " (мобы " + hunter.spot.min + "-" + hunter.spot.max + " ур.)" : "только вышел в игру и выбираешь, где качаться";
+-				return where + (player.isSitting() ? ", сейчас сидишь отдыхаешь" : "") + "; соло, ни с кем не ходишь" + wallet;
++				final long now = System.currentTimeMillis();
++				final String lfp = now < hunter.lfpUntil ? "; ищешь пати — только что кричал в чат, ждёшь инвайта" : "; соло, ни с кем не ходишь";
++				final Choice last = hunter.lastChoice;
++				final String thought = (last != null) && !last.thought.isEmpty() && ((now - last.at) < 900000) ? "; недавно думал: «" + last.thought + "»" : "";
++				return where + (player.isSitting() ? ", сейчас сидишь отдыхаешь" : "") + lfp + wallet + thought;
+ 			}
+ 		}
+ 	}
+ 
+-	private static String money(long adena)
++	static String money(long adena)
+ 	{
+ 		if (adena >= 1000000)
+ 		{
+@@ -345,15 +406,16 @@ public class PhantomHunterManager
+ 		selfTest();
+ 		writeStatus(now);
+ 
+-		boolean realPlayer = false;
++		int realPlayers = 0;
+ 		for (Player player : World.getPlayers())
+ 		{
+ 			if (!PhantomManager.getInstance().isPhantom(player) && (player.getClient() != null) && !player.getClient().isDetached())
+ 			{
+-				realPlayer = true;
+-				break;
++				realPlayers++;
+ 			}
+ 		}
++		_realPlayers = realPlayers;
++		final boolean realPlayer = realPlayers > 0;
+ 		if (realPlayer)
+ 		{
+ 			_lastRealPlayer = now;
+@@ -404,6 +466,14 @@ public class PhantomHunterManager
+ 				FakePlayerBrain.field(sb, "spot", hunter.spot != null ? hunter.spot.name : "").append(',');
+ 				FakePlayerBrain.field(sb, "town", MapRegionData.getInstance().getClosestTownName(player)).append(',');
+ 				FakePlayerBrain.field(sb, "party", player.isInParty() ? player.getParty().getLeader().getName() : "");
++				final Choice last = hunter.lastChoice;
++				if (last != null)
++				{
++					sb.append(",\"strategy\":{\"at\":").append(last.at).append(',');
++					FakePlayerBrain.field(sb, "decision", last.toString()).append(',');
++					FakePlayerBrain.field(sb, "thought", last.thought).append('}');
++				}
++				sb.append(",\"nextThink\":").append(hunter.nextThink);
+ 				if (hunter.storeOpen && (player.getPrivateStoreType() == PrivateStoreType.SELL))
+ 				{
+ 					sb.append(",\"store\":{\"until\":").append(hunter.phaseUntil).append(',');
+@@ -485,6 +555,9 @@ public class PhantomHunterManager
+ 				hunter.deadSince = 0;
+ 				hunter.phase = Phase.HUNT;
+ 				hunter.unsold.clear();
++				hunter.choice = null;
++				hunter.lastChoice = null;
++				hunter.deaths.clear();
+ 				count++;
+ 			}
+ 		}
+@@ -514,6 +587,13 @@ public class PhantomHunterManager
+ 		hunter.lastActive = now;
+ 		hunter.lastTown = now;
+ 		hunter.roams = 0;
++		// Стратег: первое решение — в пределах обычного промежутка, у каждого своё время, чтобы не спрашивали все разом.
++		hunter.nextThink = now + Rnd.get(60000L, Math.max(60000L, PhantomHunterStrategy.nextDelay()));
++		hunter.thinkingSince = 0;
++		hunter.choice = null;
++		hunter.afkUntil = 0;
++		hunter.lfpUntil = 0;
++		hunter.wantStore = false;
+ 	}
+ 
+ 	private void think(Hunter hunter, Player player, long now)
+@@ -541,6 +621,14 @@ public class PhantomHunterManager
+ 			player.storeMe();
+ 		}
+ 
++		// Решение стратега пришло, а охотник уже занят другим (город по правилам, пати, лавка) — забыть.
++		final Choice pending = hunter.choice;
++		if ((pending != null) && (hunter.phase != Phase.HUNT))
++		{
++			hunter.choice = null;
++			LOGGER.info(getClass().getSimpleName() + ": Strategy: " + player.getName() + " drops " + pending + ", busy (" + hunter.phase + ").");
++		}
++
+ 		switch (hunter.phase)
+ 		{
+ 			case PARTY:
+@@ -594,6 +682,12 @@ public class PhantomHunterManager
+ 		}
+ 		noticeGrudges(player);
+ 
++		// Мозги-стратег: решение модели выполняется тут, когда можно; нет решения — правила, как раньше.
++		if (strategy(hunter, player, now))
++		{
++			return;
++		}
++
+ 		if (!player.isInCombat() && !player.isAttackingNow() && !player.isCastingNow() && needsTown(hunter, player, now))
+ 		{
+ 			goToTown(hunter, player, now);
+@@ -628,6 +722,8 @@ public class PhantomHunterManager
+ 		if (hunter.deadSince == 0)
+ 		{
+ 			hunter.deadSince = now;
++			hunter.deaths.addLast(now);
++			hunter.choice = null;
+ 			endFight(hunter, player);
+ 			if (hunter.phase != Phase.PARTY)
+ 			{
+@@ -698,10 +794,19 @@ public class PhantomHunterManager
+ 		{
+ 			return;
+ 		}
++		moveToSpot(hunter, player, spot);
++	}
+ 
++	/**
++	 * Телепорт на этот спот (у гейткипера, с платой с 40-го уровня).
++	 */
++	private static void moveToSpot(Hunter hunter, Player player, HuntSpot spot)
++	{
+ 		hunter.spot = spot;
+ 		hunter.roams = 0;
+ 		hunter.lastActive = System.currentTimeMillis();
++		hunter.spotSince = hunter.lastActive;
++		hunter.spotExp = player.getExp();
+ 		stop(player);
+ 		if (player.isSitting())
+ 		{
+@@ -709,7 +814,7 @@ public class PhantomHunterManager
+ 		}
+ 		payTeleport(player);
+ 		player.teleToLocation(spot.entry, true);
+-		LOGGER.fine(getClass().getSimpleName() + ": " + player.getName() + " (" + player.getLevel() + ") goes to " + spot + ".");
++		LOGGER.fine(PhantomHunterManager.class.getSimpleName() + ": " + player.getName() + " (" + player.getLevel() + ") goes to " + spot + ".");
+ 	}
+ 
+ 	/**
+@@ -889,17 +994,30 @@ public class PhantomHunterManager
+ 			final List<String> done = PhantomHunterOutfit.townChores(player, hunter.template, hunter.unsold);
+ 			player.storeMe();
+ 			LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " (" + player.getLevel() + ") in " + MapRegionData.getInstance().getClosestTownName(player) + ": " + (done.isEmpty() ? "nothing to do" : String.join(", ", done)) + "; " + player.getAdena() + " adena.");
+-			if (wantsStore(hunter, player, now))
++			final boolean afk = hunter.afkUntil > now;
++			if (!afk && wantsStore(hunter, player, now))
+ 			{
++				hunter.wantStore = false;
+ 				goToStore(hunter, player);
+ 				return;
+ 			}
+-			hunter.phaseUntil = now + Rnd.get(5000, 15000);
++			hunter.wantStore = false;
++			// Стратег велел отдохнуть — сидит афк до назначенного, потом обратно.
++			hunter.phaseUntil = Math.max(now + Rnd.get(5000, 15000), hunter.afkUntil);
++			if (afk && !player.isSitting())
++			{
++				player.sitDown();
++			}
+ 			return;
+ 		}
+ 
+ 		if (now >= hunter.phaseUntil)
+ 		{
++			if (hunter.afkUntil > 0)
++			{
++				hunter.afkUntil = 0;
++				LOGGER.info(getClass().getSimpleName() + ": Strategy: " + player.getName() + " is back from AFK.");
++			}
+ 			backToHunt(hunter, player);
+ 		}
+ 	}
+@@ -946,7 +1064,7 @@ public class PhantomHunterManager
+ 
+ 	private boolean wantsStore(Hunter hunter, Player player, long now)
+ 	{
+-		if (((now - hunter.lastStoreSession) < STORE_COOLDOWN) || PhantomHunterOutfit.storeGoods(player).isEmpty())
++		if ((!hunter.wantStore && ((now - hunter.lastStoreSession) < STORE_COOLDOWN)) || PhantomHunterOutfit.storeGoods(player).isEmpty())
+ 		{
+ 			return false;
+ 		}
+@@ -1195,6 +1313,11 @@ public class PhantomHunterManager
+ 
+ 		GlobalVariablesManager.getInstance().set(SELF_TEST_VARIABLE, PhantomHuntersConfig.HUNTERS_SELF_TEST_ID);
+ 		GlobalVariablesManager.getInstance().storeMe();
++		if ("STRATEGY".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST))
++		{
++			strategySelfTest();
++			return;
++		}
+ 		if (!"LFM".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST))
+ 		{
+ 			return;
+@@ -1380,6 +1503,358 @@ public class PhantomHunterManager
+ 		}
+ 	}
+ 
++	// ---------- Мозги-стратег ----------
++
++	/**
++	 * Мозги-стратег на споте: пришло решение — выполнить (смену спота и город — между боями, как свиток у игрока); пора думать — спросить модель. Ответ приходит асинхронно и выполняется на одном из следующих тиков.
++	 * @return {@code true}, если охотник по решению ушёл со спота и правилам на этом тике делать нечего
++	 */
++	private boolean strategy(Hunter hunter, Player player, long now)
++	{
++		final Choice choice = hunter.choice;
++		if (choice != null)
++		{
++			if ((now - choice.at) > PhantomHunterStrategy.CHOICE_TTL)
++			{
++				hunter.choice = null;
++				LOGGER.info(getClass().getSimpleName() + ": Strategy: " + player.getName() + " drops " + choice + ", no chance to do it.");
++				return false;
++			}
++
++			final boolean anytime = (choice.decision == Decision.HUNT) || (choice.decision == Decision.PARTY);
++			if (!anytime && (player.isInCombat() || player.isAttackingNow() || player.isCastingNow()))
++			{
++				return false;
++			}
++
++			hunter.choice = null;
++			return apply(hunter, player, choice, now);
++		}
++
++		if ((hunter.thinkingSince > 0) && ((now - hunter.thinkingSince) > THINK_TIMEOUT))
++		{
++			hunter.thinkingSince = 0;
++		}
++		if ((hunter.thinkingSince == 0) && (now >= hunter.nextThink))
++		{
++			ask(hunter, player, now);
++		}
++		return false;
++	}
++
++	/**
++	 * Может ли стратег думать сейчас: включён, мозги включены, а при {@code HunterStrategyWhen = WITH_PLAYERS} в игре есть живой игрок (или идёт самопроверка STRATEGY).
++	 */
++	private boolean strategyOn(long now)
++	{
++		return PhantomHuntersConfig.HUNTER_STRATEGY && PhantomChat.brainEnabled() && ("ALWAYS".equals(PhantomHuntersConfig.HUNTER_STRATEGY_WHEN) || (_realPlayers > 0) || (now < _strategyTestUntil));
++	}
++
++	/**
++	 * Спросить модель, что делать дальше: состояние охотника и доступные варианты — в brain.py ({@code "kind":"strategy"}). Бюджет исчерпан, стратег выключен, ответа нет — решают правила.
++	 */
++	private void ask(Hunter hunter, Player player, long now)
++	{
++		if (!strategyOn(now))
++		{
++			// Без живых игроков не думает; войдёт игрок — охотники начнут думать вразнобой, а не все разом.
++			hunter.nextThink = now + Rnd.get(60000L, Math.max(60000L, PhantomHunterStrategy.nextDelay()));
++			return;
++		}
++
++		if (!PhantomHunterStrategy.budget(now))
++		{
++			hunter.nextThink = now + Rnd.get(60000, 180000);
++			if ((now - _lastStrategyLog) >= STRATEGY_LOG_INTERVAL)
++			{
++				_lastStrategyLog = now;
++				LOGGER.info(getClass().getSimpleName() + ": Strategy: budget " + PhantomHuntersConfig.HUNTER_STRATEGY_PER_MINUTE + " per minute is spent, rules decide (" + player.getName() + " asks later).");
++			}
++			return;
++		}
++
++		hunter.nextThink = now + PhantomHunterStrategy.nextDelay();
++		hunter.thinkingSince = now;
++		final Facts facts = facts(hunter, player, now);
++		final Map<Decision, String> options = options(hunter, player, now);
++		FakePlayerBrain.getInstance().send(PhantomHunterStrategy.request(player, hunter.template, facts, options), reply ->
++		{
++			hunter.thinkingSince = 0;
++			final Choice choice = PhantomHunterStrategy.parse(reply, options.keySet(), System.currentTimeMillis());
++			if (choice == null)
++			{
++				LOGGER.info(getClass().getSimpleName() + ": Strategy: " + player.getName() + " got garbage from the brain («" + reply + "»), rules decide.");
++				return;
++			}
++
++			hunter.lastChoice = choice;
++			hunter.choice = choice;
++			LOGGER.info(getClass().getSimpleName() + ": Strategy: " + player.getName() + " (" + player.getLevel() + ", " + spotLabel(hunter.spot) + ") decides " + choice + ": «" + choice.thought + "»" + (facts.test.isEmpty() ? "." : " [SelfTest " + facts.test + "]."));
++		}, () ->
++		{
++			hunter.thinkingSince = 0;
++			final long time = System.currentTimeMillis();
++			if (!facts.test.isEmpty() || ((time - _lastStrategyFailLog) >= STRATEGY_LOG_INTERVAL))
++			{
++				_lastStrategyFailLog = time;
++				LOGGER.info(getClass().getSimpleName() + ": Strategy: " + player.getName() + " got no decision (brain failed or answered garbage), rules decide" + (facts.test.isEmpty() ? "." : " [SelfTest " + facts.test + "]."));
++			}
++		});
++	}
++
++	/**
++	 * Что о нём знает менеджер — для запроса стратегу: сколько на споте и сколько там набрал, простой, смерти за час, давно ли был в городе и в лавке.
++	 */
++	private Facts facts(Hunter hunter, Player player, long now)
++	{
++		final Facts facts = new Facts();
++		facts.spot = hunter.spot;
++		facts.spotMinutes = hunter.spotSince > 0 ? (int) ((now - hunter.spotSince) / 60000) : 0;
++		facts.spotExpPercent = hunter.spotSince > 0 ? PhantomHunterStrategy.expGainPercent(player, hunter.spotExp) : 0;
++		facts.idleMinutes = (int) ((now - hunter.lastActive) / 60000);
++		facts.roams = hunter.roams;
++		while (!hunter.deaths.isEmpty() && ((now - hunter.deaths.peekFirst()) > 3600000))
++		{
++			hunter.deaths.pollFirst();
++		}
++		facts.deathsHour = hunter.deaths.size();
++		facts.townMinutes = (int) ((now - hunter.lastTown) / 60000);
++		facts.storeMinutes = hunter.lastStoreSession > 0 ? (int) ((now - hunter.lastStoreSession) / 60000) : -1;
++		facts.realPlayers = _realPlayers;
++		if (now < _strategyTestUntil)
++		{
++			// Самопроверка: первый ответ — мусор (откат на правила), следующие шесть — случайный вариант без модели (выполнение).
++			final int n = _strategyTestCount++;
++			facts.test = n == 0 ? "garbage" : n <= 6 ? "random" : "";
++		}
++		return facts;
++	}
++
++	/**
++	 * Что стратегу можно выбрать сейчас, с пометкой для модели: смены спота — если есть куда, лавка — если есть что продать и место в Гиране, пати — если крик кто-то услышит и не было крика недавно.
++	 */
++	private Map<Decision, String> options(Hunter hunter, Player player, long now)
++	{
++		final Map<Decision, String> options = new LinkedHashMap<>();
++		options.put(Decision.HUNT, hunter.spot != null ? spotNote(hunter.spot) : "");
++		hunter.upSpot = shiftedSpot(hunter, player, true);
++		if (hunter.upSpot != null)
++		{
++			options.put(Decision.SPOT_UP, spotNote(hunter.upSpot));
++		}
++		hunter.downSpot = shiftedSpot(hunter, player, false);
++		if (hunter.downSpot != null)
++		{
++			options.put(Decision.SPOT_DOWN, spotNote(hunter.downSpot));
++		}
++		options.put(Decision.TOWN, MapRegionData.getInstance().getClosestTownName(player));
++		final String drop = PhantomHunterStrategy.drop(player);
++		if (!drop.isEmpty() && (stores() < PhantomHuntersConfig.HUNTER_MAX_STORES))
++		{
++			options.put(Decision.STORE, drop);
++		}
++		if (((_realPlayers > 0) || (now < _strategyTestUntil)) && ((now - hunter.lastLfp) >= LFP_COOLDOWN) && ((now - _lastLfp) >= LFP_GLOBAL_COOLDOWN))
++		{
++			options.put(Decision.PARTY, player.getLevel() >= 20 ? "крикнуть в торговый чат" : "крикнуть в общий чат рядом (торговый — с 20 ур.)");
++		}
++		options.put(Decision.AFK, "");
++		return options;
++	}
++
++	/**
++	 * Спот для смены по решению стратега. Выше — мобы сильнее нынешних, но не больше чем на 3 уровня выше своего; ниже — слабее нынешних, но не перерос.
++	 * В первую очередь свободные, до 20-го — в родной зоне, ближе по уровню к нынешнему.
++	 * @return спот или {@code null}, если некуда
++	 */
++	private HuntSpot shiftedSpot(Hunter hunter, Player player, boolean up)
++	{
++		final HuntSpot current = hunter.spot;
++		if (current == null)
++		{
++			return null;
++		}
++
++		final int level = player.getLevel();
++		final String home = level < 20 ? HOME_REGIONS.get(player.getRace()) : null;
++		final List<HuntSpot> best = new ArrayList<>();
++		int bestScore = Integer.MAX_VALUE;
++		for (HuntSpot spot : HuntSpotData.getInstance().getSpots())
++		{
++			if ((spot == current) || outgrown(spot, level) || (up ? ((spot.level <= current.level) || (spot.level > (level + 3))) : ((spot.level >= current.level) || (spot.level < (level - 6)))))
++			{
++				continue;
++			}
++
++			// Меньше — лучше: занятый спот, чужая зона до 20-го, дальше по уровню от нынешнего.
++			final int score = (crowd(spot) >= PhantomHuntersConfig.HUNTERS_PER_SPOT ? 1000 : 0) + ((home != null) && !home.equals(spot.region) ? 100 : 0) + Math.abs(spot.level - current.level);
++			if (score < bestScore)
++			{
++				bestScore = score;
++				best.clear();
++			}
++			if (score == bestScore)
++			{
++				best.add(spot);
++			}
++		}
++		return best.isEmpty() ? null : best.get(Rnd.get(best.size()));
++	}
++
++	/**
++	 * Выполнить решение стратега через фазы охотника. Не вышло (некуда, нечего продавать) — остаётся на споте, дальше правила.
++	 * @return {@code true}, если охотник ушёл со спота
++	 */
++	private boolean apply(Hunter hunter, Player player, Choice choice, long now)
++	{
++		final String who = getClass().getSimpleName() + ": Strategy: " + player.getName() + " (" + player.getLevel() + ") " + choice;
++		thinkAloud(player, choice);
++		switch (choice.decision)
++		{
++			case SPOT_UP:
++			case SPOT_DOWN:
++			{
++				final HuntSpot target = choice.decision == Decision.SPOT_UP ? hunter.upSpot : hunter.downSpot;
++				if ((target == null) || outgrown(target, player.getLevel()))
++				{
++					LOGGER.info(who + ": no such spot now, keeps hunting.");
++					return false;
++				}
++
++				LOGGER.info(who + ": " + spotLabel(hunter.spot) + " -> " + spotLabel(target) + ".");
++				moveToSpot(hunter, player, target);
++				return true;
++			}
++			case TOWN:
++			{
++				if ((now - hunter.lastTown) < TOWN_COOLDOWN)
++				{
++					LOGGER.info(who + ": was in town a minute ago, keeps hunting.");
++					return false;
++				}
++
++				LOGGER.info(who + ": goes to town.");
++				goToTown(hunter, player, now);
++				return true;
++			}
++			case STORE:
++			{
++				if (PhantomHunterOutfit.storeGoods(player).isEmpty() || (stores() >= PhantomHuntersConfig.HUNTER_MAX_STORES))
++				{
++					LOGGER.info(who + ": nothing to sell or no place in Giran, keeps hunting.");
++					return false;
++				}
++
++				hunter.wantStore = true;
++				LOGGER.info(who + ": town, then a store in Giran.");
++				goToTown(hunter, player, now);
++				return true;
++			}
++			case PARTY:
++			{
++				final String text = String.format(LFP_SHOUTS[Rnd.get(LFP_SHOUTS.length)], roleWord(hunter.template, player), player.getLevel());
++				final String channel = PhantomChat.getInstance().hunterShout(player, text);
++				hunter.lastLfp = now;
++				hunter.lfpUntil = now + LFP_WINDOW;
++				_lastLfp = now;
++				LOGGER.info(who + ": shouts to " + channel + " chat «" + text + "», keeps hunting and waits for an invite.");
++				return false;
++			}
++			case AFK:
++			{
++				hunter.afkUntil = now + (choice.minutes * 60000L);
++				LOGGER.info(who + ": rests in town for " + choice.minutes + " min.");
++				goToTown(hunter, player, now);
++				return true;
++			}
++			default:
++			{
++				LOGGER.info(who + ": keeps hunting at " + spotLabel(hunter.spot) + ".");
++				return false;
++			}
++		}
++	}
++
++	/**
++	 * Мысль вслух в общий чат рядом — изредка ({@link PhantomHuntersConfig#HUNTER_STRATEGY_SAY_CHANCE}) и только если рядом есть живой игрок.
++	 */
++	private static void thinkAloud(Player player, Choice choice)
++	{
++		if (choice.thought.isEmpty() || (Rnd.get(100) >= PhantomHuntersConfig.HUNTER_STRATEGY_SAY_CHANCE))
++		{
++			return;
++		}
++
++		if (World.getFirstVisibleObject(player, Player.class, other -> !PhantomManager.getInstance().isPhantom(other) && (player.calculateDistance2D(other) < 1250)) != null)
++		{
++			PhantomChat.getInstance().hunterSay(player, choice.thought);
++		}
++	}
++
++	/**
++	 * @return кем он себя называет в крике «лфп»
++	 */
++	private static String roleWord(PhantomTemplate template, Player player)
++	{
++		switch (template.getRole())
++		{
++			case HEALER:
++			{
++				return "хил";
++			}
++			case BUFFER:
++			{
++				return "баффер";
++			}
++			case TANK:
++			{
++				return "танк";
++			}
++			default:
++			{
++				return PhantomHunterOutfit.ammoId(player) > 0 ? "лук" : player.isMageClass() ? "маг" : "дд";
++			}
++		}
++	}
++
++	private int stores()
++	{
++		int stores = 0;
++		for (Hunter other : _hunters.values())
++		{
++			if (other.phase == Phase.STORE)
++			{
++				stores++;
++			}
++		}
++		return stores;
++	}
++
++	private static String spotLabel(HuntSpot spot)
++	{
++		return spot == null ? "no spot" : spot.name + " (" + spot.min + "-" + spot.max + ")";
++	}
++
++	private static String spotNote(HuntSpot spot)
++	{
++		return spot.name + " (мобы " + spot.min + "-" + spot.max + " ур.)";
++	}
++
++	/**
++	 * Самопроверка стратега без клиента ({@code HuntersSelfTest = STRATEGY}): {@value #STRATEGY_TEST_DURATION} мс стратег думает и без живых игроков, все охотники спрашивают в ближайшие 3 минуты
++	 * (в пределах бюджета в минуту). Первый ответ — нарочно мусор (проверка отката на правила), следующие шесть — случайный вариант без модели (проверка выполнения), остальные — модель.
++	 */
++	private void strategySelfTest()
++	{
++		final long now = System.currentTimeMillis();
++		_strategyTestUntil = now + STRATEGY_TEST_DURATION;
++		_strategyTestCount = 0;
++		for (Hunter hunter : _hunters.values())
++		{
++			hunter.nextThink = now + Rnd.get(5000, 180000);
++		}
++		LOGGER.info(getClass().getSimpleName() + ": SelfTest STRATEGY: " + _hunters.size() + " hunters ask the strategist within 3 minutes, test runs " + (STRATEGY_TEST_DURATION / 60000) + " minutes" + (PhantomHuntersConfig.HUNTER_STRATEGY && PhantomChat.brainEnabled() ? "." : ", but the strategist or the brains are off."));
++	}
++
+ 	// ---------- ПвП ----------
+ 
+ 	/**
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterOutfit.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterOutfit.java
+index ee43247..1d03c7f 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterOutfit.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterOutfit.java
+@@ -289,6 +289,150 @@ final class PhantomHunterOutfit
+ 		return done;
+ 	}
+ 
++	// ---------- Для стратега ----------
++
++	/** Названия частей шмота в порядке {@link #SLOTS}. */
++	private static final String[] SLOT_NAMES =
++	{
++		"оружие",
++		"нагрудник",
++		"штаны",
++		"шлем",
++		"перчатки",
++		"ботинки",
++		"щит"
++	};
++
++	/**
++	 * Для стратега: что надето по грейдам и чего не хватает до сета лучшего разрешённого грейда — те же вещи и тот же порядок, что у покупок в городе.
++	 * @return «надето: оружие D, нагрудник D, …, бижа 2/5; до сета C не хватает: оружие (~1.2кк), … — всего ~3.4кк; дальше — B с 52 ур.»
++	 */
++	static String gearReport(Player player, PhantomTemplate template)
++	{
++		final List<PhantomTemplate.Gear> grades = new ArrayList<>();
++		for (PhantomTemplate.Gear gear : template.getAllGear())
++		{
++			if ((gear.minLevel <= player.getLevel()) && (grade(gear.rhand) <= player.getExpertiseLevel()))
++			{
++				grades.add(0, gear); // лучший грейд — первым
++			}
++		}
++		final PhantomTemplate.Gear best = grades.isEmpty() ? null : grades.get(0);
++
++		final StringBuilder worn = new StringBuilder("надето:");
++		final List<String> missing = new ArrayList<>();
++		long missingPrice = 0;
++		for (int i = 0; i < SLOTS.length; i++)
++		{
++			final int slot = SLOTS[i];
++			final boolean skip = ((slot == Inventory.PAPERDOLL_LEGS) && (wornBodyPart(player, Inventory.PAPERDOLL_CHEST) == BodyPart.FULL_ARMOR)) || ((slot == Inventory.PAPERDOLL_LHAND) && ((wornBodyPart(player, Inventory.PAPERDOLL_RHAND) == BodyPart.LR_HAND) || (best == null) || (best.lhand <= 0)));
++			if (skip)
++			{
++				continue;
++			}
++
++			final Item current = player.getInventory().getPaperdollItem(slot);
++			final int currentGrade = (current == null) || current.isEtcItem() ? -1 : current.getTemplate().getCrystalType().getLevel();
++			worn.append(' ').append(SLOT_NAMES[i]).append(' ').append(currentGrade < 0 ? "—" : gradeName(currentGrade)).append(',');
++
++			final ItemTemplate wanted = best == null ? null : ItemData.getInstance().getTemplate(itemFor(best, slot));
++			if ((wanted != null) && (wanted.getCrystalType().getLevel() > currentGrade))
++			{
++				missing.add(SLOT_NAMES[i] + " (~" + PhantomHunterManager.money(wanted.getReferencePrice()) + ")");
++				missingPrice += wanted.getReferencePrice();
++			}
++		}
++
++		int jewels = 0;
++		for (int slot : JEWEL_SLOTS)
++		{
++			final Item current = player.getInventory().getPaperdollItem(slot);
++			if (current != null)
++			{
++				jewels++;
++			}
++			else if (missing.isEmpty() && (best != null))
++			{
++				final ItemTemplate wanted = ItemData.getInstance().getTemplate(jewel(Math.min(7, grade(best.rhand)), slot));
++				if (wanted != null)
++				{
++					missing.add("бижа (~" + PhantomHunterManager.money(wanted.getReferencePrice()) + ")");
++					missingPrice += wanted.getReferencePrice();
++				}
++			}
++		}
++		worn.append(" бижа ").append(jewels).append('/').append(JEWEL_SLOTS.length);
++
++		if (best != null)
++		{
++			final String setGrade = gradeName(grade(best.rhand));
++			worn.append(missing.isEmpty() ? "; сет " + setGrade + " собран" : "; до сета " + setGrade + " не хватает: " + String.join(", ", missing) + " — всего ~" + PhantomHunterManager.money(missingPrice));
++			for (PhantomTemplate.Gear gear : template.getAllGear())
++			{
++				if (grade(gear.rhand) > grade(best.rhand))
++				{
++					worn.append("; дальше — ").append(gradeName(grade(gear.rhand))).append(" с ").append(Math.max(gear.minLevel, expertiseLevel(grade(gear.rhand)))).append(" ур.");
++					break;
++				}
++			}
++		}
++		return worn.toString();
++	}
++
++	/**
++	 * Для стратега: сосы, стрелы и банки против запаса из PhantomHunters.ini.
++	 * @return «сосы D 1500/2000, стрелы 2000/3000, банок 12/30»
++	 */
++	static String suppliesReport(Player player)
++	{
++		final StringBuilder sb = new StringBuilder();
++		sb.append(player.isMageClass() ? "BSS " : "сосы ").append(gradeName(weaponGrade(player))).append(' ').append(count(player, shotId(player))).append('/').append(PhantomHuntersConfig.HUNTER_SHOT_COUNT);
++		final int ammo = ammoId(player);
++		if (ammo > 0)
++		{
++			sb.append(", стрелы ").append(count(player, ammo)).append('/').append(PhantomHuntersConfig.HUNTER_AMMO_COUNT);
++		}
++		long potions = 0;
++		for (int potion : HEALING_POTIONS)
++		{
++			potions += count(player, potion);
++		}
++		return sb.append(", банок ").append(potions).append('/').append(PhantomHuntersConfig.HUNTER_POTION_COUNT).toString();
++	}
++
++	private static String gradeName(int grade)
++	{
++		return switch (grade)
++		{
++			case 0 -> "NG";
++			case 1 -> "D";
++			case 2 -> "C";
++			case 3 -> "B";
++			case 4 -> "A";
++			case 5 -> "S";
++			case 6 -> "S80";
++			default -> "S84";
++		};
++	}
++
++	/**
++	 * @return с какого уровня грейд без штрафа (как у игроков H5)
++	 */
++	private static int expertiseLevel(int grade)
++	{
++		return switch (grade)
++		{
++			case 0 -> 1;
++			case 1 -> 20;
++			case 2 -> 40;
++			case 3 -> 52;
++			case 4 -> 61;
++			case 5 -> 76;
++			case 6 -> 80;
++			default -> 84;
++		};
++	}
++
+ 	/**
+ 	 * @return хилка по уровню: до 20 — 1060, до 40 — 1061, дальше — 1539
+ 	 */
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterStrategy.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterStrategy.java
+new file mode 100644
+index 0000000..4f7413b
+--- /dev/null
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterStrategy.java
+@@ -0,0 +1,316 @@
++package org.l2jmobius.gameserver.managers.phantom;
++
++import java.util.ArrayDeque;
++import java.util.Collection;
++import java.util.Deque;
++import java.util.List;
++import java.util.Locale;
++import java.util.Map;
++import java.util.regex.Matcher;
++import java.util.regex.Pattern;
++
++import org.l2jmobius.commons.util.Rnd;
++import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
++import org.l2jmobius.gameserver.data.sql.CharInfoTable;
++import org.l2jmobius.gameserver.data.xml.ExperienceData;
++import org.l2jmobius.gameserver.data.xml.MapRegionData;
++import org.l2jmobius.gameserver.entity.World;
++import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.entity.item.instance.Item;
++import org.l2jmobius.gameserver.managers.FakePlayerBrain;
++import org.l2jmobius.gameserver.managers.phantom.HuntSpotData.HuntSpot;
++import org.l2jmobius.gameserver.taskmanagers.GameTimeTaskManager;
++
++/**
++ * L2Hub: мозги-стратег охотников (раздел 4.3 docs/PHANTOMS.md). Охотник на споте раз в несколько минут ({@link PhantomHuntersConfig#HUNTER_STRATEGY_PER_HOUR} решений в час, со случайным разбросом)
++ * спрашивает сервис мозгов ({@code "kind":"strategy"} в launcher/l2hub/brain.py), что делать дальше. Модель видит его состояние и характер и отвечает тегом из доступных вариантов и короткой мыслью от его лица.<br>
++ * Решение выполняет {@link PhantomHunterManager} через свои фазы на ближайшем тике. Модель не ответила, ответила мусором или бюджет в минуту ({@link PhantomHuntersConfig#HUNTER_STRATEGY_PER_MINUTE}) исчерпан —
++ * охотник живёт по правилам, как без стратега.
++ */
++final class PhantomHunterStrategy
++{
++	/** Варианты решения — теги для модели. */
++	enum Decision
++	{
++		/** Качаться дальше на этом споте. */
++		HUNT,
++		/** Сменить спот на мобов повыше. */
++		SPOT_UP,
++		/** Сменить спот на мобов пониже. */
++		SPOT_DOWN,
++		/** В город: хлам, покупки, ребаф — и обратно. */
++		TOWN,
++		/** В город, потом лавка в Гиране с ценным дропом. */
++		STORE,
++		/** Поискать пати: «лфп» в торговый чат (до 20-го — в общий рядом). */
++		PARTY,
++		/** Отдохнуть в городе N минут. */
++		AFK
++	}
++
++	static final int AFK_MIN = 5;
++	static final int AFK_MAX = 30;
++	/** Решение, которое за это время не удалось выполнить (бой, другие дела), забывается. */
++	static final long CHOICE_TTL = 180000;
++	/** Ответ brain.py: «[[ТЕГ]] мысль» или «[[AFK 15]] мысль». */
++	private static final Pattern REPLY = Pattern.compile("^\\[\\[([A-Z_]+)(?: (\\d{1,3}))?\\]\\]\\s*(.*)$", Pattern.DOTALL);
++	private static final int MAX_THOUGHT = 120;
++
++	/** Решение модели. */
++	static final class Choice
++	{
++		final Decision decision;
++		final int minutes;
++		final String thought;
++		final long at;
++
++		Choice(Decision decision, int minutes, String thought, long at)
++		{
++			this.decision = decision;
++			this.minutes = minutes;
++			this.thought = thought;
++			this.at = at;
++		}
++
++		@Override
++		public String toString()
++		{
++			return decision == Decision.AFK ? decision + " " + minutes : decision.name();
++		}
++	}
++
++	/** Что о нём знает менеджер (спот, простой, смерти, город, лавка) — для запроса. */
++	static final class Facts
++	{
++		HuntSpot spot;
++		int spotMinutes;
++		double spotExpPercent;
++		int idleMinutes;
++		int roams;
++		int deathsHour;
++		int townMinutes;
++		/** С прошлой лавки, минут; -1 — лавки ещё не было. */
++		int storeMinutes = -1;
++		int realPlayers;
++		/** Самопроверка для brain.py: {@code garbage} — ответить мусором, {@code random} — случайный вариант без модели; пусто — как обычно. */
++		String test = "";
++	}
++
++	/** Запросы стратега за последнюю минуту — на всех охотников. */
++	private static final Deque<Long> CALLS = new ArrayDeque<>();
++
++	private PhantomHunterStrategy()
++	{
++	}
++
++	/**
++	 * @return через сколько мс следующее решение: в среднем 60 / HunterStrategyPerHour минут, от половины до полутора
++	 */
++	static long nextDelay()
++	{
++		final long mean = 3600000L / Math.max(1, PhantomHuntersConfig.HUNTER_STRATEGY_PER_HOUR);
++		return Rnd.get(mean / 2, (mean * 3) / 2);
++	}
++
++	/**
++	 * Бюджет запросов стратега в минуту на всех охотников.
++	 * @return можно ли спросить сейчас (и запрос засчитан)
++	 */
++	static boolean budget(long now)
++	{
++		synchronized (CALLS)
++		{
++			while (!CALLS.isEmpty() && ((now - CALLS.peekFirst()) > 60000))
++			{
++				CALLS.pollFirst();
++			}
++
++			if (CALLS.size() >= PhantomHuntersConfig.HUNTER_STRATEGY_PER_MINUTE)
++			{
++				return false;
++			}
++			CALLS.addLast(now);
++			return true;
++		}
++	}
++
++	/**
++	 * Ответ мозгов: тег проверяет и brain.py, но сервер верит только своему списку вариантов.
++	 * @param reply «[[ТЕГ]] мысль» или «[[AFK 15]] мысль»
++	 * @param options что было доступно
++	 * @return решение или {@code null}, если это мусор
++	 */
++	static Choice parse(String reply, Collection<Decision> options, long now)
++	{
++		final Matcher matcher = REPLY.matcher(reply == null ? "" : reply.strip());
++		if (!matcher.matches())
++		{
++			return null;
++		}
++
++		final Decision decision;
++		try
++		{
++			decision = Decision.valueOf(matcher.group(1));
++		}
++		catch (IllegalArgumentException e)
++		{
++			return null;
++		}
++		if (!options.contains(decision))
++		{
++			return null;
++		}
++
++		final int minutes = decision == Decision.AFK ? Math.max(AFK_MIN, Math.min(AFK_MAX, matcher.group(2) != null ? Integer.parseInt(matcher.group(2)) : 15)) : 0;
++		final String thought = matcher.group(3).replaceAll("\\s+", " ").strip();
++		return new Choice(decision, minutes, thought.length() > MAX_THOUGHT ? thought.substring(0, MAX_THOUGHT) : thought, now);
++	}
++
++	// ---------- Запрос ----------
++
++	/**
++	 * Тело POST /chat для brain.py: {@code "kind":"strategy"}, состояние охотника, доступные варианты (с пометкой, куда ведут) и диапазон AFK. Характер brain.py берёт сам из L2HubPhantomPersonas.json.
++	 * @param options вариант → пометка для модели (куда сменить спот, что продавать), может быть пустой
++	 */
++	static String request(Player player, PhantomTemplate template, Facts facts, Map<Decision, String> options)
++	{
++		final StringBuilder sb = new StringBuilder(2048);
++		sb.append('{');
++		FakePlayerBrain.field(sb, "kind", "strategy").append(',');
++		FakePlayerBrain.field(sb, "fpc", player.getName()).append(',');
++		sb.append("\"npcId\":").append(player.getObjectId()).append(',');
++		FakePlayerBrain.field(sb, "test", facts.test).append(',');
++		sb.append("\"hunter\":{");
++		sb.append("\"level\":").append(player.getLevel()).append(',');
++		FakePlayerBrain.field(sb, "class", player.getPlayerClass().name()).append(',');
++		FakePlayerBrain.field(sb, "race", player.getRace().name()).append(',');
++		FakePlayerBrain.field(sb, "role", template.getRole().name()).append(',');
++		sb.append("\"mage\":").append(player.isMageClass()).append(',');
++		sb.append("\"adena\":").append(player.getAdena()).append(',');
++		FakePlayerBrain.field(sb, "money", PhantomHunterManager.money(player.getAdena())).append(',');
++		sb.append("\"expPct\":").append(String.format(Locale.ROOT, "%.1f", levelPercent(player))).append(',');
++		sb.append("\"hpPct\":").append((int) ((player.getCurrentHp() * 100) / Math.max(1, player.getMaxHp()))).append(',');
++		sb.append("\"mpPct\":").append((int) ((player.getCurrentMp() * 100) / Math.max(1, player.getMaxMp()))).append(',');
++		FakePlayerBrain.field(sb, "gear", PhantomHunterOutfit.gearReport(player, template)).append(',');
++		FakePlayerBrain.field(sb, "supplies", PhantomHunterOutfit.suppliesReport(player)).append(',');
++		FakePlayerBrain.field(sb, "drop", drop(player)).append(',');
++		sb.append("\"inventoryPct\":").append((player.getInventory().getSize() * 100) / Math.max(1, player.getInventoryLimit())).append(',');
++		FakePlayerBrain.field(sb, "spot", facts.spot != null ? facts.spot.name : "").append(',');
++		sb.append("\"spotMin\":").append(facts.spot != null ? facts.spot.min : 0).append(',');
++		sb.append("\"spotMax\":").append(facts.spot != null ? facts.spot.max : 0).append(',');
++		sb.append("\"spotMinutes\":").append(facts.spotMinutes).append(',');
++		sb.append("\"spotExpPct\":").append(String.format(Locale.ROOT, "%.1f", facts.spotExpPercent)).append(',');
++		sb.append("\"idleMinutes\":").append(facts.idleMinutes).append(',');
++		sb.append("\"roams\":").append(facts.roams).append(',');
++		sb.append("\"deathsHour\":").append(facts.deathsHour).append(',');
++		sb.append("\"townMinutes\":").append(facts.townMinutes).append(',');
++		sb.append("\"storeMinutes\":").append(facts.storeMinutes).append(',');
++		FakePlayerBrain.field(sb, "town", MapRegionData.getInstance().getClosestTownName(player)).append(',');
++		grudges(sb, player);
++		sb.append("},\"options\":[");
++		boolean first = true;
++		for (Map.Entry<Decision, String> option : options.entrySet())
++		{
++			sb.append(first ? "" : ",").append('{');
++			first = false;
++			FakePlayerBrain.field(sb, "tag", option.getKey().name()).append(',');
++			FakePlayerBrain.field(sb, "note", option.getValue());
++			sb.append('}');
++		}
++		sb.append("],\"afk\":[").append(AFK_MIN).append(',').append(AFK_MAX).append("],");
++		sb.append("\"realPlayers\":").append(facts.realPlayers).append(',');
++		final int time = GameTimeTaskManager.getInstance().getGameTime();
++		FakePlayerBrain.field(sb, "gameTime", String.format("%02d:%02d", (time / 60) % 24, time % 60)).append(',');
++		sb.append("\"night\":").append(GameTimeTaskManager.getInstance().isNight());
++		sb.append('}');
++		return sb.toString();
++	}
++
++	/**
++	 * @return сколько процентов уровня уже набрано
++	 */
++	static double levelPercent(Player player)
++	{
++		final long base = ExperienceData.getInstance().getExpForLevel(player.getLevel());
++		final long next = ExperienceData.getInstance().getExpForLevel(player.getLevel() + 1);
++		return next > base ? ((player.getExp() - base) * 100.0) / (next - base) : 100;
++	}
++
++	/**
++	 * @param since опыт на момент прихода на спот
++	 * @return сколько процентов текущего уровня набрано с тех пор
++	 */
++	static double expGainPercent(Player player, long since)
++	{
++		final long base = ExperienceData.getInstance().getExpForLevel(player.getLevel());
++		final long next = ExperienceData.getInstance().getExpForLevel(player.getLevel() + 1);
++		return next > base ? (Math.max(0, player.getExp() - since) * 100.0) / (next - base) : 0;
++	}
++
++	/**
++	 * @return ценный дроп для лавки — «Elven Long Sword, Mithril Gloves и ещё 2 — всего ~180к по цене магазина»; пусто — нечего продавать
++	 */
++	static String drop(Player player)
++	{
++		final List<Item> goods = PhantomHunterOutfit.storeGoods(player);
++		if (goods.isEmpty())
++		{
++			return "";
++		}
++
++		long total = 0;
++		final StringBuilder names = new StringBuilder();
++		for (int i = 0; i < goods.size(); i++)
++		{
++			final Item item = goods.get(i);
++			total += item.getTemplate().getReferencePrice() * item.getCount();
++			if (i < 3)
++			{
++				names.append(i > 0 ? ", " : "").append(item.getName()).append(item.getCount() > 1 ? " x" + item.getCount() : "");
++			}
++		}
++		return names + (goods.size() > 3 ? " и ещё " + (goods.size() - 3) : "") + " — всего ~" + PhantomHunterManager.money(total) + " по цене магазина";
++	}
++
++	/**
++	 * Обидчики из {@link PhantomHunterManager#GRUDGE_VARIABLE}: имя, сколько раз убивал, в игре ли сейчас (до пяти).
++	 */
++	private static void grudges(StringBuilder sb, Player player)
++	{
++		sb.append("\"grudges\":[");
++		int count = 0;
++		for (String entry : player.getVariables().getString(PhantomHunterManager.GRUDGE_VARIABLE, "").split(";"))
++		{
++			final String[] parts = entry.split(":");
++			if ((parts.length != 2) || (count >= 5))
++			{
++				continue;
++			}
++
++			final int objectId;
++			final int kills;
++			try
++			{
++				objectId = Integer.parseInt(parts[0]);
++				kills = Integer.parseInt(parts[1]);
++			}
++			catch (NumberFormatException e)
++			{
++				continue;
++			}
++
++			final String name = CharInfoTable.getInstance().getNameById(objectId);
++			if (name == null)
++			{
++				continue;
++			}
++
++			sb.append(count > 0 ? "," : "").append('{');
++			FakePlayerBrain.field(sb, "name", name).append(',');
++			sb.append("\"count\":").append(kills).append(",\"online\":").append(World.getPlayer(objectId) != null).append('}');
++			count++;
++		}
++		sb.append(']');
++	}
++}

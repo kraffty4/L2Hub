@@ -1,0 +1,49 @@
+diff --git a/dist/game/data/stats/npcs/20000-20099.xml b/dist/game/data/stats/npcs/20000-20099.xml
+index 8b2dbee..650d698 100644
+--- a/dist/game/data/stats/npcs/20000-20099.xml
++++ b/dist/game/data/stats/npcs/20000-20099.xml
+@@ -273,7 +273,7 @@
+ 			<param name="MoveAroundSocial" value="104" />
+ 			<param name="MoveAroundSocial1" value="104" />
+ 			<param name="MoveAroundSocial2" value="104" />
+-			<param name="SetHateRace" value="race_human" />
++			<param name="SetHateRace" value="HUMAN" />
+ 			<param name="SetHateRaceRatio" value="10" />
+ 		</parameters>
+ 		<race>HUMANOID</race>
+@@ -434,7 +434,7 @@
+ 			<param name="MoveAroundSocial" value="138" />
+ 			<param name="MoveAroundSocial1" value="138" />
+ 			<param name="MoveAroundSocial2" value="138" />
+-			<param name="SetHateRace" value="race_elf" />
++			<param name="SetHateRace" value="ELF" />
+ 			<param name="SetHateRaceRatio" value="10" />
+ 		</parameters>
+ 		<race>HUMANOID</race>
+@@ -524,7 +524,7 @@
+ 			<param name="MoveAroundSocial" value="104" />
+ 			<param name="MoveAroundSocial1" value="104" />
+ 			<param name="MoveAroundSocial2" value="104" />
+-			<param name="SetHateRace" value="race_dark_elf" />
++			<param name="SetHateRace" value="DARK_ELF" />
+ 			<param name="SetHateRaceRatio" value="10" />
+ 		</parameters>
+ 		<race>HUMANOID</race>
+@@ -812,7 +812,7 @@
+ 			<param name="MoveAroundSocial" value="75" />
+ 			<param name="MoveAroundSocial1" value="75" />
+ 			<param name="MoveAroundSocial2" value="75" />
+-			<param name="SetHateRace" value="race_orc" />
++			<param name="SetHateRace" value="ORC" />
+ 			<param name="SetHateRaceRatio" value="10" />
+ 			<param name="SetAggressiveTime" value="0" />
+ 		</parameters>
+@@ -4598,7 +4598,7 @@
+ 			<param name="MoveAroundSocial" value="75" />
+ 			<param name="MoveAroundSocial1" value="75" />
+ 			<param name="MoveAroundSocial2" value="75" />
+-			<param name="SetHateRace" value="race_dwarf" />
++			<param name="SetHateRace" value="DWARF" />
+ 			<param name="SetHateRaceRatio" value="10" />
+ 			<param name="SetAggressiveTime" value="0" />
+ 		</parameters>

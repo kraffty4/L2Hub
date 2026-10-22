@@ -1,0 +1,237 @@
+diff --git a/dist/game/config/Custom/L2HubEvents.ini b/dist/game/config/Custom/L2HubEvents.ini
+index fcd0656..6b70974 100644
+--- a/dist/game/config/Custom/L2HubEvents.ini
++++ b/dist/game/config/Custom/L2HubEvents.ini
+@@ -66,3 +66,23 @@ PvpMinLevel = 1
+ TvT = 0 */3 * * *
+ Deathmatch = 0 1-23/3 * * *
+ CtF = 0 2-23/3 * * *
++
++# ---------------------------------------------------------------------------
++# Elpies (custom/events/Elpies): нашествие кроликов-эльпи в городе
++# ---------------------------------------------------------------------------
++# 100 кроликов, скиллами по ним не бьют; с каждого падают расходники (зелья, благословлённые свитки телепорта и
++# воскрешения, Giant's Codex) и кристаллы. Город — ближайший к живому игроку из Aden, Dion, Gludin, Hunters Village,
++# Oren (у Mobius — случайный). Расписание Mobius в config.xml скрипта закомментировано — здесь своё; GM запускает и так.
++# Default: True
++Elpies = True
++
++# Крон «минуты часы день месяц день_недели», как schedule у Mobius; пусто — только командой GM.
++ElpiesSchedule = 30 */4 * * *
++
++# Длительность нашествия, мин (у Mobius — 2: одиночке не успеть даже добежать).
++# Default: 10
++ElpiesMinutes = 10
++
++# Старт по расписанию только при живом игроке в мире (с клиентом; фантомы и офлайн-торговцы не считаются).
++# Default: True
++ElpiesOnlyWithPlayers = True
+diff --git a/dist/game/data/scripts/custom/events/Elpies/Elpies.java b/dist/game/data/scripts/custom/events/Elpies/Elpies.java
+index 9cbc722..c73ccb6 100644
+--- a/dist/game/data/scripts/custom/events/Elpies/Elpies.java
++++ b/dist/game/data/scripts/custom/events/Elpies/Elpies.java
+@@ -21,6 +21,14 @@
+ package custom.events.Elpies;
+ 
+ import java.io.File;
++import java.io.Reader;
++import java.nio.charset.StandardCharsets;
++import java.nio.file.Files;
++import java.nio.file.Path;
++import java.nio.file.Paths;
++import java.util.ArrayList;
++import java.util.List;
++import java.util.Properties;
+ import java.util.concurrent.ScheduledFuture;
+ import java.util.concurrent.atomic.AtomicInteger;
+ 
+@@ -51,6 +59,9 @@ public class Elpies extends Event
+ 	
+ 	// Event duration in minutes
+ 	private static final int EVENT_DURATION_MINUTES = 2;
++	
++	// L2Hub: расписание, длительность и «только при живом игроке» — ключи Elpies* в config/Custom/L2HubEvents.ini.
++	private static final Path L2HUB_CONFIG = Paths.get("./config/Custom/L2HubEvents.ini");
+ 	// @formatter:off
+ 	private static final int[][] DROPLIST_CONSUMABLES =
+ 	{
+@@ -87,6 +98,7 @@ public class Elpies extends Event
+ 		addKillId(ELPY);
+ 		
+ 		loadConfig();
++		l2hubSchedule();
+ 	}
+ 	
+ 	private void loadConfig()
+@@ -158,32 +170,46 @@ public class Elpies extends Event
+ 			return false;
+ 		}
+ 		
++		// L2Hub: по расписанию — только при живом игроке (ElpiesOnlyWithPlayers); город — ближайший к живому игроку.
++		final Properties l2hub = l2hubConfig();
++		final Player near = eventMaker != null ? eventMaker : livePlayer();
++		if ((near == null) && !"false".equalsIgnoreCase(l2hub.getProperty("ElpiesOnlyWithPlayers", "True").trim()))
++		{
++			LOGGER.info(getName() + ": пропущен — в мире нет живого игрока.");
++			return false;
++		}
++		
+ 		// Check Custom Table - we use custom NPCs.
+ 		if (!GeneralConfig.CUSTOM_NPC_DATA)
+ 		{
+ 			LOGGER.info(getName() + ": Event can't be started because custom NPC table is disabled!");
+-			eventMaker.sendMessage("Event " + getName() + " can't be started because custom NPC table is disabled!");
++			if (eventMaker != null) // L2Hub: по расписанию eventMaker == null
++			{
++				eventMaker.sendMessage("Event " + getName() + " can't be started because custom NPC table is disabled!");
++			}
+ 			return false;
+ 		}
+ 		
+ 		EVENT_ACTIVE = true;
+ 		
+-		final EventLocation randomLoc = getRandomEntry(EventLocation.values());
++		final EventLocation randomLoc = near != null ? nearest(near) : getRandomEntry(EventLocation.values());
+ 		CURRENT_ELPY_COUNT = 0;
+-		final long despawnDelay = EVENT_DURATION_MINUTES * 60000;
++		final int minutes = l2hubMinutes(l2hub);
++		final long despawnDelay = minutes * 60000L;
+ 		for (int i = 0; i < ELPY_AMOUNT; i++)
+ 		{
+ 			addSpawn(ELPY, randomLoc.getRandomX(), randomLoc.getRandomY(), randomLoc.getZ(), 0, true, despawnDelay);
+ 			CURRENT_ELPY_COUNT++;
+ 		}
+ 		
+-		World.broadcastToAllOnlinePlayers("*Squeak Squeak*");
+-		World.broadcastToAllOnlinePlayers("Elpy invasion in " + randomLoc.getName());
+-		World.broadcastToAllOnlinePlayers("Help us exterminate them!");
+-		World.broadcastToAllOnlinePlayers("You have " + EVENT_DURATION_MINUTES + " minutes!");
++		World.broadcastToAllOnlinePlayers("*Пи-пи-пи!*");
++		World.broadcastToAllOnlinePlayers("Нашествие эльпи: " + randomLoc.getName() + "!");
++		World.broadcastToAllOnlinePlayers("Помогите их истребить — с них падают зелья, свитки и кристаллы!");
++		World.broadcastToAllOnlinePlayers("У вас " + minutes + " мин.");
++		LOGGER.info(getName() + ": нашествие в " + randomLoc.getName() + " на " + minutes + " мин.");
+ 		_eventTask = ThreadPool.schedule(() ->
+ 		{
+-			World.broadcastToAllOnlinePlayers("Time is up!");
++			World.broadcastToAllOnlinePlayers("Время вышло!");
+ 			eventStop();
+ 		}, despawnDelay);
+ 		return true;
+@@ -213,8 +239,8 @@ public class Elpies extends Event
+ 			}
+ 		}
+ 		
+-		World.broadcastToAllOnlinePlayers("*Squeak Squeak*");
+-		World.broadcastToAllOnlinePlayers("Elpy Event finished!");
++		World.broadcastToAllOnlinePlayers("*Пи-пи-пи!*");
++		World.broadcastToAllOnlinePlayers("Нашествие эльпи окончено!");
+ 		return true;
+ 	}
+ 	
+@@ -229,7 +255,7 @@ public class Elpies extends Event
+ 			
+ 			if (CURRENT_ELPY_COUNT <= 0)
+ 			{
+-				World.broadcastToAllOnlinePlayers("All elpies have been killed!");
++				World.broadcastToAllOnlinePlayers("Все эльпи перебиты!");
+ 				eventStop();
+ 			}
+ 		}
+@@ -301,6 +327,96 @@ public class Elpies extends Event
+ 		}
+ 	}
+ 	
++	/**
++	 * L2Hub: свой крон из L2HubEvents.ini (Elpies = True, ElpiesSchedule) — тем же таймером «Schedule…», что расписание config.xml.
++	 */
++	private void l2hubSchedule()
++	{
++		final Properties config = l2hubConfig();
++		final String pattern = config.getProperty("ElpiesSchedule", "").trim();
++		if (!"true".equalsIgnoreCase(config.getProperty("Elpies", "False").trim()) || pattern.isEmpty())
++		{
++			return;
++		}
++		
++		try
++		{
++			final SchedulingPattern schedulingPattern = new SchedulingPattern(pattern);
++			final StatSet params = new StatSet();
++			params.set("Name", getName());
++			params.set("SchedulingPattern", pattern);
++			final long delay = schedulingPattern.getDelayToNextFromNow();
++			getTimers().addTimer("ScheduleL2Hub", params, delay + 5000, null, null);
++			LOGGER.info("Event " + getName() + " scheduled at " + TimeUtil.getDateTimeString(System.currentTimeMillis() + delay));
++		}
++		catch (Exception e)
++		{
++			LOGGER.warning(getName() + ": ElpiesSchedule = " + pattern + " — не крон: " + e.getMessage());
++		}
++	}
++	
++	private static Properties l2hubConfig()
++	{
++		final Properties properties = new Properties();
++		if (Files.isRegularFile(L2HUB_CONFIG))
++		{
++			try (Reader reader = Files.newBufferedReader(L2HUB_CONFIG, StandardCharsets.UTF_8))
++			{
++				properties.load(reader);
++			}
++			catch (Exception e)
++			{
++				LOGGER.warning("Elpies: " + L2HUB_CONFIG + ": " + e.getMessage());
++			}
++		}
++		return properties;
++	}
++	
++	private static int l2hubMinutes(Properties config)
++	{
++		try
++		{
++			return Math.max(1, Integer.parseInt(config.getProperty("ElpiesMinutes", "10").trim()));
++		}
++		catch (NumberFormatException e)
++		{
++			return EVENT_DURATION_MINUTES;
++		}
++	}
++	
++	/**
++	 * @return случайный живой игрок (с клиентом, не офлайн-торговец; фантомы не в счёт) или null
++	 */
++	private static Player livePlayer()
++	{
++		final List<Player> players = new ArrayList<>();
++		for (Player player : World.getPlayers())
++		{
++			if ((player.getClient() != null) && !player.getClient().isDetached() && !player.isInOfflineMode())
++			{
++				players.add(player);
++			}
++		}
++		return players.isEmpty() ? null : players.get(getRandom(players.size()));
++	}
++	
++	private static EventLocation nearest(Player player)
++	{
++		EventLocation best = null;
++		long bestDistance = Long.MAX_VALUE;
++		for (EventLocation loc : EventLocation.values())
++		{
++			final long dx = ((loc._minX + loc._maxX) / 2) - player.getX();
++			final long dy = ((loc._minY + loc._maxY) / 2) - player.getY();
++			if (((dx * dx) + (dy * dy)) < bestDistance)
++			{
++				bestDistance = (dx * dx) + (dy * dy);
++				best = loc;
++			}
++		}
++		return best;
++	}
++	
+ 	public static void main(String[] args)
+ 	{
+ 		new Elpies();

@@ -1,0 +1,339 @@
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java
+index d970619..ad48511 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java
+@@ -17,6 +17,7 @@ import org.l2jmobius.gameserver.config.custom.FakePlayersConfig;
+ import org.l2jmobius.gameserver.config.custom.PhantomPartyConfig;
+ import org.l2jmobius.gameserver.config.custom.PhantomsConfig;
+ import org.l2jmobius.gameserver.data.xml.MapRegionData;
++import org.l2jmobius.gameserver.entity.World;
+ import org.l2jmobius.gameserver.entity.WorldObject;
+ import org.l2jmobius.gameserver.entity.actor.Creature;
+ import org.l2jmobius.gameserver.entity.actor.Player;
+@@ -284,6 +285,58 @@ public class PhantomChat
+ 		});
+ 	}
+ 
++	/**
++	 * Реплика охотника в общий чат рядом (ПвП: напали, убили, обидчик повержен, обидчик проходит мимо). Кулдаун — на пару «охотник — игрок» и вид события; без мозгов или сверх бюджета — заготовка.
++	 * @param hunter охотник
++	 * @param other игрок, о котором речь (он же собеседник для мозгов: событие попадает в память их разговора)
++	 * @param kind вид события
++	 * @param what что случилось — от лица охотника
++	 * @param fallback заготовка или {@code null}
++	 * @param cooldown не чаще, мс
++	 */
++	public void hunterEvent(Player hunter, Player other, String kind, String what, String fallback, long cooldown)
++	{
++		final long now = System.currentTimeMillis();
++		final String key = "h" + hunter.getObjectId() + ":" + other.getObjectId() + ":" + kind;
++		final Long until = _eventCooldowns.get(key);
++		if ((until != null) && (now < until))
++		{
++			return;
++		}
++		_eventCooldowns.put(key, now + cooldown);
++
++		final PhantomTemplate template = PhantomData.getInstance().getTemplate(hunter.getName());
++		if ((template == null) || !brainEnabled() || !eventBudget(now))
++		{
++			if (fallback != null)
++			{
++				sayNear(hunter, fallback);
++			}
++			return;
++		}
++
++		FakePlayerBrain.getInstance().send(request(other, hunter, template, "event", what, null, false), reply ->
++		{
++			final String text = TAG.matcher(reply).replaceAll("").strip();
++			if (!text.isEmpty())
++			{
++				sayNear(hunter, text);
++			}
++		}, () ->
++		{
++			if (fallback != null)
++			{
++				sayNear(hunter, fallback);
++			}
++		});
++	}
++
++	private static void sayNear(Player speaker, String text)
++	{
++		final CreatureSay say = new CreatureSay(speaker, ChatType.GENERAL, speaker.getName(), text);
++		World.forEachVisibleObjectInRange(speaker, Player.class, 1250, player -> player.sendPacket(say));
++	}
++
+ 	// ---------- Разговор ----------
+ 
+ 	/**
+@@ -452,6 +505,7 @@ public class PhantomChat
+ 		FakePlayerBrain.field(sb, "clan", player.getClan() != null ? player.getClan().getName() : "").append(',');
+ 		sb.append("\"gm\":").append(player.isGM()).append(',');
+ 		sb.append("\"owner\":").append(owner).append(',');
++		sb.append("\"grudge\":").append(template.isHunter() ? PhantomHunterManager.grudge(phantom, player) : 0).append(',');
+ 		sb.append("\"hpPct\":").append(percent(player.getCurrentHp(), player.getMaxHp())).append(',');
+ 		sb.append("\"dead\":").append(player.isDead()).append(',');
+ 		sb.append("\"distance\":").append((int) phantom.calculateDistance2D(player));
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+index feebd8e..74c432a 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+@@ -20,7 +20,9 @@ import org.l2jmobius.gameserver.data.xml.SkillData;
+ import org.l2jmobius.gameserver.entity.Location;
+ import org.l2jmobius.gameserver.entity.World;
+ import org.l2jmobius.gameserver.entity.WorldObject;
++import org.l2jmobius.gameserver.entity.actor.Creature;
+ import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.entity.actor.Summon;
+ import org.l2jmobius.gameserver.entity.actor.enums.creature.Race;
+ import org.l2jmobius.gameserver.entity.actor.enums.player.TeleportWhereType;
+ import org.l2jmobius.gameserver.entity.actor.holders.npc.BuffSkillHolder;
+@@ -28,6 +30,10 @@ import org.l2jmobius.gameserver.entity.actor.instance.Monster;
+ import org.l2jmobius.gameserver.geoengine.GeoEngine;
+ import org.l2jmobius.gameserver.managers.GlobalVariablesManager;
+ import org.l2jmobius.gameserver.managers.phantom.HuntSpotData.HuntSpot;
++import org.l2jmobius.gameserver.mechanics.events.EventType;
++import org.l2jmobius.gameserver.mechanics.events.holders.actor.creature.OnCreatureDamageReceived;
++import org.l2jmobius.gameserver.mechanics.events.holders.actor.creature.OnCreatureDeath;
++import org.l2jmobius.gameserver.mechanics.events.listeners.ConsumerEventListener;
+ import org.l2jmobius.gameserver.mechanics.skill.Skill;
+ import org.l2jmobius.gameserver.taskmanagers.AutoPlayTaskManager;
+ import org.l2jmobius.gameserver.taskmanagers.AutoUseTaskManager;
+@@ -57,6 +63,8 @@ public class PhantomHunterManager
+ 	private static final int ROAMS_BEFORE_SWITCH = 3;
+ 	private static final int DANGER_RANGE = 900;
+ 	private static final String RESET_VARIABLE = "L2HubHuntersResetId";
++	/** Обиды охотника: кто и сколько раз его убивал (переменная персонажа). */
++	static final String GRUDGE_VARIABLE = "L2HubGrudges";
+ 
+ 	/** Родная зона расы: до 20-го уровня охотник качается там, если есть подходящий спот. */
+ 	private static final Map<Race, String> HOME_REGIONS = new EnumMap<>(Race.class);
+@@ -82,6 +90,9 @@ public class PhantomHunterManager
+ 		long lastActive;
+ 		int roams;
+ 		long retryAt;
++		/** Живой игрок, который на него напал (ПвП): охотник бьёт его, пока тот рядом. */
++		volatile int enemyId;
++		volatile long enemySeen;
+ 
+ 		Hunter(PhantomTemplate template)
+ 		{
+@@ -304,6 +315,10 @@ public class PhantomHunterManager
+ 		hunter.spot = null;
+ 		hunter.deadSince = 0;
+ 		hunter.needBuff = true;
++		hunter.enemyId = 0;
++		// ПвП: кто ударил и кто убил — события приходят от сервера (асинхронно).
++		player.addListener(new ConsumerEventListener(player, EventType.ON_CREATURE_DAMAGE_RECEIVED, (OnCreatureDamageReceived event) -> onDamaged(hunter, player, event.getAttacker()), this));
++		player.addListener(new ConsumerEventListener(player, EventType.ON_CREATURE_DEATH, (OnCreatureDeath event) -> onKilled(hunter, player, event.getAttacker()), this));
+ 		hunter.lastStore = now;
+ 		hunter.lastShots = now;
+ 		hunter.lastActive = now;
+@@ -353,6 +368,14 @@ public class PhantomHunterManager
+ 			player.storeMe();
+ 		}
+ 
++		// ПвП: пока обидчик рядом — драка с ним, без отдыха и поводка.
++		if ((hunter.enemyId != 0) && fight(hunter, player, now))
++		{
++			hunter.lastActive = now;
++			return;
++		}
++		noticeGrudges(player);
++
+ 		if (rest(player))
+ 		{
+ 			hunter.lastActive = now;
+@@ -381,6 +404,7 @@ public class PhantomHunterManager
+ 		if (hunter.deadSince == 0)
+ 		{
+ 			hunter.deadSince = now;
++			endFight(hunter, player);
+ 			stop(player);
+ 			return;
+ 		}
+@@ -535,6 +559,181 @@ public class PhantomHunterManager
+ 		}
+ 	}
+ 
++	// ---------- ПвП ----------
++
++	/**
++	 * Охотника ударил живой игрок (или его питомец): он — враг, охотник даёт сдачи. Флаг ставит сам сервер, когда охотник бьёт в ответ.
++	 */
++	private void onDamaged(Hunter hunter, Player player, Creature attacker)
++	{
++		final Player enemy = actingPlayer(attacker);
++		if ((enemy == null) || (enemy == player) || PhantomManager.getInstance().isPhantom(enemy) || player.isDead())
++		{
++			return;
++		}
++
++		final boolean fresh = hunter.enemyId != enemy.getObjectId();
++		hunter.enemyId = enemy.getObjectId();
++		hunter.enemySeen = System.currentTimeMillis();
++		if (fresh)
++		{
++			final int grudge = grudge(player, enemy);
++			PhantomChat.getInstance().hunterEvent(player, enemy, "ATTACKED", "на тебя напал " + describe(enemy) + (grudge > 0 ? ", который уже убивал тебя (" + grudge + " раз)" : "") + ", ты даёшь сдачи", "ты чё творишь?!", 180000);
++		}
++	}
++
++	/**
++	 * Охотника убил живой игрок: запомнить обидчика (переменная персонажа, переживает рестарт) и высказаться.
++	 */
++	private void onKilled(Hunter hunter, Player player, Creature killer)
++	{
++		hunter.enemyId = 0;
++		final Player enemy = actingPlayer(killer);
++		if ((enemy == null) || (enemy == player) || PhantomManager.getInstance().isPhantom(enemy))
++		{
++			return;
++		}
++
++		final int count = addGrudge(player, enemy);
++		PhantomChat.getInstance().hunterEvent(player, enemy, "KILLED", "тебя убил " + describe(enemy) + (count > 1 ? " — уже " + count + "-й раз" : "") + "; ты лежишь и скоро вернёшься в город", count > 1 ? "опять ты... ну погоди" : "ну ты и гад...", 60000);
++		LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " was killed by " + enemy.getName() + " (" + count + ").");
++	}
++
++	/**
++	 * Драка с обидчиком: AutoPlay переключается на персонажей, цель — он; AutoUse бьёт скиллами. Обидчик ушёл, умер или стал неатакуемым — конец драки.
++	 * @return {@code true}, если драка продолжается
++	 */
++	private boolean fight(Hunter hunter, Player player, long now)
++	{
++		final Player enemy = World.getPlayer(hunter.enemyId);
++		final boolean gone = (enemy == null) || !enemy.isOnline() || (player.calculateDistance2D(enemy) > 2500) || ((now - hunter.enemySeen) > 60000);
++		if (gone || enemy.isDead() || !enemy.isAutoAttackable(player))
++		{
++			if ((enemy != null) && enemy.isDead() && !gone)
++			{
++				PhantomChat.getInstance().hunterEvent(player, enemy, "WON", "ты завалил " + enemy.getName() + ", который на тебя напал", "изи)", 180000);
++			}
++			endFight(hunter, player);
++			return false;
++		}
++
++		if (player.isSitting())
++		{
++			player.standUp();
++			return true;
++		}
++
++		player.getAutoPlaySettings().setNextTargetMode(2); // персонажи
++		if (player.getTarget() != enemy)
++		{
++			player.setTarget(enemy);
++		}
++		if (!player.isAutoPlaying())
++		{
++			AutoPlayTaskManager.getInstance().startAutoPlay(player);
++			AutoUseTaskManager.getInstance().startAutoUseTask(player);
++		}
++		return true;
++	}
++
++	private static void endFight(Hunter hunter, Player player)
++	{
++		hunter.enemyId = 0;
++		player.getAutoPlaySettings().setNextTargetMode(1); // снова мобы
++		if ((player.getTarget() instanceof Player))
++		{
++			player.setTarget(null);
++		}
++	}
++
++	/**
++	 * Обидчик проходит мимо — охотник его узнаёт (не чаще раза в 15 минут на каждого).
++	 */
++	private static void noticeGrudges(Player player)
++	{
++		final String grudges = player.getVariables().getString(GRUDGE_VARIABLE, "");
++		if (grudges.isEmpty())
++		{
++			return;
++		}
++
++		for (Player other : World.getVisibleObjectsInRange(player, Player.class, 700))
++		{
++			if (PhantomManager.getInstance().isPhantom(other) || other.isInvisible())
++			{
++				continue;
++			}
++
++			final int count = grudge(player, other);
++			if (count > 0)
++			{
++				PhantomChat.getInstance().hunterEvent(player, other, "GRUDGE", "мимо проходит " + describe(other) + ", который убивал тебя (" + count + " раз) — ты его узнал", "о, опять ты...", 900000);
++			}
++		}
++	}
++
++	/**
++	 * Обиды охотника — переменная персонажа {@value #GRUDGE_VARIABLE}: «objectId:сколько раз убил;...».
++	 * @return сколько раз этот игрок убивал охотника
++	 */
++	static int grudge(Player hunter, Player other)
++	{
++		for (String entry : hunter.getVariables().getString(GRUDGE_VARIABLE, "").split(";"))
++		{
++			final String[] parts = entry.split(":");
++			if ((parts.length == 2) && parts[0].equals(String.valueOf(other.getObjectId())))
++			{
++				return Integer.parseInt(parts[1]);
++			}
++		}
++		return 0;
++	}
++
++	private static int addGrudge(Player hunter, Player other)
++	{
++		final List<String> entries = new ArrayList<>();
++		int count = 1;
++		for (String entry : hunter.getVariables().getString(GRUDGE_VARIABLE, "").split(";"))
++		{
++			final String[] parts = entry.split(":");
++			if (parts.length != 2)
++			{
++				continue;
++			}
++
++			if (parts[0].equals(String.valueOf(other.getObjectId())))
++			{
++				count = Integer.parseInt(parts[1]) + 1;
++			}
++			else
++			{
++				entries.add(entry);
++			}
++		}
++		entries.add(0, other.getObjectId() + ":" + count);
++		hunter.getVariables().set(GRUDGE_VARIABLE, String.join(";", entries.subList(0, Math.min(entries.size(), 20))));
++		hunter.getVariables().storeMe();
++		return count;
++	}
++
++	private static Player actingPlayer(Creature creature)
++	{
++		if (creature instanceof Player)
++		{
++			return (Player) creature;
++		}
++		if (creature instanceof Summon)
++		{
++			return ((Summon) creature).getOwner();
++		}
++		return null;
++	}
++
++	private static String describe(Player other)
++	{
++		return other.getName() + " (" + other.getLevel() + " ур., " + other.getPlayerClass().name().replace('_', ' ').toLowerCase() + ")";
++	}
++
+ 	// ---------- На споте ----------
+ 
+ 	/**

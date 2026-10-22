@@ -1,0 +1,14 @@
+Use your built-in image generation tool to create exactly ONE image. Do not run any shell commands and do not write any files; just generate the image and reply with one short sentence describing it.
+
+Project: "L2Hub" — a personal desktop launcher that starts local game servers of a classic dark-fantasy MMORPG of the 2000s, one click per "chronicle" (game era). The brand must be ORIGINAL: no existing game logos, no "Lineage" text, no winged emblems, no roman numeral "II", no recognisable characters or trademarks.
+
+Brand style (approved): dark fantasy, aged bronze and warm gold on near-black brown (#130f0b), subtle engraved texture, but clean and readable like a modern app icon. Wordmark is set in an elegant classical Roman-capital serif similar to Cinzel: "L2Hub" (capital L, digit 2, capital H, lowercase u b — or small caps), gold with a thin bronze edge.
+
+Image: a brand concept presentation board, landscape 3:2, dark background. Layout:
+- left two thirds: the logo mark large in the centre, with the wordmark "L2Hub" set beside it (horizontal lockup);
+- right third, top to bottom: the mark alone as a rounded-square app icon at about 256 px, then the same icon at about 64 px, 32 px and 16 px in a row to prove it stays readable when tiny, then a thin title-bar strip showing the small mark followed by "L2Hub" text at small size;
+- a small caption at the bottom left in plain sans-serif: "Direction 3 — Astrolabe".
+No other text. Crisp vector-like edges, flat lighting on the small icons, no photo-realism, no clutter.
+
+The mark for this direction:
+A hub: a bronze astrolabe / compass rose with SEVEN slender rays (seven chronicles) radiating from a central faceted gold gem, enclosed in a thin ring; the rays are of unequal length like a star map. Geometric, symmetric, elegant; the central gem and ring keep it legible at 16 px.

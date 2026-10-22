@@ -1,0 +1,1000 @@
+diff --git a/dist/game/config/AdminCommands.xml b/dist/game/config/AdminCommands.xml
+index 9e0ac05..8554cda 100644
+--- a/dist/game/config/AdminCommands.xml
++++ b/dist/game/config/AdminCommands.xml
+@@ -384,6 +384,7 @@
+ 
+ 	<!-- ADMIN PHANTOMS (L2Hub) -->
+ 	<admin command="phantom" description="Phantoms (players without a client): list, spawn, despawn, reload." accessLevel="100" />
++	<admin command="hunters" description="Hunter phantoms window: where each one is, what it does, teleport to it." accessLevel="100" />
+ 
+ 	<!-- ADMIN ONLINE -->
+ 	<admin command="online" description="Display a list of all currently online players." accessLevel="100" />
+diff --git a/dist/game/config/Custom/PhantomHunters.ini b/dist/game/config/Custom/PhantomHunters.ini
+index 3923257..30056bb 100644
+--- a/dist/game/config/Custom/PhantomHunters.ini
++++ b/dist/game/config/Custom/PhantomHunters.ini
+@@ -21,6 +21,8 @@ HuntersResetId = 0
+ # STRATEGY — 10 минут мозги-стратег думает и без живых игроков: все охотники на спотах спрашивают модель
+ # в ближайшие 3 минуты (в пределах HunterStrategyPerMinute); первый ответ — нарочно мусор (проверка отката
+ # на правила), следующие шесть — случайный вариант без модели (проверка выполнения), остальные — модель.
++# UI — окна «где охотники» (//hunters для GM и «Охотники» на Alt+B) от лица первого охотника в мире
++# пишутся в log/L2HubHuntersUi.html: открыть в браузере и посмотреть, что строится.
+ # Выполняется один раз — когда меняется HuntersSelfTestId.
+ HuntersSelfTest =
+ HuntersSelfTestId = 0
+diff --git a/dist/game/data/html/CommunityBoard/Custom/home.html b/dist/game/data/html/CommunityBoard/Custom/home.html
+index 04d5ef3..61839f0 100644
+--- a/dist/game/data/html/CommunityBoard/Custom/home.html
++++ b/dist/game/data/html/CommunityBoard/Custom/home.html
+@@ -20,7 +20,7 @@
+ 							</tr>
+ 							<tr>
+ 								<td align="center" height=240>
+-									<font name="hs12" color="CDB67F">L2Hub — сервер для своих</font><br><br><font color="B09878">Слева: баффер с наборами для воина и мага, GM-шоп, телепорт по городам,<br1>напарники (Весна лечит, Митяй бафает) и поиск дропа.</font><br><br><font color="808080">Напарникам можно писать в чат пати: «за мной», «бафни», «хил», «рес», «пока».</font>
++									<font name="hs12" color="CDB67F">L2Hub — сервер для своих</font><br><br><font color="B09878">Слева: баффер с наборами для воина и мага, GM-шоп, телепорт по городам,<br1>напарники (Весна лечит, Митяй бафает),<br1>охотники — кто где качается и торгует, и поиск дропа.</font><br><br><font color="808080">Напарникам можно писать в общий чат рядом или в чат пати: «за мной», «бафни», «хил», «рес», «пока».</font>
+ 								</td>
+ 							</tr>
+ 						</table>
+diff --git a/dist/game/data/html/CommunityBoard/Custom/navigation.html b/dist/game/data/html/CommunityBoard/Custom/navigation.html
+index b8e69cf..a7ef656 100644
+--- a/dist/game/data/html/CommunityBoard/Custom/navigation.html
++++ b/dist/game/data/html/CommunityBoard/Custom/navigation.html
+@@ -17,6 +17,9 @@
+ <tr>
+ 	<td><button value="Напарники" action="bypass _bbshubbuddy" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Reward_Down" fore="L2UI_CT1.OlympiadWnd_DF_Reward"></td>
+ </tr>
++<tr>
++	<td><button value="Охотники" action="bypass _bbshubhunters" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Fight1None_Down" fore="L2UI_CT1.OlympiadWnd_DF_Fight1None"></td>
++</tr>
+ <tr>
+ 	<td><button value="Поиск дропа" action="bypass _bbstop;dropsearch/main.html" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Watch_Down" fore="L2UI_CT1.OlympiadWnd_DF_Watch"></td>
+ </tr>
+diff --git a/dist/game/data/scripts/handlers/MasterHandler.java b/dist/game/data/scripts/handlers/MasterHandler.java
+index 1a5a5c8..002b9c3 100644
+--- a/dist/game/data/scripts/handlers/MasterHandler.java
++++ b/dist/game/data/scripts/handlers/MasterHandler.java
+@@ -172,6 +172,7 @@ import handlers.chat.commands.admin.AdminPForge;
+ import handlers.chat.commands.admin.AdminPathNode;
+ import handlers.chat.commands.admin.AdminPcCafePoints;
+ import handlers.chat.commands.admin.AdminPetition;
++import handlers.chat.commands.admin.AdminHunters;
+ import handlers.chat.commands.admin.AdminPhantom;
+ import handlers.chat.commands.admin.AdminPledge;
+ import handlers.chat.commands.admin.AdminPremium;
+@@ -402,6 +403,7 @@ public class MasterHandler
+ 			AdminPetition.class,
+ 			AdminPForge.class,
+ 			AdminPhantom.class,
++			AdminHunters.class, // L2Hub: окно охотников //hunters
+ 			AdminPledge.class,
+ 			AdminPremium.class,
+ 			AdminPunishment.class,
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+index a24c3d2..c779e5f 100644
+--- a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+@@ -17,6 +17,7 @@ import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
+ import org.l2jmobius.gameserver.entity.zone.ZoneId;
+ import org.l2jmobius.gameserver.handler.CommunityBoardHandler;
+ import org.l2jmobius.gameserver.handler.IParseBoardHandler;
++import org.l2jmobius.gameserver.managers.phantom.PhantomHunterUi;
+ import org.l2jmobius.gameserver.managers.phantom.PhantomUi;
+ import org.l2jmobius.gameserver.mechanics.skill.Skill;
+ 
+@@ -26,6 +27,7 @@ import org.l2jmobius.gameserver.mechanics.skill.Skill;
+  * <li>_bbshubbuff [категория] — баффер из SchemeBufferSkills.xml (как городской баффер схем): категории, по одному бафу, наборы воину и магу (FIGHTER_GROUP, MAGE_GROUP), себе или питомцу; хил и снять бафы</li>
+  * <li>_bbshubshop [страница] — GM-шоп из страниц NPC GM-шопа (html/merchant/&lt;CommunityShopNpc&gt;*.htm) с переписанными кнопками; мультиселлы — MultisellData.separateAndSendFromBoard</li>
+  * <li>_bbshubbuddy [действие имя] — окно напарников ({@link PhantomUi})</li>
++ * <li>_bbshubhunters [near|all|store] [страница] | go &lt;имя&gt; … — кто из охотников где и телепорт на их спот или к лавке ({@link PhantomHunterUi})</li>
+  * </ul>
+  */
+ public class L2HubBoard implements IParseBoardHandler
+@@ -34,11 +36,13 @@ public class L2HubBoard implements IParseBoardHandler
+ 	private static final String BUFF = "_bbshubbuff";
+ 	private static final String SHOP = "_bbshubshop";
+ 	private static final String BUDDY = "_bbshubbuddy";
++	private static final String HUNTERS = "_bbshubhunters";
+ 	private static final String[] COMMANDS =
+ 	{
+ 		BUFF,
+ 		SHOP,
+-		BUDDY
++		BUDDY,
++		HUNTERS
+ 	};
+ 
+ 	private static final Pattern NPC_CHAT = Pattern.compile("bypass (?:-h )?npc_%objectId%_Chat (\\d+)");
+@@ -70,6 +74,10 @@ public class L2HubBoard implements IParseBoardHandler
+ 		{
+ 			html = buddy(player, args);
+ 		}
++		else if (args[0].equalsIgnoreCase(HUNTERS))
++		{
++			html = hunters(player, args);
++		}
+ 		else
+ 		{
+ 			return false;
+@@ -391,6 +399,35 @@ public class L2HubBoard implements IParseBoardHandler
+ 		return page(player, "Напарники", PhantomUi.render(player, "bypass " + BUDDY));
+ 	}
+ 
++	// ---------- Охотники ----------
++
++	/**
++	 * _bbshubhunters [near|all|store] [страница] | go &lt;имя&gt; [вкладка] [страница]
++	 */
++	private static String hunters(Player player, String[] args)
++	{
++		if (!PhantomsConfig.PHANTOMS_ENABLED)
++		{
++			return page(player, "Охотники", "Фантомы выключены (EnablePhantoms в Phantoms.ini).");
++		}
++
++		int i = 1;
++		if ((args.length > 2) && args[1].equalsIgnoreCase("go"))
++		{
++			if (canUse(player))
++			{
++				final String error = PhantomHunterUi.teleport(player, args[2]);
++				if (error == null)
++				{
++					return null; // улетел — доска закрыта
++				}
++				player.sendMessage(error);
++			}
++			i = 3;
++		}
++		return page(player, "Охотники", PhantomHunterUi.board(player, args.length > i ? args[i] : null, args.length > (i + 1) ? parseInt(args[i + 1]) : 0, "bypass " + HUNTERS));
++	}
++
+ 	// ---------- Общее ----------
+ 
+ 	/**
+diff --git a/dist/game/data/scripts/handlers/chat/commands/admin/AdminHunters.java b/dist/game/data/scripts/handlers/chat/commands/admin/AdminHunters.java
+new file mode 100644
+index 0000000..de263ea
+--- /dev/null
++++ b/dist/game/data/scripts/handlers/chat/commands/admin/AdminHunters.java
+@@ -0,0 +1,41 @@
++package handlers.chat.commands.admin;
++
++import org.l2jmobius.gameserver.config.custom.PhantomsConfig;
++import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.handler.IAdminCommandHandler;
++import org.l2jmobius.gameserver.managers.phantom.PhantomHunterUi;
++import org.l2jmobius.gameserver.network.serverpackets.NpcHtmlMessage;
++
++/**
++ * L2Hub: окно охотников для GM ({@link PhantomHunterUi}).
++ * <ul>
++ * <li>//hunters [all|near|store|hunt|town|party] [level|name|near] [страница] — кто где: что делает, адена, доход в час, квест, расстояние</li>
++ * <li>//hunters goto &lt;имя&gt; … — телепорт к охотнику, он становится целью; окно остаётся на той же вкладке</li>
++ * </ul>
++ */
++public class AdminHunters implements IAdminCommandHandler
++{
++	private static final String[] ADMIN_COMMANDS =
++	{
++		"admin_hunters"
++	};
++
++	@Override
++	public boolean onCommand(String command, Player activeChar)
++	{
++		if (!PhantomsConfig.PHANTOMS_ENABLED)
++		{
++			activeChar.sendSysMessage("Phantoms are disabled: EnablePhantoms in config/Custom/Phantoms.ini.");
++			return false;
++		}
++
++		activeChar.sendPacket(new NpcHtmlMessage(PhantomHunterUi.admin(activeChar, command.strip().split("\\s+"))));
++		return true;
++	}
++
++	@Override
++	public String[] getCommandList()
++	{
++		return ADMIN_COMMANDS;
++	}
++}
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+index 92e7606..f79d5fc 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+@@ -93,6 +93,8 @@ public class PhantomHunterManager
+ 	private static final String SELF_TEST_VARIABLE = "L2HubHuntersSelfTestId";
+ 	/** Состояние охотников для лаунчера (от папки game). */
+ 	private static final String STATUS_FILE = "./log/L2HubHunters.json";
++	/** Самопроверка UI: окна //hunters и Alt+B, как их увидел бы первый охотник в мире. */
++	private static final String UI_TEST_FILE = "./log/L2HubHuntersUi.html";
+ 	/** Обиды охотника: кто и сколько раз его убивал (переменная персонажа). */
+ 	static final String GRUDGE_VARIABLE = "L2HubGrudges";
+ 	/** Квесты-симуляция: уровень последнего сданного квеста (переменная персонажа). */
+@@ -1449,6 +1451,14 @@ public class PhantomHunterManager
+ 			return;
+ 		}
+ 
++		// Окнам нужен зритель: ждём, пока в мире появится хоть один охотник.
++		final boolean ui = "UI".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
++		final List<HunterView> views = ui ? views() : List.of();
++		if (ui && views.isEmpty())
++		{
++			return;
++		}
++
+ 		GlobalVariablesManager.getInstance().set(SELF_TEST_VARIABLE, PhantomHuntersConfig.HUNTERS_SELF_TEST_ID);
+ 		GlobalVariablesManager.getInstance().storeMe();
+ 		if ("STRATEGY".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST))
+@@ -1456,6 +1466,11 @@ public class PhantomHunterManager
+ 			strategySelfTest();
+ 			return;
+ 		}
++		if (ui)
++		{
++			uiSelfTest(views.get(0).player);
++			return;
++		}
+ 		if (!"LFM".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST))
+ 		{
+ 			return;
+@@ -2302,6 +2317,122 @@ public class PhantomHunterManager
+ 		return _hunters.containsKey(player.getName().toLowerCase()) && PhantomManager.getInstance().isPhantom(player);
+ 	}
+ 
++	/**
++	 * Самопроверка {@code HuntersSelfTest = UI}: окно GM на вкладках «Все» и «Лавки» и раздел доски на «Мой уровень» и «Все» — в {@link #UI_TEST_FILE}.
++	 * Кнопки там не работают; смотреть, что строится, какой длины и как выглядит.
++	 */
++	private void uiSelfTest(Player viewer)
++	{
++		final String[][] admin =
++		{
++			{
++				"admin_hunters"
++			},
++			{
++				"admin_hunters",
++				"store",
++				"name",
++				"0"
++			}
++		};
++		final StringBuilder sb = new StringBuilder(65536);
++		sb.append("<!doctype html><meta charset=\"utf-8\"><title>L2Hub: окна охотников</title><body style=\"background:#1b1b1b;color:#ddd;font:12px Tahoma\">");
++		sb.append("<p>Зритель: ").append(viewer.getName()).append(" (").append(viewer.getLevel()).append(" ур.). Кнопки не работают.</p>");
++		for (String[] args : admin)
++		{
++			final String html = PhantomHunterUi.admin(viewer, args);
++			sb.append("<h3>//hunters ").append(String.join(" ", args).substring("admin_hunters".length())).append(" — ").append(html.length()).append(" символов (предел 17200)</h3>");
++			sb.append("<div style=\"width:280px;border:1px solid #555;padding:4px\">").append(html).append("</div>");
++		}
++		for (String tab : new String[]
++		{
++			"near",
++			"all"
++		})
++		{
++			final String html = PhantomHunterUi.board(viewer, tab, 0, "bypass _bbshubhunters");
++			sb.append("<h3>Alt+B, вкладка ").append(tab).append(" — ").append(html.length()).append(" символов</h3>");
++			sb.append("<div style=\"width:560px;border:1px solid #555;padding:4px\">").append(html).append("</div>");
++		}
++		sb.append("</body>");
++
++		try
++		{
++			Files.writeString(Path.of(UI_TEST_FILE), sb, StandardCharsets.UTF_8);
++			LOGGER.info(getClass().getSimpleName() + ": SelfTest UI: windows for " + viewer.getName() + " written to " + UI_TEST_FILE + ".");
++		}
++		catch (Exception e)
++		{
++			LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": SelfTest UI: could not write " + UI_TEST_FILE + ".", e);
++		}
++	}
++
++	// ---------- Снимок для окон ----------
++
++	/**
++	 * Охотник в мире, как его видят окна //hunters и «Охотники» на Alt+B ({@link PhantomHunterUi}).
++	 */
++	public static final class HunterView
++	{
++		public final Player player;
++		/** HUNT, TOWN, STORE, RECRUIT, PARTY или DEAD. */
++		public final String phase;
++		/** Спот, на котором качается или куда вернётся; {@code null} — ещё без спота. */
++		public final HuntSpot spot;
++		public final long earnedPerHour;
++		/** Взятый квест (уровень), 0 — никакого. */
++		public final int questLevel;
++		public final long questUntil;
++		public final boolean questReady;
++		/** Сколько не хватает на профу, 0 — не копит. */
++		public final long professionDue;
++		/** Сидит в лавке (торговля открыта). */
++		public final boolean storeOpen;
++		/** Кто позвал его в пати криком (фаза RECRUIT), иначе пусто. */
++		public final String recruiter;
++
++		HunterView(Hunter hunter, Player player, long now)
++		{
++			this.player = player;
++			phase = player.isDead() ? "DEAD" : hunter.phase.name();
++			spot = hunter.spot;
++			earnedPerHour = hunter.earnedSince > 0 ? (hunter.earned * 3600000L) / Math.max(600000L, now - hunter.earnedSince) : 0;
++			questLevel = hunter.questLevel;
++			questUntil = hunter.questUntil;
++			questReady = hunter.questReady;
++			professionDue = PhantomHunterOutfit.professionDue(player);
++			storeOpen = hunter.storeOpen && (player.getPrivateStoreType() == PrivateStoreType.SELL);
++			final Player recruiterPlayer = hunter.recruiterId != 0 ? World.getPlayer(hunter.recruiterId) : null;
++			recruiter = (hunter.phase == Phase.RECRUIT) && (recruiterPlayer != null) ? recruiterPlayer.getName() : "";
++		}
++	}
++
++	/**
++	 * @return охотники, которые сейчас в мире
++	 */
++	public List<HunterView> views()
++	{
++		final long now = System.currentTimeMillis();
++		final List<HunterView> result = new ArrayList<>(_hunters.size());
++		for (Hunter hunter : _hunters.values())
++		{
++			final Player player = PhantomManager.getInstance().getPhantom(hunter.template);
++			if (player != null)
++			{
++				result.add(new HunterView(hunter, player, now));
++			}
++		}
++		return result;
++	}
++
++	/**
++	 * @return живых игроков в игре (считается раз в 10 с)
++	 */
++	public int getRealPlayers()
++	{
++		return _realPlayers;
++	}
++
+ 	public static PhantomHunterManager getInstance()
+ 	{
+ 		return SingletonHolder.INSTANCE;
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterUi.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterUi.java
+new file mode 100644
+index 0000000..1aff12e
+--- /dev/null
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterUi.java
+@@ -0,0 +1,617 @@
++package org.l2jmobius.gameserver.managers.phantom;
++
++import java.time.Instant;
++import java.time.ZoneId;
++import java.time.format.DateTimeFormatter;
++import java.util.ArrayList;
++import java.util.Comparator;
++import java.util.List;
++
++import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
++import org.l2jmobius.gameserver.data.xml.MapRegionData;
++import org.l2jmobius.gameserver.entity.Location;
++import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
++import org.l2jmobius.gameserver.managers.phantom.PhantomHunterManager.HunterView;
++import org.l2jmobius.gameserver.network.serverpackets.ShowBoard;
++
++/**
++ * L2Hub: где охотники — окно ГМ {@code //hunters} и раздел «Охотники» на доске Alt+B.<br>
++ * ГМ видит всех: что делает, адену, доход в час, квест, долг за профу, расстояние; «К нему» — телепорт к охотнику, он же становится целью.<br>
++ * Игрок видит, кто качается на его уровне (±{@link #NEAR_LEVELS}), кто где и кто сидит в лавке. Кнопка ведёт на спот охотника или к его лавке
++ * телепортом по правилам охотников: до 40-го уровня бесплатно, дальше {@link PhantomHuntersConfig#HUNTER_TELEPORT_FEE}. В пати и на зов — без кнопки.
++ */
++public final class PhantomHunterUi
++{
++	/** Игроку по умолчанию — охотники его уровня ± столько. */
++	public static final int NEAR_LEVELS = 5;
++	private static final int GM_PAGE = 8;
++	private static final int BOARD_PAGE = 12;
++	private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault());
++
++	/** Вкладки: ключ в bypass, подпись. ГМ видит все, игрок — первые три. */
++	private enum Tab
++	{
++		NEAR("Мой уровень"),
++		ALL("Все"),
++		STORE("Лавки"),
++		HUNT("На каче"),
++		TOWN("В городе"),
++		PARTY("В пати");
++
++		final String label;
++
++		Tab(String label)
++		{
++			this.label = label;
++		}
++
++		static Tab of(String key, Tab fallback)
++		{
++			for (Tab tab : values())
++			{
++				if (tab.name().equalsIgnoreCase(key))
++				{
++					return tab;
++				}
++			}
++			return fallback;
++		}
++	}
++
++	private enum Sort
++	{
++		LEVEL("По уровню"),
++		NAME("По имени"),
++		NEAR("Ближе ко мне");
++
++		final String label;
++
++		Sort(String label)
++		{
++			this.label = label;
++		}
++
++		static Sort of(String key)
++		{
++			for (Sort sort : values())
++			{
++				if (sort.name().equalsIgnoreCase(key))
++				{
++					return sort;
++				}
++			}
++			return LEVEL;
++		}
++	}
++
++	private PhantomHunterUi()
++	{
++	}
++
++	// ---------- ГМ: //hunters ----------
++
++	/**
++	 * {@code //hunters [вкладка] [сортировка] [страница]} или {@code //hunters goto <имя> [вкладка] [сортировка] [страница]}.
++	 * @param gm кто смотрит
++	 * @param args команда, разбитая по пробелам ({@code args[0]} — {@code admin_hunters})
++	 * @return окно целиком (html)
++	 */
++	public static String admin(Player gm, String[] args)
++	{
++		int i = 1;
++		if ((args.length > 2) && args[1].equalsIgnoreCase("goto"))
++		{
++			final String error = gmGoto(gm, args[2]);
++			if (error != null)
++			{
++				gm.sendSysMessage(error);
++			}
++			i = 3;
++		}
++		final Tab tab = Tab.of(args.length > i ? args[i] : null, Tab.ALL);
++		final Sort sort = Sort.of(args.length > (i + 1) ? args[i + 1] : null);
++		final int page = args.length > (i + 2) ? parse(args[i + 2]) : 0;
++		final String state = tab.name().toLowerCase() + " " + sort.name().toLowerCase();
++
++		final List<HunterView> all = PhantomHunterManager.getInstance().views();
++		final StringBuilder sb = new StringBuilder(12288);
++		sb.append("<html><title>Охотники</title><body><center>");
++		sb.append("<font color=\"LEVEL\">Охотников в мире: ").append(all.size()).append("</font><br1>");
++		sb.append("<font color=\"808080\">").append(counts(all)).append(" · живых игроков: ").append(PhantomHunterManager.getInstance().getRealPlayers()).append("</font><br>");
++
++		// Вкладки — две строки по три, сортировка — третья.
++		sb.append("<table width=270><tr>");
++		for (Tab t : Tab.values())
++		{
++			if (t.ordinal() == 3)
++			{
++				sb.append("</tr><tr>");
++			}
++			sb.append("<td>").append(gmButton(t == tab ? "[" + t.label + "]" : t.label, t.name().toLowerCase() + " " + sort.name().toLowerCase() + " 0", 88)).append("</td>");
++		}
++		sb.append("</tr><tr>");
++		for (Sort s : Sort.values())
++		{
++			sb.append("<td>").append(gmButton(s == sort ? "[" + s.label + "]" : s.label, tab.name().toLowerCase() + " " + s.name().toLowerCase() + " 0", 88)).append("</td>");
++		}
++		sb.append("</tr></table>");
++
++		final List<HunterView> list = filter(all, tab, gm);
++		sortList(list, sort, tab, gm);
++		final int pages = Math.max(1, (list.size() + GM_PAGE - 1) / GM_PAGE);
++		final int current = Math.max(0, Math.min(page, pages - 1));
++		sb.append("<img src=\"L2UI.SquareGray\" width=270 height=1><br1>");
++		if (list.isEmpty())
++		{
++			sb.append("<font color=\"808080\">Никого.</font><br>");
++		}
++		for (HunterView view : list.subList(current * GM_PAGE, Math.min(list.size(), (current + 1) * GM_PAGE)))
++		{
++			final Player hunter = view.player;
++			sb.append("<table width=270><tr><td width=200><font color=\"LEVEL\">").append(hunter.getName()).append("</font> ").append(hunter.getLevel()).append(' ').append(PhantomUi.className(hunter)).append("</td>");
++			sb.append("<td width=70>").append(gmButton("К нему", "goto " + hunter.getName() + " " + state + " " + current, 66)).append("</td></tr></table>");
++			sb.append("<table width=270><tr><td width=270><font color=\"").append(phaseColor(view.phase)).append("\">").append(doing(view)).append("</font></td></tr></table>");
++			sb.append("<table width=270><tr><td width=270><font color=\"808080\">").append(economy(view, gm)).append("</font></td></tr></table>");
++			sb.append("<img src=\"L2UI.SquareGray\" width=270 height=1><br1>");
++		}
++
++		if (pages > 1)
++		{
++			sb.append("<table width=270><tr><td width=90>").append(current > 0 ? gmButton("Назад", state + " " + (current - 1), 60) : "").append("</td>");
++			sb.append("<td width=90 align=center>").append(current + 1).append(" / ").append(pages).append("</td>");
++			sb.append("<td width=90 align=right>").append((current + 1) < pages ? gmButton("Дальше", state + " " + (current + 1), 60) : "").append("</td></tr></table>");
++		}
++		sb.append("<br><font color=\"808080\">Цель после прыжка — охотник. Позвать к себе (//recall) не выйдет: поводок вернёт его на спот.</font>");
++		sb.append("</center></body></html>");
++		return sb.toString();
++	}
++
++	private static String gmGoto(Player gm, String name)
++	{
++		final HunterView view = find(name);
++		if (view == null)
++		{
++			return "No such hunter in the world: " + name;
++		}
++
++		final Player hunter = view.player;
++		gm.setInstanceId(hunter.getInstanceId());
++		gm.teleToLocation(new Location(hunter.getX(), hunter.getY(), hunter.getZ()), true);
++		gm.setTarget(hunter);
++		return null;
++	}
++
++	private static String gmButton(String label, String action, int width)
++	{
++		return "<button value=\"" + label + "\" action=\"bypass -h admin_hunters " + action + "\" width=" + width + " height=21 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\">";
++	}
++
++	/**
++	 * Адена, доход в час, квест, долг за профу, расстояние от ГМ.
++	 */
++	private static String economy(HunterView view, Player gm)
++	{
++		final Player hunter = view.player;
++		final StringBuilder sb = new StringBuilder(128);
++		sb.append(money(hunter.getAdena())).append(" адены");
++		if (view.earnedPerHour > 0)
++		{
++			sb.append(" · ~").append(money(view.earnedPerHour)).append("/ч");
++		}
++		if (view.questReady)
++		{
++			sb.append(" · сдаёт квест ").append(view.questLevel);
++		}
++		else if (view.questLevel > 0)
++		{
++			sb.append(" · квест ").append(view.questLevel).append(" до ").append(TIME.format(Instant.ofEpochMilli(view.questUntil)));
++		}
++		if (view.professionDue > 0)
++		{
++			sb.append(" · на профу не хватает ").append(money(view.professionDue));
++		}
++		if (hunter.getInstanceId() == gm.getInstanceId())
++		{
++			sb.append(" · ").append(distance(gm, hunter)).append(" от тебя");
++		}
++		return sb.toString();
++	}
++
++	// ---------- Игрок: доска Alt+B ----------
++
++	/**
++	 * Раздел «Охотники» доски: вкладки «Мой уровень», «Все», «Лавки», таблица и кнопки телепорта.
++	 * @param player кто смотрит
++	 * @param tabKey вкладка ({@code near}, {@code all}, {@code store}) или {@code null}
++	 * @param page страница с 0
++	 * @param bypass начало действия кнопок: {@code bypass _bbshubhunters}
++	 * @return содержимое страницы доски (без html и body)
++	 */
++	public static String board(Player player, String tabKey, int page, String bypass)
++	{
++		Tab tab = Tab.of(tabKey, Tab.NEAR);
++		if (tab.ordinal() > Tab.STORE.ordinal())
++		{
++			tab = Tab.NEAR;
++		}
++
++		final List<HunterView> list = filter(PhantomHunterManager.getInstance().views(), tab, player);
++		sortList(list, tab == Tab.STORE ? Sort.NAME : Sort.LEVEL, tab, player);
++		final int pages = Math.max(1, (list.size() + BOARD_PAGE - 1) / BOARD_PAGE);
++		final int current = Math.max(0, Math.min(page, pages - 1));
++		final int fee = fee(player);
++
++		final StringBuilder sb = new StringBuilder(12288);
++		sb.append("<table width=520><tr><td width=520><font color=\"B09878\">Охотники — такие же игроки, только без клиента: качаются сами с 1-го уровня, сидят в лавках в Гиране и идут в пати, если рядом крикнуть «лфм». ");
++		sb.append("Кнопка — телепорт на их спот или к лавке: ").append(fee > 0 ? "за " + money(fee) + " адены (с 40-го уровня, как у них)." : "пока бесплатно (до 40-го уровня).").append("</font></td></tr></table><br>");
++
++		sb.append("<table width=520><tr>");
++		for (Tab t : new Tab[]
++		{
++			Tab.NEAR,
++			Tab.ALL,
++			Tab.STORE
++		})
++		{
++			final String label = t == Tab.NEAR ? t.label + " (" + Math.max(1, player.getLevel() - NEAR_LEVELS) + "–" + (player.getLevel() + NEAR_LEVELS) + ")" : t.label;
++			sb.append("<td align=center>").append(boardButton(t == tab ? "[" + label + "]" : label, bypass + " " + t.name().toLowerCase() + " 0", 160)).append("</td>");
++		}
++		sb.append("</tr></table><br>");
++
++		if (list.isEmpty())
++		{
++			sb.append("<font color=\"808080\">").append(tab == Tab.STORE ? "Сейчас никто не торгует." : tab == Tab.NEAR ? "На твоём уровне сейчас никого — загляни во вкладку «Все»." : "Охотников в мире нет.").append("</font>");
++			return sb.toString();
++		}
++
++		sb.append("<table width=520><tr><td width=90><font color=\"LEVEL\">Имя</font></td><td width=30><font color=\"LEVEL\">Ур.</font></td><td width=105><font color=\"LEVEL\">Класс</font></td><td width=210><font color=\"LEVEL\">Где и что делает</font></td><td width=85></td></tr></table>");
++		sb.append("<img src=\"L2UI.SquareGray\" width=520 height=1>");
++		for (HunterView view : list.subList(current * BOARD_PAGE, Math.min(list.size(), (current + 1) * BOARD_PAGE)))
++		{
++			final Player hunter = view.player;
++			final Location target = destination(view);
++			sb.append("<table width=520><tr><td width=90>").append(hunter.getName()).append("</td><td width=30>").append(hunter.getLevel()).append("</td><td width=105>").append(PhantomUi.className(hunter)).append("</td>");
++			sb.append("<td width=210><font color=\"").append(phaseColor(view.phase)).append("\">").append(doing(view, true)).append("</font></td><td width=85>");
++			if (target != null)
++			{
++				sb.append(boardButton(view.phase.equals("STORE") || view.phase.equals("TOWN") ? "К нему" : "На спот", bypass + " go " + hunter.getName() + " " + tab.name().toLowerCase() + " " + current, 80));
++			}
++			sb.append("</td></tr></table>");
++		}
++		sb.append("<img src=\"L2UI.SquareGray\" width=520 height=1><br>");
++
++		if (pages > 1)
++		{
++			sb.append("<table width=300><tr><td width=100>").append(current > 0 ? boardButton("Назад", bypass + " " + tab.name().toLowerCase() + " " + (current - 1), 60) : "").append("</td>");
++			sb.append("<td width=100 align=center>").append(current + 1).append(" / ").append(pages).append("</td>");
++			sb.append("<td width=100 align=right>").append((current + 1) < pages ? boardButton("Дальше", bypass + " " + tab.name().toLowerCase() + " " + (current + 1), 60) : "").append("</td></tr></table><br>");
++		}
++		sb.append("<font color=\"808080\">Позвать в пати: подойди и напиши «лфм» в общий чат (с 20-го — можно в торговый). Поговорить — просто назови по имени в общем чате.</font>");
++		return sb.toString();
++	}
++
++	/**
++	 * Телепорт с доски на спот охотника или к нему (лавка, город). Проверки доски (бой, олимпиада, карма) — на стороне доски.
++	 * @param player кто летит
++	 * @param name имя охотника
++	 * @return {@code null} — улетел (доска закрыта), иначе почему нельзя
++	 */
++	public static String teleport(Player player, String name)
++	{
++		final HunterView view = find(name);
++		if (view == null)
++		{
++			return "Такого охотника сейчас нет в игре.";
++		}
++
++		final Location target = destination(view);
++		if (target == null)
++		{
++			return view.phase.equals("PARTY") || view.phase.equals("RECRUIT") ? view.player.getName() + " сейчас в пати — спроси шёпотом, где он." : "Сейчас к " + view.player.getName() + " не попасть.";
++		}
++		if (player.isJailed() || (player.getInstanceId() != 0))
++		{
++			return "Отсюда телепорт не работает.";
++		}
++
++		final int fee = fee(player);
++		if ((fee > 0) && !player.reduceAdena(ItemProcessType.FEE, fee, player, true))
++		{
++			return "Не хватает адены: телепорт стоит " + money(fee) + ".";
++		}
++
++		player.sendPacket(new ShowBoard());
++		player.setIn7sDungeon(false);
++		player.teleToLocation(target, true);
++		return null;
++	}
++
++	/**
++	 * Куда ведёт кнопка: на каче (и мёртвый на споте) — точка входа спота, в лавке и в городе — к охотнику; в пати, на зов и в инстансе — никуда.
++	 */
++	private static Location destination(HunterView view)
++	{
++		final Player hunter = view.player;
++		if (hunter.getInstanceId() != 0)
++		{
++			return null;
++		}
++
++		switch (view.phase)
++		{
++			case "HUNT":
++			case "DEAD":
++			{
++				return view.spot != null ? view.spot.entry : null;
++			}
++			case "STORE":
++			case "TOWN":
++			{
++				return new Location(hunter.getX(), hunter.getY(), hunter.getZ());
++			}
++			default:
++			{
++				return null;
++			}
++		}
++	}
++
++	private static int fee(Player player)
++	{
++		return player.getLevel() >= 40 ? Math.max(0, PhantomHuntersConfig.HUNTER_TELEPORT_FEE) : 0;
++	}
++
++	private static String boardButton(String label, String action, int width)
++	{
++		return "<button value=\"" + label + "\" action=\"" + action + "\" width=" + width + " height=22 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\">";
++	}
++
++	// ---------- Общее ----------
++
++	private static String doing(HunterView view)
++	{
++		return doing(view, false);
++	}
++
++	/**
++	 * Что делает охотник — одной строкой.
++	 * @param brief для узкой колонки доски: на каче — только спот и уровни мобов (цвет и так говорит, что качается)
++	 */
++	private static String doing(HunterView view, boolean brief)
++	{
++		final Player hunter = view.player;
++		switch (view.phase)
++		{
++			case "DEAD":
++			{
++				return "лежит мёртвый" + (view.spot != null ? " — " + view.spot.name : "");
++			}
++			case "HUNT":
++			{
++				if (view.spot == null)
++				{
++					return "выбирает спот";
++				}
++				return brief ? view.spot.name + ", мобы " + view.spot.min + "–" + view.spot.max : "качается: " + view.spot.name + " (мобы " + view.spot.min + "–" + view.spot.max + ")";
++			}
++			case "TOWN":
++			{
++				return "в городе: " + MapRegionData.getInstance().getClosestTownName(hunter);
++			}
++			case "STORE":
++			{
++				if (!view.storeOpen)
++				{
++					return "идёт в лавку";
++				}
++				return "лавка «" + escape(hunter.getSellList().getTitle()) + "», товаров: " + hunter.getSellList().getItemCount();
++			}
++			case "RECRUIT":
++			{
++				return view.recruiter.isEmpty() ? "бежит на зов в пати" : "бежит в пати к " + view.recruiter;
++			}
++			case "PARTY":
++			{
++				return hunter.isInParty() ? "в пати у " + hunter.getParty().getLeader().getName() : "в пати";
++			}
++			default:
++			{
++				return view.phase;
++			}
++		}
++	}
++
++	private static String phaseColor(String phase)
++	{
++		switch (phase)
++		{
++			case "HUNT":
++			{
++				return "99CC99";
++			}
++			case "STORE":
++			{
++				return "E6C35C";
++			}
++			case "PARTY":
++			case "RECRUIT":
++			{
++				return "88AAEE";
++			}
++			case "DEAD":
++			{
++				return "CC6666";
++			}
++			default:
++			{
++				return "B09878";
++			}
++		}
++	}
++
++	private static String counts(List<HunterView> all)
++	{
++		int hunt = 0;
++		int town = 0;
++		int store = 0;
++		int party = 0;
++		int dead = 0;
++		for (HunterView view : all)
++		{
++			switch (view.phase)
++			{
++				case "HUNT":
++				{
++					hunt++;
++					break;
++				}
++				case "TOWN":
++				{
++					town++;
++					break;
++				}
++				case "STORE":
++				{
++					store++;
++					break;
++				}
++				case "DEAD":
++				{
++					dead++;
++					break;
++				}
++				default:
++				{
++					party++;
++					break;
++				}
++			}
++		}
++		return "на каче " + hunt + " · в городе " + town + " · в лавках " + store + " · в пати " + party + " · мёртвых " + dead;
++	}
++
++	private static List<HunterView> filter(List<HunterView> all, Tab tab, Player viewer)
++	{
++		final List<HunterView> result = new ArrayList<>();
++		for (HunterView view : all)
++		{
++			final boolean fits;
++			switch (tab)
++			{
++				case NEAR:
++				{
++					fits = Math.abs(view.player.getLevel() - viewer.getLevel()) <= NEAR_LEVELS;
++					break;
++				}
++				case STORE:
++				{
++					fits = view.phase.equals("STORE");
++					break;
++				}
++				case HUNT:
++				{
++					fits = view.phase.equals("HUNT") || view.phase.equals("DEAD");
++					break;
++				}
++				case TOWN:
++				{
++					fits = view.phase.equals("TOWN");
++					break;
++				}
++				case PARTY:
++				{
++					fits = view.phase.equals("PARTY") || view.phase.equals("RECRUIT");
++					break;
++				}
++				default:
++				{
++					fits = true;
++					break;
++				}
++			}
++			if (fits)
++			{
++				result.add(view);
++			}
++		}
++		return result;
++	}
++
++	private static void sortList(List<HunterView> list, Sort sort, Tab tab, Player viewer)
++	{
++		final Comparator<HunterView> byName = Comparator.comparing(view -> view.player.getName().toLowerCase());
++		switch (sort)
++		{
++			case NAME:
++			{
++				list.sort(byName);
++				break;
++			}
++			case NEAR:
++			{
++				list.sort(Comparator.<HunterView> comparingDouble(view -> view.player.getInstanceId() == viewer.getInstanceId() ? viewer.calculateDistance2D(view.player) : Double.MAX_VALUE).thenComparing(byName));
++				break;
++			}
++			default:
++			{
++				// «Мой уровень» — сначала самые близкие по уровню, остальные — от старших к младшим.
++				final Comparator<HunterView> level = tab == Tab.NEAR ? Comparator.comparingInt(view -> Math.abs(view.player.getLevel() - viewer.getLevel())) : Comparator.comparingInt(view -> -view.player.getLevel());
++				list.sort(level.thenComparing(byName));
++				break;
++			}
++		}
++	}
++
++	private static HunterView find(String name)
++	{
++		for (HunterView view : PhantomHunterManager.getInstance().views())
++		{
++			if (view.player.getName().equalsIgnoreCase(name))
++			{
++				return view;
++			}
++		}
++		return null;
++	}
++
++	/**
++	 * 950 → 950, 14 297 → 14к, 1 234 567 → 1,2кк.
++	 */
++	private static String money(long value)
++	{
++		if (value >= 1000000)
++		{
++			final long tenths = value / 100000;
++			return (tenths / 10) + ((tenths % 10) != 0 ? "," + (tenths % 10) : "") + "кк";
++		}
++		if (value >= 10000)
++		{
++			return (value / 1000) + "к";
++		}
++		return String.valueOf(value);
++	}
++
++	private static String distance(Player from, Player to)
++	{
++		final int d = (int) from.calculateDistance2D(to);
++		return d >= 10000 ? (d / 1000) + "к" : String.valueOf(d);
++	}
++
++	private static String escape(String text)
++	{
++		return text == null ? "" : text.replace("<", "&lt;").replace(">", "&gt;").replace("\"", "'");
++	}
++
++	private static int parse(String value)
++	{
++		try
++		{
++			return Integer.parseInt(value);
++		}
++		catch (NumberFormatException e)
++		{
++			return 0;
++		}
++	}
++}
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomUi.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomUi.java
+index 15b5bee..b7f14d2 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomUi.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomUi.java
+@@ -214,7 +214,7 @@ public final class PhantomUi
+ 	/**
+ 	 * BISHOP → Bishop, ELVEN_ELDER → Elven Elder.
+ 	 */
+-	private static String className(Player phantom)
++	static String className(Player phantom)
+ 	{
+ 		final StringBuilder sb = new StringBuilder();
+ 		for (String word : phantom.getPlayerClass().name().split("_"))

@@ -1,0 +1,5 @@
+{
+  "archive": "downloads/L2J_Mobius_CT_2.6_HighFive_2026-10-16.zip",
+  "build": "L2J_Mobius_CT_2.6_HighFive",
+  "note": "Чистые исходники Mobius, от которых считается glue.patch (tools/phantoms_glue.py): архив сборки, с которой развёрнуто дерево servers/ct26_highfive."
+}

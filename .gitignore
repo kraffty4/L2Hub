@@ -1,0 +1,24 @@
+# Тяжёлое и машинное — не в git
+/runtime/
+/servers/
+/data/
+/downloads/
+*.log
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Сборка лаунчера
+build/
+dist/
+# Модуль фантомов повторяет дерево Mobius: его dist/ — исходники, а не сборка
+!/phantoms/**/dist/
+
+# Подложка карты мира — карта NCSoft из npetrovski/l2-world-map, только локально (tools/world_map_tiles.py)
+/launcher/l2hub/ui/maps/
+
+# Машина автора: пути, имена и адреса за метками в доках; пути дев-серверов превью
+/AGENTS.local.md
+/.claude/launch.json

@@ -1,0 +1,109 @@
+diff --git a/dist/game/config/GrandBoss.ini b/dist/game/config/GrandBoss.ini
+index cbba271793631411a0cf05161a8b69b820ee0aa5..b063860d8430752cb1ebb8a7b77c8c4caba264ab 100644
+--- a/dist/game/config/GrandBoss.ini
++++ b/dist/game/config/GrandBoss.ini
+@@ -107,3 +107,18 @@ DisableRaidBossHealFromPlayers = false
+ # Prevent RaidBoss from receiving buff skills cast by players (including pet/summon owner).
+ # Default: false
+ DisableRaidBossBuffFromPlayers = false
++
++# ---------------------------------------------------------------------------
++# L2Hub (малый мир): эпики малого мира (tools/l2hub_epics_small.py)
++# ---------------------------------------------------------------------------
++# Выключатель «Эпики малого мира» в лаунчере («Настройки сервера», «Мир»; режим «Хардкор» выключает). True — интервал
++# и случайная добавка респауна эпиков выше — в процентах SmallWorldEpicsIntervalPercent, ожидание Антараса и Валакаса
++# после первого входа — не дольше SmallWorldEpicsWaitTime минут, к старой Фринтезе — лидеру пати без командного канала,
++# к Белету — канал от SmallWorldEpicsMinPlayers человек. Новый интервал — со следующей смерти босса.
++SmallWorldEpics = True
++# Интервал респауна в процентах от официального. Range 1-100
++SmallWorldEpicsIntervalPercent = 25
++# Ожидание Антараса и Валакаса после первого входа, минут.
++SmallWorldEpicsWaitTime = 5
++# Порог командного канала для входа к Белету.
++SmallWorldEpicsMinPlayers = 2
+diff --git a/dist/game/data/scripts/ai/bosses/Frintezza/Frintezza.java b/dist/game/data/scripts/ai/bosses/Frintezza/Frintezza.java
+index 420c14857015ad5f6c81d25c62cc920a00b92428..9e5f751870656137e4433218d3f33b214da87eaa 100644
+--- a/dist/game/data/scripts/ai/bosses/Frintezza/Frintezza.java
++++ b/dist/game/data/scripts/ai/bosses/Frintezza/Frintezza.java
+@@ -1447,11 +1447,12 @@ public class Frintezza extends Script
+ 			}
+ 			else
+ 			{
+-				if ((!player.isInParty() || !player.getParty().isLeader(player)) || (player.getParty().getCommandChannel() == null) || (player.getParty().getCommandChannel().getLeader() != player))
++				// L2Hub (малый мир): с SmallWorldEpics — лидеру пати и без командного канала, без требования 4–5 пати (заходит его пати).
++				if ((!player.isInParty() || !player.getParty().isLeader(player)) || ((player.getParty().getCommandChannel() == null) ? !GrandBossConfig.SMALL_WORLD_EPICS : (player.getParty().getCommandChannel().getLeader() != player)))
+ 				{
+ 					htmltext = "<html><body>No reaction. Contact must be initiated by the Command Channel Leader.</body></html>";
+ 				}
+-				else if ((player.getParty().getCommandChannel().getParties().size() < 4) || (player.getParty().getCommandChannel().getParties().size() > 5))
++				else if (!GrandBossConfig.SMALL_WORLD_EPICS && ((player.getParty().getCommandChannel().getParties().size() < 4) || (player.getParty().getCommandChannel().getParties().size() > 5)))
+ 				{
+ 					htmltext = "<html><body>Your command channel needs to have at least 4 parties and a maximum of 5.</body></html>";
+ 				}
+@@ -1469,7 +1470,7 @@ public class Frintezza extends Script
+ 					startQuestTimer("room_final", 2100000, npc, null);
+ 					startQuestTimer("frintezza_despawn", 60000, npc, null, true);
+ 					_lastAction = System.currentTimeMillis();
+-					for (Party party : cc.getParties())
++					for (Party party : (cc != null) ? cc.getParties() : List.of(player.getParty()))
+ 					{
+ 						if (party == null)
+ 						{
+diff --git a/java/org/l2jmobius/gameserver/config/GrandBossConfig.java b/java/org/l2jmobius/gameserver/config/GrandBossConfig.java
+index 924f889df6704ce9c01470ce73e385f8598c5557..cce452d964d5bd3c74c5bc292e870369cfd4ee68 100644
+--- a/java/org/l2jmobius/gameserver/config/GrandBossConfig.java
++++ b/java/org/l2jmobius/gameserver/config/GrandBossConfig.java
+@@ -56,6 +56,12 @@ public class GrandBossConfig
+ 	public static boolean DISABLE_RAIDBOSS_HEAL_FROM_PLAYERS;
+ 	public static boolean DISABLE_RAIDBOSS_BUFF_FROM_PLAYERS;
+ 	
++	// L2Hub (малый мир): выключатель «Эпики малого мира» (tools/l2hub_epics_small.py).
++	public static boolean SMALL_WORLD_EPICS;
++	public static int SMALL_WORLD_EPICS_INTERVAL_PERCENT;
++	public static int SMALL_WORLD_EPICS_WAIT_TIME;
++	public static int SMALL_WORLD_EPICS_MIN_PLAYERS;
++	
+ 	public static void load()
+ 	{
+ 		final ConfigReader config = new ConfigReader(GRANDBOSS_CONFIG_FILE);
+@@ -82,5 +88,40 @@ public class GrandBossConfig
+ 		FRINTEZZA_SPAWN_RANDOM = config.getInt("RandomOfFrintezzaSpawn", 8);
+ 		DISABLE_RAIDBOSS_HEAL_FROM_PLAYERS = config.getBoolean("DisableRaidBossHealFromPlayers", false);
+ 		DISABLE_RAIDBOSS_BUFF_FROM_PLAYERS = config.getBoolean("DisableRaidBossBuffFromPlayers", false);
++		// L2Hub (малый мир): с выключателем — интервал и случайная добавка респауна эпиков выше в процентах от официальных,
++		// ожидание Антараса и Валакаса не дольше SmallWorldEpicsWaitTime минут, порог канала к Белету — SmallWorldEpicsMinPlayers.
++		SMALL_WORLD_EPICS = config.getBoolean("SmallWorldEpics", false);
++		SMALL_WORLD_EPICS_INTERVAL_PERCENT = Math.max(1, Math.min(100, config.getInt("SmallWorldEpicsIntervalPercent", 25)));
++		SMALL_WORLD_EPICS_WAIT_TIME = Math.max(1, config.getInt("SmallWorldEpicsWaitTime", 5));
++		SMALL_WORLD_EPICS_MIN_PLAYERS = Math.max(1, config.getInt("SmallWorldEpicsMinPlayers", 2));
++		if (SMALL_WORLD_EPICS)
++		{
++			ANTHARAS_SPAWN_INTERVAL = smallWorld(ANTHARAS_SPAWN_INTERVAL);
++			ANTHARAS_SPAWN_RANDOM = smallWorld(ANTHARAS_SPAWN_RANDOM);
++			VALAKAS_SPAWN_INTERVAL = smallWorld(VALAKAS_SPAWN_INTERVAL);
++			VALAKAS_SPAWN_RANDOM = smallWorld(VALAKAS_SPAWN_RANDOM);
++			BAIUM_SPAWN_INTERVAL = smallWorld(BAIUM_SPAWN_INTERVAL);
++			BAIUM_SPAWN_RANDOM = smallWorld(BAIUM_SPAWN_RANDOM);
++			CORE_SPAWN_INTERVAL = smallWorld(CORE_SPAWN_INTERVAL);
++			CORE_SPAWN_RANDOM = smallWorld(CORE_SPAWN_RANDOM);
++			ORFEN_SPAWN_INTERVAL = smallWorld(ORFEN_SPAWN_INTERVAL);
++			ORFEN_SPAWN_RANDOM = smallWorld(ORFEN_SPAWN_RANDOM);
++			QUEEN_ANT_SPAWN_INTERVAL = smallWorld(QUEEN_ANT_SPAWN_INTERVAL);
++			QUEEN_ANT_SPAWN_RANDOM = smallWorld(QUEEN_ANT_SPAWN_RANDOM);
++			ZAKEN_SPAWN_INTERVAL = smallWorld(ZAKEN_SPAWN_INTERVAL);
++			ZAKEN_SPAWN_RANDOM = smallWorld(ZAKEN_SPAWN_RANDOM);
++			FRINTEZZA_SPAWN_INTERVAL = smallWorld(FRINTEZZA_SPAWN_INTERVAL);
++			FRINTEZZA_SPAWN_RANDOM = smallWorld(FRINTEZZA_SPAWN_RANDOM);
++			ANTHARAS_WAIT_TIME = Math.min(ANTHARAS_WAIT_TIME, SMALL_WORLD_EPICS_WAIT_TIME);
++			VALAKAS_WAIT_TIME = Math.min(VALAKAS_WAIT_TIME, SMALL_WORLD_EPICS_WAIT_TIME);
++		}
++	}
++	
++	/**
++	 * L2Hub (малый мир): часы респауна в процентах SmallWorldEpicsIntervalPercent, не меньше часа.
++	 */
++	private static int smallWorld(int hours)
++	{
++		return Math.max(1, Math.round((hours * SMALL_WORLD_EPICS_INTERVAL_PERCENT) / 100f));
+ 	}
+ }

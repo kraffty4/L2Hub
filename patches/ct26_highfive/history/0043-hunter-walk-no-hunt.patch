@@ -1,0 +1,23 @@
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+index 50f0844..7514815 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+@@ -931,6 +931,18 @@ public class PhantomHunterManager
+ 			return;
+ 		}
+ 
++		// В дороге на спот — бежит, а не охотится по пути (патч 0043): AutoPlay цеплял мобов вокруг и гонялся за ними, и охотник,
++		// вошедший в мир посреди чужого поля, не уходил с места. Бьёт, только если бьют его.
++		if ((hunter.walkBackUntil > now) && !inDanger(player))
++		{
++			if (player.isAutoPlaying())
++			{
++				stop(player);
++			}
++			leash(hunter, player, now);
++			return;
++		}
++
+ 		if (!player.isAutoPlaying())
+ 		{
+ 			AutoPlayTaskManager.getInstance().startAutoPlay(player);

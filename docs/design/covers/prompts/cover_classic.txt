@@ -1,0 +1,12 @@
+Use your built-in image generation tool to create exactly ONE image. Do not run any shell commands and do not write any files; just generate the image and reply with one short sentence describing it.
+
+The image is a cover banner for one era ("chronicle") of a classic dark-fantasy MMORPG, shown in a desktop game launcher. Format: ultra-wide panoramic landscape, aspect ratio 12:5 (about 1942 x 809 px).
+
+Style (same series as the other covers): cinematic painterly digital fantasy illustration, rich detail, dramatic atmospheric lighting, depth haze, warm bronze-and-gold accents, epic scale, matte-painting quality.
+
+Composition rules: the key subject sits in the middle horizontal band (between 20 % and 75 % of the height), because the launcher crops the top and bottom; the lower-left quarter stays calm and darker (UI chips are placed there); the silhouette of the key subject must still read when the banner is shrunk to a 46 x 30 px thumbnail.
+
+Strict rules: completely original designs; do not copy any existing game's official artwork, characters, creature designs or logos; no text, letters, numbers, logos, watermarks, signatures or UI anywhere in the image.
+
+Scene:
+A peaceful island at early morning. A small medieval harbour village with timber-framed houses, a stone pier and a stone lighthouse; a wooden sailing ferry leaves the pier toward a distant mainland town with a castle on a hill across the strait. Morning mist over the sea, seagulls, soft golden light. On a dirt road in the foreground a group of five novice adventurers in simple cloth tunics with wooden swords and plain staffs, seen from behind walking toward the harbour: a human, an elf, a dark elf, an orc and a dwarf. Nostalgic feeling of the very first day of an early-2000s MMORPG adventure. Palette: soft morning gold, fresh green, sea blue.

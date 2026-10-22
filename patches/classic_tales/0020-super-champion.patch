@@ -1,0 +1,396 @@
+diff --git a/dist/game/config/Custom/ChampionMonsters.ini b/dist/game/config/Custom/ChampionMonsters.ini
+index efc6a94..12f2da5 100644
+--- a/dist/game/config/Custom/ChampionMonsters.ini
++++ b/dist/game/config/Custom/ChampionMonsters.ini
+@@ -117,3 +117,63 @@ ChampionBlueSpdAtk = 1.0
+ 
+ # Предметы-награды синего чемпиона: id,количество через ; (пусто — без наград).
+ ChampionBlueRewardItems =
++
++# ---------------------------------------------------------------------------
++# Суперчемпионы (L2Hub) — третий уровень над красными, мини-РБ
++# ---------------------------------------------------------------------------
++# Работают только при ChampionEnable = True. Уровни мобов, пассивность, аура, шансы предметов-наград,
++# виталити и инстансы — общие со всеми чемпионами. Шанс бросается первым: суперчемпион, затем красный,
++# затем синий. Код — entity/actor/SuperChampion.java (эффекты, объявление, список для охотников).
++
++# Включить суперчемпионов.
++SuperChampionEnable = True
++
++# Шанс суперчемпиона, % (дробный: 0.1 — один моб из тысячи; бросается при каждом появлении моба).
++SuperChampionFrequency = 0.1
++
++# Титул суперчемпиона.
++SuperChampionTitle = Legendary Champion
++
++# Множитель HP суперчемпиона.
++SuperChampionHp = 20
++
++# Множитель регенерации HP суперчемпиона.
++SuperChampionHpRegen = 2.0
++
++# Множитель опыта и SP суперчемпиона.
++SuperChampionRewardsExpSp = 20.0
++
++# Множитель шанса обычного дропа суперчемпиона.
++SuperChampionRewardsChance = 10.0
++
++# Множитель количества обычного дропа суперчемпиона.
++SuperChampionRewardsAmount = 2.0
++
++# Множитель шанса адены и печатей суперчемпиона.
++SuperChampionAdenasRewardsChance = 1.0
++
++# Множитель количества адены и печатей суперчемпиона.
++SuperChampionAdenasRewardsAmount = 10.0
++
++# Множитель P. Atk и M. Atk суперчемпиона. Не x10: так моб убивает игрока своего уровня с пары ударов;
++# x3 — как удар рейд-босса того же уровня.
++SuperChampionAtk = 3.0
++
++# Множитель скорости атаки и каста суперчемпиона.
++SuperChampionSpdAtk = 1.5
++
++# Предметы-награды суперчемпиона: id,количество через ; (пусто — без наград). 91663 — L-Coin: с мобов
++# не падает, тратится в магазине L-Coin (LimitShop).
++SuperChampionRewardItems = 91663,30
++
++# Эффекты над моделью (AbnormalVisualEffect через запятую, пусто — без эффектов): BIG_BODY — моб крупнее,
++# ULTIMATE_DEFENCE — свечение скилла Ultimate Defense, H_GOLD_STAR3_AVE — золотые звёзды. Клиент Classic знает
++# 429 эффектов из таблицы AbnormalDefaultEffect.dat (ещё H_GOLD_STAR1_AVE…H_GOLD_STAR5_AVE, HEROIC_HOLY_AVE) и старые
++# встроенные (BIG_BODY, ULTIMATE_DEFENCE). Примерить на цели в игре: //ave_abnormal (без имени — список).
++SuperChampionEffects = BIG_BODY,ULTIMATE_DEFENCE,H_GOLD_STAR3_AVE
++
++# Объявление при появлении: Region — игрокам в том же регионе карты, World — всем, Off — без объявления.
++SuperChampionAnnounce = Region
++
++# Текст объявления: %name% — моб, %level% — его уровень, %town% — ближайший город.
++SuperChampionAnnounceText = Легендарный чемпион %name% (%level% ур.) появился у %town%!
+diff --git a/java/org/l2jmobius/gameserver/config/custom/ChampionMonstersConfig.java b/java/org/l2jmobius/gameserver/config/custom/ChampionMonstersConfig.java
+index 007e9ea..e38db2d 100644
+--- a/java/org/l2jmobius/gameserver/config/custom/ChampionMonstersConfig.java
++++ b/java/org/l2jmobius/gameserver/config/custom/ChampionMonstersConfig.java
+@@ -22,10 +22,12 @@ package org.l2jmobius.gameserver.config.custom;
+ 
+ import java.util.ArrayList;
+ import java.util.List;
++import java.util.logging.Logger;
+ 
+ import org.l2jmobius.commons.util.ConfigReader;
+ import org.l2jmobius.gameserver.entity.actor.enums.creature.Team;
+ import org.l2jmobius.gameserver.entity.item.holders.ItemHolder;
++import org.l2jmobius.gameserver.mechanics.skill.AbnormalVisualEffect;
+ 
+ /**
+  * This class loads all the custom champion monster related configurations.
+@@ -35,6 +37,7 @@ public class ChampionMonstersConfig
+ {
+ 	// File
+ 	private static final String CHAMPION_MONSTERS_CONFIG_FILE = "./config/Custom/ChampionMonsters.ini";
++	private static final Logger LOGGER = Logger.getLogger(ChampionMonstersConfig.class.getName());
+ 
+ 	/**
+ 	 * Уровень чемпиона (L2Hub): красный — ключи Champion*, синий — ChampionBlue*.<br>
+@@ -52,6 +55,12 @@ public class ChampionMonstersConfig
+ 	public static int CHAMP_MAX_LEVEL;
+ 	public static Tier CHAMPION_RED;
+ 	public static Tier CHAMPION_BLUE;
++	// L2Hub: суперчемпион — третий уровень (ключи SuperChampion*), эффекты и объявление — entity/actor/SuperChampion.
++	public static Tier CHAMPION_SUPER;
++	public static boolean SUPER_CHAMPION_ENABLE;
++	public static AbnormalVisualEffect[] SUPER_CHAMPION_EFFECTS = new AbnormalVisualEffect[0];
++	public static String SUPER_CHAMPION_ANNOUNCE;
++	public static String SUPER_CHAMPION_ANNOUNCE_TEXT;
+ 	public static int CHAMPION_REWARD_LOWER_LEVEL_ITEM_CHANCE;
+ 	public static int CHAMPION_REWARD_HIGHER_LEVEL_ITEM_CHANCE;
+ 	public static boolean CHAMPION_ENABLE_VITALITY;
+@@ -67,6 +76,11 @@ public class ChampionMonstersConfig
+ 		CHAMP_MAX_LEVEL = config.getInt("ChampionMaxLevel", 60);
+ 		CHAMPION_RED = loadTier(config, "Champion", Team.RED, 7, 8, 8, "4356,10");
+ 		CHAMPION_BLUE = loadTier(config, "ChampionBlue", Team.BLUE, 2, 2, 2, "");
++		SUPER_CHAMPION_ENABLE = config.getBoolean("SuperChampionEnable", false);
++		CHAMPION_SUPER = loadTier(config, "SuperChampion", Team.RED, 20, 20, 10, "");
++		SUPER_CHAMPION_EFFECTS = superChampionEffects(config.getString("SuperChampionEffects", "BIG_BODY,ULTIMATE_DEFENCE"));
++		SUPER_CHAMPION_ANNOUNCE = config.getString("SuperChampionAnnounce", "Region");
++		SUPER_CHAMPION_ANNOUNCE_TEXT = config.getString("SuperChampionAnnounceText", "Legendary Champion %name% (%level%) has appeared near %town%!");
+ 		CHAMPION_REWARD_LOWER_LEVEL_ITEM_CHANCE = config.getInt("ChampionRewardLowerLvlItemChance", 0);
+ 		CHAMPION_REWARD_HIGHER_LEVEL_ITEM_CHANCE = config.getInt("ChampionRewardHigherLvlItemChance", 0);
+ 		CHAMPION_ENABLE_VITALITY = config.getBoolean("ChampionEnableVitality", false);
+@@ -90,4 +104,28 @@ public class ChampionMonstersConfig
+ 
+ 		return new Tier(aura, config.getString(prefix + "Title", "Champion"), config.getDouble(prefix + "Frequency", 0), config.getFloat(prefix + "Hp", hp), config.getFloat(prefix + "HpRegen", 1), config.getFloat(prefix + "RewardsExpSp", rewardsExpSp), config.getFloat(prefix + "RewardsChance", rewardsChance), config.getFloat(prefix + "RewardsAmount", 1), config.getFloat(prefix + "AdenasRewardsChance", 1), config.getFloat(prefix + "AdenasRewardsAmount", 1), config.getFloat(prefix + "Atk", 1), config.getFloat(prefix + "SpdAtk", 1), List.copyOf(items));
+ 	}
++
++	/**
++	 * L2Hub: эффекты суперчемпиона — имена AbnormalVisualEffect через запятую; неизвестные пропускаются с предупреждением.
++	 */
++	private static AbnormalVisualEffect[] superChampionEffects(String names)
++	{
++		final List<AbnormalVisualEffect> effects = new ArrayList<>();
++		for (String name : names.split(","))
++		{
++			if (name.isBlank())
++			{
++				continue;
++			}
++			try
++			{
++				effects.add(AbnormalVisualEffect.valueOf(name.trim()));
++			}
++			catch (IllegalArgumentException e)
++			{
++				LOGGER.warning("ChampionMonsters.ini: SuperChampionEffects — нет эффекта " + name.trim() + ".");
++			}
++		}
++		return effects.toArray(new AbnormalVisualEffect[0]);
++	}
+ }
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/Attackable.java b/java/org/l2jmobius/gameserver/entity/actor/Attackable.java
+index dfcc788..1f6c281 100644
+--- a/java/org/l2jmobius/gameserver/entity/actor/Attackable.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/Attackable.java
+@@ -1650,15 +1650,20 @@ public class Attackable extends Npc
+ 		// Reset champion state
+ 		_champion = null;
+ 		
+-		// Set champion on next spawn: сначала шанс красного, затем синего (L2Hub: два уровня чемпионов).
++		// Set champion on next spawn: сначала шанс суперчемпиона, затем красного, затем синего (L2Hub: три уровня чемпионов).
+ 		if (ChampionMonstersConfig.CHAMPION_ENABLE && isMonster() && !isQuestMonster() && !getTemplate().isUndying() && !_isRaid && !_isRaidMinion && (getLevel() >= ChampionMonstersConfig.CHAMP_MIN_LEVEL) && (getLevel() <= ChampionMonstersConfig.CHAMP_MAX_LEVEL) && (ChampionMonstersConfig.CHAMPION_ENABLE_IN_INSTANCES || (getInstanceId() == 0)))
+ 		{
+ 			final double roll = Rnd.nextDouble() * 100;
+-			if (roll < ChampionMonstersConfig.CHAMPION_RED.frequency())
++			final double superFrequency = ChampionMonstersConfig.SUPER_CHAMPION_ENABLE ? ChampionMonstersConfig.CHAMPION_SUPER.frequency() : 0;
++			if (roll < superFrequency)
++			{
++				_champion = ChampionMonstersConfig.CHAMPION_SUPER;
++			}
++			else if (roll < (superFrequency + ChampionMonstersConfig.CHAMPION_RED.frequency()))
+ 			{
+ 				_champion = ChampionMonstersConfig.CHAMPION_RED;
+ 			}
+-			else if (roll < (ChampionMonstersConfig.CHAMPION_RED.frequency() + ChampionMonstersConfig.CHAMPION_BLUE.frequency()))
++			else if (roll < (superFrequency + ChampionMonstersConfig.CHAMPION_RED.frequency() + ChampionMonstersConfig.CHAMPION_BLUE.frequency()))
+ 			{
+ 				_champion = ChampionMonstersConfig.CHAMPION_BLUE;
+ 			}
+@@ -1668,6 +1673,7 @@ public class Attackable extends Npc
+ 				setTeam(_champion != null ? _champion.aura() : Team.NONE, false);
+ 			}
+ 		}
++		SuperChampion.onChampion(this, _champion); // L2Hub: суперчемпион — эффекты над моделью (и снять прежние)
+ 		
+ 		// Reset the rest of NPC related states.
+ 		super.onRespawn();
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/SuperChampion.java b/java/org/l2jmobius/gameserver/entity/actor/SuperChampion.java
+new file mode 100644
+index 0000000..aa2e179
+--- /dev/null
++++ b/java/org/l2jmobius/gameserver/entity/actor/SuperChampion.java
+@@ -0,0 +1,164 @@
++/*
++ * This file is part of the L2J Mobius project.
++ *
++ * This program is free software: you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation, either version 3 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
++ * General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program. If not, see <http://www.gnu.org/licenses/>.
++ */
++package org.l2jmobius.gameserver.entity.actor;
++
++import java.util.ArrayList;
++import java.util.List;
++import java.util.Map;
++import java.util.Set;
++import java.util.concurrent.ConcurrentHashMap;
++import java.util.logging.Logger;
++
++import org.l2jmobius.gameserver.config.custom.ChampionMonstersConfig;
++import org.l2jmobius.gameserver.data.xml.MapRegionData;
++import org.l2jmobius.gameserver.entity.World;
++import org.l2jmobius.gameserver.mechanics.skill.AbnormalVisualEffect;
++import org.l2jmobius.gameserver.network.enums.ChatType;
++import org.l2jmobius.gameserver.network.serverpackets.CreatureSay;
++import org.l2jmobius.gameserver.network.serverpackets.ExShowScreenMessage;
++
++/**
++ * L2Hub: суперчемпион — третий уровень чемпионов над красными, мини-РБ (ключи SuperChampion* в config/Custom/ChampionMonsters.ini).<br>
++ * Уровень — {@link ChampionMonstersConfig#CHAMPION_SUPER} (тот же Tier, что у красных и синих); здесь — то, чего у них нет:
++ * визуальные эффекты над моделью ({@link #onChampion}, из Attackable.setChampion), объявление при появлении ({@link #announce},
++ * из места, где спавн бросает шанс чемпиона) и список живых суперчемпионов для охотников-фантомов ({@link #alive}).<br>
++ * Класс общий для хроник Mobius; в файлы Mobius врезаны только вызовы (tools/l2hub_super_champion.py).
++ * @author L2Hub
++ */
++public class SuperChampion
++{
++	private static final Logger LOGGER = Logger.getLogger(SuperChampion.class.getName());
++
++	/** Суперчемпионы с наложенными эффектами (objectId → моб и его эффекты): снять при следующем spawn, найти для охотников. */
++	private static final Map<Integer, Attackable> SUPER = new ConcurrentHashMap<>();
++	private static final Map<Integer, AbnormalVisualEffect[]> EFFECTS = new ConcurrentHashMap<>();
++
++	private SuperChampion()
++	{
++	}
++
++	/**
++	 * @param tier уровень чемпиона или null
++	 * @return это уровень суперчемпиона (сравнение по ссылке: после перечитывания конфига прежние мобы — уже не супер)
++	 */
++	public static boolean isSuper(ChampionMonstersConfig.Tier tier)
++	{
++		return (tier != null) && (tier == ChampionMonstersConfig.CHAMPION_SUPER);
++	}
++
++	/**
++	 * @param creature кто угодно
++	 * @return суперчемпион
++	 */
++	public static boolean isSuper(Creature creature)
++	{
++		return (creature != null) && isSuper(creature.getChampionTier());
++	}
++
++	/**
++	 * Из Attackable.onRespawn (бросок шанса чемпиона): снять эффекты прежнего суперчемпиона и наложить новые, если моб стал суперчемпионом.
++	 * @param npc моб
++	 * @param tier новый уровень чемпиона или null
++	 */
++	public static void onChampion(Attackable npc, ChampionMonstersConfig.Tier tier)
++	{
++		final AbnormalVisualEffect[] old = EFFECTS.remove(npc.getObjectId());
++		if (old != null)
++		{
++			npc.getEffectList().stopAbnormalVisualEffect(old);
++		}
++		if (!isSuper(tier))
++		{
++			SUPER.remove(npc.getObjectId());
++			return;
++		}
++
++		SUPER.put(npc.getObjectId(), npc);
++		final AbnormalVisualEffect[] effects = ChampionMonstersConfig.SUPER_CHAMPION_EFFECTS;
++		if (effects.length > 0)
++		{
++			EFFECTS.put(npc.getObjectId(), effects);
++			npc.getEffectList().startAbnormalVisualEffect(effects);
++		}
++	}
++
++	/**
++	 * Из EffectList.updateEffectList: у Classic и Essence эффекты над моделью пересобираются из бафов при каждом бафе и дебафе —
++	 * эффекты суперчемпиона возвращаются в новый набор, иначе первый же дебаф игрока их снимет.
++	 * @param owner владелец списка эффектов
++	 * @param flags новый набор эффектов над моделью
++	 */
++	public static void keepEffects(Creature owner, Set<AbnormalVisualEffect> flags)
++	{
++		final AbnormalVisualEffect[] effects = EFFECTS.get(owner.getObjectId());
++		if (effects != null)
++		{
++			for (AbnormalVisualEffect effect : effects)
++			{
++				flags.add(effect);
++			}
++		}
++	}
++	
++	/**
++	 * Объявление о появлении суперчемпиона (SuperChampionAnnounce: Region — игрокам в том же регионе карты, World — всем, Off — нет)
++	 * и строка в лог сервера.
++	 * @param npc только что ставший суперчемпионом моб
++	 */
++	public static void announce(Attackable npc)
++	{
++		final String town = MapRegionData.getInstance().getClosestTownName(npc);
++		final String text = ChampionMonstersConfig.SUPER_CHAMPION_ANNOUNCE_TEXT.replace("%name%", npc.getName()).replace("%level%", String.valueOf(npc.getLevel())).replace("%town%", town);
++		LOGGER.info("SuperChampion: " + npc.getName() + " (" + npc.getLevel() + ") at " + npc.getX() + ", " + npc.getY() + ", " + npc.getZ() + " — " + text);
++		final String scope = ChampionMonstersConfig.SUPER_CHAMPION_ANNOUNCE;
++		final boolean world = "World".equalsIgnoreCase(scope);
++		if (!world && !"Region".equalsIgnoreCase(scope))
++		{
++			return;
++		}
++
++		final CreatureSay say = new CreatureSay(null, ChatType.ANNOUNCEMENT, "", text);
++		final ExShowScreenMessage screen = new ExShowScreenMessage(text, 10000);
++		say.sendInBroadcast();
++		screen.sendInBroadcast();
++		final int region = MapRegionData.getInstance().getMapRegionLocId(npc);
++		for (Player player : World.getPlayers())
++		{
++			if (player.isOnline() && (world || (MapRegionData.getInstance().getMapRegionLocId(player) == region)))
++			{
++				player.sendPacket(say);
++				player.sendPacket(screen);
++			}
++		}
++	}
++
++	/**
++	 * @return живые суперчемпионы в мире — для охотников-фантомов (собраться на мини-РБ)
++	 */
++	public static List<Attackable> alive()
++	{
++		final List<Attackable> result = new ArrayList<>();
++		for (Attackable npc : SUPER.values())
++		{
++			if (isSuper(npc) && npc.isSpawned() && !npc.isDead())
++			{
++				result.add(npc);
++			}
++		}
++		return result;
++	}
++}
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/holders/creature/EffectList.java b/java/org/l2jmobius/gameserver/entity/actor/holders/creature/EffectList.java
+index 755cc76..796d434 100644
+--- a/java/org/l2jmobius/gameserver/entity/actor/holders/creature/EffectList.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/holders/creature/EffectList.java
+@@ -40,6 +40,7 @@ import org.l2jmobius.commons.threads.ThreadPool;
+ import org.l2jmobius.gameserver.config.PlayerConfig;
+ import org.l2jmobius.gameserver.entity.actor.Creature;
+ import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.entity.actor.SuperChampion;
+ import org.l2jmobius.gameserver.entity.groups.Party;
+ import org.l2jmobius.gameserver.mechanics.effects.AbstractEffect;
+ import org.l2jmobius.gameserver.mechanics.effects.EffectFlag;
+@@ -1352,6 +1353,7 @@ public class EffectList
+ 		if (broadcast)
+ 		{
+ 			// Check if there is change in AbnormalVisualEffect.
++			SuperChampion.keepEffects(_owner, abnormalVisualEffectFlags); // L2Hub: суперчемпион
+ 			if (!abnormalVisualEffectFlags.equals(_abnormalVisualEffects))
+ 			{
+ 				_abnormalVisualEffects = abnormalVisualEffectFlags;
+diff --git a/java/org/l2jmobius/gameserver/entity/spawns/Spawn.java b/java/org/l2jmobius/gameserver/entity/spawns/Spawn.java
+index 285aa51..ef89836 100644
+--- a/java/org/l2jmobius/gameserver/entity/spawns/Spawn.java
++++ b/java/org/l2jmobius/gameserver/entity/spawns/Spawn.java
+@@ -33,6 +33,7 @@ import org.l2jmobius.gameserver.config.custom.RandomSpawnsConfig;
+ import org.l2jmobius.gameserver.data.xml.NpcData;
+ import org.l2jmobius.gameserver.entity.Location;
+ import org.l2jmobius.gameserver.entity.actor.Npc;
++import org.l2jmobius.gameserver.entity.actor.SuperChampion;
+ import org.l2jmobius.gameserver.entity.actor.templates.NpcTemplate;
+ import org.l2jmobius.gameserver.entity.instancezone.Instance;
+ import org.l2jmobius.gameserver.entity.zone.type.WaterZone;
+@@ -481,6 +482,10 @@ public class Spawn extends Location
+ 		
+ 		// Spawn NPC
+ 		npc.spawnMe(newlocx, newlocy, newlocz);
++		if (npc.isAttackable() && SuperChampion.isSuper(npc))
++		{
++			SuperChampion.announce(npc.asAttackable()); // L2Hub: суперчемпион — объявление
++		}
+ 		
+ 		// Make sure info is broadcasted in instances.
+ 		if (npc.getInstanceId() > 0)

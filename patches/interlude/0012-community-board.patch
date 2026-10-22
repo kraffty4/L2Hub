@@ -1,0 +1,751 @@
+diff --git a/dist/game/config/Custom/CommunityBoard.ini b/dist/game/config/Custom/CommunityBoard.ini
+index e527a538fc58f275f0a8124ce3cd5e16bc7e24ac..a60c0a02bbba3511f5b7e159d99f322d891ddd0d 100644
+--- a/dist/game/config/Custom/CommunityBoard.ini
++++ b/dist/game/config/Custom/CommunityBoard.ini
+@@ -4,7 +4,12 @@
+ 
+ # Enable Custom Community Board.
+ # Default: False
+-CustomCommunityBoard = False
++# L2Hub: True — Alt+B с баффером, GM-шопом, телепортами и напарниками (handlers/bypass/communityboard/L2HubBoard).
++CustomCommunityBoard = True
++
++# L2Hub: NPC GM-шопа. Его мультиселлы (закрытые для остальных NPC) открываются и с доски Alt+B,
++# а GM-шоп на доске собирается из его страниц (html/merchant/<id>*.htm).
++CommunityShopNpc = 50010
+ 
+ # Currency used by the Community Board (itemId).
+ # Default: 57 (Adena)
+diff --git a/dist/game/data/html/CommunityBoard/Custom/dropsearch/main.html b/dist/game/data/html/CommunityBoard/Custom/dropsearch/main.html
+index 11bf3ae7cf010a97d341b2f3b039fe24cafd8c12..66d0630f5945caf16b66241ed188571f1983d39e 100644
+--- a/dist/game/data/html/CommunityBoard/Custom/dropsearch/main.html
++++ b/dist/game/data/html/CommunityBoard/Custom/dropsearch/main.html
+@@ -11,17 +11,17 @@
+ 		<td><center>
+ 			<table border=0 bgcolor="000000" cellpadding=0 cellspacing=0 width=500 height=415>
+ 			<tr><td height=15></td></tr>
+-			<tr><td height=25 align="center"><font color="CDB67F">Drop Search</font></td></tr>
++			<tr><td height=25 align="center"><font color="CDB67F">Поиск дропа</font></td></tr>
+ 			<tr><td><center><img src="L2UI.SquareGray" width=500 height=1></center></td></tr>
+ 			<tr><td height=15></td></tr>
+-			<tr><td align="left"><font color="CDB67F">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1. Input item name or partial name to search for items.</font></td></tr>
+-			<tr><td align="left"><font color="CDB67F">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2. Choose item icon to search for drops.</font></td></tr>
+-			<tr><td align="left"><font color="CDB67F">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3. Select an NPC, you can see its location on the world map.</font></td></tr>
++			<tr><td align="left"><font color="CDB67F">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1. Введи название предмета или его часть (по-английски, как в игре).</font></td></tr>
++			<tr><td align="left"><font color="CDB67F">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2. Нажми на иконку предмета — покажет, с кого падает.</font></td></tr>
++			<tr><td align="left"><font color="CDB67F">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3. Выбери моба — его место покажут на карте мира.</font></td></tr>
+ 			<tr><td height=15></td></tr>
+ 			<tr><td height=15 align="center">
+ 			<table><tr>
+-			<td width=70>Item name:</td><td><edit width=200 var="itemname"></td>
+-			<td><button value="Search" action="bypass _bbs_search_item $itemname" width=45 height=15 back="sek.cbui94" fore="sek.cbui92"></td>
++			<td width=70>Предмет:</td><td><edit width=200 var="itemname"></td>
++			<td><button value="Найти" action="bypass _bbs_search_item $itemname" width=45 height=15 back="sek.cbui94" fore="sek.cbui92"></td>
+ 			</tr></table></td></tr>
+ 			<tr><td height=15 align="center"></td></tr>
+ 			<tr><td height=15></td></tr>
+@@ -33,7 +33,7 @@
+ 			</table>
+ 			<table border=0 cellpadding=0 cellspacing=0 width=500><tr><td height=10></td></tr></table>
+ 			<table border=0 bgcolor="000000" cellpadding=0 cellspacing=0 width=500>
+-			<tr><td height=50 align=center><font color=696969><br>LINEAGE II - COMMUNITY BOARD</font></td></tr>
++			<tr><td height=50 align=center><font color=696969><br>L2HUB · ДОСКА СООБЩЕСТВА</font></td></tr>
+ 			</table></center></td></tr>
+ 		</table>
+ 	</body>
+diff --git a/dist/game/data/html/CommunityBoard/Custom/gatekeeper/main.html b/dist/game/data/html/CommunityBoard/Custom/gatekeeper/main.html
+index 9e1fdf7f044635cc1f087dc53856be4f82ab221e..af3aceacb4074c07cd541a37d1b001c6ec22abd9 100644
+--- a/dist/game/data/html/CommunityBoard/Custom/gatekeeper/main.html
++++ b/dist/game/data/html/CommunityBoard/Custom/gatekeeper/main.html
+@@ -3,26 +3,26 @@
+ <table width=20><tr><td>%navigation%</td><td><center>
+ <table bgcolor="000000" width=500 height=415>
+ <tr><td height=23></td></tr>
+-<tr><td height=25 align="center"><font color="CDB67F">Gatekeeper</font></td></tr>
++<tr><td height=25 align="center"><font color="CDB67F">Телепорт</font></td></tr>
+ <tr><td height=24></td></tr>
+ <tr><td><center><img src="L2UI.SquareGray" width=500 height=1></center></td></tr>
+-<tr><td height=25><center><br><br>From here you can teleport all over the continent.<br></td></tr>
++<tr><td height=25><center><br><br>Отсюда можно улететь в любой город.<br></td></tr>
+ <tr><td align="center">
+ <table align=center border="0" height=45><tr>
+-<td><button value="Giran" action="bypass _bbsteleport;Giran" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
+-<td><button value="Aden" action="bypass _bbsteleport;Aden" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
+-<td><button value="Goddard" action="bypass _bbsteleport;Goddard" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
++<td><button value="Гиран" action="bypass _bbsteleport;Giran" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
++<td><button value="Аден" action="bypass _bbsteleport;Aden" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
++<td><button value="Годдард" action="bypass _bbsteleport;Goddard" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
+ </tr><tr>
+-<td><button value="Rune" action="bypass _bbsteleport;Rune" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
+-<td><button value="Dion" action="bypass _bbsteleport;Dion" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
+-<td><button value="Oren" action="bypass _bbsteleport;Oren" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
++<td><button value="Руна" action="bypass _bbsteleport;Rune" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
++<td><button value="Дион" action="bypass _bbsteleport;Dion" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
++<td><button value="Орен" action="bypass _bbsteleport;Oren" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
+ </tr><tr>
+-<td><button value="Gludio" action="bypass _bbsteleport;Gludio" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
+-<td><button value="Schuttgart" action="bypass _bbsteleport;Schuttgart" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
+-<td><button value="Heine" action="bypass _bbsteleport;Heine" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
++<td><button value="Глудио" action="bypass _bbsteleport;Gludio" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
++<td><button value="Шутгарт" action="bypass _bbsteleport;Schuttgart" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
++<td><button value="Хейн" action="bypass _bbsteleport;Heine" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
+ </tr><tr>
+-<td><button value="Gludin" action="bypass _bbsteleport;Gludin" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
+-<td><button value="Hunters" action="bypass _bbsteleport;Hunters" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
++<td><button value="Глудин" action="bypass _bbsteleport;Gludin" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
++<td><button value="Деревня Охотников" action="bypass _bbsteleport;Hunters" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
+ </tr></table>
+ <table align=center border="0">
+ <tr><td height=20></td></tr></table>
+@@ -30,5 +30,5 @@
+ <tr><td height=60></td></tr></table>
+ <table border=0 cellpadding=0 cellspacing=0 width=500><tr><td height=10></td></tr></table>
+ <table border=0 bgcolor="000000" cellpadding=0 cellspacing=0 width=500>
+-<tr><td height=50 align=center><font color=696969><br>LINEAGE II - COMMUNITY BOARD</font></td></tr>
++<tr><td height=50 align=center><font color=696969><br>L2HUB · ДОСКА СООБЩЕСТВА</font></td></tr>
+ </table></center></td></tr></table></body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/html/CommunityBoard/Custom/home.html b/dist/game/data/html/CommunityBoard/Custom/home.html
+index 02db900c232d6d037933e7ab0130852e9086f304..ccdf199e9a689aa140916c9a6b197ba5788ea63e 100644
+--- a/dist/game/data/html/CommunityBoard/Custom/home.html
++++ b/dist/game/data/html/CommunityBoard/Custom/home.html
+@@ -27,7 +27,7 @@
+ 							<tr>
+ 								<td align="center" height=292>
+ 									<img src="L2UI_CH3.Etc.onscrmsg_pattern01_2" width="292" height="32"><br>
+-									<font color="CDB67F">Welcome to our Community Board</font>
++									<font name="hs12" color="CDB67F">L2Hub — сервер для своих</font><br><br><font color="B09878">Слева: баффер с наборами для воина и мага, GM-шоп, телепорт по городам,<br1>напарники (Весна лечит, Митяй бафает),<br1>охотники — кто где качается и торгует, и поиск дропа.</font><br><br><font color="808080">Напарникам можно писать в общий чат рядом или в чат пати: «за мной», «бафни», «хил», «рес», «пока».</font>
+ 								</td>
+ 							</tr>
+ 						</table>
+@@ -38,7 +38,7 @@
+ 						</table>
+ 						<table border=0 bgcolor="000000" cellpadding=0 cellspacing=0 width=500>
+ 							<tr>
+-								<td height=50 align=center><font color=696969><br>LINEAGE II - COMMUNITY BOARD</font></td>
++								<td height=50 align=center><font color=696969><br>L2HUB · ДОСКА СООБЩЕСТВА</font></td>
+ 							</tr>
+ 						</table>
+ 					</center>
+diff --git a/dist/game/data/html/CommunityBoard/Custom/navigation.html b/dist/game/data/html/CommunityBoard/Custom/navigation.html
+index 37d20d196f7e211219836e8ee269a80d0fa8b2ac..f8886abe35ff7925bf7ac79633d6dc963c43fe9d 100644
+--- a/dist/game/data/html/CommunityBoard/Custom/navigation.html
++++ b/dist/game/data/html/CommunityBoard/Custom/navigation.html
+@@ -1,9 +1,9 @@
+ <table valign="top" bgcolor="000000"><tr><td height=25></td></tr><tr><td>
+-<button value="Home" action="bypass _bbstop;home.html" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
+-<button value="Buffer" action="bypass _bbstop;buffer/main.html" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
+-<button value="Merchant" action="bypass _bbstop;merchant/main.html" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
+-<button value="Gatekeeper" action="bypass _bbstop;gatekeeper/main.html" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
+-<button value="Drop Search" action="bypass _bbstop;dropsearch/main.html" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
+-<button value="Delevel" action="bypass _bbstop;delevel/main.html" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
+-<button value="Premium" action="bypass _bbstop;premium/main.html" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
++<button value="Главная" action="bypass _bbstop;home.html" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
++<button value="Баффер" action="bypass _bbshubbuff" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
++<button value="GM-шоп" action="bypass _bbshubshop" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
++<button value="Телепорт" action="bypass _bbstop;gatekeeper/main.html" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
++<button value="Напарники" action="bypass _bbshubbuddy" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
++<button value="Охотники" action="bypass _bbshubhunters" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
++<button value="Поиск дропа" action="bypass _bbstop;dropsearch/main.html" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
+ </td><td height=440></td></tr></table>
+\ No newline at end of file
+diff --git a/dist/game/data/scripts/handlers/MasterHandler.java b/dist/game/data/scripts/handlers/MasterHandler.java
+index 22d62df3df9cc8592082309deb0b821a9d0607ab..d7e7b22dc23307e6535fd109af103763b75f7267 100644
+--- a/dist/game/data/scripts/handlers/MasterHandler.java
++++ b/dist/game/data/scripts/handlers/MasterHandler.java
+@@ -69,6 +69,7 @@ import handlers.bypass.communityboard.FavoriteBoard;
+ import handlers.bypass.communityboard.FriendsBoard;
+ import handlers.bypass.communityboard.HomeBoard;
+ import handlers.bypass.communityboard.HomepageBoard;
++import handlers.bypass.communityboard.L2HubBoard;
+ import handlers.bypass.communityboard.MailBoard;
+ import handlers.bypass.communityboard.MemoBoard;
+ import handlers.bypass.communityboard.RegionBoard;
+@@ -460,6 +461,7 @@ public class MasterHandler
+ 			FriendsBoard.class,
+ 			HomeBoard.class,
+ 			HomepageBoard.class,
++			L2HubBoard.class, // L2Hub: баффер, GM-шоп, напарники на Alt+B
+ 			MailBoard.class,
+ 			MemoBoard.class,
+ 			RegionBoard.class,
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..9275365a3d8d2d56dd7069529dda2a9fef42a0ec
+--- /dev/null
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+@@ -0,0 +1,464 @@
++package handlers.bypass.communityboard;
++
++import java.util.List;
++import java.util.regex.Matcher;
++import java.util.regex.Pattern;
++
++import org.l2jmobius.gameserver.cache.HtmCache;
++import org.l2jmobius.gameserver.config.custom.CommunityBoardConfig;
++import org.l2jmobius.gameserver.config.custom.PhantomsConfig;
++import org.l2jmobius.gameserver.data.SchemeBufferTable;
++import org.l2jmobius.gameserver.data.xml.MultisellData;
++import org.l2jmobius.gameserver.data.xml.SkillData;
++import org.l2jmobius.gameserver.entity.actor.Creature;
++import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.entity.actor.holders.npc.BuffSkillHolder;
++import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
++import org.l2jmobius.gameserver.entity.zone.ZoneId;
++import org.l2jmobius.gameserver.handler.CommunityBoardHandler;
++import org.l2jmobius.gameserver.handler.IParseBoardHandler;
++import org.l2jmobius.gameserver.managers.phantom.PhantomHunterUi;
++import org.l2jmobius.gameserver.managers.phantom.PhantomUi;
++import org.l2jmobius.gameserver.mechanics.skill.Skill;
++
++/**
++ * L2Hub: доска Alt+B — баффер, GM-шоп и напарники.
++ * <ul>
++ * <li>_bbshubbuff [категория] — баффер из SchemeBufferSkills.xml (как городской баффер схем): категории, по одному бафу, наборы воину и магу (FIGHTER_GROUP, MAGE_GROUP), себе или питомцу; хил и снять бафы</li>
++ * <li>_bbshubshop [страница] — GM-шоп из страниц NPC GM-шопа (html/merchant/&lt;CommunityShopNpc&gt;*.htm) с переписанными кнопками; мультиселлы — MultisellData.separateAndSendFromBoard</li>
++ * <li>_bbshubbuddy [действие имя] — окно напарников ({@link PhantomUi})</li>
++ * <li>_bbshubhunters [near|all|store] [страница] | go &lt;имя&gt; … — кто из охотников где и телепорт на их спот или к лавке ({@link PhantomHunterUi})</li>
++ * </ul>
++ */
++public class L2HubBoard implements IParseBoardHandler
++{
++	private static final String NAVIGATION_PATH = "data/html/CommunityBoard/Custom/navigation.html";
++	private static final String BUFF = "_bbshubbuff";
++	private static final String SHOP = "_bbshubshop";
++	private static final String BUDDY = "_bbshubbuddy";
++	private static final String HUNTERS = "_bbshubhunters";
++	private static final String[] COMMANDS =
++	{
++		BUFF,
++		SHOP,
++		BUDDY,
++		HUNTERS
++	};
++
++	private static final Pattern NPC_CHAT = Pattern.compile("bypass (?:-h )?npc_%objectId%_Chat (\\d+)");
++	private static final Pattern NPC_MULTISELL = Pattern.compile("bypass (?:-h )?npc_%objectId%_multisell (\\d+)");
++	private static final Pattern BODY = Pattern.compile("(?is)<body[^>]*>(.*)</body>");
++	private static final Pattern TITLE = Pattern.compile("(?is)<title>.*?</title>");
++	private static final int ICONS_PER_ROW = 10;
++
++	@Override
++	public String[] getCommandList()
++	{
++		return COMMANDS;
++	}
++
++	@Override
++	public boolean onCommand(String command, Player player)
++	{
++		final String[] args = command.strip().split("\\s+");
++		final String html;
++		if (args[0].equalsIgnoreCase(BUFF))
++		{
++			html = buffer(player, args);
++		}
++		else if (args[0].equalsIgnoreCase(SHOP))
++		{
++			html = shop(player, args);
++		}
++		else if (args[0].equalsIgnoreCase(BUDDY))
++		{
++			html = buddy(player, args);
++		}
++		else if (args[0].equalsIgnoreCase(HUNTERS))
++		{
++			html = hunters(player, args);
++		}
++		else
++		{
++			return false;
++		}
++
++		if (html != null)
++		{
++			CommunityBoardHandler.separateAndSend(html, player);
++		}
++		return false;
++	}
++
++	// ---------- Баффер ----------
++
++	/**
++	 * _bbshubbuff [категория] | set fighter|mage [pet] | one &lt;id&gt; &lt;категория&gt; [pet] | heal &lt;категория&gt; | cancel &lt;категория&gt;
++	 */
++	private static String buffer(Player player, String[] args)
++	{
++		final SchemeBufferTable table = SchemeBufferTable.getInstance();
++		final List<String> types = table.getSkillTypes();
++		String category = types.isEmpty() ? "" : types.get(0);
++		final String action = args.length > 1 ? args[1].toLowerCase() : "";
++		switch (action)
++		{
++			case "set":
++			{
++				if (canUse(player))
++				{
++					final boolean pet = (args.length > 3) && args[3].equalsIgnoreCase("pet");
++					final String group = (args.length > 2) && args[2].equalsIgnoreCase("mage") ? "MAGE_GROUP" : "FIGHTER_GROUP";
++					final Creature target = pet ? player.getSummon() : player;
++					if (target == null)
++					{
++						player.sendMessage("У тебя нет питомца.");
++					}
++					else
++					{
++						int count = 0;
++						for (int skillId : table.getSkillsIdsByType(group))
++						{
++							if (apply(player, target, table.getAvailableBuff(group, skillId)))
++							{
++								count++;
++							}
++						}
++						player.sendMessage("Бафы наложены: " + count + ".");
++					}
++				}
++				break;
++			}
++			case "one":
++			{
++				category = args.length > 3 ? args[3] : category;
++				if (canUse(player) && (args.length > 2))
++				{
++					final boolean pet = (args.length > 4) && args[4].equalsIgnoreCase("pet");
++					final Creature target = pet ? player.getSummon() : player;
++					final BuffSkillHolder holder = table.getAvailableBuff(category, parseInt(args[2]));
++					if (target == null)
++					{
++						player.sendMessage("У тебя нет питомца.");
++					}
++					else if ((holder == null) || !table.getSkillsIdsByType(category).contains(holder.getId()))
++					{
++						player.sendMessage("Такого бафа у баффера нет.");
++					}
++					else if (pay(player, holder.getPrice()))
++					{
++						apply(player, target, holder);
++					}
++				}
++				break;
++			}
++			case "heal":
++			{
++				category = args.length > 2 ? args[2] : category;
++				if (canUse(player))
++				{
++					player.setCurrentHpMp(player.getMaxHp(), player.getMaxMp());
++					player.setCurrentCp(player.getMaxCp());
++					if (player.hasSummon())
++					{
++						player.getSummon().setCurrentHpMp(player.getSummon().getMaxHp(), player.getSummon().getMaxMp());
++					}
++					player.sendMessage("HP, MP и CP восстановлены.");
++				}
++				break;
++			}
++			case "cancel":
++			{
++				category = args.length > 2 ? args[2] : category;
++				if (canUse(player))
++				{
++					player.getEffectList().stopAllBuffs(true);
++					player.getEffectList().stopAllDances(true);
++					player.sendMessage("Бафы сняты.");
++				}
++				break;
++			}
++			default:
++			{
++				if (args.length > 1)
++				{
++					category = args[1];
++				}
++				break;
++			}
++		}
++		return page(player, "Баффер", bufferContent(player, table, types, category));
++	}
++
++	private static String bufferContent(Player player, SchemeBufferTable table, List<String> types, String category)
++	{
++		final StringBuilder sb = new StringBuilder(12288);
++		sb.append("<table width=480><tr>");
++		sb.append("<td align=center>").append(button("Воину — всё", BUFF + " set fighter", 120)).append("</td>");
++		sb.append("<td align=center>").append(button("Магу — всё", BUFF + " set mage", 120)).append("</td>");
++		sb.append("<td align=center>").append(button("Хил", BUFF + " heal " + category, 120)).append("</td>");
++		sb.append("<td align=center>").append(button("Снять бафы", BUFF + " cancel " + category, 120)).append("</td>");
++		sb.append("</tr>");
++		if (player.hasSummon())
++		{
++			sb.append("<tr><td align=center>").append(button("Питомцу: воин", BUFF + " set fighter pet", 120)).append("</td>");
++			sb.append("<td align=center>").append(button("Питомцу: маг", BUFF + " set mage pet", 120)).append("</td><td></td><td></td></tr>");
++		}
++		sb.append("</table><br>");
++
++		sb.append("<table width=480><tr>");
++		int column = 0;
++		for (String type : types)
++		{
++			if ((column > 0) && ((column % 6) == 0))
++			{
++				sb.append("</tr><tr>");
++			}
++			sb.append("<td align=center>").append(button(type.equalsIgnoreCase(category) ? "[" + categoryName(type) + "]" : categoryName(type), BUFF + " " + type, 80)).append("</td>");
++			column++;
++		}
++		sb.append("</tr></table><br>");
++
++		sb.append("<font color=\"LEVEL\">").append(categoryName(category)).append("</font> — нажми на иконку, чтобы наложить баф").append(player.hasSummon() ? " (ниже — питомцу)" : "").append("<br1>");
++		sb.append(iconGrid(table, category, ""));
++		if (player.hasSummon())
++		{
++			sb.append("<br><font color=\"B09878\">Питомцу</font><br1>").append(iconGrid(table, category, " pet"));
++		}
++		return sb.toString();
++	}
++
++	private static String iconGrid(SchemeBufferTable table, String category, String suffix)
++	{
++		final StringBuilder sb = new StringBuilder(6144);
++		sb.append("<table cellspacing=4><tr>");
++		int column = 0;
++		for (int skillId : table.getSkillsIdsByType(category))
++		{
++			if ((column > 0) && ((column % ICONS_PER_ROW) == 0))
++			{
++				sb.append("</tr><tr>");
++			}
++			sb.append("<td width=32 height=32><button value=\" \" action=\"bypass ").append(BUFF).append(" one ").append(skillId).append(' ').append(category).append(suffix).append("\" width=32 height=32 back=\"").append(icon(skillId)).append("\" fore=\"").append(icon(skillId)).append("\"></td>");
++			column++;
++		}
++		return sb.append("</tr></table>").toString();
++	}
++
++	private static boolean apply(Player player, Creature target, BuffSkillHolder holder)
++	{
++		if (holder == null)
++		{
++			return false;
++		}
++
++		final Skill skill = SkillData.getInstance().getSkill(holder.getId(), holder.getLevel());
++		if (skill == null)
++		{
++			return false;
++		}
++
++		skill.applyEffects(player, target);
++		return true;
++	}
++
++	private static boolean pay(Player player, int price)
++	{
++		return (price <= 0) || player.reduceAdena(ItemProcessType.FEE, price, player, true);
++	}
++
++	/**
++	 * Как у доски Mobius: в бою, на олимпиаде, в осаде, с PvP-флагом, мёртвым или с кармой — нельзя.
++	 */
++	private static boolean canUse(Player player)
++	{
++		if (CommunityBoardConfig.COMMUNITYBOARD_KARMA_DISABLED && (player.getKarma() > 0))
++		{
++			player.sendMessage("С кармой доской пользоваться нельзя.");
++			return false;
++		}
++
++		if (CommunityBoardConfig.COMMUNITYBOARD_COMBAT_DISABLED && (player.isCastingNow() || player.isInCombat() || player.isInDuel() || player.isInOlympiadMode() || player.isInsideZone(ZoneId.SIEGE) || player.isInsideZone(ZoneId.PVP) || (player.getPvpFlag() > 0) || player.isAlikeDead() || player.isOnEvent() || player.isInStoreMode()))
++		{
++			player.sendMessage("Сейчас нельзя: ты в бою, мёртв или на событии.");
++			return false;
++		}
++
++		if (CommunityBoardConfig.COMMUNITYBOARD_PEACE_ONLY && !player.isInsideZone(ZoneId.PEACE))
++		{
++			player.sendMessage("Доской можно пользоваться только в мирной зоне.");
++			return false;
++		}
++		return true;
++	}
++
++	private static String categoryName(String type)
++	{
++		switch (type.toLowerCase())
++		{
++			case "buffs":
++			{
++				return "Бафы";
++			}
++			case "dances":
++			{
++				return "Танцы";
++			}
++			case "songs":
++			{
++				return "Песни";
++			}
++			case "chants":
++			{
++				return "Чанты";
++			}
++			case "special":
++			{
++				return "Особые";
++			}
++			case "resist":
++			{
++				return "Резисты";
++			}
++			default:
++			{
++				return type;
++			}
++		}
++	}
++
++	private static String icon(int skillId)
++	{
++		return skillId < 1000 ? String.format("icon.skill%04d", skillId) : "icon.skill" + skillId;
++	}
++
++	// ---------- GM-шоп ----------
++
++	/**
++	 * _bbshubshop [страница] | ms &lt;мультиселл&gt; &lt;страница&gt;
++	 */
++	private static String shop(Player player, String[] args)
++	{
++		int pageId = 0;
++		if ((args.length > 3) && args[1].equalsIgnoreCase("ms"))
++		{
++			pageId = parseInt(args[3]);
++			if (canUse(player))
++			{
++				MultisellData.getInstance().separateAndSendFromBoard(parseInt(args[2]), player);
++			}
++		}
++		else if (args.length > 1)
++		{
++			pageId = parseInt(args[1]);
++		}
++
++		final int npcId = CommunityBoardConfig.COMMUNITY_SHOP_NPC;
++		String htm = HtmCache.getInstance().getHtm(player, "data/html/merchant/" + npcId + (pageId > 0 ? "-" + pageId : "") + ".htm");
++		if (htm == null)
++		{
++			htm = HtmCache.getInstance().getHtm(player, "data/html/merchant/" + npcId + ".htm");
++			pageId = 0;
++		}
++		if (htm == null)
++		{
++			return page(player, "GM-шоп", "Нет страниц GM-шопа (NPC " + npcId + ").");
++		}
++
++		final Matcher body = BODY.matcher(htm);
++		String content = TITLE.matcher(body.find() ? body.group(1) : htm).replaceAll("");
++		content = NPC_CHAT.matcher(content).replaceAll("bypass " + SHOP + " $1");
++		content = NPC_MULTISELL.matcher(content).replaceAll("bypass " + SHOP + " ms $1 " + pageId);
++		if (pageId > 0)
++		{
++			content = button("В начало GM-шопа", SHOP, 150) + "<br>" + content;
++		}
++		return page(player, "GM-шоп", content);
++	}
++
++	// ---------- Напарники ----------
++
++	/**
++	 * _bbshubbuddy [действие имя]
++	 */
++	private static String buddy(Player player, String[] args)
++	{
++		if (!PhantomsConfig.PHANTOMS_ENABLED)
++		{
++			return page(player, "Напарники", "Напарники выключены (EnablePhantoms в Phantoms.ini).");
++		}
++
++		if (args.length > 1)
++		{
++			final String error = PhantomUi.handle(player, args[1], args.length > 2 ? args[2] : null);
++			if (error != null)
++			{
++				player.sendMessage(error);
++			}
++		}
++		return page(player, "Напарники", PhantomUi.render(player, "bypass " + BUDDY));
++	}
++
++	// ---------- Охотники ----------
++
++	/**
++	 * _bbshubhunters [near|all|store] [страница] | go &lt;имя&gt; [вкладка] [страница]
++	 */
++	private static String hunters(Player player, String[] args)
++	{
++		if (!PhantomsConfig.PHANTOMS_ENABLED)
++		{
++			return page(player, "Охотники", "Фантомы выключены (EnablePhantoms в Phantoms.ini).");
++		}
++
++		int i = 1;
++		if ((args.length > 2) && args[1].equalsIgnoreCase("go"))
++		{
++			if (canUse(player))
++			{
++				final String error = PhantomHunterUi.teleport(player, args[2]);
++				if (error == null)
++				{
++					return null; // улетел — доска закрыта
++				}
++				player.sendMessage(error);
++			}
++			i = 3;
++		}
++		return page(player, "Охотники", PhantomHunterUi.board(player, args.length > i ? args[i] : null, args.length > (i + 1) ? parseInt(args[i + 1]) : 0, "bypass " + HUNTERS));
++	}
++
++	// ---------- Общее ----------
++
++	/**
++	 * Страница доски в общем оформлении: навигация слева, справа заголовок и содержимое.
++	 */
++	private static String page(Player player, String title, String content)
++	{
++		final String navigation = HtmCache.getInstance().getHtm(player, NAVIGATION_PATH);
++		return "<html><body><table width=700><tr><td height=10></td></tr></table><table width=20><tr><td valign=top>" + (navigation != null ? navigation : "") + "</td><td valign=top><center>" //
++			+ "<table border=0 cellpadding=0 cellspacing=0 width=500>" //
++			+ "<tr><td height=15></td></tr><tr><td align=center><font name=\"hs12\" color=\"CDB67F\">" + title + "</font></td></tr>" //
++			+ "<tr><td><center><img src=\"L2UI.SquareGray\" width=200 height=1></center></td></tr><tr><td height=10></td></tr>" //
++			+ "<tr><td align=center>" + content + "</td></tr><tr><td height=15></td></tr></table>" //
++			+ "</center></td></tr></table></body></html>";
++	}
++
++	private static String button(String label, String action, int width)
++	{
++		// Шире 90 — BigButton3: Btn1_normal в клиенте Interlude не растягивается.
++		return "<button value=\"" + label + "\" action=\"bypass " + action + "\" width=" + width + " height=25 back=\"" + (width > 90 ? "L2UI_ch3.BigButton3_over" : "L2UI_ch3.Btn1_normalOn") + "\" fore=\"" + (width > 90 ? "L2UI_ch3.BigButton3" : "L2UI_ch3.Btn1_normal") + "\">";
++	}
++
++	private static int parseInt(String value)
++	{
++		try
++		{
++			return Integer.parseInt(value);
++		}
++		catch (NumberFormatException e)
++		{
++			return 0;
++		}
++	}
++}
+diff --git a/java/org/l2jmobius/gameserver/config/custom/CommunityBoardConfig.java b/java/org/l2jmobius/gameserver/config/custom/CommunityBoardConfig.java
+index 010d9c5c89ecbc042a18d83e2aac668dccc404c6..e4d8b4321b99df07f8c0f84d4759429b44c0c0ae 100644
+--- a/java/org/l2jmobius/gameserver/config/custom/CommunityBoardConfig.java
++++ b/java/org/l2jmobius/gameserver/config/custom/CommunityBoardConfig.java
+@@ -44,6 +44,7 @@ public class CommunityBoardConfig
+ 	public static boolean COMMUNITYBOARD_ENABLE_TELEPORTS;
+ 	public static boolean COMMUNITYBOARD_ENABLE_BUFFS;
+ 	public static boolean COMMUNITYBOARD_ENABLE_HEAL;
++	public static int COMMUNITY_SHOP_NPC;
+ 	public static boolean COMMUNITYBOARD_ENABLE_DELEVEL;
+ 	public static int COMMUNITYBOARD_TELEPORT_PRICE;
+ 	public static int COMMUNITYBOARD_BUFF_PRICE;
+@@ -68,6 +69,7 @@ public class CommunityBoardConfig
+ 		COMMUNITYBOARD_ENABLE_TELEPORTS = config.getBoolean("CommunityEnableTeleports", true);
+ 		COMMUNITYBOARD_ENABLE_BUFFS = config.getBoolean("CommunityEnableBuffs", true);
+ 		COMMUNITYBOARD_ENABLE_HEAL = config.getBoolean("CommunityEnableHeal", true);
++		COMMUNITY_SHOP_NPC = config.getInt("CommunityShopNpc", 50010);
+ 		COMMUNITYBOARD_ENABLE_DELEVEL = config.getBoolean("CommunityEnableDelevel", false);
+ 		COMMUNITYBOARD_TELEPORT_PRICE = config.getInt("CommunityTeleportPrice", 0);
+ 		COMMUNITYBOARD_BUFF_PRICE = config.getInt("CommunityBuffPrice", 0);
+diff --git a/java/org/l2jmobius/gameserver/data/xml/MultisellData.java b/java/org/l2jmobius/gameserver/data/xml/MultisellData.java
+index 0aca43a197f19a378a047fdbe7c721f3752d780b..46a5688f00d61f4e802eb361e6252f6afeeb53a8 100644
+--- a/java/org/l2jmobius/gameserver/data/xml/MultisellData.java
++++ b/java/org/l2jmobius/gameserver/data/xml/MultisellData.java
+@@ -35,6 +35,7 @@ import org.w3c.dom.Node;
+ import org.l2jmobius.commons.util.IXmlReader;
+ import org.l2jmobius.gameserver.config.ConfigLoader;
+ import org.l2jmobius.gameserver.config.GeneralConfig;
++import org.l2jmobius.gameserver.config.custom.CommunityBoardConfig;
+ import org.l2jmobius.gameserver.entity.actor.Npc;
+ import org.l2jmobius.gameserver.entity.actor.Player;
+ import org.l2jmobius.gameserver.entity.clan.Clan;
+@@ -313,6 +314,32 @@ public class MultisellData implements IXmlReader
+ 	{
+ 		separateAndSend(listId, player, npc, inventoryOnly, 1, 1);
+ 	}
++
++	/**
++	 * L2Hub: мультиселл GM-шопа с доски Alt+B. Открываются только списки без ограничений и списки, разрешённые NPC GM-шопа ({@code CommunityShopNpc} в CommunityBoard.ini): с доски — то же, что у NPC в городе. При покупке такой список NPC рядом не требует.
++	 * @param listId мультиселл
++	 * @param player игрок
++	 */
++	public void separateAndSendFromBoard(int listId, Player player)
++	{
++		final ListContainer template = _entries.get(listId);
++		if ((template == null) || (!template.isNpcAllowed(-1) && !template.isNpcAllowed(CommunityBoardConfig.COMMUNITY_SHOP_NPC)))
++		{
++			LOGGER.warning(getClass().getSimpleName() + ": " + player + " attempted to open multisell " + listId + " from the community board which is not allowed!");
++			return;
++		}
++
++		final PreparedListContainer list = new PreparedListContainer(template, false, player, null);
++		list.setFromBoard(true);
++		int index = 0;
++		do
++		{
++			player.sendPacket(new MultiSellList(list, index));
++			index += PAGE_SIZE;
++		}
++		while (index < list.getEntries().size());
++		player.setMultiSell(list);
++	}
+ 	
+ 	public static boolean hasSpecialIngredient(int id, long amount, Player player)
+ 	{
+diff --git a/java/org/l2jmobius/gameserver/mechanics/multisell/PreparedListContainer.java b/java/org/l2jmobius/gameserver/mechanics/multisell/PreparedListContainer.java
+index 3a9d73f5341d2a3c6fbd260ae7a5ba3c942cc365..c47c20611883ea9a3fa2ee4d10c07c8b1eb2463a 100644
+--- a/java/org/l2jmobius/gameserver/mechanics/multisell/PreparedListContainer.java
++++ b/java/org/l2jmobius/gameserver/mechanics/multisell/PreparedListContainer.java
+@@ -30,6 +30,7 @@ import org.l2jmobius.gameserver.entity.item.instance.Item;
+ public class PreparedListContainer extends ListContainer
+ {
+ 	private int _npcObjectId = 0;
++	private boolean _fromBoard;
+ 	
+ 	public PreparedListContainer(ListContainer template, boolean inventoryOnly, Player player, Npc npc)
+ 	{
+@@ -97,4 +98,18 @@ public class PreparedListContainer extends ListContainer
+ 	{
+ 		return (_npcObjectId == 0) || (_npcObjectId == npcObjectId);
+ 	}
++
++	/**
++	 * L2Hub: список открыт с доски Alt+B (GM-шоп без NPC рядом) — при покупке NPC рядом не нужен.
++	 * @return {@code true}, если открыт с доски
++	 */
++	public boolean isFromBoard()
++	{
++		return _fromBoard;
++	}
++
++	public void setFromBoard(boolean fromBoard)
++	{
++		_fromBoard = fromBoard;
++	}
+ }
+diff --git a/java/org/l2jmobius/gameserver/network/clientpackets/MultiSellChoose.java b/java/org/l2jmobius/gameserver/network/clientpackets/MultiSellChoose.java
+index 627851a3082d833e26d1a2d9b2501d60b5bfe5c1..341fcb786d703d1a6d5b3d990ce4116dbef9ef43 100644
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/MultiSellChoose.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/MultiSellChoose.java
+@@ -88,7 +88,8 @@ public class MultiSellChoose extends ClientPacket
+ 		}
+ 		
+ 		final Npc npc = player.getLastFolkNPC();
+-		if (!list.isNpcAllowed(-1))
++		// L2Hub: список GM-шопа, открытый с доски Alt+B (MultisellData.separateAndSendFromBoard), NPC рядом не требует.
++		if (!list.isNpcAllowed(-1) && !list.isFromBoard())
+ 		{
+ 			if ((npc == null) //
+ 				|| !list.isNpcAllowed(npc.getId()) //

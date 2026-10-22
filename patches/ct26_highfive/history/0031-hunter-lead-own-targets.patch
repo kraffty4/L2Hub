@@ -1,0 +1,232 @@
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java
+index 4e0e39a..8b04a00 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java
+@@ -22,6 +22,7 @@ import org.l2jmobius.gameserver.entity.groups.PartyDistributionType;
+ import org.l2jmobius.gameserver.entity.item.instance.Item;
+ import org.l2jmobius.gameserver.entity.zone.ZoneId;
+ import org.l2jmobius.gameserver.geoengine.GeoEngine;
++import org.l2jmobius.gameserver.managers.phantom.HuntSpotData.HuntSpot;
+ import org.l2jmobius.gameserver.managers.phantom.PhantomChat.Event;
+ import org.l2jmobius.gameserver.managers.phantom.PhantomOrders.Order;
+ import org.l2jmobius.gameserver.mechanics.skill.Skill;
+@@ -31,7 +32,6 @@ import org.l2jmobius.gameserver.network.serverpackets.CreatureSay;
+ import org.l2jmobius.gameserver.network.serverpackets.JoinParty;
+ import org.l2jmobius.gameserver.network.serverpackets.SystemMessage;
+ import org.l2jmobius.gameserver.taskmanagers.AutoPlayTaskManager;
+-import org.l2jmobius.gameserver.taskmanagers.AutoUseTaskManager;
+ 
+ /**
+  * L2Hub: напарники — фантомы в пати с живым игроком (этап 2: пати, follow, assist, защита, догоняющий телепорт).<br>
+@@ -82,8 +82,14 @@ public class PhantomCompanionManager
+ 	private static final int LEAD_RETURN = 2500;
+ 	/** Владелец дальше этого — телепорт к нему. */
+ 	private static final int LEAD_TELEPORT = 4000;
+-	/** Цель дальше этого от владельца — бросить, AutoPlay возьмёт ближе. */
+-	private static final int LEAD_TARGET_RANGE = 2200;
++	/** Цель дальше этого от владельца — бросить и взять ближе (владелец идёт следом — с запасом). */
++	private static final int LEAD_TARGET_RANGE = 3000;
++	/**
++	 * Свободных мобов искать в этом радиусе вокруг охотника (патч 0031, решение автора: «паровоз ищет мобов в большом радиусе, сижу-качай — вокруг игрока»).
++	 */
++	private static final int LEAD_RADIUS = 2500;
++	/** Мобы сильнее охотника больше чем на столько уровней — самому не брать. */
++	private static final int LEAD_LEVEL_UP = 5;
+ 
+ 	public enum Mode
+ 	{
+@@ -630,7 +636,7 @@ public class PhantomCompanionManager
+ 			return "тебя позвал " + owner.getName() + ", ждёшь, когда он пригласит в пати";
+ 		}
+ 
+-		final String where = companion.mode == Mode.STAY ? "по его приказу стоишь на месте" : "идёшь за ним следом";
++		final String where = companion.mode == Mode.STAY ? "по его приказу стоишь на месте" : companion.mode == Mode.LEAD ? "ты впереди, он идёт за тобой" : "идёшь за ним следом";
+ 		final String doing;
+ 		if (template.getRole() == PhantomTemplate.Role.HEALER)
+ 		{
+@@ -642,7 +648,7 @@ public class PhantomCompanionManager
+ 		}
+ 		else
+ 		{
+-			doing = companion.mode == Mode.LEAD ? "ведёшь кач: сам качаешься, он идёт за тобой" : companion.mode == Mode.HUNT ? "качаешься рядом с ним: сам бьёшь всех мобов вокруг"
++			doing = companion.mode == Mode.LEAD ? "ведёшь кач: сам выбираешь мобов и бьёшь, нет рядом — ведёшь его к споту" : companion.mode == Mode.HUNT ? "качаешься рядом с ним: сам бьёшь всех мобов вокруг"
+ 				: companion.mode == Mode.ASSIST ? "бьёшь его цель" : "только защищаешься";
+ 		}
+ 		return "в пати с " + owner.getName() + ": " + where + ", " + doing + (PhantomSupport.isSitOrdered(phantom) ? ", по его просьбе сидишь отдыхаешь" : "");
+@@ -1078,31 +1084,35 @@ public class PhantomCompanionManager
+ 	}
+ 
+ 	/**
+-	 * «Паровозик» (патч 0029): охотник качается сам родным AutoPlay, как на споте — свои цели (дальний поиск), скиллы AutoUse, подбор; маг под ударами отмахивается.
+-	 * В пати AutoPlay не тянется за лидером ({@code AssistLeader = False}).
+-	 * Владелец догоняет с задержкой Follow, поэтому пороги с запасом и с гистерезисом (патч 0030), иначе охотник метался бы туда-сюда:
++	 * «Паровозик»: охотник ведёт кач сам, своими целями (патч 0031: родной AutoPlay в пати брал только мобов, до которых путь по прямой, —
++	 * на холмах и в толчее охотников не находил никого и стоял). Бьёт и добивает свободных мобов в {@link #LEAD_RADIUS} вокруг себя, защищается, подбирает;
++	 * мобов рядом нет — ведёт к ближайшему споту по силам и бьёт всех по дороге. Бой — тот же {@link #attack}: скиллы, маг отмахивается под ударами.
++	 * Владелец догоняет с задержкой Follow — пороги с запасом и с гистерезисом (патч 0030), иначе охотник метался бы туда-сюда:
+ 	 * отстал дальше {@link #LEAD_WAIT} — ждёт (новых мобов не берёт, того, кто бьёт его, добивает) до {@link #LEAD_RESUME};
+ 	 * дальше {@link #LEAD_RETURN} — идёт к нему; дальше {@link #LEAD_TELEPORT} — телепорт к нему (в {@link #think}).
+ 	 */
+ 	private static void lead(Companion companion, Player phantom, Player owner)
+ 	{
++		if (phantom.isAutoPlaying())
++		{
++			AutoPlayTaskManager.getInstance().stopAutoPlay(phantom);
++		}
++		if (phantom.isCastingNow())
++		{
++			return;
++		}
++
+ 		final double distance = phantom.calculateDistance2D(owner);
+ 		if (companion.leadWaiting ? (distance > LEAD_RESUME) : (distance > LEAD_WAIT))
+ 		{
+ 			companion.leadWaiting = true;
+-			final WorldObject current = phantom.getTarget();
+-			final boolean fighting = (current instanceof Monster) && !((Monster) current).isAlikeDead() && (((Monster) current).getTarget() == phantom);
+-			if (fighting)
++			final Monster attacker = attackerOf(companion, phantom, owner);
++			if (attacker != null)
+ 			{
+-				startLeadAutoPlay(phantom);
++				attack(phantom, attacker);
+ 				return;
+ 			}
+-
+-			if (phantom.isAutoPlaying())
+-			{
+-				AutoPlayTaskManager.getInstance().stopAutoPlay(phantom);
+-			}
+-			if ((distance > LEAD_RETURN) && !phantom.isAttackingNow() && !phantom.isCastingNow() && !phantom.isMoving())
++			if ((distance > LEAD_RETURN) && !phantom.isAttackingNow() && !phantom.isMoving())
+ 			{
+ 				phantom.setRunning();
+ 				phantom.getAI().setIntentionMoveTo(new Location(owner.getX(), owner.getY(), owner.getZ()));
+@@ -1111,28 +1121,114 @@ public class PhantomCompanionManager
+ 		}
+ 		companion.leadWaiting = false;
+ 
+-		// Цель совсем далеко от владельца — опыт пати мимо: пусть AutoPlay возьмёт ближе. Пока бежит к ней — не трогать.
+-		final WorldObject target = phantom.getTarget();
+-		if ((target instanceof Monster) && !phantom.isAttackingNow() && !phantom.isCastingNow() && !phantom.isMoving() && (owner.calculateDistance2D(target) > LEAD_TARGET_RANGE))
++		final Creature enemy = leadEnemy(companion, phantom, owner);
++		if (enemy != null)
++		{
++			attack(phantom, enemy);
++			return;
++		}
++		if (phantom.getAI().getIntention() == Intention.ATTACK)
++		{
++			calmDown(phantom);
++		}
++		if (pickUp(phantom))
++		{
++			return;
++		}
++
++		// Мобов рядом нет — к ближайшему споту по силам: там они есть, по дороге — бьёт встречных.
++		final HuntSpot spot = nearestLeadSpot(phantom);
++		if ((spot != null) && (phantom.calculateDistance2D(spot.entry) > (spot.radius / 2)) && !phantom.isMoving())
++		{
++			phantom.setRunning();
++			phantom.getAI().setIntentionMoveTo(spot.entry);
++		}
++	}
++
++	/**
++	 * Кого бить в «паровозике»: свою цель (жива, не чужая, не дальше {@link #LEAD_TARGET_RANGE} от владельца), того, кто бьёт нас или пати,
++	 * иначе ближайшего свободного моба в {@link #LEAD_RADIUS} вокруг себя: не РБ, не сильнее охотника больше чем на {@link #LEAD_LEVEL_UP}, не далеко от владельца.
++	 */
++	private static Creature leadEnemy(Companion companion, Player phantom, Player owner)
++	{
++		final WorldObject current = phantom.getTarget();
++		if ((current instanceof Monster) && isEnemy(phantom, (Monster) current) && !takenByOthers((Monster) current, phantom) && (owner.calculateDistance2D(current) <= LEAD_TARGET_RANGE))
++		{
++			return (Monster) current;
++		}
++
++		final Monster attacker = attackerOf(companion, phantom, owner);
++		if (attacker != null)
++		{
++			return attacker;
++		}
++
++		Monster nearest = null;
++		double nearestDistance = Double.MAX_VALUE;
++		for (Monster monster : World.getVisibleObjectsInRange(phantom, Monster.class, LEAD_RADIUS))
++		{
++			if (!isEnemy(phantom, monster) || monster.isRaid() || (monster.getLevel() > (phantom.getLevel() + LEAD_LEVEL_UP)) || takenByOthers(monster, phantom) || (owner.calculateDistance2D(monster) > LEAD_TARGET_RANGE))
++			{
++				continue;
++			}
++
++			final double distance = phantom.calculateDistance2D(monster);
++			if (distance < nearestDistance)
++			{
++				nearest = monster;
++				nearestDistance = distance;
++			}
++		}
++		return nearest;
++	}
++
++	/**
++	 * @return ближайший моб, который бьёт охотника или пати ({@link #attacksUs}), в {@code PhantomDefendRange}, или {@code null}
++	 */
++	private static Monster attackerOf(Companion companion, Player phantom, Player owner)
++	{
++		Monster nearest = null;
++		double nearestDistance = Double.MAX_VALUE;
++		for (Monster monster : World.getVisibleObjectsInRange(phantom, Monster.class, PhantomPartyConfig.PHANTOM_DEFEND_RANGE))
+ 		{
+-			phantom.setTarget(null);
++			if (!isEnemy(phantom, monster) || !attacksUs(monster, companion, phantom, owner))
++			{
++				continue;
++			}
++
++			final double distance = phantom.calculateDistance2D(monster);
++			if (distance < nearestDistance)
++			{
++				nearest = monster;
++				nearestDistance = distance;
++			}
+ 		}
+-		startLeadAutoPlay(phantom);
++		return nearest;
+ 	}
+ 
+-	private static void startLeadAutoPlay(Player phantom)
++	/**
++	 * Ближайший спот по силам охотника: не перерос (как в {@code PhantomHunterManager}: уровень не выше max + 3), мобы не сильнее {@link #LEAD_LEVEL_UP} уровней.
++	 */
++	private static HuntSpot nearestLeadSpot(Player phantom)
+ 	{
+-		if (!phantom.isAutoPlaying())
++		final int level = phantom.getLevel();
++		HuntSpot nearest = null;
++		double nearestDistance = Double.MAX_VALUE;
++		for (HuntSpot spot : HuntSpotData.getInstance().getSpots())
+ 		{
+-			if (phantom.isSitting())
++			if ((level > (spot.max + 3)) || (spot.level > (level + LEAD_LEVEL_UP)))
++			{
++				continue;
++			}
++
++			final double distance = phantom.calculateDistance2D(spot.entry);
++			if (distance < nearestDistance)
+ 			{
+-				phantom.standUp();
++				nearest = spot;
++				nearestDistance = distance;
+ 			}
+-			phantom.getAutoPlaySettings().setNextTargetMode(1); // мобы
+-			AutoPlayTaskManager.getInstance().startAutoPlay(phantom);
+-			AutoUseTaskManager.getInstance().startAutoUseTask(phantom);
+ 		}
+-		PhantomHunterOutfit.syncMelee(phantom);
++		return nearest;
+ 	}
+ 
+ 	/**

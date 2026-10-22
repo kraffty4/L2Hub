@@ -1,0 +1,5 @@
+{
+  "archive": "downloads/L2J_Mobius_Classic_3.5_TalesUntold_2026-10-20.zip",
+  "build": "L2J_Mobius_Classic_3.5_TalesUntold",
+  "note": "Чистые исходники Mobius, от которых считается glue.patch (tools/phantoms_glue.py): архив сборки, с которой развёрнуто дерево servers/classic_tales."
+}

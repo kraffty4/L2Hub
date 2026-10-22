@@ -1,0 +1,220 @@
+diff --git a/dist/game/data/html/mods/NpcView/AggroList.htm b/dist/game/data/html/mods/NpcView/AggroList.htm
+index 370e18bb1264c8a7d99825dcb177e917e6eadd10..029bcf7ba97b9b7be1569e42f8cb22abe323546c 100644
+--- a/dist/game/data/html/mods/NpcView/AggroList.htm
++++ b/dist/game/data/html/mods/NpcView/AggroList.htm
+@@ -1,15 +1,15 @@
+ <html>
+ <head>
+-	<title>NPC Aggro List %npc_name% (%npcId%)</title>
++	<title>Агро: %npc_name% (%npcId%)</title>
+ </head>
+ <body>
+-<center><button value="Refresh" action="bypass NpcViewMod aggrolist %objid%" width=60 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></center>
++<center><button value="Обновить" action="bypass NpcViewMod aggrolist %objid%" width=60 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></center>
+ <table width=260 height=40 cellspacing=0 background="L2UI_CT1.Button_DF_Calculator">
+ 	<tr>
+ 		<td width=10></td>
+-		<td width=100>Hated Name</td>
+-		<td width=70 align=center>Hate</td>
+-		<td width=70 align=center>Damage</td>
++		<td width=100>Кого</td>
++		<td width=70 align=center>Агро</td>
++		<td width=70 align=center>Урон</td>
+ 		<td width=10></td>
+ 	</tr>
+ </table>
+diff --git a/dist/game/data/html/mods/NpcView/DropList.htm b/dist/game/data/html/mods/NpcView/DropList.htm
+index a6d554e625db34fc40ea6b885ae1273ee2512cda..8eeee29bbbc8b1ac20562529c0e51fd7d024897d 100644
+--- a/dist/game/data/html/mods/NpcView/DropList.htm
++++ b/dist/game/data/html/mods/NpcView/DropList.htm
+@@ -1,6 +1,6 @@
+ <html>
+ <head>
+-	<title>NPC Drop List - %name%</title>
++	<title>Дроп и спойл: %name%</title>
+ </head>
+ <body>
+ <center>
+diff --git a/dist/game/data/html/mods/NpcView/Info.htm b/dist/game/data/html/mods/NpcView/Info.htm
+index d2baa3548c3f5415f94e0f78d4457d90e918e025..2f681b5002b892f45277abc72f1b29e83f64c55e 100644
+--- a/dist/game/data/html/mods/NpcView/Info.htm
++++ b/dist/game/data/html/mods/NpcView/Info.htm
+@@ -1,6 +1,6 @@
+ <html>
+ <head>
+-	<title>NPC Info - %name% (%npcId%)</title>
++	<title>%name% (%npcId%)</title>
+ </head>
+ <body>
+ <table width=275 cellpadding=0 cellspacing=0>
+@@ -18,71 +18,71 @@
+ </tr>
+ </table>
+ <br>
+-<center><font color="LEVEL">Respawn:</font> %respawn%</center><br>
+-<center><font color="LEVEL">Stats</font></center>
++<center><font color="LEVEL">Респаун:</font> %respawn%</center><br>
++<center><font color="LEVEL">Характеристики</font></center>
+ <table width=275 cellpadding=0 cellspacing=0>
+ 	<tr>
+-		<td width=68 align=right><font color="LEVEL">Atk. Type:</font></td>
++		<td width=68 align=right><font color="LEVEL">Тип атаки:</font></td>
+ 		<td width=70 align=center>%atktype%</td>
+-		<td width=67 align=right><font color="LEVEL">Atk. Range:</font></td>
++		<td width=67 align=right><font color="LEVEL">Дальность:</font></td>
+ 		<td width=70 align=center>%atkrange%</td>
+ 	</tr>
+ 	<tr>
+-		<td width=68 align=right><font color="LEVEL">P. Atk:</font></td>
++		<td width=68 align=right><font color="LEVEL">Физ. атк:</font></td>
+ 		<td width=70 align=center>%patk%</td>
+-		<td width=67 align=right><font color="LEVEL">P. Def:</font></td>
++		<td width=67 align=right><font color="LEVEL">Физ. защ:</font></td>
+ 		<td width=70 align=center>%pdef%</td>
+ 	</tr>
+ 	<tr>
+-		<td width=68 align=right><font color="LEVEL">M. Atk:</font></td>
++		<td width=68 align=right><font color="LEVEL">Маг. атк:</font></td>
+ 		<td width=70 align=center>%matk%</td>
+-		<td width=67 align=right><font color="LEVEL">M. Def:</font></td>
++		<td width=67 align=right><font color="LEVEL">Маг. защ:</font></td>
+ 		<td width=70 align=center>%mdef%</td>
+ 	</tr>
+ 	<tr>
+-		<td width=68 align=right><font color="LEVEL">Atk. Spd:</font></td>
++		<td width=68 align=right><font color="LEVEL">Скор. атк:</font></td>
+ 		<td width=70 align=center>%atkspd%</td>
+-		<td width=67 align=right><font color="LEVEL">Cast. Spd:</font></td>
++		<td width=67 align=right><font color="LEVEL">Скор. маг:</font></td>
+ 		<td width=70 align=center>%castspd%</td>
+ 	</tr>
+ 	<tr>
+-		<td width=68 align=right><font color="LEVEL">Crit. Rate:</font></td>
++		<td width=68 align=right><font color="LEVEL">Крит:</font></td>
+ 		<td width=70 align=center>%critrate%</td>
+-		<td width=67 align=right><font color="LEVEL">Evasion:</font></td>
++		<td width=67 align=right><font color="LEVEL">Уклонение:</font></td>
+ 		<td width=70 align=center>%evasion%</td>
+ 	</tr>
+ 	<tr>
+-		<td width=68 align=right><font color="LEVEL">Accuracy:</font></td>
++		<td width=68 align=right><font color="LEVEL">Точность:</font></td>
+ 		<td width=70 align=center>%accuracy%</td>
+-		<td width=67 align=right><font color="LEVEL">Speed:</font></td>
++		<td width=67 align=right><font color="LEVEL">Скорость:</font></td>
+ 		<td width=70 align=center>%speed%</td>
+ 	</tr>
+ </table>
+ <br>
+-<center><font color="LEVEL">Attributes</font></center>
++<center><font color="LEVEL">Стихии</font></center>
+ <table width=275 cellpadding=0 cellspacing=0>
+ 	<tr>
+-		<td width=68 align=right><font color="LEVEL">Atk. Type:</font></td>
++		<td width=68 align=right><font color="LEVEL">Стихия атк:</font></td>
+ 		<td width=70 align=center>%attributeatktype%</td>
+-		<td width=67 align=right><font color="LEVEL">Atk. Value:</font></td>
++		<td width=67 align=right><font color="LEVEL">Сила:</font></td>
+ 		<td width=70 align=center>%attributeatkvalue%</td>
+ 	</tr>
+ 	<tr>
+-		<td width=68 align=right><font color="LEVEL">Fire:</font></td>
++		<td width=68 align=right><font color="LEVEL">Огонь:</font></td>
+ 		<td width=70 align=center>%attributefire%</td>
+-		<td width=67 align=right><font color="LEVEL">Water:</font></td>
++		<td width=67 align=right><font color="LEVEL">Вода:</font></td>
+ 		<td width=70 align=center>%attributewater%</td>
+ 	</tr>
+ 	<tr>
+-		<td width=68 align=right><font color="LEVEL">Wind:</font></td>
++		<td width=68 align=right><font color="LEVEL">Ветер:</font></td>
+ 		<td width=70 align=center>%attributewind%</td>
+-		<td width=67 align=right><font color="LEVEL">Earth:</font></td>
++		<td width=67 align=right><font color="LEVEL">Земля:</font></td>
+ 		<td width=70 align=center>%attributeearth%</td>
+ 	</tr>
+ 	<tr>
+-		<td width=68 align=right><font color="LEVEL">Dark:</font></td>
++		<td width=68 align=right><font color="LEVEL">Тьма:</font></td>
+ 		<td width=70 align=center>%attributedark%</td>
+-		<td width=67 align=right><font color="LEVEL">Holy:</font></td>
++		<td width=67 align=right><font color="LEVEL">Свет:</font></td>
+ 		<td width=70 align=center>%attributeholy%</td>
+ 	</tr>
+ </table>
+diff --git a/dist/game/data/html/mods/NpcView/Skills.htm b/dist/game/data/html/mods/NpcView/Skills.htm
+index 2d66b2f424a7be4b2389d1c3018f32bd6419f1e1..ce4bc1c26285ae8482c512424b70be0d990e41aa 100644
+--- a/dist/game/data/html/mods/NpcView/Skills.htm
++++ b/dist/game/data/html/mods/NpcView/Skills.htm
+@@ -1,14 +1,14 @@
+ <html>
+ <head>
+-	<title>NPC Skill List %npc_name% (%npcId%)</title>
++	<title>Скиллы: %npc_name% (%npcId%)</title>
+ </head>
+ <body>
+ <table width=280 height=40 cellspacing=0 background="L2UI_CT1.Button_DF_Calculator">
+ 	<tr>
+ 		<td width=32></td>
+-		<td width=108>Name</td>
++		<td width=108>Скилл</td>
+ 		<td width=45 align=center>ID</td>
+-		<td width=35 align=center>Lvl</td>
++		<td width=35 align=center>Ур.</td>
+ 		<td width=45></td>
+ 	</tr>
+ </table>
+diff --git a/dist/game/data/scripts/handlers/bypass/npc/NpcViewMod.java b/dist/game/data/scripts/handlers/bypass/npc/NpcViewMod.java
+index 2045dee5421d4fe101fced0acb039ec2bcc80f7f..3b6b663692882f2214d6f77aac7ef1490fbd5420 100644
+--- a/dist/game/data/scripts/handlers/bypass/npc/NpcViewMod.java
++++ b/dist/game/data/scripts/handlers/bypass/npc/NpcViewMod.java
+@@ -352,18 +352,18 @@ public class NpcViewMod implements IBypassHandler
+ 		if ((dropListGroups != null) || (dropListDeath != null) || (dropListSpoil != null))
+ 		{
+ 			sb.append("<table width=270 border=0 bgcolor=\"444444\"><tr>");
+-			sb.append("<td align=center><button value=\"Info\" width=62 height=21 action=\"bypass NpcViewMod view " + npc.getObjectId() + "\" back=\"L2UI_CT1.Button_DF_Calculator_Down\" fore=\"L2UI_CT1.Button_DF_Calculator\"></td>");
++			sb.append("<td align=center><button value=\"Инфо\" width=62 height=21 action=\"bypass NpcViewMod view " + npc.getObjectId() + "\" back=\"L2UI_CT1.Button_DF_Calculator_Down\" fore=\"L2UI_CT1.Button_DF_Calculator\"></td>");
+ 			if ((dropListGroups != null) || (dropListDeath != null))
+ 			{
+-				sb.append("<td align=center><button value=\"Drop\" width=62 height=21 action=\"bypass NpcViewMod dropList DROP " + npc.getObjectId() + "\" back=\"L2UI_CT1.Button_DF_Calculator_Down\" fore=\"L2UI_CT1.Button_DF_Calculator\"></td>");
++				sb.append("<td align=center><button value=\"Дроп\" width=62 height=21 action=\"bypass NpcViewMod dropList DROP " + npc.getObjectId() + "\" back=\"L2UI_CT1.Button_DF_Calculator_Down\" fore=\"L2UI_CT1.Button_DF_Calculator\"></td>");
+ 			}
+ 			
+ 			if (dropListSpoil != null)
+ 			{
+-				sb.append("<td align=center><button value=\"Spoil\" width=62 height=21 action=\"bypass NpcViewMod dropList SPOIL " + npc.getObjectId() + "\" back=\"L2UI_CT1.Button_DF_Calculator_Down\" fore=\"L2UI_CT1.Button_DF_Calculator\"></td>");
++				sb.append("<td align=center><button value=\"Спойл\" width=62 height=21 action=\"bypass NpcViewMod dropList SPOIL " + npc.getObjectId() + "\" back=\"L2UI_CT1.Button_DF_Calculator_Down\" fore=\"L2UI_CT1.Button_DF_Calculator\"></td>");
+ 			}
+ 			
+-			sb.append("<td align=center><button value=\"Aggro\" width=62 height=21 action=\"bypass NpcViewMod aggrolist " + npc.getObjectId() + "\" back=\"L2UI_CT1.Button_DF_Calculator_Down\" fore=\"L2UI_CT1.Button_DF_Calculator\"></td>");
++			sb.append("<td align=center><button value=\"Агро\" width=62 height=21 action=\"bypass NpcViewMod aggrolist " + npc.getObjectId() + "\" back=\"L2UI_CT1.Button_DF_Calculator_Down\" fore=\"L2UI_CT1.Button_DF_Calculator\"></td>");
+ 			sb.append("</tr></table><br>");
+ 		}
+ 		
+@@ -575,7 +575,7 @@ public class NpcViewMod implements IBypassHandler
+ 			sb.append("</td><td fixwidth=300 align=center><font name=\"hs9\" color=\"CD9000\">");
+ 			sb.append("&#" + item.getId() + ";");
+ 			sb.append("</font></td></tr><tr><td width=32></td><td width=300><table width=295 cellpadding=0 cellspacing=0>");
+-			sb.append("<tr><td width=48 align=right valign=top><font color=\"LEVEL\">Amount:</font></td>");
++			sb.append("<tr><td width=48 align=right valign=top><font color=\"LEVEL\">Кол-во:</font></td>");
+ 			sb.append("<td width=247 align=center>");
+ 			
+ 			final long min = (long) (dropItem.getMin() * rateAmount);
+@@ -591,7 +591,7 @@ public class NpcViewMod implements IBypassHandler
+ 				sb.append(amountFormat.format(max));
+ 			}
+ 			
+-			sb.append("</td></tr><tr><td width=48 align=right valign=top><font color=\"LEVEL\">Chance:</font></td>");
++			sb.append("</td></tr><tr><td width=48 align=right valign=top><font color=\"LEVEL\">Шанс:</font></td>");
+ 			sb.append("<td width=247 align=center>");
+ 			sb.append(chanceFormat.format(Math.min(dropItem.getChance() * rateChance, 100)));
+ 			sb.append("%</td></tr></table></td></tr><tr><td width=32></td><td width=300>&nbsp;</td></tr></table>");
+@@ -601,7 +601,7 @@ public class NpcViewMod implements IBypassHandler
+ 			}
+ 			else
+ 			{
+-				limitReachedMsg = "<br><center>Too many drops! Could not display them all!</center>";
++				limitReachedMsg = "<br><center>Слишком много дропа — показано не всё.</center>";
+ 			}
+ 		}
+ 		

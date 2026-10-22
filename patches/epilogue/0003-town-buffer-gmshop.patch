@@ -1,0 +1,46 @@
+diff --git a/dist/game/data/spawns/Custom/L2HubTownNpcs.xml b/dist/game/data/spawns/Custom/L2HubTownNpcs.xml
+new file mode 100644
+index 0000000000000000000000000000000000000000..d35ab99bb044e3c574d649e14fa72bbebc1261fe
+--- /dev/null
++++ b/dist/game/data/spawns/Custom/L2HubTownNpcs.xml
+@@ -0,0 +1,40 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<list enabled="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../xsd/spawns.xsd">
++	<!-- L2Hub: баффер и GM-шоп у гейткиперов городов. Сгенерировано tools/town_npcs.py. -->
++	<spawn name="L2HubTownNpcs">
++		<npc id="50008" x="-84051" y="244547" z="-3728" heading="40960" respawnDelay="60" /> <!-- Scheme Buffer: Talking Island Village -->
++		<npc id="50010" x="-84129" y="244681" z="-3728" heading="40960" respawnDelay="60" /> <!-- GM Shop: Talking Island Village -->
++		<npc id="50008" x="46992" y="51467" z="-2976" heading="43000" respawnDelay="60" /> <!-- Scheme Buffer: Elven Village -->
++		<npc id="50010" x="46860" y="51555" z="-2976" heading="43000" respawnDelay="60" /> <!-- GM Shop: Elven Village -->
++		<npc id="50008" x="9687" y="15615" z="-4568" heading="5892" respawnDelay="60" /> <!-- Scheme Buffer: Dark Elven Village -->
++		<npc id="50010" x="9750" y="15540" z="-4568" heading="5892" respawnDelay="60" /> <!-- GM Shop: Dark Elven Village -->
++		<npc id="50008" x="-45224" y="-112443" z="-240" heading="0" respawnDelay="60" /> <!-- Scheme Buffer: Orc Village -->
++		<npc id="50010" x="-45264" y="-112592" z="-240" heading="0" respawnDelay="60" /> <!-- GM Shop: Orc Village -->
++		<npc id="50008" x="115112" y="-178107" z="-888" heading="0" respawnDelay="60" /> <!-- Scheme Buffer: Dwarven Village -->
++		<npc id="50010" x="115072" y="-178256" z="-880" heading="0" respawnDelay="60" /> <!-- GM Shop: Dwarven Village -->
++		<npc id="50008" x="-116807" y="46555" z="360" heading="44352" respawnDelay="60" /> <!-- Scheme Buffer: Kamael Village -->
++		<npc id="50010" x="-116951" y="46627" z="360" heading="44352" respawnDelay="60" /> <!-- GM Shop: Kamael Village -->
++		<npc id="50008" x="-80831" y="149786" z="-3040" heading="20480" respawnDelay="60" /> <!-- Scheme Buffer: Gludin Village -->
++		<npc id="50010" x="-80678" y="149807" z="-3040" heading="20480" respawnDelay="60" /> <!-- GM Shop: Gludin Village -->
++		<npc id="50008" x="-12667" y="122776" z="-3112" heading="49152" respawnDelay="60" /> <!-- Scheme Buffer: Town of Gludio -->
++		<npc id="50010" x="-12816" y="122816" z="-3112" heading="49152" respawnDelay="60" /> <!-- GM Shop: Town of Gludio -->
++		<npc id="50008" x="15551" y="142888" z="-2696" heading="16000" respawnDelay="60" /> <!-- Scheme Buffer: Town of Dion -->
++		<npc id="50010" x="15690" y="142939" z="-2696" heading="16000" respawnDelay="60" /> <!-- GM Shop: Town of Dion -->
++		<npc id="50008" x="83339" y="147961" z="-3400" heading="16384" respawnDelay="60" /> <!-- Scheme Buffer: Town of Giran -->
++		<npc id="50010" x="83465" y="147944" z="-3400" heading="16384" respawnDelay="60" /> <!-- GM Shop: Town of Giran -->
++		<npc id="50008" x="111419" y="219363" z="-3544" heading="-15780" respawnDelay="60" /> <!-- Scheme Buffer: Town of Heine -->
++		<npc id="50010" x="111326" y="219410" z="-3544" heading="-15780" respawnDelay="60" /> <!-- GM Shop: Town of Heine -->
++		<npc id="50008" x="117097" y="76843" z="-2696" heading="34000" respawnDelay="60" /> <!-- Scheme Buffer: Hunters Village -->
++		<npc id="50010" x="117120" y="76996" z="-2688" heading="34000" respawnDelay="60" /> <!-- GM Shop: Hunters Village -->
++		<npc id="50008" x="82941" y="53109" z="-1488" heading="31000" respawnDelay="60" /> <!-- Scheme Buffer: Town of Oren -->
++		<npc id="50010" x="82946" y="53236" z="-1488" heading="31000" respawnDelay="60" /> <!-- GM Shop: Town of Oren -->
++		<npc id="50008" x="146737" y="25887" z="-2008" heading="0" respawnDelay="60" /> <!-- Scheme Buffer: Town of Aden -->
++		<npc id="50010" x="146794" y="25750" z="-2008" heading="0" respawnDelay="60" /> <!-- GM Shop: Town of Aden -->
++		<npc id="50008" x="147998" y="-55301" z="-2728" heading="48000" respawnDelay="60" /> <!-- Scheme Buffer: Town of Goddard -->
++		<npc id="50010" x="147904" y="-55278" z="-2728" heading="48000" respawnDelay="60" /> <!-- GM Shop: Town of Goddard -->
++		<npc id="50008" x="43885" y="-47716" z="-792" heading="50000" respawnDelay="60" /> <!-- Scheme Buffer: Town of Rune -->
++		<npc id="50010" x="43758" y="-47709" z="-792" heading="50000" respawnDelay="60" /> <!-- GM Shop: Town of Rune -->
++		<npc id="50008" x="87109" y="-143396" z="-1288" heading="15584" respawnDelay="60" /> <!-- Scheme Buffer: Town of Schuttgart -->
++		<npc id="50010" x="87148" y="-143456" z="-1288" heading="15584" respawnDelay="60" /> <!-- GM Shop: Town of Schuttgart -->
++	</spawn>
++</list>

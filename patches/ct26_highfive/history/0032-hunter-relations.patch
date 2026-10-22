@@ -1,0 +1,1252 @@
+diff --git a/dist/game/config/Custom/PhantomHunters.ini b/dist/game/config/Custom/PhantomHunters.ini
+index c09e0ae..7cf984e 100644
+--- a/dist/game/config/Custom/PhantomHunters.ini
++++ b/dist/game/config/Custom/PhantomHunters.ini
+@@ -33,6 +33,10 @@ HuntersIdleTimeout = 300
+ # Сколько секунд лежит убитый охотник, прежде чем вернуться в город.
+ HunterRespawnDelay = 20
+ 
++# Если рядом с трупом (в 1500) живой игрок, не враг, — охотник лежит до стольких секунд: вдруг реснёт. 0 — не ждать.
++# Когда на охотника кастуют рес, он в любом случае ждёт конца каста (свиток реса — 15 с). В пати охотник ждёт 2 минуты.
++HunterReviveWait = 60
++
+ # ---------------------------------------------------------------------------
+ # Экономика x1 (docs/PHANTOMS.md, раздел 4.2): всё за свою адену, как у живого игрока.
+ # ---------------------------------------------------------------------------
+@@ -162,3 +166,19 @@ HunterChatTopicGap = 300
+ # первым усталый не заговаривает, настороженный — только со знакомыми, занятый — вдвое реже, скучающий — в 1,5 раза
+ # чаще. Мозги знают настроение и говорят в нём.
+ HunterMood = True
++
++# ---------------------------------------------------------------------------
++# Отношения охотников к живым игрокам (docs/PHANTOMS.md, раздел 4.13; приём L2Solo).
++# Обида: убил +3, напал +1. Благодарность: хилил раненого (меньше 40 % HP) в бою +1, реснул +3, убил моба, который
++# добивал охотника, +2, качались в пати +1 за каждые 30 минут (до +3 за пати). Одинаковое событие на пару — не чаще
++# раза в 30 минут, «убил» — каждый раз. Враг — обида не меньше HunterRelationEnemy и больше благодарности: охотник
++# не берёт его в пати и не идёт на его «лфм», первым не заговаривает, узнаёт («о, опять ты…»). Друг — благодарность
++# от 3 и больше обиды: заговаривает первым чаще (до ×2). Помириться можно: добро перевешивает, обида остывает.
++# ---------------------------------------------------------------------------
++HunterRelations = True
++
++# Обида и благодарность остывают вдвое за столько часов игры охотника (пока сервер выключен — не остывают). 0 — не остывают.
++HunterRelationHalfLife = 72
++
++# С такой обиды (и если она больше благодарности) игрок — враг. 3 — одно убийство или три нападения.
++HunterRelationEnemy = 3
+diff --git a/java/org/l2jmobius/gameserver/config/custom/PhantomHuntersConfig.java b/java/org/l2jmobius/gameserver/config/custom/PhantomHuntersConfig.java
+index 9557114..535c3d7 100644
+--- a/java/org/l2jmobius/gameserver/config/custom/PhantomHuntersConfig.java
++++ b/java/org/l2jmobius/gameserver/config/custom/PhantomHuntersConfig.java
+@@ -60,6 +60,10 @@ public class PhantomHuntersConfig
+ 	public static int HUNTER_CHAT_QUIET;
+ 	public static int HUNTER_CHAT_SPEAKER_GAP;
+ 	public static int HUNTER_CHAT_TOPIC_GAP;
++	public static boolean HUNTER_RELATIONS;
++	public static int HUNTER_RELATION_HALF_LIFE;
++	public static int HUNTER_RELATION_ENEMY;
++	public static int HUNTER_REVIVE_WAIT;
+ 
+ 	public static void load()
+ 	{
+@@ -110,6 +114,10 @@ public class PhantomHuntersConfig
+ 		HUNTER_CHAT_QUIET = Math.max(0, config.getInt("HunterChatQuiet", 45));
+ 		HUNTER_CHAT_SPEAKER_GAP = Math.max(0, config.getInt("HunterChatSpeakerGap", 120));
+ 		HUNTER_CHAT_TOPIC_GAP = Math.max(0, config.getInt("HunterChatTopicGap", 300));
++		HUNTER_RELATIONS = config.getBoolean("HunterRelations", true);
++		HUNTER_RELATION_HALF_LIFE = Math.max(0, config.getInt("HunterRelationHalfLife", 72));
++		HUNTER_RELATION_ENEMY = Math.max(1, config.getInt("HunterRelationEnemy", 3));
++		HUNTER_REVIVE_WAIT = Math.max(0, config.getInt("HunterReviveWait", 60));
+ 	}
+ 
+ 	/**
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java
+index cf6ea48..00d81f4 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java
+@@ -790,6 +790,11 @@ public class PhantomChat
+ 		sb.append("\"gm\":").append(player.isGM()).append(',');
+ 		sb.append("\"owner\":").append(owner).append(',');
+ 		sb.append("\"grudge\":").append(template.isHunter() ? PhantomHunterManager.grudge(phantom, player) : 0).append(',');
++		if (template.isHunter())
++		{
++			// Отношение охотника к игроку (патч 0032): обида, благодарность, причины.
++			PhantomRelations.getInstance().json(sb, phantom, player);
++		}
+ 		sb.append("\"hpPct\":").append(percent(player.getCurrentHp(), player.getMaxHp())).append(',');
+ 		sb.append("\"dead\":").append(player.isDead()).append(',');
+ 		sb.append("\"distance\":").append((int) phantom.calculateDistance2D(player));
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+index c2a2559..0650636 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+@@ -113,8 +113,17 @@ public class PhantomHunterManager
+ 	private static final String STATUS_FILE = "./log/L2HubHunters.json";
+ 	/** Самопроверка UI: окна //hunters и Alt+B, как их увидел бы первый охотник в мире. */
+ 	private static final String UI_TEST_FILE = "./log/L2HubHuntersUi.html";
+-	/** Обиды охотника: кто и сколько раз его убивал (переменная персонажа). */
++	/** Обиды охотника до патча 0031: кто и сколько раз его убивал (переменная персонажа). Теперь только читается — перенос в {@link PhantomRelations}. */
+ 	static final String GRUDGE_VARIABLE = "L2HubGrudges";
++	/** Часы игры охотника (секунды, переменная персонажа): по ним остывают отношения (патч 0032). */
++	private static final String PLAYED_VARIABLE = "L2HubPlayed";
++	/** Качались вместе: за каждые столько мс в пати с живым игроком — благодарность, не больше {@link #TOGETHER_MAX} за пати. */
++	private static final long TOGETHER_STEP = 1800000;
++	private static final int TOGETHER_MAX = 3;
++	/** Вместе — если живой игрок из пати не дальше этого (как делится опыт пати). */
++	private static final int TOGETHER_RANGE = 1500;
++	/** Живой игрок не дальше этого от трупа — охотник ждёт реса дольше. */
++	private static final int REVIVE_RANGE = 1500;
+ 	/** Квесты-симуляция: уровень последнего сданного квеста (переменная персонажа). */
+ 	private static final String QUEST_VARIABLE = "L2HubHunterQuest";
+ 
+@@ -268,6 +277,13 @@ public class PhantomHunterManager
+ 		final Deque<Long> deaths = new ArrayDeque<>();
+ 		/** Последняя смерть — для настроения: его читают и потоки чата, а {@link #deaths} — только тик. */
+ 		volatile long lastDeath;
++		// Отношения (патч 0032): часы игры, мс; «качались вместе» — сколько мс с каждым живым из пати и сколько раз засчитано.
++		volatile long played;
++		volatile boolean playedLoaded;
++		long playedTick;
++		final Map<Integer, Long> together = new ConcurrentHashMap<>();
++		final Map<Integer, Integer> togetherAwards = new ConcurrentHashMap<>();
++		long togetherTick;
+ 
+ 		Hunter(PhantomTemplate template)
+ 		{
+@@ -313,6 +329,7 @@ public class PhantomHunterManager
+ 		}
+ 
+ 		HuntSpotData.getInstance();
++		PhantomRelations.getInstance().start();
+ 		LOGGER.info(getClass().getSimpleName() + ": " + _hunters.size() + " hunters, mode " + PhantomHuntersConfig.HUNTERS_MODE + ".");
+ 		if ((_task == null) || _task.isDone())
+ 		{
+@@ -335,7 +352,11 @@ public class PhantomHunterManager
+ 
+ 		if (player.isDead())
+ 		{
+-			return "тебя только что убили, лежишь и скоро вернёшься в город";
++			if (System.currentTimeMillis() < PhantomRelations.getInstance().reviveCastUntil(player))
++			{
++				return "тебя убили, лежишь — и тебя как раз ресают";
++			}
++			return hunter.phase != Phase.PARTY && (PhantomHuntersConfig.HUNTER_REVIVE_WAIT > 0) && reviverNear(player) ? "тебя убили, лежишь и ждёшь реса — рядом живой игрок, может реснёт" : "тебя только что убили, лежишь и скоро вернёшься в город";
+ 		}
+ 
+ 		final String wallet = "; в кармане " + money(player.getAdena()) + " адены";
+@@ -557,6 +578,8 @@ public class PhantomHunterManager
+ 					sb.append(',');
+ 					FakePlayerBrain.field(sb, "mood", mood.getKey());
+ 				}
++				sb.append(",\"relations\":");
++				PhantomRelations.getInstance().top(sb, player, 5);
+ 				final Choice last = hunter.lastChoice;
+ 				if (last != null)
+ 				{
+@@ -704,6 +727,7 @@ public class PhantomHunterManager
+ 
+ 	private void think(Hunter hunter, Player player, long now)
+ 	{
++		played(hunter, player, now);
+ 		if (player.isDead())
+ 		{
+ 			died(hunter, player, now);
+@@ -724,6 +748,7 @@ public class PhantomHunterManager
+ 		if ((now - hunter.lastStore) > STORE_INTERVAL)
+ 		{
+ 			hunter.lastStore = now;
++			player.getVariables().set(PLAYED_VARIABLE, hunter.played / 1000);
+ 			player.storeMe();
+ 		}
+ 
+@@ -758,7 +783,9 @@ public class PhantomHunterManager
+ 				{
+ 					LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " left the party, back to hunting.");
+ 					backToHuntNearby(hunter, player);
++					return;
+ 				}
++				together(hunter, player, now);
+ 				return;
+ 			}
+ 			case RECRUIT:
+@@ -875,19 +902,32 @@ public class PhantomHunterManager
+ 			return;
+ 		}
+ 
+-		// Кто-то предложил рес — соглашаемся.
++		// Кто-то предложил рес — соглашаемся; «реснул» засчитывается тому, кто кастовал (патч 0032).
+ 		if (player.isReviveRequested())
+ 		{
+ 			player.reviveAnswer(1);
+ 			hunter.deadSince = 0;
++			PhantomRelations.getInstance().revived(player);
++			return;
++		}
++
++		// На него кастуют рес — ждать конца каста, а не улетать в город посреди него (патч 0032).
++		if (now < PhantomRelations.getInstance().reviveCastUntil(player))
++		{
+ 			return;
+ 		}
+ 
+-		// В пати ждёт реса дольше; не дождался — уходит из пати в город.
+-		if ((now - hunter.deadSince) < (hunter.phase == Phase.PARTY ? PARTY_DEATH_WAIT : (PhantomHuntersConfig.HUNTER_RESPAWN_DELAY * 1000L)))
++		// В пати ждёт реса дольше; рядом живой игрок, не враг, — тоже: вдруг реснёт (патч 0032). Не дождался — в город.
++		long wait = hunter.phase == Phase.PARTY ? PARTY_DEATH_WAIT : (PhantomHuntersConfig.HUNTER_RESPAWN_DELAY * 1000L);
++		if ((hunter.phase != Phase.PARTY) && (PhantomHuntersConfig.HUNTER_REVIVE_WAIT > 0) && reviverNear(player))
++		{
++			wait = Math.max(wait, PhantomHuntersConfig.HUNTER_REVIVE_WAIT * 1000L);
++		}
++		if ((now - hunter.deadSince) < wait)
+ 		{
+ 			return;
+ 		}
++		PhantomRelations.getInstance().clearRevive(player);
+ 
+ 		if (hunter.phase == Phase.PARTY)
+ 		{
+@@ -1709,7 +1749,7 @@ public class PhantomHunterManager
+ 		for (Hunter hunter : _hunters.values())
+ 		{
+ 			final Player player = PhantomManager.getInstance().getPhantom(hunter.template);
+-			if ((player == null) || (player == shouter) || (hunter.phase != Phase.HUNT) || player.isDead() || (hunter.enemyId != 0) || (Math.abs(player.getLevel() - shouter.getLevel()) > LFM_LEVEL_GAP) || (grudge(player, shouter) > 0))
++			if ((player == null) || (player == shouter) || (hunter.phase != Phase.HUNT) || player.isDead() || (hunter.enemyId != 0) || (Math.abs(player.getLevel() - shouter.getLevel()) > LFM_LEVEL_GAP) || PhantomRelations.getInstance().isEnemy(player, shouter))
+ 			{
+ 				continue;
+ 			}
+@@ -1937,7 +1977,7 @@ public class PhantomHunterManager
+ 		{
+ 			return hunter.recruiterId == requestor.getObjectId();
+ 		}
+-		return (hunter.phase == Phase.HUNT) && (hunter.enemyId == 0) && (Math.abs(player.getLevel() - requestor.getLevel()) <= LFM_LEVEL_GAP) && (grudge(player, requestor) == 0);
++		return (hunter.phase == Phase.HUNT) && (hunter.enemyId == 0) && (Math.abs(player.getLevel() - requestor.getLevel()) <= LFM_LEVEL_GAP) && !PhantomRelations.getInstance().isEnemy(player, requestor);
+ 	}
+ 
+ 	/**
+@@ -1955,6 +1995,9 @@ public class PhantomHunterManager
+ 		}
+ 
+ 		hunter.phase = Phase.PARTY;
++		hunter.together.clear();
++		hunter.togetherAwards.clear();
++		hunter.togetherTick = 0;
+ 		hunter.recruiterId = 0;
+ 		hunter.gatekeeperSpot = null;
+ 		closeStore(hunter, player);
+@@ -2325,6 +2368,8 @@ public class PhantomHunterManager
+ 	 */
+ 	private void onDamaged(Hunter hunter, Player player, Creature attacker)
+ 	{
++		// Моб добивает охотника — убьёт его живой игрок, значит «спас» (патч 0032).
++		PhantomRelations.getInstance().threat(attacker, player);
+ 		final Player enemy = actingPlayer(attacker);
+ 		if ((enemy == null) || (enemy == player) || PhantomManager.getInstance().isPhantom(enemy) || player.isDead() || (hunter.phase == Phase.PARTY))
+ 		{
+@@ -2336,6 +2381,7 @@ public class PhantomHunterManager
+ 		hunter.enemySeen = System.currentTimeMillis();
+ 		if (fresh)
+ 		{
++			PhantomRelations.getInstance().record(player, enemy, PhantomRelations.Kind.ATTACKED);
+ 			final int grudge = grudge(player, enemy);
+ 			PhantomChat.getInstance().hunterEvent(player, enemy, "ATTACKED", "на тебя напал " + describe(enemy) + (grudge > 0 ? ", который уже убивал тебя (" + grudge + " раз)" : "") + ", ты даёшь сдачи", "ты чё творишь?!", 180000);
+ 		}
+@@ -2406,73 +2452,112 @@ public class PhantomHunterManager
+ 	}
+ 
+ 	/**
+-	 * Обидчик проходит мимо — охотник его узнаёт (не чаще раза в 15 минут на каждого).
++	 * Враг проходит мимо — охотник его узнаёт (не чаще раза в 15 минут на каждого). Остыла обида или помирились — молчит (патч 0032).
+ 	 */
+ 	private static void noticeGrudges(Player player)
+ 	{
+-		final String grudges = player.getVariables().getString(GRUDGE_VARIABLE, "");
+-		if (grudges.isEmpty())
++		if (!PhantomRelations.getInstance().hasEnemies(player))
+ 		{
+ 			return;
+ 		}
+ 
+ 		for (Player other : World.getVisibleObjectsInRange(player, Player.class, 700))
+ 		{
+-			if (PhantomManager.getInstance().isPhantom(other) || other.isInvisible())
++			if (PhantomManager.getInstance().isPhantom(other) || other.isInvisible() || !PhantomRelations.getInstance().isEnemy(player, other))
+ 			{
+ 				continue;
+ 			}
+ 
+ 			final int count = grudge(player, other);
+-			if (count > 0)
+-			{
+-				PhantomChat.getInstance().hunterEvent(player, other, "GRUDGE", "мимо проходит " + describe(other) + ", который убивал тебя (" + count + " раз) — ты его узнал", "о, опять ты...", 900000);
+-			}
++			PhantomChat.getInstance().hunterEvent(player, other, "GRUDGE", "мимо проходит " + describe(other) + ", который " + (count > 0 ? "убивал тебя (" + count + " раз)" : "нападал на тебя") + " — ты его узнал", "о, опять ты...", 900000);
+ 		}
+ 	}
+ 
+ 	/**
+-	 * Обиды охотника — переменная персонажа {@value #GRUDGE_VARIABLE}: «objectId:сколько раз убил;...».
+-	 * @return сколько раз этот игрок убивал охотника
++	 * @return сколько раз этот игрок убивал охотника ({@link PhantomRelations}); враг ли он — {@link PhantomRelations#isEnemy}
+ 	 */
+ 	static int grudge(Player hunter, Player other)
+ 	{
+-		for (String entry : hunter.getVariables().getString(GRUDGE_VARIABLE, "").split(";"))
++		return PhantomRelations.getInstance().kills(hunter, other);
++	}
++
++	private static int addGrudge(Player hunter, Player other)
++	{
++		return PhantomRelations.getInstance().record(hunter, other, PhantomRelations.Kind.KILLED);
++	}
++
++	/**
++	 * Рядом с трупом охотника живой игрок, не враг: может реснуть — охотник лежит дольше ({@link PhantomHuntersConfig#HUNTER_REVIVE_WAIT}).
++	 */
++	private static boolean reviverNear(Player player)
++	{
++		return World.getFirstVisibleObject(player, Player.class, other -> !PhantomManager.getInstance().isPhantom(other) && !other.isDead() && !other.isInvisible() && (player.calculateDistance2D(other) < REVIVE_RANGE) && !PhantomRelations.getInstance().isEnemy(player, other)) != null;
++	}
++
++	/**
++	 * Часы игры охотника: копятся на тике, пока он в мире; сохраняются с персонажем ({@value #PLAYED_VARIABLE}).
++	 */
++	private static void played(Hunter hunter, Player player, long now)
++	{
++		if (!hunter.playedLoaded)
+ 		{
+-			final String[] parts = entry.split(":");
+-			if ((parts.length == 2) && parts[0].equals(String.valueOf(other.getObjectId())))
+-			{
+-				return Integer.parseInt(parts[1]);
+-			}
++			hunter.played = player.getVariables().getLong(PLAYED_VARIABLE, 0) * 1000;
++			hunter.playedLoaded = true;
++		}
++		else if ((hunter.playedTick > 0) && ((now - hunter.playedTick) < (TICK * 5)))
++		{
++			hunter.played += now - hunter.playedTick;
+ 		}
+-		return 0;
++		hunter.playedTick = now;
+ 	}
+ 
+-	private static int addGrudge(Player hunter, Player other)
++	/**
++	 * @param player охотник
++	 * @return сколько часов он провёл в мире — по ним остывают отношения ({@link PhantomRelations})
++	 */
++	public double playedHours(Player player)
+ 	{
+-		final List<String> entries = new ArrayList<>();
+-		int count = 1;
+-		for (String entry : hunter.getVariables().getString(GRUDGE_VARIABLE, "").split(";"))
++		final Hunter hunter = _hunters.get(player.getName().toLowerCase());
++		if (hunter == null)
++		{
++			return 0;
++		}
++		if (!hunter.playedLoaded)
+ 		{
+-			final String[] parts = entry.split(":");
+-			if (parts.length != 2)
++			hunter.played = player.getVariables().getLong(PLAYED_VARIABLE, 0) * 1000;
++			hunter.playedLoaded = true;
++		}
++		return hunter.played / 3600000.0;
++	}
++
++	/**
++	 * Охотник в пати: время рядом с каждым живым из пати; за каждые {@link #TOGETHER_STEP} мс — «качались вместе» (не больше {@link #TOGETHER_MAX} за пати).
++	 */
++	private static void together(Hunter hunter, Player player, long now)
++	{
++		final long delta = hunter.togetherTick > 0 ? Math.min(now - hunter.togetherTick, TICK * 5) : 0;
++		hunter.togetherTick = now;
++		if ((delta <= 0) || !player.isInParty() || player.isDead())
++		{
++			return;
++		}
++
++		for (Player member : player.getParty().getMembers())
++		{
++			if ((member == player) || PhantomManager.getInstance().isPhantom(member) || !member.isOnline() || member.isDead() || (player.calculateDistance2D(member) > TOGETHER_RANGE))
+ 			{
+ 				continue;
+ 			}
+ 
+-			if (parts[0].equals(String.valueOf(other.getObjectId())))
++			final int id = member.getObjectId();
++			final long time = hunter.together.merge(id, delta, Long::sum);
++			if ((time >= TOGETHER_STEP) && (hunter.togetherAwards.getOrDefault(id, 0) < TOGETHER_MAX))
+ 			{
+-				count = Integer.parseInt(parts[1]) + 1;
+-			}
+-			else
+-			{
+-				entries.add(entry);
++				hunter.together.put(id, time - TOGETHER_STEP);
++				hunter.togetherAwards.merge(id, 1, Integer::sum);
++				PhantomRelations.getInstance().record(player, member, PhantomRelations.Kind.HUNTED);
+ 			}
+ 		}
+-		entries.add(0, other.getObjectId() + ":" + count);
+-		hunter.getVariables().set(GRUDGE_VARIABLE, String.join(";", entries.subList(0, Math.min(entries.size(), 20))));
+-		hunter.getVariables().storeMe();
+-		return count;
+ 	}
+ 
+ 	private static Player actingPlayer(Creature creature)
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterStrategy.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterStrategy.java
+index 4f7413b..da31b1a 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterStrategy.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterStrategy.java
+@@ -11,10 +11,8 @@ import java.util.regex.Pattern;
+ 
+ import org.l2jmobius.commons.util.Rnd;
+ import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
+-import org.l2jmobius.gameserver.data.sql.CharInfoTable;
+ import org.l2jmobius.gameserver.data.xml.ExperienceData;
+ import org.l2jmobius.gameserver.data.xml.MapRegionData;
+-import org.l2jmobius.gameserver.entity.World;
+ import org.l2jmobius.gameserver.entity.actor.Player;
+ import org.l2jmobius.gameserver.entity.item.instance.Item;
+ import org.l2jmobius.gameserver.managers.FakePlayerBrain;
+@@ -207,7 +205,9 @@ final class PhantomHunterStrategy
+ 		sb.append("\"townMinutes\":").append(facts.townMinutes).append(',');
+ 		sb.append("\"storeMinutes\":").append(facts.storeMinutes).append(',');
+ 		FakePlayerBrain.field(sb, "town", MapRegionData.getInstance().getClosestTownName(player)).append(',');
+-		grudges(sb, player);
++		// Отношения (патч 0032): враги и друзья с причинами, в игре ли сейчас.
++		sb.append("\"relations\":");
++		PhantomRelations.getInstance().top(sb, player, 5);
+ 		sb.append("},\"options\":[");
+ 		boolean first = true;
+ 		for (Map.Entry<Decision, String> option : options.entrySet())
+@@ -272,45 +272,4 @@ final class PhantomHunterStrategy
+ 		}
+ 		return names + (goods.size() > 3 ? " и ещё " + (goods.size() - 3) : "") + " — всего ~" + PhantomHunterManager.money(total) + " по цене магазина";
+ 	}
+-
+-	/**
+-	 * Обидчики из {@link PhantomHunterManager#GRUDGE_VARIABLE}: имя, сколько раз убивал, в игре ли сейчас (до пяти).
+-	 */
+-	private static void grudges(StringBuilder sb, Player player)
+-	{
+-		sb.append("\"grudges\":[");
+-		int count = 0;
+-		for (String entry : player.getVariables().getString(PhantomHunterManager.GRUDGE_VARIABLE, "").split(";"))
+-		{
+-			final String[] parts = entry.split(":");
+-			if ((parts.length != 2) || (count >= 5))
+-			{
+-				continue;
+-			}
+-
+-			final int objectId;
+-			final int kills;
+-			try
+-			{
+-				objectId = Integer.parseInt(parts[0]);
+-				kills = Integer.parseInt(parts[1]);
+-			}
+-			catch (NumberFormatException e)
+-			{
+-				continue;
+-			}
+-
+-			final String name = CharInfoTable.getInstance().getNameById(objectId);
+-			if (name == null)
+-			{
+-				continue;
+-			}
+-
+-			sb.append(count > 0 ? "," : "").append('{');
+-			FakePlayerBrain.field(sb, "name", name).append(',');
+-			sb.append("\"count\":").append(kills).append(",\"online\":").append(World.getPlayer(objectId) != null).append('}');
+-			count++;
+-		}
+-		sb.append(']');
+-	}
+ }
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomInitiative.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomInitiative.java
+index e9f33d2..379bf23 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomInitiative.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomInitiative.java
+@@ -162,7 +162,7 @@ public class PhantomInitiative
+ 		{
+ 			return false;
+ 		}
+-		if ((hunter.isInParty() && (hunter.getParty() == player.getParty())) || (PhantomHunterManager.grudge(hunter, player) > 0) || PhantomChat.getInstance().inConversation(player, now))
++		if ((hunter.isInParty() && (hunter.getParty() == player.getParty())) || PhantomRelations.getInstance().isEnemy(hunter, player) || PhantomChat.getInstance().inConversation(player, now))
+ 		{
+ 			return false;
+ 		}
+@@ -208,7 +208,8 @@ public class PhantomInitiative
+ 			return;
+ 		}
+ 
+-		final boolean known = Boolean.parseBoolean(met.group(1));
++		// Знакомый — кто писал охотнику, или тот, кто ему помогал (патч 0032: хилил, реснул, качались вместе).
++		final boolean known = Boolean.parseBoolean(met.group(1)) || (PhantomRelations.getInstance().gratitude(hunter, player) >= 1);
+ 		final Matcher agoMatcher = AGO.matcher(reply);
+ 		final long ago = agoMatcher.find() ? Long.parseLong(agoMatcher.group(1)) : -1;
+ 		final String who = getClass().getSimpleName() + ": " + hunter.getName() + " -> " + player.getName() + ": " + (known ? "знаком" : "не знаком");
+@@ -221,9 +222,11 @@ public class PhantomInitiative
+ 
+ 		// Настроение (патч 0026): настороженный незнакомым не пишет, занятый — вдвое реже, скучающий — в полтора раза чаще.
+ 		final PhantomMood mood = PhantomHunterManager.getInstance().mood(hunter);
+-		final double chance = (known ? PhantomHuntersConfig.HUNTER_INITIATIVE_CHANCE_KNOWN : PhantomHuntersConfig.HUNTER_INITIATIVE_CHANCE_STRANGER) * template.getSocial() * (mood != null ? mood.initiativeFactor(known) : 1);
++		// Другу — чаще (патч 0032): × (1 + благодарность / 3), не больше × 2.
++		final double friend = PhantomRelations.getInstance().initiativeFactor(hunter, player);
++		final double chance = (known ? PhantomHuntersConfig.HUNTER_INITIATIVE_CHANCE_KNOWN : PhantomHuntersConfig.HUNTER_INITIATIVE_CHANCE_STRANGER) * template.getSocial() * (mood != null ? mood.initiativeFactor(known) : 1) * friend;
+ 		final boolean yes = Rnd.get(100.0) < chance;
+-		LOGGER.info(who + (mood != null ? ", " + mood.getWord() : "") + ", шанс " + String.format(Locale.ROOT, "%.0f", chance) + "% — " + (yes ? "заговаривает." : "нет."));
++		LOGGER.info(who + (friend > 1 ? ", друг" : "") + (mood != null ? ", " + mood.getWord() : "") + ", шанс " + String.format(Locale.ROOT, "%.0f", chance) + "% — " + (yes ? "заговаривает." : "нет."));
+ 		final long now = System.currentTimeMillis();
+ 		if (!yes || hunter.isDead() || !isLive(player) || player.isInCombat() || player.isDead() || player.isTeleporting() || (hunter.calculateDistance2D(player) > (PhantomHuntersConfig.HUNTER_INITIATIVE_RANGE * 2)))
+ 		{
+diff --git b/java/org/l2jmobius/gameserver/managers/phantom/PhantomRelations.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomRelations.java
+new file mode 100644
+index 0000000..2a8db6f
+--- /dev/null
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomRelations.java
+@@ -0,0 +1,740 @@
++package org.l2jmobius.gameserver.managers.phantom;
++
++import java.util.ArrayDeque;
++import java.util.ArrayList;
++import java.util.Collection;
++import java.util.Deque;
++import java.util.Iterator;
++import java.util.List;
++import java.util.Locale;
++import java.util.Map;
++import java.util.concurrent.ConcurrentHashMap;
++import java.util.logging.Logger;
++
++import org.l2jmobius.commons.threads.ThreadPool;
++import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
++import org.l2jmobius.gameserver.data.sql.CharInfoTable;
++import org.l2jmobius.gameserver.entity.World;
++import org.l2jmobius.gameserver.entity.WorldObject;
++import org.l2jmobius.gameserver.entity.actor.Attackable;
++import org.l2jmobius.gameserver.entity.actor.Creature;
++import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.managers.FakePlayerBrain;
++import org.l2jmobius.gameserver.mechanics.effects.EffectType;
++import org.l2jmobius.gameserver.mechanics.events.Containers;
++import org.l2jmobius.gameserver.mechanics.events.EventType;
++import org.l2jmobius.gameserver.mechanics.events.holders.actor.creature.OnCreatureSkillUse;
++import org.l2jmobius.gameserver.mechanics.events.holders.actor.npc.attackable.OnAttackableKill;
++import org.l2jmobius.gameserver.mechanics.events.listeners.ConsumerEventListener;
++import org.l2jmobius.gameserver.mechanics.skill.Skill;
++
++/**
++ * L2Hub: отношения охотника к живым игрокам (патч 0032, docs/PHANTOMS.md, раздел 4.13; приём L2Solo — {@code RelationshipLayers}, {@code CombatHelpMemory}).<br>
++ * Обида и благодарность копятся из поступков и остывают вдвое за {@link PhantomHuntersConfig#HUNTER_RELATION_HALF_LIFE} часов игры охотника — пока сервер выключен, ничего не остывает.
++ * Остывание считается при чтении, без таймеров. Хранится в переменной охотника {@value #VARIABLE}: до {@value #ENTRIES} пар
++ * «objectId:обида:благодарность:час:убийств:причины», причины — «вид@время,…» (последние {@value #REASONS}, время — секунды Unix).<br>
++ * Враг — обида не меньше {@link PhantomHuntersConfig#HUNTER_RELATION_ENEMY} и больше благодарности: отказ в пати и по «лфм», «о, опять ты…», первым не заговаривает.
++ * Друг — благодарность от 3 и больше обиды: заговаривает первым чаще. Помириться можно: добро перевешивает, обида остывает.<br>
++ * События ловятся без правок ядра: хил и рес — глобальный {@code ON_CREATURE_SKILL_USE}, «спас» — глобальный {@code ON_ATTACKABLE_KILL} по угрозам из {@link #threat},
++ * «напал», «убил» и «качались вместе» передаёт {@link PhantomHunterManager}. Одинаковое событие на пару засчитывается не чаще раза в {@value #COOLDOWN} мс; «убил» — каждый раз.<br>
++ * Рес: пока на мёртвого охотника идёт каст, он не уходит в город ({@link #reviveCastUntil}); «реснул» засчитывается, когда рес принят ({@link #revived}), а не на начале каста.
++ */
++public class PhantomRelations
++{
++	private static final Logger LOGGER = Logger.getLogger(PhantomRelations.class.getName());
++
++	static final String VARIABLE = "L2HubRelations";
++	private static final int ENTRIES = 30;
++	private static final int REASONS = 3;
++	private static final long COOLDOWN = 1800000;
++	/** Угроза: моб бил охотника на < 40 % HP не позже стольких мс назад — убивший его живой игрок «спас». */
++	private static final long THREAT = 15000;
++	private static final double INJURED = 0.4;
++	/** Друг — благодарность от стольких очков (и больше обиды). */
++	private static final double FRIEND = 3;
++	/** Запас к времени каста реса: столько охотник ещё ждёт, пока придёт предложение реса. */
++	private static final long REVIVE_MARGIN = 3000;
++	/** Рес принят не позже стольких мс после конца каста — «реснул» тому, кто кастовал. */
++	private static final long REVIVE_ACCEPT = 30000;
++
++	public enum Kind
++	{
++		KILLED("killed", 3, 0),
++		ATTACKED("attacked", 1, 0),
++		HEALED("healed", 0, 1),
++		REVIVED("revived", 0, 3),
++		SAVED("saved", 0, 2),
++		HUNTED("hunted", 0, 1);
++
++		final String key;
++		final double grudge;
++		final double gratitude;
++
++		Kind(String key, double grudge, double gratitude)
++		{
++			this.key = key;
++			this.grudge = grudge;
++			this.gratitude = gratitude;
++		}
++
++		static Kind of(String key)
++		{
++			for (Kind kind : values())
++			{
++				if (kind.key.equals(key))
++				{
++					return kind;
++				}
++			}
++			return null;
++		}
++	}
++
++	static class Relation
++	{
++		double grudge;
++		double gratitude;
++		/** Часы игры охотника, на которые посчитаны обида и благодарность. */
++		double hour;
++		int kills;
++		/** Последние причины: вид и время (секунды Unix), свежие первыми. */
++		final Deque<Object[]> reasons = new ArrayDeque<>();
++
++		double grudgeAt(double now)
++		{
++			return decay(grudge, now - hour);
++		}
++
++		double gratitudeAt(double now)
++		{
++			return decay(gratitude, now - hour);
++		}
++
++		long lastAt()
++		{
++			return reasons.isEmpty() ? 0 : (long) reasons.peekFirst()[1];
++		}
++	}
++
++	/** Охотник (objectId) → игрок (objectId) → отношение; читается из переменной при первом обращении. */
++	private final Map<Integer, Map<Integer, Relation>> _relations = new ConcurrentHashMap<>();
++	/** «охотник:игрок:вид» → когда засчитано последний раз, мс. */
++	private final Map<String, Long> _cooldowns = new ConcurrentHashMap<>();
++	/** Моб (objectId) → {охотник, когда бил его на < 40 % HP}. */
++	private final Map<Integer, long[]> _threats = new ConcurrentHashMap<>();
++	/** Мёртвый охотник (objectId) → {кто кастует на него рес, когда каст кончится + запас}. */
++	private final Map<Integer, long[]> _revives = new ConcurrentHashMap<>();
++	private boolean _started;
++
++	protected PhantomRelations()
++	{
++	}
++
++	/**
++	 * Глобальные слушатели хила, реса и убийства мобов — один раз, из {@link PhantomHunterManager#start()}.
++	 */
++	public synchronized void start()
++	{
++		if (_started)
++		{
++			return;
++		}
++		_started = true;
++		Containers.Global().addListener(new ConsumerEventListener(Containers.Global(), EventType.ON_CREATURE_SKILL_USE, (OnCreatureSkillUse event) -> onSkillUse(event), this));
++		Containers.Global().addListener(new ConsumerEventListener(Containers.Global(), EventType.ON_ATTACKABLE_KILL, (OnAttackableKill event) -> onAttackableKill(event), this));
++	}
++
++	// ---------- События ----------
++
++	/**
++	 * Засчитать поступок игрока по отношению к охотнику. Запись в базу — в фоне.
++	 * @param hunter охотник
++	 * @param player живой игрок
++	 * @param kind что сделал
++	 * @return сколько раз игрок убивал охотника (после события)
++	 */
++	public int record(Player hunter, Player player, Kind kind)
++	{
++		if ((hunter == null) || (player == null) || (hunter == player) || PhantomManager.getInstance().isPhantom(player))
++		{
++			return 0;
++		}
++		// Выключено — как раньше: копятся только убийства.
++		if (!PhantomHuntersConfig.HUNTER_RELATIONS && (kind != Kind.KILLED))
++		{
++			return kills(hunter, player);
++		}
++
++		final long now = System.currentTimeMillis();
++		final String cooldownKey = hunter.getObjectId() + ":" + player.getObjectId() + ":" + kind.key;
++		final boolean counts = (kind == Kind.KILLED) || (kind == Kind.HUNTED) || (now - _cooldowns.getOrDefault(cooldownKey, 0L)) >= COOLDOWN;
++		if (!counts)
++		{
++			return kills(hunter, player);
++		}
++		_cooldowns.put(cooldownKey, now);
++
++		final double hour = PhantomHunterManager.getInstance().playedHours(hunter);
++		final Map<Integer, Relation> map = relations(hunter);
++		final String value;
++		final Relation relation;
++		synchronized (map)
++		{
++			relation = map.computeIfAbsent(player.getObjectId(), id -> new Relation());
++			apply(relation, kind, hour, now / 1000);
++			trim(map, hour);
++			value = serialize(map);
++		}
++
++		hunter.getVariables().set(VARIABLE, value);
++		ThreadPool.execute(() -> hunter.getVariables().storeMe());
++		LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " " + kind.key + " " + hunter.getName() + " — обида " + format(relation.grudge) + ", благодарность " + format(relation.gratitude) + (relation.kills > 0 ? ", убийств " + relation.kills : "") + ".");
++		return relation.kills;
++	}
++
++	/**
++	 * Моб бьёт охотника на < 40 % HP (из слушателя урона охотника): если его убьёт живой игрок в ближайшие {@value #THREAT} мс — «спас».
++	 */
++	void threat(Creature attacker, Player hunter)
++	{
++		if (!PhantomHuntersConfig.HUNTER_RELATIONS || !(attacker instanceof Attackable) || hunter.isDead() || (hunter.getCurrentHp() >= (hunter.getMaxHp() * INJURED)))
++		{
++			return;
++		}
++
++		final long now = System.currentTimeMillis();
++		if (_threats.size() > 256)
++		{
++			_threats.values().removeIf(t -> (now - t[1]) > THREAT);
++		}
++		_threats.put(attacker.getObjectId(), new long[]
++		{
++			hunter.getObjectId(),
++			now
++		});
++	}
++
++	/**
++	 * Каст живого игрока: хил раненого охотника в бою или рес мёртвого. Глобальный слушатель — на каждый каст на сервере, поэтому сначала дешёвый отсев.
++	 */
++	private void onSkillUse(OnCreatureSkillUse event)
++	{
++		// Без отношений тоже: каст реса держит охотника на месте ({@link #reviveCastUntil}); хил record() сам пропустит.
++		final Creature caster = event.getCaster();
++		if ((caster == null) || !caster.isPlayer())
++		{
++			return;
++		}
++
++		final Skill skill = event.getSkill();
++		final boolean heal = skill.hasEffectType(EffectType.HEAL);
++		final boolean revive = skill.hasEffectType(EffectType.RESURRECTION);
++		if ((!heal && !revive) || PhantomManager.getInstance().isPhantom(caster.asPlayer()))
++		{
++			return;
++		}
++
++		final Player helper = caster.asPlayer();
++		final Collection<WorldObject> targets = event.getTargets();
++		final List<WorldObject> all = new ArrayList<>(targets != null ? targets : List.of());
++		if (all.isEmpty() && (event.getTarget() != null))
++		{
++			all.add(event.getTarget());
++		}
++
++		for (WorldObject target : all)
++		{
++			if (!(target instanceof Player) || (target == helper) || !isHunter((Player) target))
++			{
++				continue;
++			}
++
++			final Player hunter = (Player) target;
++			if (revive && hunter.isDead())
++			{
++				// «Реснул» — только когда рес принят ({@link #revived}); пока идёт каст, охотник не уходит в город.
++				_revives.put(hunter.getObjectId(), new long[]
++				{
++					helper.getObjectId(),
++					System.currentTimeMillis() + skill.getHitTime() + REVIVE_MARGIN
++				});
++			}
++			else if (heal && !hunter.isDead() && hunter.isInCombat() && (hunter.getCurrentHp() < (hunter.getMaxHp() * INJURED)))
++			{
++				ThreadPool.execute(() -> record(hunter, helper, Kind.HEALED));
++			}
++		}
++	}
++
++	/**
++	 * @param hunter мёртвый охотник
++	 * @return до какого времени (мс) на него идёт каст реса с запасом; 0 — никто не ресает
++	 */
++	public long reviveCastUntil(Player hunter)
++	{
++		final long[] revive = _revives.get(hunter.getObjectId());
++		return revive != null ? revive[1] : 0;
++	}
++
++	/**
++	 * Охотник принял рес: «реснул» — тому, кто на него кастовал (если каст был только что). Предложение без каста, которого мы видели, — без благодарности.
++	 * @param hunter охотник
++	 */
++	public void revived(Player hunter)
++	{
++		final long[] revive = _revives.remove(hunter.getObjectId());
++		if ((revive == null) || (System.currentTimeMillis() > (revive[1] + REVIVE_ACCEPT)))
++		{
++			return;
++		}
++
++		final Player reviver = World.getPlayer((int) revive[0]);
++		if (reviver != null)
++		{
++			record(hunter, reviver, Kind.REVIVED);
++		}
++	}
++
++	/**
++	 * Охотник ушёл в город без реса: начатый каст не засчитывается.
++	 * @param hunter охотник
++	 */
++	public void clearRevive(Player hunter)
++	{
++		_revives.remove(hunter.getObjectId());
++	}
++
++	/**
++	 * Живой игрок убил моба: если тот только что добивал охотника — «спас».
++	 */
++	private void onAttackableKill(OnAttackableKill event)
++	{
++		if (_threats.isEmpty() || (event.getTarget() == null))
++		{
++			return;
++		}
++
++		final long[] threat = _threats.remove(event.getTarget().getObjectId());
++		final Player killer = event.getAttacker();
++		if ((threat == null) || (killer == null) || ((System.currentTimeMillis() - threat[1]) > THREAT) || PhantomManager.getInstance().isPhantom(killer))
++		{
++			return;
++		}
++
++		final Player hunter = World.getPlayer((int) threat[0]);
++		if ((hunter != null) && !hunter.isDead() && (hunter != killer))
++		{
++			record(hunter, killer, Kind.SAVED);
++		}
++	}
++
++	// ---------- Чтение ----------
++
++	/**
++	 * @return враг: обида не меньше {@link PhantomHuntersConfig#HUNTER_RELATION_ENEMY} и больше благодарности (выключено — убивал хоть раз)
++	 */
++	public boolean isEnemy(Player hunter, Player player)
++	{
++		final Relation relation = get(hunter, player);
++		if (relation == null)
++		{
++			return false;
++		}
++		if (!PhantomHuntersConfig.HUNTER_RELATIONS)
++		{
++			return relation.kills > 0;
++		}
++
++		return enemy(relation, PhantomHunterManager.getInstance().playedHours(hunter));
++	}
++
++	/**
++	 * @return друг: благодарность от 3 и больше обиды
++	 */
++	public boolean isFriend(Player hunter, Player player)
++	{
++		final Relation relation = get(hunter, player);
++		return (relation != null) && friend(relation, PhantomHunterManager.getInstance().playedHours(hunter));
++	}
++
++	/**
++	 * @return благодарность сейчас (с остыванием)
++	 */
++	public double gratitude(Player hunter, Player player)
++	{
++		final Relation relation = get(hunter, player);
++		return (relation == null) || !PhantomHuntersConfig.HUNTER_RELATIONS ? 0 : relation.gratitudeAt(PhantomHunterManager.getInstance().playedHours(hunter));
++	}
++
++	/**
++	 * @return сколько раз игрок убивал охотника
++	 */
++	public int kills(Player hunter, Player player)
++	{
++		final Relation relation = get(hunter, player);
++		return relation != null ? relation.kills : 0;
++	}
++
++	/**
++	 * @return множитель шанса заговорить первым: другу — 1 + благодарность / 3, не больше 2
++	 */
++	public double initiativeFactor(Player hunter, Player player)
++	{
++		return isFriend(hunter, player) ? Math.min(2, 1 + (gratitude(hunter, player) / FRIEND)) : 1;
++	}
++
++	/**
++	 * @return есть ли у охотника хоть один враг — быстрый отсев для «обидчик мимо»
++	 */
++	public boolean hasEnemies(Player hunter)
++	{
++		final Map<Integer, Relation> map = relations(hunter);
++		if (map.isEmpty())
++		{
++			return false;
++		}
++
++		final double hour = PhantomHunterManager.getInstance().playedHours(hunter);
++		synchronized (map)
++		{
++			for (Relation relation : map.values())
++			{
++				if (enemy(relation, hour))
++				{
++					return true;
++				}
++			}
++		}
++		return false;
++	}
++
++	/**
++	 * Для мозгов — в блок игрока: {@code "relation":{"grudge":…,"gratitude":…,"kills":…,"enemy":…,"friend":…,"reasons":[{"type":…,"ago":с},…]},}; нет отношения — ничего.
++	 */
++	void json(StringBuilder sb, Player hunter, Player player)
++	{
++		final Relation relation = get(hunter, player);
++		if (relation == null)
++		{
++			return;
++		}
++
++		final double hour = PhantomHunterManager.getInstance().playedHours(hunter);
++		sb.append("\"relation\":{\"grudge\":").append(format(relation.grudgeAt(hour))).append(",\"gratitude\":").append(format(relation.gratitudeAt(hour)));
++		sb.append(",\"kills\":").append(relation.kills).append(",\"enemy\":").append(isEnemy(hunter, player)).append(",\"friend\":").append(isFriend(hunter, player)).append(",\"reasons\":[");
++		reasons(sb, relation, true);
++		sb.append("]},");
++	}
++
++	/**
++	 * Для лаунчера ({@code L2HubHunters.json}) и стратега: самые сильные отношения охотника.
++	 * @param max сколько
++	 */
++	void top(StringBuilder sb, Player hunter, int max)
++	{
++		final Map<Integer, Relation> map = relations(hunter);
++		final double hour = PhantomHunterManager.getInstance().playedHours(hunter);
++		final List<Map.Entry<Integer, Relation>> list;
++		synchronized (map)
++		{
++			list = new ArrayList<>(map.entrySet());
++		}
++		list.sort((a, b) -> Double.compare(score(b.getValue(), hour), score(a.getValue(), hour)));
++
++		sb.append('[');
++		int count = 0;
++		for (Map.Entry<Integer, Relation> entry : list)
++		{
++			final String name = CharInfoTable.getInstance().getNameById(entry.getKey());
++			if ((name == null) || (count >= max))
++			{
++				continue;
++			}
++
++			final Relation relation = entry.getValue();
++			final double grudge = relation.grudgeAt(hour);
++			final double gratitude = relation.gratitudeAt(hour);
++			sb.append(count > 0 ? "," : "").append('{');
++			FakePlayerBrain.field(sb, "name", name).append(',');
++			FakePlayerBrain.field(sb, "kind", enemy(relation, hour) ? "enemy" : friend(relation, hour) ? "friend" : "neutral").append(',');
++			sb.append("\"grudge\":").append(format(grudge)).append(",\"gratitude\":").append(format(gratitude)).append(",\"kills\":").append(relation.kills);
++			sb.append(",\"online\":").append(World.getPlayer(entry.getKey()) != null).append(",\"reasons\":[");
++			reasons(sb, relation, false);
++			sb.append("]}");
++			count++;
++		}
++		sb.append(']');
++	}
++
++	// ---------- Хранение ----------
++
++	private static boolean isHunter(Player player)
++	{
++		if (!PhantomManager.getInstance().isPhantom(player))
++		{
++			return false;
++		}
++
++		final PhantomTemplate template = PhantomData.getInstance().getTemplate(player.getName());
++		return (template != null) && template.isHunter();
++	}
++
++	private Relation get(Player hunter, Player player)
++	{
++		if ((hunter == null) || (player == null))
++		{
++			return null;
++		}
++
++		final Map<Integer, Relation> map = relations(hunter);
++		synchronized (map)
++		{
++			return map.get(player.getObjectId());
++		}
++	}
++
++	private Map<Integer, Relation> relations(Player hunter)
++	{
++		return _relations.computeIfAbsent(hunter.getObjectId(), id -> load(hunter));
++	}
++
++	/**
++	 * Из переменной; её нет — перенос старых обид {@link PhantomHunterManager#GRUDGE_VARIABLE} «objectId:убийств»: каждое убийство — обида +3.
++	 */
++	private static Map<Integer, Relation> load(Player hunter)
++	{
++		final String stored = hunter.getVariables().getString(VARIABLE, "");
++		if (!stored.isEmpty())
++		{
++			return parse(stored);
++		}
++
++		final Map<Integer, Relation> map = migrate(hunter.getVariables().getString(PhantomHunterManager.GRUDGE_VARIABLE, ""), PhantomHunterManager.getInstance().playedHours(hunter), System.currentTimeMillis() / 1000);
++		if (!map.isEmpty())
++		{
++			hunter.getVariables().set(VARIABLE, serialize(map));
++			LOGGER.info(PhantomRelations.class.getSimpleName() + ": " + hunter.getName() + " — старые обиды перенесены (" + map.size() + ").");
++		}
++		return map;
++	}
++
++	// ---------- Правила (статические — их проверяет тест без сервера) ----------
++
++	/**
++	 * Поступок: обида и благодарность остывают до этого часа, к ним прибавляется вес события; причина — первой.
++	 */
++	static void apply(Relation relation, Kind kind, double hour, long nowSeconds)
++	{
++		relation.grudge = relation.grudgeAt(hour) + kind.grudge;
++		relation.gratitude = relation.gratitudeAt(hour) + kind.gratitude;
++		relation.hour = hour;
++		if (kind == Kind.KILLED)
++		{
++			relation.kills++;
++		}
++		relation.reasons.addFirst(new Object[]
++		{
++			kind.key,
++			nowSeconds
++		});
++		while (relation.reasons.size() > REASONS)
++		{
++			relation.reasons.pollLast();
++		}
++	}
++
++	/**
++	 * @return враг на этот час: обида не меньше {@link PhantomHuntersConfig#HUNTER_RELATION_ENEMY} и больше благодарности; отношения выключены — убивал хоть раз
++	 */
++	static boolean enemy(Relation relation, double hour)
++	{
++		if (!PhantomHuntersConfig.HUNTER_RELATIONS)
++		{
++			return relation.kills > 0;
++		}
++
++		final double grudge = relation.grudgeAt(hour);
++		return (grudge >= PhantomHuntersConfig.HUNTER_RELATION_ENEMY) && (grudge > relation.gratitudeAt(hour));
++	}
++
++	/**
++	 * @return друг на этот час: благодарность от {@value #FRIEND} и больше обиды
++	 */
++	static boolean friend(Relation relation, double hour)
++	{
++		if (!PhantomHuntersConfig.HUNTER_RELATIONS)
++		{
++			return false;
++		}
++
++		final double gratitude = relation.gratitudeAt(hour);
++		return (gratitude >= FRIEND) && (gratitude > relation.grudgeAt(hour));
++	}
++
++	/**
++	 * Переменная {@value #VARIABLE} → пары; кривые записи пропускаются.
++	 */
++	static Map<Integer, Relation> parse(String stored)
++	{
++		final Map<Integer, Relation> map = new ConcurrentHashMap<>();
++		for (String entry : stored.split(";"))
++		{
++			final String[] parts = entry.split(":", 6);
++			if (parts.length < 5)
++			{
++				continue;
++			}
++
++			try
++			{
++				final Relation relation = new Relation();
++				relation.grudge = Double.parseDouble(parts[1]);
++				relation.gratitude = Double.parseDouble(parts[2]);
++				relation.hour = Double.parseDouble(parts[3]);
++				relation.kills = Integer.parseInt(parts[4]);
++				if ((parts.length > 5) && !parts[5].isEmpty())
++				{
++					for (String reason : parts[5].split(","))
++					{
++						final String[] r = reason.split("@");
++						if ((r.length == 2) && (Kind.of(r[0]) != null))
++						{
++							relation.reasons.addLast(new Object[]
++							{
++								r[0],
++								Long.parseLong(r[1])
++							});
++						}
++					}
++				}
++				map.put(Integer.parseInt(parts[0]), relation);
++			}
++			catch (NumberFormatException e)
++			{
++				// кривая запись — пропуск
++			}
++		}
++		return map;
++	}
++
++	/**
++	 * Старые обиды {@link PhantomHunterManager#GRUDGE_VARIABLE} «objectId:убийств;…» → пары: каждое убийство — обида +3.
++	 */
++	static Map<Integer, Relation> migrate(String grudges, double hour, long nowSeconds)
++	{
++		final Map<Integer, Relation> map = new ConcurrentHashMap<>();
++		for (String entry : grudges.split(";"))
++		{
++			final String[] parts = entry.split(":");
++			if (parts.length != 2)
++			{
++				continue;
++			}
++
++			try
++			{
++				final Relation relation = new Relation();
++				relation.kills = Integer.parseInt(parts[1]);
++				relation.grudge = relation.kills * Kind.KILLED.grudge;
++				relation.hour = hour;
++				relation.reasons.add(new Object[]
++				{
++					Kind.KILLED.key,
++					nowSeconds
++				});
++				map.put(Integer.parseInt(parts[0]), relation);
++			}
++			catch (NumberFormatException e)
++			{
++				// кривая запись — пропуск
++			}
++		}
++		return map;
++	}
++
++	/**
++	 * Больше {@value #ENTRIES} пар — выбыть самым слабым: убийства и сильные чувства держатся дольше.
++	 */
++	static void trim(Map<Integer, Relation> map, double hour)
++	{
++		while (map.size() > ENTRIES)
++		{
++			Integer weakest = null;
++			double min = Double.MAX_VALUE;
++			for (Map.Entry<Integer, Relation> entry : map.entrySet())
++			{
++				final double score = score(entry.getValue(), hour);
++				if (score < min)
++				{
++					min = score;
++					weakest = entry.getKey();
++				}
++			}
++			map.remove(weakest);
++		}
++	}
++
++	private static double score(Relation relation, double hour)
++	{
++		return Math.max(relation.grudgeAt(hour), relation.gratitudeAt(hour)) + (relation.kills > 0 ? 1 : 0) + (relation.lastAt() / 1e12);
++	}
++
++	static String serialize(Map<Integer, Relation> map)
++	{
++		final StringBuilder sb = new StringBuilder(map.size() * 48);
++		for (Map.Entry<Integer, Relation> entry : map.entrySet())
++		{
++			final Relation relation = entry.getValue();
++			sb.append(sb.length() > 0 ? ";" : "").append(entry.getKey()).append(':').append(format(relation.grudge)).append(':').append(format(relation.gratitude));
++			sb.append(':').append(String.format(Locale.ROOT, "%.3f", relation.hour)).append(':').append(relation.kills).append(':');
++			boolean first = true;
++			for (Object[] reason : relation.reasons)
++			{
++				sb.append(first ? "" : ",").append(reason[0]).append('@').append(reason[1]);
++				first = false;
++			}
++		}
++		return sb.toString();
++	}
++
++	private static void reasons(StringBuilder sb, Relation relation, boolean withAgo)
++	{
++		final long now = System.currentTimeMillis() / 1000;
++		boolean first = true;
++		for (Iterator<Object[]> it = relation.reasons.iterator(); it.hasNext();)
++		{
++			final Object[] reason = it.next();
++			sb.append(first ? "" : ",");
++			first = false;
++			if (withAgo)
++			{
++				sb.append("{\"type\":\"").append(reason[0]).append("\",\"ago\":").append(Math.max(0, now - (long) reason[1])).append('}');
++			}
++			else
++			{
++				sb.append('"').append(reason[0]).append('"');
++			}
++		}
++	}
++
++	private static double decay(double value, double hours)
++	{
++		final int halfLife = PhantomHuntersConfig.HUNTER_RELATION_HALF_LIFE;
++		return (halfLife <= 0) || (hours <= 0) ? value : value * Math.pow(0.5, hours / halfLife);
++	}
++
++	private static String format(double value)
++	{
++		return String.format(Locale.ROOT, "%.2f", value);
++	}
++
++	public static PhantomRelations getInstance()
++	{
++		return SingletonHolder.INSTANCE;
++	}
++
++	private static class SingletonHolder
++	{
++		protected static final PhantomRelations INSTANCE = new PhantomRelations();
++	}
++}

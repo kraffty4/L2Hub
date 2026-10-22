@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>L2Hub — оболочка v3</title>
+<!-- Макет оболочки v3 (2026-10-20): разделы L2Hub, «Мой мир» отдельно от хроник, панель сеанса, трей.
+     Данные внутри, кнопки ничего не вызывают. Обложки и знак — из launcher/l2hub/ui/assets. -->
+<style>
+@font-face { font-family: "Cinzel"; src: url(fonts/cinzel-var.woff2) format("woff2"); font-weight: 400 900; }
+@font-face { font-family: "Inter"; src: url(fonts/inter-var.woff2) format("woff2"); font-weight: 100 900; }
+/* size-adjust подгоняет высоту прописных к Cinzel: иначе кириллица рядом с латиницей мельчит. */
+@font-face { font-family: "Cormorant SC"; src: url(fonts/cormorantsc-600.woff2) format("woff2"); font-weight: 600; size-adjust: 112%; }
+@font-face { font-family: "Cormorant SC"; src: url(fonts/cormorantsc-700.woff2) format("woff2"); font-weight: 700; size-adjust: 112%; }
+@font-face { font-family: "Forum"; src: url(fonts/forum-400.woff2) format("woff2"); font-weight: 400 700; size-adjust: 104%; }
+@font-face { font-family: "Philosopher"; src: url(fonts/philosopher-400.woff2) format("woff2"); font-weight: 400; }
+@font-face { font-family: "Philosopher"; src: url(fonts/philosopher-700.woff2) format("woff2"); font-weight: 700; }
+
+:root {
+  --bg: #100d0a; --win: #16120e; --panel: #1d1813; --panel-2: #251e17; --panel-3: #2d241b;
+  --line: #4a3b26; --bronze: #7a6038; --gold: #c9a052; --gold-hi: #e2c27d;
+  --text: #ece2cc; --text-2: #b6a68a; --muted: #7f725d;
+  --ok: #82c46c; --warn: #e3a63c; --bad: #d4705e; --off: #6f675a; --info: #8fa8d8;
+  --cyr: "Cormorant SC";
+  --serif: "Cinzel", var(--cyr), serif; --sans: "Inter", "Segoe UI", system-ui, sans-serif; --mono: Consolas, "Cascadia Mono", monospace;
+}
+:root[data-font="forum"] { --cyr: "Forum"; }
+:root[data-font="philosopher"] { --cyr: "Philosopher"; }
+:root[data-font="times"] { --cyr: "Times New Roman"; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: #0b0907; color: var(--text); font-family: var(--sans); }
+button { font: inherit; color: inherit; cursor: pointer; }
+.serif { font-family: var(--serif); }
+
+/* Пульт макета — вне окна */
+.mockbar { width: 1320px; margin: 0 auto; display: flex; gap: 14px; align-items: center; padding: 8px 0; font-size: 12.5px; color: var(--muted); flex-wrap: wrap; }
+.mockbar .grp { display: flex; gap: 4px; align-items: center; }
+.mockbar button { background: transparent; border: 1px solid var(--line); color: var(--text-2); border-radius: 999px; padding: 3px 10px; font-size: 12px; }
+.mockbar button.on { border-color: var(--gold); color: var(--gold-hi); background: var(--panel-2); }
+
+/* Окно */
+.win { width: 1320px; height: 860px; margin: 0 auto 24px; background: var(--win); border: 1px solid var(--bronze); overflow: clip; display: grid; grid-template-rows: 44px 1fr 48px; position: relative; }
+.titlebar { display: flex; align-items: center; gap: 10px; padding: 0 6px 0 14px; border-bottom: 1px solid var(--line); background: #130f0b; user-select: none; }
+.titlebar .crest { width: 22px; height: 22px; }
+.titlebar .name { font-family: var(--serif); font-weight: 700; font-size: 18px; color: var(--gold-hi); letter-spacing: .5px; }
+.tag { font-size: 11px; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 1px 6px; background: transparent; }
+.tag:hover { border-color: var(--gold); color: var(--gold-hi); }
+.spacer { flex: 1; }
+.winbtn { width: 40px; height: 30px; display: grid; place-items: center; border: 0; background: transparent; color: var(--text-2); border-radius: 6px; }
+.winbtn:hover { background: var(--panel-2); color: var(--text); }
+.winbtn.close:hover { background: #6b2a22; color: #fff; }
+.winbtn svg { width: 14px; height: 14px; }
+.body { display: grid; grid-template-columns: 76px 1fr; min-height: 0; position: relative; }
+
+/* Рельс разделов */
+.rail { background: #110d0a; border-right: 1px solid var(--line); display: flex; flex-direction: column; align-items: stretch; padding: 10px 0; gap: 4px; }
+.rail button { position: relative; background: transparent; border: 0; padding: 9px 4px 7px; display: flex; flex-direction: column; align-items: center; gap: 5px; color: var(--muted); font-size: 11px; }
+.rail button svg { width: 24px; height: 24px; }
+.rail button:hover { color: var(--text-2); }
+.rail button.on { color: var(--gold-hi); }
+.rail button.on::before { content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; border-radius: 0 3px 3px 0; background: var(--gold); }
+.rail button .pip { position: absolute; top: 8px; right: 18px; width: 8px; height: 8px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 2px #110d0a; }
+.rail .sep { flex: 1; }
+
+.screen { display: none; min-height: 0; min-width: 0; }
+.screen.on { display: grid; }
+.col { background: #14100c; border-right: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
+.col-head { display: flex; align-items: center; gap: 8px; padding: 14px 14px 10px; border-bottom: 1px solid var(--line); position: relative; }
+.col-head h2 { font-family: var(--serif); font-size: 17px; font-weight: 700; color: var(--gold-hi); margin: 0; }
+.iconbtn { width: 30px; height: 28px; border-radius: 6px; border: 1px solid transparent; background: transparent; color: var(--text-2); display: grid; place-items: center; }
+.iconbtn:hover, .iconbtn.on { border-color: var(--line); background: var(--panel-2); color: var(--gold-hi); }
+.iconbtn svg { width: 16px; height: 16px; }
+
+/* Список хроник */
+.chron-list { padding: 6px 8px; overflow: auto; flex: 1; }
+.era { padding: 10px 6px 5px; color: var(--muted); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; }
+.chron { display: flex; align-items: center; gap: 10px; width: 100%; padding: 7px 8px; border-radius: 8px; border: 1px solid transparent; background: transparent; text-align: left; }
+.chron:hover { background: var(--panel); border-color: var(--line); }
+.chron.sel { background: var(--panel-2); border-color: var(--gold); }
+.thumb { width: 58px; height: 38px; border-radius: 5px; border: 1px solid var(--line); background: #1b150f center 40%/cover; flex: none; }
+.chron .t { display: flex; flex-direction: column; min-width: 0; flex: 1; gap: 2px; }
+.chron .n { font-family: var(--serif); font-weight: 600; font-size: 14px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chron.sel .n { color: var(--gold-hi); }
+.chron .m { font-size: 11.5px; color: var(--muted); display: flex; align-items: center; gap: 5px; }
+.chron.plan .thumb { filter: grayscale(.85) brightness(.6); }
+.chron.plan .n { color: var(--text-2); }
+.st { font-size: 10.5px; padding: 1px 6px; border-radius: 999px; border: 1px solid var(--line); color: var(--text-2); }
+.st.ready { border-color: #4f6b3c; color: var(--ok); }
+.st.run { border-color: var(--ok); background: rgba(130,196,108,.12); color: var(--ok); }
+.list-foot { padding: 10px 14px 12px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
+.list-foot a { color: var(--gold); text-decoration: none; border-bottom: 1px dashed var(--bronze); cursor: pointer; }
+
+.pop { position: absolute; left: 12px; right: -220px; top: 50px; background: var(--panel-2); border: 1px solid var(--gold); border-radius: 9px; padding: 12px 14px; z-index: 8; display: none; box-shadow: 0 14px 40px rgba(0,0,0,.5); }
+.pop.on { display: block; }
+.pop h4 { margin: 0 0 10px; font-size: 12px; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; font-weight: 500; }
+
+/* Переключатель и выноска */
+.row { display: flex; align-items: center; gap: 12px; padding: 9px 0; }
+.row .lbl { flex: 1; font-size: 13.5px; }
+.row .lbl small { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+.switch { width: 38px; height: 22px; border-radius: 999px; border: 1px solid var(--line); background: #0f0c09; position: relative; flex: none; }
+.switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: var(--muted); transition: left .15s; }
+.switch.on { background: #3b2d17; border-color: var(--gold); }
+.switch.on::after { left: 19px; background: var(--gold-hi); }
+.callout { position: relative; margin-top: 4px; background: #1a150f; border: 1px solid var(--line); border-left: 3px solid var(--gold); border-radius: 6px; padding: 9px 11px; font-size: 12.5px; color: var(--text-2); line-height: 1.45; }
+.callout b { color: var(--text); font-weight: 500; }
+
+/* Страница хроники */
+.page { display: flex; flex-direction: column; min-width: 0; min-height: 0; padding: 16px 20px 14px; gap: 12px; overflow: auto; }
+.hero { height: 332px; flex: none; border-radius: 9px; border: 1px solid var(--bronze); background: #18130e center 40%/cover; position: relative; overflow: hidden; }
+.hero::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(16,13,10,.96) 0%, rgba(16,13,10,.7) 26%, rgba(16,13,10,0) 58%); }
+.hero > * { position: absolute; z-index: 1; }
+.chips { left: 14px; top: 12px; display: flex; gap: 6px; }
+.chip { font-size: 12px; padding: 3px 9px; border-radius: 999px; background: rgba(16,13,10,.8); border: 1px solid var(--bronze); color: var(--text); }
+.era-label { right: 14px; top: 12px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--gold-hi); background: rgba(16,13,10,.75); border: 1px solid var(--bronze); padding: 3px 8px; border-radius: 4px; }
+.hero .who { left: 22px; bottom: 18px; }
+.title { font-family: var(--serif); font-weight: 700; font-size: 46px; line-height: 1; color: var(--gold-hi); margin: 0; letter-spacing: .5px; text-shadow: 0 2px 12px rgba(0,0,0,.6); }
+.subline { font-size: 13px; color: var(--text-2); margin-top: 9px; }
+.subline b { color: var(--text); font-weight: 500; }
+.hero .cta { right: 20px; bottom: 20px; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.cta small { font-size: 11.5px; color: var(--text-2); }
+.split { display: flex; }
+.btn { height: 52px; border-radius: 8px; border: 1px solid var(--bronze); background: var(--panel); display: flex; align-items: center; justify-content: center; gap: 9px; font-size: 15px; font-weight: 500; padding: 0 18px; }
+.btn svg { width: 20px; height: 20px; flex: none; }
+.btn.play { min-width: 270px; border-radius: 8px 0 0 8px; background: var(--gold); border-color: var(--gold-hi); color: #23190b; font-family: var(--serif); font-weight: 700; font-size: 20px; letter-spacing: .6px; }
+.btn.play:hover, .btn.more:hover { background: var(--gold-hi); }
+.btn.more { border-radius: 0 8px 8px 0; border-left: 1px solid #a07f3f; background: var(--gold); border-color: var(--gold-hi); width: 46px; padding: 0; color: #23190b; }
+
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); flex: none; }
+.tab { background: transparent; border: 1px solid transparent; border-bottom: 0; padding: 8px 15px; border-radius: 7px 7px 0 0; color: var(--text-2); font-size: 14px; }
+.tab.on { background: var(--panel); border-color: var(--line); color: var(--gold-hi); margin-bottom: -1px; }
+.tab small { color: var(--muted); font-size: 11.5px; margin-left: 4px; }
+
+.health { border: 1px solid var(--line); border-radius: 8px; background: var(--panel); padding: 10px 12px; display: flex; flex-direction: column; gap: 9px; }
+.health-head { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+.health-head .sub { color: var(--muted); font-size: 12.5px; }
+.linkbtn { margin-left: auto; background: transparent; border: 1px solid var(--line); border-radius: 6px; font-size: 12.5px; padding: 4px 10px; color: var(--text-2); display: inline-flex; gap: 6px; align-items: center; }
+.linkbtn:hover { border-color: var(--gold); color: var(--gold-hi); }
+.tiles { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 8px; }
+.tile { background: #18130e; border: 1px solid var(--line); border-radius: 7px; padding: 8px 10px; min-width: 0; }
+.tile .top { display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 500; }
+.tile .s { font-size: 12px; margin-top: 3px; color: var(--text-2); }
+.tile .det { font-size: 11.5px; color: var(--muted); margin-top: 2px; font-family: var(--mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--off); flex: none; display: inline-block; }
+.dot.on { background: var(--ok); } .dot.warn { background: var(--warn); } .dot.bad { background: var(--bad); }
+.dot.ring { background: transparent; border: 1px solid var(--gold); }
+
+.cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 11px 13px; display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.card h3 { margin: 0; font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); font-weight: 500; display: flex; align-items: center; gap: 7px; }
+.card .big { font-size: 15px; color: var(--text); }
+.card .big b { font-family: var(--serif); color: var(--gold-hi); font-size: 19px; margin-right: 4px; }
+.card .m { font-size: 12.5px; color: var(--text-2); }
+.card .go { margin-top: auto; padding-top: 4px; font-size: 12.5px; color: var(--gold); }
+
+/* Панель сеанса */
+.dock { border-top: 1px solid var(--line); background: #120e0b; display: flex; align-items: center; gap: 12px; padding: 0 10px 0 16px; font-size: 13px; }
+.dock .run { display: flex; align-items: center; gap: 9px; }
+.dock .run .dot { width: 9px; height: 9px; box-shadow: 0 0 0 3px rgba(130,196,108,.2); }
+.dock .run b { font-family: var(--serif); font-weight: 700; color: var(--gold-hi); font-size: 14.5px; }
+.dock .meta { color: var(--text-2); }
+.dock .log { flex: 1; color: var(--muted); font-family: var(--mono); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sbtn { height: 32px; border-radius: 7px; border: 1px solid var(--line); background: var(--panel); padding: 0 12px; font-size: 13px; display: inline-flex; align-items: center; gap: 7px; }
+.sbtn:hover { border-color: var(--gold); }
+.sbtn svg { width: 15px; height: 15px; }
+.sbtn.primary { background: var(--gold); border-color: var(--gold-hi); color: #23190b; font-weight: 600; }
+.sbtn.danger { color: var(--bad); border-color: #7a3a30; background: transparent; }
+
+/* «Мой мир» */
+.wnav { padding: 8px; display: flex; flex-direction: column; gap: 2px; overflow: auto; flex: 1; }
+.wsel { margin: 10px 10px 4px; display: flex; flex-direction: column; gap: 4px; }
+.wsel button { display: flex; align-items: center; gap: 9px; padding: 7px 9px; border-radius: 8px; border: 1px solid var(--line); background: #18130e; text-align: left; }
+.wsel button.on { border-color: var(--gold); background: var(--panel-2); }
+.wsel .thumb { width: 40px; height: 26px; }
+.wsel .n { font-family: var(--serif); font-weight: 600; font-size: 13px; }
+.wsel button.on .n { color: var(--gold-hi); }
+.wsel .m { font-size: 11px; color: var(--muted); }
+.wsel button.dim { opacity: .62; }
+.nav-h { padding: 12px 10px 4px; font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.nav { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 7px; border: 1px solid transparent; background: transparent; color: var(--text-2); font-size: 14px; text-align: left; width: 100%; }
+.nav svg { width: 17px; height: 17px; color: var(--gold); flex: none; }
+.nav .c { margin-left: auto; font-size: 12px; color: var(--muted); }
+.nav:hover { background: var(--panel); }
+.nav.on { background: var(--panel-2); border-color: var(--gold); color: var(--gold-hi); }
+.whead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.whead h1 { font-family: var(--serif); font-size: 24px; color: var(--gold-hi); margin: 0 6px 0 0; }
+.pill { font-size: 12px; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--text-2); display: inline-flex; gap: 6px; align-items: center; }
+.wtiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.wt { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 11px 13px; }
+.wt h3 { margin: 0 0 6px; font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+.wt .v { font-family: var(--serif); font-size: 28px; color: var(--gold-hi); font-weight: 700; line-height: 1.1; }
+.wt .v small { font-size: 15px; color: var(--muted); }
+.wt .m { font-size: 12px; color: var(--text-2); margin-top: 3px; }
+.phase { height: 10px; border-radius: 6px; overflow: hidden; display: flex; margin: 8px 0; }
+.legend { display: flex; gap: 14px; font-size: 12.5px; color: var(--text-2); flex-wrap: wrap; }
+.legend i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
+
+table.mt { width: 100%; border-collapse: collapse; font-size: 13px; }
+.mt th { text-align: left; font-weight: 500; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 8px 10px; border-bottom: 1px solid var(--line); }
+.mt td { padding: 10px; border-bottom: 1px solid #2f261b; vertical-align: top; color: var(--text-2); }
+.mt td:first-child { color: var(--text); }
+.mt td .n { font-family: var(--serif); font-weight: 600; color: var(--gold-hi); }
+.mt td small { display: block; color: var(--muted); font-size: 11.5px; margin-top: 2px; }
+.mt tr.off td { opacity: .55; }
+.yes { color: var(--ok); } .no { color: var(--muted); } .warnc { color: var(--warn); }
+
+/* Настройки L2Hub */
+.set { padding: 18px 26px; overflow: auto; display: flex; flex-direction: column; gap: 16px; }
+.group { background: var(--panel); border: 1px solid var(--line); border-radius: 9px; padding: 6px 16px 12px; }
+.group > h3 { font-family: var(--serif); font-size: 16px; color: var(--gold-hi); margin: 10px 0 4px; }
+.group .row + .row { border-top: 1px solid #2f261b; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; flex: none; }
+.seg button { background: transparent; border: 0; padding: 6px 12px; font-size: 12.5px; color: var(--text-2); }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button.on { background: var(--panel-3); color: var(--gold-hi); }
+.progress7 { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0 4px; }
+.progress7 span { font-size: 12px; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+.progress7 span.ready { border-color: #4f6b3c; color: var(--ok); }
+.progress7 span.run { border-color: var(--bronze); color: var(--text-2); }
+.news { margin: 6px 0 0; padding: 0; list-style: none; font-size: 13px; color: var(--text-2); }
+.news li { padding: 6px 0; border-top: 1px solid #2f261b; display: flex; gap: 10px; }
+.news b { font-family: var(--mono); color: var(--gold); font-weight: 400; flex: none; width: 52px; }
+
+/* Окно «Сервер ещё работает» и меню трея */
+.scrim { position: absolute; inset: 44px 0 0 0; background: rgba(8,6,4,.62); display: none; z-index: 20; }
+.modal { position: absolute; left: 50%; top: 46%; transform: translate(-50%, -50%); width: 470px; background: var(--panel-2); border: 1px solid var(--gold); border-radius: 11px; padding: 20px 22px 18px; box-shadow: 0 24px 70px rgba(0,0,0,.6); }
+.modal h2 { font-family: var(--serif); color: var(--gold-hi); margin: 0 0 8px; font-size: 21px; }
+.modal p { margin: 0 0 14px; font-size: 13.5px; color: var(--text-2); line-height: 1.5; }
+.choice { display: flex; flex-direction: column; gap: 7px; }
+.choice button { display: flex; align-items: center; gap: 11px; text-align: left; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); }
+.choice button:hover { border-color: var(--gold); }
+.choice button svg { width: 19px; height: 19px; color: var(--gold); flex: none; }
+.choice button span { display: flex; flex-direction: column; font-size: 14px; }
+.choice button small { color: var(--muted); font-size: 12px; margin-top: 2px; }
+.choice button.primary { background: #3b2d17; border-color: var(--gold); }
+.choice button.primary span { color: var(--gold-hi); }
+.mfoot { display: flex; align-items: center; gap: 9px; margin-top: 14px; font-size: 12.5px; color: var(--text-2); }
+.box { width: 16px; height: 16px; border: 1px solid var(--bronze); border-radius: 4px; background: #0f0c09; }
+.mfoot .spacer + button { background: transparent; border: 0; color: var(--muted); }
+.tray { position: absolute; right: 14px; bottom: 58px; width: 270px; z-index: 21; display: none; }
+.tray .menu { background: #1c1712; border: 1px solid var(--bronze); border-radius: 8px; padding: 5px; box-shadow: 0 14px 40px rgba(0,0,0,.6); font-size: 13px; }
+.tray .menu .hd { display: flex; align-items: center; gap: 8px; padding: 8px 10px 9px; border-bottom: 1px solid var(--line); margin-bottom: 4px; }
+.tray .menu .hd img { width: 18px; height: 18px; }
+.tray .menu .hd b { font-family: var(--serif); color: var(--gold-hi); }
+.tray .menu .hd small { display: block; color: var(--text-2); font-size: 11.5px; }
+.tray .menu div.it { padding: 7px 10px; border-radius: 5px; color: var(--text); }
+.tray .menu div.it:hover { background: var(--panel-3); }
+.tray .menu div.it.def { font-weight: 600; }
+.tray .menu hr { border: 0; border-top: 1px solid var(--line); margin: 4px 2px; }
+.tray .cap { text-align: right; font-size: 11.5px; color: var(--muted); margin-top: 6px; }
+.win.closing .scrim, .win.closing .tray { display: block; }
+
+/* Шрифты: образец */
+.spec { padding: 20px 26px; overflow: auto; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-content: start; }
+.spec .group { padding: 12px 16px 14px; cursor: pointer; }
+.spec .group.on { border-color: var(--gold); background: var(--panel-2); }
+.spec .lineA { font-size: 30px; font-weight: 700; color: var(--gold-hi); margin: 6px 0 4px; }
+.spec .lineB { font-size: 19px; font-weight: 700; color: var(--gold-hi); }
+.spec .lineC { font-size: 14px; font-weight: 600; color: var(--text); margin-top: 6px; }
+.spec .about { font-size: 12.5px; color: var(--muted); margin-top: 8px; line-height: 1.45; }
+</style>
+</head>
+<body>
+
+<div class="mockbar">
+  <div class="grp">Экран:
+    <button data-go="chron" class="on">Хроники</button>
+    <button data-go="world">Мой мир</button>
+    <button data-go="module">Мой мир · модуль</button>
+    <button data-go="app">L2Hub</button>
+    <button data-go="close">Крестик и трей</button>
+    <button data-go="fonts">Шрифты</button>
+  </div>
+  <div class="grp">Кириллица в заголовках:
+    <button data-font="cormorant" class="on">Cormorant SC</button>
+    <button data-font="forum">Forum</button>
+    <button data-font="philosopher">Philosopher</button>
+    <button data-font="times">как сейчас (Times)</button>
+  </div>
+  <div class="grp">Обложки:
+    <button data-covers="login" class="on">новые — экран входа</button>
+    <button data-covers="old">прежние</button>
+  </div>
+</div>
+
+<div class="win" id="win">
+  <div class="titlebar">
+    <img class="crest" src="../../../launcher/l2hub/ui/assets/logo_mark.svg" alt="">
+    <span class="name">L2Hub</span><button class="tag" data-go="app" title="О программе и что нового">v0.2.18</button>
+    <span class="spacer"></span>
+    <button class="winbtn" aria-label="Свернуть"><svg viewBox="0 0 14 14" stroke="currentColor"><path d="M2 7h10"/></svg></button>
+    <button class="winbtn" aria-label="Развернуть"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor"><rect x="2.5" y="2.5" width="9" height="9"/></svg></button>
+    <button class="winbtn close" data-go="close" aria-label="Закрыть"><svg viewBox="0 0 14 14" stroke="currentColor"><path d="M3 3l8 8M11 3l-8 8"/></svg></button>
+  </div>
+
+  <div class="body">
+    <nav class="rail">
+      <button data-go="chron" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 5.5C4 4.7 4.7 4 5.5 4H10v16H5.5C4.7 20 4 19.3 4 18.5z"/><path d="M10 4h4v16h-4z"/><path d="M14.6 4.6l3.8-1 3.1 15.5-3.8.8z"/></svg>Хроники<i class="pip"></i></button>
+      <button data-go="world"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.8 3 2.8 15 0 18M12 3c-2.8 3-2.8 15 0 18"/></svg>Мой мир</button>
+      <button data-go="friends"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><circle cx="17" cy="9" r="2.6"/><path d="M16.5 14.6c2.6.2 4.4 1.9 5 4.9"/></svg>Друзья</button>
+      <span class="sep"></span>
+      <button data-go="app"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4z"/><path d="M19.4 13.5l1.6 1.2-2 3.4-1.9-.7a7.6 7.6 0 0 1-2 1.2l-.3 2h-4l-.3-2a7.6 7.6 0 0 1-2-1.2l-1.9.7-2-3.4 1.6-1.2a7.7 7.7 0 0 1 0-3L3 9.3l2-3.4 1.9.7a7.6 7.6 0 0 1 2-1.2l.3-2h4l.3 2a7.6 7.6 0 0 1 2 1.2l1.9-.7 2 3.4-1.6 1.2a7.7 7.7 0 0 1 0 3z"/></svg>L2Hub</button>
+    </nav>
+
+    <!-- ХРОНИКИ -->
+    <section class="screen on" id="s-chron" style="grid-template-columns: 268px 1fr;">
+      <div class="col">
+        <div class="col-head"><h2>Хроники</h2><span class="spacer"></span>
+          <button class="iconbtn" id="listOpts" title="Вид списка"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button>
+          <div class="pop" id="listPop">
+            <h4>Список хроник</h4>
+            <div class="row" style="padding-top:0"><div class="lbl">Показывать хроники вне плана<small>17 штук: Prelude, C1–C3, C5, Kamael, Hellbound…</small></div><button class="switch" data-sw></button></div>
+            <div class="callout">Добавлять их в L2Hub <b>пока не планируем</b>. Хочешь в какую-то поиграть — дай знать, добавим.</div>
+          </div>
+        </div>
+        <div class="chron-list">
+          <div class="era">Chaotic Chronicle</div>
+          <button class="chron"><span class="thumb" style="background-image:url(../../../launcher/l2hub/ui/assets/cover_c4.jpg)"></span><span class="t"><span class="n">Scions of Destiny</span><span class="m"><span class="st">играет</span>L2Solo</span></span></button>
+          <button class="chron"><span class="thumb" style="background-image:url(../../../launcher/l2hub/ui/assets/cover_interlude_v2.jpg)"></span><span class="t"><span class="n">Interlude</span><span class="m"><span class="st">играет</span>мир — в работе</span></span></button>
+          <div class="era">Chaotic Throne</div>
+          <button class="chron"><span class="thumb" style="background-image:url(../../../launcher/l2hub/ui/assets/cover_gracia_final.jpg)"></span><span class="t"><span class="n">Gracia Final</span><span class="m"><span class="st ready">готова</span>La2offline</span></span></button>
+          <button class="chron plan"><span class="thumb" style="background-image:url(../../../launcher/l2hub/ui/assets/cover_epilogue.jpg)"></span><span class="t"><span class="n">Gracia Epilogue</span><span class="m"><span class="st">в планах</span>есть Mobius</span></span></button>
+          <button class="chron sel"><span class="thumb" style="background-image:url(../../../launcher/l2hub/ui/assets/cover_ct26_highfive_v2.jpg)"></span><span class="t"><span class="n">High Five</span><span class="m"><span class="st run">работает</span>живой мир</span></span></button>
+          <div class="era">Classic · Essence</div>
+          <button class="chron plan"><span class="thumb" style="background-image:url(../../../launcher/l2hub/ui/assets/cover_classic_v2.jpg)"></span><span class="t"><span class="n">Classic</span><span class="m"><span class="st">в планах</span></span></span></button>
+          <button class="chron plan"><span class="thumb" style="background-image:url(../../../launcher/l2hub/ui/assets/cover_essence.jpg)"></span><span class="t"><span class="n">Essence</span><span class="m"><span class="st">в планах</span></span></span></button>
+        </div>
+        <div class="list-foot">17 хроник вне плана скрыто · <a id="showHidden">показать</a></div>
+      </div>
+
+      <div class="page">
+        <div class="hero" style="background-image:url(../../../launcher/l2hub/ui/assets/cover_ct26_highfive_v2.jpg)">
+          <div class="chips"><span class="chip">Mobius CT 2.6 HighFive</span><span class="chip">Протокол 273</span><span class="chip">Геодата 203 региона</span></div>
+          <div class="era-label">Chaotic Throne</div>
+          <div class="who"><h1 class="title">High Five</h1><div class="subline">Сервер работает <b>34 мин</b> · клиент <b><игры>\LA2 H5</b> · система R.C-TEAM Rev 273</div></div>
+          <div class="cta">
+            <div class="split"><button class="btn play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l12.5-7.5z"/></svg>Запустить клиент</button><button class="btn more" aria-label="Ещё"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg></button></div>
+          </div>
+        </div>
+        <div class="tabs"><button class="tab on">Обзор</button><button class="tab">Настройки сервера</button><button class="tab">Персонажи <small>3</small></button><button class="tab">Бэкапы <small>17</small></button><button class="tab">Журнал</button></div>
+        <div class="health">
+          <div class="health-head"><span class="dot on"></span><span>Всё работает</span><span class="sub">в игре 0 · гейм на логине как Server 2: Sieghardt · клиент не запущен</span>
+            <button class="linkbtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>Проверить всё</button></div>
+          <div class="tiles">
+            <div class="tile"><div class="top"><span class="dot on"></span>База данных</div><div class="s">работает</div><div class="det">MariaDB · 127.0.0.1:3306</div></div>
+            <div class="tile"><div class="top"><span class="dot on"></span>Логин-сервер</div><div class="s">работает</div><div class="det">127.0.0.1:2106 · PID 21360</div></div>
+            <div class="tile"><div class="top"><span class="dot on"></span>Гейм-сервер</div><div class="s">работает</div><div class="det">127.0.0.1:7777 · 2832/4096 МБ</div></div>
+            <div class="tile"><div class="top"><span class="dot"></span>Клиент</div><div class="s">выключен</div><div class="det">протокол 273</div></div>
+          </div>
+        </div>
+        <div class="cards">
+          <div class="card"><h3><span class="dot on"></span>Живой мир</h3><div class="big"><b>28</b>охотников · 2 напарника</div><div class="m">разум на связи · deepseek-flash</div><a class="go" data-go="world">Мой мир →</a></div>
+          <div class="card"><h3><span class="dot on"></span>Сеть</h3><div class="big">Только этот ПК</div><div class="m">логин и гейм слушают 127.0.0.1 — по сокетам процессов</div><a class="go" data-go="friends">Друзья →</a></div>
+          <div class="card"><h3><span class="dot on"></span>Бэкап базы</h3><div class="big">сегодня 13:58</div><div class="m">сам, перед запуском · хранится 10 последних</div><a class="go">Бэкапы →</a></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- МОЙ МИР: обзор -->
+    <section class="screen" id="s-world" style="grid-template-columns: 248px 1fr;">
+      <div class="col">
+        <div class="col-head"><h2>Мой мир</h2></div>
+        <div class="wsel">
+          <button class="on"><span class="thumb" style="background-image:url(../../../launcher/l2hub/ui/assets/cover_ct26_highfive_v2.jpg)"></span><span><span class="n">High Five</span><br><span class="m">живой · 28 охотников</span></span></button>
+          <button class="dim"><span class="thumb" style="background-image:url(../../../launcher/l2hub/ui/assets/cover_interlude_v2.jpg)"></span><span><span class="n">Interlude</span><br><span class="m">модуль в работе</span></span></button>
+        </div>
+        <div class="wnav">
+          <div class="nav-h">Мир High Five</div>
+          <button class="nav on" data-go="world"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Обзор</button>
+          <button class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><circle cx="17" cy="9" r="2.6"/><path d="M16.5 14.6c2.6.2 4.4 1.9 5 4.9"/></svg>Население<span class="c">28</span></button>
+          <button class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3l7 3v6c0 4.4-3 7.6-7 9-4-1.4-7-4.6-7-9V6z"/></svg>Напарники<span class="c">2</span></button>
+          <button class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Создатель</button>
+          <div class="nav-h">Общее для всех миров</div>
+          <button class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 4a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3 3 0 0 0 2 5 3 3 0 0 0 6 0V7a3 3 0 0 0-3-3zM15 4a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3 3 0 0 1-2 5 3 3 0 0 1-6 0"/></svg>Разум<span class="c"><span class="dot on"></span></span></button>
+          <button class="nav" data-go="module"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/></svg>Модуль фантомов</button>
+        </div>
+      </div>
+      <div class="page">
+        <div class="whead"><h1>Обзор</h1><span class="pill"><span class="dot on"></span>сервер работает · 34 мин · в игре 0</span><span class="pill">живые данные · 4 с назад</span></div>
+        <div class="wtiles">
+          <div class="wt"><h3>Охотники</h3><div class="v">28 <small>/ 28</small></div><div class="m">в мире сейчас · режим «всегда»</div></div>
+          <div class="wt"><h3>Напарники</h3><div class="v">2</div><div class="m">Vesna, Mityai · зовут в игре</div></div>
+          <div class="wt"><h3>Разум</h3><div class="v" style="font-size:19px;padding:5px 0 4px">deepseek-flash</div><div class="m">на связи · общий для всех миров</div></div>
+          <div class="wt"><h3>Игроки</h3><div class="v">0</div><div class="m">охотники живут и без тебя</div></div>
+        </div>
+        <div class="card">
+          <h3>Чем занят мир</h3>
+          <div class="phase"><i style="flex:21;background:var(--ok)"></i><i style="flex:2;background:var(--warn)"></i><i style="flex:3;background:var(--gold)"></i><i style="flex:2;background:var(--info)"></i></div>
+          <div class="legend"><span><i style="background:var(--ok)"></i>На каче 21</span><span><i style="background:var(--warn)"></i>В городе 2</span><span><i style="background:var(--gold)"></i>В лавке 3</span><span><i style="background:var(--info)"></i>В пати 2</span><span><i style="background:var(--bad)"></i>Убит 0</span></div>
+        </div>
+        <div class="cards" style="grid-template-columns: 1fr 1fr;">
+          <div class="card"><h3>Экономика</h3><div class="m">Адены у всех — <b style="color:var(--text)">13,7кк</b> · доход с охоты, медиана — ~43к/ч · квестов в работе 6 · копят на профу 1 · лавок в Гиране 3</div></div>
+          <div class="card"><h3>Пати сейчас</h3><div class="m"><b style="color:var(--gold-hi)">Vovan</b> → Morok</div></div>
+        </div>
+        <div class="callout">Тут всё как в нынешнем «Мой мир» — меняется место: мир стал разделом L2Hub, а не кнопкой на странице High Five. Сверху выбираешь, чей мир смотреть: по умолчанию — запущенной хроники. «Разум» и «Модуль» — общие: один ключ, одна модель и один код фантомов на все хроники Mobius.</div>
+      </div>
+    </section>
+
+    <!-- МОЙ МИР: модуль -->
+    <section class="screen" id="s-module" style="grid-template-columns: 248px 1fr;">
+      <div class="col" id="worldColClone"></div>
+      <div class="page">
+        <div class="whead"><h1>Модуль фантомов</h1><span class="pill">phantoms/core · правка 2026-10-20</span></div>
+        <div class="subline" style="margin-top:-4px;color:var(--text-2)">Один код охотников, напарников и мозгов на все хроники Mobius. Хроника получает модуль при сборке сервера (<span style="font-family:var(--mono)">server_build.ps1</span>): код — из <span style="font-family:var(--mono)">core</span>, данные мира — свои, врезки в Mobius — <span style="font-family:var(--mono)">glue.patch</span>.</div>
+        <div class="card" style="padding:4px 6px">
+          <table class="mt">
+            <tr><th>Хроника</th><th>Сервер</th><th>Данные мира</th><th>Врезки</th><th>В сборке сервера</th><th></th></tr>
+            <tr><td><span class="n">High Five</span><small>живой мир</small></td><td>Mobius CT 2.6</td><td class="yes">✓ 6 файлов<small>tools/fake_players.py</small></td><td class="yes">✓ 20 файлов Mobius</td><td class="yes">✓ совпадает с core<small>сверка по .module_manifest.json</small></td><td><button class="sbtn">Пересобрать</button></td></tr>
+            <tr><td><span class="n">Interlude</span><small>в работе</small></td><td>Mobius CT 0</td><td class="no">— нет</td><td class="no">— нет</td><td class="no">—</td><td class="warnc" style="font-size:12px">разведка — docs/INTERLUDE.md</td></tr>
+            <tr class="off"><td><span class="n">Gracia Epilogue</span><small>в планах</small></td><td>Mobius CT 2.4</td><td class="no">—</td><td class="no">—</td><td class="no">—</td><td style="font-size:12px">можно перенести</td></tr>
+            <tr class="off"><td><span class="n">Gracia Final</span></td><td>La2offline</td><td colspan="4" style="font-size:12.5px">не Mobius — модуль под эту сборку не делали</td></tr>
+            <tr class="off"><td><span class="n">Scions of Destiny</span></td><td>L2Solo</td><td colspan="4" style="font-size:12.5px">чужой код, его не патчим; у L2Solo свои боты</td></tr>
+          </table>
+        </div>
+        <div class="callout">Зачем экран: сейчас не видно, в какой хронике модуль свежий, а где сборка отстала от <span style="font-family:var(--mono)">core</span>. Строки берутся из файлов: <span style="font-family:var(--mono)">phantoms/&lt;id&gt;/</span>, <span style="font-family:var(--mono)">servers/&lt;id&gt;/.module_manifest.json</span>. «Пересобрать» — та же сборка, что сейчас из консоли, с ходом в панели сеанса.</div>
+      </div>
+    </section>
+
+    <!-- ДРУЗЬЯ (без изменений по сути — только стал разделом) -->
+    <section class="screen" id="s-friends" style="grid-template-columns: 1fr;">
+      <div class="set">
+        <div class="whead"><h1 style="font-family:var(--serif);font-size:24px;color:var(--gold-hi);margin:0">Друзья</h1><span class="pill"><span class="dot on"></span>Radmin VPN · 26.14.3.77</span></div>
+        <div class="callout">Содержимое — нынешний ящик «Друзья»: режим сети, L2.ini и клиент целиком для друзей, инструкция, кто играет. Меняется место: Radmin — это про весь ПК, а не про одну хронику, поэтому «Друзья» — раздел L2Hub. Пакет клиента собирается для выбранной хроники.</div>
+      </div>
+    </section>
+
+    <!-- НАСТРОЙКИ L2HUB -->
+    <section class="screen" id="s-app" style="grid-template-columns: 1fr;">
+      <div class="set">
+        <div class="group">
+          <h3>Окно и трей</h3>
+          <div class="row"><div class="lbl">Крестик, пока сервер работает<small>«Спрашивать» — окно с выбором и галкой «запомнить»</small></div><div class="seg"><button class="on">Спрашивать</button><button>Скрыть в трей</button><button>Остановить и выйти</button></div></div>
+          <div class="row"><div class="lbl">Крестик, когда ничего не запущено</div><div class="seg"><button class="on">Выйти</button><button>Скрыть в трей</button></div></div>
+          <div class="row"><div class="lbl">Сказать, если сервер упал<small>уведомление Windows от значка в трее, даже когда окно скрыто</small></div><button class="switch on" data-sw></button></div>
+          <div class="row"><div class="lbl">Запоминать размер и место окна</div><button class="switch on" data-sw></button></div>
+        </div>
+        <div class="group">
+          <h3>Список хроник</h3>
+          <div class="row"><div class="lbl">Показывать хроники вне плана<small>то же, что в шестерёнке над списком хроник</small></div><button class="switch" data-sw></button></div>
+          <div class="callout">Prelude, C1–C3, C5, The Kamael, Hellbound, Gracia Part 1–2, Freya и ветку Goddess of Destruction добавлять в L2Hub <b>пока не планируем</b>. Хочешь в какую-то поиграть — дай знать, добавим.</div>
+        </div>
+        <div class="group">
+          <h3>О программе</h3>
+          <div class="row" style="align-items:flex-start"><div class="lbl"><span style="font-family:var(--serif);font-size:20px;color:var(--gold-hi);font-weight:700">L2Hub 0.2.18</span><small>0.&lt;готовых хроник из списка 1.0&gt;.&lt;номер коммита&gt; · сейчас готово 2 из 7</small>
+            <div class="progress7"><span class="ready">✓ High Five</span><span class="ready">✓ Gracia Final</span><span class="run">Interlude</span><span class="run">C4</span><span>Gracia Epilogue</span><span>Classic</span><span>Essence</span></div></div>
+            <button class="sbtn">Вся история</button></div>
+          <ul class="news">
+            <li><b>0.2.18</b>High Five: итоги ночного прогона охотников без игрока</li>
+            <li><b>0.2.17</b>High Five: охотники доходят до спотов ногами</li>
+            <li><b>0.2.16</b>High Five: в дороге на спот охотник бежит, а не охотится</li>
+            <li><b>0.2.15</b>Охотники бегут отрезками, бижа на рынке, пати в Alt+B</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ШРИФТЫ -->
+    <section class="screen" id="s-fonts" style="grid-template-columns: 1fr;">
+      <div class="spec">
+        <div class="group" data-pick="cormorant"><h3 style="font-family:var(--sans);font-size:12px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase">Cormorant SC</h3>
+          <div class="lineA" style="font-family:Cinzel,'Cormorant SC'">High Five · Мой мир</div><div class="lineB" style="font-family:Cinzel,'Cormorant SC'">Сервер ещё работает · Проверка</div><div class="lineC" style="font-family:Cinzel,'Cormorant SC'">Население · Напарники · Создатель</div>
+          <div class="about">Гарамон с настоящими капителями: строчные — маленькие прописные, как у Cinzel. Ближе всего по духу к шапке, в мелком размере тоньше.</div></div>
+        <div class="group" data-pick="forum"><h3 style="font-family:var(--sans);font-size:12px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase">Forum</h3>
+          <div class="lineA" style="font-family:Cinzel,Forum">High Five · Мой мир</div><div class="lineB" style="font-family:Cinzel,Forum">Сервер ещё работает · Проверка</div><div class="lineC" style="font-family:Cinzel,Forum">Население · Напарники · Создатель</div>
+          <div class="about">Римские надписи, как Cinzel, но со строчными и одной жирностью. Плотнее и читаемее в мелком, но рядом с капителями Cinzel виден разнобой.</div></div>
+        <div class="group" data-pick="philosopher"><h3 style="font-family:var(--sans);font-size:12px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase">Philosopher</h3>
+          <div class="lineA" style="font-family:Cinzel,Philosopher">High Five · Мой мир</div><div class="lineB" style="font-family:Cinzel,Philosopher">Сервер ещё работает · Проверка</div><div class="lineC" style="font-family:Cinzel,Philosopher">Население · Напарники · Создатель</div>
+          <div class="about">Полугротеск с засечками-намёками, русский шрифт. Самый читаемый, но меньше всего «старины».</div></div>
+        <div class="group" data-pick="times"><h3 style="font-family:var(--sans);font-size:12px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase">Как сейчас</h3>
+          <div class="lineA" style="font-family:Cinzel,'Times New Roman'">High Five · Мой мир</div><div class="lineB" style="font-family:Cinzel,'Times New Roman'">Сервер ещё работает · Проверка</div><div class="lineC" style="font-family:Cinzel,'Times New Roman'">Население · Напарники · Создатель</div>
+          <div class="about">Cinzel без кириллицы — русские буквы берёт Times New Roman. Так сейчас в окне.</div></div>
+      </div>
+    </section>
+
+    <div class="scrim"><div class="modal">
+      <h2>Сервер ещё работает</h2>
+      <p>High Five работает 34 мин, в игре 0, охотников 28. Куда деть L2Hub?</p>
+      <div class="choice">
+        <button class="primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="15" width="18" height="6" rx="1.5"/><path d="M12 3v9M8 8l4 4 4-4"/></svg><span>Скрыть в трей<small>сервер работает, L2Hub присматривает — значок у часов</small></span></button>
+        <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3v9M6.3 7.5a8 8 0 1 0 11.4 0"/></svg><span>Остановить и выйти<small>персонажи сохранятся, база закроется</small></span></button>
+        <button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M14 4h6v16h-6M10 8l-4 4 4 4M6 12h10"/></svg><span>Выйти, сервер оставить<small>без присмотра: остановишь, когда снова откроешь L2Hub</small></span></button>
+      </div>
+      <div class="mfoot"><span class="box"></span>Запомнить и больше не спрашивать<span class="spacer"></span><button data-go="chron">Отмена</button></div>
+    </div></div>
+    <div class="tray"><div class="menu">
+      <div class="hd"><img src="../../../launcher/l2hub/ui/assets/logo_mark.svg" alt=""><span><b>L2Hub</b><small><span class="dot on"></span> High Five · 34 мин · в игре 0</small></span></div>
+      <div class="it def">Открыть L2Hub</div><div class="it">Запустить клиент</div><div class="it">Мой мир</div><hr><div class="it">Остановить сервер</div><div class="it">Выйти</div>
+    </div><div class="cap">меню значка в трее · двойной щелчок — открыть окно</div></div>
+  </div>
+
+  <div class="dock">
+    <div class="run"><span class="dot on"></span><b>High Five</b><span class="meta">работает · 34 мин · в игре 0 · охотников 28</span></div>
+    <span class="log">13:58 бэкап перед запуском · 13:59 логин 127.0.0.1:2106 · 14:00 гейм 127.0.0.1:7777, Server 2: Sieghardt</span>
+    <button class="sbtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 3-3 3M12 15h5"/></svg>Лог</button>
+    <button class="sbtn danger"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="1.5"/></svg>Стоп</button>
+  </div>
+</div>
+
+<script>
+const win = document.getElementById('win');
+document.getElementById('worldColClone').innerHTML = document.querySelector('#s-world .col').innerHTML;
+document.querySelectorAll('#s-module .nav').forEach(b => b.classList.toggle('on', b.dataset.go === 'module'));
+function go(name) {
+  win.classList.toggle('closing', name === 'close');
+  const scr = name === 'close' ? 'chron' : name;
+  document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === 's-' + scr));
+  const railName = { module: 'world', fonts: 'app' }[scr] || scr;
+  document.querySelectorAll('.rail button').forEach(b => b.classList.toggle('on', b.dataset.go === railName));
+  document.querySelectorAll('.mockbar [data-go]').forEach(b => b.classList.toggle('on', b.dataset.go === name));
+  try { history.replaceState(null, '', '#' + name); } catch (e) { /* file:// */ }
+}
+function font(name) {
+  if (name === 'cormorant') delete document.documentElement.dataset.font; else document.documentElement.dataset.font = name;
+  document.querySelectorAll('[data-font]').forEach(b => b.classList.toggle('on', b.dataset.font === name));
+  document.querySelectorAll('[data-pick]').forEach(g => g.classList.toggle('on', g.dataset.pick === name));
+}
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-go],[data-font],[data-pick],[data-sw],#listOpts,#showHidden');
+  if (!t) return;
+  if (t.dataset.sw !== undefined) return t.classList.toggle('on');
+  if (t.id === 'listOpts' || t.id === 'showHidden') { document.getElementById('listPop').classList.toggle('on'); document.getElementById('listOpts').classList.toggle('on'); return; }
+  if (t.dataset.go) go(t.dataset.go);
+  if (t.dataset.font) font(t.dataset.font);
+  if (t.dataset.pick) font(t.dataset.pick);
+});
+// Обложки v3 «в духе экрана входа» (docs/design/covers/2026-10-20_cover_<id>_login.jpg) против прежних из ui/assets.
+const COVER_V3 = { c4: 'c4', interlude_v2: 'interlude', gracia_final: 'gracia_final', epilogue: 'epilogue', ct26_highfive_v2: 'ct26_highfive', classic_v2: 'classic', essence: 'essence' };
+document.querySelectorAll('[style*="cover_"]').forEach(el => { el.dataset.old = el.style.backgroundImage; el.dataset.cover = el.style.backgroundImage.match(/cover_([a-z0-9_]+)\.jpg/)[1]; });
+function covers(kind) {
+  document.querySelectorAll('[data-cover]').forEach(el => {
+    el.style.backgroundImage = kind === 'old' ? el.dataset.old : `url(../covers/2026-10-20_cover_${COVER_V3[el.dataset.cover]}_login.jpg)`;
+  });
+  document.querySelectorAll('[data-covers]').forEach(b => b.classList.toggle('on', b.dataset.covers === kind));
+}
+document.addEventListener('click', e => { const b = e.target.closest('[data-covers]'); if (b) covers(b.dataset.covers); });
+covers(new URLSearchParams(location.search).get('covers') || 'login');
+window.addEventListener('hashchange', () => go(location.hash.slice(1) || 'chron'));
+const start = new URLSearchParams(location.search);
+go((location.hash || '#chron').slice(1));
+font(start.get('font') || 'cormorant');
+</script>
+</body>
+</html>

@@ -1,0 +1,55 @@
+# Gracia Epilogue в L2Hub
+
+Создан 2026-10-20. Профиль `epilogue` (`profiles/epilogue.json`), сборка `L2J_Mobius_CT_2.4_Epilogue` из свежего `master` Mobius. Хроника из списка 1.0; по устройству — ближайшая к High Five.
+
+## Что скачано
+
+- Исходники Mobius: GitLab `MobiusDevelopment/L2J_Mobius`, ветка `master`, архив папки `L2J_Mobius_CT_2.4_Epilogue`, 32,6 МБ → `downloads/L2J_Mobius_CT_2.4_Epilogue_2026-10-20.zip`, распакованы в `servers/epilogue/L2J_Mobius_CT_2.4_Epilogue`.
+- Геодата не скачивалась: границы мира у Epilogue и High Five одинаковые (тайлы X 11–26, Y 10–26), взята копия геодаты H5 (203 файла `.l2j`) — `GeoEngine: Loaded 203 regions`.
+- Клиент — автор скачал браузером: `<загрузки браузера>\Lineage II - The Chaotic Throne - The 2nd Throne - Epilogue.zip` (4,9 ГБ, 2028 файлов) и «чистый патч» `Ggracia_epilogue-patch_system.7z` (11,7 МБ).
+
+## Сервер
+
+- Сборка — `scripts/server_build.ps1 -Id epilogue`: JDK 27, без предупреждений; база — `server_setup.ps1 -Id epilogue`: `l2jmobiusepilogue`, 120 SQL-файлов. Сервер принимает протокол `152`.
+- Патч `patches/epilogue/0001-gameserver-bind-hostname.patch` — тот же, что у H5 и Interlude (гейм слушает только `127.0.0.1`).
+- Фантомы — общий модуль `phantoms/` (`phantoms/README.md`, «Gracia Epilogue»).
+
+Пробный старт 2026-10-20 без клиента: мир за 34 с, геодата 203 региона, 2 напарника и 28 охотников, 1466 спотов, `.buddy` и `.hunters` зарегистрированы (обработчиков команд 11), макрос «Напарник» загружен, `error0.log` пустой, «Проверить всё» — зелёное.
+
+## Клиент
+
+`<игры>\Lineage2-Epilogue` (9,8 ГБ), распакован из архива автора. Лаунчер запускает `system_ru\L2.exe`.
+
+Осмотр без запуска:
+- Defender (проверка папки) угроз не нашёл.
+- Своя система клиента уже под локальный сервер: `system\l2.ini` зашифрован ключом комьюнити, `ServerAddr=127.0.0.1`; `system\l2.exe` (2010-01-10) без подписи — пропатчен под ключ комьюнити; `Engine.dll` и `Core.dll` подписаны NCSoft, без античита Frost; nProtect GameGuard 2009 года (`GameGuard.des`, `npkcrypt.sys`/`npkcusb.sys` — 32-битные драйверы, на x64 не грузятся).
+- В `l2.ini` был автологин репакера — выключен (`IsL2AutoLogOn=False`, `L2ID`/`L2Passwd` пустые); копия исходного — `data/backups/client/epilogue/2026-10-20_19-49-28/l2.ini`.
+- `LineageII.exe` в корне — лаунчер 2009 года, `Patch\`, `patchw32.dll` — его. Не запускать. В `SysTextures` лежит `L2Font-e.7z` — архив репакера, игра его не читает.
+- Русский чат: русских шрифтов и текстов в клиенте нет, в `localization.ini` есть язык `8=Russia`. Как в H5 (`docs/RU_CHAT.md`): `tools/client_system_ru.py` собрал `system_ru` — копию `system` с `Language=8` и английскими шрифтами и текстами. Набирается ли кириллица — покажет вход.
+
+«Чистый патч» не ставится — он лежит в карантине `downloads/quarantine_epilogue_patch/`:
+- это официальная система: `Engine.dll`, `Core.dll`, `L2.bin` подписаны NCSoft, подписи целы (статус `UnknownError` — просроченная цепочка сертификата 2009 года, правленый файл дал бы `HashMismatch`);
+- в его `Engine.dll` встроены точки подключения античита Frost (`frostConnect`, `frostSend`, `frostRecv`…) — это сборка Иннова;
+- его `L2.ini` зашифрован ключом NCSoft и смотрит на `L2authd.Lineage2.com`; перешифровать на `127.0.0.1` нечем (закрытого ключа NCSoft нет);
+- `.exe` в патче нет.
+
+## Вход автора
+
+2026-10-20: клиент пускает, русский чат в `system_ru` работает (проверено автором). Персонаж `Zalup4ik` — права GM (`characters.accesslevel = 100`, Master), выданы при `online = 0`.
+
+## Моды High Five (2026-10-20)
+
+Все пять модов H5 перенесены — `patches/epilogue/` (имена те же, что у H5): на чистом Epilogue легли сами, кроме одного куска меню доски.
+- `0002-champion-tiers` — два уровня чемпионов, как в H5; `ChampionMonsters.ini` в сервере совпадал с архивом и заменён собранным (значения те же, что в H5: `ChampionEnable = True` и т.д.).
+- `0003-town-buffer-gmshop` — схем-баффер и GM-шоп у гейткиперов 17 городов; точки пересчитаны `tools/town_npcs.py` по геодате Epilogue — вышли те же, что у H5 (мир один).
+- `0004-buffer-max-level` — бафы баффера на максимальном уровне; уровни сверены с данными скиллов Epilogue (совпадают с H5).
+- `0012-community-board` — доска Alt+B: баффер, GM-шоп, телепорт, напарники, охотники, поиск дропа. Меню (`navigation.html`) — текстуры Epilogue (`L2UI_CT1.Button_DF`). В `L2HubBoard.java` — `stopAllBuffs(true)`: у Epilogue метод с одним параметром (у H5 — `stopAllBuffs(boolean, boolean)`). `CommunityBoard.ini` в сервере заменён собранным (`CustomCommunityBoard = True`).
+- `0014-npc-view-ru` — окно моба по Shift+клику на русском; в `NPC.ini` сервера включены `AltGameViewNpc`, `ShowNpcLevel`, `ShowNpcAggression`, как в H5.
+
+Бафы — на 3 часа, как в H5 (настройка сервера): в `Player.ini` `EnableModifySkillDuration = True`, `SkillDurationList` — 112 скиллов по 10800 с. Копии исходных конфигов сервера — `data/backups/config/epilogue/2026-10-20_21-22-18/` и `2026-10-20_22-04-31/` (`Player.ini`). Врезки фантомов (`phantoms/epilogue/glue.patch`) пересобраны поверх модов: в `NpcTemplate` строка шанса дропа — чемпион по уровню (`getChampionTier().rewardsChance()`) и множитель охотникам.
+
+## Самопроверка модов (`0015-l2hub-selftest`, 2026-10-21)
+
+Тот же скрипт, что у Interlude (`docs/INTERLUDE.md`, «Самопроверка модов»): `data/scripts/custom/L2HubSelfTest`, через минуту после старта без игрока сверяет баффер и GM-шоп у гейткиперов, мультиселлы, бафы на максимуме и на 3 часа, чемпионов, доску Alt+B, `.buddy` и `.hunters`, окно моба, сезонные события, фантомов и автолут; итог — `game/log/L2HubSelfTest.json` и «Моды L2Hub» в «Проверить всё». Патч `patches/epilogue/0015` (и такой же у High Five) — с пунктом «Живой мир: `.daily` и `.raid`»: команды поручений дня и рейдов охотников зарегистрированы (выключенные в конфиге — не ошибка).
+
+Прогон 2026-10-21, 19:36, без клиента: 13 из 13 — баффер и GM-шоп 17 из 17, мультиселлов 167, бафов 92 (все на максимуме и на 3 часа), монстров 40 452 — синих чемпионов 1443, красных 267, доска, `.buddy`, `.hunters`, `.daily` и `.raid` на месте, охотников 27; сезонных событий загружено 8, ни одно сейчас не идёт; `error0.log` пуст. Серверная проверка модов Epilogue этим закрыта; вид окон и покупки в клиенте — автору.

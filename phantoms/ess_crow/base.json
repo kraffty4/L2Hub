@@ -1,0 +1,5 @@
+{
+  "archive": "downloads/L2J_Mobius_Essence_10.1_SamuraiCrow_2026-10-20.zip",
+  "build": "L2J_Mobius_Essence_10.1_SamuraiCrow",
+  "note": "Чистые исходники Mobius, от которых считается glue.patch (tools/phantoms_glue.py): архив сборки, с которой развёрнуто дерево servers/ess_crow."
+}

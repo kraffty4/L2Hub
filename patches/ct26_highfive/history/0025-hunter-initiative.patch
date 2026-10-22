@@ -1,0 +1,899 @@
+diff --git a/dist/game/config/Custom/PhantomHunters.ini b/dist/game/config/Custom/PhantomHunters.ini
+index 30056bb..7dc9296 100644
+--- a/dist/game/config/Custom/PhantomHunters.ini
++++ b/dist/game/config/Custom/PhantomHunters.ini
+@@ -105,3 +105,38 @@ HunterStrategyPerMinute = 6
+ 
+ # С такой вероятностью (%) охотник говорит свою мысль вслух в общий чат рядом — если рядом есть живой игрок.
+ HunterStrategySayChance = 20
++
++# ---------------------------------------------------------------------------
++# Охотник заговаривает первым (docs/PHANTOMS.md, раздел 4.9): заметил живого игрока рядом — иногда сам
++# здоровается или говорит что-то по ситуации в общий чат. Знакомым (кто уже писал ему) — чаще, незнакомым — редко;
++# болтуны чаще, молчуны реже (social в data/L2HubPhantoms.xml). Решают правила сервера, модель только пишет фразу;
++# мозги недоступны — охотник молчит и качается дальше.
++# ---------------------------------------------------------------------------
++HunterInitiative = True
++
++# На каком расстоянии охотник замечает игрока. Игрок должен побыть рядом пару секунд: пролёт мимо и телепорт не в счёт.
++HunterInitiativeRange = 600
++
++# Шанс (%) заговорить при встрече со знакомым и с незнакомым; умножается на общительность охотника.
++HunterInitiativeChanceKnown = 30
++HunterInitiativeChanceStranger = 4
++
++# Один охотник заговаривает первым не чаще раза в столько секунд — с кем угодно.
++HunterInitiativeHunterCooldown = 1800
++
++# С одним и тем же игроком один охотник заговаривает первым не чаще раза в столько секунд (переживает рестарт).
++HunterInitiativePairCooldown = 21600
++
++# К одному игроку любой охотник — не чаще раза в столько секунд: двое разом не здороваются. Столько же после
++# неудачного броска эта пара не бросает снова, даже если игрок отошёл и вернулся.
++HunterInitiativePlayerGap = 600
++
++# Не больше стольких обращений первым к одному игроку за час (от всех охотников).
++HunterInitiativePlayerPerHour = 3
++
++# Столько секунд охотник ждёт ответа. Игрок не ответил — этот охотник больше не заговаривает с ним первым,
++# пока игрок сам ему не напишет.
++HunterInitiativeAnswerWait = 120
++
++# Говорили меньше стольких секунд назад — первым не заговаривает: разговор только что был.
++HunterInitiativeRecentTalk = 1800
+diff --git a/dist/game/data/L2HubPhantoms.xml b/dist/game/data/L2HubPhantoms.xml
+index 64695f3..b11c830 100644
+--- a/dist/game/data/L2HubPhantoms.xml
++++ b/dist/game/data/L2HubPhantoms.xml
+@@ -24,7 +24,7 @@
+ 		<gear grade="S84" minLevel="84" rhand="15854" head="13139" chest="13434" legs="13444" gloves="13445" feet="13446" shots="3952" /> <!-- Black Visage - Magic Hold, Vesper Circlet, Vesper Tunic, Vesper Stockings, Vesper Gloves, Vesper Shoes -->
+ 	</phantom>
+ 	<!-- Kuzya: охотник, Dwarf Fighter, Artisan, Warsmith, Maestro -->
+-	<phantom name="Kuzya" kind="hunter" role="DAMAGE" female="false" face="0" hairStyle="0" hairColor="3" classes="53,56,57,118" aliases="кузя;кузьма" x="115502" y="-177693" z="-904">
++	<phantom name="Kuzya" kind="hunter" role="DAMAGE" female="false" face="0" hairStyle="0" hairColor="3" classes="53,56,57,118" aliases="кузя;кузьма" social="1.5" x="115502" y="-177693" z="-904">
+ 		<gear grade="NONE" minLevel="1" rhand="2370" chest="1146" legs="1147" shots="1835" /> <!-- Guild Member's Club, Squire's Shirt, Squire's Pants -->
+ 		<gear grade="D" minLevel="20" rhand="168" head="2411" chest="352" legs="2378" shots="1463" /> <!-- Work Hammer, Brigandine Helmet, Brigandine Tunic, Brigandine Gaiters -->
+ 		<gear grade="C" minLevel="40" rhand="161" head="2413" chest="354" legs="381" shots="1464" /> <!-- Silver Axe, Chain Hood, Chain Mail Shirt, Chain Gaiters -->
+@@ -35,7 +35,7 @@
+ 		<gear grade="S84" minLevel="84" rhand="15678" head="13140" chest="13435" legs="13448" gloves="13449" feet="13450" shots="1467" /> <!-- Triumph Hammer, Vesper Noble Helmet, Vesper Noble Breastplate, Vesper Noble Gaiters, Vesper Noble Gauntlet, Vesper Noble Boots -->
+ 	</phantom>
+ 	<!-- LunaTik: охотник, Elven Mystic, Elven Wizard, Spellsinger, Mystic Muse -->
+-	<phantom name="LunaTik" kind="hunter" role="DAMAGE" female="true" face="0" hairStyle="3" hairColor="0" classes="25,26,27,103" aliases="луна;лунатик" x="46846" y="51112" z="-2992">
++	<phantom name="LunaTik" kind="hunter" role="DAMAGE" female="true" face="0" hairStyle="3" hairColor="0" classes="25,26,27,103" aliases="луна;лунатик" social="1" x="46846" y="51112" z="-2992">
+ 		<gear grade="NONE" minLevel="1" rhand="6" chest="425" legs="461" shots="3947" /> <!-- Apprentice's Wand, Apprentice's Tunic, Apprentice's Stockings -->
+ 		<gear grade="D" minLevel="20" rhand="178" chest="436" legs="469" gloves="2447" shots="3948" /> <!-- Bone Staff, Tunic of Knowledge, Stockings of Knowledge, Gloves of Knowledge -->
+ 		<gear grade="C" minLevel="40" rhand="192" chest="442" legs="473" gloves="2463" shots="3949" /> <!-- Crystal Staff, Divine Tunic, Divine Stockings, Divine Gloves -->
+@@ -46,7 +46,7 @@
+ 		<gear grade="S84" minLevel="84" rhand="15566" head="13139" chest="13434" legs="13444" gloves="13445" feet="13446" shots="3952" /> <!-- Black Visage, Vesper Circlet, Vesper Tunic, Vesper Stockings, Vesper Gloves, Vesper Shoes -->
+ 	</phantom>
+ 	<!-- Vovan: охотник, Human Fighter, Human Knight, Paladin, Phoenix Knight -->
+-	<phantom name="Vovan" kind="hunter" role="TANK" female="false" face="1" hairStyle="2" hairColor="0" classes="0,4,5,90" aliases="вован;вова;вовчик" x="-84567" y="244226" z="-3728">
++	<phantom name="Vovan" kind="hunter" role="TANK" female="false" face="1" hairStyle="2" hairColor="0" classes="0,4,5,90" aliases="вован;вова;вовчик" social="1" x="-84567" y="244226" z="-3728">
+ 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
+ 		<gear grade="D" minLevel="20" rhand="123" head="2411" chest="352" legs="2378" lhand="2493" shots="1463" /> <!-- Saber, Brigandine Helmet, Brigandine Tunic, Brigandine Gaiters, Brigandine Shield -->
+ 		<gear grade="C" minLevel="40" rhand="133" head="2414" chest="356" lhand="2497" shots="1464" /> <!-- Raid Sword, Full Plate Helmet, Full Plate Armor, Full Plate Shield -->
+@@ -57,7 +57,7 @@
+ 		<gear grade="S84" minLevel="84" rhand="21919" head="13140" chest="13435" legs="13448" gloves="13449" feet="13450" lhand="13471" shots="1467" /> <!-- Hellblade, Vesper Noble Helmet, Vesper Noble Breastplate, Vesper Noble Gaiters, Vesper Noble Gauntlet, Vesper Noble Boots, Vesper Shield -->
+ 	</phantom>
+ 	<!-- Shadowmoth: охотник, Dark Fighter, Assassin, Abyss Walker, Ghost Hunter -->
+-	<phantom name="Shadowmoth" kind="hunter" role="DAMAGE" female="false" face="0" hairStyle="2" hairColor="0" classes="31,35,36,108" aliases="шэдоу;шадоу;моль" x="9745" y="15868" z="-4568">
++	<phantom name="Shadowmoth" kind="hunter" role="DAMAGE" female="false" face="0" hairStyle="2" hairColor="0" classes="31,35,36,108" aliases="шэдоу;шадоу;моль" social="0.2" x="9745" y="15868" z="-4568">
+ 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
+ 		<gear grade="D" minLevel="20" rhand="4028" chest="395" legs="417" feet="2424" shots="1463" /> <!-- Giant Cannon, Manticore Skin Shirt, Manticore Skin Gaiters, Manticore Skin Boots -->
+ 		<gear grade="C" minLevel="40" rhand="226" chest="401" feet="2437" shots="1464" /> <!-- Cursed Dagger, Drake Leather Armor, Drake Leather Boots -->
+@@ -68,7 +68,7 @@
+ 		<gear grade="S84" minLevel="84" rhand="15559" head="13141" chest="13436" legs="13451" gloves="13452" feet="13453" shots="1467" /> <!-- Skull Edge, Vesper Noble Leather Helmet, Vesper Noble Leather Breastplate, Vesper Noble Leather Leggings, Vesper Noble Leather Gloves, Vesper Noble Leather Boots -->
+ 	</phantom>
+ 	<!-- Pupsik: охотник, Orc Fighter, Orc Raider, Destroyer, Titan -->
+-	<phantom name="Pupsik" kind="hunter" role="DAMAGE" female="true" face="0" hairStyle="1" hairColor="2" classes="44,45,46,113" aliases="пупсик;пупс" x="-45070" y="-111953" z="-240">
++	<phantom name="Pupsik" kind="hunter" role="DAMAGE" female="true" face="0" hairStyle="1" hairColor="2" classes="44,45,46,113" aliases="пупсик;пупс" social="1.5" x="-45070" y="-111953" z="-240">
+ 		<gear grade="NONE" minLevel="1" rhand="2368" chest="1146" legs="1147" shots="1835" /> <!-- Training Gloves, Squire's Shirt, Squire's Pants -->
+ 		<gear grade="D" minLevel="20" rhand="7880" head="2411" chest="352" legs="2378" shots="1463" /> <!-- Steel Sword, Brigandine Helmet, Brigandine Tunic, Brigandine Gaiters -->
+ 		<gear grade="C" minLevel="40" rhand="71" head="2413" chest="354" legs="381" shots="1464" /> <!-- Flamberge, Chain Hood, Chain Mail Shirt, Chain Gaiters -->
+@@ -79,7 +79,7 @@
+ 		<gear grade="S84" minLevel="84" rhand="13458" head="13140" chest="13435" legs="13448" gloves="13449" feet="13450" shots="1467" /> <!-- Vesper Slasher, Vesper Noble Helmet, Vesper Noble Breastplate, Vesper Noble Gaiters, Vesper Noble Gauntlet, Vesper Noble Boots -->
+ 	</phantom>
+ 	<!-- Bezumnyi: охотник, Human Fighter, Rogue, Hawkeye, Sagittarius -->
+-	<phantom name="Bezumnyi" kind="hunter" role="DAMAGE" female="false" face="2" hairStyle="1" hairColor="1" classes="0,7,9,92" aliases="безумный;безум;безя" x="-84286" y="244791" z="-3728">
++	<phantom name="Bezumnyi" kind="hunter" role="DAMAGE" female="false" face="2" hairStyle="1" hairColor="1" classes="0,7,9,92" aliases="безумный;безум;безя" social="1.5" x="-84286" y="244791" z="-3728">
+ 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
+ 		<gear grade="D" minLevel="20" rhand="274" chest="394" legs="416" feet="2422" shots="1463" /> <!-- Reinforced Bow, Reinforced Leather Shirt, Reinforced Leather Gaiters, Reinforced Leather Boots -->
+ 		<gear grade="C" minLevel="40" rhand="285" chest="400" legs="420" feet="2436" shots="1464" /> <!-- Noble Elven Bow, Theca Leather Armor, Theca Leather Gaiters, Theca Leather Boots -->
+@@ -90,7 +90,7 @@
+ 		<gear grade="S84" minLevel="84" rhand="15686" head="13138" chest="13433" legs="13441" gloves="13442" feet="13443" shots="1467" /> <!-- Triumph Bow, Vesper Leather Helmet, Vesper Leather Breastplate, Vesper Leather Leggings, Vesper Leather Gloves, Vesper Leather Boots -->
+ 	</phantom>
+ 	<!-- Glad1ator: охотник, Human Fighter, Warrior, Gladiator, Duelist -->
+-	<phantom name="Glad1ator" kind="hunter" role="DAMAGE" female="false" face="1" hairStyle="3" hairColor="3" classes="0,1,2,88" aliases="глад;гладиатор" x="-84527" y="244303" z="-3728">
++	<phantom name="Glad1ator" kind="hunter" role="DAMAGE" female="false" face="1" hairStyle="3" hairColor="3" classes="0,1,2,88" aliases="глад;гладиатор" social="1" x="-84527" y="244303" z="-3728">
+ 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
+ 		<gear grade="D" minLevel="20" rhand="5129" head="2411" chest="352" legs="2378" shots="1463" /> <!-- Doll Knife, Brigandine Helmet, Brigandine Tunic, Brigandine Gaiters -->
+ 		<gear grade="C" minLevel="40" rhand="2553" head="2414" chest="356" shots="1464" /> <!-- Crimson Sword*Sword of Revolution, Full Plate Helmet, Full Plate Armor -->
+@@ -101,7 +101,7 @@
+ 		<gear grade="S84" minLevel="84" rhand="52" head="13140" chest="13435" legs="13448" gloves="13449" feet="13450" shots="1467" /> <!-- Vesper Dual Sword, Vesper Noble Helmet, Vesper Noble Breastplate, Vesper Noble Gaiters, Vesper Noble Gauntlet, Vesper Noble Boots -->
+ 	</phantom>
+ 	<!-- Alenka: охотник, Elven Mystic, Elven Oracle, Elven Elder, Eva's Saint -->
+-	<phantom name="Alenka" kind="hunter" role="HEALER" female="true" face="2" hairStyle="6" hairColor="3" classes="25,29,30,105" aliases="алёнка;аленка;алена;алёна" x="47399" y="51631" z="-2992">
++	<phantom name="Alenka" kind="hunter" role="HEALER" female="true" face="2" hairStyle="6" hairColor="3" classes="25,29,30,105" aliases="алёнка;аленка;алена;алёна" social="1.5" x="47399" y="51631" z="-2992">
+ 		<gear grade="NONE" minLevel="1" rhand="6" chest="425" legs="461" shots="3947" /> <!-- Apprentice's Wand, Apprentice's Tunic, Apprentice's Stockings -->
+ 		<gear grade="D" minLevel="20" rhand="180" chest="436" legs="469" gloves="2447" shots="3948" /> <!-- Mace of Judgment, Tunic of Knowledge, Stockings of Knowledge, Gloves of Knowledge -->
+ 		<gear grade="C" minLevel="40" rhand="193" chest="441" legs="472" gloves="2459" shots="3949" /> <!-- Stick of Faith, Demon's Tunic, Demon's Stockings, Demon's Gloves -->
+@@ -112,7 +112,7 @@
+ 		<gear grade="S84" minLevel="84" rhand="15565" head="13139" chest="13434" legs="13444" gloves="13445" feet="13446" shots="3952" /> <!-- Rising Star, Vesper Circlet, Vesper Tunic, Vesper Stockings, Vesper Gloves, Vesper Shoes -->
+ 	</phantom>
+ 	<!-- Krosh: охотник, Male Kamael Soldier, Trooper, Berserker, Doombringer -->
+-	<phantom name="Krosh" kind="hunter" role="DAMAGE" female="false" face="1" hairStyle="2" hairColor="0" classes="123,125,127,131" aliases="крош;кроша" x="-116586" y="46706" z="360">
++	<phantom name="Krosh" kind="hunter" role="DAMAGE" female="false" face="1" hairStyle="2" hairColor="0" classes="123,125,127,131" aliases="крош;кроша" social="1.5" x="-116586" y="46706" z="360">
+ 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
+ 		<gear grade="D" minLevel="20" rhand="9211" chest="394" legs="416" feet="2422" shots="1463" /> <!-- Talwar, Reinforced Leather Shirt, Reinforced Leather Gaiters, Reinforced Leather Boots -->
+ 		<gear grade="C" minLevel="40" rhand="9232" chest="397" legs="2387" feet="62" shots="1464" /> <!-- Schlager, Mithril Shirt, Reinforced Mithril Gaiters, Reinforced Mithril Boots -->
+@@ -123,7 +123,7 @@
+ 		<gear grade="S84" minLevel="84" rhand="13470" head="13138" chest="13433" legs="13441" gloves="13442" feet="13443" shots="1467" /> <!-- Vesper Nagan, Vesper Leather Helmet, Vesper Leather Breastplate, Vesper Leather Leggings, Vesper Leather Gloves, Vesper Leather Boots -->
+ 	</phantom>
+ 	<!-- Morok: охотник, Dark Mystic, Dark Wizard, Spellhowler, Storm Screamer -->
+-	<phantom name="Morok" kind="hunter" role="DAMAGE" female="false" face="0" hairStyle="3" hairColor="1" classes="38,39,40,110" aliases="морок" x="9919" y="15868" z="-4568">
++	<phantom name="Morok" kind="hunter" role="DAMAGE" female="false" face="0" hairStyle="3" hairColor="1" classes="38,39,40,110" aliases="морок" social="0.5" x="9919" y="15868" z="-4568">
+ 		<gear grade="NONE" minLevel="1" rhand="6" chest="425" legs="461" shots="3947" /> <!-- Apprentice's Wand, Apprentice's Tunic, Apprentice's Stockings -->
+ 		<gear grade="D" minLevel="20" rhand="178" chest="436" legs="469" gloves="2447" shots="3948" /> <!-- Bone Staff, Tunic of Knowledge, Stockings of Knowledge, Gloves of Knowledge -->
+ 		<gear grade="C" minLevel="40" rhand="195" chest="439" legs="471" gloves="2454" shots="3949" /> <!-- Cursed Staff, Karmian Tunic, Karmian Stockings, Karmian Gloves -->
+@@ -134,7 +134,7 @@
+ 		<gear grade="S84" minLevel="84" rhand="15566" head="13139" chest="13434" legs="13444" gloves="13445" feet="13446" shots="3952" /> <!-- Black Visage, Vesper Circlet, Vesper Tunic, Vesper Stockings, Vesper Gloves, Vesper Shoes -->
+ 	</phantom>
+ 	<!-- Sanchez: охотник, Human Fighter, Rogue, Treasure Hunter, Adventurer -->
+-	<phantom name="Sanchez" kind="hunter" role="DAMAGE" female="false" face="1" hairStyle="4" hairColor="0" classes="0,7,8,93" aliases="санчез;саня;санек;санёк" x="-84668" y="244434" z="-3728">
++	<phantom name="Sanchez" kind="hunter" role="DAMAGE" female="false" face="1" hairStyle="4" hairColor="0" classes="0,7,8,93" aliases="санчез;саня;санек;санёк" social="1" x="-84668" y="244434" z="-3728">
+ 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
+ 		<gear grade="D" minLevel="20" rhand="5131" chest="394" legs="416" feet="2422" shots="1463" /> <!-- Parhit Staff, Reinforced Leather Shirt, Reinforced Leather Gaiters, Reinforced Leather Boots -->
+ 		<gear grade="C" minLevel="40" rhand="230" chest="400" legs="420" feet="2436" shots="1464" /> <!-- Wolverine Needle, Theca Leather Armor, Theca Leather Gaiters, Theca Leather Boots -->
+@@ -145,7 +145,7 @@
+ 		<gear grade="S84" minLevel="84" rhand="15677" head="13138" chest="13433" legs="13441" gloves="13442" feet="13443" shots="1467" /> <!-- Triumph Dagger, Vesper Leather Helmet, Vesper Leather Breastplate, Vesper Leather Leggings, Vesper Leather Gloves, Vesper Leather Boots -->
+ 	</phantom>
+ 	<!-- Ryzhaya: охотник, Elven Fighter, Elven Scout, Silver Ranger, Moonlight Sentinel -->
+-	<phantom name="Ryzhaya" kind="hunter" role="DAMAGE" female="true" face="2" hairStyle="6" hairColor="2" classes="18,22,24,102" aliases="рыжая;рыжик" x="47130" y="51289" z="-2992">
++	<phantom name="Ryzhaya" kind="hunter" role="DAMAGE" female="true" face="2" hairStyle="6" hairColor="2" classes="18,22,24,102" aliases="рыжая;рыжик" social="1" x="47130" y="51289" z="-2992">
+ 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
+ 		<gear grade="D" minLevel="20" rhand="274" chest="395" legs="417" feet="2424" shots="1463" /> <!-- Reinforced Bow, Manticore Skin Shirt, Manticore Skin Gaiters, Manticore Skin Boots -->
+ 		<gear grade="C" minLevel="40" rhand="285" chest="401" feet="2437" shots="1464" /> <!-- Noble Elven Bow, Drake Leather Armor, Drake Leather Boots -->
+@@ -156,7 +156,7 @@
+ 		<gear grade="S84" minLevel="84" rhand="15686" head="13141" chest="13436" legs="13451" gloves="13452" feet="13453" shots="1467" /> <!-- Triumph Bow, Vesper Noble Leather Helmet, Vesper Noble Leather Breastplate, Vesper Noble Leather Leggings, Vesper Noble Leather Gloves, Vesper Noble Leather Boots -->
+ 	</phantom>
+ 	<!-- OldSchool: охотник, Human Mystic, Human Wizard, Necromancer, Soultaker -->
+-	<phantom name="OldSchool" kind="hunter" role="DAMAGE" female="false" face="2" hairStyle="4" hairColor="2" classes="10,11,13,95" aliases="олдскул;олд;олдскулл" x="-84129" y="245039" z="-3728">
++	<phantom name="OldSchool" kind="hunter" role="DAMAGE" female="false" face="2" hairStyle="4" hairColor="2" classes="10,11,13,95" aliases="олдскул;олд;олдскулл" social="1" x="-84129" y="245039" z="-3728">
+ 		<gear grade="NONE" minLevel="1" rhand="6" chest="425" legs="461" shots="3947" /> <!-- Apprentice's Wand, Apprentice's Tunic, Apprentice's Stockings -->
+ 		<gear grade="D" minLevel="20" rhand="178" chest="437" legs="470" gloves="2450" shots="3948" /> <!-- Bone Staff, Mithril Tunic, Mithril Stockings, Mithril Gloves -->
+ 		<gear grade="C" minLevel="40" rhand="194" chest="441" legs="472" gloves="2459" shots="3949" /> <!-- Heavy Doom Axe, Demon's Tunic, Demon's Stockings, Demon's Gloves -->
+@@ -167,7 +167,7 @@
+ 		<gear grade="S84" minLevel="84" rhand="13466" head="13142" chest="13437" legs="13454" gloves="13455" feet="13456" shots="3952" /> <!-- Vesper Singer, Vesper Noble Circlet, Vesper Noble Tunic, Vesper Noble Stockings, Vesper Noble Gloves, Vesper Noble Shoes -->
+ 	</phantom>
+ 	<!-- Tihon: охотник, Dwarf Fighter, Artisan, Warsmith, Maestro -->
+-	<phantom name="Tihon" kind="hunter" role="DAMAGE" female="false" face="1" hairStyle="3" hairColor="0" classes="53,56,57,118" aliases="тихон;тиша" x="115554" y="-177935" z="-912">
++	<phantom name="Tihon" kind="hunter" role="DAMAGE" female="false" face="1" hairStyle="3" hairColor="0" classes="53,56,57,118" aliases="тихон;тиша" social="1" x="115554" y="-177935" z="-912">
+ 		<gear grade="NONE" minLevel="1" rhand="2370" chest="1146" legs="1147" shots="1835" /> <!-- Guild Member's Club, Squire's Shirt, Squire's Pants -->
+ 		<gear grade="D" minLevel="20" rhand="166" head="47" chest="58" legs="59" shots="1463" /> <!-- Heavy Mace, Helmet, Mithril Breastplate, Mithril Gaiters -->
+ 		<gear grade="C" minLevel="40" rhand="173" head="517" chest="60" shots="1464" /> <!-- Skull Graver, Composite Helmet, Composite Armor -->
+@@ -178,7 +178,7 @@
+ 		<gear grade="S84" minLevel="84" rhand="15683" head="13137" chest="13432" legs="13438" gloves="13439" feet="13440" shots="1467" /> <!-- Triumph Staff, Vesper Helmet, Vesper Breastplate, Vesper Gaiters, Vesper Gauntlet, Vesper Boots -->
+ 	</phantom>
+ 	<!-- Nyusha: охотник, Dark Mystic, Shillien Oracle, Shillien Elder, Shillien Saint -->
+-	<phantom name="Nyusha" kind="hunter" role="HEALER" female="true" face="0" hairStyle="6" hairColor="0" classes="38,42,43,112" aliases="нюша;нюшка" x="9825" y="16038" z="-4568">
++	<phantom name="Nyusha" kind="hunter" role="HEALER" female="true" face="0" hairStyle="6" hairColor="0" classes="38,42,43,112" aliases="нюша;нюшка" social="1.5" x="9825" y="16038" z="-4568">
+ 		<gear grade="NONE" minLevel="1" rhand="6" chest="425" legs="461" shots="3947" /> <!-- Apprentice's Wand, Apprentice's Tunic, Apprentice's Stockings -->
+ 		<gear grade="D" minLevel="20" rhand="181" chest="436" legs="469" gloves="2447" shots="3948" /> <!-- Mace of Miracle, Tunic of Knowledge, Stockings of Knowledge, Gloves of Knowledge -->
+ 		<gear grade="C" minLevel="40" rhand="193" chest="442" legs="473" gloves="2463" shots="3949" /> <!-- Stick of Faith, Divine Tunic, Divine Stockings, Divine Gloves -->
+@@ -189,7 +189,7 @@
+ 		<gear grade="S84" minLevel="84" rhand="13465" head="13139" chest="13434" legs="13444" gloves="13445" feet="13446" shots="3952" /> <!-- Vesper Caster, Vesper Circlet, Vesper Tunic, Vesper Stockings, Vesper Gloves, Vesper Shoes -->
+ 	</phantom>
+ 	<!-- Brutal: охотник, Orc Fighter, Orc Raider, Destroyer, Titan -->
+-	<phantom name="Brutal" kind="hunter" role="DAMAGE" female="false" face="2" hairStyle="3" hairColor="0" classes="44,45,46,113" aliases="брутал;брут" x="-45195" y="-112208" z="-240">
++	<phantom name="Brutal" kind="hunter" role="DAMAGE" female="false" face="2" hairStyle="3" hairColor="0" classes="44,45,46,113" aliases="брутал;брут" social="0.2" x="-45195" y="-112208" z="-240">
+ 		<gear grade="NONE" minLevel="1" rhand="2368" chest="1146" legs="1147" shots="1835" /> <!-- Training Gloves, Squire's Shirt, Squire's Pants -->
+ 		<gear grade="D" minLevel="20" rhand="5285" head="2411" chest="352" legs="2378" shots="1463" /> <!-- Heavy Sword, Brigandine Helmet, Brigandine Tunic, Brigandine Gaiters -->
+ 		<gear grade="C" minLevel="40" rhand="71" head="2414" chest="356" shots="1464" /> <!-- Flamberge, Full Plate Helmet, Full Plate Armor -->
+@@ -200,7 +200,7 @@
+ 		<gear grade="S84" minLevel="84" rhand="15562" head="13140" chest="13435" legs="13448" gloves="13449" feet="13450" shots="1467" /> <!-- Feather Eye Blade, Vesper Noble Helmet, Vesper Noble Breastplate, Vesper Noble Gaiters, Vesper Noble Gauntlet, Vesper Noble Boots -->
+ 	</phantom>
+ 	<!-- Freya: охотник, Female Kamael Soldier, Warder, Arbalester, Trickster -->
+-	<phantom name="Freya" kind="hunter" role="DAMAGE" female="true" face="1" hairStyle="5" hairColor="3" classes="124,126,130,134" aliases="фрея" x="-117308" y="46396" z="360">
++	<phantom name="Freya" kind="hunter" role="DAMAGE" female="true" face="1" hairStyle="5" hairColor="3" classes="124,126,130,134" aliases="фрея" social="0.5" x="-117308" y="46396" z="360">
+ 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
+ 		<gear grade="D" minLevel="20" rhand="9212" chest="395" legs="417" feet="2424" shots="1463" /> <!-- Field Gun, Manticore Skin Shirt, Manticore Skin Gaiters, Manticore Skin Boots -->
+ 		<gear grade="C" minLevel="40" rhand="9256" chest="398" legs="418" feet="2431" shots="1464" /> <!-- Ballista, Plated Leather, Plated Leather Gaiters, Plated Leather Boots -->
+@@ -211,7 +211,7 @@
+ 		<gear grade="S84" minLevel="84" rhand="15571" head="13141" chest="13436" legs="13451" gloves="13452" feet="13453" shots="1467" /> <!-- Dominion Crossbow, Vesper Noble Leather Helmet, Vesper Noble Leather Breastplate, Vesper Noble Leather Leggings, Vesper Noble Leather Gloves, Vesper Noble Leather Boots -->
+ 	</phantom>
+ 	<!-- DarkLord: охотник, Dark Fighter, Palus Knight, Shillien Knight, Shillien Templar -->
+-	<phantom name="DarkLord" kind="hunter" role="TANK" female="false" face="2" hairStyle="0" hairColor="3" classes="31,32,33,106" aliases="дарклорд;лорд;дарк" x="10026" y="15576" z="-4568">
++	<phantom name="DarkLord" kind="hunter" role="TANK" female="false" face="2" hairStyle="0" hairColor="3" classes="31,32,33,106" aliases="дарклорд;лорд;дарк" social="1" x="10026" y="15576" z="-4568">
+ 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
+ 		<gear grade="D" minLevel="20" rhand="123" head="47" chest="58" legs="59" lhand="628" shots="1463" /> <!-- Saber, Helmet, Mithril Breastplate, Mithril Gaiters, Hoplon -->
+ 		<gear grade="C" minLevel="40" rhand="133" head="2414" chest="356" lhand="2497" shots="1464" /> <!-- Raid Sword, Full Plate Helmet, Full Plate Armor, Full Plate Shield -->
+@@ -222,7 +222,7 @@
+ 		<gear grade="S84" minLevel="84" rhand="21919" head="13137" chest="13432" legs="13438" gloves="13439" feet="13440" lhand="13471" shots="1467" /> <!-- Hellblade, Vesper Helmet, Vesper Breastplate, Vesper Gaiters, Vesper Gauntlet, Vesper Boots, Vesper Shield -->
+ 	</phantom>
+ 	<!-- Masha: охотник, Human Mystic, Human Wizard, Sorcerer, Archmage -->
+-	<phantom name="Masha" kind="hunter" role="DAMAGE" female="true" face="0" hairStyle="4" hairColor="3" classes="10,11,12,94" aliases="маша;машка;мария" x="-84124" y="244902" z="-3728">
++	<phantom name="Masha" kind="hunter" role="DAMAGE" female="true" face="0" hairStyle="4" hairColor="3" classes="10,11,12,94" aliases="маша;машка;мария" social="1.5" x="-84124" y="244902" z="-3728">
+ 		<gear grade="NONE" minLevel="1" rhand="6" chest="425" legs="461" shots="3947" /> <!-- Apprentice's Wand, Apprentice's Tunic, Apprentice's Stockings -->
+ 		<gear grade="D" minLevel="20" rhand="178" chest="437" legs="470" gloves="2450" shots="3948" /> <!-- Bone Staff, Mithril Tunic, Mithril Stockings, Mithril Gloves -->
+ 		<gear grade="C" minLevel="40" rhand="192" chest="442" legs="473" gloves="2463" shots="3949" /> <!-- Crystal Staff, Divine Tunic, Divine Stockings, Divine Gloves -->
+@@ -233,7 +233,7 @@
+ 		<gear grade="S84" minLevel="84" rhand="15566" head="13142" chest="13437" legs="13454" gloves="13455" feet="13456" shots="3952" /> <!-- Black Visage, Vesper Noble Circlet, Vesper Noble Tunic, Vesper Noble Stockings, Vesper Noble Gloves, Vesper Noble Shoes -->
+ 	</phantom>
+ 	<!-- Ded: охотник, Human Mystic, Cleric, Bishop, Cardinal -->
+-	<phantom name="Ded" kind="hunter" role="HEALER" female="false" face="2" hairStyle="2" hairColor="3" classes="10,15,16,97" aliases="дед;дедуля;дедушка" x="-84341" y="244395" z="-3728">
++	<phantom name="Ded" kind="hunter" role="HEALER" female="false" face="2" hairStyle="2" hairColor="3" classes="10,15,16,97" aliases="дед;дедуля;дедушка" social="1.5" x="-84341" y="244395" z="-3728">
+ 		<gear grade="NONE" minLevel="1" rhand="6" chest="425" legs="461" shots="3947" /> <!-- Apprentice's Wand, Apprentice's Tunic, Apprentice's Stockings -->
+ 		<gear grade="D" minLevel="20" rhand="182" chest="437" legs="470" gloves="2450" shots="3948" /> <!-- Doom Hammer, Mithril Tunic, Mithril Stockings, Mithril Gloves -->
+ 		<gear grade="C" minLevel="40" rhand="193" chest="439" legs="471" gloves="2454" shots="3949" /> <!-- Stick of Faith, Karmian Tunic, Karmian Stockings, Karmian Gloves -->
+@@ -244,7 +244,7 @@
+ 		<gear grade="S84" minLevel="84" rhand="15565" head="13142" chest="13437" legs="13454" gloves="13455" feet="13456" shots="3952" /> <!-- Rising Star, Vesper Noble Circlet, Vesper Noble Tunic, Vesper Noble Stockings, Vesper Noble Gloves, Vesper Noble Shoes -->
+ 	</phantom>
+ 	<!-- Nagibator: охотник, Human Fighter, Rogue, Treasure Hunter, Adventurer -->
+-	<phantom name="Nagibator" kind="hunter" role="DAMAGE" female="false" face="2" hairStyle="1" hairColor="3" classes="0,7,8,93" aliases="нагибатор;наги;нагиб" x="-84051" y="245032" z="-3728">
++	<phantom name="Nagibator" kind="hunter" role="DAMAGE" female="false" face="2" hairStyle="1" hairColor="3" classes="0,7,8,93" aliases="нагибатор;наги;нагиб" social="1" x="-84051" y="245032" z="-3728">
+ 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
+ 		<gear grade="D" minLevel="20" rhand="5127" chest="394" legs="416" feet="2422" shots="1463" /> <!-- Dailaon Knife, Reinforced Leather Shirt, Reinforced Leather Gaiters, Reinforced Leather Boots -->
+ 		<gear grade="C" minLevel="40" rhand="227" chest="397" legs="2387" feet="62" shots="1464" /> <!-- Stiletto, Mithril Shirt, Reinforced Mithril Gaiters, Reinforced Mithril Boots -->
+@@ -255,7 +255,7 @@
+ 		<gear grade="S84" minLevel="84" rhand="15559" head="13138" chest="13433" legs="13441" gloves="13442" feet="13443" shots="1467" /> <!-- Skull Edge, Vesper Leather Helmet, Vesper Leather Breastplate, Vesper Leather Leggings, Vesper Leather Gloves, Vesper Leather Boots -->
+ 	</phantom>
+ 	<!-- Rin: охотник, Elven Fighter, Elven Scout, Plains Walker, Wind Rider -->
+-	<phantom name="Rin" kind="hunter" role="DAMAGE" female="true" face="1" hairStyle="6" hairColor="0" classes="18,22,23,101" aliases="рин" x="47028" y="50830" z="-2992">
++	<phantom name="Rin" kind="hunter" role="DAMAGE" female="true" face="1" hairStyle="6" hairColor="0" classes="18,22,23,101" aliases="рин" social="1" x="47028" y="50830" z="-2992">
+ 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
+ 		<gear grade="D" minLevel="20" rhand="221" chest="395" legs="417" feet="2424" shots="1463" /> <!-- Assassin Knife, Manticore Skin Shirt, Manticore Skin Gaiters, Manticore Skin Boots -->
+ 		<gear grade="C" minLevel="40" rhand="227" chest="401" feet="2437" shots="1464" /> <!-- Stiletto, Drake Leather Armor, Drake Leather Boots -->
+@@ -266,7 +266,7 @@
+ 		<gear grade="S84" minLevel="84" rhand="15559" head="13141" chest="13436" legs="13451" gloves="13452" feet="13453" shots="1467" /> <!-- Skull Edge, Vesper Noble Leather Helmet, Vesper Noble Leather Breastplate, Vesper Noble Leather Leggings, Vesper Noble Leather Gloves, Vesper Noble Leather Boots -->
+ 	</phantom>
+ 	<!-- Grom: охотник, Orc Fighter, Orc Raider, Destroyer, Titan -->
+-	<phantom name="Grom" kind="hunter" role="DAMAGE" female="false" face="0" hairStyle="0" hairColor="0" classes="44,45,46,113" aliases="гром" x="-44679" y="-112684" z="-240">
++	<phantom name="Grom" kind="hunter" role="DAMAGE" female="false" face="0" hairStyle="0" hairColor="0" classes="44,45,46,113" aliases="гром" social="1.5" x="-44679" y="-112684" z="-240">
+ 		<gear grade="NONE" minLevel="1" rhand="2368" chest="1146" legs="1147" shots="1835" /> <!-- Training Gloves, Squire's Shirt, Squire's Pants -->
+ 		<gear grade="D" minLevel="20" rhand="5285" head="47" chest="58" legs="59" shots="1463" /> <!-- Heavy Sword, Helmet, Mithril Breastplate, Mithril Gaiters -->
+ 		<gear grade="C" minLevel="40" rhand="71" head="517" chest="60" shots="1464" /> <!-- Flamberge, Composite Helmet, Composite Armor -->
+@@ -277,7 +277,7 @@
+ 		<gear grade="S84" minLevel="84" rhand="15562" head="13137" chest="13432" legs="13438" gloves="13439" feet="13440" shots="1467" /> <!-- Feather Eye Blade, Vesper Helmet, Vesper Breastplate, Vesper Gaiters, Vesper Gauntlet, Vesper Boots -->
+ 	</phantom>
+ 	<!-- Vedma: охотник, Dark Mystic, Dark Wizard, Spellhowler, Storm Screamer -->
+-	<phantom name="Vedma" kind="hunter" role="DAMAGE" female="true" face="1" hairStyle="5" hairColor="3" classes="38,39,40,110" aliases="ведьма;ведьмочка" x="9586" y="15823" z="-4568">
++	<phantom name="Vedma" kind="hunter" role="DAMAGE" female="true" face="1" hairStyle="5" hairColor="3" classes="38,39,40,110" aliases="ведьма;ведьмочка" social="1" x="9586" y="15823" z="-4568">
+ 		<gear grade="NONE" minLevel="1" rhand="6" chest="425" legs="461" shots="3947" /> <!-- Apprentice's Wand, Apprentice's Tunic, Apprentice's Stockings -->
+ 		<gear grade="D" minLevel="20" rhand="178" chest="436" legs="469" gloves="2447" shots="3948" /> <!-- Bone Staff, Tunic of Knowledge, Stockings of Knowledge, Gloves of Knowledge -->
+ 		<gear grade="C" minLevel="40" rhand="194" chest="442" legs="473" gloves="2463" shots="3949" /> <!-- Heavy Doom Axe, Divine Tunic, Divine Stockings, Divine Gloves -->
+@@ -288,7 +288,7 @@
+ 		<gear grade="S84" minLevel="84" rhand="13466" head="13139" chest="13434" legs="13444" gloves="13445" feet="13446" shots="3952" /> <!-- Vesper Singer, Vesper Circlet, Vesper Tunic, Vesper Stockings, Vesper Gloves, Vesper Shoes -->
+ 	</phantom>
+ 	<!-- Zloy: охотник, Male Kamael Soldier, Trooper, Berserker, Doombringer -->
+-	<phantom name="Zloy" kind="hunter" role="DAMAGE" female="false" face="0" hairStyle="0" hairColor="0" classes="123,125,127,131" aliases="злой;злыдень" x="-117178" y="46680" z="360">
++	<phantom name="Zloy" kind="hunter" role="DAMAGE" female="false" face="0" hairStyle="0" hairColor="0" classes="123,125,127,131" aliases="злой;злыдень" social="1" x="-117178" y="46680" z="360">
+ 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
+ 		<gear grade="D" minLevel="20" rhand="9211" chest="394" legs="416" feet="2422" shots="1463" /> <!-- Talwar, Reinforced Leather Shirt, Reinforced Leather Gaiters, Reinforced Leather Boots -->
+ 		<gear grade="C" minLevel="40" rhand="9232" chest="400" legs="420" feet="2436" shots="1464" /> <!-- Schlager, Theca Leather Armor, Theca Leather Gaiters, Theca Leather Boots -->
+@@ -299,7 +299,7 @@
+ 		<gear grade="S84" minLevel="84" rhand="15570" head="13138" chest="13433" legs="13441" gloves="13442" feet="13443" shots="1467" /> <!-- Finale Blade, Vesper Leather Helmet, Vesper Leather Breastplate, Vesper Leather Leggings, Vesper Leather Gloves, Vesper Leather Boots -->
+ 	</phantom>
+ 	<!-- Sova: охотник, Elven Fighter, Elven Scout, Silver Ranger, Moonlight Sentinel -->
+-	<phantom name="Sova" kind="hunter" role="DAMAGE" female="false" face="2" hairStyle="4" hairColor="0" classes="18,22,24,102" aliases="сова;совушка" x="47296" y="50975" z="-2992">
++	<phantom name="Sova" kind="hunter" role="DAMAGE" female="false" face="2" hairStyle="4" hairColor="0" classes="18,22,24,102" aliases="сова;совушка" social="0.5" x="47296" y="50975" z="-2992">
+ 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
+ 		<gear grade="D" minLevel="20" rhand="274" chest="394" legs="416" feet="2422" shots="1463" /> <!-- Reinforced Bow, Reinforced Leather Shirt, Reinforced Leather Gaiters, Reinforced Leather Boots -->
+ 		<gear grade="C" minLevel="40" rhand="285" chest="397" legs="2387" feet="62" shots="1464" /> <!-- Noble Elven Bow, Mithril Shirt, Reinforced Mithril Gaiters, Reinforced Mithril Boots -->
+@@ -310,7 +310,7 @@
+ 		<gear grade="S84" minLevel="84" rhand="15686" head="13138" chest="13433" legs="13441" gloves="13442" feet="13443" shots="1467" /> <!-- Triumph Bow, Vesper Leather Helmet, Vesper Leather Breastplate, Vesper Leather Leggings, Vesper Leather Gloves, Vesper Leather Boots -->
+ 	</phantom>
+ 	<!-- Arhimag: охотник, Human Mystic, Human Wizard, Sorcerer, Archmage -->
+-	<phantom name="Arhimag" kind="hunter" role="DAMAGE" female="false" face="1" hairStyle="4" hairColor="0" classes="10,11,12,94" aliases="архимаг;архи" x="-84396" y="244788" z="-3728">
++	<phantom name="Arhimag" kind="hunter" role="DAMAGE" female="false" face="1" hairStyle="4" hairColor="0" classes="10,11,12,94" aliases="архимаг;архи" social="0.5" x="-84396" y="244788" z="-3728">
+ 		<gear grade="NONE" minLevel="1" rhand="6" chest="425" legs="461" shots="3947" /> <!-- Apprentice's Wand, Apprentice's Tunic, Apprentice's Stockings -->
+ 		<gear grade="D" minLevel="20" rhand="178" chest="436" legs="469" gloves="2447" shots="3948" /> <!-- Bone Staff, Tunic of Knowledge, Stockings of Knowledge, Gloves of Knowledge -->
+ 		<gear grade="C" minLevel="40" rhand="192" chest="442" legs="473" gloves="2463" shots="3949" /> <!-- Crystal Staff, Divine Tunic, Divine Stockings, Divine Gloves -->
+@@ -321,7 +321,7 @@
+ 		<gear grade="S84" minLevel="84" rhand="15566" head="13139" chest="13434" legs="13444" gloves="13445" feet="13446" shots="3952" /> <!-- Black Visage, Vesper Circlet, Vesper Tunic, Vesper Stockings, Vesper Gloves, Vesper Shoes -->
+ 	</phantom>
+ 	<!-- Ksenon: охотник, Human Fighter, Human Knight, Paladin, Phoenix Knight -->
+-	<phantom name="Ksenon" kind="hunter" role="TANK" female="false" face="0" hairStyle="2" hairColor="3" classes="0,4,5,90" aliases="ксенон;ксен" x="-84461" y="244694" z="-3728">
++	<phantom name="Ksenon" kind="hunter" role="TANK" female="false" face="0" hairStyle="2" hairColor="3" classes="0,4,5,90" aliases="ксенон;ксен" social="1.5" x="-84461" y="244694" z="-3728">
+ 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
+ 		<gear grade="D" minLevel="20" rhand="123" head="2411" chest="352" legs="2378" lhand="2493" shots="1463" /> <!-- Saber, Brigandine Helmet, Brigandine Tunic, Brigandine Gaiters, Brigandine Shield -->
+ 		<gear grade="C" minLevel="40" rhand="73" head="2414" chest="356" lhand="2497" shots="1464" /> <!-- Shamshir, Full Plate Helmet, Full Plate Armor, Full Plate Shield -->
+diff --git a/dist/game/data/xsd/L2HubPhantoms.xsd b/dist/game/data/xsd/L2HubPhantoms.xsd
+index cc54d01..9d16106 100644
+--- a/dist/game/data/xsd/L2HubPhantoms.xsd
++++ b/dist/game/data/xsd/L2HubPhantoms.xsd
+@@ -49,6 +49,8 @@
+ 						<xs:attribute name="classes" type="xs:string" use="required" />
+ 						<!-- Прозвища для чата пати через «;» (имя учитывается и так). -->
+ 						<xs:attribute name="aliases" type="xs:string" />
++						<!-- Общительность охотника: множитель шанса заговорить первым (1 — обычный). -->
++						<xs:attribute name="social" type="xs:decimal" default="1" />
+ 						<xs:attribute name="x" type="xs:integer" use="required" />
+ 						<xs:attribute name="y" type="xs:integer" use="required" />
+ 						<xs:attribute name="z" type="xs:integer" use="required" />
+diff --git a/java/org/l2jmobius/gameserver/config/custom/PhantomHuntersConfig.java b/java/org/l2jmobius/gameserver/config/custom/PhantomHuntersConfig.java
+index c4afe0e..0eb1395 100644
+--- a/java/org/l2jmobius/gameserver/config/custom/PhantomHuntersConfig.java
++++ b/java/org/l2jmobius/gameserver/config/custom/PhantomHuntersConfig.java
+@@ -46,6 +46,16 @@ public class PhantomHuntersConfig
+ 	public static int HUNTER_STRATEGY_PER_HOUR;
+ 	public static int HUNTER_STRATEGY_PER_MINUTE;
+ 	public static int HUNTER_STRATEGY_SAY_CHANCE;
++	public static boolean HUNTER_INITIATIVE;
++	public static int HUNTER_INITIATIVE_RANGE;
++	public static int HUNTER_INITIATIVE_CHANCE_KNOWN;
++	public static int HUNTER_INITIATIVE_CHANCE_STRANGER;
++	public static int HUNTER_INITIATIVE_HUNTER_COOLDOWN;
++	public static int HUNTER_INITIATIVE_PAIR_COOLDOWN;
++	public static int HUNTER_INITIATIVE_PLAYER_GAP;
++	public static int HUNTER_INITIATIVE_PLAYER_PER_HOUR;
++	public static int HUNTER_INITIATIVE_ANSWER_WAIT;
++	public static int HUNTER_INITIATIVE_RECENT_TALK;
+ 
+ 	public static void load()
+ 	{
+@@ -82,6 +92,16 @@ public class PhantomHuntersConfig
+ 		HUNTER_STRATEGY_PER_HOUR = Math.max(1, config.getInt("HunterStrategyPerHour", 6));
+ 		HUNTER_STRATEGY_PER_MINUTE = config.getInt("HunterStrategyPerMinute", 6);
+ 		HUNTER_STRATEGY_SAY_CHANCE = config.getInt("HunterStrategySayChance", 20);
++		HUNTER_INITIATIVE = config.getBoolean("HunterInitiative", true);
++		HUNTER_INITIATIVE_RANGE = Math.max(100, config.getInt("HunterInitiativeRange", 600));
++		HUNTER_INITIATIVE_CHANCE_KNOWN = Math.max(0, Math.min(100, config.getInt("HunterInitiativeChanceKnown", 30)));
++		HUNTER_INITIATIVE_CHANCE_STRANGER = Math.max(0, Math.min(100, config.getInt("HunterInitiativeChanceStranger", 4)));
++		HUNTER_INITIATIVE_HUNTER_COOLDOWN = Math.max(0, config.getInt("HunterInitiativeHunterCooldown", 1800));
++		HUNTER_INITIATIVE_PAIR_COOLDOWN = Math.max(0, config.getInt("HunterInitiativePairCooldown", 21600));
++		HUNTER_INITIATIVE_PLAYER_GAP = Math.max(0, config.getInt("HunterInitiativePlayerGap", 600));
++		HUNTER_INITIATIVE_PLAYER_PER_HOUR = Math.max(0, config.getInt("HunterInitiativePlayerPerHour", 3));
++		HUNTER_INITIATIVE_ANSWER_WAIT = Math.max(10, config.getInt("HunterInitiativeAnswerWait", 120));
++		HUNTER_INITIATIVE_RECENT_TALK = Math.max(0, config.getInt("HunterInitiativeRecentTalk", 1800));
+ 	}
+ 
+ 	/**
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java
+index 57b5026..360ee87 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java
+@@ -37,7 +37,8 @@ import org.l2jmobius.gameserver.taskmanagers.GameTimeTaskManager;
+  * Остальное — в мозги; тег приказа в их ответе ({@code [[STAY]]}) выполняется, если говорил владелец.<br>
+  * В чате пати без имени отвечает тот напарник, с которым игрок уже говорит, а если в пати кроме него только напарники — любой; с именем или прозвищем — названный.<br>
+  * Общий (белый) чат рядом ({@code ChatGeneral}): напарники из пати, кто стоит рядом, слышат его так же, как чат пати, и отвечают вслух; охотник рядом — если назвали, а без имени изредка встревает сам.<br>
+- * События (вступил в пати, новый уровень владельца, смерть, рес, отдых) — реплика с кулдауном и общим бюджетом в минуту; мозги недоступны — заготовка.
++ * События (вступил в пати, новый уровень владельца, смерть, рес, отдых) — реплика с кулдауном и общим бюджетом в минуту; мозги недоступны — заготовка.<br>
++ * Охотник заговаривает первым ({@link PhantomInitiative} решает, здесь — реплика): ответ игрока без имени уходит ему, как в разговоре.
+  */
+ public class PhantomChat
+ {
+@@ -207,6 +208,18 @@ public class PhantomChat
+ 
+ 		// Назван только кто-то чужой — отвечает он, а не напарники.
+ 		final List<PhantomTemplate> named = PhantomOrders.addressed(text, strangers.keySet());
++
++		// Без имён и приказов: игрок сейчас говорит с охотником (тот ему ответил или сам заговорил первым), а с напарниками разговора нет — отвечает охотник.
++		if (named.isEmpty() && PhantomOrders.addressed(text, mates.keySet()).isEmpty() && PhantomOrders.parse(text).isEmpty() && (recentPartner(speaker, mates) == null))
++		{
++			final PhantomTemplate partner = recentPartner(speaker, strangers);
++			if (partner != null)
++			{
++				talk(speaker, strangers.get(partner), partner, "say", text, List.of(), null, PhantomCompanionManager.getInstance().isOwner(speaker, partner));
++				return;
++			}
++		}
++
+ 		if ((named.isEmpty() || !PhantomOrders.addressed(text, mates.keySet()).isEmpty()) && route(speaker, text, mates, othersHuman, "say"))
+ 		{
+ 			return;
+@@ -469,6 +482,60 @@ public class PhantomChat
+ 		World.forEachVisibleObjectInRange(speaker, Player.class, 1250, player -> player.sendPacket(say));
+ 	}
+ 
++	/**
++	 * Охотник заговаривает первым ({@link PhantomInitiative}): правила уже разрешили, здесь — реплика модели вслух в общий чат рядом, в общем бюджете событий.
++	 * Модель промолчала, мозги недоступны или бюджет исчерпан — тишина, без заготовок: дежурное «привет» хуже молчания.
++	 * @param hunter охотник
++	 * @param player к кому он обращается
++	 * @param template шаблон охотника
++	 * @param what что он видит — для мозгов, от его лица
++	 * @param onSaid охотник что-то сказал: ждать ответа
++	 */
++	void initiative(Player hunter, Player player, PhantomTemplate template, String what, Runnable onSaid)
++	{
++		if (!brainEnabled() || !eventBudget(System.currentTimeMillis()))
++		{
++			return;
++		}
++
++		FakePlayerBrain.getInstance().send(request(player, hunter, template, "initiative", what, null, false), reply ->
++		{
++			final String line = TAG.matcher(reply).replaceAll("").strip();
++			if (line.isEmpty() || hunter.isDead())
++			{
++				return;
++			}
++
++			// Ответ игрока без имени уйдёт этому охотнику; сам охотник следом не встревает.
++			final long now = System.currentTimeMillis();
++			_lastReply.put(pair(hunter, player), now);
++			_eventCooldowns.put("overhear:" + hunter.getObjectId(), now + (PhantomPartyConfig.PHANTOM_OVERHEAR_COOLDOWN * 1000L));
++			sayNear(hunter, line);
++			onSaid.run();
++		}, () ->
++		{
++			// Мозги недоступны — охотник молчит и качается дальше.
++		});
++	}
++
++	/**
++	 * @param player игрок
++	 * @param now текущее время
++	 * @return с игроком сейчас разговаривает кто-то из фантомов (отвечал ему за последние {@value #CONVERSATION_WINDOW} мс)
++	 */
++	boolean inConversation(Player player, long now)
++	{
++		final long id = player.getObjectId() & 0xffffffffL;
++		for (Map.Entry<Long, Long> entry : _lastReply.entrySet())
++		{
++			if (((entry.getKey() & 0xffffffffL) == id) && ((now - entry.getValue()) <= CONVERSATION_WINDOW))
++			{
++				return true;
++			}
++		}
++		return false;
++	}
++
+ 	/**
+ 	 * Мысль охотника вслух (мозги-стратег) — в общий чат рядом.
+ 	 * @param hunter охотник
+@@ -577,6 +644,10 @@ public class PhantomChat
+ 		if (!"overheard".equals(channel))
+ 		{
+ 			_lastReply.put(pair(phantom, speaker), System.currentTimeMillis());
++			if (template.isHunter())
++			{
++				PhantomInitiative.getInstance().onSpoke(phantom, speaker);
++			}
+ 		}
+ 		if (!brainEnabled())
+ 		{
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomData.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomData.java
+index c6ca683..f053e27 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomData.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomData.java
+@@ -68,7 +68,7 @@ public class PhantomData implements IXmlReader
+ 					gear.add(new PhantomTemplate.Gear(g.getString("grade"), g.getInt("minLevel"), g.getInt("rhand", 0), g.getInt("lhand", 0), g.getInt("head", 0), g.getInt("chest", 0), g.getInt("legs", 0), g.getInt("gloves", 0), g.getInt("feet", 0), g.getInt("shots", 0)));
+ 				});
+ 
+-				final PhantomTemplate template = new PhantomTemplate(name, PhantomTemplate.Role.valueOf(set.getString("role")), set.getBoolean("female"), (byte) set.getInt("face"), (byte) set.getInt("hairStyle"), (byte) set.getInt("hairColor"), classes, new Location(set.getInt("x"), set.getInt("y"), set.getInt("z")), gear, set.getString("aliases", ""), "hunter".equals(set.getString("kind", "companion")));
++				final PhantomTemplate template = new PhantomTemplate(name, PhantomTemplate.Role.valueOf(set.getString("role")), set.getBoolean("female"), (byte) set.getInt("face"), (byte) set.getInt("hairStyle"), (byte) set.getInt("hairColor"), classes, new Location(set.getInt("x"), set.getInt("y"), set.getInt("z")), gear, set.getString("aliases", ""), "hunter".equals(set.getString("kind", "companion")), set.getFloat("social", 1));
+ 				_loading.put(name.toLowerCase(), template);
+ 			}
+ 			catch (Exception e)
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+index f79d5fc..f758509 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+@@ -70,6 +70,7 @@ import org.l2jmobius.gameserver.taskmanagers.AutoUseTaskManager;
+  * <li>экономика x1 (раздел 4.2 docs/PHANTOMS.md): кончились сосы или стрелы, полон инвентарь, есть ценный дроп или просто давно не был — в город: хлам NPC, покупки за свою адену; ценное — в лавку в Гиране;</li>
+  * <li>пати по крику: «лфм», «нужен хил» в общем, торговом чате и в крике — свободный охотник своей роли и уровня просится в пати и ходит там как напарник;</li>
+  * <li>мозги-стратег ({@link PhantomHunterStrategy}): раз в несколько минут охотник на споте спрашивает модель, что делать дальше, и выполняет ответ через те же фазы; нет ответа — правила выше;</li>
++ * <li>живой игрок подошёл — охотник иногда заговаривает с ним первым ({@link PhantomInitiative});</li>
+  * <li>режим (выключены, всегда, только при живых игроках) и сброс прогресса — из PhantomHunters.ini, который сервер перечитывает на ходу.</li>
+  * </ul>
+  */
+@@ -670,6 +671,12 @@ public class PhantomHunterManager
+ 			LOGGER.info(getClass().getSimpleName() + ": Strategy: " + player.getName() + " drops " + pending + ", busy (" + hunter.phase + ").");
+ 		}
+ 
++		// Заговорить первым с живым игроком рядом (патч 0025): на каче, в городе и в лавке.
++		if ((hunter.phase == Phase.HUNT) || (hunter.phase == Phase.TOWN) || (hunter.phase == Phase.STORE))
++		{
++			PhantomInitiative.getInstance().look(player, hunter.template, hunter.enemyId != 0, _realPlayers > 0, now);
++		}
++
+ 		switch (hunter.phase)
+ 		{
+ 			case PARTY:
+@@ -2178,7 +2185,7 @@ public class PhantomHunterManager
+ 		return null;
+ 	}
+ 
+-	private static String describe(Player other)
++	static String describe(Player other)
+ 	{
+ 		return other.getName() + " (" + other.getLevel() + " ур., " + other.getPlayerClass().name().replace('_', ' ').toLowerCase() + ")";
+ 	}
+diff --git a/b/java/org/l2jmobius/gameserver/managers/phantom/PhantomInitiative.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomInitiative.java
+new file mode 100644
+index 0000000..6cb10e7
+--- /dev/null
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomInitiative.java
+@@ -0,0 +1,357 @@
++package org.l2jmobius.gameserver.managers.phantom;
++
++import java.util.ArrayDeque;
++import java.util.ArrayList;
++import java.util.Deque;
++import java.util.HashMap;
++import java.util.Iterator;
++import java.util.List;
++import java.util.Locale;
++import java.util.Map;
++import java.util.concurrent.ConcurrentHashMap;
++import java.util.logging.Logger;
++import java.util.regex.Matcher;
++import java.util.regex.Pattern;
++
++import org.l2jmobius.commons.util.Rnd;
++import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
++import org.l2jmobius.gameserver.entity.World;
++import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.managers.FakePlayerBrain;
++
++/**
++ * L2Hub: охотник заговаривает первым (патч 0025, docs/PHANTOMS.md, раздел 4.9).<br>
++ * Тот же проход раз в 2 с, что и обиды ({@link PhantomHunterManager}): охотник на каче, в городе или в лавке смотрит, кто из живых игроков рядом.
++ * Кто рядом второй проход подряд — подошёл, а не пролетает мимо и не в момент телепорта. Дальше по порядку:
++ * <ul>
++ * <li>фильтры и кулдауны без модели: игрок в бою, мёртв, невидим, телепортируется, на олимпиаде, в лавке, уже разговаривает с фантомом, есть обида; кулдауны охотника, пары и игрока, потолок в час на игрока, пара «проигнорирована»;</li>
++ * <li>бронь игрока за этим охотником — двое разом не здороваются;</li>
++ * <li>мозги отвечают из памяти, знакомы ли и давно ли говорили ({@code "kind":"acquaintance"}, без модели);</li>
++ * <li>бросок здесь: шанс для знакомого или незнакомого × общительность охотника ({@link PhantomTemplate#getSocial()});</li>
++ * <li>выпало — реплика модели вслух ({@link PhantomChat#initiative}); модель промолчала или недоступна — тишина.</li>
++ * </ul>
++ * Игрок не ответил за {@link PhantomHuntersConfig#HUNTER_INITIATIVE_ANSWER_WAIT} с — пара «проигнорирована»: этот охотник больше не заговаривает с ним первым, пока игрок сам ему не напишет.
++ * Время последней инициативы пары и пометка игнора хранятся в переменной персонажа охотника {@value #SOCIAL_VARIABLE} и переживают рестарт; остальные кулдауны — в памяти.
++ */
++public class PhantomInitiative
++{
++	private static final Logger LOGGER = Logger.getLogger(PhantomInitiative.class.getName());
++
++	/** Пары охотника: «objectId игрока:время последней инициативы, с:1 — проигнорировал;...», свежие первыми. */
++	static final String SOCIAL_VARIABLE = "L2HubSocial";
++	private static final int SOCIAL_ENTRIES = 30;
++	/** Столько проходов подряд игрок рядом — подошёл. */
++	private static final int ARRIVAL_PASSES = 2;
++	/** Проходов не было дольше этого (охотник был вне мира, в пати, дрался с игроком) — кто рядом, считается заново и без бросков. */
++	private static final long PASS_GAP = 10000;
++	/** Бронь игрока, пока мозги отвечают, знакомы ли. */
++	private static final long RESERVE = 30000;
++	private static final long HOUR = 3600000;
++	private static final Pattern MET = Pattern.compile("\"met\"\\s*:\\s*(true|false)");
++	private static final Pattern AGO = Pattern.compile("\"ago\"\\s*:\\s*(-?\\d+)");
++
++	/** Охотник → игроки рядом: objectId → сколько проходов подряд. */
++	private final Map<Integer, Map<Integer, Integer>> _near = new ConcurrentHashMap<>();
++	private final Map<Integer, Long> _lastPass = new ConcurrentHashMap<>();
++	/** Охотник → не заговаривает первым до. */
++	private final Map<Integer, Long> _hunterNext = new ConcurrentHashMap<>();
++	/** Игрок → к нему никто не обращается до (бронь или промежуток). */
++	private final Map<Integer, Long> _playerNext = new ConcurrentHashMap<>();
++	/** Игрок → когда к нему обращались первыми за последний час. */
++	private final Map<Integer, Deque<Long>> _playerHour = new ConcurrentHashMap<>();
++	/** Пара → не бросать снова до. */
++	private final Map<Long, Long> _pairRoll = new ConcurrentHashMap<>();
++	/** Пара → ждёт ответа до. */
++	private final Map<Long, Long> _waiting = new ConcurrentHashMap<>();
++
++	protected PhantomInitiative()
++	{
++	}
++
++	/**
++	 * Проход охотника (из тика {@link PhantomHunterManager}, раз в 2 с): кто рядом, не пора ли заговорить первым. За проход — не больше одного кандидата.
++	 * @param hunter охотник
++	 * @param template его шаблон
++	 * @param busy охотник занят (дерётся с игроком)
++	 * @param realPlayers в мире есть живые игроки
++	 * @param now текущее время
++	 */
++	public void look(Player hunter, PhantomTemplate template, boolean busy, boolean realPlayers, long now)
++	{
++		final int hunterId = hunter.getObjectId();
++		expireWaiting(hunter, now);
++		if (!PhantomHuntersConfig.HUNTER_INITIATIVE || !realPlayers || !PhantomChat.brainEnabled())
++		{
++			_near.remove(hunterId);
++			_lastPass.remove(hunterId);
++			return;
++		}
++
++		final Long last = _lastPass.put(hunterId, now);
++		final boolean fresh = (last == null) || ((now - last) > PASS_GAP);
++		final Map<Integer, Integer> before = fresh ? Map.of() : _near.getOrDefault(hunterId, Map.of());
++		final Map<Integer, Integer> near = new HashMap<>();
++		final List<Player> arrived = new ArrayList<>();
++		for (Player player : World.getVisibleObjectsInRange(hunter, Player.class, PhantomHuntersConfig.HUNTER_INITIATIVE_RANGE))
++		{
++			if (!isLive(player))
++			{
++				continue;
++			}
++
++			// Первый проход: все, кто рядом, — «давно здесь», бросков нет.
++			final int passes = fresh ? ARRIVAL_PASSES + 1 : Math.min(ARRIVAL_PASSES + 1, before.getOrDefault(player.getObjectId(), 0) + 1);
++			near.put(player.getObjectId(), passes);
++			if (passes == ARRIVAL_PASSES)
++			{
++				arrived.add(player);
++			}
++		}
++		_near.put(hunterId, near);
++
++		if (arrived.isEmpty() || busy || hunter.isDead() || hunter.isTeleporting() || (hunter.getCurrentHp() < (hunter.getMaxHp() * 0.5)) || (now < _hunterNext.getOrDefault(hunterId, 0L)))
++		{
++			return;
++		}
++
++		for (Player player : arrived)
++		{
++			if (allowed(hunter, player, now))
++			{
++				consider(hunter, template, player, now);
++				return;
++			}
++		}
++	}
++
++	/**
++	 * Игрок что-то сказал охотнику (шёпот, общий чат с именем или в разговоре): ответил на инициативу; пометка «проигнорировал» снимается — он заговорил первым.
++	 * @param hunter охотник
++	 * @param player игрок
++	 */
++	public void onSpoke(Player hunter, Player player)
++	{
++		_waiting.remove(pair(hunter, player));
++		final long[] entry = entry(hunter, player.getObjectId());
++		if ((entry != null) && (entry[1] == 1))
++		{
++			store(hunter, player.getObjectId(), entry[0], false);
++			LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " заговорил с " + hunter.getName() + " сам — пометка игнора снята.");
++		}
++	}
++
++	// ---------- Правила ----------
++
++	private static boolean isLive(Player player)
++	{
++		return !PhantomManager.getInstance().isPhantom(player) && (player.getClient() != null) && !player.getClient().isDetached() && !player.isInOfflineMode();
++	}
++
++	/**
++	 * Фильтры без модели: игрок занят, кулдауны, потолок в час, пара проигнорирована.
++	 */
++	private boolean allowed(Player hunter, Player player, long now)
++	{
++		if (player.isInvisible() || player.isDead() || player.isInCombat() || player.isTeleporting() || player.isInOlympiadMode() || player.isInStoreMode())
++		{
++			return false;
++		}
++		if ((hunter.isInParty() && (hunter.getParty() == player.getParty())) || (PhantomHunterManager.grudge(hunter, player) > 0) || PhantomChat.getInstance().inConversation(player, now))
++		{
++			return false;
++		}
++
++		final int playerId = player.getObjectId();
++		if ((now < _playerNext.getOrDefault(playerId, 0L)) || (now < _pairRoll.getOrDefault(pair(hunter, player), 0L)) || (perHour(playerId, now) >= PhantomHuntersConfig.HUNTER_INITIATIVE_PLAYER_PER_HOUR))
++		{
++			return false;
++		}
++
++		final long[] entry = entry(hunter, playerId);
++		return (entry == null) || ((entry[1] == 0) && (((now / 1000) - entry[0]) >= PhantomHuntersConfig.HUNTER_INITIATIVE_PAIR_COOLDOWN));
++	}
++
++	/**
++	 * Бронь игрока и вопрос мозгам, знакомы ли; решение — в {@link #decide}.
++	 */
++	private void consider(Player hunter, PhantomTemplate template, Player player, long now)
++	{
++		final int playerId = player.getObjectId();
++		_playerNext.put(playerId, now + RESERVE);
++		_pairRoll.put(pair(hunter, player), now + (PhantomHuntersConfig.HUNTER_INITIATIVE_PLAYER_GAP * 1000L));
++
++		final StringBuilder sb = new StringBuilder(128).append('{');
++		FakePlayerBrain.field(sb, "kind", "acquaintance").append(',');
++		FakePlayerBrain.field(sb, "fpc", template.getName()).append(',');
++		sb.append("\"player\":{");
++		FakePlayerBrain.field(sb, "name", player.getName());
++		sb.append("}}");
++		FakePlayerBrain.getInstance().send(sb.toString(), reply -> decide(hunter, template, player, reply), () -> _playerNext.remove(playerId));
++	}
++
++	/**
++	 * Ответ мозгов «знакомы ли» пришёл: бросок и, если выпало, реплика.
++	 */
++	private void decide(Player hunter, PhantomTemplate template, Player player, String reply)
++	{
++		final int playerId = player.getObjectId();
++		final Matcher met = MET.matcher(reply);
++		if (!met.find())
++		{
++			_playerNext.remove(playerId);
++			return;
++		}
++
++		final boolean known = Boolean.parseBoolean(met.group(1));
++		final Matcher agoMatcher = AGO.matcher(reply);
++		final long ago = agoMatcher.find() ? Long.parseLong(agoMatcher.group(1)) : -1;
++		final String who = getClass().getSimpleName() + ": " + hunter.getName() + " -> " + player.getName() + ": " + (known ? "знаком" : "не знаком");
++		if ((ago >= 0) && (ago < PhantomHuntersConfig.HUNTER_INITIATIVE_RECENT_TALK))
++		{
++			_playerNext.remove(playerId);
++			LOGGER.info(who + ", говорили " + (ago / 60) + " мин назад — не заговаривает.");
++			return;
++		}
++
++		final double chance = (known ? PhantomHuntersConfig.HUNTER_INITIATIVE_CHANCE_KNOWN : PhantomHuntersConfig.HUNTER_INITIATIVE_CHANCE_STRANGER) * template.getSocial();
++		final boolean yes = Rnd.get(100.0) < chance;
++		LOGGER.info(who + ", шанс " + String.format(Locale.ROOT, "%.0f", chance) + "% — " + (yes ? "заговаривает." : "нет."));
++		final long now = System.currentTimeMillis();
++		if (!yes || hunter.isDead() || !isLive(player) || player.isInCombat() || player.isDead() || player.isTeleporting() || (hunter.calculateDistance2D(player) > (PhantomHuntersConfig.HUNTER_INITIATIVE_RANGE * 2)))
++		{
++			_playerNext.remove(playerId);
++			return;
++		}
++
++		_hunterNext.put(hunter.getObjectId(), now + (PhantomHuntersConfig.HUNTER_INITIATIVE_HUNTER_COOLDOWN * 1000L));
++		_playerNext.put(playerId, now + (PhantomHuntersConfig.HUNTER_INITIATIVE_PLAYER_GAP * 1000L));
++		final Deque<Long> hour = _playerHour.computeIfAbsent(playerId, k -> new ArrayDeque<>());
++		synchronized (hour)
++		{
++			hour.addLast(now);
++		}
++		store(hunter, playerId, now / 1000, false);
++
++		final long pair = pair(hunter, player);
++		PhantomChat.getInstance().initiative(hunter, player, template, situation(player), () -> _waiting.put(pair, System.currentTimeMillis() + (PhantomHuntersConfig.HUNTER_INITIATIVE_ANSWER_WAIT * 1000L)));
++	}
++
++	/**
++	 * Что видит охотник — для мозгов, от его лица; где он сам и чем занят, мозги знают из его состояния.
++	 */
++	private static String situation(Player player)
++	{
++		String what = "рядом с тобой остановился " + PhantomHunterManager.describe(player);
++		if (player.isInParty())
++		{
++			what += ", он в пати (" + player.getParty().getMemberCount() + " чел.)";
++		}
++		if (player.isSitting())
++		{
++			what += ", сидит отдыхает";
++		}
++		return what;
++	}
++
++	/**
++	 * Ответа не было — пара «проигнорирована».
++	 */
++	private void expireWaiting(Player hunter, long now)
++	{
++		final long high = (long) hunter.getObjectId() << 32;
++		for (Iterator<Map.Entry<Long, Long>> it = _waiting.entrySet().iterator(); it.hasNext();)
++		{
++			final Map.Entry<Long, Long> e = it.next();
++			if (((e.getKey() & 0xffffffff00000000L) != high) || (now < e.getValue()))
++			{
++				continue;
++			}
++
++			it.remove();
++			final int playerId = (int) (e.getKey() & 0xffffffffL);
++			final long[] entry = entry(hunter, playerId);
++			store(hunter, playerId, entry != null ? entry[0] : now / 1000, true);
++			final Player player = World.getPlayer(playerId);
++			LOGGER.info(getClass().getSimpleName() + ": " + (player != null ? player.getName() : String.valueOf(playerId)) + " не ответил " + hunter.getName() + " — тот больше не заговаривает с ним первым.");
++		}
++	}
++
++	private int perHour(int playerId, long now)
++	{
++		final Deque<Long> hour = _playerHour.get(playerId);
++		if (hour == null)
++		{
++			return 0;
++		}
++
++		synchronized (hour)
++		{
++			while (!hour.isEmpty() && ((now - hour.peekFirst()) > HOUR))
++			{
++				hour.pollFirst();
++			}
++			return hour.size();
++		}
++	}
++
++	// ---------- Пары: переменная персонажа охотника ----------
++
++	/**
++	 * @return {время последней инициативы, с; 1 — проигнорировал} или {@code null}
++	 */
++	private static long[] entry(Player hunter, int playerId)
++	{
++		final String id = String.valueOf(playerId);
++		for (String entry : hunter.getVariables().getString(SOCIAL_VARIABLE, "").split(";"))
++		{
++			final String[] parts = entry.split(":");
++			if ((parts.length == 3) && parts[0].equals(id))
++			{
++				try
++				{
++					return new long[]
++					{
++						Long.parseLong(parts[1]),
++						Long.parseLong(parts[2])
++					};
++				}
++				catch (NumberFormatException e)
++				{
++					return null;
++				}
++			}
++		}
++		return null;
++	}
++
++	private static void store(Player hunter, int playerId, long time, boolean ignored)
++	{
++		final String id = String.valueOf(playerId);
++		final List<String> entries = new ArrayList<>();
++		entries.add(id + ":" + time + ":" + (ignored ? 1 : 0));
++		for (String entry : hunter.getVariables().getString(SOCIAL_VARIABLE, "").split(";"))
++		{
++			if ((entry.split(":").length == 3) && !entry.startsWith(id + ":"))
++			{
++				entries.add(entry);
++			}
++		}
++		hunter.getVariables().set(SOCIAL_VARIABLE, String.join(";", entries.subList(0, Math.min(entries.size(), SOCIAL_ENTRIES))));
++		hunter.getVariables().storeMe();
++	}
++
++	private static long pair(Player hunter, Player player)
++	{
++		return ((long) hunter.getObjectId() << 32) | (player.getObjectId() & 0xffffffffL);
++	}
++
++	public static PhantomInitiative getInstance()
++	{
++		return SingletonHolder.INSTANCE;
++	}
++
++	private static class SingletonHolder
++	{
++		protected static final PhantomInitiative INSTANCE = new PhantomInitiative();
++	}
++}
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomTemplate.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomTemplate.java
+index bf13b76..070c7bb 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomTemplate.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomTemplate.java
+@@ -85,11 +85,13 @@ public class PhantomTemplate
+ 	private final List<Gear> _gear;
+ 	private final List<String> _aliases;
+ 	private final boolean _hunter;
++	private final float _social;
+ 
+-	public PhantomTemplate(String name, Role role, boolean female, byte face, byte hairStyle, byte hairColor, int[] classes, Location home, List<Gear> gear, String aliases, boolean hunter)
++	public PhantomTemplate(String name, Role role, boolean female, byte face, byte hairStyle, byte hairColor, int[] classes, Location home, List<Gear> gear, String aliases, boolean hunter, float social)
+ 	{
+ 		_name = name;
+ 		_hunter = hunter;
++		_social = Math.max(0, social);
+ 		final List<String> names = new ArrayList<>();
+ 		names.add(name.toLowerCase());
+ 		for (String alias : aliases.toLowerCase().replace('ё', 'е').split(";"))
+@@ -130,6 +132,14 @@ public class PhantomTemplate
+ 		return _hunter;
+ 	}
+ 
++	/**
++	 * @return общительность охотника — множитель шанса заговорить первым ({@link PhantomInitiative}): 1 — обычный, больше — болтун, меньше — замкнутый
++	 */
++	public float getSocial()
++	{
++		return _social;
++	}
++
+ 	/**
+ 	 * @return имя и прозвища в нижнем регистре, «ё» заменена на «е»: по ним в чате понятно, к кому обращаются
+ 	 */

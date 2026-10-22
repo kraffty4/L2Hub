@@ -1,0 +1,120 @@
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java
+index 1b377ac..e73c4dd 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java
+@@ -1115,7 +1115,7 @@ public class PhantomCompanionManager
+ 			if ((distance > LEAD_RETURN) && !phantom.isAttackingNow() && !phantom.isMoving())
+ 			{
+ 				phantom.setRunning();
+-				phantom.getAI().setIntentionMoveTo(new Location(owner.getX(), owner.getY(), owner.getZ()));
++				PhantomHunterManager.runTo(phantom, new Location(owner.getX(), owner.getY(), owner.getZ()));
+ 			}
+ 			return;
+ 		}
+@@ -1141,7 +1141,7 @@ public class PhantomCompanionManager
+ 		if ((spot != null) && (phantom.calculateDistance2D(spot.entry) > (spot.radius / 2)) && !phantom.isMoving())
+ 		{
+ 			phantom.setRunning();
+-			phantom.getAI().setIntentionMoveTo(spot.entry);
++			PhantomHunterManager.runTo(phantom, spot.entry);
+ 		}
+ 	}
+ 
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+index bbe1d49..7e2c813 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+@@ -102,6 +102,11 @@ public class PhantomHunterManager
+ 	private static final int SPAWN_LEVEL_UP = 3;
+ 	/** Вне города спот не дальше этого — ногами, а не телепортом (патч 0030). */
+ 	private static final int WALK_TRAVEL = 12000;
++	/**
++	 * Дальше этого Mobius ведёт игрока по прямой без поиска пути (Creature.moveToLocation: «ткнул мышкой далеко — беги»), и первая скала или стена
++	 * останавливает охотника. Поэтому к далёкой точке — отрезками не длиннее этого: на них путь по геодате ищется (патч 0040).
++	 */
++	private static final int MOVE_STEP = 2500;
+ 	/** До этого уровня охотник качается в родной зоне расы, с него — уходит в мир: стартовые зоны не берёт, пока есть другие (патч 0039). */
+ 	private static final int HOME_LEVEL = 15;
+ 	/** Охотники на спотах ближе этого друг к другу — в одном месте: {@code HuntersPerSpot} считается на место, а не на спот (патч 0039). */
+@@ -1058,7 +1063,7 @@ public class PhantomHunterManager
+ 		{
+ 			hunter.walkBackUntil = System.currentTimeMillis() + walkTime(distance);
+ 			player.setRunning();
+-			player.getAI().setIntentionMoveTo(spot.entry);
++			runTo(player, spot.entry);
+ 			LOGGER.info(PhantomHunterManager.class.getSimpleName() + ": " + player.getName() + " walks to " + spot.name + " (мобы " + spot.min + "-" + spot.max + ", " + distance + ").");
+ 			return;
+ 		}
+@@ -1079,7 +1084,7 @@ public class PhantomHunterManager
+ 		hunter.gatekeeperAt = new Location(x, y, GeoEngine.getInstance().getHeight(x, y, gatekeeper.getZ()));
+ 		hunter.gatekeeperUntil = System.currentTimeMillis() + GATEKEEPER_TIMEOUT;
+ 		player.setRunning();
+-		player.getAI().setIntentionMoveTo(hunter.gatekeeperAt);
++		runTo(player, hunter.gatekeeperAt);
+ 		LOGGER.info(PhantomHunterManager.class.getSimpleName() + ": " + player.getName() + " runs to gatekeeper " + gatekeeper.getName() + " (" + (int) player.calculateDistance2D(gatekeeper) + ") for " + spot.name + ".");
+ 	}
+ 
+@@ -1095,7 +1100,7 @@ public class PhantomHunterManager
+ 			if (!player.isMoving())
+ 			{
+ 				player.setRunning();
+-				player.getAI().setIntentionMoveTo(hunter.gatekeeperAt);
++				runTo(player, hunter.gatekeeperAt);
+ 			}
+ 			return;
+ 		}
+@@ -1476,7 +1481,7 @@ public class PhantomHunterManager
+ 			{
+ 				LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " walks back to " + hunter.spot.name + " (" + distance + ").");
+ 				hunter.walkBackUntil = now + WALK_BACK_TIMEOUT;
+-				player.getAI().setIntentionMoveTo(hunter.spot.entry);
++				runTo(player, hunter.spot.entry);
+ 				return;
+ 			}
+ 			LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " teleports back to " + hunter.spot.name + " (" + distance + ").");
+@@ -1609,7 +1614,26 @@ public class PhantomHunterManager
+ 		LOGGER.info(PhantomHunterManager.class.getSimpleName() + ": " + player.getName() + " walks to " + spot.name + " (мобы " + spot.min + "-" + spot.max + ", " + distance + ").");
+ 		hunter.walkBackUntil = now + walkTime(distance);
+ 		player.setRunning();
+-		player.getAI().setIntentionMoveTo(spot.entry);
++		runTo(player, spot.entry);
++	}
++
++	/**
++	 * Бежать к точке, как живой игрок: ближе {@link #MOVE_STEP} — прямо (путь по геодате Mobius найдёт сам), дальше — к промежуточной точке на {@link #MOVE_STEP}
++	 * в её сторону. Дошёл до промежуточной и встал — следующий тик даёт следующую (патч 0040).
++	 */
++	static void runTo(Player player, Location target)
++	{
++		final double distance = player.calculateDistance2D(target);
++		if (distance <= MOVE_STEP)
++		{
++			player.getAI().setIntentionMoveTo(target);
++			return;
++		}
++
++		final double k = MOVE_STEP / distance;
++		final int x = player.getX() + (int) ((target.getX() - player.getX()) * k);
++		final int y = player.getY() + (int) ((target.getY() - player.getY()) * k);
++		player.getAI().setIntentionMoveTo(new Location(x, y, GeoEngine.getInstance().getHeight(x, y, player.getZ())));
+ 	}
+ 
+ 	/**
+@@ -1687,7 +1711,7 @@ public class PhantomHunterManager
+ 			if (!player.isMoving())
+ 			{
+ 				player.setRunning();
+-				player.getAI().setIntentionMoveTo(new Location(seller.getX(), seller.getY(), seller.getZ()));
++				runTo(player, new Location(seller.getX(), seller.getY(), seller.getZ()));
+ 			}
+ 			return;
+ 		}
+@@ -2974,7 +2998,7 @@ public class PhantomHunterManager
+ 			if ((target == null) || !(target instanceof Monster) || ((Monster) target).isAlikeDead() || (player.calculateDistance2D(target) > 300))
+ 			{
+ 				player.setTarget(null);
+-				player.getAI().setIntentionMoveTo(spot.entry);
++				runTo(player, spot.entry);
+ 			}
+ 			return;
+ 		}

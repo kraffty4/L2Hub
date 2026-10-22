@@ -1,0 +1,125 @@
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+index 35793a4..c1c26d6 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+@@ -107,9 +107,21 @@ public class PhantomHunterManager
+ 	private static final int WALK_TRAVEL = 12000;
+ 	/**
+ 	 * Дальше этого Mobius ведёт игрока по прямой без поиска пути (Creature.moveToLocation: «ткнул мышкой далеко — беги»), и первая скала или стена
+-	 * останавливает охотника. Поэтому к далёкой точке — отрезками не длиннее этого: на них путь по геодате ищется (патч 0040).
+-	 */
+-	private static final int MOVE_STEP = 2500;
++	 * останавливает охотника. Поэтому к далёкой точке — отрезками не длиннее этого: на них путь по геодате ищется (патч 0040). Буфер поиска пути у Mobius —
++	 * 64 + 2·Δ клеток по 16, не больше 500: на 2500 он почти полон, и промежуточная точка в скале оставляла без пути; 1500 — с запасом (патч 0045).
++	 */
++	private static final int MOVE_STEP = 1500;
++	/** Стоит и не приближается — следующий отрезок с поворотом, по очереди (патч 0045): обход скалы или стены, как жук. */
++	private static final int[] WALK_TURNS =
++	{
++		0,
++		40,
++		-40,
++		80,
++		-80,
++		120,
++		-120
++	};
+ 	/** До этого уровня охотник качается в родной зоне расы, с него — уходит в мир: стартовые зоны не берёт, пока есть другие (патч 0039). */
+ 	private static final int HOME_LEVEL = 15;
+ 	/** Охотники на спотах ближе этого друг к другу — в одном месте: {@code HuntersPerSpot} считается на место, а не на спот (патч 0039). */
+@@ -251,6 +263,9 @@ public class PhantomHunterManager
+ 		long walkBackUntil;
+ 		/** Сколько раз подряд не дошёл до спота ногами (застрял в геодате). */
+ 		int walkFails;
++		/** Обход в дороге (патч 0045): номер поворота из {@link #WALK_TURNS} и расстояние до спота на прошлом тике. */
++		int walkTurn;
++		double walkLastDistance;
+ 		/** Последняя проверка дороги и расстояние до спота тогда (патч 0044). */
+ 		long walkProgressAt;
+ 		double walkProgressDistance;
+@@ -1093,6 +1108,8 @@ public class PhantomHunterManager
+ 		if (!town && (distance <= WALK_TRAVEL))
+ 		{
+ 			hunter.walkBackUntil = System.currentTimeMillis() + walkTime(distance);
++			hunter.walkTurn = 0;
++			hunter.walkLastDistance = distance;
+ 			player.setRunning();
+ 			runTo(player, spot.entry);
+ 			LOGGER.info(PhantomHunterManager.class.getSimpleName() + ": " + player.getName() + " walks to " + spot.name + " (мобы " + spot.min + "-" + spot.max + ", " + distance + ").");
+@@ -1644,6 +1661,8 @@ public class PhantomHunterManager
+ 
+ 		LOGGER.info(PhantomHunterManager.class.getSimpleName() + ": " + player.getName() + " walks to " + spot.name + " (мобы " + spot.min + "-" + spot.max + ", " + distance + ").");
+ 		hunter.walkBackUntil = now + walkTime(distance);
++		hunter.walkTurn = 0;
++		hunter.walkLastDistance = distance;
+ 		player.setRunning();
+ 		runTo(player, spot.entry);
+ 	}
+@@ -1653,17 +1672,26 @@ public class PhantomHunterManager
+ 	 * в её сторону. Дошёл до промежуточной и встал — следующий тик даёт следующую (патч 0040).
+ 	 */
+ 	static void runTo(Player player, Location target)
++	{
++		runTo(player, target, 0);
++	}
++
++	/**
++	 * @param turn поворот отрезка от направления на цель, в градусах: обход препятствия (патч 0045)
++	 */
++	private static void runTo(Player player, Location target, int turn)
+ 	{
+ 		final double distance = player.calculateDistance2D(target);
+-		if (distance <= MOVE_STEP)
++		if ((distance <= MOVE_STEP) && (turn == 0))
+ 		{
+ 			player.getAI().setIntentionMoveTo(target);
+ 			return;
+ 		}
+ 
+-		final double k = MOVE_STEP / distance;
+-		final int x = player.getX() + (int) ((target.getX() - player.getX()) * k);
+-		final int y = player.getY() + (int) ((target.getY() - player.getY()) * k);
++		final double angle = Math.atan2(target.getY() - player.getY(), target.getX() - player.getX()) + Math.toRadians(turn);
++		final double step = Math.min(MOVE_STEP, distance);
++		final int x = player.getX() + (int) (Math.cos(angle) * step);
++		final int y = player.getY() + (int) (Math.sin(angle) * step);
+ 		player.getAI().setIntentionMoveTo(new Location(x, y, GeoEngine.getInstance().getHeight(x, y, player.getZ())));
+ 	}
+ 
+@@ -3011,12 +3039,12 @@ public class PhantomHunterManager
+ 			final HuntSpot other = hunter.walkFails++ == 0 ? nearestSpot(player, spot) : null;
+ 			if (other != null)
+ 			{
+-				LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " got stuck walking to " + spot.name + " (" + (int) distance + "), tries " + other.name + ".");
++				LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " got stuck walking to " + spot.name + " (" + (int) distance + (player.isInCombat() ? ", в бою" : "") + "), tries " + other.name + ".");
+ 				walkTo(hunter, player, other);
+ 				return;
+ 			}
+ 			hunter.walkFails = 0;
+-			LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " got stuck walking back to " + spot.name + " (" + (int) distance + "), teleports.");
++			LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " got stuck walking back to " + spot.name + " (" + (int) distance + (player.isInCombat() ? ", в бою" : "") + "), teleports.");
+ 			stop(player);
+ 			player.teleToLocation(spot.entry, true);
+ 			return;
+@@ -3041,7 +3069,20 @@ public class PhantomHunterManager
+ 			if ((target == null) || !(target instanceof Monster) || ((Monster) target).isAlikeDead() || (player.calculateDistance2D(target) > 300))
+ 			{
+ 				player.setTarget(null);
+-				runTo(player, spot.entry);
++				// Стоит и не приблизился с прошлого тика — следующий поворот обхода; приближается — прямо (патч 0045).
++				if (hunter.walkBackUntil != 0)
++				{
++					if (distance < (hunter.walkLastDistance - 50))
++					{
++						hunter.walkTurn = 0;
++					}
++					else if (!player.isMoving())
++					{
++						hunter.walkTurn++;
++					}
++					hunter.walkLastDistance = distance;
++				}
++				runTo(player, spot.entry, hunter.walkBackUntil != 0 ? WALK_TURNS[hunter.walkTurn % WALK_TURNS.length] : 0);
+ 			}
+ 			return;
+ 		}

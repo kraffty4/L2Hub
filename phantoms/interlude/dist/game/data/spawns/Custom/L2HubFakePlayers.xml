@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list enabled="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../xsd/spawns.xsd">
+	<!-- L2Hub: фейковые игроки. Сгенерировано tools/fake_players.py. -->
+	<spawn name="L2HubFakePlayers">
+		<npc id="80129" x="83563" y="148094" z="-3400" heading="43736" respawnDelay="60" /> <!-- Baryga: Гиран -->
+		<npc id="80130" x="83275" y="148196" z="-3408" heading="18843" respawnDelay="60" /> <!-- Skupshik: Гиран -->
+		<npc id="80131" x="146407" y="25688" z="-2008" heading="30511" respawnDelay="60" /> <!-- AfkMan: Аден -->
+	</spawn>
+</list>

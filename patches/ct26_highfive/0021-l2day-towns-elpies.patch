@@ -1,0 +1,372 @@
+diff --git a/dist/game/config/Custom/L2HubEvents.ini b/dist/game/config/Custom/L2HubEvents.ini
+index 2fff926ff38475682164fd637271bd8971b0566b..3e9ff868ae06ab9597ad53b0bd44d0f9a4beee4f 100644
+--- a/dist/game/config/Custom/L2HubEvents.ini
++++ b/dist/game/config/Custom/L2HubEvents.ini
+@@ -66,3 +66,23 @@ PvpMinLevel = 1
+ TvT = 0 */3 * * *
+ Deathmatch = 0 1-23/3 * * *
+ CtF = 0 2-23/3 * * *
++
++# ---------------------------------------------------------------------------
++# Elpies (custom/events/Elpies): нашествие кроликов-эльпи в городе
++# ---------------------------------------------------------------------------
++# 100 кроликов, скиллами по ним не бьют; с каждого падают расходники (зелья, благословлённые свитки телепорта и
++# воскрешения, Giant's Codex) и кристаллы. Город — ближайший к живому игроку из Aden, Dion, Gludin, Hunters Village,
++# Oren (у Mobius — случайный). Расписание Mobius в config.xml скрипта закомментировано — здесь своё; GM запускает и так.
++# Default: True
++Elpies = True
++
++# Крон «минуты часы день месяц день_недели», как schedule у Mobius; пусто — только командой GM.
++ElpiesSchedule = 30 */4 * * *
++
++# Длительность нашествия, мин (у Mobius — 2: одиночке не успеть даже добежать).
++# Default: 10
++ElpiesMinutes = 10
++
++# Старт по расписанию только при живом игроке в мире (с клиентом; фантомы и офлайн-торговцы не считаются).
++# Default: True
++ElpiesOnlyWithPlayers = True
+diff --git a/dist/game/data/scripts/custom/events/Elpies/Elpies.java b/dist/game/data/scripts/custom/events/Elpies/Elpies.java
+index b07f3ab4f249f1bb08946f525eebf3bb4e14509a..229a2322b49d1a0b9a785f1c130e0fae250a8595 100644
+--- a/dist/game/data/scripts/custom/events/Elpies/Elpies.java
++++ b/dist/game/data/scripts/custom/events/Elpies/Elpies.java
+@@ -21,6 +21,14 @@
+ package custom.events.Elpies;
+ 
+ import java.io.File;
++import java.io.Reader;
++import java.nio.charset.StandardCharsets;
++import java.nio.file.Files;
++import java.nio.file.Path;
++import java.nio.file.Paths;
++import java.util.ArrayList;
++import java.util.List;
++import java.util.Properties;
+ import java.util.Set;
+ import java.util.concurrent.ConcurrentHashMap;
+ import java.util.concurrent.ScheduledFuture;
+@@ -51,6 +59,9 @@ public class Elpies extends Event
+ 	
+ 	// Event duration in minutes
+ 	private static final int EVENT_DURATION_MINUTES = 2;
++	
++	// L2Hub: расписание, длительность и «только при живом игроке» — ключи Elpies* в config/Custom/L2HubEvents.ini.
++	private static final Path L2HUB_CONFIG = Paths.get("./config/Custom/L2HubEvents.ini");
+ 	// @formatter:off
+ 	private static final int[][] DROPLIST_CONSUMABLES =
+ 	{
+@@ -87,6 +98,7 @@ public class Elpies extends Event
+ 		addKillId(ELPY);
+ 		
+ 		loadConfig();
++		l2hubSchedule();
+ 	}
+ 	
+ 	private void loadConfig()
+@@ -158,30 +170,44 @@ public class Elpies extends Event
+ 			return false;
+ 		}
+ 		
++		// L2Hub: по расписанию — только при живом игроке (ElpiesOnlyWithPlayers); город — ближайший к живому игроку.
++		final Properties l2hub = l2hubConfig();
++		final Player near = eventMaker != null ? eventMaker : livePlayer();
++		if ((near == null) && !"false".equalsIgnoreCase(l2hub.getProperty("ElpiesOnlyWithPlayers", "True").trim()))
++		{
++			LOGGER.info(getName() + ": пропущен — в мире нет живого игрока.");
++			return false;
++		}
++		
+ 		// Check Custom Table - we use custom NPCs.
+ 		if (!GeneralConfig.CUSTOM_NPC_DATA)
+ 		{
+ 			LOGGER.info(getName() + ": Event can't be started because custom NPC table is disabled!");
+-			eventMaker.sendMessage("Event " + getName() + " can't be started because custom NPC table is disabled!");
++			if (eventMaker != null) // L2Hub: по расписанию eventMaker == null
++			{
++				eventMaker.sendMessage("Event " + getName() + " can't be started because custom NPC table is disabled!");
++			}
+ 			return false;
+ 		}
+ 		
+ 		EVENT_ACTIVE = true;
+ 		
+-		final EventLocation randomLoc = getRandomEntry(EventLocation.values());
+-		final long despawnDelay = EVENT_DURATION_MINUTES * 60000;
++		final EventLocation randomLoc = near != null ? nearest(near) : getRandomEntry(EventLocation.values());
++		final int minutes = l2hubMinutes(l2hub);
++		final long despawnDelay = minutes * 60000L;
+ 		for (int i = 0; i < ELPY_AMOUNT; i++)
+ 		{
+ 			_elpies.add(addSpawn(ELPY, randomLoc.getRandomX(), randomLoc.getRandomY(), randomLoc.getZ(), 0, true, despawnDelay));
+ 		}
+ 		
+-		World.broadcastToAllOnlinePlayers("*Squeak Squeak*");
+-		World.broadcastToAllOnlinePlayers("Elpy invasion in " + randomLoc.getName());
+-		World.broadcastToAllOnlinePlayers("Help us exterminate them!");
+-		World.broadcastToAllOnlinePlayers("You have " + EVENT_DURATION_MINUTES + " minutes!");
++		World.broadcastToAllOnlinePlayers("*Пи-пи-пи!*");
++		World.broadcastToAllOnlinePlayers("Нашествие эльпи: " + randomLoc.getName() + "!");
++		World.broadcastToAllOnlinePlayers("Помогите их истребить — с них падают зелья, свитки и кристаллы!");
++		World.broadcastToAllOnlinePlayers("У вас " + minutes + " мин.");
++		LOGGER.info(getName() + ": нашествие в " + randomLoc.getName() + " на " + minutes + " мин.");
+ 		_eventTask = ThreadPool.schedule(() ->
+ 		{
+-			World.broadcastToAllOnlinePlayers("Time is up!");
++			World.broadcastToAllOnlinePlayers("Время вышло!");
+ 			eventStop();
+ 		}, despawnDelay);
+ 		return true;
+@@ -209,8 +235,8 @@ public class Elpies extends Event
+ 		
+ 		_elpies.clear();
+ 		
+-		World.broadcastToAllOnlinePlayers("*Squeak Squeak*");
+-		World.broadcastToAllOnlinePlayers("Elpy Event finished!");
++		World.broadcastToAllOnlinePlayers("*Пи-пи-пи!*");
++		World.broadcastToAllOnlinePlayers("Нашествие эльпи окончено!");
+ 		return true;
+ 	}
+ 	
+@@ -225,7 +251,7 @@ public class Elpies extends Event
+ 			dropItem(npc, killer, DROPLIST_CRYSTALS);
+ 			if (_elpies.isEmpty())
+ 			{
+-				World.broadcastToAllOnlinePlayers("All elpies have been killed!");
++				World.broadcastToAllOnlinePlayers("Все эльпи перебиты!");
+ 				eventStop();
+ 			}
+ 		}
+@@ -297,6 +323,96 @@ public class Elpies extends Event
+ 		}
+ 	}
+ 	
++	/**
++	 * L2Hub: свой крон из L2HubEvents.ini (Elpies = True, ElpiesSchedule) — тем же таймером «Schedule…», что расписание config.xml.
++	 */
++	private void l2hubSchedule()
++	{
++		final Properties config = l2hubConfig();
++		final String pattern = config.getProperty("ElpiesSchedule", "").trim();
++		if (!"true".equalsIgnoreCase(config.getProperty("Elpies", "False").trim()) || pattern.isEmpty())
++		{
++			return;
++		}
++		
++		try
++		{
++			final SchedulingPattern schedulingPattern = new SchedulingPattern(pattern);
++			final StatSet params = new StatSet();
++			params.set("Name", getName());
++			params.set("SchedulingPattern", pattern);
++			final long delay = schedulingPattern.getDelayToNextFromNow();
++			getTimers().addTimer("ScheduleL2Hub", params, delay + 5000, null, null);
++			LOGGER.info("Event " + getName() + " scheduled at " + TimeUtil.getDateTimeString(System.currentTimeMillis() + delay));
++		}
++		catch (Exception e)
++		{
++			LOGGER.warning(getName() + ": ElpiesSchedule = " + pattern + " — не крон: " + e.getMessage());
++		}
++	}
++	
++	private static Properties l2hubConfig()
++	{
++		final Properties properties = new Properties();
++		if (Files.isRegularFile(L2HUB_CONFIG))
++		{
++			try (Reader reader = Files.newBufferedReader(L2HUB_CONFIG, StandardCharsets.UTF_8))
++			{
++				properties.load(reader);
++			}
++			catch (Exception e)
++			{
++				LOGGER.warning("Elpies: " + L2HUB_CONFIG + ": " + e.getMessage());
++			}
++		}
++		return properties;
++	}
++	
++	private static int l2hubMinutes(Properties config)
++	{
++		try
++		{
++			return Math.max(1, Integer.parseInt(config.getProperty("ElpiesMinutes", "10").trim()));
++		}
++		catch (NumberFormatException e)
++		{
++			return EVENT_DURATION_MINUTES;
++		}
++	}
++	
++	/**
++	 * @return случайный живой игрок (с клиентом, не офлайн-торговец; фантомы не в счёт) или null
++	 */
++	private static Player livePlayer()
++	{
++		final List<Player> players = new ArrayList<>();
++		for (Player player : World.getPlayers())
++		{
++			if ((player.getClient() != null) && !player.getClient().isDetached() && !player.isInOfflineMode())
++			{
++				players.add(player);
++			}
++		}
++		return players.isEmpty() ? null : players.get(getRandom(players.size()));
++	}
++	
++	private static EventLocation nearest(Player player)
++	{
++		EventLocation best = null;
++		long bestDistance = Long.MAX_VALUE;
++		for (EventLocation loc : EventLocation.values())
++		{
++			final long dx = ((loc._minX + loc._maxX) / 2) - player.getX();
++			final long dy = ((loc._minY + loc._maxY) / 2) - player.getY();
++			if (((dx * dx) + (dy * dy)) < bestDistance)
++			{
++				bestDistance = (dx * dx) + (dy * dy);
++				best = loc;
++			}
++		}
++		return best;
++	}
++	
+ 	public static void main(String[] args)
+ 	{
+ 		new Elpies();
+diff --git a/dist/game/data/scripts/events/L2Day/L2Day.java b/dist/game/data/scripts/events/L2Day/L2Day.java
+index 9ef1a7f50d9761d5073b965950f81aeb838fc14b..eda7d9ba5483234227780e20e1e0b8eabb7edf48 100644
+--- a/dist/game/data/scripts/events/L2Day/L2Day.java
++++ b/dist/game/data/scripts/events/L2Day/L2Day.java
+@@ -23,9 +23,11 @@ package events.L2Day;
+ import java.util.HashMap;
+ import java.util.Map;
+ 
++import org.l2jmobius.gameserver.data.xml.MapRegionData;
+ import org.l2jmobius.gameserver.entity.actor.Npc;
+ import org.l2jmobius.gameserver.entity.actor.Player;
+ import org.l2jmobius.gameserver.entity.item.holders.ItemChanceHolder;
++import org.l2jmobius.gameserver.geoengine.GeoEngine;
+ import org.l2jmobius.gameserver.mechanics.script.LongTimeEvent;
+ 
+ /**
+@@ -45,6 +47,23 @@ public class L2Day extends LongTimeEvent
+ 		MANAGERS.put(31858, 7120); // Orc Village
+ 	}
+ 	
++	// L2Hub: менеджеры и в больших городах (spawnlist в config.xml, NPC 31854) — свиток телепорта в город, где стоит менеджер.
++	private static final Map<String, Integer> TOWN_SCROLLS = new HashMap<>();
++	static
++	{
++		TOWN_SCROLLS.put("Gludin Castle Town", 7122); // Gludin Village
++		TOWN_SCROLLS.put("Gludio Castle Town", 7123); // Town of Gludio
++		TOWN_SCROLLS.put("Dion Castle Town", 7124); // Town of Dion
++		TOWN_SCROLLS.put("Giran Castle Town", 7126); // Giran Castle Town
++		TOWN_SCROLLS.put("Heine Town", 7128); // Heine
++		TOWN_SCROLLS.put("Oren Castle Town", 7129); // Town of Oren
++		TOWN_SCROLLS.put("Hunters Village", 7131); // Hunters Village
++		TOWN_SCROLLS.put("Aden Castle Town", 7132); // Aden Castle Town
++		TOWN_SCROLLS.put("Goddard Town", 7133); // Town of Goddard
++		TOWN_SCROLLS.put("Rune Town", 7134); // Rune Township
++		TOWN_SCROLLS.put("Town of Schuttgart", 7135); // Town of Schuttgart
++	}
++	
+ 	// Items
+ 	private static final int A = 3875;
+ 	private static final int C = 3876;
+@@ -152,6 +171,7 @@ public class L2Day extends LongTimeEvent
+ 		addStartNpc(MANAGERS.keySet());
+ 		addFirstTalkId(MANAGERS.keySet());
+ 		addTalkId(MANAGERS.keySet());
++		addSpawnId(MANAGERS.keySet());
+ 	}
+ 	
+ 	@Override
+@@ -168,7 +188,7 @@ public class L2Day extends LongTimeEvent
+ 					final int random = getRandom(100);
+ 					if (random >= 95)
+ 					{
+-						giveItems(player, MANAGERS.get(npc.getId()), 2);
++						giveItems(player, scroll(npc), 2);
+ 					}
+ 					else
+ 					{
+@@ -198,7 +218,7 @@ public class L2Day extends LongTimeEvent
+ 					final int random = getRandom(100);
+ 					if (random >= 95)
+ 					{
+-						giveItems(player, MANAGERS.get(npc.getId()), 1);
++						giveItems(player, scroll(npc), 1);
+ 					}
+ 					else
+ 					{
+@@ -228,7 +248,7 @@ public class L2Day extends LongTimeEvent
+ 					final int random = getRandom(100);
+ 					if (random >= 95)
+ 					{
+-						giveItems(player, MANAGERS.get(npc.getId()), 1);
++						giveItems(player, scroll(npc), 1);
+ 					}
+ 					else
+ 					{
+@@ -261,6 +281,33 @@ public class L2Day extends LongTimeEvent
+ 		return "manager-1.htm";
+ 	}
+ 	
++	@Override
++	public void onSpawn(Npc npc)
++	{
++		// L2Hub: проверка точки менеджера — высота по геодате; у менеджера в большом городе — какой свиток он даёт.
++		final int geoZ = GeoEngine.getInstance().getHeight(npc.getX(), npc.getY(), npc.getZ());
++		if (Math.abs(geoZ - npc.getZ()) > 64)
++		{
++			LOGGER.warning(getName() + ": manager at " + npc.getX() + ", " + npc.getY() + ", " + npc.getZ() + " — geodata height " + geoZ + ", check spawnlist in config.xml.");
++		}
++		final String town = MapRegionData.getInstance().getClosestTownName(npc);
++		if (TOWN_SCROLLS.containsKey(town))
++		{
++			LOGGER.info(getName() + ": manager in " + town + " gives scroll " + TOWN_SCROLLS.get(town) + ".");
++		}
++	}
++	
++	/**
++	 * L2Hub: свиток телепорта — в большой город, где стоит менеджер, иначе в стартовую деревню его NPC.
++	 * @param npc менеджер события
++	 * @return id свитка
++	 */
++	private static int scroll(Npc npc)
++	{
++		final Integer town = TOWN_SCROLLS.get(MapRegionData.getInstance().getClosestTownName(npc));
++		return town != null ? town : MANAGERS.get(npc.getId());
++	}
++	
+ 	public static void main(String[] args)
+ 	{
+ 		new L2Day();
+diff --git a/dist/game/data/scripts/events/L2Day/config.xml b/dist/game/data/scripts/events/L2Day/config.xml
+index 581ce960281060576c9ed51d7fdd970364dc7d66..4fc4c62298d4acbae44f500fd2dbdef4ee68636a 100644
+--- a/dist/game/data/scripts/events/L2Day/config.xml
++++ b/dist/game/data/scripts/events/L2Day/config.xml
+@@ -22,9 +22,21 @@
+ 		<add npc="31856" x="11861" y="16173" z="-4568" heading="18289" />
+ 		<add npc="31857" x="115639" y="-178066" z="-921" heading="27485" />
+ 		<add npc="31858" x="-44810" y="-113388" z="-192" heading="15527" />
++		<!-- L2Hub: менеджеры в больших городах — рядом с баффером и GM-шопом; свиток даётся в свой город (L2Day.java, TOWN_SCROLLS) -->
++		<add npc="31854" x="-80525" y="149828" z="-3040" heading="20480" /> <!-- L2Hub: Gludin Village -->
++		<add npc="31854" x="-12965" y="122856" z="-3112" heading="49152" /> <!-- L2Hub: Town of Gludio -->
++		<add npc="31854" x="15829" y="142990" z="-2696" heading="16000" /> <!-- L2Hub: Town of Dion -->
++		<add npc="31854" x="83591" y="147927" z="-3400" heading="16384" /> <!-- L2Hub: Town of Giran -->
++		<add npc="31854" x="111233" y="219457" z="-3544" heading="49756" /> <!-- L2Hub: Town of Heine -->
++		<add npc="31854" x="117143" y="77149" z="-2680" heading="34000" /> <!-- L2Hub: Hunters Village -->
++		<add npc="31854" x="82951" y="53363" z="-1488" heading="31000" /> <!-- L2Hub: Town of Oren -->
++		<add npc="31854" x="146851" y="25613" z="-2008" heading="0" /> <!-- L2Hub: Town of Aden -->
++		<add npc="31854" x="147810" y="-55255" z="-2728" heading="48000" /> <!-- L2Hub: Town of Goddard -->
++		<add npc="31854" x="43647" y="-47688" z="-792" heading="50000" /> <!-- L2Hub: Town of Rune -->
++		<add npc="31854" x="87187" y="-143516" z="-1288" heading="15584" /> <!-- L2Hub: Town of Schuttgart -->
+ 	</spawnlist>
+ 	<messages>
+ 		<add type="onEnd" text="L2 Day: Event end!" />
+-		<add type="onEnter" text="L2 Day Event: Collect letters from monsters. Create the words NCSOFT, CHRONICLE and LINEAGE II. Turn these letters to the Event Manager in the villages and win great prizes!" />
++		<add type="onEnter" text="L2 Day Event: Collect letters from monsters. Create the words NCSOFT, CHRONICLE and LINEAGE II. Turn these letters to the Event Manager in the starting villages or in the big towns next to the buffer and win great prizes!" />
+ 	</messages>
+ </event>
+\ No newline at end of file

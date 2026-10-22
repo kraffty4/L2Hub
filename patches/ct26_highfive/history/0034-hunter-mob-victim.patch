@@ -1,0 +1,103 @@
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java
+index 8b04a00..1b377ac 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java
+@@ -942,7 +942,7 @@ public class PhantomCompanionManager
+ 		if (((companion.mode == Mode.ASSIST) || hunt) && !owner.isDead())
+ 		{
+ 			final WorldObject target = owner.getTarget();
+-			if ((target instanceof Monster) && isEnemy(phantom, (Monster) target) && (owner.calculateDistance2D(target) <= PhantomPartyConfig.PHANTOM_ASSIST_RANGE) && (owner.isInCombat() || (((Monster) target).getTarget() == owner)))
++			if ((target instanceof Monster) && isEnemy(phantom, (Monster) target) && (owner.calculateDistance2D(target) <= PhantomPartyConfig.PHANTOM_ASSIST_RANGE) && (owner.isInCombat() || (PhantomHunterOutfit.victimOf((Monster) target) == owner)))
+ 			{
+ 				return (Monster) target;
+ 			}
+@@ -1001,7 +1001,7 @@ public class PhantomCompanionManager
+ 	 */
+ 	private static boolean takenByOthers(Monster monster, Player phantom)
+ 	{
+-		final WorldObject target = monster.getTarget();
++		final WorldObject target = PhantomHunterOutfit.victimOf(monster);
+ 		return (target instanceof Player) && (target != phantom) && (!phantom.isInParty() || !phantom.getParty().containsPlayer((Player) target));
+ 	}
+ 
+@@ -1011,7 +1011,7 @@ public class PhantomCompanionManager
+ 	}
+ 
+ 	/**
+-	 * Моб бьёт нас: самого фантома — всегда, владельца и пати — кроме режима «стой».
++	 * Моб бьёт нас: самого фантома — всегда, владельца и пати — кроме режима «стой». Кого бьёт — из ИИ моба ({@link PhantomHunterOutfit#victimOf}, патч 0034).
+ 	 */
+ 	private static boolean attacksUs(Monster monster, Companion companion, Player phantom, Player owner)
+ 	{
+@@ -1020,7 +1020,7 @@ public class PhantomCompanionManager
+ 			return false;
+ 		}
+ 
+-		final WorldObject target = monster.getTarget();
++		final WorldObject target = PhantomHunterOutfit.victimOf(monster);
+ 		if (target == phantom)
+ 		{
+ 			return true;
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterOutfit.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterOutfit.java
+index 9df9aae..d794010 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterOutfit.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterOutfit.java
+@@ -10,6 +10,8 @@ import org.l2jmobius.gameserver.ai.Intention;
+ import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
+ import org.l2jmobius.gameserver.data.xml.ItemData;
+ import org.l2jmobius.gameserver.entity.World;
++import org.l2jmobius.gameserver.entity.WorldObject;
++import org.l2jmobius.gameserver.entity.actor.Creature;
+ import org.l2jmobius.gameserver.entity.actor.Player;
+ import org.l2jmobius.gameserver.entity.actor.enums.player.PlayerClass;
+ import org.l2jmobius.gameserver.entity.actor.holders.player.AutoPlaySettingsHolder;
+@@ -1101,7 +1103,7 @@ final class PhantomHunterOutfit
+ 		double nearestDistance = Double.MAX_VALUE;
+ 		for (Monster monster : World.getVisibleObjectsInRange(player, Monster.class, MELEE_RANGE))
+ 		{
+-			if (monster.isAlikeDead() || (monster.getTarget() != player) || (!monster.isInCombat() && (monster.getAI().getIntention() != Intention.ATTACK)))
++			if (monster.isAlikeDead() || (victimOf(monster) != player) || (!monster.isInCombat() && (monster.getAI().getIntention() != Intention.ATTACK)))
+ 			{
+ 				continue;
+ 			}
+@@ -1116,6 +1118,18 @@ final class PhantomHunterOutfit
+ 		return nearest;
+ 	}
+ 
++	/**
++	 * Кого бьёт моб (патч 0034). В драке {@code AttackableAI} пишет цель только в ИИ ({@code getAI().getAttackTarget()}), а {@code getTarget()} моба
++	 * остаётся пустым или старым: проверки «моб бьёт меня» по {@code getTarget()} почти всегда отвечали «нет» — охотник не отбивался от агро.
++	 * @param monster моб
++	 * @return кого он атакует; не атакует — его {@code getTarget()}
++	 */
++	static WorldObject victimOf(Monster monster)
++	{
++		final Creature attackTarget = monster.getAI().getAttackTarget();
++		return (attackTarget != null) && (monster.getAI().getIntention() == Intention.ATTACK) ? attackTarget : monster.getTarget();
++	}
++
+ 	/**
+ 	 * @param player охотник
+ 	 * @return маны не хватает ни на один атакующий скилл из AutoUse
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomOrders.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomOrders.java
+index f0ff4a4..f0d9b6e 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomOrders.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomOrders.java
+@@ -53,7 +53,7 @@ public class PhantomOrders
+ 	private static final Map<Order, Set<String>> WHOLE = new EnumMap<>(Order.class);
+ 	static
+ 	{
+-		ANYWHERE.put(Order.FOLLOW, phrases("за мной", "иди за мной", "ко мне", "иди сюда", "давай сюда", "следуй*", "держись рядом", "follow*", "come here", "za mnoy", "za mnoi", "za mnoj", "ko mne", "idi syuda", "idi suda"));
++		ANYWHERE.put(Order.FOLLOW, phrases("за мной", "замной", "иди за мной", "ко мне", "иди сюда", "давай сюда", "следуй*", "держись рядом", "follow*", "come here", "za mnoy", "za mnoi", "za mnoj", "ko mne", "idi syuda", "idi suda"));
+ 		ANYWHERE.put(Order.STAY, phrases("стой", "стойте", "стоять", "стоп", "жди", "ждите", "подожди", "подождите", "останься", "оставайся", "stay", "stop", "wait", "hold", "stoi", "stoy", "stoj", "zhdi", "jdi", "podozhdi"));
+ 		ANYWHERE.put(Order.ASSIST, phrases("бей", "бейте", "атакуй", "атакуйте", "мочи", "асист*", "ассист*", "attack", "assist", "fight", "kill", "bei", "bey", "atakuy", "asist*"));
+ 		ANYWHERE.put(Order.BUFF, phrases("баф*", "ребаф*", "перебаф*", "buf*", "baf*", "rebaf*", "rebuf*", "perebaf*"));
+@@ -63,7 +63,7 @@ public class PhantomOrders
+ 		ANYWHERE.put(Order.STAND, phrases("встань", "вставай", "встать", "подъем", "поднимайся", "stand", "stand up", "vstan", "vstavai", "vstavay"));
+ 		ANYWHERE.put(Order.LEAVE, phrases("отпускаю", "свободен", "свободна", "свободны", "иди домой", "можешь идти", "можешь уходить", "уходи", "dismiss", "otpuskayu", "svoboden", "svobodna"));
+ 		ANYWHERE.put(Order.HUNT, phrases("кач тут", "кач здесь", "качаемся тут", "качаемся здесь", "качайся тут", "качайтесь тут", "фарм тут", "фарм здесь", "фармим тут", "фармим здесь", "фарми тут",
+-			"бей всех", "бейте всех", "мочи всех", "мочите всех", "убивай всех", "зачищай*", "зачисти*", "чисти тут", "качай меня", "покачай меня", "покачай", "кач меня",
++			"бей всех", "бейте всех", "мочи всех", "мочите всех", "убивай всех", "зачищай*", "зачисти*", "чисти тут", "качай меня", "покачай меня", "покачай", "кач меня", "качай", "качайте", "сижу качай",
+ 			"kach tut", "kach zdes", "farm tut", "farm here", "farm zdes", "hunt here", "kill all", "kill everything", "bei vseh", "mochi vseh", "kachai menya", "pokachai"));
+ 		ANYWHERE.put(Order.LEAD, phrases("веди", "веди меня", "веди на кач", "паровоз*", "я за тобой", "иду за тобой", "пойду за тобой", "показывай дорогу",
+ 			"vedi", "vedi menya", "parovoz*", "lead", "lead me", "lead the way"));

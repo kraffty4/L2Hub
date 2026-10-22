@@ -1,0 +1,41 @@
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+index 7514815..35793a4 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+@@ -94,6 +94,9 @@ public class PhantomHunterManager
+ 	private static final int WALK_RANGE = 6000;
+ 	/** Шёл к споту ногами столько и не дошёл (застрял в геодате) — телепорт; на дальнюю дорогу — больше, по расстоянию ({@link #walkTime}). */
+ 	private static final long WALK_BACK_TIMEOUT = 90000;
++	/** В дороге раз в столько проверяется, приблизился ли охотник; приблизился хотя бы на {@link #WALK_PROGRESS_MIN} — время в пути продлевается (патч 0044). */
++	private static final long WALK_PROGRESS_CHECK = 30000;
++	private static final int WALK_PROGRESS_MIN = 300;
+ 	/** Скорость для расчёта времени в пути ногами: бег новичка — около 115–130, с запасом. */
+ 	private static final int WALK_SPEED = 90;
+ 	/** Отпустили из пати — спот рядом годится, даже если мобы до стольких уровней выше своего: игрок привёл туда, бафы ещё висят. */
+@@ -248,6 +251,9 @@ public class PhantomHunterManager
+ 		long walkBackUntil;
+ 		/** Сколько раз подряд не дошёл до спота ногами (застрял в геодате). */
+ 		int walkFails;
++		/** Последняя проверка дороги и расстояние до спота тогда (патч 0044). */
++		long walkProgressAt;
++		double walkProgressDistance;
+ 		/** Из города на далёкий спот: бежит к гейткиперу, у него — телепорт на этот спот. {@code null} — не бежит. */
+ 		HuntSpot gatekeeperSpot;
+ 		Location gatekeeperAt;
+@@ -2979,6 +2985,16 @@ public class PhantomHunterManager
+ 	{
+ 		final HuntSpot spot = hunter.spot;
+ 		final double distance = player.calculateDistance2D(spot.entry);
++		// Идёт и приближается — не застрял, даже если обход по геодате и драки по дороге дольше расчёта по прямой (патч 0044).
++		if ((hunter.walkBackUntil != 0) && ((now - hunter.walkProgressAt) >= WALK_PROGRESS_CHECK))
++		{
++			if (distance < (hunter.walkProgressDistance - WALK_PROGRESS_MIN))
++			{
++				hunter.walkBackUntil = Math.max(hunter.walkBackUntil, now + WALK_PROGRESS_CHECK);
++			}
++			hunter.walkProgressAt = now;
++			hunter.walkProgressDistance = distance;
++		}
+ 		if (distance <= (spot.radius * 1.3))
+ 		{
+ 			if (hunter.walkBackUntil != 0)

@@ -1,0 +1,37 @@
+diff --git a/dist/game/config/Olympiad.ini b/dist/game/config/Olympiad.ini
+index e8d4408f7b74d92efe6e3cee53d0e186cd863a8d..eb07beda4fd6a008d29c729c4bf480bf78d69c69 100644
+--- a/dist/game/config/Olympiad.ini
++++ b/dist/game/config/Olympiad.ini
+@@ -49,11 +49,13 @@ OlympiadWeeklyPoints = 10
+ 
+ # Required number of participants for the class based games
+ # Default: 20
+-OlympiadClassedParticipants = 20
++# L2Hub (малый мир): было 20 — матч по классу, как только записались двое.
++OlympiadClassedParticipants = 2
+ 
+ # Required number of participants for the non-class based games
+ # Default: 10
+-OlympiadNonClassedParticipants = 20
++# L2Hub (малый мир): было 20 — матч без класса, как только записались двое.
++OlympiadNonClassedParticipants = 2
+ 
+ # Reward for the winner
+ # Format: itemId1,itemNum1;itemId2,itemNum2... (45584,12)
+@@ -142,12 +144,14 @@ OlympiadMaxWeeklyMatches = 30
+ 
+ # Enable competitions only on specific days. Usage: 1,2,3,4,5,6,7 (SUNDAY,MONDAY,TUESDAY,WEDNESDAY,THURSDAY,FRIDAY,SATURDAY)
+ # Default: 6,7 (FRIDAY,SATURDAY)
+-OlympiadCompetitionDays = 6,7
++# L2Hub (малый мир): было 6,7 — матчи каждый день, а не только в пятницу и субботу.
++OlympiadCompetitionDays = 1,2,3,4,5,6,7
+ 
+ # Change the type of delay between two Olympiads.
+ # Available values: MONTH, WEEK, DAY
+ # Default: MONTH
+-OlympiadPeriod = MONTH
++# L2Hub (малый мир): было MONTH — герои каждую неделю, очки раз в полнедели.
++OlympiadPeriod = WEEK
+ 
+ # Change the Olympiad frequency.
+ # The value is a multiplier of period type,

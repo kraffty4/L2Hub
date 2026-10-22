@@ -1,0 +1,130 @@
+diff --git a/dist/game/config/Custom/L2HubTown.ini b/dist/game/config/Custom/L2HubTown.ini
+new file mode 100644
+index 0000000..3c141f6
+--- /dev/null
++++ b/dist/game/config/Custom/L2HubTown.ini
+@@ -0,0 +1,13 @@
++# ---------------------------------------------------------------------------
++# L2Hub: баффер и GM-шоп у гейткиперов городов
++# ---------------------------------------------------------------------------
++# NPC стоят рядом с гейткиперами 13 городов (data/spawns/Custom/L2HubTownNpcs.xml, расставляет tools/town_npcs.py).
++# False — NPC не появляются. Новое значение действует со следующего запуска гейм-сервера.
++
++# Баффер (50008): бафы на максимальном уровне и на 3 часа.
++# Default: True
++TownBuffer = True
++
++# GM-шоп (50010): расходники и снаряжение за адену.
++# Default: True
++TownGmShop = True
+diff --git a/dist/game/data/scripts/custom/L2HubTown/L2HubTown.java b/dist/game/data/scripts/custom/L2HubTown/L2HubTown.java
+new file mode 100644
+index 0000000..97fe1de
+--- /dev/null
++++ b/dist/game/data/scripts/custom/L2HubTown/L2HubTown.java
+@@ -0,0 +1,63 @@
++/*
++ * This file is part of the L2J Mobius project.
++ *
++ * This program is free software: you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation, either version 3 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
++ * General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program. If not, see <http://www.gnu.org/licenses/>.
++ */
++package custom.L2HubTown;
++
++import org.l2jmobius.commons.util.ConfigReader;
++import org.l2jmobius.gameserver.entity.spawns.SpawnGroup;
++import org.l2jmobius.gameserver.entity.spawns.SpawnTemplate;
++import org.l2jmobius.gameserver.mechanics.script.Script;
++
++/**
++ * L2Hub: выключатели баффера и GM-шопа у гейткиперов городов.<br>
++ * NPC лежат в группах TownBuffer и TownGmShop спавна L2HubTownNpcs (data/spawns/Custom/L2HubTownNpcs.xml), которые сам Mobius не спавнит.
++ * Здесь спавнятся группы, включённые в config/Custom/L2HubTown.ini (имя группы — ключ). Новое значение действует со следующего запуска гейм-сервера.
++ */
++public class L2HubTown extends Script
++{
++	private static final String CONFIG_FILE = "./config/Custom/L2HubTown.ini";
++	
++	private L2HubTown()
++	{
++	}
++	
++	@Override
++	public void onSpawnActivate(SpawnTemplate template)
++	{
++		final ConfigReader config = new ConfigReader(CONFIG_FILE);
++		for (SpawnGroup group : template.getGroups())
++		{
++			if (group.getName() == null)
++			{
++				continue;
++			}
++			
++			if (!config.getBoolean(group.getName(), true))
++			{
++				LOGGER.info(getName() + ": " + group.getName() + " is turned off in L2HubTown.ini.");
++				continue;
++			}
++			
++			group.spawnAll();
++			LOGGER.info(getName() + ": " + group.getName() + " spawned " + group.getSpawns().stream().mapToInt(spawn -> spawn.getSpawnedNpcs().size()).sum() + " NPC.");
++		}
++	}
++	
++	public static void main(String[] args)
++	{
++		new L2HubTown();
++	}
++}
+diff --git a/dist/game/data/spawns/Custom/L2HubTownNpcs.xml b/dist/game/data/spawns/Custom/L2HubTownNpcs.xml
+new file mode 100644
+index 0000000..50641b5
+--- /dev/null
++++ b/dist/game/data/spawns/Custom/L2HubTownNpcs.xml
+@@ -0,0 +1,36 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../xsd/spawns.xsd">
++	<!-- L2Hub: баффер и GM-шоп у гейткиперов городов. Сгенерировано tools/town_npcs.py. -->
++	<spawn name="L2HubTownNpcs" ai="L2HubTown">
++		<group name="TownBuffer" spawnByDefault="false">
++			<npc id="50008" x="-84051" y="244547" z="-3552" heading="40960" respawnTime="60sec" /> <!-- Scheme Buffer: Talking Island Village -->
++			<npc id="50008" x="46961" y="51439" z="-2976" heading="43000" respawnTime="60sec" /> <!-- Scheme Buffer: Elven Village -->
++			<npc id="50008" x="9731" y="15591" z="-4576" heading="5826" respawnTime="60sec" /> <!-- Scheme Buffer: Dark Elven Village -->
++			<npc id="50008" x="-45264" y="-112432" z="-240" heading="0" respawnTime="60sec" /> <!-- Scheme Buffer: Orc Village -->
++			<npc id="50008" x="115072" y="-178096" z="-912" heading="0" respawnTime="60sec" /> <!-- Scheme Buffer: Dwarven Village -->
++			<npc id="50008" x="-80844" y="149738" z="-3040" heading="20480" respawnTime="60sec" /> <!-- Scheme Buffer: Gludin Village -->
++			<npc id="50008" x="-14460" y="124131" z="-3128" heading="0" respawnTime="60sec" /> <!-- Scheme Buffer: Town of Gludio -->
++			<npc id="50008" x="15551" y="142888" z="-2704" heading="16000" respawnTime="60sec" /> <!-- Scheme Buffer: Town of Dion -->
++			<npc id="50008" x="83309" y="147954" z="-3400" heading="16384" respawnTime="60sec" /> <!-- Scheme Buffer: Town of Giran -->
++			<npc id="50008" x="117120" y="76996" z="-2696" heading="34000" respawnTime="60sec" /> <!-- Scheme Buffer: Hunters Village -->
++			<npc id="50008" x="83005" y="53250" z="-1496" heading="31000" respawnTime="60sec" /> <!-- Scheme Buffer: Town of Oren -->
++			<npc id="50008" x="146737" y="25727" z="-2008" heading="0" respawnTime="60sec" /> <!-- Scheme Buffer: Town of Aden -->
++			<npc id="50008" x="148028" y="-55306" z="-2736" heading="48000" respawnTime="60sec" /> <!-- Scheme Buffer: Town of Goddard -->
++		</group>
++		<group name="TownGmShop" spawnByDefault="false">
++			<npc id="50010" x="-84165" y="244661" z="-3536" heading="40960" respawnTime="60sec" /> <!-- GM Shop: Talking Island Village -->
++			<npc id="50010" x="46846" y="51516" z="-2976" heading="43000" respawnTime="60sec" /> <!-- GM Shop: Elven Village -->
++			<npc id="50010" x="9737" y="15431" z="-4576" heading="5826" respawnTime="60sec" /> <!-- GM Shop: Dark Elven Village -->
++			<npc id="50010" x="-45264" y="-112592" z="-240" heading="0" respawnTime="60sec" /> <!-- GM Shop: Orc Village -->
++			<npc id="50010" x="115072" y="-178256" z="-912" heading="0" respawnTime="60sec" /> <!-- GM Shop: Dwarven Village -->
++			<npc id="50010" x="-80660" y="149814" z="-3040" heading="20480" respawnTime="60sec" /> <!-- GM Shop: Gludin Village -->
++			<npc id="50010" x="-14481" y="123973" z="-3128" heading="0" respawnTime="60sec" /> <!-- GM Shop: Town of Gludio -->
++			<npc id="50010" x="15731" y="142881" z="-2704" heading="16000" respawnTime="60sec" /> <!-- GM Shop: Town of Dion -->
++			<npc id="50010" x="83336" y="148008" z="-3400" heading="16384" respawnTime="60sec" /> <!-- GM Shop: Town of Giran -->
++			<npc id="50010" x="117055" y="76949" z="-2696" heading="34000" respawnTime="60sec" /> <!-- GM Shop: Hunters Village -->
++			<npc id="50010" x="82934" y="53253" z="-1496" heading="31000" respawnTime="60sec" /> <!-- GM Shop: Town of Oren -->
++			<npc id="50010" x="146808" y="25736" z="-2008" heading="0" respawnTime="60sec" /> <!-- GM Shop: Town of Aden -->
++			<npc id="50010" x="147874" y="-55268" z="-2736" heading="48000" respawnTime="60sec" /> <!-- GM Shop: Town of Goddard -->
++		</group>
++	</spawn>
++</list>

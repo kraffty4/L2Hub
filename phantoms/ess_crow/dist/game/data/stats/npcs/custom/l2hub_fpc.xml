@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../xsd/npcs.xsd">
+	<!-- L2Hub: фейковые игроки. Сгенерировано tools/fake_players.py, правки — в таблице PERSONAS. -->
+	<!-- Baryga: Bounty Hunter 61, Гиран -->
+	<npc id="80129" level="61" type="Folk" name="Baryga">
+		<race>DWARF</race>
+		<sex>MALE</sex>
+		<stats str="88" int="39" dex="55" wit="39" con="82" men="38">
+			<vitals hp="5267" hpRegen="9.0" mp="1055" mpRegen="3.0" />
+			<attack physical="262" magical="128" random="30" critical="8" accuracy="10" attackSpeed="430" type="BLUNT" range="40" distance="80" width="120" />
+			<defence physical="209" magical="153" />
+			<speed>
+				<walk ground="80" />
+				<run ground="138" />
+			</speed>
+		</stats>
+		<status talkable="false" undying="true" attackable="false" />
+		<fakePlayer classId="55" hair="0" hairColor="2" face="1" equipRHand="5599" equipHead="90467" equipChest="2382" equipGloves="5768" equipFeet="5780" weaponEnchantLevel="7" armorEnchantLevel="6" sitting="true" privateStoreType="1" privateStoreMessage="WTS cheap B grade" />
+		<collision>
+			<radius normal="9" />
+			<height normal="18" />
+		</collision>
+		<parameters>
+			<param name="aliases" value="барыга;барыж" />
+		</parameters>
+	</npc>
+	<!-- Skupshik: Treasure Hunter 58, Гиран -->
+	<npc id="80130" level="58" type="Folk" name="Skupshik">
+		<race>HUMAN</race>
+		<sex>MALE</sex>
+		<stats str="88" int="39" dex="55" wit="39" con="82" men="38">
+			<vitals hp="5267" hpRegen="9.0" mp="1055" mpRegen="3.0" />
+			<attack physical="262" magical="128" random="30" critical="30" accuracy="10" attackSpeed="600" type="DAGGER" range="40" distance="80" width="120" />
+			<defence physical="209" magical="153" />
+			<speed>
+				<walk ground="80" />
+				<run ground="150" />
+			</speed>
+		</stats>
+		<status talkable="false" undying="true" attackable="false" />
+		<fakePlayer classId="8" hair="0" hairColor="2" face="1" equipRHand="4782" equipHead="90465" equipChest="2392" equipGloves="5723" equipFeet="5739" weaponEnchantLevel="2" armorEnchantLevel="2" sitting="true" privateStoreType="3" privateStoreMessage="WTB mats and recipes" />
+		<collision>
+			<radius normal="9" />
+			<height normal="23" />
+		</collision>
+		<parameters>
+			<param name="aliases" value="скупщик;скуп" />
+		</parameters>
+	</npc>
+	<!-- AfkMan: Tyrant 66, Аден -->
+	<npc id="80131" level="66" type="Folk" name="AfkMan">
+		<race>ORC</race>
+		<sex>MALE</sex>
+		<stats str="88" int="39" dex="55" wit="39" con="82" men="38">
+			<vitals hp="5267" hpRegen="9.0" mp="1055" mpRegen="3.0" />
+			<attack physical="262" magical="128" random="30" critical="8" accuracy="10" attackSpeed="430" type="BLUNT" range="40" distance="80" width="120" />
+			<defence physical="209" magical="153" />
+			<speed>
+				<walk ground="80" />
+				<run ground="138" />
+			</speed>
+		</stats>
+		<status talkable="false" undying="true" attackable="false" />
+		<fakePlayer classId="48" hair="0" hairColor="1" face="1" equipRHand="8795" equipHead="90467" equipChest="2382" equipGloves="5768" equipFeet="5780" weaponEnchantLevel="0" armorEnchantLevel="0" sitting="true" />
+		<collision>
+			<radius normal="11" />
+			<height normal="28" />
+		</collision>
+		<parameters>
+			<param name="aliases" value="афкмен;афк" />
+		</parameters>
+	</npc>
+</list>

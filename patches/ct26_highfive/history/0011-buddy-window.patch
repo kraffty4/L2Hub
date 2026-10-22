@@ -1,0 +1,305 @@
+diff --git a/dist/game/data/scripts/handlers/chat/commands/voiced/Buddy.java b/dist/game/data/scripts/handlers/chat/commands/voiced/Buddy.java
+index b520600..3f76efd 100644
+--- a/dist/game/data/scripts/handlers/chat/commands/voiced/Buddy.java
++++ b/dist/game/data/scripts/handlers/chat/commands/voiced/Buddy.java
+@@ -1,12 +1,16 @@
+ package handlers.chat.commands.voiced;
+ 
++import java.util.EnumMap;
++import java.util.Map;
++
+ import org.l2jmobius.gameserver.config.custom.PhantomsConfig;
+ import org.l2jmobius.gameserver.entity.actor.Player;
+ import org.l2jmobius.gameserver.handler.IVoicedCommandHandler;
++import org.l2jmobius.gameserver.managers.phantom.PhantomChat;
+ import org.l2jmobius.gameserver.managers.phantom.PhantomCompanionManager;
+-import org.l2jmobius.gameserver.managers.phantom.PhantomCompanionManager.Mode;
+ import org.l2jmobius.gameserver.managers.phantom.PhantomData;
+ import org.l2jmobius.gameserver.managers.phantom.PhantomManager;
++import org.l2jmobius.gameserver.managers.phantom.PhantomOrders.Order;
+ import org.l2jmobius.gameserver.managers.phantom.PhantomTemplate;
+ import org.l2jmobius.gameserver.network.serverpackets.NpcHtmlMessage;
+ 
+@@ -14,9 +18,10 @@ import org.l2jmobius.gameserver.network.serverpackets.NpcHtmlMessage;
+  * L2Hub: напарники-фантомы.
+  * <ul>
+  * <li>.buddy — окно: кто есть, где он, кнопки</li>
+- * <li>.buddy summon &lt;имя|роль&gt; — позвать к себе, подтянуть до своего уровня; затем пригласить в пати</li>
++ * <li>.buddy summon &lt;имя|роль&gt; — позвать к себе, подтянуть до своего уровня и сразу взять в пати</li>
++ * <li>.buddy invite &lt;имя|роль&gt; — взять в пати позванного (если сразу не вышло: ты не лидер, пати полная)</li>
+  * <li>.buddy dismiss &lt;имя|роль&gt; — отпустить (уходит из мира)</li>
+- * <li>.buddy assist|follow|stay &lt;имя|роль&gt; — режим: бьёт твою цель / только защищается / стоит на месте</li>
++ * <li>.buddy assist|follow|stay|sit|stand|buff|heal|res &lt;имя|роль&gt; — приказ, как словами в чате пати: напарник выполнит и ответит</li>
+  * </ul>
+  */
+ public class Buddy implements IVoicedCommandHandler
+@@ -28,6 +33,21 @@ public class Buddy implements IVoicedCommandHandler
+ 
+ 	private static final String BUTTON = "<button value=\"%s\" action=\"bypass voice .buddy %s %s\" width=85 height=21 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\">";
+ 
++	/** Кнопки приказов: команда .buddy → приказ и как он звучал бы словами (для мозгов). */
++	private static final Map<String, Order> ORDERS = Map.of("assist", Order.ASSIST, "follow", Order.FOLLOW, "stay", Order.STAY, "sit", Order.SIT, "stand", Order.STAND, "buff", Order.BUFF, "heal", Order.HEAL, "res", Order.RES);
++	private static final Map<Order, String> SAID = new EnumMap<>(Order.class);
++	static
++	{
++		SAID.put(Order.ASSIST, "бей мою цель");
++		SAID.put(Order.FOLLOW, "за мной");
++		SAID.put(Order.STAY, "стой тут");
++		SAID.put(Order.SIT, "сядь отдохни");
++		SAID.put(Order.STAND, "встань");
++		SAID.put(Order.BUFF, "бафни");
++		SAID.put(Order.HEAL, "хильни");
++		SAID.put(Order.RES, "рес");
++	}
++
+ 	@Override
+ 	public boolean onCommand(String command, Player player, String params)
+ 	{
+@@ -48,37 +68,41 @@ public class Buddy implements IVoicedCommandHandler
+ 			else
+ 			{
+ 				final PhantomCompanionManager companions = PhantomCompanionManager.getInstance();
++				final String action = args[0].toLowerCase();
+ 				final String error;
+-				switch (args[0].toLowerCase())
++				switch (action)
+ 				{
+ 					case "summon":
+ 					{
+ 						error = companions.summon(player, template);
+ 						break;
+ 					}
+-					case "dismiss":
+-					{
+-						error = companions.dismiss(player, template);
+-						break;
+-					}
+-					case "assist":
++					case "invite":
+ 					{
+-						error = companions.setMode(player, template, Mode.ASSIST);
++						error = companions.invite(player, template);
+ 						break;
+ 					}
+-					case "follow":
+-					{
+-						error = companions.setMode(player, template, Mode.FOLLOW);
+-						break;
+-					}
+-					case "stay":
++					case "dismiss":
+ 					{
+-						error = companions.setMode(player, template, Mode.STAY);
++						error = companions.dismiss(player, template);
+ 						break;
+ 					}
+ 					default:
+ 					{
+-						error = "Не понял: " + args[0] + ". Можно summon, dismiss, assist, follow, stay.";
++						final Order order = ORDERS.get(action);
++						if (order == null)
++						{
++							error = "Не понял: " + args[0] + ". Можно summon, invite, dismiss, assist, follow, stay, sit, stand, buff, heal, res.";
++						}
++						else if (!companions.isPartiedWith(player, template))
++						{
++							error = template.getName() + " не в пати с тобой — нажми «Позвать» или «В пати».";
++						}
++						else
++						{
++							PhantomChat.getInstance().command(player, template, order, SAID.get(order));
++							error = null;
++						}
+ 						break;
+ 					}
+ 				}
+@@ -117,33 +141,86 @@ public class Buddy implements IVoicedCommandHandler
+ 
+ 	private static void showWindow(Player player)
+ 	{
+-		final StringBuilder sb = new StringBuilder(4096);
++		final PhantomCompanionManager companions = PhantomCompanionManager.getInstance();
++		final StringBuilder sb = new StringBuilder(6144);
+ 		sb.append("<html><title>Напарники</title><body><center>");
+ 		for (PhantomTemplate template : PhantomData.getInstance().getTemplates())
+ 		{
+ 			final String name = template.getName();
+ 			final Player phantom = PhantomManager.getInstance().getPhantom(template);
++			final boolean partied = companions.isPartiedWith(player, template);
++			final boolean mine = (phantom != null) && companions.isOwner(player, template);
+ 			sb.append("<table width=280><tr><td width=280><font color=\"LEVEL\">").append(name).append("</font> — ").append(roleName(template.getRole()));
+ 			if (phantom != null)
+ 			{
+ 				sb.append(", ").append(phantom.getLevel()).append(" ").append(className(phantom));
+ 			}
+-			sb.append("</td></tr><tr><td width=280><font color=\"B09878\">").append(PhantomCompanionManager.getInstance().describe(player, template)).append("</font></td></tr></table>");
+-			sb.append("<table width=280><tr><td>").append(String.format(BUTTON, "Позвать", "summon", name)).append("</td><td>").append(String.format(BUTTON, "Отпустить", "dismiss", name)).append("</td><td></td></tr>");
+-			if (PhantomCompanionManager.getInstance().isPartiedWith(player, template))
++			sb.append("</td></tr><tr><td width=280><font color=\"B09878\">").append(companions.describe(player, template)).append("</font></td></tr></table>");
++
++			sb.append("<table width=280><tr>");
++			cell(sb, "Позвать", "summon", name);
++			cell(sb, "Отпустить", "dismiss", name);
++			if (mine && !partied)
++			{
++				cell(sb, "В пати", "invite", name);
++			}
++			else
++			{
++				sb.append("<td></td>");
++			}
++			sb.append("</tr>");
++
++			if (partied)
+ 			{
+-				// Хилер и баффер не дерутся: им «Бей мою цель» не нужна.
+-				final boolean support = (template.getRole() == PhantomTemplate.Role.HEALER) || (template.getRole() == PhantomTemplate.Role.BUFFER);
+-				sb.append("<tr><td>").append(support ? "" : String.format(BUTTON, "Бей мою цель", "assist", name)).append("</td><td>").append(String.format(BUTTON, "За мной", "assist", name)).append("</td><td>").append(String.format(BUTTON, "Стой", "stay", name)).append("</td></tr>");
++				// Хилер и баффер не дерутся: вместо «Бей мою цель» — их работа по кнопке.
++				sb.append("<tr>");
++				switch (template.getRole())
++				{
++					case HEALER:
++					{
++						cell(sb, "За мной", "follow", name);
++						cell(sb, "Стой", "stay", name);
++						cell(sb, "Хильни", "heal", name);
++						sb.append("</tr><tr>");
++						cell(sb, "Рес", "res", name);
++						cell(sb, "Сядь", "sit", name);
++						cell(sb, "Встань", "stand", name);
++						break;
++					}
++					case BUFFER:
++					{
++						cell(sb, "За мной", "follow", name);
++						cell(sb, "Стой", "stay", name);
++						cell(sb, "Бафни", "buff", name);
++						sb.append("</tr><tr>");
++						cell(sb, "Рес", "res", name);
++						cell(sb, "Сядь", "sit", name);
++						cell(sb, "Встань", "stand", name);
++						break;
++					}
++					default:
++					{
++						cell(sb, "Бей мою цель", "assist", name);
++						cell(sb, "За мной", "follow", name);
++						cell(sb, "Стой", "stay", name);
++						break;
++					}
++				}
++				sb.append("</tr>");
+ 			}
+ 			sb.append("</table><br>");
+ 		}
+-		sb.append("<font color=\"808080\">Позвал — пригласи в пати: /invite имя. Напарник идёт следом, отставший телепортируется к тебе. Хилер лечит и поднимает, баффер держит бафы, оба садятся на MP. Опыт и лут — тебе.</font><br1>");
+-		sb.append("<font color=\"808080\">С ними можно говорить в чате пати и шёпотом. Приказы: «за мной», «стой», «бафни», «хил», «рес», «сядь», «встань», «пока»; по имени — только одному: «Митяй, бафни».</font>");
++		sb.append("<font color=\"808080\">«Позвать» — напарник прибежит, подтянется до твоего уровня и сразу вступит в пати. Идёт следом, отставший телепортируется к тебе. Хилер лечит и поднимает, баффер держит бафы, оба садятся на MP. Опыт и лут — тебе.</font><br1>");
++		sb.append("<font color=\"808080\">Кнопки — то же, что словами в чате пати или шёпотом: «за мной», «стой», «бафни», «хил», «рес», «сядь», «встань», «пока». По имени — только одному: «Митяй, бафни». Просто поговорить с ними тоже можно.</font>");
+ 		sb.append("</center></body></html>");
+ 		player.sendPacket(new NpcHtmlMessage(sb.toString()));
+ 	}
+ 
++	private static void cell(StringBuilder sb, String label, String action, String name)
++	{
++		sb.append("<td>").append(String.format(BUTTON, label, action, name)).append("</td>");
++	}
++
+ 	private static String roleName(PhantomTemplate.Role role)
+ 	{
+ 		switch (role)
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java
+index e90f6c4..4ff2389 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java
+@@ -219,6 +219,25 @@ public class PhantomChat
+ 		talk(speaker, phantoms.get(replier), replier, "party", text, List.of(), null, PhantomCompanionManager.getInstance().isOwner(speaker, replier));
+ 	}
+ 
++	/**
++	 * Приказ кнопкой из окна .buddy: выполняется и озвучивается в чате пати так же, как сказанный словами.
++	 * @param owner владелец
++	 * @param template напарник
++	 * @param order приказ
++	 * @param said как он звучал бы словами — для мозгов («бафни»)
++	 */
++	public void command(Player owner, PhantomTemplate template, Order order, String said)
++	{
++		final Player phantom = PhantomManager.getInstance().getPhantom(template);
++		if (phantom == null)
++		{
++			return;
++		}
++
++		final List<Order> orders = List.of(order);
++		talk(owner, phantom, template, "party", said, orders, execute(owner, template, orders), true);
++	}
++
+ 	/**
+ 	 * Реплика напарника на событие: с кулдауном и бюджетом в минуту; без мозгов — заготовка.
+ 	 * @param phantom напарник
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java
+index aa80227..09c0c2d 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java
+@@ -30,7 +30,7 @@ import org.l2jmobius.gameserver.network.serverpackets.SystemMessage;
+ 
+ /**
+  * L2Hub: напарники — фантомы в пати с живым игроком (этап 2: пати, follow, assist, защита, догоняющий телепорт).<br>
+- * Владелец зовёт напарника через .buddy и приглашает в пати; приглашение принимает сервер ({@code RequestJoinParty}). В пати напарник держится сзади-сбоку от владельца, бьёт цель владельца, когда тот в бою, защищает себя и пати,
++ * Владелец зовёт напарника через .buddy — тот сразу вступает в пати (или по /invite: приглашение принимает сервер, {@code RequestJoinParty}). В пати напарник держится сзади-сбоку от владельца, бьёт цель владельца, когда тот в бою, защищает себя и пати,
+  * а отставшего или застрявшего телепортирует к владельцу. Владелец вышел из игры — через {@link PhantomPartyConfig#PHANTOM_OWNER_LOGOUT_GRACE} секунд напарник уходит из мира.<br>
+  * Бой — родным AI игрока (намерения ATTACK и MOVE_TO), без AutoPlay: он для живых игроков выключен ({@code EnableAutoPlay = False}).
+  */
+@@ -148,6 +148,11 @@ public class PhantomCompanionManager
+ 		{
+ 			partySay(phantom, "тут, иду за тобой");
+ 		}
++		else if (!owner.isInParty() || (owner.getParty().isLeader(owner) && (owner.getParty().getMemberCount() < 9)))
++		{
++			// Одним кликом: позвал — сразу в пати.
++			onInvited(owner, phantom, null);
++		}
+ 		else
+ 		{
+ 			whisper(phantom, owner, "я тут, кидай пати: /invite " + phantom.getName());
+@@ -202,6 +207,29 @@ public class PhantomCompanionManager
+ 		return null;
+ 	}
+ 
++	/**
++	 * Взять в пати позванного напарника (кнопка «В пати» в .buddy) — то же, что /invite.
++	 * @param owner владелец
++	 * @param template напарник
++	 * @return текст ошибки для игрока или {@code null}
++	 */
++	public String invite(Player owner, PhantomTemplate template)
++	{
++		final Player phantom = PhantomManager.getInstance().getPhantom(template);
++		if ((phantom == null) || !isOwner(owner, template))
++		{
++			return template.getName() + " не с тобой — сначала позови его.";
++		}
++
++		if (isPartiedWith(owner, phantom))
++		{
++			return template.getName() + " уже в пати с тобой.";
++		}
++
++		onInvited(owner, phantom, null);
++		return null;
++	}
++
+ 	/**
+ 	 * @param owner владелец
+ 	 * @param template напарник
+@@ -351,7 +379,7 @@ public class PhantomCompanionManager
+ 			{
+ 				return "в пати с тобой: " + (PhantomSupport.isSupport(template) ? supportLabel(template.getRole(), companion.mode) : modeLabel(companion.mode));
+ 			}
+-			return "рядом, ждёт пати: /invite " + template.getName();
++			return "рядом, ждёт пати: «В пати» или /invite " + template.getName();
+ 		}
+ 		return "в мире, свободен";
+ 	}

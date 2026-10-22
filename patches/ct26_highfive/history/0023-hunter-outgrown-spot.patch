@@ -1,0 +1,14 @@
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+index e8e5e8c..92e7606 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+@@ -903,7 +903,8 @@ public class PhantomHunterManager
+ 			final List<HuntSpot> fitting = new ArrayList<>();
+ 			for (HuntSpot spot : HuntSpotData.getInstance().getSpots())
+ 			{
+-				if ((spot != avoid) && ((region == null) || spot.region.equals(region)) && (spot.level >= (level - 3 - tolerance)) && (spot.level <= (level + tolerance)))
++				// Перерос — не брать: иначе каждый тик телепорт на тот же спот (у тёмных эльфов дома споты только до 11-го).
++				if ((spot != avoid) && !outgrown(spot, level) && ((region == null) || spot.region.equals(region)) && (spot.level >= (level - 3 - tolerance)) && (spot.level <= (level + tolerance)))
+ 				{
+ 					fitting.add(spot);
+ 				}

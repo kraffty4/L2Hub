@@ -1,0 +1,14 @@
+Use your built-in image generation tool to create exactly ONE image. Do not run any shell commands and do not write any files; just generate the image and reply with one short sentence describing it.
+
+The image is the cover of one era ("chronicle") of a classic fantasy MMORPG, shown as a wide hero banner in a desktop game launcher. It must feel like that era's login screen: a calm, wide establishing shot of a place, the scenery you look at while typing your password. Landscape and architecture tell the story; there are no characters in the foreground (at most a few tiny distant silhouettes). Slow, atmospheric, inviting, a little mysterious.
+
+Format: ultra-wide panoramic landscape, aspect ratio 12:5 (about 1942 x 809 px).
+
+Style (one series for all eras): painterly digital matte painting in the spirit of a lovingly rendered 3D game login scene, rich detail, soft volumetric light, depth haze, gentle bloom, high-end fantasy concept art quality.
+
+Composition rules: the focal landmark sits in the upper-middle of the frame (roughly 15-65 % of the height), centred or slightly off-centre; the bottom third is calmer and darkens towards the bottom edge, because the launcher overlays the era title on the lower left and a large play button on the lower right; the top-left and top-right corners are quiet. The silhouette of the landmark must still read when the banner is shrunk to a 58 x 38 px thumbnail.
+
+Strict rules: completely original designs; do not copy any existing game's official artwork, login screens, characters, creature designs, symbols or logos; no text, letters, numbers, runes that look like writing, logos, watermarks, signatures, buttons or UI anywhere in the image.
+
+Scene:
+A dramatic dusk landscape of wild highlands. On a rocky ridge in the centre stands a huge fortress gate built of rough stone and great tusks, hung with hide banners and war totems, campfires glowing at its foot. Above it, in the clouds, four colossal elemental spirits manifest as giant luminous shapes swirling around the sky: a flame spirit, a water spirit, a wind spirit and an earth spirit, each a different glowing colour. On the far right a dark spire wreathed in black-violet flame rises from a ruined castle. Palette: dusk purple, ember orange, teal and gold.

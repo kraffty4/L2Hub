@@ -1,0 +1,18 @@
+[project]
+name = "l2hub"
+version = "0"  # версия L2Hub — в l2hub/__init__.py (__version__); здесь не меняется
+description = "Личный лаунчер локальных серверов Lineage II"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "pywebview>=5.3",
+    "psutil>=6.0",
+    "pillow>=11",
+]
+
+[tool.uv]
+package = false
+
+[dependency-groups]
+dev = [
+    "pyinstaller>=6.22.3",
+]

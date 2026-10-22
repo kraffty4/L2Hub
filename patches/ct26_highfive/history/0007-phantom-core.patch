@@ -1,0 +1,1372 @@
+diff --git a/dist/game/config/AdminCommands.xml b/dist/game/config/AdminCommands.xml
+index f74d0df..9e0ac05 100644
+--- a/dist/game/config/AdminCommands.xml
++++ b/dist/game/config/AdminCommands.xml
+@@ -382,6 +382,9 @@
+ 	<!-- ADMIN FAKE PLAYERS -->
+ 	<admin command="fakechat" description="Send a fake chat message appearing to come from a fake player." accessLevel="100" />
+ 
++	<!-- ADMIN PHANTOMS (L2Hub) -->
++	<admin command="phantom" description="Phantoms (players without a client): list, spawn, despawn, reload." accessLevel="100" />
++
+ 	<!-- ADMIN ONLINE -->
+ 	<admin command="online" description="Display a list of all currently online players." accessLevel="100" />
+ 
+diff --git a/dist/game/config/Custom/Phantoms.ini b/dist/game/config/Custom/Phantoms.ini
+new file mode 100644
+index 0000000..ee68588
+--- /dev/null
++++ b/dist/game/config/Custom/Phantoms.ini
+@@ -0,0 +1,26 @@
++# ---------------------------------------------------------------------------
++# Фантомы (L2Hub)
++# ---------------------------------------------------------------------------
++# Фантом — настоящий персонаж игрока без клиента: свой класс, скиллы, шмот и уровень.
++# Напарники описаны в data/L2HubPhantoms.xml (пишет tools/fake_players.py), характеры для мозгов —
++# в data/L2HubFakePersonas.json. Управление GM: //phantom list | spawn | despawn | reload.
++
++# Включить фантомов.
++EnablePhantoms = True
++
++# Аккаунт, на котором живут персонажи фантомов (в списках лаунчера они не показываются).
++PhantomAccount = l2hub_phantom
++
++# Закрыть вход под аккаунтом фантомов: при старте сервера строка аккаунта в таблице accounts
++# получает accessLevel = -1 (бан), иначе при AutoCreateAccounts любой зашёл бы их персонажами.
++PhantomBanAccountLogin = True
++
++# Поднимать после рестарта фантомов, которые были в мире, на их местах.
++PhantomRestoreOnStartup = True
++
++# Уровень нового фантома, если его поднимают при старте сервера, а персонажа ещё нет
++# (//phantom spawn берёт уровень из команды или уровень GM).
++PhantomDefaultLevel = 40
++
++# Сколько зарядов BSS выдавать фантому при сборке и подкладывать при восстановлении.
++PhantomShotCount = 5000
+diff --git a/dist/game/data/L2HubPhantomPersonas.json b/dist/game/data/L2HubPhantomPersonas.json
+new file mode 100644
+index 0000000..985696f
+--- /dev/null
++++ b/dist/game/data/L2HubPhantomPersonas.json
+@@ -0,0 +1,31 @@
++{
++ "version": 1,
++ "personas": {
++  "Vesna": {
++   "race": "Человек",
++   "sex": "F",
++   "class": "Cardinal",
++   "role": "хилер",
++   "companion": true,
++   "place": "ходит в пати с напарником по всему миру",
++   "activity": "напарник в пати: лечит своих и ходит следом",
++   "traits": "раскрепощённая, уверенная и игривая хилка-напарница; сама начинает флирт, любит взаимные подколы и легко принимает ответный флирт; в опасности собранна и внимательна к пати",
++   "style": "коротко, живо и по-свойски; смело флиртует, шутит с двусмысленностью, мягко дразнит, иногда ругается к месту; реагирует на слова собеседника и ситуацию, без заученных фраз и флирта в каждой реплике",
++   "bio": "Заботится о своих, после спасения любит игриво подколоть. Ей нравятся смелые и остроумные собеседники; охотно поддерживает взаимный флирт, а если его не поддерживают — спокойно общается по-дружески.",
++   "aliases": "весна;веснушка"
++  },
++  "Mityai": {
++   "race": "Человек",
++   "sex": "M",
++   "class": "Hierophant",
++   "role": "баффер",
++   "companion": true,
++   "place": "ходит в пати с напарником по всему миру",
++   "activity": "напарник в пати: бафает своих и ходит следом",
++   "traits": "весёлый бафер-балагур, бафает всех подряд и знает тайминги бафов наизусть",
++   "style": "по-свойски: «братишка», «бафнул», «ща всё будет»",
++   "bio": "Хиерофант, на сервере всем свой; считает, что без хорошего бафа фармить — грех.",
++   "aliases": "митяй;митя;мить"
++  }
++ }
++}
+diff --git a/dist/game/data/L2HubPhantoms.xml b/dist/game/data/L2HubPhantoms.xml
+new file mode 100644
+index 0000000..48810f7
+--- /dev/null
++++ b/dist/game/data/L2HubPhantoms.xml
+@@ -0,0 +1,26 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="xsd/L2HubPhantoms.xsd">
++	<!-- L2Hub: напарники-фантомы. Сгенерировано tools/fake_players.py, правки — в таблице COMPANIONS. -->
++	<!-- Vesna: хилер, Human Mystic, Cleric, Bishop, Cardinal -->
++	<phantom name="Vesna" role="HEALER" female="true" face="0" hairStyle="3" hairColor="0" classes="10,15,16,97" x="83208" y="148132" z="-3408">
++		<gear grade="NONE" minLevel="1" rhand="7" shots="3947" /> <!-- Apprentice's Rod -->
++		<gear grade="D" minLevel="20" rhand="180" chest="436" legs="469" gloves="2447" shots="3948" /> <!-- Mace of Judgment, Tunic of Knowledge, Stockings of Knowledge, Gloves of Knowledge -->
++		<gear grade="C" minLevel="40" rhand="174" chest="441" legs="472" gloves="2459" shots="3949" /> <!-- Nirvana Axe, Demon's Tunic, Demon's Stockings, Demon's Gloves -->
++		<gear grade="B" minLevel="52" rhand="10899" head="503" chest="2397" legs="2402" gloves="5712" feet="5728" shots="3950" /> <!-- Spell Breaker - Hail - Acumen, Zubei's Helmet, Tunic of Zubei, Stockings of Zubei, Zubei's Gauntlets - Robe, Zubei's Boots - Robe -->
++		<gear grade="A" minLevel="61" rhand="7895" head="547" chest="2400" legs="2405" gloves="5770" feet="5782" shots="3951" /> <!-- Flaming Dragon Skull, Tallum Helm, Tallum Tunic, Tallum Stockings, Tallum Gloves - Robe, Tallum Boots - Robe -->
++		<gear grade="S" minLevel="76" rhand="11223" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- Arcana Mace - Nature - Acumen, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
++		<gear grade="S80" minLevel="80" rhand="10455" head="9438" chest="10238" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall - Mana Up, Dynasty Circlet, Dynasty Silver Satin Tunic - Summoner, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
++		<gear grade="S84" minLevel="84" rhand="15892" head="13139" chest="13434" legs="13444" gloves="13445" feet="13446" shots="3952" /> <!-- Sacredium - Mana Up, Vesper Circlet, Vesper Tunic, Vesper Stockings, Vesper Gloves, Vesper Shoes -->
++	</phantom>
++	<!-- Mityai: баффер, Human Mystic, Cleric, Prophet, Hierophant -->
++	<phantom name="Mityai" role="BUFFER" female="false" face="0" hairStyle="3" hairColor="0" classes="10,15,17,98" x="83374" y="148422" z="-3400">
++		<gear grade="NONE" minLevel="1" rhand="7816" shots="3947" /> <!-- Apprentice Adventurer's Staff -->
++		<gear grade="D" minLevel="20" rhand="7825" chest="436" legs="469" gloves="2447" shots="3948" /> <!-- Traveler's Staff, Tunic of Knowledge, Stockings of Knowledge, Gloves of Knowledge -->
++		<gear grade="C" minLevel="40" rhand="195" chest="441" legs="472" gloves="2459" shots="3949" /> <!-- Cursed Staff, Demon's Tunic, Demon's Stockings, Demon's Gloves -->
++		<gear grade="B" minLevel="52" rhand="209" head="2416" chest="2398" legs="2403" gloves="5720" feet="5736" shots="3950" /> <!-- Divine Staff, Blue Wolf Helmet, Blue Wolf Tunic, Blue Wolf Stockings, Blue Wolf Gloves - Robe, Blue Wolf Boots - Robe -->
++		<gear grade="A" minLevel="61" rhand="11106" head="2418" chest="2408" gloves="5773" feet="5785" shots="3951" /> <!-- Branch of the Mother Tree - Nature - Magic Damage, Helm of Nightmare, Robe of Nightmare, Gauntlets of Nightmare - Robe, Boots of Nightmare - Robe -->
++		<gear grade="S" minLevel="76" rhand="10529" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- Dynasty Staff - Acumen, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
++		<gear grade="S80" minLevel="80" rhand="11348" head="9438" chest="10238" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall - Hail - Acumen, Dynasty Circlet, Dynasty Silver Satin Tunic - Summoner, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
++		<gear grade="S84" minLevel="84" rhand="15854" head="13139" chest="13434" legs="13444" gloves="13445" feet="13446" shots="3952" /> <!-- Black Visage - Magic Hold, Vesper Circlet, Vesper Tunic, Vesper Stockings, Vesper Gloves, Vesper Shoes -->
++	</phantom>
++</list>
+diff --git a/dist/game/data/scripts/handlers/MasterHandler.java b/dist/game/data/scripts/handlers/MasterHandler.java
+index 8ebebb0..1f7c2ce 100644
+--- a/dist/game/data/scripts/handlers/MasterHandler.java
++++ b/dist/game/data/scripts/handlers/MasterHandler.java
+@@ -171,6 +171,7 @@ import handlers.chat.commands.admin.AdminPForge;
+ import handlers.chat.commands.admin.AdminPathNode;
+ import handlers.chat.commands.admin.AdminPcCafePoints;
+ import handlers.chat.commands.admin.AdminPetition;
++import handlers.chat.commands.admin.AdminPhantom;
+ import handlers.chat.commands.admin.AdminPledge;
+ import handlers.chat.commands.admin.AdminPremium;
+ import handlers.chat.commands.admin.AdminPunishment;
+@@ -398,6 +399,7 @@ public class MasterHandler
+ 			AdminPcCafePoints.class,
+ 			AdminPetition.class,
+ 			AdminPForge.class,
++			AdminPhantom.class,
+ 			AdminPledge.class,
+ 			AdminPremium.class,
+ 			AdminPunishment.class,
+diff --git a/dist/game/data/scripts/handlers/chat/commands/admin/AdminPhantom.java b/dist/game/data/scripts/handlers/chat/commands/admin/AdminPhantom.java
+new file mode 100644
+index 0000000..65d59fd
+--- /dev/null
++++ b/dist/game/data/scripts/handlers/chat/commands/admin/AdminPhantom.java
+@@ -0,0 +1,216 @@
++package handlers.chat.commands.admin;
++
++import java.util.ArrayList;
++import java.util.List;
++import java.util.StringTokenizer;
++
++import org.l2jmobius.gameserver.config.custom.PhantomsConfig;
++import org.l2jmobius.gameserver.entity.Location;
++import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.geoengine.GeoEngine;
++import org.l2jmobius.gameserver.handler.IAdminCommandHandler;
++import org.l2jmobius.gameserver.managers.phantom.PhantomData;
++import org.l2jmobius.gameserver.managers.phantom.PhantomManager;
++import org.l2jmobius.gameserver.managers.phantom.PhantomTemplate;
++import org.l2jmobius.gameserver.util.LocationUtil;
++
++/**
++ * L2Hub: фантомы — персонажи игроков без клиента.
++ * <ul>
++ * <li>//phantom list — напарники и кто из них в мире</li>
++ * <li>//phantom spawn &lt;имя|роль|all&gt; [уровень] — поставить рядом с GM; уровень по умолчанию — уровень GM</li>
++ * <li>//phantom despawn &lt;имя|роль|all&gt; — убрать из мира (персонаж остаётся в базе)</li>
++ * <li>//phantom reload — перечитать Phantoms.ini и L2HubPhantoms.xml</li>
++ * </ul>
++ * Ответы GM — по-английски: системные сообщения клиента с латиницей отображаются надёжно.
++ */
++public class AdminPhantom implements IAdminCommandHandler
++{
++	private static final String[] ADMIN_COMMANDS =
++	{
++		"admin_phantom"
++	};
++
++	private static final int SPAWN_DISTANCE = 90;
++
++	@Override
++	public boolean onCommand(String command, Player activeChar)
++	{
++		final StringTokenizer st = new StringTokenizer(command, " ");
++		st.nextToken();
++		final String action = st.hasMoreTokens() ? st.nextToken().toLowerCase() : "list";
++		if (!PhantomsConfig.PHANTOMS_ENABLED && !action.equals("reload"))
++		{
++			activeChar.sendSysMessage("Phantoms are disabled: EnablePhantoms in config/Custom/Phantoms.ini.");
++			return false;
++		}
++
++		switch (action)
++		{
++			case "list":
++			{
++				list(activeChar);
++				return true;
++			}
++			case "spawn":
++			{
++				return spawn(activeChar, st);
++			}
++			case "despawn":
++			{
++				return despawn(activeChar, st);
++			}
++			case "reload":
++			{
++				PhantomsConfig.load();
++				PhantomData.getInstance().load();
++				activeChar.sendSysMessage("Phantoms reloaded: " + PhantomData.getInstance().getTemplates().size() + " companions.");
++				return true;
++			}
++			default:
++			{
++				activeChar.sendSysMessage("Usage: //phantom list | spawn <name|role|all> [level] | despawn <name|role|all> | reload");
++				return false;
++			}
++		}
++	}
++
++	private void list(Player activeChar)
++	{
++		activeChar.sendSysMessage("Phantoms (" + PhantomData.getInstance().getTemplates().size() + "):");
++		for (PhantomTemplate template : PhantomData.getInstance().getTemplates())
++		{
++			final Player phantom = PhantomManager.getInstance().getPhantom(template);
++			if (phantom == null)
++			{
++				activeChar.sendSysMessage(template.getName() + " (" + template.getRole() + "): not in the world");
++			}
++			else
++			{
++				activeChar.sendSysMessage(template.getName() + " (" + template.getRole() + "): level " + phantom.getLevel() + " " + phantom.getPlayerClass().name() + ", " + phantom.getX() + " " + phantom.getY() + " " + phantom.getZ() + (phantom.isDead() ? ", dead" : ""));
++			}
++		}
++	}
++
++	private boolean spawn(Player activeChar, StringTokenizer st)
++	{
++		if (!st.hasMoreTokens())
++		{
++			activeChar.sendSysMessage("Usage: //phantom spawn <name|role|all> [level]");
++			return false;
++		}
++
++		final List<PhantomTemplate> targets = resolve(st.nextToken());
++		if (targets.isEmpty())
++		{
++			activeChar.sendSysMessage("No such phantom. See //phantom list.");
++			return false;
++		}
++
++		int level = activeChar.getLevel();
++		if (st.hasMoreTokens())
++		{
++			try
++			{
++				level = Integer.parseInt(st.nextToken());
++			}
++			catch (NumberFormatException e)
++			{
++				activeChar.sendSysMessage("Level must be a number.");
++				return false;
++			}
++		}
++
++		if (activeChar.getInstanceId() != 0)
++		{
++			activeChar.sendSysMessage("Phantoms cannot be spawned inside an instance.");
++			return false;
++		}
++
++		int index = 0;
++		for (PhantomTemplate template : targets)
++		{
++			final Player phantom = PhantomManager.getInstance().spawn(template, near(activeChar, index++), level);
++			if (phantom == null)
++			{
++				activeChar.sendSysMessage(template.getName() + ": spawn failed, see the game server log.");
++			}
++			else
++			{
++				activeChar.sendSysMessage(template.getName() + ": level " + phantom.getLevel() + " " + phantom.getPlayerClass().name() + ", " + phantom.getAllSkills().size() + " skills.");
++			}
++		}
++		return true;
++	}
++
++	private boolean despawn(Player activeChar, StringTokenizer st)
++	{
++		if (!st.hasMoreTokens())
++		{
++			activeChar.sendSysMessage("Usage: //phantom despawn <name|role|all>");
++			return false;
++		}
++
++		final List<PhantomTemplate> targets = resolve(st.nextToken());
++		if (targets.isEmpty())
++		{
++			activeChar.sendSysMessage("No such phantom. See //phantom list.");
++			return false;
++		}
++
++		for (PhantomTemplate template : targets)
++		{
++			activeChar.sendSysMessage(template.getName() + (PhantomManager.getInstance().despawn(template) ? ": despawned." : ": was not in the world."));
++		}
++		return true;
++	}
++
++	/**
++	 * Имя напарника, роль (HEALER, BUFFER, ...) или all.
++	 */
++	private static List<PhantomTemplate> resolve(String key)
++	{
++		final List<PhantomTemplate> result = new ArrayList<>();
++		final PhantomTemplate byName = PhantomData.getInstance().getTemplate(key);
++		if (byName != null)
++		{
++			result.add(byName);
++			return result;
++		}
++
++		for (PhantomTemplate template : PhantomData.getInstance().getTemplates())
++		{
++			if (key.equalsIgnoreCase("all") || template.getRole().name().equalsIgnoreCase(key))
++			{
++				result.add(template);
++			}
++		}
++		return result;
++	}
++
++	/**
++	 * Точка сбоку от GM, на земле по геодате и с проходом от GM; фантом смотрит на GM.
++	 */
++	private static Location near(Player activeChar, int index)
++	{
++		final double facing = (activeChar.getHeading() * 2 * Math.PI) / 65536;
++		for (int attempt = 0; attempt < 8; attempt++)
++		{
++			final double angle = facing + Math.toRadians(60 + (index * 50) + (attempt * 45));
++			final int x = activeChar.getX() + (int) (Math.cos(angle) * SPAWN_DISTANCE);
++			final int y = activeChar.getY() + (int) (Math.sin(angle) * SPAWN_DISTANCE);
++			final int z = GeoEngine.getInstance().getHeight(x, y, activeChar.getZ());
++			if (GeoEngine.getInstance().canMoveToTarget(activeChar.getX(), activeChar.getY(), activeChar.getZ(), x, y, z, activeChar.getInstanceId()))
++			{
++				return new Location(x, y, z, LocationUtil.calculateHeadingFrom(x, y, activeChar.getX(), activeChar.getY()));
++			}
++		}
++		return new Location(activeChar.getX(), activeChar.getY(), activeChar.getZ(), activeChar.getHeading());
++	}
++
++	@Override
++	public String[] getCommandList()
++	{
++		return ADMIN_COMMANDS;
++	}
++}
+diff --git a/dist/game/data/xsd/L2HubPhantoms.xsd b/dist/game/data/xsd/L2HubPhantoms.xsd
+new file mode 100644
+index 0000000..1b9f534
+--- /dev/null
++++ b/dist/game/data/xsd/L2HubPhantoms.xsd
+@@ -0,0 +1,49 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<!-- L2Hub: напарники-фантомы (data/L2HubPhantoms.xml, пишет tools/fake_players.py). -->
++<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
++	<xs:element name="list">
++		<xs:complexType>
++			<xs:sequence>
++				<xs:element name="phantom" maxOccurs="unbounded" minOccurs="0">
++					<xs:complexType>
++						<xs:sequence>
++							<xs:element name="gear" maxOccurs="unbounded" minOccurs="1">
++								<xs:complexType>
++									<xs:attribute name="grade" type="xs:token" use="required" />
++									<xs:attribute name="minLevel" type="xs:positiveInteger" use="required" />
++									<xs:attribute name="rhand" type="xs:nonNegativeInteger" />
++									<xs:attribute name="lhand" type="xs:nonNegativeInteger" />
++									<xs:attribute name="head" type="xs:nonNegativeInteger" />
++									<xs:attribute name="chest" type="xs:nonNegativeInteger" />
++									<xs:attribute name="legs" type="xs:nonNegativeInteger" />
++									<xs:attribute name="gloves" type="xs:nonNegativeInteger" />
++									<xs:attribute name="feet" type="xs:nonNegativeInteger" />
++									<xs:attribute name="shots" type="xs:nonNegativeInteger" />
++								</xs:complexType>
++							</xs:element>
++						</xs:sequence>
++						<xs:attribute name="name" type="xs:token" use="required" />
++						<xs:attribute name="role" use="required">
++							<xs:simpleType>
++								<xs:restriction base="xs:token">
++									<xs:enumeration value="HEALER" />
++									<xs:enumeration value="BUFFER" />
++									<xs:enumeration value="TANK" />
++									<xs:enumeration value="DAMAGE" />
++								</xs:restriction>
++							</xs:simpleType>
++						</xs:attribute>
++						<xs:attribute name="female" type="xs:boolean" use="required" />
++						<xs:attribute name="face" type="xs:nonNegativeInteger" use="required" />
++						<xs:attribute name="hairStyle" type="xs:nonNegativeInteger" use="required" />
++						<xs:attribute name="hairColor" type="xs:nonNegativeInteger" use="required" />
++						<xs:attribute name="classes" type="xs:string" use="required" />
++						<xs:attribute name="x" type="xs:integer" use="required" />
++						<xs:attribute name="y" type="xs:integer" use="required" />
++						<xs:attribute name="z" type="xs:integer" use="required" />
++					</xs:complexType>
++				</xs:element>
++			</xs:sequence>
++		</xs:complexType>
++	</xs:element>
++</xs:schema>
+diff --git a/java/org/l2jmobius/gameserver/GameServer.java b/java/org/l2jmobius/gameserver/GameServer.java
+index c8c9e2b..45b177f 100644
+--- a/java/org/l2jmobius/gameserver/GameServer.java
++++ b/java/org/l2jmobius/gameserver/GameServer.java
+@@ -142,6 +142,7 @@ import org.l2jmobius.gameserver.managers.MailManager;
+ import org.l2jmobius.gameserver.managers.MercTicketManager;
+ import org.l2jmobius.gameserver.managers.PcCafePointsManager;
+ import org.l2jmobius.gameserver.managers.PetitionManager;
++import org.l2jmobius.gameserver.managers.phantom.PhantomManager;
+ import org.l2jmobius.gameserver.managers.PrecautionaryRestartManager;
+ import org.l2jmobius.gameserver.managers.PremiumManager;
+ import org.l2jmobius.gameserver.managers.PunishmentManager;
+@@ -448,7 +449,10 @@ public class GameServer
+ 		{
+ 			OfflinePlayTable.getInstance().restoreOfflinePlayers();
+ 		}
+-		
++
++		// L2Hub: фантомы — игроки без клиента (напарники).
++		PhantomManager.getInstance().onServerStart();
++
+ 		if (ServerConfig.SERVER_RESTART_SCHEDULE_ENABLED)
+ 		{
+ 			ServerRestartManager.getInstance();
+diff --git a/java/org/l2jmobius/gameserver/config/ConfigLoader.java b/java/org/l2jmobius/gameserver/config/ConfigLoader.java
+index 5b60e02..11202c0 100644
+--- a/java/org/l2jmobius/gameserver/config/ConfigLoader.java
++++ b/java/org/l2jmobius/gameserver/config/ConfigLoader.java
+@@ -47,6 +47,7 @@ import org.l2jmobius.gameserver.config.custom.OfflinePlayConfig;
+ import org.l2jmobius.gameserver.config.custom.OfflineTradeConfig;
+ import org.l2jmobius.gameserver.config.custom.OnlineInfoConfig;
+ import org.l2jmobius.gameserver.config.custom.PasswordChangeConfig;
++import org.l2jmobius.gameserver.config.custom.PhantomsConfig;
+ import org.l2jmobius.gameserver.config.custom.PremiumSystemConfig;
+ import org.l2jmobius.gameserver.config.custom.PrivateStoreRangeConfig;
+ import org.l2jmobius.gameserver.config.custom.PvpAnnounceConfig;
+@@ -122,6 +123,7 @@ public class ConfigLoader
+ 		OfflineTradeConfig.load();
+ 		OnlineInfoConfig.load();
+ 		PasswordChangeConfig.load();
++		PhantomsConfig.load();
+ 		PremiumSystemConfig.load();
+ 		PrivateStoreRangeConfig.load();
+ 		PvpAnnounceConfig.load();
+diff --git a/java/org/l2jmobius/gameserver/config/custom/PhantomsConfig.java b/java/org/l2jmobius/gameserver/config/custom/PhantomsConfig.java
+new file mode 100644
+index 0000000..d54ffd6
+--- /dev/null
++++ b/java/org/l2jmobius/gameserver/config/custom/PhantomsConfig.java
+@@ -0,0 +1,31 @@
++package org.l2jmobius.gameserver.config.custom;
++
++import org.l2jmobius.commons.util.ConfigReader;
++
++/**
++ * L2Hub: настройки фантомов — персонажей игроков без клиента (config/Custom/Phantoms.ini).
++ */
++public class PhantomsConfig
++{
++	// File
++	private static final String PHANTOMS_CONFIG_FILE = "./config/Custom/Phantoms.ini";
++
++	// Constants
++	public static boolean PHANTOMS_ENABLED;
++	public static String PHANTOM_ACCOUNT;
++	public static boolean PHANTOM_BAN_ACCOUNT_LOGIN;
++	public static boolean PHANTOM_RESTORE_ON_STARTUP;
++	public static int PHANTOM_DEFAULT_LEVEL;
++	public static int PHANTOM_SHOT_COUNT;
++
++	public static void load()
++	{
++		final ConfigReader config = new ConfigReader(PHANTOMS_CONFIG_FILE);
++		PHANTOMS_ENABLED = config.getBoolean("EnablePhantoms", false);
++		PHANTOM_ACCOUNT = config.getString("PhantomAccount", "l2hub_phantom");
++		PHANTOM_BAN_ACCOUNT_LOGIN = config.getBoolean("PhantomBanAccountLogin", true);
++		PHANTOM_RESTORE_ON_STARTUP = config.getBoolean("PhantomRestoreOnStartup", true);
++		PHANTOM_DEFAULT_LEVEL = config.getInt("PhantomDefaultLevel", 40);
++		PHANTOM_SHOT_COUNT = config.getInt("PhantomShotCount", 5000);
++	}
++}
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/Creature.java b/java/org/l2jmobius/gameserver/entity/actor/Creature.java
+index 6ebcf89..98b0446 100644
+--- a/java/org/l2jmobius/gameserver/entity/actor/Creature.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/Creature.java
+@@ -865,11 +865,12 @@ public abstract class Creature extends WorldObject
+ 		}
+ 		
+ 		// Allow recall of the detached characters.
++		// L2Hub: и фантомов без клиента (client == null): иначе они висят в телепорте и не видны другим.
+ 		if (isPlayer())
+ 		{
+ 			final Player player = asPlayer();
+ 			final GameClient client = player.getClient();
+-			if ((client != null) && client.isDetached())
++			if ((client == null) || client.isDetached())
+ 			{
+ 				onTeleported();
+ 			}
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomData.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomData.java
+new file mode 100644
+index 0000000..a2ac66c
+--- /dev/null
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomData.java
+@@ -0,0 +1,104 @@
++package org.l2jmobius.gameserver.managers.phantom;
++
++import java.io.File;
++import java.util.ArrayList;
++import java.util.Collection;
++import java.util.Collections;
++import java.util.LinkedHashMap;
++import java.util.List;
++import java.util.Map;
++import java.util.logging.Logger;
++
++import org.w3c.dom.Document;
++
++import org.l2jmobius.commons.util.IXmlReader;
++import org.l2jmobius.gameserver.data.xml.PlayerTemplateData;
++import org.l2jmobius.gameserver.entity.Location;
++import org.l2jmobius.gameserver.util.StatSet;
++
++/**
++ * L2Hub: напарники-фантомы из data/L2HubPhantoms.xml (пишет tools/fake_players.py).
++ */
++public class PhantomData implements IXmlReader
++{
++	private static final Logger LOGGER = Logger.getLogger(PhantomData.class.getName());
++
++	private volatile Map<String, PhantomTemplate> _templates = Collections.emptyMap();
++	private Map<String, PhantomTemplate> _loading;
++
++	protected PhantomData()
++	{
++		load();
++	}
++
++	@Override
++	public synchronized void load()
++	{
++		_loading = new LinkedHashMap<>();
++		parseDatapackFile("data/L2HubPhantoms.xml");
++		_templates = Collections.unmodifiableMap(_loading);
++		_loading = null;
++		LOGGER.info(getClass().getSimpleName() + ": Loaded " + _templates.size() + " phantom companions.");
++	}
++
++	@Override
++	public void parseDocument(Document document, File file)
++	{
++		forEach(document, "list", listNode -> forEach(listNode, "phantom", phantomNode ->
++		{
++			final StatSet set = new StatSet(parseAttributes(phantomNode));
++			final String name = set.getString("name");
++			try
++			{
++				final String[] classIds = set.getString("classes").split(",");
++				final int[] classes = new int[classIds.length];
++				for (int i = 0; i < classIds.length; i++)
++				{
++					classes[i] = Integer.parseInt(classIds[i].strip());
++					if (PlayerTemplateData.getInstance().getTemplate(classes[i]) == null)
++					{
++						throw new IllegalArgumentException("нет шаблона класса " + classes[i]);
++					}
++				}
++
++				final List<PhantomTemplate.Gear> gear = new ArrayList<>();
++				forEach(phantomNode, "gear", gearNode ->
++				{
++					final StatSet g = new StatSet(parseAttributes(gearNode));
++					gear.add(new PhantomTemplate.Gear(g.getString("grade"), g.getInt("minLevel"), g.getInt("rhand", 0), g.getInt("lhand", 0), g.getInt("head", 0), g.getInt("chest", 0), g.getInt("legs", 0), g.getInt("gloves", 0), g.getInt("feet", 0), g.getInt("shots", 0)));
++				});
++
++				final PhantomTemplate template = new PhantomTemplate(name, PhantomTemplate.Role.valueOf(set.getString("role")), set.getBoolean("female"), (byte) set.getInt("face"), (byte) set.getInt("hairStyle"), (byte) set.getInt("hairColor"), classes, new Location(set.getInt("x"), set.getInt("y"), set.getInt("z")), gear);
++				_loading.put(name.toLowerCase(), template);
++			}
++			catch (Exception e)
++			{
++				LOGGER.warning(getClass().getSimpleName() + ": Skipped phantom " + name + ": " + e.getMessage());
++			}
++		}));
++	}
++
++	/**
++	 * @param name имя напарника (без учёта регистра)
++	 * @return напарник или {@code null}
++	 */
++	public PhantomTemplate getTemplate(String name)
++	{
++		return name == null ? null : _templates.get(name.toLowerCase());
++	}
++
++	public Collection<PhantomTemplate> getTemplates()
++	{
++		return _templates.values();
++	}
++
++	public static PhantomData getInstance()
++	{
++		return SingletonHolder.INSTANCE;
++	}
++
++	private static class SingletonHolder
++	{
++		protected static final PhantomData INSTANCE = new PhantomData();
++	}
++}
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomManager.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomManager.java
+new file mode 100644
+index 0000000..986eb89
+--- /dev/null
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomManager.java
+@@ -0,0 +1,340 @@
++package org.l2jmobius.gameserver.managers.phantom;
++
++import java.security.SecureRandom;
++import java.sql.Connection;
++import java.sql.PreparedStatement;
++import java.sql.ResultSet;
++import java.util.ArrayList;
++import java.util.Base64;
++import java.util.LinkedHashSet;
++import java.util.List;
++import java.util.Map;
++import java.util.Set;
++import java.util.concurrent.ConcurrentHashMap;
++import java.util.logging.Level;
++import java.util.logging.Logger;
++
++import org.l2jmobius.commons.database.DatabaseFactory;
++import org.l2jmobius.gameserver.config.PlayerConfig;
++import org.l2jmobius.gameserver.config.custom.PhantomsConfig;
++import org.l2jmobius.gameserver.data.sql.CharInfoTable;
++import org.l2jmobius.gameserver.data.xml.PlayerTemplateData;
++import org.l2jmobius.gameserver.entity.Location;
++import org.l2jmobius.gameserver.entity.World;
++import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.entity.actor.appearance.PlayerAppearance;
++import org.l2jmobius.gameserver.entity.actor.templates.PlayerTemplate;
++import org.l2jmobius.gameserver.managers.GlobalVariablesManager;
++import org.l2jmobius.gameserver.network.Disconnection;
++import org.l2jmobius.gameserver.taskmanagers.AutoPlayTaskManager;
++
++/**
++ * L2Hub: фантомы — настоящие персонажи игроков без клиента (напарники).<br>
++ * Приём тот же, что у Mobius для офлайн-игроков после рестарта ({@code OfflinePlayTable.restoreOfflinePlayers}): {@link Player#load}, вход в мир через {@code spawnMe}, {@code setOfflinePlay(true)} и
++ * {@code setOnlineStatus(true, true)}. Персонажи живут на аккаунте {@link PhantomsConfig#PHANTOM_ACCOUNT}; вход под ним закрыт баном в таблице accounts.<br>
++ * Кто из фантомов в мире, хранится в глобальной переменной {@value #ACTIVE_VARIABLE}: после рестарта они поднимаются на своих местах.
++ */
++public class PhantomManager
++{
++	private static final Logger LOGGER = Logger.getLogger(PhantomManager.class.getName());
++
++	private static final String ACTIVE_VARIABLE = "L2HubPhantomsActive";
++	private static final String FIND_CHARACTER = "SELECT charId FROM characters WHERE char_name=? AND account_name=?";
++	private static final String BAN_ACCOUNT = "INSERT INTO accounts (login, password, accessLevel) VALUES (?, ?, -1) ON DUPLICATE KEY UPDATE accessLevel = -1";
++
++	/** Фантомы в мире: objectId → напарник. */
++	private final Map<Integer, PhantomTemplate> _phantoms = new ConcurrentHashMap<>();
++
++	protected PhantomManager()
++	{
++	}
++
++	/**
++	 * Вызывается при старте сервера, когда мир уже загружен: закрывает вход под аккаунтом фантомов и поднимает тех, кто был в мире.
++	 */
++	public void onServerStart()
++	{
++		if (!PhantomsConfig.PHANTOMS_ENABLED)
++		{
++			LOGGER.info(getClass().getSimpleName() + ": Disabled.");
++			return;
++		}
++
++		PhantomData.getInstance();
++		if (PhantomsConfig.PHANTOM_BAN_ACCOUNT_LOGIN)
++		{
++			banLogin();
++		}
++
++		if (PhantomsConfig.PHANTOM_RESTORE_ON_STARTUP)
++		{
++			restore();
++		}
++	}
++
++	/**
++	 * @param player игрок
++	 * @return {@code true}, если это фантом в мире
++	 */
++	public boolean isPhantom(Player player)
++	{
++		return (player != null) && _phantoms.containsKey(player.getObjectId());
++	}
++
++	/**
++	 * @param template напарник
++	 * @return его фантом в мире или {@code null}
++	 */
++	public Player getPhantom(PhantomTemplate template)
++	{
++		final Player player = World.getPlayer(template.getName());
++		return isPhantom(player) ? player : null;
++	}
++
++	/**
++	 * Ставит напарника в точку: создаёт персонажа при первом вызове, подтягивает до уровня (профа, скиллы, шмот грейда) и вводит в мир. Если он уже в мире — пересобирает и переставляет.
++	 * @param template напарник
++	 * @param location куда поставить
++	 * @param requestedLevel уровень
++	 * @return фантом или {@code null}, если не вышло (причина — в логе)
++	 */
++	public synchronized Player spawn(PhantomTemplate template, Location location, int requestedLevel)
++	{
++		final int level = Math.max(1, Math.min(requestedLevel, PlayerConfig.PLAYER_MAXIMUM_LEVEL - 1));
++		Player phantom = getPhantom(template);
++		if (phantom != null)
++		{
++			PhantomOutfit.build(phantom, template, level);
++			phantom.storeMe();
++			phantom.setHeading(location.getHeading());
++			phantom.teleToLocation(location, false);
++			phantom.broadcastUserInfo();
++			setActive(template.getName(), true);
++			return phantom;
++		}
++
++		if (World.getPlayer(template.getName()) != null)
++		{
++			LOGGER.warning(getClass().getSimpleName() + ": " + template.getName() + " is online as a real player, phantom not spawned.");
++			return null;
++		}
++
++		phantom = loadOrCreate(template);
++		if (phantom == null)
++		{
++			return null;
++		}
++
++		phantom.setOnlineStatus(true, false);
++		PhantomOutfit.build(phantom, template, level);
++		phantom.storeMe();
++		enterWorld(phantom, template, location);
++		setActive(template.getName(), true);
++		return phantom;
++	}
++
++	/**
++	 * Убирает напарника из мира. Персонаж остаётся в базе со своим уровнем и скиллами.
++	 * @param template напарник
++	 * @return {@code true}, если он был в мире
++	 */
++	public synchronized boolean despawn(PhantomTemplate template)
++	{
++		setActive(template.getName(), false);
++		final Player phantom = getPhantom(template);
++		if (phantom == null)
++		{
++			return false;
++		}
++
++		_phantoms.remove(phantom.getObjectId());
++		if (phantom.isAutoPlaying())
++		{
++			AutoPlayTaskManager.getInstance().stopAutoPlay(phantom);
++		}
++		Disconnection.of(phantom).storeAndDelete();
++		LOGGER.info(getClass().getSimpleName() + ": Despawned " + template.getName() + ".");
++		return true;
++	}
++
++	private void restore()
++	{
++		int restored = 0;
++		for (String name : getActiveNames())
++		{
++			final PhantomTemplate template = PhantomData.getInstance().getTemplate(name);
++			if (template == null)
++			{
++				LOGGER.warning(getClass().getSimpleName() + ": Active phantom " + name + " is not in L2HubPhantoms.xml, dropped.");
++				setActive(name, false);
++				continue;
++			}
++
++			try
++			{
++				final boolean existed = findCharId(template.getName()) > 0;
++				final Player phantom = loadOrCreate(template);
++				if (phantom == null)
++				{
++					continue;
++				}
++
++				phantom.setOnlineStatus(true, false);
++				final Location location;
++				if (existed && ((phantom.getX() != 0) || (phantom.getY() != 0)))
++				{
++					phantom.restoreEffects();
++					PhantomOutfit.refresh(phantom, template);
++					location = new Location(phantom.getX(), phantom.getY(), phantom.getZ(), phantom.getHeading());
++				}
++				else
++				{
++					PhantomOutfit.build(phantom, template, PhantomsConfig.PHANTOM_DEFAULT_LEVEL);
++					phantom.storeMe();
++					location = template.getHome();
++				}
++				enterWorld(phantom, template, location);
++				restored++;
++			}
++			catch (Exception e)
++			{
++				LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Could not restore phantom " + name + ".", e);
++			}
++		}
++		LOGGER.info(getClass().getSimpleName() + ": Restored " + restored + " phantoms.");
++	}
++
++	/**
++	 * Персонаж напарника из базы, а при первом вызове — новый: создаётся так же, как в {@code CharacterCreate}, сохраняется и загружается обратно полным {@link Player#load}.
++	 */
++	private Player loadOrCreate(PhantomTemplate template)
++	{
++		int charId = findCharId(template.getName());
++		if (charId <= 0)
++		{
++			if (CharInfoTable.getInstance().doesCharNameExist(template.getName()))
++			{
++				LOGGER.warning(getClass().getSimpleName() + ": Name " + template.getName() + " is taken by a character of another account, phantom not created.");
++				return null;
++			}
++
++			final PlayerTemplate playerTemplate = PlayerTemplateData.getInstance().getTemplate(template.getStartClassId());
++			final Player created = Player.create(playerTemplate, PhantomsConfig.PHANTOM_ACCOUNT, template.getName(), new PlayerAppearance(template.getFace(), template.getHairColor(), template.getHairStyle(), template.isFemale()));
++			if (created == null)
++			{
++				LOGGER.warning(getClass().getSimpleName() + ": Could not create character " + template.getName() + ".");
++				return null;
++			}
++
++			// Как в CharacterCreate: полные бары до сохранения, иначе Player.load поднимет персонажа трупом (curHp = 0).
++			created.setCurrentHp(created.getMaxHp());
++			created.setCurrentMp(created.getMaxMp());
++			created.setCurrentCp(created.getMaxCp());
++			final Location home = template.getHome();
++			created.setXYZInvisible(home.getX(), home.getY(), home.getZ());
++			created.setTitle("");
++			created.setOnlineStatus(true, false);
++			Disconnection.of(created).storeAndDelete();
++			charId = created.getObjectId();
++			LOGGER.info(getClass().getSimpleName() + ": Created phantom character " + template.getName() + " (" + charId + ").");
++		}
++
++		final Player phantom = Player.load(charId);
++		if (phantom == null)
++		{
++			LOGGER.warning(getClass().getSimpleName() + ": Could not load phantom character " + template.getName() + " (" + charId + ").");
++		}
++		return phantom;
++	}
++
++	/**
++	 * Вход в мир по образцу {@code OfflinePlayTable.restoreOfflinePlayers}: клиента нет и не будет. {@code setOfflinePlay(true)} нужен, чтобы AutoPlay не принял фантома за офлайн-торговца.
++	 */
++	private void enterWorld(Player phantom, PhantomTemplate template, Location location)
++	{
++		_phantoms.put(phantom.getObjectId(), template);
++		phantom.setHeading(location.getHeading());
++		phantom.spawnMe(location.getX(), location.getY(), location.getZ());
++		phantom.setOfflinePlay(true);
++		phantom.setOnlineStatus(true, true);
++		phantom.setRunning();
++		phantom.broadcastUserInfo();
++		LOGGER.info(getClass().getSimpleName() + ": " + template.getName() + " entered the world at " + location.getX() + ", " + location.getY() + ", " + location.getZ() + ".");
++	}
++
++	private int findCharId(String name)
++	{
++		try (Connection con = DatabaseFactory.getConnection();
++			PreparedStatement ps = con.prepareStatement(FIND_CHARACTER))
++		{
++			ps.setString(1, name);
++			ps.setString(2, PhantomsConfig.PHANTOM_ACCOUNT);
++			try (ResultSet rs = ps.executeQuery())
++			{
++				return rs.next() ? rs.getInt("charId") : 0;
++			}
++		}
++		catch (Exception e)
++		{
++			LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": Could not look up " + name + ".", e);
++			return 0;
++		}
++	}
++
++	/**
++	 * Закрывает вход под аккаунтом фантомов: строка в accounts с accessLevel = -1 (логин отвечает ACCOUNT_BANNED). Пароль — случайный, его никто не знает.
++	 */
++	private void banLogin()
++	{
++		final byte[] secret = new byte[24];
++		new SecureRandom().nextBytes(secret);
++		try (Connection con = DatabaseFactory.getConnection();
++			PreparedStatement ps = con.prepareStatement(BAN_ACCOUNT))
++		{
++			ps.setString(1, PhantomsConfig.PHANTOM_ACCOUNT);
++			ps.setString(2, Base64.getEncoder().encodeToString(secret));
++			ps.executeUpdate();
++		}
++		catch (Exception e)
++		{
++			LOGGER.warning(getClass().getSimpleName() + ": Could not ban login of account " + PhantomsConfig.PHANTOM_ACCOUNT + ": " + e.getMessage());
++		}
++	}
++
++	/**
++	 * @return имена напарников, которые были в мире (в порядке появления)
++	 */
++	public List<String> getActiveNames()
++	{
++		final List<String> names = new ArrayList<>();
++		for (String name : GlobalVariablesManager.getInstance().getString(ACTIVE_VARIABLE, "").split(";"))
++		{
++			if (!name.isBlank())
++			{
++				names.add(name.strip());
++			}
++		}
++		return names;
++	}
++
++	private synchronized void setActive(String name, boolean active)
++	{
++		final Set<String> names = new LinkedHashSet<>(getActiveNames());
++		final boolean changed = active ? names.add(name) : names.remove(name);
++		if (changed)
++		{
++			GlobalVariablesManager.getInstance().set(ACTIVE_VARIABLE, String.join(";", names));
++			GlobalVariablesManager.getInstance().storeMe();
++		}
++	}
++
++	public static PhantomManager getInstance()
++	{
++		return SingletonHolder.INSTANCE;
++	}
++
++	private static class SingletonHolder
++	{
++		protected static final PhantomManager INSTANCE = new PhantomManager();
++	}
++}
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomOutfit.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomOutfit.java
+new file mode 100644
+index 0000000..3b06601
+--- /dev/null
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomOutfit.java
+@@ -0,0 +1,184 @@
++package org.l2jmobius.gameserver.managers.phantom;
++
++import java.util.ArrayList;
++import java.util.logging.Logger;
++
++import org.l2jmobius.gameserver.config.custom.PhantomsConfig;
++import org.l2jmobius.gameserver.data.xml.ExperienceData;
++import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
++import org.l2jmobius.gameserver.entity.item.instance.Item;
++import org.l2jmobius.gameserver.entity.itemcontainer.Inventory;
++import org.l2jmobius.gameserver.mechanics.skill.Skill;
++
++/**
++ * L2Hub: сборка фантома под уровень — опыт, профессия ветки, скиллы, шмот своего грейда и BSS.<br>
++ * Вызывается до входа в мир (тогда первый CharInfo уже показывает шмот) или для фантома в мире.
++ */
++final class PhantomOutfit
++{
++	private static final Logger LOGGER = Logger.getLogger(PhantomOutfit.class.getName());
++
++	private PhantomOutfit()
++	{
++	}
++
++	/**
++	 * Полная сборка: уровень, класс и скиллы (если уровень или класс меняются), шмот заново, BSS, полные бары.
++	 * @param player фантом
++	 * @param template напарник
++	 * @param level уровень, до которого его подтянуть
++	 */
++	static void build(Player player, PhantomTemplate template, int level)
++	{
++		// Стопка BSS даёт перегруз, а с перегрузом 4-й степени фантом не может сдвинуться с места.
++		player.setDietMode(true);
++		revive(player);
++
++		final int classId = template.getClassId(level);
++		final boolean relearn = (player.getLevel() != level) || (player.getPlayerClass().getId() != classId) || player.getAllSkills().isEmpty();
++
++		// Сначала снять и уничтожить старый шмот: его скиллы не должны пережить пересборку.
++		player.getInventory().destroyAllItems(ItemProcessType.DESTROY, player, null);
++		player.getAutoSoulShot().clear();
++
++		setLevel(player, level);
++		if (relearn)
++		{
++			relearn(player, classId);
++		}
++
++		dress(player, template.getGear(level));
++		refill(player, template.getGear(level));
++		fullBars(player);
++		LOGGER.info("PhantomOutfit: " + player.getName() + " is level " + player.getLevel() + " " + player.getPlayerClass().name() + ", " + player.getAllSkills().size() + " skills" + (relearn ? " (relearned)" : "") + ".");
++	}
++
++	/**
++	 * Лёгкое обновление после рестарта: шмот и скиллы уже в базе, а регистрация BSS и вес — только в памяти.
++	 * @param player фантом
++	 * @param template напарник
++	 */
++	static void refresh(Player player, PhantomTemplate template)
++	{
++		player.setDietMode(true);
++		revive(player);
++		final PhantomTemplate.Gear gear = template.getGear(player.getLevel());
++		if (player.getInventory().getPaperdollItem(Inventory.PAPERDOLL_RHAND) == null)
++		{
++			dress(player, gear);
++		}
++		refill(player, gear);
++		fullBars(player);
++	}
++
++	/**
++	 * Мёртвому HP и MP не выставляются ({@code CreatureStatus} молча пропускает), а {@link Player#load} считает мёртвым любого с curHp &lt; 0.5 в базе. Поэтому перед сборкой фантома поднимаем: в мире — честным ресом с пакетом,
++	 * до входа в мир — просто снимаем флаг.
++	 */
++	private static void revive(Player player)
++	{
++		if (!player.isDead())
++		{
++			return;
++		}
++
++		if (player.isSpawned())
++		{
++			player.doRevive();
++		}
++		else
++		{
++			player.setDead(false);
++		}
++	}
++
++	private static void setLevel(Player player, int level)
++	{
++		final long current = player.getExp();
++		final long wanted = ExperienceData.getInstance().getExpForLevel(level);
++		if (current > wanted)
++		{
++			player.getStat().setLevel((byte) level);
++			player.removeExpAndSp(current - wanted, 0, false);
++		}
++		else if (current < wanted)
++		{
++			player.addExpAndSp(wanted - current, 0);
++		}
++
++		if (player.getLevel() != level)
++		{
++			LOGGER.warning("PhantomOutfit: " + player.getName() + " stopped at level " + player.getLevel() + " instead of " + level + ".");
++		}
++	}
++
++	/**
++	 * Скиллы заново: всё старое снять, выставить класс ветки, выучить всё доступное классу на этом уровне.
++	 */
++	private static void relearn(Player player, int classId)
++	{
++		for (Skill skill : new ArrayList<>(player.getAllSkills()))
++		{
++			player.removeSkill(skill, true, true);
++		}
++
++		if (player.getPlayerClass().getId() != classId)
++		{
++			player.setPlayerClass(classId);
++		}
++		player.setBaseClass(classId);
++		player.giveAvailableSkills(true, true, true);
++	}
++
++	private static void dress(Player player, PhantomTemplate.Gear gear)
++	{
++		if (gear == null)
++		{
++			return;
++		}
++
++		for (int itemId : gear.items())
++		{
++			if (itemId <= 0)
++			{
++				continue;
++			}
++
++			final Item item = player.getInventory().addItem(ItemProcessType.REWARD, itemId, 1, player, null);
++			if ((item != null) && item.isEquipable())
++			{
++				player.getInventory().equipItem(item);
++			}
++			else
++			{
++				LOGGER.warning("PhantomOutfit: " + player.getName() + " could not equip item " + itemId + ".");
++			}
++		}
++		player.refreshOverloaded();
++		player.refreshExpertisePenalty();
++	}
++
++	private static void refill(Player player, PhantomTemplate.Gear gear)
++	{
++		if ((gear == null) || (gear.shots <= 0))
++		{
++			return;
++		}
++
++		final Item shots = player.getInventory().getItemByItemId(gear.shots);
++		final long have = shots == null ? 0 : shots.getCount();
++		if (have < PhantomsConfig.PHANTOM_SHOT_COUNT)
++		{
++			player.getInventory().addItem(ItemProcessType.REWARD, gear.shots, PhantomsConfig.PHANTOM_SHOT_COUNT - have, player, null);
++		}
++		player.addAutoSoulShot(gear.shots);
++		player.rechargeShots(true, true);
++	}
++
++	private static void fullBars(Player player)
++	{
++		player.setCurrentHpMp(player.getMaxHp(), player.getMaxMp());
++		player.setCurrentCp(player.getMaxCp());
++	}
++}
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomTemplate.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomTemplate.java
+new file mode 100644
+index 0000000..1f1c69d
+--- /dev/null
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomTemplate.java
+@@ -0,0 +1,183 @@
++package org.l2jmobius.gameserver.managers.phantom;
++
++import java.util.ArrayList;
++import java.util.Collections;
++import java.util.Comparator;
++import java.util.List;
++
++import org.l2jmobius.gameserver.entity.Location;
++
++/**
++ * L2Hub: описание напарника-фантома из data/L2HubPhantoms.xml.<br>
++ * Уровень у напарника не фиксирован: класс и шмот выбираются по уровню, до которого его подтягивают.
++ */
++public class PhantomTemplate
++{
++	/** Смены профессии: с какого уровня берётся следующий класс ветки. */
++	private static final int[] CLASS_TIER_LEVELS =
++	{
++		20,
++		40,
++		76
++	};
++
++	public enum Role
++	{
++		HEALER,
++		BUFFER,
++		TANK,
++		DAMAGE
++	}
++
++	/**
++	 * Шмот одного грейда: надевается с minLevel. Ноль — слот пустой.
++	 */
++	public static class Gear
++	{
++		public final String grade;
++		public final int minLevel;
++		public final int rhand;
++		public final int lhand;
++		public final int head;
++		public final int chest;
++		public final int legs;
++		public final int gloves;
++		public final int feet;
++		public final int shots;
++
++		public Gear(String grade, int minLevel, int rhand, int lhand, int head, int chest, int legs, int gloves, int feet, int shots)
++		{
++			this.grade = grade;
++			this.minLevel = minLevel;
++			this.rhand = rhand;
++			this.lhand = lhand;
++			this.head = head;
++			this.chest = chest;
++			this.legs = legs;
++			this.gloves = gloves;
++			this.feet = feet;
++			this.shots = shots;
++		}
++
++		public int[] items()
++		{
++			return new int[]
++			{
++				chest,
++				legs,
++				head,
++				gloves,
++				feet,
++				rhand,
++				lhand
++			};
++		}
++	}
++
++	private final String _name;
++	private final Role _role;
++	private final boolean _female;
++	private final byte _face;
++	private final byte _hairStyle;
++	private final byte _hairColor;
++	private final int[] _classes;
++	private final Location _home;
++	private final List<Gear> _gear;
++
++	public PhantomTemplate(String name, Role role, boolean female, byte face, byte hairStyle, byte hairColor, int[] classes, Location home, List<Gear> gear)
++	{
++		_name = name;
++		_role = role;
++		_female = female;
++		_face = face;
++		_hairStyle = hairStyle;
++		_hairColor = hairColor;
++		_classes = classes;
++		_home = home;
++		final List<Gear> sorted = new ArrayList<>(gear);
++		sorted.sort(Comparator.comparingInt(g -> g.minLevel));
++		_gear = Collections.unmodifiableList(sorted);
++	}
++
++	public String getName()
++	{
++		return _name;
++	}
++
++	public Role getRole()
++	{
++		return _role;
++	}
++
++	public boolean isFemale()
++	{
++		return _female;
++	}
++
++	public byte getFace()
++	{
++		return _face;
++	}
++
++	public byte getHairStyle()
++	{
++		return _hairStyle;
++	}
++
++	public byte getHairColor()
++	{
++		return _hairColor;
++	}
++
++	/**
++	 * @return стартовый класс ветки (из него создаётся персонаж)
++	 */
++	public int getStartClassId()
++	{
++		return _classes[0];
++	}
++
++	/**
++	 * @param level уровень персонажа
++	 * @return класс ветки, положенный на этом уровне
++	 */
++	public int getClassId(int level)
++	{
++		int tier = 0;
++		while ((tier < CLASS_TIER_LEVELS.length) && (level >= CLASS_TIER_LEVELS[tier]))
++		{
++			tier++;
++		}
++		return _classes[Math.min(tier, _classes.length - 1)];
++	}
++
++	/**
++	 * @param level уровень персонажа
++	 * @return шмот самого высокого грейда, доступного на этом уровне, или {@code null}
++	 */
++	public Gear getGear(int level)
++	{
++		Gear result = null;
++		for (Gear gear : _gear)
++		{
++			if (gear.minLevel <= level)
++			{
++				result = gear;
++			}
++		}
++		return result;
++	}
++
++	public List<Gear> getAllGear()
++	{
++		return _gear;
++	}
++
++	/**
++	 * @return точка у гейткипера Гирана: здесь появляется новый фантом, если его поднимают без GM рядом
++	 */
++	public Location getHome()
++	{
++		return _home;
++	}
++}
+diff --git a/java/org/l2jmobius/gameserver/taskmanagers/DecayTaskManager.java b/java/org/l2jmobius/gameserver/taskmanagers/DecayTaskManager.java
+index c9d88a8..52921e1 100644
+--- a/java/org/l2jmobius/gameserver/taskmanagers/DecayTaskManager.java
++++ b/java/org/l2jmobius/gameserver/taskmanagers/DecayTaskManager.java
+@@ -32,6 +32,7 @@ import org.l2jmobius.gameserver.config.custom.OfflinePlayConfig;
+ import org.l2jmobius.gameserver.entity.actor.Creature;
+ import org.l2jmobius.gameserver.entity.actor.Player;
+ import org.l2jmobius.gameserver.entity.actor.templates.NpcTemplate;
++import org.l2jmobius.gameserver.managers.phantom.PhantomManager;
+ 
+ /**
+  * @author Mobius
+@@ -106,6 +107,13 @@ public class DecayTaskManager implements Runnable
+ 		if (creature.isPlayer())
+ 		{
+ 			final Player player = creature.asPlayer();
++
++			// L2Hub: труп фантома не исчезает и не выкидывает его из мира — фантом ждёт реса.
++			if (PhantomManager.getInstance().isPhantom(player))
++			{
++				return;
++			}
++
+ 			if (player.isOfflinePlay() && OfflinePlayConfig.OFFLINE_PLAY_LOGOUT_ON_DEATH)
+ 			{
+ 				delay = 10; // 10 seconds

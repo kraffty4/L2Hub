@@ -1,0 +1,86 @@
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+index 3fc3c2c..e8ccf8e 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+@@ -85,6 +85,10 @@ public class PhantomHunterManager
+ 	/** Столько прогулок подряд без боя — спот пустой: сменить. */
+ 	private static final int ROAMS_BEFORE_SWITCH = 3;
+ 	private static final int DANGER_RANGE = 900;
++	/** Спот ближе этого — к нему ногами (поводок, возврат на кач из пати и города), дальше — телепорт. */
++	private static final int WALK_RANGE = 6000;
++	/** Шёл к споту ногами столько и не дошёл (застрял в геодате) — телепорт. */
++	private static final long WALK_BACK_TIMEOUT = 90000;
+ 	private static final String RESET_VARIABLE = "L2HubHuntersResetId";
+ 	private static final String SELF_TEST_VARIABLE = "L2HubHuntersSelfTestId";
+ 	/** Состояние охотников для лаунчера (от папки game). */
+@@ -189,6 +193,8 @@ public class PhantomHunterManager
+ 		long lastActive;
+ 		int roams;
+ 		long retryAt;
++		/** Идёт на спот ногами до этого времени; не дошёл — телепорт. 0 — не идёт. */
++		long walkBackUntil;
+ 		/** Живой игрок, который на него напал (ПвП): охотник бьёт его, пока тот рядом. */
+ 		volatile int enemyId;
+ 		volatile long enemySeen;
+@@ -1024,14 +1030,17 @@ public class PhantomHunterManager
+ 
+ 	/**
+ 	 * Из города, лавки, пати — обратно: на свой спот, если он ещё по уровню, иначе — выбрать новый.
++	 * Спот рядом — бежит ногами, как живой (дальше дорогу ведёт {@link #leash}); далеко — телепорт за адену.
+ 	 */
+ 	private void backToHunt(Hunter hunter, Player player)
+ 	{
++		final long now = System.currentTimeMillis();
+ 		hunter.phase = Phase.HUNT;
+ 		hunter.needBuff = true;
+ 		hunter.recruiterId = 0;
+-		hunter.lastActive = System.currentTimeMillis();
++		hunter.lastActive = now;
+ 		hunter.roams = 0;
++		hunter.walkBackUntil = 0;
+ 		closeStore(hunter, player);
+ 		if ((hunter.spot != null) && !outgrown(hunter.spot, player.getLevel()))
+ 		{
+@@ -1040,6 +1049,15 @@ public class PhantomHunterManager
+ 			{
+ 				player.standUp();
+ 			}
++			final int distance = (int) player.calculateDistance2D(hunter.spot.entry);
++			if (distance <= WALK_RANGE)
++			{
++				LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " walks back to " + hunter.spot.name + " (" + distance + ").");
++				hunter.walkBackUntil = now + WALK_BACK_TIMEOUT;
++				player.getAI().setIntentionMoveTo(hunter.spot.entry);
++				return;
++			}
++			LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " teleports back to " + hunter.spot.name + " (" + distance + ").");
+ 			payTeleport(player);
+ 			player.teleToLocation(hunter.spot.entry, true);
+ 			return;
+@@ -2080,8 +2098,25 @@ public class PhantomHunterManager
+ 	{
+ 		final HuntSpot spot = hunter.spot;
+ 		final double distance = player.calculateDistance2D(spot.entry);
+-		if (distance > 6000)
++		if (distance <= (spot.radius * 1.3))
++		{
++			if (hunter.walkBackUntil != 0)
++			{
++				hunter.walkBackUntil = 0;
++				LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " reached " + spot.name + " on foot.");
++			}
++		}
++		else if ((hunter.walkBackUntil != 0) && (now > hunter.walkBackUntil))
++		{
++			hunter.walkBackUntil = 0; // шёл и не дошёл — застрял в геодате
++			LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " got stuck walking back to " + spot.name + " (" + (int) distance + "), teleports.");
++			stop(player);
++			player.teleToLocation(spot.entry, true);
++			return;
++		}
++		if (distance > WALK_RANGE)
+ 		{
++			hunter.walkBackUntil = 0;
+ 			stop(player);
+ 			player.teleToLocation(spot.entry, true);
+ 			return;

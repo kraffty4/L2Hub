@@ -1,0 +1,14 @@
+{
+  "id": "gracia_final",
+  "type": "la2offline",
+  "build": "La2offline 4.0 (L2J 2.0.6 RusTeam)",
+  "server": "servers/gracia_final/server",
+  "database": "l2rt",
+  "ports": { "db": 3305, "login": 2106, "game": 1042 },
+  "accessLevels": { "0": "Игрок", "1": "Admin", "127": "Master" },
+  "client": {
+    "path": "C:\\Games\\Lineage II",
+    "exe": "La2system\\L2.exe",
+    "system": "La2system — оффлайн-система La2offline"
+  }
+}

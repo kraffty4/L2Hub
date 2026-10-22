@@ -1,0 +1,17 @@
+diff --git a/dist/game/data/html/CommunityBoard/Custom/navigation.html b/dist/game/data/html/CommunityBoard/Custom/navigation.html
+index a7ef6569108266e07170dfc4fea3d743938b6ad6..8fdd2a96a76d0c5d3c9ccca0f000577b764e5218 100644
+--- a/dist/game/data/html/CommunityBoard/Custom/navigation.html
++++ b/dist/game/data/html/CommunityBoard/Custom/navigation.html
+@@ -20,6 +20,12 @@
+ <tr>
+ 	<td><button value="Охотники" action="bypass _bbshubhunters" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Fight1None_Down" fore="L2UI_CT1.OlympiadWnd_DF_Fight1None"></td>
+ </tr>
++<tr>
++	<td><button value="Поручения дня" action="bypass voice .daily" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Fight1None_Down" fore="L2UI_CT1.OlympiadWnd_DF_Fight1None"></td>
++</tr>
++<tr>
++	<td><button value="Рейд охотников" action="bypass voice .raid" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Fight1None_Down" fore="L2UI_CT1.OlympiadWnd_DF_Fight1None"></td>
++</tr>
+ <tr>
+ 	<td><button value="Поиск дропа" action="bypass _bbstop;dropsearch/main.html" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Watch_Down" fore="L2UI_CT1.OlympiadWnd_DF_Watch"></td>
+ </tr>

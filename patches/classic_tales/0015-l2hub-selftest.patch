@@ -1,0 +1,434 @@
+diff --git a/dist/game/config/Custom/L2HubSelfTest.ini b/dist/game/config/Custom/L2HubSelfTest.ini
+new file mode 100644
+index 0000000..a02adb1
+--- /dev/null
++++ b/dist/game/config/Custom/L2HubSelfTest.ini
+@@ -0,0 +1,8 @@
++# ---------------------------------------------------------------------------
++# L2Hub: самопроверка модов (data/scripts/custom/L2HubSelfTest)
++# ---------------------------------------------------------------------------
++# Через минуту после старта сервер сверяет моды L2Hub без игрока (только чтение): баффер и GM-шоп у гейткиперов,
++# бафы на максимуме и на 3 часа, чемпионов, доску Alt+B, .buddy и .hunters, .daily и .raid, окно моба, фантомов.
++# Итог — в лог и в log/L2HubSelfTest.json (его показывает лаунчер в «Проверить всё»).
++# Default: True
++Enabled = True
+diff --git a/dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java b/dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java
+new file mode 100644
+index 0000000..3591dbb
+--- /dev/null
++++ b/dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java
+@@ -0,0 +1,414 @@
++/*
++ * This file is part of the L2J Mobius project.
++ *
++ * This program is free software: you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation, either version 3 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
++ * General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program. If not, see <http://www.gnu.org/licenses/>.
++ */
++package custom.L2HubSelfTest;
++
++import java.io.Reader;
++import java.lang.reflect.Field;
++import java.nio.charset.StandardCharsets;
++import java.nio.file.DirectoryStream;
++import java.nio.file.Files;
++import java.nio.file.Path;
++import java.nio.file.Paths;
++import java.text.SimpleDateFormat;
++import java.time.LocalDateTime;
++import java.time.format.DateTimeFormatter;
++import java.util.ArrayList;
++import java.util.HashSet;
++import java.util.List;
++import java.util.Map;
++import java.util.Properties;
++import java.util.Set;
++import java.util.TreeSet;
++import java.util.logging.Logger;
++import java.util.regex.Matcher;
++import java.util.regex.Pattern;
++
++import org.l2jmobius.commons.threads.ThreadPool;
++import org.l2jmobius.gameserver.config.NpcConfig;
++import org.l2jmobius.gameserver.config.PlayerConfig;
++import org.l2jmobius.gameserver.config.custom.ChampionMonstersConfig;
++import org.l2jmobius.gameserver.config.custom.CommunityBoardConfig;
++import org.l2jmobius.gameserver.config.custom.L2HubWorldConfig;
++import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
++import org.l2jmobius.gameserver.data.SchemeBufferTable;
++import org.l2jmobius.gameserver.data.SpawnTable;
++import org.l2jmobius.gameserver.data.xml.MultisellData;
++import org.l2jmobius.gameserver.data.xml.NpcData;
++import org.l2jmobius.gameserver.data.xml.SkillData;
++import org.l2jmobius.gameserver.entity.World;
++import org.l2jmobius.gameserver.entity.WorldObject;
++import org.l2jmobius.gameserver.entity.actor.Attackable;
++import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.entity.actor.holders.npc.BuffSkillHolder;
++import org.l2jmobius.gameserver.handler.CommunityBoardHandler;
++import org.l2jmobius.gameserver.handler.IParseBoardHandler;
++import org.l2jmobius.gameserver.handler.VoicedCommandHandler;
++import org.l2jmobius.gameserver.managers.phantom.PhantomHunterManager;
++import org.l2jmobius.gameserver.managers.ScriptManager;
++import org.l2jmobius.gameserver.managers.phantom.PhantomManager;
++import org.l2jmobius.gameserver.mechanics.script.LongTimeEvent;
++import org.l2jmobius.gameserver.mechanics.script.Quest;
++
++/**
++ * L2Hub: самопроверка модов на сервере, без игрока (только чтение).<br>
++ * Через минуту после старта, когда мир заспавнен, сверяет то, что можно проверить без клиента: баффер и GM-шоп у
++ * гейткиперов (спавны и мультиселлы), бафы баффера на максимальном уровне и на 3 часа, чемпионов в мире, доску Alt+B,
++ * команды .buddy и .hunters, окно моба по Shift+клику, фантомов, сезонные события (календарь L2HubEvents.ini). Итог — строки в лог и log/L2HubSelfTest.json
++ * (его читает лаунчер). Выключить — Enabled = False в config/Custom/L2HubSelfTest.ini.
++ * @author L2Hub
++ */
++public class L2HubSelfTest
++{
++	private static final Logger LOGGER = Logger.getLogger(L2HubSelfTest.class.getName());
++	private static final Path CONFIG = Paths.get("./config/Custom/L2HubSelfTest.ini");
++	private static final Path REPORT = Paths.get("./log/L2HubSelfTest.json");
++	private static final Path TOWN_SPAWNS = Paths.get("./data/spawns/Custom/L2HubTownNpcs.xml");
++	private static final Path NPC_VIEW_DROP = Paths.get("./data/html/mods/NpcView/DropList.htm");
++	private static final Path MERCHANT_HTML = Paths.get("./data/html/merchant");
++	private static final int TOWN_BUFFER = 50008;
++	private static final int TOWN_SHOP = 50010;
++	private static final int BUFF_DURATION = 10800;
++	private static final long FIRST_DELAY = 60_000;
++	private static final long RETRY_DELAY = 30_000;
++	private static final int ATTEMPTS = 10;
++
++	private record Check(String name, boolean ok, String detail)
++	{
++	}
++
++	private interface Probe
++	{
++		Check run() throws Exception;
++	}
++
++	private L2HubSelfTest()
++	{
++		ThreadPool.schedule(() -> run(1), FIRST_DELAY);
++	}
++
++	private void run(int attempt)
++	{
++		// Спавны поднимаются после скриптов: ждём, пока в мире появятся наши городские NPC.
++		if ((SpawnTable.getInstance().getSpawnCount(TOWN_BUFFER) == 0) && (attempt < ATTEMPTS))
++		{
++			ThreadPool.schedule(() -> run(attempt + 1), RETRY_DELAY);
++			return;
++		}
++
++		final List<Check> checks = new ArrayList<>();
++		probe(checks, "Баффер у гейткиперов", () -> townNpc(TOWN_BUFFER));
++		probe(checks, "GM-шоп у гейткиперов", () -> townNpc(TOWN_SHOP));
++		probe(checks, "GM-шоп: мультиселлы", L2HubSelfTest::shopMultisells);
++		probe(checks, "Баффер: бафы на максимуме", L2HubSelfTest::bufferLevels);
++		probe(checks, "Бафы на 3 часа", L2HubSelfTest::buffDurations);
++		probe(checks, "Чемпионы", L2HubSelfTest::champions);
++		probe(checks, "Доска Alt+B", L2HubSelfTest::board);
++		probe(checks, "Команды .buddy и .hunters", L2HubSelfTest::voiced);
++		probe(checks, "Живой мир: .daily и .raid", L2HubSelfTest::world);
++		probe(checks, "Окно моба по Shift+клику", L2HubSelfTest::npcView);
++		probe(checks, "Фантомы", L2HubSelfTest::phantoms);
++		probe(checks, "Сезонные события", L2HubSelfTest::seasonalEvents);
++		probe(checks, "Автолут", () -> new Check("", true, "живым — " + onOff(PlayerConfig.AUTO_LOOT) + ", травы — " + onOff(PlayerConfig.AUTO_LOOT_HERBS) + ", рейды — " + onOff(PlayerConfig.AUTO_LOOT_RAIDS)));
++
++		final long ok = checks.stream().filter(Check::ok).count();
++		LOGGER.info("L2Hub проверка модов: " + ok + " из " + checks.size() + " в порядке.");
++		for (Check check : checks)
++		{
++			if (check.ok())
++			{
++				LOGGER.info("L2Hub проверка модов: " + check.name() + " — " + check.detail());
++			}
++			else
++			{
++				LOGGER.warning("L2Hub проверка модов: " + check.name() + " — " + check.detail());
++			}
++		}
++		writeReport(checks);
++	}
++
++	private static void probe(List<Check> checks, String name, Probe probe)
++	{
++		try
++		{
++			final Check check = probe.run();
++			checks.add(new Check(name, check.ok(), check.detail()));
++		}
++		catch (Throwable e)
++		{
++			checks.add(new Check(name, false, "ошибка проверки: " + e));
++		}
++	}
++
++	private static Check townNpc(int npcId) throws Exception
++	{
++		final int expected = count(Files.readString(TOWN_SPAWNS, StandardCharsets.UTF_8), "id=\"" + npcId + "\"");
++		final int spawned = SpawnTable.getInstance().getSpawnCount(npcId);
++		final boolean template = NpcData.getInstance().getTemplate(npcId) != null;
++		return new Check("", template && (expected > 0) && (spawned == expected), "в мире " + spawned + " из " + expected + (template ? "" : ", нет шаблона NPC " + npcId));
++	}
++
++	@SuppressWarnings("unchecked")
++	private static Check shopMultisells() throws Exception
++	{
++		Field field;
++		try
++		{
++			field = MultisellData.class.getDeclaredField("_entries");
++		}
++		catch (NoSuchFieldException e)
++		{
++			field = MultisellData.class.getDeclaredField("_multisells"); // Classic, Essence
++		}
++		field.setAccessible(true);
++		final Map<Integer, ?> entries = (Map<Integer, ?>) field.get(MultisellData.getInstance());
++		final TreeSet<Integer> ids = new TreeSet<>();
++		try (DirectoryStream<Path> files = Files.newDirectoryStream(MERCHANT_HTML, TOWN_SHOP + "*.htm"))
++		{
++			for (Path file : files)
++			{
++				final Matcher m = Pattern.compile("multisell (\\d+)").matcher(Files.readString(file, StandardCharsets.UTF_8));
++				while (m.find())
++				{
++					ids.add(Integer.parseInt(m.group(1)));
++				}
++			}
++		}
++		final List<Integer> missing = ids.stream().filter(id -> !entries.containsKey(id)).toList();
++		return new Check("", !ids.isEmpty() && missing.isEmpty(), "списков в окнах " + ids.size() + (missing.isEmpty() ? ", все загружены" : ", нет: " + missing));
++	}
++
++	private static Check bufferLevels()
++	{
++		final TreeSet<Integer> ids = bufferSkills();
++		final List<String> low = new ArrayList<>();
++		for (int id : ids)
++		{
++			final BuffSkillHolder holder = SchemeBufferTable.getInstance().getAvailableBuff(id);
++			final int max = SkillData.getInstance().getMaxLevel(id);
++			if ((holder != null) && (holder.getLevel() < max))
++			{
++				low.add(id + " (" + holder.getLevel() + " из " + max + ")");
++			}
++		}
++		return new Check("", !ids.isEmpty() && low.isEmpty(), "бафов " + ids.size() + (low.isEmpty() ? ", все на максимальном уровне" : ", ниже максимума: " + low));
++	}
++
++	private static Check buffDurations()
++	{
++		final TreeSet<Integer> ids = bufferSkills();
++		if (!PlayerConfig.ENABLE_MODIFY_SKILL_DURATION || (PlayerConfig.SKILL_DURATION_LIST == null))
++		{
++			return new Check("", false, "EnableModifySkillDuration выключен в Player.ini — бафы стандартной длины");
++		}
++		final List<Integer> missing = ids.stream().filter(id -> PlayerConfig.SKILL_DURATION_LIST.getOrDefault(id, 0) < BUFF_DURATION).toList();
++		return new Check("", missing.isEmpty(), "в SkillDurationList " + PlayerConfig.SKILL_DURATION_LIST.size() + " скиллов" + (missing.isEmpty() ? ", все бафы баффера — 3 часа" : ", бафы баффера короче 3 часов: " + missing));
++	}
++
++	private static TreeSet<Integer> bufferSkills()
++	{
++		final TreeSet<Integer> ids = new TreeSet<>();
++		for (String type : SchemeBufferTable.getInstance().getSkillTypes())
++		{
++			ids.addAll(SchemeBufferTable.getInstance().getSkillsIdsByType(type));
++		}
++		return ids;
++	}
++
++	private static Check champions()
++	{
++		int monsters = 0;
++		int blue = 0;
++		int red = 0;
++		for (WorldObject object : World.getVisibleObjects())
++		{
++			if ((object instanceof Attackable attackable) && attackable.isMonster())
++			{
++				monsters++;
++				if (attackable.isChampion())
++				{
++					if (attackable.getChampionTier() == ChampionMonstersConfig.CHAMPION_RED)
++					{
++						red++;
++					}
++					else
++					{
++						blue++;
++					}
++				}
++			}
++		}
++		if (!ChampionMonstersConfig.CHAMPION_ENABLE)
++		{
++			return new Check("", false, "ChampionEnable выключен в ChampionMonsters.ini");
++		}
++		return new Check("", (blue + red) > 0, "монстров в мире " + monsters + ", синих " + blue + ", красных " + red);
++	}
++
++	private static Check board()
++	{
++		final IParseBoardHandler hub = CommunityBoardHandler.getInstance().getHandler("_bbshubbuff");
++		final IParseBoardHandler home = CommunityBoardHandler.getInstance().getHandler("_bbshome");
++		final boolean ok = (hub != null) && hub.getClass().getSimpleName().equals("L2HubBoard") && CommunityBoardConfig.CUSTOM_CB_ENABLED;
++		return new Check("", ok, "L2HubBoard " + ((hub != null) ? "зарегистрирована" : "не зарегистрирована") + ", главная — " + ((home != null) ? home.getClass().getSimpleName() : "нет") + ", CustomCommunityBoard " + onOff(CommunityBoardConfig.CUSTOM_CB_ENABLED));
++	}
++
++	private static Check voiced()
++	{
++		final boolean buddy = VoicedCommandHandler.getInstance().getHandler("buddy") != null;
++		final boolean hunters = VoicedCommandHandler.getInstance().getHandler("hunters") != null;
++		return new Check("", buddy && hunters, ".buddy " + (buddy ? "есть" : "нет") + ", .hunters " + (hunters ? "есть" : "нет"));
++	}
++
++	private static Check world()
++	{
++		// Поручения дня (L2HubWorld.ini) и рейды охотников (PhantomHunters.ini) — общий модуль phantoms/core; выключены в конфиге — не ошибка.
++		final boolean daily = VoicedCommandHandler.getInstance().getHandler("daily") != null;
++		final boolean raid = VoicedCommandHandler.getInstance().getHandler("raid") != null;
++		final boolean dailyOn = L2HubWorldConfig.WORLD_DAILY;
++		return new Check("", (daily || !dailyOn) && raid, ".daily " + (daily ? "есть" : dailyOn ? "нет" : "выключены (WorldDaily)") + ", .raid " + (raid ? "есть" : "нет") + ", рейды охотников " + onOff(PhantomHuntersConfig.HUNTER_RAIDS));
++	}
++
++	private static Check npcView() throws Exception
++	{
++		final boolean russian = Files.isRegularFile(NPC_VIEW_DROP) && Files.readString(NPC_VIEW_DROP, StandardCharsets.UTF_8).chars().anyMatch(c -> (c >= 0x0400) && (c <= 0x04FF));
++		return new Check("", NpcConfig.ALT_GAME_VIEWNPC && russian, "AltGameViewNpc " + onOff(NpcConfig.ALT_GAME_VIEWNPC) + ", окно " + (russian ? "по-русски" : "не по-русски"));
++	}
++
++	private static Check phantoms()
++	{
++		int phantoms = 0;
++		int hunters = 0;
++		int live = 0;
++		for (Player player : World.getPlayers())
++		{
++			if (PhantomManager.getInstance().isPhantom(player))
++			{
++				phantoms++;
++				if (PhantomHunterManager.getInstance().isHunter(player))
++				{
++					hunters++;
++				}
++			}
++			else
++			{
++				live++;
++			}
++		}
++		return new Check("", true, "фантомов в мире " + phantoms + ", из них охотников " + hunters + ", живых игроков " + live);
++	}
++
++	private static Check seasonalEvents()
++	{
++		final List<String> active = new ArrayList<>();
++		final Set<Quest> seen = new HashSet<>();
++		int total = 0;
++		for (Map<String, Quest> scripts : List.of(ScriptManager.getInstance().getScripts(), ScriptManager.getInstance().getQuests()))
++		{
++			for (Quest script : scripts.values())
++			{
++				if ((script instanceof LongTimeEvent event) && seen.add(script))
++				{
++					total++;
++					if (event.isEventPeriod())
++					{
++						active.add(script.getName() + " до " + new SimpleDateFormat("dd.MM.yyyy").format(event.getEndDate()));
++					}
++				}
++			}
++		}
++		return new Check("", true, "загружено " + total + (active.isEmpty() ? ", сейчас не идёт ни одно" : ", идёт: " + String.join(", ", active)));
++	}
++	
++	private static String onOff(boolean value)
++	{
++		return value ? "вкл" : "выкл";
++	}
++
++	private static int count(String text, String needle)
++	{
++		int n = 0;
++		for (int i = text.indexOf(needle); i >= 0; i = text.indexOf(needle, i + needle.length()))
++		{
++			n++;
++		}
++		return n;
++	}
++
++	private static void writeReport(List<Check> checks)
++	{
++		final StringBuilder sb = new StringBuilder();
++		sb.append("{\"time\": \"").append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))).append("\", \"checks\": [");
++		for (int i = 0; i < checks.size(); i++)
++		{
++			final Check check = checks.get(i);
++			sb.append(i == 0 ? "\n" : ",\n").append("  {\"name\": ").append(json(check.name())).append(", \"ok\": ").append(check.ok()).append(", \"detail\": ").append(json(check.detail())).append('}');
++		}
++		sb.append("\n]}\n");
++		try
++		{
++			Files.writeString(REPORT, sb.toString(), StandardCharsets.UTF_8);
++		}
++		catch (Exception e)
++		{
++			LOGGER.warning("L2Hub проверка модов: не записать " + REPORT + ": " + e.getMessage());
++		}
++	}
++
++	private static String json(String value)
++	{
++		final StringBuilder sb = new StringBuilder("\"");
++		for (char c : value.toCharArray())
++		{
++			switch (c)
++			{
++				case '"' -> sb.append("\\\"");
++				case '\\' -> sb.append("\\\\");
++				case '\n' -> sb.append("\\n");
++				case '\r' -> sb.append("\\r");
++				case '\t' -> sb.append("\\t");
++				default -> sb.append(c < 0x20 ? String.format("\\u%04x", (int) c) : String.valueOf(c));
++			}
++		}
++		return sb.append('"').toString();
++	}
++
++	private static boolean enabled()
++	{
++		if (!Files.isRegularFile(CONFIG))
++		{
++			return true;
++		}
++		try (Reader reader = Files.newBufferedReader(CONFIG, StandardCharsets.UTF_8))
++		{
++			final Properties properties = new Properties();
++			properties.load(reader);
++			return !"false".equalsIgnoreCase(properties.getProperty("Enabled", "True").trim());
++		}
++		catch (Exception e)
++		{
++			return true;
++		}
++	}
++
++	public static void main(String[] args)
++	{
++		if (enabled())
++		{
++			new L2HubSelfTest();
++		}
++	}
++}

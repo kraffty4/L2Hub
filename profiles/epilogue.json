@@ -1,0 +1,15 @@
+{
+  "id": "epilogue",
+  "type": "mobius",
+  "build": "L2J_Mobius_CT_2.4_Epilogue",
+  "server": "servers/epilogue/server",
+  "database": "l2jmobiusepilogue",
+  "ports": { "db": 3306, "login": 2106, "game": 7777 },
+  "brain": { "port": 8771, "model": "deepseek-flash", "alphabet": "cyrillic" },
+  "client": {
+    "path": "C:\\Games\\Lineage2-Epilogue",
+    "exe": "system_ru\\L2.exe",
+    "system": "репак, система с L2.ini на 127.0.0.1; system_ru — язык Russia для русского ввода",
+    "protocol": 152
+  }
+}

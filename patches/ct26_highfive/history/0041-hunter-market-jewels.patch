@@ -1,0 +1,99 @@
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+index 7e2c813..37158b8 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+@@ -1820,10 +1820,12 @@ public class PhantomHunterManager
+ 		final TradeList list = player.getSellList();
+ 		list.clear();
+ 		list.setPackaged(false);
++		final List<String> names = new ArrayList<>();
+ 		for (Item item : goods.subList(0, Math.min(goods.size(), player.getPrivateSellStoreLimit())))
+ 		{
+ 			final long price = Math.max(1, Math.round(item.getTemplate().getReferencePrice() * factor));
+ 			list.addItem(item.getObjectId(), item.getCount(), price);
++			names.add(item.getName() + (item.getCount() > 1 ? " x" + item.getCount() : "") + " " + price);
+ 		}
+ 		if (list.getItemCount() == 0)
+ 		{
+@@ -1840,7 +1842,7 @@ public class PhantomHunterManager
+ 		hunter.storeTries = 0;
+ 		hunter.lastStoreSession = now;
+ 		hunter.phaseUntil = now + (Rnd.get(PhantomHuntersConfig.HUNTER_STORE_MIN_MINUTES, PhantomHuntersConfig.HUNTER_STORE_MAX_MINUTES) * 60000L);
+-		LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " opens a store in Giran: " + list.getItemCount() + " items, price x" + String.format(Locale.ROOT, "%.2f", factor) + ".");
++		LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " opens a store in Giran: " + list.getItemCount() + " items, price x" + String.format(Locale.ROOT, "%.2f", factor) + ": " + String.join(", ", names) + ".");
+ 		return true;
+ 	}
+ 
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterOutfit.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterOutfit.java
+index 7281821..2af2bed 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterOutfit.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterOutfit.java
+@@ -847,7 +847,7 @@ final class PhantomHunterOutfit
+ 
+ 	/**
+ 	 * Вещь из чужой лавки — апгрейд (патч 0035, рынок): те же правила, что у удачного дропа ({@link #equipBetterDrops}) — разрешённого грейда,
+-	 * того же вида, хвата и места, дороже надетого; бижутерию на рынке не берёт.
++	 * того же вида, хвата и места, дороже надетого; бижутерия — если наденет: есть пустой слот её вида или она дороже самой дешёвой надетой (патч 0041).
+ 	 * @param player охотник
+ 	 * @param item вещь продавца
+ 	 * @return надел бы вместо своей
+@@ -855,10 +855,14 @@ final class PhantomHunterOutfit
+ 	static boolean isUpgrade(Player player, Item item)
+ 	{
+ 		final ItemTemplate drop = item.getTemplate();
+-		if (!item.isEquipable() || (!item.isWeapon() && !item.isArmor()) || JEWELS.contains(drop.getBodyPart()) || (drop.getCrystalType().getLevel() > player.getExpertiseLevel()))
++		if (!item.isEquipable() || (!item.isWeapon() && !item.isArmor()) || (drop.getCrystalType().getLevel() > player.getExpertiseLevel()))
+ 		{
+ 			return false;
+ 		}
++		if (JEWELS.contains(drop.getBodyPart()))
++		{
++			return jewelUpgrade(player, drop);
++		}
+ 
+ 		final int slot = Inventory.getPaperdollIndex(drop.getBodyPart());
+ 		final Item current = slot < 0 ? null : player.getInventory().getPaperdollItem(slot);
+@@ -955,10 +959,28 @@ final class PhantomHunterOutfit
+ 		return 0;
+ 	}
+ 
+-	private static boolean equipJewel(Player player, Item item)
++	/**
++	 * Бижутерия с рынка (патч 0041): надел бы, как в {@link #equipJewel}, — есть пустой слот её вида или она дороже самой дешёвой надетой.
++	 */
++	private static boolean jewelUpgrade(Player player, ItemTemplate drop)
++	{
++		long cheapest = Long.MAX_VALUE;
++		for (int slot : jewelSlots(drop.getBodyPart()))
++		{
++			final Item worn = player.getInventory().getPaperdollItem(slot);
++			if (worn == null)
++			{
++				return true;
++			}
++			cheapest = Math.min(cheapest, worn.getTemplate().getReferencePrice());
++		}
++		return cheapest < drop.getReferencePrice();
++	}
++
++	private static int[] jewelSlots(BodyPart part)
+ 	{
+ 		final int[] slots;
+-		switch (item.getTemplate().getBodyPart())
++		switch (part)
+ 		{
+ 			case NECK:
+ 			{
+@@ -989,7 +1011,12 @@ final class PhantomHunterOutfit
+ 				break;
+ 			}
+ 		}
++		return slots;
++	}
+ 
++	private static boolean equipJewel(Player player, Item item)
++	{
++		final int[] slots = jewelSlots(item.getTemplate().getBodyPart());
+ 		Item cheapest = null;
+ 		for (int slot : slots)
+ 		{

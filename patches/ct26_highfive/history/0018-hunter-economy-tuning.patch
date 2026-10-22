@@ -1,0 +1,1159 @@
+diff --git a/dist/game/config/Custom/PhantomHunters.ini b/dist/game/config/Custom/PhantomHunters.ini
+index bbc7212..5f76f05 100644
+--- a/dist/game/config/Custom/PhantomHunters.ini
++++ b/dist/game/config/Custom/PhantomHunters.ini
+@@ -16,6 +16,12 @@ HuntersMode = ALWAYS
+ HuntersReset =
+ HuntersResetId = 0
+ 
++# Самопроверка без клиента (для разработки): LFM — охотник «кричит» «лфм нужен дд», откликнувшийся приходит,
++# принимает инвайт, минуту ходит в пати и возвращается на кач; шаги — в логе с пометкой SelfTest.
++# Выполняется один раз — когда меняется HuntersSelfTestId.
++HuntersSelfTest =
++HuntersSelfTestId = 0
++
+ # Режим WITH_PLAYERS: через столько секунд после выхода последнего живого игрока охотники уходят из мира.
+ HuntersIdleTimeout = 300
+ 
+@@ -31,6 +37,9 @@ HunterShotCount = 2000
+ # Запас стрел или болтов у лучников (покупаются первыми: без них лук не стреляет).
+ HunterAmmoCount = 3000
+ 
++# Запас хилок своего уровня (на банки — не больше четверти адены); AutoUse пьёт их на 40 % HP.
++HunterPotionCount = 30
++
+ # Плата за телепорт в город и обратно с 40 уровня (до 40 — бесплатно, как у новичков).
+ HunterTeleportFee = 15000
+ 
+diff --git a/dist/game/data/L2HubPhantoms.xml b/dist/game/data/L2HubPhantoms.xml
+index c88be91..64695f3 100644
+--- a/dist/game/data/L2HubPhantoms.xml
++++ b/dist/game/data/L2HubPhantoms.xml
+@@ -26,309 +26,309 @@
+ 	<!-- Kuzya: охотник, Dwarf Fighter, Artisan, Warsmith, Maestro -->
+ 	<phantom name="Kuzya" kind="hunter" role="DAMAGE" female="false" face="0" hairStyle="0" hairColor="3" classes="53,56,57,118" aliases="кузя;кузьма" x="115502" y="-177693" z="-904">
+ 		<gear grade="NONE" minLevel="1" rhand="2370" chest="1146" legs="1147" shots="1835" /> <!-- Guild Member's Club, Squire's Shirt, Squire's Pants -->
+-		<gear grade="D" minLevel="20" rhand="157" head="2411" chest="352" legs="2378" shots="1463" /> <!-- Spiked Club, Brigandine Helmet, Brigandine Tunic, Brigandine Gaiters -->
+-		<gear grade="C" minLevel="40" rhand="13186" head="2413" chest="354" legs="381" shots="1464" /> <!-- Player Commendation - Yaksa Mace - Player Commendation Weapon, Chain Hood, Chain Mail Shirt, Chain Gaiters -->
+-		<gear grade="B" minLevel="52" rhand="4753" head="2415" chest="2376" legs="2379" gloves="5714" feet="5730" shots="1465" /> <!-- Art of Battle Axe - Health, Avadon Circlet, Avadon Breastplate, Avadon Gaiters, Avadon Gloves - Heavy Armor, Avadon Boots - Heavy Armor -->
+-		<gear grade="A" minLevel="61" rhand="11141" head="547" chest="2382" gloves="5768" feet="5780" shots="1466" /> <!-- Barakiel's Axe - On Fire, Tallum Helm, Tallum Plate Armor, Tallum Gloves - Heavy Armor, Tallum Boots - Heavy Armor -->
+-		<gear grade="S" minLevel="76" rhand="11213" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" shots="1467" /> <!-- Basalt Battlehammer - Concentration - HP Regeneration, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots -->
+-		<gear grade="S80" minLevel="80" rhand="10454" head="9422" chest="9417" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Hammer - Rsk. Focus, Dynasty Helmet, Dynasty Breast Plate - Shield Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
+-		<gear grade="S84" minLevel="84" rhand="21950" head="13140" chest="13435" legs="13448" gloves="13449" feet="13450" shots="1467" /> <!-- Claw of Destruction - Landslide - HP Regeneration, Vesper Noble Helmet, Vesper Noble Breastplate, Vesper Noble Gaiters, Vesper Noble Gauntlet, Vesper Noble Boots -->
++		<gear grade="D" minLevel="20" rhand="168" head="2411" chest="352" legs="2378" shots="1463" /> <!-- Work Hammer, Brigandine Helmet, Brigandine Tunic, Brigandine Gaiters -->
++		<gear grade="C" minLevel="40" rhand="161" head="2413" chest="354" legs="381" shots="1464" /> <!-- Silver Axe, Chain Hood, Chain Mail Shirt, Chain Gaiters -->
++		<gear grade="B" minLevel="52" rhand="91" head="2415" chest="2376" legs="2379" gloves="5714" feet="5730" shots="1465" /> <!-- Heavy War Axe, Avadon Circlet, Avadon Breastplate, Avadon Gaiters, Avadon Gloves - Heavy Armor, Avadon Boots - Heavy Armor -->
++		<gear grade="A" minLevel="61" rhand="8763" head="547" chest="2382" gloves="5768" feet="5780" shots="1466" /> <!-- Elrokian Trap, Tallum Helm, Tallum Plate Armor, Tallum Gloves - Heavy Armor, Tallum Boots - Heavy Armor -->
++		<gear grade="S" minLevel="76" rhand="6365" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" shots="1467" /> <!-- Basalt Battlehammer, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots -->
++		<gear grade="S80" minLevel="80" rhand="10220" head="9422" chest="9417" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Hammer, Dynasty Helmet, Dynasty Breast Plate - Shield Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
++		<gear grade="S84" minLevel="84" rhand="15678" head="13140" chest="13435" legs="13448" gloves="13449" feet="13450" shots="1467" /> <!-- Triumph Hammer, Vesper Noble Helmet, Vesper Noble Breastplate, Vesper Noble Gaiters, Vesper Noble Gauntlet, Vesper Noble Boots -->
+ 	</phantom>
+ 	<!-- LunaTik: охотник, Elven Mystic, Elven Wizard, Spellsinger, Mystic Muse -->
+ 	<phantom name="LunaTik" kind="hunter" role="DAMAGE" female="true" face="0" hairStyle="3" hairColor="0" classes="25,26,27,103" aliases="луна;лунатик" x="46846" y="51112" z="-2992">
+ 		<gear grade="NONE" minLevel="1" rhand="6" chest="425" legs="461" shots="3947" /> <!-- Apprentice's Wand, Apprentice's Tunic, Apprentice's Stockings -->
+-		<gear grade="D" minLevel="20" rhand="13169" chest="436" legs="469" gloves="2447" shots="3948" /> <!-- Player Commendation - Atuba Mace - Player Commendation Weapon, Tunic of Knowledge, Stockings of Knowledge, Gloves of Knowledge -->
+-		<gear grade="C" minLevel="40" rhand="4872" chest="442" legs="473" gloves="2463" shots="3949" /> <!-- Heavy Doom Axe - Magic Chaos, Divine Tunic, Divine Stockings, Divine Gloves -->
+-		<gear grade="B" minLevel="52" rhand="10918" head="2416" chest="2398" legs="2403" gloves="5720" feet="5736" shots="3950" /> <!-- Sprite's Staff - Hail - Mental Shield, Blue Wolf Helmet, Blue Wolf Tunic, Blue Wolf Stockings, Blue Wolf Gloves - Robe, Blue Wolf Boots - Robe -->
+-		<gear grade="A" minLevel="61" rhand="11106" head="2418" chest="2408" gloves="5773" feet="5785" shots="3951" /> <!-- Branch of the Mother Tree - Nature - Magic Damage, Helm of Nightmare, Robe of Nightmare, Gauntlets of Nightmare - Robe, Boots of Nightmare - Robe -->
+-		<gear grade="S" minLevel="76" rhand="11230" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- Imperial Staff - Nature, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
++		<gear grade="D" minLevel="20" rhand="178" chest="436" legs="469" gloves="2447" shots="3948" /> <!-- Bone Staff, Tunic of Knowledge, Stockings of Knowledge, Gloves of Knowledge -->
++		<gear grade="C" minLevel="40" rhand="192" chest="442" legs="473" gloves="2463" shots="3949" /> <!-- Crystal Staff, Divine Tunic, Divine Stockings, Divine Gloves -->
++		<gear grade="B" minLevel="52" rhand="208" head="2416" chest="2398" legs="2403" gloves="5720" feet="5736" shots="3950" /> <!-- Staff of Seal, Blue Wolf Helmet, Blue Wolf Tunic, Blue Wolf Stockings, Blue Wolf Gloves - Robe, Blue Wolf Boots - Robe -->
++		<gear grade="A" minLevel="61" rhand="4903" head="2418" chest="2408" gloves="5773" feet="5785" shots="3951" /> <!-- Dasparion's Staff, Helm of Nightmare, Robe of Nightmare, Gauntlets of Nightmare - Robe, Boots of Nightmare - Robe -->
++		<gear grade="S" minLevel="76" rhand="6366" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- Imperial Staff, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
+ 		<gear grade="S80" minLevel="80" rhand="10222" head="9438" chest="9435" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall, Dynasty Circlet, Dynasty Tunic - Summoner, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
+-		<gear grade="S84" minLevel="84" rhand="14145" head="13139" chest="13434" legs="13444" gloves="13445" feet="13446" shots="3952" /> <!-- Vesper Singer - Empower, Vesper Circlet, Vesper Tunic, Vesper Stockings, Vesper Gloves, Vesper Shoes -->
++		<gear grade="S84" minLevel="84" rhand="15566" head="13139" chest="13434" legs="13444" gloves="13445" feet="13446" shots="3952" /> <!-- Black Visage, Vesper Circlet, Vesper Tunic, Vesper Stockings, Vesper Gloves, Vesper Shoes -->
+ 	</phantom>
+ 	<!-- Vovan: охотник, Human Fighter, Human Knight, Paladin, Phoenix Knight -->
+ 	<phantom name="Vovan" kind="hunter" role="TANK" female="false" face="1" hairStyle="2" hairColor="0" classes="0,4,5,90" aliases="вован;вова;вовчик" x="-84567" y="244226" z="-3728">
+ 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
+-		<gear grade="D" minLevel="20" rhand="130" head="2411" chest="352" legs="2378" lhand="2493" shots="1463" /> <!-- Elven Sword, Brigandine Helmet, Brigandine Tunic, Brigandine Gaiters, Brigandine Shield -->
+-		<gear grade="C" minLevel="40" rhand="4689" head="2414" chest="356" lhand="2497" shots="1464" /> <!-- Katana - Haste, Full Plate Helmet, Full Plate Armor, Full Plate Shield -->
++		<gear grade="D" minLevel="20" rhand="123" head="2411" chest="352" legs="2378" lhand="2493" shots="1463" /> <!-- Saber, Brigandine Helmet, Brigandine Tunic, Brigandine Gaiters, Brigandine Shield -->
++		<gear grade="C" minLevel="40" rhand="133" head="2414" chest="356" lhand="2497" shots="1464" /> <!-- Raid Sword, Full Plate Helmet, Full Plate Armor, Full Plate Shield -->
+ 		<gear grade="B" minLevel="52" rhand="142" head="2415" chest="2376" legs="2379" gloves="5714" feet="5730" lhand="673" shots="1465" /> <!-- Keshanberk, Avadon Circlet, Avadon Breastplate, Avadon Gaiters, Avadon Gloves - Heavy Armor, Avadon Boots - Heavy Armor, Avadon Shield -->
+-		<gear grade="A" minLevel="61" rhand="5647" head="547" chest="2382" gloves="5768" feet="5780" shots="1466" /> <!-- Dark Legion's Edge - Critical Damage, Tallum Helm, Tallum Plate Armor, Tallum Gloves - Heavy Armor, Tallum Boots - Heavy Armor -->
+-		<gear grade="S" minLevel="76" rhand="6581" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" lhand="6377" shots="1467" /> <!-- Forgotten Blade - Haste, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots, Imperial Crusader Shield -->
+-		<gear grade="S80" minLevel="80" rhand="11307" head="9422" chest="9419" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Sawsword - Destruction - Health, Dynasty Helmet, Dynasty Breast Plate - Force Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
+-		<gear grade="S84" minLevel="84" rhand="16058" head="13140" chest="13435" legs="13448" gloves="13449" feet="13450" lhand="13471" shots="1467" /> <!-- Vesper Cutter - Thunder - Focus, Vesper Noble Helmet, Vesper Noble Breastplate, Vesper Noble Gaiters, Vesper Noble Gauntlet, Vesper Noble Boots, Vesper Shield -->
++		<gear grade="A" minLevel="61" rhand="80" head="547" chest="2382" gloves="5768" feet="5780" shots="1466" /> <!-- Tallum Blade, Tallum Helm, Tallum Plate Armor, Tallum Gloves - Heavy Armor, Tallum Boots - Heavy Armor -->
++		<gear grade="S" minLevel="76" rhand="6364" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" lhand="6377" shots="1467" /> <!-- Forgotten Blade, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots, Imperial Crusader Shield -->
++		<gear grade="S80" minLevel="80" rhand="10215" head="9422" chest="9419" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Sawsword, Dynasty Helmet, Dynasty Breast Plate - Force Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
++		<gear grade="S84" minLevel="84" rhand="21919" head="13140" chest="13435" legs="13448" gloves="13449" feet="13450" lhand="13471" shots="1467" /> <!-- Hellblade, Vesper Noble Helmet, Vesper Noble Breastplate, Vesper Noble Gaiters, Vesper Noble Gauntlet, Vesper Noble Boots, Vesper Shield -->
+ 	</phantom>
+ 	<!-- Shadowmoth: охотник, Dark Fighter, Assassin, Abyss Walker, Ghost Hunter -->
+ 	<phantom name="Shadowmoth" kind="hunter" role="DAMAGE" female="false" face="0" hairStyle="2" hairColor="0" classes="31,35,36,108" aliases="шэдоу;шадоу;моль" x="9745" y="15868" z="-4568">
+ 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
+-		<gear grade="D" minLevel="20" rhand="224" chest="395" legs="417" feet="2424" shots="1463" /> <!-- Maingauche, Manticore Skin Shirt, Manticore Skin Gaiters, Manticore Skin Boots -->
+-		<gear grade="C" minLevel="40" rhand="232" chest="401" feet="2437" shots="1464" /> <!-- Dark Elven Dagger, Drake Leather Armor, Drake Leather Boots -->
+-		<gear grade="B" minLevel="52" rhand="10928" head="2417" chest="2392" gloves="5723" feet="5739" shots="1465" /> <!-- Kris - Confusion - Focus, Doom Helmet, Leather Armor of Doom, Doom Gloves - Light Armor, Doom Boots - Light Armor -->
+-		<gear grade="A" minLevel="61" rhand="4785" head="2419" chest="2395" gloves="5775" feet="5787" shots="1466" /> <!-- Bloody Orchid - Back Blow, Majestic Circlet, Majestic Leather Armor, Majestic Gauntlets - Light Armor, Majestic Boots - Light Armor -->
+-		<gear grade="S" minLevel="76" rhand="6592" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Angel Slayer - Haste, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
+-		<gear grade="S80" minLevel="80" rhand="11301" head="9429" chest="9425" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Disperser - Confusion, Dynasty Leather Helmet, Dynasty Leather Armor, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
+-		<gear grade="S84" minLevel="84" rhand="16045" head="13141" chest="13436" legs="13451" gloves="13452" feet="13453" shots="1467" /> <!-- Vesper Shaper - Gale, Vesper Noble Leather Helmet, Vesper Noble Leather Breastplate, Vesper Noble Leather Leggings, Vesper Noble Leather Gloves, Vesper Noble Leather Boots -->
++		<gear grade="D" minLevel="20" rhand="4028" chest="395" legs="417" feet="2424" shots="1463" /> <!-- Giant Cannon, Manticore Skin Shirt, Manticore Skin Gaiters, Manticore Skin Boots -->
++		<gear grade="C" minLevel="40" rhand="226" chest="401" feet="2437" shots="1464" /> <!-- Cursed Dagger, Drake Leather Armor, Drake Leather Boots -->
++		<gear grade="B" minLevel="52" rhand="229" head="2417" chest="2392" gloves="5723" feet="5739" shots="1465" /> <!-- Kris, Doom Helmet, Leather Armor of Doom, Doom Gloves - Light Armor, Doom Boots - Light Armor -->
++		<gear grade="A" minLevel="61" rhand="235" head="2419" chest="2395" gloves="5775" feet="5787" shots="1466" /> <!-- Bloody Orchid, Majestic Circlet, Majestic Leather Armor, Majestic Gauntlets - Light Armor, Majestic Boots - Light Armor -->
++		<gear grade="S" minLevel="76" rhand="237" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Dragon's Tooth, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
++		<gear grade="S80" minLevel="80" rhand="10216" head="9429" chest="9425" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Disperser, Dynasty Leather Helmet, Dynasty Leather Armor, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
++		<gear grade="S84" minLevel="84" rhand="15559" head="13141" chest="13436" legs="13451" gloves="13452" feet="13453" shots="1467" /> <!-- Skull Edge, Vesper Noble Leather Helmet, Vesper Noble Leather Breastplate, Vesper Noble Leather Leggings, Vesper Noble Leather Gloves, Vesper Noble Leather Boots -->
+ 	</phantom>
+ 	<!-- Pupsik: охотник, Orc Fighter, Orc Raider, Destroyer, Titan -->
+ 	<phantom name="Pupsik" kind="hunter" role="DAMAGE" female="true" face="0" hairStyle="1" hairColor="2" classes="44,45,46,113" aliases="пупсик;пупс" x="-45070" y="-111953" z="-240">
+ 		<gear grade="NONE" minLevel="1" rhand="2368" chest="1146" legs="1147" shots="1835" /> <!-- Training Gloves, Squire's Shirt, Squire's Pants -->
+-		<gear grade="D" minLevel="20" rhand="13164" head="2411" chest="352" legs="2378" shots="1463" /> <!-- Player Commendation - Claymore - Player Commendation Weapon, Brigandine Helmet, Brigandine Tunic, Brigandine Gaiters -->
+-		<gear grade="C" minLevel="40" rhand="8103" head="2413" chest="354" legs="381" shots="1464" /> <!-- Pa'agrian Sword - Health, Chain Hood, Chain Mail Shirt, Chain Gaiters -->
+-		<gear grade="B" minLevel="52" rhand="4723" head="2417" chest="2381" gloves="5722" feet="5738" shots="1465" /> <!-- Great Sword - Health, Doom Helmet, Doom Plate Armor, Doom Gloves - Heavy Armor, Doom Boots - Heavy Armor -->
+-		<gear grade="A" minLevel="61" rhand="13043" head="2419" chest="2383" gloves="5774" feet="5786" shots="1466" /> <!-- Enhanced Ancient Legacy Sword, Majestic Circlet, Majestic Plate Armor, Majestic Gauntlets - Heavy Armor, Majestic Boots - Heavy Armor -->
+-		<gear grade="S" minLevel="76" rhand="11239" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" shots="1467" /> <!-- Heaven's Divider - Thunder, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots -->
+-		<gear grade="S80" minLevel="80" rhand="11343" head="9422" chest="9420" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Heavy Arms - Lightning - Health, Dynasty Helmet, Dynasty Breast Plate - Bard, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
+-		<gear grade="S84" minLevel="84" rhand="14121" head="13140" chest="13435" legs="13448" gloves="13449" feet="13450" shots="1467" /> <!-- Vesper Slasher - Haste, Vesper Noble Helmet, Vesper Noble Breastplate, Vesper Noble Gaiters, Vesper Noble Gauntlet, Vesper Noble Boots -->
++		<gear grade="D" minLevel="20" rhand="7880" head="2411" chest="352" legs="2378" shots="1463" /> <!-- Steel Sword, Brigandine Helmet, Brigandine Tunic, Brigandine Gaiters -->
++		<gear grade="C" minLevel="40" rhand="71" head="2413" chest="354" legs="381" shots="1464" /> <!-- Flamberge, Chain Hood, Chain Mail Shirt, Chain Gaiters -->
++		<gear grade="B" minLevel="52" rhand="78" head="2417" chest="2381" gloves="5722" feet="5738" shots="1465" /> <!-- Great Sword, Doom Helmet, Doom Plate Armor, Doom Gloves - Heavy Armor, Doom Boots - Heavy Armor -->
++		<gear grade="A" minLevel="61" rhand="7884" head="2419" chest="2383" gloves="5774" feet="5786" shots="1466" /> <!-- Infernal Master, Majestic Circlet, Majestic Plate Armor, Majestic Gauntlets - Heavy Armor, Majestic Boots - Heavy Armor -->
++		<gear grade="S" minLevel="76" rhand="6372" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" shots="1467" /> <!-- Heaven's Divider, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots -->
++		<gear grade="S80" minLevel="80" rhand="10218" head="9422" chest="9420" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Heavy Arms, Dynasty Helmet, Dynasty Breast Plate - Bard, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
++		<gear grade="S84" minLevel="84" rhand="13458" head="13140" chest="13435" legs="13448" gloves="13449" feet="13450" shots="1467" /> <!-- Vesper Slasher, Vesper Noble Helmet, Vesper Noble Breastplate, Vesper Noble Gaiters, Vesper Noble Gauntlet, Vesper Noble Boots -->
+ 	</phantom>
+ 	<!-- Bezumnyi: охотник, Human Fighter, Rogue, Hawkeye, Sagittarius -->
+ 	<phantom name="Bezumnyi" kind="hunter" role="DAMAGE" female="false" face="2" hairStyle="1" hairColor="1" classes="0,7,9,92" aliases="безумный;безум;безя" x="-84286" y="244791" z="-3728">
+ 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
+-		<gear grade="D" minLevel="20" rhand="276" chest="394" legs="416" feet="2422" shots="1463" /> <!-- Elven Bow, Reinforced Leather Shirt, Reinforced Leather Gaiters, Reinforced Leather Boots -->
+-		<gear grade="C" minLevel="40" rhand="4815" chest="400" legs="420" feet="2436" shots="1464" /> <!-- Elemental Bow - Quick Recovery, Theca Leather Armor, Theca Leather Gaiters, Theca Leather Boots -->
+-		<gear grade="B" minLevel="52" rhand="4826" head="2416" chest="2391" gloves="5719" feet="5735" shots="1465" /> <!-- Dark Elven Long Bow - Critical Bleed, Blue Wolf Helmet, Blue Wolf Leather Armor, Blue Wolf Gloves - Light Armor, Blue Wolf Boots - Light Armor -->
+-		<gear grade="A" minLevel="61" rhand="11055" head="2418" chest="2394" gloves="5772" feet="5784" shots="1466" /> <!-- Carnage Bow - Concentration - Critical Bleed, Helm of Nightmare, Leather Armor of Nightmare, Gauntlets of Nightmare - Light Armor, Boots of Nightmare - Light Armor -->
+-		<gear grade="S" minLevel="76" rhand="6595" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Shining Bow - Critical Slow, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
+-		<gear grade="S80" minLevel="80" rhand="10444" head="9429" chest="10126" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Spitter - Guidance, Dynasty Leather Helmet, Dynasty Leather Armor - Force Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
+-		<gear grade="S84" minLevel="84" rhand="14150" head="13138" chest="13433" legs="13441" gloves="13442" feet="13443" shots="1467" /> <!-- Vesper Thrower - Critical Slow, Vesper Leather Helmet, Vesper Leather Breastplate, Vesper Leather Leggings, Vesper Leather Gloves, Vesper Leather Boots -->
++		<gear grade="D" minLevel="20" rhand="274" chest="394" legs="416" feet="2422" shots="1463" /> <!-- Reinforced Bow, Reinforced Leather Shirt, Reinforced Leather Gaiters, Reinforced Leather Boots -->
++		<gear grade="C" minLevel="40" rhand="285" chest="400" legs="420" feet="2436" shots="1464" /> <!-- Noble Elven Bow, Theca Leather Armor, Theca Leather Gaiters, Theca Leather Boots -->
++		<gear grade="B" minLevel="52" rhand="284" head="2416" chest="2391" gloves="5719" feet="5735" shots="1465" /> <!-- Dark Elven Long Bow, Blue Wolf Helmet, Blue Wolf Leather Armor, Blue Wolf Gloves - Light Armor, Blue Wolf Boots - Light Armor -->
++		<gear grade="A" minLevel="61" rhand="288" head="2418" chest="2394" gloves="5772" feet="5784" shots="1466" /> <!-- Carnage Bow, Helm of Nightmare, Leather Armor of Nightmare, Gauntlets of Nightmare - Light Armor, Boots of Nightmare - Light Armor -->
++		<gear grade="S" minLevel="76" rhand="7575" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Draconic Bow, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
++		<gear grade="S80" minLevel="80" rhand="10223" head="9429" chest="10126" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Spitter, Dynasty Leather Helmet, Dynasty Leather Armor - Force Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
++		<gear grade="S84" minLevel="84" rhand="15686" head="13138" chest="13433" legs="13441" gloves="13442" feet="13443" shots="1467" /> <!-- Triumph Bow, Vesper Leather Helmet, Vesper Leather Breastplate, Vesper Leather Leggings, Vesper Leather Gloves, Vesper Leather Boots -->
+ 	</phantom>
+ 	<!-- Glad1ator: охотник, Human Fighter, Warrior, Gladiator, Duelist -->
+ 	<phantom name="Glad1ator" kind="hunter" role="DAMAGE" female="false" face="1" hairStyle="3" hairColor="3" classes="0,1,2,88" aliases="глад;гладиатор" x="-84527" y="244303" z="-3728">
+ 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
+-		<gear grade="D" minLevel="20" rhand="2530" head="2411" chest="352" legs="2378" shots="1463" /> <!-- Bastard Sword*Elven Sword, Brigandine Helmet, Brigandine Tunic, Brigandine Gaiters -->
+-		<gear grade="C" minLevel="40" rhand="2554" head="2414" chest="356" shots="1464" /> <!-- Crimson Sword*Elven Long Sword, Full Plate Helmet, Full Plate Armor -->
+-		<gear grade="B" minLevel="52" rhand="2570" head="2415" chest="2376" legs="2379" gloves="5714" feet="5730" shots="1465" /> <!-- Stormbringer*Tsurugi, Avadon Circlet, Avadon Breastplate, Avadon Gaiters, Avadon Gloves - Heavy Armor, Avadon Boots - Heavy Armor -->
+-		<gear grade="A" minLevel="61" rhand="8938" head="547" chest="2382" gloves="5768" feet="5780" shots="1466" /> <!-- Damascus * Tallum Blade, Tallum Helm, Tallum Plate Armor, Tallum Gloves - Heavy Armor, Tallum Boots - Heavy Armor -->
+-		<gear grade="S" minLevel="76" rhand="14570" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" shots="1467" /> <!-- Dual Sword of Hunter Family, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots -->
+-		<gear grade="S80" minLevel="80" rhand="15300" head="9422" chest="10228" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Transparent Dual (for NPC), Dynasty Helmet, Dynasty Platinum Plate - Shield Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
+-		<gear grade="S84" minLevel="84" rhand="16154" head="13140" chest="13435" legs="13448" gloves="13449" feet="13450" shots="1467" /> <!-- Periel Dual Sword, Vesper Noble Helmet, Vesper Noble Breastplate, Vesper Noble Gaiters, Vesper Noble Gauntlet, Vesper Noble Boots -->
++		<gear grade="D" minLevel="20" rhand="5129" head="2411" chest="352" legs="2378" shots="1463" /> <!-- Doll Knife, Brigandine Helmet, Brigandine Tunic, Brigandine Gaiters -->
++		<gear grade="C" minLevel="40" rhand="2553" head="2414" chest="356" shots="1464" /> <!-- Crimson Sword*Sword of Revolution, Full Plate Helmet, Full Plate Armor -->
++		<gear grade="B" minLevel="52" rhand="2615" head="2415" chest="2376" legs="2379" gloves="5714" feet="5730" shots="1465" /> <!-- Sword of Limit*Tsurugi, Avadon Circlet, Avadon Breastplate, Avadon Gaiters, Avadon Gloves - Heavy Armor, Avadon Boots - Heavy Armor -->
++		<gear grade="A" minLevel="61" rhand="5233" head="547" chest="2382" gloves="5768" feet="5780" shots="1466" /> <!-- Keshanberk*Keshanberk, Tallum Helm, Tallum Plate Armor, Tallum Gloves - Heavy Armor, Tallum Boots - Heavy Armor -->
++		<gear grade="S" minLevel="76" rhand="6580" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" shots="1467" /> <!-- Tallum Blade*Dark Legion's Edge, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots -->
++		<gear grade="S80" minLevel="80" rhand="10415" head="9422" chest="10228" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Dual Sword, Dynasty Helmet, Dynasty Platinum Plate - Shield Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
++		<gear grade="S84" minLevel="84" rhand="52" head="13140" chest="13435" legs="13448" gloves="13449" feet="13450" shots="1467" /> <!-- Vesper Dual Sword, Vesper Noble Helmet, Vesper Noble Breastplate, Vesper Noble Gaiters, Vesper Noble Gauntlet, Vesper Noble Boots -->
+ 	</phantom>
+ 	<!-- Alenka: охотник, Elven Mystic, Elven Oracle, Elven Elder, Eva's Saint -->
+ 	<phantom name="Alenka" kind="hunter" role="HEALER" female="true" face="2" hairStyle="6" hairColor="3" classes="25,29,30,105" aliases="алёнка;аленка;алена;алёна" x="47399" y="51631" z="-2992">
+ 		<gear grade="NONE" minLevel="1" rhand="6" chest="425" legs="461" shots="3947" /> <!-- Apprentice's Wand, Apprentice's Tunic, Apprentice's Stockings -->
+-		<gear grade="D" minLevel="20" rhand="181" chest="436" legs="469" gloves="2447" shots="3948" /> <!-- Mace of Miracle, Tunic of Knowledge, Stockings of Knowledge, Gloves of Knowledge -->
+-		<gear grade="C" minLevel="40" rhand="7701" chest="441" legs="472" gloves="2459" shots="3949" /> <!-- Stick of Faith - Mana Up, Demon's Tunic, Demon's Stockings, Demon's Gloves -->
+-		<gear grade="B" minLevel="52" rhand="8146" head="2416" chest="2398" legs="2403" gloves="5720" feet="5736" shots="3950" /> <!-- Kaim Vanul's Bones - Conversion, Blue Wolf Helmet, Blue Wolf Tunic, Blue Wolf Stockings, Blue Wolf Gloves - Robe, Blue Wolf Boots - Robe -->
+-		<gear grade="A" minLevel="61" rhand="8817" head="2418" chest="2408" gloves="5773" feet="5785" shots="3951" /> <!-- Cabrio's Hand - Magic Silence, Helm of Nightmare, Robe of Nightmare, Gauntlets of Nightmare - Robe, Boots of Nightmare - Robe -->
+-		<gear grade="S" minLevel="76" rhand="9875" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- Dynasty Mace - Mana Up, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
+-		<gear grade="S80" minLevel="80" rhand="11346" head="9438" chest="10238" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall - Hail - Mana Up, Dynasty Circlet, Dynasty Silver Satin Tunic - Summoner, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
+-		<gear grade="S84" minLevel="84" rhand="16080" head="13139" chest="13434" legs="13444" gloves="13445" feet="13446" shots="3952" /> <!-- Vesper Caster - Cleverness - Acumen, Vesper Circlet, Vesper Tunic, Vesper Stockings, Vesper Gloves, Vesper Shoes -->
++		<gear grade="D" minLevel="20" rhand="180" chest="436" legs="469" gloves="2447" shots="3948" /> <!-- Mace of Judgment, Tunic of Knowledge, Stockings of Knowledge, Gloves of Knowledge -->
++		<gear grade="C" minLevel="40" rhand="193" chest="441" legs="472" gloves="2459" shots="3949" /> <!-- Stick of Faith, Demon's Tunic, Demon's Stockings, Demon's Gloves -->
++		<gear grade="B" minLevel="52" rhand="7892" head="2416" chest="2398" legs="2403" gloves="5720" feet="5736" shots="3950" /> <!-- Spell Breaker, Blue Wolf Helmet, Blue Wolf Tunic, Blue Wolf Stockings, Blue Wolf Gloves - Robe, Blue Wolf Boots - Robe -->
++		<gear grade="A" minLevel="61" rhand="7894" head="2418" chest="2408" gloves="5773" feet="5785" shots="3951" /> <!-- Spiritual Eye, Helm of Nightmare, Robe of Nightmare, Gauntlets of Nightmare - Robe, Boots of Nightmare - Robe -->
++		<gear grade="S" minLevel="76" rhand="6579" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- Arcana Mace, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
++		<gear grade="S80" minLevel="80" rhand="10222" head="9438" chest="10238" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall, Dynasty Circlet, Dynasty Silver Satin Tunic - Summoner, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
++		<gear grade="S84" minLevel="84" rhand="15565" head="13139" chest="13434" legs="13444" gloves="13445" feet="13446" shots="3952" /> <!-- Rising Star, Vesper Circlet, Vesper Tunic, Vesper Stockings, Vesper Gloves, Vesper Shoes -->
+ 	</phantom>
+ 	<!-- Krosh: охотник, Male Kamael Soldier, Trooper, Berserker, Doombringer -->
+ 	<phantom name="Krosh" kind="hunter" role="DAMAGE" female="false" face="1" hairStyle="2" hairColor="0" classes="123,125,127,131" aliases="крош;кроша" x="-116586" y="46706" z="360">
+ 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
+-		<gear grade="D" minLevel="20" rhand="9223" chest="394" legs="416" feet="2422" shots="1463" /> <!-- Katzbalger, Reinforced Leather Shirt, Reinforced Leather Gaiters, Reinforced Leather Boots -->
+-		<gear grade="C" minLevel="40" rhand="9287" chest="397" legs="2387" feet="62" shots="1464" /> <!-- Immortal Edge - Critical Drain, Mithril Shirt, Reinforced Mithril Gaiters, Reinforced Mithril Boots -->
+-		<gear grade="B" minLevel="52" rhand="10885" head="503" chest="2384" legs="2388" gloves="5711" feet="5727" shots="1465" /> <!-- Innominate Victory - Lightning - Focus, Zubei's Helmet, Zubei's Leather Shirt, Zubei's Leather Gaiters, Zubei's Gauntlets - Light Armor, Zubei's Boots - Light Armor -->
+-		<gear grade="A" minLevel="61" rhand="11156" head="512" chest="2385" legs="2389" gloves="5766" feet="5778" shots="1466" /> <!-- Bultgang - Earth - Health, Dark Crystal Helmet, Dark Crystal Leather Armor, Dark Crystal Leggings, Dark Crystal Gloves - Light Armor, Dark Crystal Boots - Light Armor -->
+-		<gear grade="S" minLevel="76" rhand="15324" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Player Commendation - Gram - Player Recommendation Weapon, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
+-		<gear grade="S80" minLevel="80" rhand="11328" head="9429" chest="10168" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Wingblade - Lightning - Light, Dynasty Leather Helmet, Dynasty Leather Armor - Enchanter, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
+-		<gear grade="S84" minLevel="84" rhand="15908" head="13138" chest="13433" legs="13441" gloves="13442" feet="13443" shots="1467" /> <!-- Pyseal Blade - Haste, Vesper Leather Helmet, Vesper Leather Breastplate, Vesper Leather Leggings, Vesper Leather Gloves, Vesper Leather Boots -->
++		<gear grade="D" minLevel="20" rhand="9211" chest="394" legs="416" feet="2422" shots="1463" /> <!-- Talwar, Reinforced Leather Shirt, Reinforced Leather Gaiters, Reinforced Leather Boots -->
++		<gear grade="C" minLevel="40" rhand="9232" chest="397" legs="2387" feet="62" shots="1464" /> <!-- Schlager, Mithril Shirt, Reinforced Mithril Gaiters, Reinforced Mithril Boots -->
++		<gear grade="B" minLevel="52" rhand="9308" head="503" chest="2384" legs="2388" gloves="5711" feet="5727" shots="1465" /> <!-- Innominate Victory, Zubei's Helmet, Zubei's Leather Shirt, Zubei's Leather Gaiters, Zubei's Gauntlets - Light Armor, Zubei's Boots - Light Armor -->
++		<gear grade="A" minLevel="61" rhand="9332" head="512" chest="2385" legs="2389" gloves="5766" feet="5778" shots="1466" /> <!-- Divine Pain, Dark Crystal Helmet, Dark Crystal Leather Armor, Dark Crystal Leggings, Dark Crystal Gloves - Light Armor, Dark Crystal Boots - Light Armor -->
++		<gear grade="S" minLevel="76" rhand="9368" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Gram, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
++		<gear grade="S80" minLevel="80" rhand="10225" head="9429" chest="10168" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Wingblade, Dynasty Leather Helmet, Dynasty Leather Armor - Enchanter, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
++		<gear grade="S84" minLevel="84" rhand="13470" head="13138" chest="13433" legs="13441" gloves="13442" feet="13443" shots="1467" /> <!-- Vesper Nagan, Vesper Leather Helmet, Vesper Leather Breastplate, Vesper Leather Leggings, Vesper Leather Gloves, Vesper Leather Boots -->
+ 	</phantom>
+ 	<!-- Morok: охотник, Dark Mystic, Dark Wizard, Spellhowler, Storm Screamer -->
+ 	<phantom name="Morok" kind="hunter" role="DAMAGE" female="false" face="0" hairStyle="3" hairColor="1" classes="38,39,40,110" aliases="морок" x="9919" y="15868" z="-4568">
+ 		<gear grade="NONE" minLevel="1" rhand="6" chest="425" legs="461" shots="3947" /> <!-- Apprentice's Wand, Apprentice's Tunic, Apprentice's Stockings -->
+ 		<gear grade="D" minLevel="20" rhand="178" chest="436" legs="469" gloves="2447" shots="3948" /> <!-- Bone Staff, Tunic of Knowledge, Stockings of Knowledge, Gloves of Knowledge -->
+-		<gear grade="C" minLevel="40" rhand="13181" chest="439" legs="471" gloves="2454" shots="3949" /> <!-- Player Commendation - Devil's Wand - Player Commendation Weapon, Karmian Tunic, Karmian Stockings, Karmian Gloves -->
+-		<gear grade="B" minLevel="52" rhand="211" head="503" chest="2397" legs="2402" gloves="5712" feet="5728" shots="3950" /> <!-- Staff of Nobility, Zubei's Helmet, Tunic of Zubei, Stockings of Zubei, Zubei's Gauntlets - Robe, Zubei's Boots - Robe -->
+-		<gear grade="A" minLevel="61" rhand="11104" head="547" chest="2400" legs="2405" gloves="5770" feet="5782" shots="3951" /> <!-- Branch of the Mother Tree - Nature, Tallum Helm, Tallum Tunic, Tallum Stockings, Tallum Gloves - Robe, Tallum Boots - Robe -->
+-		<gear grade="S" minLevel="76" rhand="11232" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- Imperial Staff - Nature - MP Regeneration, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
+-		<gear grade="S80" minLevel="80" rhand="11348" head="9438" chest="9436" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall - Hail - Acumen, Dynasty Circlet, Dynasty Tunic - Wizard, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
+-		<gear grade="S84" minLevel="84" rhand="16085" head="13139" chest="13434" legs="13444" gloves="13445" feet="13446" shots="3952" /> <!-- Vesper Singer - Hail - Magic Hold, Vesper Circlet, Vesper Tunic, Vesper Stockings, Vesper Gloves, Vesper Shoes -->
++		<gear grade="C" minLevel="40" rhand="195" chest="439" legs="471" gloves="2454" shots="3949" /> <!-- Cursed Staff, Karmian Tunic, Karmian Stockings, Karmian Gloves -->
++		<gear grade="B" minLevel="52" rhand="208" head="503" chest="2397" legs="2402" gloves="5712" feet="5728" shots="3950" /> <!-- Staff of Seal, Zubei's Helmet, Tunic of Zubei, Stockings of Zubei, Zubei's Gauntlets - Robe, Zubei's Boots - Robe -->
++		<gear grade="A" minLevel="61" rhand="4905" head="547" chest="2400" legs="2405" gloves="5770" feet="5782" shots="3951" /> <!-- Dasparion's Staff, Tallum Helm, Tallum Tunic, Tallum Stockings, Tallum Gloves - Robe, Tallum Boots - Robe -->
++		<gear grade="S" minLevel="76" rhand="6366" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- Imperial Staff, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
++		<gear grade="S80" minLevel="80" rhand="10222" head="9438" chest="9436" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall, Dynasty Circlet, Dynasty Tunic - Wizard, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
++		<gear grade="S84" minLevel="84" rhand="15566" head="13139" chest="13434" legs="13444" gloves="13445" feet="13446" shots="3952" /> <!-- Black Visage, Vesper Circlet, Vesper Tunic, Vesper Stockings, Vesper Gloves, Vesper Shoes -->
+ 	</phantom>
+ 	<!-- Sanchez: охотник, Human Fighter, Rogue, Treasure Hunter, Adventurer -->
+ 	<phantom name="Sanchez" kind="hunter" role="DAMAGE" female="false" face="1" hairStyle="4" hairColor="0" classes="0,7,8,93" aliases="санчез;саня;санек;санёк" x="-84668" y="244434" z="-3728">
+ 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
+-		<gear grade="D" minLevel="20" rhand="13170" chest="394" legs="416" feet="2422" shots="1463" /> <!-- Player Commendation - Mithril Dagger - Player Commendation Weapon, Reinforced Leather Shirt, Reinforced Leather Gaiters, Reinforced Leather Boots -->
+-		<gear grade="C" minLevel="40" rhand="4759" chest="400" legs="420" feet="2436" shots="1464" /> <!-- Cursed Dagger - Critical Bleed, Theca Leather Armor, Theca Leather Gaiters, Theca Leather Boots -->
+-		<gear grade="B" minLevel="52" rhand="10926" head="2416" chest="2391" gloves="5719" feet="5735" shots="1465" /> <!-- Kris - Confusion, Blue Wolf Helmet, Blue Wolf Leather Armor, Blue Wolf Gloves - Light Armor, Blue Wolf Boots - Light Armor -->
+-		<gear grade="A" minLevel="61" rhand="5615" head="2418" chest="2394" gloves="5772" feet="5784" shots="1466" /> <!-- Bloody Orchid - Back Blow, Helm of Nightmare, Leather Armor of Nightmare, Gauntlets of Nightmare - Light Armor, Boots of Nightmare - Light Armor -->
+-		<gear grade="S" minLevel="76" rhand="6592" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Angel Slayer - Haste, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
+-		<gear grade="S80" minLevel="80" rhand="10447" head="9429" chest="10233" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Disperser - Evasion, Dynasty Leather Helmet, Dynasty Jewel Leather Armor - Dagger Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
+-		<gear grade="S84" minLevel="84" rhand="15876" head="13138" chest="13433" legs="13441" gloves="13442" feet="13443" shots="1467" /> <!-- Mamba Edge - HP Drain, Vesper Leather Helmet, Vesper Leather Breastplate, Vesper Leather Leggings, Vesper Leather Gloves, Vesper Leather Boots -->
++		<gear grade="D" minLevel="20" rhand="5131" chest="394" legs="416" feet="2422" shots="1463" /> <!-- Parhit Staff, Reinforced Leather Shirt, Reinforced Leather Gaiters, Reinforced Leather Boots -->
++		<gear grade="C" minLevel="40" rhand="230" chest="400" legs="420" feet="2436" shots="1464" /> <!-- Wolverine Needle, Theca Leather Armor, Theca Leather Gaiters, Theca Leather Boots -->
++		<gear grade="B" minLevel="52" rhand="229" head="2416" chest="2391" gloves="5719" feet="5735" shots="1465" /> <!-- Kris, Blue Wolf Helmet, Blue Wolf Leather Armor, Blue Wolf Gloves - Light Armor, Blue Wolf Boots - Light Armor -->
++		<gear grade="A" minLevel="61" rhand="235" head="2418" chest="2394" gloves="5772" feet="5784" shots="1466" /> <!-- Bloody Orchid, Helm of Nightmare, Leather Armor of Nightmare, Gauntlets of Nightmare - Light Armor, Boots of Nightmare - Light Armor -->
++		<gear grade="S" minLevel="76" rhand="237" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Dragon's Tooth, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
++		<gear grade="S80" minLevel="80" rhand="10216" head="9429" chest="10233" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Disperser, Dynasty Leather Helmet, Dynasty Jewel Leather Armor - Dagger Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
++		<gear grade="S84" minLevel="84" rhand="15677" head="13138" chest="13433" legs="13441" gloves="13442" feet="13443" shots="1467" /> <!-- Triumph Dagger, Vesper Leather Helmet, Vesper Leather Breastplate, Vesper Leather Leggings, Vesper Leather Gloves, Vesper Leather Boots -->
+ 	</phantom>
+ 	<!-- Ryzhaya: охотник, Elven Fighter, Elven Scout, Silver Ranger, Moonlight Sentinel -->
+ 	<phantom name="Ryzhaya" kind="hunter" role="DAMAGE" female="true" face="2" hairStyle="6" hairColor="2" classes="18,22,24,102" aliases="рыжая;рыжик" x="47130" y="51289" z="-2992">
+ 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
+-		<gear grade="D" minLevel="20" rhand="276" chest="395" legs="417" feet="2424" shots="1463" /> <!-- Elven Bow, Manticore Skin Shirt, Manticore Skin Gaiters, Manticore Skin Boots -->
+-		<gear grade="C" minLevel="40" rhand="4823" chest="401" feet="2437" shots="1464" /> <!-- Eminence Bow - Miser, Drake Leather Armor, Drake Leather Boots -->
+-		<gear grade="B" minLevel="52" rhand="4825" head="2417" chest="2392" gloves="5723" feet="5739" shots="1465" /> <!-- Dark Elven Long Bow - Evasion, Doom Helmet, Leather Armor of Doom, Doom Gloves - Light Armor, Doom Boots - Light Armor -->
+-		<gear grade="A" minLevel="61" rhand="5608" head="2419" chest="2395" gloves="5775" feet="5787" shots="1466" /> <!-- Carnage Bow - Light, Majestic Circlet, Majestic Leather Armor, Majestic Gauntlets - Light Armor, Majestic Boots - Light Armor -->
+-		<gear grade="S" minLevel="76" rhand="11264" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Dynasty Bow - Great Gale, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
+-		<gear grade="S80" minLevel="80" rhand="10444" head="9429" chest="10214" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Spitter - Guidance, Dynasty Leather Helmet, Dynasty Leather Armor - Summoner, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
+-		<gear grade="S84" minLevel="84" rhand="14149" head="13141" chest="13436" legs="13451" gloves="13452" feet="13453" shots="1467" /> <!-- Vesper Thrower - Focus, Vesper Noble Leather Helmet, Vesper Noble Leather Breastplate, Vesper Noble Leather Leggings, Vesper Noble Leather Gloves, Vesper Noble Leather Boots -->
++		<gear grade="D" minLevel="20" rhand="274" chest="395" legs="417" feet="2424" shots="1463" /> <!-- Reinforced Bow, Manticore Skin Shirt, Manticore Skin Gaiters, Manticore Skin Boots -->
++		<gear grade="C" minLevel="40" rhand="285" chest="401" feet="2437" shots="1464" /> <!-- Noble Elven Bow, Drake Leather Armor, Drake Leather Boots -->
++		<gear grade="B" minLevel="52" rhand="284" head="2417" chest="2392" gloves="5723" feet="5739" shots="1465" /> <!-- Dark Elven Long Bow, Doom Helmet, Leather Armor of Doom, Doom Gloves - Light Armor, Doom Boots - Light Armor -->
++		<gear grade="A" minLevel="61" rhand="288" head="2419" chest="2395" gloves="5775" feet="5787" shots="1466" /> <!-- Carnage Bow, Majestic Circlet, Majestic Leather Armor, Majestic Gauntlets - Light Armor, Majestic Boots - Light Armor -->
++		<gear grade="S" minLevel="76" rhand="7575" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Draconic Bow, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
++		<gear grade="S80" minLevel="80" rhand="10223" head="9429" chest="10214" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Spitter, Dynasty Leather Helmet, Dynasty Leather Armor - Summoner, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
++		<gear grade="S84" minLevel="84" rhand="15686" head="13141" chest="13436" legs="13451" gloves="13452" feet="13453" shots="1467" /> <!-- Triumph Bow, Vesper Noble Leather Helmet, Vesper Noble Leather Breastplate, Vesper Noble Leather Leggings, Vesper Noble Leather Gloves, Vesper Noble Leather Boots -->
+ 	</phantom>
+ 	<!-- OldSchool: охотник, Human Mystic, Human Wizard, Necromancer, Soultaker -->
+ 	<phantom name="OldSchool" kind="hunter" role="DAMAGE" female="false" face="2" hairStyle="4" hairColor="2" classes="10,11,13,95" aliases="олдскул;олд;олдскулл" x="-84129" y="245039" z="-3728">
+ 		<gear grade="NONE" minLevel="1" rhand="6" chest="425" legs="461" shots="3947" /> <!-- Apprentice's Wand, Apprentice's Tunic, Apprentice's Stockings -->
+-		<gear grade="D" minLevel="20" rhand="185" chest="437" legs="470" gloves="2450" shots="3948" /> <!-- Staff of Mana, Mithril Tunic, Mithril Stockings, Mithril Gloves -->
+-		<gear grade="C" minLevel="40" rhand="4877" chest="441" legs="472" gloves="2459" shots="3949" /> <!-- Paradia Staff - Mental Shield, Demon's Tunic, Demon's Stockings, Demon's Gloves -->
+-		<gear grade="B" minLevel="52" rhand="210" head="2417" chest="2399" legs="2404" gloves="5724" feet="5740" shots="3950" /> <!-- Staff of Evil Spirits, Doom Helmet, Tunic of Doom, Stockings of Doom, Doom Gloves - Robe, Doom Boots - Robe -->
+-		<gear grade="A" minLevel="61" rhand="11020" head="2419" chest="2409" gloves="5776" feet="5788" shots="3951" /> <!-- Dasparion's Staff - Hail - Acumen, Majestic Circlet, Majestic Robe, Majestic Gauntlets - Robe, Majestic Boots - Robe -->
+-		<gear grade="S" minLevel="76" rhand="11277" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- Dynasty Staff - Holy Spirit - Mana Up, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
+-		<gear grade="S80" minLevel="80" rhand="10456" head="9438" chest="9432" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall - Conversion, Dynasty Circlet, Dynasty Tunic, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
+-		<gear grade="S84" minLevel="84" rhand="15853" head="13142" chest="13437" legs="13454" gloves="13455" feet="13456" shots="3952" /> <!-- Black Visage - MP Regeneration, Vesper Noble Circlet, Vesper Noble Tunic, Vesper Noble Stockings, Vesper Noble Gloves, Vesper Noble Shoes -->
++		<gear grade="D" minLevel="20" rhand="178" chest="437" legs="470" gloves="2450" shots="3948" /> <!-- Bone Staff, Mithril Tunic, Mithril Stockings, Mithril Gloves -->
++		<gear grade="C" minLevel="40" rhand="194" chest="441" legs="472" gloves="2459" shots="3949" /> <!-- Heavy Doom Axe, Demon's Tunic, Demon's Stockings, Demon's Gloves -->
++		<gear grade="B" minLevel="52" rhand="207" head="2417" chest="2399" legs="2404" gloves="5724" feet="5740" shots="3950" /> <!-- Staff of Phantom, Doom Helmet, Tunic of Doom, Stockings of Doom, Doom Gloves - Robe, Doom Boots - Robe -->
++		<gear grade="A" minLevel="61" rhand="4904" head="2419" chest="2409" gloves="5776" feet="5788" shots="3951" /> <!-- Dasparion's Staff, Majestic Circlet, Majestic Robe, Majestic Gauntlets - Robe, Majestic Boots - Robe -->
++		<gear grade="S" minLevel="76" rhand="214" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- The Staff, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
++		<gear grade="S80" minLevel="80" rhand="10217" head="9438" chest="9432" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Spirit, Dynasty Circlet, Dynasty Tunic, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
++		<gear grade="S84" minLevel="84" rhand="13466" head="13142" chest="13437" legs="13454" gloves="13455" feet="13456" shots="3952" /> <!-- Vesper Singer, Vesper Noble Circlet, Vesper Noble Tunic, Vesper Noble Stockings, Vesper Noble Gloves, Vesper Noble Shoes -->
+ 	</phantom>
+ 	<!-- Tihon: охотник, Dwarf Fighter, Artisan, Warsmith, Maestro -->
+ 	<phantom name="Tihon" kind="hunter" role="DAMAGE" female="false" face="1" hairStyle="3" hairColor="0" classes="53,56,57,118" aliases="тихон;тиша" x="115554" y="-177935" z="-912">
+ 		<gear grade="NONE" minLevel="1" rhand="2370" chest="1146" legs="1147" shots="1835" /> <!-- Guild Member's Club, Squire's Shirt, Squire's Pants -->
+-		<gear grade="D" minLevel="20" rhand="172" head="47" chest="58" legs="59" shots="1463" /> <!-- Heavy Bone Club, Helmet, Mithril Breastplate, Mithril Gaiters -->
+-		<gear grade="C" minLevel="40" rhand="4729" head="517" chest="60" shots="1464" /> <!-- Battle Axe - Anger, Composite Helmet, Composite Armor -->
+-		<gear grade="B" minLevel="52" rhand="10980" head="503" chest="357" legs="383" gloves="5710" feet="5726" shots="1465" /> <!-- Deadman's Glory - Landslide - Anger, Zubei's Helmet, Zubei's Breastplate, Zubei's Gaiters, Zubei's Gauntlets - Heavy Armor, Zubei's Boots - Heavy Armor -->
+-		<gear grade="A" minLevel="61" rhand="11141" head="512" chest="365" legs="388" gloves="5765" feet="5777" shots="1466" /> <!-- Barakiel's Axe - On Fire, Dark Crystal Helmet, Dark Crystal Breastplate, Dark Crystal Gaiters, Dark Crystal Gloves - Heavy Armor, Dark Crystal Boots - Heavy Armor -->
+-		<gear grade="S" minLevel="76" rhand="14569" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" shots="1467" /> <!-- Mace of Cadmus Family, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots -->
+-		<gear grade="S80" minLevel="80" rhand="11334" head="9422" chest="9418" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Hammer - Earth - Anger, Dynasty Helmet, Dynasty Breast Plate - Weapon Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
+-		<gear grade="S84" minLevel="84" rhand="16074" head="13137" chest="13432" legs="13438" gloves="13439" feet="13440" shots="1467" /> <!-- Vesper Avenger - Landslide - HP Drain, Vesper Helmet, Vesper Breastplate, Vesper Gaiters, Vesper Gauntlet, Vesper Boots -->
++		<gear grade="D" minLevel="20" rhand="166" head="47" chest="58" legs="59" shots="1463" /> <!-- Heavy Mace, Helmet, Mithril Breastplate, Mithril Gaiters -->
++		<gear grade="C" minLevel="40" rhand="173" head="517" chest="60" shots="1464" /> <!-- Skull Graver, Composite Helmet, Composite Armor -->
++		<gear grade="B" minLevel="52" rhand="91" head="503" chest="357" legs="383" gloves="5710" feet="5726" shots="1465" /> <!-- Heavy War Axe, Zubei's Helmet, Zubei's Breastplate, Zubei's Gaiters, Zubei's Gauntlets - Heavy Armor, Zubei's Boots - Heavy Armor -->
++		<gear grade="A" minLevel="61" rhand="8763" head="512" chest="365" legs="388" gloves="5765" feet="5777" shots="1466" /> <!-- Elrokian Trap, Dark Crystal Helmet, Dark Crystal Breastplate, Dark Crystal Gaiters, Dark Crystal Gloves - Heavy Armor, Dark Crystal Boots - Heavy Armor -->
++		<gear grade="S" minLevel="76" rhand="6365" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" shots="1467" /> <!-- Basalt Battlehammer, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots -->
++		<gear grade="S80" minLevel="80" rhand="10220" head="9422" chest="9418" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Hammer, Dynasty Helmet, Dynasty Breast Plate - Weapon Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
++		<gear grade="S84" minLevel="84" rhand="15683" head="13137" chest="13432" legs="13438" gloves="13439" feet="13440" shots="1467" /> <!-- Triumph Staff, Vesper Helmet, Vesper Breastplate, Vesper Gaiters, Vesper Gauntlet, Vesper Boots -->
+ 	</phantom>
+ 	<!-- Nyusha: охотник, Dark Mystic, Shillien Oracle, Shillien Elder, Shillien Saint -->
+ 	<phantom name="Nyusha" kind="hunter" role="HEALER" female="true" face="0" hairStyle="6" hairColor="0" classes="38,42,43,112" aliases="нюша;нюшка" x="9825" y="16038" z="-4568">
+ 		<gear grade="NONE" minLevel="1" rhand="6" chest="425" legs="461" shots="3947" /> <!-- Apprentice's Wand, Apprentice's Tunic, Apprentice's Stockings -->
+-		<gear grade="D" minLevel="20" rhand="179" chest="436" legs="469" gloves="2447" shots="3948" /> <!-- Mace of Prayer, Tunic of Knowledge, Stockings of Knowledge, Gloves of Knowledge -->
+-		<gear grade="C" minLevel="40" rhand="7702" chest="442" legs="473" gloves="2463" shots="3949" /> <!-- Stick of Faith - Magic Hold, Divine Tunic, Divine Stockings, Divine Gloves -->
+-		<gear grade="B" minLevel="52" rhand="10898" head="503" chest="2397" legs="2402" gloves="5712" feet="5728" shots="3950" /> <!-- Spell Breaker - Hail, Zubei's Helmet, Tunic of Zubei, Stockings of Zubei, Zubei's Gauntlets - Robe, Zubei's Boots - Robe -->
+-		<gear grade="A" minLevel="61" rhand="11048" head="547" chest="2400" legs="2405" gloves="5770" feet="5782" shots="3951" /> <!-- Spiritual Eye - Hail - Acumen, Tallum Helm, Tallum Tunic, Tallum Stockings, Tallum Gloves - Robe, Tallum Boots - Robe -->
+-		<gear grade="S" minLevel="76" rhand="9876" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- Dynasty Mace - Conversion, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
+-		<gear grade="S80" minLevel="80" rhand="11347" head="9438" chest="10236" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall - Hail - Conversion, Dynasty Circlet, Dynasty Silver Satin Tunic - Healer, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
+-		<gear grade="S84" minLevel="84" rhand="16081" head="13139" chest="13434" legs="13444" gloves="13445" feet="13446" shots="3952" /> <!-- Vesper Caster - Cleverness - MP Regeneration, Vesper Circlet, Vesper Tunic, Vesper Stockings, Vesper Gloves, Vesper Shoes -->
++		<gear grade="D" minLevel="20" rhand="181" chest="436" legs="469" gloves="2447" shots="3948" /> <!-- Mace of Miracle, Tunic of Knowledge, Stockings of Knowledge, Gloves of Knowledge -->
++		<gear grade="C" minLevel="40" rhand="193" chest="442" legs="473" gloves="2463" shots="3949" /> <!-- Stick of Faith, Divine Tunic, Divine Stockings, Divine Gloves -->
++		<gear grade="B" minLevel="52" rhand="7892" head="503" chest="2397" legs="2402" gloves="5712" feet="5728" shots="3950" /> <!-- Spell Breaker, Zubei's Helmet, Tunic of Zubei, Stockings of Zubei, Zubei's Gauntlets - Robe, Zubei's Boots - Robe -->
++		<gear grade="A" minLevel="61" rhand="7894" head="547" chest="2400" legs="2405" gloves="5770" feet="5782" shots="3951" /> <!-- Spiritual Eye, Tallum Helm, Tallum Tunic, Tallum Stockings, Tallum Gloves - Robe, Tallum Boots - Robe -->
++		<gear grade="S" minLevel="76" rhand="6579" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- Arcana Mace, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
++		<gear grade="S80" minLevel="80" rhand="10222" head="9438" chest="10236" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall, Dynasty Circlet, Dynasty Silver Satin Tunic - Healer, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
++		<gear grade="S84" minLevel="84" rhand="13465" head="13139" chest="13434" legs="13444" gloves="13445" feet="13446" shots="3952" /> <!-- Vesper Caster, Vesper Circlet, Vesper Tunic, Vesper Stockings, Vesper Gloves, Vesper Shoes -->
+ 	</phantom>
+ 	<!-- Brutal: охотник, Orc Fighter, Orc Raider, Destroyer, Titan -->
+ 	<phantom name="Brutal" kind="hunter" role="DAMAGE" female="false" face="2" hairStyle="3" hairColor="0" classes="44,45,46,113" aliases="брутал;брут" x="-45195" y="-112208" z="-240">
+ 		<gear grade="NONE" minLevel="1" rhand="2368" chest="1146" legs="1147" shots="1835" /> <!-- Training Gloves, Squire's Shirt, Squire's Pants -->
+-		<gear grade="D" minLevel="20" rhand="13842" head="2411" chest="352" legs="2378" shots="1463" /> <!-- Tiat Two-Handed Weapon, Brigandine Helmet, Brigandine Tunic, Brigandine Gaiters -->
+-		<gear grade="C" minLevel="40" rhand="8104" head="2414" chest="356" shots="1464" /> <!-- Pa'agrian Sword - Critical Drain, Full Plate Helmet, Full Plate Armor -->
+-		<gear grade="B" minLevel="52" rhand="7883" head="2417" chest="2381" gloves="5722" feet="5738" shots="1465" /> <!-- Guardian Sword, Doom Helmet, Doom Plate Armor, Doom Gloves - Heavy Armor, Doom Boots - Heavy Armor -->
+-		<gear grade="A" minLevel="61" rhand="13044" head="2419" chest="2383" gloves="5774" feet="5786" shots="1466" /> <!-- Complete Ancient Legacy Sword, Majestic Circlet, Majestic Plate Armor, Majestic Gauntlets - Heavy Armor, Majestic Boots - Heavy Armor -->
+-		<gear grade="S" minLevel="76" rhand="21968" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" shots="1467" /> <!-- Blood Brother - Great Gale - Health, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots -->
+-		<gear grade="S80" minLevel="80" rhand="11341" head="9422" chest="10231" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Heavy Arms - Lightning, Dynasty Helmet, Dynasty Platinum Plate - Bard, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
+-		<gear grade="S84" minLevel="84" rhand="15548" head="13140" chest="13435" legs="13448" gloves="13449" feet="13450" shots="1467" /> <!-- Lava Saw, Vesper Noble Helmet, Vesper Noble Breastplate, Vesper Noble Gaiters, Vesper Noble Gauntlet, Vesper Noble Boots -->
++		<gear grade="D" minLevel="20" rhand="5285" head="2411" chest="352" legs="2378" shots="1463" /> <!-- Heavy Sword, Brigandine Helmet, Brigandine Tunic, Brigandine Gaiters -->
++		<gear grade="C" minLevel="40" rhand="71" head="2414" chest="356" shots="1464" /> <!-- Flamberge, Full Plate Helmet, Full Plate Armor -->
++		<gear grade="B" minLevel="52" rhand="78" head="2417" chest="2381" gloves="5722" feet="5738" shots="1465" /> <!-- Great Sword, Doom Helmet, Doom Plate Armor, Doom Gloves - Heavy Armor, Doom Boots - Heavy Armor -->
++		<gear grade="A" minLevel="61" rhand="7884" head="2419" chest="2383" gloves="5774" feet="5786" shots="1466" /> <!-- Infernal Master, Majestic Circlet, Majestic Plate Armor, Majestic Gauntlets - Heavy Armor, Majestic Boots - Heavy Armor -->
++		<gear grade="S" minLevel="76" rhand="6372" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" shots="1467" /> <!-- Heaven's Divider, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots -->
++		<gear grade="S80" minLevel="80" rhand="10218" head="9422" chest="10231" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Heavy Arms, Dynasty Helmet, Dynasty Platinum Plate - Bard, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
++		<gear grade="S84" minLevel="84" rhand="15562" head="13140" chest="13435" legs="13448" gloves="13449" feet="13450" shots="1467" /> <!-- Feather Eye Blade, Vesper Noble Helmet, Vesper Noble Breastplate, Vesper Noble Gaiters, Vesper Noble Gauntlet, Vesper Noble Boots -->
+ 	</phantom>
+ 	<!-- Freya: охотник, Female Kamael Soldier, Warder, Arbalester, Trickster -->
+ 	<phantom name="Freya" kind="hunter" role="DAMAGE" female="true" face="1" hairStyle="5" hairColor="3" classes="124,126,130,134" aliases="фрея" x="-117308" y="46396" z="360">
+ 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
+-		<gear grade="D" minLevel="20" rhand="9221" chest="395" legs="417" feet="2424" shots="1463" /> <!-- Crossbow, Manticore Skin Shirt, Manticore Skin Gaiters, Manticore Skin Boots -->
++		<gear grade="D" minLevel="20" rhand="9212" chest="395" legs="417" feet="2424" shots="1463" /> <!-- Field Gun, Manticore Skin Shirt, Manticore Skin Gaiters, Manticore Skin Boots -->
+ 		<gear grade="C" minLevel="40" rhand="9256" chest="398" legs="418" feet="2431" shots="1464" /> <!-- Ballista, Plated Leather, Plated Leather Gaiters, Plated Leather Boots -->
+-		<gear grade="B" minLevel="52" rhand="10935" head="2415" chest="2390" gloves="5715" feet="5731" shots="1465" /> <!-- Peacemaker - Concentration - Evasion, Avadon Circlet, Avadon Leather Armor, Avadon Gloves - Light Armor, Avadon Boots - Light Armor -->
+-		<gear grade="A" minLevel="61" rhand="9351" head="547" chest="2393" gloves="5769" feet="5781" shots="1466" /> <!-- Reaper - Critical Poison, Tallum Helm, Tallum Leather Armor, Tallum Gloves - Light Armor, Tallum Boots - Light Armor -->
+-		<gear grade="S" minLevel="76" rhand="9374" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Sarunga - Focus, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
+-		<gear grade="S80" minLevel="80" rhand="11309" head="9429" chest="10490" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Shooter - Concentration, Dynasty Leather Helmet, Dynasty Jeweled Leather Armor - Summoner, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
+-		<gear grade="S84" minLevel="84" rhand="15870" head="13141" chest="13436" legs="13451" gloves="13452" feet="13453" shots="1467" /> <!-- Dominion Crossbow - Cheap Shot, Vesper Noble Leather Helmet, Vesper Noble Leather Breastplate, Vesper Noble Leather Leggings, Vesper Noble Leather Gloves, Vesper Noble Leather Boots -->
++		<gear grade="B" minLevel="52" rhand="9312" head="2415" chest="2390" gloves="5715" feet="5731" shots="1465" /> <!-- Peacemaker, Avadon Circlet, Avadon Leather Armor, Avadon Gloves - Light Armor, Avadon Boots - Light Armor -->
++		<gear grade="A" minLevel="61" rhand="9336" head="547" chest="2393" gloves="5769" feet="5781" shots="1466" /> <!-- Doomchanter, Tallum Helm, Tallum Leather Armor, Tallum Gloves - Light Armor, Tallum Boots - Light Armor -->
++		<gear grade="S" minLevel="76" rhand="9372" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Sarunga, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
++		<gear grade="S80" minLevel="80" rhand="10226" head="9429" chest="10490" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Shooter, Dynasty Leather Helmet, Dynasty Jeweled Leather Armor - Summoner, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
++		<gear grade="S84" minLevel="84" rhand="15571" head="13141" chest="13436" legs="13451" gloves="13452" feet="13453" shots="1467" /> <!-- Dominion Crossbow, Vesper Noble Leather Helmet, Vesper Noble Leather Breastplate, Vesper Noble Leather Leggings, Vesper Noble Leather Gloves, Vesper Noble Leather Boots -->
+ 	</phantom>
+ 	<!-- DarkLord: охотник, Dark Fighter, Palus Knight, Shillien Knight, Shillien Templar -->
+ 	<phantom name="DarkLord" kind="hunter" role="TANK" female="false" face="2" hairStyle="0" hairColor="3" classes="31,32,33,106" aliases="дарклорд;лорд;дарк" x="10026" y="15576" z="-4568">
+ 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
+-		<gear grade="D" minLevel="20" rhand="127" head="47" chest="58" legs="59" lhand="628" shots="1463" /> <!-- Crimson Sword, Helmet, Mithril Breastplate, Mithril Gaiters, Hoplon -->
+-		<gear grade="C" minLevel="40" rhand="4687" head="2414" chest="356" lhand="2497" shots="1464" /> <!-- Katana - Focus, Full Plate Helmet, Full Plate Armor, Full Plate Shield -->
+-		<gear grade="B" minLevel="52" rhand="13194" head="503" chest="357" legs="383" gloves="5710" feet="5726" shots="1465" /> <!-- Player Commendation - Damascus Sword - Player Commendation Weapon, Zubei's Helmet, Zubei's Breastplate, Zubei's Gaiters, Zubei's Gauntlets - Heavy Armor, Zubei's Boots - Heavy Armor -->
+-		<gear grade="A" minLevel="61" rhand="13881" head="512" chest="365" legs="388" gloves="5765" feet="5777" lhand="641" shots="1466" /> <!-- Attribute Master Yang's Sword, Dark Crystal Helmet, Dark Crystal Breastplate, Dark Crystal Gaiters, Dark Crystal Gloves - Heavy Armor, Dark Crystal Boots - Heavy Armor, Dark Crystal Shield -->
+-		<gear grade="S" minLevel="76" rhand="21837" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" lhand="6377" shots="1467" /> <!-- Dynasty Sword of Fortune - 90-day limited period, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots, Imperial Crusader Shield -->
+-		<gear grade="S80" minLevel="80" rhand="11305" head="9422" chest="10231" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Sawsword - Destruction, Dynasty Helmet, Dynasty Platinum Plate - Bard, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
+-		<gear grade="S84" minLevel="84" rhand="16057" head="13137" chest="13432" legs="13438" gloves="13439" feet="13440" lhand="13471" shots="1467" /> <!-- Vesper Cutter - Thunder - Health, Vesper Helmet, Vesper Breastplate, Vesper Gaiters, Vesper Gauntlet, Vesper Boots, Vesper Shield -->
++		<gear grade="D" minLevel="20" rhand="123" head="47" chest="58" legs="59" lhand="628" shots="1463" /> <!-- Saber, Helmet, Mithril Breastplate, Mithril Gaiters, Hoplon -->
++		<gear grade="C" minLevel="40" rhand="133" head="2414" chest="356" lhand="2497" shots="1464" /> <!-- Raid Sword, Full Plate Helmet, Full Plate Armor, Full Plate Shield -->
++		<gear grade="B" minLevel="52" rhand="142" head="503" chest="357" legs="383" gloves="5710" feet="5726" shots="1465" /> <!-- Keshanberk, Zubei's Helmet, Zubei's Breastplate, Zubei's Gaiters, Zubei's Gauntlets - Heavy Armor, Zubei's Boots - Heavy Armor -->
++		<gear grade="A" minLevel="61" rhand="80" head="512" chest="365" legs="388" gloves="5765" feet="5777" lhand="641" shots="1466" /> <!-- Tallum Blade, Dark Crystal Helmet, Dark Crystal Breastplate, Dark Crystal Gaiters, Dark Crystal Gloves - Heavy Armor, Dark Crystal Boots - Heavy Armor, Dark Crystal Shield -->
++		<gear grade="S" minLevel="76" rhand="82" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" lhand="6377" shots="1467" /> <!-- Gaz Blade, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots, Imperial Crusader Shield -->
++		<gear grade="S80" minLevel="80" rhand="10215" head="9422" chest="10231" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Sawsword, Dynasty Helmet, Dynasty Platinum Plate - Bard, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
++		<gear grade="S84" minLevel="84" rhand="21919" head="13137" chest="13432" legs="13438" gloves="13439" feet="13440" lhand="13471" shots="1467" /> <!-- Hellblade, Vesper Helmet, Vesper Breastplate, Vesper Gaiters, Vesper Gauntlet, Vesper Boots, Vesper Shield -->
+ 	</phantom>
+ 	<!-- Masha: охотник, Human Mystic, Human Wizard, Sorcerer, Archmage -->
+ 	<phantom name="Masha" kind="hunter" role="DAMAGE" female="true" face="0" hairStyle="4" hairColor="3" classes="10,11,12,94" aliases="маша;машка;мария" x="-84124" y="244902" z="-3728">
+ 		<gear grade="NONE" minLevel="1" rhand="6" chest="425" legs="461" shots="3947" /> <!-- Apprentice's Wand, Apprentice's Tunic, Apprentice's Stockings -->
+-		<gear grade="D" minLevel="20" rhand="186" chest="437" legs="470" gloves="2450" shots="3948" /> <!-- Staff of Magic, Mithril Tunic, Mithril Stockings, Mithril Gloves -->
+-		<gear grade="C" minLevel="40" rhand="198" chest="442" legs="473" gloves="2463" shots="3949" /> <!-- Inferno Staff, Divine Tunic, Divine Stockings, Divine Gloves -->
+-		<gear grade="B" minLevel="52" rhand="211" head="2417" chest="2399" legs="2404" gloves="5724" feet="5740" shots="3950" /> <!-- Staff of Nobility, Doom Helmet, Tunic of Doom, Stockings of Doom, Doom Gloves - Robe, Doom Boots - Robe -->
+-		<gear grade="A" minLevel="61" rhand="5596" head="2419" chest="2409" gloves="5776" feet="5788" shots="3951" /> <!-- Dasparion's Staff - Mana Up, Majestic Circlet, Majestic Robe, Majestic Gauntlets - Robe, Majestic Boots - Robe -->
+-		<gear grade="S" minLevel="76" rhand="10252" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- Dynasty Staff, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
+-		<gear grade="S80" minLevel="80" rhand="10455" head="9438" chest="10239" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall - Mana Up, Dynasty Circlet, Dynasty Silver Satin Tunic - Wizard, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
++		<gear grade="D" minLevel="20" rhand="178" chest="437" legs="470" gloves="2450" shots="3948" /> <!-- Bone Staff, Mithril Tunic, Mithril Stockings, Mithril Gloves -->
++		<gear grade="C" minLevel="40" rhand="192" chest="442" legs="473" gloves="2463" shots="3949" /> <!-- Crystal Staff, Divine Tunic, Divine Stockings, Divine Gloves -->
++		<gear grade="B" minLevel="52" rhand="208" head="2417" chest="2399" legs="2404" gloves="5724" feet="5740" shots="3950" /> <!-- Staff of Seal, Doom Helmet, Tunic of Doom, Stockings of Doom, Doom Gloves - Robe, Doom Boots - Robe -->
++		<gear grade="A" minLevel="61" rhand="4903" head="2419" chest="2409" gloves="5776" feet="5788" shots="3951" /> <!-- Dasparion's Staff, Majestic Circlet, Majestic Robe, Majestic Gauntlets - Robe, Majestic Boots - Robe -->
++		<gear grade="S" minLevel="76" rhand="6366" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- Imperial Staff, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
++		<gear grade="S80" minLevel="80" rhand="10222" head="9438" chest="10239" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall, Dynasty Circlet, Dynasty Silver Satin Tunic - Wizard, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
+ 		<gear grade="S84" minLevel="84" rhand="15566" head="13142" chest="13437" legs="13454" gloves="13455" feet="13456" shots="3952" /> <!-- Black Visage, Vesper Noble Circlet, Vesper Noble Tunic, Vesper Noble Stockings, Vesper Noble Gloves, Vesper Noble Shoes -->
+ 	</phantom>
+ 	<!-- Ded: охотник, Human Mystic, Cleric, Bishop, Cardinal -->
+ 	<phantom name="Ded" kind="hunter" role="HEALER" female="false" face="2" hairStyle="2" hairColor="3" classes="10,15,16,97" aliases="дед;дедуля;дедушка" x="-84341" y="244395" z="-3728">
+ 		<gear grade="NONE" minLevel="1" rhand="6" chest="425" legs="461" shots="3947" /> <!-- Apprentice's Wand, Apprentice's Tunic, Apprentice's Stockings -->
+-		<gear grade="D" minLevel="20" rhand="179" chest="437" legs="470" gloves="2450" shots="3948" /> <!-- Mace of Prayer, Mithril Tunic, Mithril Stockings, Mithril Gloves -->
+-		<gear grade="C" minLevel="40" rhand="7703" chest="439" legs="471" gloves="2454" shots="3949" /> <!-- Stick of Faith - Magic Shield, Karmian Tunic, Karmian Stockings, Karmian Gloves -->
+-		<gear grade="B" minLevel="52" rhand="10898" head="2417" chest="2399" legs="2404" gloves="5724" feet="5740" shots="3950" /> <!-- Spell Breaker - Hail, Doom Helmet, Tunic of Doom, Stockings of Doom, Doom Gloves - Robe, Doom Boots - Robe -->
+-		<gear grade="A" minLevel="61" rhand="11045" head="2419" chest="2409" gloves="5776" feet="5788" shots="3951" /> <!-- Spiritual Eye - Hail, Majestic Circlet, Majestic Robe, Majestic Gauntlets - Robe, Majestic Boots - Robe -->
+-		<gear grade="S" minLevel="76" rhand="9877" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- Dynasty Mace - Acumen, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
+-		<gear grade="S80" minLevel="80" rhand="11348" head="9438" chest="9436" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall - Hail - Acumen, Dynasty Circlet, Dynasty Tunic - Wizard, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
+-		<gear grade="S84" minLevel="84" rhand="15851" head="13142" chest="13437" legs="13454" gloves="13455" feet="13456" shots="3952" /> <!-- Rising Star - Mana Up, Vesper Noble Circlet, Vesper Noble Tunic, Vesper Noble Stockings, Vesper Noble Gloves, Vesper Noble Shoes -->
++		<gear grade="D" minLevel="20" rhand="182" chest="437" legs="470" gloves="2450" shots="3948" /> <!-- Doom Hammer, Mithril Tunic, Mithril Stockings, Mithril Gloves -->
++		<gear grade="C" minLevel="40" rhand="193" chest="439" legs="471" gloves="2454" shots="3949" /> <!-- Stick of Faith, Karmian Tunic, Karmian Stockings, Karmian Gloves -->
++		<gear grade="B" minLevel="52" rhand="7892" head="2417" chest="2399" legs="2404" gloves="5724" feet="5740" shots="3950" /> <!-- Spell Breaker, Doom Helmet, Tunic of Doom, Stockings of Doom, Doom Gloves - Robe, Doom Boots - Robe -->
++		<gear grade="A" minLevel="61" rhand="7894" head="2419" chest="2409" gloves="5776" feet="5788" shots="3951" /> <!-- Spiritual Eye, Majestic Circlet, Majestic Robe, Majestic Gauntlets - Robe, Majestic Boots - Robe -->
++		<gear grade="S" minLevel="76" rhand="6579" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- Arcana Mace, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
++		<gear grade="S80" minLevel="80" rhand="10222" head="9438" chest="9436" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall, Dynasty Circlet, Dynasty Tunic - Wizard, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
++		<gear grade="S84" minLevel="84" rhand="15565" head="13142" chest="13437" legs="13454" gloves="13455" feet="13456" shots="3952" /> <!-- Rising Star, Vesper Noble Circlet, Vesper Noble Tunic, Vesper Noble Stockings, Vesper Noble Gloves, Vesper Noble Shoes -->
+ 	</phantom>
+ 	<!-- Nagibator: охотник, Human Fighter, Rogue, Treasure Hunter, Adventurer -->
+ 	<phantom name="Nagibator" kind="hunter" role="DAMAGE" female="false" face="2" hairStyle="1" hairColor="3" classes="0,7,8,93" aliases="нагибатор;наги;нагиб" x="-84051" y="245032" z="-3728">
+ 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
+-		<gear grade="D" minLevel="20" rhand="1471" chest="394" legs="416" feet="2422" shots="1463" /> <!-- Silenos Blowgun, Reinforced Leather Shirt, Reinforced Leather Gaiters, Reinforced Leather Boots -->
++		<gear grade="D" minLevel="20" rhand="5127" chest="394" legs="416" feet="2422" shots="1463" /> <!-- Dailaon Knife, Reinforced Leather Shirt, Reinforced Leather Gaiters, Reinforced Leather Boots -->
+ 		<gear grade="C" minLevel="40" rhand="227" chest="397" legs="2387" feet="62" shots="1464" /> <!-- Stiletto, Mithril Shirt, Reinforced Mithril Gaiters, Reinforced Mithril Boots -->
+-		<gear grade="B" minLevel="52" rhand="10929" head="503" chest="2384" legs="2388" gloves="5711" feet="5727" shots="1465" /> <!-- Kris - Confusion - Back Blow, Zubei's Helmet, Zubei's Leather Shirt, Zubei's Leather Gaiters, Zubei's Gauntlets - Light Armor, Zubei's Boots - Light Armor -->
+-		<gear grade="A" minLevel="61" rhand="236" head="512" chest="2385" legs="2389" gloves="5766" feet="5778" shots="1466" /> <!-- Soul Separator, Dark Crystal Helmet, Dark Crystal Leather Armor, Dark Crystal Leggings, Dark Crystal Gloves - Light Armor, Dark Crystal Boots - Light Armor -->
+-		<gear grade="S" minLevel="76" rhand="11249" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Dynasty Knife - Great Gale - Evasion, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
+-		<gear grade="S80" minLevel="80" rhand="11302" head="9429" chest="10233" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Disperser - Confusion - Focus, Dynasty Leather Helmet, Dynasty Jewel Leather Armor - Dagger Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
+-		<gear grade="S84" minLevel="84" rhand="14129" head="13138" chest="13433" legs="13441" gloves="13442" feet="13443" shots="1467" /> <!-- Vesper Shaper - Haste, Vesper Leather Helmet, Vesper Leather Breastplate, Vesper Leather Leggings, Vesper Leather Gloves, Vesper Leather Boots -->
++		<gear grade="B" minLevel="52" rhand="229" head="503" chest="2384" legs="2388" gloves="5711" feet="5727" shots="1465" /> <!-- Kris, Zubei's Helmet, Zubei's Leather Shirt, Zubei's Leather Gaiters, Zubei's Gauntlets - Light Armor, Zubei's Boots - Light Armor -->
++		<gear grade="A" minLevel="61" rhand="235" head="512" chest="2385" legs="2389" gloves="5766" feet="5778" shots="1466" /> <!-- Bloody Orchid, Dark Crystal Helmet, Dark Crystal Leather Armor, Dark Crystal Leggings, Dark Crystal Gloves - Light Armor, Dark Crystal Boots - Light Armor -->
++		<gear grade="S" minLevel="76" rhand="6367" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Angel Slayer, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
++		<gear grade="S80" minLevel="80" rhand="10216" head="9429" chest="10233" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Disperser, Dynasty Leather Helmet, Dynasty Jewel Leather Armor - Dagger Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
++		<gear grade="S84" minLevel="84" rhand="15559" head="13138" chest="13433" legs="13441" gloves="13442" feet="13443" shots="1467" /> <!-- Skull Edge, Vesper Leather Helmet, Vesper Leather Breastplate, Vesper Leather Leggings, Vesper Leather Gloves, Vesper Leather Boots -->
+ 	</phantom>
+ 	<!-- Rin: охотник, Elven Fighter, Elven Scout, Plains Walker, Wind Rider -->
+ 	<phantom name="Rin" kind="hunter" role="DAMAGE" female="true" face="1" hairStyle="6" hairColor="0" classes="18,22,23,101" aliases="рин" x="47028" y="50830" z="-2992">
+ 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
+ 		<gear grade="D" minLevel="20" rhand="221" chest="395" legs="417" feet="2424" shots="1463" /> <!-- Assassin Knife, Manticore Skin Shirt, Manticore Skin Gaiters, Manticore Skin Boots -->
+-		<gear grade="C" minLevel="40" rhand="4762" chest="401" feet="2437" shots="1464" /> <!-- Dark Elven Dagger - Focus, Drake Leather Armor, Drake Leather Boots -->
+-		<gear grade="B" minLevel="52" rhand="4777" head="2417" chest="2392" gloves="5723" feet="5739" shots="1465" /> <!-- Kris - Evasion, Doom Helmet, Leather Armor of Doom, Doom Gloves - Light Armor, Doom Boots - Light Armor -->
+-		<gear grade="A" minLevel="61" rhand="5618" head="2419" chest="2395" gloves="5775" feet="5787" shots="1466" /> <!-- Soul Separator - Critical Damage, Majestic Circlet, Majestic Leather Armor, Majestic Gauntlets - Light Armor, Majestic Boots - Light Armor -->
+-		<gear grade="S" minLevel="76" rhand="6591" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Angel Slayer - HP Drain, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
+-		<gear grade="S80" minLevel="80" rhand="10446" head="9429" chest="10126" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Disperser - Focus, Dynasty Leather Helmet, Dynasty Leather Armor - Force Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
+-		<gear grade="S84" minLevel="84" rhand="14129" head="13141" chest="13436" legs="13451" gloves="13452" feet="13453" shots="1467" /> <!-- Vesper Shaper - Haste, Vesper Noble Leather Helmet, Vesper Noble Leather Breastplate, Vesper Noble Leather Leggings, Vesper Noble Leather Gloves, Vesper Noble Leather Boots -->
++		<gear grade="C" minLevel="40" rhand="227" chest="401" feet="2437" shots="1464" /> <!-- Stiletto, Drake Leather Armor, Drake Leather Boots -->
++		<gear grade="B" minLevel="52" rhand="229" head="2417" chest="2392" gloves="5723" feet="5739" shots="1465" /> <!-- Kris, Doom Helmet, Leather Armor of Doom, Doom Gloves - Light Armor, Doom Boots - Light Armor -->
++		<gear grade="A" minLevel="61" rhand="235" head="2419" chest="2395" gloves="5775" feet="5787" shots="1466" /> <!-- Bloody Orchid, Majestic Circlet, Majestic Leather Armor, Majestic Gauntlets - Light Armor, Majestic Boots - Light Armor -->
++		<gear grade="S" minLevel="76" rhand="6367" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Angel Slayer, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
++		<gear grade="S80" minLevel="80" rhand="10216" head="9429" chest="10126" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Disperser, Dynasty Leather Helmet, Dynasty Leather Armor - Force Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
++		<gear grade="S84" minLevel="84" rhand="15559" head="13141" chest="13436" legs="13451" gloves="13452" feet="13453" shots="1467" /> <!-- Skull Edge, Vesper Noble Leather Helmet, Vesper Noble Leather Breastplate, Vesper Noble Leather Leggings, Vesper Noble Leather Gloves, Vesper Noble Leather Boots -->
+ 	</phantom>
+ 	<!-- Grom: охотник, Orc Fighter, Orc Raider, Destroyer, Titan -->
+ 	<phantom name="Grom" kind="hunter" role="DAMAGE" female="false" face="0" hairStyle="0" hairColor="0" classes="44,45,46,113" aliases="гром" x="-44679" y="-112684" z="-240">
+ 		<gear grade="NONE" minLevel="1" rhand="2368" chest="1146" legs="1147" shots="1835" /> <!-- Training Gloves, Squire's Shirt, Squire's Pants -->
+-		<gear grade="D" minLevel="20" rhand="5795" head="47" chest="58" legs="59" shots="1463" /> <!-- Tomb Guard A, Helmet, Mithril Breastplate, Mithril Gaiters -->
+-		<gear grade="C" minLevel="40" rhand="6347" head="517" chest="60" shots="1464" /> <!-- Berserker Blade - Focus, Composite Helmet, Composite Armor -->
+-		<gear grade="B" minLevel="52" rhand="10958" head="503" chest="357" legs="383" gloves="5710" feet="5726" shots="1465" /> <!-- Guardian Sword - Great Gale - Critical Bleed, Zubei's Helmet, Zubei's Breastplate, Zubei's Gaiters, Zubei's Gauntlets - Heavy Armor, Zubei's Boots - Heavy Armor -->
+-		<gear grade="A" minLevel="61" rhand="81" head="512" chest="365" legs="388" gloves="5765" feet="5777" shots="1466" /> <!-- Dragon Slayer, Dark Crystal Helmet, Dark Crystal Breastplate, Dark Crystal Gaiters, Dark Crystal Gloves - Heavy Armor, Dark Crystal Boots - Heavy Armor -->
+-		<gear grade="S" minLevel="76" rhand="6605" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" shots="1467" /> <!-- Heavens Divider - Haste, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots -->
+-		<gear grade="S80" minLevel="80" rhand="11344" head="9422" chest="9418" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Heavy Arms - Lightning - Light, Dynasty Helmet, Dynasty Breast Plate - Weapon Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
+-		<gear grade="S84" minLevel="84" rhand="16060" head="13137" chest="13432" legs="13438" gloves="13439" feet="13440" shots="1467" /> <!-- Vesper Slasher - Gale - Health, Vesper Helmet, Vesper Breastplate, Vesper Gaiters, Vesper Gauntlet, Vesper Boots -->
++		<gear grade="D" minLevel="20" rhand="5285" head="47" chest="58" legs="59" shots="1463" /> <!-- Heavy Sword, Helmet, Mithril Breastplate, Mithril Gaiters -->
++		<gear grade="C" minLevel="40" rhand="71" head="517" chest="60" shots="1464" /> <!-- Flamberge, Composite Helmet, Composite Armor -->
++		<gear grade="B" minLevel="52" rhand="78" head="503" chest="357" legs="383" gloves="5710" feet="5726" shots="1465" /> <!-- Great Sword, Zubei's Helmet, Zubei's Breastplate, Zubei's Gaiters, Zubei's Gauntlets - Heavy Armor, Zubei's Boots - Heavy Armor -->
++		<gear grade="A" minLevel="61" rhand="7884" head="512" chest="365" legs="388" gloves="5765" feet="5777" shots="1466" /> <!-- Infernal Master, Dark Crystal Helmet, Dark Crystal Breastplate, Dark Crystal Gaiters, Dark Crystal Gloves - Heavy Armor, Dark Crystal Boots - Heavy Armor -->
++		<gear grade="S" minLevel="76" rhand="6372" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" shots="1467" /> <!-- Heaven's Divider, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots -->
++		<gear grade="S80" minLevel="80" rhand="10218" head="9422" chest="9418" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Heavy Arms, Dynasty Helmet, Dynasty Breast Plate - Weapon Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
++		<gear grade="S84" minLevel="84" rhand="15562" head="13137" chest="13432" legs="13438" gloves="13439" feet="13440" shots="1467" /> <!-- Feather Eye Blade, Vesper Helmet, Vesper Breastplate, Vesper Gaiters, Vesper Gauntlet, Vesper Boots -->
+ 	</phantom>
+ 	<!-- Vedma: охотник, Dark Mystic, Dark Wizard, Spellhowler, Storm Screamer -->
+ 	<phantom name="Vedma" kind="hunter" role="DAMAGE" female="true" face="1" hairStyle="5" hairColor="3" classes="38,39,40,110" aliases="ведьма;ведьмочка" x="9586" y="15823" z="-4568">
+ 		<gear grade="NONE" minLevel="1" rhand="6" chest="425" legs="461" shots="3947" /> <!-- Apprentice's Wand, Apprentice's Tunic, Apprentice's Stockings -->
+-		<gear grade="D" minLevel="20" rhand="183" chest="436" legs="469" gloves="2447" shots="3948" /> <!-- Mystic Staff, Tunic of Knowledge, Stockings of Knowledge, Gloves of Knowledge -->
++		<gear grade="D" minLevel="20" rhand="178" chest="436" legs="469" gloves="2447" shots="3948" /> <!-- Bone Staff, Tunic of Knowledge, Stockings of Knowledge, Gloves of Knowledge -->
+ 		<gear grade="C" minLevel="40" rhand="194" chest="442" legs="473" gloves="2463" shots="3949" /> <!-- Heavy Doom Axe, Divine Tunic, Divine Stockings, Divine Gloves -->
+ 		<gear grade="B" minLevel="52" rhand="208" head="503" chest="2397" legs="2402" gloves="5712" feet="5728" shots="3950" /> <!-- Staff of Seal, Zubei's Helmet, Tunic of Zubei, Stockings of Zubei, Zubei's Gauntlets - Robe, Zubei's Boots - Robe -->
+-		<gear grade="A" minLevel="61" rhand="4903" head="547" chest="2400" legs="2405" gloves="5770" feet="5782" shots="3951" /> <!-- Dasparion's Staff, Tallum Helm, Tallum Tunic, Tallum Stockings, Tallum Gloves - Robe, Tallum Boots - Robe -->
+-		<gear grade="S" minLevel="76" rhand="6587" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- Imperial Staff - Empower, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
+-		<gear grade="S80" minLevel="80" rhand="10440" head="9438" chest="10236" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Spirit - Acumen, Dynasty Circlet, Dynasty Silver Satin Tunic - Healer, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
+-		<gear grade="S84" minLevel="84" rhand="14146" head="13139" chest="13434" legs="13444" gloves="13445" feet="13446" shots="3952" /> <!-- Vesper Singer - MP Regeneration, Vesper Circlet, Vesper Tunic, Vesper Stockings, Vesper Gloves, Vesper Shoes -->
++		<gear grade="A" minLevel="61" rhand="4904" head="547" chest="2400" legs="2405" gloves="5770" feet="5782" shots="3951" /> <!-- Dasparion's Staff, Tallum Helm, Tallum Tunic, Tallum Stockings, Tallum Gloves - Robe, Tallum Boots - Robe -->
++		<gear grade="S" minLevel="76" rhand="214" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- The Staff, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
++		<gear grade="S80" minLevel="80" rhand="10217" head="9438" chest="10236" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Spirit, Dynasty Circlet, Dynasty Silver Satin Tunic - Healer, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
++		<gear grade="S84" minLevel="84" rhand="13466" head="13139" chest="13434" legs="13444" gloves="13445" feet="13446" shots="3952" /> <!-- Vesper Singer, Vesper Circlet, Vesper Tunic, Vesper Stockings, Vesper Gloves, Vesper Shoes -->
+ 	</phantom>
+ 	<!-- Zloy: охотник, Male Kamael Soldier, Trooper, Berserker, Doombringer -->
+ 	<phantom name="Zloy" kind="hunter" role="DAMAGE" female="false" face="0" hairStyle="0" hairColor="0" classes="123,125,127,131" aliases="злой;злыдень" x="-117178" y="46680" z="360">
+ 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
+-		<gear grade="D" minLevel="20" rhand="9220" chest="394" legs="416" feet="2422" shots="1463" /> <!-- Field Sword, Reinforced Leather Shirt, Reinforced Leather Gaiters, Reinforced Leather Boots -->
++		<gear grade="D" minLevel="20" rhand="9211" chest="394" legs="416" feet="2422" shots="1463" /> <!-- Talwar, Reinforced Leather Shirt, Reinforced Leather Gaiters, Reinforced Leather Boots -->
+ 		<gear grade="C" minLevel="40" rhand="9232" chest="400" legs="420" feet="2436" shots="1464" /> <!-- Schlager, Theca Leather Armor, Theca Leather Gaiters, Theca Leather Boots -->
+-		<gear grade="B" minLevel="52" rhand="9310" head="2416" chest="2391" gloves="5719" feet="5735" shots="1465" /> <!-- Innominate Victory - Critical Damage, Blue Wolf Helmet, Blue Wolf Leather Armor, Blue Wolf Gloves - Light Armor, Blue Wolf Boots - Light Armor -->
+-		<gear grade="A" minLevel="61" rhand="13223" head="2418" chest="2394" gloves="5772" feet="5784" shots="1466" /> <!-- Player Commendation - Durendal - Player Commendation Weapon, Helm of Nightmare, Leather Armor of Nightmare, Gauntlets of Nightmare - Light Armor, Boots of Nightmare - Light Armor -->
+-		<gear grade="S" minLevel="76" rhand="11192" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Gram - Thunder - Health, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
+-		<gear grade="S80" minLevel="80" rhand="11328" head="9429" chest="10127" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Wingblade - Lightning - Light, Dynasty Leather Helmet, Dynasty Leather Armor - Weapon Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
+-		<gear grade="S84" minLevel="84" rhand="14158" head="13138" chest="13433" legs="13441" gloves="13442" feet="13443" shots="1467" /> <!-- Vesper Nagan - Health, Vesper Leather Helmet, Vesper Leather Breastplate, Vesper Leather Leggings, Vesper Leather Gloves, Vesper Leather Boots -->
++		<gear grade="B" minLevel="52" rhand="9308" head="2416" chest="2391" gloves="5719" feet="5735" shots="1465" /> <!-- Innominate Victory, Blue Wolf Helmet, Blue Wolf Leather Armor, Blue Wolf Gloves - Light Armor, Blue Wolf Boots - Light Armor -->
++		<gear grade="A" minLevel="61" rhand="9332" head="2418" chest="2394" gloves="5772" feet="5784" shots="1466" /> <!-- Divine Pain, Helm of Nightmare, Leather Armor of Nightmare, Gauntlets of Nightmare - Light Armor, Boots of Nightmare - Light Armor -->
++		<gear grade="S" minLevel="76" rhand="9368" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Gram, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
++		<gear grade="S80" minLevel="80" rhand="10225" head="9429" chest="10127" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Wingblade, Dynasty Leather Helmet, Dynasty Leather Armor - Weapon Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
++		<gear grade="S84" minLevel="84" rhand="15570" head="13138" chest="13433" legs="13441" gloves="13442" feet="13443" shots="1467" /> <!-- Finale Blade, Vesper Leather Helmet, Vesper Leather Breastplate, Vesper Leather Leggings, Vesper Leather Gloves, Vesper Leather Boots -->
+ 	</phantom>
+ 	<!-- Sova: охотник, Elven Fighter, Elven Scout, Silver Ranger, Moonlight Sentinel -->
+ 	<phantom name="Sova" kind="hunter" role="DAMAGE" female="false" face="2" hairStyle="4" hairColor="0" classes="18,22,24,102" aliases="сова;совушка" x="47296" y="50975" z="-2992">
+ 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
+-		<gear grade="D" minLevel="20" rhand="13172" chest="394" legs="416" feet="2422" shots="1463" /> <!-- Player Commendation - Crossbow - Player Commendation Weapon, Reinforced Leather Shirt, Reinforced Leather Gaiters, Reinforced Leather Boots -->
+-		<gear grade="C" minLevel="40" rhand="13184" chest="397" legs="2387" feet="62" shots="1464" /> <!-- Player Commendation - Eminence Bow - Player Commendation Weapon, Mithril Shirt, Reinforced Mithril Gaiters, Reinforced Mithril Boots -->
+-		<gear grade="B" minLevel="52" rhand="11012" head="503" chest="2384" legs="2388" gloves="5711" feet="5727" shots="1465" /> <!-- Bow of Peril - Earth - Cheap Shot, Zubei's Helmet, Zubei's Leather Shirt, Zubei's Leather Gaiters, Zubei's Gauntlets - Light Armor, Zubei's Boots - Light Armor -->
+-		<gear grade="A" minLevel="61" rhand="5610" head="512" chest="2385" legs="2389" gloves="5766" feet="5778" shots="1466" /> <!-- Carnage Bow - Mana Up, Dark Crystal Helmet, Dark Crystal Leather Armor, Dark Crystal Leggings, Dark Crystal Gloves - Light Armor, Dark Crystal Boots - Light Armor -->
+-		<gear grade="S" minLevel="76" rhand="21835" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Dynasty Bow of Fortune - 90-day limited period, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
+-		<gear grade="S80" minLevel="80" rhand="15302" head="9429" chest="10126" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Transparent Bow (for NPC), Dynasty Leather Helmet, Dynasty Leather Armor - Force Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
+-		<gear grade="S84" minLevel="84" rhand="16087" head="13138" chest="13433" legs="13441" gloves="13442" feet="13443" shots="1467" /> <!-- Vesper Thrower - Clairvoyance - Focus, Vesper Leather Helmet, Vesper Leather Breastplate, Vesper Leather Leggings, Vesper Leather Gloves, Vesper Leather Boots -->
++		<gear grade="D" minLevel="20" rhand="274" chest="394" legs="416" feet="2422" shots="1463" /> <!-- Reinforced Bow, Reinforced Leather Shirt, Reinforced Leather Gaiters, Reinforced Leather Boots -->
++		<gear grade="C" minLevel="40" rhand="285" chest="397" legs="2387" feet="62" shots="1464" /> <!-- Noble Elven Bow, Mithril Shirt, Reinforced Mithril Gaiters, Reinforced Mithril Boots -->
++		<gear grade="B" minLevel="52" rhand="284" head="503" chest="2384" legs="2388" gloves="5711" feet="5727" shots="1465" /> <!-- Dark Elven Long Bow, Zubei's Helmet, Zubei's Leather Shirt, Zubei's Leather Gaiters, Zubei's Gauntlets - Light Armor, Zubei's Boots - Light Armor -->
++		<gear grade="A" minLevel="61" rhand="288" head="512" chest="2385" legs="2389" gloves="5766" feet="5778" shots="1466" /> <!-- Carnage Bow, Dark Crystal Helmet, Dark Crystal Leather Armor, Dark Crystal Leggings, Dark Crystal Gloves - Light Armor, Dark Crystal Boots - Light Armor -->
++		<gear grade="S" minLevel="76" rhand="7575" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Draconic Bow, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
++		<gear grade="S80" minLevel="80" rhand="10223" head="9429" chest="10126" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Spitter, Dynasty Leather Helmet, Dynasty Leather Armor - Force Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
++		<gear grade="S84" minLevel="84" rhand="15686" head="13138" chest="13433" legs="13441" gloves="13442" feet="13443" shots="1467" /> <!-- Triumph Bow, Vesper Leather Helmet, Vesper Leather Breastplate, Vesper Leather Leggings, Vesper Leather Gloves, Vesper Leather Boots -->
+ 	</phantom>
+ 	<!-- Arhimag: охотник, Human Mystic, Human Wizard, Sorcerer, Archmage -->
+ 	<phantom name="Arhimag" kind="hunter" role="DAMAGE" female="false" face="1" hairStyle="4" hairColor="0" classes="10,11,12,94" aliases="архимаг;архи" x="-84396" y="244788" z="-3728">
+ 		<gear grade="NONE" minLevel="1" rhand="6" chest="425" legs="461" shots="3947" /> <!-- Apprentice's Wand, Apprentice's Tunic, Apprentice's Stockings -->
+-		<gear grade="D" minLevel="20" rhand="13166" chest="436" legs="469" gloves="2447" shots="3948" /> <!-- Player Commendation - Atuba Hammer - Player Commendation Weapon, Tunic of Knowledge, Stockings of Knowledge, Gloves of Knowledge -->
+-		<gear grade="C" minLevel="40" rhand="13179" chest="442" legs="473" gloves="2463" shots="3949" /> <!-- Player Commendation - Ghost's Wand - Player Commendation Weapon, Divine Tunic, Divine Stockings, Divine Gloves -->
+-		<gear grade="B" minLevel="52" rhand="10919" head="2416" chest="2398" legs="2403" gloves="5720" feet="5736" shots="3950" /> <!-- Sprite's Staff - Hail - Magic Hold, Blue Wolf Helmet, Blue Wolf Tunic, Blue Wolf Stockings, Blue Wolf Gloves - Robe, Blue Wolf Boots - Robe -->
+-		<gear grade="A" minLevel="61" rhand="213" head="2418" chest="2408" gloves="5773" feet="5785" shots="3951" /> <!-- Branch of the Mother Tree, Helm of Nightmare, Robe of Nightmare, Gauntlets of Nightmare - Robe, Boots of Nightmare - Robe -->
+-		<gear grade="S" minLevel="76" rhand="14566" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- Staff of Dake Family, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
+-		<gear grade="S80" minLevel="80" rhand="11346" head="9438" chest="10236" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall - Hail - Mana Up, Dynasty Circlet, Dynasty Silver Satin Tunic - Healer, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
+-		<gear grade="S84" minLevel="84" rhand="16083" head="13139" chest="13434" legs="13444" gloves="13445" feet="13446" shots="3952" /> <!-- Vesper Singer - Hail - Empower, Vesper Circlet, Vesper Tunic, Vesper Stockings, Vesper Gloves, Vesper Shoes -->
++		<gear grade="D" minLevel="20" rhand="178" chest="436" legs="469" gloves="2447" shots="3948" /> <!-- Bone Staff, Tunic of Knowledge, Stockings of Knowledge, Gloves of Knowledge -->
++		<gear grade="C" minLevel="40" rhand="192" chest="442" legs="473" gloves="2463" shots="3949" /> <!-- Crystal Staff, Divine Tunic, Divine Stockings, Divine Gloves -->
++		<gear grade="B" minLevel="52" rhand="92" head="2416" chest="2398" legs="2403" gloves="5720" feet="5736" shots="3950" /> <!-- Sprite's Staff, Blue Wolf Helmet, Blue Wolf Tunic, Blue Wolf Stockings, Blue Wolf Gloves - Robe, Blue Wolf Boots - Robe -->
++		<gear grade="A" minLevel="61" rhand="4903" head="2418" chest="2408" gloves="5773" feet="5785" shots="3951" /> <!-- Dasparion's Staff, Helm of Nightmare, Robe of Nightmare, Gauntlets of Nightmare - Robe, Boots of Nightmare - Robe -->
++		<gear grade="S" minLevel="76" rhand="6366" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- Imperial Staff, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
++		<gear grade="S80" minLevel="80" rhand="10222" head="9438" chest="10236" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall, Dynasty Circlet, Dynasty Silver Satin Tunic - Healer, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
++		<gear grade="S84" minLevel="84" rhand="15566" head="13139" chest="13434" legs="13444" gloves="13445" feet="13446" shots="3952" /> <!-- Black Visage, Vesper Circlet, Vesper Tunic, Vesper Stockings, Vesper Gloves, Vesper Shoes -->
+ 	</phantom>
+ 	<!-- Ksenon: охотник, Human Fighter, Human Knight, Paladin, Phoenix Knight -->
+ 	<phantom name="Ksenon" kind="hunter" role="TANK" female="false" face="0" hairStyle="2" hairColor="3" classes="0,4,5,90" aliases="ксенон;ксен" x="-84461" y="244694" z="-3728">
+ 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
+-		<gear grade="D" minLevel="20" rhand="126" head="2411" chest="352" legs="2378" lhand="2493" shots="1463" /> <!-- Artisan's Sword, Brigandine Helmet, Brigandine Tunic, Brigandine Gaiters, Brigandine Shield -->
+-		<gear grade="C" minLevel="40" rhand="4695" head="2414" chest="356" lhand="2497" shots="1464" /> <!-- Raid Sword - Critical Poison, Full Plate Helmet, Full Plate Armor, Full Plate Shield -->
+-		<gear grade="B" minLevel="52" rhand="4719" head="2417" chest="2381" gloves="5722" feet="5738" lhand="110" shots="1465" /> <!-- Sword of Damascus - Haste, Doom Helmet, Doom Plate Armor, Doom Gloves - Heavy Armor, Doom Boots - Heavy Armor, Doom Shield -->
+-		<gear grade="A" minLevel="61" rhand="11171" head="2419" chest="2383" gloves="5774" feet="5786" shots="1466" /> <!-- Sirra's Blade - Landslide - Health, Majestic Circlet, Majestic Plate Armor, Majestic Gauntlets - Heavy Armor, Majestic Boots - Heavy Armor -->
+-		<gear grade="S" minLevel="76" rhand="11274" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" lhand="6377" shots="1467" /> <!-- Dynasty Sword - Earth - Health, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots, Imperial Crusader Shield -->
+-		<gear grade="S80" minLevel="80" rhand="10436" head="9422" chest="10231" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Sawsword - Light, Dynasty Helmet, Dynasty Platinum Plate - Bard, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
+-		<gear grade="S84" minLevel="84" rhand="13457" head="13140" chest="13435" legs="13448" gloves="13449" feet="13450" lhand="13471" shots="1467" /> <!-- Vesper Cutter, Vesper Noble Helmet, Vesper Noble Breastplate, Vesper Noble Gaiters, Vesper Noble Gauntlet, Vesper Noble Boots, Vesper Shield -->
++		<gear grade="D" minLevel="20" rhand="123" head="2411" chest="352" legs="2378" lhand="2493" shots="1463" /> <!-- Saber, Brigandine Helmet, Brigandine Tunic, Brigandine Gaiters, Brigandine Shield -->
++		<gear grade="C" minLevel="40" rhand="73" head="2414" chest="356" lhand="2497" shots="1464" /> <!-- Shamshir, Full Plate Helmet, Full Plate Armor, Full Plate Shield -->
++		<gear grade="B" minLevel="52" rhand="142" head="2417" chest="2381" gloves="5722" feet="5738" lhand="110" shots="1465" /> <!-- Keshanberk, Doom Helmet, Doom Plate Armor, Doom Gloves - Heavy Armor, Doom Boots - Heavy Armor, Doom Shield -->
++		<gear grade="A" minLevel="61" rhand="80" head="2419" chest="2383" gloves="5774" feet="5786" shots="1466" /> <!-- Tallum Blade, Majestic Circlet, Majestic Plate Armor, Majestic Gauntlets - Heavy Armor, Majestic Boots - Heavy Armor -->
++		<gear grade="S" minLevel="76" rhand="82" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" lhand="6377" shots="1467" /> <!-- Gaz Blade, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots, Imperial Crusader Shield -->
++		<gear grade="S80" minLevel="80" rhand="10215" head="9422" chest="10231" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Sawsword, Dynasty Helmet, Dynasty Platinum Plate - Bard, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
++		<gear grade="S84" minLevel="84" rhand="15558" head="13140" chest="13435" legs="13448" gloves="13449" feet="13450" lhand="13471" shots="1467" /> <!-- Periel Sword, Vesper Noble Helmet, Vesper Noble Breastplate, Vesper Noble Gaiters, Vesper Noble Gauntlet, Vesper Noble Boots, Vesper Shield -->
+ 	</phantom>
+ </list>
+diff --git a/java/org/l2jmobius/gameserver/config/custom/PhantomHuntersConfig.java b/java/org/l2jmobius/gameserver/config/custom/PhantomHuntersConfig.java
+index 55c46bf..66f5dd6 100644
+--- a/java/org/l2jmobius/gameserver/config/custom/PhantomHuntersConfig.java
++++ b/java/org/l2jmobius/gameserver/config/custom/PhantomHuntersConfig.java
+@@ -14,11 +14,14 @@ public class PhantomHuntersConfig
+ 	public static String HUNTERS_MODE;
+ 	public static String HUNTERS_RESET;
+ 	public static int HUNTERS_RESET_ID;
++	public static String HUNTERS_SELF_TEST;
++	public static int HUNTERS_SELF_TEST_ID;
+ 	public static int HUNTERS_IDLE_TIMEOUT;
+ 	public static int HUNTER_RESPAWN_DELAY;
+ 	public static int HUNTER_SHOT_COUNT;
+ 	public static int HUNTERS_PER_SPOT;
+ 	public static int HUNTER_AMMO_COUNT;
++	public static int HUNTER_POTION_COUNT;
+ 	public static int HUNTER_TELEPORT_FEE;
+ 	public static int HUNTER_TOWN_INTERVAL;
+ 	public static int HUNTER_STORE_MIN_PRICE;
+@@ -33,11 +36,14 @@ public class PhantomHuntersConfig
+ 		HUNTERS_MODE = config.getString("HuntersMode", "ALWAYS").strip().toUpperCase();
+ 		HUNTERS_RESET = config.getString("HuntersReset", "").strip();
+ 		HUNTERS_RESET_ID = config.getInt("HuntersResetId", 0);
++		HUNTERS_SELF_TEST = config.getString("HuntersSelfTest", "").strip();
++		HUNTERS_SELF_TEST_ID = config.getInt("HuntersSelfTestId", 0);
+ 		HUNTERS_IDLE_TIMEOUT = config.getInt("HuntersIdleTimeout", 300);
+ 		HUNTER_RESPAWN_DELAY = config.getInt("HunterRespawnDelay", 20);
+ 		HUNTER_SHOT_COUNT = config.getInt("HunterShotCount", 2000);
+ 		HUNTERS_PER_SPOT = config.getInt("HuntersPerSpot", 2);
+ 		HUNTER_AMMO_COUNT = config.getInt("HunterAmmoCount", 3000);
++		HUNTER_POTION_COUNT = config.getInt("HunterPotionCount", 30);
+ 		HUNTER_TELEPORT_FEE = config.getInt("HunterTeleportFee", 15000);
+ 		HUNTER_TOWN_INTERVAL = config.getInt("HunterTownInterval", 120);
+ 		HUNTER_STORE_MIN_PRICE = config.getInt("HunterStoreMinPrice", 20000);
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+index 01d8a50..35398fc 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+@@ -1,6 +1,10 @@
+ package org.l2jmobius.gameserver.managers.phantom;
+ 
+ import java.io.File;
++import java.nio.charset.StandardCharsets;
++import java.nio.file.Files;
++import java.nio.file.Path;
++import java.nio.file.StandardCopyOption;
+ import java.util.ArrayList;
+ import java.util.Collections;
+ import java.util.EnumMap;
+@@ -34,6 +38,7 @@ import org.l2jmobius.gameserver.entity.actor.instance.Monster;
+ import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
+ import org.l2jmobius.gameserver.entity.item.instance.Item;
+ import org.l2jmobius.gameserver.geoengine.GeoEngine;
++import org.l2jmobius.gameserver.managers.FakePlayerBrain;
+ import org.l2jmobius.gameserver.managers.GlobalVariablesManager;
+ import org.l2jmobius.gameserver.managers.phantom.HuntSpotData.HuntSpot;
+ import org.l2jmobius.gameserver.mechanics.events.EventType;
+@@ -42,6 +47,7 @@ import org.l2jmobius.gameserver.mechanics.events.holders.actor.creature.OnCreatu
+ import org.l2jmobius.gameserver.mechanics.events.listeners.ConsumerEventListener;
+ import org.l2jmobius.gameserver.mechanics.skill.Skill;
+ import org.l2jmobius.gameserver.network.enums.ChatType;
++import org.l2jmobius.gameserver.network.holders.TradeItem;
+ import org.l2jmobius.gameserver.network.holders.TradeList;
+ import org.l2jmobius.gameserver.network.serverpackets.PrivateStoreMsgSell;
+ import org.l2jmobius.gameserver.taskmanagers.AutoPlayTaskManager;
+@@ -73,6 +79,9 @@ public class PhantomHunterManager
+ 	private static final int ROAMS_BEFORE_SWITCH = 3;
+ 	private static final int DANGER_RANGE = 900;
+ 	private static final String RESET_VARIABLE = "L2HubHuntersResetId";
++	private static final String SELF_TEST_VARIABLE = "L2HubHuntersSelfTestId";
++	/** Состояние охотников для лаунчера (от папки game). */
++	private static final String STATUS_FILE = "./log/L2HubHunters.json";
+ 	/** Обиды охотника: кто и сколько раз его убивал (переменная персонажа). */
+ 	static final String GRUDGE_VARIABLE = "L2HubGrudges";
+ 
+@@ -333,6 +342,8 @@ public class PhantomHunterManager
+ 		}
+ 
+ 		reset();
++		selfTest();
++		writeStatus(now);
+ 
+ 		boolean realPlayer = false;
+ 		for (Player player : World.getPlayers())
+@@ -368,6 +379,63 @@ public class PhantomHunterManager
+ 		}
+ 	}
+ 
++	/**
++	 * Состояние охотников для лаунчера L2Hub ({@value #STATUS_FILE}, раз в 10 с): уровень, фаза, адена, где качается, лавка с товаром, с кем в пати.
++	 */
++	private void writeStatus(long now)
++	{
++		final StringBuilder sb = new StringBuilder(8192);
++		sb.append("{\"time\":").append(now).append(',');
++		FakePlayerBrain.field(sb, "mode", PhantomHuntersConfig.HUNTERS_MODE).append(',');
++		sb.append("\"wanted\":").append(_wanted).append(",\"hunters\":[");
++		boolean first = true;
++		for (Hunter hunter : _hunters.values())
++		{
++			final Player player = PhantomManager.getInstance().getPhantom(hunter.template);
++			sb.append(first ? "" : ",").append('{');
++			first = false;
++			FakePlayerBrain.field(sb, "name", hunter.template.getName()).append(',');
++			sb.append("\"online\":").append(player != null);
++			if (player != null)
++			{
++				final String phase = player.isDead() ? "DEAD" : hunter.phase.name();
++				sb.append(",\"level\":").append(player.getLevel()).append(",\"classId\":").append(player.getPlayerClass().getId()).append(",\"adena\":").append(player.getAdena()).append(',');
++				FakePlayerBrain.field(sb, "phase", phase).append(',');
++				FakePlayerBrain.field(sb, "spot", hunter.spot != null ? hunter.spot.name : "").append(',');
++				FakePlayerBrain.field(sb, "town", MapRegionData.getInstance().getClosestTownName(player)).append(',');
++				FakePlayerBrain.field(sb, "party", player.isInParty() ? player.getParty().getLeader().getName() : "");
++				if (hunter.storeOpen && (player.getPrivateStoreType() == PrivateStoreType.SELL))
++				{
++					sb.append(",\"store\":{\"until\":").append(hunter.phaseUntil).append(',');
++					FakePlayerBrain.field(sb, "title", player.getSellList().getTitle()).append(",\"items\":[");
++					boolean firstItem = true;
++					for (TradeItem trade : player.getSellList().getItems())
++					{
++						sb.append(firstItem ? "" : ",").append('{');
++						firstItem = false;
++						FakePlayerBrain.field(sb, "name", trade.getItem().getName()).append(',');
++						sb.append("\"count\":").append(trade.getCount()).append(",\"price\":").append(trade.getPrice()).append('}');
++					}
++					sb.append("]}");
++				}
++			}
++			sb.append('}');
++		}
++		sb.append("]}");
++
++		try
++		{
++			final Path file = Path.of(STATUS_FILE);
++			final Path tmp = file.resolveSibling(file.getFileName() + ".tmp");
++			Files.writeString(tmp, sb, StandardCharsets.UTF_8);
++			Files.move(tmp, file, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
++		}
++		catch (Exception e)
++		{
++			LOGGER.log(Level.FINE, getClass().getSimpleName() + ": could not write " + STATUS_FILE + ".", e);
++		}
++	}
++
+ 	/**
+ 	 * Сброс прогресса: когда HuntersResetId отличается от выполненного в прошлый раз — удалить названных (или ALL) охотников из базы.
+ 	 */
+@@ -1037,9 +1105,18 @@ public class PhantomHunterManager
+ 	 */
+ 	public void onLfm(Player shouter, ChatType type, String text)
+ 	{
+-		if (!PhantomHuntersConfig.HUNTER_LFM || !_wanted || (shouter == null) || (text == null) || PhantomManager.getInstance().isPhantom(shouter) || !LFM.matcher(text).find())
++		lfm(shouter, type, text, false);
++	}
++
++	/**
++	 * @param test самопроверка {@code HuntersSelfTest = LFM}: кричит сам охотник
++	 * @return кто откликнулся
++	 */
++	private List<Hunter> lfm(Player shouter, ChatType type, String text, boolean test)
++	{
++		if (!PhantomHuntersConfig.HUNTER_LFM || !_wanted || (shouter == null) || (text == null) || (!test && PhantomManager.getInstance().isPhantom(shouter)) || !LFM.matcher(text).find())
+ 		{
+-			return;
++			return List.of();
+ 		}
+ 
+ 		final boolean healer = WANT_HEALER.matcher(text).find();
+@@ -1047,26 +1124,26 @@ public class PhantomHunterManager
+ 		final boolean damage = WANT_DAMAGE.matcher(text).find();
+ 		if (!healer && !tank && !damage && !WANT_PARTY.matcher(text).find() && !text.toLowerCase().contains("лфм") && !text.toLowerCase().contains("lfm"))
+ 		{
+-			return; // «нужен совет» — не про пати
++			return List.of(); // «нужен совет» — не про пати
+ 		}
+ 
+ 		if (shouter.isInParty() && (!shouter.getParty().isLeader(shouter) || (shouter.getParty().getMemberCount() >= 9)))
+ 		{
+-			return;
++			return List.of();
+ 		}
+ 
+ 		final long now = System.currentTimeMillis();
+ 		final Long until = _lfmCooldowns.get(shouter.getObjectId());
+ 		if ((until != null) && (now < until))
+ 		{
+-			return;
++			return List.of();
+ 		}
+ 
+ 		final List<Hunter> candidates = new ArrayList<>();
+ 		for (Hunter hunter : _hunters.values())
+ 		{
+ 			final Player player = PhantomManager.getInstance().getPhantom(hunter.template);
+-			if ((player == null) || (hunter.phase != Phase.HUNT) || player.isDead() || (hunter.enemyId != 0) || (Math.abs(player.getLevel() - shouter.getLevel()) > LFM_LEVEL_GAP) || (grudge(player, shouter) > 0))
++			if ((player == null) || (player == shouter) || (hunter.phase != Phase.HUNT) || player.isDead() || (hunter.enemyId != 0) || (Math.abs(player.getLevel() - shouter.getLevel()) > LFM_LEVEL_GAP) || (grudge(player, shouter) > 0))
+ 			{
+ 				continue;
+ 			}
+@@ -1082,13 +1159,15 @@ public class PhantomHunterManager
+ 
+ 		if (candidates.isEmpty())
+ 		{
+-			return;
++			return List.of();
+ 		}
+ 
+ 		_lfmCooldowns.put(shouter.getObjectId(), now + LFM_COOLDOWN);
+ 		Collections.shuffle(candidates);
++		// Названы роли — по одному на каждую, не названы — двое любых.
+ 		final int wanted = (healer ? 1 : 0) + (tank ? 1 : 0) + (damage ? 1 : 0);
+-		for (Hunter hunter : candidates.subList(0, Math.min(candidates.size(), Math.max(wanted, 2))))
++		final List<Hunter> recruited = new ArrayList<>(candidates.subList(0, Math.min(candidates.size(), wanted > 0 ? wanted : 2)));
++		for (Hunter hunter : recruited)
+ 		{
+ 			final Player player = PhantomManager.getInstance().getPhantom(hunter.template);
+ 			hunter.recruiterId = shouter.getObjectId();
+@@ -1100,6 +1179,98 @@ public class PhantomHunterManager
+ 			PhantomChat.getInstance().hunterEvent(player, shouter, "LFM", shouter.getName() + " (" + shouter.getLevel() + " ур.) пишет в чат: «" + text + "». Ты свободен и подходишь — напиши ему в личку коротко, что идёшь к нему в пати (ты " + who + ")", "го, я " + who + ", кинь пати", 60000, true);
+ 			LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " answers the LFM of " + shouter.getName() + ".");
+ 		}
++		return recruited;
++	}
++
++	/**
++	 * Самопроверка пати по крику без клиента ({@code HuntersSelfTest = LFM}, один раз на каждое новое {@code HuntersSelfTestId}): охотник «кричит» «лфм нужен дд», через 40 с — инвайт тому, кто откликнулся, через 100 с — отпустить. Каждый шаг — в лог с пометкой SelfTest.
++	 */
++	private void selfTest()
++	{
++		final int done = GlobalVariablesManager.getInstance().getInt(SELF_TEST_VARIABLE, 0);
++		if (PhantomHuntersConfig.HUNTERS_SELF_TEST_ID == done)
++		{
++			return;
++		}
++
++		GlobalVariablesManager.getInstance().set(SELF_TEST_VARIABLE, PhantomHuntersConfig.HUNTERS_SELF_TEST_ID);
++		GlobalVariablesManager.getInstance().storeMe();
++		if (!"LFM".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST))
++		{
++			return;
++		}
++
++		// Кричит тот, у кого больше всего охотников-дамагеров рядом по уровню.
++		Player shouter = null;
++		int best = 0;
++		for (Hunter hunter : _hunters.values())
++		{
++			final Player player = PhantomManager.getInstance().getPhantom(hunter.template);
++			if ((player == null) || (hunter.phase != Phase.HUNT) || player.isDead() || player.isInParty())
++			{
++				continue;
++			}
++
++			int peers = 0;
++			for (Hunter other : _hunters.values())
++			{
++				final Player peer = PhantomManager.getInstance().getPhantom(other.template);
++				if ((peer != null) && (peer != player) && (other.phase == Phase.HUNT) && (other.template.getRole() == PhantomTemplate.Role.DAMAGE) && (Math.abs(peer.getLevel() - player.getLevel()) <= LFM_LEVEL_GAP))
++				{
++					peers++;
++				}
++			}
++			if (peers > best)
++			{
++				best = peers;
++				shouter = player;
++			}
++		}
++
++		if (shouter == null)
++		{
++			LOGGER.info(getClass().getSimpleName() + ": SelfTest LFM: no free hunters to test with.");
++			return;
++		}
++
++		final Player leader = shouter;
++		final List<Hunter> recruited = lfm(leader, ChatType.SHOUT, "лфм нужен дд", true);
++		LOGGER.info(getClass().getSimpleName() + ": SelfTest LFM: " + leader.getName() + " (" + leader.getLevel() + ") shouts, " + recruited.size() + " answered" + (recruited.isEmpty() ? "." : ": " + recruited.get(0).template.getName() + "."));
++		if (recruited.isEmpty())
++		{
++			return;
++		}
++
++		final Hunter hunter = recruited.get(0);
++		ThreadPool.schedule(() ->
++		{
++			final Player member = PhantomManager.getInstance().getPhantom(hunter.template);
++			if (member == null)
++			{
++				LOGGER.info(getClass().getSimpleName() + ": SelfTest LFM: " + hunter.template.getName() + " left the world.");
++				return;
++			}
++
++			LOGGER.info(getClass().getSimpleName() + ": SelfTest LFM: " + member.getName() + " is " + hunter.phase + ", " + (int) member.calculateDistance2D(leader) + " from " + leader.getName() + "; inviting.");
++			PhantomCompanionManager.getInstance().onInvited(leader, member, null);
++			LOGGER.info(getClass().getSimpleName() + ": SelfTest LFM: after invite " + member.getName() + " is " + hunter.phase + ", companion " + PhantomCompanionManager.getInstance().isCompanion(hunter.template) + ", party " + (member.isInParty() ? member.getParty().getLeader().getName() + " x" + member.getParty().getMemberCount() : "none") + ", level " + member.getLevel() + ".");
++		}, 40000);
++		ThreadPool.schedule(() ->
++		{
++			final Player member = PhantomManager.getInstance().getPhantom(hunter.template);
++			if (member == null)
++			{
++				return;
++			}
++
++			LOGGER.info(getClass().getSimpleName() + ": SelfTest LFM: after 1 min in party " + member.getName() + " is " + (int) member.calculateDistance2D(leader) + " from " + leader.getName() + ", " + hunter.phase + "; releasing.");
++			PhantomCompanionManager.getInstance().release(hunter.template, false);
++		}, 100000);
++		ThreadPool.schedule(() ->
++		{
++			final Player member = PhantomManager.getInstance().getPhantom(hunter.template);
++			LOGGER.info(getClass().getSimpleName() + ": SelfTest LFM: done, " + hunter.template.getName() + " is " + hunter.phase + (member != null ? ", party " + member.isInParty() + ", spot " + (hunter.spot != null ? hunter.spot.name : "none") : "") + ".");
++		}, 115000);
+ 	}
+ 
+ 	/**
+@@ -1131,20 +1302,35 @@ public class PhantomHunterManager
+ 			}
+ 			if (player.calculateDistance2D(recruiter) > 1500)
+ 			{
+-				final double angle = Rnd.nextDouble() * 2 * Math.PI;
+-				final int x = recruiter.getX() + (int) (Math.cos(angle) * 250);
+-				final int y = recruiter.getY() + (int) (Math.sin(angle) * 250);
+-				final int z = GeoEngine.getInstance().getHeight(x, y, recruiter.getZ());
+-				final boolean reachable = GeoEngine.getInstance().canMoveToTarget(recruiter.getX(), recruiter.getY(), recruiter.getZ(), x, y, z, recruiter.getInstanceId());
+-				player.teleToLocation(reachable ? new Location(x, y, z) : new Location(recruiter.getX(), recruiter.getY(), recruiter.getZ()), false);
++				// Рядом, но не в нём: несколько точек вокруг по геодате, ни одна не годится — к нему самому.
++				Location near = new Location(recruiter.getX(), recruiter.getY(), recruiter.getZ());
++				for (int i = 0; i < 8; i++)
++				{
++					final double angle = Rnd.nextDouble() * 2 * Math.PI;
++					final int r = Rnd.get(120, 250);
++					final int x = recruiter.getX() + (int) (Math.cos(angle) * r);
++					final int y = recruiter.getY() + (int) (Math.sin(angle) * r);
++					final int z = GeoEngine.getInstance().getHeight(x, y, recruiter.getZ());
++					if (GeoEngine.getInstance().canMoveToTarget(recruiter.getX(), recruiter.getY(), recruiter.getZ(), x, y, z, recruiter.getInstanceId()))
++					{
++						near = new Location(x, y, z);
++						break;
++					}
++				}
++				player.teleToLocation(near, false);
+ 			}
+ 			return;
+ 		}
+ 
+-		if ((player.calculateDistance2D(recruiter) > 200) && !player.isMoving())
++		// Позвавший отошёл — подбежать, но остановиться в паре шагов от него, а не в нём.
++		final double distance = player.calculateDistance2D(recruiter);
++		if ((distance > 400) && !player.isMoving())
+ 		{
++			final double k = (distance - 120) / distance;
++			final int x = player.getX() + (int) ((recruiter.getX() - player.getX()) * k);
++			final int y = player.getY() + (int) ((recruiter.getY() - player.getY()) * k);
+ 			player.setRunning();
+-			player.getAI().setIntentionMoveTo(new Location(recruiter.getX(), recruiter.getY(), recruiter.getZ()));
++			player.getAI().setIntentionMoveTo(new Location(x, y, GeoEngine.getInstance().getHeight(x, y, recruiter.getZ())));
+ 		}
+ 	}
+ 
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterOutfit.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterOutfit.java
+index d7b3229..ee43247 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterOutfit.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterOutfit.java
+@@ -4,6 +4,7 @@ import java.util.ArrayList;
+ import java.util.List;
+ import java.util.Map;
+ import java.util.Set;
++import java.util.regex.Pattern;
+ 
+ import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
+ import org.l2jmobius.gameserver.data.xml.ItemData;
+@@ -91,6 +92,25 @@ final class PhantomHunterOutfit
+ 	private static final int SHOT_RESERVE = 300;
+ 	private static final int AMMO_RESERVE = 500;
+ 	private static final int AMMO_LOAN = 300;
++	/** Хилки по уровню: Lesser (1060, до 20), Greater (1061, до 40), Greater (1539, дальше) — так в датапаке H5. */
++	private static final int[] HEALING_POTIONS =
++	{
++		1060,
++		1061,
++		1539
++	};
++	private static final int POTION_HP_PERCENT = 40;
++	/** Левые слоты — первыми: так их заполняет Inventory.equipItem, иначе вторая серьга и второе кольцо не покупались бы. */
++	private static final int[] JEWEL_SLOTS =
++	{
++		Inventory.PAPERDOLL_NECK,
++		Inventory.PAPERDOLL_LEAR,
++		Inventory.PAPERDOLL_REAR,
++		Inventory.PAPERDOLL_LFINGER,
++		Inventory.PAPERDOLL_RFINGER
++	};
++	private static final Pattern JEWEL_SKIP = Pattern.compile(" - |Commendation|Event|Shadow|Common|Limited|Sealed|Olympiad|Hero|Lord|Test|Monster|Pvp|PvP|Retail|Baguette|Valakas|Antharas|Baium|Zaken|Orfen|Core|Queen Ant|Frintezza|Beleth|Freya");
++	private static int[][] _jewels;
+ 	/** Идти в город за сосами есть смысл, если хватает хотя бы на столько. */
+ 	private static final int RESTOCK_MIN = 100;
+ 
+@@ -210,6 +230,7 @@ final class PhantomHunterOutfit
+ 			player.addAutoSoulShot(shotId);
+ 			player.rechargeShots(true, true);
+ 		}
++		syncPotion(player);
+ 	}
+ 
+ 	// ---------- Город ----------
+@@ -251,6 +272,13 @@ final class PhantomHunterOutfit
+ 			done.add("взял стрел в долг: " + AMMO_LOAN);
+ 		}
+ 
++		// Банки — на четверть кармана: хилка своего уровня, AutoUse пьёт её на 40 % HP.
++		final long potions = buy(player, potionId(player), PhantomHuntersConfig.HUNTER_POTION_COUNT, player.getAdena() / 4);
++		if (potions > 0)
++		{
++			done.add("купил банок: " + potions);
++		}
++
+ 		final long shots = buy(player, shotId(player), PhantomHuntersConfig.HUNTER_SHOT_COUNT, player.getAdena() / 2);
+ 		if (shots > 0)
+ 		{
+@@ -261,6 +289,133 @@ final class PhantomHunterOutfit
+ 		return done;
+ 	}
+ 
++	/**
++	 * @return хилка по уровню: до 20 — 1060, до 40 — 1061, дальше — 1539
++	 */
++	private static int potionId(Player player)
++	{
++		return player.getLevel() < 20 ? HEALING_POTIONS[0] : player.getLevel() < 40 ? HEALING_POTIONS[1] : HEALING_POTIONS[2];
++	}
++
++	/**
++	 * Авто-банка: своя хилка, а нет её — любая из оставшихся; пьёт на {@value #POTION_HP_PERCENT} % HP.
++	 */
++	private static void syncPotion(Player player)
++	{
++		int potion = 0;
++		for (int i = HEALING_POTIONS.length - 1; i >= 0; i--)
++		{
++			if (count(player, HEALING_POTIONS[i]) > 0)
++			{
++				potion = HEALING_POTIONS[i];
++				if (potion == potionId(player))
++				{
++					break;
++				}
++			}
++		}
++		player.getAutoUseSettings().setAutoPotionItem(potion);
++		player.getAutoPlaySettings().setAutoPotionPercent(POTION_HP_PERCENT);
++	}
++
++	/**
++	 * Бижутерия (шея, две серьги, два кольца) — после полного сета брони: самая дешёвая обычная своего грейда, по цене магазина. Не хватает — копит.
++	 * @param grade грейд шмота, который он сейчас носит по набору
++	 * @param reserve запас на расходники и телепорт
++	 * @return что купил
++	 */
++	private static List<String> buyJewels(Player player, int grade, long reserve)
++	{
++		final List<String> bought = new ArrayList<>();
++		for (int slot : JEWEL_SLOTS)
++		{
++			final int itemId = jewel(grade, slot);
++			final ItemTemplate item = itemId > 0 ? ItemData.getInstance().getTemplate(itemId) : null;
++			final Item current = player.getInventory().getPaperdollItem(slot);
++			if ((item == null) || ((current != null) && (current.getTemplate().getCrystalType().getLevel() >= item.getCrystalType().getLevel())))
++			{
++				continue;
++			}
++
++			if (((player.getAdena() - reserve) < item.getReferencePrice()) || !player.reduceAdena(ItemProcessType.BUY, item.getReferencePrice(), player, false))
++			{
++				break;
++			}
++
++			final Item added = player.getInventory().addItem(ItemProcessType.BUY, itemId, 1, player, null);
++			if (added == null)
++			{
++				break;
++			}
++			if (current != null)
++			{
++				player.getInventory().unEquipItemInSlot(slot);
++			}
++			player.getInventory().equipItem(added);
++			if ((current != null) && !current.isEquipped())
++			{
++				sell(player, current);
++			}
++			bought.add(item.getName());
++		}
++		return bought;
++	}
++
++	/**
++	 * @return самая дешёвая обычная бижутерия грейда для слота (нет в грейде — грейдом ниже); 0 — нет
++	 */
++	private static int jewel(int grade, int slot)
++	{
++		final int kind = slot == Inventory.PAPERDOLL_NECK ? 0 : (slot == Inventory.PAPERDOLL_REAR) || (slot == Inventory.PAPERDOLL_LEAR) ? 1 : 2;
++		final int[][] catalog = jewels();
++		for (int g = Math.min(7, grade); g >= 0; g--)
++		{
++			if (catalog[g][kind] > 0)
++			{
++				return catalog[g][kind];
++			}
++		}
++		return 0;
++	}
++
++	/**
++	 * Каталог бижутерии [грейд][шея, серьга, кольцо] — собирается один раз из ItemData: продаётся, передаётся, с ценой, без SA, наградных, ивентовых и геройских.
++	 */
++	private static synchronized int[][] jewels()
++	{
++		if (_jewels != null)
++		{
++			return _jewels;
++		}
++
++		final int[][] catalog = new int[8][3];
++		final long[][] best = new long[8][3];
++		for (ItemTemplate item : ItemData.getInstance().getAllItems())
++		{
++			if ((item == null) || !item.isArmor() || (item.getReferencePrice() <= 0) || !item.isSellable() || !item.isTradeable() || item.isQuestItem() || item.isHeroItem() || item.isPvpItem())
++			{
++				continue;
++			}
++
++			final BodyPart part = item.getBodyPart();
++			final int kind = part == BodyPart.NECK ? 0 : (part == BodyPart.LR_EAR) || (part == BodyPart.R_EAR) || (part == BodyPart.L_EAR) ? 1 : (part == BodyPart.LR_FINGER) || (part == BodyPart.R_FINGER) || (part == BodyPart.L_FINGER) ? 2 : -1;
++			final String name = item.getName();
++			if ((kind < 0) || (name == null) || JEWEL_SKIP.matcher(name).find())
++			{
++				continue;
++			}
++
++			final int grade = Math.min(7, item.getCrystalType().getLevel());
++			if ((catalog[grade][kind] == 0) || (item.getReferencePrice() < best[grade][kind]))
++			{
++				catalog[grade][kind] = item.getId();
++				best[grade][kind] = item.getReferencePrice();
++			}
++		}
++		_jewels = catalog;
++		return catalog;
++	}
++
+ 	/**
+ 	 * Докупить расходник до запаса по цене магазина.
+ 	 * @return сколько купил
+@@ -285,7 +440,7 @@ final class PhantomHunterOutfit
+ 	}
+ 
+ 	/**
+-	 * Шмот по частям: оружие, потом броня. Для каждой части — лучший разрешённый грейд из своего набора, на который хватает адены (с запасом на сосы, стрелы и телепорт); не хватает — грейдом ниже, если это лучше надетого. Старое — NPC за полцены.
++	 * Шмот по частям: оружие, потом броня. Для каждой части — лучший разрешённый грейд из своего набора, на который хватает адены (с запасом на сосы, стрелы и телепорт); не хватает — грейдом ниже, если это лучше надетого; и на это нет — копит, следующие части не покупает. Старое — NPC за полцены.
+ 	 * @return что купил — для лога
+ 	 */
+ 	private static List<String> buyGear(Player player, PhantomTemplate template)
+@@ -301,6 +456,7 @@ final class PhantomHunterOutfit
+ 			}
+ 		}
+ 
++		boolean stopped = false;
+ 		for (int slot : SLOTS)
+ 		{
+ 			// Штаны к цельному доспеху и щит к двуручу не покупаются: надев их, он снял бы доспех или оружие.
+@@ -311,6 +467,7 @@ final class PhantomHunterOutfit
+ 
+ 			final Item current = player.getInventory().getPaperdollItem(slot);
+ 			final int currentGrade = (current == null) || current.isEtcItem() ? -1 : current.getTemplate().getCrystalType().getLevel();
++			boolean saving = false; // есть вещь лучше надетой, но не хватает ни на один грейд
+ 			for (PhantomTemplate.Gear gear : grades)
+ 			{
+ 				final int itemId = itemFor(gear, slot);
+@@ -324,6 +481,7 @@ final class PhantomHunterOutfit
+ 				{
+ 					break; // надетое не хуже этого грейда, ниже искать нечего
+ 				}
++				saving = true;
+ 
+ 				// Запас на расходники того грейда, под который покупается (новое оружие меняет грейд сосов).
+ 				final int g = Math.min(7, grade(gear.rhand));
+@@ -339,6 +497,7 @@ final class PhantomHunterOutfit
+ 					break;
+ 				}
+ 
++				saving = false;
+ 				final Item added = player.getInventory().addItem(ItemProcessType.BUY, itemId, 1, player, null);
+ 				if ((added != null) && added.isEquipable())
+ 				{
+@@ -351,6 +510,21 @@ final class PhantomHunterOutfit
+ 				}
+ 				break;
+ 			}
++
++			// Не хватает на эту вещь — копит на неё, остальное потом (сначала оружие, как у игроков).
++			if (saving)
++			{
++				stopped = true;
++				break;
++			}
++		}
++
++		// Броня собрана — бижутерия своего грейда.
++		if (!stopped && !grades.isEmpty())
++		{
++			final int g = Math.min(7, grade(grades.get(0).rhand));
++			final long reserve = (price(player.isMageClass() ? SPIRITSHOTS[g] : SOULSHOTS[g]) * SHOT_RESERVE) + (ammoId(player) > 0 ? price(ARROWS[g]) * AMMO_RESERVE : 0) + (player.getLevel() >= 40 ? PhantomHuntersConfig.HUNTER_TELEPORT_FEE : 0);
++			bought.addAll(buyJewels(player, g, reserve));
+ 		}
+ 
+ 		if (!bought.isEmpty())
+@@ -532,6 +706,13 @@ final class PhantomHunterOutfit
+ 		{
+ 			return false;
+ 		}
++		for (int potion : HEALING_POTIONS)
++		{
++			if (id == potion)
++			{
++				return false;
++			}
++		}
+ 		return (id != shotId(player)) && (id != ammoId(player));
+ 	}
+ 

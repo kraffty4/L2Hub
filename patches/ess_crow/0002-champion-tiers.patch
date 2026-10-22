@@ -1,0 +1,619 @@
+diff --git a/dist/game/config/Custom/ChampionMonsters.ini b/dist/game/config/Custom/ChampionMonsters.ini
+index 71d7358..efc6a94 100644
+--- a/dist/game/config/Custom/ChampionMonsters.ini
++++ b/dist/game/config/Custom/ChampionMonsters.ini
+@@ -1,57 +1,60 @@
+ # ---------------------------------------------------------------------------
+ # Champion mobs - Turn random mobs into Champions
+ # ---------------------------------------------------------------------------
++# L2Hub: два уровня чемпионов. Ключи Champion* — красные (сильные), ChampionBlue* — синие
++# (слабые, блок в конце файла). Включение, пассивность, аура, уровни мобов, шансы
++# предметов-наград, виталити и инстансы — общие для обоих уровней.
+ 
+ # Enable/Disable Champion Mob System.
+-ChampionEnable = False
++ChampionEnable = True
+ 
+ # Force Champion mobs to be passive?
+ # To leave champion mobs to default/Aggressive, set to False.
+ # To set all champion mobs to Passive, set True.
+ ChampionPassive = False
+ 
+-# % chance for a mob to became champion (0 to disable).
+-ChampionFrequency = 5
++# Шанс красного чемпиона, % (0 — выключить). Допускаются дробные: 0.5.
++# Сначала бросается шанс красного, затем синего: всего чемпионов ChampionFrequency + ChampionBlueFrequency.
++ChampionFrequency = 1
+ 
+-# Title of all Champion Mobs.
+-ChampionTitle = Champion
++# Титул красного чемпиона.
++ChampionTitle = Elite Champion
+ 
+-# Red aura for Champion Mobs.
++# Аура под чемпионами: у красных красная, у синих синяя.
+ ChampionAura = True
+ 
+ # Min and max levels allowed for a mob to be a Champion mob.
+ ChampionMinLevel = 20
+ ChampionMaxLevel = 85
+ 
+-# Hp multiplier for Champion mobs.
+-ChampionHp = 8
++# Множитель HP красного чемпиона.
++ChampionHp = 4
+ 
+-# Hp Regen Multiplier for Champion mobs.
++# Множитель регенерации HP красного чемпиона.
+ ChampionHpRegen = 1.0
+ 
+-# Exp/Sp rewards multiplier for Champion mobs.
+-ChampionRewardsExpSp = 8.0
++# Множитель опыта и SP красного чемпиона.
++ChampionRewardsExpSp = 4.0
+ 
+-# Standard rewards chance multiplier for Champion mobs.
+-ChampionRewardsChance = 8.0
++# Множитель шанса обычного дропа красного чемпиона.
++ChampionRewardsChance = 4.0
+ 
+-# Standard rewards amount multiplier for Champion mobs.
++# Множитель количества обычного дропа красного чемпиона.
+ ChampionRewardsAmount = 1.0
+ 
+-# Adena & Seal Stone rewards chance multiplier for Champion mobs.
++# Множитель шанса адены и печатей красного чемпиона.
+ ChampionAdenasRewardsChance = 1.0
+ 
+-# Adena & Seal Stone rewards amount multiplier for Champion mobs.
++# Множитель количества адены и печатей красного чемпиона.
+ ChampionAdenasRewardsAmount = 1.0
+ 
+-# P. Attack and M. Attack bonus for Champion mobs.
++# Множитель P. Atk и M. Atk красного чемпиона.
+ ChampionAtk = 1.0
+ 
+-# Physical/Magical Attack Speed bonus for Champion mobs.
++# Множитель скорости атаки и каста красного чемпиона.
+ ChampionSpdAtk = 1.0
+ 
+-# Specified id and amount of reward a player will receive if they are awarded the item.
+-# Separated by ; 
++# Предметы-награды красного чемпиона: id,количество через ; (пусто — без наград).
+ # Example: 6393,1;57,5000
+ ChampionRewardItems = 6393,1
+ 
+@@ -60,7 +63,7 @@ ChampionRewardItems = 6393,1
+ ChampionRewardLowerLvlItemChance = 0
+ 
+ # % Chance to obtain a specified reward item from a higher level Champion mob.
+-# Default: 100
++# Default: 0
+ ChampionRewardHigherLvlItemChance = 100
+ 
+ # Do you want to enable the vitality calculation when killing champion mobs?
+@@ -74,3 +77,43 @@ ChampionEnableVitality = False
+ # Enable spawning of the champions in instances
+ # Default = False
+ ChampionEnableInInstances = False
++
++# ---------------------------------------------------------------------------
++# Синие чемпионы (L2Hub) — слабый уровень
++# ---------------------------------------------------------------------------
++
++# Шанс синего чемпиона, % (0 — выключить). Допускаются дробные: 0.5.
++ChampionBlueFrequency = 5
++
++# Титул синего чемпиона.
++ChampionBlueTitle = Champion
++
++# Множитель HP синего чемпиона.
++ChampionBlueHp = 2
++
++# Множитель регенерации HP синего чемпиона.
++ChampionBlueHpRegen = 1.0
++
++# Множитель опыта и SP синего чемпиона.
++ChampionBlueRewardsExpSp = 2.0
++
++# Множитель шанса обычного дропа синего чемпиона.
++ChampionBlueRewardsChance = 2.0
++
++# Множитель количества обычного дропа синего чемпиона.
++ChampionBlueRewardsAmount = 1.0
++
++# Множитель шанса адены и печатей синего чемпиона.
++ChampionBlueAdenasRewardsChance = 1.0
++
++# Множитель количества адены и печатей синего чемпиона.
++ChampionBlueAdenasRewardsAmount = 1.0
++
++# Множитель P. Atk и M. Atk синего чемпиона.
++ChampionBlueAtk = 1.0
++
++# Множитель скорости атаки и каста синего чемпиона.
++ChampionBlueSpdAtk = 1.0
++
++# Предметы-награды синего чемпиона: id,количество через ; (пусто — без наград).
++ChampionBlueRewardItems =
+diff --git a/dist/game/data/scripts/handlers/chat/commands/admin/AdminKill.java b/dist/game/data/scripts/handlers/chat/commands/admin/AdminKill.java
+index ecc9fb3..5a40da2 100644
+--- a/dist/game/data/scripts/handlers/chat/commands/admin/AdminKill.java
++++ b/dist/game/data/scripts/handlers/chat/commands/admin/AdminKill.java
+@@ -139,7 +139,7 @@ public class AdminKill implements IAdminCommandHandler
+ 		}
+ 		else if (ChampionMonstersConfig.CHAMPION_ENABLE && target.isChampion())
+ 		{
+-			target.reduceCurrentHp((target.getMaxHp() * ChampionMonstersConfig.CHAMPION_HP) + 1, activeChar, null);
++			target.reduceCurrentHp((target.getMaxHp() * target.getChampionTier().hp()) + 1, activeChar, null);
+ 		}
+ 		else
+ 		{
+diff --git a/dist/game/data/scripts/handlers/chat/commands/admin/AdminMenu.java b/dist/game/data/scripts/handlers/chat/commands/admin/AdminMenu.java
+index 28a8ab2..af207b7 100644
+--- a/dist/game/data/scripts/handlers/chat/commands/admin/AdminMenu.java
++++ b/dist/game/data/scripts/handlers/chat/commands/admin/AdminMenu.java
+@@ -265,7 +265,7 @@ public class AdminMenu implements IAdminCommandHandler
+ 			}
+ 			else if (ChampionMonstersConfig.CHAMPION_ENABLE && target.isChampion())
+ 			{
+-				target.reduceCurrentHp((target.getMaxHp() * ChampionMonstersConfig.CHAMPION_HP) + 1, activeChar, null);
++				target.reduceCurrentHp((target.getMaxHp() * target.getChampionTier().hp()) + 1, activeChar, null);
+ 			}
+ 			else
+ 			{
+diff --git a/java/org/l2jmobius/gameserver/config/custom/ChampionMonstersConfig.java b/java/org/l2jmobius/gameserver/config/custom/ChampionMonstersConfig.java
+index 1db6131..007e9ea 100644
+--- a/java/org/l2jmobius/gameserver/config/custom/ChampionMonstersConfig.java
++++ b/java/org/l2jmobius/gameserver/config/custom/ChampionMonstersConfig.java
+@@ -24,6 +24,7 @@ import java.util.ArrayList;
+ import java.util.List;
+ 
+ import org.l2jmobius.commons.util.ConfigReader;
++import org.l2jmobius.gameserver.entity.actor.enums.creature.Team;
+ import org.l2jmobius.gameserver.entity.item.holders.ItemHolder;
+ 
+ /**
+@@ -34,63 +35,59 @@ public class ChampionMonstersConfig
+ {
+ 	// File
+ 	private static final String CHAMPION_MONSTERS_CONFIG_FILE = "./config/Custom/ChampionMonsters.ini";
+-	
++
++	/**
++	 * Уровень чемпиона (L2Hub): красный — ключи Champion*, синий — ChampionBlue*.<br>
++	 * frequency — шанс стать чемпионом этого уровня в процентах, допускаются дробные.
++	 */
++	public record Tier(Team aura, String title, double frequency, float hp, float hpRegen, float rewardsExpSp, float rewardsChance, float rewardsAmount, float adenasRewardsChance, float adenasRewardsAmount, float atk, float spdAtk, List<ItemHolder> rewardItems)
++	{
++	}
++
+ 	// Constants
+ 	public static boolean CHAMPION_ENABLE;
+ 	public static boolean CHAMPION_PASSIVE;
+-	public static int CHAMPION_FREQUENCY;
+-	public static String CHAMP_TITLE;
+ 	public static boolean SHOW_CHAMPION_AURA;
+ 	public static int CHAMP_MIN_LEVEL;
+ 	public static int CHAMP_MAX_LEVEL;
+-	public static int CHAMPION_HP;
+-	public static float CHAMPION_HP_REGEN;
+-	public static float CHAMPION_REWARDS_EXP_SP;
+-	public static float CHAMPION_REWARDS_CHANCE;
+-	public static float CHAMPION_REWARDS_AMOUNT;
+-	public static float CHAMPION_ADENAS_REWARDS_CHANCE;
+-	public static float CHAMPION_ADENAS_REWARDS_AMOUNT;
+-	public static float CHAMPION_ATK;
+-	public static float CHAMPION_SPD_ATK;
++	public static Tier CHAMPION_RED;
++	public static Tier CHAMPION_BLUE;
+ 	public static int CHAMPION_REWARD_LOWER_LEVEL_ITEM_CHANCE;
+ 	public static int CHAMPION_REWARD_HIGHER_LEVEL_ITEM_CHANCE;
+-	public static List<ItemHolder> CHAMPION_REWARD_ITEMS = new ArrayList<>();
+ 	public static boolean CHAMPION_ENABLE_VITALITY;
+ 	public static boolean CHAMPION_ENABLE_IN_INSTANCES;
+-	
++
+ 	public static void load()
+ 	{
+ 		final ConfigReader config = new ConfigReader(CHAMPION_MONSTERS_CONFIG_FILE);
+ 		CHAMPION_ENABLE = config.getBoolean("ChampionEnable", false);
+ 		CHAMPION_PASSIVE = config.getBoolean("ChampionPassive", false);
+-		CHAMPION_FREQUENCY = config.getInt("ChampionFrequency", 0);
+-		CHAMP_TITLE = config.getString("ChampionTitle", "Champion");
+ 		SHOW_CHAMPION_AURA = config.getBoolean("ChampionAura", true);
+ 		CHAMP_MIN_LEVEL = config.getInt("ChampionMinLevel", 20);
+ 		CHAMP_MAX_LEVEL = config.getInt("ChampionMaxLevel", 60);
+-		CHAMPION_HP = config.getInt("ChampionHp", 7);
+-		CHAMPION_HP_REGEN = config.getFloat("ChampionHpRegen", 1);
+-		CHAMPION_REWARDS_EXP_SP = config.getFloat("ChampionRewardsExpSp", 8);
+-		CHAMPION_REWARDS_CHANCE = config.getFloat("ChampionRewardsChance", 8);
+-		CHAMPION_REWARDS_AMOUNT = config.getFloat("ChampionRewardsAmount", 1);
+-		CHAMPION_ADENAS_REWARDS_CHANCE = config.getFloat("ChampionAdenasRewardsChance", 1);
+-		CHAMPION_ADENAS_REWARDS_AMOUNT = config.getFloat("ChampionAdenasRewardsAmount", 1);
+-		CHAMPION_ATK = config.getFloat("ChampionAtk", 1);
+-		CHAMPION_SPD_ATK = config.getFloat("ChampionSpdAtk", 1);
++		CHAMPION_RED = loadTier(config, "Champion", Team.RED, 7, 8, 8, "4356,10");
++		CHAMPION_BLUE = loadTier(config, "ChampionBlue", Team.BLUE, 2, 2, 2, "");
+ 		CHAMPION_REWARD_LOWER_LEVEL_ITEM_CHANCE = config.getInt("ChampionRewardLowerLvlItemChance", 0);
+ 		CHAMPION_REWARD_HIGHER_LEVEL_ITEM_CHANCE = config.getInt("ChampionRewardHigherLvlItemChance", 0);
+-		
+-		CHAMPION_REWARD_ITEMS.clear();
+-		for (String s : config.getString("ChampionRewardItems", "4356,10").split(";"))
++		CHAMPION_ENABLE_VITALITY = config.getBoolean("ChampionEnableVitality", false);
++		CHAMPION_ENABLE_IN_INSTANCES = config.getBoolean("ChampionEnableInInstances", false);
++	}
++
++	/**
++	 * Читает уровень чемпиона из ключей с префиксом. Шанс по умолчанию 0: без ключей уровень выключен.
++	 */
++	private static Tier loadTier(ConfigReader config, String prefix, Team aura, float hp, float rewardsExpSp, float rewardsChance, String rewardItems)
++	{
++		final List<ItemHolder> items = new ArrayList<>();
++		for (String s : config.getString(prefix + "RewardItems", rewardItems).split(";"))
+ 		{
+ 			if (s.isEmpty())
+ 			{
+ 				continue;
+ 			}
+-			CHAMPION_REWARD_ITEMS.add(new ItemHolder(Integer.parseInt(s.split(",")[0]), Integer.parseInt(s.split(",")[1])));
++			items.add(new ItemHolder(Integer.parseInt(s.split(",")[0]), Integer.parseInt(s.split(",")[1])));
+ 		}
+-		
+-		CHAMPION_ENABLE_VITALITY = config.getBoolean("ChampionEnableVitality", false);
+-		CHAMPION_ENABLE_IN_INSTANCES = config.getBoolean("ChampionEnableInInstances", false);
++
++		return new Tier(aura, config.getString(prefix + "Title", "Champion"), config.getDouble(prefix + "Frequency", 0), config.getFloat(prefix + "Hp", hp), config.getFloat(prefix + "HpRegen", 1), config.getFloat(prefix + "RewardsExpSp", rewardsExpSp), config.getFloat(prefix + "RewardsChance", rewardsChance), config.getFloat(prefix + "RewardsAmount", 1), config.getFloat(prefix + "AdenasRewardsChance", 1), config.getFloat(prefix + "AdenasRewardsAmount", 1), config.getFloat(prefix + "Atk", 1), config.getFloat(prefix + "SpdAtk", 1), List.copyOf(items));
+ 	}
+ }
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/Attackable.java b/java/org/l2jmobius/gameserver/entity/actor/Attackable.java
+index a6836d7..e728a97 100644
+--- a/java/org/l2jmobius/gameserver/entity/actor/Attackable.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/Attackable.java
+@@ -103,7 +103,7 @@ public class Attackable extends Npc
+ 	private boolean _isRaidMinion = false;
+ 	
+ 	//
+-	private boolean _champion = false;
++	private ChampionMonstersConfig.Tier _champion = null;
+ 	private final Map<Creature, AggroInfo> _aggroList = new ConcurrentHashMap<>();
+ 	private boolean _canReturnToSpawnPoint = true;
+ 	private boolean _seeThroughSilentMove = false;
+@@ -593,10 +593,10 @@ public class Attackable extends Npc
+ 							final double[] expSp = calculateExpAndSp(attacker.getLevel(), damage, totalDamage);
+ 							double exp = expSp[0];
+ 							double sp = expSp[1];
+-							if (ChampionMonstersConfig.CHAMPION_ENABLE && _champion)
++							if (ChampionMonstersConfig.CHAMPION_ENABLE && (_champion != null))
+ 							{
+-								exp *= ChampionMonstersConfig.CHAMPION_REWARDS_EXP_SP;
+-								sp *= ChampionMonstersConfig.CHAMPION_REWARDS_EXP_SP;
++								exp *= _champion.rewardsExpSp();
++								sp *= _champion.rewardsExpSp();
+ 							}
+ 							
+ 							exp *= penalty;
+@@ -745,10 +745,10 @@ public class Attackable extends Npc
+ 						final double[] expSp = calculateExpAndSp(partyLvl, partyDmg, totalDamage);
+ 						double exp = expSp[0];
+ 						double sp = expSp[1];
+-						if (ChampionMonstersConfig.CHAMPION_ENABLE && _champion)
++						if (ChampionMonstersConfig.CHAMPION_ENABLE && (_champion != null))
+ 						{
+-							exp *= ChampionMonstersConfig.CHAMPION_REWARDS_EXP_SP;
+-							sp *= ChampionMonstersConfig.CHAMPION_REWARDS_EXP_SP;
++							exp *= _champion.rewardsExpSp();
++							sp *= _champion.rewardsExpSp();
+ 						}
+ 						
+ 						exp *= partyMul;
+@@ -1661,19 +1661,24 @@ public class Attackable extends Npc
+ 	public void onRespawn()
+ 	{
+ 		// Reset champion state
+-		_champion = false;
++		_champion = null;
+ 		
+-		// Set champion on next spawn.
+-		if (ChampionMonstersConfig.CHAMPION_ENABLE && isMonster() && !isQuestMonster() && !getTemplate().isUndying() && !_isRaid && !_isRaidMinion && (ChampionMonstersConfig.CHAMPION_FREQUENCY > 0) && (getLevel() >= ChampionMonstersConfig.CHAMP_MIN_LEVEL) && (getLevel() <= ChampionMonstersConfig.CHAMP_MAX_LEVEL) && (ChampionMonstersConfig.CHAMPION_ENABLE_IN_INSTANCES || (getInstanceId() == 0)))
++		// Set champion on next spawn: сначала шанс красного, затем синего (L2Hub: два уровня чемпионов).
++		if (ChampionMonstersConfig.CHAMPION_ENABLE && isMonster() && !isQuestMonster() && !getTemplate().isUndying() && !_isRaid && !_isRaidMinion && (getLevel() >= ChampionMonstersConfig.CHAMP_MIN_LEVEL) && (getLevel() <= ChampionMonstersConfig.CHAMP_MAX_LEVEL) && (ChampionMonstersConfig.CHAMPION_ENABLE_IN_INSTANCES || (getInstanceId() == 0)))
+ 		{
+-			if (Rnd.get(100) < ChampionMonstersConfig.CHAMPION_FREQUENCY)
++			final double roll = Rnd.nextDouble() * 100;
++			if (roll < ChampionMonstersConfig.CHAMPION_RED.frequency())
+ 			{
+-				_champion = true;
++				_champion = ChampionMonstersConfig.CHAMPION_RED;
++			}
++			else if (roll < (ChampionMonstersConfig.CHAMPION_RED.frequency() + ChampionMonstersConfig.CHAMPION_BLUE.frequency()))
++			{
++				_champion = ChampionMonstersConfig.CHAMPION_BLUE;
+ 			}
+ 			
+ 			if (ChampionMonstersConfig.SHOW_CHAMPION_AURA)
+ 			{
+-				setTeam(_champion ? Team.RED : Team.NONE, false);
++				setTeam(_champion != null ? _champion.aura() : Team.NONE, false);
+ 			}
+ 		}
+ 		
+@@ -1891,7 +1896,7 @@ public class Attackable extends Npc
+ 	 */
+ 	public boolean useVitalityRate()
+ 	{
+-		return !_champion || ChampionMonstersConfig.CHAMPION_ENABLE_VITALITY;
++		return (_champion == null) || ChampionMonstersConfig.CHAMPION_ENABLE_VITALITY;
+ 	}
+ 	
+ 	/** Return True if the Creature is RaidBoss or his minion. */
+@@ -1942,6 +1947,12 @@ public class Attackable extends Npc
+ 	
+ 	@Override
+ 	public boolean isChampion()
++	{
++		return _champion != null;
++	}
++	
++	@Override
++	public ChampionMonstersConfig.Tier getChampionTier()
+ 	{
+ 		return _champion;
+ 	}
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/Creature.java b/java/org/l2jmobius/gameserver/entity/actor/Creature.java
+index e9581d1..10b3dfb 100644
+--- a/java/org/l2jmobius/gameserver/entity/actor/Creature.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/Creature.java
+@@ -2672,13 +2672,13 @@ public abstract class Creature extends WorldObject
+ 				t1 += " " + _title;
+ 			}
+ 			
+-			return isChampion() ? ChampionMonstersConfig.CHAMP_TITLE + " " + t1 : t1;
++			return isChampion() ? getChampionTier().title() + " " + t1 : t1;
+ 		}
+ 		
+ 		// Champion titles
+ 		if (isChampion())
+ 		{
+-			return ChampionMonstersConfig.CHAMP_TITLE;
++			return getChampionTier().title();
+ 		}
+ 		
+ 		// Set trap title
+@@ -5322,9 +5322,10 @@ public abstract class Creature extends WorldObject
+ 			}
+ 		}
+ 		
+-		if (ChampionMonstersConfig.CHAMPION_ENABLE && isChampion() && (ChampionMonstersConfig.CHAMPION_HP != 0))
++		final ChampionMonstersConfig.Tier champion = getChampionTier();
++		if (ChampionMonstersConfig.CHAMPION_ENABLE && (champion != null) && (champion.hp() != 0))
+ 		{
+-			_status.reduceHp(amount / ChampionMonstersConfig.CHAMPION_HP, attacker, (skill == null) || !skill.isToggle(), isDOT, false);
++			_status.reduceHp(amount / champion.hp(), attacker, (skill == null) || !skill.isToggle(), isDOT, false);
+ 		}
+ 		else if (isPlayer())
+ 		{
+@@ -5506,6 +5507,14 @@ public abstract class Creature extends WorldObject
+ 	{
+ 		return false;
+ 	}
++
++	/**
++	 * @return уровень чемпиона (красный или синий) или null, если это не чемпион
++	 */
++	public ChampionMonstersConfig.Tier getChampionTier()
++	{
++		return null;
++	}
+ 	
+ 	/**
+ 	 * Send system message about damage.
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/templates/NpcTemplate.java b/java/org/l2jmobius/gameserver/entity/actor/templates/NpcTemplate.java
+index 5a5c8c1..ceb7c89 100644
+--- a/java/org/l2jmobius/gameserver/entity/actor/templates/NpcTemplate.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/templates/NpcTemplate.java
+@@ -844,7 +844,7 @@ public class NpcTemplate extends CreatureTemplate
+ 						rateChance *= RatesConfig.RATE_DROP_CHANCE_BY_ID.get(itemId);
+ 						if (champion && (itemId == Inventory.ADENA_ID))
+ 						{
+-							rateChance *= ChampionMonstersConfig.CHAMPION_ADENAS_REWARDS_CHANCE;
++							rateChance *= victim.getChampionTier().adenasRewardsChance();
+ 						}
+ 						
+ 						if ((itemId == Inventory.ADENA_ID) && (rateChance > 100))
+@@ -862,7 +862,7 @@ public class NpcTemplate extends CreatureTemplate
+ 					}
+ 					else
+ 					{
+-						rateChance *= RatesConfig.RATE_DEATH_DROP_CHANCE_MULTIPLIER * (champion ? ChampionMonstersConfig.CHAMPION_REWARDS_CHANCE : 1);
++						rateChance *= RatesConfig.RATE_DEATH_DROP_CHANCE_MULTIPLIER * (champion ? victim.getChampionTier().rewardsChance() : 1);
+ 					}
+ 					
+ 					// premium chance
+@@ -993,7 +993,7 @@ public class NpcTemplate extends CreatureTemplate
+ 			}
+ 			
+ 			// champion extra drop
+-			if (victim.isChampion() && (Rnd.get(100) < (victim.getLevel() < killer.getLevel() ? ChampionMonstersConfig.CHAMPION_REWARD_LOWER_LEVEL_ITEM_CHANCE : ChampionMonstersConfig.CHAMPION_REWARD_HIGHER_LEVEL_ITEM_CHANCE)))
++			if (victim.isChampion() && !victim.getChampionTier().rewardItems().isEmpty() && (Rnd.get(100) < (victim.getLevel() < killer.getLevel() ? ChampionMonstersConfig.CHAMPION_REWARD_LOWER_LEVEL_ITEM_CHANCE : ChampionMonstersConfig.CHAMPION_REWARD_HIGHER_LEVEL_ITEM_CHANCE)))
+ 			{
+ 				// create list
+ 				if (calculatedDrops == null)
+@@ -1001,9 +1001,9 @@ public class NpcTemplate extends CreatureTemplate
+ 					calculatedDrops = new ArrayList<>();
+ 				}
+ 				
+-				if (!calculatedDrops.containsAll(ChampionMonstersConfig.CHAMPION_REWARD_ITEMS))
++				if (!calculatedDrops.containsAll(victim.getChampionTier().rewardItems()))
+ 				{
+-					calculatedDrops.addAll(ChampionMonstersConfig.CHAMPION_REWARD_ITEMS);
++					calculatedDrops.addAll(victim.getChampionTier().rewardItems());
+ 				}
+ 			}
+ 		}
+@@ -1094,7 +1094,7 @@ public class NpcTemplate extends CreatureTemplate
+ 		}
+ 		
+ 		// champion extra drop
+-		if (victim.isChampion() && (Rnd.get(100) < (victim.getLevel() < killer.getLevel() ? ChampionMonstersConfig.CHAMPION_REWARD_LOWER_LEVEL_ITEM_CHANCE : ChampionMonstersConfig.CHAMPION_REWARD_HIGHER_LEVEL_ITEM_CHANCE)))
++		if (victim.isChampion() && !victim.getChampionTier().rewardItems().isEmpty() && (Rnd.get(100) < (victim.getLevel() < killer.getLevel() ? ChampionMonstersConfig.CHAMPION_REWARD_LOWER_LEVEL_ITEM_CHANCE : ChampionMonstersConfig.CHAMPION_REWARD_HIGHER_LEVEL_ITEM_CHANCE)))
+ 		{
+ 			// create list
+ 			if (calculatedDrops == null)
+@@ -1102,9 +1102,9 @@ public class NpcTemplate extends CreatureTemplate
+ 				calculatedDrops = new ArrayList<>();
+ 			}
+ 			
+-			if (!calculatedDrops.containsAll(ChampionMonstersConfig.CHAMPION_REWARD_ITEMS))
++			if (!calculatedDrops.containsAll(victim.getChampionTier().rewardItems()))
+ 			{
+-				calculatedDrops.addAll(ChampionMonstersConfig.CHAMPION_REWARD_ITEMS);
++				calculatedDrops.addAll(victim.getChampionTier().rewardItems());
+ 			}
+ 		}
+ 		
+@@ -1135,7 +1135,7 @@ public class NpcTemplate extends CreatureTemplate
+ 				rateAmount *= RatesConfig.RATE_DROP_AMOUNT_BY_ID.get(itemId);
+ 				if (champion && (itemId == Inventory.ADENA_ID))
+ 				{
+-					rateAmount *= ChampionMonstersConfig.CHAMPION_ADENAS_REWARDS_AMOUNT;
++					rateAmount *= victim.getChampionTier().adenasRewardsAmount();
+ 				}
+ 			}
+ 			else if (item.hasExImmediateEffect())
+@@ -1148,7 +1148,7 @@ public class NpcTemplate extends CreatureTemplate
+ 			}
+ 			else
+ 			{
+-				rateAmount *= RatesConfig.RATE_DEATH_DROP_AMOUNT_MULTIPLIER * (champion ? ChampionMonstersConfig.CHAMPION_REWARDS_AMOUNT : 1);
++				rateAmount *= RatesConfig.RATE_DEATH_DROP_AMOUNT_MULTIPLIER * (champion ? victim.getChampionTier().rewardsAmount() : 1);
+ 			}
+ 			
+ 			// premium amount
+@@ -1215,7 +1215,7 @@ public class NpcTemplate extends CreatureTemplate
+ 					rateChance *= RatesConfig.RATE_DROP_CHANCE_BY_ID.get(itemId);
+ 					if (champion && (itemId == Inventory.ADENA_ID))
+ 					{
+-						rateChance *= ChampionMonstersConfig.CHAMPION_ADENAS_REWARDS_CHANCE;
++						rateChance *= victim.getChampionTier().adenasRewardsChance();
+ 					}
+ 					
+ 					if ((itemId == Inventory.ADENA_ID) && (rateChance > 100))
+@@ -1233,7 +1233,7 @@ public class NpcTemplate extends CreatureTemplate
+ 				}
+ 				else
+ 				{
+-					rateChance *= RatesConfig.RATE_DEATH_DROP_CHANCE_MULTIPLIER * (champion ? ChampionMonstersConfig.CHAMPION_REWARDS_CHANCE : 1);
++					rateChance *= RatesConfig.RATE_DEATH_DROP_CHANCE_MULTIPLIER * (champion ? victim.getChampionTier().rewardsChance() : 1);
+ 				}
+ 				
+ 				// premium chance
+@@ -1279,7 +1279,7 @@ public class NpcTemplate extends CreatureTemplate
+ 						rateAmount *= RatesConfig.RATE_DROP_AMOUNT_BY_ID.get(itemId);
+ 						if (champion && (itemId == Inventory.ADENA_ID))
+ 						{
+-							rateAmount *= ChampionMonstersConfig.CHAMPION_ADENAS_REWARDS_AMOUNT;
++							rateAmount *= victim.getChampionTier().adenasRewardsAmount();
+ 						}
+ 					}
+ 					else if (item.hasExImmediateEffect())
+@@ -1292,7 +1292,7 @@ public class NpcTemplate extends CreatureTemplate
+ 					}
+ 					else
+ 					{
+-						rateAmount *= RatesConfig.RATE_DEATH_DROP_AMOUNT_MULTIPLIER * (champion ? ChampionMonstersConfig.CHAMPION_REWARDS_AMOUNT : 1);
++						rateAmount *= RatesConfig.RATE_DEATH_DROP_AMOUNT_MULTIPLIER * (champion ? victim.getChampionTier().rewardsAmount() : 1);
+ 					}
+ 					
+ 					// premium amount
+diff --git a/java/org/l2jmobius/gameserver/mechanics/script/Quest.java b/java/org/l2jmobius/gameserver/mechanics/script/Quest.java
+index fad453d..862d00e 100644
+--- a/java/org/l2jmobius/gameserver/mechanics/script/Quest.java
++++ b/java/org/l2jmobius/gameserver/mechanics/script/Quest.java
+@@ -5635,15 +5635,15 @@ public class Quest implements IEventTimerEvent<String>, IEventTimerCancel<String
+ 		{
+ 			if ((itemId == Inventory.ADENA_ID) || (itemId == Inventory.ANCIENT_ADENA_ID))
+ 			{
+-				dropChanceWithBonus *= ChampionMonstersConfig.CHAMPION_ADENAS_REWARDS_CHANCE;
+-				minAmountWithBonus *= ChampionMonstersConfig.CHAMPION_ADENAS_REWARDS_AMOUNT;
+-				maxAmountWithBonus *= ChampionMonstersConfig.CHAMPION_ADENAS_REWARDS_AMOUNT;
++				dropChanceWithBonus *= npc.getChampionTier().adenasRewardsChance();
++				minAmountWithBonus *= npc.getChampionTier().adenasRewardsAmount();
++				maxAmountWithBonus *= npc.getChampionTier().adenasRewardsAmount();
+ 			}
+ 			else
+ 			{
+-				dropChanceWithBonus *= ChampionMonstersConfig.CHAMPION_REWARDS_CHANCE;
+-				minAmountWithBonus *= ChampionMonstersConfig.CHAMPION_REWARDS_AMOUNT;
+-				maxAmountWithBonus *= ChampionMonstersConfig.CHAMPION_REWARDS_AMOUNT;
++				dropChanceWithBonus *= npc.getChampionTier().rewardsChance();
++				minAmountWithBonus *= npc.getChampionTier().rewardsAmount();
++				maxAmountWithBonus *= npc.getChampionTier().rewardsAmount();
+ 			}
+ 		}
+ 		
+diff --git a/java/org/l2jmobius/gameserver/mechanics/stats/finalizers/MAttackFinalizer.java b/java/org/l2jmobius/gameserver/mechanics/stats/finalizers/MAttackFinalizer.java
+index 3afee9e..950954f 100644
+--- a/java/org/l2jmobius/gameserver/mechanics/stats/finalizers/MAttackFinalizer.java
++++ b/java/org/l2jmobius/gameserver/mechanics/stats/finalizers/MAttackFinalizer.java
+@@ -54,7 +54,7 @@ public class MAttackFinalizer implements IStatFunction
+ 		
+ 		if (ChampionMonstersConfig.CHAMPION_ENABLE && creature.isChampion())
+ 		{
+-			baseValue *= ChampionMonstersConfig.CHAMPION_ATK;
++			baseValue *= creature.getChampionTier().atk();
+ 		}
+ 		
+ 		if (creature.isRaid())
+diff --git a/java/org/l2jmobius/gameserver/mechanics/stats/finalizers/MAttackSpeedFinalizer.java b/java/org/l2jmobius/gameserver/mechanics/stats/finalizers/MAttackSpeedFinalizer.java
+index 2777815..5d8ea48 100644
+--- a/java/org/l2jmobius/gameserver/mechanics/stats/finalizers/MAttackSpeedFinalizer.java
++++ b/java/org/l2jmobius/gameserver/mechanics/stats/finalizers/MAttackSpeedFinalizer.java
+@@ -45,7 +45,7 @@ public class MAttackSpeedFinalizer implements IStatFunction
+ 		double baseValue = calcWeaponBaseValue(creature, stat);
+ 		if (ChampionMonstersConfig.CHAMPION_ENABLE && creature.isChampion())
+ 		{
+-			baseValue *= ChampionMonstersConfig.CHAMPION_SPD_ATK;
++			baseValue *= creature.getChampionTier().spdAtk();
+ 		}
+ 		
+ 		// NPC casting speed is used as defined, unless the WIT bonus is enabled for them.
+diff --git a/java/org/l2jmobius/gameserver/mechanics/stats/finalizers/PAttackFinalizer.java b/java/org/l2jmobius/gameserver/mechanics/stats/finalizers/PAttackFinalizer.java
+index efa2dff..2894fb9 100644
+--- a/java/org/l2jmobius/gameserver/mechanics/stats/finalizers/PAttackFinalizer.java
++++ b/java/org/l2jmobius/gameserver/mechanics/stats/finalizers/PAttackFinalizer.java
+@@ -54,7 +54,7 @@ public class PAttackFinalizer implements IStatFunction
+ 		
+ 		if (ChampionMonstersConfig.CHAMPION_ENABLE && creature.isChampion())
+ 		{
+-			baseValue *= ChampionMonstersConfig.CHAMPION_ATK;
++			baseValue *= creature.getChampionTier().atk();
+ 		}
+ 		
+ 		if (creature.isRaid())
+diff --git a/java/org/l2jmobius/gameserver/mechanics/stats/finalizers/PAttackSpeedFinalizer.java b/java/org/l2jmobius/gameserver/mechanics/stats/finalizers/PAttackSpeedFinalizer.java
+index b9d3758..2bea174 100644
+--- a/java/org/l2jmobius/gameserver/mechanics/stats/finalizers/PAttackSpeedFinalizer.java
++++ b/java/org/l2jmobius/gameserver/mechanics/stats/finalizers/PAttackSpeedFinalizer.java
+@@ -44,7 +44,7 @@ public class PAttackSpeedFinalizer implements IStatFunction
+ 		double baseValue = calcWeaponBaseValue(creature, stat);
+ 		if (ChampionMonstersConfig.CHAMPION_ENABLE && creature.isChampion())
+ 		{
+-			baseValue *= ChampionMonstersConfig.CHAMPION_SPD_ATK;
++			baseValue *= creature.getChampionTier().spdAtk();
+ 		}
+ 		
+ 		final double dexBonus = creature.getDEX() > 0 ? BaseStat.DEX.calcBonus(creature) : 1;
+diff --git a/java/org/l2jmobius/gameserver/mechanics/stats/finalizers/RegenHPFinalizer.java b/java/org/l2jmobius/gameserver/mechanics/stats/finalizers/RegenHPFinalizer.java
+index 2696e1a..06e9c9d 100644
+--- a/java/org/l2jmobius/gameserver/mechanics/stats/finalizers/RegenHPFinalizer.java
++++ b/java/org/l2jmobius/gameserver/mechanics/stats/finalizers/RegenHPFinalizer.java
+@@ -63,7 +63,7 @@ public class RegenHPFinalizer implements IStatFunction
+ 		baseValue *= creature.isRaid() ? NpcConfig.RAID_HP_REGEN_MULTIPLIER : PlayerConfig.HP_REGEN_MULTIPLIER;
+ 		if (ChampionMonstersConfig.CHAMPION_ENABLE && creature.isChampion())
+ 		{
+-			baseValue *= ChampionMonstersConfig.CHAMPION_HP_REGEN;
++			baseValue *= creature.getChampionTier().hpRegen();
+ 		}
+ 		
+ 		if (creature.isPlayer())

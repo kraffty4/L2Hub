@@ -1,0 +1,85 @@
+{
+  "_note": "Сборки-комбайны: сервер, своя база и своя Java в одной папке (решение автора 2026-10-21 — L2Hub не строится вокруг одного проекта). Каждый вид — как опознать (detect: файлы относительно папки server), как поднять базу и части, какое семейство конфигов. Пути — относительно папки server в servers/<id>/server; {port} — порт базы из профиля. Профиль такой хроники: \"type\": \"bundle\", \"bundle\": \"<вид>\" (у Gracia Final автора — прежний \"type\": \"la2offline\", он читается как вид la2offline). Новый вид — новая запись здесь.",
+  "kinds": {
+    "mobius": {
+      "title": "Сборка L2J Mobius — готовый сервер (libs, game, login): своя или чужая, с правками или без",
+      "examples": "то, что Ant кладёт в build/<сборка>.zip; Java и база — наши",
+      "runtime": "ours",
+      "detect": ["libs/GameServer.jar", "libs/LoginServer.jar", "game/config/Server.ini", "login/config/Database.ini", "game/java.cfg"],
+      "config": "mobius",
+      "jar": "libs/GameServer.jar",
+      "setup": "mobius"
+    },
+    "lisvus": {
+      "title": "L2JLisvus — L2J под C4 (GPL-3.0): части gameserver и login, конфиги *.properties",
+      "examples": "GitLab TheDnR/l2j-lisvus, зеркало github.com/craqpter/L2c4; клиент C4 протоколов 656–665 — подходит клиент L2Solo; рецепт — docs/C4_EMULATORS.md",
+      "runtime": "ours",
+      "detect": ["gameserver/L2JLisvus.jar", "login/L2JLisvus.jar", "gameserver/config/GameServer.properties", "login/config/LoginServer.properties"],
+      "config": "l2j2",
+      "jar": "gameserver/L2JLisvus.jar",
+      "rename": {"gameserver": "game"},
+      "files": {"login": "LoginServer.properties", "game": "GameServer.properties", "general": "GeoData.properties"},
+      "parts": {
+        "login": {"main": "net.sf.l2j.loginserver.L2LoginServer", "cp": "./libs/*;L2JLisvus.jar", "jvm": ["-Xms128m", "-Xmx256m"]},
+        "game": {"main": "net.sf.l2j.gameserver.GameServer", "cp": "./libs/*;L2JLisvus.jar", "jvm": ["-Djava.util.logging.manager=net.sf.l2j.util.L2LogManager", "-Xmx2048m"]}
+      },
+      "database": {
+        "files": ["login/config/LoginServer.properties", "game/config/GameServer.properties"],
+        "url": "jdbc:mariadb://127.0.0.1:3306/{db}?useSSL=false",
+        "keys": {"url": "URL", "user": "Login", "password": "Password"},
+        "sql": "sql"
+      },
+      "local": [
+        ["login/config/LoginServer.properties", "LoginserverHostname", "127.0.0.1"],
+        ["login/config/LoginServer.properties", "LoginHostname", "127.0.0.1"],
+        ["login/config/LoginServer.properties", "AcceptNewGameServer", "True"],
+        ["login/config/LoginServer.properties", "EnableUPnP", "False"],
+        ["game/config/GameServer.properties", "GameserverHostname", "127.0.0.1"],
+        ["game/config/GameServer.properties", "ExternalHostname", "127.0.0.1"],
+        ["game/config/GameServer.properties", "InternalHostname", "127.0.0.1"],
+        ["game/config/GameServer.properties", "LoginHost", "127.0.0.1"],
+        ["game/config/GameServer.properties", "EnableUPnP", "False"]
+      ],
+      "ports": {"login": 2106, "game": 7777},
+      "logSuffix": ".0",
+      "geodata": ["game/config/GeoData.properties", "GeoDataPath", "./data/geodata"],
+      "protocol": ["game/config/GameServer.properties", "MinProtocolRevision"],
+      "client": {"exe": "system\\L2.exe"}
+    },
+    "la2offline": {
+      "title": "La2offline (RusTeam) — своя MySQL 5.0 в песочнице ThinApp и Java 6 внутри",
+      "runtime": "own",
+      "examples": "La2offline 4.0 (Gracia Final); у его авторов был такой же для Interlude",
+      "detect": ["mysql-la2.exe", "jre/bin/login_server.exe", "jre/bin/game_server.exe", "game/config/server.properties"],
+      "config": "l2j2",
+      "db": {
+        "engine": "MySQL 5.0 сборки",
+        "port": 3305,
+        "start": ["mysql-la2.exe", "--port={port}", "--bind-address=127.0.0.1"],
+        "stop": ["mysqladmin.exe", "--no-defaults", "-h", "127.0.0.1", "-P{port}", "-u", "root", "shutdown"],
+        "client": ["--no-defaults", "-h", "127.0.0.1", "-P{port}", "-u", "root", "--skip-ssl", "--default-character-set=utf8"],
+        "data": "DB/MySQL/%drive_C%/MySQL/Data"
+      },
+      "parts": {
+        "login": {"exe": "jre/bin/login_server.exe", "bat": "login/startLoginServer.bat"},
+        "game": {"exe": "jre/bin/game_server.exe", "bat": "game/startGameServer.bat"}
+      },
+      "batLine": "^\\s*start\\s+/b\\s+\\S+\\s+(.+?)\\s*$",
+      "logSuffix": ".0",
+      "ports": {"login": 2106, "game": 1042},
+      "accessLevels": {"0": "Игрок", "1": "Admin", "127": "Master"},
+      "local": [
+        ["login/config/loginserver.properties", "LoginserverHostname", "127.0.0.1"],
+        ["login/config/loginserver.properties", "LoginHostname", "127.0.0.1"],
+        ["game/config/server.properties", "GameserverHostname", "127.0.0.1"],
+        ["game/config/telnet.properties", "EnableTelnet", "False"]
+      ],
+      "read": {
+        "url": ["login/config/loginserver.properties", "URL"],
+        "login": ["login/config/loginserver.properties", "LoginserverPort"],
+        "game": ["game/config/server.properties", "GameserverPort"]
+      },
+      "client": {"exe": "system\\L2.exe", "note": "у La2offline — его оффлайн-система La2system рядом с клиентом: укажи её папку"}
+    }
+  }
+}

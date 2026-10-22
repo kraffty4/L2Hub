@@ -1,0 +1,26 @@
+{
+  "_note": "C4 (L2Solo) для установки из окна: закреплённый коммит кода, их клиент и client mod (не раздаём — пользователь качает сам по ссылкам из их README) и отпечатки, по которым узнаём их клиент. Сменить коммит — только после проверки, что L2Solo на нём стартует и оверлей l2solo_ru.js покрывает фразы (docs/L2SOLO.md). l2solo.install_plan / install_steps читают отсюда.",
+  "repo": "https://github.com/pmbstyle/L2Solo",
+  "branch": "main",
+  "commit": "d132ed63681c86c6a8881d1f37ae63cf1dae3989",
+  "date": "2026-10-18",
+  "sizes": {"clone": 176000000, "archive": 25000000, "npm": 125000000, "geodata": 218990038},
+  "client": {
+    "title": "клиент C4 от L2Solo (протокол 656, репак La2base.ru)",
+    "url": "https://drive.google.com/file/d/1u0nW3m9c6Hql8sR9POQAcvglxIno23lv/view?usp=sharing",
+    "file": "L2Solo-C4-client.7z",
+    "size": 1915078702,
+    "sha256": "23e8e247ac73fe0f1a34ce6a95f51d29c6b54074123d41b59ca578c8f90d512b",
+    "exe": "system\\L2.exe",
+    "exe_sha256": ["11814d7246de9ce13e0a3ffd5a3679540a21386ca2d15e65234917f9bbef0710"]
+  },
+  "mod": {
+    "title": "L2Solo client mod (новое окно чата с кириллицей, карта, панели)",
+    "url": "https://drive.google.com/file/d/1nDTPAHRFe2WQmt2IDfkBZMwEqVEYT4XD/view?usp=sharing",
+    "file": "L2solo-client-mod-20261018.zip",
+    "size": 1199681,
+    "sha256": "b6acd931817645afe339454392df512a206255cc62fdc4f7e93d40796b883585",
+    "marker": "system\\C4Chat.dll",
+    "nwindow_original_sha256": "860765f28ee5687b0cde8852ddddd21c615b26983a3a6a74b021586f1185ac72"
+  }
+}

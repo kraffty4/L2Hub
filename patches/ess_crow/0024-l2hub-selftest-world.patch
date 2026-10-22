@@ -1,0 +1,131 @@
+diff --git a/dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java b/dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java
+index 3591dbb367d7782d60ed88d7ccad46f5ea46ba94..8fbae76e29819ae9e884dda08761aef0ae950972 100644
+--- a/dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java
++++ b/dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java
+@@ -122,6 +122,10 @@ public class L2HubSelfTest
+ 		probe(checks, "Окно моба по Shift+клику", L2HubSelfTest::npcView);
+ 		probe(checks, "Фантомы", L2HubSelfTest::phantoms);
+ 		probe(checks, "Сезонные события", L2HubSelfTest::seasonalEvents);
++		probe(checks, "Суперчемпионы", L2HubSelfTest::superChampions); // L2Hub 0024: моды живого мира
++		probe(checks, "Мир сейчас: .world", L2HubSelfTest::worldInfo);
++		probe(checks, "Нашествие эльпи", L2HubSelfTest::elpies);
++		probe(checks, "Летопись мира", L2HubSelfTest::chronicle);
+ 		probe(checks, "Автолут", () -> new Check("", true, "живым — " + onOff(PlayerConfig.AUTO_LOOT) + ", травы — " + onOff(PlayerConfig.AUTO_LOOT_HERBS) + ", рейды — " + onOff(PlayerConfig.AUTO_LOOT_RAIDS)));
+ 
+ 		final long ok = checks.stream().filter(Check::ok).count();
+@@ -325,7 +329,7 @@ public class L2HubSelfTest
+ 					total++;
+ 					if (event.isEventPeriod())
+ 					{
+-						active.add(script.getName() + " до " + new SimpleDateFormat("dd.MM.yyyy").format(event.getEndDate()));
++						active.add(script.getName() + " по " + new SimpleDateFormat("dd.MM.yyyy").format(new java.util.Date(event.getEndDate().getTime() - 1))); // L2Hub 0024: конец окна — начало следующего дня, пишем последний
+ 					}
+ 				}
+ 			}
+@@ -333,6 +337,106 @@ public class L2HubSelfTest
+ 		return new Check("", true, "загружено " + total + (active.isEmpty() ? ", сейчас не идёт ни одно" : ", идёт: " + String.join(", ", active)));
+ 	}
+ 	
++	// ---------- L2Hub 0024: моды живого мира — суперчемпион, «Мир сейчас», эльпи, летопись ----------
++
++	private static Properties customIni(String name) throws Exception
++	{
++		final Properties properties = new Properties();
++		final Path path = Paths.get("./config/Custom/" + name);
++		if (Files.isRegularFile(path))
++		{
++			try (Reader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8))
++			{
++				properties.load(reader);
++			}
++		}
++		return properties;
++	}
++
++	private static boolean isTrue(Properties properties, String key, String defaultValue)
++	{
++		return "true".equalsIgnoreCase(properties.getProperty(key, defaultValue).trim());
++	}
++
++	private static Check superChampions() throws Exception
++	{
++		final Properties config = customIni("ChampionMonsters.ini");
++		if (config.getProperty("SuperChampionEnable") == null)
++		{
++			return new Check("", false, "нет ключей SuperChampion* в ChampionMonsters.ini — мод 0020 не наложен");
++		}
++		if (!isTrue(config, "ChampionEnable", "False") || !isTrue(config, "SuperChampionEnable", "False"))
++		{
++			return new Check("", true, "выключены (" + (isTrue(config, "ChampionEnable", "False") ? "SuperChampionEnable" : "ChampionEnable") + " = False)");
++		}
++		final Object alive = Class.forName("org.l2jmobius.gameserver.entity.actor.SuperChampion").getMethod("alive").invoke(null);
++		return new Check("", true, "вкл, шанс " + config.getProperty("SuperChampionFrequency", "?").trim() + " %, живых в мире " + ((alive instanceof java.util.Collection<?> list) ? list.size() : "?"));
++	}
++
++	private static Check worldInfo() throws Exception
++	{
++		if (VoicedCommandHandler.getInstance().getHandler("world") == null)
++		{
++			return new Check("", false, "нет команды .world — мод 0022 не наложен или скрипт L2HubWorldInfo не загрузился");
++		}
++		final Path file = Paths.get("./log/L2HubWorld.json");
++		if (!Files.isRegularFile(file))
++		{
++			return new Check("", false, ".world есть, но log/L2HubWorld.json не записан");
++		}
++		final long age = (System.currentTimeMillis() - Files.getLastModifiedTime(file).toMillis()) / 1000;
++		return new Check("", age < 180, ".world есть, L2HubWorld.json обновлён " + age + " с назад");
++	}
++
++	private static Check elpies() throws Exception
++	{
++		if (ScriptManager.getInstance().getScript("Elpies") == null)
++		{
++			return new Check("", false, "нет скрипта Elpies");
++		}
++		final Properties config = customIni("L2HubEvents.ini");
++		if (config.getProperty("Elpies") == null)
++		{
++			return new Check("", true, "расписания L2Hub нет (ключей Elpies* в L2HubEvents.ini нет) — только командой GM");
++		}
++		if (!isTrue(config, "Elpies", "False"))
++		{
++			return new Check("", true, "выключено (Elpies = False в L2HubEvents.ini)");
++		}
++		final String pattern = config.getProperty("ElpiesSchedule", "").trim();
++		if (pattern.isEmpty())
++		{
++			return new Check("", true, "вкл, расписания нет — только командой GM");
++		}
++		final long next = System.currentTimeMillis() + new org.l2jmobius.commons.time.SchedulingPattern(pattern).getDelayToNextFromNow();
++		final String when = new SimpleDateFormat("dd.MM HH:mm").format(new java.util.Date(((next + 30000) / 60000) * 60000));
++		return new Check("", true, "вкл, " + pattern + ", следующий старт " + when + (isTrue(config, "ElpiesOnlyWithPlayers", "True") ? ", только при живом игроке" : ""));
++	}
++
++	private static Check chronicle() throws Exception
++	{
++		if (!Files.isRegularFile(Paths.get("./data/scripts/custom/L2HubChronicle/L2HubChronicle.java")))
++		{
++			return new Check("", false, "нет скрипта L2HubChronicle — мод 0023 не наложен");
++		}
++		final Path file = Paths.get("./log/L2HubChronicle.json");
++		if (!Files.isRegularFile(file))
++		{
++			final boolean writable = Files.isWritable(file.toAbsolutePath().getParent());
++			return new Check("", writable, "записей пока нет, папка log " + (writable ? "доступна для записи" : "недоступна для записи!"));
++		}
++		long entries = 0;
++		for (String line : Files.readAllLines(file, StandardCharsets.UTF_8))
++		{
++			if (line.startsWith("{\"time\":"))
++			{
++				entries++;
++			}
++		}
++		final boolean writable = Files.isWritable(file);
++		return new Check("", writable, "log/L2HubChronicle.json " + (writable ? "доступен для записи" : "только для чтения!") + ", записей " + entries);
++	}
++
+ 	private static String onOff(boolean value)
+ 	{
+ 		return value ? "вкл" : "выкл";

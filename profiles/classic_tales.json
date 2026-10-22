@@ -1,0 +1,17 @@
+{
+  "id": "classic_tales",
+  "type": "mobius",
+  "build": "L2J_Mobius_Classic_3.5_TalesUntold",
+  "server": "servers/classic_tales/server",
+  "database": "l2jmobiusclassic",
+  "ports": { "db": 3306, "login": 2106, "game": 7777 },
+  "brain": { "port": 8771, "model": "deepseek-flash", "alphabet": "cyrillic" },
+  "client": {
+    "path": "C:\\Games\\Lineage2-Classic",
+    "exe": "system_ru\\L2.exe",
+    "args": ["-INI=.\\L2Hub.ini"],
+    "ini": "system_ru\\L2Hub.ini",
+    "system": "единый клиент 4game EU 286 (Main, Classic, Essence), штатная система с языком Russia (system_ru), открытый L2Hub.ini на 127.0.0.1",
+    "protocol": 286
+  }
+}

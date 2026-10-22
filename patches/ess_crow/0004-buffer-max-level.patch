@@ -1,0 +1,159 @@
+diff --git a/dist/game/data/SchemeBufferSkills.xml b/dist/game/data/SchemeBufferSkills.xml
+index 702d02f..6560c0f 100644
+--- a/dist/game/data/SchemeBufferSkills.xml
++++ b/dist/game/data/SchemeBufferSkills.xml
+@@ -1,24 +1,24 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="xsd/SchemeBufferSkills.xsd">
+ 	<category type="Buffs">
+-		<buff id="1240" level="1" price="0" desc="Increases Accuracy." /> <!-- Guidance -->
+-		<buff id="1087" level="1" price="0" desc="Increases Evasion." /> <!-- Agility -->
+-		<buff id="1204" level="1" price="0" desc="Increases Speed." /> <!-- Wind Walk -->
+-		<buff id="1036" level="1" price="0" desc="Increases M. Def." /> <!-- Magic Barrier -->
+-		<buff id="1040" level="1" price="0" desc="Increases P. Def." /> <!-- Shield -->
+-		<buff id="1045" level="1" price="0" desc="Increases maximum HP." /> <!-- Blessed Body -->
+-		<buff id="1048" level="1" price="0" desc="Increases maximum MP." /> <!-- Blessed Soul -->
+-		<buff id="1062" level="1" price="0" desc="Reduces def. and increase atk. power." /> <!-- Berserker Spirit -->
+-		<buff id="1078" level="1" price="0" desc="Increases magic concentration." /> <!-- Concentration -->
+-		<buff id="1059" level="1" price="0" desc="Increases M. Atk." /> <!-- Empower -->
+-		<buff id="1085" level="1" price="0" desc="Increases Casting Spd." /> <!-- Acumen -->
+-		<buff id="1303" level="1" price="0" desc="Increases crit. rate of magic attacks." /> <!-- Wild Magic -->
+-		<buff id="1397" level="1" price="0" desc="Decreases MP consumption rate." /> <!-- Clarity -->
+-		<buff id="1086" level="1" price="0" desc="Increases Atk. Spd." /> <!-- Haste -->
+-		<buff id="1068" level="1" price="0" desc="Increases P. Atk." /> <!-- Might -->
+-		<buff id="1077" level="1" price="0" desc="Increases critical attack rate." /> <!-- Focus -->
+-		<buff id="1242" level="1" price="0" desc="Increases critical attack." /> <!-- Death Whisper -->
+-		<buff id="1268" level="1" price="0" desc="Restores HP using inflicted damage." /> <!-- Vampiric Rage -->
++		<buff id="1240" level="3" price="0" desc="Increases Accuracy." /> <!-- Guidance -->
++		<buff id="1087" level="3" price="0" desc="Increases Evasion." /> <!-- Agility -->
++		<buff id="1204" level="3" price="0" desc="Increases Speed." /> <!-- Wind Walk -->
++		<buff id="1036" level="3" price="0" desc="Increases M. Def." /> <!-- Magic Barrier -->
++		<buff id="1040" level="4" price="0" desc="Increases P. Def." /> <!-- Shield -->
++		<buff id="1045" level="6" price="0" desc="Increases maximum HP." /> <!-- Blessed Body -->
++		<buff id="1048" level="6" price="0" desc="Increases maximum MP." /> <!-- Blessed Soul -->
++		<buff id="1062" level="3" price="0" desc="Reduces def. and increase atk. power." /> <!-- Berserker Spirit -->
++		<buff id="1078" level="6" price="0" desc="Increases magic concentration." /> <!-- Concentration -->
++		<buff id="1059" level="4" price="0" desc="Increases M. Atk." /> <!-- Empower -->
++		<buff id="1085" level="4" price="0" desc="Increases Casting Spd." /> <!-- Acumen -->
++		<buff id="1303" level="3" price="0" desc="Increases crit. rate of magic attacks." /> <!-- Wild Magic -->
++		<buff id="1397" level="4" price="0" desc="Decreases MP consumption rate." /> <!-- Clarity -->
++		<buff id="1086" level="3" price="0" desc="Increases Atk. Spd." /> <!-- Haste -->
++		<buff id="1068" level="4" price="0" desc="Increases P. Atk." /> <!-- Might -->
++		<buff id="1077" level="4" price="0" desc="Increases critical attack rate." /> <!-- Focus -->
++		<buff id="1242" level="4" price="0" desc="Increases critical attack." /> <!-- Death Whisper -->
++		<buff id="1268" level="4" price="0" desc="Restores HP using inflicted damage." /> <!-- Vampiric Rage -->
+ 	</category>
+ 	<category type="Dances">
+ 		<buff id="51170" level="1" price="0" desc="Increases P. Def" /> <!-- Warrior's Dance -->
+@@ -34,48 +34,48 @@
+ 		<buff id="51169" level="1" price="0" desc="Increases Maximum HP" /> <!-- Song of Vitality -->
+ 	</category>
+ 	<category type="Chants">
+-		<buff id="1390" level="1" price="0" desc="Increases P. Atk and M. Atk" /> <!-- Battefield Glory -->
+-		<buff id="1006" level="1" price="0" desc="Increases M. Atk" /> <!-- Chant of Empower -->
+-		<buff id="1413" level="1" price="0" desc="Increases Magical Critical Rate" /> <!-- Chant of Wild Magic -->
+-		<buff id="1261" level="1" price="0" desc="Reduces Hp/MP and increase Stats power." /> <!-- Chant of Berserker Spirit -->
+-		<buff id="1549" level="1" price="0" desc="Increases M. Def" /> <!-- Chant of Magic Barrier -->
+-		<buff id="1007" level="1" price="0" desc="Reflects P. Atk" /> <!-- Chant of Might -->
+-		<buff id="1002" level="1" price="0" desc="Increases Casting Speed" /> <!-- Chant of Acumen -->
+-		<buff id="1251" level="1" price="0" desc="Increases Attack Speed" /> <!-- Chant of Haste -->
+-		<buff id="1308" level="1" price="0" desc="Increases P. Critical Rate" /> <!-- Chant of Focus -->
+-		<buff id="1253" level="1" price="0" desc="Increases P. Critical Damage" /> <!-- Chant of Death Whisper -->
+-		<buff id="1009" level="1" price="0" desc="Increases P. Def" /> <!-- Chant of Shield -->
+-		<buff id="1310" level="1" price="0" desc="Absorbs the inflicted damage as HP" /> <!-- Chant of Vampire -->
+-		<buff id="1252" level="1" price="0" desc="Increases M. Skill MP Consumption and Max MP" /> <!-- Chant of Invocation -->
++		<buff id="1390" level="3" price="0" desc="Increases P. Atk and M. Atk" /> <!-- Battefield Glory -->
++		<buff id="1006" level="4" price="0" desc="Increases M. Atk" /> <!-- Chant of Empower -->
++		<buff id="1413" level="3" price="0" desc="Increases Magical Critical Rate" /> <!-- Chant of Wild Magic -->
++		<buff id="1261" level="3" price="0" desc="Reduces Hp/MP and increase Stats power." /> <!-- Chant of Berserker Spirit -->
++		<buff id="1549" level="3" price="0" desc="Increases M. Def" /> <!-- Chant of Magic Barrier -->
++		<buff id="1007" level="4" price="0" desc="Reflects P. Atk" /> <!-- Chant of Might -->
++		<buff id="1002" level="4" price="0" desc="Increases Casting Speed" /> <!-- Chant of Acumen -->
++		<buff id="1251" level="3" price="0" desc="Increases Attack Speed" /> <!-- Chant of Haste -->
++		<buff id="1308" level="4" price="0" desc="Increases P. Critical Rate" /> <!-- Chant of Focus -->
++		<buff id="1253" level="4" price="0" desc="Increases P. Critical Damage" /> <!-- Chant of Death Whisper -->
++		<buff id="1009" level="4" price="0" desc="Increases P. Def" /> <!-- Chant of Shield -->
++		<buff id="1310" level="4" price="0" desc="Absorbs the inflicted damage as HP" /> <!-- Chant of Vampire -->
++		<buff id="1252" level="3" price="0" desc="Increases M. Skill MP Consumption and Max MP" /> <!-- Chant of Invocation -->
+ 	</category>
+ 	<category type="Special">
+-		<buff id="1388" level="1" price="0" desc="Increases P. Atk and M. Atk" /> <!-- Improve attack -->
+-		<buff id="1389" level="1" price="0" desc="Increases P. Def and M. Def" /> <!-- Improve defense -->
+-		<buff id="1355" level="1" price="0" desc="Increases all mage abilities." /> <!-- Prophecy of Water -->
+-		<buff id="1356" level="1" price="0" desc="Increases all fighter abilities." /> <!-- Prophecy of Fire -->
+-		<buff id="1357" level="1" price="0" desc="Increases all dagger abilities." /> <!-- Prophecy of Wind -->
+-		<buff id="1363" level="1" price="0" desc="Increases combat abilities." /> <!-- Chant of Victory -->
+-		<buff id="4702" level="1" price="0" desc="Increases MP regeneration rate" /> <!-- Blessing of Seraphim -->
+-		<buff id="4703" level="1" price="0" desc="Decreases re-use time of magic skills" /> <!-- Gift of Seraphim -->
+-		<buff id="4700" level="1" price="0" desc="Increases P. Atk. and Accuracy" /> <!-- Gift of Queen -->
+-		<buff id="4699" level="1" price="0" desc="Increases critical chance and power" /> <!-- Blessing of Queen -->
++		<buff id="1388" level="3" price="0" desc="Increases P. Atk and M. Atk" /> <!-- Improve attack -->
++		<buff id="1389" level="3" price="0" desc="Increases P. Def and M. Def" /> <!-- Improve defense -->
++		<buff id="1355" level="2" price="0" desc="Increases all mage abilities." /> <!-- Prophecy of Water -->
++		<buff id="1356" level="2" price="0" desc="Increases all fighter abilities." /> <!-- Prophecy of Fire -->
++		<buff id="1357" level="2" price="0" desc="Increases all dagger abilities." /> <!-- Prophecy of Wind -->
++		<buff id="1363" level="2" price="0" desc="Increases combat abilities." /> <!-- Chant of Victory -->
++		<buff id="4702" level="13" price="0" desc="Increases MP regeneration rate" /> <!-- Blessing of Seraphim -->
++		<buff id="4703" level="13" price="0" desc="Decreases re-use time of magic skills" /> <!-- Gift of Seraphim -->
++		<buff id="4700" level="13" price="0" desc="Increases P. Atk. and Accuracy" /> <!-- Gift of Queen -->
++		<buff id="4699" level="13" price="0" desc="Increases critical chance and power" /> <!-- Blessing of Queen -->
+ 	</category>
+ 	<category type="Resist">
+-		<buff id="1304" level="1" price="0" desc="Increases shield defense power." /> <!-- Advanced Block -->
+-		<buff id="1243" level="1" price="0" desc="Increases shield defense rate." /> <!-- Bless Shield -->
++		<buff id="1304" level="5" price="0" desc="Increases shield defense power." /> <!-- Advanced Block -->
++		<buff id="1243" level="6" price="0" desc="Increases shield defense rate." /> <!-- Bless Shield -->
+ 	</category>
+ 	<category type="MAGE_GROUP">
+-		<buff id="1078" level="1" price="0" desc="Increases magic concentration." /> <!-- Concentration -->
+-		<buff id="1204" level="1" price="0" desc="Increases Speed." /> <!-- Wind Walk -->
+-		<buff id="1085" level="1" price="0" desc="Increases Casting Spd." /> <!-- Acumen -->
+-		<buff id="1040" level="1" price="0" desc="Increases P. Def." /> <!-- Shield -->
+-		<buff id="1036" level="1" price="0" desc="Increases M. Def." /> <!-- Magic Barrier -->
+-		<buff id="1059" level="1" price="0" desc="Increases M. Atk." /> <!-- Empower -->
+-		<buff id="1062" level="1" price="0" desc="Reduces def. and increase atk. power." /> <!-- Berserker Spirit -->
+-		<buff id="1045" level="1" price="0" desc="Increases maximum HP." /> <!-- Blessed Body -->
+-		<buff id="1048" level="1" price="0" desc="Increases maximum MP." /> <!-- Blessed Soul -->
+-		<buff id="1303" level="1" price="0" desc="Increases crit. rate of magic attacks." /> <!-- Wild Magic -->
+-		<buff id="1355" level="1" price="0" desc="Increases mage abilities." /> <!-- Prophecy of Water -->
++		<buff id="1078" level="6" price="0" desc="Increases magic concentration." /> <!-- Concentration -->
++		<buff id="1204" level="3" price="0" desc="Increases Speed." /> <!-- Wind Walk -->
++		<buff id="1085" level="4" price="0" desc="Increases Casting Spd." /> <!-- Acumen -->
++		<buff id="1040" level="4" price="0" desc="Increases P. Def." /> <!-- Shield -->
++		<buff id="1036" level="3" price="0" desc="Increases M. Def." /> <!-- Magic Barrier -->
++		<buff id="1059" level="4" price="0" desc="Increases M. Atk." /> <!-- Empower -->
++		<buff id="1062" level="3" price="0" desc="Reduces def. and increase atk. power." /> <!-- Berserker Spirit -->
++		<buff id="1045" level="6" price="0" desc="Increases maximum HP." /> <!-- Blessed Body -->
++		<buff id="1048" level="6" price="0" desc="Increases maximum MP." /> <!-- Blessed Soul -->
++		<buff id="1303" level="3" price="0" desc="Increases crit. rate of magic attacks." /> <!-- Wild Magic -->
++		<buff id="1355" level="2" price="0" desc="Increases mage abilities." /> <!-- Prophecy of Water -->
+ 		<buff id="51170" level="1" price="0" desc="Increases P. Def" /> <!-- Warrior's Dance -->
+ 		<buff id="51171" level="1" price="0" desc="Increases P. Critical Damage" /> <!-- Dance of Fire -->
+ 		<buff id="51172" level="1" price="0" desc="Increases Atk. Spd" /> <!-- Dance of Rage -->
+@@ -86,16 +86,16 @@
+ 		<buff id="51169" level="1" price="0" desc="Increases Maximum HP" /> <!-- Song of Vitality -->
+ 	</category>
+ 	<category type="FIGHTER_GROUP">
+-		<buff id="1204" level="1" price="0" desc="Increases Speed." /> <!-- Wind Walk -->
+-		<buff id="1036" level="1" price="0" desc="Increases M. Def." /> <!-- Magic Barrier -->
+-		<buff id="1040" level="1" price="0" desc="Increases P. Def." /> <!-- Shield -->
+-		<buff id="1045" level="1" price="0" desc="Increases maximum HP." /> <!-- Blessed Body -->
+-		<buff id="1062" level="1" price="0" desc="Reduces def. and increase atk. power." /> <!-- Berserker Spirit -->
+-		<buff id="1068" level="1" price="0" desc="Increases P. Atk." /> <!-- Might -->
+-		<buff id="1077" level="1" price="0" desc="Increases critical attack rate." /> <!-- Focus -->
+-		<buff id="1086" level="1" price="0" desc="Increases Atk. Spd." /> <!-- Haste -->
+-		<buff id="1242" level="1" price="0" desc="Increases critical attack." /> <!-- Death Whisper -->
+-		<buff id="1356" level="1" price="0" desc="Increases fighter abilities." /> <!-- Prophecy of Fire -->
++		<buff id="1204" level="3" price="0" desc="Increases Speed." /> <!-- Wind Walk -->
++		<buff id="1036" level="3" price="0" desc="Increases M. Def." /> <!-- Magic Barrier -->
++		<buff id="1040" level="4" price="0" desc="Increases P. Def." /> <!-- Shield -->
++		<buff id="1045" level="6" price="0" desc="Increases maximum HP." /> <!-- Blessed Body -->
++		<buff id="1062" level="3" price="0" desc="Reduces def. and increase atk. power." /> <!-- Berserker Spirit -->
++		<buff id="1068" level="4" price="0" desc="Increases P. Atk." /> <!-- Might -->
++		<buff id="1077" level="4" price="0" desc="Increases critical attack rate." /> <!-- Focus -->
++		<buff id="1086" level="3" price="0" desc="Increases Atk. Spd." /> <!-- Haste -->
++		<buff id="1242" level="4" price="0" desc="Increases critical attack." /> <!-- Death Whisper -->
++		<buff id="1356" level="2" price="0" desc="Increases fighter abilities." /> <!-- Prophecy of Fire -->
+ 		<buff id="51170" level="1" price="0" desc="Increases P. Def" /> <!-- Warrior's Dance -->
+ 		<buff id="51171" level="1" price="0" desc="Increases P. Critical Damage" /> <!-- Dance of Fire -->
+ 		<buff id="51172" level="1" price="0" desc="Increases Atk. Spd" /> <!-- Dance of Rage -->

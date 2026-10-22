@@ -1,0 +1,58 @@
+# Сборка L2Hub по тегу vX.Y.Z (docs/RELEASE.md, «Порядок», шаг 3): exe, установщик и портативный zip — из кода
+# репозитория, в релиз — с SHA-256. Руками — workflow_dispatch (без выкладки в релиз, только артефакты).
+# Не проверено на GitHub: репозитория ещё нет (docs/GITHUB.md); локально тот же путь — packaging\build.py.
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+        working-directory: launcher
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+
+      - name: Зависимости (uv.lock, с PyInstaller)
+        run: uv sync --group dev --frozen
+
+      - name: Inno Setup 6
+        run: choco install innosetup --no-progress -y
+
+      - name: Сборка — exe, установщик, портативный zip
+        run: uv run python -X utf8 packaging/build.py --installer --portable
+
+      - name: Контрольные суммы
+        run: |
+          $files = Get-ChildItem dist -File | Where-Object { $_.Name -match '(-setup\.exe|-portable\.zip)$' }
+          $files | ForEach-Object { "$((Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower())  $($_.Name)" } |
+            Set-Content -Encoding ascii dist/SHA256SUMS.txt
+          Get-Content dist/SHA256SUMS.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: L2Hub
+          path: |
+            launcher/dist/*-setup.exe
+            launcher/dist/*-portable.zip
+            launcher/dist/SHA256SUMS.txt
+
+      - uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            launcher/dist/*-setup.exe
+            launcher/dist/*-portable.zip
+            launcher/dist/SHA256SUMS.txt

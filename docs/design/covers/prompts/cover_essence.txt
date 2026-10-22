@@ -1,0 +1,12 @@
+Use your built-in image generation tool to create exactly ONE image. Do not run any shell commands and do not write any files; just generate the image and reply with one short sentence describing it.
+
+The image is a cover banner for one era ("chronicle") of a classic dark-fantasy MMORPG, shown in a desktop game launcher. Format: ultra-wide panoramic landscape, aspect ratio 12:5 (about 1942 x 809 px).
+
+Style (same series as the other covers): cinematic painterly digital fantasy illustration, rich detail, dramatic atmospheric lighting, depth haze, warm bronze-and-gold accents, epic scale, matte-painting quality.
+
+Composition rules: the key subject sits in the middle horizontal band (between 20 % and 75 % of the height), because the launcher crops the top and bottom; the lower-left quarter stays calm and darker (UI chips are placed there); the silhouette of the key subject must still read when the banner is shrunk to a 46 x 30 px thumbnail.
+
+Strict rules: completely original designs; do not copy any existing game's official artwork, characters, creature designs or logos; no text, letters, numbers, logos, watermarks, signatures or UI anywhere in the image.
+
+Scene:
+A dynamic charge across a battlefield plain at dusk. On the right an orc rider in heavy armour with a long spear bursts forward mounted on a huge fanged war beast (a sabre-toothed, boar-like wolf). Beside him a death knight in black-and-crimson armour, wreathed in dark fire, swings a greatsword. Around them swirl four small luminous elemental spirit creatures: fire, water, wind and earth. In the background a fortified city on a hill under a dramatic stormy sky. More vivid, saturated and high-contrast than a classic painting, modern game key-art energy. Palette: crimson and icy blue.

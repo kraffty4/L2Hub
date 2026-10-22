@@ -1,0 +1,13801 @@
+window.CONFIG_SCHEMA = {
+ "game": [
+  {
+   "file": "ConquerableHallSiege.ini",
+   "sections": [
+    {
+     "title": "Contestable halls general configuration",
+     "keys": [
+      {
+       "key": "MinClanLevel",
+       "value": "4",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Min level that each clan needs to register for the siege"
+      },
+      {
+       "key": "MaxAttackers",
+       "value": "500",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Max number of clans allowed to register for the battle"
+      },
+      {
+       "key": "MaxFlagsPerClan",
+       "value": "1",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Max numbers of flags that each clan is allowed to put"
+      },
+      {
+       "key": "EnableFame",
+       "value": "false",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Enable the fame reward"
+      },
+      {
+       "key": "FameAmount",
+       "value": "0",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Fame amount"
+      },
+      {
+       "key": "FameFrequency",
+       "value": "0",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Fame Frequency"
+      }
+     ]
+    }
+   ],
+   "group": "Core"
+  },
+  {
+   "file": "Development.ini",
+   "sections": [
+    {
+     "title": "Development Settings",
+     "keys": [
+      {
+       "key": "LogServerLoadTimes",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Display the time taken to load each server initialization section during startup. When enabled, logs will show completion time for Database, ThreadPool, Skills, Items, etc. Useful for identifying slow startup phases and performance bottlenecks."
+      },
+      {
+       "key": "HtmlActionCacheDebug",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Html action cache debugging."
+      },
+      {
+       "key": "NoQuests",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Don't load quests."
+      },
+      {
+       "key": "NoSpawns",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Don't load spawntable."
+      },
+      {
+       "key": "ShowQuestLoadInLogs",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Show quests while loading them."
+      },
+      {
+       "key": "ShowScriptLoadInLogs",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Show scripts while loading them."
+      },
+      {
+       "key": "DebugClientPackets",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Debug client packets."
+      },
+      {
+       "key": "DebugExClientPackets",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Debug ex-client packets."
+      },
+      {
+       "key": "DebugServerPackets",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Debug server packets."
+      },
+      {
+       "key": "DebugUnknownPackets",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Debug unknown packets."
+      },
+      {
+       "key": "ExcludedPacketList",
+       "value": "AbnormalStatusUpdate, AcquireSkillList, Attack, AutoAttackStart, AutoAttackStop, DeleteObject, ExAutoSoulShot, ExPacket, ExStorageMaxCount, ExUserInfoAbnormalVisualEffect, ExUserInfoEquipSlot, MoveToLocation, NpcInfo, NpcSay, SkillCoolTime, SocialAction, StatusUpdate, UserInfo, ValidatePosition",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": "Excluded packet list. Packet names that are excluded from debugging, separated by commas."
+      }
+     ]
+    }
+   ],
+   "group": "Core"
+  },
+  {
+   "file": "Feature.ini",
+   "sections": [
+    {
+     "title": "Alternative Feature Settings",
+     "keys": []
+    },
+    {
+     "title": "Castle",
+     "keys": [
+      {
+       "key": "SiegeHourList",
+       "value": "16,20",
+       "secret": false,
+       "default": "16,20",
+       "type": "list",
+       "description": "Siege Time rules Which hours can change Castle Lords"
+      },
+      {
+       "key": "CastleTeleportFunctionFeeRatio",
+       "value": "604800000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Teleport Function price Price = 7 days"
+      },
+      {
+       "key": "CastleTeleportFunctionFeeLvl1",
+       "value": "1000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "CastleTeleportFunctionFeeLvl2",
+       "value": "10000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "CastleSupportFunctionFeeRatio",
+       "value": "604800000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Support magic buff price Price = 7 day"
+      },
+      {
+       "key": "CastleSupportFeeLvl1",
+       "value": "49000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "CastleSupportFeeLvl2",
+       "value": "120000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "CastleMpRegenerationFunctionFeeRatio",
+       "value": "604800000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "MP Regeneration price Price = 7 day"
+      },
+      {
+       "key": "CastleMpRegenerationFeeLvl1",
+       "value": "45000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "CastleMpRegenerationFeeLvl2",
+       "value": "65000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "CastleHpRegenerationFunctionFeeRatio",
+       "value": "604800000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Hp Regeneration price Price = 7 day"
+      },
+      {
+       "key": "CastleHpRegenerationFeeLvl1",
+       "value": "12000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "CastleHpRegenerationFeeLvl2",
+       "value": "20000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "CastleExpRegenerationFunctionFeeRatio",
+       "value": "604800000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Exp Regeneration price Price = 7 day"
+      },
+      {
+       "key": "CastleExpRegenerationFeeLvl1",
+       "value": "63000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "CastleExpRegenerationFeeLvl2",
+       "value": "70000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "OuterDoorUpgradePriceLvl2",
+       "value": "3000000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Outer Door upgrade price"
+      },
+      {
+       "key": "OuterDoorUpgradePriceLvl3",
+       "value": "4000000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "OuterDoorUpgradePriceLvl5",
+       "value": "5000000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "InnerDoorUpgradePriceLvl2",
+       "value": "750000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Inner Door upgrade price"
+      },
+      {
+       "key": "InnerDoorUpgradePriceLvl3",
+       "value": "900000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "InnerDoorUpgradePriceLvl5",
+       "value": "1000000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "WallUpgradePriceLvl2",
+       "value": "1600000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Wall upgrade price"
+      },
+      {
+       "key": "WallUpgradePriceLvl3",
+       "value": "1800000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "WallUpgradePriceLvl5",
+       "value": "2000000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "TrapUpgradePriceLvl1",
+       "value": "3000000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Trap upgrade price"
+      },
+      {
+       "key": "TrapUpgradePriceLvl2",
+       "value": "4000000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "TrapUpgradePriceLvl3",
+       "value": "5000000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "TrapUpgradePriceLvl4",
+       "value": "6000000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      }
+     ]
+    },
+    {
+     "title": "Clan Hall",
+     "keys": [
+      {
+       "key": "ClanHallTeleportFunctionFeeRatio",
+       "value": "604800000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Teleport Function price Price = 7 days"
+      },
+      {
+       "key": "ClanHallTeleportFunctionFeeLvl1",
+       "value": "7000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanHallTeleportFunctionFeeLvl2",
+       "value": "14000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanHallSupportFunctionFeeRatio",
+       "value": "86400000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Support magic buff price Price = 1 day"
+      },
+      {
+       "key": "ClanHallSupportFeeLvl1",
+       "value": "2500",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanHallSupportFeeLvl2",
+       "value": "5000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanHallSupportFeeLvl3",
+       "value": "7000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanHallSupportFeeLvl4",
+       "value": "11000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanHallSupportFeeLvl5",
+       "value": "21000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanHallSupportFeeLvl6",
+       "value": "36000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanHallSupportFeeLvl7",
+       "value": "37000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanHallSupportFeeLvl8",
+       "value": "364000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanHallMpRegenerationFunctionFeeRatio",
+       "value": "86400000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "MP Regeneration price Price = 1 day"
+      },
+      {
+       "key": "ClanHallMpRegenerationFeeLvl1",
+       "value": "2000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanHallMpRegenerationFeeLvl2",
+       "value": "3750",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanHallMpRegenerationFeeLvl3",
+       "value": "6500",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanHallMpRegenerationFeeLvl4",
+       "value": "13750",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanHallMpRegenerationFeeLvl5",
+       "value": "20000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanHallHpRegenerationFunctionFeeRatio",
+       "value": "86400000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Hp Regeneration price Price = 1 day"
+      },
+      {
+       "key": "ClanHallHpRegenerationFeeLvl1",
+       "value": "700",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanHallHpRegenerationFeeLvl2",
+       "value": "800",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanHallHpRegenerationFeeLvl3",
+       "value": "1000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanHallHpRegenerationFeeLvl4",
+       "value": "1166",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanHallHpRegenerationFeeLvl5",
+       "value": "1500",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanHallHpRegenerationFeeLvl6",
+       "value": "1750",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanHallHpRegenerationFeeLvl7",
+       "value": "2000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanHallHpRegenerationFeeLvl8",
+       "value": "2250",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanHallHpRegenerationFeeLvl9",
+       "value": "2500",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanHallHpRegenerationFeeLvl10",
+       "value": "3250",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanHallHpRegenerationFeeLvl11",
+       "value": "3750",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanHallHpRegenerationFeeLvl12",
+       "value": "4250",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanHallHpRegenerationFeeLvl13",
+       "value": "5166",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanHallExpRegenerationFunctionFeeRatio",
+       "value": "86400000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Exp Regeneration price Price = 1 day"
+      },
+      {
+       "key": "ClanHallExpRegenerationFeeLvl1",
+       "value": "3000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanHallExpRegenerationFeeLvl2",
+       "value": "6000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanHallExpRegenerationFeeLvl3",
+       "value": "9000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanHallExpRegenerationFeeLvl4",
+       "value": "15000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanHallExpRegenerationFeeLvl5",
+       "value": "21000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanHallExpRegenerationFeeLvl6",
+       "value": "23330",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanHallExpRegenerationFeeLvl7",
+       "value": "30000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanHallItemCreationFunctionFeeRatio",
+       "value": "86400000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Creation item function Price = 1 day"
+      },
+      {
+       "key": "ClanHallItemCreationFunctionFeeLvl1",
+       "value": "30000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanHallItemCreationFunctionFeeLvl2",
+       "value": "70000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanHallItemCreationFunctionFeeLvl3",
+       "value": "140000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanHallCurtainFunctionFeeRatio",
+       "value": "604800000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Curtains Decoration Price = 7 days"
+      },
+      {
+       "key": "ClanHallCurtainFunctionFeeLvl1",
+       "value": "2000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanHallCurtainFunctionFeeLvl2",
+       "value": "2500",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanHallFrontPlatformFunctionFeeRatio",
+       "value": "259200000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Fixtures Decoration Price = 3 days"
+      },
+      {
+       "key": "ClanHallFrontPlatformFunctionFeeLvl1",
+       "value": "1300",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanHallFrontPlatformFunctionFeeLvl2",
+       "value": "4000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "AltClanHallMpBuffFree",
+       "value": "True",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "If true Clan Hall buff cost 0 mp."
+      }
+     ]
+    },
+    {
+     "title": "Fortress",
+     "keys": [
+      {
+       "key": "FortressTeleportFunctionFeeRatio",
+       "value": "604800000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Teleport Function price Price = 7 days"
+      },
+      {
+       "key": "FortressTeleportFunctionFeeLvl1",
+       "value": "1000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "FortressTeleportFunctionFeeLvl2",
+       "value": "10000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "FortressSupportFunctionFeeRatio",
+       "value": "86400000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Support magic buff price Price = 1 day"
+      },
+      {
+       "key": "FortressSupportFeeLvl1",
+       "value": "7000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "FortressSupportFeeLvl2",
+       "value": "17000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "FortressMpRegenerationFunctionFeeRatio",
+       "value": "86400000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "MP Regeneration price Price = 1 day"
+      },
+      {
+       "key": "FortressMpRegenerationFeeLvl1",
+       "value": "6500",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "FortressMpRegenerationFeeLvl2",
+       "value": "9300",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "FortressHpRegenerationFunctionFeeRatio",
+       "value": "86400000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Hp Regeneration price Price = 1 day"
+      },
+      {
+       "key": "FortressHpRegenerationFeeLvl1",
+       "value": "2000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "FortressHpRegenerationFeeLvl2",
+       "value": "3500",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "FortressExpRegenerationFunctionFeeRatio",
+       "value": "86400000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Exp Regeneration price Price = 1 day"
+      },
+      {
+       "key": "FortressExpRegenerationFeeLvl1",
+       "value": "9000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "FortressExpRegenerationFeeLvl2",
+       "value": "10000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "FortressPeriodicUpdateFrequency",
+       "value": "360",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "This is the time frequently when Fort owner gets Blood Oath, supply level raised and Fort fee is payed Default 360 mins"
+      },
+      {
+       "key": "FortressBloodOathCount",
+       "value": "1",
+       "secret": false,
+       "default": "1",
+       "type": "int",
+       "description": "The number of Blood Oath which given to the Fort owner clan when Fort Updater runs"
+      },
+      {
+       "key": "FortressMaxSupplyLevel",
+       "value": "6",
+       "secret": false,
+       "default": "6",
+       "type": "int",
+       "description": "The maximum Fort supply level Max lvl what you can define here is 21!"
+      },
+      {
+       "key": "FortressFeeForCastle",
+       "value": "25000",
+       "secret": false,
+       "default": "25000",
+       "type": "int",
+       "description": "Fort fee which payed to the Castle"
+      },
+      {
+       "key": "FortressMaximumOwnTime",
+       "value": "168",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "The maximum time while a clan can own a fortress Deafault: 168 hours"
+      }
+     ]
+    },
+    {
+     "title": "Seven Signs",
+     "keys": [
+      {
+       "key": "AltOpenCatacumbs",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Determine any player can use Necropoils and catacoms independing seal status or period."
+      },
+      {
+       "key": "AltOpenNecropolis",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": ""
+      },
+      {
+       "key": "AltRequireClanCastle",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Determines whether castle ownership is determined by clan or by alliance. Default is by alliance, as on official servers."
+      },
+      {
+       "key": "AltCastleForDawn",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Dawn: True - Players not owning castle need pay participation fee False - Anyone can join Dawn"
+      },
+      {
+       "key": "AltCastleForDusk",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Dusk: True - Players owning castle can not join Dusk side False - Anyone can join Dusk"
+      },
+      {
+       "key": "AltFestivalMinPlayer",
+       "value": "5",
+       "secret": false,
+       "default": "5",
+       "type": "int",
+       "description": "Minimum Players for participate in SevenSigns Festival."
+      },
+      {
+       "key": "AltMaxPlayerContrib",
+       "value": "1000000",
+       "secret": false,
+       "default": "1000000",
+       "type": "int",
+       "description": "Maximum seal stone contribution per player during festival."
+      },
+      {
+       "key": "AltFestivalManagerStart",
+       "value": "120000",
+       "secret": false,
+       "default": "2 minutes",
+       "type": "int",
+       "description": "Festival Manager Start time (set in milliseconds; 1000 = 1 second)."
+      },
+      {
+       "key": "AltFestivalLength",
+       "value": "1080000",
+       "secret": false,
+       "default": "18 minutes",
+       "type": "int",
+       "description": "Festival Length (set in milliseconds; 1000 = 1 second)."
+      },
+      {
+       "key": "AltFestivalCycleLength",
+       "value": "2280000",
+       "secret": false,
+       "default": "38 Minutes (20 minutes wait time + Festival Length) (set in milliseconds; 1000 = 1 second).",
+       "type": "int",
+       "description": "Festival Cycle Length."
+      },
+      {
+       "key": "AltFestivalFirstSpawn",
+       "value": "120000",
+       "secret": false,
+       "default": "2 minutes (set in milliseconds; 1000 = 1 second).",
+       "type": "int",
+       "description": "At what point the first festival spawn occurs."
+      },
+      {
+       "key": "AltFestivalFirstSwarm",
+       "value": "300000",
+       "secret": false,
+       "default": "5 minutes (set in milliseconds; 1000 = 1 second).",
+       "type": "int",
+       "description": "At what Point the first festival swarm occurs."
+      },
+      {
+       "key": "AltFestivalSecondSpawn",
+       "value": "540000",
+       "secret": false,
+       "default": "9 minutes (set in milliseconds; 1000 = 1 second).",
+       "type": "int",
+       "description": "At what Point the second festival spawn occurs."
+      },
+      {
+       "key": "AltFestivalSecondSwarm",
+       "value": "720000",
+       "secret": false,
+       "default": "12 minutes (set in milliseconds; 1000 = 1 second).",
+       "type": "int",
+       "description": "At what Point the second festival spawn occurs."
+      },
+      {
+       "key": "AltFestivalChestSpawn",
+       "value": "900000",
+       "secret": false,
+       "default": "15 minutes (set in milliseconds; 1000 = 1 second).",
+       "type": "int",
+       "description": "At what point the chests spawn in."
+      },
+      {
+       "key": "AltDawnGatesPdefMult",
+       "value": "1.1",
+       "secret": false,
+       "default": "1.1,0.8,1.1,0.8",
+       "type": "float",
+       "description": "This multipliers are used to change P.Def/M.Def of castle gates/walls while Seal of Strife is controlled by one of the sides."
+      },
+      {
+       "key": "AltDuskGatesPdefMult",
+       "value": "0.8",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": ""
+      },
+      {
+       "key": "AltDawnGatesMdefMult",
+       "value": "1.1",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": ""
+      },
+      {
+       "key": "AltDuskGatesMdefMult",
+       "value": "0.8",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": ""
+      },
+      {
+       "key": "StrictSevenSigns",
+       "value": "False",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "If this = true only cabal period owners can use merchant and blacksmith of mammon. If false any player can use."
+      },
+      {
+       "key": "AltSevenSignsLazyUpdate",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Save SevenSigns status only each 30 minutes and after period change. Player info saved only during periodic data store (set by CharacterDataStoreInterval) and logout. If False then save info and status immediately after changes."
+      },
+      {
+       "key": "SevenSignsDawnTicketQuantity",
+       "value": "300",
+       "secret": false,
+       "default": "300",
+       "type": "int",
+       "description": "Total count of available tickets."
+      },
+      {
+       "key": "SevenSignsDawnTicketPrice",
+       "value": "1000",
+       "secret": false,
+       "default": "1000",
+       "type": "int",
+       "description": "Price of each ticket."
+      },
+      {
+       "key": "SevenSignsDawnTicketBundle",
+       "value": "10",
+       "secret": false,
+       "default": "10",
+       "type": "int",
+       "description": "Tickets bundle (exchanged in amounts of)."
+      },
+      {
+       "key": "SevenSignsManorsAgreementId",
+       "value": "6388",
+       "secret": false,
+       "default": "6388",
+       "type": "int",
+       "description": "Ticket item Id."
+      },
+      {
+       "key": "SevenSignsJoinDawnFee",
+       "value": "50000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Fee for joining Dawn"
+      }
+     ]
+    },
+    {
+     "title": "Clan Reputation Points",
+     "keys": [
+      {
+       "key": "TakeFortPoints",
+       "value": "200",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Reputation score gained by taking Fortress."
+      },
+      {
+       "key": "TakeCastlePoints",
+       "value": "1500",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Reputation score gained by taking Castle."
+      },
+      {
+       "key": "CastleDefendedPoints",
+       "value": "750",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Reputation score gained by defended Castle."
+      },
+      {
+       "key": "FestivalOfDarknessWin",
+       "value": "200",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Reputation score gained per clan members of festival winning party."
+      },
+      {
+       "key": "HeroPoints",
+       "value": "1000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Reputation score gained for per hero clan members."
+      },
+      {
+       "key": "CompleteAcademyMinPoints",
+       "value": "190",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Minimum Reputation score gained after completing 2nd class transfer under Academy."
+      },
+      {
+       "key": "CompleteAcademyMaxPoints",
+       "value": "650",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Maximum Reputation score gained after completing 2nd class transfer under Academy."
+      },
+      {
+       "key": "KillBallistaPoints",
+       "value": "30",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Reputation score gained per killed ballista."
+      },
+      {
+       "key": "BloodAlliancePoints",
+       "value": "500",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Reputation score gained for one Blood Alliance."
+      },
+      {
+       "key": "BloodOathPoints",
+       "value": "200",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Reputation score gained for 10 Blood Oaths."
+      },
+      {
+       "key": "KnightsEpaulettePoints",
+       "value": "20",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Reputation score gained for 100 Knight's Epaulettes."
+      },
+      {
+       "key": "1stRaidRankingPoints",
+       "value": "1250",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Reputation score gained per clan member listed as top raid killers."
+      },
+      {
+       "key": "2ndRaidRankingPoints",
+       "value": "900",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "3rdRaidRankingPoints",
+       "value": "700",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "4thRaidRankingPoints",
+       "value": "600",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "5thRaidRankingPoints",
+       "value": "450",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "6thRaidRankingPoints",
+       "value": "350",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "7thRaidRankingPoints",
+       "value": "300",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "8thRaidRankingPoints",
+       "value": "200",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "9thRaidRankingPoints",
+       "value": "150",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "10thRaidRankingPoints",
+       "value": "100",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "UpTo50thRaidRankingPoints",
+       "value": "25",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "UpTo100thRaidRankingPoints",
+       "value": "12",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ReputationScorePerKill",
+       "value": "1",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Reputation score gained/reduced per kill during a clan war or siege war."
+      },
+      {
+       "key": "LooseFortPoints",
+       "value": "0",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Reputation score reduced by loosing Fortress in battle."
+      },
+      {
+       "key": "LooseCastlePoints",
+       "value": "3000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Reputation score reduced by loosing Castle in battle."
+      },
+      {
+       "key": "CreateRoyalGuardCost",
+       "value": "5000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Reputation score reduced by creating Royal Guard."
+      },
+      {
+       "key": "CreateKnightUnitCost",
+       "value": "10000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Reputation score reduced by creating Knight Unit."
+      },
+      {
+       "key": "ReinforceKnightUnitCost",
+       "value": "5000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Reputation score reduced by reinforcing Knight Unit (if clan level is 9 or more)."
+      },
+      {
+       "key": "ClanLevel6Cost",
+       "value": "5000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Reputation score reduced by increasing clan level."
+      },
+      {
+       "key": "ClanLevel7Cost",
+       "value": "10000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanLevel8Cost",
+       "value": "20000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanLevel9Cost",
+       "value": "40000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanLevel10Cost",
+       "value": "40000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanLevel11Cost",
+       "value": "75000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanLevel6Requirement",
+       "value": "30",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Number of clan members needed to increase clan level."
+      },
+      {
+       "key": "ClanLevel7Requirement",
+       "value": "50",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanLevel8Requirement",
+       "value": "80",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanLevel9Requirement",
+       "value": "120",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanLevel10Requirement",
+       "value": "140",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ClanLevel11Requirement",
+       "value": "170",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      }
+     ]
+    },
+    {
+     "title": "Mount Restrictions During Sieges",
+     "keys": [
+      {
+       "key": "AllowRideWyvernAlways",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Allow riding wyvern ignoring 7 Signs status. This will allow Castle Lords to ride wyvern even when Dusk has won Seal of Strife."
+      },
+      {
+       "key": "AllowRideWyvernDuringSiege",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Allow riding wyvern during Castle/Fort Siege. All players are restricted from riding wyverns during a siege. However, the castle lord (clan leader who owns the castle being sieged) is still allowed to ride a wyvern during the siege. This matches official behavior."
+      },
+      {
+       "key": "AllowRideMountsDuringSiege",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Allow riding mounts (wyvern excluded) during Castle/Fort Siege."
+      }
+     ]
+    }
+   ],
+   "group": "Core"
+  },
+  {
+   "file": "FloodProtector.ini",
+   "sections": [
+    {
+     "title": "Floodprotector Options",
+     "keys": [
+      {
+       "key": "FloodProtectorUseItemInterval",
+       "value": "0",
+       "secret": false,
+       "default": "0",
+       "type": "int",
+       "description": "UseItem - item usage flooding Item usage interval Disabled to match retail, if you want to enable this protection change the value to 4 for example."
+      },
+      {
+       "key": "FloodProtectorUseItemLogFlooding",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorUseItemPunishmentLimit",
+       "value": "0",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorUseItemPunishmentType",
+       "value": "none",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorUseItemPunishmentTime",
+       "value": "0",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorRollDiceInterval",
+       "value": "42",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "RollDice - rolling dice flooding"
+      },
+      {
+       "key": "FloodProtectorRollDiceLogFlooding",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorRollDicePunishmentLimit",
+       "value": "0",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorRollDicePunishmentType",
+       "value": "none",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorRollDicePunishmentTime",
+       "value": "0",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorItemPetSummonInterval",
+       "value": "16",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "ItemPetSummon - item summoning and pet mounting flooding"
+      },
+      {
+       "key": "FloodProtectorItemPetSummonLogFlooding",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorItemPetSummonPunishmentLimit",
+       "value": "0",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorItemPetSummonPunishmentType",
+       "value": "none",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorItemPetSummonPunishmentTime",
+       "value": "0",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorHeroVoiceInterval",
+       "value": "100",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "HeroVoice - hero voice flooding"
+      },
+      {
+       "key": "FloodProtectorHeroVoiceLogFlooding",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorHeroVoicePunishmentLimit",
+       "value": "0",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorHeroVoicePunishmentType",
+       "value": "none",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorHeroVoicePunishmentTime",
+       "value": "0",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorGlobalChatInterval",
+       "value": "5",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "GlobalChat - global chat flooding"
+      },
+      {
+       "key": "FloodProtectorGlobalChatLogFlooding",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorGlobalChatPunishmentLimit",
+       "value": "0",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorGlobalChatPunishmentType",
+       "value": "none",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorGlobalChatPunishmentTime",
+       "value": "0",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorSubclassInterval",
+       "value": "20",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Subclass - subclass flooding"
+      },
+      {
+       "key": "FloodProtectorSubclassLogFlooding",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorSubclassPunishmentLimit",
+       "value": "0",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorSubclassPunishmentType",
+       "value": "none",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorSubclassPunishmentTime",
+       "value": "0",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorDropItemInterval",
+       "value": "10",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "DropItem - drop item flooding"
+      },
+      {
+       "key": "FloodProtectorDropItemLogFlooding",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorDropItemPunishmentLimit",
+       "value": "0",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorDropItemPunishmentType",
+       "value": "none",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorDropItemPunishmentTime",
+       "value": "0",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorServerBypassInterval",
+       "value": "3",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "ServerBypass - server bypass flooding"
+      },
+      {
+       "key": "FloodProtectorServerBypassLogFlooding",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorServerBypassPunishmentLimit",
+       "value": "0",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorServerBypassPunishmentType",
+       "value": "none",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorServerBypassPunishmentTime",
+       "value": "0",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorMultiSellInterval",
+       "value": "10",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "ServerBypass - multisell list request flooding"
+      },
+      {
+       "key": "FloodProtectorMultiSellLogFlooding",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorMultiSellPunishmentLimit",
+       "value": "0",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorMultiSellPunishmentType",
+       "value": "none",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorMultiSellPunishmentTime",
+       "value": "0",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorTransactionInterval",
+       "value": "10",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "All kind of other transactions - to/from pet, private store, warehouse, destroy"
+      },
+      {
+       "key": "FloodProtectorTransactionLogFlooding",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorTransactionPunishmentLimit",
+       "value": "0",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorTransactionPunishmentType",
+       "value": "none",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorTransactionPunishmentTime",
+       "value": "0",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorManufactureInterval",
+       "value": "3",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Manufacture"
+      },
+      {
+       "key": "FloodProtectorManufactureLogFlooding",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorManufacturePunishmentLimit",
+       "value": "0",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorManufacturePunishmentType",
+       "value": "none",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorManufacturePunishmentTime",
+       "value": "0",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorSendMailInterval",
+       "value": "100",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "SendMail - sending mail interval, 10s on retail"
+      },
+      {
+       "key": "FloodProtectorSendMailLogFlooding",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorSendMailPunishmentLimit",
+       "value": "0",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorSendMailPunishmentType",
+       "value": "none",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorSendMailPunishmentTime",
+       "value": "0",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorCharacterSelectInterval",
+       "value": "30",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "CharacterSelect - attempts to load character"
+      },
+      {
+       "key": "FloodProtectorCharacterSelectLogFlooding",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorCharacterSelectPunishmentLimit",
+       "value": "0",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorCharacterSelectPunishmentType",
+       "value": "none",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorCharacterSelectPunishmentTime",
+       "value": "0",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorItemAuctionInterval",
+       "value": "9",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Item Auction - Request for refresh"
+      },
+      {
+       "key": "FloodProtectorItemAuctionLogFlooding",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorItemAuctionPunishmentLimit",
+       "value": "0",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorItemAuctionPunishmentType",
+       "value": "none",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorItemAuctionPunishmentTime",
+       "value": "0",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorPlayerActionInterval",
+       "value": "1",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Player Action - Next Target, Attack, etc"
+      },
+      {
+       "key": "FloodProtectorPlayerActionLogFlooding",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorPlayerActionPunishmentLimit",
+       "value": "0",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorPlayerActionPunishmentType",
+       "value": "none",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "FloodProtectorPlayerActionPunishmentTime",
+       "value": "0",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      }
+     ]
+    }
+   ],
+   "group": "Core"
+  },
+  {
+   "file": "FortSiege.ini",
+   "sections": [
+    {
+     "title": "Fort Siege Settings",
+     "keys": []
+    },
+    {
+     "title": "Standard Settings",
+     "keys": [
+      {
+       "key": "SiegeLength",
+       "value": "60",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Length of siege before the count down (in minutes)."
+      },
+      {
+       "key": "SuspiciousMerchantRespawnDelay",
+       "value": "180",
+       "secret": false,
+       "default": "180",
+       "type": "int",
+       "description": "This defines how long you need to wait until the suspicious merchant will spawn after siege ends (in minutes). Keep in mind when merchant spawns, the fort can be immediately sieged."
+      },
+      {
+       "key": "CountDownLength",
+       "value": "10",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "This defines how long you have to kill all commanders once you kill the first one (in minutes). After that time (if all commanders not killed) all commanders and doors get respawned."
+      },
+      {
+       "key": "MaxFlags",
+       "value": "1",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Max number of flags per clan."
+      },
+      {
+       "key": "SiegeClanMinLevel",
+       "value": "4",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Minimum clan level needed to sign up."
+      },
+      {
+       "key": "AttackerMaxClans",
+       "value": "500",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Max number of clans that can register on each side."
+      },
+      {
+       "key": "JustToTerritory",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "This option, if enabled, will enable register Fortress Siege to Castle owners just in territory."
+      }
+     ]
+    },
+    {
+     "title": "Fortress Commander Spawns",
+     "keys": [
+      {
+       "key": "ShantyCommander1",
+       "value": "-52435,155188,-1768,20000,35683",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Shanty Fortress Commander syntax:  NameCommanderN = x,y,z,heading,npc_id"
+      },
+      {
+       "key": "ShantyCommander2",
+       "value": "-52128,157752,-2024,29864,35677",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "ShantyCommander3",
+       "value": "-53944,155433,-2024,7304,35680",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "ShantyFlag1",
+       "value": "-53086,156493,-1896,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Flag syntax:  NameFlagN = x,y,z,flag_id"
+      },
+      {
+       "key": "ShantyFlag2",
+       "value": "-53054,156605,-1896,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "ShantyFlag3",
+       "value": "-53032,156689,-1896,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "SouthernCommander1",
+       "value": "-21328,218864,-2952,0,35719",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Southern Fortress Commander syntax:  NameCommanderN = x,y,z,heading,npc_id"
+      },
+      {
+       "key": "SouthernCommander2",
+       "value": "-22992,218160,-3208,0,35713",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "SouthernCommander3",
+       "value": "-21520,221504,-3208,45328,35716",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "SouthernCommander4",
+       "value": "-22728,221746,-3200,33168,35721",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "SouthernFlag1",
+       "value": "-22386,219917,-3079,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Flag syntax:  NameFlagN = x,y,z,flag_id"
+      },
+      {
+       "key": "SouthernFlag2",
+       "value": "-22386,219798,-3079,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "SouthernFlag3",
+       "value": "-22386,219679,-3079,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "HiveCommander1",
+       "value": "15152,188128,-2640,0,35752",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Hive Fortress Commander syntax:  NameCommanderN = x,y,z,heading,npc_id"
+      },
+      {
+       "key": "HiveCommander2",
+       "value": "17984,187536,-2896,45056,35746",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "HiveCommander3",
+       "value": "16016,189520,-2888,0,35749",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "HiveFlag1",
+       "value": "16685,188358,-2770,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Flag syntax:  NameFlagN = x,y,z,flag_id"
+      },
+      {
+       "key": "HiveFlag2",
+       "value": "16761,188306,-2770,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "HiveFlag3",
+       "value": "16847,188257,-2770,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "ValleyCommander1",
+       "value": "124768,121856,-2296,0,35788",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Valley Fortress Commander syntax:  NameCommanderN = x,y,z,heading,npc_id"
+      },
+      {
+       "key": "ValleyCommander2",
+       "value": "124299,123614,-2552,49192,35782",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "ValleyCommander3",
+       "value": "124768,124640,-2552,54480,35785",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "ValleyCommander4",
+       "value": "128048,123344,-2536,35028,35790",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "ValleyFlag1",
+       "value": "125970,123653,-2429,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Flag syntax:  NameFlagN = x,y,z,flag_id"
+      },
+      {
+       "key": "ValleyFlag2",
+       "value": "126092,123650,-2429,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "ValleyFlag3",
+       "value": "126205,123648,-2429,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "IvoryCommander1",
+       "value": "72400,2896,-2760,0,35821",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Ivory Fortress Commander syntax:  NameCommanderN = x,y,z,heading,npc_id"
+      },
+      {
+       "key": "IvoryCommander2",
+       "value": "73788,5479,-3016,55136,35815",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "IvoryCommander3",
+       "value": "71264,4144,-3008,0,35818",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "IvoryFlag1",
+       "value": "72565,4436,-2888,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Flag syntax:  NameFlagN = x,y,z,flag_id"
+      },
+      {
+       "key": "IvoryFlag2",
+       "value": "72660,4512,-2888,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "IvoryFlag3",
+       "value": "72759,4594,-2888,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "NarsellCommander1",
+       "value": "154704,53856,-2968,0,35852",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Narsell Fortress Commander syntax:  NameCommanderN = x,y,z,heading,npc_id"
+      },
+      {
+       "key": "NarsellCommander2",
+       "value": "155576,56592,-3224,59224,35846",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "NarsellCommander3",
+       "value": "153328,54848,-3216,5512,35849",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "NarsellFlag1",
+       "value": "154567,55397,-3097,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Flag syntax:  NameFlagN = x,y,z,flag_id"
+      },
+      {
+       "key": "NarsellFlag2",
+       "value": "154650,55493,-3097,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "NarsellFlag3",
+       "value": "154715,55587,-3097,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "BayouCommander1",
+       "value": "188624,38240,-3128,0,35888",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Bayou Fortress Commander syntax:  NameCommanderN = x,y,z,heading,npc_id"
+      },
+      {
+       "key": "BayouCommander2",
+       "value": "188160,39920,-3376,49284,35882",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "BayouCommander3",
+       "value": "188626,41066,-3376,57140,35885",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "BayouCommander4",
+       "value": "191846,39764,-3368,33020,35890",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "BayouFlag1",
+       "value": "189838,40063,-3253,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Flag syntax:  NameFlagN = x,y,z,flag_id"
+      },
+      {
+       "key": "BayouFlag2",
+       "value": "189931,40060,-3253,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "BayouFlag3",
+       "value": "190052,40062,-3253,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "WhiteSandsCommander1",
+       "value": "117216,205648,-3048,0,35921",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "White Sands Fortress Commander syntax:  NameCommanderN = x,y,z,heading,npc_id"
+      },
+      {
+       "key": "WhiteSandsCommander2",
+       "value": "118880,203568,-3304,5396,35915",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "WhiteSandsCommander3",
+       "value": "118560,206560,-3304,48872,35918",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "WhiteSandsFlag1",
+       "value": "118640,205151,-3176,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Flag syntax:  NameFlagN = x,y,z,flag_id"
+      },
+      {
+       "key": "WhiteSandsFlag2",
+       "value": "118690,205062,-3176,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "WhiteSandsFlag3",
+       "value": "118742,204968,-3176,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "BorderlandCommander1",
+       "value": "159664,-72224,-2584,0,35957",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Borderland Fortress Commander syntax:  NameCommanderN = x,y,z,heading,npc_id"
+      },
+      {
+       "key": "BorderlandCommander2",
+       "value": "157968,-71659,-2832,59020,35951",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "BorderlandCommander3",
+       "value": "157312,-70640,-2832,0,35954",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "BorderlandCommander4",
+       "value": "160194,-68688,-2824,43272,35959",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "BorderlandFlag1",
+       "value": "158817,-70229,-2708,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Flag syntax:  NameFlagN = x,y,z,flag_id"
+      },
+      {
+       "key": "BorderlandFlag2",
+       "value": "158883,-70145,-2708,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "BorderlandFlag3",
+       "value": "158946,-70045,-2708,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "SwampCommander1",
+       "value": "71264,-60512,-2504,0,35995",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Swamp Fortress Commander syntax:  NameCommanderN = x,y,z,heading,npc_id"
+      },
+      {
+       "key": "SwampCommander2",
+       "value": "71248,-62352,-2752,12388,35989",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "SwampCommander3",
+       "value": "68688,-59648,-2752,56012,35992",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "SwampCommander4",
+       "value": "68005,-60866,-2744,5424,35997",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "SwampFlag1",
+       "value": "69829,-61087,-2629,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Flag syntax:  NameFlagN = x,y,z,flag_id"
+      },
+      {
+       "key": "SwampFlag2",
+       "value": "69979,-61144,-2632,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "SwampFlag3",
+       "value": "70069,-61182,-2629,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "ArchaicCommander1",
+       "value": "109856,-142640,-2672,0,36028",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Archaic Fortress Commander syntax:  NameCommanderN = x,y,z,heading,npc_id"
+      },
+      {
+       "key": "ArchaicCommander2",
+       "value": "109600,-139735,-2928,62612,36022",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "ArchaicCommander3",
+       "value": "108223,-142209,-2920,8524,36025",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "ArchaicFlag1",
+       "value": "109142,-141243,-2801,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Flag syntax:  NameFlagN = x,y,z,flag_id"
+      },
+      {
+       "key": "ArchaicFlag2",
+       "value": "109184,-141129,-2801,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "ArchaicFlag3",
+       "value": "109214,-141016,-2801,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "FloranCommander1",
+       "value": "6528,151872,-2608,0,36064",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Floran Fortress Commander syntax:  NameCommanderN = x,y,z,heading,npc_id"
+      },
+      {
+       "key": "FloranCommander2",
+       "value": "7006,148242,-2856,32768,36058",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "FloranCommander3",
+       "value": "4384,150992,-2856,0,36061",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "FloranCommander4",
+       "value": "5246,152319,-2848,49151,36066",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "FloranFlag1",
+       "value": "5293,149624,-2732,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Flag syntax:  NameFlagN = x,y,z,flag_id"
+      },
+      {
+       "key": "FloranFlag2",
+       "value": "5306,149743,-2732,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "FloranFlag3",
+       "value": "5299,149870,-2732,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "CloudMountainCommander1",
+       "value": "-55248,90496,-2536,0,36102",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Cloud Mountain Fortress Commander syntax:  NameCommanderN = x,y,z,heading,npc_id"
+      },
+      {
+       "key": "CloudMountainCommander2",
+       "value": "-55791,91856,-2792,0,36096",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "CloudMountainCommander3",
+       "value": "-54168,92604,-2784,49196,36099",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "CloudMountainCommander4",
+       "value": "-50913,92259,-2776,41188,36104",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "CloudMountainFlag1",
+       "value": "-53354,91537,-2664,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Flag syntax:  NameFlagN = x,y,z,flag_id"
+      },
+      {
+       "key": "CloudMountainFlag2",
+       "value": "-53237,91537,-2664,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "CloudMountainFlag3",
+       "value": "-53112,91537,-2664,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "TanorCommander1",
+       "value": "58480,139648,-1464,0,36135",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Tanor Fortress Commander syntax:  NameCommanderN = x,y,z,heading,npc_id"
+      },
+      {
+       "key": "TanorCommander2",
+       "value": "61864,139257,-1728,46896,36129",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "TanorCommander3",
+       "value": "59436,140834,-1720,47296,36132",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "TanorFlag1",
+       "value": "60225,139771,-1597,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Flag syntax:  NameFlagN = x,y,z,flag_id"
+      },
+      {
+       "key": "TanorFlag2",
+       "value": "60362,139742,-1597,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "TanorFlag3",
+       "value": "60467,139727,-1597,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "DragonspineCommander1",
+       "value": "13184,94928,-3144,0,36166",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "DragonSpine Fortress Commander syntax:  NameCommanderN = x,y,z,heading,npc_id"
+      },
+      {
+       "key": "DragonspineCommander2",
+       "value": "9472,94992,-3392,0,36160",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "DragonspineCommander3",
+       "value": "12829,96214,-3392,49152,36163",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "DragonspineFlag1",
+       "value": "11459,95308,-3264,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Flag syntax:  NameFlagN = x,y,z,flag_id"
+      },
+      {
+       "key": "DragonspineFlag2",
+       "value": "11527,95301,-3264,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "DragonspineFlag3",
+       "value": "11623,95311,-3264,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "AntharasCommander1",
+       "value": "79440,88752,-2600,0,36202",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Antharas Fortress Commander syntax:  NameCommanderN = x,y,z,heading,npc_id"
+      },
+      {
+       "key": "AntharasCommander2",
+       "value": "77262,91704,-2856,5112,36196",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "AntharasCommander3",
+       "value": "80929,90510,-2856,40192,36199",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "AntharasCommander4",
+       "value": "80755,89002,-2848,21984,36204",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "AntharasFlag1",
+       "value": "79470,91299,-2728,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Flag syntax:  NameFlagN = x,y,z,flag_id"
+      },
+      {
+       "key": "AntharasFlag2",
+       "value": "79528,91187,-2728,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "AntharasFlag3",
+       "value": "79580,91095,-2728,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "WesternCommander1",
+       "value": "113481,-16058,-712,0,36240",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Western Fortress Commander syntax:  NameCommanderN = x,y,z,heading,npc_id"
+      },
+      {
+       "key": "WesternCommander2",
+       "value": "109872,-16624,-968,16384,36234",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "WesternCommander3",
+       "value": "112601,-13933,-960,49152,36237",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "WesternCommander4",
+       "value": "113929,-14801,-960,32768,36242",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "WesternFlag1",
+       "value": "111280,-14820,-839,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Flag syntax:  NameFlagN = x,y,z,flag_id"
+      },
+      {
+       "key": "WesternFlag2",
+       "value": "111380,-14820,-839,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "WesternFlag3",
+       "value": "111480,-14820,-839,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "HuntersCommander1",
+       "value": "123232,94400,-1856,0,36278",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Hunters Fortress Commander syntax:  NameCommanderN = x,y,z,heading,npc_id"
+      },
+      {
+       "key": "HuntersCommander2",
+       "value": "122688,95760,-2112,0,36272",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "HuntersCommander3",
+       "value": "124305,96528,-2104,49151,36275",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "HuntersCommander4",
+       "value": "127632,96240,-2096,40892,36280",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "HuntersFlag1",
+       "value": "125155,95455,-1984,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Flag syntax:  NameFlagN = x,y,z,flag_id"
+      },
+      {
+       "key": "HuntersFlag2",
+       "value": "125255,95455,-1984,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "HuntersFlag3",
+       "value": "125355,95455,-1984,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "AaruCommander1",
+       "value": "74288,186912,-2296,0,36311",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Aaru Fortress Commander syntax:  NameCommanderN = x,y,z,heading,npc_id"
+      },
+      {
+       "key": "AaruCommander2",
+       "value": "71392,184720,-2552,5528,36305",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "AaruCommander3",
+       "value": "71542,186410,-2552,55088,36308",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "AaruFlag1",
+       "value": "73029,186303,-2424,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Flag syntax:  NameFlagN = x,y,z,flag_id"
+      },
+      {
+       "key": "AaruFlag2",
+       "value": "72923,186247,-2424,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "AaruFlag3",
+       "value": "72833,186178,-2424,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "DemonCommander1",
+       "value": "100752,-53664,-360,0,36347",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Demon Fortress Commander syntax:  NameCommanderN = x,y,z,heading,npc_id"
+      },
+      {
+       "key": "DemonCommander2",
+       "value": "100688,-57440,-616,16384,36341",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "DemonCommander3",
+       "value": "99484,-54027,-616,0,36344",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "DemonFlag1",
+       "value": "100400,-55401,-488,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Flag syntax:  NameFlagN = x,y,z,flag_id"
+      },
+      {
+       "key": "DemonFlag2",
+       "value": "100400,-55301,-488,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "DemonFlag3",
+       "value": "100400,-55201,-488,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "MonasticCommander1",
+       "value": "73680,-95456,-1144,0,36385",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Monastic Fortress Commander syntax:  NameCommanderN = x,y,z,heading,npc_id"
+      },
+      {
+       "key": "MonasticCommander2",
+       "value": "70189,-93935,-1400,61576,36379",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "MonasticCommander3",
+       "value": "73831,-94119,-1400,45536,36382",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "MonasticFlag1",
+       "value": "72174,-94437,-1271,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Flag syntax:  NameFlagN = x,y,z,flag_id"
+      },
+      {
+       "key": "MonasticFlag2",
+       "value": "72294,-94481,-1271,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "MonasticFlag3",
+       "value": "72401,-94526,-1271,9819",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      }
+     ]
+    }
+   ],
+   "group": "Core"
+  },
+  {
+   "file": "General.ini",
+   "sections": [
+    {
+     "title": "General Server Settings",
+     "keys": []
+    },
+    {
+     "title": "Administrator",
+     "keys": [
+      {
+       "key": "EverybodyHasAdminRights",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "If this option is set to True every newly created character will have access level 127. This means that every character created will have Administrator Privileges."
+      },
+      {
+       "key": "ServerGMOnly",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "If True, only accounts with GM access can enter the server."
+      },
+      {
+       "key": "GMHeroAura",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Enable GMs to have the glowing aura of a Hero character on login. Notes: GMs can do \"///hero\" on themselves and get this aura voluntarily. It's advised to keep this off due to graphic lag."
+      },
+      {
+       "key": "GMStartupBuilderHide",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Whether GM logins in builder hide mode by default."
+      },
+      {
+       "key": "GMStartupInvulnerable",
+       "value": "True",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Auto set invulnerable status to a GM on login."
+      },
+      {
+       "key": "GMStartupInvisible",
+       "value": "True",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Auto set invisible status to a GM on login."
+      },
+      {
+       "key": "GMStartupSilence",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Auto block private messages to a GM on login."
+      },
+      {
+       "key": "GMStartupAutoList",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Auto list GMs in GM list (/gmlist) on login."
+      },
+      {
+       "key": "GMStartupDietMode",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Auto set diet mode on to a GM on login (affects your weight penalty)."
+      },
+      {
+       "key": "GMItemRestriction",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Item restrictions apply to GMs as well? (True = restricted usage)"
+      },
+      {
+       "key": "GMSkillRestriction",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Skill restrictions apply to GMs as well? (True = restricted usage)"
+      },
+      {
+       "key": "GMTradeRestrictedItems",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Allow GMs to drop/trade non-tradable and quest(drop only) items"
+      },
+      {
+       "key": "GMRestartFighting",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Allow GMs to restart/exit while is fighting stance"
+      },
+      {
+       "key": "GMShowAnnouncerName",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Show the GM's name behind an announcement made by him example: \"Announce: hi (HanWik)\""
+      },
+      {
+       "key": "GMShowCritAnnouncerName",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Show the GM's name before an announcement made by him example: \"Nyaran: hi\""
+      },
+      {
+       "key": "GMGiveSpecialSkills",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Give special skills for every GM 7029,7041-7064,7088-7096,23238-23249 (Master's Blessing)"
+      },
+      {
+       "key": "GMGiveSpecialAuraSkills",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Give special aura skills for every GM 7029,23238-23249,23253-23296 (Master's Blessing)"
+      },
+      {
+       "key": "GMDebugHtmlPaths",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Debug html paths for GM characters."
+      },
+      {
+       "key": "UseSuperHasteAsGMSpeed",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "In case you are not satisfied with the retail-like implementation of //gmspeed\", with this config you can rollback it to the old custom L2J version of the GM Speed."
+      }
+     ]
+    },
+    {
+     "title": "Server Security",
+     "keys": [
+      {
+       "key": "LogChat",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Enable logging of player chat messages. Set to True if you need a record of all chat interactions."
+      },
+      {
+       "key": "LogItems",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Enable logging of item transactions (e.g., pickups, trades, sales). This setting can be useful for tracking item movement but may lead to extensive logging on busy servers."
+      },
+      {
+       "key": "LogItemsSmallLog",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "If LogItems is enabled, set this to True to only log important items, specifically Adena (in-game currency) and equippable items. This helps to reduce log volume by excluding common, low-value items."
+      },
+      {
+       "key": "LogItemsIdsOnly",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "If LogItems is enabled, set this to True to log only specific item IDs rather than all items. This is helpful if you only need logs for certain items, such as rare or high-value items."
+      },
+      {
+       "key": "LogItemsIdsList",
+       "value": "4356",
+       "secret": false,
+       "default": "4356 (Gold Einhasad)",
+       "type": "int",
+       "description": "Specifies the item IDs to log when LogItemsIdsOnly is enabled. Enter item IDs separated by commas to track specific items, for example, rare items or in-game currency."
+      },
+      {
+       "key": "LogItemEnchants",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Enable logging for all actions involving item enchantments, such as success or failure of upgrades. This can help with tracking suspicious behavior but may create large log files if enchantment is frequently used."
+      },
+      {
+       "key": "LogSkillEnchants",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Enable logging for all actions related to skill enchantments, including upgrades and modifications. Useful for monitoring skill progression but can lead to extensive logging on active servers."
+      },
+      {
+       "key": "GMAudit",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Enable audit logging for actions performed by Game Masters (GMs). This helps in tracking GM activities to ensure administrative actions are recorded for accountability."
+      },
+      {
+       "key": "SkillCheckEnable",
+       "value": "True",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Check players for non-allowed skills"
+      },
+      {
+       "key": "SkillCheckRemove",
+       "value": "True",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "If true, remove invalid skills from player and database. Report only, if false."
+      },
+      {
+       "key": "SkillCheckGM",
+       "value": "False",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Check also GM characters (only if SkillCheckEnable = True)"
+      }
+     ]
+    },
+    {
+     "title": "Optimization",
+     "keys": [
+      {
+       "key": "AllowDiscardItem",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Items on ground management. Allow players to drop items on the ground."
+      },
+      {
+       "key": "AutoDestroyDroppedItemAfter",
+       "value": "600",
+       "secret": false,
+       "default": "600",
+       "type": "int",
+       "description": "Delete dropped reward items from world after a specified amount of seconds. Disabled = 0."
+      },
+      {
+       "key": "AutoDestroyHerbTime",
+       "value": "60",
+       "secret": false,
+       "default": "60",
+       "type": "int",
+       "description": "Time in seconds after which dropped herb will be auto-destroyed"
+      },
+      {
+       "key": "ListOfProtectedItems",
+       "value": "0",
+       "secret": false,
+       "default": "0",
+       "type": "int",
+       "description": "List of item id that will not be destroyed (separated by \",\" like 57,5575,6673). Notes: Make sure the lists do NOT CONTAIN trailing spaces or spaces between the numbers! Items on this list will be protected regardless of the following options."
+      },
+      {
+       "key": "CharacterDataStoreInterval",
+       "value": "15",
+       "secret": false,
+       "default": "15",
+       "type": "int",
+       "description": "This is the interval (in minutes), that the gameserver will update a players information such as location. The higher you set this number, there will be less character information saving so you will have less accessing of the database and your hard drive(s). The lower you set this number, there will be more frequent character information saving so you will have more access to the database and your hard drive(s). A value of 0 disables periodic saving. Independent of this setting the character is always saved after leaving the world."
+      },
+      {
+       "key": "LazyItemsUpdate",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "This enables the server to only update items when saving the character. Enabling this greatly reduces DB usage and improves performance. WARNING: This option causes item loss during crashes."
+      },
+      {
+       "key": "UpdateItemsOnCharStore",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "When enabled, this forces (even if using lazy item updates) the items owned by the character to be updated into DB when saving its character."
+      },
+      {
+       "key": "DestroyPlayerDroppedItem",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Also delete from world misc. items dropped by players (all except equip-able items). Notes: Works only if AutoDestroyDroppedItemAfter is greater than 0."
+      },
+      {
+       "key": "DestroyEquipableItem",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Destroy dropped equippable items (armor, weapon, jewelry). Notes: Works only if DestroyPlayerDroppedItem = True"
+      },
+      {
+       "key": "DestroyAllItems",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Make all items destroyable. If enabled players can destroy all items!!!"
+      },
+      {
+       "key": "SaveDroppedItem",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Save dropped items into the database for restoring after restart."
+      },
+      {
+       "key": "EmptyDroppedItemTableAfterLoad",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Enable/Disable the emptying of the stored dropped items table after items are loaded into memory (safety setting). If the server crashed before saving items, on next start old items will be restored and players may already have picked up some of them so this will prevent duplicates."
+      },
+      {
+       "key": "SaveDroppedItemInterval",
+       "value": "60",
+       "secret": false,
+       "default": "60",
+       "type": "int",
+       "description": "Time interval in minutes to save in DB items on ground. Disabled = 0. Notes: If SaveDroppedItemInterval is disabled, items will be saved into the database only at server shutdown."
+      },
+      {
+       "key": "ClearDroppedItemTable",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Delete all saved items from the database on next restart? Notes: Works only if SaveDroppedItem = False."
+      },
+      {
+       "key": "AutoDeleteInvalidQuestData",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Delete invalid quest from players."
+      },
+      {
+       "key": "MultipleItemDrop",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Allow creating multiple non-stackable items at one time?"
+      },
+      {
+       "key": "HtmCache",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Enable/Disable html caching. True = Load all html's into cache on server startup. False = Load html's into cache only on first time html is requested. Recommended for live servers: True Recommended for development: False"
+      },
+      {
+       "key": "CheckHtmlEncoding",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Check if html files contain non ASCII characters. Default = True"
+      },
+      {
+       "key": "MinNpcAnimation",
+       "value": "5",
+       "secret": false,
+       "default": "5",
+       "type": "int",
+       "description": "Minimum and maximum variables in seconds for NPC animation delay. You must keep MinNpcAnimation lower or equal to MaxNpcAnimation. Set values to 0 for disabling random animations."
+      },
+      {
+       "key": "MaxNpcAnimation",
+       "value": "60",
+       "secret": false,
+       "default": "60",
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "MinMonsterAnimation",
+       "value": "5",
+       "secret": false,
+       "default": "5",
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "MaxMonsterAnimation",
+       "value": "60",
+       "secret": false,
+       "default": "60",
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "GridsAlwaysOn",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Grid options: Grids can turn themselves on and off.  This also affects the loading and processing of all AI tasks and (in the future) geodata within this grid. Turn on for a grid with a person in it is immediate, but it then turns on the 8 neighboring grids based on the specified number of seconds. Turn off for a grid and neighbors occurs after the specified number of seconds have passed during which a grid has had no players in or in any of its neighbors. The always on option allows to ignore all this and let all grids be active at all times (not suggested)."
+      },
+      {
+       "key": "GridNeighborTurnOnTime",
+       "value": "1",
+       "secret": false,
+       "default": "1",
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "GridNeighborTurnOffTime",
+       "value": "90",
+       "secret": false,
+       "default": "90",
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "CorrectPrices",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Correct buylist and multisell prices when lower than sell price."
+      },
+      {
+       "key": "MultisellAmountLimit",
+       "value": "10000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Item limit on multisell transaction. Max client allowed 999999"
+      }
+     ]
+    },
+    {
+     "title": "Falling Damage",
+     "keys": [
+      {
+       "key": "EnableFallingDamage",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Allow characters to receive damage from falling."
+      }
+     ]
+    },
+    {
+     "title": "Skills & Effects",
+     "keys": [
+      {
+       "key": "DebuffDurationUsesResists",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Affect debuff time by the character resistances. If the option is false, the debuff time will be the one set in the skill xml."
+      }
+     ]
+    },
+    {
+     "title": "Features",
+     "keys": [
+      {
+       "key": "PeaceZoneMode",
+       "value": "0",
+       "secret": false,
+       "default": "0",
+       "type": "int",
+       "description": "Peace Zone Modes: 0 = Peace All the Time 1 = PVP During Siege for siege participants 2 = PVP All the Time"
+      },
+      {
+       "key": "GlobalChat",
+       "value": "ON",
+       "secret": false,
+       "default": "ON",
+       "type": "string",
+       "description": "Global Chat. Available Options: ON, OFF, GM, GLOBAL"
+      },
+      {
+       "key": "TradeChat",
+       "value": "ON",
+       "secret": false,
+       "default": "ON",
+       "type": "string",
+       "description": "Trade Chat. Available Options: ON, OFF, GM, GLOBAL"
+      },
+      {
+       "key": "MinimumChatLevel",
+       "value": "0",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Minimum level for chat, 0 = disable."
+      },
+      {
+       "key": "AllowWarehouse",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "If you are experiencing problems with Warehouse transactions, feel free to disable them here."
+      },
+      {
+       "key": "AllowRefund",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": ""
+      },
+      {
+       "key": "AllowMail",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": ""
+      },
+      {
+       "key": "AllowAttachments",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": ""
+      },
+      {
+       "key": "AllowWear",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "If True player can try on weapon and armor in shop."
+      },
+      {
+       "key": "WearDelay",
+       "value": "5",
+       "secret": false,
+       "default": "5",
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "WearPrice",
+       "value": "10",
+       "secret": false,
+       "default": "10",
+       "type": "int",
+       "description": "Adena cost to try on an item."
+      }
+     ]
+    },
+    {
+     "title": "Instances",
+     "keys": [
+      {
+       "key": "RestorePlayerInstance",
+       "value": "True",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Restores the player to their previous instance (ie. an instanced area/dungeon) on EnterWorld."
+      },
+      {
+       "key": "AllowSummonInInstance",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Set whether summon skills can be used to summon players inside an instance. When enabled individual instances can have summoning disabled in instance xml's. DEFAULT NEEDS TO BE VERIFIED, MUST BE CHANGED HERE AND IN CONFIG.JAVA IF NOT CORRECT"
+      },
+      {
+       "key": "EjectDeadPlayerTime",
+       "value": "60",
+       "secret": false,
+       "default": "60",
+       "type": "int",
+       "description": "When a player dies, is removed from instance after a fixed period of time. Time in seconds."
+      },
+      {
+       "key": "DefaultFinishTime",
+       "value": "300",
+       "secret": false,
+       "default": "300",
+       "type": "int",
+       "description": "When is instance finished, is set time to destruction currency instance. Time in seconds."
+      }
+     ]
+    },
+    {
+     "title": "Misc Settings",
+     "keys": [
+      {
+       "key": "AllowRace",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": ""
+      },
+      {
+       "key": "AllowWater",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": ""
+      },
+      {
+       "key": "AllowRentPet",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Enable pets for rent (wyvern & strider) from pet managers."
+      },
+      {
+       "key": "AllowFishing",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": ""
+      },
+      {
+       "key": "AllowBoat",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": ""
+      },
+      {
+       "key": "BoatBroadcastRadius",
+       "value": "20000",
+       "secret": false,
+       "default": "20000",
+       "type": "int",
+       "description": "Boat broadcast radius. If players getting annoyed by boat shouts then radius can be decreased."
+      },
+      {
+       "key": "AllowCursedWeapons",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": ""
+      },
+      {
+       "key": "AllowPartyInSameEvent",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "If false, always block party on event. If true, allows party if both are in the same event."
+      },
+      {
+       "key": "ShowServerNews",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Show \"data/html/servnews.htm\" when a character enters world."
+      },
+      {
+       "key": "EnableCommunityBoard",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Enable the Community Board."
+      },
+      {
+       "key": "BBSDefault",
+       "value": "_bbshome",
+       "secret": false,
+       "default": "_bbshome",
+       "type": "string",
+       "description": "Default Community Board page."
+      },
+      {
+       "key": "UseChatFilter",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Enable chat filter Default = False"
+      },
+      {
+       "key": "ChatFilterChars",
+       "value": "^_^",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": "Replace filter words with following chars"
+      },
+      {
+       "key": "BanChatChannels",
+       "value": "GENERAL;SHOUT;TRADE;HERO_VOICE;WHISPER",
+       "secret": false,
+       "default": "GENERAL;SHOUT;TRADE;HERO_VOICE;WHISPER",
+       "type": "list",
+       "description": "Banchat for channels, split \";\" GENERAL (white) SHOUT (!) WHISPER (\") PARTY (#) CLAN (@) GM (//gmchat) PETITION_PLAYER (*) PETITION_GM (*) TRADE (+) ALLIANCE ($) ANNOUNCEMENT BOAT FRIEND MSNCHAT PARTYMATCH_ROOM PARTYROOM_COMMANDER (Yellow) PARTYROOM_ALL (Red) HERO_VOICE (%) CRITICAL_ANNOUNCE SCREEN_ANNOUNCE BATTLEFIELD MPCC_ROOM NPC_GENERAL NPC_SHOUT"
+      }
+     ]
+    },
+    {
+     "title": "Manor",
+     "keys": [
+      {
+       "key": "AllowManor",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": ""
+      },
+      {
+       "key": "AltManorRefreshTime",
+       "value": "20",
+       "secret": false,
+       "default": "20 (8pm)",
+       "type": "int",
+       "description": "Manor refresh time in military hours."
+      },
+      {
+       "key": "AltManorRefreshMin",
+       "value": "00",
+       "secret": false,
+       "default": "00 (start of the hour)",
+       "type": "int",
+       "description": "Manor refresh time (minutes)."
+      },
+      {
+       "key": "AltManorApproveTime",
+       "value": "4",
+       "secret": false,
+       "default": "4 (4am)",
+       "type": "int",
+       "description": "Manor period approve time in military hours."
+      },
+      {
+       "key": "AltManorApproveMin",
+       "value": "30",
+       "secret": false,
+       "default": "30",
+       "type": "int",
+       "description": "Manor period approve time (minutes)."
+      },
+      {
+       "key": "AltManorMaintenanceMin",
+       "value": "6",
+       "secret": false,
+       "default": "6",
+       "type": "int",
+       "description": "Manor maintenance time (minutes)."
+      },
+      {
+       "key": "AltManorSaveAllActions",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Manor Save Type. True = Save data into the database after every action"
+      },
+      {
+       "key": "AltManorSavePeriodRate",
+       "value": "2",
+       "secret": false,
+       "default": "2 (hour)",
+       "type": "int",
+       "description": "Manor Save Period (used only if AltManorSaveAllActions = False)"
+      }
+     ]
+    },
+    {
+     "title": "Lottery",
+     "keys": [
+      {
+       "key": "AllowLottery",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": ""
+      },
+      {
+       "key": "AltLotteryPrize",
+       "value": "50000",
+       "secret": false,
+       "default": "50000",
+       "type": "int",
+       "description": "Initial Lottery prize."
+      },
+      {
+       "key": "AltLotteryTicketPrice",
+       "value": "2000",
+       "secret": false,
+       "default": "2000",
+       "type": "int",
+       "description": "Lottery Ticket Price"
+      },
+      {
+       "key": "AltLottery5NumberRate",
+       "value": "0.6",
+       "secret": false,
+       "default": "0.6",
+       "type": "float",
+       "description": "What part of jackpot amount should receive characters who pick 5 wining numbers"
+      },
+      {
+       "key": "AltLottery4NumberRate",
+       "value": "0.2",
+       "secret": false,
+       "default": "0.2",
+       "type": "float",
+       "description": "What part of jackpot amount should receive characters who pick 4 wining numbers"
+      },
+      {
+       "key": "AltLottery3NumberRate",
+       "value": "0.2",
+       "secret": false,
+       "default": "0.2",
+       "type": "float",
+       "description": "What part of jackpot amount should receive characters who pick 3 wining numbers"
+      },
+      {
+       "key": "AltLottery2and1NumberPrize",
+       "value": "200",
+       "secret": false,
+       "default": "200",
+       "type": "int",
+       "description": "How much Adena receive characters who pick two or less of the winning number"
+      }
+     ]
+    },
+    {
+     "title": "Fishing Tournament",
+     "keys": [
+      {
+       "key": "AltFishChampionshipEnabled",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Enable or disable the Fishing Tournament system"
+      },
+      {
+       "key": "AltFishChampionshipRewardItemId",
+       "value": "57",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Item Id used as reward"
+      },
+      {
+       "key": "AltFishChampionshipReward1",
+       "value": "800000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Item count used as reward (for the 5 first winners)"
+      },
+      {
+       "key": "AltFishChampionshipReward2",
+       "value": "500000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "AltFishChampionshipReward3",
+       "value": "300000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "AltFishChampionshipReward4",
+       "value": "200000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "AltFishChampionshipReward5",
+       "value": "100000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      }
+     ]
+    },
+    {
+     "title": "Item Auction",
+     "keys": [
+      {
+       "key": "AltItemAuctionEnabled",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": ""
+      },
+      {
+       "key": "AltItemAuctionExpiredAfter",
+       "value": "14",
+       "secret": false,
+       "default": "14",
+       "type": "int",
+       "description": "Number of days before auction cleared from database with all bids."
+      },
+      {
+       "key": "AltItemAuctionTimeExtendsOnBid",
+       "value": "0",
+       "secret": false,
+       "default": "0",
+       "type": "int",
+       "description": "Auction extends to specified amount of seconds if one or more new bids added. By default auction extends only two times, by 5 and 3 minutes, this custom value used after it. Values higher than 60s is not recommended."
+      }
+     ]
+    },
+    {
+     "title": "Dimension Rift",
+     "keys": [
+      {
+       "key": "RiftMinPartySize",
+       "value": "2",
+       "secret": false,
+       "default": "2",
+       "type": "int",
+       "description": "Minimum party size to enter rift. Min = 2, Max = 9. If while inside the rift, the party becomes smaller, all members will be teleported back."
+      },
+      {
+       "key": "MaxRiftJumps",
+       "value": "4",
+       "secret": false,
+       "default": "4",
+       "type": "int",
+       "description": "Number of maximum jumps between rooms allowed, after this time party will be teleported back"
+      },
+      {
+       "key": "RiftSpawnDelay",
+       "value": "10000",
+       "secret": false,
+       "default": "10000",
+       "type": "int",
+       "description": "Time in ms the party has to wait until the mobs spawn when entering a room. C4 retail: 10s"
+      },
+      {
+       "key": "AutoJumpsDelayMin",
+       "value": "480",
+       "secret": false,
+       "default": "480",
+       "type": "int",
+       "description": "Time between automatic jumps in seconds"
+      },
+      {
+       "key": "AutoJumpsDelayMax",
+       "value": "600",
+       "secret": false,
+       "default": "600",
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "BossRoomTimeMultiply",
+       "value": "1.5",
+       "secret": false,
+       "default": "1.5",
+       "type": "float",
+       "description": "Time Multiplier for stay in the boss room"
+      },
+      {
+       "key": "RecruitCost",
+       "value": "18",
+       "secret": false,
+       "default": "18",
+       "type": "int",
+       "description": "Cost in dimension fragments to enter the rift, each party member must own this amount"
+      },
+      {
+       "key": "SoldierCost",
+       "value": "21",
+       "secret": false,
+       "default": "21",
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "OfficerCost",
+       "value": "24",
+       "secret": false,
+       "default": "24",
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "CaptainCost",
+       "value": "27",
+       "secret": false,
+       "default": "27",
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "CommanderCost",
+       "value": "30",
+       "secret": false,
+       "default": "30",
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "HeroCost",
+       "value": "33",
+       "secret": false,
+       "default": "33",
+       "type": "int",
+       "description": ""
+      }
+     ]
+    },
+    {
+     "title": "Punishment",
+     "keys": [
+      {
+       "key": "DefaultPunish",
+       "value": "KICK",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": "Player punishment for illegal actions: BROADCAST - broadcast warning to GMs only KICK - kick player (default) KICKBAN - kick and ban player JAIL - jail player"
+      },
+      {
+       "key": "DefaultPunishParam",
+       "value": "0",
+       "secret": false,
+       "default": "0 (automatically sets to 100 years)",
+       "type": "int",
+       "description": "This setting typically specifies the duration of the above punishment."
+      },
+      {
+       "key": "OnlyGMItemsFree",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Apply default punish if player buy items for zero Adena."
+      },
+      {
+       "key": "JailIsPvp",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Jail is a PvP zone."
+      },
+      {
+       "key": "JailDisableChat",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Disable all chat in jail (except normal one)"
+      },
+      {
+       "key": "JailDisableTransaction",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Disable all transaction in jail Trade/Store/Drop"
+      },
+      {
+       "key": "NormalEnchantCostMultipiler",
+       "value": "1",
+       "secret": false,
+       "default": "1,5",
+       "type": "int",
+       "description": "Enchant Skill Details Settings"
+      },
+      {
+       "key": "SafeEnchantCostMultipiler",
+       "value": "5",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      }
+     ]
+    },
+    {
+     "title": "Custom Components",
+     "keys": [
+      {
+       "key": "CustomNpcData",
+       "value": "True",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": ""
+      },
+      {
+       "key": "CustomTeleportTable",
+       "value": "True",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": ""
+      },
+      {
+       "key": "CustomSkillsLoad",
+       "value": "True",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": ""
+      },
+      {
+       "key": "CustomItemsLoad",
+       "value": "True",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": ""
+      },
+      {
+       "key": "CustomMultisellLoad",
+       "value": "True",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": ""
+      },
+      {
+       "key": "CustomBuyListLoad",
+       "value": "True",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": ""
+      }
+     ]
+    },
+    {
+     "title": "Teleport Bookmark Settings",
+     "keys": [
+      {
+       "key": "BookmarkConsumeItemId",
+       "value": "20033",
+       "secret": false,
+       "default": "20033  (Teleport Flag)",
+       "type": "int",
+       "description": "Consume item for teleporting. No item consume: -1"
+      }
+     ]
+    },
+    {
+     "title": "Birthday Event Settings",
+     "keys": [
+      {
+       "key": "AltBirthdayGift",
+       "value": "22187",
+       "secret": false,
+       "default": "22187",
+       "type": "int",
+       "description": "Gift sent with Mail System"
+      },
+      {
+       "key": "AltBirthdayMailSubject",
+       "value": "Happy Birthday!",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": "Mail Subject"
+      },
+      {
+       "key": "AltBirthdayMailText",
+       "value": "Hello Adventurer!! Seeing as you're one year older now, I thought I would send you some birthday cheer :) Please find your birthday pack attached. May these gifts bring you joy and happiness on this very special day.\\n\\nSincerely, Alegria",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": "Mail Content $c1: Player name $s1: Age"
+      }
+     ]
+    },
+    {
+     "title": "Handy's Block Checker Event Settings",
+     "keys": [
+      {
+       "key": "EnableBlockCheckerEvent",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Enable the Handy's Block Checker event"
+      },
+      {
+       "key": "BlockCheckerMinTeamMembers",
+       "value": "2",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Minimum number of members on each team before be able to start the event Min: 1 Max: 6 Retail: 2"
+      },
+      {
+       "key": "HBCEFairPlay",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Fair play Players can choose what team to play. However, by enabling this property to true, the teams will be balanced in the teleport to the arena"
+      }
+     ]
+    },
+    {
+     "title": "Hellbound Settings",
+     "keys": [
+      {
+       "key": "HellboundWithoutQuest",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "If true, players can enter the Hellbound island without any quests"
+      }
+     ]
+    },
+    {
+     "title": "Bot Report Button settings",
+     "keys": [
+      {
+       "key": "EnableBotReportButton",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Enable the bot report button on the desired game servers."
+      },
+      {
+       "key": "BotReportPointsResetHour",
+       "value": "00:00",
+       "secret": false,
+       "default": "00:00",
+       "type": "string",
+       "description": "Report points restart hour. Format: HH:MM ( PM mode, 24 hours clock)"
+      },
+      {
+       "key": "BotReportDelay",
+       "value": "30",
+       "secret": false,
+       "default": "30 minutes",
+       "type": "int",
+       "description": "Delay between reports from the same player (in minutes)"
+      },
+      {
+       "key": "AllowReportsFromSameClanMembers",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Allow players from the same clan to report the same bot"
+      }
+     ]
+    },
+    {
+     "title": "Prime-Shop Settings",
+     "keys": [
+      {
+       "key": "EnablePrimeShop",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Enable Prime-Shop. Must enable in L2.ini client file."
+      },
+      {
+       "key": "PrimeShopItemId",
+       "value": "-1",
+       "secret": false,
+       "default": "-1",
+       "type": "int",
+       "description": "Item Id used by prime shop."
+      }
+     ]
+    }
+   ],
+   "group": "Core"
+  },
+  {
+   "file": "GeoEngine.ini",
+   "sections": [
+    {
+     "title": "",
+     "keys": [
+      {
+       "key": "PathFinding",
+       "value": "2",
+       "secret": false,
+       "default": "2",
+       "type": "int",
+       "description": "Pathfinding options: 0 = Disabled 1 = Enabled using path node files. 2 = Enabled using geodata cells at runtime (recommended)."
+      },
+      {
+       "key": "GeoDataPath",
+       "value": "./data/geodata/",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": "Geodata file directory."
+      },
+      {
+       "key": "PathnodePath",
+       "value": "./data/pathnode/",
+       "secret": false,
+       "default": "pathnode",
+       "type": "string",
+       "description": "Pathnode file directory."
+      },
+      {
+       "key": "GeoEditPath",
+       "value": "./saves/",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": "Geodata editor save directory. Can set to ./data/geodata/ to replace existing files on save."
+      },
+      {
+       "key": "PathFindBuffers",
+       "value": "100x6;128x6;192x6;256x4;320x4;384x4;500x2",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Pathfinding array buffers configuration."
+      },
+      {
+       "key": "LowWeight",
+       "value": "0.5",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": "Weight for nodes without obstacles far from walls."
+      },
+      {
+       "key": "MediumWeight",
+       "value": "2",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Weight for nodes near walls."
+      },
+      {
+       "key": "HighWeight",
+       "value": "3",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Weight for nodes with obstacles."
+      },
+      {
+       "key": "AdvancedDiagonalStrategy",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Angle paths will be more \"smart\", but in cost of higher CPU utilization."
+      },
+      {
+       "key": "AvoidObstructedPathNodes",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Avoid pathing to nodes that are obstructed at any direction."
+      },
+      {
+       "key": "DiagonalWeight",
+       "value": "0.707",
+       "secret": false,
+       "default": "LowWeight * sqrt(2)",
+       "type": "float",
+       "description": "Weight for diagonal movement. Used only with AdvancedDiagonalStrategy = True"
+      },
+      {
+       "key": "MaxPostfilterPasses",
+       "value": "3",
+       "secret": false,
+       "default": "3",
+       "type": "int",
+       "description": "Maximum number of LOS postfilter passes, 0 will disable postfilter."
+      }
+     ]
+    }
+   ],
+   "group": "Core"
+  },
+  {
+   "file": "GraciaSeeds.ini",
+   "sections": [
+    {
+     "title": "Gracia Seeds Settings",
+     "keys": []
+    },
+    {
+     "title": "Seed of Destruction Settings",
+     "keys": [
+      {
+       "key": "TiatKillCountForNextState",
+       "value": "10",
+       "secret": false,
+       "default": "10",
+       "type": "int",
+       "description": "Count of Kills which needed for Stage 2"
+      },
+      {
+       "key": "Stage2Length",
+       "value": "720",
+       "secret": false,
+       "default": "720min (12h)",
+       "type": "int",
+       "description": "Length of Stage 2 before the Defense state starts (in minutes)."
+      }
+     ]
+    },
+    {
+     "title": "Tiat Settings",
+     "keys": [
+      {
+       "key": "MinLevel",
+       "value": "75",
+       "secret": false,
+       "default": "75",
+       "type": "int",
+       "description": "Min. level for player"
+      },
+      {
+       "key": "MinPlayers",
+       "value": "36",
+       "secret": false,
+       "default": "36",
+       "type": "int",
+       "description": "Min. members in command channel"
+      },
+      {
+       "key": "MaxPlayers",
+       "value": "45",
+       "secret": false,
+       "default": "45",
+       "type": "int",
+       "description": "Min. members in command channel"
+      }
+     ]
+    },
+    {
+     "title": "Seed of Infinity Settings",
+     "keys": [
+      {
+       "key": "EkimusKillCount",
+       "value": "5",
+       "secret": false,
+       "default": "5",
+       "type": "int",
+       "description": "Count of Kills Ekimus which needed for open Stage 3."
+      },
+      {
+       "key": "MinEroAttPlayers",
+       "value": "18",
+       "secret": false,
+       "default": "18",
+       "type": "int",
+       "description": "Attack to Erosion Hall - min and max players"
+      },
+      {
+       "key": "MaxEroAttPlayers",
+       "value": "27",
+       "secret": false,
+       "default": "27",
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "MinEroDefPlayers",
+       "value": "18",
+       "secret": false,
+       "default": "18",
+       "type": "int",
+       "description": "Defence to Erosion Hall - min and max players"
+      },
+      {
+       "key": "MaxEroDefPlayers",
+       "value": "27",
+       "secret": false,
+       "default": "27",
+       "type": "int",
+       "description": "Seed of Infinity Settings"
+      },
+      {
+       "key": "MinHeaAttPlayers",
+       "value": "18",
+       "secret": false,
+       "default": "18",
+       "type": "int",
+       "description": "Attack to Heart Hall - min and max players"
+      },
+      {
+       "key": "MaxHeaAttPlayers",
+       "value": "27",
+       "secret": false,
+       "default": "27",
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "MinHeaDefPlayers",
+       "value": "18",
+       "secret": false,
+       "default": "18",
+       "type": "int",
+       "description": "Defence to Heart Hall - min and max players"
+      },
+      {
+       "key": "MaxHeaDefPlayers",
+       "value": "27",
+       "secret": false,
+       "default": "27",
+       "type": "int",
+       "description": ""
+      }
+     ]
+    }
+   ],
+   "group": "Core"
+  },
+  {
+   "file": "GrandBoss.ini",
+   "sections": [
+    {
+     "title": "Antharas",
+     "keys": [
+      {
+       "key": "AntharasWaitTime",
+       "value": "20",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Delay of appearance time of Antharas. Value is minute. Range 3-60"
+      },
+      {
+       "key": "IntervalOfAntharasSpawn",
+       "value": "120",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Interval time of Antharas. Value is hour. Range 1-480"
+      },
+      {
+       "key": "RandomOfAntharasSpawn",
+       "value": "24",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Random interval. Range 1-192"
+      },
+      {
+       "key": "AntharasRecognizeHero",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Does Antharas recognizes presence of a Hero player."
+      }
+     ]
+    },
+    {
+     "title": "Valakas",
+     "keys": [
+      {
+       "key": "ValakasWaitTime",
+       "value": "30",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Delay of appearance time of Valakas. Value is minute. Range 3-60"
+      },
+      {
+       "key": "IntervalOfValakasSpawn",
+       "value": "120",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Interval time of Valakas. Value is hour. Range 1-480"
+      },
+      {
+       "key": "RandomOfValakasSpawn",
+       "value": "24",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Random interval. Range 1-192"
+      },
+      {
+       "key": "ValakasRecognizeHero",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Does Valakas recognizes presence of a Hero player."
+      }
+     ]
+    },
+    {
+     "title": "Baium",
+     "keys": [
+      {
+       "key": "IntervalOfBaiumSpawn",
+       "value": "120",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Interval time of Baium. Value is hour. Range 1-480"
+      },
+      {
+       "key": "RandomOfBaiumSpawn",
+       "value": "3",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Random interval. Range 1-192"
+      },
+      {
+       "key": "BaiumRecognizeHero",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Does Baium recognizes presence of a Hero player."
+      }
+     ]
+    },
+    {
+     "title": "Core",
+     "keys": [
+      {
+       "key": "IntervalOfCoreSpawn",
+       "value": "30",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Interval time of Core. Value is hour. Range 1-480"
+      },
+      {
+       "key": "RandomOfCoreSpawn",
+       "value": "2",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Random interval. Range 1-192"
+      }
+     ]
+    },
+    {
+     "title": "Orfen",
+     "keys": [
+      {
+       "key": "IntervalOfOrfenSpawn",
+       "value": "48",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Interval time of Orfen. Value is hour. Range 1-480"
+      },
+      {
+       "key": "RandomOfOrfenSpawn",
+       "value": "2",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Random interval. Range 1-192"
+      }
+     ]
+    },
+    {
+     "title": "Queen Ant",
+     "keys": [
+      {
+       "key": "IntervalOfQueenAntSpawn",
+       "value": "24",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Interval time of QueenAnt. Value is hour. Range 1-480"
+      },
+      {
+       "key": "RandomOfQueenAntSpawn",
+       "value": "2",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Random interval. Range 1-192"
+      }
+     ]
+    },
+    {
+     "title": "Beleth",
+     "keys": [
+      {
+       "key": "IntervalOfBelethSpawn",
+       "value": "120",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Interval time of Beleth. Value is hour. Range 1-480. Retail: 192"
+      },
+      {
+       "key": "RandomOfBelethSpawn",
+       "value": "24",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Random interval. Range 1-192. Retail: 148"
+      },
+      {
+       "key": "BelethMinPlayers",
+       "value": "36",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Minimum count of players for enter to Beleth. Retail: 36"
+      }
+     ]
+    },
+    {
+     "title": "RaidBoss: block positive support from players",
+     "keys": [
+      {
+       "key": "DisableRaidBossHealFromPlayers",
+       "value": "false",
+       "secret": false,
+       "default": "false",
+       "type": "bool",
+       "description": "Prevent RaidBoss from receiving heal skills cast by players (including pet/summon owner)."
+      },
+      {
+       "key": "DisableRaidBossBuffFromPlayers",
+       "value": "false",
+       "secret": false,
+       "default": "false",
+       "type": "bool",
+       "description": "Prevent RaidBoss from receiving buff skills cast by players (including pet/summon owner)."
+      }
+     ]
+    }
+   ],
+   "group": "Core"
+  },
+  {
+   "file": "IdManager.ini",
+   "sections": [
+    {
+     "title": "Id Manager Settings",
+     "keys": [
+      {
+       "key": "DatabaseCleanUp",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Enables database cleanup during server startup to remove obsolete or invalid data. A larger database may result in a slower startup if cleanup is enabled. To speed up startup, set this to 'False'; however, regular cleanup is recommended for optimal performance."
+      },
+      {
+       "key": "FirstObjectId",
+       "value": "268435456",
+       "secret": false,
+       "default": "268,435,456 (0x10000000)",
+       "type": "int",
+       "description": "Specifies the starting object ID in the range of allocatable IDs. This value, along with LastObjectId, defines the entire range of unique IDs that can be allocated. Note: FirstObjectId should be less than LastObjectId."
+      },
+      {
+       "key": "LastObjectId",
+       "value": "2147483647",
+       "secret": false,
+       "default": "2,147,483,647 (0x7FFFFFFF)",
+       "type": "int",
+       "description": "Specifies the ending object ID in the range of allocatable IDs. The maximum value (2,147,483,647 or 0x7FFFFFFF) ensures the ID range fits within standard 32-bit integer limits."
+      },
+      {
+       "key": "InitialCapacity",
+       "value": "100000",
+       "secret": false,
+       "default": "100000",
+       "type": "int",
+       "description": "Defines the initial capacity of the BitSet in terms of ID count. This setting specifies how many IDs the BitSet can initially track and may influence memory usage."
+      },
+      {
+       "key": "ResizeThreshold",
+       "value": "0.9",
+       "secret": false,
+       "default": "0.9",
+       "type": "float",
+       "description": "Sets the utilization threshold for triggering dynamic resizing of the BitSet. When the percentage of used IDs meets or exceeds this value, the BitSet expands to accommodate more IDs. The value must be between 0 and 1 (e.g., 0.9 represents 90% usage)."
+      },
+      {
+       "key": "ResizeMultiplier",
+       "value": "1.1",
+       "secret": false,
+       "default": "1.1",
+       "type": "float",
+       "description": "Sets the growth factor for resizing the BitSet when utilization reaches the ResizeThreshold. This multiplier determines how much the BitSet expands, as a factor of its current size. For example, a value of 1.1 expands the BitSet by 10% each time resizing occurs."
+      }
+     ]
+    }
+   ],
+   "group": "Core"
+  },
+  {
+   "file": "Interface.ini",
+   "sections": [
+    {
+     "title": "Interface Settings",
+     "keys": [
+      {
+       "key": "EnableGUI",
+       "value": "False",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Enable L2jMobius GUI when OS supports it. Provides access to admin commands without the need to be online."
+      },
+      {
+       "key": "DarkTheme",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Dark theme. Use a dark version of the Nimbus theme."
+      }
+     ]
+    }
+   ],
+   "group": "Core"
+  },
+  {
+   "file": "Network.ini",
+   "sections": [
+    {
+     "title": "Network Settings These settings provide fine-grained control over the network behavior and packet handling within the server application. Adjusting these parameters can help optimize network performance and ensure secure communication between the server and clients.",
+     "keys": []
+    },
+    {
+     "title": "General Network Settings",
+     "keys": [
+      {
+       "key": "ShutdownWaitTime",
+       "value": "5",
+       "secret": false,
+       "default": "5 seconds",
+       "type": "int",
+       "description": "Shutdown Wait Time Defines the time in seconds the server waits for send/receive packets to be finalized during shutdown."
+      },
+      {
+       "key": "DropPackets",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Define if packet dropping is enabled."
+      },
+      {
+       "key": "DropPacketThreshold",
+       "value": "2500",
+       "secret": false,
+       "default": "250",
+       "type": "int",
+       "description": "Packet Dropping Threshold Defines the threshold to drop disposable packets. Higher values allow more packets to be queued before dropping starts, potentially reducing packet loss at the cost of higher memory usage."
+      }
+     ]
+    },
+    {
+     "title": "ThreadPool Settings",
+     "keys": [
+      {
+       "key": "ThreadPoolSize",
+       "value": "0",
+       "secret": false,
+       "default": "0 (auto-configured as the number of available processor cores * 4)",
+       "type": "int",
+       "description": "Defines the core pool size of threads in each packet execution thread pool. This determines the number of threads that will be prestarted and available to handle tasks immediately. If set to 0 the default size is set to the number of available processor cores. A higher number can handle more tasks concurrently, while a lower number conserves resources."
+      },
+      {
+       "key": "ThreadPriority",
+       "value": "5",
+       "secret": false,
+       "default": "5 (medium priority level suitable for general task handling)",
+       "type": "int",
+       "description": "Defines the priority level of threads within the packet execution thread pool. This value determines the importance of these threads relative to other processes on the system. Values typically range from 1 (lowest priority) to 10 (highest priority)."
+      }
+     ]
+    },
+    {
+     "title": "Buffer Pool Settings",
+     "keys": [
+      {
+       "key": "BufferSegmentSize",
+       "value": "64",
+       "secret": false,
+       "default": "64",
+       "type": "int",
+       "description": "Buffer Segment Size Size of segments for dynamic buffers, which are used to increase buffer sizes as needed."
+      },
+      {
+       "key": "BufferPool.AutoExpandCapacity",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Allow the buffer pool to dynamically increase its size when it reaches maximum capacity."
+      },
+      {
+       "key": "BufferPool.InitFactor",
+       "value": "0",
+       "secret": false,
+       "default": "0 (no pre-initialization)",
+       "type": "int",
+       "description": "Initial Factor Multiplier for pre-initializing buffer pools. A higher factor means more buffers are pre-created."
+      },
+      {
+       "key": "BufferPool.Empty.Size",
+       "value": "100",
+       "secret": false,
+       "default": "100 buffers of 2 bytes each.",
+       "type": "int",
+       "description": "Empty Buffer Pool Size and buffer size for empty size buffers. Used for empty sized network packets."
+      },
+      {
+       "key": "BufferPool.Empty.BufferSize",
+       "value": "2",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "BufferPool.Minimum.Size",
+       "value": "100",
+       "secret": false,
+       "default": "100 buffers of 64 bytes each.",
+       "type": "int",
+       "description": "Minimum Buffer Pool Size and buffer size for minimum size buffers. Used for minimum sized network packets."
+      },
+      {
+       "key": "BufferPool.Minimum.BufferSize",
+       "value": "64",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "BufferPool.VerySmall.Size",
+       "value": "75",
+       "secret": false,
+       "default": "75 buffers of 128 bytes each.",
+       "type": "int",
+       "description": "Very Small Buffer Pool Size and buffer size for very small buffers. Used for very small network packets."
+      },
+      {
+       "key": "BufferPool.VerySmall.BufferSize",
+       "value": "128",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "BufferPool.Small.Size",
+       "value": "75",
+       "secret": false,
+       "default": "75 buffers of 256 bytes each.",
+       "type": "int",
+       "description": "Small Buffer Pool Size and buffer size for small buffers. Used for small network packets."
+      },
+      {
+       "key": "BufferPool.Small.BufferSize",
+       "value": "256",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "BufferPool.LargeSmall.Size",
+       "value": "75",
+       "secret": false,
+       "default": "75 buffers of 512 bytes each.",
+       "type": "int",
+       "description": "Large Small Buffer Pool Size and buffer size for larger small buffers. Used for larger small network packets."
+      },
+      {
+       "key": "BufferPool.LargeSmall.BufferSize",
+       "value": "512",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "BufferPool.SmallMedium.Size",
+       "value": "50",
+       "secret": false,
+       "default": "50 buffers of 1024 bytes each.",
+       "type": "int",
+       "description": "Small Medium Buffer Pool Size and buffer size for small medium buffers. Used for smaller medium network packets."
+      },
+      {
+       "key": "BufferPool.SmallMedium.BufferSize",
+       "value": "1024",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "BufferPool.Medium.Size",
+       "value": "50",
+       "secret": false,
+       "default": "50 buffers of 2048 bytes each.",
+       "type": "int",
+       "description": "Medium Buffer Pool Size and buffer size for medium buffers. Used for medium network packets."
+      },
+      {
+       "key": "BufferPool.Medium.BufferSize",
+       "value": "2048",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "BufferPool.LargeMedium.Size",
+       "value": "50",
+       "secret": false,
+       "default": "50 buffers of 4096 bytes each.",
+       "type": "int",
+       "description": "Large Medium Buffer Pool Size and buffer size for larger medium buffers. Used for larger medium network packets."
+      },
+      {
+       "key": "BufferPool.LargeMedium.BufferSize",
+       "value": "4096",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "BufferPool.SmallLarge.Size",
+       "value": "25",
+       "secret": false,
+       "default": "25 buffers of 8192 bytes each.",
+       "type": "int",
+       "description": "Small Large Buffer Pool Size and buffer size for small large buffers. Used for smaller large network packets."
+      },
+      {
+       "key": "BufferPool.SmallLarge.BufferSize",
+       "value": "8192",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "BufferPool.Large.Size",
+       "value": "25",
+       "secret": false,
+       "default": "25 buffers of 16384 bytes.",
+       "type": "int",
+       "description": "Large Buffer Pool Size and buffer size for large buffers. Used for large network packets."
+      },
+      {
+       "key": "BufferPool.Large.BufferSize",
+       "value": "16384",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "BufferPool.VeryLarge.Size",
+       "value": "25",
+       "secret": false,
+       "default": "25 buffers of 24576 bytes each.",
+       "type": "int",
+       "description": "Very Large Buffer Pool Size and buffer size for very large buffers. Used for very large network packets."
+      },
+      {
+       "key": "BufferPool.VeryLarge.BufferSize",
+       "value": "24576",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "BufferPool.Maximum.Size",
+       "value": "10",
+       "secret": false,
+       "default": "10 buffers of 32768 bytes.",
+       "type": "int",
+       "description": "Maximum Buffer Pool Size and buffer size for maximum size buffers. Used for maximum sized network packets."
+      },
+      {
+       "key": "BufferPool.Maximum.BufferSize",
+       "value": "32768",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      }
+     ]
+    }
+   ],
+   "group": "Core"
+  },
+  {
+   "file": "NPC.ini",
+   "sections": [
+    {
+     "title": "NPC Settings",
+     "keys": []
+    },
+    {
+     "title": "General",
+     "keys": [
+      {
+       "key": "AnnounceMammonSpawn",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Global announcements will be made indicating Blacksmith/Merchant of Mammon Spawning points."
+      },
+      {
+       "key": "AltMobAgroInPeaceZone",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "True - Mobs can be aggressive while in peace zones. False - Mobs can NOT be aggressive while in peace zones."
+      },
+      {
+       "key": "AltAttackableNpcs",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Defines whether NPCs are attackable by default Retail: True"
+      },
+      {
+       "key": "AltGameViewNpc",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Allows non-GM players to view NPC stats via shift-click"
+      },
+      {
+       "key": "ShowNpcLevel",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": ""
+      },
+      {
+       "key": "ShowNpcAggression",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": ""
+      },
+      {
+       "key": "AttackablesCampPlayerCorpses",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Attackables do not leave player corpses."
+      },
+      {
+       "key": "ShowCrestWithoutQuest",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Show clan, alliance crests for territory NPCs without quests"
+      },
+      {
+       "key": "EnableRandomEnchantEffect",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Custom random EnchantEffect All npcs with weapons get random weapon enchanted value Enchantment is only visual, range is 4-21"
+      },
+      {
+       "key": "NpcSpeedsWithoutStatBonus",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "NPCs move and cast at their own speeds. When disabled, NPC movement speed gets the DEX bonus and casting speed the WIT bonus, the same as players. Requires a server restart."
+      },
+      {
+       "key": "MinNPCLevelForDmgPenalty",
+       "value": "78",
+       "secret": false,
+       "default": "78",
+       "type": "int",
+       "description": "The minimum NPC level for the Gracia Epilogue rule: \"The amount of damage inflicted on monsters will be lower if your character is 2 or more levels below that of the level 78+ monster.\" Notes: If you want to disable this feature then set it 99"
+      },
+      {
+       "key": "DmgPenaltyForLvLDifferences",
+       "value": "0.7, 0.6, 0.6, 0.55",
+       "secret": false,
+       "default": "",
+       "type": "string",
+       "description": "The penalty in percent for -2 till -5 level differences normal - 0.7, 0.6, 0.6, 0.55 critical - 0.75, 0.65, 0.6, 0.58 skill - 0.8, 0.7, 0.65, 0.62"
+      },
+      {
+       "key": "CritDmgPenaltyForLvLDifferences",
+       "value": "0.75, 0.65, 0.6, 0.58",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "SkillDmgPenaltyForLvLDifferences",
+       "value": "0.8, 0.7, 0.65, 0.62",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "MinNPCLevelForMagicPenalty",
+       "value": "78",
+       "secret": false,
+       "default": "78",
+       "type": "int",
+       "description": "The minimum NPC level for the Gracia Epilogue rule: \"When a character's level is 3 or more levels lower than that of a monsters level the chance that the monster will be able to resist a magic spell will increase.\" Notes: If you want to disable this feature then set it 99"
+      },
+      {
+       "key": "SkillChancePenaltyForLvLDifferences",
+       "value": "2.5, 3.0, 3.25, 3.5",
+       "secret": false,
+       "default": "unknown",
+       "type": "string",
+       "description": "The penalty in percent for -3 till -6 level differences"
+      }
+     ]
+    },
+    {
+     "title": "Monsters",
+     "keys": [
+      {
+       "key": "DecayTimeTask",
+       "value": "5000",
+       "secret": false,
+       "default": "5000",
+       "type": "int",
+       "description": "Decay Time Task (don't set it too low!) (in milliseconds):"
+      },
+      {
+       "key": "DefaultCorpseTime",
+       "value": "7",
+       "secret": false,
+       "default": "7",
+       "type": "int",
+       "description": "This is the default corpse time (in seconds)."
+      },
+      {
+       "key": "SpoiledCorpseExtendTime",
+       "value": "10",
+       "secret": false,
+       "default": "10",
+       "type": "int",
+       "description": "This is the time that will be added to spoiled corpse time (in seconds)."
+      },
+      {
+       "key": "CorpseConsumeSkillAllowedTimeBeforeDecay",
+       "value": "2000",
+       "secret": false,
+       "default": "2000",
+       "type": "int",
+       "description": "The time allowed to use a corpse consume skill before the corpse decays."
+      },
+      {
+       "key": "MaxAggroRange",
+       "value": "450",
+       "secret": false,
+       "default": "1500",
+       "type": "int",
+       "description": "Maximum distance mobs can get aggro. Related post at https://l2jserver.com/forum/viewtopic.php?f=128&t=31588 L2jMobius: 450"
+      },
+      {
+       "key": "MaxDriftRange",
+       "value": "300",
+       "secret": false,
+       "default": "300",
+       "type": "int",
+       "description": "Maximum distance monsters can randomly move from spawn."
+      },
+      {
+       "key": "AggroDistanceCheckEnabled",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Enable monster aggro distance check. When enabled monsters will lose aggro if pulled far away from spawn."
+      },
+      {
+       "key": "AggroDistanceCheckRange",
+       "value": "2000",
+       "secret": false,
+       "default": "2000",
+       "type": "int",
+       "description": "Maximum distance monsters can be pulled away from spawn. Overridden by Spawn chaseRange parameter."
+      },
+      {
+       "key": "AggroDistanceCheckRaids",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Use maximum aggro distance check for raids. Grandbosses are excluded."
+      },
+      {
+       "key": "AggroDistanceCheckRaidRange",
+       "value": "4000",
+       "secret": false,
+       "default": "4000",
+       "type": "int",
+       "description": "Maximum distance raids can be pulled away from spawn. Overridden by Spawn chaseRange parameter."
+      },
+      {
+       "key": "AggroDistanceCheckInstances",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Use maximum aggro distance check in instances."
+      },
+      {
+       "key": "AggroDistanceCheckRestoreLife",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Restore monster HP and MP when aggro is reset by distance."
+      }
+     ]
+    },
+    {
+     "title": "Guards",
+     "keys": [
+      {
+       "key": "GuardAttackAggroMob",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "True - Allows guards to attack aggressive mobs within range."
+      }
+     ]
+    },
+    {
+     "title": "Pets",
+     "keys": [
+      {
+       "key": "AllowWyvernUpgrader",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "This option enables or disables the Wyvern manager located in every castle to train Wyverns and Striders from Hatchlings."
+      },
+      {
+       "key": "ListPetRentNpc",
+       "value": "30827",
+       "secret": false,
+       "default": "30827",
+       "type": "int",
+       "description": "Pets that can be rented. Example: 30827, 32471, 34486, 36547"
+      },
+      {
+       "key": "MaximumSlotsForPet",
+       "value": "12",
+       "secret": false,
+       "default": "12",
+       "type": "int",
+       "description": "This will control the inventory space limit for pets (NOT WEIGHT LIMIT)."
+      },
+      {
+       "key": "PetHpRegenMultiplier",
+       "value": "100",
+       "secret": false,
+       "default": "100, 100",
+       "type": "int",
+       "description": "HP/MP Regen Multiplier for Pets"
+      },
+      {
+       "key": "PetMpRegenMultiplier",
+       "value": "100",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      }
+     ]
+    },
+    {
+     "title": "Raid Bosses",
+     "keys": [
+      {
+       "key": "RaidHpRegenMultiplier",
+       "value": "100",
+       "secret": false,
+       "default": "100, 100",
+       "type": "int",
+       "description": "Percent of HP and MP regeneration for raid bosses. Example: Setting HP to 10 will cause raid boss HP to regenerate 90% slower than normal."
+      },
+      {
+       "key": "RaidMpRegenMultiplier",
+       "value": "100",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "RaidPDefenceMultiplier",
+       "value": "100",
+       "secret": false,
+       "default": "100, 100",
+       "type": "int",
+       "description": "Percent of physical and magical defense for raid bosses. Example: A setting of 10 will cause defense to be 90% lower than normal, while 110 will cause defense to be 10% higher than normal."
+      },
+      {
+       "key": "RaidMDefenceMultiplier",
+       "value": "100",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "RaidPAttackMultiplier",
+       "value": "100",
+       "secret": false,
+       "default": "100, 100",
+       "type": "int",
+       "description": "Percent of physical and magical attack for raid bosses. Example: A setting of 10 will cause attack to be 90% lower than normal, while 110 will cause attack to be 10% higher than normal."
+      },
+      {
+       "key": "RaidMAttackMultiplier",
+       "value": "100",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "RaidMinRespawnMultiplier",
+       "value": "1.0",
+       "secret": false,
+       "default": "1.0, 1.0",
+       "type": "float",
+       "description": "Configure Minimum and Maximum time multiplier between raid boss re-spawn. By default 12Hours*1.0 for Minimum Time and 24Hours*1.0 for Maximum Time. Example: Setting RaidMaxRespawnMultiplier to 2 will make the time between re-spawn 24 hours to 48 hours."
+      },
+      {
+       "key": "RaidMaxRespawnMultiplier",
+       "value": "1.0",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": ""
+      },
+      {
+       "key": "RaidMinionRespawnTime",
+       "value": "300000",
+       "secret": false,
+       "default": "300000",
+       "type": "int",
+       "description": "Configure the interval at which raid boss minions will re-spawn. This time is in milliseconds, 1 minute is 60000 milliseconds."
+      },
+      {
+       "key": "CustomMinionsRespawnTime",
+       "value": "22450,30;22371,120;22543,0;25545,0;22424,30;22425,30;22426,30;22427,30;22428,30;22429,30;22430,30;22432,30;22433,30;22434,30;22435,30;22436,30;22437,30;22438,30;25596,30;25605,0;25606,0;25607,0;25608,0",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Let's make handling of minions with non-standard static respawn easier - no additional code, just config. Format: minionId1,timeInSec1;minionId2,timeInSec2"
+      },
+      {
+       "key": "ForceDeleteMinions",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Force delete spawned minions upon master death. By default minions are deleted only for raidbosses."
+      },
+      {
+       "key": "DisableRaidCurse",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Disable Raid Curse if raid more than 8 levels lower."
+      },
+      {
+       "key": "RaidChaosTime",
+       "value": "30",
+       "secret": false,
+       "default": "10,10,10",
+       "type": "int",
+       "description": "Configure the interval at which raid bosses and minions wont reconsider their target This time is in seconds, 1 minute is 60 seconds."
+      },
+      {
+       "key": "GrandChaosTime",
+       "value": "30",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "MinionChaosTime",
+       "value": "30",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      }
+     ]
+    }
+   ],
+   "group": "Core"
+  },
+  {
+   "file": "Olympiad.ini",
+   "sections": [
+    {
+     "title": "Olympiad Settings",
+     "keys": [
+      {
+       "key": "OlympiadEnabled",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Enable Olympiad."
+      },
+      {
+       "key": "OlympiadStartTime",
+       "value": "18",
+       "secret": false,
+       "default": "18",
+       "type": "int",
+       "description": "Olympiad Start Time in Military hours Default 6pm (18)"
+      },
+      {
+       "key": "OlympiadMin",
+       "value": "00",
+       "secret": false,
+       "default": "00",
+       "type": "int",
+       "description": "Olympiad Start Time for Min's, Default 00 so at the start of the hour."
+      },
+      {
+       "key": "OlympiadMaxBuffs",
+       "value": "5",
+       "secret": false,
+       "default": "5",
+       "type": "int",
+       "description": "Maximum number of buffs."
+      },
+      {
+       "key": "OlympiadCPeriod",
+       "value": "21600000",
+       "secret": false,
+       "default": "21600000",
+       "type": "int",
+       "description": "Olympiad Competition Period, Default 6 hours. (If set different, should be increment by 10mins)"
+      },
+      {
+       "key": "OlympiadBattle",
+       "value": "300000",
+       "secret": false,
+       "default": "300000",
+       "type": "int",
+       "description": "Olympiad Battle Period, Default 5 minutes."
+      },
+      {
+       "key": "OlympiadWPeriod",
+       "value": "604800000",
+       "secret": false,
+       "default": "604800000",
+       "type": "int",
+       "description": "Olympiad Weekly Period, Default 1 week Used for adding points to nobles"
+      },
+      {
+       "key": "OlympiadVPeriod",
+       "value": "86400000",
+       "secret": false,
+       "default": "86400000",
+       "type": "int",
+       "description": "Olympiad Validation Period, Default 24 Hours."
+      },
+      {
+       "key": "OlympiadStartPoints",
+       "value": "10",
+       "secret": false,
+       "default": "10",
+       "type": "int",
+       "description": "Points for reaching Noblesse for the first time"
+      },
+      {
+       "key": "OlympiadWeeklyPoints",
+       "value": "10",
+       "secret": false,
+       "default": "10",
+       "type": "int",
+       "description": "Points every week"
+      },
+      {
+       "key": "OlympiadClassedParticipants",
+       "value": "5",
+       "secret": false,
+       "default": "11",
+       "type": "int",
+       "description": "Required number of participants for the class based games"
+      },
+      {
+       "key": "OlympiadNonClassedParticipants",
+       "value": "9",
+       "secret": false,
+       "default": "11",
+       "type": "int",
+       "description": "Required number of participants for the non-class based games"
+      },
+      {
+       "key": "OlympiadTeamsParticipants",
+       "value": "6",
+       "secret": false,
+       "default": "6",
+       "type": "int",
+       "description": "Required number of participants for the 3x3 teams games"
+      },
+      {
+       "key": "OlympiadRegistrationDisplayNumber",
+       "value": "100",
+       "secret": false,
+       "default": "100",
+       "type": "int",
+       "description": "Number used for displaying amount of registered participants, messages \"Fewer than ...\" or \"More than ...\". 0 for displaying digits instead of text phrase (old style)."
+      },
+      {
+       "key": "OlympiadClassedReward",
+       "value": "13722,50",
+       "secret": false,
+       "default": "13722,50",
+       "type": "list",
+       "description": "Reward for the class based games Format: itemId1,itemNum1;itemId2,itemNum2..."
+      },
+      {
+       "key": "OlympiadNonClassedReward",
+       "value": "13722,40",
+       "secret": false,
+       "default": "13722,40",
+       "type": "list",
+       "description": "Reward for the non-class based games Format: itemId1,itemNum1;itemId2,itemNum2..."
+      },
+      {
+       "key": "OlympiadTeamReward",
+       "value": "13722,85",
+       "secret": false,
+       "default": "13722,85",
+       "type": "list",
+       "description": "Reward for the 3x3 teams games Format: itemId1,itemNum1;itemId2,itemNum2..."
+      },
+      {
+       "key": "OlympiadCompRewItem",
+       "value": "13722",
+       "secret": false,
+       "default": "13722",
+       "type": "int",
+       "description": "ItemId used for exchanging to the points."
+      },
+      {
+       "key": "OlympiadMinMatchesForPoints",
+       "value": "15",
+       "secret": false,
+       "default": "15",
+       "type": "int",
+       "description": "The minimum matches you need to participate to receive point rewards"
+      },
+      {
+       "key": "OlympiadGPPerPoint",
+       "value": "1000",
+       "secret": false,
+       "default": "1000",
+       "type": "int",
+       "description": "Rate to exchange points to reward item."
+      },
+      {
+       "key": "OlympiadHeroPoints",
+       "value": "200",
+       "secret": false,
+       "default": "200",
+       "type": "int",
+       "description": "Noblesse points awarded to Heroes."
+      },
+      {
+       "key": "OlympiadRank1Points",
+       "value": "100",
+       "secret": false,
+       "default": "100",
+       "type": "int",
+       "description": "Noblesse points awarded to Rank 1 members."
+      },
+      {
+       "key": "OlympiadRank2Points",
+       "value": "75",
+       "secret": false,
+       "default": "75",
+       "type": "int",
+       "description": "Noblesse points awarded to Rank 2 members."
+      },
+      {
+       "key": "OlympiadRank3Points",
+       "value": "55",
+       "secret": false,
+       "default": "55",
+       "type": "int",
+       "description": "Noblesse points awarded to Rank 3 members."
+      },
+      {
+       "key": "OlympiadRank4Points",
+       "value": "40",
+       "secret": false,
+       "default": "40",
+       "type": "int",
+       "description": "Noblesse points awarded to Rank 4 members."
+      },
+      {
+       "key": "OlympiadRank5Points",
+       "value": "30",
+       "secret": false,
+       "default": "30",
+       "type": "int",
+       "description": "Noblesse points awarded to Rank 5 members."
+      },
+      {
+       "key": "OlympiadMaxPoints",
+       "value": "10",
+       "secret": false,
+       "default": "10",
+       "type": "int",
+       "description": "Maximum points that player can gain/lose on a match."
+      },
+      {
+       "key": "OlympiadShowMonthlyWinners",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Hero tables show last month's winners or current status."
+      },
+      {
+       "key": "OlympiadAnnounceGames",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Olympiad Managers announce each start of fight."
+      },
+      {
+       "key": "OlympiadRestrictedItems",
+       "value": "",
+       "secret": false,
+       "default": "",
+       "type": "string",
+       "description": "Restrict specified items in Olympiad. ItemID's need to be separated with a comma (ex. 1,200,350) Equipped items will be moved to inventory during port."
+      },
+      {
+       "key": "OlympiadDisableBlessedSpiritShots",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Disable Blessed SpiritShots."
+      },
+      {
+       "key": "OlympiadEnchantLimit",
+       "value": "-1",
+       "secret": false,
+       "default": "-1",
+       "type": "int",
+       "description": "Enchant limit for items during Olympiad battles. Disabled = -1."
+      },
+      {
+       "key": "OlympiadLogFights",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Log all Olympiad fights and outcome to olympiad.csv file."
+      },
+      {
+       "key": "OlympiadWaitTime",
+       "value": "120",
+       "secret": false,
+       "default": "120",
+       "type": "int",
+       "description": "Time to wait before teleported to arena."
+      },
+      {
+       "key": "OlympiadDividerClassed",
+       "value": "5",
+       "secret": false,
+       "default": "5, 5",
+       "type": "int",
+       "description": "Divider for points in classed and non-classed games"
+      },
+      {
+       "key": "OlympiadDividerNonClassed",
+       "value": "5",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "OlympiadMaxWeeklyMatches",
+       "value": "70",
+       "secret": false,
+       "default": "70",
+       "type": "int",
+       "description": "Maximum number of matches a Noblesse character can join per week"
+      },
+      {
+       "key": "OlympiadMaxWeeklyMatchesNonClassed",
+       "value": "60",
+       "secret": false,
+       "default": "60",
+       "type": "int",
+       "description": "Maximum number of Class-Irrelevant Individual matches a character can join per week"
+      },
+      {
+       "key": "OlympiadMaxWeeklyMatchesClassed",
+       "value": "30",
+       "secret": false,
+       "default": "30",
+       "type": "int",
+       "description": "Maximum number of Class Individual matches a character can join per week"
+      },
+      {
+       "key": "OlympiadMaxWeeklyMatchesTeam",
+       "value": "10",
+       "secret": false,
+       "default": "10",
+       "type": "int",
+       "description": "Maximum number of Class-Irrelevant Team matches a character can join per week"
+      }
+     ]
+    },
+    {
+     "title": "Custom Olympiad period settings",
+     "keys": [
+      {
+       "key": "OlympiadUseCustomPeriodSettings",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Example for Olympiad every 2 weeks: OlympiadUseCustomPeriodSettings = True OlympiadPeriod = WEEK OlympiadPeriodMultiplier = 2 --------------------------------------------------------------------------- Enable/disable custom period settings."
+      },
+      {
+       "key": "OlympiadPeriod",
+       "value": "MONTH",
+       "secret": false,
+       "default": "MONTH",
+       "type": "string",
+       "description": "Change the type of delay between two Olympiads. Available values: MONTH, WEEK, DAY"
+      },
+      {
+       "key": "OlympiadPeriodMultiplier",
+       "value": "1",
+       "secret": false,
+       "default": "1",
+       "type": "int",
+       "description": "Change the Olympiad frequency. The value is a multiplier of period type, i.e. if type is MONTH and multiplier is 2, then Olympiad will occur every 2 months. Note! If type = DAY, multiplier must be >= 7!"
+      },
+      {
+       "key": "OlympiadCompetitionDays",
+       "value": "1,2,3,4,5,6,7",
+       "secret": false,
+       "default": "1,2,3,4,5,6,7 (SUNDAY,MONDAY,TUESDAY,WEDNESDAY,THURSDAY,FRIDAY,SATURDAY)",
+       "type": "list",
+       "description": "Enable competitions only on specific days."
+      }
+     ]
+    }
+   ],
+   "group": "Core"
+  },
+  {
+   "file": "Player.ini",
+   "sections": [
+    {
+     "title": "Player Settings",
+     "keys": []
+    },
+    {
+     "title": "Statistics",
+     "keys": [
+      {
+       "key": "Delevel",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "This option, if enabled, will force a character to de-level if the characters' experience is below their level after losing experience on death. If this is set to False, the character will not de-level even if their Experience is below their level after death."
+      },
+      {
+       "key": "DecreaseSkillOnDelevel",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "This option enable check for all player skills for skill level. If player level is lower than skill learn level - 9, skill level is decreased to next possible level. If there is no possible level, skill is removed from player."
+      },
+      {
+       "key": "AltWeightLimit",
+       "value": "1",
+       "secret": false,
+       "default": "1",
+       "type": "int",
+       "description": "Weight limit multiplier. Example: Setting this to 5 will give players 5x the normal weight limit."
+      },
+      {
+       "key": "RunSpeedBoost",
+       "value": "0",
+       "secret": false,
+       "default": "0",
+       "type": "int",
+       "description": "Run speed modifier. Example: Setting this to 5 will give players +5 to their running speed."
+      },
+      {
+       "key": "DeathPenaltyChance",
+       "value": "20",
+       "secret": false,
+       "default": "20",
+       "type": "int",
+       "description": "Chance of receiving the Death Penalty debuff when killed by a mob."
+      },
+      {
+       "key": "RespawnRestoreCP",
+       "value": "0",
+       "secret": false,
+       "default": "0, 65, 0",
+       "type": "int",
+       "description": "Percent of HP, MP, and CP which is restored on character revival. Use 0 to disable restore"
+      },
+      {
+       "key": "RespawnRestoreHP",
+       "value": "65",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "RespawnRestoreMP",
+       "value": "0",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "HpRegenMultiplier",
+       "value": "100",
+       "secret": false,
+       "default": "100, 100, 100",
+       "type": "int",
+       "description": "Percent of HP, MP, and CP regeneration for players. Example: Setting HP to 10 will cause player HP to regenerate 90% slower than normal."
+      },
+      {
+       "key": "MpRegenMultiplier",
+       "value": "100",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "CpRegenMultiplier",
+       "value": "100",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      }
+     ]
+    },
+    {
+     "title": "Skills & Effects",
+     "keys": [
+      {
+       "key": "EnableModifySkillDuration",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "When this is enabled it will read the \"SkillDurationList\" option. This will basically overlook the \"time = x\" in the skill XMLs so that you do not need to modify the L2J Datapack XMLs to increase skill duration."
+      },
+      {
+       "key": "SkillDurationList",
+       "value": "264,3660;265,3660;266,3660;267,3660;268,3660;\\",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Skill duration list Format: skillid,newtime;skillid2,newtime2... Example: This enable 1h(3600) duration for songs, the \"\\\"indicates new line, and is only set for formating purposes. SkillDurationList = 264,3600;265,3600;266,3600;267,3600;268,3600;\\ 269,3600;270,3600;304,3600;305,1200;306,3600;308,3600;349,3600;\\ 363,3600;364,3600"
+      },
+      {
+       "key": "EnableModifySkillReuse",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "When this is enabled it will read the \"SkillReuseList\" option."
+      },
+      {
+       "key": "SkillReuseList",
+       "value": "",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": "Format: skillid,newDelayTime;skillid,newDelayTime2 (See skillDuration for examples)"
+      },
+      {
+       "key": "AutoLearnSkills",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "If it's true all class skills will be delivered upon level up and login."
+      },
+      {
+       "key": "AutoLearnSkillsWithoutItems",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Auto learn skills that need items to be learned. Forgotten Scroll skills have their own configuration."
+      },
+      {
+       "key": "AutoLearnForgottenScrollSkills",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "If it's true skills from forgotten scrolls will be delivered upon level up and login, require AutoLearnSkills."
+      },
+      {
+       "key": "ShowEffectMessagesOnLogin",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Show chat effect messages on login. Retail: True"
+      },
+      {
+       "key": "MaxBuffAmount",
+       "value": "20",
+       "secret": false,
+       "default": "20, 12, 12",
+       "type": "int",
+       "description": "Maximum number of buffs and songs/dances. Remember that Divine Inspiration will give players 4 additional buff slots on top of the number specified in \"maxbuffamount\"."
+      },
+      {
+       "key": "MaxTriggeredBuffAmount",
+       "value": "12",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "MaxDanceAmount",
+       "value": "12",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "DanceCancelBuff",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Allow players to cancel dances/songs via Alt+click on buff icon"
+      },
+      {
+       "key": "DanceConsumeAdditionalMP",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "This option enables/disables additional MP consume for dances and songs."
+      },
+      {
+       "key": "AltStoreDances",
+       "value": "True",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Allow players to have all dances/songs stored when logout."
+      },
+      {
+       "key": "AltStoreToggles",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Allow players to have toggle skills stored when logout. Retail: False"
+      },
+      {
+       "key": "AutoLearnDivineInspiration",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "This option allows a player to automatically learn Divine Inspiration. This is not included in AutoLearnSkills above."
+      },
+      {
+       "key": "AltGameCancelByHit",
+       "value": "cast",
+       "secret": false,
+       "default": "cast",
+       "type": "string",
+       "description": "This is to allow a character to be canceled during bow use, skill use, or both. Available Options: bow, cast, all"
+      },
+      {
+       "key": "MagicFailures",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "This option, if enabled, will allow magic to fail, and if disabled magic damage will always succeed with a 100% chance."
+      },
+      {
+       "key": "PlayerFakeDeathUpProtection",
+       "value": "0",
+       "secret": false,
+       "default": "0",
+       "type": "int",
+       "description": "Protection from aggressive mobs after getting up from fake death. The value is specified in seconds."
+      },
+      {
+       "key": "StoreSkillCooltime",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "This option is to enable or disable the storage of buffs/debuffs among other effects."
+      },
+      {
+       "key": "SubclassStoreSkillCooltime",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "This option is to enable or disable the storage of buffs/debuffs among other effects during a subclass change"
+      },
+      {
+       "key": "AltShieldBlocks",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "These are alternative rules for shields. If True and they block: The damage is powerAtk-shieldDef, If False and they block: The damage is powerAtk / (shieldDef + powerDef)"
+      },
+      {
+       "key": "AltPerfectShieldBlockRate",
+       "value": "10",
+       "secret": false,
+       "default": "10",
+       "type": "int",
+       "description": "This is the percentage for perfect shield block rate. DEFAULT NEEDS TO BE VERIFIED, MUST BE CHANGED HERE AND IN CONFIG.JAVA IF NOT CORRECT"
+      },
+      {
+       "key": "EffectTickRatio",
+       "value": "666",
+       "secret": false,
+       "default": "666",
+       "type": "int",
+       "description": "This is the value ticks are multiplied with to result in interval per tick in milliseconds. Note: Editing this will not affect how much the over-time effects heals since heal scales with that value too."
+      },
+      {
+       "key": "FakeDeathUntarget",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Untarget player when uses fake death."
+      },
+      {
+       "key": "FakeDeathDamageStand",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Stand when fake death is active and taking damage."
+      },
+      {
+       "key": "CalculateMagicSuccessBySkillMagicLevel",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Calculate magic success by target level and skill magic level (when available). Otherwise target level and (alternatively) attacker level is used."
+      },
+      {
+       "key": "DistanceBowDamage",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Distance damage calculation for bow. Bows Ranged Damage Formula (Damage gradually decreases when 60% or lower than full hit range and increases when 60% or higher). Full hit range is 500 which is the base bow range and the 60% of this is 800. It does not affect crossbows. Retail: False"
+      }
+     ]
+    },
+    {
+     "title": "Class, Sub-class and skill learning options",
+     "keys": [
+      {
+       "key": "LifeCrystalNeeded",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Require life crystal needed to learn clan skills."
+      },
+      {
+       "key": "EnchantSkillSpBookNeeded",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Require book needed to enchant skills."
+      },
+      {
+       "key": "DivineInspirationSpBookNeeded",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Require spell book needed to learn Divine Inspiration."
+      },
+      {
+       "key": "AltGameSkillLearn",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "When enabled, the following will be true: All classes can learn all skills. Skills of another class costs x2 SP to learn. Skills of another race costs x2 SP to learn. Skills of fighters/mages costs x3 SP to learn."
+      },
+      {
+       "key": "AltSubClassWithoutQuests",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Allow player to sub-class without checking for unique quest items."
+      },
+      {
+       "key": "AltSubclassEverywhere",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Allow player to add/change subclass at all village master"
+      },
+      {
+       "key": "AltTransformationWithoutQuest",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Allow player to learn transformations without quest."
+      },
+      {
+       "key": "FeeDeleteTransferSkills",
+       "value": "10000000",
+       "secret": false,
+       "default": "10000000",
+       "type": "int",
+       "description": "Fee to remove Transfer skills."
+      },
+      {
+       "key": "FeeDeleteSubClassSkills",
+       "value": "10000000",
+       "secret": false,
+       "default": "10000000",
+       "type": "int",
+       "description": "Fee to remove Sub-Class skills."
+      }
+     ]
+    },
+    {
+     "title": "Summons configuration",
+     "keys": [
+      {
+       "key": "SummonStoreSkillCooltime",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "This option is to enable or disable the storage of buffs/debuffs among other effects on pets/invocations"
+      },
+      {
+       "key": "RestoreServitorOnReconnect",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Servitor summons on login if player had it summoned before logout"
+      },
+      {
+       "key": "RestorePetOnReconnect",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Pet summons on login if player had it summoned before logout"
+      }
+     ]
+    },
+    {
+     "title": "Vitality configuration",
+     "keys": [
+      {
+       "key": "EnableVitality",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Enables vitality system"
+      },
+      {
+       "key": "RecoverVitalityOnReconnect",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Do you want players to recover their vitality when they reconnect? This is calculated with the time they've been offline Actual Time - Last Time Online / 1000 x rate recovery on reconnect Notes: Works only if EnableVitality = True"
+      },
+      {
+       "key": "StartingVitalityPoints",
+       "value": "20000",
+       "secret": false,
+       "default": "20000",
+       "type": "int",
+       "description": "Option to set a lower vitality at character creation. Vitality needs to be enabled, and startingpoints needs to be lower than max-vitality points."
+      },
+      {
+       "key": "RaidbossUseVitality",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Calculate vitality bonus for raidboss kills."
+      }
+     ]
+    },
+    {
+     "title": "Limits",
+     "keys": [
+      {
+       "key": "MaxExpBonus",
+       "value": "3.5",
+       "secret": false,
+       "default": "3.5",
+       "type": "float",
+       "description": "Maximum Exp Bonus. from vitality + nevit's hunting bonus, and etc.."
+      },
+      {
+       "key": "MaxSpBonus",
+       "value": "3.5",
+       "secret": false,
+       "default": "3.5",
+       "type": "float",
+       "description": "Maximum Sp Bonus. from vitality + nevit's hunting bonus, and etc.."
+      },
+      {
+       "key": "MaxRunSpeed",
+       "value": "250",
+       "secret": false,
+       "default": "250",
+       "type": "int",
+       "description": "Maximum character running speed."
+      },
+      {
+       "key": "MaxPAtk",
+       "value": "999999",
+       "secret": false,
+       "default": "999999",
+       "type": "int",
+       "description": "Maximum character Physical Attack."
+      },
+      {
+       "key": "MaxMAtk",
+       "value": "999999",
+       "secret": false,
+       "default": "999999",
+       "type": "int",
+       "description": "Maximum character Magic Attack."
+      },
+      {
+       "key": "MaxPCritRate",
+       "value": "500",
+       "secret": false,
+       "default": "500",
+       "type": "int",
+       "description": "Maximum character Physical Critical Rate. (10 = 1%)"
+      },
+      {
+       "key": "MaxMCritRate",
+       "value": "200",
+       "secret": false,
+       "default": "200",
+       "type": "int",
+       "description": "Maximum character Magic Critical Rate. (10 = 1%)"
+      },
+      {
+       "key": "MaxPAtkSpeed",
+       "value": "1500",
+       "secret": false,
+       "default": "1500",
+       "type": "int",
+       "description": "Maximum character Attack Speed."
+      },
+      {
+       "key": "MaxMAtkSpeed",
+       "value": "1999",
+       "secret": false,
+       "default": "1999",
+       "type": "int",
+       "description": "Maximum character Cast Speed."
+      },
+      {
+       "key": "MaxEvasion",
+       "value": "250",
+       "secret": false,
+       "default": "250",
+       "type": "int",
+       "description": "Maximum character Evasion."
+      },
+      {
+       "key": "MinAbnormalStateSuccessRate",
+       "value": "10",
+       "secret": false,
+       "default": "H5 minimum of 10% and maximum of 90%.",
+       "type": "int",
+       "description": "Minimum and Maximum Abnormal State Success Rate. This affect all skills/effects chances, except in skills where minChance or maxChance parameters are defined."
+      },
+      {
+       "key": "MaxAbnormalStateSuccessRate",
+       "value": "90",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "MaxSp",
+       "value": "2000000000",
+       "secret": false,
+       "default": "2147483647",
+       "type": "int",
+       "description": "Maximum amount of SP a character can posses. Current retail limit is max integer number, use -1 to set it to unlimited."
+      },
+      {
+       "key": "MaximumPlayerLevel",
+       "value": "85",
+       "secret": false,
+       "default": "85",
+       "type": "int",
+       "description": "Maximum Player Level WARNING: Cannot exceed the maximum experience.xml level. Example: Set as 80 to force the maximum player level at 80."
+      },
+      {
+       "key": "MaxSubclass",
+       "value": "3",
+       "secret": false,
+       "default": "3",
+       "type": "int",
+       "description": "Maximum number of allowed subclasses for every player."
+      },
+      {
+       "key": "BaseSubclassLevel",
+       "value": "40",
+       "secret": false,
+       "default": "40",
+       "type": "int",
+       "description": "Starting level for subclasses."
+      },
+      {
+       "key": "MaxSubclassLevel",
+       "value": "80",
+       "secret": false,
+       "default": "80",
+       "type": "int",
+       "description": "Maximum subclass level."
+      },
+      {
+       "key": "MaxPvtStoreSellSlotsDwarf",
+       "value": "4",
+       "secret": false,
+       "default": "4, 3",
+       "type": "int",
+       "description": "Maximum number of allowed slots for Private Stores Sell. Other means all the other races aside from Dwarf."
+      },
+      {
+       "key": "MaxPvtStoreSellSlotsOther",
+       "value": "3",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "MaxPvtStoreBuySlotsDwarf",
+       "value": "5",
+       "secret": false,
+       "default": "5, 4",
+       "type": "int",
+       "description": "Maximum number of allowed slots for Private Stores Buy. Other means all the other races aside from Dwarf."
+      },
+      {
+       "key": "MaxPvtStoreBuySlotsOther",
+       "value": "4",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "MaximumSlotsForNoDwarf",
+       "value": "80",
+       "secret": false,
+       "default": "80, 100, 250",
+       "type": "int",
+       "description": "This will control the inventory space limit (NOT WEIGHT LIMIT)."
+      },
+      {
+       "key": "MaximumSlotsForDwarf",
+       "value": "100",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "MaximumSlotsForGMPlayer",
+       "value": "250",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "MaximumSlotsForQuestItems",
+       "value": "100",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "MaximumWarehouseSlotsForDwarf",
+       "value": "120",
+       "secret": false,
+       "default": "120, 100, 200, 20",
+       "type": "int",
+       "description": "This will control a character's warehouse capacity. Notes: This must be LESS then 300 or the client will crash."
+      },
+      {
+       "key": "MaximumWarehouseSlotsForNoDwarf",
+       "value": "100",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "MaximumWarehouseSlotsForClan",
+       "value": "200",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "MaximumFreightSlots",
+       "value": "200",
+       "secret": false,
+       "default": "200",
+       "type": "int",
+       "description": "Freight Maximum items that can be placed in Freight"
+      },
+      {
+       "key": "FreightPrice",
+       "value": "1000",
+       "secret": false,
+       "default": "1000",
+       "type": "int",
+       "description": "The price for each item that's deposited"
+      },
+      {
+       "key": "NpcTalkBlockingTime",
+       "value": "0",
+       "secret": false,
+       "default": "0",
+       "type": "int",
+       "description": "Npc talk blockage. When a player talks to a NPC, he must wait some secs before being able to walk again. In seconds Set to 0 to disable it"
+      }
+     ]
+    },
+    {
+     "title": "Enchanting",
+     "keys": [
+      {
+       "key": "EnchantChanceElementStone",
+       "value": "50",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "This controls the chance an item has to break if it is enchanted. This chance is in %, so if you set this to 100%, enchants will always succeed. DEFAULT NEEDS TO BE VERIFIED, MUST BE CHANGED HERE AND IN CONFIG.JAVA IF NOT CORRECT"
+      },
+      {
+       "key": "EnchantChanceElementCrystal",
+       "value": "30",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "EnchantChanceElementJewel",
+       "value": "20",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "EnchantChanceElementEnergy",
+       "value": "10",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "EnchantBlackList",
+       "value": "7816,7817,7818,7819,7820,7821,7822,7823,7824,7825,7826,7827,7828,7829,7830,7831,13293,13294,13296",
+       "secret": false,
+       "default": "7816,7817,7818,7819,7820,7821,7822,7823,7824,7825,7826,7827,7828,7829,7830,7831,13293,13294,13296",
+       "type": "list",
+       "description": "List of non-enchantable items. Currently apprentice, travelers weapons and Pailaka items"
+      },
+      {
+       "key": "DisableOverEnchanting",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "If enabled, enchanting over the maximum enchant limit will not be possible; instead, a warning message will be sent to the player. You can set custom maxEnchant values at EnchantItemData.xml"
+      },
+      {
+       "key": "OverEnchantProtection",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Over-enchant protection. If player is found with an over-enchanted item, he will be punished and the item will disappear."
+      },
+      {
+       "key": "OverEnchantPunishment",
+       "value": "JAIL",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": "The punishment for over-enchanting. NONE - Disabled (items will still be deleted) BROADCAST - broadcast warning to GMs only KICK - kick player KICKBAN - kick and ban player JAIL - jail player"
+      }
+     ]
+    },
+    {
+     "title": "Augmenting",
+     "keys": [
+      {
+       "key": "AugmentationNGSkillChance",
+       "value": "15",
+       "secret": false,
+       "default": "15, 30, 45, 60",
+       "type": "int",
+       "description": "These control the chance to get a skill in the augmentation process."
+      },
+      {
+       "key": "AugmentationMidSkillChance",
+       "value": "30",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "AugmentationHighSkillChance",
+       "value": "45",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "AugmentationTopSkillChance",
+       "value": "60",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "AugmentationAccSkillChance",
+       "value": "0",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Accessory augmentation skills currently disabled"
+      },
+      {
+       "key": "AugmentationBaseStatChance",
+       "value": "1",
+       "secret": false,
+       "default": "1",
+       "type": "int",
+       "description": "This controls the chance to get a base stat modifier in the augmentation process. Notes: This has no dependency on the grade of Life Stone."
+      },
+      {
+       "key": "AugmentationNGGlowChance",
+       "value": "0",
+       "secret": false,
+       "default": "0, 40, 70, 100",
+       "type": "int",
+       "description": "These control the chance to get a glow effect in the augmentation process. Notes: No/Mid Grade Life Stone can not have glow effect if you do not get a skill or base stat modifier."
+      },
+      {
+       "key": "AugmentationMidGlowChance",
+       "value": "40",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "AugmentationHighGlowChance",
+       "value": "70",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "AugmentationTopGlowChance",
+       "value": "100",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "RetailLikeAugmentation",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "This will enable retail like weapon augmentation, but then you cant change weapon glow, base stat chance, because it wouldnt be retail like again."
+      },
+      {
+       "key": "RetailLikeAugmentationNoGradeChance",
+       "value": "55,35,7,3",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "This will have effect ONLY when RetailLikeAugmentation is True. The sum of 4 numbers must be 100! You can change probability (in %) of augment color chances - in order yellow, blue, purple, red Purple and Red always give skill. Default is 55%,35%,7%,3% for all lifestone grades (ie 7+3=10% for skill, not counting blue ones, that are very rare and not useful anyway)."
+      },
+      {
+       "key": "RetailLikeAugmentationMidGradeChance",
+       "value": "55,35,7,3",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "RetailLikeAugmentationHighGradeChance",
+       "value": "55,35,7,3",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "RetailLikeAugmentationTopGradeChance",
+       "value": "55,35,7,3",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "RetailLikeAugmentationAccessory",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "This will enable retail like accessory augmentation, but then you cant change skill chances for accessory augments"
+      },
+      {
+       "key": "AugmentationBlackList",
+       "value": "6656,6657,6658,6659,6660,6661,6662,8191,10170,10314,13740,13741,13742,13743,13744,13745,13746,13747,13748,14592,14593,14594,14595,14596,14597,14598,14599,14600,14664,14665,14666,14667,14668,14669,14670,14671,14672,14801,14802,14803,14804,14805,14806,14807,14808,14809,15282,15283,15284,15285,15286,15287,15288,15289,15290,15291,15292,15293,15294,15295,15296,15297,15298,15299,16025,16026,21712,22173,22174,22175",
+       "secret": false,
+       "default": "6656,6657,6658,6659,6660,6661,6662,8191,10170,10314",
+       "type": "list",
+       "description": "List of non-augmentable items, currently contains only Grand Boss jewels Shadow, common, time-limited, hero, pvp, wear items are hardcoded, as well as all etcitems. Rods can't be augmented too."
+      },
+      {
+       "key": "AltAllowAugmentPvPItems",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Allows alternative augmentation of PvP items."
+      },
+      {
+       "key": "AltAllowAugmentTrade",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Enable Trade/Drop/Sell for augmented items."
+      },
+      {
+       "key": "AltAllowAugmentDestroy",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Enable Destroy/Crystalize for augmented items."
+      }
+     ]
+    },
+    {
+     "title": "Soul Crystal",
+     "keys": [
+      {
+       "key": "SoulCrystalChanceMultiplier",
+       "value": "1",
+       "secret": false,
+       "default": "1",
+       "type": "int",
+       "description": "Multiplier for retail soul crystal leveling changes."
+      }
+     ]
+    },
+    {
+     "title": "Karma",
+     "keys": [
+      {
+       "key": "AltKarmaPlayerCanBeKilledInPeaceZone",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Karma player can be killed in Peace zone."
+      },
+      {
+       "key": "AltKarmaPlayerCanUseGK",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Karma player can use GateKeeper."
+      },
+      {
+       "key": "AltKarmaPlayerCanTeleport",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Karma player can use escape and recall skills."
+      },
+      {
+       "key": "AltKarmaPlayerCanShop",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Karma player can shop."
+      },
+      {
+       "key": "AltKarmaPlayerCanTrade",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Karma player can trade."
+      },
+      {
+       "key": "AltKarmaPlayerCanUseWareHouse",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Karma player can use warehouse."
+      }
+     ]
+    },
+    {
+     "title": "Fame",
+     "keys": [
+      {
+       "key": "EnableFameSystem",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Enable Fame system."
+      },
+      {
+       "key": "MaxPersonalFamePoints",
+       "value": "100000",
+       "secret": false,
+       "default": "100000",
+       "type": "int",
+       "description": "The maximum number of Fame points a player can have"
+      },
+      {
+       "key": "FortressZoneFameTaskFrequency",
+       "value": "300",
+       "secret": false,
+       "default": "300s (5 min)",
+       "type": "int",
+       "description": "How frequently the player gets Fame points while in a Fortress Siege zone"
+      },
+      {
+       "key": "FortressZoneFameAquirePoints",
+       "value": "31",
+       "secret": false,
+       "default": "31",
+       "type": "int",
+       "description": "How much Fame aquired while in a Fortress Siege Zone"
+      },
+      {
+       "key": "CastleZoneFameTaskFrequency",
+       "value": "300",
+       "secret": false,
+       "default": "300s (5 min)",
+       "type": "int",
+       "description": "How frequently the player gets Fame points while in a Castle Siege zone"
+      },
+      {
+       "key": "CastleZoneFameAquirePoints",
+       "value": "125",
+       "secret": false,
+       "default": "125",
+       "type": "int",
+       "description": "How much Fame acquired while in a Castle Siege Zone"
+      },
+      {
+       "key": "FameForDeadPlayers",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Dead players can receive fame."
+      }
+     ]
+    },
+    {
+     "title": "Crafting",
+     "keys": [
+      {
+       "key": "CraftingEnabled",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Option to enable or disable crafting."
+      },
+      {
+       "key": "CraftingInCombat",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Allow crafting from the recipe book while in combat stance."
+      },
+      {
+       "key": "CraftMasterwork",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Enable/Disable crafting of Masterwork items (If set to true, masterwork items can be created when crafting)."
+      },
+      {
+       "key": "CraftMasterworkChanceRate",
+       "value": "1",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Rate multilier crafting of Masterwork items Default 1:"
+      },
+      {
+       "key": "DwarfRecipeLimit",
+       "value": "50",
+       "secret": false,
+       "default": "50, 50",
+       "type": "int",
+       "description": "Limits for recipes"
+      },
+      {
+       "key": "CommonRecipeLimit",
+       "value": "50",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "AltGameCreation",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Alternative crafting rules. If enabled, the following will be true: Crafting takes time. Players get EXP/SP for crafting."
+      },
+      {
+       "key": "AltGameCreationSpeed",
+       "value": "1",
+       "secret": false,
+       "default": "1",
+       "type": "int",
+       "description": "Crafting Time multiplier. The higher the number, the more time the crafting process takes. XP/SP reward increases with time."
+      },
+      {
+       "key": "AltGameCreationXpRate",
+       "value": "1",
+       "secret": false,
+       "default": "1, 1",
+       "type": "int",
+       "description": "Additional crafting XP/SP rate multiplier."
+      },
+      {
+       "key": "AltGameCreationSpRate",
+       "value": "1",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "AltGameCreationRareXpSpRate",
+       "value": "2",
+       "secret": false,
+       "default": "2",
+       "type": "int",
+       "description": "Additional XP/SP rate multiplier when creating rare item."
+      },
+      {
+       "key": "AltBlacksmithUseRecipes",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "If set to False, blacksmiths don't take recipes from players inventory when crafting."
+      },
+      {
+       "key": "StoreRecipeShopList",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Store/Restore Dwarven Manufacture list Keep manufacture shoplist after relog"
+      }
+     ]
+    },
+    {
+     "title": "Clan",
+     "keys": [
+      {
+       "key": "AltClanLeaderInstantActivation",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "When enabled all clan leader requests will be performed instantly."
+      },
+      {
+       "key": "DaysBeforeJoinAClan",
+       "value": "1",
+       "secret": false,
+       "default": "1",
+       "type": "int",
+       "description": "Number of days you have to wait before joining another clan."
+      },
+      {
+       "key": "DaysBeforeCreateAClan",
+       "value": "10",
+       "secret": false,
+       "default": "10",
+       "type": "int",
+       "description": "Number of days you have to wait before creating a new clan."
+      },
+      {
+       "key": "DaysToPassToDissolveAClan",
+       "value": "7",
+       "secret": false,
+       "default": "7",
+       "type": "int",
+       "description": "Number of days it takes to dissolve a clan."
+      },
+      {
+       "key": "DaysBeforeJoinAllyWhenLeaved",
+       "value": "1",
+       "secret": false,
+       "default": "1",
+       "type": "int",
+       "description": "Number of days before joining a new alliance when clan voluntarily leave an alliance. DEFAULT NEEDS TO BE VERIFIED, MUST BE CHANGED HERE AND IN CONFIG.JAVA IF NOT CORRECT"
+      },
+      {
+       "key": "DaysBeforeJoinAllyWhenDismissed",
+       "value": "1",
+       "secret": false,
+       "default": "1",
+       "type": "int",
+       "description": "Number of days before joining a new alliance when clan was dismissed from an alliance. DEFAULT NEEDS TO BE VERIFIED, MUST BE CHANGED HERE AND IN CONFIG.JAVA IF NOT CORRECT"
+      },
+      {
+       "key": "DaysBeforeAcceptNewClanWhenDismissed",
+       "value": "1",
+       "secret": false,
+       "default": "1",
+       "type": "int",
+       "description": "Number of days before accepting a new clan for alliance when clan was dismissed from an alliance. DEFAULT NEEDS TO BE VERIFIED, MUST BE CHANGED HERE AND IN CONFIG.JAVA IF NOT CORRECT"
+      },
+      {
+       "key": "DaysBeforeCreateNewAllyWhenDissolved",
+       "value": "1",
+       "secret": false,
+       "default": "1",
+       "type": "int",
+       "description": "Number of days before creating a new alliance after dissolving an old alliance. DEFAULT NEEDS TO BE VERIFIED, MUST BE CHANGED HERE AND IN CONFIG.JAVA IF NOT CORRECT"
+      },
+      {
+       "key": "AltMaxNumOfClansInAlly",
+       "value": "3",
+       "secret": false,
+       "default": "3",
+       "type": "int",
+       "description": "Maximum number of clans in alliance."
+      },
+      {
+       "key": "AltMembersCanWithdrawFromClanWH",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Allow clan members to withdraw from the clan warehouse."
+      },
+      {
+       "key": "RemoveCastleCirclets",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Remove castle circlets after a clan loses their castle or a player leaves a clan."
+      },
+      {
+       "key": "AltClanMembersForWar",
+       "value": "15",
+       "secret": false,
+       "default": "15",
+       "type": "int",
+       "description": "Number of members needed to request a clan war."
+      }
+     ]
+    },
+    {
+     "title": "Party",
+     "keys": [
+      {
+       "key": "AltPartyRange",
+       "value": "1500",
+       "secret": false,
+       "default": "1500",
+       "type": "int",
+       "description": "When you made damage to a mob and are inside this range, you will be considered as player to reward. Checks for party range to mob to calculate rewards(exp, items)."
+      },
+      {
+       "key": "AltLeavePartyLeader",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "If true, when party leader leaves party, next member in party will be the leader. If false the party be will dispersed."
+      }
+     ]
+    },
+    {
+     "title": "Initial Settings:",
+     "keys": [
+      {
+       "key": "StartingAdena",
+       "value": "0",
+       "secret": false,
+       "default": "0",
+       "type": "int",
+       "description": "This is the amount of Adena that a new character starts their character with."
+      },
+      {
+       "key": "StartingLevel",
+       "value": "1",
+       "secret": false,
+       "default": "1",
+       "type": "int",
+       "description": "This is the starting level of the new character."
+      },
+      {
+       "key": "StartingSP",
+       "value": "0",
+       "secret": false,
+       "default": "0",
+       "type": "int",
+       "description": "This is the amount of SP that a new character starts their character with."
+      }
+     ]
+    },
+    {
+     "title": "Other Settings:",
+     "keys": [
+      {
+       "key": "MaxAdena",
+       "value": "3000000000000000",
+       "secret": false,
+       "default": "99900000000 (99 bilion and 900 milion)",
+       "type": "int",
+       "description": "This is the maximum amount of Adena that character can have in his inventory or warehouse. The maximum input amount is 9,223,372,036,854,775,807. (nine quintillion two hundred twenty three quadrillion three hundred seventy two trillion thirty six billion eight hundred fifty four million seven hundred seventy five thousand eight hundred seven) Setting negative values (-1 or others) will result in maximum amount available. Big values do not cause critical errors, although only 16 digits are visible in the inventory (example: 3,372,036,854,775,807 is visible out of 9,223,372,036,854,775,807)"
+      },
+      {
+       "key": "AutoLootHerbs",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Enable herbs auto pickup."
+      },
+      {
+       "key": "AutoLoot",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "This option, when set to True, will enable automatically picking up items. If set False it will force the player to pickup dropped items from mobs. This excludes herbs mentioned above and items from Raid/GrandBosses with minions."
+      },
+      {
+       "key": "AutoLootRaids",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "This option, when set to True, will enable automatically picking up items from Raid/GrandBosses with minions. If set False it will force the player to pickup dropped items from bosses. This excludes herbs mentioned above and items from mobs."
+      },
+      {
+       "key": "AutoLootSlotLimit",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Prevent auto loot when inventory slot limit is reached. The items will be dropped to the ground instead."
+      },
+      {
+       "key": "RaidLootRightsInterval",
+       "value": "900",
+       "secret": false,
+       "default": "900 (15min)",
+       "type": "int",
+       "description": "Delay for raid drop items loot privilege Require Command Channel , check next option Value is in seconds"
+      },
+      {
+       "key": "RaidLootRightsCCSize",
+       "value": "45",
+       "secret": false,
+       "default": "45",
+       "type": "int",
+       "description": "Minimum size of Command Channel for apply raid loot privilege"
+      },
+      {
+       "key": "AutoLootItemIds",
+       "value": "0",
+       "secret": false,
+       "default": "0",
+       "type": "int",
+       "description": "Specific item ids for auto pickup. Overrides all methods above. Format: itemId,itemId,itemId,...."
+      },
+      {
+       "key": "KeyboardMovement",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Enable keyboard movement. Retail: True"
+      },
+      {
+       "key": "UnstuckInterval",
+       "value": "300",
+       "secret": false,
+       "default": "300",
+       "type": "int",
+       "description": "This is the time in seconds that it will take for the player command \"/unstuck\" to activate."
+      },
+      {
+       "key": "TeleportWatchdogTimeout",
+       "value": "0",
+       "secret": false,
+       "default": "0",
+       "type": "int",
+       "description": "Teleport Watchdog Timeout (seconds) Player forced to appear if remain in teleported state longer than timeout Does not set too low, recommended value 60s. This time is in seconds, leave it at 0 if you want this feature disabled."
+      },
+      {
+       "key": "PlayerSpawnProtection",
+       "value": "600",
+       "secret": false,
+       "default": "600",
+       "type": "int",
+       "description": "After a player spawns, this is the time the player is protected. This time is in seconds, leave it at 0 if you want this feature disabled. Retail (Since GE): 600 (10 minutes)"
+      },
+      {
+       "key": "PlayerTeleportProtection",
+       "value": "0",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "After a player teleports, this is the time the player is protected. This time is in seconds, leave it at 0 if you want this feature disabled."
+      },
+      {
+       "key": "RandomRespawnInTownEnabled",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "If enabled, players respawn in town on different locations defined in zone.xml for given town. If disabled the first spawn location from zone.xml is used."
+      },
+      {
+       "key": "OffsetOnTeleportEnabled",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "This will allow a random offset from the base teleport location coordinates based on a maximum offset."
+      },
+      {
+       "key": "MaxOffsetOnTeleport",
+       "value": "50",
+       "secret": false,
+       "default": "50",
+       "type": "int",
+       "description": "Maximum offset for base teleport location when OffsetOnTeleportEnabled is enabled."
+      },
+      {
+       "key": "TeleportWhileSiegeInProgress",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Enable teleporting while siege in progress."
+      },
+      {
+       "key": "PetitioningAllowed",
+       "value": "True",
+       "secret": false,
+       "default": "True, 5, 25",
+       "type": "bool",
+       "description": "This option is to enable or disable the use of in game petitions. The MaxPetitionsPerPlayer is the amount of petitions a player can make. The MaximumPendingPetitions is the total amount of petitions in the server. Note: Logically, MaximumPendingPetitions must be higher then MaxPetitionsPerPlayer."
+      },
+      {
+       "key": "MaxPetitionsPerPlayer",
+       "value": "5",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "MaxPetitionsPending",
+       "value": "25",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "MaxFreeTeleportLevel",
+       "value": "40",
+       "secret": false,
+       "default": "40",
+       "type": "int",
+       "description": "Max player level for free teleporting around the world."
+      },
+      {
+       "key": "DeleteCharAfterDays",
+       "value": "7",
+       "secret": false,
+       "default": "7",
+       "type": "int",
+       "description": "Allow character deletion after days set below. To disallow character deletion, set this equal to 0."
+      },
+      {
+       "key": "DisconnectAfterDeath",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Disconnect player after being dead for 1 hour."
+      },
+      {
+       "key": "PartyXpCutoffMethod",
+       "value": "level",
+       "secret": false,
+       "default": "highfive",
+       "type": "string",
+       "description": "PARTY XP DISTRIBUTION With \"auto method\" member is cut from Exp/SP distribution when his share is lower than party bonus acquired for him (30% for 2 member party). In that case he will not receive any Exp/SP from party and is not counted for party bonus. If you don't want to have a cutoff point for party members' XP distribution, set the first option to \"none\". Available Options: highfive, auto, level, percentage, none"
+      },
+      {
+       "key": "PartyXpCutoffPercent",
+       "value": "3.0",
+       "secret": false,
+       "default": "3.0",
+       "type": "float",
+       "description": "This option takes effect when \"percentage\" method is chosen. Don't use high values for this!"
+      },
+      {
+       "key": "PartyXpCutoffLevel",
+       "value": "20",
+       "secret": false,
+       "default": "20",
+       "type": "int",
+       "description": "This option takes effect when \"level\" method is chosen. Don't use low values for this!"
+      },
+      {
+       "key": "PartyXpCutoffGaps",
+       "value": "0,9;10,14;15,99",
+       "secret": false,
+       "default": "0,9;10,14;15,99",
+       "type": "list",
+       "description": "This option takes effect when \"highfive\" method is chosen. Each pair of numbers represent a level range. If the gap is between the first pair, there is no penalty. If the gap is between the second pair, the lowest party member will gain only 30% of the XP that others receive. If the gap is between the last pair, the lowest party member will not receive any XP."
+      },
+      {
+       "key": "PartyXpCutoffGapPercent",
+       "value": "100;30;0",
+       "secret": false,
+       "default": "100;30;0",
+       "type": "list",
+       "description": "This option takes effect when \"highfive\" method is chosen. Each number represent the XP percent gain at that level gap. For the first gap, the lowest party member will gain 100% XP as there is no penalty. For the second gap, the lowest party member will gain only 30% of the XP that others receive. For the last gap, the lowest party member will not receive any XP."
+      },
+      {
+       "key": "DisableTutorial",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Disable tutorial on new player enter into Game Please remember its sometimes important to novice players"
+      },
+      {
+       "key": "ExpertisePenalty",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Expertise penalty If disabled, player will not receive penalty for equip higher grade items"
+      },
+      {
+       "key": "StoreCharUiSettings",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Player can in client define his own key mapping and for save it must be stored server side."
+      },
+      {
+       "key": "ForbiddenNames",
+       "value": "annou,ammou,amnou,anmou,anou,amou",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Character name restriction Disallow characters to have a name which contains the words. Split them with \",\". Example: announcements,announce..."
+      },
+      {
+       "key": "SilenceModeExclude",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "If enabled, when character in silence (block PMs) mode sends a PM to a character, silence mode no longer blocks this character, allowing both characters send each other PMs even with enabled silence mode. The exclude list is cleared each time the character goes into silence mode."
+      },
+      {
+       "key": "AltValidateTriggerSkills",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Enables alternative validation of triggering skills. When enabled pvp skills will not be casted on non flagged player. Sadly its non-retail"
+      }
+     ]
+    },
+    {
+     "title": "Damage Randomization",
+     "keys": [
+      {
+       "key": "RandomizeAutoAttackDamage",
+       "value": "True",
+       "secret": false,
+       "default": "True (current behavior)",
+       "type": "bool",
+       "description": "Applies the weapon's random multiplier to basic physical attacks."
+      },
+      {
+       "key": "RandomizePhysicalSkillDamage",
+       "value": "True",
+       "secret": false,
+       "default": "True (current behavior)",
+       "type": "bool",
+       "description": "Applies the random weapon multiplier to physical skills (including blows/backstabs)."
+      },
+      {
+       "key": "RandomizeMagicalSkillDamage",
+       "value": "True",
+       "secret": false,
+       "default": "True (current behavior)",
+       "type": "bool",
+       "description": "Applies the random weapon multiplier to magic skills."
+      }
+     ]
+    },
+    {
+     "title": "Nevit System",
+     "keys": [
+      {
+       "key": "NevitEnabled",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Enable the Nevit system."
+      },
+      {
+       "key": "NevitMaxPoints",
+       "value": "7200",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Default NevitMaxPoints: 7200"
+      },
+      {
+       "key": "NevitBonusEffectTime",
+       "value": "180",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Default NevitBonusEffectTime: 180"
+      },
+      {
+       "key": "NevitAdventTime",
+       "value": "14400",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Default NevitAdventTime: 14400"
+      },
+      {
+       "key": "NevitIgnoreAdventTime",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Give Nevit's Blessing at all times. Retail: False"
+      }
+     ]
+    }
+   ],
+   "group": "Core"
+  },
+  {
+   "file": "PVP.ini",
+   "sections": [
+    {
+     "title": "PvP Related Settings",
+     "keys": []
+    },
+    {
+     "title": "PK'er Drop Settings",
+     "keys": [
+      {
+       "key": "CanGMDropEquipment",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": ""
+      },
+      {
+       "key": "ListOfPetItems",
+       "value": "2375,3500,3501,3502,4422,4423,4424,4425,6648,6649,6650",
+       "secret": false,
+       "default": "2375,3500,3501,3502,4422,4423,4424,4425,6648,6649,6650",
+       "type": "list",
+       "description": "Warning: Make sure the lists do NOT CONTAIN trailing spaces or spaces between the numbers! List of pet items we cannot drop."
+      },
+      {
+       "key": "ListOfNonDroppableItems",
+       "value": "57,1147,425,1146,461,10,2368,7,6,2370,2369,6842,6611,6612,6613,6614,6615,6616,6617,6618,6619,6620,6621,7694,8181,5575,7694,9388,9389,9390",
+       "secret": false,
+       "default": "57,1147,425,1146,461,10,2368,7,6,2370,2369,6842,6611,6612,6613,6614,6615,6616,6617,6618,6619,6620,6621,7694,8181,5575,7694,9388,9389,9390",
+       "type": "list",
+       "description": "Lists of items which should NEVER be dropped (note, Adena will never be dropped) whether on this list or not"
+      },
+      {
+       "key": "MinimumPKRequiredToDrop",
+       "value": "6",
+       "secret": false,
+       "default": "6",
+       "type": "int",
+       "description": ""
+      }
+     ]
+    },
+    {
+     "title": "AntiFeed",
+     "keys": [
+      {
+       "key": "AntiFeedEnable",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "This option will enable antifeed for pvp/pk/clanrep points."
+      },
+      {
+       "key": "AntiFeedDualbox",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "If set to True, kills from dualbox will not increase pvp/pk points and clan reputation will not be transferred."
+      },
+      {
+       "key": "AntiFeedDisconnectedAsDualbox",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "If set to True, server will count disconnected (unable to determine ip address) as dualbox."
+      },
+      {
+       "key": "AntiFeedInterval",
+       "value": "120",
+       "secret": false,
+       "default": "120 seconds.",
+       "type": "int",
+       "description": "If character died faster than timeout - pvp/pk points for killer will not increase and clan reputation will not be transferred. Setting to 0 will disable this feature."
+      }
+     ]
+    },
+    {
+     "title": "Misc.",
+     "keys": [
+      {
+       "key": "AwardPKKillPVPPoint",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Should we award a pvp point for killing a player with karma?"
+      },
+      {
+       "key": "PvPVsNormalTime",
+       "value": "120000",
+       "secret": false,
+       "default": "120000",
+       "type": "int",
+       "description": "How much time one stays in PvP mode after hitting an innocent (in ms)"
+      },
+      {
+       "key": "PvPVsPvPTime",
+       "value": "60000",
+       "secret": false,
+       "default": "60000",
+       "type": "int",
+       "description": "Length one stays in PvP mode after hitting a purple player (in ms)"
+      }
+     ]
+    },
+    {
+     "title": "Flag on Raid/Champion (Open World PvP)",
+     "keys": [
+      {
+       "key": "FlagPlayerOnRaidAttack",
+       "value": "false",
+       "secret": false,
+       "default": "false",
+       "type": "bool",
+       "description": "Flag the player when attacking a RaidBoss. For the other settings to work, this one must be set to true."
+      },
+      {
+       "key": "FlagPlayerOnChampionAttack",
+       "value": "false",
+       "secret": false,
+       "default": "false",
+       "type": "bool",
+       "description": "Flag the player when attacking a Champion monster."
+      },
+      {
+       "key": "FlagPlayerOnSummonPetRaidChampionAttack",
+       "value": "false",
+       "secret": false,
+       "default": "false",
+       "type": "bool",
+       "description": "Flag the owner when his summon/pet attacks a RaidBoss or Champion (physical hits + offensive skills)."
+      }
+     ]
+    }
+   ],
+   "group": "Core"
+  },
+  {
+   "file": "Rates.ini",
+   "sections": [
+    {
+     "title": "Rate Settings",
+     "keys": []
+    },
+    {
+     "title": "Standard Settings (Retail value = 1)",
+     "keys": [
+      {
+       "key": "RateXp",
+       "value": "1",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Experience multiplier"
+      },
+      {
+       "key": "RateSp",
+       "value": "1",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Skill points multiplier"
+      },
+      {
+       "key": "RatePartyXp",
+       "value": "1",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Experience multiplier (Party)"
+      },
+      {
+       "key": "RatePartySp",
+       "value": "1",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Skill points multiplier (Party)"
+      },
+      {
+       "key": "RateDropManor",
+       "value": "1",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "RateKarmaLost",
+       "value": "-1",
+       "secret": false,
+       "default": "-1",
+       "type": "int",
+       "description": "Karma decreasing rate Note: -1 means RateXp so it means it will use retail rate for decreasing karma upon death or receiving exp by farming mobs."
+      },
+      {
+       "key": "RateKarmaExpLost",
+       "value": "1",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "RateSiegeGuardsPrice",
+       "value": "1",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "RateExtractable",
+       "value": "1.",
+       "secret": false,
+       "default": "1.",
+       "type": "string",
+       "description": "Modify the rate of reward of all extractable items and skills."
+      },
+      {
+       "key": "RateHellboundTrustIncrease",
+       "value": "1",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Hellbound trust increase/decrease multipliers"
+      },
+      {
+       "key": "RateHellboundTrustDecrease",
+       "value": "1",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      }
+     ]
+    },
+    {
+     "title": "Quest Multipliers",
+     "keys": [
+      {
+       "key": "QuestItemDropAmountMultiplier",
+       "value": "1",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Quest item drop amount multiplier."
+      },
+      {
+       "key": "RateQuestRewardXP",
+       "value": "1",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Exp/SP reward multipliers"
+      },
+      {
+       "key": "RateQuestRewardSP",
+       "value": "1",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "RateQuestRewardAdena",
+       "value": "1",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Adena reward multiplier"
+      },
+      {
+       "key": "UseQuestRewardMultipliers",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Use additional item multipliers?"
+      },
+      {
+       "key": "RateQuestReward",
+       "value": "1",
+       "secret": false,
+       "default": "1",
+       "type": "int",
+       "description": "Default reward multiplier When UseRewardMultipliers=False - default multiplier is used for any reward When UseRewardMultipliers=True  - default multiplier is used for all items not affected by additional multipliers"
+      },
+      {
+       "key": "RateQuestRewardPotion",
+       "value": "1",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Additional quest-reward multipliers based on item type"
+      },
+      {
+       "key": "RateQuestRewardScroll",
+       "value": "1",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "RateQuestRewardRecipe",
+       "value": "1",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "RateQuestRewardMaterial",
+       "value": "1",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "MonsterExpMaxLevelDifference",
+       "value": "11",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "The maximum monster level difference for rewarding experience."
+      }
+     ]
+    },
+    {
+     "title": "Item Drop Rates",
+     "keys": [
+      {
+       "key": "DeathDropAmountMultiplier",
+       "value": "1",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Multiplies the amount of items rewarded from monsters when they die."
+      },
+      {
+       "key": "SpoilDropAmountMultiplier",
+       "value": "1",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Multiplies the amount of items rewarded from monsters when a Spoil skill is used."
+      },
+      {
+       "key": "HerbDropAmountMultiplier",
+       "value": "1",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Multiplies the amount of items rewarded from monsters when they die."
+      },
+      {
+       "key": "RaidDropAmountMultiplier",
+       "value": "1",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "DeathDropChanceMultiplier",
+       "value": "1",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Multiplies the chance of items that can be rewarded from monsters when they die."
+      },
+      {
+       "key": "SpoilDropChanceMultiplier",
+       "value": "1",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Multiplies the chance of items that can be rewarded from monsters when a Spoil skill is used."
+      },
+      {
+       "key": "HerbDropChanceMultiplier",
+       "value": "1",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Multiplies the chance of items that can be rewarded from monsters when they die."
+      },
+      {
+       "key": "RaidDropChanceMultiplier",
+       "value": "1",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "DropAmountMultiplierByItemId",
+       "value": "57,1;6656,1;6657,1;6658,1;6659,1;6660,1;6661,1;6662,1;8191,1;10170,1;10314,1",
+       "secret": false,
+       "default": "57,1",
+       "type": "list",
+       "description": "List of items affected by custom drop rate by id, used now for Adena rate too. Usage: itemId1,multiplier1;itemId2,multiplier2;... Note: Make sure the lists do NOT CONTAIN trailing spaces or spaces between the numbers! Example for Raid boss 1x jewelry: 6656,1;6657,1;6658,1;6659,1;6660,1;6661,1;6662,1;8191,1;10170,1;10314,1 Disable HighFive Adventurer's Treasure Sack drops: 21747,0;21748,0;21749,0"
+      },
+      {
+       "key": "DropChanceMultiplierByItemId",
+       "value": "57,1;21747,0;21748,0;21749,0",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "DropMaxOccurrencesNormal",
+       "value": "2",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Maximum drop occurrences. Note: Items that have 100% drop chance without server rate multipliers are not counted by this value. They will drop as extra drops. Also grouped drops with total chance over 100% break this configuration."
+      },
+      {
+       "key": "DropMaxOccurrencesRaidboss",
+       "value": "7",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      }
+     ]
+    },
+    {
+     "title": "Item Drop Level Difference Settings",
+     "keys": [
+      {
+       "key": "DropAdenaMinLevelDifference",
+       "value": "8",
+       "secret": false,
+       "default": "8",
+       "type": "int",
+       "description": "The min and max level difference used for level gap calculation this is only for how many levels higher the player is than the monster"
+      },
+      {
+       "key": "DropAdenaMaxLevelDifference",
+       "value": "15",
+       "secret": false,
+       "default": "15",
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "DropAdenaMinLevelGapChance",
+       "value": "10",
+       "secret": false,
+       "default": "10",
+       "type": "int",
+       "description": "This is the minimum level gap chance meaning for 10 that the monster will have 10% chance to allow dropping the item if level difference is bigger than DropAdenaMaxLevelDifference Note: This value is scalling from 100 to the specified value for DropAdenaMinLevelDifference to DropAdenaMaxLevelDifference limits"
+      },
+      {
+       "key": "DropItemMinLevelDifference",
+       "value": "5",
+       "secret": false,
+       "default": "5",
+       "type": "int",
+       "description": "The min and max level difference used for level gap calculation this is only for how many levels higher the player is than the monster"
+      },
+      {
+       "key": "DropItemMaxLevelDifference",
+       "value": "10",
+       "secret": false,
+       "default": "10",
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "DropItemMinLevelGapChance",
+       "value": "10",
+       "secret": false,
+       "default": "10",
+       "type": "int",
+       "description": "This is the minimum level gap chance meaning for 10 that the monster will have 10% chance to allow dropping the item if level difference is bigger than DropAdenaMaxLevelDifference Note: This value is scalling from 100 to the specified value for DropAdenaMinLevelDifference to DropAdenaMaxLevelDifference limits"
+      },
+      {
+       "key": "EventItemMaxLevelDifference",
+       "value": "9",
+       "secret": false,
+       "default": "9",
+       "type": "int",
+       "description": "Allow event items drop within custom level range between character and monster."
+      }
+     ]
+    },
+    {
+     "title": "Vitality system rates. Works only if EnableVitality = True",
+     "keys": [
+      {
+       "key": "RateVitalityLevel1",
+       "value": "1.5",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": "The following configures the XP multiplier of each vitality level. Basically, you have 5 levels, the first one being 0. Official rates are: Level 1: 150% Level 2: 200% Level 3: 250% Level 4: 300% Take care setting these values according to your server rates, as the can lead to huge differences! Example with a server rate 15x and a level 4 vitality = 3. => final server rate = 45 (15x3)!"
+      },
+      {
+       "key": "RateVitalityLevel2",
+       "value": "2.",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "RateVitalityLevel3",
+       "value": "2.5",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": ""
+      },
+      {
+       "key": "RateVitalityLevel4",
+       "value": "3.",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "RateVitalityGain",
+       "value": "1.",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": "These options are to be used if you want to increase the vitality gain/lost for each mob you kills Default values are 1."
+      },
+      {
+       "key": "RateVitalityLost",
+       "value": "0.6",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": ""
+      },
+      {
+       "key": "RateRecoveryPeaceZone",
+       "value": "1.",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": "This defines how many times faster do the players regain their vitality when in peace zones"
+      },
+      {
+       "key": "RateRecoveryOnReconnect",
+       "value": "4.",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": "This defines how many times faster do the players regain their vitality when offline Note that you need to turn on \"RecoverVitalityOnReconnect\" to have this option effective"
+      }
+     ]
+    },
+    {
+     "title": "Player Drops (values are set in PERCENTS)",
+     "keys": [
+      {
+       "key": "PlayerDropLimit",
+       "value": "0",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "PlayerRateDrop",
+       "value": "0",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "in %"
+      },
+      {
+       "key": "PlayerRateDropItem",
+       "value": "0",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "in %"
+      },
+      {
+       "key": "PlayerRateDropEquip",
+       "value": "0",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "in %"
+      },
+      {
+       "key": "PlayerRateDropEquipWeapon",
+       "value": "0",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "in %"
+      },
+      {
+       "key": "KarmaDropLimit",
+       "value": "10",
+       "secret": false,
+       "default": "10",
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "KarmaRateDrop",
+       "value": "40",
+       "secret": false,
+       "default": "40",
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "KarmaRateDropItem",
+       "value": "50",
+       "secret": false,
+       "default": "50",
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "KarmaRateDropEquip",
+       "value": "40",
+       "secret": false,
+       "default": "40",
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "KarmaRateDropEquipWeapon",
+       "value": "10",
+       "secret": false,
+       "default": "10",
+       "type": "int",
+       "description": ""
+      }
+     ]
+    },
+    {
+     "title": "Pets (Default value = 1)",
+     "keys": [
+      {
+       "key": "PetXpRate",
+       "value": "1",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "PetFoodRate",
+       "value": "1",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "SinEaterXpRate",
+       "value": "1",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      }
+     ]
+    },
+    {
+     "title": "Additional drops from raid bosses (except GrandBoss)",
+     "keys": [
+      {
+       "key": "BossDropEnable",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": ""
+      },
+      {
+       "key": "BossDropMinLevel",
+       "value": "40",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "BossDropMaxLevel",
+       "value": "999",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "BossDropList",
+       "value": "4356,1,2,100;",
+       "secret": false,
+       "default": "Gold Einhasad, min: 1x, max: 2x, 100% chance of drop",
+       "type": "list",
+       "description": "The following configures the items you want to add to the drop Usage: itemId1,minAmount1;maxAmount1,chance1;itemId2... PLEASE NOTE: Chance of drop also increases from VIP level/runes/etc."
+      }
+     ]
+    }
+   ],
+   "group": "Core"
+  },
+  {
+   "file": "Server.ini",
+   "sections": [
+    {
+     "title": "Game Server Settings",
+     "keys": []
+    },
+    {
+     "title": "Networking",
+     "keys": [
+      {
+       "key": "LoginHost",
+       "value": "127.0.0.1",
+       "secret": false,
+       "default": "127.0.0.1",
+       "type": "string",
+       "description": "Where's the Login server this gameserver should connect to WARNING: <u><b><font color=\"red\">Please don't change default IPs here if you don't know what are you doing!</font></b></u> WARNING: <u><b><font color=\"red\">External/Internal IPs are now inside \"ipconfig.xml\" file.</font></b></u>"
+      },
+      {
+       "key": "LoginPort",
+       "value": "9014",
+       "secret": false,
+       "default": "9014",
+       "type": "int",
+       "description": "TCP port the login server listen to for gameserver connection requests"
+      },
+      {
+       "key": "GameserverHostname",
+       "value": "127.0.0.1",
+       "secret": false,
+       "default": "* (0.0.0.0)",
+       "type": "string",
+       "description": "Bind address for gameserver. You should not need to change it in most cases. WARNING: <u><b><font color=\"red\">Please don't change default IPs here if you don't know what are you doing!</font></b></u> WARNING: <u><b><font color=\"red\">External/Internal IPs are now inside \"ipconfig.xml\" file.</font></b></u>"
+      },
+      {
+       "key": "GameserverPort",
+       "value": "7777",
+       "secret": false,
+       "default": "7777",
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "PacketEncryption",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Packet encryption. By default packets sent or received are encrypted using the Blowfish algorithm. Disabling this reduces the resources needed to process any packets transfered, also broadcasted packets do not need to be re-encrypted for each client sent. Retail: True"
+      }
+     ]
+    },
+    {
+     "title": "Misc Server Settings",
+     "keys": [
+      {
+       "key": "RequestServerID",
+       "value": "1",
+       "secret": false,
+       "default": "1",
+       "type": "int",
+       "description": "This is the server ID that the Game Server will request. Example: 1 = Bartz"
+      },
+      {
+       "key": "AcceptAlternateID",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "True = The Login Server will give an other ID to the server if the requested ID is already reserved."
+      },
+      {
+       "key": "DatapackRoot",
+       "value": ".",
+       "secret": false,
+       "default": ".",
+       "type": "string",
+       "description": "Datapack root directory. Defaults to current directory from which the server is started unless the below line is uncommented. WARNING: <u><b><font color=\"red\">If the specified path is invalid, it will lead to multiple errors!</font></b></u>"
+      },
+      {
+       "key": "ScriptRoot",
+       "value": "./data/scripts",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": "Scripts root directory."
+      },
+      {
+       "key": "MaximumOnlineUsers",
+       "value": "2000",
+       "secret": false,
+       "default": "2000",
+       "type": "int",
+       "description": "Define how many players are allowed to play simultaneously on your server."
+      },
+      {
+       "key": "AllowedProtocolRevisions",
+       "value": "267;268;271;273",
+       "secret": false,
+       "default": "267;268;271;273",
+       "type": "list",
+       "description": "Numbers of protocol revisions that server allows to connect. Delimiter is ; WARNING: <u><b><font color=\"red\">Changing the protocol revision may result in incompatible communication and many errors in game!</font></b></u>"
+      },
+      {
+       "key": "ServerListType",
+       "value": "Free",
+       "secret": false,
+       "default": "Free",
+       "type": "string",
+       "description": "Displays server type next to the server name on character selection. Notes: Accepted Values: Normal, Relax, Test, Broad, Restricted, Event, Free, World, New, Classic"
+      },
+      {
+       "key": "ServerListAge",
+       "value": "0",
+       "secret": false,
+       "default": "0",
+       "type": "int",
+       "description": "Displays server minimum age to the server name on character selection. Notes: Accepted values: 0, 15, 18"
+      },
+      {
+       "key": "ServerListBrackets",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Setting for serverList Displays [] in front of server name on character selection"
+      }
+     ]
+    },
+    {
+     "title": "Deadlock Watcher (separate thread for detecting deadlocks)",
+     "keys": [
+      {
+       "key": "DeadlockWatcher",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "For improved crash logs and automatic restart in deadlock case if enabled. Check interval is in seconds."
+      },
+      {
+       "key": "DeadlockCheckInterval",
+       "value": "20",
+       "secret": false,
+       "default": "20",
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "RestartOnDeadlock",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": ""
+      }
+     ]
+    },
+    {
+     "title": "Player HWID settings",
+     "keys": [
+      {
+       "key": "EnableHardwareInfo",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Check if hardware information is sent upon login. WARNING: To receive hardware information client needs a modified system for setting GameClient HWID via the setHardwareInfo method."
+      },
+      {
+       "key": "KickMissingHWID",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Players without hardware information are kicked from the game. Automatically set to True when MaxPlayersPerHWID > 0."
+      },
+      {
+       "key": "MaxPlayersPerHWID",
+       "value": "0",
+       "secret": false,
+       "default": "0 (unlimited)",
+       "type": "int",
+       "description": "Maximum number of players per HWID allowed to enter game."
+      },
+      {
+       "key": "RequireFreshHWID",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Require a fresh hardware information packet on every world entry instead of accepting a previously stored value. Closes the case where a client that sent its HWID once (value persisted to account variables) and then stops sending is never kicked. Only effective together with KickMissingHWID = True."
+      },
+      {
+       "key": "HwidCheckDelay",
+       "value": "5000",
+       "secret": false,
+       "default": "5000",
+       "type": "int",
+       "description": "Delay in milliseconds before the hardware information check runs after entering the world (time given to the client to send its HWID packet). Increase it if legitimate clients are kicked under RequireFreshHWID on slow machines."
+      }
+     ]
+    },
+    {
+     "title": "Misc Player Settings",
+     "keys": [
+      {
+       "key": "CnameTemplate",
+       "value": ".*",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": "Character name template. Examples: CnameTemplate = [A-Z][a-z]{3,3}[A-Za-z0-9]* The above setting will allow names with first capital letter, next three small letters, and any letter (case insensitive) or number, like OmfgWTF1 CnameTemplate = [A-Z][a-z]* The above setting will allow names only of letters with first one capital, like Omfgwtf Default .* (allows any symbol)"
+      },
+      {
+       "key": "PetNameTemplate",
+       "value": ".*",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": "This setting restricts names players can give to their pets. See CnameTemplate for details"
+      },
+      {
+       "key": "ClanNameTemplate",
+       "value": ".*",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": "This setting restricts clan/subpledge names players can set. See CnameTemplate for details"
+      },
+      {
+       "key": "CharMaxNumber",
+       "value": "7",
+       "secret": false,
+       "default": "7 (client limit)",
+       "type": "int",
+       "description": "Maximum number of characters per account."
+      }
+     ]
+    },
+    {
+     "title": "Precautionary Server Restart",
+     "keys": [
+      {
+       "key": "PrecautionaryRestartEnabled",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Enable server restart when CPU or memory usage is too high."
+      },
+      {
+       "key": "PrecautionaryRestartCpu",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Enable monitoring system CPU usage."
+      },
+      {
+       "key": "PrecautionaryRestartMemory",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Enable monitoring process memory usage."
+      },
+      {
+       "key": "PrecautionaryRestartChecks",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Check if sieges are in progress or players are in olympiad, events, instances or have targeted raidbosses."
+      },
+      {
+       "key": "PrecautionaryRestartPercentage",
+       "value": "95",
+       "secret": false,
+       "default": "95",
+       "type": "int",
+       "description": "Percentage of used resources."
+      },
+      {
+       "key": "PrecautionaryRestartDelay",
+       "value": "60",
+       "secret": false,
+       "default": "60",
+       "type": "int",
+       "description": "Delay in seconds between each check."
+      }
+     ]
+    },
+    {
+     "title": "Scheduled Server Restart",
+     "keys": [
+      {
+       "key": "ServerRestartScheduleEnabled",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Enable scheduled server restart."
+      },
+      {
+       "key": "ServerRestartScheduleMessage",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Send a message when player enters the game."
+      },
+      {
+       "key": "ServerRestartScheduleCountdown",
+       "value": "600",
+       "secret": false,
+       "default": "600 (10 minutes)",
+       "type": "int",
+       "description": "Restart time countdown (in seconds)."
+      },
+      {
+       "key": "ServerRestartSchedule",
+       "value": "08:00",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": "Scheduled restart schedule. You can put more than one value separated by commas (,). Example: 12:00, 00:00"
+      },
+      {
+       "key": "ServerRestartDays",
+       "value": "4",
+       "secret": false,
+       "default": "4 (WEDNESDAY)",
+       "type": "int",
+       "description": "Specify days that the restart will occur. Values separated by commas (,). Example: 1,2,3,4,5,6,7 (SUNDAY,MONDAY,TUESDAY,WEDNESDAY,THURSDAY,FRIDAY,SATURDAY)"
+      }
+     ]
+    }
+   ],
+   "group": "Core"
+  },
+  {
+   "file": "Siege.ini",
+   "sections": [
+    {
+     "title": "Siege Settings",
+     "keys": []
+    },
+    {
+     "title": "Standard Settings",
+     "keys": [
+      {
+       "key": "SiegeCycle",
+       "value": "2",
+       "secret": false,
+       "default": "2",
+       "type": "int",
+       "description": "Siege cycle (in weeks)"
+      },
+      {
+       "key": "SiegeLength",
+       "value": "120",
+       "secret": false,
+       "default": "120",
+       "type": "int",
+       "description": "Length of siege before the count down (in minutes)."
+      },
+      {
+       "key": "MaxFlags",
+       "value": "1",
+       "secret": false,
+       "default": "1",
+       "type": "int",
+       "description": "Maximum number of flags per clan."
+      },
+      {
+       "key": "SiegeClanMinLevel",
+       "value": "5",
+       "secret": false,
+       "default": "5",
+       "type": "int",
+       "description": "Minimum level to register."
+      },
+      {
+       "key": "AttackerMaxClans",
+       "value": "500",
+       "secret": false,
+       "default": "500",
+       "type": "int",
+       "description": "Max number of clans that can register on each side."
+      },
+      {
+       "key": "DefenderMaxClans",
+       "value": "500",
+       "secret": false,
+       "default": "500",
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "AttackerRespawn",
+       "value": "0",
+       "secret": false,
+       "default": "0",
+       "type": "int",
+       "description": "Respawn times (in milliseconds)."
+      },
+      {
+       "key": "BloodAllianceReward",
+       "value": "1",
+       "secret": false,
+       "default": "1",
+       "type": "int",
+       "description": "Reward successful siege defense with blood alliance in clan warehouse"
+      }
+     ]
+    },
+    {
+     "title": "Castle Control Tower Spawns",
+     "keys": [
+      {
+       "key": "GludioFlameTower1",
+       "value": "-18154,107591,-2560,13004,70017,70019",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Gludio"
+      },
+      {
+       "key": "GludioFlameTower2",
+       "value": "-19329,108154,-2384,13004,70018,70020",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "GludioControlTower1",
+       "value": "-18325,112811,-2377,13002",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "GludioControlTower2",
+       "value": "-18048,107098,-2378,13002",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "GludioControlTower3",
+       "value": "-18113,108597,-2343,13002",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "GludioMaxMercenaries",
+       "value": "100",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "GiranFlameTower1",
+       "value": "118331,145055,-2627,13004,70025,70027",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Giran"
+      },
+      {
+       "key": "GiranFlameTower2",
+       "value": "117768,143880,-2451,13004,70026,70028",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "GiranControlTower1",
+       "value": "113115,144829,-2446,13002",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "GiranControlTower2",
+       "value": "118828,145106,-2447,13002",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "GiranControlTower3",
+       "value": "117329,145041,-2412,13002",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "GiranMaxMercenaries",
+       "value": "200",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "DionFlameTower1",
+       "value": "22114,162159,-2754,13004,70021,70023",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Dion"
+      },
+      {
+       "key": "DionFlameTower2",
+       "value": "23289,161596,-2578,13004,70022,70024",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "DionControlTower1",
+       "value": "22285,156939,-2571,13002",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "DionControlTower2",
+       "value": "22008,162652,-2572,13002",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "DionControlTower3",
+       "value": "22073,161153,-2537,13002",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "DionMaxMercenaries",
+       "value": "150",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "OrenFlameTower1",
+       "value": "84407,37150,-2354,13004,70029,70031",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Oren"
+      },
+      {
+       "key": "OrenFlameTower2",
+       "value": "83844,35975,-2178,13004,70030,70032",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "OrenControlTower1",
+       "value": "79193,36977,-2167,13002",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "OrenControlTower2",
+       "value": "84906,37254,-2168,13002",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "OrenControlTower3",
+       "value": "83407,37189,-2133,13002",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "OrenMaxMercenaries",
+       "value": "300",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "AdenFlameTower1",
+       "value": "149976,1583,-450,13004,70008,70016,70007,70015,70006,70014,70005,70013",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Aden"
+      },
+      {
+       "key": "AdenFlameTower2",
+       "value": "144955,1603,-450,13004,70004,70012,70003,70011,70002,70010,70001,70009",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "AdenControlTower1",
+       "value": "148774,2351,-389,13002",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "AdenControlTower2",
+       "value": "147456,5724,158,13002",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "AdenControlTower3",
+       "value": "146137,2352,-389,13002",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "AdenMaxMercenaries",
+       "value": "400",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "InnadrilFlameTower1",
+       "value": "116065,250938,-850,13004,70033,70035",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Innadril"
+      },
+      {
+       "key": "InnadrilFlameTower2",
+       "value": "117240,250375,-674,13004,70034,70036",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "InnadrilControlTower1",
+       "value": "116236,245718,-667,13002",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "InnadrilControlTower2",
+       "value": "115959,251431,-667,13002",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "InnadrilControlTower3",
+       "value": "116024,249932,-633,13002",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "InnadrilMaxMercenaries",
+       "value": "400",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "GoddardFlameTower1",
+       "value": "148144,-46992,-1609,13004,70037,70039",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Goddard"
+      },
+      {
+       "key": "GoddardFlameTower2",
+       "value": "146784,-46992,-1609,13004,70038,70040",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "GoddardControlTower1",
+       "value": "144672,-48832,-1742,13002",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "GoddardControlTower2",
+       "value": "150240,-48832,-1742,13002",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "GoddardControlTower3",
+       "value": "147456,-49200,-1619,13002",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "GoddardMaxMercenaries",
+       "value": "400",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "RuneFlameTower1",
+       "value": "12864,-47440,-1087,13004,70041,70043",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Rune"
+      },
+      {
+       "key": "RuneFlameTower2",
+       "value": "12225,-50767,1248,13004,70042,70044",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "RuneControlTower1",
+       "value": "16565,-50318,-641,13002",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "RuneControlTower2",
+       "value": "16559,-48000,-641,13002",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "RuneControlTower3",
+       "value": "10775,-48481,83,13002",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "RuneMaxMercenaries",
+       "value": "400",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "SchuttgartFlameTower1",
+       "value": "76872,-151043,120,13004,70045,70047",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Schuttgart"
+      },
+      {
+       "key": "SchuttgartFlameTower2",
+       "value": "78233,-151037,120,13004,70046,70048",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "SchuttgartControlTower1",
+       "value": "80334,-152898,-8,13002",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "SchuttgartControlTower2",
+       "value": "74775,-152928,-8,13002",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "SchuttgartControlTower3",
+       "value": "77547,-153246,112,13002",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      },
+      {
+       "key": "SchuttgartMaxMercenaries",
+       "value": "400",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      }
+     ]
+    }
+   ],
+   "group": "Core"
+  },
+  {
+   "file": "TerritoryWar.ini",
+   "sections": [
+    {
+     "title": "TerritoryWar Settings",
+     "keys": []
+    },
+    {
+     "title": "Standard Settings",
+     "keys": [
+      {
+       "key": "WarLength",
+       "value": "120",
+       "secret": false,
+       "default": "120",
+       "type": "int",
+       "description": "Length of siege before the count down (in minutes)."
+      },
+      {
+       "key": "ClanMinLevel",
+       "value": "0",
+       "secret": false,
+       "default": "0",
+       "type": "int",
+       "description": "Clan Minimum level to register."
+      },
+      {
+       "key": "PlayerMinLevel",
+       "value": "40",
+       "secret": false,
+       "default": "40",
+       "type": "int",
+       "description": "Player Minimum level to register."
+      },
+      {
+       "key": "DefenderMaxClans",
+       "value": "500",
+       "secret": false,
+       "default": "500",
+       "type": "int",
+       "description": "Max number of clans and players that can register for a side."
+      },
+      {
+       "key": "DefenderMaxPlayers",
+       "value": "500",
+       "secret": false,
+       "default": "500",
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "PlayerWithWardCanBeKilledInPeaceZone",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Is Ward holding players can be attacked and killed in peace zone"
+      },
+      {
+       "key": "SpawnWardsWhenTWIsNotInProgress",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Spawn wards in Castles when Territory War is not in progress"
+      },
+      {
+       "key": "ReturnWardsWhenTWStarts",
+       "value": "True",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Return all wards to their own castle when Territory War starts True: Fixes territory wards not spawn when Territory War starts."
+      },
+      {
+       "key": "MinTerritoryBadgeForNobless",
+       "value": "100",
+       "secret": false,
+       "default": "100",
+       "type": "int",
+       "description": "Territory Badge needed to change nobless"
+      },
+      {
+       "key": "MinTerritoryBadgeForStriders",
+       "value": "50",
+       "secret": false,
+       "default": "50",
+       "type": "int",
+       "description": "Territory Badge needed to buy Strider"
+      },
+      {
+       "key": "MinTerritoryBadgeForBigStrider",
+       "value": "80",
+       "secret": false,
+       "default": "80",
+       "type": "int",
+       "description": "Territory Badge needed to buy Guardian's Strider"
+      }
+     ]
+    }
+   ],
+   "group": "Core"
+  },
+  {
+   "file": "Threads.ini",
+   "sections": [
+    {
+     "title": "Thread Configuration",
+     "keys": [
+      {
+       "key": "ScheduledThreadPoolSize",
+       "value": "-1",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Defines the number of threads in the scheduled thread pool. If set to -1, this will be determined by available processors multiplied by 4. You can specify a positive integer to manually set the pool size. Additionally, a high priority pool is created, sized at one quarter of the scheduled pool. Note that higher values can improve task handling under heavy load but may increase CPU and memory usage."
+      },
+      {
+       "key": "InstantThreadPoolSize",
+       "value": "-1",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Defines the number of threads in the instant thread pool. If set to -1, this will be determined by available processors multiplied by 2. You can specify a positive integer to manually set the pool size. Note that higher values can improve task handling under heavy load but may increase CPU and memory usage."
+      },
+      {
+       "key": "ThreadsForLoading",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Use threads to decrease startup time."
+      }
+     ]
+    }
+   ],
+   "group": "Core"
+  },
+  {
+   "file": "UndergroundColiseum.ini",
+   "sections": [
+    {
+     "title": "Underground Coliseum",
+     "keys": [
+      {
+       "key": "BattleStartTime",
+       "value": "0 21 * * 5,6,7",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": "Battle period time (in cron format). Default is 9:00 PM every Friday, Saturday, and Sunday."
+      },
+      {
+       "key": "BattlePeriod",
+       "value": "2",
+       "secret": false,
+       "default": "2",
+       "type": "int",
+       "description": "Battle period (in hours)"
+      },
+      {
+       "key": "AllowAnnouncements",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Announce on event start and finish."
+      },
+      {
+       "key": "PartySize",
+       "value": "7",
+       "secret": false,
+       "default": "7",
+       "type": "int",
+       "description": "Minimum party member size that can register."
+      },
+      {
+       "key": "ResurrectionTime",
+       "value": "10",
+       "secret": false,
+       "default": "10",
+       "type": "int",
+       "description": "Resurrection delay (in seconds)."
+      }
+     ]
+    }
+   ],
+   "group": "Core"
+  },
+  {
+   "file": "AllowedPlayerRaces.ini",
+   "sections": [
+    {
+     "title": "Allowed Player Races",
+     "keys": [
+      {
+       "key": "AllowHuman",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Allowing specific races to be created."
+      },
+      {
+       "key": "AllowElf",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": ""
+      },
+      {
+       "key": "AllowDarkElf",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": ""
+      },
+      {
+       "key": "AllowOrc",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": ""
+      },
+      {
+       "key": "AllowDwarf",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": ""
+      },
+      {
+       "key": "AllowKamael",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": ""
+      }
+     ]
+    }
+   ],
+   "group": "Custom"
+  },
+  {
+   "file": "AutoPlay.ini",
+   "sections": [
+    {
+     "title": "Auto Play Settings",
+     "keys": [
+      {
+       "key": "EnableAutoPlay",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Enable player .play voiced command."
+      },
+      {
+       "key": "EnableAutoPotion",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": ""
+      },
+      {
+       "key": "EnableAutoSkill",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": ""
+      },
+      {
+       "key": "EnableAutoItem",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": ""
+      },
+      {
+       "key": "ResumeAutoPlay",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Resume auto play upon enter game. Retail: False"
+      },
+      {
+       "key": "AssistLeader",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Assist party leader. When in party, target what the leader is targeting. Retail: False"
+      },
+      {
+       "key": "ShortRange",
+       "value": "600",
+       "secret": false,
+       "default": "LongRange 1400",
+       "type": "int",
+       "description": "Range Targeting."
+      },
+      {
+       "key": "LongRange",
+       "value": "1400",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "AutoPlayPremium",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Enable .play command only for premium players. Premium System must be enabled."
+      },
+      {
+       "key": "DisabledSkillIds",
+       "value": "42",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "List of skills that cannot be added to auto play selection menu, separated by commas."
+      },
+      {
+       "key": "DisabledItemIds",
+       "value": "",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": "List of items that cannot be added to auto play selection menu, separated by commas."
+      },
+      {
+       "key": "IgnoredAutoPickItems",
+       "value": "8190, 8689",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": "Items ignored from auto play pickup. Cursed Weapons: 8190, 8689"
+      },
+      {
+       "key": "AutoPlayLoginMessage",
+       "value": "",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": "Message send to players on login. Leave empty to disable. Example: You can use .play to automate farming."
+      }
+     ]
+    }
+   ],
+   "group": "Custom"
+  },
+  {
+   "file": "AutoPotions.ini",
+   "sections": [
+    {
+     "title": "Auto Potion Settings",
+     "keys": [
+      {
+       "key": "AutoPotionsEnabled",
+       "value": "false",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Enable auto potion commands."
+      },
+      {
+       "key": "AutoPotionsInOlympiad",
+       "value": "false",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Use auto potions in Olympiad."
+      },
+      {
+       "key": "AutoPotionMinimumLevel",
+       "value": "1",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Minimum player level to use the commands."
+      },
+      {
+       "key": "AutoCpEnabled",
+       "value": "true",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Enable auto CP potions."
+      },
+      {
+       "key": "AutoCpPercentage",
+       "value": "70",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Percentage that CP potions will be used."
+      },
+      {
+       "key": "AutoCpItemIds",
+       "value": "5592,5591",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Auto CP item ids. Order by use priority."
+      },
+      {
+       "key": "AutoHpEnabled",
+       "value": "true",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Enable auto HP potions."
+      },
+      {
+       "key": "AutoHpPercentage",
+       "value": "70",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Percentage that HP potions will be used."
+      },
+      {
+       "key": "AutoHpItemIds",
+       "value": "1540,1539,1061,1060",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Auto HP item ids. Order by use priority."
+      },
+      {
+       "key": "AutoMpEnabled",
+       "value": "true",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Enable auto MP potions."
+      },
+      {
+       "key": "AutoMpPercentage",
+       "value": "70",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Percentage that MP potions will be used."
+      },
+      {
+       "key": "AutoMpItemIds",
+       "value": "728",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Auto MP item ids. Order by use priority."
+      }
+     ]
+    }
+   ],
+   "group": "Custom"
+  },
+  {
+   "file": "Banking.ini",
+   "sections": [
+    {
+     "title": "Banking System",
+     "keys": [
+      {
+       "key": "BankingEnabled",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Enable/Disable Banking System"
+      },
+      {
+       "key": "BankingGoldbarCount",
+       "value": "1",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Amount of Goldbars a player gets when they use the \".deposit\" command. Also the same amount they will lose with \".withdraw\"."
+      },
+      {
+       "key": "BankingAdenaCount",
+       "value": "1000000000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Amount of Adena a player gets when they use the \".withdraw\" command. Also the same amount they will lose with \".deposit\"."
+      },
+      {
+       "key": "BankingAutoConvert",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Enable/Disable Auto Convert. Auto convert to gold bar when inventory has more Adena than the BankingAutoConvertAdenaLimit configuration bellow."
+      },
+      {
+       "key": "BankingAutoConvertAdenaLimit",
+       "value": "51000000000",
+       "secret": false,
+       "default": "51 billion",
+       "type": "int",
+       "description": "Adena limit after which auto convert starts."
+      }
+     ]
+    }
+   ],
+   "group": "Custom"
+  },
+  {
+   "file": "BossAnnouncements.ini",
+   "sections": [
+    {
+     "title": "Boss Announcement Settings",
+     "keys": [
+      {
+       "key": "RaidBossSpawnAnnouncements",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Enable RaidBoss spawn announcements."
+      },
+      {
+       "key": "RaidBossDefeatAnnouncements",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Enable RaidBoss defeat announcements."
+      },
+      {
+       "key": "RaidBossInstanceAnnouncements",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Enable RaidBoss announcements in instances."
+      },
+      {
+       "key": "GrandBossSpawnAnnouncements",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Enable GrandBoss spawn announcements."
+      },
+      {
+       "key": "GrandBossDefeatAnnouncements",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Enable GrandBoss defeat announcements."
+      },
+      {
+       "key": "GrandBossInstanceAnnouncements",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Enable GrandBoss announcements in instances."
+      },
+      {
+       "key": "RaidbossExcludedFromSpawnAnnouncements",
+       "value": "",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": "Exclude certain Raid Bosses or Grand Bosses from spawn announcements. Add the NPC IDs of bosses to exclude, separated by commas. Leave empty to include all."
+      },
+      {
+       "key": "RaidbossExcludedFromDefeatAnnouncements",
+       "value": "",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": "Exclude certain Raid Bosses or Grand Bosses from defeat announcements. Add the NPC IDs of bosses to exclude, separated by commas. Leave empty to include all."
+      }
+     ]
+    }
+   ],
+   "group": "Custom"
+  },
+  {
+   "file": "CancelReturn.ini",
+   "sections": [
+    {
+     "title": "Buff Return System Configuration",
+     "keys": [
+      {
+       "key": "CancelReturn",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Global toggle for the buff return feature. When False, no buffs will be restored under any circumstances."
+      },
+      {
+       "key": "ReturnMonster",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Restore buff if the original caster was a Monster or Raid Boss."
+      },
+      {
+       "key": "ReturnPlayer",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Restore buff if the original caster was a Player."
+      },
+      {
+       "key": "ReturnPlayerOlys",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Restore buffs for Players who are currently participating in the Olympiad. This setting only takes effect when `ReturnPlayer = True`."
+      },
+      {
+       "key": "TimeToReturn",
+       "value": "10",
+       "secret": false,
+       "default": "10",
+       "type": "int",
+       "description": "Duration (in seconds) before a cancelled buff is automatically restored. Applies only when conditions for returning a buff are satisfied."
+      }
+     ]
+    }
+   ],
+   "group": "Custom"
+  },
+  {
+   "file": "Captcha.ini",
+   "sections": [
+    {
+     "title": "Captcha - Bot protection",
+     "keys": [
+      {
+       "key": "EnableCaptcha",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Enable bot prevention system."
+      },
+      {
+       "key": "KillCounter",
+       "value": "100",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "How many monsters have to be killed to run validation task?"
+      },
+      {
+       "key": "KillCounterRandomization",
+       "value": "50",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Specify range of randomly taken values summed with main counter."
+      },
+      {
+       "key": "KillCounterReset",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Reset the kills counter due to inactivity."
+      },
+      {
+       "key": "KillCounterResetTime",
+       "value": "20",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Reset the kills counter time after the last mob killed. (in minutes)"
+      },
+      {
+       "key": "ValidationTime",
+       "value": "60",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "How long validation window awaits an answer. (in seconds)"
+      },
+      {
+       "key": "CaptchaAttempts",
+       "value": "2",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Number of retries the player has if they type incorrect code. 1 = disable."
+      },
+      {
+       "key": "Punishment",
+       "value": "0",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Punishments: 0 = move character to the closest village. 1 = kick characters from the server. 2 = put character to jail. 3 = ban character from the server."
+      },
+      {
+       "key": "JailTime",
+       "value": "2",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "How long character were suppose to stay in jail? (in minutes) 0 = forever in jail."
+      },
+      {
+       "key": "DoubleJailTime",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Double the time on each entry in jail. After 24h the time will return from the initial time."
+      }
+     ]
+    }
+   ],
+   "group": "Custom"
+  },
+  {
+   "file": "ChampionMonsters.ini",
+   "sections": [
+    {
+     "title": "Champion mobs - Turn random mobs into Champions",
+     "keys": [
+      {
+       "key": "ChampionEnable",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Enable/Disable Champion Mob System."
+      },
+      {
+       "key": "ChampionPassive",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Force Champion mobs to be passive? To leave champion mobs to default/Aggressive, set to False. To set all champion mobs to Passive, set True."
+      },
+      {
+       "key": "ChampionFrequency",
+       "value": "5",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "% chance for a mob to became champion (0 to disable)."
+      },
+      {
+       "key": "ChampionTitle",
+       "value": "Champion",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": "Title of all Champion Mobs."
+      },
+      {
+       "key": "ChampionAura",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Red aura for Champion Mobs."
+      },
+      {
+       "key": "ChampionMinLevel",
+       "value": "20",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Min and max levels allowed for a mob to be a Champion mob."
+      },
+      {
+       "key": "ChampionMaxLevel",
+       "value": "70",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "ChampionHp",
+       "value": "8",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Hp multiplier for Champion mobs."
+      },
+      {
+       "key": "ChampionHpRegen",
+       "value": "1.0",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": "Hp Regen Multiplier for Champion mobs."
+      },
+      {
+       "key": "ChampionRewardsExpSp",
+       "value": "8.0",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": "Exp/Sp rewards multiplier for Champion mobs."
+      },
+      {
+       "key": "ChampionRewardsChance",
+       "value": "8.0",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": "Standard rewards chance multiplier for Champion mobs."
+      },
+      {
+       "key": "ChampionRewardsAmount",
+       "value": "1.0",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": "Standard rewards amount multiplier for Champion mobs."
+      },
+      {
+       "key": "ChampionAdenasRewardsChance",
+       "value": "1.0",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": "Adena & Seal Stone rewards chance multiplier for Champion mobs."
+      },
+      {
+       "key": "ChampionAdenasRewardsAmount",
+       "value": "1.0",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": "Adena & Seal Stone rewards amount multiplier for Champion mobs."
+      },
+      {
+       "key": "ChampionAtk",
+       "value": "1.0",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": "P. Attack and M. Attack bonus for Champion mobs."
+      },
+      {
+       "key": "ChampionSpdAtk",
+       "value": "1.0",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": "Physical/Magical Attack Speed bonus for Champion mobs."
+      },
+      {
+       "key": "ChampionRewardItems",
+       "value": "6393,1",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Specified id and amount of reward a player will receive if they are awarded the item. Separated by ; Example: 6393,1;57,5000"
+      },
+      {
+       "key": "ChampionRewardLowerLvlItemChance",
+       "value": "0",
+       "secret": false,
+       "default": "0",
+       "type": "int",
+       "description": "% Chance to obtain a specified reward item from a lower level Champion mob."
+      },
+      {
+       "key": "ChampionRewardHigherLvlItemChance",
+       "value": "100",
+       "secret": false,
+       "default": "0",
+       "type": "int",
+       "description": "% Chance to obtain a specified reward item from a higher level Champion mob."
+      },
+      {
+       "key": "ChampionEnableVitality",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Do you want to enable the vitality calculation when killing champion mobs? Be aware that it can lead to huge unbalance on your server, your rate for that mob would then be \"mobXP x serverRate x vitalityRate x championXpRate Notes: Works only if EnableVitality = True"
+      },
+      {
+       "key": "ChampionEnableInInstances",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Enable spawning of the champions in instances Default = False"
+      }
+     ]
+    }
+   ],
+   "group": "Custom"
+  },
+  {
+   "file": "ChatModeration.ini",
+   "sections": [
+    {
+     "title": "Chat Moderation",
+     "keys": [
+      {
+       "key": "ChatAdmin",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "This option will enable using of the voice commands .banchat and .unbanchat for players with corresponding access level (default: 100). Check AdminCommands.xml for details."
+      }
+     ]
+    }
+   ],
+   "group": "Custom"
+  },
+  {
+   "file": "ClassBalance.ini",
+   "sections": [
+    {
+     "title": "Class Balance",
+     "keys": [
+      {
+       "key": "PveMagicalSkillDamageMultipliers",
+       "value": "",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "PvpMagicalSkillDamageMultipliers",
+       "value": "",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "PveMagicalSkillDefenceMultipliers",
+       "value": "",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "PvpMagicalSkillDefenceMultipliers",
+       "value": "",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "PveMagicalSkillCriticalChanceMultipliers",
+       "value": "",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "PvpMagicalSkillCriticalChanceMultipliers",
+       "value": "",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "PveMagicalSkillCriticalDamageMultipliers",
+       "value": "",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "PvpMagicalSkillCriticalDamageMultipliers",
+       "value": "",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "PvePhysicalSkillDamageMultipliers",
+       "value": "",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "PvpPhysicalSkillDamageMultipliers",
+       "value": "",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "PvePhysicalSkillDefenceMultipliers",
+       "value": "",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "PvpPhysicalSkillDefenceMultipliers",
+       "value": "",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "PvePhysicalSkillCriticalChanceMultipliers",
+       "value": "",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "PvpPhysicalSkillCriticalChanceMultipliers",
+       "value": "",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "PvePhysicalSkillCriticalDamageMultipliers",
+       "value": "",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "PvpPhysicalSkillCriticalDamageMultipliers",
+       "value": "",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "PvePhysicalAttackDamageMultipliers",
+       "value": "",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "PvpPhysicalAttackDamageMultipliers",
+       "value": "",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "PvePhysicalAttackDefenceMultipliers",
+       "value": "",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "PvpPhysicalAttackDefenceMultipliers",
+       "value": "",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "PvePhysicalAttackCriticalChanceMultipliers",
+       "value": "",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "PvpPhysicalAttackCriticalChanceMultipliers",
+       "value": "",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "PvePhysicalAttackCriticalDamageMultipliers",
+       "value": "",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "PvpPhysicalAttackCriticalDamageMultipliers",
+       "value": "",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "PveBlowSkillDamageMultipliers",
+       "value": "",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "PvpBlowSkillDamageMultipliers",
+       "value": "",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "PveBlowSkillDefenceMultipliers",
+       "value": "",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "PvpBlowSkillDefenceMultipliers",
+       "value": "",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "PveEnergySkillDamageMultipliers",
+       "value": "",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "PvpEnergySkillDamageMultipliers",
+       "value": "",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "PveEnergySkillDefenceMultipliers",
+       "value": "",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "PvpEnergySkillDefenceMultipliers",
+       "value": "",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "PlayerHealingSkillMultipliers",
+       "value": "",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "SkillMasteryChanceMultipliers",
+       "value": "",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "SkillReuseMultipliers",
+       "value": "",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "ExpAmountMultipliers",
+       "value": "",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "SpAmountMultipliers",
+       "value": "",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      }
+     ]
+    }
+   ],
+   "group": "Custom"
+  },
+  {
+   "file": "CommunityBoard.ini",
+   "sections": [
+    {
+     "title": "Custom Community Board",
+     "keys": [
+      {
+       "key": "CustomCommunityBoard",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Enable Custom Community Board."
+      },
+      {
+       "key": "CommunityCurrencyId",
+       "value": "57",
+       "secret": false,
+       "default": "57 (Adena)",
+       "type": "int",
+       "description": "Currency used by the Community Board (itemId)."
+      },
+      {
+       "key": "CommunityEnableMultisells",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Enable Multisells."
+      },
+      {
+       "key": "CommunityEnableTeleports",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Enable Teleports."
+      },
+      {
+       "key": "CommunityEnableBuffs",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Enable Buffs."
+      },
+      {
+       "key": "CommunityEnableHeal",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Enable Heal."
+      },
+      {
+       "key": "CommunityEnableDelevel",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Enable delevel."
+      },
+      {
+       "key": "CommunityTeleportPrice",
+       "value": "0",
+       "secret": false,
+       "default": "0 (free)",
+       "type": "int",
+       "description": "Price for Teleports."
+      },
+      {
+       "key": "CommunityBuffPrice",
+       "value": "0",
+       "secret": false,
+       "default": "0 (free)",
+       "type": "int",
+       "description": "Price for Buffs."
+      },
+      {
+       "key": "CommunityHealPrice",
+       "value": "0",
+       "secret": false,
+       "default": "0 (free)",
+       "type": "int",
+       "description": "Price for Heal."
+      },
+      {
+       "key": "CommunityDelevelPrice",
+       "value": "0",
+       "secret": false,
+       "default": "0 (free)",
+       "type": "int",
+       "description": "Price for Delevel."
+      },
+      {
+       "key": "CommunityBoardPeaceOnly",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Enable Custom Community Board only in peace zone."
+      },
+      {
+       "key": "CommunityCombatDisabled",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Disable Community Board while in combat."
+      },
+      {
+       "key": "CommunityKarmaDisabled",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Disable Community Board while player has Karma."
+      },
+      {
+       "key": "CommunityCastAnimations",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Cast animations of each buff."
+      },
+      {
+       "key": "CommunityPremiumSystem",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Enable buying premium from community board. Premium System must be enabled."
+      },
+      {
+       "key": "CommunityPremiumBuyCoinId",
+       "value": "57",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "ItemID for buying premium in community board. Check data/html/CommunityBoard/Custom/premium/main.html"
+      },
+      {
+       "key": "CommunityPremiumPricePerDay",
+       "value": "1000000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Amount of coins needed for each premium day bought."
+      },
+      {
+       "key": "CommunityAvailableBuffs",
+       "value": "1077,1240,1086,1032,1073,1036,1035,1068,1040,1044,1182,1191,1033,1189,1392,1393,1303,1059,1242,1268",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "List of available buffs to avoid exploits. Usage: SkillId1,SkillId2..."
+      },
+      {
+       "key": "CommunityTeleportList",
+       "value": "\\",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": "List of available teleports to avoid exploits. Usage: TeleportName1,X1,Y1,Z1;TeleportName2,X2,Y2,Z2... the \"\\\" indicates a new line"
+      }
+     ]
+    }
+   ],
+   "group": "Custom"
+  },
+  {
+   "file": "CustomMailManager.ini",
+   "sections": [
+    {
+     "title": "Custom Mail Manager",
+     "keys": [
+      {
+       "key": "CustomMailManagerEnabled",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Enable/Disable sending mail through the custom_mail SQL table."
+      },
+      {
+       "key": "DatabaseQueryDelay",
+       "value": "30",
+       "secret": false,
+       "default": "30",
+       "type": "int",
+       "description": "Database query delay in seconds."
+      }
+     ]
+    }
+   ],
+   "group": "Custom"
+  },
+  {
+   "file": "DelevelManager.ini",
+   "sections": [
+    {
+     "title": "Delevel Manager (instant delevel NPC)",
+     "keys": [
+      {
+       "key": "Enabled",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Enable Delevel Manager NPC."
+      },
+      {
+       "key": "NpcId",
+       "value": "1002000",
+       "secret": false,
+       "default": "1002000",
+       "type": "int",
+       "description": "Delevel Manager NPC id."
+      },
+      {
+       "key": "RequiredItemId",
+       "value": "4356",
+       "secret": false,
+       "default": "4356 (Gold Einhasad)",
+       "type": "int",
+       "description": "Required item id."
+      },
+      {
+       "key": "RequiredItemCount",
+       "value": "2",
+       "secret": false,
+       "default": "2",
+       "type": "int",
+       "description": "Required item count."
+      },
+      {
+       "key": "MimimumDelevel",
+       "value": "20",
+       "secret": false,
+       "default": "20",
+       "type": "int",
+       "description": "Mimimum level you can reach."
+      }
+     ]
+    }
+   ],
+   "group": "Custom"
+  },
+  {
+   "file": "DualboxCheck.ini",
+   "sections": [
+    {
+     "title": "Dualbox Check",
+     "keys": [
+      {
+       "key": "DualboxCheckMaxPlayersPerIP",
+       "value": "0",
+       "secret": false,
+       "default": "0 (unlimited)",
+       "type": "int",
+       "description": "Maximum number of players per IP address allowed to enter game."
+      },
+      {
+       "key": "DualboxCheckMaxOlympiadParticipantsPerIP",
+       "value": "0",
+       "secret": false,
+       "default": "0 (unlimited)",
+       "type": "int",
+       "description": "Maximum number of players per IP address allowed to participate in olympiad."
+      },
+      {
+       "key": "DualboxCheckMaxL2EventParticipantsPerIP",
+       "value": "0",
+       "secret": false,
+       "default": "0 (unlimited)",
+       "type": "int",
+       "description": "Maximum number of players per IP address allowed to participate in events using L2J Event Engine (//event)."
+      },
+      {
+       "key": "DualboxCheckMaxOfflinePlayPerIP",
+       "value": "0",
+       "secret": false,
+       "default": "0 (unlimited)",
+       "type": "int",
+       "description": "Maximum number of players per IP address allowed to offlineplay."
+      },
+      {
+       "key": "DualboxCheckMaxOfflinePlayPremiumPerIP",
+       "value": "0",
+       "secret": false,
+       "default": "0 (unlimited)",
+       "type": "int",
+       "description": "Maximum number of premium players per IP address allowed to offlineplay."
+      },
+      {
+       "key": "DualboxCountOfflineTraders",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Count offline traders as dualbox."
+      },
+      {
+       "key": "DualboxCheckWhitelist",
+       "value": "127.0.0.1,0",
+       "secret": false,
+       "default": "127.0.0.1,0 (no limits from localhost)",
+       "type": "list",
+       "description": "Whitelist of the addresses for dualbox checks. Format: Address1,Number1;Address2,Number2... Network address can be number (127.0.0.1) or symbolic (localhost) formats. Additional connection number added to the global limits for this address. For example, if number of TvT event participants per IP address set to the 1 (no dualbox) and whitelist contains \"l2jmobius.org,2\" then number of allowed participants from l2jmobius.org will be 1+2=3. Use 0 or negative value for unlimited number of connections."
+      }
+     ]
+    }
+   ],
+   "group": "Custom"
+  },
+  {
+   "file": "FactionSystem.ini",
+   "sections": [
+    {
+     "title": "Faction System (Good vs Evil)",
+     "keys": [
+      {
+       "key": "EnableFactionSystem",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Enable faction system."
+      },
+      {
+       "key": "StartingLocation",
+       "value": "85332,16199,-1252",
+       "secret": false,
+       "default": "85332,16199,-1252",
+       "type": "list",
+       "description": "Starting location for all players."
+      },
+      {
+       "key": "ManagerSpawnLocation",
+       "value": "85712,15974,-1260,26808",
+       "secret": false,
+       "default": "85712,15974,-1260,26808",
+       "type": "list",
+       "description": "Spawn location for faction manager NPC."
+      },
+      {
+       "key": "GoodBaseLocation",
+       "value": "45306,48878,-3058",
+       "secret": false,
+       "default": "45306,48878,-3058",
+       "type": "list",
+       "description": "Good base location."
+      },
+      {
+       "key": "EvilBaseLocation",
+       "value": "-44037,-113283,-237",
+       "secret": false,
+       "default": "-44037,-113283,-237",
+       "type": "list",
+       "description": "Evil base location."
+      },
+      {
+       "key": "GoodTeamName",
+       "value": "Good",
+       "secret": false,
+       "default": "Good",
+       "type": "string",
+       "description": "Good team name."
+      },
+      {
+       "key": "EvilTeamName",
+       "value": "Evil",
+       "secret": false,
+       "default": "Evil",
+       "type": "string",
+       "description": "Evil team name."
+      },
+      {
+       "key": "GoodNameColor",
+       "value": "00FF00",
+       "secret": false,
+       "default": "00FF00",
+       "type": "string",
+       "description": "Good name color."
+      },
+      {
+       "key": "EvilNameColor",
+       "value": "0000FF",
+       "secret": false,
+       "default": "0000FF",
+       "type": "string",
+       "description": "Evil name color."
+      },
+      {
+       "key": "EnableFactionGuards",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Enable faction guards. The NPC template must have faction as clan."
+      },
+      {
+       "key": "RespawnAtFactionBase",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Upon death, respawn at faction base."
+      },
+      {
+       "key": "FactionAutoNobless",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Upon selecting faction, players become nobless."
+      },
+      {
+       "key": "EnableFactionChat",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Disallow chat between factions."
+      },
+      {
+       "key": "BalanceOnlinePlayers",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Prohibit login when faction has more online players."
+      },
+      {
+       "key": "BalancePlayerExceedLimit",
+       "value": "20",
+       "secret": false,
+       "default": "20",
+       "type": "int",
+       "description": "Online player exceed limit (used by setting above)."
+      }
+     ]
+    }
+   ],
+   "group": "Custom"
+  },
+  {
+   "file": "FakePlayers.ini",
+   "sections": [
+    {
+     "title": "Fake players",
+     "keys": [
+      {
+       "key": "EnableFakePlayers",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Enable fake players."
+      },
+      {
+       "key": "FakePlayerChat",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Enable chatting with fake players."
+      },
+      {
+       "key": "FakePlayerUseShots",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Enable shots usage for fake players."
+      },
+      {
+       "key": "FakePlayerKillsRewardPvP",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Reward PvP kills by killing fake players."
+      },
+      {
+       "key": "FakePlayerUnflaggedKillsKarma",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Fake player kills apply karma rules."
+      },
+      {
+       "key": "FakePlayerAutoAttackable",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Fake players can be attacked without PvP flagging."
+      },
+      {
+       "key": "FakePlayerAggroMonsters",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Aggressive AI fake players attack nearby monsters."
+      },
+      {
+       "key": "FakePlayerAggroPlayers",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Aggressive AI fake players attack nearby players."
+      },
+      {
+       "key": "FakePlayerAggroFPC",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Aggressive AI fake players attack nearby fake players."
+      },
+      {
+       "key": "FakePlayerCanDropItems",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Fake players can drop items when killing monsters."
+      },
+      {
+       "key": "FakePlayerCanPickup",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Fake players can pickup dropped items."
+      }
+     ]
+    }
+   ],
+   "group": "Custom"
+  },
+  {
+   "file": "FindPvP.ini",
+   "sections": [
+    {
+     "title": "Find PvP",
+     "keys": [
+      {
+       "key": "EnableFindPvP",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Enable FindPvP bypass."
+      }
+     ]
+    }
+   ],
+   "group": "Custom"
+  },
+  {
+   "file": "FreeMounts.ini",
+   "sections": [
+    {
+     "title": "Free Mount Settings",
+     "keys": [
+      {
+       "key": "EnableFreeStrider",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Enable free strider mount."
+      },
+      {
+       "key": "EnableFreeWyvern",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Enable free wyvern mount."
+      }
+     ]
+    }
+   ],
+   "group": "Custom"
+  },
+  {
+   "file": "HellboundStatus.ini",
+   "sections": [
+    {
+     "title": "Hellbound Status Voice Command",
+     "keys": [
+      {
+       "key": "HellboundStatus",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "This option will enable using of the voice commands .hellbound for retrieving information about current Hellbound level and trust."
+      }
+     ]
+    }
+   ],
+   "group": "Custom"
+  },
+  {
+   "file": "MerchantZeroSellPrice.ini",
+   "sections": [
+    {
+     "title": "Merchant Zero Sell Price",
+     "keys": [
+      {
+       "key": "MerchantZeroSellPrice",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "All items sold to merchants reward no Adena."
+      }
+     ]
+    }
+   ],
+   "group": "Custom"
+  },
+  {
+   "file": "MultilingualSupport.ini",
+   "sections": [
+    {
+     "title": "Multilingual support",
+     "keys": [
+      {
+       "key": "MultiLangEnable",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Enable or disable multilingual support."
+      },
+      {
+       "key": "MultiLangDefault",
+       "value": "en",
+       "secret": false,
+       "default": "en",
+       "type": "string",
+       "description": "Default language, if not defined."
+      },
+      {
+       "key": "MultiLangAllowed",
+       "value": "en;el",
+       "secret": false,
+       "default": "en;el",
+       "type": "list",
+       "description": "List of allowed languages, semicolon separated."
+      },
+      {
+       "key": "MultiLangVoiceCommand",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Enable or disable voice command .lang for changing languages on the fly."
+      }
+     ]
+    }
+   ],
+   "group": "Custom"
+  },
+  {
+   "file": "NoblessMaster.ini",
+   "sections": [
+    {
+     "title": "Nobless Master Configuration (Instant Nobless NPC)",
+     "keys": [
+      {
+       "key": "Enabled",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Enable or disable the Nobless Master NPC."
+      },
+      {
+       "key": "NpcId",
+       "value": "1003000",
+       "secret": false,
+       "default": "1003000",
+       "type": "int",
+       "description": "The ID of the Nobless Master NPC."
+      },
+      {
+       "key": "LevelRequirement",
+       "value": "80",
+       "secret": false,
+       "default": "80",
+       "type": "int",
+       "description": "Level requirement to become Nobless. Note: If you modify this, ensure the corresponding HTMLs are updated."
+      },
+      {
+       "key": "ItemId",
+       "value": "57",
+       "secret": false,
+       "default": "57 (Adena)",
+       "type": "int",
+       "description": "The item ID required to become Nobless (e.g., Adena)."
+      },
+      {
+       "key": "ItemCount",
+       "value": "0",
+       "secret": false,
+       "default": "0",
+       "type": "int",
+       "description": "The quantity of the required item. Set to 0 to disable the item requirement."
+      },
+      {
+       "key": "RewardTiara",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Whether to reward the Nobless Tiara upon becoming Nobless."
+      }
+     ]
+    }
+   ],
+   "group": "Custom"
+  },
+  {
+   "file": "NpcStatMultipliers.ini",
+   "sections": [
+    {
+     "title": "NPC Stat Multipliers",
+     "keys": [
+      {
+       "key": "EnableNpcStatMultipliers",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Enable/Disable NPC stat multipliers."
+      },
+      {
+       "key": "MonsterHP",
+       "value": "1.0",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": "Monsters"
+      },
+      {
+       "key": "MonsterMP",
+       "value": "1.0",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": ""
+      },
+      {
+       "key": "MonsterPAtk",
+       "value": "1.0",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": ""
+      },
+      {
+       "key": "MonsterMAtk",
+       "value": "1.0",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": ""
+      },
+      {
+       "key": "MonsterPDef",
+       "value": "1.0",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": ""
+      },
+      {
+       "key": "MonsterMDef",
+       "value": "1.0",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": ""
+      },
+      {
+       "key": "MonsterAggroRange",
+       "value": "1.0",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": ""
+      },
+      {
+       "key": "MonsterClanHelpRange",
+       "value": "1.0",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": ""
+      },
+      {
+       "key": "RaidbossHP",
+       "value": "1.0",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": "Raidbosses"
+      },
+      {
+       "key": "RaidbossMP",
+       "value": "1.0",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": ""
+      },
+      {
+       "key": "RaidbossPAtk",
+       "value": "1.0",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": ""
+      },
+      {
+       "key": "RaidbossMAtk",
+       "value": "1.0",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": ""
+      },
+      {
+       "key": "RaidbossPDef",
+       "value": "1.0",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": ""
+      },
+      {
+       "key": "RaidbossMDef",
+       "value": "1.0",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": ""
+      },
+      {
+       "key": "RaidbossAggroRange",
+       "value": "1.0",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": ""
+      },
+      {
+       "key": "RaidbossClanHelpRange",
+       "value": "1.0",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": ""
+      },
+      {
+       "key": "GuardHP",
+       "value": "1.0",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": "Guards"
+      },
+      {
+       "key": "GuardMP",
+       "value": "1.0",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": ""
+      },
+      {
+       "key": "GuardPAtk",
+       "value": "1.0",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": ""
+      },
+      {
+       "key": "GuardMAtk",
+       "value": "1.0",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": ""
+      },
+      {
+       "key": "GuardPDef",
+       "value": "1.0",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": ""
+      },
+      {
+       "key": "GuardMDef",
+       "value": "1.0",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": ""
+      },
+      {
+       "key": "GuardAggroRange",
+       "value": "1.0",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": ""
+      },
+      {
+       "key": "GuardClanHelpRange",
+       "value": "1.0",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": ""
+      },
+      {
+       "key": "DefenderHP",
+       "value": "1.0",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": "Defenders"
+      },
+      {
+       "key": "DefenderMP",
+       "value": "1.0",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": ""
+      },
+      {
+       "key": "DefenderPAtk",
+       "value": "1.0",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": ""
+      },
+      {
+       "key": "DefenderMAtk",
+       "value": "1.0",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": ""
+      },
+      {
+       "key": "DefenderPDef",
+       "value": "1.0",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": ""
+      },
+      {
+       "key": "DefenderMDef",
+       "value": "1.0",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": ""
+      },
+      {
+       "key": "DefenderAggroRange",
+       "value": "1.0",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": ""
+      },
+      {
+       "key": "DefenderClanHelpRange",
+       "value": "1.0",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": ""
+      }
+     ]
+    }
+   ],
+   "group": "Custom"
+  },
+  {
+   "file": "OfflinePlay.ini",
+   "sections": [
+    {
+     "title": "Offline Auto Play",
+     "keys": [
+      {
+       "key": "EnableOfflinePlayCommand",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Enable .offlineplay command for logging out and continue auto play."
+      },
+      {
+       "key": "RestoreAutoPlayOffliners",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Store offline play players to database. This allows offline players to be restored after server restart."
+      },
+      {
+       "key": "OfflinePlayPremium",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Enable .offlineplay command only for premium players. Premium System must be enabled."
+      },
+      {
+       "key": "OfflinePlayLogoutOnDeath",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Logout player on death."
+      },
+      {
+       "key": "OfflinePlayDisconnectSameAccount",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Disconnect when player from same account logins to the game."
+      },
+      {
+       "key": "OfflinePlayLoginMessage",
+       "value": "",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": "Message send to players on login. Leave empty to disable. Example: You can use .offlineplay to logout and continue auto play."
+      },
+      {
+       "key": "OfflinePlaySetNameColor",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "If set to True, name color will be changed then entering offline play mode."
+      },
+      {
+       "key": "OfflinePlayNameColor",
+       "value": "808080",
+       "secret": false,
+       "default": "808080",
+       "type": "int",
+       "description": "Color of the name in offline play mode (if OfflinePlaySetNameColor = True)."
+      },
+      {
+       "key": "OfflinePlayAbnormalEffect",
+       "value": "",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": "Abnormal effect for offline play. Can use multiple enums separated by commas to choose random effect. Leave empty to disable. Example: SLEEP"
+      }
+     ]
+    }
+   ],
+   "group": "Custom"
+  },
+  {
+   "file": "OfflineTrade.ini",
+   "sections": [
+    {
+     "title": "Offline trade/craft",
+     "keys": [
+      {
+       "key": "OfflineTradeEnable",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Option to enable or disable offline trade feature."
+      },
+      {
+       "key": "OfflineCraftEnable",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Option to enable or disable offline craft feature."
+      },
+      {
+       "key": "OfflineModeInPeaceZone",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "If set to True, off-line shops will be possible only peace zones."
+      },
+      {
+       "key": "OfflineModeNoDamage",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "If set to True, players in off-line shop mode wont take any damage, thus they cannot be killed."
+      },
+      {
+       "key": "OfflineSetNameColor",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "If set to True, name color will be changed then entering offline mode."
+      },
+      {
+       "key": "OfflineNameColor",
+       "value": "808080",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Color of the name in offline mode (if OfflineSetNameColor = True)."
+      },
+      {
+       "key": "OfflineFame",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Allow fame for characters in offline mode."
+      },
+      {
+       "key": "RestoreOffliners",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Restore offline traders after restart/shutdown."
+      },
+      {
+       "key": "OfflineMaxDays",
+       "value": "0",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Do not restore offline characters, after OfflineMaxDays days spent from first restore. Require server restart to disconnect expired shops. 0 = disabled (always restore)."
+      },
+      {
+       "key": "OfflineDisconnectFinished",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Disconnect shop after finished selling, buying."
+      },
+      {
+       "key": "OfflineDisconnectSameAccount",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Disconnect shop when character from same account logins to the game."
+      },
+      {
+       "key": "StoreOfflineTradeInRealtime",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Store offline trader transactions in realtime. Uses more datatabase resources, but helps if server shuts down unexpectedly."
+      },
+      {
+       "key": "EnableOfflineCommand",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Enable .offline command for logging out."
+      },
+      {
+       "key": "OfflineAbnormalEffect",
+       "value": "",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": "Abnormal effect for offline traders. Can use multiple enums separated by commas to choose random effect. Leave empty to disable. Example: SLEEP"
+      }
+     ]
+    }
+   ],
+   "group": "Custom"
+  },
+  {
+   "file": "OnlineInfo.ini",
+   "sections": [
+    {
+     "title": "Online Info Settings",
+     "keys": [
+      {
+       "key": "EnableOnlineCommand",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Enable player .online voiced command. Shows how many players are online."
+      }
+     ]
+    }
+   ],
+   "group": "Custom"
+  },
+  {
+   "file": "PasswordChange.ini",
+   "sections": [
+    {
+     "title": "Password Change",
+     "keys": [
+      {
+       "key": "AllowChangePassword",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Enables .changepassword voiced command which allows the players to change their account's password ingame."
+      }
+     ]
+    }
+   ],
+   "group": "Custom"
+  },
+  {
+   "file": "PremiumSystem.ini",
+   "sections": [
+    {
+     "title": "Premium System (VIP)",
+     "keys": []
+    },
+    {
+     "title": "PC Cafe (PC Bang)",
+     "keys": [
+      {
+       "key": "EnablePremiumSystem",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Enable premium system."
+      },
+      {
+       "key": "AccountWidePremium",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Make premium account wide."
+      },
+      {
+       "key": "PcCafeEnabled",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "PC Cafe Enabled."
+      },
+      {
+       "key": "PcCafeRetailLike",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Retail accuisition of PC points(10 PA points are gained for each 5 minutes of being online)"
+      },
+      {
+       "key": "PcCafeRewardTime",
+       "value": "300000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "PC Cafe point reward time. Retail: 300000 (5min)"
+      },
+      {
+       "key": "PcCafeOnlyPremium",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Allow only players with a Premium account."
+      },
+      {
+       "key": "MaxPcCafePoints",
+       "value": "200000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Max points that player may have. Limited by int limit."
+      },
+      {
+       "key": "AcquisitionPointsRetailLikePoints",
+       "value": "10",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "PC Ban points acquisition if it's retail like"
+      },
+      {
+       "key": "AcquisitionPointsRate",
+       "value": "1.0",
+       "secret": false,
+       "default": null,
+       "type": "float",
+       "description": "PC Bang point rate if it's not retail like. Acquisition formula equals (exp * 0.0001 * AcquisitionPointsRate) e.g. with 1.0 it's 10000 exp = 1 PC Bang point 2.0 - 10000 exp = 2 PC Bang points 0.5 - 5000  exp = 1 PC Bang point"
+      },
+      {
+       "key": "AcquisitionPointsRandom",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Use random points rewarding. If enabled points will be random from points/2 to points."
+      },
+      {
+       "key": "DoublingAcquisitionPoints",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Creates a chance to aquire double points."
+      },
+      {
+       "key": "DoublingAcquisitionPointsChance",
+       "value": "1",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Double points chance. Used when DoublingAcquisitionPoints is enabled. Default 1 (%)"
+      },
+      {
+       "key": "RewardLowExpKills",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Reward low exp kills Acquire points if player gains exp and aquire formula equals 0."
+      },
+      {
+       "key": "RewardLowExpKillsChance",
+       "value": "50",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Chance for low exp kills Used when RewardLowExpKills is enabled. Default 50 (%)"
+      },
+      {
+       "key": "PremiumRateXp",
+       "value": "2",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Xp rate for premium players."
+      },
+      {
+       "key": "PremiumRateSp",
+       "value": "2",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Sp rate for premium players."
+      },
+      {
+       "key": "PremiumRateDropChance",
+       "value": "1",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Drop chance for premium players."
+      },
+      {
+       "key": "PremiumRateDropAmount",
+       "value": "2",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Drop amount for premium players."
+      },
+      {
+       "key": "PremiumRateSpoilChance",
+       "value": "1",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Spoil chance for premium players."
+      },
+      {
+       "key": "PremiumRateSpoilAmount",
+       "value": "2",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Spoil amount for premium players."
+      },
+      {
+       "key": "PremiumRateQuestXp",
+       "value": "1",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Quest Xp rate for premium players."
+      },
+      {
+       "key": "PremiumRateQuestSp",
+       "value": "1",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Quest Sp rate for premium players."
+      },
+      {
+       "key": "PremiumRateDropChanceByItemId",
+       "value": "57,2;6656,1;6657,1;6658,1;6659,1;6660,1;6661,1;6662,1;8191,1;10170,1;10314,1",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Caution: Raid bosses and herbs are not affected by premium rates, but specific items can be affected by rates bellow. List of items affected by custom drop rate by id, used now for Adena rate too. Usage: itemId1,multiplier1;itemId2,multiplier2;..."
+      },
+      {
+       "key": "PremiumRateDropAmountByItemId",
+       "value": "57,2;6656,1;6657,1;6658,1;6659,1;6660,1;6661,1;6662,1;8191,1;10170,1;10314,1",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": ""
+      }
+     ]
+    }
+   ],
+   "group": "Custom"
+  },
+  {
+   "file": "PrivateStoreRange.ini",
+   "sections": [
+    {
+     "title": "Minimum Range for Private Stores",
+     "keys": [
+      {
+       "key": "ShopMinRangeFromPlayer",
+       "value": "50",
+       "secret": false,
+       "default": "0",
+       "type": "int",
+       "description": "Minimum distance from player / npc to open a new private store."
+      },
+      {
+       "key": "ShopMinRangeFromNpc",
+       "value": "100",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      }
+     ]
+    }
+   ],
+   "group": "Custom"
+  },
+  {
+   "file": "PvpAnnounce.ini",
+   "sections": [
+    {
+     "title": "Pvp/pk Announce",
+     "keys": [
+      {
+       "key": "AnnouncePkPvP",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": ""
+      },
+      {
+       "key": "AnnouncePkPvPNormalMessage",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Announce this as normal system message"
+      },
+      {
+       "key": "AnnouncePkMsg",
+       "value": "$killer has slaughtered $target",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": "PK message template variables: $killer, $target"
+      },
+      {
+       "key": "AnnouncePvpMsg",
+       "value": "$killer has defeated $target",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": "Pvp message template variables: $killer, $target"
+      }
+     ]
+    }
+   ],
+   "group": "Custom"
+  },
+  {
+   "file": "PvpRewardItem.ini",
+   "sections": [
+    {
+     "title": "PvP/PK Reward Item",
+     "keys": [
+      {
+       "key": "RewardPvpItem",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Reward item on PvP"
+      },
+      {
+       "key": "RewardPvpItemId",
+       "value": "57",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Reward PvP item ID"
+      },
+      {
+       "key": "RewardPvpItemAmount",
+       "value": "1000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Reward PvP item Amount"
+      },
+      {
+       "key": "RewardPvpItemMessage",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Show PvP item reward message?"
+      },
+      {
+       "key": "RewardPkItem",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Reward item on PK"
+      },
+      {
+       "key": "RewardPkItemId",
+       "value": "57",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Reward PK item ID"
+      },
+      {
+       "key": "RewardPkItemAmount",
+       "value": "500",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Reward PK item Amount"
+      },
+      {
+       "key": "RewardPkItemMessage",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Show PK item reward message?"
+      },
+      {
+       "key": "DisableRewardsInInstances",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Disable rewards in instances."
+      },
+      {
+       "key": "DisableRewardsInPvpZones",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Disable rewards in PvP zones."
+      }
+     ]
+    }
+   ],
+   "group": "Custom"
+  },
+  {
+   "file": "PvpTitleColor.ini",
+   "sections": [
+    {
+     "title": "Custom PvP Titles and Colors",
+     "keys": [
+      {
+       "key": "EnablePvPColorSystem",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": ""
+      },
+      {
+       "key": "PvpAmount1",
+       "value": "500",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Rank 1"
+      },
+      {
+       "key": "ColorForAmount1",
+       "value": "9C9C9C",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "PvPTitleForAmount1",
+       "value": "Sergeant",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "PvpAmount2",
+       "value": "1000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Rank 2"
+      },
+      {
+       "key": "ColorForAmount2",
+       "value": "696969",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "PvPTitleForAmount2",
+       "value": "Lieutenant",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "PvpAmount3",
+       "value": "1500",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Rank 3"
+      },
+      {
+       "key": "ColorForAmount3",
+       "value": "4F4F4F",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "PvPTitleForAmount3",
+       "value": "Captain",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "PvpAmount4",
+       "value": "2500",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Rank 4"
+      },
+      {
+       "key": "ColorForAmount4",
+       "value": "363636",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "PvPTitleForAmount4",
+       "value": "Major",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "PvpAmount5",
+       "value": "5000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Rank 5"
+      },
+      {
+       "key": "ColorForAmount5",
+       "value": "1C1C1C",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "PvPTitleForAmount5",
+       "value": "General",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      }
+     ]
+    }
+   ],
+   "group": "Custom"
+  },
+  {
+   "file": "RandomSpawns.ini",
+   "sections": [
+    {
+     "title": "Random Spawn System for Monsters",
+     "keys": [
+      {
+       "key": "EnableRandomMonsterSpawns",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Enable random monster spawns."
+      },
+      {
+       "key": "MaxSpawnMobRange",
+       "value": "150",
+       "secret": false,
+       "default": "150",
+       "type": "int",
+       "description": "Max range for X and Y coords."
+      },
+      {
+       "key": "MobsSpawnNotRandom",
+       "value": "18812,18813,18814,22138,\\",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Examples: No random spawns for Kasha's Eye, Pagan Guards, Sel Mahums, Four Sepulchers MobsSpawnNotRandom = 18812,18813,18814"
+      }
+     ]
+    }
+   ],
+   "group": "Custom"
+  },
+  {
+   "file": "Rebirth.ini",
+   "sections": [
+    {
+     "title": "Rebirth System",
+     "keys": [
+      {
+       "key": "RebirthAllow",
+       "value": "false",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Enables or disables the rebirth system."
+      },
+      {
+       "key": "RebirthMin",
+       "value": "75",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Minimum character level required to request rebirth."
+      },
+      {
+       "key": "RebirthMaxCount",
+       "value": "3",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Maximum number of rebirths a player can perform."
+      },
+      {
+       "key": "RebirthMaxSelectedSkills",
+       "value": "3",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Maximum number of rebirth skills a player can own simultaneously."
+      }
+     ]
+    },
+    {
+     "title": "Rebirth Skill Inheritance / Skill Wipe",
+     "keys": [
+      {
+       "key": "RebirthInheritSkillsToSubclasses",
+       "value": "true",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "If true, rebirth skills are also applied to subclasses. If false, rebirth skills are applied only to the main class."
+      },
+      {
+       "key": "RebirthDeleteAllSkills",
+       "value": "true",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "If true, all player skills are removed during rebirth except protected groups and explicitly whitelisted skills. Use with caution."
+      },
+      {
+       "key": "RebirthSkillDeleteWhitelist",
+       "value": "",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": "Comma-separated list of skill IDs that must never be removed during rebirth. Example: 1216,1405,1414"
+      },
+      {
+       "key": "RebirthDeleteProtectedSkillGroups",
+       "value": "STARTING_CLASS,FISHING,NOBLE,HERO,CLAN,COLLECT,SUBCLASS,SUBPLEDGE,TRANSFER,TRANSFORM",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Skill groups protected from deletion during rebirth. Available groups in High Five: STARTING_CLASS, FISHING, NOBLE, HERO, CLAN, COLLECT, SUBCLASS, SUBPLEDGE, TRANSFER, TRANSFORM"
+      },
+      {
+       "key": "RebirthDeleteRestoreTemporarySkills",
+       "value": "true",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "If true, temporary runtime skills are restored after the wipe/rebuild phase."
+      }
+     ]
+    },
+    {
+     "title": "Rebirth Costs",
+     "keys": [
+      {
+       "key": "RebirthItemId",
+       "value": "57",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Item ID and amount required to perform rebirth."
+      },
+      {
+       "key": "RebirthItemAmount",
+       "value": "1000000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      }
+     ]
+    },
+    {
+     "title": "Rebirth Reward",
+     "keys": [
+      {
+       "key": "RebirthRewardItemId",
+       "value": "1232",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Reward granted after each successful rebirth."
+      },
+      {
+       "key": "RebirthRewardItemAmount",
+       "value": "10",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      }
+     ]
+    },
+    {
+     "title": "Rebirth Skill Reset",
+     "keys": [
+      {
+       "key": "RebirthSkillRefundMode",
+       "value": "MID",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": "Refund mode when resetting a rebirth skill. Available options: FULL, MID, NONE"
+      }
+     ]
+    },
+    {
+     "title": "Rebirth Skill Pools",
+     "keys": [
+      {
+       "key": "RebirthMageSkills",
+       "value": "1059,1,6;1085,1,6;1204,1,6;1087,1,6;1013,1,6;1303,1,6",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Available rebirth skills for mage classes. Format: skillId,skillLevel,itemCost"
+      },
+      {
+       "key": "RebirthFighterSkills",
+       "value": "1086,1,6;1077,1,6;1013,1,6;1240,1,6;1035,1,6;1068,1,6",
+       "secret": false,
+       "default": null,
+       "type": "list",
+       "description": "Available rebirth skills for fighter classes. Format: skillId,skillLevel,itemCost"
+      }
+     ]
+    },
+    {
+     "title": "Rebirth Completion Effects",
+     "keys": [
+      {
+       "key": "RebirthFinishSocialId",
+       "value": "7",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Animation triggered when rebirth is completed. Format: social action + skill animation + skill level"
+      },
+      {
+       "key": "RebirthFinishEffectSkillId",
+       "value": "2024",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "RebirthFinishEffectSkillLevel",
+       "value": "1",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "RebirthSelectSocialId",
+       "value": "3",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Animation triggered when a rebirth skill is acquired. Format: social action + skill animation + skill level"
+      },
+      {
+       "key": "RebirthSelectEffectSkillId",
+       "value": "2024",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "RebirthSelectEffectSkillLevel",
+       "value": "1",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      }
+     ]
+    },
+    {
+     "title": "Personal Screen Message",
+     "keys": [
+      {
+       "key": "RebirthScreenMessageEnabled",
+       "value": "true",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Screen message shown only to the player after a successful rebirth. Available placeholders: %player%, %rebirth_count%, %max_rebirth%"
+      },
+      {
+       "key": "RebirthScreenMessage",
+       "value": "Congratulations %player%! Rebirth status acquired.",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "RebirthScreenMessagePosition",
+       "value": "TOP_CENTER",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "RebirthScreenMessageTime",
+       "value": "5000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      }
+     ]
+    },
+    {
+     "title": "Global Announcement",
+     "keys": [
+      {
+       "key": "RebirthGlobalAnnouncementEnabled",
+       "value": "true",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Global announcement sent to the entire server after a successful rebirth. Available placeholders: %player%, %rebirth_count%, %max_rebirth%"
+      },
+      {
+       "key": "RebirthGlobalAnnouncement",
+       "value": "Congratulations %player% has reached Rebirth.",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": ""
+      },
+      {
+       "key": "RebirthGlobalAnnouncementCritical",
+       "value": "false",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": ""
+      }
+     ]
+    }
+   ],
+   "group": "Custom"
+  },
+  {
+   "file": "SchemeBuffer.ini",
+   "sections": [
+    {
+     "title": "",
+     "keys": [
+      {
+       "key": "BufferMaxSchemesPerChar",
+       "value": "4",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Maximum number of available schemes per player."
+      },
+      {
+       "key": "BufferItemId",
+       "value": "57",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Payment for buffer, can be changed to custom server coin."
+      },
+      {
+       "key": "BufferStaticCostPerBuff",
+       "value": "-1",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Static cost of buffs ; override skills price if different of -1."
+      }
+     ]
+    }
+   ],
+   "group": "Custom"
+  },
+  {
+   "file": "ScreenWelcomeMessage.ini",
+   "sections": [
+    {
+     "title": "Welcome message",
+     "keys": [
+      {
+       "key": "ScreenWelcomeMessageEnable",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Show screen welcome message on character login"
+      },
+      {
+       "key": "ScreenWelcomeMessageText",
+       "value": "Welcome to our server!",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": "Screen welcome message text to show on character login if enabled ('#' for a new line, but message can have max 2 lines)"
+      },
+      {
+       "key": "ScreenWelcomeMessageTime",
+       "value": "10",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Show screen welcome message for x seconds when character log in to game if enabled"
+      }
+     ]
+    }
+   ],
+   "group": "Custom"
+  },
+  {
+   "file": "SellBuffs.ini",
+   "sections": [
+    {
+     "title": "Sell Buffs configuration",
+     "keys": [
+      {
+       "key": "SellBuffEnable",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Enable/Disable selling buffs"
+      },
+      {
+       "key": "MpCostMultipler",
+       "value": "1",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Multipler for mana cost of buffs"
+      },
+      {
+       "key": "PaymentID",
+       "value": "57",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Payment for Sell Buff System, can be changed to custom server coin"
+      },
+      {
+       "key": "MinimumPrice",
+       "value": "100000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Minimum price of every buff"
+      },
+      {
+       "key": "MaximumPrice",
+       "value": "100000000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Maximum price of every buff"
+      },
+      {
+       "key": "MaxBuffs",
+       "value": "20",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Maximum count of buffs in sell list"
+      }
+     ]
+    }
+   ],
+   "group": "Custom"
+  },
+  {
+   "file": "ServerTime.ini",
+   "sections": [
+    {
+     "title": "Display Server Time",
+     "keys": [
+      {
+       "key": "DisplayServerTime",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "This option will enable displaying of the local server time for /time command."
+      }
+     ]
+    }
+   ],
+   "group": "Custom"
+  },
+  {
+   "file": "StartingLocation.ini",
+   "sections": [
+    {
+     "title": "Custom Starting Location",
+     "keys": [
+      {
+       "key": "CustomStartingLocation",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Enable custom starting location."
+      },
+      {
+       "key": "CustomStartingLocX",
+       "value": "83020",
+       "secret": false,
+       "default": "83020, 147880, -3469 (Giran)",
+       "type": "int",
+       "description": "Coords for custom starting location"
+      },
+      {
+       "key": "CustomStartingLocY",
+       "value": "147880",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "CustomStartingLocZ",
+       "value": "-3469",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      }
+     ]
+    }
+   ],
+   "group": "Custom"
+  },
+  {
+   "file": "StartingTitle.ini",
+   "sections": [
+    {
+     "title": "Starting Title",
+     "keys": [
+      {
+       "key": "EnableStartingTitle",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Enable starting title."
+      },
+      {
+       "key": "StartingTitle",
+       "value": "Newbie",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": "Starting title for new players."
+      }
+     ]
+    }
+   ],
+   "group": "Custom"
+  },
+  {
+   "file": "Transmog.ini",
+   "sections": [
+    {
+     "title": "Transmogrification System",
+     "keys": [
+      {
+       "key": "TransmogEnabled",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Enable/Disable Transmogrification System."
+      },
+      {
+       "key": "TransmogShareAccount",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Make transmog sharable in the same account."
+      },
+      {
+       "key": "TransmogApplyCost",
+       "value": "0",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Transmog apply cost in Adena."
+      },
+      {
+       "key": "TransmogRemoveCost",
+       "value": "0",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Transmog remove cost in Adena."
+      },
+      {
+       "key": "TransmogBannedItemIds",
+       "value": "",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": "List of items that cannot be added to transmog, separated by commas."
+      }
+     ]
+    }
+   ],
+   "group": "Custom"
+  },
+  {
+   "file": "WalkerBotProtection.ini",
+   "sections": [
+    {
+     "title": "Walker/Bot protection",
+     "keys": [
+      {
+       "key": "L2WalkerProtection",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Basic protection against L2Walker."
+      }
+     ]
+    }
+   ],
+   "group": "Custom"
+  },
+  {
+   "file": "WarehouseSorting.ini",
+   "sections": [
+    {
+     "title": "Warehouse Sorting Shows Withdraw Window sorted by ItemType (Armor/Weapon/Spellbook....)",
+     "keys": [
+      {
+       "key": "EnableWarehouseSortingClan",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": ""
+      },
+      {
+       "key": "EnableWarehouseSortingPrivate",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": ""
+      }
+     ]
+    }
+   ],
+   "group": "Custom"
+  },
+  {
+   "file": "Wedding.ini",
+   "sections": [
+    {
+     "title": "Wedding System",
+     "keys": [
+      {
+       "key": "AllowWedding",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Wedding Manager ID: 50007 First part - \"Engagement\" 1) Target the player that you want to make a couple with. 2) Use the voice command \".engage nameofyourpartner\" then press enter. 3) If the target player has you on listed as a friend (ie. you are in each other's friends list) a popup will appear with an engagement request along with a system message that you want to be engaged with him/her. 4) If the target player accepts the engagement invitation, you will be engaged. Second part - \"Marriage\" 1) Once two players are engaged, they can speak to Andromeda, the Wedding Priest in the Hot Springs Guild House (Goddard Area). (You may need Formal Wear and Adena to pay wedding fees!) 2) Each player needs to speak to the NPC and make the request to be married. 3) Once done, fireworks will display and the two players will be married. Afterwards you can use the voice command \".gotolove nameofyourpartner\" to teleport to your partner if you're married (there may also be a fee which can be specified below) If you want to cancel your Engagement/Marriage, use the voice command \".divorce nameofyourpartner\". If you're married you have to pay a specified % of your adena to your partner. If a player attempts to become engaged to another player while married they may suffer a penalty if it's enabled below. --------------------------------------------------------------------------- Enable/Disable Wedding System"
+      },
+      {
+       "key": "WeddingPrice",
+       "value": "250000000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Amount of Adena required to get married"
+      },
+      {
+       "key": "WeddingPunishInfidelity",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Enable/Disable punishing of players who attempt to be engaged to other players while married."
+      },
+      {
+       "key": "WeddingTeleport",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Enable/Disable teleport function for married couples."
+      },
+      {
+       "key": "WeddingTeleportPrice",
+       "value": "50000",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Amount of Adena required to teleport to spouse."
+      },
+      {
+       "key": "WeddingTeleportDuration",
+       "value": "60",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Time before character is teleported after using the skill."
+      },
+      {
+       "key": "WeddingAllowSameSex",
+       "value": "False",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Enable/Disable same sex marriages."
+      },
+      {
+       "key": "WeddingFormalWear",
+       "value": "True",
+       "secret": false,
+       "default": null,
+       "type": "bool",
+       "description": "Require players to wear formal wear to be married?"
+      },
+      {
+       "key": "WeddingDivorceCosts",
+       "value": "20",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Amount of Adena (%) a player must pay to the other to get divorced."
+      }
+     ]
+    }
+   ],
+   "group": "Custom"
+  }
+ ],
+ "login": [
+  {
+   "file": "Interface.ini",
+   "sections": [
+    {
+     "title": "Interface Settings",
+     "keys": [
+      {
+       "key": "EnableGUI",
+       "value": "False",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Enable L2jMobius GUI when OS supports it. Provides access to admin commands without the need to be online."
+      },
+      {
+       "key": "DarkTheme",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Dark theme. Use a dark version of the Nimbus theme."
+      }
+     ]
+    }
+   ],
+   "group": "Core"
+  },
+  {
+   "file": "Network.ini",
+   "sections": [
+    {
+     "title": "Network Settings These settings provide fine-grained control over the network behavior and packet handling within the server application. Adjusting these parameters can help optimize network performance and ensure secure communication between the server and clients.",
+     "keys": []
+    },
+    {
+     "title": "General Network Settings",
+     "keys": [
+      {
+       "key": "ShutdownWaitTime",
+       "value": "5",
+       "secret": false,
+       "default": "5 seconds",
+       "type": "int",
+       "description": "Shutdown Wait Time Defines the time in seconds the server waits for send/receive packets to be finalized during shutdown."
+      },
+      {
+       "key": "DropPackets",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Define if packet dropping is enabled."
+      },
+      {
+       "key": "DropPacketThreshold",
+       "value": "250",
+       "secret": false,
+       "default": "250",
+       "type": "int",
+       "description": "Packet Dropping Threshold Defines the threshold to drop disposable packets. Higher values allow more packets to be queued before dropping starts, potentially reducing packet loss at the cost of higher memory usage."
+      }
+     ]
+    },
+    {
+     "title": "ThreadPool Settings",
+     "keys": [
+      {
+       "key": "ThreadPoolSize",
+       "value": "4",
+       "secret": false,
+       "default": "0 (auto-configured as the number of available processor cores * 4)",
+       "type": "int",
+       "description": "Defines the core pool size of threads in each packet execution thread pool. This determines the number of threads that will be prestarted and available to handle tasks immediately. If set to 0 the default size is set to the number of available processor cores. A higher number can handle more tasks concurrently, while a lower number conserves resources."
+      },
+      {
+       "key": "ThreadPriority",
+       "value": "5",
+       "secret": false,
+       "default": "5 (medium priority level suitable for general task handling)",
+       "type": "int",
+       "description": "Defines the priority level of threads within the packet execution thread pool. This value determines the importance of these threads relative to other processes on the system. Values typically range from 1 (lowest priority) to 10 (highest priority)."
+      }
+     ]
+    },
+    {
+     "title": "Buffer Pool Settings",
+     "keys": [
+      {
+       "key": "BufferSegmentSize",
+       "value": "64",
+       "secret": false,
+       "default": "64",
+       "type": "int",
+       "description": "Buffer Segment Size Size of segments for dynamic buffers, which are used to increase buffer sizes as needed."
+      },
+      {
+       "key": "BufferPool.AutoExpandCapacity",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Allow the buffer pool to dynamically increase its size when it reaches maximum capacity."
+      },
+      {
+       "key": "BufferPool.InitFactor",
+       "value": "0",
+       "secret": false,
+       "default": "0 (no pre-initialization)",
+       "type": "int",
+       "description": "Initial Factor Multiplier for pre-initializing buffer pools. A higher factor means more buffers are pre-created."
+      },
+      {
+       "key": "BufferPool.Empty.Size",
+       "value": "100",
+       "secret": false,
+       "default": "100 buffers of 2 bytes each.",
+       "type": "int",
+       "description": "Empty Buffer Pool Size and buffer size for empty size buffers. Used for empty sized network packets."
+      },
+      {
+       "key": "BufferPool.Empty.BufferSize",
+       "value": "2",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "BufferPool.Minimum.Size",
+       "value": "100",
+       "secret": false,
+       "default": "100 buffers of 64 bytes each.",
+       "type": "int",
+       "description": "Minimum Buffer Pool Size and buffer size for minimum size buffers. Used for minimum sized network packets."
+      },
+      {
+       "key": "BufferPool.Minimum.BufferSize",
+       "value": "64",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "BufferPool.VerySmall.Size",
+       "value": "75",
+       "secret": false,
+       "default": "75 buffers of 128 bytes each.",
+       "type": "int",
+       "description": "Very Small Buffer Pool Size and buffer size for very small buffers. Used for very small network packets."
+      },
+      {
+       "key": "BufferPool.VerySmall.BufferSize",
+       "value": "128",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "BufferPool.Small.Size",
+       "value": "75",
+       "secret": false,
+       "default": "75 buffers of 256 bytes each.",
+       "type": "int",
+       "description": "Small Buffer Pool Size and buffer size for small buffers. Used for small network packets."
+      },
+      {
+       "key": "BufferPool.Small.BufferSize",
+       "value": "256",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "BufferPool.LargeSmall.Size",
+       "value": "75",
+       "secret": false,
+       "default": "75 buffers of 512 bytes each.",
+       "type": "int",
+       "description": "Large Small Buffer Pool Size and buffer size for larger small buffers. Used for larger small network packets."
+      },
+      {
+       "key": "BufferPool.LargeSmall.BufferSize",
+       "value": "512",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "BufferPool.SmallMedium.Size",
+       "value": "50",
+       "secret": false,
+       "default": "50 buffers of 1024 bytes each.",
+       "type": "int",
+       "description": "Small Medium Buffer Pool Size and buffer size for small medium buffers. Used for smaller medium network packets."
+      },
+      {
+       "key": "BufferPool.SmallMedium.BufferSize",
+       "value": "1024",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "BufferPool.Medium.Size",
+       "value": "50",
+       "secret": false,
+       "default": "50 buffers of 2048 bytes each.",
+       "type": "int",
+       "description": "Medium Buffer Pool Size and buffer size for medium buffers. Used for medium network packets."
+      },
+      {
+       "key": "BufferPool.Medium.BufferSize",
+       "value": "2048",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "BufferPool.LargeMedium.Size",
+       "value": "50",
+       "secret": false,
+       "default": "50 buffers of 4096 bytes each.",
+       "type": "int",
+       "description": "Large Medium Buffer Pool Size and buffer size for larger medium buffers. Used for larger medium network packets."
+      },
+      {
+       "key": "BufferPool.LargeMedium.BufferSize",
+       "value": "4096",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "BufferPool.SmallLarge.Size",
+       "value": "25",
+       "secret": false,
+       "default": "25 buffers of 8192 bytes each.",
+       "type": "int",
+       "description": "Small Large Buffer Pool Size and buffer size for small large buffers. Used for smaller large network packets."
+      },
+      {
+       "key": "BufferPool.SmallLarge.BufferSize",
+       "value": "8192",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "BufferPool.Large.Size",
+       "value": "25",
+       "secret": false,
+       "default": "25 buffers of 16384 bytes.",
+       "type": "int",
+       "description": "Large Buffer Pool Size and buffer size for large buffers. Used for large network packets."
+      },
+      {
+       "key": "BufferPool.Large.BufferSize",
+       "value": "16384",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "BufferPool.VeryLarge.Size",
+       "value": "25",
+       "secret": false,
+       "default": "25 buffers of 24576 bytes each.",
+       "type": "int",
+       "description": "Very Large Buffer Pool Size and buffer size for very large buffers. Used for very large network packets."
+      },
+      {
+       "key": "BufferPool.VeryLarge.BufferSize",
+       "value": "24576",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "BufferPool.Maximum.Size",
+       "value": "10",
+       "secret": false,
+       "default": "10 buffers of 32768 bytes.",
+       "type": "int",
+       "description": "Maximum Buffer Pool Size and buffer size for maximum size buffers. Used for maximum sized network packets."
+      },
+      {
+       "key": "BufferPool.Maximum.BufferSize",
+       "value": "32768",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": ""
+      }
+     ]
+    }
+   ],
+   "group": "Core"
+  },
+  {
+   "file": "Server.ini",
+   "sections": [
+    {
+     "title": "Login Server Settings",
+     "keys": []
+    },
+    {
+     "title": "Networking",
+     "keys": [
+      {
+       "key": "LoginserverHostname",
+       "value": "127.0.0.1",
+       "secret": false,
+       "default": "0.0.0.0",
+       "type": "string",
+       "description": "Bind ip of the LoginServer, use 0.0.0.0 to bind on all available IPs WARNING: <u><b><font color=\"red\">Please don't change default IPs here if you don't know what are you doing!</font></b></u> WARNING: <u><b><font color=\"red\">External/Internal IPs are now inside \"ipconfig.xml\" file.</font></b></u>"
+      },
+      {
+       "key": "LoginserverPort",
+       "value": "2106",
+       "secret": false,
+       "default": "2106",
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "LoginHostname",
+       "value": "127.0.0.1",
+       "secret": false,
+       "default": "127.0.0.1",
+       "type": "string",
+       "description": "The address on which login will listen for GameServers, use * to bind on all available IPs WARNING: <u><b><font color=\"red\">Please don't change default IPs here if you don't know what are you doing!</font></b></u> WARNING: <u><b><font color=\"red\">External/Internal IPs are now inside \"ipconfig.xml\" file.</font></b></u>"
+      },
+      {
+       "key": "LoginPort",
+       "value": "9014",
+       "secret": false,
+       "default": "9014",
+       "type": "int",
+       "description": "The port on which login will listen for GameServers"
+      }
+     ]
+    },
+    {
+     "title": "Security",
+     "keys": [
+      {
+       "key": "LoginTryBeforeBan",
+       "value": "5",
+       "secret": false,
+       "default": "5",
+       "type": "int",
+       "description": "How many times you can provide an invalid account/pass before the IP gets banned."
+      },
+      {
+       "key": "LoginBlockAfterBan",
+       "value": "900",
+       "secret": false,
+       "default": "900 (15 minutes)",
+       "type": "int",
+       "description": "Time you won't be able to login back again after LoginTryBeforeBan tries to login."
+      },
+      {
+       "key": "AcceptNewGameServer",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "If set to True any GameServer can register on your login's free slots"
+      },
+      {
+       "key": "EnableFloodProtection",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "Flood Protection. All values are in milliseconds."
+      },
+      {
+       "key": "FastConnectionLimit",
+       "value": "15",
+       "secret": false,
+       "default": "15",
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "NormalConnectionTime",
+       "value": "700",
+       "secret": false,
+       "default": "700",
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "FastConnectionTime",
+       "value": "350",
+       "secret": false,
+       "default": "350",
+       "type": "int",
+       "description": ""
+      },
+      {
+       "key": "MaxConnectionPerIP",
+       "value": "50",
+       "secret": false,
+       "default": "50",
+       "type": "int",
+       "description": ""
+      }
+     ]
+    },
+    {
+     "title": "Misc Login Settings",
+     "keys": [
+      {
+       "key": "ShowLicence",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": "If False, the license (after the login) will not be shown."
+      },
+      {
+       "key": "AutoCreateAccounts",
+       "value": "True",
+       "secret": false,
+       "default": "True",
+       "type": "bool",
+       "description": ""
+      },
+      {
+       "key": "DatapackRoot",
+       "value": ".",
+       "secret": false,
+       "default": null,
+       "type": "string",
+       "description": "Datapack root directory. Defaults to current directory from which the server is started."
+      }
+     ]
+    },
+    {
+     "title": "Scheduled Login Restart",
+     "keys": [
+      {
+       "key": "LoginRestartSchedule",
+       "value": "False",
+       "secret": false,
+       "default": "False",
+       "type": "bool",
+       "description": "Enable disable scheduled login restart."
+      },
+      {
+       "key": "LoginRestartTime",
+       "value": "24",
+       "secret": false,
+       "default": "24",
+       "type": "int",
+       "description": "Time in hours."
+      }
+     ]
+    }
+   ],
+   "group": "Core"
+  },
+  {
+   "file": "Threads.ini",
+   "sections": [
+    {
+     "title": "Thread Configuration",
+     "keys": [
+      {
+       "key": "ScheduledThreadPoolSize",
+       "value": "2",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Defines the number of threads in the scheduled thread pool. If set to -1, this will be determined by available processors multiplied by 4. You can specify a positive integer to manually set the pool size. Note that higher values can improve task handling under heavy load but may increase CPU and memory usage."
+      },
+      {
+       "key": "InstantThreadPoolSize",
+       "value": "2",
+       "secret": false,
+       "default": null,
+       "type": "int",
+       "description": "Defines the number of threads in the instant thread pool. If set to -1, this will be determined by available processors multiplied by 2. You can specify a positive integer to manually set the pool size. Note that higher values can improve task handling under heavy load but may increase CPU and memory usage."
+      }
+     ]
+    }
+   ],
+   "group": "Core"
+  }
+ ]
+};

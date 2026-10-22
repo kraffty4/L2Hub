@@ -1,0 +1,608 @@
+diff --git a/dist/game/config/Custom/PhantomHunters.ini b/dist/game/config/Custom/PhantomHunters.ini
+index 3b3167f..3923257 100644
+--- a/dist/game/config/Custom/PhantomHunters.ini
++++ b/dist/game/config/Custom/PhantomHunters.ini
+@@ -34,9 +34,13 @@ HunterRespawnDelay = 20
+ # ---------------------------------------------------------------------------
+ # Экономика x1 (docs/PHANTOMS.md, раздел 4.2): всё за свою адену, как у живого игрока.
+ # ---------------------------------------------------------------------------
+-# Запас сосов своего грейда, который охотник покупает в городе по цене магазина (на сосы — не больше половины адены).
++# Запас сосов своего грейда, который охотник покупает в городе по цене магазина.
+ HunterShotCount = 2000
+ 
++# Сосы с умом: на сосы — не больше стольких процентов свободной адены (свободная — всё, кроме отложенного на профу).
++# Мало денег — бьёт без сосов, как новичок, и не спускает заработок на них.
++HunterShotBudget = 30
++
+ # Запас стрел или болтов у лучников (покупаются первыми: без них лук не стреляет).
+ HunterAmmoCount = 3000
+ 
+@@ -49,8 +53,23 @@ HunterTeleportFee = 15000
+ # Раз в столько минут охотник заходит в город, даже если сосов и места хватает.
+ HunterTownInterval = 120
+ 
+-# Вещи дороже этого (цена магазина, адена) охотник не сдаёт NPC, а выставляет в своей лавке в Гиране.
+-HunterStoreMinPrice = 20000
++# Порог лавки по уровню охотника «уровень:адена;…»: вещи дороже порога (цена магазина; у пачек — за всю пачку:
++# ресурсы, рецепты, заточки) он не сдаёт NPC, а выставляет в своей лавке в Гиране. Низкоуровневым ценно и дешёвое.
++HunterStoreMinPrices = 1:2000;20:5000;40:20000;52:50000;61:100000;76:300000
++
++# Шанс дропа вещей (не адены) с мобов, убитых охотником, — чтобы было что ставить в лавку. Адену задаёт Rates.ini для всех.
++HunterDropChanceMultiplier = 2.0
++
++# Профессия стоит адену «уровень:цена;…»: дорос, но не накопил — качается без профы и копит, шмот не покупает.
++HunterProfessionPrices = 20:50000;40:1000000;76:10000000
++
++# Квесты-симуляция: на этих уровнях охотник берёт квест, качается ещё HunterQuestMinutes минут (как за
++# квестовыми мобами), потом идёт в город сдавать и получает HunterQuestReward × уровень² адены.
++# Живые игроки на x1 до 20-го живут на квестах — охотникам это заменяет их.
++HunterQuests = True
++HunterQuestLevels = 6,10,14,17,20,23,26,30,34,38,42,46,50,55,60,65,70,75,80
++HunterQuestMinutes = 15,25
++HunterQuestReward = 40
+ 
+ # Не больше стольких лавок охотников одновременно; сколько минут сидит лавка.
+ HunterMaxStores = 4
+diff --git a/java/org/l2jmobius/gameserver/config/custom/PhantomHuntersConfig.java b/java/org/l2jmobius/gameserver/config/custom/PhantomHuntersConfig.java
+index 6dd3730..c4afe0e 100644
+--- a/java/org/l2jmobius/gameserver/config/custom/PhantomHuntersConfig.java
++++ b/java/org/l2jmobius/gameserver/config/custom/PhantomHuntersConfig.java
+@@ -1,5 +1,9 @@
+ package org.l2jmobius.gameserver.config.custom;
+ 
++import java.util.Arrays;
++import java.util.NavigableMap;
++import java.util.TreeMap;
++
+ import org.l2jmobius.commons.util.ConfigReader;
+ 
+ /**
+@@ -19,12 +23,20 @@ public class PhantomHuntersConfig
+ 	public static int HUNTERS_IDLE_TIMEOUT;
+ 	public static int HUNTER_RESPAWN_DELAY;
+ 	public static int HUNTER_SHOT_COUNT;
++	public static int HUNTER_SHOT_BUDGET;
+ 	public static int HUNTERS_PER_SPOT;
+ 	public static int HUNTER_AMMO_COUNT;
+ 	public static int HUNTER_POTION_COUNT;
+ 	public static int HUNTER_TELEPORT_FEE;
+ 	public static int HUNTER_TOWN_INTERVAL;
+-	public static int HUNTER_STORE_MIN_PRICE;
++	public static NavigableMap<Integer, Long> HUNTER_STORE_MIN_PRICES;
++	public static float HUNTER_DROP_CHANCE_MULTIPLIER;
++	public static NavigableMap<Integer, Long> HUNTER_PROFESSION_PRICES;
++	public static boolean HUNTER_QUESTS;
++	public static int[] HUNTER_QUEST_LEVELS;
++	public static int HUNTER_QUEST_MIN_MINUTES;
++	public static int HUNTER_QUEST_MAX_MINUTES;
++	public static int HUNTER_QUEST_REWARD;
+ 	public static int HUNTER_MAX_STORES;
+ 	public static int HUNTER_STORE_MIN_MINUTES;
+ 	public static int HUNTER_STORE_MAX_MINUTES;
+@@ -46,12 +58,21 @@ public class PhantomHuntersConfig
+ 		HUNTERS_IDLE_TIMEOUT = config.getInt("HuntersIdleTimeout", 300);
+ 		HUNTER_RESPAWN_DELAY = config.getInt("HunterRespawnDelay", 20);
+ 		HUNTER_SHOT_COUNT = config.getInt("HunterShotCount", 2000);
++		HUNTER_SHOT_BUDGET = Math.max(0, Math.min(100, config.getInt("HunterShotBudget", 30)));
+ 		HUNTERS_PER_SPOT = config.getInt("HuntersPerSpot", 2);
+ 		HUNTER_AMMO_COUNT = config.getInt("HunterAmmoCount", 3000);
+ 		HUNTER_POTION_COUNT = config.getInt("HunterPotionCount", 30);
+ 		HUNTER_TELEPORT_FEE = config.getInt("HunterTeleportFee", 15000);
+ 		HUNTER_TOWN_INTERVAL = config.getInt("HunterTownInterval", 120);
+-		HUNTER_STORE_MIN_PRICE = config.getInt("HunterStoreMinPrice", 20000);
++		HUNTER_STORE_MIN_PRICES = levelMap(config.getString("HunterStoreMinPrices", "1:2000;20:5000;40:20000;52:50000;61:100000;76:300000"));
++		HUNTER_DROP_CHANCE_MULTIPLIER = Math.max(0, config.getFloat("HunterDropChanceMultiplier", 2));
++		HUNTER_PROFESSION_PRICES = levelMap(config.getString("HunterProfessionPrices", "20:50000;40:1000000;76:10000000"));
++		HUNTER_QUESTS = config.getBoolean("HunterQuests", true);
++		HUNTER_QUEST_LEVELS = levels(config.getString("HunterQuestLevels", "6,10,14,17,20,23,26,30,34,38,42,46,50,55,60,65,70,75,80"));
++		final int[] minutes = levels(config.getString("HunterQuestMinutes", "15,25"));
++		HUNTER_QUEST_MIN_MINUTES = minutes.length > 0 ? Math.max(1, minutes[0]) : 15;
++		HUNTER_QUEST_MAX_MINUTES = Math.max(HUNTER_QUEST_MIN_MINUTES, minutes.length > 1 ? minutes[1] : HUNTER_QUEST_MIN_MINUTES);
++		HUNTER_QUEST_REWARD = Math.max(0, config.getInt("HunterQuestReward", 40));
+ 		HUNTER_MAX_STORES = config.getInt("HunterMaxStores", 4);
+ 		HUNTER_STORE_MIN_MINUTES = config.getInt("HunterStoreMinMinutes", 20);
+ 		HUNTER_STORE_MAX_MINUTES = Math.max(HUNTER_STORE_MIN_MINUTES, config.getInt("HunterStoreMaxMinutes", 40));
+@@ -62,4 +83,36 @@ public class PhantomHuntersConfig
+ 		HUNTER_STRATEGY_PER_MINUTE = config.getInt("HunterStrategyPerMinute", 6);
+ 		HUNTER_STRATEGY_SAY_CHANCE = config.getInt("HunterStrategySayChance", 20);
+ 	}
++
++	/**
++	 * «уровень:значение;уровень:значение» → уровень → значение; кривые пары пропускаются.
++	 */
++	private static NavigableMap<Integer, Long> levelMap(String value)
++	{
++		final NavigableMap<Integer, Long> map = new TreeMap<>();
++		for (String pair : value.split(";"))
++		{
++			final String[] parts = pair.strip().split(":");
++			if (parts.length == 2)
++			{
++				try
++				{
++					map.put(Integer.parseInt(parts[0].strip()), Long.parseLong(parts[1].strip()));
++				}
++				catch (NumberFormatException e)
++				{
++					// пропуск
++				}
++			}
++		}
++		return map;
++	}
++
++	/**
++	 * «6,10,14» → по возрастанию; не числа пропускаются.
++	 */
++	private static int[] levels(String value)
++	{
++		return Arrays.stream(value.split(",")).map(String::strip).filter(s -> s.matches("\\d+")).mapToInt(Integer::parseInt).sorted().toArray();
++	}
+ }
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/templates/NpcTemplate.java b/java/org/l2jmobius/gameserver/entity/actor/templates/NpcTemplate.java
+index fe20c7d..2677aaa 100644
+--- a/java/org/l2jmobius/gameserver/entity/actor/templates/NpcTemplate.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/templates/NpcTemplate.java
+@@ -51,6 +51,7 @@ import org.l2jmobius.gameserver.entity.actor.stat.PlayerStat;
+ import org.l2jmobius.gameserver.entity.item.ItemTemplate;
+ import org.l2jmobius.gameserver.entity.item.holders.ItemHolder;
+ import org.l2jmobius.gameserver.entity.itemcontainer.Inventory;
++import org.l2jmobius.gameserver.managers.phantom.PhantomHunterManager;
+ import org.l2jmobius.gameserver.mechanics.skill.Skill;
+ import org.l2jmobius.gameserver.util.MathUtil;
+ import org.l2jmobius.gameserver.util.StatSet;
+@@ -781,7 +782,7 @@ public class NpcTemplate extends CreatureTemplate
+ 					}
+ 					else
+ 					{
+-						rateChance *= RatesConfig.RATE_DEATH_DROP_CHANCE_MULTIPLIER * (champion ? victim.getChampionTier().rewardsChance() : 1);
++						rateChance *= RatesConfig.RATE_DEATH_DROP_CHANCE_MULTIPLIER * (champion ? victim.getChampionTier().rewardsChance() : 1) * PhantomHunterManager.dropChanceMultiplier(killer);
+ 					}
+ 					
+ 					// premium chance
+@@ -1148,7 +1149,7 @@ public class NpcTemplate extends CreatureTemplate
+ 				}
+ 				else
+ 				{
+-					rateChance *= RatesConfig.RATE_DEATH_DROP_CHANCE_MULTIPLIER * (champion ? victim.getChampionTier().rewardsChance() : 1);
++					rateChance *= RatesConfig.RATE_DEATH_DROP_CHANCE_MULTIPLIER * (champion ? victim.getChampionTier().rewardsChance() : 1) * PhantomHunterManager.dropChanceMultiplier(killer);
+ 				}
+ 				
+ 				// premium chance
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+index e8ccf8e..0476272 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+@@ -95,6 +95,8 @@ public class PhantomHunterManager
+ 	private static final String STATUS_FILE = "./log/L2HubHunters.json";
+ 	/** Обиды охотника: кто и сколько раз его убивал (переменная персонажа). */
+ 	static final String GRUDGE_VARIABLE = "L2HubGrudges";
++	/** Квесты-симуляция: уровень последнего сданного квеста (переменная персонажа). */
++	private static final String QUEST_VARIABLE = "L2HubHunterQuest";
+ 
+ 	// Экономика.
+ 	/** Между походами в город не меньше этого; по сосам и ценному дропу — не чаще {@link #TOWN_SOFT_COOLDOWN}. */
+@@ -195,6 +197,14 @@ public class PhantomHunterManager
+ 		long retryAt;
+ 		/** Идёт на спот ногами до этого времени; не дошёл — телепорт. 0 — не идёт. */
+ 		long walkBackUntil;
++		// Квесты-симуляция: какой взял (уровень, 0 — никакого), когда сделает, сделал — несёт сдавать.
++		int questLevel;
++		long questUntil;
++		boolean questReady;
++		// Доход с охоты для лаунчера: прирост адены, пока он на споте, с выхода в мир.
++		long earned;
++		long lastAdena = -1;
++		long earnedSince;
+ 		/** Живой игрок, который на него напал (ПвП): охотник бьёт его, пока тот рядом. */
+ 		volatile int enemyId;
+ 		volatile long enemySeen;
+@@ -480,6 +490,16 @@ public class PhantomHunterManager
+ 					FakePlayerBrain.field(sb, "thought", last.thought).append('}');
+ 				}
+ 				sb.append(",\"nextThink\":").append(hunter.nextThink);
++				sb.append(",\"earnedPerHour\":").append(hunter.earnedSince > 0 ? (hunter.earned * 3600000L) / Math.max(600000L, now - hunter.earnedSince) : 0);
++				if (hunter.questLevel > 0)
++				{
++					sb.append(",\"quest\":{\"level\":").append(hunter.questLevel).append(",\"until\":").append(hunter.questUntil).append(",\"ready\":").append(hunter.questReady).append('}');
++				}
++				final long due = PhantomHunterOutfit.professionDue(player);
++				if (due > 0)
++				{
++					sb.append(",\"professionDue\":").append(due);
++				}
+ 				if (hunter.storeOpen && (player.getPrivateStoreType() == PrivateStoreType.SELL))
+ 				{
+ 					sb.append(",\"store\":{\"until\":").append(hunter.phaseUntil).append(',');
+@@ -600,6 +620,11 @@ public class PhantomHunterManager
+ 		hunter.afkUntil = 0;
+ 		hunter.lfpUntil = 0;
+ 		hunter.wantStore = false;
++		hunter.questLevel = 0;
++		hunter.questReady = false;
++		hunter.earned = 0;
++		hunter.lastAdena = player.getAdena();
++		hunter.earnedSince = now;
+ 	}
+ 
+ 	private void think(Hunter hunter, Player player, long now)
+@@ -627,6 +652,14 @@ public class PhantomHunterManager
+ 			player.storeMe();
+ 		}
+ 
++		// Доход с охоты: прирост адены, пока он на споте (город, лавка и сдача квеста — не в счёт).
++		final long adena = player.getAdena();
++		if ((hunter.phase == Phase.HUNT) && (hunter.lastAdena >= 0) && (adena > hunter.lastAdena))
++		{
++			hunter.earned += adena - hunter.lastAdena;
++		}
++		hunter.lastAdena = adena;
++
+ 		// Решение стратега пришло, а охотник уже занят другим (город по правилам, пати, лавка) — забыть.
+ 		final Choice pending = hunter.choice;
+ 		if ((pending != null) && (hunter.phase != Phase.HUNT))
+@@ -688,6 +721,12 @@ public class PhantomHunterManager
+ 		}
+ 		noticeGrudges(player);
+ 
++		// Квест сделан — в город сдавать.
++		if (quest(hunter, player, now))
++		{
++			return;
++		}
++
+ 		// Мозги-стратег: решение модели выполняется тут, когда можно; нет решения — правила, как раньше.
+ 		if (strategy(hunter, player, now))
+ 		{
+@@ -970,6 +1009,81 @@ public class PhantomHunterManager
+ 		enterTown(hunter, now);
+ 	}
+ 
++	// ---------- Квесты-симуляция ----------
++
++	/**
++	 * Квесты-симуляция (HunterQuests) вместо квестов, на которых живые игроки на x1 живут до 20-го: на уровне из HunterQuestLevels
++	 * охотник берёт квест, качается ещё HunterQuestMinutes (как за квестовыми мобами), потом идёт в город сдавать — награда в {@link #turnInQuest}.
++	 * @return пошёл сдавать
++	 */
++	private boolean quest(Hunter hunter, Player player, long now)
++	{
++		if (!PhantomHuntersConfig.HUNTER_QUESTS)
++		{
++			return false;
++		}
++
++		if (hunter.questLevel == 0)
++		{
++			final int next = nextQuest(player);
++			if (next > 0)
++			{
++				hunter.questLevel = next;
++				hunter.questReady = false;
++				hunter.questUntil = now + (Rnd.get(PhantomHuntersConfig.HUNTER_QUEST_MIN_MINUTES, PhantomHuntersConfig.HUNTER_QUEST_MAX_MINUTES) * 60000L);
++				LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " (" + player.getLevel() + ") takes a quest (level " + next + ").");
++			}
++			return false;
++		}
++
++		if (!hunter.questReady && (now >= hunter.questUntil))
++		{
++			hunter.questReady = true;
++		}
++		if (hunter.questReady && !player.isInCombat() && !player.isAttackingNow() && !player.isCastingNow())
++		{
++			LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " finished the quest (level " + hunter.questLevel + "), goes to town.");
++			goToTown(hunter, player, now);
++			return true;
++		}
++		return false;
++	}
++
++	/**
++	 * @return квест, который можно взять: самый высокий из HunterQuestLevels не выше своего уровня и выше уже сданного (низкие пропускаются, как у игроков); 0 — нет
++	 */
++	private static int nextQuest(Player player)
++	{
++		final int done = player.getVariables().getInt(QUEST_VARIABLE, 0);
++		int best = 0;
++		for (int level : PhantomHuntersConfig.HUNTER_QUEST_LEVELS)
++		{
++			if ((level > done) && (level <= player.getLevel()))
++			{
++				best = level;
++			}
++		}
++		return best;
++	}
++
++	/**
++	 * Сдать квест в городе: HunterQuestReward × уровень квеста² адены.
++	 */
++	private void turnInQuest(Hunter hunter, Player player)
++	{
++		final long reward = (long) PhantomHuntersConfig.HUNTER_QUEST_REWARD * hunter.questLevel * hunter.questLevel;
++		if (reward > 0)
++		{
++			player.addAdena(ItemProcessType.QUEST, reward, player, false);
++		}
++		player.getVariables().set(QUEST_VARIABLE, hunter.questLevel);
++		player.getVariables().storeMe();
++		LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " turned in the quest (level " + hunter.questLevel + "): +" + reward + " adena.");
++		hunter.questLevel = 0;
++		hunter.questReady = false;
++		hunter.questUntil = 0;
++	}
++
+ 	private static void enterTown(Hunter hunter, long now)
+ 	{
+ 		hunter.phase = Phase.TOWN;
+@@ -997,6 +1111,10 @@ public class PhantomHunterManager
+ 			}
+ 
+ 			hunter.choresDone = true;
++			if (hunter.questReady)
++			{
++				turnInQuest(hunter, player);
++			}
+ 			final List<String> done = PhantomHunterOutfit.townChores(player, hunter.template, hunter.unsold);
+ 			player.storeMe();
+ 			LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " (" + player.getLevel() + ") in " + MapRegionData.getInstance().getClosestTownName(player) + ": " + (done.isEmpty() ? "nothing to do" : String.join(", ", done)) + "; " + player.getAdena() + " adena.");
+@@ -2168,6 +2286,20 @@ public class PhantomHunterManager
+ 		player.abortCast();
+ 	}
+ 
++	/**
++	 * Шанс дропа вещей (не адены) с моба, убитого охотником (NpcTemplate): HunterDropChanceMultiplier — чтобы было что ставить в лавку.
++	 */
++	public static double dropChanceMultiplier(Creature killer)
++	{
++		final Player player = killer == null ? null : killer.asPlayer();
++		return (player != null) && getInstance().isHunter(player) ? PhantomHuntersConfig.HUNTER_DROP_CHANCE_MULTIPLIER : 1;
++	}
++
++	public boolean isHunter(Player player)
++	{
++		return _hunters.containsKey(player.getName().toLowerCase()) && PhantomManager.getInstance().isPhantom(player);
++	}
++
+ 	public static PhantomHunterManager getInstance()
+ 	{
+ 		return SingletonHolder.INSTANCE;
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterOutfit.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterOutfit.java
+index 1d03c7f..955615d 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterOutfit.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterOutfit.java
+@@ -9,6 +9,7 @@ import java.util.regex.Pattern;
+ import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
+ import org.l2jmobius.gameserver.data.xml.ItemData;
+ import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.entity.actor.enums.player.PlayerClass;
+ import org.l2jmobius.gameserver.entity.actor.holders.player.AutoPlaySettingsHolder;
+ import org.l2jmobius.gameserver.entity.actor.holders.player.AutoUseSettingsHolder;
+ import org.l2jmobius.gameserver.entity.item.ItemTemplate;
+@@ -128,7 +129,7 @@ final class PhantomHunterOutfit
+ 		// Лут и сосы весят: с перегрузом 4-й степени охотник встанет столбом.
+ 		player.setDietMode(true);
+ 		final int classId = template.getClassId(player.getLevel());
+-		if (player.getPlayerClass().getId() != classId)
++		if ((player.getPlayerClass().getId() != classId) && !professionLocked(player, classId))
+ 		{
+ 			player.setPlayerClass(classId);
+ 			player.setBaseClass(classId);
+@@ -149,6 +150,76 @@ final class PhantomHunterOutfit
+ 		syncShots(player);
+ 	}
+ 
++	// ---------- Профессия за адену ----------
++
++	/**
++	 * @param tier ступень профессии: 1 — первая (с 20-го), 2 — вторая, 3 — третья
++	 * @return уровень, с которого она, и цена по HunterProfessionPrices; нет в настройках — {@code null} (тогда бесплатно, как раньше)
++	 */
++	private static Map.Entry<Integer, Long> tier(int tier)
++	{
++		int i = 0;
++		for (Map.Entry<Integer, Long> entry : PhantomHuntersConfig.HUNTER_PROFESSION_PRICES.entrySet())
++		{
++			if (++i == tier)
++			{
++				return entry;
++			}
++		}
++		return null;
++	}
++
++	/**
++	 * Следующая ступень класса сама не выдаётся: за неё охотник платит в городе ({@link #buyProfession}).
++	 */
++	private static boolean professionLocked(Player player, int classId)
++	{
++		final PlayerClass target = PlayerClass.getPlayerClass(classId);
++		final Map.Entry<Integer, Long> next = tier(player.getPlayerClass().level() + 1);
++		return (target != null) && (target.level() > player.getPlayerClass().level()) && (next != null) && (next.getValue() > 0);
++	}
++
++	/**
++	 * @return сколько стоит профа, до которой охотник дорос, но ещё не купил; 0 — такой нет. Пока не купил, всё на неё и копит.
++	 */
++	static long professionDue(Player player)
++	{
++		final Map.Entry<Integer, Long> next = tier(player.getPlayerClass().level() + 1);
++		return (next != null) && (player.getLevel() >= next.getKey()) ? next.getValue() : 0;
++	}
++
++	/**
++	 * Профа в городе, как у классмастера: дорос и накопил — платит и получает класс со скиллами; не накопил — копит.
++	 * @return что сделал — для лога, {@code null} — профа не нужна
++	 */
++	private static String buyProfession(Player player, PhantomTemplate template)
++	{
++		final List<String> done = new ArrayList<>();
++		long price;
++		while ((price = professionDue(player)) > 0)
++		{
++			if (player.getAdena() < price)
++			{
++				done.add("копит на профу: " + PhantomHunterManager.money(player.getAdena()) + " из " + PhantomHunterManager.money(price));
++				break;
++			}
++
++			final int classId = template.getClassId(tier(player.getPlayerClass().level() + 1).getKey());
++			if ((classId == player.getPlayerClass().getId()) || !player.reduceAdena(ItemProcessType.FEE, price, player, false))
++			{
++				break; // у класса нет следующей ступени
++			}
++
++			player.setPlayerClass(classId);
++			player.setBaseClass(classId);
++			player.giveAvailableSkills(true, true, true);
++			setupCombat(player);
++			player.broadcastUserInfo();
++			done.add("профа " + player.getPlayerClass().name() + " за " + PhantomHunterManager.money(price));
++		}
++		return done.isEmpty() ? null : String.join(", ", done);
++	}
++
+ 	// ---------- Расходники ----------
+ 
+ 	private static int weaponGrade(Player player)
+@@ -201,12 +272,20 @@ final class PhantomHunterOutfit
+ 	}
+ 
+ 	/**
+-	 * @return хватит ли адены хотя бы на {@value #RESTOCK_MIN} сосов (или стрел у лучника): нет — бьёт без них, в город за ними не идёт
++	 * @return хватит ли бюджета на сосы (HunterShotBudget % свободной адены — не отложенной на профу) хотя бы на {@value #RESTOCK_MIN} сосов (или стрел у лучника): нет — бьёт без них, в город за ними не идёт
+ 	 */
+ 	static boolean canRestock(Player player)
+ 	{
+ 		final long need = Math.min(price(shotId(player)), ammoId(player) > 0 ? price(ammoId(player)) : Long.MAX_VALUE);
+-		return player.getAdena() >= (need * RESTOCK_MIN);
++		return shotBudget(player) >= (need * RESTOCK_MIN);
++	}
++
++	/**
++	 * Сосы с умом: на них — не больше HunterShotBudget % свободной адены (всё, кроме отложенного на профу).
++	 */
++	private static long shotBudget(Player player)
++	{
++		return (Math.max(0, player.getAdena() - professionDue(player)) * PhantomHuntersConfig.HUNTER_SHOT_BUDGET) / 100;
+ 	}
+ 
+ 	/**
+@@ -257,7 +336,15 @@ final class PhantomHunterOutfit
+ 			done.add("сдал хлам на " + sold);
+ 		}
+ 
+-		done.addAll(buyGear(player, template));
++		// Профа — первой; не накопил — откладывает на неё всё: шмот, банки и сосы — только со свободной адены.
++		final String profession = buyProfession(player, template);
++		if (profession != null)
++		{
++			done.add(profession);
++		}
++		final long reserve = professionDue(player);
++
++		done.addAll(buyGear(player, template, reserve));
+ 
+ 		// Стрелы — первыми: без них лук не стреляет. На сосы — не больше половины того, что осталось.
+ 		final long arrows = buy(player, ammoId(player), PhantomHuntersConfig.HUNTER_AMMO_COUNT, player.getAdena());
+@@ -272,14 +359,17 @@ final class PhantomHunterOutfit
+ 			done.add("взял стрел в долг: " + AMMO_LOAN);
+ 		}
+ 
+-		// Банки — на четверть кармана: хилка своего уровня, AutoUse пьёт её на 40 % HP.
+-		final long potions = buy(player, potionId(player), PhantomHuntersConfig.HUNTER_POTION_COUNT, player.getAdena() / 4);
++		// Банки — на четверть свободной адены (копит на профу — на десятую всей: без банок помрёт): хилка своего уровня, AutoUse пьёт её на 40 % HP.
++		final long free = Math.max(0, player.getAdena() - reserve);
++		final long potions = buy(player, potionId(player), PhantomHuntersConfig.HUNTER_POTION_COUNT, free > 0 ? free / 4 : player.getAdena() / 10);
+ 		if (potions > 0)
+ 		{
+ 			done.add("купил банок: " + potions);
+ 		}
+ 
+-		final long shots = buy(player, shotId(player), PhantomHuntersConfig.HUNTER_SHOT_COUNT, player.getAdena() / 2);
++		// Сосы с умом: бюджет — HunterShotBudget % свободной адены; меньше чем на RESTOCK_MIN — не берёт вовсе, бьёт без них.
++		final long budget = shotBudget(player);
++		final long shots = budget >= (price(shotId(player)) * RESTOCK_MIN) ? buy(player, shotId(player), PhantomHuntersConfig.HUNTER_SHOT_COUNT, budget) : 0;
+ 		if (shots > 0)
+ 		{
+ 			done.add("купил сосов: " + shots);
+@@ -376,6 +466,11 @@ final class PhantomHunterOutfit
+ 				}
+ 			}
+ 		}
++		final long due = professionDue(player);
++		if (due > 0)
++		{
++			worn.append("; профа: дорос до следующей, но она стоит ").append(PhantomHunterManager.money(due)).append(" — копишь, шмот пока не покупаешь");
++		}
+ 		return worn.toString();
+ 	}
+ 
+@@ -587,7 +682,7 @@ final class PhantomHunterOutfit
+ 	 * Шмот по частям: оружие, потом броня. Для каждой части — лучший разрешённый грейд из своего набора, на который хватает адены (с запасом на сосы, стрелы и телепорт); не хватает — грейдом ниже, если это лучше надетого; и на это нет — копит, следующие части не покупает. Старое — NPC за полцены.
+ 	 * @return что купил — для лога
+ 	 */
+-	private static List<String> buyGear(Player player, PhantomTemplate template)
++	private static List<String> buyGear(Player player, PhantomTemplate template, long professionReserve)
+ 	{
+ 		final List<String> bought = new ArrayList<>();
+ 		final int expertise = player.getExpertiseLevel();
+@@ -630,7 +725,7 @@ final class PhantomHunterOutfit
+ 				// Запас на расходники того грейда, под который покупается (новое оружие меняет грейд сосов).
+ 				final int g = Math.min(7, grade(gear.rhand));
+ 				final long ammoReserve = (slot == Inventory.PAPERDOLL_RHAND ? isRanged(gear.rhand) : ammoId(player) > 0) ? price(ARROWS[g]) * AMMO_RESERVE : 0;
+-				final long reserve = (price(player.isMageClass() ? SPIRITSHOTS[g] : SOULSHOTS[g]) * SHOT_RESERVE) + ammoReserve + (player.getLevel() >= 40 ? PhantomHuntersConfig.HUNTER_TELEPORT_FEE : 0);
++				final long reserve = (price(player.isMageClass() ? SPIRITSHOTS[g] : SOULSHOTS[g]) * SHOT_RESERVE) + ammoReserve + (player.getLevel() >= 40 ? PhantomHuntersConfig.HUNTER_TELEPORT_FEE : 0) + professionReserve;
+ 				if ((player.getAdena() - reserve) < item.getReferencePrice())
+ 				{
+ 					continue; // не хватает — посмотреть грейд ниже
+@@ -667,7 +762,7 @@ final class PhantomHunterOutfit
+ 		if (!stopped && !grades.isEmpty())
+ 		{
+ 			final int g = Math.min(7, grade(grades.get(0).rhand));
+-			final long reserve = (price(player.isMageClass() ? SPIRITSHOTS[g] : SOULSHOTS[g]) * SHOT_RESERVE) + (ammoId(player) > 0 ? price(ARROWS[g]) * AMMO_RESERVE : 0) + (player.getLevel() >= 40 ? PhantomHuntersConfig.HUNTER_TELEPORT_FEE : 0);
++			final long reserve = (price(player.isMageClass() ? SPIRITSHOTS[g] : SOULSHOTS[g]) * SHOT_RESERVE) + (ammoId(player) > 0 ? price(ARROWS[g]) * AMMO_RESERVE : 0) + (player.getLevel() >= 40 ? PhantomHuntersConfig.HUNTER_TELEPORT_FEE : 0) + professionReserve;
+ 			bought.addAll(buyJewels(player, g, reserve));
+ 		}
+ 
+@@ -812,7 +907,7 @@ final class PhantomHunterOutfit
+ 		long total = 0;
+ 		for (Item item : new ArrayList<>(player.getInventory().getItems()))
+ 		{
+-			if (!junk(player, item) || (isStoreGood(item) && (unsold.getOrDefault(item.getObjectId(), 0) < 2)))
++			if (!junk(player, item) || (isStoreGood(player, item) && (unsold.getOrDefault(item.getObjectId(), 0) < 2)))
+ 			{
+ 				continue;
+ 			}
+@@ -831,7 +926,7 @@ final class PhantomHunterOutfit
+ 		final List<Item> goods = new ArrayList<>();
+ 		for (Item item : player.getInventory().getItems())
+ 		{
+-			if (junk(player, item) && isStoreGood(item) && item.isTradeable())
++			if (junk(player, item) && isStoreGood(player, item) && item.isTradeable())
+ 			{
+ 				goods.add(item);
+ 			}
+@@ -860,9 +955,19 @@ final class PhantomHunterOutfit
+ 		return (id != shotId(player)) && (id != ammoId(player));
+ 	}
+ 
+-	static boolean isStoreGood(Item item)
++	/**
++	 * Ценное для лавки — не дешевле порога своего уровня (HunterStoreMinPrices); у пачек (ресурсы, рецепты, заточки) — по цене всей пачки.
++	 */
++	static boolean isStoreGood(Player player, Item item)
++	{
++		final long price = item.getTemplate().getReferencePrice();
++		return (item.isStackable() ? price * item.getCount() : price) >= storeMinPrice(player.getLevel());
++	}
++
++	static long storeMinPrice(int level)
+ 	{
+-		return item.getTemplate().getReferencePrice() >= PhantomHuntersConfig.HUNTER_STORE_MIN_PRICE;
++		final Map.Entry<Integer, Long> entry = PhantomHuntersConfig.HUNTER_STORE_MIN_PRICES.floorEntry(level);
++		return entry == null ? Long.MAX_VALUE : entry.getValue();
+ 	}
+ 
+ 	/**

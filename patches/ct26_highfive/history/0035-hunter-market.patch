@@ -1,0 +1,479 @@
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+index ff194e1..a9d57a5 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+@@ -137,6 +137,12 @@ public class PhantomHunterManager
+ 	private static final Location GIRAN_SQUARE = new Location(82698, 148638, -3470);
+ 	private static final int STORE_SPACING = 80;
+ 	private static final int STORE_TRIES = 6;
++	/** Рынок: не дошёл до продавца за столько — назад на кач. */
++	private static final long SHOP_TIMEOUT = 120000;
++	/** Ближе этого к продавцу — покупает. */
++	private static final int SHOP_REACH = 120;
++	/** Продавец ближе этого — к нему пешком; дальше — телепорт на площадь Гирана. */
++	private static final int MARKET_WALK = 4000;
+ 	/** Убитый в пати ждёт реса столько, потом уходит из пати в город. */
+ 	private static final long PARTY_DEATH_WAIT = 120000;
+ 	/** Сколько ждёт инвайта, позванный криком. */
+@@ -274,6 +280,9 @@ public class PhantomHunterManager
+ 		long lastLfp;
+ 		/** Стратег решил сесть в лавку: в городе — в лавку, даже если с прошлой не прошло 30 минут. */
+ 		boolean wantStore;
++		/** Рынок (патч 0035): за чем идёт в лавку на площади Гирана и до какого времени; {@code null} — не идёт. */
++		PhantomMarket.Offer shop;
++		long shopUntil;
+ 		final Deque<Long> deaths = new ArrayDeque<>();
+ 		/** Последняя смерть — для настроения: его читают и потоки чата, а {@link #deaths} — только тик. */
+ 		volatile long lastDeath;
+@@ -1224,7 +1233,8 @@ public class PhantomHunterManager
+ 			return true;
+ 		}
+ 
+-		return ((now - hunter.lastStoreSession) >= STORE_COOLDOWN) && !PhantomHunterOutfit.storeGoods(player).isEmpty();
++		// Ценный дроп — повод идти в город, только если нужна адена (лавка от нужды, патч 0035).
++		return ((now - hunter.lastStoreSession) >= STORE_COOLDOWN) && !PhantomHunterOutfit.storeGoods(player).isEmpty() && PhantomMarket.needsStore(player, hunter.template);
+ 	}
+ 
+ 	private static void goToTown(Hunter hunter, Player player, long now)
+@@ -1323,6 +1333,7 @@ public class PhantomHunterManager
+ 		hunter.phaseUntil = now + Rnd.get(20000, 45000);
+ 		hunter.lastTown = now;
+ 		hunter.recruitArrived = false;
++		hunter.shop = null;
+ 	}
+ 
+ 	/**
+@@ -1330,6 +1341,13 @@ public class PhantomHunterManager
+ 	 */
+ 	private void town(Hunter hunter, Player player, long now)
+ 	{
++		// Рынок (патч 0035): идёт к лавке в Гиране за покупкой.
++		if (hunter.shop != null)
++		{
++			shop(hunter, player, now);
++			return;
++		}
++
+ 		if (!hunter.choresDone)
+ 		{
+ 			if (!player.isMoving() && (Rnd.get(100) < 25))
+@@ -1351,6 +1369,11 @@ public class PhantomHunterManager
+ 			player.storeMe();
+ 			LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " (" + player.getLevel() + ") in " + MapRegionData.getInstance().getClosestTownName(player) + ": " + (done.isEmpty() ? "nothing to do" : String.join(", ", done)) + "; " + player.getAdena() + " adena.");
+ 			final boolean afk = hunter.afkUntil > now;
++			// Рынок (патч 0035): в лавках Гирана есть вещь лучше надетой, не дороже магазина и по карману — сходить купить.
++			if (!afk && goShopping(hunter, player, now))
++			{
++				return;
++			}
+ 			if (!afk && wantsStore(hunter, player, now))
+ 			{
+ 				hunter.wantStore = false;
+@@ -1556,6 +1579,71 @@ public class PhantomHunterManager
+ 		}
+ 	}
+ 
++	// ---------- Рынок (патч 0035) ----------
++
++	/**
++	 * После дел в городе: в лавках на площади Гирана (охотники и живые игроки) есть вещь лучше надетой, не дороже магазина и по карману — туда:
++	 * не в Гиране — телепорт на площадь (плата — как у гейткипера), дальше пешком к продавцу ({@link #shop}).
++	 * @return пошёл за покупкой
++	 */
++	private static boolean goShopping(Hunter hunter, Player player, long now)
++	{
++		final PhantomMarket.Offer offer = PhantomMarket.findOffer(player);
++		final Player seller = offer == null ? null : PhantomMarket.seller(offer);
++		if (seller == null)
++		{
++			return false;
++		}
++
++		hunter.shop = offer;
++		hunter.shopUntil = now + SHOP_TIMEOUT;
++		LOGGER.info(PhantomHunterManager.class.getSimpleName() + ": " + player.getName() + " goes to buy " + offer.name() + " from " + seller.getName() + " for " + offer.price() + " (" + player.getAdena() + " adena).");
++		stop(player);
++		if (player.isSitting())
++		{
++			player.standUp();
++		}
++		if (player.calculateDistance2D(seller) > (MARKET_WALK))
++		{
++			payTeleport(player);
++			final double angle = Rnd.nextDouble() * 2 * Math.PI;
++			final int x = PhantomMarket.GIRAN_SQUARE.getX() + (int) (Math.cos(angle) * 150);
++			final int y = PhantomMarket.GIRAN_SQUARE.getY() + (int) (Math.sin(angle) * 150);
++			player.teleToLocation(new Location(x, y, GeoEngine.getInstance().getHeight(x, y, PhantomMarket.GIRAN_SQUARE.getZ())), true);
++		}
++		return true;
++	}
++
++	/**
++	 * Идёт к продавцу; рядом — покупает в его лавке, постоит и обратно на кач. Продавец свернулся или не дошёл за {@link #SHOP_TIMEOUT} — сразу обратно.
++	 */
++	private void shop(Hunter hunter, Player player, long now)
++	{
++		final Player seller = PhantomMarket.seller(hunter.shop);
++		if ((seller == null) || (now > hunter.shopUntil))
++		{
++			LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " did not buy " + hunter.shop.name() + (seller == null ? ": the store is gone." : ": did not reach the seller."));
++			hunter.shop = null;
++			backToHunt(hunter, player);
++			return;
++		}
++
++		if (player.calculateDistance2D(seller) > SHOP_REACH)
++		{
++			if (!player.isMoving())
++			{
++				player.setRunning();
++				player.getAI().setIntentionMoveTo(new Location(seller.getX(), seller.getY(), seller.getZ()));
++			}
++			return;
++		}
++
++		PhantomMarket.buy(player, hunter.shop);
++		hunter.shop = null;
++		hunter.choresDone = true;
++		hunter.phaseUntil = now + Rnd.get(3000, 8000); // постоять у лавки, потом — town() вернёт на кач
++	}
++
+ 	// ---------- Лавка ----------
+ 
+ 	private boolean wantsStore(Hunter hunter, Player player, long now)
+@@ -1564,6 +1652,11 @@ public class PhantomHunterManager
+ 		{
+ 			return false;
+ 		}
++		// Лавка от нужды (патч 0035): садится, только когда не хватает адены на цель или сумка почти полна; стратег велел — садится и так.
++		if (!hunter.wantStore && !PhantomMarket.needsStore(player, hunter.template))
++		{
++			return false;
++		}
+ 
+ 		int stores = 0;
+ 		for (Hunter other : _hunters.values())
+@@ -1643,7 +1736,9 @@ public class PhantomHunterManager
+ 			return false;
+ 		}
+ 
+-		final double factor = priceFactor(hunter.template);
++		// Цена — по характеру и от нужды (патч 0035): чем больше не хватает до цели, тем дешевле; не продалось раньше — ещё дешевле.
++		final boolean unsoldBefore = goods.stream().anyMatch(item -> hunter.unsold.containsKey(item.getObjectId()));
++		final double factor = priceFactor(hunter.template) * PhantomMarket.desperation(player, hunter.template, unsoldBefore);
+ 		final TradeList list = player.getSellList();
+ 		list.clear();
+ 		list.setPackaged(false);
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterOutfit.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterOutfit.java
+index d794010..7281821 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterOutfit.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterOutfit.java
+@@ -800,7 +800,7 @@ final class PhantomHunterOutfit
+ 	 * Удачный дроп: разрешённого грейда и дороже надетого. Оружие — того же вида и хвата (и магическое у мага), броня — того же типа и места; бижутерия — в пустой слот или вместо самой дешёвой. Старое потом уйдёт NPC как хлам.
+ 	 * @return сколько вещей надел
+ 	 */
+-	private static int equipBetterDrops(Player player)
++	static int equipBetterDrops(Player player)
+ 	{
+ 		final int expertise = player.getExpertiseLevel();
+ 		int count = 0;
+@@ -845,6 +845,116 @@ final class PhantomHunterOutfit
+ 		return count;
+ 	}
+ 
++	/**
++	 * Вещь из чужой лавки — апгрейд (патч 0035, рынок): те же правила, что у удачного дропа ({@link #equipBetterDrops}) — разрешённого грейда,
++	 * того же вида, хвата и места, дороже надетого; бижутерию на рынке не берёт.
++	 * @param player охотник
++	 * @param item вещь продавца
++	 * @return надел бы вместо своей
++	 */
++	static boolean isUpgrade(Player player, Item item)
++	{
++		final ItemTemplate drop = item.getTemplate();
++		if (!item.isEquipable() || (!item.isWeapon() && !item.isArmor()) || JEWELS.contains(drop.getBodyPart()) || (drop.getCrystalType().getLevel() > player.getExpertiseLevel()))
++		{
++			return false;
++		}
++
++		final int slot = Inventory.getPaperdollIndex(drop.getBodyPart());
++		final Item current = slot < 0 ? null : player.getInventory().getPaperdollItem(slot);
++		if ((current == null) || current.isEtcItem() || (current.getTemplate().getItemType() != drop.getItemType()) || (current.getTemplate().getBodyPart() != drop.getBodyPart()) || (drop.getReferencePrice() <= current.getTemplate().getReferencePrice()))
++		{
++			return false;
++		}
++		return !item.isWeapon() || (drop.isMagicWeapon() == current.getTemplate().isMagicWeapon());
++	}
++
++	/**
++	 * Свободная адена (патч 0035): за вычетом того, что отложено на профу, запаса на сосы и платы за телепорт.
++	 * @param player охотник
++	 * @return сколько можно потратить на рынке
++	 */
++	static long freeAdena(Player player)
++	{
++		return player.getAdena() - professionDue(player) - (price(shotId(player)) * SHOT_RESERVE) - (player.getLevel() >= 40 ? PhantomHuntersConfig.HUNTER_TELEPORT_FEE : 0);
++	}
++
++	/**
++	 * Сколько адены не хватает на ближайшую цель (патч 0035, лавка от нужды): на профу, до которой дорос, или на первую вещь, на которую копит ({@link #buyGear}).
++	 * @param player охотник
++	 * @param template его шаблон
++	 * @return нехватка; 0 — ни на что не копит, всё по карману
++	 */
++	static long shortfall(Player player, PhantomTemplate template)
++	{
++		final long due = professionDue(player);
++		if (due > player.getAdena())
++		{
++			return due - player.getAdena();
++		}
++		return gearShortfall(player, template, due);
++	}
++
++	/**
++	 * Сухой прогон {@link #buyGear}: по тем же правилам и в том же порядке «покупает» на бумаге; первая вещь, на которую не хватает ни в одном грейде, — нехватка до самой дешёвой из них.
++	 */
++	private static long gearShortfall(Player player, PhantomTemplate template, long professionReserve)
++	{
++		final int expertise = player.getExpertiseLevel();
++		final List<PhantomTemplate.Gear> grades = new ArrayList<>();
++		for (PhantomTemplate.Gear gear : template.getAllGear())
++		{
++			if ((gear.minLevel <= player.getLevel()) && (grade(gear.rhand) <= expertise))
++			{
++				grades.add(0, gear);
++			}
++		}
++
++		long adena = player.getAdena();
++		for (int slot : SLOTS)
++		{
++			if (((slot == Inventory.PAPERDOLL_LEGS) && (wornBodyPart(player, Inventory.PAPERDOLL_CHEST) == BodyPart.FULL_ARMOR)) || ((slot == Inventory.PAPERDOLL_LHAND) && (wornBodyPart(player, Inventory.PAPERDOLL_RHAND) == BodyPart.LR_HAND)))
++			{
++				continue;
++			}
++
++			final Item current = player.getInventory().getPaperdollItem(slot);
++			final int currentGrade = (current == null) || current.isEtcItem() ? -1 : current.getTemplate().getCrystalType().getLevel();
++			long missing = 0;
++			boolean bought = false;
++			for (PhantomTemplate.Gear gear : grades)
++			{
++				final int itemId = itemFor(gear, slot);
++				if (itemId <= 0)
++				{
++					continue;
++				}
++
++				final ItemTemplate item = ItemData.getInstance().getTemplate(itemId);
++				if ((item == null) || (item.getCrystalType().getLevel() <= currentGrade) || ((current != null) && (current.getId() == itemId)))
++				{
++					break;
++				}
++
++				final int g = Math.min(7, grade(gear.rhand));
++				final long ammoReserve = (slot == Inventory.PAPERDOLL_RHAND ? isRanged(gear.rhand) : ammoId(player) > 0) ? price(ARROWS[g]) * AMMO_RESERVE : 0;
++				final long reserve = (price(player.isMageClass() ? SPIRITSHOTS[g] : SOULSHOTS[g]) * SHOT_RESERVE) + ammoReserve + (player.getLevel() >= 40 ? PhantomHuntersConfig.HUNTER_TELEPORT_FEE : 0) + professionReserve;
++				if ((adena - reserve) >= item.getReferencePrice())
++				{
++					adena -= item.getReferencePrice();
++					bought = true;
++					break;
++				}
++				missing = (item.getReferencePrice() + reserve) - adena; // грейдом ниже — дешевле: остаётся самая маленькая нехватка
++			}
++			if (!bought && (missing > 0))
++			{
++				return missing;
++			}
++		}
++		return 0;
++	}
++
+ 	private static boolean equipJewel(Player player, Item item)
+ 	{
+ 		final int[] slots;
+diff --git a/b/java/org/l2jmobius/gameserver/managers/phantom/PhantomMarket.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomMarket.java
+new file mode 100644
+index 0000000..197af0f
+--- /dev/null
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomMarket.java
+@@ -0,0 +1,177 @@
++package org.l2jmobius.gameserver.managers.phantom;
++
++import java.util.HashSet;
++import java.util.Set;
++import java.util.logging.Logger;
++
++import org.l2jmobius.gameserver.config.custom.OfflineTradeConfig;
++import org.l2jmobius.gameserver.data.sql.OfflineTraderTable;
++import org.l2jmobius.gameserver.entity.Location;
++import org.l2jmobius.gameserver.entity.World;
++import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.entity.actor.enums.player.PrivateStoreType;
++import org.l2jmobius.gameserver.entity.item.instance.Item;
++import org.l2jmobius.gameserver.network.holders.RequestTrade;
++import org.l2jmobius.gameserver.network.holders.TradeItem;
++import org.l2jmobius.gameserver.network.holders.TradeList;
++
++/**
++ * L2Hub: лавка от нужды и рынок между охотниками (патч 0035, docs/PHANTOMS.md, раздел 4.18).
++ * <ul>
++ * <li>Лавка от нужды: охотник садится торговать, только когда ему не хватает адены на цель — профу или вещь, на которую копит ({@link PhantomHunterOutfit#shortfall}),
++ * или когда сумка почти полна. Иначе ценный дроп носит с собой. Чем больше не хватает, тем дешевле ставит ({@link #desperation}).</li>
++ * <li>Рынок: охотник в городе, у которого есть свободная адена, смотрит лавки на площади Гирана — охотников и живых игроков — и, если там есть вещь лучше надетой
++ * не дороже магазина, идёт и покупает её настоящей покупкой в лавке ({@link TradeList#privateStoreBuy}), как живой игрок.</li>
++ * </ul>
++ */
++final class PhantomMarket
++{
++	private static final Logger LOGGER = Logger.getLogger(PhantomMarket.class.getName());
++
++	/** Площадь Гирана у гейткипера: тут стоят лавки (как в {@code PhantomHunterManager}). */
++	static final Location GIRAN_SQUARE = new Location(82698, 148638, -3470);
++	/** Лавки дальше этого от площади — не рынок. */
++	private static final int MARKET_RANGE = 2500;
++	/** На рынке — не дороже цены магазина × это. */
++	private static final double MAX_PRICE_FACTOR = 1.0;
++	/** Сумка заполнена больше чем на столько — продать, даже если ни на что не копит. */
++	private static final double FULL_BAG = 0.75;
++	/** Скидка от нужды: не хватает всего — цена × (1 − это). */
++	private static final double DESPERATION = 0.3;
++	/** Вещь уже не продалась раз — ещё × это. */
++	private static final double UNSOLD_DISCOUNT = 0.85;
++
++	/**
++	 * Предложение в чужой лавке.
++	 * @param sellerId продавец (objectId)
++	 * @param objectId вещь
++	 * @param itemId её шаблон
++	 * @param price цена в лавке
++	 * @param name название — для лога
++	 */
++	record Offer(int sellerId, int objectId, int itemId, long price, String name)
++	{
++	}
++
++	private PhantomMarket()
++	{
++	}
++
++	// ---------- Лавка от нужды ----------
++
++	/**
++	 * @param player охотник
++	 * @param template его шаблон
++	 * @return есть зачем садиться в лавку: не хватает адены на цель или сумка почти полна
++	 */
++	static boolean needsStore(Player player, PhantomTemplate template)
++	{
++		return (PhantomHunterOutfit.shortfall(player, template) > 0) || (player.getInventory().getSize() > (player.getInventoryLimit() * FULL_BAG));
++	}
++
++	/**
++	 * Цена от нужды: × (1 − {@value #DESPERATION} × доля нехватки до цели); вещь уже не продалась — ещё × {@value #UNSOLD_DISCOUNT}.
++	 * @param player охотник
++	 * @param template его шаблон
++	 * @param unsoldBefore в лавке есть то, что уже не продалось
++	 * @return множитель к цене лавки
++	 */
++	static double desperation(Player player, PhantomTemplate template, boolean unsoldBefore)
++	{
++		final long shortfall = PhantomHunterOutfit.shortfall(player, template);
++		final double goal = shortfall + Math.max(0, player.getAdena());
++		final double need = goal > 0 ? Math.min(1, shortfall / goal) : 0;
++		return (1 - (DESPERATION * need)) * (unsoldBefore ? UNSOLD_DISCOUNT : 1);
++	}
++
++	// ---------- Рынок ----------
++
++	/**
++	 * Лучшее предложение для охотника в лавках Гирана: вещь лучше надетой ({@link PhantomHunterOutfit#isUpgrade}), не дороже магазина, по карману со свободной адены;
++	 * из таких — самая сильная (дороже по цене магазина).
++	 * @param buyer охотник
++	 * @return предложение или {@code null}
++	 */
++	static Offer findOffer(Player buyer)
++	{
++		final long free = PhantomHunterOutfit.freeAdena(buyer);
++		if (free <= 0)
++		{
++			return null;
++		}
++
++		Offer best = null;
++		long bestValue = 0;
++		for (Player seller : World.getPlayers())
++		{
++			if ((seller == buyer) || (seller.getPrivateStoreType() != PrivateStoreType.SELL) || (seller.calculateDistance2D(GIRAN_SQUARE) > MARKET_RANGE))
++			{
++				continue;
++			}
++
++			for (TradeItem trade : seller.getSellList().getItems())
++			{
++				final Item item = seller.getInventory().getItemByObjectId(trade.getObjectId());
++				if ((item == null) || (trade.getPrice() > free) || (trade.getPrice() > (item.getTemplate().getReferencePrice() * MAX_PRICE_FACTOR)) || !PhantomHunterOutfit.isUpgrade(buyer, item))
++				{
++					continue;
++				}
++
++				final long value = item.getTemplate().getReferencePrice();
++				if (value > bestValue)
++				{
++					best = new Offer(seller.getObjectId(), trade.getObjectId(), item.getId(), trade.getPrice(), item.getName());
++					bestValue = value;
++				}
++			}
++		}
++		return best;
++	}
++
++	/**
++	 * @param offer предложение
++	 * @return продавец, если лавка ещё открыта, или {@code null}
++	 */
++	static Player seller(Offer offer)
++	{
++		final Player seller = World.getPlayer(offer.sellerId());
++		return (seller != null) && (seller.getPrivateStoreType() == PrivateStoreType.SELL) ? seller : null;
++	}
++
++	/**
++	 * Купить в лавке, как живой игрок (то же, что {@code RequestPrivateStoreBuy}): {@link TradeList#privateStoreBuy}, опустевшая лавка закрывается; купленное — надеть.
++	 * @param buyer охотник
++	 * @param offer предложение
++	 * @return купил
++	 */
++	static boolean buy(Player buyer, Offer offer)
++	{
++		final Player seller = seller(offer);
++		if (seller == null)
++		{
++			return false;
++		}
++
++		final TradeList list = seller.getSellList();
++		final Set<RequestTrade> request = new HashSet<>();
++		request.add(new RequestTrade(offer.objectId(), offer.itemId(), 1, offer.price()));
++		if (list.privateStoreBuy(buyer, request) != 0)
++		{
++			return false;
++		}
++
++		if (OfflineTradeConfig.OFFLINE_TRADE_ENABLE && OfflineTradeConfig.STORE_OFFLINE_TRADE_IN_REALTIME && ((seller.getClient() == null) || seller.getClient().isDetached()))
++		{
++			OfflineTraderTable.getInstance().onTransaction(seller, list.getItemCount() == 0, false);
++		}
++		if (list.getItemCount() == 0)
++		{
++			seller.setPrivateStoreType(PrivateStoreType.NONE);
++			seller.broadcastUserInfo();
++		}
++
++		PhantomHunterOutfit.equipBetterDrops(buyer);
++		LOGGER.info(PhantomMarket.class.getSimpleName() + ": " + buyer.getName() + " bought " + offer.name() + " from " + seller.getName() + " for " + offer.price() + "; " + buyer.getAdena() + " adena.");
++		return true;
++	}
++}

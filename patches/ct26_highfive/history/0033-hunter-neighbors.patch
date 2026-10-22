@@ -1,0 +1,645 @@
+diff --git a/dist/game/config/Custom/PhantomHunters.ini b/dist/game/config/Custom/PhantomHunters.ini
+index 7cf984e..2df923d 100644
+--- a/dist/game/config/Custom/PhantomHunters.ini
++++ b/dist/game/config/Custom/PhantomHunters.ini
+@@ -182,3 +182,21 @@ HunterRelationHalfLife = 72
+ 
+ # С такой обиды (и если она больше благодарности) игрок — враг. 3 — одно убийство или три нападения.
+ HunterRelationEnemy = 3
++
++# ---------------------------------------------------------------------------
++# Охотники между собой (docs/PHANTOMS.md, раздел 4.17). Отношения копятся и между охотниками — те же веса.
++# ---------------------------------------------------------------------------
++
++# Соседи на споте: хилеры-охотники (Alenka, Nyusha, Ded) ресают мёртвого охотника рядом и хилят раненого (меньше 40 % HP
++# в бою), врагам — нет; «отжал моба» — кто стал бить моба, которого охотник бил первым (охотник или живой игрок), — обида +1.
++HunterNeighbors = True
++
++# Перепалки и приветствия: встретились охотники-враги — подкалывают друг друга, друзья — здороваются. Только если рядом
++# живой игрок, который это слышит, и вокруг тихо (HunterChatQuiet). Две реплики модели на встречу; мозги недоступны — молчат.
++HunterBanter = True
++
++# Шанс (%) заговорить при встрече; умножается на общительность охотника.
++HunterBanterChance = 30
++
++# Одна и та же пара охотников — не чаще раза в столько секунд (бросок тоже: не выпало — молчат до следующего раза).
++HunterBanterCooldown = 1800
+diff --git a/java/org/l2jmobius/gameserver/config/custom/PhantomHuntersConfig.java b/java/org/l2jmobius/gameserver/config/custom/PhantomHuntersConfig.java
+index 535c3d7..a1fd3ed 100644
+--- a/java/org/l2jmobius/gameserver/config/custom/PhantomHuntersConfig.java
++++ b/java/org/l2jmobius/gameserver/config/custom/PhantomHuntersConfig.java
+@@ -64,6 +64,10 @@ public class PhantomHuntersConfig
+ 	public static int HUNTER_RELATION_HALF_LIFE;
+ 	public static int HUNTER_RELATION_ENEMY;
+ 	public static int HUNTER_REVIVE_WAIT;
++	public static boolean HUNTER_NEIGHBORS;
++	public static boolean HUNTER_BANTER;
++	public static int HUNTER_BANTER_CHANCE;
++	public static int HUNTER_BANTER_COOLDOWN;
+ 
+ 	public static void load()
+ 	{
+@@ -118,6 +122,10 @@ public class PhantomHuntersConfig
+ 		HUNTER_RELATION_HALF_LIFE = Math.max(0, config.getInt("HunterRelationHalfLife", 72));
+ 		HUNTER_RELATION_ENEMY = Math.max(1, config.getInt("HunterRelationEnemy", 3));
+ 		HUNTER_REVIVE_WAIT = Math.max(0, config.getInt("HunterReviveWait", 60));
++		HUNTER_NEIGHBORS = config.getBoolean("HunterNeighbors", true);
++		HUNTER_BANTER = config.getBoolean("HunterBanter", true);
++		HUNTER_BANTER_CHANCE = Math.max(0, Math.min(100, config.getInt("HunterBanterChance", 30)));
++		HUNTER_BANTER_COOLDOWN = Math.max(0, config.getInt("HunterBanterCooldown", 1800));
+ 	}
+ 
+ 	/**
+diff --git b/java/org/l2jmobius/gameserver/managers/phantom/PhantomBanter.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomBanter.java
+new file mode 100644
+index 0000000..d83940b
+--- /dev/null
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomBanter.java
+@@ -0,0 +1,111 @@
++package org.l2jmobius.gameserver.managers.phantom;
++
++import java.util.Locale;
++import java.util.Map;
++import java.util.concurrent.ConcurrentHashMap;
++import java.util.logging.Logger;
++
++import org.l2jmobius.commons.util.Rnd;
++import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
++import org.l2jmobius.gameserver.entity.World;
++import org.l2jmobius.gameserver.entity.actor.Player;
++
++/**
++ * L2Hub: перепалки и приветствия охотников между собой (патч 0033, docs/PHANTOMS.md, раздел 4.17).<br>
++ * Охотник раз в {@value #LOOK_GAP} мс смотрит, нет ли рядом (в {@value #RANGE}) охотника, которому он враг или друг ({@link PhantomRelations}).
++ * Говорят только при зрителе — живом игроке в пределах слышимости: без него модель жгла бы деньги впустую.
++ * Дальше по порядку: тишина в округе ({@link PhantomQuiet}), кулдаун пары {@link PhantomHuntersConfig#HUNTER_BANTER_COOLDOWN}, бросок {@link PhantomHuntersConfig#HUNTER_BANTER_CHANCE} × общительность.
++ * Выпало — первый говорит реплику (враг — подкол или претензия, друг — привет), второй через пару секунд отвечает в своём отношении ({@link PhantomChat#banter}).
++ */
++public class PhantomBanter
++{
++	private static final Logger LOGGER = Logger.getLogger(PhantomBanter.class.getName());
++
++	static final String TOPIC = "banter";
++	/** Встреча — охотники не дальше этого друг от друга. */
++	private static final int RANGE = 600;
++	/** Зритель — живой игрок в пределах слышимости общего чата. */
++	private static final int AUDIENCE = 1250;
++	/** Охотник оглядывается не чаще. */
++	private static final long LOOK_GAP = 10000;
++
++	private final Map<Integer, Long> _nextLook = new ConcurrentHashMap<>();
++	/** Пара охотников (меньший objectId, больший) → не раньше. */
++	private final Map<Long, Long> _pairNext = new ConcurrentHashMap<>();
++
++	protected PhantomBanter()
++	{
++	}
++
++	/**
++	 * Тик охотника (на каче, в городе, в лавке — из {@link PhantomHunterManager}).
++	 * @param hunter охотник
++	 * @param template его шаблон
++	 * @param now текущее время
++	 */
++	public void tick(Player hunter, PhantomTemplate template, long now)
++	{
++		final int id = hunter.getObjectId();
++		if (!PhantomHuntersConfig.HUNTER_BANTER || !PhantomChat.brainEnabled() || (now < _nextLook.getOrDefault(id, 0L)))
++		{
++			return;
++		}
++		_nextLook.put(id, now + LOOK_GAP);
++		if (hunter.isDead() || hunter.isTeleporting() || (PhantomHunterManager.getInstance().mood(hunter) == PhantomMood.TIRED))
++		{
++			return;
++		}
++		if (World.getFirstVisibleObject(hunter, Player.class, p -> !PhantomManager.getInstance().isPhantom(p) && !p.isInvisible() && (hunter.calculateDistance2D(p) < AUDIENCE)) == null)
++		{
++			return;
++		}
++
++		for (Player other : World.getVisibleObjectsInRange(hunter, Player.class, RANGE))
++		{
++			if (other.isDead() || !PhantomRelations.isHunter(other))
++			{
++				continue;
++			}
++
++			final boolean enemy = PhantomRelations.getInstance().isEnemy(hunter, other);
++			if (!enemy && !PhantomRelations.getInstance().isFriend(hunter, other))
++			{
++				continue;
++			}
++
++			final long pair = pair(hunter, other);
++			if ((now < _pairNext.getOrDefault(pair, 0L)) || !PhantomQuiet.getInstance().allowed(hunter, TOPIC, now))
++			{
++				continue;
++			}
++
++			// Бросок — раз за кулдаун пары: не выпало — молчат до следующего раза.
++			_pairNext.put(pair, now + (PhantomHuntersConfig.HUNTER_BANTER_COOLDOWN * 1000L));
++			final double chance = PhantomHuntersConfig.HUNTER_BANTER_CHANCE * template.getSocial();
++			final boolean yes = Rnd.get(100.0) < chance;
++			LOGGER.info(getClass().getSimpleName() + ": " + hunter.getName() + " -> " + other.getName() + " (" + (enemy ? "враг" : "друг") + "), шанс " + String.format(Locale.ROOT, "%.0f", chance) + "% — " + (yes ? "говорит." : "молчит."));
++			if (yes)
++			{
++				PhantomChat.getInstance().banter(hunter, other, template, enemy);
++			}
++			return;
++		}
++	}
++
++	private static long pair(Player a, Player b)
++	{
++		final long low = Math.min(a.getObjectId(), b.getObjectId());
++		final long high = Math.max(a.getObjectId(), b.getObjectId());
++		return (low << 32) | (high & 0xffffffffL);
++	}
++
++	public static PhantomBanter getInstance()
++	{
++		return SingletonHolder.INSTANCE;
++	}
++
++	private static class SingletonHolder
++	{
++		protected static final PhantomBanter INSTANCE = new PhantomBanter();
++	}
++}
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java
+index 00d81f4..97641ab 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java
+@@ -14,6 +14,7 @@ import java.util.logging.Logger;
+ import java.util.regex.Matcher;
+ import java.util.regex.Pattern;
+ 
++import org.l2jmobius.commons.threads.ThreadPool;
+ import org.l2jmobius.commons.util.Rnd;
+ import org.l2jmobius.gameserver.config.GeneralConfig;
+ import org.l2jmobius.gameserver.config.custom.FakePlayersConfig;
+@@ -543,6 +544,64 @@ public class PhantomChat
+ 		});
+ 	}
+ 
++	/**
++	 * Перепалка или привет между охотниками ({@link PhantomBanter} решил, патч 0033): первый говорит вслух, второй через 2–5 с отвечает в своём отношении.
++	 * Без заготовок: мозги молчат или недоступны — тишина. Обе реплики — в бюджете событий и в памяти пары у мозгов.
++	 * @param first кто начинает
++	 * @param second к кому обращается
++	 * @param template шаблон первого
++	 * @param enemy первый видит во втором врага (иначе — друга)
++	 */
++	void banter(Player first, Player second, PhantomTemplate template, boolean enemy)
++	{
++		if (!brainEnabled() || !eventBudget(System.currentTimeMillis()))
++		{
++			return;
++		}
++
++		final String what = "рядом " + PhantomHunterManager.describe(second) + " — такой же охотник, как ты, " + (enemy ? "ты на него в обиде" : "ты ему благодарен") + "; вокруг стоят и слышат другие игроки";
++		FakePlayerBrain.getInstance().send(request(second, first, template, "banter", what, null, false), reply ->
++		{
++			final String line = TAG.matcher(reply).replaceAll("").strip();
++			if (line.isEmpty() || first.isDead())
++			{
++				return;
++			}
++
++			sayNear(first, line, PhantomBanter.TOPIC);
++			LOGGER.info(PhantomBanter.class.getSimpleName() + ": " + first.getName() + " -> " + second.getName() + ": «" + line + "»");
++			final PhantomTemplate secondTemplate = PhantomData.getInstance().getTemplate(second.getName());
++			if (secondTemplate == null)
++			{
++				return;
++			}
++
++			ThreadPool.schedule(() ->
++			{
++				if (second.isDead() || (second.calculateDistance2D(first) > SAY_RANGE) || !eventBudget(System.currentTimeMillis()))
++				{
++					return;
++				}
++
++				FakePlayerBrain.getInstance().send(request(first, second, secondTemplate, "say", line, null, false), answer ->
++				{
++					final String text = TAG.matcher(answer).replaceAll("").strip();
++					if (!text.isEmpty() && !second.isDead())
++					{
++						sayNear(second, text, "say");
++						LOGGER.info(PhantomBanter.class.getSimpleName() + ": " + second.getName() + " -> " + first.getName() + ": «" + text + "»");
++					}
++				}, () ->
++				{
++					// Мозги недоступны — второй молчит.
++				});
++			}, Rnd.get(2000, 5000));
++		}, () ->
++		{
++			// Мозги недоступны — тишина.
++		});
++	}
++
+ 	/**
+ 	 * @param player игрок
+ 	 * @param now текущее время
+@@ -788,6 +847,8 @@ public class PhantomChat
+ 		sb.append("\"female\":").append(player.getAppearance().isFemale()).append(',');
+ 		FakePlayerBrain.field(sb, "clan", player.getClan() != null ? player.getClan().getName() : "").append(',');
+ 		sb.append("\"gm\":").append(player.isGM()).append(',');
++		// Собеседник — тоже охотник (перепалки охотников, патч 0033).
++		sb.append("\"hunter\":").append(PhantomRelations.isHunter(player)).append(',');
+ 		sb.append("\"owner\":").append(owner).append(',');
+ 		sb.append("\"grudge\":").append(template.isHunter() ? PhantomHunterManager.grudge(phantom, player) : 0).append(',');
+ 		if (template.isHunter())
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+index 0650636..ff194e1 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+@@ -772,6 +772,8 @@ public class PhantomHunterManager
+ 		if ((hunter.phase == Phase.HUNT) || (hunter.phase == Phase.TOWN) || (hunter.phase == Phase.STORE))
+ 		{
+ 			PhantomInitiative.getInstance().look(player, hunter.template, hunter.enemyId != 0, _realPlayers > 0, now);
++			// Перепалки и приветствия с другими охотниками при живом зрителе (патч 0033).
++			PhantomBanter.getInstance().tick(player, hunter.template, now);
+ 		}
+ 
+ 		switch (hunter.phase)
+@@ -843,6 +845,13 @@ public class PhantomHunterManager
+ 		}
+ 		noticeGrudges(player);
+ 
++		// Соседи-охотники (патч 0033): «отжал моба»; хилер хилит и ресает соседа — пока помогает, остальное ждёт.
++		if (PhantomNeighbors.getInstance().tick(player, hunter.template, now))
++		{
++			hunter.lastActive = now;
++			return;
++		}
++
+ 		// Квест сделан — в город сдавать.
+ 		if (quest(hunter, player, now))
+ 		{
+@@ -2487,11 +2496,11 @@ public class PhantomHunterManager
+ 	}
+ 
+ 	/**
+-	 * Рядом с трупом охотника живой игрок, не враг: может реснуть — охотник лежит дольше ({@link PhantomHuntersConfig#HUNTER_REVIVE_WAIT}).
++	 * Рядом с трупом охотника живой игрок, не враг, или охотник-хилер с ресом (патч 0033): может реснуть — охотник лежит дольше ({@link PhantomHuntersConfig#HUNTER_REVIVE_WAIT}).
+ 	 */
+ 	private static boolean reviverNear(Player player)
+ 	{
+-		return World.getFirstVisibleObject(player, Player.class, other -> !PhantomManager.getInstance().isPhantom(other) && !other.isDead() && !other.isInvisible() && (player.calculateDistance2D(other) < REVIVE_RANGE) && !PhantomRelations.getInstance().isEnemy(player, other)) != null;
++		return World.getFirstVisibleObject(player, Player.class, other -> !other.isDead() && !other.isInvisible() && (player.calculateDistance2D(other) < REVIVE_RANGE) && !PhantomRelations.getInstance().isEnemy(player, other) && (!PhantomManager.getInstance().isPhantom(other) || PhantomNeighbors.getInstance().canRevive(other, player))) != null;
+ 	}
+ 
+ 	/**
+@@ -2613,7 +2622,16 @@ public class PhantomHunterManager
+ 	{
+ 		for (Monster monster : World.getVisibleObjectsInRange(player, Monster.class, DANGER_RANGE))
+ 		{
+-			if (!monster.isAlikeDead() && (monster.getTarget() == player) && (monster.isInCombat() || (monster.getAI().getIntention() == Intention.ATTACK)))
++			if (monster.isAlikeDead())
++			{
++				continue;
++			}
++
++			// Цель моба в драке AttackableAI держит только в ИИ, getTarget() остаётся пустым или старым (находка параллельной сессии, патч 0034).
++			final Creature attackTarget = monster.getAI().getAttackTarget();
++			final boolean attacking = monster.getAI().getIntention() == Intention.ATTACK;
++			final WorldObject victim = (attackTarget != null) && attacking ? attackTarget : monster.getTarget();
++			if ((victim == player) && (monster.isInCombat() || attacking))
+ 			{
+ 				return true;
+ 			}
+diff --git b/java/org/l2jmobius/gameserver/managers/phantom/PhantomNeighbors.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomNeighbors.java
+new file mode 100644
+index 0000000..25dfff4
+--- /dev/null
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomNeighbors.java
+@@ -0,0 +1,269 @@
++package org.l2jmobius.gameserver.managers.phantom;
++
++import java.util.Map;
++import java.util.concurrent.ConcurrentHashMap;
++import java.util.logging.Logger;
++
++import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
++import org.l2jmobius.gameserver.entity.World;
++import org.l2jmobius.gameserver.entity.WorldObject;
++import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.entity.actor.instance.Monster;
++import org.l2jmobius.gameserver.managers.phantom.PhantomRelations.Kind;
++import org.l2jmobius.gameserver.mechanics.skill.Skill;
++import org.l2jmobius.gameserver.taskmanagers.AutoPlayTaskManager;
++
++/**
++ * L2Hub: соседи-охотники (патч 0033, docs/PHANTOMS.md, раздел 4.17).<br>
++ * <ul>
++ * <li>Охотник-хилер (Alenka, Nyusha, Ded) на споте ресает мёртвого охотника рядом и хилит раненого (меньше 40 % HP в бою) — настоящим кастом: благодарность засчитывают слушатели {@link PhantomRelations}.
++ * Врагам не помогает. Пока помогает, AutoPlay выключен — иначе он перебьёт каст своей целью; кончил — тик охотника включает его снова.</li>
++ * <li>«Отжал моба»: охотник бил моба первым, а кто-то (охотник или живой игрок) стал бить того же моба позже — обида +1 ({@link Kind#CONTESTED}, не чаще раза в 30 минут на пару).
++ * Живому игроку охотник ещё и скажет об этом вслух.</li>
++ * </ul>
++ */
++public class PhantomNeighbors
++{
++	private static final Logger LOGGER = Logger.getLogger(PhantomNeighbors.class.getName());
++
++	/** Одиночные хилы, сильные первыми: Major Heal, Greater Heal, Greater Battle Heal, Battle Heal, Heal. */
++	private static final int[] HEALS =
++	{
++		1401,
++		1217,
++		1218,
++		1015,
++		1011
++	};
++	static final int RESURRECTION = 1016;
++	/** Хилер замечает соседа не дальше этого. */
++	private static final int HELP_RANGE = 900;
++	private static final double INJURED = 0.4;
++	/** Хилер помогает не чаще. */
++	private static final long HELP_GAP = 5000;
++	/** Помощь (подход и каст) — не дольше этого, потом снова свой кач. */
++	private static final long HELP_TIMEOUT = 15000;
++	/** Кто бьёт моба охотника — смотрим не дальше этого. */
++	private static final int CONTEST_RANGE = 1200;
++	/** Отжал — если начал бить моба хотя бы на столько позже охотника. */
++	private static final long CONTEST_LEAD = 3000;
++	private static final long CONTEST_SAY_COOLDOWN = 600000;
++
++	/** Хилер → не помогать до. */
++	private final Map<Integer, Long> _nextHelp = new ConcurrentHashMap<>();
++	/** Хилер → помогает до (AutoPlay выключен). */
++	private final Map<Integer, Long> _helping = new ConcurrentHashMap<>();
++	/** Охотник → {моб, с какого времени охотник его бьёт}. */
++	private final Map<Integer, long[]> _targets = new ConcurrentHashMap<>();
++	/** Охотник → кто ещё бьёт его моба → когда замечен впервые. */
++	private final Map<Integer, Map<Integer, Long>> _seen = new ConcurrentHashMap<>();
++
++	protected PhantomNeighbors()
++	{
++	}
++
++	/**
++	 * Тик охотника на споте (фаза HUNT, раз в 2 с, из {@link PhantomHunterManager}).
++	 * @param hunter охотник
++	 * @param template его шаблон
++	 * @param now текущее время
++	 * @return {@code true}, пока хилер помогает соседу: остальной тик (AutoPlay, поводок, отдых) ждёт
++	 */
++	public boolean tick(Player hunter, PhantomTemplate template, long now)
++	{
++		if (!PhantomHuntersConfig.HUNTER_NEIGHBORS || hunter.isDead())
++		{
++			_helping.remove(hunter.getObjectId());
++			return false;
++		}
++
++		contest(hunter, now);
++		return (template.getRole() == PhantomTemplate.Role.HEALER) && help(hunter, now);
++	}
++
++	/**
++	 * @param healer охотник
++	 * @param dead мёртвый охотник
++	 * @return этот охотник может реснуть того: хилер с ресом, живой, не враг — мёртвому стоит подождать
++	 */
++	boolean canRevive(Player healer, Player dead)
++	{
++		return PhantomHuntersConfig.HUNTER_NEIGHBORS && !healer.isDead() && PhantomRelations.isHunter(healer) && (healer.getKnownSkill(RESURRECTION) != null) && !PhantomRelations.getInstance().isEnemy(healer, dead);
++	}
++
++	// ---------- Хилер помогает ----------
++
++	private boolean help(Player healer, long now)
++	{
++		final int id = healer.getObjectId();
++		final long until = _helping.getOrDefault(id, 0L);
++		if (until > 0)
++		{
++			// Идёт к соседу или кастует — ждать; кончил или вышло время — снова свой кач.
++			if ((now < until) && (healer.isCastingNow() || healer.isMoving()))
++			{
++				return true;
++			}
++			_helping.remove(id);
++			return false;
++		}
++
++		if ((now < _nextHelp.getOrDefault(id, 0L)) || healer.isCastingNow() || (healer.getCurrentHp() < (healer.getMaxHp() * 0.5)))
++		{
++			return false;
++		}
++
++		Player dead = null;
++		Player injured = null;
++		double worst = INJURED;
++		for (Player other : World.getVisibleObjectsInRange(healer, Player.class, HELP_RANGE))
++		{
++			if ((other == healer) || !PhantomRelations.isHunter(other) || PhantomRelations.getInstance().isEnemy(healer, other))
++			{
++				continue;
++			}
++
++			if (other.isDead())
++			{
++				if ((dead == null) && !other.isReviveRequested() && (now >= PhantomRelations.getInstance().reviveCastUntil(other)))
++				{
++					dead = other;
++				}
++				continue;
++			}
++
++			final double hp = other.getCurrentHp() / Math.max(1, other.getMaxHp());
++			if (other.isInCombat() && (hp < worst))
++			{
++				worst = hp;
++				injured = other;
++			}
++		}
++
++		Skill skill = null;
++		Player target = null;
++		if (dead != null)
++		{
++			skill = usable(healer, RESURRECTION);
++			target = dead;
++		}
++		if ((skill == null) && (injured != null))
++		{
++			for (int skillId : HEALS)
++			{
++				skill = usable(healer, skillId);
++				if (skill != null)
++				{
++					break;
++				}
++			}
++			target = injured;
++		}
++		if (skill == null)
++		{
++			return false;
++		}
++
++		_nextHelp.put(id, now + HELP_GAP);
++		if (healer.isSitting())
++		{
++			healer.standUp();
++			return true;
++		}
++
++		AutoPlayTaskManager.getInstance().stopAutoPlay(healer);
++		healer.setTarget(target);
++		if (!healer.useMagic(skill, false, false))
++		{
++			return false;
++		}
++
++		_helping.put(id, now + HELP_TIMEOUT);
++		LOGGER.info(getClass().getSimpleName() + ": " + healer.getName() + " " + (target.isDead() ? "ресает" : "хилит") + " " + target.getName() + " (" + skill.getName() + ").");
++		return true;
++	}
++
++	/**
++	 * @return выученный скилл, который можно кастовать сейчас (не на откате, хватает MP), или {@code null}
++	 */
++	private static Skill usable(Player player, int skillId)
++	{
++		final Skill skill = player.getKnownSkill(skillId);
++		if ((skill == null) || player.isSkillDisabled(skill) || (player.getCurrentMp() < (skill.getMpConsume() + skill.getMpInitialConsume())))
++		{
++			return null;
++		}
++		return skill;
++	}
++
++	// ---------- Отжал моба ----------
++
++	private void contest(Player hunter, long now)
++	{
++		final int id = hunter.getObjectId();
++		final WorldObject target = hunter.getTarget();
++		if (!(target instanceof Monster) || ((Monster) target).isDead())
++		{
++			_targets.remove(id);
++			_seen.remove(id);
++			return;
++		}
++
++		long[] mine = _targets.get(id);
++		if ((mine == null) || (mine[0] != target.getObjectId()))
++		{
++			mine = new long[]
++			{
++				target.getObjectId(),
++				now
++			};
++			_targets.put(id, mine);
++			_seen.remove(id);
++			return;
++		}
++
++		final Map<Integer, Long> seen = _seen.computeIfAbsent(id, k -> new ConcurrentHashMap<>());
++		for (Player other : World.getVisibleObjectsInRange(hunter, Player.class, CONTEST_RANGE))
++		{
++			if ((other == hunter) || other.isDead() || (other.getTarget() != target) || (!other.isAttackingNow() && !other.isCastingNow()))
++			{
++				continue;
++			}
++			// Свои по пати и напарники из .buddy — не в счёт.
++			if ((hunter.isInParty() && (hunter.getParty() == other.getParty())) || (PhantomManager.getInstance().isPhantom(other) && !PhantomRelations.isHunter(other)))
++			{
++				continue;
++			}
++
++			// Кто взял моба позже. У охотника — по его собственной отметке (иначе двое, взявшие моба почти разом, засчитали бы друг друга:
++			// тики разъезжаются); у живого игрока — когда охотник впервые увидел его на своём мобе.
++			final boolean otherHunter = PhantomRelations.isHunter(other);
++			final long[] theirs = otherHunter ? _targets.get(other.getObjectId()) : null;
++			if (otherHunter && ((theirs == null) || (theirs[0] != target.getObjectId())))
++			{
++				continue; // сосед только переключился на этого моба — его отметка появится на его тике
++			}
++			final long first = otherHunter ? theirs[1] : seen.computeIfAbsent(other.getObjectId(), k -> now);
++			if (first < (mine[1] + CONTEST_LEAD))
++			{
++				continue;
++			}
++
++			PhantomRelations.getInstance().record(hunter, other, Kind.CONTESTED);
++			if (!PhantomManager.getInstance().isPhantom(other))
++			{
++				PhantomChat.getInstance().hunterEvent(hunter, other, "CONTESTED", other.getName() + " бьёт моба (" + target.getName() + "), которого ты бил первым, — отжимает его у тебя", "эй, это мой моб!", CONTEST_SAY_COOLDOWN);
++			}
++		}
++	}
++
++	public static PhantomNeighbors getInstance()
++	{
++		return SingletonHolder.INSTANCE;
++	}
++
++	private static class SingletonHolder
++	{
++		protected static final PhantomNeighbors INSTANCE = new PhantomNeighbors();
++	}
++}
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomRelations.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomRelations.java
+index 2a8db6f..4e49394 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomRelations.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomRelations.java
+@@ -64,7 +64,9 @@ public class PhantomRelations
+ 		HEALED("healed", 0, 1),
+ 		REVIVED("revived", 0, 3),
+ 		SAVED("saved", 0, 2),
+-		HUNTED("hunted", 0, 1);
++		HUNTED("hunted", 0, 1),
++		/** Отжал моба: бил моба, которого охотник бил первым (патч 0033, {@link PhantomNeighbors}). */
++		CONTESTED("contested", 1, 0);
+ 
+ 		final String key;
+ 		final double grudge;
+@@ -155,7 +157,8 @@ public class PhantomRelations
+ 	 */
+ 	public int record(Player hunter, Player player, Kind kind)
+ 	{
+-		if ((hunter == null) || (player == null) || (hunter == player) || PhantomManager.getInstance().isPhantom(player))
++		// Тот, о ком помнят, — живой игрок или другой охотник (патч 0033); напарники из .buddy — нет.
++		if ((hunter == null) || (player == null) || (hunter == player) || (PhantomManager.getInstance().isPhantom(player) && !isHunter(player)))
+ 		{
+ 			return 0;
+ 		}
+@@ -229,7 +232,8 @@ public class PhantomRelations
+ 		final Skill skill = event.getSkill();
+ 		final boolean heal = skill.hasEffectType(EffectType.HEAL);
+ 		final boolean revive = skill.hasEffectType(EffectType.RESURRECTION);
+-		if ((!heal && !revive) || PhantomManager.getInstance().isPhantom(caster.asPlayer()))
++		// Хилит и ресает живой игрок или охотник-хилер ({@link PhantomNeighbors}, патч 0033).
++		if ((!heal && !revive) || (PhantomManager.getInstance().isPhantom(caster.asPlayer()) && !isHunter(caster.asPlayer())))
+ 		{
+ 			return;
+ 		}
+@@ -316,7 +320,7 @@ public class PhantomRelations
+ 
+ 		final long[] threat = _threats.remove(event.getTarget().getObjectId());
+ 		final Player killer = event.getAttacker();
+-		if ((threat == null) || (killer == null) || ((System.currentTimeMillis() - threat[1]) > THREAT) || PhantomManager.getInstance().isPhantom(killer))
++		if ((threat == null) || (killer == null) || ((System.currentTimeMillis() - threat[1]) > THREAT) || (PhantomManager.getInstance().isPhantom(killer) && !isHunter(killer)))
+ 		{
+ 			return;
+ 		}
+@@ -468,7 +472,10 @@ public class PhantomRelations
+ 
+ 	// ---------- Хранение ----------
+ 
+-	private static boolean isHunter(Player player)
++	/**
++	 * @return охотник-фантом (не напарник из .buddy)
++	 */
++	static boolean isHunter(Player player)
+ 	{
+ 		if (!PhantomManager.getInstance().isPhantom(player))
+ 		{

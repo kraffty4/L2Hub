@@ -1,0 +1,391 @@
+diff --git a/dist/game/config/Custom/PhantomHunters.ini b/dist/game/config/Custom/PhantomHunters.ini
+index 2df923d..5315263 100644
+--- a/dist/game/config/Custom/PhantomHunters.ini
++++ b/dist/game/config/Custom/PhantomHunters.ini
+@@ -200,3 +200,19 @@ HunterBanterChance = 30
+ 
+ # Одна и та же пара охотников — не чаще раза в столько секунд (бросок тоже: не выпало — молчат до следующего раза).
+ HunterBanterCooldown = 1800
++
++# Пати охотников между собой (docs/PHANTOMS.md, раздел 4.19): охотник на каче зовёт в пати свободного охотника рядом
++# (±5 уровней). Друзья собираются, враги — никогда, остальные (незнакомые и «сложные») — бросок. Лидер качается на
++# своём споте, позванные ходят с ним: дамагеры бьют мобов вокруг, хилеры и бафферы лечат пати. Ушёл лидер с кача
++# (город, лавка, смерть, «лфм» живого игрока) или время вышло — пати распускается, все идут качаться ногами рядом.
++HunterParties = True
++
++# Сколько охотников в такой пати, вместе с лидером.
++HunterPartyMax = 3
++
++# Шанс (%) собраться: незнакомые и «сложные» (× общительность того, кто зовёт) и друзья.
++HunterPartyChance = 25
++HunterPartyChanceFriend = 80
++
++# Сколько минут живёт пати охотников «от,до» — у каждой своё.
++HunterPartyMinutes = 20,60
+diff --git a/java/org/l2jmobius/gameserver/config/custom/PhantomHuntersConfig.java b/java/org/l2jmobius/gameserver/config/custom/PhantomHuntersConfig.java
+index a1fd3ed..43499ff 100644
+--- a/java/org/l2jmobius/gameserver/config/custom/PhantomHuntersConfig.java
++++ b/java/org/l2jmobius/gameserver/config/custom/PhantomHuntersConfig.java
+@@ -68,6 +68,11 @@ public class PhantomHuntersConfig
+ 	public static boolean HUNTER_BANTER;
+ 	public static int HUNTER_BANTER_CHANCE;
+ 	public static int HUNTER_BANTER_COOLDOWN;
++	public static boolean HUNTER_PARTIES;
++	public static int HUNTER_PARTY_MAX;
++	public static int HUNTER_PARTY_CHANCE;
++	public static int HUNTER_PARTY_CHANCE_FRIEND;
++	public static int[] HUNTER_PARTY_MINUTES;
+ 
+ 	public static void load()
+ 	{
+@@ -126,6 +131,11 @@ public class PhantomHuntersConfig
+ 		HUNTER_BANTER = config.getBoolean("HunterBanter", true);
+ 		HUNTER_BANTER_CHANCE = Math.max(0, Math.min(100, config.getInt("HunterBanterChance", 30)));
+ 		HUNTER_BANTER_COOLDOWN = Math.max(0, config.getInt("HunterBanterCooldown", 1800));
++		HUNTER_PARTIES = config.getBoolean("HunterParties", true);
++		HUNTER_PARTY_MAX = Math.max(2, Math.min(9, config.getInt("HunterPartyMax", 3)));
++		HUNTER_PARTY_CHANCE = Math.max(0, Math.min(100, config.getInt("HunterPartyChance", 25)));
++		HUNTER_PARTY_CHANCE_FRIEND = Math.max(0, Math.min(100, config.getInt("HunterPartyChanceFriend", 80)));
++		HUNTER_PARTY_MINUTES = levels(config.getString("HunterPartyMinutes", "20,60"));
+ 	}
+ 
+ 	/**
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java
+index 97641ab..78195cf 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java
+@@ -375,6 +375,12 @@ public class PhantomChat
+ 	 */
+ 	public void event(Player phantom, Player owner, Event event, String what, String fallback)
+ 	{
++		// Пати охотников (патч 0036): лидер — охотник, живых в пати нет — реплику в чат пати никто не услышит, модель не звать.
++		if (PhantomManager.getInstance().isPhantom(owner))
++		{
++			return;
++		}
++
+ 		final long now = System.currentTimeMillis();
+ 		final String key = (event.partyWide ? "o" + owner.getObjectId() : "p" + phantom.getObjectId()) + ":" + event;
+ 		final Long until = _eventCooldowns.get(key);
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+index a9d57a5..aa0483b 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+@@ -737,6 +737,8 @@ public class PhantomHunterManager
+ 	private void think(Hunter hunter, Player player, long now)
+ 	{
+ 		played(hunter, player, now);
++		// Пати охотников (патч 0036): лидер ушёл с кача, погиб, время вышло — распустить.
++		PhantomHunterParty.getInstance().check(player, hunter.phase == Phase.HUNT, now);
+ 		if (player.isDead())
+ 		{
+ 			died(hunter, player, now);
+@@ -861,6 +863,13 @@ public class PhantomHunterManager
+ 			return;
+ 		}
+ 
++		// Пати охотников по отношениям (патч 0036): собрать или позвать ещё одного; лидер тоже копит «качались вместе».
++		PhantomHunterParty.getInstance().tick(player, hunter.template, now);
++		if (PhantomHunterParty.getInstance().isLeader(player))
++		{
++			together(hunter, player, now);
++		}
++
+ 		// Квест сделан — в город сдавать.
+ 		if (quest(hunter, player, now))
+ 		{
+@@ -2635,7 +2644,32 @@ public class PhantomHunterManager
+ 	}
+ 
+ 	/**
+-	 * Охотник в пати: время рядом с каждым живым из пати; за каждые {@link #TOGETHER_STEP} мс — «качались вместе» (не больше {@link #TOGETHER_MAX} за пати).
++	 * @param player охотник
++	 * @return он на каче, свободен и не дерётся с игроком — его можно звать в пати охотников (патч 0036)
++	 */
++	public boolean isHunting(Player player)
++	{
++		final Hunter hunter = _hunters.get(player.getName().toLowerCase());
++		return (hunter != null) && (hunter.phase == Phase.HUNT) && (hunter.enemyId == 0) && (hunter.spot != null) && !player.isDead();
++	}
++
++	/**
++	 * Охотник собрал пати охотников (патч 0036): счёт «качались вместе» — с нуля, как у вступившего ({@link #joinedParty}).
++	 * @param player лидер
++	 */
++	public void ledParty(Player player)
++	{
++		final Hunter hunter = _hunters.get(player.getName().toLowerCase());
++		if (hunter != null)
++		{
++			hunter.together.clear();
++			hunter.togetherAwards.clear();
++			hunter.togetherTick = 0;
++		}
++	}
++
++	/**
++	 * Охотник в пати: время рядом с каждым живым или охотником из пати; за каждые {@link #TOGETHER_STEP} мс — «качались вместе» (не больше {@link #TOGETHER_MAX} за пати).
+ 	 */
+ 	private static void together(Hunter hunter, Player player, long now)
+ 	{
+@@ -2648,7 +2682,8 @@ public class PhantomHunterManager
+ 
+ 		for (Player member : player.getParty().getMembers())
+ 		{
+-			if ((member == player) || PhantomManager.getInstance().isPhantom(member) || !member.isOnline() || member.isDead() || (player.calculateDistance2D(member) > TOGETHER_RANGE))
++			// С живыми и с охотниками (патч 0036: пати охотников); напарники из .buddy — нет.
++			if ((member == player) || (PhantomManager.getInstance().isPhantom(member) && !PhantomRelations.isHunter(member)) || !member.isOnline() || member.isDead() || (player.calculateDistance2D(member) > TOGETHER_RANGE))
+ 			{
+ 				continue;
+ 			}
+diff --git b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterParty.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterParty.java
+new file mode 100644
+index 0000000..a35cb5c
+--- /dev/null
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterParty.java
+@@ -0,0 +1,245 @@
++package org.l2jmobius.gameserver.managers.phantom;
++
++import java.util.ArrayList;
++import java.util.List;
++import java.util.Locale;
++import java.util.Map;
++import java.util.Set;
++import java.util.concurrent.ConcurrentHashMap;
++import java.util.logging.Logger;
++
++import org.l2jmobius.commons.util.Rnd;
++import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
++import org.l2jmobius.gameserver.entity.World;
++import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.managers.phantom.PhantomCompanionManager.Mode;
++
++/**
++ * L2Hub: пати охотников между собой по отношениям (патч 0036, docs/PHANTOMS.md, раздел 4.19).<br>
++ * Решение автора: друзья собираются, остальные — бросок кости, враги — никогда.<br>
++ * Охотник на каче раз в {@value #LOOK_GAP} мс смотрит, нет ли рядом (в {@value #RANGE}) свободного охотника близкого уровня (±{@value #LEVEL_GAP}).
++ * Враг хоть с одной стороны — никогда; друг (благодарность от 3 и больше обиды) с любой стороны — шанс {@link PhantomHuntersConfig#HUNTER_PARTY_CHANCE_FRIEND};
++ * остальные (незнакомые и «сложные») — {@link PhantomHuntersConfig#HUNTER_PARTY_CHANCE} × общительность. Бросок на пару — не чаще раза в {@value #PAIR_GAP} мс.<br>
++ * Выпало — тот, кто смотрел, становится лидером и зовёт второго тем же механизмом, что живой игрок ({@link PhantomCompanionManager#onInvited}):
++ * лидер качается дальше на своём споте родным AutoPlay, второй ходит с ним напарником — дамагер «кач тут» вокруг лидера, хилер и баффер «бей его цель» и лечат пати.
++ * Пати до {@link PhantomHuntersConfig#HUNTER_PARTY_MAX} охотников; живёт {@link PhantomHuntersConfig#HUNTER_PARTY_MINUTES} минут, распускается раньше, если лидер ушёл с кача
++ * (город, лавка, смерть, «лфм» живого игрока) или остался один. Отпущенные идут качаться ногами на ближайший спот, как после пати с живым.
++ * «Качались вместе» засчитывается и между охотниками — так незнакомцы со временем становятся друзьями.
++ */
++public class PhantomHunterParty
++{
++	private static final Logger LOGGER = Logger.getLogger(PhantomHunterParty.class.getName());
++
++	private static final long LOOK_GAP = 30000;
++	private static final int RANGE = 1500;
++	private static final int LEVEL_GAP = 5;
++	/** Одна пара охотников бросает кость не чаще. */
++	private static final long PAIR_GAP = 1200000;
++	/** После пати охотник столько не собирает новую и не идёт в чужую. */
++	private static final long REST_AFTER = 1200000;
++
++	private static class Group
++	{
++		final long until;
++		final Set<Integer> members = ConcurrentHashMap.newKeySet();
++
++		Group(long until)
++		{
++			this.until = until;
++		}
++	}
++
++	/** Лидер (objectId) → его пати охотников. */
++	private final Map<Integer, Group> _groups = new ConcurrentHashMap<>();
++	private final Map<Integer, Long> _nextLook = new ConcurrentHashMap<>();
++	/** Охотник → не в пати до (отдых после пати). */
++	private final Map<Integer, Long> _restUntil = new ConcurrentHashMap<>();
++	/** Пара → не бросать до. */
++	private final Map<Long, Long> _pairNext = new ConcurrentHashMap<>();
++
++	protected PhantomHunterParty()
++	{
++	}
++
++	/**
++	 * Каждый тик охотника (из начала {@link PhantomHunterManager#think}): лидер ушёл с кача, время вышло, остался один — распустить.
++	 * @param leader охотник
++	 * @param hunting он сейчас на каче (фаза HUNT)
++	 * @param now текущее время
++	 */
++	public void check(Player leader, boolean hunting, long now)
++	{
++		final Group group = _groups.get(leader.getObjectId());
++		if (group == null)
++		{
++			return;
++		}
++
++		// Кто вышел сам (умер и не дождался реса, позвал живой игрок) — из списка.
++		group.members.removeIf(id ->
++		{
++			final Player member = World.getPlayer(id);
++			return (member == null) || !member.isInParty() || (member.getParty() != leader.getParty());
++		});
++
++		final String reason = !PhantomHuntersConfig.HUNTER_PARTIES ? "пати охотников выключены" : leader.isDead() ? "лидер погиб" : !hunting ? "лидер ушёл с кача" : !leader.isInParty() || group.members.isEmpty() ? "остался один" : now >= group.until ? "время вышло" : null;
++		if (reason != null)
++		{
++			disband(leader, group, reason, now);
++		}
++	}
++
++	/**
++	 * Охотник на каче (фаза HUNT, из {@link PhantomHunterManager}): собрать пати или позвать ещё одного.
++	 * @param hunter охотник
++	 * @param template его шаблон
++	 * @param now текущее время
++	 */
++	public void tick(Player hunter, PhantomTemplate template, long now)
++	{
++		final int id = hunter.getObjectId();
++		if (!PhantomHuntersConfig.HUNTER_PARTIES || (now < _nextLook.getOrDefault(id, 0L)))
++		{
++			return;
++		}
++		_nextLook.put(id, now + LOOK_GAP + Rnd.get(10000));
++
++		final Group group = _groups.get(id);
++		if (hunter.isDead() || (now < _restUntil.getOrDefault(id, 0L)) || ((group == null) && hunter.isInParty()) || ((group != null) && ((group.members.size() + 1) >= PhantomHuntersConfig.HUNTER_PARTY_MAX)))
++		{
++			return;
++		}
++		if (PhantomHunterManager.getInstance().mood(hunter) == PhantomMood.TIRED)
++		{
++			return;
++		}
++
++		for (Player other : World.getVisibleObjectsInRange(hunter, Player.class, RANGE))
++		{
++			if (!PhantomRelations.isHunter(other) || other.isDead() || other.isInParty() || (Math.abs(other.getLevel() - hunter.getLevel()) > LEVEL_GAP) || (now < _restUntil.getOrDefault(other.getObjectId(), 0L)) || !PhantomHunterManager.getInstance().isHunting(other))
++			{
++				continue;
++			}
++
++			// Враг хоть с одной стороны — никогда.
++			final PhantomRelations relations = PhantomRelations.getInstance();
++			if (relations.isEnemy(hunter, other) || relations.isEnemy(other, hunter))
++			{
++				continue;
++			}
++
++			final long pair = pair(hunter, other);
++			if (now < _pairNext.getOrDefault(pair, 0L))
++			{
++				continue;
++			}
++			_pairNext.put(pair, now + PAIR_GAP);
++
++			final boolean friend = relations.isFriend(hunter, other) || relations.isFriend(other, hunter);
++			final double chance = friend ? PhantomHuntersConfig.HUNTER_PARTY_CHANCE_FRIEND : Math.min(100, PhantomHuntersConfig.HUNTER_PARTY_CHANCE * template.getSocial());
++			final boolean yes = Rnd.get(100.0) < chance;
++			LOGGER.info(getClass().getSimpleName() + ": " + hunter.getName() + " -> " + other.getName() + " (" + (friend ? "друг" : "бросок") + ", шанс " + String.format(Locale.ROOT, "%.0f", chance) + "%) — " + (yes ? "зовёт в пати." : "нет."));
++			if (yes)
++			{
++				invite(hunter, other, group, now);
++			}
++			return;
++		}
++	}
++
++	/**
++	 * @param player охотник
++	 * @return он ведёт пати охотников
++	 */
++	public boolean isLeader(Player player)
++	{
++		return _groups.containsKey(player.getObjectId());
++	}
++
++	private void invite(Player leader, Player member, Group existing, long now)
++	{
++		final PhantomTemplate memberTemplate = PhantomData.getInstance().getTemplate(member.getName());
++		if (memberTemplate == null)
++		{
++			return;
++		}
++
++		PhantomCompanionManager.getInstance().onInvited(leader, member, null);
++		if (!member.isInParty() || (member.getParty() != leader.getParty()))
++		{
++			LOGGER.info(getClass().getSimpleName() + ": " + member.getName() + " не вступил в пати " + leader.getName() + ".");
++			return;
++		}
++
++		final boolean support = (memberTemplate.getRole() == PhantomTemplate.Role.HEALER) || (memberTemplate.getRole() == PhantomTemplate.Role.BUFFER);
++		PhantomCompanionManager.getInstance().setMode(leader, memberTemplate, support ? Mode.ASSIST : Mode.HUNT);
++
++		Group group = existing;
++		if (group == null)
++		{
++			final int[] minutes = PhantomHuntersConfig.HUNTER_PARTY_MINUTES;
++			final int lo = minutes.length > 0 ? minutes[0] : 20;
++			final int hi = minutes.length > 1 ? Math.max(lo, minutes[1]) : lo;
++			group = new Group(now + (Rnd.get(lo, hi) * 60000L));
++			_groups.put(leader.getObjectId(), group);
++			PhantomHunterManager.getInstance().ledParty(leader);
++		}
++		group.members.add(member.getObjectId());
++		LOGGER.info(getClass().getSimpleName() + ": " + leader.getName() + " собрал пати: " + names(leader, group) + " (" + (support ? "хилит и бафает" : "качается рядом") + ").");
++	}
++
++	private void disband(Player leader, Group group, String reason, long now)
++	{
++		_groups.remove(leader.getObjectId());
++		_restUntil.put(leader.getObjectId(), now + REST_AFTER);
++		final List<String> names = new ArrayList<>();
++		for (int id : group.members)
++		{
++			final Player member = World.getPlayer(id);
++			final PhantomTemplate template = member != null ? PhantomData.getInstance().getTemplate(member.getName()) : null;
++			if (template != null)
++			{
++				PhantomCompanionManager.getInstance().release(template, true);
++				names.add(member.getName());
++			}
++			_restUntil.put(id, now + REST_AFTER);
++		}
++		if (leader.isInParty())
++		{
++			leader.leaveParty();
++		}
++		LOGGER.info(getClass().getSimpleName() + ": пати " + leader.getName() + (names.isEmpty() ? "" : " с " + String.join(", ", names)) + " распущена: " + reason + ".");
++	}
++
++	private static String names(Player leader, Group group)
++	{
++		final List<String> names = new ArrayList<>();
++		names.add(leader.getName());
++		for (int id : group.members)
++		{
++			final Player member = World.getPlayer(id);
++			if (member != null)
++			{
++				names.add(member.getName());
++			}
++		}
++		return String.join(", ", names);
++	}
++
++	private static long pair(Player a, Player b)
++	{
++		final long low = Math.min(a.getObjectId(), b.getObjectId());
++		final long high = Math.max(a.getObjectId(), b.getObjectId());
++		return (low << 32) | (high & 0xffffffffL);
++	}
++
++	public static PhantomHunterParty getInstance()
++	{
++		return SingletonHolder.INSTANCE;
++	}
++
++	private static class SingletonHolder
++	{
++		protected static final PhantomHunterParty INSTANCE = new PhantomHunterParty();
++	}
++}

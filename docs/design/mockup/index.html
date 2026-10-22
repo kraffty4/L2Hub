@@ -1,0 +1,788 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>L2Hub — макет v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --bg: #100d0a; --win: #16120e; --panel: #1d1813; --panel-2: #251e17; --panel-3: #2d241b;
+    --line: #4a3b26; --bronze: #7a6038; --gold: #c9a052; --gold-hi: #e2c27d;
+    --text: #ece2cc; --text-2: #b6a68a; --muted: #7f725d;
+    --ok: #82c46c; --warn: #e3a63c; --bad: #d4705e; --off: #6f675a;
+    --serif: "Cinzel", "Times New Roman", serif; --sans: "Inter", "Segoe UI", system-ui, sans-serif; --mono: Consolas, "Cascadia Mono", monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font-family: var(--sans); }
+  body { overflow: hidden; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  .stage { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: #120e0a; }
+  ::-webkit-scrollbar-thumb { background: #3a2e1f; border-radius: 6px; border: 2px solid #120e0a; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--bronze); }
+  /* clip, а не hidden: иначе браузер прокручивает окно при фокусе и вытаскивает спрятанные панели. */
+  .win { width: 1280px; height: 800px; flex: none; transform-origin: center; background: var(--win); border: 1px solid var(--bronze); border-radius: 10px; overflow: clip; display: grid; grid-template-rows: 44px 1fr 32px; position: relative; box-shadow: 0 24px 60px rgba(0,0,0,.55); }
+
+  .titlebar { display: flex; align-items: center; gap: 10px; padding: 0 8px 0 14px; border-bottom: 1px solid var(--line); background: #130f0b; }
+  .titlebar .crest { width: 22px; height: 22px; color: var(--gold); }
+  .titlebar .name { font-family: var(--serif); font-weight: 700; font-size: 18px; color: var(--gold-hi); letter-spacing: .5px; }
+  .tag { font-size: 11px; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 1px 6px; }
+  .spacer { flex: 1; }
+  .winbtn { width: 38px; height: 30px; display: grid; place-items: center; border: 0; background: transparent; color: var(--text-2); border-radius: 6px; }
+  .winbtn:hover { background: var(--panel-2); color: var(--text); }
+  .winbtn.close:hover { background: #6b2a22; color: #fff; }
+  .winbtn svg { width: 14px; height: 14px; }
+  .body { display: grid; grid-template-columns: 284px 1fr; min-height: 0; position: relative; overflow: clip; }
+
+  /* Список хроник */
+  .sidebar { border-right: 1px solid var(--line); background: #14100c; display: flex; flex-direction: column; min-height: 0; }
+  .side-top { padding: 12px 12px 8px; display: flex; flex-direction: column; gap: 8px; border-bottom: 1px solid var(--line); }
+  .search { height: 32px; border-radius: 6px; border: 1px solid var(--line); background: #0f0c09; padding: 0 10px; font-size: 13px; outline: none; }
+  .search:focus { border-color: var(--gold); }
+  .filters { display: flex; gap: 4px; flex-wrap: wrap; }
+  .fchip { font-size: 11.5px; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--text-2); }
+  .fchip.on { border-color: var(--gold); color: var(--gold-hi); background: var(--panel-2); }
+  .chron-list { overflow: auto; padding: 6px 8px 8px; flex: 1; min-height: 0; }
+  .era { width: 100%; display: flex; align-items: center; gap: 8px; background: transparent; border: 0; padding: 9px 6px 5px; color: var(--muted); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; text-align: left; }
+  .era .chev { width: 12px; height: 12px; transition: transform .15s; flex: none; }
+  .era.collapsed .chev { transform: rotate(-90deg); }
+  .era .cnt { margin-left: auto; letter-spacing: 0; text-transform: none; font-size: 11px; }
+  .era:hover { color: var(--text-2); }
+  .chron { display: flex; align-items: center; gap: 9px; padding: 5px 6px; border-radius: 7px; border: 1px solid transparent; background: transparent; text-align: left; width: 100%; }
+  .chron:hover { background: var(--panel); border-color: var(--line); }
+  .chron.sel { background: var(--panel-2); border-color: var(--gold); }
+  .thumb { width: 46px; height: 30px; border-radius: 4px; border: 1px solid var(--line); background: #1b150f center/cover; flex: none; position: relative; display: grid; place-items: center; font-family: var(--serif); font-size: 11px; color: var(--bronze); }
+  .chron .t { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+  .chron .n { font-family: var(--serif); font-weight: 600; font-size: 13.5px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chron.sel .n { color: var(--gold-hi); }
+  .chron .m { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chron.st-none .thumb, .chron.st-mobius .thumb { filter: grayscale(.8) brightness(.65); }
+  .chron.st-none .n { color: var(--muted); }
+  .sdot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+  .sdot.ready { background: var(--ok); }
+  .sdot.mobius { border: 1px solid var(--gold); }
+  .sdot.none { background: var(--off); }
+  .sdot.run { background: var(--ok); box-shadow: 0 0 0 3px rgba(130,196,108,.25); }
+  .side-bottom { padding: 8px 12px 12px; border-top: 1px solid var(--line); display: flex; gap: 8px; align-items: center; font-size: 11.5px; color: var(--muted); }
+  .legend { display: flex; gap: 10px; flex: 1; }
+  .legend span { display: inline-flex; align-items: center; gap: 4px; }
+
+  /* Основная область */
+  .main { padding: 16px 22px 14px; display: flex; flex-direction: column; gap: 12px; min-width: 0; min-height: 0; }
+  .banner { flex: 1 1 auto; min-height: 240px; border-radius: 8px; border: 1px solid var(--bronze); background: #18130e center 40%/cover; position: relative; overflow: hidden; }
+  .banner .ph { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; background: repeating-linear-gradient(135deg, #18130e 0 14px, #1b150f 14px 28px); }
+  .banner .ph b { font-family: var(--serif); font-size: 40px; color: var(--bronze); letter-spacing: 2px; }
+  .banner .ph span { font-size: 13px; color: var(--muted); }
+  .banner .chips { position: absolute; left: 12px; bottom: 10px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip { font-size: 12px; padding: 3px 9px; border-radius: 999px; background: rgba(16,13,10,.8); border: 1px solid var(--bronze); color: var(--text); }
+  .era-label { position: absolute; right: 12px; top: 10px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--gold-hi); background: rgba(16,13,10,.75); border: 1px solid var(--bronze); padding: 3px 8px; border-radius: 4px; }
+  .headline { display: flex; align-items: flex-end; gap: 16px; }
+  .title { font-family: var(--serif); font-weight: 700; font-size: 40px; line-height: 1; color: var(--gold-hi); margin: 0; letter-spacing: .5px; }
+  .subline { font-size: 13px; color: var(--muted); margin-top: 8px; }
+  .subline b { color: var(--text-2); font-weight: 500; }
+
+  .actions { display: flex; gap: 10px; }
+  .btn { height: 50px; border-radius: 8px; border: 1px solid var(--bronze); background: var(--panel); display: flex; align-items: center; justify-content: center; gap: 9px; font-size: 15px; font-weight: 500; padding: 0 18px; }
+  .btn:hover { border-color: var(--gold); background: var(--panel-2); }
+  .btn svg { width: 19px; height: 19px; color: var(--gold); flex: none; }
+  .split { display: flex; flex: 1.6; position: relative; }
+  .btn.play { flex: 1; border-radius: 8px 0 0 8px; background: var(--gold); border-color: var(--gold-hi); color: #23190b; font-family: var(--serif); font-weight: 700; font-size: 21px; letter-spacing: 1px; }
+  .btn.play svg { color: #23190b; width: 21px; height: 21px; }
+  .btn.play:hover { background: var(--gold-hi); }
+  .btn.more { border-radius: 0 8px 8px 0; border-left: 1px solid #a07f3f; background: var(--gold); border-color: var(--gold-hi); width: 44px; padding: 0; }
+  .btn.more svg { color: #23190b; }
+  .btn.more:hover { background: var(--gold-hi); }
+  .split.stop .btn.play, .split.stop .btn.more { background: transparent; color: var(--bad); border-color: var(--bad); }
+  .split.stop .btn svg { color: var(--bad); }
+  .split.stop .btn:hover { background: #2a1612; }
+  .split.ghost .btn.play, .split.ghost .btn.more { background: var(--panel-2); color: var(--gold-hi); border-color: var(--gold); }
+  .split.ghost .btn svg { color: var(--gold-hi); }
+  .split.busy { opacity: .75; cursor: progress; }
+  .actions .btn.sec { flex: 1; }
+  .menu { position: absolute; right: 0; top: 54px; width: 270px; background: var(--panel-2); border: 1px solid var(--gold); border-radius: 8px; padding: 5px; z-index: 5; display: none; }
+  .menu.on { display: block; }
+  .menu button { width: 100%; text-align: left; background: transparent; border: 0; padding: 8px 10px; border-radius: 6px; font-size: 13.5px; display: flex; gap: 9px; align-items: center; }
+  .menu button:hover { background: var(--panel-3); }
+  .menu button small { margin-left: auto; color: var(--muted); }
+  .menu hr { border: 0; border-top: 1px solid var(--line); margin: 4px 2px; }
+
+  /* Состояние */
+  .health { border: 1px solid var(--line); border-radius: 8px; background: var(--panel); padding: 10px 12px; display: flex; flex-direction: column; gap: 9px; }
+  .health-head { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+  .health-head .dot { width: 10px; height: 10px; }
+  .health-head .sum { color: var(--text); font-weight: 500; }
+  .health-head .sub { color: var(--muted); font-size: 12.5px; }
+  .progress { height: 3px; border-radius: 3px; background: var(--panel-3); overflow: hidden; }
+  .progress > i { display: block; height: 100%; width: 0; background: var(--gold); transition: width .5s; }
+  .tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+  .tile { background: #18130e; border: 1px solid var(--line); border-radius: 7px; padding: 8px 10px; min-width: 0; }
+  .tile .top { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--text); font-weight: 500; }
+  .tile .st { font-size: 12px; margin-top: 3px; color: var(--text-2); }
+  .tile .det { font-size: 11.5px; color: var(--muted); margin-top: 2px; font-family: var(--mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--off); flex: none; }
+  .dot.starting { background: var(--warn); animation: pulse 1s infinite; }
+  .dot.on { background: var(--ok); }
+  .dot.bad { background: var(--bad); }
+  @keyframes pulse { 50% { opacity: .35; } }
+  .linkbtn { margin-left: auto; background: transparent; border: 1px solid var(--line); border-radius: 6px; font-size: 12.5px; padding: 4px 10px; color: var(--text-2); display: inline-flex; gap: 6px; align-items: center; }
+  .linkbtn:hover { border-color: var(--gold); color: var(--gold-hi); }
+  .linkbtn svg { width: 14px; height: 14px; }
+
+  .statusbar { border-top: 1px solid var(--line); background: #130f0b; display: flex; align-items: center; gap: 10px; padding: 0 14px; font-size: 12.5px; color: var(--muted); }
+  .statusbar .log { flex: 1; font-family: var(--mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* Полноэкранные настройки */
+  .view { position: absolute; inset: 0; background: var(--win); display: none; flex-direction: column; z-index: 3; }
+  .view.on { display: flex; }
+  .view-head { display: flex; align-items: center; gap: 14px; padding: 12px 18px 0; border-bottom: 1px solid var(--line); }
+  .view-head h2 { font-family: var(--serif); font-size: 20px; color: var(--gold-hi); margin: 0 10px 10px 0; }
+  .tabs { display: flex; gap: 2px; align-self: flex-end; }
+  .tab { background: transparent; border: 1px solid transparent; border-bottom: 0; padding: 8px 14px; border-radius: 7px 7px 0 0; color: var(--text-2); font-size: 14px; }
+  .tab.on { background: var(--panel); border-color: var(--line); color: var(--gold-hi); }
+  .tab .badge { font-size: 11px; color: var(--muted); margin-left: 4px; }
+  .view-body { flex: 1; min-height: 0; display: flex; }
+  .pane { flex: 1; min-height: 0; display: none; }
+  .pane.on { display: flex; }
+  .view-foot { border-top: 1px solid var(--line); padding: 10px 18px; display: flex; gap: 10px; align-items: center; }
+  .view-foot .info { flex: 1; font-size: 12.5px; color: var(--muted); }
+
+  .basic { overflow: auto; padding: 16px 18px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-content: start; width: 100%; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; }
+  .card.wide { grid-column: 1 / -1; }
+  .card h3 { margin: 0 0 10px; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 500; display: flex; align-items: center; gap: 8px; }
+  .card h3 .src { margin-left: auto; text-transform: none; letter-spacing: 0; font-family: var(--mono); font-size: 11px; color: var(--bronze); }
+  .rates { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px 10px; }
+  .num { display: flex; flex-direction: column; gap: 3px; }
+  .num label { font-size: 12.5px; color: var(--text-2); }
+  .num input { height: 32px; border-radius: 6px; border: 1px solid var(--line); background: #120e0a; padding: 0 8px; font-variant-numeric: tabular-nums; width: 100%; }
+  .num input:focus, .field:focus { outline: none; border-color: var(--gold); }
+  .num input.changed { border-color: var(--gold); color: var(--gold-hi); }
+  .num small { font-family: var(--mono); font-size: 10.5px; color: var(--muted); }
+  .opt { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px dashed #2e2519; }
+  .opt:last-child { border-bottom: 0; }
+  .opt .l { flex: 1; font-size: 13.5px; }
+  .opt .l small { display: block; font-family: var(--mono); font-size: 10.5px; color: var(--muted); }
+  .opt input[type=number], .opt select { width: 110px; height: 30px; border-radius: 6px; border: 1px solid var(--line); background: #120e0a; padding: 0 8px; }
+  .field { height: 32px; border-radius: 6px; border: 1px solid var(--line); background: #120e0a; padding: 0 10px; font: 13px var(--mono); width: 100%; }
+  textarea.field { height: 64px; padding: 6px 10px; resize: none; font-family: var(--sans); }
+  .switch { width: 38px; height: 21px; border-radius: 21px; border: 1px solid var(--bronze); background: var(--panel-2); position: relative; flex: none; padding: 0; }
+  .switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 13px; height: 13px; border-radius: 50%; background: var(--muted); transition: left .15s, background .15s; }
+  .switch[aria-checked=true] { background: #4a3a1d; border-color: var(--gold); }
+  .switch[aria-checked=true]::after { left: 20px; background: var(--gold-hi); }
+
+  .all { display: grid; grid-template-columns: 250px 1fr; width: 100%; min-height: 0; }
+  .files { border-right: 1px solid var(--line); overflow: auto; padding: 10px 8px; }
+  .files .grp { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 8px 8px 4px; }
+  .fileb { width: 100%; display: flex; gap: 8px; align-items: center; background: transparent; border: 1px solid transparent; border-radius: 6px; padding: 5px 8px; text-align: left; font-size: 13px; color: var(--text-2); }
+  .fileb:hover { background: var(--panel); }
+  .fileb.on { background: var(--panel-2); border-color: var(--gold); color: var(--gold-hi); }
+  .fileb .c { margin-left: auto; font-size: 11px; color: var(--muted); }
+  .fileb .chg { font-size: 11px; color: var(--gold); }
+  .keys { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+  .keys-bar { display: flex; gap: 10px; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+  .keys-bar .search { flex: 1; }
+  .keys-bar label { font-size: 13px; color: var(--text-2); display: flex; gap: 6px; align-items: center; white-space: nowrap; }
+  .keys-list { overflow: auto; padding: 4px 14px 14px; flex: 1; }
+  .sec-title { font-family: var(--serif); color: var(--gold-hi); font-size: 14px; margin: 14px 0 6px; }
+  .kv { display: grid; grid-template-columns: minmax(0, 1fr) 210px 28px; gap: 12px; align-items: center; padding: 8px 6px; border-bottom: 1px solid #2a2117; }
+  .kv:hover { background: #1a150f; }
+  .kv .k { font-family: var(--mono); font-size: 12.5px; color: var(--text); }
+  .kv .k .f { color: var(--muted); }
+  .kv .d { font-size: 12px; color: var(--muted); margin-top: 2px; line-height: 1.45; }
+  .kv .dv { font-size: 11px; color: var(--bronze); margin-top: 2px; font-family: var(--mono); }
+  .kv.changed .k { color: var(--gold-hi); }
+  .kv input.field { height: 30px; }
+  .kv .reset { width: 26px; height: 26px; border-radius: 6px; border: 1px solid var(--line); background: transparent; color: var(--gold); display: grid; place-items: center; visibility: hidden; padding: 0; }
+  .kv.changed .reset { visibility: visible; }
+  .kv .reset svg { width: 14px; height: 14px; }
+  .empty { color: var(--muted); font-size: 13px; padding: 24px 6px; }
+  .netgrid { overflow: auto; padding: 16px 18px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-content: start; width: 100%; }
+  .sbtn { height: 34px; padding: 0 14px; border-radius: 6px; border: 1px solid var(--bronze); background: var(--panel-2); font-size: 13px; white-space: nowrap; }
+  .sbtn:hover { border-color: var(--gold); }
+  .sbtn.primary { background: var(--gold); color: #23190b; border-color: var(--gold-hi); font-weight: 600; }
+  .row2 { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+  .note { font-size: 12.5px; color: var(--text-2); background: #1a140e; border: 1px solid var(--line); border-radius: 6px; padding: 9px 11px; line-height: 1.5; }
+
+  /* Выдвижные панели */
+  .scrim { position: absolute; inset: 0; background: rgba(8,6,4,.55); opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 6; }
+  .scrim.on { opacity: 1; pointer-events: auto; }
+  .drawer { position: absolute; top: 0; right: 0; bottom: 0; width: 460px; background: var(--panel); border-left: 1px solid var(--bronze); transform: translateX(100%); transition: transform .22s ease-out; display: flex; flex-direction: column; z-index: 7; }
+  .drawer.on { transform: none; }
+  .drawer header { display: flex; align-items: center; gap: 10px; padding: 16px 18px; border-bottom: 1px solid var(--line); }
+  .drawer header h2 { font-family: var(--serif); font-size: 20px; color: var(--gold-hi); margin: 0; flex: 1; }
+  .drawer .content { padding: 14px 18px; overflow: auto; flex: 1; display: flex; flex-direction: column; gap: 16px; }
+  .sec h3 { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; font-weight: 500; }
+  .check { display: flex; gap: 10px; align-items: flex-start; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 13.5px; }
+  .check .ic { width: 18px; text-align: center; flex: none; }
+  .check .ic.ok { color: var(--ok); } .check .ic.bad { color: var(--bad); } .check .ic.na { color: var(--muted); }
+  .check small { display: block; color: var(--muted); font-size: 12px; font-family: var(--mono); }
+  pre.logs { margin: 0; background: #0f0c09; border: 1px solid var(--line); border-radius: 6px; padding: 10px; font: 12px/1.55 var(--mono); color: #c9bb9f; white-space: pre-wrap; max-height: 230px; overflow: auto; }
+  .friend { display: flex; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--line); }
+  .ava { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--panel-2); border: 1px solid var(--bronze); font-weight: 600; color: var(--gold-hi); }
+  .friend .who { flex: 1; font-size: 14px; }
+  .friend .who small { display: block; color: var(--muted); font-size: 12px; }
+  .list-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 13.5px; }
+  .list-row span { flex: 1; }
+  select { height: 30px; border-radius: 6px; border: 1px solid var(--line); background: #120e0a; padding: 0 6px; }
+
+  .toast { position: absolute; left: 50%; bottom: 44px; transform: translate(-50%, 20px); background: var(--panel-2); border: 1px solid var(--gold); padding: 10px 16px; border-radius: 8px; font-size: 14px; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; max-width: 680px; text-align: center; z-index: 9; }
+  .toast.on { opacity: 1; transform: translate(-50%, 0); }
+</style>
+</head>
+<body>
+<div class="stage">
+<div class="win" id="win">
+  <div class="titlebar">
+    <svg class="crest" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2l7 3v6c0 5-3 8.5-7 11-4-2.5-7-6-7-11V5z"/><path d="M12 7v9M8.5 10.5h7"/></svg>
+    <span class="name">L2Hub</span><span class="tag">макет v2</span>
+    <span class="spacer"></span>
+    <button class="winbtn" aria-label="Свернуть"><svg viewBox="0 0 14 14" stroke="currentColor"><path d="M2 7h10"/></svg></button>
+    <button class="winbtn" aria-label="Развернуть"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor"><rect x="2.5" y="2.5" width="9" height="9"/></svg></button>
+    <button class="winbtn close" aria-label="Закрыть"><svg viewBox="0 0 14 14" stroke="currentColor"><path d="M3 3l8 8M11 3l-8 8"/></svg></button>
+  </div>
+
+  <div class="body">
+    <nav class="sidebar">
+      <div class="side-top">
+        <input class="search" id="chronSearch" placeholder="Найти хронику">
+        <div class="filters" id="filters">
+          <button class="fchip on" data-f="all">Все</button>
+          <button class="fchip" data-f="ready">Готовые</button>
+          <button class="fchip" data-f="mobius">Есть сервер</button>
+          <button class="fchip" data-f="none">Нет сервера</button>
+        </div>
+      </div>
+      <div class="chron-list" id="chronList"></div>
+      <div class="side-bottom"><div class="legend"><span><i class="sdot ready"></i>готова</span><span><i class="sdot mobius"></i>есть сервер</span><span><i class="sdot none"></i>нет</span></div></div>
+    </nav>
+
+    <section class="main">
+      <div class="banner" id="banner"><div class="era-label" id="eraLabel"></div><div class="chips" id="chips"></div></div>
+      <div class="headline"><div><h1 class="title" id="title"></h1><div class="subline" id="subline"></div></div></div>
+      <div class="actions">
+        <div class="split" id="split">
+          <button class="btn play" id="play"></button>
+          <button class="btn more" id="more" aria-label="Другие варианты запуска"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg></button>
+          <div class="menu" id="menu">
+            <button data-act="server"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="7" rx="1.5"/><rect x="3" y="13" width="18" height="7" rx="1.5"/></svg>Только сервер, без клиента</button>
+            <button data-act="db"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6"/></svg>Только база<small>для правок в БД</small></button>
+            <button data-act="restart"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></svg>Перезапустить гейм-сервер</button>
+            <hr>
+            <button data-act="console"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 3-3 3M12 15h5"/></svg>Показать консоль сервера</button>
+            <button data-act="kill"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v9M6.3 7.5a8 8 0 1 0 11.4 0"/></svg>Аварийная остановка<small>только наши процессы</small></button>
+          </div>
+        </div>
+        <button class="btn sec" data-view="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Настройки</button>
+        <button class="btn sec" data-open="friends"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><circle cx="17" cy="9" r="2.6"/><path d="M16.5 14.6c2.6.2 4.4 1.9 5 4.9"/></svg>Друзья</button>
+        <button class="btn sec" data-open="service"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/></svg>Сервис</button>
+      </div>
+      <div class="health" id="health">
+        <div class="health-head"><span class="dot" id="hDot"></span><span class="sum" id="hSum"></span><span class="sub" id="hSub"></span>
+          <button class="linkbtn" data-open="diag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>Проверить всё</button></div>
+        <div class="progress" id="progress"><i id="bar"></i></div>
+        <div class="tiles" id="tiles"></div>
+      </div>
+    </section>
+
+    <!-- Полноэкранные настройки -->
+    <section class="view" id="view-settings">
+      <div class="view-head">
+        <h2 id="setTitle">Настройки</h2>
+        <div class="tabs">
+          <button class="tab on" data-tab="basic">Основное</button>
+          <button class="tab" data-tab="all">Все настройки <span class="badge" id="allBadge"></span></button>
+          <button class="tab" data-tab="net">Клиент и сеть</button>
+        </div>
+        <span class="spacer"></span>
+        <button class="winbtn" data-closeview aria-label="Закрыть" style="margin-bottom:8px"><svg viewBox="0 0 14 14" stroke="currentColor"><path d="M3 3l8 8M11 3l-8 8"/></svg></button>
+      </div>
+      <div class="view-body">
+        <div class="pane on" id="pane-basic"><div class="basic" id="basic"></div></div>
+        <div class="pane" id="pane-all">
+          <div class="all">
+            <div class="files" id="files"></div>
+            <div class="keys">
+              <div class="keys-bar"><input class="search" id="keySearch" placeholder="Поиск по 1585 настройкам: имя или описание"><label><button class="switch" role="switch" aria-checked="false" id="onlyChanged"></button>Только изменённые</label></div>
+              <div class="keys-list" id="keysList"></div>
+            </div>
+          </div>
+        </div>
+        <div class="pane" id="pane-net"><div class="netgrid" id="net"></div></div>
+      </div>
+      <div class="view-foot"><span class="info" id="pendingInfo">Изменений нет.</span><button class="sbtn" data-closeview>Закрыть</button><button class="sbtn primary" id="saveBtn">Сохранить</button></div>
+    </section>
+
+    <div class="scrim" id="scrim"></div>
+
+    <aside class="drawer" id="drawer-diag">
+      <header><h2>Проверка</h2><button class="winbtn" data-close aria-label="Закрыть"><svg viewBox="0 0 14 14" stroke="currentColor"><path d="M3 3l8 8M11 3l-8 8"/></svg></button></header>
+      <div class="content"><div class="sec" id="diagList"></div><div class="note">Лаунчер проверяет порты, процессы, базу, логи сервера и совпадение протокола клиента. Всё, что красное, — с подсказкой, что делать.</div></div>
+    </aside>
+
+    <aside class="drawer" id="drawer-friends">
+      <header><h2>Друзья</h2><button class="winbtn" data-close aria-label="Закрыть"><svg viewBox="0 0 14 14" stroke="currentColor"><path d="M3 3l8 8M11 3l-8 8"/></svg></button></header>
+      <div class="content">
+        <div class="sec"><h3>Режим хоста</h3>
+          <div class="opt"><span class="l">Пускать друзей на мой сервер<small>через VPN, без проброса портов</small></span><button class="switch" role="switch" aria-checked="false"></button></div>
+          <div class="row2"><input class="field" placeholder="100.64.0.1 — адрес в VPN"><button class="sbtn">Определить</button></div>
+        </div>
+        <div class="sec"><h3>Кто играет</h3>
+          <div class="friend"><div class="ava">А</div><div class="who">Алекс<small>Россия · не в сети</small></div><span class="dot"></span></div>
+          <div class="friend"><div class="ava">К</div><div class="who">Кен<small>Япония · не в сети</small></div><span class="dot"></span></div>
+        </div>
+        <button class="sbtn" data-toast="Пакет: система клиента с твоим адресом в L2.ini и короткая инструкция. Это фаза 4.">Собрать пакет для друзей</button>
+        <div class="note">Друзьям нужен тот же клиент хроники. Пакет подставит в него адрес твоего сервера — как «L2.ini IP» в La2offline, только без ручного шифрования.</div>
+      </div>
+    </aside>
+
+    <aside class="drawer" id="drawer-service">
+      <header><h2>Сервис</h2><button class="winbtn" data-close aria-label="Закрыть"><svg viewBox="0 0 14 14" stroke="currentColor"><path d="M3 3l8 8M11 3l-8 8"/></svg></button></header>
+      <div class="content">
+        <div class="sec"><h3>Лог гейм-сервера</h3>
+<pre class="logs">23:23:49 GeoEngine: Loaded 203 regions.
+23:23:58 GameServer: Started, using 2838 of 4096 MB total memory.
+23:23:58 GameServer: Server loaded in 20 seconds.
+23:23:58 LoginServerThread: Registered on login as Server 2: Sieghardt
+23:31:35 Master access level set for character PlayerOne! Just a warning to be careful ;)
+23:33:07 All players disconnected and saved(0ms).</pre>
+          <div class="row2"><button class="sbtn">Открыть папку логов</button><button class="sbtn">Логин-сервер</button></div>
+        </div>
+        <div class="sec"><h3>Бэкапы базы</h3>
+          <div class="list-row"><span>2026-10-16 23:33 · автоматически при остановке</span><button class="sbtn" data-toast="Откат базы к бэкапу 23:33 — в макете не выполняется.">Откатить</button></div>
+          <div class="row2"><button class="sbtn" data-toast="Бэкап базы сохранён в data\backups.">Сделать бэкап сейчас</button></div>
+        </div>
+        <div class="sec"><h3>Персонажи и права GM</h3>
+          <div class="list-row"><span>PlayerOne · аккаунт 123 · 3 ур.</span><select><option>Игрок</option><option>Admin (70)</option><option selected>Master (100)</option></select></div>
+          <div class="note">Права меняются, только пока персонаж не в игре — иначе сервер затрёт их при сохранении.</div>
+        </div>
+        <div class="sec"><h3>Сборка сервера</h3>
+          <div class="list-row"><span>L2J Mobius CT 2.6 · master от 2026-10-16 · 1 наш патч</span><button class="sbtn" data-toast="Скачать свежий Mobius, наложить наши патчи, пересобрать — конфиги и база не трогаются.">Обновить</button></div>
+        </div>
+      </div>
+    </aside>
+
+    <div class="toast" id="toast"></div>
+  </div>
+
+  <div class="statusbar"><span class="log" id="footLog"></span><span>v0.2.0 · макет</span></div>
+</div>
+</div>
+
+<script src="assets/config_ct26_highfive.js"></script>
+<script>
+// ---------- Хроники ----------
+const COVERS = { interlude: 1, gracia_final: 1, ct26_highfive: 1, ertheia: 1, classic_10: 'classic' };
+const ERAS = [
+  { name: 'Chaotic Chronicle', items: [
+    ['prelude', 'Prelude', 'none'], ['c1', 'Harbingers of War', 'mobius', 'C1'], ['c2', 'Age of Splendor', 'none', 'C2'], ['c3', 'Rise of Darkness', 'none', 'C3'],
+    ['c4', 'Scions of Destiny', 'mobius', 'C4'], ['c5', 'Oath of Blood', 'none', 'C5'], ['interlude', 'Interlude', 'mobius'] ] },
+  { name: 'Chaotic Throne', items: [
+    ['kamael', 'The Kamael', 'none'], ['hellbound', 'Hellbound', 'none'], ['gracia1', 'Gracia Part 1', 'none'], ['gracia2', 'Gracia Part 2', 'none'],
+    ['gracia_final', 'Gracia Final', 'la2offline'], ['epilogue', 'Gracia Epilogue', 'mobius'], ['freya', 'Freya', 'none'], ['ct26_highfive', 'High Five', 'ready'] ] },
+  { name: 'Goddess of Destruction', items: [
+    ['awakening', 'Awakening', 'none'], ['harmony', 'Harmony', 'none'], ['tauti', 'Tauti', 'none'], ['glory_days', 'Glory Days', 'none'], ['lindvior', 'Lindvior', 'none'], ['valiance', 'Valiance', 'none'] ] },
+  { name: 'После GoD', items: [
+    ['ertheia', 'Ertheia', 'mobius'], ['underground', 'Underground', 'mobius'], ['helios', 'Helios', 'mobius'], ['grand_crusade', 'Grand Crusade', 'mobius'], ['salvation', 'Salvation', 'mobius'],
+    ['fafurion', 'Fafurion', 'mobius'], ['prelude_of_war', 'Prelude of War', 'mobius'], ['homunculus', 'Homunculus', 'mobius'], ['queen_ant', 'Return of the Queen Ant', 'mobius'], ['master_class', 'Master Class', 'mobius'],
+    ['shinemaker', 'Shinemaker', 'mobius'], ['superion', 'Superion', 'mobius'], ['orc_village', 'Orc Village', 'mobius'], ['wolf_waker', 'Wolf Waker', 'mobius'], ['samurai_crow', 'Samurai Crow', 'mobius'] ] },
+  { name: 'Classic', items: [
+    ['classic_10', 'Classic 1.0', 'mobius'], ['classic_aos', 'Age of Splendor', 'mobius'], ['classic_saviors', 'Saviors', 'mobius'], ['classic_zaken', 'Zaken', 'mobius'], ['classic_antharas', 'Antharas', 'mobius'],
+    ['classic_soe', 'Secret of Empire', 'mobius'], ['classic_saviors2', 'Saviors 2.9.5', 'mobius'], ['classic_kamael', 'The Kamael', 'mobius'], ['classic_tales', 'Tales Untold', 'mobius'] ] },
+  { name: 'Essence', items: [
+    ['ess_dos', 'Dwelling of Spirits', 'mobius'], ['ess_frost', 'Frost Lord', 'mobius'], ['ess_crusader', 'Crusader', 'mobius'], ['ess_seven', 'Seven Signs', 'mobius'],
+    ['ess_guardians', 'Guardians', 'mobius'], ['ess_warg', 'Warg', 'mobius'], ['ess_rose', 'Rose Vain', 'mobius'], ['ess_crow', 'Samurai Crow', 'mobius'] ] },
+];
+const chronicles = [];
+for (const era of ERAS) for (const [id, name, server, short] of era.items) {
+  const st = server === 'ready' || server === 'la2offline' ? 'ready' : server;
+  const cov = COVERS[id] ? `assets/cover_${COVERS[id] === 1 ? id : COVERS[id]}.jpg` : null;
+  chronicles.push({ id, name, era: era.name, server, st, short: short || name.split(' ').map((w) => w[0]).join('').slice(0, 3), cover: cov });
+}
+const meta = {
+  ct26_highfive: { sub: 'Сервер <b>L2J Mobius CT 2.6</b> · клиент <b>C:\\Games\\LA2 H5</b> · персонаж <b>PlayerOne</b>, 3 ур., GM', chips: ['Mobius CT 2.6', 'Протокол 273', 'Геодата 203 региона'] },
+  gracia_final: { sub: 'Сервер <b>La2offline 4.0</b> запускается напрямую, без его лаунчера · клиент <b>C:\\Games\\Lineage II</b>', chips: ['La2offline 4.0', 'L2J 2.0.6 (2009)'] },
+  interlude: { sub: 'Исходники Mobius CT 0 уже скачаны · нужен клиент Interlude (протокол 746)', chips: ['Mobius CT 0'] },
+};
+const statusText = { ready: 'готова', la2offline: 'готова', mobius: 'есть сервер Mobius', none: 'сервера пока нет' };
+
+let selected = 'ct26_highfive', running = null, busy = false, filter = 'all', query = '';
+const collapsed = new Set(['Goddess of Destruction', 'После GoD', 'Classic', 'Essence']);
+const $ = (id) => document.getElementById(id);
+const byId = (id) => chronicles.find((c) => c.id === id);
+
+function renderList() {
+  const box = $('chronList'); box.innerHTML = '';
+  const q = query.trim().toLowerCase();
+  for (const era of ERAS) {
+    const items = chronicles.filter((c) => c.era === era.name && (filter === 'all' || c.st === filter) && (!q || (c.name + ' ' + c.short).toLowerCase().includes(q)));
+    if (!items.length) continue;
+    const total = chronicles.filter((c) => c.era === era.name);
+    const ready = total.filter((c) => c.st === 'ready').length;
+    const isCol = collapsed.has(era.name) && !q && filter === 'all';
+    const h = document.createElement('button');
+    h.className = 'era' + (isCol ? ' collapsed' : '');
+    h.innerHTML = `<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>${era.name}<span class="cnt">${ready ? ready + ' из ' : ''}${total.length}</span>`;
+    h.onclick = () => { collapsed.has(era.name) ? collapsed.delete(era.name) : collapsed.add(era.name); renderList(); };
+    box.appendChild(h);
+    if (isCol) continue;
+    for (const c of items) {
+      const b = document.createElement('button');
+      b.className = `chron st-${c.st}` + (c.id === selected ? ' sel' : '');
+      const thumb = c.cover ? `<span class="thumb" style="background-image:url(${c.cover})"></span>` : `<span class="thumb">${c.short}</span>`;
+      const dot = c.id === running ? 'run' : c.st;
+      b.innerHTML = `${thumb}<span class="t"><span class="n">${c.name}</span><span class="m">${c.server === 'la2offline' ? 'La2offline 4.0' : statusText[c.server]}</span></span><i class="sdot ${dot}"></i>`;
+      b.onclick = () => select(c.id);
+      box.appendChild(b);
+    }
+  }
+  if (!box.children.length) box.innerHTML = '<div class="empty">Ничего не нашлось.</div>';
+}
+
+function select(id) {
+  if (busy) return toast('Подожди, сервер ещё меняет состояние.');
+  selected = id; closeMenu(); renderList(); renderMain();
+}
+
+// ---------- Главный экран ----------
+const ICON = {
+  play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l12.5-7.5z"/></svg>',
+  stop: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="12" height="12" rx="1.5"/></svg>',
+  get: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>',
+  find: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg>',
+};
+const comp = { db: 'off', login: 'off', game: 'off', client: 'off' };
+
+function renderMain() {
+  const c = byId(selected), m = meta[c.id] || {};
+  const ban = $('banner');
+  ban.style.backgroundImage = c.cover ? `url(${c.cover})` : 'none';
+  ban.style.filter = c.st === 'ready' ? 'none' : 'saturate(.55) brightness(.75)';
+  ban.querySelector('.ph')?.remove();
+  if (!c.cover) { const ph = document.createElement('div'); ph.className = 'ph'; ph.innerHTML = `<b>${c.name}</b><span>Обложка появится при наполнении хроники</span>`; ban.prepend(ph); }
+  $('eraLabel').textContent = c.era;
+  $('chips').innerHTML = (m.chips || []).map((t) => `<span class="chip">${t}</span>`).join('');
+  $('title').textContent = c.name;
+  $('subline').innerHTML = m.sub || (c.st === 'mobius' ? `Сборка есть в L2J Mobius — лаунчер скачает и соберёт её сам, нужен только клиент` : `Сборки в Mobius нет — нужен другой эмулятор (фаза 6)`);
+  const split = $('split'); split.className = 'split';
+  if (c.st === 'mobius') { split.classList.add('ghost'); $('play').innerHTML = ICON.get + 'Установить'; }
+  else if (c.st === 'none') { split.classList.add('ghost'); $('play').innerHTML = ICON.find + 'Найти сервер'; }
+  else if (running === c.id) { split.classList.add('stop'); $('play').innerHTML = ICON.stop + 'Остановить'; }
+  else $('play').innerHTML = ICON.play + 'Играть';
+  renderHealth();
+}
+
+function renderHealth() {
+  const c = byId(selected), here = running === c.id;
+  const S = (k) => (here || busy ? comp[k] : 'off');
+  const label = { off: 'выключен', starting: 'запускается…', on: 'работает', bad: 'ошибка' };
+  const tiles = [
+    ['db', 'База данных', 'MariaDB 13.0.2 · 127.0.0.1:3306', here ? 'PID 8800 · 1 аккаунт' : ''],
+    ['login', 'Логин-сервер', '127.0.0.1:2106 · java 27', here ? 'PID 21932 · аптайм 4 мин' : ''],
+    ['game', 'Гейм-сервер', '127.0.0.1:7777 · мир 203 региона', here ? 'память 2,8 / 4 ГБ · онлайн 1' : ''],
+    ['client', 'Клиент', 'L2.exe · протокол 273', here ? 'PID 21532 · в игре' : ''],
+  ];
+  if (c.st !== 'ready') {
+    $('hDot').className = 'dot'; $('hSum').textContent = c.st === 'mobius' ? 'Хроника не установлена' : 'Сервера для этой хроники пока нет'; $('hSub').textContent = '';
+    $('tiles').innerHTML = tiles.map(([k, n]) => `<div class="tile"><div class="top"><span class="dot"></span>${n}</div><div class="st">—</div></div>`).join('');
+    return;
+  }
+  const states = tiles.map(([k]) => S(k));
+  const all = states.every((s) => s === 'on') ? 'on' : states.some((s) => s === 'starting') ? 'starting' : states.some((s) => s === 'bad') ? 'bad' : 'off';
+  $('hDot').className = 'dot ' + (all === 'off' ? '' : all);
+  $('hSum').textContent = { on: 'Всё работает', starting: 'Запуск…', off: 'Сервер выключен', bad: 'Есть проблема' }[all];
+  $('hSub').textContent = all === 'on' ? '· онлайн 1 · последнее сохранение мира 2 мин назад' : all === 'off' ? (c.id === 'ct26_highfive' ? '· последний запуск сегодня в 23:23, остановлен корректно' : '') : '';
+  $('tiles').innerHTML = tiles.map(([k, n, d1, d2]) => `<div class="tile"><div class="top"><span class="dot ${S(k) === 'off' ? '' : S(k)}"></span>${n}</div><div class="st">${label[S(k)]}</div><div class="det" title="${d1}">${d1}</div>${d2 ? `<div class="det">${d2}</div>` : ''}</div>`).join('');
+  if (!busy) $('footLog').textContent = running ? `${byId(running).name}: 127.0.0.1:2106, 127.0.0.1:7777 · всё работает` : 'Локальный сервер остановлен.';
+}
+
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+async function runSteps(steps) {
+  busy = true; $('split').classList.add('busy'); $('bar').style.width = '0';
+  for (let i = 0; i < steps.length; i++) {
+    const [k, state, log, ms] = steps[i];
+    if (k) comp[k] = state;
+    $('footLog').textContent = log;
+    $('bar').style.width = Math.round(((i + 1) / steps.length) * 100) + '%';
+    renderHealth();
+    await wait(ms || 700);
+  }
+  await wait(200); $('bar').style.width = '0'; busy = false;
+}
+
+async function start(withClient = true, onlyDb = false) {
+  const c = byId(selected);
+  if (running && running !== c.id) return toast(`Сначала останови ${byId(running).name}: одновременно работает одна хроника.`);
+  running = c.id;
+  const steps = [['db', 'starting', 'MariaDB: запуск…', 500], ['db', 'on', 'MariaDB: 127.0.0.1:3306 слушает', 400]];
+  if (!onlyDb) steps.push(['login', 'starting', 'LoginServer: запуск…', 500], ['login', 'on', 'LoginServer: listening on 127.0.0.1:2106', 400],
+    ['game', 'starting', 'GameServer: загрузка мира… GeoEngine: Loaded 203 regions.', 1600], ['game', 'on', 'LoginServerThread: Registered on login as Server 2: Sieghardt', 400]);
+  if (withClient && !onlyDb) steps.push(['client', 'starting', 'L2.exe: запуск клиента…', 700], ['client', 'on', 'Клиент подключился: протокол 273', 300]);
+  await runSteps(steps);
+  renderList(); renderMain();
+}
+async function stop() {
+  await runSteps([['client', 'off', 'Клиент закрыт', 300], ['game', 'starting', 'GameServer: All players disconnected and saved', 1100], ['game', 'off', 'GameServer: остановлен корректно', 300],
+    ['login', 'off', 'LoginServer: остановлен', 400], ['db', 'off', 'MariaDB: остановлена', 400]]);
+  running = null; renderList(); renderMain();
+}
+
+$('play').onclick = () => {
+  if (busy) return;
+  const c = byId(selected);
+  if (c.st === 'mobius') return toast(`Установка ${c.name}: скачать сборку Mobius, собрать, залить базу, указать клиент. Сейчас это делают наши скрипты, в лаунчере будет мастер.`);
+  if (c.st === 'none') return toast(`Для ${c.name} в Mobius сборки нет. Ищем другой эмулятор — это фаза 6.`);
+  running === c.id ? stop() : start();
+};
+$('more').onclick = (e) => { e.stopPropagation(); $('menu').classList.toggle('on'); };
+function closeMenu() { $('menu').classList.remove('on'); }
+document.addEventListener('click', closeMenu);
+$('menu').querySelectorAll('button').forEach((b) => (b.onclick = (e) => {
+  e.stopPropagation(); closeMenu();
+  const c = byId(selected);
+  if (c.st !== 'ready') return toast('Сначала установи хронику.');
+  const a = b.dataset.act;
+  if (a === 'server') return running === c.id ? toast('Сервер уже работает.') : start(false);
+  if (a === 'db') return running === c.id ? toast('База уже работает.') : start(false, true);
+  if (a === 'restart') return running === c.id ? runSteps([['game', 'starting', 'GameServer: сохраняю мир и перезапускаю…', 1400], ['game', 'on', 'GameServer: Registered on login as Server 2', 400]]) : toast('Сервер не запущен.');
+  if (a === 'console') return toast('Окно с живым логом сервера — как «Показывать окно запуска» в La2offline.');
+  if (a === 'kill') return toast('Жёстко завершит только процессы этой хроники по их PID. Не как Kill All в La2offline, который убивает все java.exe и cmd.exe в системе.');
+}));
+
+// ---------- Панели и экран настроек ----------
+let openDrawer = null;
+function open(name) { close(); openDrawer = $('drawer-' + name); if (name === 'diag') renderDiag(); openDrawer.classList.add('on'); $('scrim').classList.add('on'); }
+function close() { if (openDrawer) openDrawer.classList.remove('on'); openDrawer = null; $('scrim').classList.remove('on'); }
+document.querySelectorAll('[data-open]').forEach((b) => (b.onclick = () => open(b.dataset.open)));
+document.querySelectorAll('[data-close]').forEach((b) => (b.onclick = close));
+$('scrim').onclick = close;
+document.querySelectorAll('[data-toast]').forEach((b) => (b.onclick = () => toast(b.dataset.toast)));
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { close(); closeView(); } });
+document.querySelectorAll('.drawer .switch').forEach((s) => (s.onclick = () => s.setAttribute('aria-checked', s.getAttribute('aria-checked') !== 'true')));
+
+function renderDiag() {
+  const c = byId(selected), on = running === c.id;
+  const rows = c.st !== 'ready' ? [['na', 'Хроника не установлена', '']] : [
+    [on ? 'ok' : 'na', 'Порт базы 127.0.0.1:3306', on ? 'слушает mariadbd.exe' : 'сервер выключен'],
+    [on ? 'ok' : 'na', 'Порт логина 127.0.0.1:2106', on ? 'слушает java.exe (логин)' : ''],
+    [on ? 'ok' : 'na', 'Порт гейма 127.0.0.1:7777', on ? 'слушает только 127.0.0.1 — наш патч' : ''],
+    [on ? 'ok' : 'na', 'Гейм зарегистрирован на логине', on ? 'Server 2: Sieghardt' : ''],
+    ['ok', 'Геодата', '203 региона, GeoEngine.ini → ./data/geodata/'],
+    ['ok', 'Протокол клиента', 'R.C-TEAM Rev 273 ∈ AllowedProtocolRevisions 267;268;271;273'],
+    ['ok', 'Адрес в L2.ini клиента', 'ServerAddr=127.0.0.1'],
+    ['ok', 'ipconfig.xml', 'только 127.0.0.1, внешний IP не запрашивается'],
+    [on ? 'ok' : 'na', 'Ошибки в логе за сессию', on ? 'нет (error0.log пустой)' : ''],
+    ['ok', 'Права GM', 'PlayerOne — Master (100)'],
+  ];
+  $('diagList').innerHTML = '<h3>Результат</h3>' + rows.map(([s, t, d]) => `<div class="check"><span class="ic ${s}">${s === 'ok' ? '✓' : s === 'bad' ? '✕' : '–'}</span><div>${t}${d ? `<small>${d}</small>` : ''}</div></div>`).join('');
+}
+
+// Значения настроек: исходные из схемы и правки поверх них.
+const SCHEMA = window.CONFIG_SCHEMA || { game: [], login: [] };
+const FILES = [...SCHEMA.game.map((f) => ({ ...f, part: 'game' })), ...SCHEMA.login.map((f) => ({ ...f, part: 'login' }))];
+const KEYS = {};
+for (const f of FILES) for (const s of f.sections) for (const k of s.keys) KEYS[f.part + '/' + f.file + '/' + k.key] = { ...k, file: f.file, part: f.part, section: s.title };
+const edits = {};
+const findKey = (name) => Object.values(KEYS).find((k) => k.key === name && k.part === 'game');
+const valOf = (k) => (k.id in edits ? edits[k.id] : k.value);
+for (const [id, k] of Object.entries(KEYS)) k.id = id;
+const norm = (v) => String(v ?? '').trim().toLowerCase().replace(/\.0+$/, '').replace(/\.$/, '');
+const isChanged = (k) => k.id in edits || (k.default !== null && k.default !== undefined && !/[a-zа-я]{4,}\s/i.test(k.default) && norm(k.value) !== norm(k.default));
+$('allBadge').textContent = Object.keys(KEYS).length || '';
+$('keySearch').placeholder = `Поиск по ${Object.keys(KEYS).length} настройкам: имя или описание`;
+
+function setVal(k, v) { if (String(v) === String(k.value)) delete edits[k.id]; else edits[k.id] = String(v); updatePending(); }
+function updatePending() {
+  const n = Object.keys(edits).length;
+  $('pendingInfo').textContent = n ? `Несохранённых изменений: ${n}. Применятся при следующем запуске сервера.` : 'Изменений нет.';
+}
+
+function control(k, onChange) {
+  const v = valOf(k);
+  if (k.type === 'bool') {
+    const b = document.createElement('button'); b.className = 'switch'; b.setAttribute('role', 'switch');
+    b.setAttribute('aria-checked', String(v).toLowerCase() === 'true');
+    b.onclick = () => { const nv = b.getAttribute('aria-checked') !== 'true'; b.setAttribute('aria-checked', nv); setVal(k, nv ? 'True' : 'False'); onChange && onChange(); };
+    return b;
+  }
+  const i = document.createElement('input'); i.className = 'field'; i.value = v;
+  if (k.type === 'int' || k.type === 'float') i.inputMode = 'decimal';
+  i.oninput = () => { setVal(k, i.value); onChange && onChange(); };
+  return i;
+}
+
+// Основное: быстрые настройки, привязанные к настоящим ключам Mobius.
+const BASIC = [
+  { title: 'Рейты', src: 'Rates.ini', rates: [
+    ['RateXp', 'Опыт'], ['RateSp', 'SP'], ['RatePartyXp', 'Опыт в группе'], ['RatePartySp', 'SP в группе'],
+    ['@adena', 'Адена с мобов'], ['DeathDropAmountMultiplier', 'Дроп: количество'], ['DeathDropChanceMultiplier', 'Дроп: шанс'], ['SpoilDropAmountMultiplier', 'Спойл: количество'],
+    ['SpoilDropChanceMultiplier', 'Спойл: шанс'], ['RaidDropAmountMultiplier', 'Рейды: количество'], ['RaidDropChanceMultiplier', 'Рейды: шанс'], ['HerbDropAmountMultiplier', 'Хербы'],
+    ['RateQuestRewardXP', 'Квесты: опыт'], ['RateQuestRewardSP', 'Квесты: SP'], ['RateQuestRewardAdena', 'Квесты: адена'], ['RateDropManor', 'Манор'] ] },
+  { title: 'Игра', src: 'Player.ini · General.ini', opts: [
+    ['StartingAdena', 'Стартовая адена'], ['AutoLearnSkills', 'Автоизучение скиллов'], ['AltSubClassWithoutQuests', 'Саб-класс без квеста'], ['MaxSubclass', 'Максимум сабов'],
+    ['AutoLoot', 'Автоподбор дропа'], ['AutoLootHerbs', 'Автоподбор хербов'], ['EnableVitality', 'Виталити'], ['GlobalChat', 'Глобальный чат', ['ON', 'OFF', 'GM', 'GLOBAL']],
+    ['DeleteCharAfterDays', 'Удалять персонажа через, дней'], ['OlympiadEnabled', 'Олимпиада'] ] },
+  { title: 'Помощники для соло', src: 'Custom/*.ini', opts: [
+    ['EnableFakePlayers', 'Боты-игроки'], ['EnableAutoPlay', 'Автобой .play'], ['EnableOfflinePlayCommand', 'Оффлайн-фарм .offlineplay'], ['OfflineTradeEnable', 'Оффлайн-торговля'],
+    ['ChampionEnable', 'Мобы-чемпионы'], ['RebirthAllow', 'Перерождения'], ['EnableFreeStrider', 'Бесплатный страйдер'], ['EnableFreeWyvern', 'Бесплатная виверна'], ['AllowWedding', 'Свадьбы'] ] },
+  { title: 'GM', src: 'General.ini', opts: [
+    ['EverybodyHasAdminRights', 'Все игроки — админы'], ['GMStartupInvisible', 'GM входит невидимым'], ['GMStartupInvulnerable', 'GM входит бессмертным'],
+    ['GMStartupSilence', 'GM без личных сообщений'], ['GMStartupDietMode', 'GM без перевеса'], ['CustomStartingLocation', 'Новые персонажи — в Гиран'] ] },
+  { title: 'При входе в игру', src: 'Custom/ScreenWelcomeMessage.ini · General.ini', wide: true, welcome: true },
+];
+
+function renderBasic() {
+  const box = $('basic'); box.innerHTML = '';
+  if (selected !== 'ct26_highfive') { box.innerHTML = `<div class="note card wide">Схема настроек строится из конфигов сборки. Для ${byId(selected).name} она появится после установки${selected === 'gracia_final' ? ' — для La2offline это его .properties, тем же парсером' : ''}.</div>`; return; }
+  for (const g of BASIC) {
+    const card = document.createElement('div'); card.className = 'card' + (g.wide || g.rates ? ' wide' : '');
+    card.innerHTML = `<h3>${g.title}<span class="src">${g.src}</span></h3>`;
+    if (g.rates) {
+      const grid = document.createElement('div'); grid.className = 'rates';
+      for (const [key, label] of g.rates) {
+        const cell = document.createElement('div'); cell.className = 'num';
+        if (key === '@adena') {
+          const k = findKey('DropAmountMultiplierByItemId');
+          const cur = () => (valOf(k).match(/(?:^|;)57,([\d.]+)/) || [])[1] || '1';
+          cell.innerHTML = `<label>${label}</label><input value="${cur()}"><small>ByItemId 57</small>`;
+          const inp = cell.querySelector('input');
+          inp.oninput = () => { setVal(k, valOf(k).replace(/(^|;)57,[\d.]+/, `$157,${inp.value}`)); inp.classList.toggle('changed', k.id in edits); };
+        } else {
+          const k = findKey(key); if (!k) continue;
+          cell.innerHTML = `<label>${label}</label><input value="${valOf(k)}"><small>${key}</small>`;
+          const inp = cell.querySelector('input');
+          inp.classList.toggle('changed', k.id in edits);
+          inp.oninput = () => { setVal(k, inp.value); inp.classList.toggle('changed', k.id in edits); };
+        }
+        grid.appendChild(cell);
+      }
+      card.appendChild(grid);
+    } else if (g.opts) {
+      for (const [key, label, choices] of g.opts) {
+        const k = findKey(key); if (!k) continue;
+        const row = document.createElement('div'); row.className = 'opt';
+        row.innerHTML = `<span class="l">${label}<small>${key}</small></span>`;
+        if (choices) {
+          const s = document.createElement('select'); s.innerHTML = choices.map((c) => `<option${c === valOf(k) ? ' selected' : ''}>${c}</option>`).join('');
+          s.onchange = () => setVal(k, s.value); row.appendChild(s);
+        } else if (k.type === 'bool') row.appendChild(control(k));
+        else { const i = document.createElement('input'); i.type = 'number'; i.value = valOf(k); i.oninput = () => setVal(k, i.value); row.appendChild(i); }
+        card.appendChild(row);
+      }
+    } else if (g.welcome) {
+      const en = findKey('ScreenWelcomeMessageEnable'), tx = findKey('ScreenWelcomeMessageText'), news = findKey('ShowServerNews');
+      card.innerHTML += `<div class="rates" style="grid-template-columns:1fr 1fr;gap:14px"><div><div class="opt"><span class="l">Сообщение на экране при входе<small>ScreenWelcomeMessageText</small></span></div></div><div><div class="opt"><span class="l">Окно новостей при входе<small>ShowServerNews · servnews.htm</small></span></div></div></div>`;
+      const cols = card.querySelectorAll('.rates > div');
+      cols[0].querySelector('.opt').appendChild(control(en));
+      const t1 = document.createElement('textarea'); t1.className = 'field'; t1.value = valOf(tx); t1.oninput = () => setVal(tx, t1.value); cols[0].appendChild(t1);
+      cols[1].querySelector('.opt').appendChild(control(news));
+      const t2 = document.createElement('textarea'); t2.className = 'field'; t2.value = 'Чтобы открыть меню админа, наберите в чат //admin'; cols[1].appendChild(t2);
+    }
+    box.appendChild(card);
+  }
+}
+
+// Все настройки: генерируются из схемы сборки.
+let curFile = 'game/Rates.ini', onlyChanged = false, keyQuery = '';
+function renderFiles() {
+  const box = $('files'); box.innerHTML = '';
+  const groups = [['Основные', (f) => f.part === 'game' && f.group === 'Core'], ['Кастомные фичи', (f) => f.part === 'game' && f.group === 'Custom'], ['Логин-сервер', (f) => f.part === 'login']];
+  for (const [title, pred] of groups) {
+    const files = FILES.filter(pred); if (!files.length) continue;
+    box.insertAdjacentHTML('beforeend', `<div class="grp">${title}</div>`);
+    for (const f of files) {
+      const ks = Object.values(KEYS).filter((k) => k.part === f.part && k.file === f.file);
+      const ch = ks.filter(isChanged).length;
+      const b = document.createElement('button'); const id = f.part + '/' + f.file;
+      b.className = 'fileb' + (id === curFile && !keyQuery ? ' on' : '');
+      b.innerHTML = `${f.file.replace('.ini', '')}${ch ? `<span class="chg">● ${ch}</span>` : ''}<span class="c">${ks.length}</span>`;
+      b.onclick = () => { curFile = id; keyQuery = ''; $('keySearch').value = ''; renderFiles(); renderKeys(); };
+      box.appendChild(b);
+    }
+  }
+}
+function renderKeys() {
+  const box = $('keysList'); box.innerHTML = '';
+  const q = keyQuery.trim().toLowerCase();
+  let list = Object.values(KEYS).filter((k) => (q ? (k.key + ' ' + k.description).toLowerCase().includes(q) : k.part + '/' + k.file === curFile));
+  if (onlyChanged) list = list.filter(isChanged);
+  if (!list.length) { box.innerHTML = '<div class="empty">Ничего не нашлось.</div>'; return; }
+  const shown = list.slice(0, 250); let sec = null;
+  for (const k of shown) {
+    const head = q ? k.file : k.section;
+    if (head !== sec) { sec = head; if (head) box.insertAdjacentHTML('beforeend', `<div class="sec-title">${head}</div>`); }
+    const row = document.createElement('div'); row.className = 'kv' + (isChanged(k) ? ' changed' : '');
+    const left = document.createElement('div');
+    left.innerHTML = `<div class="k">${k.key}${q ? `<span class="f"> · ${k.file}</span>` : ''}</div>${k.description ? `<div class="d">${k.description}</div>` : ''}${k.default !== null && k.default !== undefined ? `<div class="dv">по умолчанию: ${k.default}</div>` : ''}`;
+    const ctl = document.createElement('div'); ctl.appendChild(control(k, () => row.classList.toggle('changed', isChanged(k))));
+    const rst = document.createElement('button'); rst.className = 'reset'; rst.title = 'Вернуть по умолчанию';
+    rst.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12a8 8 0 1 0 2.3-5.7M4 4v5h5"/></svg>';
+    rst.onclick = () => { if (k.default !== null && k.default !== undefined) setVal(k, k.default); else delete edits[k.id]; updatePending(); renderKeys(); renderFiles(); };
+    row.append(left, ctl, rst); box.appendChild(row);
+  }
+  if (list.length > shown.length) box.insertAdjacentHTML('beforeend', `<div class="empty">Показано ${shown.length} из ${list.length}. Уточни поиск.</div>`);
+}
+$('keySearch').oninput = (e) => { keyQuery = e.target.value; renderFiles(); renderKeys(); };
+$('onlyChanged').onclick = (e) => { onlyChanged = !onlyChanged; e.currentTarget.setAttribute('aria-checked', onlyChanged); renderKeys(); };
+
+function renderNet() {
+  const c = byId(selected);
+  $('net').innerHTML = `
+    <div class="card"><h3>Клиент</h3>
+      <div class="num"><label>Папка клиента</label><input value="${selected === 'gracia_final' ? 'C:\\Games\\Lineage II' : selected === 'ct26_highfive' ? 'C:\\Games\\LA2 H5' : ''}" placeholder="укажи папку с клиентом"></div>
+      <div class="opt"><span class="l">Система<small>R.C-TEAM HF5 Rev 273 · оригинал в system_ncsoft</small></span><button class="sbtn">Сменить</button></div>
+      <div class="opt"><span class="l">Протокол клиента<small>сервер принимает 267, 268, 271, 273</small></span><b style="color:var(--ok)">273 ✓</b></div>
+      <div class="opt"><span class="l">Адрес сервера в L2.ini<small>расшифровывается и правится лаунчером</small></span><input class="field" style="width:150px" value="127.0.0.1"></div>
+    </div>
+    <div class="card"><h3>Сеть сервера</h3>
+      <div class="opt"><span class="l">Режим<small>какие адреса отдавать клиентам</small></span><select><option>Только этот ПК</option><option>Локальная сеть</option><option>VPN для друзей</option></select></div>
+      <div class="num" style="margin-top:8px"><label>LAN IP</label><input value="192.168.1.10"></div>
+      <div class="num" style="margin-top:8px"><label>VPN / внешний IP</label><input placeholder="100.64.0.1"></div>
+      <div class="note" style="margin-top:10px">Это пишется в ipconfig.xml и Server.ini. В La2offline — блоки «LAN IP», «INET IP \\ Hamachi IP», «L2.ini IP».</div>
+    </div>
+    <div class="card"><h3>Память и Java</h3>
+      <div class="num"><label>Гейм-сервер, куча</label><input value="-Xms2g -Xmx4g"></div>
+      <div class="num" style="margin-top:8px"><label>JDK</label><input value="runtime\\jdk-27 (Temurin 27+35)"></div>
+    </div>
+    <div class="card"><h3>Файлы</h3>
+      <div class="opt"><span class="l">Конфиги гейм-сервера<small>servers\\${selected}\\server\\game\\config</small></span><button class="sbtn">Открыть</button></div>
+      <div class="opt"><span class="l">Бэкап конфигов перед сохранением<small>data\\backups\\config</small></span><button class="switch" role="switch" aria-checked="true" onclick="this.setAttribute('aria-checked', this.getAttribute('aria-checked') !== 'true')"></button></div>
+    </div>`;
+}
+
+let curTab = 'basic';
+function openView() {
+  closeMenu(); $('setTitle').textContent = 'Настройки · ' + byId(selected).name;
+  renderBasic(); renderFiles(); renderKeys(); renderNet(); updatePending();
+  $('view-settings').classList.add('on');
+}
+function closeView() { $('view-settings').classList.remove('on'); }
+document.querySelectorAll('[data-view]').forEach((b) => (b.onclick = openView));
+document.querySelectorAll('[data-closeview]').forEach((b) => (b.onclick = closeView));
+document.querySelectorAll('.tab').forEach((t) => (t.onclick = () => {
+  curTab = t.dataset.tab;
+  document.querySelectorAll('.tab').forEach((x) => x.classList.toggle('on', x === t));
+  document.querySelectorAll('.pane').forEach((p) => p.classList.toggle('on', p.id === 'pane-' + curTab));
+  if (curTab === 'basic') renderBasic();
+  if (curTab === 'all') { renderFiles(); renderKeys(); }
+}));
+$('saveBtn').onclick = () => {
+  const n = Object.keys(edits).length;
+  toast(n ? `Сохранено ${n} изменений в конфиги, старые — в бэкап. Применятся при следующем запуске.` : 'Изменений нет.');
+};
+
+// ---------- Фильтры, тосты, масштаб ----------
+$('chronSearch').oninput = (e) => { query = e.target.value; renderList(); };
+document.querySelectorAll('.fchip').forEach((b) => (b.onclick = () => { filter = b.dataset.f; document.querySelectorAll('.fchip').forEach((x) => x.classList.toggle('on', x === b)); renderList(); }));
+let toastTimer;
+function toast(text) { const t = $('toast'); t.textContent = text; t.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 3600); }
+function fit() { $('win').style.transform = `scale(${Math.min(innerWidth / 1300, innerHeight / 820, 1)})`; }
+addEventListener('resize', fit);
+
+renderList(); renderMain(); fit();
+</script>
+</body>
+</html>

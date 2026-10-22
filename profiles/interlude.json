@@ -1,0 +1,15 @@
+{
+  "id": "interlude",
+  "type": "mobius",
+  "build": "L2J_Mobius_CT_0_Interlude",
+  "server": "servers/interlude/server",
+  "database": "l2jmobiusinterlude",
+  "ports": { "db": 3306, "login": 2106, "game": 7777 },
+  "brain": { "port": 8771, "model": "deepseek-flash", "alphabet": "cyrillic" },
+  "client": {
+    "path": "C:\\Games\\Lineage2-Interlude",
+    "exe": "system\\L2.exe",
+    "system": "репак с русскими шрифтами чата, l2.ini на 127.0.0.1",
+    "protocol": 746
+  }
+}

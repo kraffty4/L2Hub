@@ -1,0 +1,11 @@
+{
+  "_note": "Закреплённые коммиты L2J Mobius: от них считаны наши патчи и врезки фантомов (phantoms/<id>/base.json). SHA — из комментария zip, который отдаёт GitLab (git archive). Сменить коммит — только вместе с проверкой, что патчи и glue.patch ложатся (tools/phantoms_glue.py --check). builder.fetch_sources скачивает отсюда.",
+  "repo": "https://gitlab.com/MobiusDevelopment/L2J_Mobius",
+  "chronicles": {
+    "interlude": {"build": "L2J_Mobius_CT_0_Interlude", "commit": "2b9d8cf5b2333560189d653b8190afd96d7185ba", "date": "2026-10-20"},
+    "epilogue": {"build": "L2J_Mobius_CT_2.4_Epilogue", "commit": "2b9d8cf5b2333560189d653b8190afd96d7185ba", "date": "2026-10-20"},
+    "ct26_highfive": {"build": "L2J_Mobius_CT_2.6_HighFive", "commit": "5ddd6ff4b98a249250e9bf4e83ce75c4324596a0", "date": "2026-10-16"},
+    "classic_tales": {"build": "L2J_Mobius_Classic_3.5_TalesUntold", "commit": "2b9d8cf5b2333560189d653b8190afd96d7185ba", "date": "2026-10-20"},
+    "ess_crow": {"build": "L2J_Mobius_Essence_10.1_SamuraiCrow", "commit": "2b9d8cf5b2333560189d653b8190afd96d7185ba", "date": "2026-10-20"}
+  }
+}

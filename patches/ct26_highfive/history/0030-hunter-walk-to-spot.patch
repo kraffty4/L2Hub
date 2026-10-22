@@ -1,0 +1,230 @@
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java
+index 0a27744..4e0e39a 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java
+@@ -73,10 +73,17 @@ public class PhantomCompanionManager
+ 	private static final int HUNT_RUN_LEASH = 700;
+ 	/** Мобы сильнее владельца больше чем на столько уровней — не трогать самим (на них — только по его цели). */
+ 	private static final int HUNT_LEVEL_UP = 6;
+-	/** «Паровозик»: владелец отстал дальше этого — новых мобов не брать, идти к нему (моб охотника рядом — опыт пати в 1500 от моба). */
+-	private static final int LEAD_WAIT = 900;
+-	/** «Паровозик»: цель дальше этого от владельца — бросить, AutoPlay возьмёт ближе. */
+-	private static final int LEAD_TARGET_RANGE = 1400;
++	// «Паровозик»: владелец идёт следом с задержкой Follow — пороги с запасом (патч 0030; было: ждать с 900, цель до 1400, телепорт с 2000).
++	/** Владелец отстал дальше этого — ждать: новых мобов не брать. */
++	private static final int LEAD_WAIT = 1600;
++	/** Ждёт, пока владелец не подойдёт ближе этого, — потом снова качается. */
++	private static final int LEAD_RESUME = 1000;
++	/** Владелец дальше этого — идти к нему. */
++	private static final int LEAD_RETURN = 2500;
++	/** Владелец дальше этого — телепорт к нему. */
++	private static final int LEAD_TELEPORT = 4000;
++	/** Цель дальше этого от владельца — бросить, AutoPlay возьмёт ближе. */
++	private static final int LEAD_TARGET_RANGE = 2200;
+ 
+ 	public enum Mode
+ 	{
+@@ -97,6 +104,8 @@ public class PhantomCompanionManager
+ 		final String name;
+ 		int ownerId;
+ 		Mode mode = Mode.ASSIST;
++		/** «Паровозик»: владелец отстал — ждёт его (до {@link #LEAD_RESUME}), новых мобов не берёт. */
++		boolean leadWaiting;
+ 		long ownerAwaySince;
+ 		Location stayAt;
+ 		Location lastDestination;
+@@ -316,6 +325,7 @@ public class PhantomCompanionManager
+ 
+ 		final Mode previous = companion.mode;
+ 		companion.mode = mode;
++		companion.leadWaiting = false;
+ 		companion.lastDestination = null;
+ 		final Player phantom = PhantomManager.getInstance().getPhantom(template);
+ 		// Из «паровозика» — AutoPlay выключить: дальше снова ведёт этот менеджер.
+@@ -788,7 +798,9 @@ public class PhantomCompanionManager
+ 		}
+ 
+ 		final int slotIndex = slotIndex(companion);
+-		if ((companion.mode != Mode.STAY) && (phantom.calculateDistance2D(owner) > PhantomPartyConfig.PHANTOM_CATCH_UP_RANGE))
++		// В «паровозике» впереди идёт охотник, а владелец догоняет с задержкой Follow — телепорт к владельцу только совсем издалека.
++		final int catchUp = companion.mode == Mode.LEAD ? LEAD_TELEPORT : PhantomPartyConfig.PHANTOM_CATCH_UP_RANGE;
++		if ((companion.mode != Mode.STAY) && (phantom.calculateDistance2D(owner) > catchUp))
+ 		{
+ 			teleport(companion, phantom, slot(owner, slotIndex));
+ 			return;
+@@ -812,7 +824,7 @@ public class PhantomCompanionManager
+ 			// «Паровозик»: качается сам родным AutoPlay, владелец идёт следом.
+ 			if (companion.mode == Mode.LEAD)
+ 			{
+-				lead(phantom, owner);
++				lead(companion, phantom, owner);
+ 				return;
+ 			}
+ 
+@@ -1067,32 +1079,49 @@ public class PhantomCompanionManager
+ 
+ 	/**
+ 	 * «Паровозик» (патч 0029): охотник качается сам родным AutoPlay, как на споте — свои цели (дальний поиск), скиллы AutoUse, подбор; маг под ударами отмахивается.
+-	 * В пати AutoPlay не тянется за лидером ({@code AssistLeader = False}). Владелец отстал дальше {@link #LEAD_WAIT} — новых мобов не берёт, идёт к нему;
+-	 * отстал дальше {@code PhantomCatchUpRange} — телепорт к нему (как у всех напарников, в {@link #think}).
++	 * В пати AutoPlay не тянется за лидером ({@code AssistLeader = False}).
++	 * Владелец догоняет с задержкой Follow, поэтому пороги с запасом и с гистерезисом (патч 0030), иначе охотник метался бы туда-сюда:
++	 * отстал дальше {@link #LEAD_WAIT} — ждёт (новых мобов не берёт, того, кто бьёт его, добивает) до {@link #LEAD_RESUME};
++	 * дальше {@link #LEAD_RETURN} — идёт к нему; дальше {@link #LEAD_TELEPORT} — телепорт к нему (в {@link #think}).
+ 	 */
+-	private static void lead(Player phantom, Player owner)
++	private static void lead(Companion companion, Player phantom, Player owner)
+ 	{
+-		if (phantom.calculateDistance2D(owner) > LEAD_WAIT)
++		final double distance = phantom.calculateDistance2D(owner);
++		if (companion.leadWaiting ? (distance > LEAD_RESUME) : (distance > LEAD_WAIT))
+ 		{
++			companion.leadWaiting = true;
++			final WorldObject current = phantom.getTarget();
++			final boolean fighting = (current instanceof Monster) && !((Monster) current).isAlikeDead() && (((Monster) current).getTarget() == phantom);
++			if (fighting)
++			{
++				startLeadAutoPlay(phantom);
++				return;
++			}
++
+ 			if (phantom.isAutoPlaying())
+ 			{
+ 				AutoPlayTaskManager.getInstance().stopAutoPlay(phantom);
+ 			}
+-			if (!phantom.isAttackingNow() && !phantom.isCastingNow() && !phantom.isMoving())
++			if ((distance > LEAD_RETURN) && !phantom.isAttackingNow() && !phantom.isCastingNow() && !phantom.isMoving())
+ 			{
+ 				phantom.setRunning();
+ 				phantom.getAI().setIntentionMoveTo(new Location(owner.getX(), owner.getY(), owner.getZ()));
+ 			}
+ 			return;
+ 		}
++		companion.leadWaiting = false;
+ 
+-		// Цель далеко от владельца — опыт пати мимо: пусть AutoPlay возьмёт ближе.
++		// Цель совсем далеко от владельца — опыт пати мимо: пусть AutoPlay возьмёт ближе. Пока бежит к ней — не трогать.
+ 		final WorldObject target = phantom.getTarget();
+-		if ((target instanceof Monster) && !phantom.isAttackingNow() && !phantom.isCastingNow() && (owner.calculateDistance2D(target) > LEAD_TARGET_RANGE))
++		if ((target instanceof Monster) && !phantom.isAttackingNow() && !phantom.isCastingNow() && !phantom.isMoving() && (owner.calculateDistance2D(target) > LEAD_TARGET_RANGE))
+ 		{
+ 			phantom.setTarget(null);
+ 		}
++		startLeadAutoPlay(phantom);
++	}
+ 
++	private static void startLeadAutoPlay(Player phantom)
++	{
+ 		if (!phantom.isAutoPlaying())
+ 		{
+ 			if (phantom.isSitting())
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+index 0afff23..c2a2559 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+@@ -97,6 +97,10 @@ public class PhantomHunterManager
+ 	private static final int WALK_SPEED = 90;
+ 	/** Отпустили из пати — спот рядом годится, даже если мобы до стольких уровней выше своего: игрок привёл туда, бафы ещё висят. */
+ 	private static final int NEARBY_LEVEL_UP = 5;
++	/** Вошёл в мир или перерос спот — ближайший спот, где мобы не выше стольких уровней (без бафов пати — осторожнее). */
++	private static final int SPAWN_LEVEL_UP = 3;
++	/** Вне города спот не дальше этого — ногами, а не телепортом (патч 0030). */
++	private static final int WALK_TRAVEL = 12000;
+ 	/** Из города: гейткипер не дальше этого; дальше или нет — телепорт с места. */
+ 	private static final int GATEKEEPER_RANGE = 5000;
+ 	/** Ближе этого к гейткиперу — «поговорил» с ним. */
+@@ -787,6 +791,13 @@ public class PhantomHunterManager
+ 
+ 		if ((hunter.spot == null) || outgrown(hunter.spot, player.getLevel()))
+ 		{
++			// Вошёл в мир или перерос спот (патч 0030): ближайший подходящий — ногами; рядом нет — выбрать и телепорт, как раньше.
++			final HuntSpot near = nearestFreeSpot(player);
++			if (near != null)
++			{
++				walkTo(hunter, player, near);
++				return;
++			}
+ 			goToSpot(hunter, player, null);
+ 			return;
+ 		}
+@@ -953,7 +964,19 @@ public class PhantomHunterManager
+ 	 */
+ 	private static void travel(Hunter hunter, Player player, HuntSpot spot)
+ 	{
+-		final Npc gatekeeper = player.isInsideZone(ZoneId.TOWN) ? nearestGatekeeper(player) : null;
++		final boolean town = player.isInsideZone(ZoneId.TOWN);
++		// Вне города и спот не дальше WALK_TRAVEL — ногами (патч 0030): смена спота стратегом, новый спот после входа в мир.
++		final int distance = (int) player.calculateDistance2D(spot.entry);
++		if (!town && (distance <= WALK_TRAVEL))
++		{
++			hunter.walkBackUntil = System.currentTimeMillis() + walkTime(distance);
++			player.setRunning();
++			player.getAI().setIntentionMoveTo(spot.entry);
++			LOGGER.info(PhantomHunterManager.class.getSimpleName() + ": " + player.getName() + " walks to " + spot.name + " (мобы " + spot.min + "-" + spot.max + ", " + distance + ").");
++			return;
++		}
++
++		final Npc gatekeeper = town ? nearestGatekeeper(player) : null;
+ 		if (gatekeeper == null)
+ 		{
+ 			payTeleport(player);
+@@ -1394,6 +1417,43 @@ public class PhantomHunterManager
+ 		return nearest;
+ 	}
+ 
++	/**
++	 * Вошёл в мир или перерос спот (патч 0030): ближайший спот по силам — мобы не выше {@link #SPAWN_LEVEL_UP} уровней, — свободный ({@code HuntersPerSpot}) первым.
++	 * @return спот не дальше {@link #WALK_TRAVEL} или {@code null} — рядом подходящего нет
++	 */
++	private HuntSpot nearestFreeSpot(Player player)
++	{
++		final int level = player.getLevel();
++		HuntSpot free = null;
++		HuntSpot any = null;
++		double freeDistance = Double.MAX_VALUE;
++		double anyDistance = Double.MAX_VALUE;
++		for (HuntSpot spot : HuntSpotData.getInstance().getSpots())
++		{
++			if (outgrown(spot, level) || (spot.level > (level + SPAWN_LEVEL_UP)) || (spot.level < (level - 9)))
++			{
++				continue;
++			}
++
++			final double distance = player.calculateDistance2D(spot.entry);
++			if (distance > WALK_TRAVEL)
++			{
++				continue;
++			}
++			if (distance < anyDistance)
++			{
++				any = spot;
++				anyDistance = distance;
++			}
++			if ((distance < freeDistance) && (crowd(spot) < PhantomHuntersConfig.HUNTERS_PER_SPOT))
++			{
++				free = spot;
++				freeDistance = distance;
++			}
++		}
++		return free != null ? free : any;
++	}
++
+ 	/**
+ 	 * Новый спот — ногами (без телепорта); уже на нём — просто качается дальше. Время в пути — по расстоянию.
+ 	 */
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomOrders.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomOrders.java
+index 8ec056b..f0ff4a4 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomOrders.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomOrders.java
+@@ -152,6 +152,11 @@ public class PhantomOrders
+ 			result.remove(Order.ASSIST);
+ 			result.remove(Order.FOLLOW);
+ 		}
++		// «Паровозиком покачай» — паровоз: режим один, иначе выполнились бы оба и остался последний (патч 0030).
++		if (result.contains(Order.LEAD))
++		{
++			result.remove(Order.HUNT);
++		}
+ 		return result;
+ 	}
+ 

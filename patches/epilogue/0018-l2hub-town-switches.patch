@@ -1,0 +1,225 @@
+diff --git a/dist/game/config/Custom/L2HubTown.ini b/dist/game/config/Custom/L2HubTown.ini
+new file mode 100644
+index 0000000000000000000000000000000000000000..233d9c519e595a228c014c2d25822a3c948c0b05
+--- /dev/null
++++ b/dist/game/config/Custom/L2HubTown.ini
+@@ -0,0 +1,13 @@
++# ---------------------------------------------------------------------------
++# L2Hub: городские NPC мода 0003 у гейткиперов (data/scripts/custom/L2HubTown)
++# ---------------------------------------------------------------------------
++# False — NPC не появляется у гейткиперов, и на доске Alt+B то же самое отвечает «выключено».
++# Применяется после перезапуска гейма. Окно лаунчера правит эти ключи («Настройки сервера», режим «Хардкор» — оба False).
++
++# Схем-баффер: бафы на максимальном уровне и на 3 часа.
++# Default: True
++TownBuffer = True
++
++# GM-шоп: расходники и снаряжение за адену.
++# Default: True
++TownGmShop = True
+diff --git a/dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java b/dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java
+index f6df3c688b63691f1f06bf9dbb62956c19a989fa..b8892fe1c3e575bc4914c72650878d87df60ffb4 100644
+--- a/dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java
++++ b/dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java
+@@ -155,6 +155,21 @@ public class L2HubSelfTest
+ 
+ 	private static Check townNpc(int npcId) throws Exception
+ 	{
++		// Выключено в L2HubTown.ini (мод 0018) — NPC убраны нарочно, это не ошибка.
++		final String key = npcId == TOWN_BUFFER ? "TownBuffer" : "TownGmShop";
++		final Path town = Paths.get("./config/Custom/L2HubTown.ini");
++		if (Files.isRegularFile(town))
++		{
++			final Properties properties = new Properties();
++			try (Reader reader = Files.newBufferedReader(town, StandardCharsets.UTF_8))
++			{
++				properties.load(reader);
++			}
++			if ("false".equalsIgnoreCase(properties.getProperty(key, "True").trim()))
++			{
++				return new Check("", true, "выключен (" + key + " = False в L2HubTown.ini), в мире " + SpawnTable.getInstance().getSpawnCount(npcId));
++			}
++		}
+ 		final int expected = count(Files.readString(TOWN_SPAWNS, StandardCharsets.UTF_8), "id=\"" + npcId + "\"");
+ 		final int spawned = SpawnTable.getInstance().getSpawnCount(npcId);
+ 		final boolean template = NpcData.getInstance().getTemplate(npcId) != null;
+diff --git a/dist/game/data/scripts/custom/L2HubTown/L2HubTown.java b/dist/game/data/scripts/custom/L2HubTown/L2HubTown.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..609676e96982fae47954d2ba5a1dff2c23ce2f47
+--- /dev/null
++++ b/dist/game/data/scripts/custom/L2HubTown/L2HubTown.java
+@@ -0,0 +1,125 @@
++/*
++ * This file is part of the L2J Mobius project.
++ *
++ * This program is free software: you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation, either version 3 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
++ * General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program. If not, see <http://www.gnu.org/licenses/>.
++ */
++package custom.L2HubTown;
++
++import java.io.Reader;
++import java.nio.charset.StandardCharsets;
++import java.nio.file.Files;
++import java.nio.file.Path;
++import java.nio.file.Paths;
++import java.util.ArrayList;
++import java.util.Properties;
++import java.util.logging.Logger;
++
++import org.l2jmobius.commons.threads.ThreadPool;
++import org.l2jmobius.gameserver.data.SpawnTable;
++import org.l2jmobius.gameserver.entity.actor.Npc;
++import org.l2jmobius.gameserver.entity.spawns.Spawn;
++
++/**
++ * L2Hub: выключатели городских NPC мода 0003 (config/Custom/L2HubTown.ini): {@code TownBuffer} — схем-баффер (50008), {@code TownGmShop} — GM-шоп (50010)
++ * у гейткиперов (спавн — data/spawns/Custom/L2HubTownNpcs.xml). Выключено — NPC убираются из мира, когда спавны загружены (спавны поднимаются после скриптов);
++ * баффер и GM-шоп на доске Alt+B тогда тоже отвечают «выключен» (L2HubBoard читает тот же файл). Применяется при старте гейма — ключи правит окно лаунчера
++ * («Настройки сервера», режимы «Хардкор» и другие).
++ * @author L2Hub
++ */
++public class L2HubTown
++{
++	private static final Logger LOGGER = Logger.getLogger(L2HubTown.class.getName());
++	private static final Path CONFIG = Paths.get("./config/Custom/L2HubTown.ini");
++	private static final int TOWN_BUFFER = 50008;
++	private static final int TOWN_SHOP = 50010;
++	private static final long FIRST_DELAY = 15_000;
++	private static final long RETRY_DELAY = 15_000;
++	private static final int ATTEMPTS = 20;
++
++	private final boolean _buffer;
++	private final boolean _shop;
++
++	private L2HubTown(boolean buffer, boolean shop)
++	{
++		_buffer = buffer;
++		_shop = shop;
++		ThreadPool.schedule(() -> run(1), FIRST_DELAY);
++	}
++
++	private void run(int attempt)
++	{
++		final SpawnTable table = SpawnTable.getInstance();
++		if ((table.getSpawnCount(TOWN_BUFFER) == 0) && (table.getSpawnCount(TOWN_SHOP) == 0) && (attempt < ATTEMPTS))
++		{
++			ThreadPool.schedule(() -> run(attempt + 1), RETRY_DELAY);
++			return;
++		}
++		if (!_buffer)
++		{
++			LOGGER.info("L2HubTown: TownBuffer = False — баффер у гейткиперов убран: " + remove(TOWN_BUFFER) + " NPC.");
++		}
++		if (!_shop)
++		{
++			LOGGER.info("L2HubTown: TownGmShop = False — GM-шоп у гейткиперов убран: " + remove(TOWN_SHOP) + " NPC.");
++		}
++	}
++
++	private static int remove(int npcId)
++	{
++		int removed = 0;
++		for (Spawn spawn : new ArrayList<>(SpawnTable.getInstance().getSpawns(npcId)))
++		{
++			spawn.stopRespawn();
++			for (Npc npc : new ArrayList<>(spawn.getSpawnedNpcs()))
++			{
++				npc.deleteMe();
++				removed++;
++			}
++			SpawnTable.getInstance().removeSpawn(spawn);
++		}
++		return removed;
++	}
++
++	/**
++	 * @param key TownBuffer или TownGmShop
++	 * @return включено (нет файла или ключа — включено)
++	 */
++	public static boolean isOn(String key)
++	{
++		if (!Files.isRegularFile(CONFIG))
++		{
++			return true;
++		}
++		try (Reader reader = Files.newBufferedReader(CONFIG, StandardCharsets.UTF_8))
++		{
++			final Properties properties = new Properties();
++			properties.load(reader);
++			return !"false".equalsIgnoreCase(properties.getProperty(key, "True").trim());
++		}
++		catch (Exception e)
++		{
++			return true;
++		}
++	}
++
++	public static void main(String[] args)
++	{
++		final boolean buffer = isOn("TownBuffer");
++		final boolean shop = isOn("TownGmShop");
++		if (!buffer || !shop)
++		{
++			new L2HubTown(buffer, shop);
++		}
++	}
++}
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+index cab933f12cffa8641c5441eee0a63148e09638a8..55a8cf3d1c18b45f8f3583d3654ae5cd594e0cbc 100644
+--- a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+@@ -64,11 +64,11 @@ public class L2HubBoard implements IParseBoardHandler
+ 		final String html;
+ 		if (args[0].equalsIgnoreCase(BUFF))
+ 		{
+-			html = buffer(player, args);
++			html = townOn("TownBuffer") ? buffer(player, args) : page(player, "Баффер", "<br><font color=\"808080\">Баффер выключен в настройках сервера (L2HubTown.ini, TownBuffer).</font>");
+ 		}
+ 		else if (args[0].equalsIgnoreCase(SHOP))
+ 		{
+-			html = shop(player, args);
++			html = townOn("TownGmShop") ? shop(player, args) : page(player, "GM-шоп", "<br><font color=\"808080\">GM-шоп выключен в настройках сервера (L2HubTown.ini, TownGmShop).</font>");
+ 		}
+ 		else if (args[0].equalsIgnoreCase(BUDDY))
+ 		{
+@@ -90,6 +90,30 @@ public class L2HubBoard implements IParseBoardHandler
+ 		return false;
+ 	}
+ 
++	/**
++	 * Выключатели городских NPC (config/Custom/L2HubTown.ini, мод 0018): баффер и GM-шоп доски выключаются вместе с NPC у гейткиперов.
++	 * @param key TownBuffer или TownGmShop
++	 * @return включено (нет файла или ключа — включено)
++	 */
++	private static boolean townOn(String key)
++	{
++		final java.io.File file = new java.io.File("./config/Custom/L2HubTown.ini");
++		if (!file.isFile())
++		{
++			return true;
++		}
++		try (java.io.Reader reader = java.nio.file.Files.newBufferedReader(file.toPath(), java.nio.charset.StandardCharsets.UTF_8))
++		{
++			final java.util.Properties properties = new java.util.Properties();
++			properties.load(reader);
++			return !"false".equalsIgnoreCase(properties.getProperty(key, "True").trim());
++		}
++		catch (Exception e)
++		{
++			return true;
++		}
++	}
++
+ 	// ---------- Баффер ----------
+ 
+ 	/**

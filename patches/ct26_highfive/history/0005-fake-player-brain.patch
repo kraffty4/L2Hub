@@ -1,0 +1,377 @@
+diff --git a/dist/game/config/Custom/FakePlayers.ini b/dist/game/config/Custom/FakePlayers.ini
+index 31ebaf8..196ed50 100644
+--- a/dist/game/config/Custom/FakePlayers.ini
++++ b/dist/game/config/Custom/FakePlayers.ini
+@@ -5,7 +5,7 @@
+ # to function seamlessly like NPCs with minimal impact on server performance.
+ 
+ # Enable fake players.
+-EnableFakePlayers = False
++EnableFakePlayers = True
+ 
+ # Enable chatting with fake players.
+ FakePlayerChat = True
+@@ -36,3 +36,19 @@ FakePlayerCanDropItems = True
+ 
+ # Fake players can pickup dropped items.
+ FakePlayerCanPickup = True
++
++# ---------------------------------------------------------------------------
++# Мозги фейков (L2Hub)
++# ---------------------------------------------------------------------------
++# Реплики фейков пишет сервис мозгов лаунчера (языковая модель): характер, память, обстановка.
++# Если сервис недоступен, фейки отвечают заготовками из FakePlayerChatData.xml.
++FakePlayerBrain = True
++
++# Адрес сервиса мозгов.
++FakePlayerBrainUrl = http://127.0.0.1:8771
++
++# Сколько секунд ждать ответа сервиса.
++FakePlayerBrainTimeout = 20
++
++# Фейк отвечает в общий чат, если рядом назвать его по имени: радиус в игровых единицах (0 — выключить).
++FakePlayerBrainSayRange = 900
+diff --git a/dist/game/data/scripts/handlers/chat/channels/ChatGeneral.java b/dist/game/data/scripts/handlers/chat/channels/ChatGeneral.java
+index 9259b3d..65829bd 100644
+--- a/dist/game/data/scripts/handlers/chat/channels/ChatGeneral.java
++++ b/dist/game/data/scripts/handlers/chat/channels/ChatGeneral.java
+@@ -20,12 +20,14 @@ import java.util.StringTokenizer;
+ 
+ import org.l2jmobius.gameserver.config.GeneralConfig;
+ import org.l2jmobius.gameserver.config.custom.FactionSystemConfig;
++import org.l2jmobius.gameserver.config.custom.FakePlayersConfig;
+ import org.l2jmobius.gameserver.entity.World;
+ import org.l2jmobius.gameserver.entity.actor.Player;
+ import org.l2jmobius.gameserver.entity.actor.holders.player.BlockList;
+ import org.l2jmobius.gameserver.handler.IChatHandler;
+ import org.l2jmobius.gameserver.handler.IVoicedCommandHandler;
+ import org.l2jmobius.gameserver.handler.VoicedCommandHandler;
++import org.l2jmobius.gameserver.managers.FakePlayerChatManager;
+ import org.l2jmobius.gameserver.network.SystemMessageId;
+ import org.l2jmobius.gameserver.network.enums.ChatType;
+ import org.l2jmobius.gameserver.network.serverpackets.CreatureSay;
+@@ -119,6 +121,12 @@ public class ChatGeneral implements IChatHandler
+ 			});
+ 			
+ 			activeChar.sendPacket(cs);
++
++			// L2Hub: фейки рядом слышат, когда к ним обращаются по имени.
++			if (FakePlayersConfig.FAKE_PLAYERS_ENABLED && FakePlayersConfig.FAKE_PLAYER_CHAT)
++			{
++				FakePlayerChatManager.getInstance().manageSay(activeChar, text);
++			}
+ 		}
+ 	}
+ 	
+diff --git a/java/org/l2jmobius/gameserver/config/custom/FakePlayersConfig.java b/java/org/l2jmobius/gameserver/config/custom/FakePlayersConfig.java
+index 85a290c..da4b8bd 100644
+--- a/java/org/l2jmobius/gameserver/config/custom/FakePlayersConfig.java
++++ b/java/org/l2jmobius/gameserver/config/custom/FakePlayersConfig.java
+@@ -43,7 +43,11 @@ public class FakePlayersConfig
+ 	public static boolean FAKE_PLAYER_AGGRO_FPC;
+ 	public static boolean FAKE_PLAYER_CAN_DROP_ITEMS;
+ 	public static boolean FAKE_PLAYER_CAN_PICKUP;
+-	
++	public static boolean FAKE_PLAYER_BRAIN;
++	public static String FAKE_PLAYER_BRAIN_URL;
++	public static int FAKE_PLAYER_BRAIN_TIMEOUT;
++	public static int FAKE_PLAYER_BRAIN_SAY_RANGE;
++
+ 	public static void load()
+ 	{
+ 		final ConfigReader config = new ConfigReader(FAKE_PLAYERS_CONFIG_FILE);
+@@ -58,5 +62,9 @@ public class FakePlayersConfig
+ 		FAKE_PLAYER_AGGRO_FPC = config.getBoolean("FakePlayerAggroFPC", false);
+ 		FAKE_PLAYER_CAN_DROP_ITEMS = config.getBoolean("FakePlayerCanDropItems", false);
+ 		FAKE_PLAYER_CAN_PICKUP = config.getBoolean("FakePlayerCanPickup", false);
++		FAKE_PLAYER_BRAIN = config.getBoolean("FakePlayerBrain", false);
++		FAKE_PLAYER_BRAIN_URL = config.getString("FakePlayerBrainUrl", "http://127.0.0.1:8771");
++		FAKE_PLAYER_BRAIN_TIMEOUT = config.getInt("FakePlayerBrainTimeout", 20);
++		FAKE_PLAYER_BRAIN_SAY_RANGE = config.getInt("FakePlayerBrainSayRange", 900);
+ 	}
+ }
+diff --git b/java/org/l2jmobius/gameserver/managers/FakePlayerBrain.java b/java/org/l2jmobius/gameserver/managers/FakePlayerBrain.java
+new file mode 100644
+index 0000000..d4a08e5
+--- /dev/null
++++ b/java/org/l2jmobius/gameserver/managers/FakePlayerBrain.java
+@@ -0,0 +1,162 @@
++package org.l2jmobius.gameserver.managers;
++
++import java.net.URI;
++import java.net.http.HttpClient;
++import java.net.http.HttpRequest;
++import java.net.http.HttpResponse;
++import java.nio.charset.StandardCharsets;
++import java.time.Duration;
++import java.util.function.Consumer;
++import java.util.logging.Logger;
++
++import org.l2jmobius.commons.threads.ThreadPool;
++import org.l2jmobius.gameserver.config.custom.FakePlayersConfig;
++import org.l2jmobius.gameserver.data.xml.MapRegionData;
++import org.l2jmobius.gameserver.entity.WorldObject;
++import org.l2jmobius.gameserver.entity.actor.Npc;
++import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.taskmanagers.GameTimeTaskManager;
++
++/**
++ * L2Hub: мозги фейковых игроков. Реплику фейка пишет внешний сервис мозгов (launcher/l2hub/brain.py).<br>
++ * Запрос уходит асинхронно и не держит игровые потоки; ответ показывается с задержкой «набора текста».<br>
++ * Пустой ответ — фейк промолчал. Если сервис недоступен или ответил ошибкой, вызывается запасной вариант.
++ */
++public class FakePlayerBrain
++{
++	private static final Logger LOGGER = Logger.getLogger(FakePlayerBrain.class.getName());
++	private static final HttpClient CLIENT = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(2)).build();
++	private static final long FAILURE_LOG_INTERVAL = 60000;
++
++	private volatile long _lastFailureLog = 0;
++
++	protected FakePlayerBrain()
++	{
++	}
++
++	/**
++	 * @param player игрок, который обратился к фейку
++	 * @param npc фейк
++	 * @param channel канал: whisper или say
++	 * @param message что сказал игрок
++	 * @param onReply куда отдать реплику фейка
++	 * @param onFail что сделать, если сервис мозгов не ответил
++	 */
++	public void ask(Player player, Npc npc, String channel, String message, Consumer<String> onReply, Runnable onFail)
++	{
++		final long start = System.currentTimeMillis();
++		final HttpRequest request;
++		try
++		{
++			request = HttpRequest.newBuilder(URI.create(FakePlayersConfig.FAKE_PLAYER_BRAIN_URL + "/chat")).timeout(Duration.ofSeconds(FakePlayersConfig.FAKE_PLAYER_BRAIN_TIMEOUT)).header("Content-Type", "application/json; charset=utf-8").POST(HttpRequest.BodyPublishers.ofString(buildRequest(player, npc, channel, message), StandardCharsets.UTF_8)).build();
++		}
++		catch (Exception e)
++		{
++			logFailure("неверный запрос: " + e.getMessage());
++			onFail.run();
++			return;
++		}
++
++		CLIENT.sendAsync(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8)).whenComplete((response, error) ->
++		{
++			if ((error != null) || (response.statusCode() != 200))
++			{
++				logFailure(error != null ? error.getClass().getSimpleName() + ": " + error.getMessage() : "HTTP " + response.statusCode());
++				onFail.run();
++				return;
++			}
++
++			final String reply = response.body().strip();
++			if (reply.isEmpty())
++			{
++				return;
++			}
++
++			final long typing = Math.max(0, (1500 + (reply.length() * 60L)) - (System.currentTimeMillis() - start));
++			ThreadPool.schedule(() -> onReply.accept(reply), typing);
++		});
++	}
++
++	private void logFailure(String reason)
++	{
++		final long now = System.currentTimeMillis();
++		if ((now - _lastFailureLog) > FAILURE_LOG_INTERVAL)
++		{
++			_lastFailureLog = now;
++			LOGGER.warning(getClass().getSimpleName() + ": сервис мозгов " + FakePlayersConfig.FAKE_PLAYER_BRAIN_URL + " не ответил (" + reason + "), фейки отвечают заготовками.");
++		}
++	}
++
++	private static String buildRequest(Player player, Npc npc, String channel, String message)
++	{
++		final StringBuilder sb = new StringBuilder(640);
++		sb.append('{');
++		field(sb, "fpc", npc.getName()).append(',');
++		sb.append("\"npcId\":").append(npc.getId()).append(',');
++		field(sb, "channel", channel).append(',');
++		field(sb, "message", message).append(',');
++		sb.append("\"player\":{");
++		field(sb, "name", player.getName()).append(',');
++		sb.append("\"level\":").append(player.getLevel()).append(',');
++		field(sb, "class", player.getPlayerClass().name()).append(',');
++		field(sb, "race", player.getRace().name()).append(',');
++		sb.append("\"female\":").append(player.getAppearance().isFemale()).append(',');
++		field(sb, "clan", player.getClan() != null ? player.getClan().getName() : "").append(',');
++		sb.append("\"gm\":").append(player.isGM()).append(',');
++		sb.append("\"distance\":").append((int) npc.calculateDistance2D(player));
++		sb.append("},\"npc\":{");
++		sb.append("\"level\":").append(npc.getLevel()).append(',');
++		sb.append("\"hpPct\":").append((int) ((npc.getCurrentHp() * 100) / Math.max(1, npc.getMaxHp()))).append(',');
++		sb.append("\"inCombat\":").append(npc.isInCombat()).append(',');
++		final WorldObject target = npc.getTarget();
++		field(sb, "target", (target != null) && (target != npc) ? target.getName() : "").append(',');
++		field(sb, "town", MapRegionData.getInstance().getClosestTownName(npc)).append(',');
++		sb.append("\"x\":").append(npc.getX()).append(",\"y\":").append(npc.getY()).append(",\"z\":").append(npc.getZ());
++		sb.append("},");
++		final int time = GameTimeTaskManager.getInstance().getGameTime();
++		field(sb, "gameTime", String.format("%02d:%02d", (time / 60) % 24, time % 60)).append(',');
++		sb.append("\"night\":").append(GameTimeTaskManager.getInstance().isNight());
++		sb.append('}');
++		return sb.toString();
++	}
++
++	private static StringBuilder field(StringBuilder sb, String key, String value)
++	{
++		sb.append('"').append(key).append("\":\"");
++		final String text = value == null ? "" : value;
++		for (int i = 0; i < text.length(); i++)
++		{
++			final char c = text.charAt(i);
++			switch (c)
++			{
++				case '"' -> sb.append("\\\"");
++				case '\\' -> sb.append("\\\\");
++				case '\n' -> sb.append("\\n");
++				case '\r' -> sb.append("\\r");
++				case '\t' -> sb.append("\\t");
++				default ->
++				{
++					if (c < 0x20)
++					{
++						sb.append(String.format("\\u%04x", (int) c));
++					}
++					else
++					{
++						sb.append(c);
++					}
++				}
++			}
++		}
++		return sb.append('"');
++	}
++
++	public static FakePlayerBrain getInstance()
++	{
++		return SingletonHolder.INSTANCE;
++	}
++
++	private static class SingletonHolder
++	{
++		protected static final FakePlayerBrain INSTANCE = new FakePlayerBrain();
++	}
++}
+diff --git a/java/org/l2jmobius/gameserver/managers/FakePlayerChatManager.java b/java/org/l2jmobius/gameserver/managers/FakePlayerChatManager.java
+index d0ce21d..c1485e0 100644
+--- a/java/org/l2jmobius/gameserver/managers/FakePlayerChatManager.java
++++ b/java/org/l2jmobius/gameserver/managers/FakePlayerChatManager.java
+@@ -34,6 +34,7 @@ import org.l2jmobius.gameserver.config.custom.FakePlayersConfig;
+ import org.l2jmobius.gameserver.data.SpawnTable;
+ import org.l2jmobius.gameserver.data.holders.FakePlayerChatHolder;
+ import org.l2jmobius.gameserver.data.xml.FakePlayerData;
++import org.l2jmobius.gameserver.entity.World;
+ import org.l2jmobius.gameserver.entity.actor.Npc;
+ import org.l2jmobius.gameserver.entity.actor.Player;
+ import org.l2jmobius.gameserver.entity.spawns.Spawn;
+@@ -88,8 +89,104 @@ public class FakePlayerChatManager implements IXmlReader
+ 	
+ 	public void manageChat(Player player, String fpcName, String message)
+ 	{
++		// L2Hub: шёпот сначала уходит в мозги фейков, заготовки — запасной вариант.
++		final Npc npc = FakePlayersConfig.FAKE_PLAYER_BRAIN ? getFakePlayer(fpcName) : null;
++		if (npc != null)
++		{
++			FakePlayerBrain.getInstance().ask(player, npc, "whisper", message, reply -> sendChat(player, fpcName, reply), () -> ThreadPool.schedule(() -> manageResponce(player, fpcName, message), Rnd.get(MIN_DELAY, MAX_DELAY)));
++			return;
++		}
++
+ 		ThreadPool.schedule(() -> manageResponce(player, fpcName, message), Rnd.get(MIN_DELAY, MAX_DELAY));
+ 	}
++
++	/**
++	 * L2Hub: фейк рядом отвечает в общий чат, если игрок назвал его по имени. Отвечает ближайший из названных.
++	 * @param player игрок
++	 * @param message что он сказал в общий чат
++	 */
++	public void manageSay(Player player, String message)
++	{
++		if (!FakePlayersConfig.FAKE_PLAYER_BRAIN || (FakePlayersConfig.FAKE_PLAYER_BRAIN_SAY_RANGE <= 0))
++		{
++			return;
++		}
++
++		final String text = message.toLowerCase();
++		Npc nearest = null;
++		double nearestDistance = Double.MAX_VALUE;
++		for (Npc npc : World.getVisibleObjectsInRange(player, Npc.class, FakePlayersConfig.FAKE_PLAYER_BRAIN_SAY_RANGE))
++		{
++			if (!npc.isFakePlayer() || !FakePlayerData.getInstance().isTalkable(npc.getName()) || !isAddressed(text, npc))
++			{
++				continue;
++			}
++
++			final double distance = npc.calculateDistance2D(player);
++			if (distance < nearestDistance)
++			{
++				nearest = npc;
++				nearestDistance = distance;
++			}
++		}
++
++		if (nearest != null)
++		{
++			final Npc npc = nearest;
++			FakePlayerBrain.getInstance().ask(player, npc, "say", message, reply -> say(npc, reply), () ->
++			{
++			});
++		}
++	}
++
++	/**
++	 * Обращение по имени фейка или по одному из его прозвищ: параметр NPC aliases, через «;» (например «ева;эви»).
++	 */
++	private static boolean isAddressed(String text, Npc npc)
++	{
++		if (mentions(text, npc.getName().toLowerCase()))
++		{
++			return true;
++		}
++
++		for (String alias : npc.getTemplate().getParameters().getString("aliases", "").toLowerCase().split(";"))
++		{
++			if (!alias.isBlank() && mentions(text, alias.strip()))
++			{
++				return true;
++			}
++		}
++		return false;
++	}
++
++	private static boolean mentions(String text, String name)
++	{
++		int index = text.indexOf(name);
++		while (index >= 0)
++		{
++			final int end = index + name.length();
++			final boolean startOk = (index == 0) || !Character.isLetterOrDigit(text.charAt(index - 1));
++			final boolean endOk = (end == text.length()) || !Character.isLetterOrDigit(text.charAt(end));
++			if (startOk && endOk)
++			{
++				return true;
++			}
++			index = text.indexOf(name, index + 1);
++		}
++		return false;
++	}
++
++	private static Npc getFakePlayer(String fpcName)
++	{
++		final Spawn spawn = SpawnTable.getInstance().getAnySpawn(FakePlayerData.getInstance().getNpcIdByName(fpcName));
++		return spawn != null ? spawn.getLastSpawn() : null;
++	}
++
++	private static void say(Npc npc, String text)
++	{
++		final CreatureSay cs = new CreatureSay(npc, ChatType.GENERAL, npc.getName(), text);
++		World.forEachVisibleObjectInRange(npc, Player.class, 1250, player -> player.sendPacket(cs));
++	}
+ 	
+ 	public void manageChat(Player player, String fpcName, String message, int minDelay, int maxDelay)
+ 	{

@@ -1,0 +1,78 @@
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java
+index 09c0c2d..b2e3d51 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java
+@@ -81,6 +81,8 @@ public class PhantomCompanionManager
+ 		int ownerLevel;
+ 		boolean ownerDead;
+ 		boolean selfDead;
++		/** Владелец получил уровень — подтянуться до него, когда бой кончится. */
++		int relevelTo;
+ 
+ 		Companion(String name)
+ 		{
+@@ -647,6 +649,25 @@ public class PhantomCompanionManager
+ 			return;
+ 		}
+ 
++		// Владелец получил уровень — подтянуться до него, но не посреди драки: шмот и скиллы собираются заново.
++		if (companion.relevelTo > phantom.getLevel())
++		{
++			if (!owner.isInCombat() && !phantom.isCastingNow() && !phantom.isInCombat())
++			{
++				final int level = companion.relevelTo;
++				companion.relevelTo = 0;
++				if (PhantomManager.getInstance().relevel(template, level))
++				{
++					LOGGER.info(getClass().getSimpleName() + ": " + companion.name + " leveled up to " + phantom.getLevel() + " after " + owner.getName() + ".");
++				}
++				return;
++			}
++		}
++		else
++		{
++			companion.relevelTo = 0;
++		}
++
+ 		final int slotIndex = slotIndex(companion);
+ 		if ((companion.mode != Mode.STAY) && (phantom.calculateDistance2D(owner) > PhantomPartyConfig.PHANTOM_CATCH_UP_RANGE))
+ 		{
+@@ -714,6 +735,7 @@ public class PhantomCompanionManager
+ 		final boolean healer = template.getRole() == PhantomTemplate.Role.HEALER;
+ 		if ((companion.ownerLevel > 0) && (owner.getLevel() > companion.ownerLevel))
+ 		{
++			companion.relevelTo = owner.getLevel();
+ 			chat.event(phantom, owner, Event.OWNER_LEVEL_UP, owner.getName() + " только что получил " + owner.getLevel() + " уровень", "грац с " + owner.getLevel() + "!");
+ 		}
+ 		companion.ownerLevel = owner.getLevel();
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomManager.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomManager.java
+index 986eb89..e9b3e7f 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomManager.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomManager.java
+@@ -133,6 +133,26 @@ public class PhantomManager
+ 		return phantom;
+ 	}
+ 
++	/**
++	 * Подтянуть напарника в мире до уровня на месте, без телепорта (владелец получил уровень): профа, скиллы, шмот грейда.
++	 * @param template напарник
++	 * @param requestedLevel уровень
++	 * @return {@code true}, если пересобран
++	 */
++	public synchronized boolean relevel(PhantomTemplate template, int requestedLevel)
++	{
++		final Player phantom = getPhantom(template);
++		if ((phantom == null) || phantom.isDead())
++		{
++			return false;
++		}
++
++		PhantomOutfit.build(phantom, template, Math.max(1, Math.min(requestedLevel, PlayerConfig.PLAYER_MAXIMUM_LEVEL - 1)));
++		phantom.storeMe();
++		phantom.broadcastUserInfo();
++		return true;
++	}
++
+ 	/**
+ 	 * Убирает напарника из мира. Персонаж остаётся в базе со своим уровнем и скиллами.
+ 	 * @param template напарник

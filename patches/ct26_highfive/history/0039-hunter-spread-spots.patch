@@ -1,0 +1,204 @@
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+index 1fd72fe..bbe1d49 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+@@ -8,6 +8,7 @@ import java.nio.file.StandardCopyOption;
+ import java.util.ArrayDeque;
+ import java.util.ArrayList;
+ import java.util.Collections;
++import java.util.Comparator;
+ import java.util.Deque;
+ import java.util.EnumMap;
+ import java.util.LinkedHashMap;
+@@ -101,6 +102,12 @@ public class PhantomHunterManager
+ 	private static final int SPAWN_LEVEL_UP = 3;
+ 	/** Вне города спот не дальше этого — ногами, а не телепортом (патч 0030). */
+ 	private static final int WALK_TRAVEL = 12000;
++	/** До этого уровня охотник качается в родной зоне расы, с него — уходит в мир: стартовые зоны не берёт, пока есть другие (патч 0039). */
++	private static final int HOME_LEVEL = 15;
++	/** Охотники на спотах ближе этого друг к другу — в одном месте: {@code HuntersPerSpot} считается на место, а не на спот (патч 0039). */
++	private static final int CROWD_RANGE = 2500;
++	/** Вошёл в мир или перерос спот — ногами на один из стольких ближайших свободных, а не всегда на самый ближний (патч 0039). */
++	private static final int NEAREST_CHOICE = 3;
+ 	/** Из города: гейткипер не дальше этого; дальше или нет — телепорт с места. */
+ 	private static final int GATEKEEPER_RANGE = 5000;
+ 	/** Ближе этого к гейткиперу — «поговорил» с ним. */
+@@ -195,7 +202,7 @@ public class PhantomHunterManager
+ 		"Лут по сходной цене"
+ 	};
+ 
+-	/** Родная зона расы: до 20-го уровня охотник качается там, если есть подходящий спот. */
++	/** Родная зона расы: до {@link #HOME_LEVEL} уровня охотник качается там, если есть подходящий спот. */
+ 	private static final Map<Race, String> HOME_REGIONS = new EnumMap<>(Race.class);
+ 	static
+ 	{
+@@ -1007,7 +1014,8 @@ public class PhantomHunterManager
+ 	}
+ 
+ 	/**
+-	 * Новый спот по уровню: мобы на уровень-три ниже и до своего; до 20-го — в родной зоне расы, если там есть; не больше HuntersPerSpot охотников на спот.
++	 * Новый спот по уровню: мобы на уровень-три ниже и до своего; до {@link #HOME_LEVEL} — в родной зоне расы, если там есть, потом — в мире вне стартовых зон;
++	 * не больше HuntersPerSpot охотников на место.
+ 	 */
+ 	private void goToSpot(Hunter hunter, Player player, HuntSpot avoid)
+ 	{
+@@ -1141,31 +1149,36 @@ public class PhantomHunterManager
+ 	private HuntSpot pickSpot(Player player, HuntSpot avoid)
+ 	{
+ 		final int level = player.getLevel();
+-		// До 20-го — сначала родная зона расы, даже с допуском по уровню пошире (у гномов, например, нет спотов 1–7 уровня), потом весь мир.
+-		if (level < 20)
++		// До HOME_LEVEL — сначала родная зона расы, даже с допуском по уровню пошире (у гномов, например, нет спотов 1–7 уровня), потом весь мир.
++		if (level < HOME_LEVEL)
+ 		{
+-			final HuntSpot home = pickSpot(level, avoid, HOME_REGIONS.get(player.getRace()), 4);
++			final HuntSpot home = pickSpot(player, avoid, HOME_REGIONS.get(player.getRace()), 4, false);
+ 			if (home != null)
+ 			{
+ 				return home;
+ 			}
++			return pickSpot(player, avoid, null, 6, false);
+ 		}
+-		return pickSpot(level, avoid, null, 6);
++		// Дальше — мир (патч 0039): свободное место вне стартовых зон, мобы не выше трёх уровней своего; нет такого — как раньше, со стартовыми зонами.
++		final HuntSpot world = pickSpot(player, avoid, null, 3, true);
++		return world != null ? world : pickSpot(player, avoid, null, 6, false);
+ 	}
+ 
+ 	/**
+ 	 * @param region только эта зона или {@code null} — любая
+ 	 * @param maxTolerance насколько расширять разброс уровня мобов
++	 * @param skipHomes не брать стартовые зоны рас ({@link #HOME_REGIONS}) и занятые места: {@code null}, если свободного вне стартовых зон нет
+ 	 */
+-	private HuntSpot pickSpot(int level, HuntSpot avoid, String region, int maxTolerance)
++	private HuntSpot pickSpot(Player player, HuntSpot avoid, String region, int maxTolerance, boolean skipHomes)
+ 	{
++		final int level = player.getLevel();
+ 		for (int tolerance = 0; tolerance <= maxTolerance; tolerance++)
+ 		{
+ 			final List<HuntSpot> fitting = new ArrayList<>();
+ 			for (HuntSpot spot : HuntSpotData.getInstance().getSpots())
+ 			{
+ 				// Перерос — не брать: иначе каждый тик телепорт на тот же спот (у тёмных эльфов дома споты только до 11-го).
+-				if ((spot != avoid) && !outgrown(spot, level) && ((region == null) || spot.region.equals(region)) && (spot.level >= (level - 3 - tolerance)) && (spot.level <= (level + tolerance)))
++				if ((spot != avoid) && !outgrown(spot, level) && ((region == null) || spot.region.equals(region)) && (!skipHomes || !HOME_REGIONS.containsValue(spot.region)) && (spot.level >= (level - 3 - tolerance)) && (spot.level <= (level + tolerance)))
+ 				{
+ 					fitting.add(spot);
+ 				}
+@@ -1179,23 +1192,37 @@ public class PhantomHunterManager
+ 			final List<HuntSpot> free = new ArrayList<>();
+ 			for (HuntSpot spot : fitting)
+ 			{
+-				if (crowd(spot) < PhantomHuntersConfig.HUNTERS_PER_SPOT)
++				if (crowd(spot, player) < PhantomHuntersConfig.HUNTERS_PER_SPOT)
+ 				{
+ 					free.add(spot);
+ 				}
+ 			}
++			if (free.isEmpty() && skipHomes)
++			{
++				continue;
++			}
+ 			final List<HuntSpot> choice = free.isEmpty() ? fitting : free;
+ 			return choice.get(Rnd.get(choice.size()));
+ 		}
+ 		return null;
+ 	}
+ 
+-	private int crowd(HuntSpot spot)
++	/**
++	 * Сколько охотников качается в этом месте: на этом споте или на соседнем ближе {@link #CROWD_RANGE} (патч 0039 — до него считались только на том же споте,
++	 * и соседние споты одного поля заполнялись по два охотника каждый).
++	 */
++	private int crowd(HuntSpot spot, Player self)
+ 	{
++		final Hunter me = _hunters.get(self.getName());
+ 		int count = 0;
+ 		for (Hunter other : _hunters.values())
+ 		{
+-			if (other.spot == spot)
++			final HuntSpot taken = other.spot;
++			if (other == me)
++			{
++				continue;
++			}
++			if ((taken == spot) || ((taken != null) && (Math.hypot(taken.entry.getX() - spot.entry.getX(), taken.entry.getY() - spot.entry.getY()) < CROWD_RANGE)))
+ 			{
+ 				count++;
+ 			}
+@@ -1512,18 +1539,20 @@ public class PhantomHunterManager
+ 
+ 	/**
+ 	 * Вошёл в мир или перерос спот (патч 0030): ближайший спот по силам — мобы не выше {@link #SPAWN_LEVEL_UP} уровней, — свободный ({@code HuntersPerSpot}) первым.
++	 * Патч 0039: из свободных — один из {@link #NEAREST_CHOICE} ближайших наугад, чтобы вошедшие в одном месте не шли на один спот; с {@link #HOME_LEVEL} уровня
++	 * стартовые зоны рас (своя и чужие) не годятся — рядом с городом в них ничего нет, и охотник уходит в мир через {@link #pickSpot}.
+ 	 * @return спот не дальше {@link #WALK_TRAVEL} или {@code null} — рядом подходящего нет
+ 	 */
+ 	private HuntSpot nearestFreeSpot(Player player)
+ 	{
+ 		final int level = player.getLevel();
+-		HuntSpot free = null;
++		final boolean leftHome = level >= HOME_LEVEL;
++		final List<HuntSpot> free = new ArrayList<>();
+ 		HuntSpot any = null;
+-		double freeDistance = Double.MAX_VALUE;
+ 		double anyDistance = Double.MAX_VALUE;
+ 		for (HuntSpot spot : HuntSpotData.getInstance().getSpots())
+ 		{
+-			if (outgrown(spot, level) || (spot.level > (level + SPAWN_LEVEL_UP)) || (spot.level < (level - 9)))
++			if (outgrown(spot, level) || (spot.level > (level + SPAWN_LEVEL_UP)) || (spot.level < (level - 9)) || (leftHome && HOME_REGIONS.containsValue(spot.region)))
+ 			{
+ 				continue;
+ 			}
+@@ -1538,13 +1567,17 @@ public class PhantomHunterManager
+ 				any = spot;
+ 				anyDistance = distance;
+ 			}
+-			if ((distance < freeDistance) && (crowd(spot) < PhantomHuntersConfig.HUNTERS_PER_SPOT))
++			if (crowd(spot, player) < PhantomHuntersConfig.HUNTERS_PER_SPOT)
+ 			{
+-				free = spot;
+-				freeDistance = distance;
++				free.add(spot);
+ 			}
+ 		}
+-		return free != null ? free : any;
++		if (free.isEmpty())
++		{
++			return any;
++		}
++		free.sort(Comparator.comparingDouble(spot -> player.calculateDistance2D(spot.entry)));
++		return free.get(Rnd.get(Math.min(NEAREST_CHOICE, free.size())));
+ 	}
+ 
+ 	/**
+@@ -2294,7 +2327,7 @@ public class PhantomHunterManager
+ 
+ 	/**
+ 	 * Спот для смены по решению стратега. Выше — мобы сильнее нынешних, но не больше чем на 3 уровня выше своего; ниже — слабее нынешних, но не перерос.
+-	 * В первую очередь свободные, до 20-го — в родной зоне, ближе по уровню к нынешнему.
++	 * В первую очередь свободные, до {@link #HOME_LEVEL} — в родной зоне, с него — вне стартовых зон (патч 0039), ближе по уровню к нынешнему.
+ 	 * @return спот или {@code null}, если некуда
+ 	 */
+ 	private HuntSpot shiftedSpot(Hunter hunter, Player player, boolean up)
+@@ -2306,7 +2339,7 @@ public class PhantomHunterManager
+ 		}
+ 
+ 		final int level = player.getLevel();
+-		final String home = level < 20 ? HOME_REGIONS.get(player.getRace()) : null;
++		final String home = level < HOME_LEVEL ? HOME_REGIONS.get(player.getRace()) : null;
+ 		final List<HuntSpot> best = new ArrayList<>();
+ 		int bestScore = Integer.MAX_VALUE;
+ 		for (HuntSpot spot : HuntSpotData.getInstance().getSpots())
+@@ -2316,8 +2349,9 @@ public class PhantomHunterManager
+ 				continue;
+ 			}
+ 
+-			// Меньше — лучше: занятый спот, чужая зона до 20-го, дальше по уровню от нынешнего.
+-			final int score = (crowd(spot) >= PhantomHuntersConfig.HUNTERS_PER_SPOT ? 1000 : 0) + ((home != null) && !home.equals(spot.region) ? 100 : 0) + Math.abs(spot.level - current.level);
++			// Меньше — лучше: занятое место, чужая зона до HOME_LEVEL или стартовая зона после, дальше по уровню от нынешнего.
++			final boolean offRoute = (home != null) ? !home.equals(spot.region) : HOME_REGIONS.containsValue(spot.region);
++			final int score = (crowd(spot, player) >= PhantomHuntersConfig.HUNTERS_PER_SPOT ? 1000 : 0) + (offRoute ? 100 : 0) + Math.abs(spot.level - current.level);
+ 			if (score < bestScore)
+ 			{
+ 				bestScore = score;

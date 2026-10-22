@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- L2Hub: напарники-фантомы (data/L2HubPhantoms.xml, пишет tools/fake_players.py). -->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+	<xs:element name="list">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="phantom" maxOccurs="unbounded" minOccurs="0">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="gear" maxOccurs="unbounded" minOccurs="1">
+								<xs:complexType>
+									<xs:attribute name="grade" type="xs:token" use="required" />
+									<xs:attribute name="minLevel" type="xs:positiveInteger" use="required" />
+									<xs:attribute name="rhand" type="xs:nonNegativeInteger" />
+									<xs:attribute name="lhand" type="xs:nonNegativeInteger" />
+									<xs:attribute name="head" type="xs:nonNegativeInteger" />
+									<xs:attribute name="chest" type="xs:nonNegativeInteger" />
+									<xs:attribute name="legs" type="xs:nonNegativeInteger" />
+									<xs:attribute name="gloves" type="xs:nonNegativeInteger" />
+									<xs:attribute name="feet" type="xs:nonNegativeInteger" />
+									<xs:attribute name="shots" type="xs:nonNegativeInteger" />
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+						<xs:attribute name="name" type="xs:token" use="required" />
+						<!-- companion — напарник (.buddy), hunter — охотник: живёт сам, качается с 1 уровня. -->
+						<xs:attribute name="kind" default="companion">
+							<xs:simpleType>
+								<xs:restriction base="xs:token">
+									<xs:enumeration value="companion" />
+									<xs:enumeration value="hunter" />
+								</xs:restriction>
+							</xs:simpleType>
+						</xs:attribute>
+						<xs:attribute name="role" use="required">
+							<xs:simpleType>
+								<xs:restriction base="xs:token">
+									<xs:enumeration value="HEALER" />
+									<xs:enumeration value="BUFFER" />
+									<xs:enumeration value="TANK" />
+									<xs:enumeration value="DAMAGE" />
+								</xs:restriction>
+							</xs:simpleType>
+						</xs:attribute>
+						<xs:attribute name="female" type="xs:boolean" use="required" />
+						<xs:attribute name="face" type="xs:nonNegativeInteger" use="required" />
+						<xs:attribute name="hairStyle" type="xs:nonNegativeInteger" use="required" />
+						<xs:attribute name="hairColor" type="xs:nonNegativeInteger" use="required" />
+						<xs:attribute name="classes" type="xs:string" use="required" />
+						<!-- Прозвища для чата пати через «;» (имя учитывается и так). -->
+						<xs:attribute name="aliases" type="xs:string" />
+						<!-- Общительность охотника: множитель шанса заговорить первым (1 — обычный). -->
+						<xs:attribute name="social" type="xs:decimal" default="1" />
+						<xs:attribute name="temper" type="xs:decimal" default="1" />
+						<xs:attribute name="x" type="xs:integer" use="required" />
+						<xs:attribute name="y" type="xs:integer" use="required" />
+						<xs:attribute name="z" type="xs:integer" use="required" />
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>

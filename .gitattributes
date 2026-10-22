@@ -1,0 +1,7 @@
+* text=auto eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+# Патчи к исходникам Mobius (они в CRLF) храним байт в байт.
+*.patch -text
+# Модуль фантомов копируется в исходники Mobius байт в байт — без преобразования строк
+phantoms/** -text

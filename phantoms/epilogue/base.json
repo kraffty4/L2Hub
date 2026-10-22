@@ -1,0 +1,5 @@
+{
+  "archive": "downloads/L2J_Mobius_CT_2.4_Epilogue_2026-10-20.zip",
+  "build": "L2J_Mobius_CT_2.4_Epilogue",
+  "note": "Чистые исходники Mobius, от которых считается glue.patch (tools/phantoms_glue.py): архив сборки, с которой развёрнуто дерево servers/epilogue."
+}

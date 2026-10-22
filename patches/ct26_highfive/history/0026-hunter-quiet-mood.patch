@@ -1,0 +1,572 @@
+diff --git a/dist/game/config/Custom/PhantomHunters.ini b/dist/game/config/Custom/PhantomHunters.ini
+index 7dc9296..c09e0ae 100644
+--- a/dist/game/config/Custom/PhantomHunters.ini
++++ b/dist/game/config/Custom/PhantomHunters.ini
+@@ -140,3 +140,25 @@ HunterInitiativeAnswerWait = 120
+ 
+ # Говорили меньше стольких секунд назад — первым не заговаривает: разговор только что был.
+ HunterInitiativeRecentTalk = 1800
++
++# ---------------------------------------------------------------------------
++# Тишина в округе и настроение (docs/PHANTOMS.md, раздел 4.10; приёмы L2Solo).
++# Непрошеные реплики охотников вслух — мысль стратега, «о, опять ты» обидчику, встрял в чужую реплику, заговорил
++# первым — ждут тишины: после любой реплики фантома вслух рядом (в пределах слышимости общего чата) другие молчат.
++# Ответы игроку и реплики на его действия (напал, убил) не ждут, но тоже считаются: следом никто не встревает.
++# ---------------------------------------------------------------------------
++
++# После любой реплики фантома вслух другие фантомы рядом не говорят непрошеного столько секунд. 0 — выключить.
++HunterChatQuiet = 45
++
++# Сам говоривший — следующая непрошеная реплика не раньше, чем через столько секунд.
++HunterChatSpeakerGap = 120
++
++# Одна и та же тема (мысль вслух, обидчик мимо, встрял, заговорил первым) рядом — не чаще раза в столько секунд.
++HunterChatTopicGap = 300
++
++# Настроение охотника из его состояния, без модели: устал (мало HP или MP, сидит), настороже (недавно напали или
++# убили), занят делом, скучает (афк, нет мобов), хочет поболтать (болтун). Усталый и настороженный не встревают;
++# первым усталый не заговаривает, настороженный — только со знакомыми, занятый — вдвое реже, скучающий — в 1,5 раза
++# чаще. Мозги знают настроение и говорят в нём.
++HunterMood = True
+diff --git a/java/org/l2jmobius/gameserver/config/custom/PhantomHuntersConfig.java b/java/org/l2jmobius/gameserver/config/custom/PhantomHuntersConfig.java
+index 0eb1395..9557114 100644
+--- a/java/org/l2jmobius/gameserver/config/custom/PhantomHuntersConfig.java
++++ b/java/org/l2jmobius/gameserver/config/custom/PhantomHuntersConfig.java
+@@ -56,6 +56,10 @@ public class PhantomHuntersConfig
+ 	public static int HUNTER_INITIATIVE_PLAYER_PER_HOUR;
+ 	public static int HUNTER_INITIATIVE_ANSWER_WAIT;
+ 	public static int HUNTER_INITIATIVE_RECENT_TALK;
++	public static boolean HUNTER_MOOD;
++	public static int HUNTER_CHAT_QUIET;
++	public static int HUNTER_CHAT_SPEAKER_GAP;
++	public static int HUNTER_CHAT_TOPIC_GAP;
+ 
+ 	public static void load()
+ 	{
+@@ -102,6 +106,10 @@ public class PhantomHuntersConfig
+ 		HUNTER_INITIATIVE_PLAYER_PER_HOUR = Math.max(0, config.getInt("HunterInitiativePlayerPerHour", 3));
+ 		HUNTER_INITIATIVE_ANSWER_WAIT = Math.max(10, config.getInt("HunterInitiativeAnswerWait", 120));
+ 		HUNTER_INITIATIVE_RECENT_TALK = Math.max(0, config.getInt("HunterInitiativeRecentTalk", 1800));
++		HUNTER_MOOD = config.getBoolean("HunterMood", true);
++		HUNTER_CHAT_QUIET = Math.max(0, config.getInt("HunterChatQuiet", 45));
++		HUNTER_CHAT_SPEAKER_GAP = Math.max(0, config.getInt("HunterChatSpeakerGap", 120));
++		HUNTER_CHAT_TOPIC_GAP = Math.max(0, config.getInt("HunterChatTopicGap", 300));
+ 	}
+ 
+ 	/**
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java
+index 360ee87..f6aaf16 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java
+@@ -7,6 +7,7 @@ import java.util.EnumMap;
+ import java.util.LinkedHashMap;
+ import java.util.List;
+ import java.util.Map;
++import java.util.Set;
+ import java.util.concurrent.ConcurrentHashMap;
+ import java.util.function.Consumer;
+ import java.util.logging.Logger;
+@@ -38,7 +39,8 @@ import org.l2jmobius.gameserver.taskmanagers.GameTimeTaskManager;
+  * В чате пати без имени отвечает тот напарник, с которым игрок уже говорит, а если в пати кроме него только напарники — любой; с именем или прозвищем — названный.<br>
+  * Общий (белый) чат рядом ({@code ChatGeneral}): напарники из пати, кто стоит рядом, слышат его так же, как чат пати, и отвечают вслух; охотник рядом — если назвали, а без имени изредка встревает сам.<br>
+  * События (вступил в пати, новый уровень владельца, смерть, рес, отдых) — реплика с кулдауном и общим бюджетом в минуту; мозги недоступны — заготовка.<br>
+- * Охотник заговаривает первым ({@link PhantomInitiative} решает, здесь — реплика): ответ игрока без имени уходит ему, как в разговоре.
++ * Охотник заговаривает первым ({@link PhantomInitiative} решает, здесь — реплика): ответ игрока без имени уходит ему, как в разговоре.<br>
++ * Все реплики вслух идут через {@link #sayNear} и записываются в {@link PhantomQuiet}: непрошеные (мысль вслух, обидчик мимо, встрял, заговорил первым) ждут тишины в округе.
+  */
+ public class PhantomChat
+ {
+@@ -49,6 +51,8 @@ public class PhantomChat
+ 	/** Сколько слышно общий чат — как у игроков. */
+ 	private static final int SAY_RANGE = 1250;
+ 	private static final Pattern TAG = Pattern.compile("\\[\\[([A-Z]+)\\]\\]");
++	/** События охотника, которые он говорит сам, без повода от игрока: ждут тишины в округе ({@link PhantomQuiet}). */
++	private static final Set<String> UNSOLICITED_EVENTS = Set.of("GRUDGE");
+ 
+ 	public enum Event
+ 	{
+@@ -247,8 +251,10 @@ public class PhantomChat
+ 		final List<PhantomTemplate> free = new ArrayList<>();
+ 		for (Map.Entry<PhantomTemplate, Player> entry : strangers.entrySet())
+ 		{
++			// Усталый и настороженный не встревают; вокруг только что говорили — тоже нет (патч 0026).
+ 			final Player phantom = entry.getValue();
+-			if (!phantom.isDead() && !phantom.isInCombat() && cooled("overhear:" + phantom.getObjectId(), now))
++			final PhantomMood mood = PhantomHunterManager.getInstance().mood(phantom);
++			if (!phantom.isDead() && !phantom.isInCombat() && cooled("overhear:" + phantom.getObjectId(), now) && ((mood == null) || mood.overhears()) && PhantomQuiet.getInstance().allowed(phantom, PhantomQuiet.OVERHEARD, now))
+ 			{
+ 				free.add(entry.getKey());
+ 			}
+@@ -434,10 +440,15 @@ public class PhantomChat
+ 		{
+ 			return;
+ 		}
++		// Обидчик мимо — непрошеная реплика: вокруг только что говорили — подождать (кулдаун не ставится, узнает на следующем проходе).
++		if (!whisper && UNSOLICITED_EVENTS.contains(kind) && !PhantomQuiet.getInstance().allowed(hunter, kind, now))
++		{
++			return;
++		}
+ 		_eventCooldowns.put(key, now + cooldown);
+ 
+ 		final PhantomTemplate template = PhantomData.getInstance().getTemplate(hunter.getName());
+-		final Consumer<String> out = text -> sayHunter(hunter, other, text, whisper);
++		final Consumer<String> out = text -> sayHunter(hunter, other, kind, text, whisper);
+ 		if ((template == null) || !brainEnabled() || !eventBudget(now))
+ 		{
+ 			if (fallback != null)
+@@ -463,7 +474,7 @@ public class PhantomChat
+ 		});
+ 	}
+ 
+-	private static void sayHunter(Player hunter, Player other, String text, boolean whisper)
++	private static void sayHunter(Player hunter, Player other, String kind, String text, boolean whisper)
+ 	{
+ 		if (whisper)
+ 		{
+@@ -473,11 +484,16 @@ public class PhantomChat
+ 			}
+ 			return;
+ 		}
+-		sayNear(hunter, text);
++		sayNear(hunter, text, kind);
+ 	}
+ 
+-	private static void sayNear(Player speaker, String text)
++	/**
++	 * Вслух в общий чат рядом; реплика записывается в тишину в округе ({@link PhantomQuiet}).
++	 * @param topic тема или вид реплики
++	 */
++	private static void sayNear(Player speaker, String text, String topic)
+ 	{
++		PhantomQuiet.getInstance().said(speaker, topic, System.currentTimeMillis());
+ 		final CreatureSay say = new CreatureSay(speaker, ChatType.GENERAL, speaker.getName(), text);
+ 		World.forEachVisibleObjectInRange(speaker, Player.class, 1250, player -> player.sendPacket(say));
+ 	}
+@@ -493,7 +509,14 @@ public class PhantomChat
+ 	 */
+ 	void initiative(Player hunter, Player player, PhantomTemplate template, String what, Runnable onSaid)
+ 	{
+-		if (!brainEnabled() || !eventBudget(System.currentTimeMillis()))
++		// Пока мозги отвечали «знакомы ли», рядом кто-то заговорил — промолчать (патч 0026).
++		final long now = System.currentTimeMillis();
++		if (!PhantomQuiet.getInstance().allowed(hunter, PhantomQuiet.INITIATIVE, now))
++		{
++			LOGGER.info(PhantomInitiative.class.getSimpleName() + ": " + hunter.getName() + " -> " + player.getName() + ": рядом только что говорили — промолчал.");
++			return;
++		}
++		if (!brainEnabled() || !eventBudget(now))
+ 		{
+ 			return;
+ 		}
+@@ -507,10 +530,10 @@ public class PhantomChat
+ 			}
+ 
+ 			// Ответ игрока без имени уйдёт этому охотнику; сам охотник следом не встревает.
+-			final long now = System.currentTimeMillis();
+-			_lastReply.put(pair(hunter, player), now);
+-			_eventCooldowns.put("overhear:" + hunter.getObjectId(), now + (PhantomPartyConfig.PHANTOM_OVERHEAR_COOLDOWN * 1000L));
+-			sayNear(hunter, line);
++			final long saidAt = System.currentTimeMillis();
++			_lastReply.put(pair(hunter, player), saidAt);
++			_eventCooldowns.put("overhear:" + hunter.getObjectId(), saidAt + (PhantomPartyConfig.PHANTOM_OVERHEAR_COOLDOWN * 1000L));
++			sayNear(hunter, line, PhantomQuiet.INITIATIVE);
+ 			onSaid.run();
+ 		}, () ->
+ 		{
+@@ -537,13 +560,19 @@ public class PhantomChat
+ 	}
+ 
+ 	/**
+-	 * Мысль охотника вслух (мозги-стратег) — в общий чат рядом.
++	 * Мысль охотника вслух (мозги-стратег) — в общий чат рядом, если вокруг тихо ({@link PhantomQuiet}).
+ 	 * @param hunter охотник
+ 	 * @param text что сказал
++	 * @return сказал
+ 	 */
+-	public void hunterSay(Player hunter, String text)
++	public boolean hunterSay(Player hunter, String text)
+ 	{
+-		sayNear(hunter, text);
++		if (!PhantomQuiet.getInstance().allowed(hunter, PhantomQuiet.THOUGHT, System.currentTimeMillis()))
++		{
++			return false;
++		}
++		sayNear(hunter, text, PhantomQuiet.THOUGHT);
++		return true;
+ 	}
+ 
+ 	/**
+@@ -557,7 +586,7 @@ public class PhantomChat
+ 		final ChatBroadcastType trade = GeneralConfig.DEFAULT_TRADE_CHAT;
+ 		if ((hunter.getLevel() < 20) || ((trade != ChatBroadcastType.ON) && (trade != ChatBroadcastType.GLOBAL)))
+ 		{
+-			sayNear(hunter, text);
++			sayNear(hunter, text, "lfp");
+ 			return "general";
+ 		}
+ 
+@@ -693,7 +722,7 @@ public class PhantomChat
+ 	{
+ 		if ("say".equals(channel) || "overheard".equals(channel))
+ 		{
+-			sayNear(phantom, text);
++			sayNear(phantom, text, channel);
+ 		}
+ 		else if (!"whisper".equals(channel) && phantom.isInParty())
+ 		{
+@@ -765,6 +794,8 @@ public class PhantomChat
+ 		sb.append("},\"phantom\":{");
+ 		FakePlayerBrain.field(sb, "role", template.getRole().name()).append(',');
+ 		sb.append("\"hunter\":").append(template.isHunter()).append(',');
++		final PhantomMood mood = template.isHunter() ? PhantomHunterManager.getInstance().mood(phantom) : null;
++		FakePlayerBrain.field(sb, "mood", mood != null ? mood.getKey() : "").append(',');
+ 		FakePlayerBrain.field(sb, "state", PhantomCompanionManager.getInstance().stateForBrain(template)).append(',');
+ 		sb.append("\"level\":").append(phantom.getLevel()).append(',');
+ 		FakePlayerBrain.field(sb, "class", phantom.getPlayerClass().name()).append(',');
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+index f758509..df3ff79 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+@@ -147,6 +147,8 @@ public class PhantomHunterManager
+ 	/** Ответа мозгов нет столько — запрос считается потерянным. */
+ 	private static final long THINK_TIMEOUT = 60000;
+ 	private static final long STRATEGY_LOG_INTERVAL = 60000;
++	/** Настроение (патч 0026): после нападения живого игрока или смерти охотник столько настороже. */
++	private static final long GUARDED_TIME = 600000;
+ 
+ 	/** Заготовки названий лавок (до 29 знаков). */
+ 	private static final String[] STORE_TITLES =
+@@ -241,6 +243,8 @@ public class PhantomHunterManager
+ 		/** Стратег решил сесть в лавку: в городе — в лавку, даже если с прошлой не прошло 30 минут. */
+ 		boolean wantStore;
+ 		final Deque<Long> deaths = new ArrayDeque<>();
++		/** Последняя смерть — для настроения: его читают и потоки чата, а {@link #deaths} — только тик. */
++		volatile long lastDeath;
+ 
+ 		Hunter(PhantomTemplate template)
+ 		{
+@@ -344,6 +348,45 @@ public class PhantomHunterManager
+ 		}
+ 	}
+ 
++	/**
++	 * Настроение охотника (патч 0026) — из состояния, без модели: для «заговорить первым», «встрять» и мозгов.
++	 * @param player фантом
++	 * @return настроение; {@code null} — не охотник или настроение выключено ({@link PhantomHuntersConfig#HUNTER_MOOD})
++	 */
++	public PhantomMood mood(Player player)
++	{
++		final Hunter hunter = player != null ? _hunters.get(player.getName().toLowerCase()) : null;
++		return hunter != null ? mood(hunter, player, System.currentTimeMillis()) : null;
++	}
++
++	private static PhantomMood mood(Hunter hunter, Player player, long now)
++	{
++		if (!PhantomHuntersConfig.HUNTER_MOOD || player.isDead())
++		{
++			return null;
++		}
++
++		final Phase phase = hunter.phase;
++		if ((player.getCurrentHp() < (player.getMaxHp() * 0.35)) || (player.getCurrentMp() < (player.getMaxMp() * 0.2)) || ((phase == Phase.HUNT) && player.isSitting()))
++		{
++			return PhantomMood.TIRED;
++		}
++		if ((hunter.enemyId != 0) || ((now - hunter.enemySeen) < GUARDED_TIME) || ((now - hunter.lastDeath) < GUARDED_TIME))
++		{
++			return PhantomMood.GUARDED;
++		}
++		final boolean afk = (phase == Phase.TOWN) && (hunter.afkUntil > now);
++		if ((phase == Phase.RECRUIT) || (phase == Phase.PARTY) || ((phase == Phase.TOWN) && !afk) || (hunter.walkBackUntil > now))
++		{
++			return PhantomMood.FOCUSED;
++		}
++		if (afk || ((phase == Phase.HUNT) && (hunter.roams > 0)))
++		{
++			return PhantomMood.RESTLESS;
++		}
++		return hunter.template.getSocial() >= 1.5 ? PhantomMood.SOCIABLE : PhantomMood.CALM;
++	}
++
+ 	static String money(long adena)
+ 	{
+ 		if (adena >= 1000000)
+@@ -485,6 +528,12 @@ public class PhantomHunterManager
+ 				FakePlayerBrain.field(sb, "spot", hunter.spot != null ? hunter.spot.name : "").append(',');
+ 				FakePlayerBrain.field(sb, "town", MapRegionData.getInstance().getClosestTownName(player)).append(',');
+ 				FakePlayerBrain.field(sb, "party", player.isInParty() ? player.getParty().getLeader().getName() : "");
++				final PhantomMood mood = mood(hunter, player, now);
++				if (mood != null)
++				{
++					sb.append(',');
++					FakePlayerBrain.field(sb, "mood", mood.getKey());
++				}
+ 				final Choice last = hunter.lastChoice;
+ 				if (last != null)
+ 				{
+@@ -777,6 +826,7 @@ public class PhantomHunterManager
+ 		{
+ 			hunter.deadSince = now;
+ 			hunter.deaths.addLast(now);
++			hunter.lastDeath = now;
+ 			hunter.choice = null;
+ 			endFight(hunter, player);
+ 			if (hunter.phase != Phase.PARTY)
+@@ -1935,7 +1985,7 @@ public class PhantomHunterManager
+ 	}
+ 
+ 	/**
+-	 * Мысль вслух в общий чат рядом — изредка ({@link PhantomHuntersConfig#HUNTER_STRATEGY_SAY_CHANCE}) и только если рядом есть живой игрок.
++	 * Мысль вслух в общий чат рядом — изредка ({@link PhantomHuntersConfig#HUNTER_STRATEGY_SAY_CHANCE}), только если рядом есть живой игрок и вокруг тихо ({@link PhantomQuiet}).
+ 	 */
+ 	private static void thinkAloud(Player player, Choice choice)
+ 	{
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomInitiative.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomInitiative.java
+index 6cb10e7..e9f33d2 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomInitiative.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomInitiative.java
+@@ -27,7 +27,7 @@ import org.l2jmobius.gameserver.managers.FakePlayerBrain;
+  * <li>фильтры и кулдауны без модели: игрок в бою, мёртв, невидим, телепортируется, на олимпиаде, в лавке, уже разговаривает с фантомом, есть обида; кулдауны охотника, пары и игрока, потолок в час на игрока, пара «проигнорирована»;</li>
+  * <li>бронь игрока за этим охотником — двое разом не здороваются;</li>
+  * <li>мозги отвечают из памяти, знакомы ли и давно ли говорили ({@code "kind":"acquaintance"}, без модели);</li>
+- * <li>бросок здесь: шанс для знакомого или незнакомого × общительность охотника ({@link PhantomTemplate#getSocial()});</li>
++ * <li>бросок здесь: шанс для знакомого или незнакомого × общительность охотника ({@link PhantomTemplate#getSocial()}) × его настроение ({@link PhantomMood}, патч 0026);</li>
+  * <li>выпало — реплика модели вслух ({@link PhantomChat#initiative}); модель промолчала или недоступна — тишина.</li>
+  * </ul>
+  * Игрок не ответил за {@link PhantomHuntersConfig#HUNTER_INITIATIVE_ANSWER_WAIT} с — пара «проигнорирована»: этот охотник больше не заговаривает с ним первым, пока игрок сам ему не напишет.
+@@ -114,6 +114,12 @@ public class PhantomInitiative
+ 			return;
+ 		}
+ 
++		// Патч 0026: усталый первым не заговаривает, а вокруг только что говорили — не время.
++		if ((PhantomHunterManager.getInstance().mood(hunter) == PhantomMood.TIRED) || !PhantomQuiet.getInstance().allowed(hunter, PhantomQuiet.INITIATIVE, now))
++		{
++			return;
++		}
++
+ 		for (Player player : arrived)
+ 		{
+ 			if (allowed(hunter, player, now))
+@@ -213,9 +219,11 @@ public class PhantomInitiative
+ 			return;
+ 		}
+ 
+-		final double chance = (known ? PhantomHuntersConfig.HUNTER_INITIATIVE_CHANCE_KNOWN : PhantomHuntersConfig.HUNTER_INITIATIVE_CHANCE_STRANGER) * template.getSocial();
++		// Настроение (патч 0026): настороженный незнакомым не пишет, занятый — вдвое реже, скучающий — в полтора раза чаще.
++		final PhantomMood mood = PhantomHunterManager.getInstance().mood(hunter);
++		final double chance = (known ? PhantomHuntersConfig.HUNTER_INITIATIVE_CHANCE_KNOWN : PhantomHuntersConfig.HUNTER_INITIATIVE_CHANCE_STRANGER) * template.getSocial() * (mood != null ? mood.initiativeFactor(known) : 1);
+ 		final boolean yes = Rnd.get(100.0) < chance;
+-		LOGGER.info(who + ", шанс " + String.format(Locale.ROOT, "%.0f", chance) + "% — " + (yes ? "заговаривает." : "нет."));
++		LOGGER.info(who + (mood != null ? ", " + mood.getWord() : "") + ", шанс " + String.format(Locale.ROOT, "%.0f", chance) + "% — " + (yes ? "заговаривает." : "нет."));
+ 		final long now = System.currentTimeMillis();
+ 		if (!yes || hunter.isDead() || !isLive(player) || player.isInCombat() || player.isDead() || player.isTeleporting() || (hunter.calculateDistance2D(player) > (PhantomHuntersConfig.HUNTER_INITIATIVE_RANGE * 2)))
+ 		{
+diff --git b/java/org/l2jmobius/gameserver/managers/phantom/PhantomMood.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomMood.java
+new file mode 100644
+index 0000000..3497e8b
+--- /dev/null
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomMood.java
+@@ -0,0 +1,86 @@
++package org.l2jmobius.gameserver.managers.phantom;
++
++/**
++ * L2Hub: настроение охотника (патч 0026, docs/PHANTOMS.md, раздел 4.10) — из его состояния, без модели; приём L2Solo ({@code BotAmbientDirector}).<br>
++ * Считает {@link PhantomHunterManager#mood}. Настроение решает, заговорит ли охотник первым ({@link PhantomInitiative}) и встрянет ли в чужую реплику ({@link PhantomChat}),
++ * и уходит мозгам в запросе ({@code "mood"}): усталый отвечает короче, настороженный не рад незнакомым.
++ */
++public enum PhantomMood
++{
++	/** Мало HP или MP, сидит отдыхает на споте: первым не заговаривает и не встревает. */
++	TIRED("tired", "устал"),
++	/** Недавно на него напал живой игрок или его убили: незнакомым первым не пишет и не встревает. */
++	GUARDED("guarded", "настороже"),
++	/** Занят делом (город по делам, идёт к позвавшему, в пати, бежит на спот): заговаривает первым вдвое реже. */
++	FOCUSED("focused", "занят делом"),
++	/** Скучает (сидит афк в городе, на споте не находит мобов): заговаривает первым в полтора раза чаще. */
++	RESTLESS("restless", "скучает"),
++	/** Болтун по характеру (общительность от 1,5) и ничем не занят. */
++	SOCIABLE("sociable", "хочет поболтать"),
++	/** Спокоен. */
++	CALM("calm", "спокоен");
++
++	private final String _key;
++	private final String _word;
++
++	PhantomMood(String key, String word)
++	{
++		_key = key;
++		_word = word;
++	}
++
++	/**
++	 * @return ключ для мозгов ({@code "mood"} в запросе)
++	 */
++	public String getKey()
++	{
++		return _key;
++	}
++
++	/**
++	 * @return по-русски — для лога и лаунчера
++	 */
++	public String getWord()
++	{
++		return _word;
++	}
++
++	/**
++	 * @param known знаком ли охотник с игроком
++	 * @return множитель шанса заговорить первым
++	 */
++	public double initiativeFactor(boolean known)
++	{
++		switch (this)
++		{
++			case TIRED:
++			{
++				return 0;
++			}
++			case GUARDED:
++			{
++				return known ? 1 : 0;
++			}
++			case FOCUSED:
++			{
++				return 0.5;
++			}
++			case RESTLESS:
++			{
++				return 1.5;
++			}
++			default:
++			{
++				return 1;
++			}
++		}
++	}
++
++	/**
++	 * @return встревает ли охотник в чужую реплику в общем чате
++	 */
++	public boolean overhears()
++	{
++		return (this != TIRED) && (this != GUARDED);
++	}
++}
+diff --git b/java/org/l2jmobius/gameserver/managers/phantom/PhantomQuiet.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomQuiet.java
+new file mode 100644
+index 0000000..34fe3d3
+--- /dev/null
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomQuiet.java
+@@ -0,0 +1,111 @@
++package org.l2jmobius.gameserver.managers.phantom;
++
++import java.util.ArrayDeque;
++import java.util.Deque;
++
++import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
++import org.l2jmobius.gameserver.entity.actor.Player;
++
++/**
++ * L2Hub: тишина в округе (патч 0026, docs/PHANTOMS.md, раздел 4.10) — общий бюджет непрошеных реплик фантомов вслух; приём L2Solo ({@code BotChatterBudget}).<br>
++ * Каждая реплика фантома в общий чат рядом записывается сюда ({@link PhantomChat}, там все реплики вслух идут через одно место).
++ * Непрошеная реплика — мысль стратега вслух, «о, опять ты» обидчику, встрял в чужую реплику, заговорил первым — проходит, только если:
++ * <ul>
++ * <li>в пределах слышимости ({@value #RANGE}) никто из фантомов ничего не говорил {@link PhantomHuntersConfig#HUNTER_CHAT_QUIET} с;</li>
++ * <li>сам он ничего не говорил {@link PhantomHuntersConfig#HUNTER_CHAT_SPEAKER_GAP} с;</li>
++ * <li>ту же тему ни он, ни кто-то рядом не поднимал {@link PhantomHuntersConfig#HUNTER_CHAT_TOPIC_GAP} с.</li>
++ * </ul>
++ * Ответы игроку и реплики на его действия (напал, убил, повержен) бюджет не режет: они только записываются, чтобы следом не встревали другие.
++ */
++public class PhantomQuiet
++{
++	/** Слышимость общего чата — как у игроков. */
++	static final int RANGE = 1250;
++	/** Темы непрошеных реплик; обидчик мимо — вид события охотника {@code GRUDGE}. */
++	static final String THOUGHT = "thought";
++	static final String OVERHEARD = "overheard";
++	static final String INITIATIVE = "initiative";
++	private static final int HISTORY = 256;
++
++	private static class Line
++	{
++		final int speaker;
++		final int x;
++		final int y;
++		final String topic;
++		final long at;
++
++		Line(Player speaker, String topic, long at)
++		{
++			this.speaker = speaker.getObjectId();
++			this.x = speaker.getX();
++			this.y = speaker.getY();
++			this.topic = topic;
++			this.at = at;
++		}
++	}
++
++	private final Deque<Line> _lines = new ArrayDeque<>();
++
++	protected PhantomQuiet()
++	{
++	}
++
++	/**
++	 * @param speaker фантом
++	 * @param topic тема непрошеной реплики
++	 * @param now текущее время
++	 * @return можно сказать: вокруг тихо, сам давно молчит, тема не повторяется
++	 */
++	public synchronized boolean allowed(Player speaker, String topic, long now)
++	{
++		final long quiet = PhantomHuntersConfig.HUNTER_CHAT_QUIET * 1000L;
++		final long speakerGap = PhantomHuntersConfig.HUNTER_CHAT_SPEAKER_GAP * 1000L;
++		final long topicGap = PhantomHuntersConfig.HUNTER_CHAT_TOPIC_GAP * 1000L;
++		prune(now, Math.max(quiet, Math.max(speakerGap, topicGap)));
++		for (Line line : _lines)
++		{
++			final long age = now - line.at;
++			final boolean self = line.speaker == speaker.getObjectId();
++			final boolean near = self || (Math.hypot(line.x - speaker.getX(), line.y - speaker.getY()) <= RANGE);
++			if ((self && (age < speakerGap)) || (near && (age < quiet)) || (near && (age < topicGap) && line.topic.equals(topic)))
++			{
++				return false;
++			}
++		}
++		return true;
++	}
++
++	/**
++	 * Фантом сказал что-то вслух в общий чат рядом.
++	 * @param speaker фантом
++	 * @param topic тема: непрошеная или вид реплики (ответ, событие)
++	 * @param now текущее время
++	 */
++	public synchronized void said(Player speaker, String topic, long now)
++	{
++		_lines.addLast(new Line(speaker, topic, now));
++		while (_lines.size() > HISTORY)
++		{
++			_lines.pollFirst();
++		}
++	}
++
++	private void prune(long now, long keep)
++	{
++		while (!_lines.isEmpty() && ((now - _lines.peekFirst().at) >= keep))
++		{
++			_lines.pollFirst();
++		}
++	}
++
++	public static PhantomQuiet getInstance()
++	{
++		return SingletonHolder.INSTANCE;
++	}
++
++	private static class SingletonHolder
++	{
++		protected static final PhantomQuiet INSTANCE = new PhantomQuiet();
++	}
++}

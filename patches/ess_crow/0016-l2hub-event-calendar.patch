@@ -1,0 +1,199 @@
+diff --git a/dist/game/config/Custom/L2HubEvents.ini b/dist/game/config/Custom/L2HubEvents.ini
+new file mode 100644
+index 0000000000000000000000000000000000000000..e406287fcc6b4be09ac852968c4a1376b9d8974a
+--- /dev/null
++++ b/dist/game/config/Custom/L2HubEvents.ini
+@@ -0,0 +1,60 @@
++# ---------------------------------------------------------------------------
++# L2Hub: календарь сезонных событий Mobius (data/scripts/events)
++# ---------------------------------------------------------------------------
++# У Mobius даты событий в config.xml — 2017–2024, поэтому большинство выключено («has passed... Ignored»).
++# Здесь — окно каждого события (ключ — папка события):
++#   дд ММ-дд ММ            — каждый год; конец не позже начала — окно переходит через Новый год
++#                            («01 12-01 01» — весь декабрь с 31-м, «01 01-01 01» — весь год);
++#   дд ММ гггг-дд ММ гггг  — один раз;
++#   Off                    — выключено;
++#   пусто или нет ключа    — как в config.xml события.
++# Конец окна — начало указанного дня: чтобы захватить 31 декабря, конец — «01 01». Новое окно действует со следующего
++# запуска сервера.
++# По умолчанию (предложение агента, 2026-10-21): круглый год — то, что у Mobius и так идёт до 2029–2034
++# (сбор букв, Храм Воды, подземелье Леоны), плюс одно-два события на сезон. Купоны, гача и магазины
++# (BlackCoupon, GoldenWheel, UniqueGacha, SecretShop, CrossEvent) — как в config.xml: их окна прошли.
++
++# Календарь целиком: False — всё как в config.xml событий.
++# Default: True
++Enabled = True
++
++# Круглый год (у Mobius до 2029–2034).
++LetterCollector = 01 01-01 01
++LegendOfTheWaterTemple = 01 01-01 01
++LeonasDungeonEvent = 01 01-01 01
++
++# Новогодние каникулы: большая ёлка и Рудольф.
++HolidayOutOfSchedule = 01 01-01 02
++
++# Chef Monkey: бананы с монстров для Шеф-повара Обезьянки.
++ChefMonkeyEvent = 01 02-01 03
++
++# Фестиваль цветения: семена Августины с монстров (1%) — у Эйлейн (испытание Баюма).
++BlossomFestival = 01 03-01 04
++
++# Победи Королеву: Энтри и Чио у Муравейника — Королева Муравьёв.
++DefeatTheQueen = 01 04-01 05
++
++# Ева-предсказательница: гадание у управляющего событием.
++EveTheFortuneTeller = 01 05-01 06
++
++# Битва с Кебером: Бонни и Камень Печати Кебера.
++BattleWithKeber = 01 06-01 07
++
++# Watermelon Ninja: нектар с монстров (10%) — арбузы у Кота Ориона.
++WatermelonNinja = 01 07-01 09
++
++# Фестиваль Балтуса: снабженец Сиби.
++BalthusFestival = 01 07-01 08
++
++# Продолжение рейда: Махи и исследователь Бейрон.
++ContinuedRaid = 01 09-01 10
++
++# Squash: нектар с монстров (50%) — тыквы у Кота Ориона.
++SquashEvent = 01 10-01 11
++
++# Охотники за удачей: посланница Верлин.
++FortuneHunters = 01 11-01 12
++
++# Merry Squashmas: снежный нектар с монстров (50%) — у Деда Мороза.
++MerrySquashmas = 01 12-01 01
+diff --git a/java/org/l2jmobius/gameserver/mechanics/script/LongTimeEvent.java b/java/org/l2jmobius/gameserver/mechanics/script/LongTimeEvent.java
+index f5a317dfc46400294134745eeffcd8e4ab9f4577..81016c1736f016f95bbbbb9bbe94183894ac1cca 100644
+--- a/java/org/l2jmobius/gameserver/mechanics/script/LongTimeEvent.java
++++ b/java/org/l2jmobius/gameserver/mechanics/script/LongTimeEvent.java
+@@ -21,6 +21,9 @@
+ package org.l2jmobius.gameserver.mechanics.script;
+ 
+ import java.io.File;
++import java.io.Reader;
++import java.nio.charset.StandardCharsets;
++import java.nio.file.Files;
+ import java.sql.Connection;
+ import java.sql.PreparedStatement;
+ import java.sql.SQLException;
+@@ -34,6 +37,7 @@ import java.util.Date;
+ import java.util.HashSet;
+ import java.util.List;
+ import java.util.Locale;
++import java.util.Properties;
+ import java.util.Set;
+ import java.util.function.Consumer;
+ 
+@@ -192,6 +196,91 @@ public class LongTimeEvent extends Script
+ 		return null;
+ 	}
+ 	
++	/**
++	 * L2Hub: окно события из config/Custom/L2HubEvents.ini — «дд ММ-дд ММ» (каждый год; конец не позже начала — через Новый год),
++	 * «дд ММ гггг-дд ММ гггг» или Off.<br>
++	 * Нет файла, Enabled = False, нет ключа или значение не по формату — окно из config.xml события, как в Mobius.
++	 * @param name имя скрипта события (папка в data/scripts/events)
++	 * @return окно, «Off» или {@code null}
++	 */
++	private static String l2hubCalendar(String name)
++	{
++		final File file = new File("./config/Custom/L2HubEvents.ini");
++		if (!file.isFile())
++		{
++			return null;
++		}
++		
++		final Properties properties = new Properties();
++		try (Reader reader = Files.newBufferedReader(file.toPath(), StandardCharsets.UTF_8))
++		{
++			properties.load(reader);
++		}
++		catch (Exception e)
++		{
++			LOGGER.warning("L2HubEvents.ini: " + e.getMessage());
++			return null;
++		}
++		
++		if ("false".equalsIgnoreCase(properties.getProperty("Enabled", "True").trim()))
++		{
++			return null;
++		}
++		
++		final String value = properties.getProperty(name, "").trim();
++		if (value.equalsIgnoreCase("off") || (value.length() == 21))
++		{
++			return value;
++		}
++		
++		if (value.length() == 11)
++		{
++			return l2hubAnnual(name, value);
++		}
++		
++		if (!value.isEmpty())
++		{
++			LOGGER.warning("L2HubEvents.ini: " + name + " = " + value + " — not «dd MM-dd MM» or «dd MM yyyy-dd MM yyyy», using config.xml.");
++		}
++		return null;
++	}
++	
++	/**
++	 * L2Hub: ежегодное окно «дд ММ-дд ММ» → «дд ММ гггг-дд ММ гггг». Конец — начало указанного дня, как у Mobius; конец не позже
++	 * начала — окно переходит через Новый год: «01 12-01 01» — весь декабрь с 31-м, «01 01-01 01» — весь год.
++	 * @param name имя скрипта события
++	 * @param value окно «дд ММ-дд ММ»
++	 * @return окно с годами или {@code null}, если даты не разобрать
++	 */
++	private static String l2hubAnnual(String name, String value)
++	{
++		try
++		{
++			final String[] parts = value.split("-");
++			final LocalDate today = LocalDate.now();
++			LocalDate start = LocalDate.parse(parts[0].trim() + " " + today.getYear(), DATE_FORMAT);
++			LocalDate end = LocalDate.parse(parts[1].trim() + " " + today.getYear(), DATE_FORMAT);
++			if (!end.isAfter(start))
++			{
++				// Через Новый год: сегодня ещё до конца — окно началось в прошлом году, иначе кончится в следующем.
++				if (today.isBefore(end))
++				{
++					start = start.minusYears(1);
++				}
++				else
++				{
++					end = end.plusYears(1);
++				}
++			}
++			return start.format(DATE_FORMAT) + "-" + end.format(DATE_FORMAT);
++		}
++		catch (Exception e)
++		{
++			LOGGER.warning("L2HubEvents.ini: " + name + " = " + value + " — " + e.getMessage() + ", using config.xml.");
++			return null;
++		}
++	}
++	
+ 	/**
+ 	 * Load event configuration file
+ 	 */
+@@ -215,8 +304,16 @@ public class LongTimeEvent extends Script
+ 				
+ 				_eventName = document.getDocumentElement().getAttributes().getNamedItem("name").getNodeValue();
+ 				final String currentYear = String.valueOf(Calendar.getInstance().get(Calendar.YEAR));
+-				final String period = document.getDocumentElement().getAttributes().getNamedItem("active").getNodeValue();
+-				String dropPeriod = document.getDocumentElement().getAttributes().getNamedItem("dropPeriod") != null ? document.getDocumentElement().getAttributes().getNamedItem("dropPeriod").getNodeValue() : null;
++				// L2Hub: календарь событий — окно из config/Custom/L2HubEvents.ini (ключ — имя скрипта события), Off — выключено.
++				final String calendar = l2hubCalendar(getName());
++				if ("off".equalsIgnoreCase(calendar))
++				{
++					LOGGER.info("Event " + _eventName + " is turned off in L2HubEvents.ini.");
++					return;
++				}
++				
++				final String period = calendar != null ? calendar : document.getDocumentElement().getAttributes().getNamedItem("active").getNodeValue();
++				String dropPeriod = (calendar == null) && (document.getDocumentElement().getAttributes().getNamedItem("dropPeriod") != null) ? document.getDocumentElement().getAttributes().getNamedItem("dropPeriod").getNodeValue() : null;
+ 				if ((document.getDocumentElement().getAttributes().getNamedItem("enableShrines") != null) && document.getDocumentElement().getAttributes().getNamedItem("enableShrines").getNodeValue().equalsIgnoreCase("true"))
+ 				{
+ 					_enableShrines = true;
