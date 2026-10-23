@@ -1,0 +1,52 @@
+diff --git a/dist/game/config/AttendanceRewards.ini b/dist/game/config/AttendanceRewards.ini
+--- a/dist/game/config/AttendanceRewards.ini
++++ b/dist/game/config/AttendanceRewards.ini
+@@ -7,7 +7,8 @@
+ 
+ # Enable the Attendance Reward system.
+ # Default: False
+-EnableAttendanceRewards = False
++# L2Hub (малый мир): было False — награды за вход каждый день, как на официале (окно клиента).
++EnableAttendanceRewards = True
+ 
+ # Enable the Attendance Reward system only for Premium accounts.
+ # Default: False
+diff --git a/dist/game/config/Rates.ini b/dist/game/config/Rates.ini
+--- a/dist/game/config/Rates.ini
++++ b/dist/game/config/Rates.ini
+@@ -220,7 +220,8 @@
+ 
+ # LCoin drops from mobs.
+ # Default: False
+-LCoinDropEnable = False
++# L2Hub (малый мир): было False — L-Coin с мобов от 40-го уровня, как на официале; другого источника в малом мире нет, а на L-Coin — магазин клиента.
++LCoinDropEnable = True
+ 
+ # LCoin drop chance from normal mobs.
+ # Default: 15.0
+diff --git a/dist/game/config/HuntPass.ini b/dist/game/config/HuntPass.ini
+--- a/dist/game/config/HuntPass.ini
++++ b/dist/game/config/HuntPass.ini
+@@ -1,7 +1,8 @@
+ # --------------------------------------------------------------------------
+ # HuntPass Settings
+ # --------------------------------------------------------------------------
+-EnabledHuntPass = False
++# L2Hub (малый мир): было False — L2 Pass — награды за охоту, как на официале.
++EnabledHuntPass = True
+ 
+ # Period to end.
+ # Retail 1 month.
+diff --git a/dist/game/config/MagicLamp.ini b/dist/game/config/MagicLamp.ini
+--- a/dist/game/config/MagicLamp.ini
++++ b/dist/game/config/MagicLamp.ini
+@@ -2,7 +2,8 @@
+ # Magic Lamp Settings
+ # ---------------------------------------------------------------------------
+ 
+-MagicLampEnabled = False
++# L2Hub (малый мир): было False — волшебная лампа — копит опыт охоты и дарит бонус, как на официале.
++MagicLampEnabled = True
+ 
+ MagicLampMaxLevelExp = 10000000
+ 

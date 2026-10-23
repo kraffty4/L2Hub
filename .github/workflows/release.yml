@@ -37,8 +37,9 @@ jobs:
       - name: Контрольные суммы
         run: |
           $files = Get-ChildItem dist -File | Where-Object { $_.Name -match '(-setup\.exe|-portable\.zip)$' }
-          $files | ForEach-Object { "$((Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower())  $($_.Name)" } |
-            Set-Content -Encoding ascii dist/SHA256SUMS.txt
+          $lines = $files | ForEach-Object { "$((Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower())  $($_.Name)" }
+          # LF, а не CRLF: с CR в конце строки `sha256sum -c` ищет файл с CR в имени
+          [IO.File]::WriteAllText((Join-Path $PWD 'dist/SHA256SUMS.txt'), ($lines -join "`n") + "`n")
           Get-Content dist/SHA256SUMS.txt
 
       - uses: actions/upload-artifact@v4

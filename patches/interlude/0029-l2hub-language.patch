@@ -1,0 +1,932 @@
+diff --git a/dist/game/data/scripts/custom/L2HubChronicle/L2HubChronicle.java b/dist/game/data/scripts/custom/L2HubChronicle/L2HubChronicle.java
+index fe27050103cc1be19c10c84fed66cace8af283dd..f78aaeb687eaa2e15582341e63a635029c3d28e0 100644
+--- a/dist/game/data/scripts/custom/L2HubChronicle/L2HubChronicle.java
++++ b/dist/game/data/scripts/custom/L2HubChronicle/L2HubChronicle.java
+@@ -66,6 +66,55 @@ import org.l2jmobius.gameserver.mechanics.script.Quest;
+  */
+ public class L2HubChronicle
+ {
++	// L2Hub: язык наших текстов (tools/l2hub_lang.py): L2HubLanguage в config/Custom/L2HubWorld.ini — ru или en, лаунчер пишет его
++	// по языку окна. Строки в коде — по-русски, tr() при en подменяет их английскими из L2HUB_EN; чего там нет — по-русски.
++	private static final boolean L2HUB_ENGLISH = l2hubEnglish();
++	private static final java.util.Map<String, String> L2HUB_EN = java.util.Map.ofEntries(
++		java.util.Map.entry("охотники ", "hunters "),
++		java.util.Map.entry("пати ", "party "),
++		java.util.Map.entry("охотник ", "hunter "),
++		java.util.Map.entry("игрок ", "player "),
++		java.util.Map.entry("Эпик ", "Epic boss "),
++		java.util.Map.entry(") повержен: ", ") defeated by "),
++		java.util.Map.entry("Рейд-босс ", "Raid boss "),
++		java.util.Map.entry(") убит: ", ") killed by "),
++		java.util.Map.entry("Суперчемпион ", "Super champion "),
++		java.util.Map.entry("Охотник ", "Hunter "),
++		java.util.Map.entry("Игрок ", "Player "),
++		java.util.Map.entry(" достиг ", " reached level "),
++		java.util.Map.entry("-го уровня", ""),
++		java.util.Map.entry(" стал ", " became "),
++		java.util.Map.entry(") появился", ") has appeared"),
++		java.util.Map.entry("Началось событие ", "Event started: "),
++		java.util.Map.entry("Кончилось событие ", "Event ended: "),
++		java.util.Map.entry("Нашествие эльпи", "Elpy invasion"),
++		java.util.Map.entry("победили синие ", "blue won "),
++		java.util.Map.entry("победили красные ", "red won "),
++		java.util.Map.entry("ничья ", "draw "),
++		java.util.Map.entry(", лучший — ", ", best: "),
++		java.util.Map.entry(" (убийств: ", " (kills: "),
++		java.util.Map.entry("победил ", "winner "),
++		java.util.Map.entry(", участников ", ", participants: "));
++	
++	private static boolean l2hubEnglish()
++	{
++		final java.util.Properties config = new java.util.Properties();
++		try (java.io.Reader reader = java.nio.file.Files.newBufferedReader(java.nio.file.Paths.get("./config/Custom/L2HubWorld.ini"), java.nio.charset.StandardCharsets.UTF_8))
++		{
++			config.load(reader);
++		}
++		catch (Exception e)
++		{
++			return false;
++		}
++		return "en".equalsIgnoreCase(config.getProperty("L2HubLanguage", "ru").trim());
++	}
++	
++	private static String tr(String text)
++	{
++		return L2HUB_ENGLISH ? L2HUB_EN.getOrDefault(text, text) : text;
++	}
++	
+ 	private static final Logger LOGGER = Logger.getLogger(L2HubChronicle.class.getName());
+ 	private static final Path FILE = Paths.get("./log/L2HubChronicle.json");
+ 	private static final int MAX = 200;
+@@ -218,9 +267,9 @@ public class L2HubChronicle
+ 		if ((party != null) && (party.getMemberCount() > 1))
+ 		{
+ 			final Player leader = party.getLeader();
+-			return (hunter(leader) ? "охотники " : "пати ") + leader.getName() + " (" + party.getMemberCount() + ")";
++			return (hunter(leader) ? tr("охотники ") : tr("пати ")) + leader.getName() + " (" + party.getMemberCount() + ")";
+ 		}
+-		return (hunter(player) ? "охотник " : "игрок ") + player.getName();
++		return (hunter(player) ? tr("охотник ") : tr("игрок ")) + player.getName();
+ 	}
+ 
+ 	private static String town(Npc npc)
+@@ -252,17 +301,17 @@ public class L2HubChronicle
+ 		if (target instanceof GrandBoss)
+ 		{
+ 			kind = "epic_killed";
+-			text = "Эпик " + target.getName() + " (" + target.getLevel() + ") повержен: " + by;
++			text = tr("Эпик ") + target.getName() + " (" + target.getLevel() + tr(") повержен: ") + by;
+ 		}
+ 		else if (target.isRaid() && !target.isRaidMinion() && !target.isMinion())
+ 		{
+ 			kind = "raid_killed";
+-			text = "Рейд-босс " + target.getName() + " (" + target.getLevel() + ") убит: " + by;
++			text = tr("Рейд-босс ") + target.getName() + " (" + target.getLevel() + tr(") убит: ") + by;
+ 		}
+ 		else if (SuperChampion.isSuper(target))
+ 		{
+ 			kind = "super_killed";
+-			text = "Суперчемпион " + target.getName() + " (" + target.getLevel() + ") убит: " + by;
++			text = tr("Суперчемпион ") + target.getName() + " (" + target.getLevel() + tr(") убит: ") + by;
+ 		}
+ 		else
+ 		{
+@@ -278,8 +327,8 @@ public class L2HubChronicle
+ 		{
+ 			if ((event.getOldLevel() < level) && (event.getNewLevel() >= level))
+ 			{
+-				final String name = (hunter(player) ? "Охотник " : "Игрок ") + player.getName();
+-				add("level", name + " достиг " + level + "-го уровня", player.getName(), null, null, null);
++				final String name = (hunter(player) ? tr("Охотник ") : tr("Игрок ")) + player.getName();
++				add("level", name + tr(" достиг ") + level + tr("-го уровня"), player.getName(), null, null, null);
+ 			}
+ 		}
+ 	}
+@@ -291,8 +340,8 @@ public class L2HubChronicle
+ 			return;
+ 		}
+ 		final Player player = event.getPlayer();
+-		final String name = (hunter(player) ? "Охотник " : "Игрок ") + player.getName();
+-		add("profession", name + " стал " + className(event.getTemplate().getPlayerClass().name()), player.getName(), null, null, null);
++		final String name = (hunter(player) ? tr("Охотник ") : tr("Игрок ")) + player.getName();
++		add("profession", name + tr(" стал ") + className(event.getTemplate().getPlayerClass().name()), player.getName(), null, null, null);
+ 	}
+ 
+ 	/**
+@@ -354,7 +403,7 @@ public class L2HubChronicle
+ 				alive.add(id);
+ 				if ((_epicsAlive != null) && !_epicsAlive.contains(id))
+ 				{
+-					add("epic_spawned", "Эпик " + boss.getName() + " (" + boss.getLevel() + ") появился", null, town(boss), boss.getX(), boss.getY());
++					add("epic_spawned", tr("Эпик ") + boss.getName() + " (" + boss.getLevel() + tr(") появился"), null, town(boss), boss.getX(), boss.getY());
+ 				}
+ 			}
+ 		}
+@@ -388,7 +437,7 @@ public class L2HubChronicle
+ 				final Boolean before = _seasonal == null ? null : _seasonal.get(quest.getName());
+ 				if ((before != null) && (before != active))
+ 				{
+-					add(active ? "seasonal_start" : "seasonal_end", (active ? "Началось событие " : "Кончилось событие ") + quest.getName(), null, null, null, null);
++					add(active ? "seasonal_start" : "seasonal_end", (active ? tr("Началось событие ") : tr("Кончилось событие ")) + quest.getName(), null, null, null, null);
+ 				}
+ 			}
+ 		}
+@@ -433,7 +482,7 @@ public class L2HubChronicle
+ 					y = elpy.getY();
+ 				}
+ 			}
+-			add("elpies", "Нашествие эльпи", null, where, x, y); // город — в where: экран летописи пишет его рядом
++			add("elpies", tr("Нашествие эльпи"), null, where, x, y); // город — в where: экран летописи пишет его рядом
+ 		}
+ 		_elpies = on;
+ 	}
+@@ -473,17 +522,17 @@ public class L2HubChronicle
+ 		final StringBuilder text = new StringBuilder(name).append(": ");
+ 		if ((staticField(script, "BLUE_SCORE") instanceof Integer blue) && (staticField(script, "RED_SCORE") instanceof Integer red))
+ 		{
+-			text.append(blue > red ? "победили синие " + blue + ":" + red : red > blue ? "победили красные " + red + ":" + blue : "ничья " + blue + ":" + red);
++			text.append(blue > red ? tr("победили синие ") + blue + ":" + red : red > blue ? tr("победили красные ") + red + ":" + blue : tr("ничья ") + blue + ":" + red);
+ 			if (best != null)
+ 			{
+-				text.append(", лучший — ").append(best.getName()).append(" (убийств: ").append(bestScore).append(")");
++				text.append(tr(", лучший — ")).append(best.getName()).append(tr(" (убийств: ")).append(bestScore).append(")");
+ 			}
+ 		}
+ 		else if (best != null)
+ 		{
+-			text.append("победил ").append(best.getName()).append(" (убийств: ").append(bestScore).append(")");
++			text.append(tr("победил ")).append(best.getName()).append(tr(" (убийств: ")).append(bestScore).append(")");
+ 		}
+-		text.append(", участников ").append(scores.size());
++		text.append(tr(", участников ")).append(scores.size());
+ 		add("pvp_result", text.toString(), best == null ? null : best.getName(), null, null, null);
+ 	}
+ 
+diff --git a/dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java b/dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java
+index 62e557a8e30a1148c52d8259ec8ef9a496424613..dcdb89403fde747aa95a8ea822e846cf4e964903 100644
+--- a/dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java
++++ b/dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java
+@@ -73,6 +73,112 @@ import org.l2jmobius.gameserver.mechanics.script.Quest;
+  */
+ public class L2HubSelfTest
+ {
++	// L2Hub: язык наших текстов (tools/l2hub_lang.py): L2HubLanguage в config/Custom/L2HubWorld.ini — ru или en, лаунчер пишет его
++	// по языку окна. Строки в коде — по-русски, tr() при en подменяет их английскими из L2HUB_EN; чего там нет — по-русски.
++	private static final boolean L2HUB_ENGLISH = l2hubEnglish();
++	private static final java.util.Map<String, String> L2HUB_EN = java.util.Map.ofEntries(
++		java.util.Map.entry("Баффер у гейткиперов", "Buffer at gatekeepers"),
++		java.util.Map.entry("GM-шоп у гейткиперов", "GM shop at gatekeepers"),
++		java.util.Map.entry("GM-шоп: мультиселлы", "GM shop: multisells"),
++		java.util.Map.entry("Баффер: бафы на максимуме", "Buffer: buffs at max level"),
++		java.util.Map.entry("Бафы на 3 часа", "3-hour buffs"),
++		java.util.Map.entry("Чемпионы", "Champions"),
++		java.util.Map.entry("Доска Alt+B", "Alt+B board"),
++		java.util.Map.entry("Команды .buddy и .hunters", ".buddy and .hunters commands"),
++		java.util.Map.entry("Живой мир: .daily и .raid", "Living world: .daily and .raid"),
++		java.util.Map.entry("Окно моба по Shift+клику", "Monster window on Shift+click"),
++		java.util.Map.entry("Фантомы", "Phantoms"),
++		java.util.Map.entry("Сезонные события", "Seasonal events"),
++		java.util.Map.entry("Суперчемпионы", "Super champions"),
++		java.util.Map.entry("Мир сейчас: .world", "World now: .world"),
++		java.util.Map.entry("Нашествие эльпи", "Elpy invasion"),
++		java.util.Map.entry("Летопись мира", "World Annals"),
++		java.util.Map.entry("Автолут", "Auto loot"),
++		java.util.Map.entry("живым — ", "regular mobs: "),
++		java.util.Map.entry(", травы — ", ", herbs: "),
++		java.util.Map.entry(", рейды — ", ", raids: "),
++		java.util.Map.entry("ошибка проверки: ", "check failed: "),
++		java.util.Map.entry("выключен (", "disabled ("),
++		java.util.Map.entry(" = False в L2HubTown.ini), в мире ", " = False in L2HubTown.ini), in the world "),
++		java.util.Map.entry("в мире ", "in the world "),
++		java.util.Map.entry(" из ", " of "),
++		java.util.Map.entry(", нет шаблона NPC ", ", no NPC template "),
++		java.util.Map.entry("списков в окнах ", "lists in windows "),
++		java.util.Map.entry(", все загружены", ", all loaded"),
++		java.util.Map.entry(", нет: ", ", missing: "),
++		java.util.Map.entry("бафов ", "buffs "),
++		java.util.Map.entry(", все на максимальном уровне", ", all at max level"),
++		java.util.Map.entry(", ниже максимума: ", ", below max: "),
++		java.util.Map.entry("EnableModifySkillDuration выключен в Player.ini — бафы стандартной длины", "EnableModifySkillDuration is off in Player.ini — buffs have standard duration"),
++		java.util.Map.entry("в SkillDurationList ", "SkillDurationList has "),
++		java.util.Map.entry(" скиллов", " skills"),
++		java.util.Map.entry(", все бафы баффера — 3 часа", ", all buffer buffs last 3 hours"),
++		java.util.Map.entry(", бафы баффера короче 3 часов: ", ", buffer buffs shorter than 3 hours: "),
++		java.util.Map.entry("ChampionEnable выключен в ChampionMonsters.ini", "ChampionEnable is off in ChampionMonsters.ini"),
++		java.util.Map.entry("монстров в мире ", "monsters in the world "),
++		java.util.Map.entry(", синих ", ", blue "),
++		java.util.Map.entry(", красных ", ", red "),
++		java.util.Map.entry("зарегистрирована", "registered"),
++		java.util.Map.entry("не зарегистрирована", "not registered"),
++		java.util.Map.entry(", главная — ", ", home page: "),
++		java.util.Map.entry("нет", "none"),
++		java.util.Map.entry("есть", "present"),
++		java.util.Map.entry("выключены (WorldDaily)", "disabled (WorldDaily)"),
++		java.util.Map.entry(", рейды охотников ", ", hunter raids "),
++		java.util.Map.entry(", окно ", ", window "),
++		java.util.Map.entry("по-русски", "in Russian"),
++		java.util.Map.entry("не по-русски", "not in Russian"),
++		java.util.Map.entry("фантомов в мире ", "phantoms in the world "),
++		java.util.Map.entry(", из них охотников ", ", hunters among them "),
++		java.util.Map.entry(", живых игроков ", ", live players "),
++		java.util.Map.entry(" по ", " until "),
++		java.util.Map.entry("загружено ", "loaded "),
++		java.util.Map.entry(", сейчас не идёт ни одно", ", none running now"),
++		java.util.Map.entry(", идёт: ", ", running: "),
++		java.util.Map.entry("нет ключей SuperChampion* в ChampionMonsters.ini — мод 0020 не наложен", "no SuperChampion* keys in ChampionMonsters.ini — mod 0020 is not applied"),
++		java.util.Map.entry("выключены (", "disabled ("),
++		java.util.Map.entry("вкл, шанс ", "on, chance "),
++		java.util.Map.entry(" %, живых в мире ", " %, alive in the world "),
++		java.util.Map.entry("нет команды .world — мод 0022 не наложен или скрипт L2HubWorldInfo не загрузился", "no .world command — mod 0022 is not applied or the L2HubWorldInfo script did not load"),
++		java.util.Map.entry(".world есть, но log/L2HubWorld.json не записан", ".world is present, but log/L2HubWorld.json was not written"),
++		java.util.Map.entry(".world есть, L2HubWorld.json обновлён ", ".world is present, L2HubWorld.json updated "),
++		java.util.Map.entry(" с назад", " s ago"),
++		java.util.Map.entry("нет скрипта Elpies", "no Elpies script"),
++		java.util.Map.entry("расписания L2Hub нет (ключей Elpies* в L2HubEvents.ini нет) — только командой GM", "no L2Hub schedule (no Elpies* keys in L2HubEvents.ini) — GM command only"),
++		java.util.Map.entry("выключено (Elpies = False в L2HubEvents.ini)", "disabled (Elpies = False in L2HubEvents.ini)"),
++		java.util.Map.entry("вкл, расписания нет — только командой GM", "on, no schedule — GM command only"),
++		java.util.Map.entry("вкл, ", "on, "),
++		java.util.Map.entry(", следующий старт ", ", next start "),
++		java.util.Map.entry(", только при живом игроке", ", only with a live player online"),
++		java.util.Map.entry("нет скрипта L2HubChronicle — мод 0023 не наложен", "no L2HubChronicle script — mod 0023 is not applied"),
++		java.util.Map.entry("записей пока нет, папка log ", "no entries yet, the log folder is "),
++		java.util.Map.entry("доступна для записи", "writable"),
++		java.util.Map.entry("недоступна для записи!", "not writable!"),
++		java.util.Map.entry("доступен для записи", "writable"),
++		java.util.Map.entry("только для чтения!", "read-only!"),
++		java.util.Map.entry(", записей ", ", entries "),
++		java.util.Map.entry("вкл", "on"),
++		java.util.Map.entry("выкл", "off"));
++	
++	private static boolean l2hubEnglish()
++	{
++		final java.util.Properties config = new java.util.Properties();
++		try (java.io.Reader reader = java.nio.file.Files.newBufferedReader(java.nio.file.Paths.get("./config/Custom/L2HubWorld.ini"), java.nio.charset.StandardCharsets.UTF_8))
++		{
++			config.load(reader);
++		}
++		catch (Exception e)
++		{
++			return false;
++		}
++		return "en".equalsIgnoreCase(config.getProperty("L2HubLanguage", "ru").trim());
++	}
++	
++	private static String tr(String text)
++	{
++		return L2HUB_ENGLISH ? L2HUB_EN.getOrDefault(text, text) : text;
++	}
++	
+ 	private static final Logger LOGGER = Logger.getLogger(L2HubSelfTest.class.getName());
+ 	private static final Path CONFIG = Paths.get("./config/Custom/L2HubSelfTest.ini");
+ 	private static final Path REPORT = Paths.get("./log/L2HubSelfTest.json");
+@@ -110,23 +216,23 @@ public class L2HubSelfTest
+ 		}
+ 
+ 		final List<Check> checks = new ArrayList<>();
+-		probe(checks, "Баффер у гейткиперов", () -> townNpc(TOWN_BUFFER));
+-		probe(checks, "GM-шоп у гейткиперов", () -> townNpc(TOWN_SHOP));
+-		probe(checks, "GM-шоп: мультиселлы", L2HubSelfTest::shopMultisells);
+-		probe(checks, "Баффер: бафы на максимуме", L2HubSelfTest::bufferLevels);
+-		probe(checks, "Бафы на 3 часа", L2HubSelfTest::buffDurations);
+-		probe(checks, "Чемпионы", L2HubSelfTest::champions);
+-		probe(checks, "Доска Alt+B", L2HubSelfTest::board);
+-		probe(checks, "Команды .buddy и .hunters", L2HubSelfTest::voiced);
+-		probe(checks, "Живой мир: .daily и .raid", L2HubSelfTest::world);
+-		probe(checks, "Окно моба по Shift+клику", L2HubSelfTest::npcView);
+-		probe(checks, "Фантомы", L2HubSelfTest::phantoms);
+-		probe(checks, "Сезонные события", L2HubSelfTest::seasonalEvents);
+-		probe(checks, "Суперчемпионы", L2HubSelfTest::superChampions); // L2Hub 0024: моды живого мира
+-		probe(checks, "Мир сейчас: .world", L2HubSelfTest::worldInfo);
+-		probe(checks, "Нашествие эльпи", L2HubSelfTest::elpies);
+-		probe(checks, "Летопись мира", L2HubSelfTest::chronicle);
+-		probe(checks, "Автолут", () -> new Check("", true, "живым — " + onOff(PlayerConfig.AUTO_LOOT) + ", травы — " + onOff(PlayerConfig.AUTO_LOOT_HERBS) + ", рейды — " + onOff(PlayerConfig.AUTO_LOOT_RAIDS)));
++		probe(checks, tr("Баффер у гейткиперов"), () -> townNpc(TOWN_BUFFER));
++		probe(checks, tr("GM-шоп у гейткиперов"), () -> townNpc(TOWN_SHOP));
++		probe(checks, tr("GM-шоп: мультиселлы"), L2HubSelfTest::shopMultisells);
++		probe(checks, tr("Баффер: бафы на максимуме"), L2HubSelfTest::bufferLevels);
++		probe(checks, tr("Бафы на 3 часа"), L2HubSelfTest::buffDurations);
++		probe(checks, tr("Чемпионы"), L2HubSelfTest::champions);
++		probe(checks, tr("Доска Alt+B"), L2HubSelfTest::board);
++		probe(checks, tr("Команды .buddy и .hunters"), L2HubSelfTest::voiced);
++		probe(checks, tr("Живой мир: .daily и .raid"), L2HubSelfTest::world);
++		probe(checks, tr("Окно моба по Shift+клику"), L2HubSelfTest::npcView);
++		probe(checks, tr("Фантомы"), L2HubSelfTest::phantoms);
++		probe(checks, tr("Сезонные события"), L2HubSelfTest::seasonalEvents);
++		probe(checks, tr("Суперчемпионы"), L2HubSelfTest::superChampions); // L2Hub 0024: моды живого мира
++		probe(checks, tr("Мир сейчас: .world"), L2HubSelfTest::worldInfo);
++		probe(checks, tr("Нашествие эльпи"), L2HubSelfTest::elpies);
++		probe(checks, tr("Летопись мира"), L2HubSelfTest::chronicle);
++		probe(checks, tr("Автолут"), () -> new Check("", true, tr("живым — ") + onOff(PlayerConfig.AUTO_LOOT) + tr(", травы — ") + onOff(PlayerConfig.AUTO_LOOT_HERBS) + tr(", рейды — ") + onOff(PlayerConfig.AUTO_LOOT_RAIDS)));
+ 
+ 		final long ok = checks.stream().filter(Check::ok).count();
+ 		LOGGER.info("L2Hub проверка модов: " + ok + " из " + checks.size() + " в порядке.");
+@@ -153,7 +259,7 @@ public class L2HubSelfTest
+ 		}
+ 		catch (Throwable e)
+ 		{
+-			checks.add(new Check(name, false, "ошибка проверки: " + e));
++			checks.add(new Check(name, false, tr("ошибка проверки: ") + e));
+ 		}
+ 	}
+ 
+@@ -171,13 +277,13 @@ public class L2HubSelfTest
+ 			}
+ 			if ("false".equalsIgnoreCase(properties.getProperty(key, "True").trim()))
+ 			{
+-				return new Check("", true, "выключен (" + key + " = False в L2HubTown.ini), в мире " + SpawnTable.getInstance().getSpawnCount(npcId));
++				return new Check("", true, tr("выключен (") + key + tr(" = False в L2HubTown.ini), в мире ") + SpawnTable.getInstance().getSpawnCount(npcId));
+ 			}
+ 		}
+ 		final int expected = count(Files.readString(TOWN_SPAWNS, StandardCharsets.UTF_8), "id=\"" + npcId + "\"");
+ 		final int spawned = SpawnTable.getInstance().getSpawnCount(npcId);
+ 		final boolean template = NpcData.getInstance().getTemplate(npcId) != null;
+-		return new Check("", template && (expected > 0) && (spawned == expected), "в мире " + spawned + " из " + expected + (template ? "" : ", нет шаблона NPC " + npcId));
++		return new Check("", template && (expected > 0) && (spawned == expected), tr("в мире ") + spawned + tr(" из ") + expected + (template ? "" : tr(", нет шаблона NPC ") + npcId));
+ 	}
+ 
+ 	@SuppressWarnings("unchecked")
+@@ -199,7 +305,7 @@ public class L2HubSelfTest
+ 			}
+ 		}
+ 		final List<Integer> missing = ids.stream().filter(id -> !entries.containsKey(id)).toList();
+-		return new Check("", !ids.isEmpty() && missing.isEmpty(), "списков в окнах " + ids.size() + (missing.isEmpty() ? ", все загружены" : ", нет: " + missing));
++		return new Check("", !ids.isEmpty() && missing.isEmpty(), tr("списков в окнах ") + ids.size() + (missing.isEmpty() ? tr(", все загружены") : tr(", нет: ") + missing));
+ 	}
+ 
+ 	private static Check bufferLevels()
+@@ -212,10 +318,10 @@ public class L2HubSelfTest
+ 			final int max = SkillData.getInstance().getMaxLevel(id);
+ 			if ((holder != null) && (holder.getLevel() < max))
+ 			{
+-				low.add(id + " (" + holder.getLevel() + " из " + max + ")");
++				low.add(id + " (" + holder.getLevel() + tr(" из ") + max + ")");
+ 			}
+ 		}
+-		return new Check("", !ids.isEmpty() && low.isEmpty(), "бафов " + ids.size() + (low.isEmpty() ? ", все на максимальном уровне" : ", ниже максимума: " + low));
++		return new Check("", !ids.isEmpty() && low.isEmpty(), tr("бафов ") + ids.size() + (low.isEmpty() ? tr(", все на максимальном уровне") : tr(", ниже максимума: ") + low));
+ 	}
+ 
+ 	private static Check buffDurations()
+@@ -223,10 +329,10 @@ public class L2HubSelfTest
+ 		final TreeSet<Integer> ids = bufferSkills();
+ 		if (!PlayerConfig.ENABLE_MODIFY_SKILL_DURATION || (PlayerConfig.SKILL_DURATION_LIST == null))
+ 		{
+-			return new Check("", false, "EnableModifySkillDuration выключен в Player.ini — бафы стандартной длины");
++			return new Check("", false, tr("EnableModifySkillDuration выключен в Player.ini — бафы стандартной длины"));
+ 		}
+ 		final List<Integer> missing = ids.stream().filter(id -> PlayerConfig.SKILL_DURATION_LIST.getOrDefault(id, 0) < BUFF_DURATION).toList();
+-		return new Check("", missing.isEmpty(), "в SkillDurationList " + PlayerConfig.SKILL_DURATION_LIST.size() + " скиллов" + (missing.isEmpty() ? ", все бафы баффера — 3 часа" : ", бафы баффера короче 3 часов: " + missing));
++		return new Check("", missing.isEmpty(), tr("в SkillDurationList ") + PlayerConfig.SKILL_DURATION_LIST.size() + tr(" скиллов") + (missing.isEmpty() ? tr(", все бафы баффера — 3 часа") : tr(", бафы баффера короче 3 часов: ") + missing));
+ 	}
+ 
+ 	private static TreeSet<Integer> bufferSkills()
+@@ -264,9 +370,9 @@ public class L2HubSelfTest
+ 		}
+ 		if (!ChampionMonstersConfig.CHAMPION_ENABLE)
+ 		{
+-			return new Check("", false, "ChampionEnable выключен в ChampionMonsters.ini");
++			return new Check("", false, tr("ChampionEnable выключен в ChampionMonsters.ini"));
+ 		}
+-		return new Check("", (blue + red) > 0, "монстров в мире " + monsters + ", синих " + blue + ", красных " + red);
++		return new Check("", (blue + red) > 0, tr("монстров в мире ") + monsters + tr(", синих ") + blue + tr(", красных ") + red);
+ 	}
+ 
+ 	private static Check board()
+@@ -274,14 +380,14 @@ public class L2HubSelfTest
+ 		final IParseBoardHandler hub = CommunityBoardHandler.getInstance().getHandler("_bbshubbuff");
+ 		final IParseBoardHandler home = CommunityBoardHandler.getInstance().getHandler("_bbshome");
+ 		final boolean ok = (hub != null) && hub.getClass().getSimpleName().equals("L2HubBoard") && CommunityBoardConfig.CUSTOM_CB_ENABLED;
+-		return new Check("", ok, "L2HubBoard " + ((hub != null) ? "зарегистрирована" : "не зарегистрирована") + ", главная — " + ((home != null) ? home.getClass().getSimpleName() : "нет") + ", CustomCommunityBoard " + onOff(CommunityBoardConfig.CUSTOM_CB_ENABLED));
++		return new Check("", ok, "L2HubBoard " + ((hub != null) ? tr("зарегистрирована") : tr("не зарегистрирована")) + tr(", главная — ") + ((home != null) ? home.getClass().getSimpleName() : tr("нет")) + ", CustomCommunityBoard " + onOff(CommunityBoardConfig.CUSTOM_CB_ENABLED));
+ 	}
+ 
+ 	private static Check voiced()
+ 	{
+ 		final boolean buddy = VoicedCommandHandler.getInstance().getHandler("buddy") != null;
+ 		final boolean hunters = VoicedCommandHandler.getInstance().getHandler("hunters") != null;
+-		return new Check("", buddy && hunters, ".buddy " + (buddy ? "есть" : "нет") + ", .hunters " + (hunters ? "есть" : "нет"));
++		return new Check("", buddy && hunters, ".buddy " + (buddy ? tr("есть") : tr("нет")) + ", .hunters " + (hunters ? tr("есть") : tr("нет")));
+ 	}
+ 
+ 	private static Check world()
+@@ -290,13 +396,13 @@ public class L2HubSelfTest
+ 		final boolean daily = VoicedCommandHandler.getInstance().getHandler("daily") != null;
+ 		final boolean raid = VoicedCommandHandler.getInstance().getHandler("raid") != null;
+ 		final boolean dailyOn = L2HubWorldConfig.WORLD_DAILY;
+-		return new Check("", (daily || !dailyOn) && raid, ".daily " + (daily ? "есть" : dailyOn ? "нет" : "выключены (WorldDaily)") + ", .raid " + (raid ? "есть" : "нет") + ", рейды охотников " + onOff(PhantomHuntersConfig.HUNTER_RAIDS));
++		return new Check("", (daily || !dailyOn) && raid, ".daily " + (daily ? tr("есть") : dailyOn ? tr("нет") : tr("выключены (WorldDaily)")) + ", .raid " + (raid ? tr("есть") : tr("нет")) + tr(", рейды охотников ") + onOff(PhantomHuntersConfig.HUNTER_RAIDS));
+ 	}
+ 
+ 	private static Check npcView() throws Exception
+ 	{
+ 		final boolean russian = Files.isRegularFile(NPC_VIEW_DROP) && Files.readString(NPC_VIEW_DROP, StandardCharsets.UTF_8).chars().anyMatch(c -> (c >= 0x0400) && (c <= 0x04FF));
+-		return new Check("", NpcConfig.ALT_GAME_VIEWNPC && russian, "AltGameViewNpc " + onOff(NpcConfig.ALT_GAME_VIEWNPC) + ", окно " + (russian ? "по-русски" : "не по-русски"));
++		return new Check("", NpcConfig.ALT_GAME_VIEWNPC && russian, "AltGameViewNpc " + onOff(NpcConfig.ALT_GAME_VIEWNPC) + tr(", окно ") + (russian ? tr("по-русски") : tr("не по-русски")));
+ 	}
+ 
+ 	private static Check phantoms()
+@@ -319,7 +425,7 @@ public class L2HubSelfTest
+ 				live++;
+ 			}
+ 		}
+-		return new Check("", true, "фантомов в мире " + phantoms + ", из них охотников " + hunters + ", живых игроков " + live);
++		return new Check("", true, tr("фантомов в мире ") + phantoms + tr(", из них охотников ") + hunters + tr(", живых игроков ") + live);
+ 	}
+ 
+ 	private static Check seasonalEvents()
+@@ -336,12 +442,12 @@ public class L2HubSelfTest
+ 					total++;
+ 					if (event.isEventPeriod())
+ 					{
+-						active.add(script.getName() + " по " + new SimpleDateFormat("dd.MM.yyyy").format(new java.util.Date(event.getEndDate().getTime() - 1))); // L2Hub 0024: конец окна — начало следующего дня, пишем последний
++						active.add(script.getName() + tr(" по ") + new SimpleDateFormat("dd.MM.yyyy").format(new java.util.Date(event.getEndDate().getTime() - 1))); // L2Hub 0024: конец окна — начало следующего дня, пишем последний
+ 					}
+ 				}
+ 			}
+ 		}
+-		return new Check("", true, "загружено " + total + (active.isEmpty() ? ", сейчас не идёт ни одно" : ", идёт: " + String.join(", ", active)));
++		return new Check("", true, tr("загружено ") + total + (active.isEmpty() ? tr(", сейчас не идёт ни одно") : tr(", идёт: ") + String.join(", ", active)));
+ 	}
+ 	
+ 	// ---------- L2Hub 0024: моды живого мира — суперчемпион, «Мир сейчас», эльпи, летопись ----------
+@@ -370,67 +476,67 @@ public class L2HubSelfTest
+ 		final Properties config = customIni("ChampionMonsters.ini");
+ 		if (config.getProperty("SuperChampionEnable") == null)
+ 		{
+-			return new Check("", false, "нет ключей SuperChampion* в ChampionMonsters.ini — мод 0020 не наложен");
++			return new Check("", false, tr("нет ключей SuperChampion* в ChampionMonsters.ini — мод 0020 не наложен"));
+ 		}
+ 		if (!isTrue(config, "ChampionEnable", "False") || !isTrue(config, "SuperChampionEnable", "False"))
+ 		{
+-			return new Check("", true, "выключены (" + (isTrue(config, "ChampionEnable", "False") ? "SuperChampionEnable" : "ChampionEnable") + " = False)");
++			return new Check("", true, tr("выключены (") + (isTrue(config, "ChampionEnable", "False") ? "SuperChampionEnable" : "ChampionEnable") + " = False)");
+ 		}
+ 		final Object alive = Class.forName("org.l2jmobius.gameserver.entity.actor.SuperChampion").getMethod("alive").invoke(null);
+-		return new Check("", true, "вкл, шанс " + config.getProperty("SuperChampionFrequency", "?").trim() + " %, живых в мире " + ((alive instanceof java.util.Collection<?> list) ? list.size() : "?"));
++		return new Check("", true, tr("вкл, шанс ") + config.getProperty("SuperChampionFrequency", "?").trim() + tr(" %, живых в мире ") + ((alive instanceof java.util.Collection<?> list) ? list.size() : "?"));
+ 	}
+ 
+ 	private static Check worldInfo() throws Exception
+ 	{
+ 		if (VoicedCommandHandler.getInstance().getHandler("world") == null)
+ 		{
+-			return new Check("", false, "нет команды .world — мод 0022 не наложен или скрипт L2HubWorldInfo не загрузился");
++			return new Check("", false, tr("нет команды .world — мод 0022 не наложен или скрипт L2HubWorldInfo не загрузился"));
+ 		}
+ 		final Path file = Paths.get("./log/L2HubWorld.json");
+ 		if (!Files.isRegularFile(file))
+ 		{
+-			return new Check("", false, ".world есть, но log/L2HubWorld.json не записан");
++			return new Check("", false, tr(".world есть, но log/L2HubWorld.json не записан"));
+ 		}
+ 		final long age = (System.currentTimeMillis() - Files.getLastModifiedTime(file).toMillis()) / 1000;
+-		return new Check("", age < 180, ".world есть, L2HubWorld.json обновлён " + age + " с назад");
++		return new Check("", age < 180, tr(".world есть, L2HubWorld.json обновлён ") + age + tr(" с назад"));
+ 	}
+ 
+ 	private static Check elpies() throws Exception
+ 	{
+ 		if (ScriptManager.getInstance().getScript("Elpies") == null)
+ 		{
+-			return new Check("", false, "нет скрипта Elpies");
++			return new Check("", false, tr("нет скрипта Elpies"));
+ 		}
+ 		final Properties config = customIni("L2HubEvents.ini");
+ 		if (config.getProperty("Elpies") == null)
+ 		{
+-			return new Check("", true, "расписания L2Hub нет (ключей Elpies* в L2HubEvents.ini нет) — только командой GM");
++			return new Check("", true, tr("расписания L2Hub нет (ключей Elpies* в L2HubEvents.ini нет) — только командой GM"));
+ 		}
+ 		if (!isTrue(config, "Elpies", "False"))
+ 		{
+-			return new Check("", true, "выключено (Elpies = False в L2HubEvents.ini)");
++			return new Check("", true, tr("выключено (Elpies = False в L2HubEvents.ini)"));
+ 		}
+ 		final String pattern = config.getProperty("ElpiesSchedule", "").trim();
+ 		if (pattern.isEmpty())
+ 		{
+-			return new Check("", true, "вкл, расписания нет — только командой GM");
++			return new Check("", true, tr("вкл, расписания нет — только командой GM"));
+ 		}
+ 		final long next = System.currentTimeMillis() + new org.l2jmobius.commons.time.SchedulingPattern(pattern).getDelayToNextFromNow();
+ 		final String when = new SimpleDateFormat("dd.MM HH:mm").format(new java.util.Date(((next + 30000) / 60000) * 60000));
+-		return new Check("", true, "вкл, " + pattern + ", следующий старт " + when + (isTrue(config, "ElpiesOnlyWithPlayers", "True") ? ", только при живом игроке" : ""));
++		return new Check("", true, tr("вкл, ") + pattern + tr(", следующий старт ") + when + (isTrue(config, "ElpiesOnlyWithPlayers", "True") ? tr(", только при живом игроке") : ""));
+ 	}
+ 
+ 	private static Check chronicle() throws Exception
+ 	{
+ 		if (!Files.isRegularFile(Paths.get("./data/scripts/custom/L2HubChronicle/L2HubChronicle.java")))
+ 		{
+-			return new Check("", false, "нет скрипта L2HubChronicle — мод 0023 не наложен");
++			return new Check("", false, tr("нет скрипта L2HubChronicle — мод 0023 не наложен"));
+ 		}
+ 		final Path file = Paths.get("./log/L2HubChronicle.json");
+ 		if (!Files.isRegularFile(file))
+ 		{
+ 			final boolean writable = Files.isWritable(file.toAbsolutePath().getParent());
+-			return new Check("", writable, "записей пока нет, папка log " + (writable ? "доступна для записи" : "недоступна для записи!"));
++			return new Check("", writable, tr("записей пока нет, папка log ") + (writable ? tr("доступна для записи") : tr("недоступна для записи!")));
+ 		}
+ 		long entries = 0;
+ 		for (String line : Files.readAllLines(file, StandardCharsets.UTF_8))
+@@ -441,12 +547,12 @@ public class L2HubSelfTest
+ 			}
+ 		}
+ 		final boolean writable = Files.isWritable(file);
+-		return new Check("", writable, "log/L2HubChronicle.json " + (writable ? "доступен для записи" : "только для чтения!") + ", записей " + entries);
++		return new Check("", writable, "log/L2HubChronicle.json " + (writable ? tr("доступен для записи") : tr("только для чтения!")) + tr(", записей ") + entries);
+ 	}
+ 
+ 	private static String onOff(boolean value)
+ 	{
+-		return value ? "вкл" : "выкл";
++		return value ? tr("вкл") : tr("выкл");
+ 	}
+ 
+ 	private static int count(String text, String needle)
+diff --git a/dist/game/data/scripts/custom/L2HubWorldInfo/L2HubWorldInfo.java b/dist/game/data/scripts/custom/L2HubWorldInfo/L2HubWorldInfo.java
+index 8a9dc12d377340b756f4c284f49924002f35de8a..47ccdb1569a32376e9ceb7b425e72da90e1cf55b 100644
+--- a/dist/game/data/scripts/custom/L2HubWorldInfo/L2HubWorldInfo.java
++++ b/dist/game/data/scripts/custom/L2HubWorldInfo/L2HubWorldInfo.java
+@@ -68,6 +68,69 @@ import org.l2jmobius.gameserver.util.StatSet;
+  */
+ public class L2HubWorldInfo implements IVoicedCommandHandler
+ {
++	// L2Hub: язык наших текстов (tools/l2hub_lang.py): L2HubLanguage в config/Custom/L2HubWorld.ini — ru или en, лаунчер пишет его
++	// по языку окна. Строки в коде — по-русски, tr() при en подменяет их английскими из L2HUB_EN; чего там нет — по-русски.
++	private static final boolean L2HUB_ENGLISH = l2hubEnglish();
++	private static final java.util.Map<String, String> L2HUB_EN = java.util.Map.ofEntries(
++		java.util.Map.entry("L2 Day: буквы с монстров, призы у менеджеров события", "L2 Day: letters from monsters, prizes at the event managers"),
++		java.util.Map.entry("Медали: кот Рой и кошка Винни в городах", "Medals: Roy the Cat and Winnie the Cat in towns"),
++		java.util.Map.entry("Рождество: ученик Санты в городах", "Christmas: Santa's apprentice in towns"),
++		java.util.Map.entry("TvT, команда на команду", "TvT, team vs team"),
++		java.util.Map.entry("Deathmatch, каждый за себя", "Deathmatch, every man for himself"),
++		java.util.Map.entry("CtF, захват флага", "CtF, capture the flag"),
++		java.util.Map.entry("<html><title>Мир сейчас</title><body><center><font color=\"LEVEL\">Мир сейчас</font></center><br>", "<html><title>World now</title><body><center><font color=\"LEVEL\">World now</font></center><br>"),
++		java.util.Map.entry("<font color=\"LEVEL\">Рейд-боссы ", "<font color=\"LEVEL\">Raid bosses, level "),
++		java.util.Map.entry(" уровня</font><br1>", "</font><br1>"),
++		java.util.Map.entry("<font color=\"808080\">Рядом с твоим уровнем — ни одного.</font><br><br>", "<font color=\"808080\">None near your level.</font><br><br>"),
++		java.util.Map.entry("<font color=\"B09878\">Живы: ", "<font color=\"B09878\">Alive: "),
++		java.util.Map.entry(", скоро встанут: ", ", respawning soon: "),
++		java.util.Map.entry("<td width=110 align=right><font color=\"808080\">встанет ", "<td width=110 align=right><font color=\"808080\">respawns "),
++		java.util.Map.entry("<font color=\"LEVEL\">Суперчемпионы</font><br1>", "<font color=\"LEVEL\">Super champions</font><br1>"),
++		java.util.Map.entry("<font color=\"808080\">Выключены (ChampionMonsters.ini).</font><br><br>", "<font color=\"808080\">Disabled (ChampionMonsters.ini).</font><br><br>"),
++		java.util.Map.entry("<font color=\"808080\">Сейчас ни одного. Появляются у мобов ", "<font color=\"808080\">None right now. They appear among monsters of level "),
++		java.util.Map.entry(" уровня; о новом объявят в регионе.</font><br><br>", "; a new one is announced in its region.</font><br><br>"),
++		java.util.Map.entry("<font color=\"B09878\">В мире: ", "<font color=\"B09878\">In the world: "),
++		java.util.Map.entry(". Ближе всего к твоему уровню:</font><br1><table width=280>", ". Closest to your level:</font><br1><table width=280>"),
++		java.util.Map.entry("<font color=\"LEVEL\">Олимпиада</font><br1>", "<font color=\"LEVEL\">Olympiad</font><br1>"),
++		java.util.Map.entry("<font color=\"808080\">Выключена (Olympiad.ini).</font><br><br>", "<font color=\"808080\">Disabled (Olympiad.ini).</font><br><br>"),
++		java.util.Map.entry("<font color=\"6E8B3D\">Соревнования идут</font>", "<font color=\"6E8B3D\">Matches in progress</font>"),
++		java.util.Map.entry("Соревнования", "Matches"),
++		java.util.Map.entry(" каждый день ", " daily "),
++		java.util.Map.entry(", период до ", ", period ends "),
++		java.util.Map.entry("<font color=\"A0A0A0\">Дворян: ", "<font color=\"A0A0A0\">Nobles: "),
++		java.util.Map.entry(", записались: ", ", registered: "),
++		java.util.Map.entry(" — участвуют только дворяне", " — only nobles take part"),
++		java.util.Map.entry("Герои: ", "Heroes: "),
++		java.util.Map.entry("<font color=\"LEVEL\">Сезонные события</font><br1>", "<font color=\"LEVEL\">Seasonal events</font><br1>"),
++		java.util.Map.entry("<font color=\"808080\">Сейчас нет и не ожидается (календарь L2HubEvents.ini).</font><br><br>", "<font color=\"808080\">None now or coming up (calendar in L2HubEvents.ini).</font><br><br>"),
++		java.util.Map.entry("<font color=\"6E8B3D\">Идёт</font> по ", "<font color=\"6E8B3D\">On</font> until "),
++		java.util.Map.entry("С ", "From "),
++		java.util.Map.entry("<font color=\"LEVEL\">Ивенты по расписанию</font><br1>", "<font color=\"LEVEL\">Scheduled events</font><br1>"),
++		java.util.Map.entry("<font color=\"808080\">Регистрация 10 минут у менеджера в Гиране (у Deathmatch — 1 минута), охотники записываются сами.</font><br1>", "<font color=\"808080\">Registration: 10 minutes at the manager in Giran (Deathmatch: 1 minute); hunters sign up on their own.</font><br1>"),
++		java.util.Map.entry("<font color=\"808080\">PvP-ивенты выключены (PvpEvents в L2HubEvents.ini).</font><br1>", "<font color=\"808080\">PvP events are disabled (PvpEvents in L2HubEvents.ini).</font><br1>"),
++		java.util.Map.entry(": нашествие эльпи на ", ": elpy invasion for "),
++		java.util.Map.entry(" мин, в городе рядом с тобой<br1>", " min, in a town near you<br1>"),
++		java.util.Map.entry("<font color=\"808080\">Стартуют, только когда ты в игре.</font>", "<font color=\"808080\">They start only while you are in the game.</font>"));
++	
++	private static boolean l2hubEnglish()
++	{
++		final java.util.Properties config = new java.util.Properties();
++		try (java.io.Reader reader = java.nio.file.Files.newBufferedReader(java.nio.file.Paths.get("./config/Custom/L2HubWorld.ini"), java.nio.charset.StandardCharsets.UTF_8))
++		{
++			config.load(reader);
++		}
++		catch (Exception e)
++		{
++			return false;
++		}
++		return "en".equalsIgnoreCase(config.getProperty("L2HubLanguage", "ru").trim());
++	}
++	
++	private static String tr(String text)
++	{
++		return L2HUB_ENGLISH ? L2HUB_EN.getOrDefault(text, text) : text;
++	}
++	
+ 	private static final Logger LOGGER = Logger.getLogger(L2HubWorldInfo.class.getName());
+ 	private static final Path CONFIG = Paths.get("./config/Custom/L2HubEvents.ini");
+ 	private static final Path STATUS_FILE = Paths.get("./log/L2HubWorld.json");
+@@ -78,22 +141,22 @@ public class L2HubWorldInfo implements IVoicedCommandHandler
+ 	};
+ 	private static final int SHOWN = 8;
+ 	private static final Map<String, String> SEASONAL = Map.of(
+-		"L2Day", "L2 Day: буквы с монстров, призы у менеджеров события",
+-		"HeavyMedal", "Медали: кот Рой и кошка Винни в городах",
+-		"Christmas", "Рождество: ученик Санты в городах");
++		"L2Day", tr("L2 Day: буквы с монстров, призы у менеджеров события"),
++		"HeavyMedal", tr("Медали: кот Рой и кошка Винни в городах"),
++		"Christmas", tr("Рождество: ученик Санты в городах"));
+ 	private static final String[][] PVP =
+ 	{
+ 		{
+ 			"TvT",
+-			"TvT, команда на команду"
++			tr("TvT, команда на команду")
+ 		},
+ 		{
+ 			"Deathmatch",
+-			"Deathmatch, каждый за себя"
++			tr("Deathmatch, каждый за себя")
+ 		},
+ 		{
+ 			"CtF",
+-			"CtF, захват флага"
++			tr("CtF, захват флага")
+ 		}
+ 	};
+ 	/** objectId суперчемпиона → когда он впервые попал в выгрузку. */
+@@ -128,7 +191,7 @@ public class L2HubWorldInfo implements IVoicedCommandHandler
+ 
+ 	private static String html(Player player)
+ 	{
+-		final StringBuilder sb = new StringBuilder("<html><title>Мир сейчас</title><body><center><font color=\"LEVEL\">Мир сейчас</font></center><br>");
++		final StringBuilder sb = new StringBuilder(tr("<html><title>Мир сейчас</title><body><center><font color=\"LEVEL\">Мир сейчас</font></center><br>"));
+ 		superChampions(sb, player);
+ 		raidBosses(sb, player);
+ 		olympiad(sb);
+@@ -246,16 +309,16 @@ public class L2HubWorldInfo implements IVoicedCommandHandler
+ 				soon.add(raid);
+ 			}
+ 		}
+-		sb.append("<font color=\"LEVEL\">Рейд-боссы ").append(Math.max(1, level - RAID_BELOW)).append("–").append(level + RAID_ABOVE).append(" уровня</font><br1>");
++		sb.append(tr("<font color=\"LEVEL\">Рейд-боссы ")).append(Math.max(1, level - RAID_BELOW)).append("–").append(level + RAID_ABOVE).append(tr(" уровня</font><br1>"));
+ 		if (near.isEmpty() && soon.isEmpty())
+ 		{
+-			sb.append("<font color=\"808080\">Рядом с твоим уровнем — ни одного.</font><br><br>");
++			sb.append(tr("<font color=\"808080\">Рядом с твоим уровнем — ни одного.</font><br><br>"));
+ 			return;
+ 		}
+ 
+ 		near.sort(Comparator.comparingInt((Raid raid) -> Math.abs(raid.level() - level)).thenComparingLong(raid -> distance(player, raid.x(), raid.y())));
+ 		soon.sort(Comparator.comparingLong(Raid::respawnAt));
+-		sb.append("<font color=\"B09878\">Живы: ").append(near.size()).append(soon.isEmpty() ? "" : ", скоро встанут: " + soon.size()).append(".</font><br1><table width=280>");
++		sb.append(tr("<font color=\"B09878\">Живы: ")).append(near.size()).append(soon.isEmpty() ? "" : tr(", скоро встанут: ") + soon.size()).append(".</font><br1><table width=280>");
+ 		for (Raid raid : near.subList(0, Math.min(SHOWN, near.size())))
+ 		{
+ 			sb.append("<tr><td width=170>").append(raid.name()).append(" (").append(raid.level()).append(")</td>");
+@@ -264,7 +327,7 @@ public class L2HubWorldInfo implements IVoicedCommandHandler
+ 		for (Raid raid : soon.subList(0, Math.min(3, soon.size())))
+ 		{
+ 			sb.append("<tr><td width=170><font color=\"808080\">").append(raid.name()).append(" (").append(raid.level()).append(")</font></td>");
+-			sb.append("<td width=110 align=right><font color=\"808080\">встанет ").append(when(raid.respawnAt())).append("</font></td></tr>");
++			sb.append(tr("<td width=110 align=right><font color=\"808080\">встанет ")).append(when(raid.respawnAt())).append("</font></td></tr>");
+ 		}
+ 		sb.append("</table><br>");
+ 	}
+@@ -276,23 +339,23 @@ public class L2HubWorldInfo implements IVoicedCommandHandler
+ 
+ 	private static void superChampions(StringBuilder sb, Player player)
+ 	{
+-		sb.append("<font color=\"LEVEL\">Суперчемпионы</font><br1>");
++		sb.append(tr("<font color=\"LEVEL\">Суперчемпионы</font><br1>"));
+ 		if (!superChampionsOn())
+ 		{
+-			sb.append("<font color=\"808080\">Выключены (ChampionMonsters.ini).</font><br><br>");
++			sb.append(tr("<font color=\"808080\">Выключены (ChampionMonsters.ini).</font><br><br>"));
+ 			return;
+ 		}
+ 
+ 		final List<Attackable> alive = SuperChampion.alive();
+ 		if (alive.isEmpty())
+ 		{
+-			sb.append("<font color=\"808080\">Сейчас ни одного. Появляются у мобов ").append(ChampionMonstersConfig.CHAMP_MIN_LEVEL).append("–").append(ChampionMonstersConfig.CHAMP_MAX_LEVEL).append(" уровня; о новом объявят в регионе.</font><br><br>");
++			sb.append(tr("<font color=\"808080\">Сейчас ни одного. Появляются у мобов ")).append(ChampionMonstersConfig.CHAMP_MIN_LEVEL).append("–").append(ChampionMonstersConfig.CHAMP_MAX_LEVEL).append(tr(" уровня; о новом объявят в регионе.</font><br><br>"));
+ 			return;
+ 		}
+ 
+ 		final int level = player.getLevel();
+ 		alive.sort(Comparator.comparingInt((Attackable npc) -> Math.abs(npc.getLevel() - level)).thenComparingLong(npc -> distance(player, npc)));
+-		sb.append("<font color=\"B09878\">В мире: ").append(alive.size()).append(". Ближе всего к твоему уровню:</font><br1><table width=280>");
++		sb.append(tr("<font color=\"B09878\">В мире: ")).append(alive.size()).append(tr(". Ближе всего к твоему уровню:</font><br1><table width=280>"));
+ 		for (Attackable npc : alive.subList(0, Math.min(SHOWN, alive.size())))
+ 		{
+ 			sb.append("<tr><td width=170>").append(npc.getName()).append(" (").append(npc.getLevel()).append(")</td>");
+@@ -388,25 +451,25 @@ public class L2HubWorldInfo implements IVoicedCommandHandler
+ 	private static void olympiad(StringBuilder sb)
+ 	{
+ 		final Oly oly = oly();
+-		sb.append("<font color=\"LEVEL\">Олимпиада</font><br1>");
++		sb.append(tr("<font color=\"LEVEL\">Олимпиада</font><br1>"));
+ 		if (!oly.enabled())
+ 		{
+-			sb.append("<font color=\"808080\">Выключена (Olympiad.ini).</font><br><br>");
++			sb.append(tr("<font color=\"808080\">Выключена (Olympiad.ini).</font><br><br>"));
+ 			return;
+ 		}
+-		sb.append(oly.competition() ? "<font color=\"6E8B3D\">Соревнования идут</font>" : "Соревнования").append(oly.daily().isEmpty() ? "" : " каждый день " + oly.daily());
++		sb.append(oly.competition() ? tr("<font color=\"6E8B3D\">Соревнования идут</font>") : tr("Соревнования")).append(oly.daily().isEmpty() ? "" : tr(" каждый день ") + oly.daily());
+ 		if (oly.periodEnd() > 0)
+ 		{
+-			sb.append(", период до ").append(new SimpleDateFormat("dd.MM").format(new Date(oly.periodEnd())));
++			sb.append(tr(", период до ")).append(new SimpleDateFormat("dd.MM").format(new Date(oly.periodEnd())));
+ 		}
+ 		sb.append("<br1>");
+ 		if (oly.nobles() >= 0)
+ 		{
+-			sb.append("<font color=\"A0A0A0\">Дворян: ").append(oly.nobles()).append(oly.registered() > 0 ? ", записались: " + oly.registered() : "").append(oly.nobles() == 0 ? " — участвуют только дворяне" : "").append("</font><br1>");
++			sb.append(tr("<font color=\"A0A0A0\">Дворян: ")).append(oly.nobles()).append(oly.registered() > 0 ? tr(", записались: ") + oly.registered() : "").append(oly.nobles() == 0 ? tr(" — участвуют только дворяне") : "").append("</font><br1>");
+ 		}
+ 		if (!oly.heroes().isEmpty())
+ 		{
+-			sb.append("Герои: ").append(String.join(", ", oly.heroes())).append("<br1>");
++			sb.append(tr("Герои: ")).append(String.join(", ", oly.heroes())).append("<br1>");
+ 		}
+ 		sb.append("<br>");
+ 	}
+@@ -433,10 +496,10 @@ public class L2HubWorldInfo implements IVoicedCommandHandler
+ 	{
+ 		final SimpleDateFormat day = new SimpleDateFormat("dd.MM");
+ 		final List<LongTimeEvent> events = seasonalEvents();
+-		sb.append("<font color=\"LEVEL\">Сезонные события</font><br1>");
++		sb.append(tr("<font color=\"LEVEL\">Сезонные события</font><br1>"));
+ 		if (events.isEmpty())
+ 		{
+-			sb.append("<font color=\"808080\">Сейчас нет и не ожидается (календарь L2HubEvents.ini).</font><br><br>");
++			sb.append(tr("<font color=\"808080\">Сейчас нет и не ожидается (календарь L2HubEvents.ini).</font><br><br>"));
+ 			return;
+ 		}
+ 
+@@ -444,7 +507,7 @@ public class L2HubWorldInfo implements IVoicedCommandHandler
+ 		{
+ 			final String title = SEASONAL.getOrDefault(event.getName(), event.getName());
+ 			// Конец окна у Mobius — начало дня после последнего (01.12 — значит, по 30.11 включительно), как пишет и лаунчер.
+-			sb.append(event.isEventPeriod() ? "<font color=\"6E8B3D\">Идёт</font> по " + day.format(new Date(event.getEndDate().getTime() - 1)) : "С " + day.format(event.getStartDate())).append(": ").append(title).append("<br1>");
++			sb.append(event.isEventPeriod() ? tr("<font color=\"6E8B3D\">Идёт</font> по ") + day.format(new Date(event.getEndDate().getTime() - 1)) : tr("С ") + day.format(event.getStartDate())).append(": ").append(title).append("<br1>");
+ 		}
+ 		sb.append("<br>");
+ 	}
+@@ -452,7 +515,7 @@ public class L2HubWorldInfo implements IVoicedCommandHandler
+ 	private static void schedule(StringBuilder sb)
+ 	{
+ 		final Properties config = config();
+-		sb.append("<font color=\"LEVEL\">Ивенты по расписанию</font><br1>");
++		sb.append(tr("<font color=\"LEVEL\">Ивенты по расписанию</font><br1>"));
+ 		if (on(config, "PvpEvents", false))
+ 		{
+ 			for (String[] pvp : PVP)
+@@ -463,21 +526,21 @@ public class L2HubWorldInfo implements IVoicedCommandHandler
+ 					sb.append(when(next)).append(": ").append(pvp[1]).append("<br1>");
+ 				}
+ 			}
+-			sb.append("<font color=\"808080\">Регистрация 10 минут у менеджера в Гиране (у Deathmatch — 1 минута), охотники записываются сами.</font><br1>");
++			sb.append(tr("<font color=\"808080\">Регистрация 10 минут у менеджера в Гиране (у Deathmatch — 1 минута), охотники записываются сами.</font><br1>"));
+ 		}
+ 		else
+ 		{
+-			sb.append("<font color=\"808080\">PvP-ивенты выключены (PvpEvents в L2HubEvents.ini).</font><br1>");
++			sb.append(tr("<font color=\"808080\">PvP-ивенты выключены (PvpEvents в L2HubEvents.ini).</font><br1>"));
+ 		}
+ 
+ 		final long elpies = on(config, "Elpies", false) ? next(config.getProperty("ElpiesSchedule", "")) : 0;
+ 		if (elpies > 0)
+ 		{
+-			sb.append(when(elpies)).append(": нашествие эльпи на ").append(minutes(config)).append(" мин, в городе рядом с тобой<br1>");
++			sb.append(when(elpies)).append(tr(": нашествие эльпи на ")).append(minutes(config)).append(tr(" мин, в городе рядом с тобой<br1>"));
+ 		}
+ 		if (on(config, "PvpOnlyWithPlayers", true) || on(config, "ElpiesOnlyWithPlayers", true))
+ 		{
+-			sb.append("<font color=\"808080\">Стартуют, только когда ты в игре.</font>");
++			sb.append(tr("<font color=\"808080\">Стартуют, только когда ты в игре.</font>"));
+ 		}
+ 	}
+ 
+diff --git a/dist/game/data/scripts/custom/events/Elpies/Elpies.java b/dist/game/data/scripts/custom/events/Elpies/Elpies.java
+index 5ffdf166e2cb83a2d70a7601e039c0a701daf64c..eb5941e305427d670577ce6bcb7d90de87f5bb81 100644
+--- a/dist/game/data/scripts/custom/events/Elpies/Elpies.java
++++ b/dist/game/data/scripts/custom/events/Elpies/Elpies.java
+@@ -51,6 +51,38 @@ import org.l2jmobius.gameserver.util.StatSet;
+ 
+ public class Elpies extends Event
+ {
++	// L2Hub: язык наших текстов (tools/l2hub_lang.py): L2HubLanguage в config/Custom/L2HubWorld.ini — ru или en, лаунчер пишет его
++	// по языку окна. Строки в коде — по-русски, tr() при en подменяет их английскими из L2HUB_EN; чего там нет — по-русски.
++	private static final boolean L2HUB_ENGLISH = l2hubEnglish();
++	private static final java.util.Map<String, String> L2HUB_EN = java.util.Map.ofEntries(
++		java.util.Map.entry("*Пи-пи-пи!*", "*Squeak-squeak!*"),
++		java.util.Map.entry("Нашествие эльпи: ", "Elpy invasion: "),
++		java.util.Map.entry("Помогите их истребить — с них падают зелья, свитки и кристаллы!", "Help wipe them out: they drop potions, scrolls and crystals!"),
++		java.util.Map.entry("У вас ", "You have "),
++		java.util.Map.entry(" мин.", " min."),
++		java.util.Map.entry("Время вышло!", "Time is up!"),
++		java.util.Map.entry("Нашествие эльпи окончено!", "The elpy invasion is over!"),
++		java.util.Map.entry("Все эльпи перебиты!", "All elpies have been wiped out!"));
++	
++	private static boolean l2hubEnglish()
++	{
++		final java.util.Properties config = new java.util.Properties();
++		try (java.io.Reader reader = java.nio.file.Files.newBufferedReader(java.nio.file.Paths.get("./config/Custom/L2HubWorld.ini"), java.nio.charset.StandardCharsets.UTF_8))
++		{
++			config.load(reader);
++		}
++		catch (Exception e)
++		{
++			return false;
++		}
++		return "en".equalsIgnoreCase(config.getProperty("L2HubLanguage", "ru").trim());
++	}
++	
++	private static String tr(String text)
++	{
++		return L2HUB_ENGLISH ? L2HUB_EN.getOrDefault(text, text) : text;
++	}
++	
+ 	// NPC
+ 	private static final int ELPY = 900100;
+ 	
+@@ -196,14 +228,14 @@ public class Elpies extends Event
+ 			_elpies.add(addSpawn(ELPY, randomLoc.getRandomX(), randomLoc.getRandomY(), randomLoc.getZ(), 0, true, despawnDelay));
+ 		}
+ 		
+-		World.broadcastToAllOnlinePlayers("*Пи-пи-пи!*");
+-		World.broadcastToAllOnlinePlayers("Нашествие эльпи: " + randomLoc.getName() + "!");
+-		World.broadcastToAllOnlinePlayers("Помогите их истребить — с них падают зелья, свитки и кристаллы!");
+-		World.broadcastToAllOnlinePlayers("У вас " + minutes + " мин.");
++		World.broadcastToAllOnlinePlayers(tr("*Пи-пи-пи!*"));
++		World.broadcastToAllOnlinePlayers(tr("Нашествие эльпи: ") + randomLoc.getName() + "!");
++		World.broadcastToAllOnlinePlayers(tr("Помогите их истребить — с них падают зелья, свитки и кристаллы!"));
++		World.broadcastToAllOnlinePlayers(tr("У вас ") + minutes + tr(" мин."));
+ 		LOGGER.info(getName() + ": нашествие в " + randomLoc.getName() + " на " + minutes + " мин.");
+ 		_eventTask = ThreadPool.schedule(() ->
+ 		{
+-			World.broadcastToAllOnlinePlayers("Время вышло!");
++			World.broadcastToAllOnlinePlayers(tr("Время вышло!"));
+ 			eventStop();
+ 		}, despawnDelay);
+ 		return true;
+@@ -231,8 +263,8 @@ public class Elpies extends Event
+ 		
+ 		_elpies.clear();
+ 		
+-		World.broadcastToAllOnlinePlayers("*Пи-пи-пи!*");
+-		World.broadcastToAllOnlinePlayers("Нашествие эльпи окончено!");
++		World.broadcastToAllOnlinePlayers(tr("*Пи-пи-пи!*"));
++		World.broadcastToAllOnlinePlayers(tr("Нашествие эльпи окончено!"));
+ 		return true;
+ 	}
+ 	
+@@ -247,7 +279,7 @@ public class Elpies extends Event
+ 			dropItem(npc, killer, DROPLIST_CRYSTALS);
+ 			if (_elpies.isEmpty())
+ 			{
+-				World.broadcastToAllOnlinePlayers("Все эльпи перебиты!");
++				World.broadcastToAllOnlinePlayers(tr("Все эльпи перебиты!"));
+ 				eventStop();
+ 			}
+ 		}
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/SuperChampion.java b/java/org/l2jmobius/gameserver/entity/actor/SuperChampion.java
+index 97e2837dafa24323abcfe6665b5f66c4051048a5..74d072d3b31b216281a424252b7371c529299ece 100644
+--- a/java/org/l2jmobius/gameserver/entity/actor/SuperChampion.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/SuperChampion.java
+@@ -40,6 +40,30 @@ import org.l2jmobius.gameserver.network.serverpackets.ExShowScreenMessage;
+  */
+ public class SuperChampion
+ {
++	// L2Hub: язык наших текстов (tools/l2hub_lang.py): L2HubLanguage в config/Custom/L2HubWorld.ini — ru или en, лаунчер пишет его
++	// по языку окна. Строки в коде — по-русски, tr() при en подменяет их английскими из L2HUB_EN; чего там нет — по-русски.
++	private static final boolean L2HUB_ENGLISH = l2hubEnglish();
++	private static final java.util.Map<String, String> L2HUB_EN = java.util.Map.of();
++	
++	private static boolean l2hubEnglish()
++	{
++		final java.util.Properties config = new java.util.Properties();
++		try (java.io.Reader reader = java.nio.file.Files.newBufferedReader(java.nio.file.Paths.get("./config/Custom/L2HubWorld.ini"), java.nio.charset.StandardCharsets.UTF_8))
++		{
++			config.load(reader);
++		}
++		catch (Exception e)
++		{
++			return false;
++		}
++		return "en".equalsIgnoreCase(config.getProperty("L2HubLanguage", "ru").trim());
++	}
++	
++	private static String tr(String text)
++	{
++		return L2HUB_ENGLISH ? L2HUB_EN.getOrDefault(text, text) : text;
++	}
++	
+ 	private static final Logger LOGGER = Logger.getLogger(SuperChampion.class.getName());
+ 
+ 	/** Суперчемпионы с наложенными эффектами (objectId → моб и его эффекты): снять при следующем spawn, найти для охотников. */
+@@ -103,7 +127,7 @@ public class SuperChampion
+ 	public static void announce(Attackable npc)
+ 	{
+ 		final String town = MapRegionData.getInstance().getClosestTownName(npc);
+-		final String text = ChampionMonstersConfig.SUPER_CHAMPION_ANNOUNCE_TEXT.replace("%name%", npc.getName()).replace("%level%", String.valueOf(npc.getLevel())).replace("%town%", town);
++		final String text = (L2HUB_ENGLISH && ChampionMonstersConfig.SUPER_CHAMPION_ANNOUNCE_TEXT.matches("(?s).*[\\u0400-\\u04FF].*") ? "Legendary Champion %name% (%level%) has appeared near %town%!" : ChampionMonstersConfig.SUPER_CHAMPION_ANNOUNCE_TEXT).replace("%name%", npc.getName()).replace("%level%", String.valueOf(npc.getLevel())).replace("%town%", town);
+ 		LOGGER.info("SuperChampion: " + npc.getName() + " (" + npc.getLevel() + ") at " + npc.getX() + ", " + npc.getY() + ", " + npc.getZ() + " — " + text);
+ 		final String scope = ChampionMonstersConfig.SUPER_CHAMPION_ANNOUNCE;
+ 		final boolean world = "World".equalsIgnoreCase(scope);

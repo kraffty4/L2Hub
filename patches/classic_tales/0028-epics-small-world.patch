@@ -1,0 +1,76 @@
+diff --git a/dist/game/config/GrandBoss.ini b/dist/game/config/GrandBoss.ini
+index 7a45bfd10e8e91f4084df519cc21a6b72e97f846..39b865916508d71392660d10bcf9c9d892befd5f 100644
+--- a/dist/game/config/GrandBoss.ini
++++ b/dist/game/config/GrandBoss.ini
+@@ -80,3 +80,18 @@ IntervalOfZakenSpawn = 168
+ 
+ # Random interval. Range 1-192
+ RandomOfZakenSpawn = 48
++
++# ---------------------------------------------------------------------------
++# L2Hub (малый мир): эпики малого мира (tools/l2hub_epics_small.py)
++# ---------------------------------------------------------------------------
++# Выключатель «Эпики малого мира» в лаунчере («Настройки сервера», «Мир»; режим «Хардкор» выключает). True — интервал
++# и случайная добавка респауна эпиков выше — в процентах SmallWorldEpicsIntervalPercent, ожидание Антараса и Валакаса
++# после первого входа — не дольше SmallWorldEpicsWaitTime минут, к старой Фринтезе — лидеру пати без командного канала,
++# к Белету — канал от SmallWorldEpicsMinPlayers человек. Новый интервал — со следующей смерти босса.
++SmallWorldEpics = True
++# Интервал респауна в процентах от официального. Range 1-100
++SmallWorldEpicsIntervalPercent = 25
++# Ожидание Антараса и Валакаса после первого входа, минут.
++SmallWorldEpicsWaitTime = 5
++# Порог командного канала для входа к Белету.
++SmallWorldEpicsMinPlayers = 2
+diff --git a/java/org/l2jmobius/gameserver/config/GrandBossConfig.java b/java/org/l2jmobius/gameserver/config/GrandBossConfig.java
+index 38cea018ab2637004b2edef9139146b52e9bb409..067fd8c11bfb6c5494fbb02669f820b373fc3d90 100644
+--- a/java/org/l2jmobius/gameserver/config/GrandBossConfig.java
++++ b/java/org/l2jmobius/gameserver/config/GrandBossConfig.java
+@@ -50,6 +50,12 @@ public class GrandBossConfig
+ 	public static boolean DISABLE_RAIDBOSS_HEAL_FROM_PLAYERS;
+ 	public static boolean DISABLE_RAIDBOSS_BUFF_FROM_PLAYERS;
+ 	
++	// L2Hub (малый мир): выключатель «Эпики малого мира» (tools/l2hub_epics_small.py).
++	public static boolean SMALL_WORLD_EPICS;
++	public static int SMALL_WORLD_EPICS_INTERVAL_PERCENT;
++	public static int SMALL_WORLD_EPICS_WAIT_TIME;
++	public static int SMALL_WORLD_EPICS_MIN_PLAYERS;
++	
+ 	public static void load()
+ 	{
+ 		final ConfigReader config = new ConfigReader(GRANDBOSS_CONFIG_FILE);
+@@ -70,5 +76,35 @@ public class GrandBossConfig
+ 		ZAKEN_SPAWN_RANDOM = config.getInt("RandomOfZakenSpawn", 48);
+ 		DISABLE_RAIDBOSS_HEAL_FROM_PLAYERS = config.getBoolean("DisableRaidBossHealFromPlayers", false);
+ 		DISABLE_RAIDBOSS_BUFF_FROM_PLAYERS = config.getBoolean("DisableRaidBossBuffFromPlayers", false);
++		// L2Hub (малый мир): с выключателем — интервал и случайная добавка респауна эпиков выше в процентах от официальных,
++		// ожидание Антараса и Валакаса не дольше SmallWorldEpicsWaitTime минут, порог канала к Белету — SmallWorldEpicsMinPlayers.
++		SMALL_WORLD_EPICS = config.getBoolean("SmallWorldEpics", false);
++		SMALL_WORLD_EPICS_INTERVAL_PERCENT = Math.max(1, Math.min(100, config.getInt("SmallWorldEpicsIntervalPercent", 25)));
++		SMALL_WORLD_EPICS_WAIT_TIME = Math.max(1, config.getInt("SmallWorldEpicsWaitTime", 5));
++		SMALL_WORLD_EPICS_MIN_PLAYERS = Math.max(1, config.getInt("SmallWorldEpicsMinPlayers", 2));
++		if (SMALL_WORLD_EPICS)
++		{
++			ANTHARAS_SPAWN_INTERVAL = smallWorld(ANTHARAS_SPAWN_INTERVAL);
++			ANTHARAS_SPAWN_RANDOM = smallWorld(ANTHARAS_SPAWN_RANDOM);
++			BAIUM_SPAWN_INTERVAL = smallWorld(BAIUM_SPAWN_INTERVAL);
++			BAIUM_SPAWN_RANDOM = smallWorld(BAIUM_SPAWN_RANDOM);
++			CORE_SPAWN_INTERVAL = smallWorld(CORE_SPAWN_INTERVAL);
++			CORE_SPAWN_RANDOM = smallWorld(CORE_SPAWN_RANDOM);
++			ORFEN_SPAWN_INTERVAL = smallWorld(ORFEN_SPAWN_INTERVAL);
++			ORFEN_SPAWN_RANDOM = smallWorld(ORFEN_SPAWN_RANDOM);
++			QUEEN_ANT_SPAWN_INTERVAL = smallWorld(QUEEN_ANT_SPAWN_INTERVAL);
++			QUEEN_ANT_SPAWN_RANDOM = smallWorld(QUEEN_ANT_SPAWN_RANDOM);
++			ZAKEN_SPAWN_INTERVAL = smallWorld(ZAKEN_SPAWN_INTERVAL);
++			ZAKEN_SPAWN_RANDOM = smallWorld(ZAKEN_SPAWN_RANDOM);
++			ANTHARAS_WAIT_TIME = Math.min(ANTHARAS_WAIT_TIME, SMALL_WORLD_EPICS_WAIT_TIME);
++		}
++	}
++	
++	/**
++	 * L2Hub (малый мир): часы респауна в процентах SmallWorldEpicsIntervalPercent, не меньше часа.
++	 */
++	private static int smallWorld(int hours)
++	{
++		return Math.max(1, Math.round((hours * SMALL_WORLD_EPICS_INTERVAL_PERCENT) / 100f));
+ 	}
+ }

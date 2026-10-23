@@ -18,6 +18,10 @@
     {"id": "offlineplay", "group": "Помощники", "title": "Игра офлайн (.offlineplay)", "note": "закрыл клиент — персонаж продолжает автоохоту", "file": "OfflinePlay.ini", "key": "EnableOfflinePlayCommand"},
     {"id": "freemounts", "group": "Помощники", "title": "Бесплатные страйдер и виверна", "note": "маунт без питомца и квеста", "file": "FreeMounts.ini", "keys": ["EnableFreeStrider", "EnableFreeWyvern"]},
     {"id": "transmog", "group": "Помощники", "title": "Трансмог", "note": "внешний вид одной вещи на другой", "file": "Transmog.ini", "key": "TransmogEnabled"},
+    {"id": "attendance", "group": "Родное", "title": "Награды за вход", "note": "окно посещения: подарок за каждый день в игре, как на официале (Classic, Essence)", "file": "AttendanceRewards.ini", "key": "EnableAttendanceRewards"},
+    {"id": "lcoin", "group": "Родное", "title": "L-Coin с мобов", "note": "мобы от 40-го уровня роняют L-Coin — на них магазин L-Coin клиента (Classic, Essence)", "file": "Rates.ini", "key": "LCoinDropEnable"},
+    {"id": "huntpass", "group": "Родное", "title": "L2 Pass", "note": "награды за охоту по сезону (Essence)", "file": "HuntPass.ini", "key": "EnabledHuntPass"},
+    {"id": "magiclamp", "group": "Родное", "title": "Волшебная лампа", "note": "копит опыт охоты и дарит бонус (Essence)", "file": "MagicLamp.ini", "key": "MagicLampEnabled"},
     {"id": "npcinfo", "group": "Интерфейс", "title": "Уровень и агрессия моба", "note": "в окне цели; Shift+клик по NPC — подробности", "file": "NPC.ini", "keys": ["ShowNpcLevel", "ShowNpcAggression", "AltGameViewNpc"]},
     {"id": "licence", "group": "Интерфейс", "title": "Соглашение на входе", "note": "окно лицензии перед списком серверов; применится после перезапуска логина", "part": "login", "file": "Server.ini", "key": "ShowLicence"}
   ],
@@ -32,17 +36,17 @@
   "modes": [
     {"id": "hardcore", "title": "Хардкор", "note": "как на официале: всё x1, без баффера, GM-шопа, долгих бафов, чемпионов и поручений дня, без телепорта и хила с доски Alt+B, без автоподбора дропа и автоизучения скиллов, сабкласс — квестом, страйдер и виверна — не даром, эпики — по официальному расписанию",
      "rates": {"xp": 1, "sp": 1, "adena": 1, "drop": 1, "spoil": 1},
-     "switches": {"buffer": false, "gmshop": false, "durations": false, "champions": false, "daily": false, "pvpevents": false, "rbannounce": false, "superchampion": false, "elpies": false, "freemounts": false, "autopotions": false, "offlineplay": false, "smallepics": false},
+     "switches": {"buffer": false, "gmshop": false, "durations": false, "champions": false, "daily": false, "pvpevents": false, "rbannounce": false, "superchampion": false, "elpies": false, "freemounts": false, "autopotions": false, "offlineplay": false, "smallepics": false, "attendance": true, "lcoin": true, "huntpass": true, "magiclamp": true},
      "settings": {"Player.ini": {"AutoLoot": "False", "AutoLootHerbs": "False", "AutoLearnSkills": "False", "AltSubClassWithoutQuests": "False", "AltKarmaPlayerCanShop": "False"},
                   "CommunityBoard.ini": {"CommunityEnableTeleports": "False", "CommunityEnableHeal": "False", "CommunityEnableBuffs": "False"}}},
     {"id": "pvpcraft", "title": "PvP-крафт", "note": "опыт и SP x50, адена x10, дроп и спойл x5 — быстрый кач, крафт ещё важен",
      "rates": {"xp": 50, "sp": 50, "adena": 10, "drop": 5, "spoil": 5},
-     "switches": {"buffer": true, "gmshop": true, "durations": true, "champions": true, "rbannounce": true, "superchampion": true, "autopotions": true, "smallepics": true},
+     "switches": {"buffer": true, "gmshop": true, "durations": true, "champions": true, "rbannounce": true, "superchampion": true, "autopotions": true, "smallepics": true, "attendance": true, "lcoin": true, "huntpass": true, "magiclamp": true},
      "settings": {"Player.ini": {"AutoLoot": "True", "AutoLootHerbs": "True", "AutoLearnSkills": "True", "AltSubClassWithoutQuests": "True"},
                   "CommunityBoard.ini": {"CommunityEnableTeleports": "True", "CommunityEnableHeal": "True", "CommunityEnableBuffs": "True"}}},
     {"id": "pvp", "title": "PvP", "note": "опыт, SP и адена x1000, дроп и спойл x10 — сразу в PvP",
      "rates": {"xp": 1000, "sp": 1000, "adena": 1000, "drop": 10, "spoil": 10},
-     "switches": {"buffer": true, "gmshop": true, "durations": true, "champions": true, "pvpevents": true, "rbannounce": true, "superchampion": true, "autopotions": true, "smallepics": true},
+     "switches": {"buffer": true, "gmshop": true, "durations": true, "champions": true, "pvpevents": true, "rbannounce": true, "superchampion": true, "autopotions": true, "smallepics": true, "attendance": true, "lcoin": true, "huntpass": true, "magiclamp": true},
      "settings": {"Player.ini": {"AutoLoot": "True", "AutoLootHerbs": "True", "AutoLearnSkills": "True", "AltSubClassWithoutQuests": "True"},
                   "CommunityBoard.ini": {"CommunityEnableTeleports": "True", "CommunityEnableHeal": "True", "CommunityEnableBuffs": "True"}}}
   ]

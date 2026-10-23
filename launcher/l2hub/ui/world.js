@@ -309,7 +309,7 @@
       if (k === 'creator' && dirty) extra = '<span class="unsaved" title="Есть несохранённые правки"></span>';
       return `<button data-s="${k}" class="${k === W.screen ? 'on' : ''}">${svg(k)}${t}${extra}</button>`;
     }).join('') + `<div class="nav-h">Для всех миров</div><button data-s="module" class="${W.screen === 'module' ? 'on' : ''}">${svg('module')}Модуль фантомов${W.mods?.items?.some((x) => x.state === 'stale') ? '<span class="unsaved" title="Где-то модуль устарел"></span>' : ''}</button>`
-      + '<div class="later">Позже: «Общество» (связи и кланы ботов) и «Летопись» (история мира) — см. docs/WORLD_CONTROL.md.</div>';
+      + '<div class="later">Позже: «Общество» — связи и кланы ботов (docs/WORLD_CONTROL.md).</div>';
     if (setHtml('worldNav', html)) {
       $('worldNav').querySelectorAll('button[data-s]').forEach((b) => (b.onclick = () => enter(b.dataset.s)));
       $('worldNav').querySelectorAll('button[data-w]').forEach((b) => (b.onclick = () => b.dataset.w !== W.chron && pickWorld(b.dataset.w)));

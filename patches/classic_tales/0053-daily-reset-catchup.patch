@@ -1,0 +1,109 @@
+diff --git a/java/org/l2jmobius/gameserver/managers/DailyResetManager.java b/java/org/l2jmobius/gameserver/managers/DailyResetManager.java
+--- a/java/org/l2jmobius/gameserver/managers/DailyResetManager.java
++++ b/java/org/l2jmobius/gameserver/managers/DailyResetManager.java
+@@ -97,7 +97,9 @@
+ 		final long currentResetTime = calendar.getTimeInMillis();
+ 		
+ 		// Check if 24 hours have passed since the last daily reset.
+-		if ((currentTime < currentResetTime) || (GlobalVariablesManager.getInstance().getLong(GlobalVariablesManager.DAILY_TASK_RESET, 0) > currentResetTime))
++		// L2Hub (малый мир): до 6:30 последний сброс — вчерашний; сервер поднят ночью — догнать и его.
++		final long lastResetTime = currentTime < currentResetTime ? currentResetTime - 86400000 : currentResetTime;
++		if (GlobalVariablesManager.getInstance().getLong(GlobalVariablesManager.DAILY_TASK_RESET, 0) > lastResetTime)
+ 		{
+ 			LOGGER.info(getClass().getSimpleName() + ": Next schedule at " + TimeUtil.getDateTimeString(nextResetTime) + ".");
+ 		}
+@@ -119,12 +121,15 @@
+ 	{
+ 		LOGGER.info("Starting reset of daily tasks...");
+ 		
++		// L2Hub (малый мир): прошлый сброс — до записи нового; по нему догоняются проспанные сервером среда и 1-е число.
++		final long previousReset = GlobalVariablesManager.getInstance().getLong(GlobalVariablesManager.DAILY_TASK_RESET, 0);
++		
+ 		// Store last reset time.
+ 		GlobalVariablesManager.getInstance().set(GlobalVariablesManager.DAILY_TASK_RESET, System.currentTimeMillis());
+ 		
+ 		// Wednesday weekly tasks.
+ 		final Calendar calendar = Calendar.getInstance();
+-		if (calendar.get(Calendar.DAY_OF_WEEK) == Calendar.WEDNESDAY)
++		if ((calendar.get(Calendar.DAY_OF_WEEK) == Calendar.WEDNESDAY) || missed(previousReset, Calendar.DAY_OF_WEEK, Calendar.WEDNESDAY))
+ 		{
+ 			clanLeaderApply();
+ 			resetMonsterArenaWeekly();
+@@ -133,10 +138,14 @@
+ 		}
+ 		else // All days, except Wednesday.
+ 		{
+-			resetVitalityDaily();
+-		}
+-		
+-		if (calendar.get(Calendar.DAY_OF_MONTH) == 1)
++			// L2Hub (малый мир): Sayha's Grace — за каждый день простоя (4 × 25 % — уже полная).
++			for (int day = Math.min(4, missedDays(previousReset)); day > 0; day--)
++			{
++				resetVitalityDaily();
++			}
++		}
++		
++		if ((calendar.get(Calendar.DAY_OF_MONTH) == 1) || missed(previousReset, Calendar.DAY_OF_MONTH, 1))
+ 		{
+ 			resetMonthlyLimitShopData();
+ 		}
+@@ -171,6 +180,58 @@
+ 		LOGGER.info("Daily tasks reset completed.");
+ 	}
+ 	
++	/**
++	 * L2Hub (малый мир): был ли между прошлым сбросом и сейчас сброс в 6:30 нужного дня (среда, 1-е число), который сервер проспал.
++	 * Минута запаса — чтобы сброс, записанный на секунду раньше 6:30, не считался пропущенным.
++	 * @param previousReset время прошлого сброса (0 — сброса ещё не было)
++	 * @param field поле Calendar (DAY_OF_WEEK, DAY_OF_MONTH)
++	 * @param value его значение
++	 * @return пропущен
++	 */
++	private static boolean missed(long previousReset, int field, int value)
++	{
++		final long now = System.currentTimeMillis();
++		final Calendar day = Calendar.getInstance();
++		day.set(Calendar.HOUR_OF_DAY, 6);
++		day.set(Calendar.MINUTE, 30);
++		day.set(Calendar.SECOND, 0);
++		day.set(Calendar.MILLISECOND, 0);
++		for (int i = 0; (i < 400) && (day.getTimeInMillis() > (previousReset + 60000)); i++)
++		{
++			if ((day.getTimeInMillis() <= (now + 60000)) && (day.get(field) == value))
++			{
++				return true;
++			}
++			day.add(Calendar.DAY_OF_MONTH, -1);
++		}
++		return false;
++	}
++	
++	/**
++	 * L2Hub (малый мир): сколько сбросов в 6:30 прошло с прошлого сброса (этот — тоже; минимум один).
++	 * @param previousReset время прошлого сброса
++	 * @return число дней, от 1 до 400
++	 */
++	private static int missedDays(long previousReset)
++	{
++		final long now = System.currentTimeMillis();
++		final Calendar day = Calendar.getInstance();
++		day.set(Calendar.HOUR_OF_DAY, 6);
++		day.set(Calendar.MINUTE, 30);
++		day.set(Calendar.SECOND, 0);
++		day.set(Calendar.MILLISECOND, 0);
++		int days = 0;
++		for (int i = 0; (i < 400) && (day.getTimeInMillis() > (previousReset + 60000)); i++)
++		{
++			if (day.getTimeInMillis() <= (now + 60000))
++			{
++				days++;
++			}
++			day.add(Calendar.DAY_OF_MONTH, -1);
++		}
++		return Math.max(1, days);
++	}
++	
+ 	private void onSave()
+ 	{
+ 		GlobalVariablesManager.getInstance().storeMe();

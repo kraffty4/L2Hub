@@ -31,7 +31,9 @@
 
 Перед каждой выкладкой проверить, что личного нет. Проверка — по списку из `AGENTS.local.md`: пути, ники, имена, адреса. Скрипт с этим списком лежит у автора вне git.
 
-Первая выкладка (сначала приватно):
+Выложено 2026-10-22 (по команде автора): приватный `kraffty4/L2Hub`, один коммит «L2Hub 0.4.176», без тегов. Снимок собирает `data/agents/public_snapshot.py <папка>` (вне git: таблица личного сама личная). Он вычищает личное, убирает раздел «Клиенты: где брать» и прямые ссылки на сайты с клиентами, выкидывает скриншоты первых макетов (на них ник и путь клиента) и проверяет результат. Папка снимка с `.git` публичного репозитория — `<рабочая папка>\L2Hub_public`.
+
+Первая выкладка (так и сделано):
 
 ```bash
 git archive HEAD -o ../l2hub_snapshot.tar
@@ -40,4 +42,4 @@ cd ../L2Hub_public && git init -b main && git add -A && git commit -m "L2Hub X.Y
 gh repo create kraffty4/L2Hub --private --source . --remote origin --push
 ```
 
-Следующие: в `../L2Hub_public` заменить дерево свежим `git archive HEAD` из рабочего репозитория (удалённые файлы — тоже), один коммит «L2Hub X.Y.Z», тег `vX.Y.Z`, `git push --follow-tags`.
+Следующие: `python -X utf8 data/agents/public_snapshot.py ../L2Hub_public` (кладёт свежий HEAD поверх, лишнее — в Корзину, `.git` не трогает; без «нет» в проверке — не пушить), в `../L2Hub_public` один коммит «L2Hub X.Y.Z», тег `vX.Y.Z` (запускает сборку релиза в Actions), `git push --follow-tags`. Паблик — `gh repo edit kraffty4/L2Hub --visibility public` по команде автора, перед ним автор смотрит README в приватном. README снимка — для чужих: `docs/README_PUBLIC.md` → `README.md`, `docs/README_PUBLIC.en.md` → `README.en.md`, рабочий `README.md` → `docs/README_DEV.md` (так раскладывает `public_snapshot.py`); скриншоты — `docs/screenshots`, сняты с дев-сервера с маской пути клиента и адресов.

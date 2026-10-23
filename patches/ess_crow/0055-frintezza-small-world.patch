@@ -1,0 +1,59 @@
+diff --git a/dist/game/data/scripts/ai/bosses/Frintezza/LastImperialTomb.java b/dist/game/data/scripts/ai/bosses/Frintezza/LastImperialTomb.java
+--- a/dist/game/data/scripts/ai/bosses/Frintezza/LastImperialTomb.java
++++ b/dist/game/data/scripts/ai/bosses/Frintezza/LastImperialTomb.java
+@@ -177,9 +177,55 @@
+ 	private static final int MAX_DEMONS = 24;
+ 	private int KILL_COUNT = 0;
+ 	
++	/**
++	 * L2Hub (малый мир, патч 0055): при «Эпиках малого мира» (SmallWorldEpics в GrandBoss.ini, патч 0028) к Фринтезе — пати лидера
++	 * без командного канала, от двух человек (у Classic канал от 27 человек, у Essence — от 2). Условия шаблона правятся на старте
++	 * скрипта: без CommandChannel и CommandChannelLeader, GroupMin — 2; маску группы пересчитывает setConditions. Без выключателя — как у Mobius.
++	 */
++	private static void smallWorldEntry()
++	{
++		if (!org.l2jmobius.gameserver.config.GrandBossConfig.SMALL_WORLD_EPICS)
++		{
++			return;
++		}
++		final org.l2jmobius.gameserver.entity.instancezone.InstanceTemplate template = org.l2jmobius.gameserver.managers.InstanceManager.getInstance().getInstanceTemplate(TEMPLATE_ID);
++		if (template == null)
++		{
++			return;
++		}
++		try
++		{
++			final java.lang.reflect.Field field = org.l2jmobius.gameserver.entity.instancezone.InstanceTemplate.class.getDeclaredField("_conditions");
++			field.setAccessible(true);
++			final List<org.l2jmobius.gameserver.entity.instancezone.conditions.Condition> conditions = new ArrayList<>();
++			for (Object cond : (List<?>) field.get(template))
++			{
++				if ((cond instanceof org.l2jmobius.gameserver.entity.instancezone.conditions.ConditionCommandChannel) || (cond instanceof org.l2jmobius.gameserver.entity.instancezone.conditions.ConditionCommandChannelLeader))
++				{
++					continue;
++				}
++				if (cond instanceof org.l2jmobius.gameserver.entity.instancezone.conditions.ConditionGroupMin)
++				{
++					final org.l2jmobius.gameserver.util.StatSet params = new org.l2jmobius.gameserver.util.StatSet();
++					params.set("limit", 2);
++					conditions.add(new org.l2jmobius.gameserver.entity.instancezone.conditions.ConditionGroupMin(template, params, true, true));
++					continue;
++				}
++				conditions.add((org.l2jmobius.gameserver.entity.instancezone.conditions.Condition) cond);
++			}
++			template.setConditions(conditions);
++			LOGGER.info("LastImperialTomb: SmallWorldEpics — вход пати от 2 человек, без командного канала.");
++		}
++		catch (Exception e)
++		{
++			LOGGER.warning("LastImperialTomb: SmallWorldEpics — условия входа не поправить: " + e);
++		}
++	}
++	
+ 	public LastImperialTomb()
+ 	{
+ 		super(TEMPLATE_ID);
++		smallWorldEntry(); // L2Hub (малый мир)
+ 		addStartNpc(GUIDE);
+ 		addTalkId(GUIDE, CUBE);
+ 		addAttackId(SCARLET1);

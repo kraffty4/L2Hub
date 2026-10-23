@@ -52,6 +52,11 @@ public class PhantomHuntersConfig
 	public static int HUNTER_RAID_BOSS_LEVEL_MAX;
 	public static float HUNTER_RAID_DAMAGE;
 	public static float HUNTER_RAID_ARMOR;
+	public static boolean HUNTER_EPIC_RAIDS;
+	public static int HUNTER_EPIC_MIN;
+	public static int HUNTER_EPIC_MAX;
+	public static float HUNTER_EPIC_DAMAGE;
+	public static float HUNTER_EPIC_ARMOR;
 	public static boolean HUNTER_PVP_EVENTS;
 	public static int HUNTER_PVP_EVENT_MAX;
 	public static int HUNTER_PVP_EVENT_CHANCE;
@@ -150,6 +155,12 @@ public class PhantomHuntersConfig
 		HUNTER_RAID_BOSS_LEVEL_MAX = Math.max(HUNTER_RAID_BOSS_LEVEL_MIN, signed(bossLevel, 1, -4));
 		HUNTER_RAID_DAMAGE = Math.max(1, config.getFloat("HunterRaidDamage", 4));
 		HUNTER_RAID_ARMOR = Math.max(1, config.getFloat("HunterRaidArmor", 5));
+		HUNTER_EPIC_RAIDS = config.getBoolean("HunterEpicRaids", true);
+		final int[] epicSize = levels(config.getString("HunterEpicSize", "5,9"));
+		HUNTER_EPIC_MIN = Math.max(2, epicSize.length > 0 ? epicSize[0] : 5);
+		HUNTER_EPIC_MAX = Math.max(HUNTER_EPIC_MIN, Math.min(9, epicSize.length > 1 ? epicSize[1] : 9));
+		HUNTER_EPIC_DAMAGE = Math.max(1, config.getFloat("HunterEpicDamage", 4));
+		HUNTER_EPIC_ARMOR = Math.max(1, config.getFloat("HunterEpicArmor", 8));
 		HUNTER_PVP_EVENTS = config.getBoolean("HunterPvpEvents", true);
 		HUNTER_PVP_EVENT_MAX = Math.max(0, config.getInt("HunterPvpEventMax", 12));
 		HUNTER_PVP_EVENT_CHANCE = Math.max(0, Math.min(100, config.getInt("HunterPvpEventChance", 30)));

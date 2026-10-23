@@ -16,6 +16,7 @@ import org.l2jmobius.gameserver.entity.actor.Creature;
 import org.l2jmobius.gameserver.entity.actor.Npc;
 import org.l2jmobius.gameserver.entity.actor.Player;
 import org.l2jmobius.gameserver.entity.actor.SuperChampion;
+import org.l2jmobius.gameserver.entity.actor.instance.GrandBoss;
 import org.l2jmobius.gameserver.entity.actor.instance.Monster;
 import org.l2jmobius.gameserver.entity.groups.Party;
 import org.l2jmobius.gameserver.entity.groups.PartyDistributionType;
@@ -24,6 +25,7 @@ import org.l2jmobius.gameserver.entity.zone.ZoneId;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
 import org.l2jmobius.gameserver.handler.VoicedCommandHandler;
 import org.l2jmobius.gameserver.managers.FakePlayerBrain;
+import org.l2jmobius.gameserver.managers.GrandBossManager;
 import org.l2jmobius.gameserver.managers.phantom.HuntSpotData.HuntSpot;
 import org.l2jmobius.gameserver.mechanics.events.EventType;
 import org.l2jmobius.gameserver.mechanics.events.holders.actor.creature.OnCreatureDamageReceived;
@@ -41,7 +43,9 @@ import org.l2jmobius.gameserver.network.serverpackets.NpcHtmlMessage;
  * Живой игрок вступает в пати рейда и телепортируется к сбору командой {@code .raid} ({@link PhantomRaidCommand}).
  * Конец — босс убит (лут подбирается {@value #LOOT_TIME} мс), лидер лежит дольше {@value #LEADER_DEAD_GRACE} мс или легли все, бой дольше {@value #FIGHT_TIME} мс:
  * итог — в торговый чат, охотники — назад на кач.
- * Охотник-лидер на это время уходит из правил кача: его ведёт {@link #drive} из {@code PhantomHunterManager.think}.
+ * Охотник-лидер на это время уходит из правил кача: его ведёт {@link #drive} из {@code PhantomHunterManager.think}.<br>
+ * Эпики (раздел 4.43, {@code HunterEpicRaids}): из {@link #EPICS} — живые и без входа через NPC; пати {@code HunterEpicSize}, множители {@code HunterEpicDamage}
+ * и {@code HunterEpicArmor}; сбор и провал — в «Летопись мира» ({@link PhantomNews}), убийство летопись пишет сама.
  */
 public final class PhantomRaid
 {
@@ -99,6 +103,26 @@ public final class PhantomRaid
 	/** Суперчемпион: как часто искать (первый раз — через столько после старта: охотникам надо разойтись по спотам). */
 	private static final long SUPER_RETRY = 120000;
 	private static final long SUPER_FIRST = 300000;
+	/**
+	 * Эпики без входа через NPC и предмет: Королева муравьёв, Ядро, Орфен, старый Закен (на Devil's Isle; у H5 — инстанс, его нет). Баюма будят тканью у статуи,
+	 * к Антарасу и Валакасу пускают через NPC с камнем, Фринтеза и Белет — инстансы под командный канал: не здесь.
+	 */
+	private static final int[] EPICS =
+	{
+		29001, // Queen Ant
+		29006, // Core
+		29014, // Orfen
+		29022 // Zaken
+	};
+	/** Эпик: как часто искать; первый раз — через столько после старта. */
+	private static final long EPIC_RETRY = 300000;
+	private static final long EPIC_FIRST = 600000;
+	private static final String[] EPIC_GATHER_SHOUTS =
+	{
+		"собираем рейд на эпика %s (%d ур)! сбор у %s, через %d мин бьём — нужны все",
+		"го на %s %d лвл, эпик! сбор у %s, %d мин на подход",
+		"эпик %s (%d) у %s, идём большой пати, через %d мин начинаем — кто с нами?"
+	};
 	private static final String[] WIN_SHOUTS =
 	{
 		"%s лёг! спасибо %s, красавцы",
@@ -141,6 +165,8 @@ public final class PhantomRaid
 		final long started;
 		/** Цель — суперчемпион (патч 0020), а не РБ: без множителей урона и брони, конец — и когда он перестал быть суперчемпионом. */
 		final boolean superChampion;
+		/** Цель — эпик (раздел 4.43): свои множители урона и брони. */
+		final boolean epic;
 		final Set<Integer> members = new LinkedHashSet<>();
 		/** Живые игроки, вступившие через .raid. */
 		final Set<Integer> players = new LinkedHashSet<>();
@@ -167,6 +193,7 @@ public final class PhantomRaid
 			this.place = place;
 			started = now;
 			superChampion = SuperChampion.isSuper(boss);
+			epic = boss instanceof GrandBoss;
 			stageUntil = now + (superChampion ? SUPER_GATHER : (PhantomHuntersConfig.HUNTER_RAID_GATHER * 60000L));
 		}
 	}
@@ -174,6 +201,7 @@ public final class PhantomRaid
 	private volatile Raid _raid;
 	private volatile long _nextRaid;
 	private long _nextSuper;
+	private long _nextEpic;
 	/** Кого можно позвать — с последнего {@link #control} (для рейда по заказу стратега). */
 	private volatile List<Player> _candidates = List.of();
 	private volatile long _lastRaidEnd;
@@ -207,6 +235,7 @@ public final class PhantomRaid
 		{
 			_nextRaid = now + (PhantomHuntersConfig.HUNTER_RAID_FIRST * 60000L);
 			_nextSuper = now + SUPER_FIRST;
+			_nextEpic = now + EPIC_FIRST;
 			LOGGER.info(getClass().getSimpleName() + ": first raid in " + PhantomHuntersConfig.HUNTER_RAID_FIRST + " min.");
 		}
 		if (_raid != null)
@@ -218,6 +247,17 @@ public final class PhantomRaid
 		{
 			_nextSuper = now + SUPER_RETRY;
 			final Raid raid = assemble(hunting, now, SuperChampion.alive());
+			if (raid != null)
+			{
+				_raid = raid;
+				return;
+			}
+		}
+		// Эпик (раздел 4.43): жив, без входа через NPC и под охотников — рейд на него, без общего интервала рейдов.
+		if (PhantomHuntersConfig.HUNTER_EPIC_RAIDS && (now >= _nextEpic))
+		{
+			_nextEpic = now + EPIC_RETRY;
+			final Raid raid = assemble(hunting, now, epics());
 			if (raid != null)
 			{
 				_raid = raid;
@@ -237,6 +277,23 @@ public final class PhantomRaid
 		}
 		_raid = raid;
 		_nextRaid = now + interval();
+	}
+
+	/**
+	 * @return живые эпики из {@link #EPICS} (каких нет у хроники — {@code null} у менеджера, пропускаются)
+	 */
+	private static List<Npc> epics()
+	{
+		final List<Npc> epics = new ArrayList<>();
+		for (int id : EPICS)
+		{
+			final GrandBoss boss = GrandBossManager.getInstance().getBoss(id);
+			if (boss != null)
+			{
+				epics.add(boss);
+			}
+		}
+		return epics;
 	}
 
 	private static long interval()
@@ -310,7 +367,7 @@ public final class PhantomRaid
 				bosses.add(boss);
 			}
 		}
-		if (bosses.isEmpty() || (hunting.size() < PhantomHuntersConfig.HUNTER_RAID_MIN))
+		if (bosses.isEmpty() || (hunting.size() < Math.min(PhantomHuntersConfig.HUNTER_RAID_MIN, PhantomHuntersConfig.HUNTER_EPIC_MIN)))
 		{
 			return null;
 		}
@@ -348,6 +405,10 @@ public final class PhantomRaid
 			// Из подходящих — один из двух самых «тонких» по HP: у РБ одного уровня HP различается вдвое (прогон 7: Discarded Guardian 20 — 4% за три минуты).
 			fitting.sort(Comparator.comparingDouble(Npc::getMaxHp));
 			final Npc boss = fitting.get(Rnd.get(Math.min(2, fitting.size())));
+			// Эпик — пати больше (раздел 4.43).
+			final boolean epic = boss instanceof GrandBoss;
+			final int minSize = epic ? PhantomHuntersConfig.HUNTER_EPIC_MIN : PhantomHuntersConfig.HUNTER_RAID_MIN;
+			final int maxSize = epic ? PhantomHuntersConfig.HUNTER_EPIC_MAX : PhantomHuntersConfig.HUNTER_RAID_MAX;
 
 			final List<Player> members = new ArrayList<>();
 			for (Player other : hunting)
@@ -358,13 +419,13 @@ public final class PhantomRaid
 				}
 			}
 			// Без хилера босс кладёт пати — нет свободного хилера, нет и рейда.
-			if (((members.size() + 1) < PhantomHuntersConfig.HUNTER_RAID_MIN) || members.stream().noneMatch(PhantomRaid::isHealer))
+			if (((members.size() + 1) < minSize) || members.stream().noneMatch(PhantomRaid::isHealer))
 			{
 				continue;
 			}
 			// Хилер — первым, дальше — ближе по уровню к боссу.
 			members.sort(Comparator.comparingInt((Player p) -> isHealer(p) ? 0 : 1).thenComparingInt(p -> Math.abs(p.getLevel() - boss.getLevel())));
-			final List<Player> team = members.subList(0, Math.min(members.size(), PhantomHuntersConfig.HUNTER_RAID_MAX - 1));
+			final List<Player> team = members.subList(0, Math.min(members.size(), maxSize - 1));
 
 			final Location rally = rally(boss);
 			if (rally == null)
@@ -409,7 +470,7 @@ public final class PhantomRaid
 	private Raid start(Player leader, List<Player> team, Npc boss, Location rally, long now)
 	{
 		final Raid raid = new Raid(leader, boss, rally, place(boss), now);
-		final String what = raid.superChampion ? "легендарного чемпиона " : "";
+		final String what = raid.epic ? "эпика " : raid.superChampion ? "легендарного чемпиона " : "";
 		PhantomHunterManager.getInstance().raidStarts(leader);
 		PhantomHunterManager.payTeleportFee(leader);
 		leader.teleToLocation(rally, true);
@@ -425,11 +486,15 @@ public final class PhantomRaid
 		}
 		final List<String> names = names(raid);
 		final long gather = (raid.stageUntil - now) / 60000;
-		LOGGER.info(getClass().getSimpleName() + ": " + leader.getName() + " (" + leader.getLevel() + ") leads a raid on " + (raid.superChampion ? "super champion " : "") + raid.bossName + " (" + raid.bossLevel + ") at " + raid.place + ": " + String.join(", ", names) + "; fight in " + gather + " min.");
+		LOGGER.info(getClass().getSimpleName() + ": " + leader.getName() + " (" + leader.getLevel() + ") leads a raid on " + (raid.epic ? "epic " : raid.superChampion ? "super champion " : "") + raid.bossName + " (" + raid.bossLevel + ") at " + raid.place + ": " + String.join(", ", names) + "; fight in " + gather + " min.");
 
-		final String[] shouts = raid.superChampion ? SUPER_GATHER_SHOUTS : GATHER_SHOUTS;
+		final String[] shouts = raid.epic ? EPIC_GATHER_SHOUTS : raid.superChampion ? SUPER_GATHER_SHOUTS : GATHER_SHOUTS;
 		final String text = String.format(shouts[Rnd.get(shouts.length)], raid.bossName, raid.bossLevel, raid.place, gather);
 		PhantomChat.getInstance().hunterShout(leader, text);
+		if (raid.epic)
+		{
+			PhantomNews.post("epic_raid", "Охотники " + leader.getName() + " (" + (raid.members.size() + 1) + ") собирают рейд на эпика " + raid.bossName + " (" + raid.bossLevel + " ур.) у " + raid.place, leader.getName(), leader);
+		}
 		for (Player player : World.getPlayers())
 		{
 			if (!PhantomManager.getInstance().isPhantom(player) && (player.getLevel() >= (raid.bossLevel - PLAYER_LEVEL_GAP)))
@@ -538,12 +603,12 @@ public final class PhantomRaid
 					raid.stage = Stage.FIGHT;
 					raid.stageUntil = now + FIGHT_TIME;
 					// Множители — для РБ (их HP и защита не по силам пати своего уровня); суперчемпион — обычный моб x20 HP, бьют как есть.
-					if (!raid.superChampion && (PhantomHuntersConfig.HUNTER_RAID_DAMAGE > 1))
+					if (!raid.superChampion && (damageOf(raid) > 1))
 					{
 						raid.damage = new ConsumerEventListener(raid.boss, EventType.ON_CREATURE_DAMAGE_RECEIVED, (OnCreatureDamageReceived event) -> onBossDamaged(raid, event), this);
 						raid.boss.addListener(raid.damage);
 					}
-					if (!raid.superChampion && (PhantomHuntersConfig.HUNTER_RAID_ARMOR > 1))
+					if (!raid.superChampion && (armorOf(raid) > 1))
 					{
 						armor(raid, player);
 						for (int id : raid.members)
@@ -690,6 +755,26 @@ public final class PhantomRaid
 		raid.result = "fail";
 		LOGGER.info(getClass().getSimpleName() + ": " + leader.getName() + "'s raid on " + raid.bossName + " failed (" + why + ") after " + ((System.currentTimeMillis() - raid.started) / 1000) + " s, the boss has " + bossHp(raid) + "% HP; " + participants(raid) + ".");
 		shout(leader, String.format(FAIL_SHOUTS[Rnd.get(FAIL_SHOUTS.length)], raid.bossName));
+		if (raid.epic)
+		{
+			PhantomNews.post("epic_raid", "Рейд охотников " + leader.getName() + " на эпика " + raid.bossName + " не удался: у босса " + bossHp(raid) + "% HP", leader.getName(), leader);
+		}
+	}
+
+	/**
+	 * @return во сколько раз удар охотника рейда по боссу сильнее: эпик — {@code HunterEpicDamage}, РБ — {@code HunterRaidDamage}
+	 */
+	private static float damageOf(Raid raid)
+	{
+		return raid.epic ? PhantomHuntersConfig.HUNTER_EPIC_DAMAGE : PhantomHuntersConfig.HUNTER_RAID_DAMAGE;
+	}
+
+	/**
+	 * @return во сколько раз удар босса по охотнику рейда слабее: эпик — {@code HunterEpicArmor}, РБ — {@code HunterRaidArmor}
+	 */
+	private static float armorOf(Raid raid)
+	{
+		return raid.epic ? PhantomHuntersConfig.HUNTER_EPIC_ARMOR : PhantomHuntersConfig.HUNTER_RAID_ARMOR;
 	}
 
 	/**
@@ -723,7 +808,7 @@ public final class PhantomRaid
 		{
 			return;
 		}
-		raid.boss.reduceCurrentHp(event.getDamage() * (PhantomHuntersConfig.HUNTER_RAID_DAMAGE - 1), attacker, null);
+		raid.boss.reduceCurrentHp(event.getDamage() * (damageOf(raid) - 1), attacker, null);
 	}
 
 	/**
@@ -743,7 +828,7 @@ public final class PhantomRaid
 		{
 			return;
 		}
-		final double restore = event.getDamage() * (1 - (1 / PhantomHuntersConfig.HUNTER_RAID_ARMOR));
+		final double restore = event.getDamage() * (1 - (1 / armorOf(raid)));
 		hunter.setCurrentHp(Math.min(hunter.getMaxHp(), hunter.getCurrentHp() + restore));
 	}
 
@@ -950,7 +1035,7 @@ public final class PhantomRaid
 		FakePlayerBrain.field(sb, "title", raid.bossName).append(',');
 		FakePlayerBrain.field(sb, "stage", raid.stage.name()).append(',');
 		FakePlayerBrain.field(sb, "place", raid.place).append(",\"since\":").append(raid.started).append(",\"bossLevel\":").append(raid.bossLevel);
-		sb.append(",\"leader\":").append(raid.leaderId == player.getObjectId()).append(",\"superChampion\":").append(raid.superChampion).append('}');
+		sb.append(",\"leader\":").append(raid.leaderId == player.getObjectId()).append(",\"superChampion\":").append(raid.superChampion).append(",\"epic\":").append(raid.epic).append('}');
 		return true;
 	}
 

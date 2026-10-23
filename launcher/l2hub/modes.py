@@ -120,7 +120,7 @@ def set_switch(p: dict, switch_id: str, value: bool) -> dict:
 
 
 def apply_mode(p: dict, mode_id: str) -> dict:
-    """Режим целиком: рейты групп и выключатели. Ключей, которых в сборке нет, — пропуск со списком."""
+    """Режим целиком: рейты групп и выключатели. Рейтов и прочих ключей, которых в сборке нет, — пропуск со списком."""
     if why := supported(p):
         raise ValueError(why)
     t = table()
@@ -141,12 +141,11 @@ def apply_mode(p: dict, mode_id: str) -> dict:
                 skipped.append(key)
             else:
                 edits.append({"part": "game", "file": rf, "key": key, "value": str(mult)})
+    # Выключателя нет в сборке (чужая хроника: L2 Pass есть только у Essence) — молча мимо: окно его и не показывает.
     for sid, value in mode["switches"].items():
         s = next(x for x in t["switches"] if x["id"] == sid)
         if keys := _present(p, s):
             edits.extend(_edits(s, keys, value))
-        else:
-            skipped.append(f"{s['file']}: {', '.join(s.get('keys') or [s['key']])}")
     # Прочие ключи режима (удобства: автоподбор, автоизучение скиллов, бесплатные маунты) — {файл: {ключ: значение}}.
     for file, keys in mode.get("settings", {}).items():
         for key, value in keys.items():

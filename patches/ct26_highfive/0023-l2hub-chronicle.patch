@@ -1,9 +1,9 @@
 diff --git a/dist/game/data/scripts/custom/L2HubChronicle/L2HubChronicle.java b/dist/game/data/scripts/custom/L2HubChronicle/L2HubChronicle.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..4f45803a155dc799c8eaa667cd04a52b38867798
+index 0000000000000000000000000000000000000000..fe27050103cc1be19c10c84fed66cace8af283dd
 --- /dev/null
 +++ b/dist/game/data/scripts/custom/L2HubChronicle/L2HubChronicle.java
-@@ -0,0 +1,532 @@
+@@ -0,0 +1,528 @@
 +/*
 + * This file is part of the L2J Mobius project.
 + *
@@ -40,15 +40,14 @@ index 0000000000000000000000000000000000000000..4f45803a155dc799c8eaa667cd04a52b
 +import java.util.logging.Logger;
 +
 +import org.l2jmobius.commons.threads.ThreadPool;
-+import org.l2jmobius.gameserver.data.SpawnTable;
 +import org.l2jmobius.gameserver.data.xml.MapRegionData;
++import org.l2jmobius.gameserver.entity.World;
 +import org.l2jmobius.gameserver.entity.actor.Attackable;
 +import org.l2jmobius.gameserver.entity.actor.Npc;
 +import org.l2jmobius.gameserver.entity.actor.Player;
 +import org.l2jmobius.gameserver.entity.actor.SuperChampion;
 +import org.l2jmobius.gameserver.entity.actor.instance.GrandBoss;
 +import org.l2jmobius.gameserver.entity.groups.Party;
-+import org.l2jmobius.gameserver.entity.spawns.Spawn;
 +import org.l2jmobius.gameserver.managers.GrandBossManager;
 +import org.l2jmobius.gameserver.managers.ScriptManager;
 +import org.l2jmobius.gameserver.managers.phantom.PhantomManager;
@@ -428,19 +427,16 @@ index 0000000000000000000000000000000000000000..4f45803a155dc799c8eaa667cd04a52b
 +					}
 +				}
 +			}
-+			// У Elpies Classic и Essence набора _elpies нет (считают CURRENT_ELPY_COUNT, убирают по SpawnTable) — ищем эльпи по спавнам.
++			// У Elpies Classic и Essence набора _elpies нет (считают CURRENT_ELPY_COUNT), а Quest.addSpawn в SpawnTable не пишет —
++			// эльпи ищем среди объектов мира (прогон classic-essence 2026-10-22).
 +			if (where == null)
 +			{
-+				for (Spawn spawn : SpawnTable.getInstance().getSpawns(ELPY))
++				final Npc elpy = World.getNpc(ELPY);
++				if ((elpy != null) && !elpy.isDead())
 +				{
-+					final Npc elpy = spawn.getLastSpawn();
-+					if ((elpy != null) && !elpy.isDead())
-+					{
-+						where = town(elpy);
-+						x = elpy.getX();
-+						y = elpy.getY();
-+						break;
-+					}
++					where = town(elpy);
++					x = elpy.getX();
++					y = elpy.getY();
 +				}
 +			}
 +			add("elpies", "Нашествие эльпи", null, where, x, y); // город — в where: экран летописи пишет его рядом
