@@ -297,6 +297,8 @@ public class PhantomHunterManager
 		/** Махач (патч 0037): драку начал он сам — бьёт только того, кто ответил и флагнулся; когда начал. */
 		volatile boolean brawlAggressor;
 		volatile long brawlSince;
+		/** ПК (раздел 4.44, {@link PhantomPk}): напал на белого и добивает его — не отходит, как в махаче. */
+		volatile boolean pkHunt;
 		/** Ответил «сорян» на предъяву за моба (патч 0037) — уйти на другой спот на ближайшем тике. */
 		volatile boolean yieldRequested;
 		// Экономика и пати.
@@ -639,6 +641,8 @@ public class PhantomHunterManager
 			PhantomDuel.getInstance().control(onSpots, now);
 			// Семь печатей (раздел 4.42): смена периода — в летопись.
 			PhantomSevenSigns.getInstance().control(now);
+			// ПК (раздел 4.44): реакция на ПК вокруг, редко — кто-то из горячих становится ПК.
+			PhantomPk.getInstance().control(onSpots, now);
 		}
 
 		switch (PhantomHuntersConfig.HUNTERS_MODE)
@@ -3365,6 +3369,12 @@ public class PhantomHunterManager
 			return;
 		}
 
+		// ПК (раздел 4.44) напал: слабый или трус не отвечает, а убегает — тогда убийство даст ПК карму.
+		if (hunterEnemy && isPkHunting(enemy) && (hunter.enemyId != enemy.getObjectId()) && PhantomPk.getInstance().fleeFromAttacker(player, enemy))
+		{
+			return;
+		}
+
 		final boolean fresh = hunter.enemyId != enemy.getObjectId();
 		hunter.enemyId = enemy.getObjectId();
 		hunter.enemySeen = System.currentTimeMillis();
@@ -3446,12 +3456,73 @@ public class PhantomHunterManager
 	}
 
 	/**
+	 * ПК (раздел 4.44, {@link PhantomPk} решил): нападение на белого — как махач ({@link #fight}), но не отходит, а добивает; карму даёт Mobius.
+	 * @param player ПК
+	 * @param victim жертва
+	 */
+	void startPk(Player player, Player victim)
+	{
+		final Hunter hunter = _hunters.get(player.getName().toLowerCase());
+		if (hunter == null)
+		{
+			return;
+		}
+		final long now = System.currentTimeMillis();
+		hunter.enemyId = victim.getObjectId();
+		hunter.enemySeen = now;
+		hunter.brawlAggressor = true;
+		hunter.brawlSince = now;
+		hunter.pkHunt = true;
+		if (player.isSitting())
+		{
+			player.standUp();
+		}
+		AutoPlayTaskManager.getInstance().stopAutoPlay(player);
+		player.setTarget(victim);
+		player.getAI().setIntentionAttack(victim);
+	}
+
+	/**
+	 * @return охотник сейчас ПК — гонится за жертвой (раздел 4.44)
+	 */
+	boolean isPkHunting(Player player)
+	{
+		final Hunter hunter = _hunters.get(player.getName().toLowerCase());
+		return (hunter != null) && hunter.pkHunt;
+	}
+
+	/**
+	 * Бить ПК (раздел 4.44): драка, как в ответ на нападение ({@link #fight}): AutoPlay по персонажам, цель — ПК (его бьют без кармы).
+	 * @return начал (на каче и ни с кем не дерётся)
+	 */
+	boolean engagePk(Player player, Player pk)
+	{
+		final Hunter hunter = _hunters.get(player.getName().toLowerCase());
+		if ((hunter == null) || (hunter.phase != Phase.HUNT) || (hunter.enemyId != 0) || player.isDead())
+		{
+			return false;
+		}
+		hunter.enemyId = pk.getObjectId();
+		hunter.enemySeen = System.currentTimeMillis();
+		hunter.brawlAggressor = false;
+		hunter.pkHunt = false;
+		return true;
+	}
+
+	/**
 	 * Охотника убил живой игрок: запомнить обидчика (переменная персонажа, переживает рестарт) и высказаться.
 	 */
 	private void onKilled(Hunter hunter, Player player, Creature killer)
 	{
 		hunter.enemyId = 0;
 		hunter.brawlAggressor = false;
+		hunter.pkHunt = false;
+		// ПК (раздел 4.44) получил по заслугам — в летопись.
+		final Player pkKiller = actingPlayer(killer);
+		if ((pkKiller != null) && (pkKiller != player) && (PhantomCompat.karma(player) > 0))
+		{
+			PhantomPk.getInstance().onPkKilled(player, pkKiller);
+		}
 		// PvP-ивент (раздел 4.33): смерть на арене — спорт, не обида; поднимет ивент, в город не уходит.
 		if (player.isOnEvent())
 		{
@@ -3480,12 +3551,17 @@ public class PhantomHunterManager
 	private boolean fight(Hunter hunter, Player player, long now)
 	{
 		final Player enemy = World.getPlayer(hunter.enemyId);
-		final boolean gone = (enemy == null) || !enemy.isOnline() || (player.calculateDistance2D(enemy) > 2500) || ((now - hunter.enemySeen) > 60000);
+		// ПК гонится за жертвой, охотник бьёт ПК — пока он рядом (раздел 4.44); ПК — не дольше PhantomPk.CHASE.
+		if ((enemy != null) && (hunter.pkHunt || (PhantomCompat.karma(enemy) > 0)) && (player.calculateDistance2D(enemy) <= 2500))
+		{
+			hunter.enemySeen = now;
+		}
+		final boolean gone = (enemy == null) || !enemy.isOnline() || (player.calculateDistance2D(enemy) > 2500) || ((now - hunter.enemySeen) > 60000) || (hunter.pkHunt && ((now - hunter.brawlSince) > PhantomPk.CHASE));
 		final boolean hunterEnemy = (enemy != null) && PhantomRelations.isHunter(enemy);
 
 		// Махач (патч 0037): страх ПК. Зачинщик бьёт только того, кто ответил и флагнулся; не ответил за GRACE или почти мёртв без флага — отойти, белого не добивать.
 		final boolean grace = hunter.brawlAggressor && ((now - hunter.brawlSince) < PhantomBrawl.GRACE);
-		if (!gone && hunter.brawlAggressor && !enemy.isDead() && (enemy.getPvpFlag() == 0) && (!grace || (enemy.getCurrentHp() < (enemy.getMaxHp() * 0.4))))
+		if (!gone && hunter.brawlAggressor && !hunter.pkHunt && !enemy.isDead() && (enemy.getPvpFlag() == 0) && (!grace || (enemy.getCurrentHp() < (enemy.getMaxHp() * 0.4))))
 		{
 			player.abortAttack();
 			player.getAI().setIntentionActive();
@@ -3498,9 +3574,13 @@ public class PhantomHunterManager
 			return false;
 		}
 
-		if (gone || enemy.isDead() || (!enemy.isAutoAttackable(player) && !grace))
+		if (gone || enemy.isDead() || (!enemy.isAutoAttackable(player) && !grace && !hunter.pkHunt))
 		{
-			if ((enemy != null) && enemy.isDead() && !gone && (!hunterEnemy || PhantomBanter.audience(player)))
+			if ((enemy != null) && enemy.isDead() && !gone && hunter.pkHunt)
+			{
+				PhantomPk.getInstance().onPkKill(player, enemy);
+			}
+			else if ((enemy != null) && enemy.isDead() && !gone && (!hunterEnemy || PhantomBanter.audience(player)))
 			{
 				PhantomChat.getInstance().hunterEvent(player, enemy, "WON", hunter.brawlAggressor ? "ты завалил " + enemy.getName() + " в махаче" : "ты завалил " + enemy.getName() + ", который на тебя напал", "изи)", 180000);
 			}
@@ -3515,7 +3595,7 @@ public class PhantomHunterManager
 		}
 
 		// Пока у врага нет флага, AutoPlay его не бьёт — зачинщик бьёт сам, как ctrl+клик.
-		if (grace && (enemy.getPvpFlag() == 0))
+		if ((grace || hunter.pkHunt) && (enemy.getPvpFlag() == 0) && (PhantomCompat.karma(enemy) <= 0))
 		{
 			if ((player.getTarget() != enemy) || (player.getAI().getIntention() != Intention.ATTACK))
 			{
@@ -3542,6 +3622,7 @@ public class PhantomHunterManager
 	{
 		hunter.enemyId = 0;
 		hunter.brawlAggressor = false;
+		hunter.pkHunt = false;
 		player.getAutoPlaySettings().setNextTargetMode(1); // снова мобы
 		if ((player.getTarget() instanceof Player))
 		{

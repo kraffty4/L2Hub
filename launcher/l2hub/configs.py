@@ -139,6 +139,31 @@ def _locate(server: Path, part: str, file: str) -> Path:
     raise FileNotFoundError(f"Нет файла {part}/{file}")
 
 
+def ensure_value(server: Path, backup_root: Path, part: str, file: str, key: str, value: str, comment: str = "") -> bool:
+    """Ключ в .ini равен value: есть — правится как в save_edits, нет — дописывается в конец файла (с комментарием над ним).
+    Уже так или файла нет — ничего не трогается (False). Перед записью — бэкап файла, как у save_edits."""
+    try:
+        path = _locate(server, part, file)
+    except FileNotFoundError:
+        return False
+    text = path.read_bytes().decode("utf-8-sig")
+    m = re.search(rf"^\s*{re.escape(key)}\s*=[ \t]*(.*?)\s*$", text, re.MULTILINE)
+    if m:
+        if m.group(1) == value:
+            return False
+        save_edits(server, backup_root, [{"part": part, "file": file, "key": key, "value": value}])
+        return True
+    raw = path.read_bytes()
+    newline = "\r\n" if b"\r\n" in raw else "\n"
+    target = backup_root / datetime.now().strftime("%Y-%m-%d_%H-%M-%S") / path.relative_to(server)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(path, target)
+    tail = (newline if raw and not raw.endswith(b"\n") else "") + newline
+    tail += "".join(f"# {c}{newline}" for c in comment.splitlines()) + f"{key} = {value}{newline}"
+    path.write_bytes(raw + tail.encode("utf-8"))
+    return True
+
+
 def save_edits(server: Path, backup_root: Path, edits: list[dict]) -> dict:
     """Пишет правки {part, file, key, value} в .ini. Комментарии и порядок строк не трогаются,
     меняется только значение в строке ключа. Оригиналы изменённых файлов копируются в backup_root."""

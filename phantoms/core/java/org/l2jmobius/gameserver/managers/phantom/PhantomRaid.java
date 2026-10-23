@@ -12,6 +12,7 @@ import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
 import org.l2jmobius.gameserver.entity.Location;
 import org.l2jmobius.gameserver.entity.World;
+import org.l2jmobius.gameserver.entity.WorldObject;
 import org.l2jmobius.gameserver.entity.actor.Creature;
 import org.l2jmobius.gameserver.entity.actor.Npc;
 import org.l2jmobius.gameserver.entity.actor.Player;
@@ -114,6 +115,14 @@ public final class PhantomRaid
 		29014, // Orfen
 		29022 // Zaken
 	};
+	/** Миньоны эпика, которые лечат его и встают через секунды (няньки Королевы — 10 с, Риба Ирен Орфена): их не гонять, бить босса. */
+	private static final Set<Integer> EPIC_HEALERS = Set.of(29003, 29018);
+	/**
+	 * Миньон эпика (не лекарь) ближе этого к лидеру и бьёт кого-то из рейда — бить его первым; не убит за {@value #EPIC_MINION_TIME} мс — бросить и бить босса
+	 * (прогон H5 2026-10-22: лидер три минуты держал целью Raikel Leos, до которого не мог дойти, а Орфен рядом бил его — пати била миньона, Орфен остался на 100 %).
+	 */
+	private static final int EPIC_MINION_RANGE = 400;
+	private static final long EPIC_MINION_TIME = 30000;
 	/** Эпик: как часто искать; первый раз — через столько после старта. */
 	private static final long EPIC_RETRY = 300000;
 	private static final long EPIC_FIRST = 600000;
@@ -167,6 +176,10 @@ public final class PhantomRaid
 		final boolean superChampion;
 		/** Цель — эпик (раздел 4.43): свои множители урона и брони. */
 		final boolean epic;
+		/** Эпик: миньон, которого бьёт лидер, и с какого времени; брошенные (не убиты вовремя). */
+		int minionId;
+		long minionSince;
+		final Set<Integer> skipMinions = new LinkedHashSet<>();
 		final Set<Integer> members = new LinkedHashSet<>();
 		/** Живые игроки, вступившие через .raid. */
 		final Set<Integer> players = new LinkedHashSet<>();
@@ -553,7 +566,7 @@ public final class PhantomRaid
 				case GATHER:
 				{
 					// РБ бьёт кто-то другой (игрок, чужая пати) — не мешать: дольше BUSY_GRACE бой не стих — рейд распускается.
-					if (!raid.superChampion && raid.boss.isInCombat())
+					if (!raid.superChampion && raid.boss.isInCombat() && !fightsRaid(raid))
 					{
 						if (raid.busySince == 0)
 						{
@@ -649,7 +662,8 @@ public final class PhantomRaid
 					if ((now - raid.lastReport) >= FIGHT_REPORT)
 					{
 						raid.lastReport = now;
-						LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " fights " + raid.bossName + ": boss " + bossHp(raid) + "% HP, leader " + (int) ((player.getCurrentHp() * 100) / Math.max(1, player.getMaxHp())) + "% HP, alive " + alive(raid) + ".");
+						final WorldObject target = player.getTarget();
+						LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " fights " + raid.bossName + ": boss " + bossHp(raid) + "% HP, leader " + (int) ((player.getCurrentHp() * 100) / Math.max(1, player.getMaxHp())) + "% HP, alive " + alive(raid) + ", target " + (target == null ? "-" : target.getName() + " at " + (int) player.calculateDistance2D(target)) + ", boss at " + (int) player.calculateDistance2D(raid.boss) + (raid.epic ? ", minions " + minions(raid) : "") + ".");
 					}
 					if (player.isSitting())
 					{
@@ -670,7 +684,7 @@ public final class PhantomRaid
 					}
 					if (!player.isCastingNow())
 					{
-						PhantomCompanionManager.fight(player, raid.boss);
+						PhantomCompanionManager.fight(player, raid.epic ? epicTarget(raid, player, now) : raid.boss);
 					}
 					return Drive.LEADS;
 				}
@@ -688,6 +702,88 @@ public final class PhantomRaid
 			}
 			return Drive.LEADS;
 		}
+	}
+
+	/**
+	 * Цель лидера в бою с эпиком: ближайший миньон-боец рядом, который бьёт кого-то из рейда, — первым (не дольше {@value #EPIC_MINION_TIME} мс на одного),
+	 * иначе сам эпик; лекарей ({@link #EPIC_HEALERS}) не гонять.
+	 */
+	private static Creature epicTarget(Raid raid, Player leader, long now)
+	{
+		if (!(raid.boss instanceof Monster) || !((Monster) raid.boss).hasMinions())
+		{
+			return raid.boss;
+		}
+		Monster best = null;
+		double bestDistance = EPIC_MINION_RANGE;
+		for (Monster minion : ((Monster) raid.boss).getMinionList().getSpawnedMinions())
+		{
+			if ((minion == null) || minion.isAlikeDead() || EPIC_HEALERS.contains(minion.getId()) || raid.skipMinions.contains(minion.getObjectId()))
+			{
+				continue;
+			}
+			final WorldObject victim = PhantomHunterOutfit.victimOf(minion);
+			if ((victim == null) || ((victim.getObjectId() != raid.leaderId) && !raid.members.contains(victim.getObjectId())))
+			{
+				continue;
+			}
+			final double distance = leader.calculateDistance2D(minion);
+			if (distance < bestDistance)
+			{
+				best = minion;
+				bestDistance = distance;
+			}
+		}
+		if (best == null)
+		{
+			raid.minionId = 0;
+			return raid.boss;
+		}
+		if (best.getObjectId() != raid.minionId)
+		{
+			raid.minionId = best.getObjectId();
+			raid.minionSince = now;
+		}
+		else if ((now - raid.minionSince) > EPIC_MINION_TIME)
+		{
+			raid.skipMinions.add(best.getObjectId());
+			raid.minionId = 0;
+			return raid.boss;
+		}
+		return best;
+	}
+
+	/**
+	 * @return босс (эпик) бьёт кого-то из рейда — не «чужой бой»: Ядро на сборе сцепилось с охотниками у точки сбора (прогон H5 2026-10-22)
+	 */
+	private static boolean fightsRaid(Raid raid)
+	{
+		if (!raid.epic)
+		{
+			return false;
+		}
+		final Creature target = PhantomCompat.attackTarget(raid.boss);
+		return (target != null) && ((target.getObjectId() == raid.leaderId) || raid.members.contains(target.getObjectId()));
+	}
+
+	/**
+	 * @return живых миньонов эпика — для отчёта боя
+	 */
+	private static int minions(Raid raid)
+	{
+		if (!(raid.boss instanceof Monster) || !((Monster) raid.boss).hasMinions())
+		{
+			return 0;
+		}
+		int alive = 0;
+		for (Monster minion : ((Monster) raid.boss).getMinionList().getSpawnedMinions())
+		{
+			if ((minion != null) && !minion.isAlikeDead())
+			{
+				alive++;
+			}
+		}
+		return alive;
 	}
 
 	/**

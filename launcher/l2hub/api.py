@@ -19,7 +19,7 @@ from pathlib import Path
 
 import psutil
 
-from . import __version__, appsettings, backups, brain, builder, catalog, clients, clientsys, configs, feedback, friendpack, geodata, health, l2solo, modes, network, paths, report, runtimes, servers, updates, worldtiles
+from . import __version__, appsettings, backups, brain, builder, catalog, clients, clientsys, configs, feedback, friendpack, geodata, health, i18n, l2solo, modes, network, paths, report, runtimes, servers, updates, worldtiles
 
 CHAR_NAME_RE = re.compile(r"^[A-Za-z0-9_\-А-Яа-яЁё]{1,35}$")  # кириллица — для имён на La2offline
 ACCESS_LEVELS = {0: "Игрок", 70: "Admin", 100: "Master"}  # Mobius; у другой сборки — "accessLevels" в профиле
@@ -356,6 +356,8 @@ class Api:
         steps.insert(0 if servers.own_db(p) else 1, ("Бэкап базы…", lambda: backups.auto(p)))
         if not only_db and servers.brain_port(p):
             steps.append(("Будим мозги фейков…", lambda: servers.start_brain(p)))
+        if not only_db and p.get("type") == "mobius":
+            steps.append(("Язык модов в игре…", lambda: modes.sync_language(p, i18n.lang())))  # L2HubLanguage — до старта гейма
         if not only_db:
             steps += [
                 ("Запускаю логин-сервер…", lambda: servers.start_part(p, "login")),
@@ -388,6 +390,7 @@ class Api:
             return self._start_job(chronicle_id, "restart", l2solo.restart_steps(p))
         return self._start_job(chronicle_id, "restart", [
             ("Сохраняю мир и останавливаю гейм…", lambda: servers.stop_part(p, "game")),
+            ("Язык модов в игре…", lambda: modes.sync_language(p, i18n.lang())),
             ("Гейм-сервер грузит мир…", lambda: servers.start_part(p, "game")),
         ])
 

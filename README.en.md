@@ -23,7 +23,7 @@
 
 - **With friends.** Radmin VPN, Tailscale, ZeroTier or a LAN: L2Hub sets the addresses and packs a client or an `L2.ini` for your friend.
 - **Database backups** before every start and a two-click rollback. **“Check everything”** tells you what broke and how to fix it.
-- **Russian and English interface** (“L2Hub” → “Interface language”). In-game texts of our mods and bot speech are still Russian for now.
+- **Russian and English interface** (“L2Hub” → “Interface language”). On Interlude, Classic and Essence the in-game texts of our mods follow it too: announcements and the `.world` window. Hunter windows, the Alt+B board, bot speech and the mods on High Five and Epilogue are still Russian for now.
 
 ## Requirements
 

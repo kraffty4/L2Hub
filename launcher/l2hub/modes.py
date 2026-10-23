@@ -110,6 +110,19 @@ def _save(p: dict, edits: list[dict]) -> dict:
     return configs.save_edits(catalog.server_dir(p), paths.BACKUPS / "config" / p["id"], edits)
 
 
+def sync_language(p: dict, lang: str) -> None:
+    """Язык текстов наших модов в игре — L2HubLanguage (ru | en) в L2HubWorld.ini модуля фантомов — по языку интерфейса
+    L2Hub, перед стартом гейма: применяется с запуска. Нет ключа — дописывается (сервер без ключа читает ru); у сборок без
+    модуля фантомов файла нет — ничего. Сбой записи старт не ломает."""
+    if p.get("type") != "mobius":
+        return
+    try:
+        configs.ensure_value(catalog.server_dir(p), paths.BACKUPS / "config" / p["id"], "game", "L2HubWorld.ini", "L2HubLanguage", lang,
+                             "Язык текстов модов L2Hub в игре: ru | en. Пишет лаунчер по языку интерфейса перед запуском.")
+    except (OSError, ValueError, KeyError):
+        pass
+
+
 def set_switch(p: dict, switch_id: str, value: bool) -> dict:
     s = next((x for x in table()["switches"] if x["id"] == switch_id), None)
     keys = _present(p, s) if s else {}

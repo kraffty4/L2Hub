@@ -34,7 +34,8 @@ def peel(cid: str, src: Path, name: str, files: list[str]) -> tuple[dict[str, by
     для файлов генератора и всех файлов поздних патчей (они нужны restack), и сами поздние патчи."""
     upper = later(cid, name, files)
     own = ROOT / "patches" / cid / name
-    paths = set(files) | {rel for p in [own, *upper] for rel in touched(p)}
+    mine = [own] if own.is_file() else []  # своего патча ещё нет (первый прогон) — снимаются только поздние
+    paths = set(files) | {rel for p in [*mine, *upper] for rel in touched(p)}
     with tempfile.TemporaryDirectory() as tmp:
         t = Path(tmp)
         for rel in paths:
@@ -42,7 +43,7 @@ def peel(cid: str, src: Path, name: str, files: list[str]) -> tuple[dict[str, by
                 (t / rel).parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(src / rel, t / rel)
         subprocess.run(["git", "init", "-q"], cwd=t, check=True)
-        for patch in [*reversed(upper), own]:
+        for patch in [*reversed(upper), *mine]:
             r = _git_apply(t, patch, reverse=True)
             if r.returncode != 0:
                 raise SystemExit(f"{patch.relative_to(ROOT)} не снимается с копии дерева: {r.stderr.decode().strip()}")

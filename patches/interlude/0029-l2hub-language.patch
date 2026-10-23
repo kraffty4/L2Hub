@@ -930,3 +930,53 @@ index 97e2837dafa24323abcfe6665b5f66c4051048a5..74d072d3b31b216281a424252b7371c5
  		LOGGER.info("SuperChampion: " + npc.getName() + " (" + npc.getLevel() + ") at " + npc.getX() + ", " + npc.getY() + ", " + npc.getZ() + " — " + text);
  		final String scope = ChampionMonstersConfig.SUPER_CHAMPION_ANNOUNCE;
  		final boolean world = "World".equalsIgnoreCase(scope);
+diff --git a/java/org/l2jmobius/gameserver/mechanics/script/LongTimeEvent.java b/java/org/l2jmobius/gameserver/mechanics/script/LongTimeEvent.java
+index 50dde7add5e89f5501cfc229a2644f06adcfdb7d..9152862a0c78a6511712f27621f41a3ede54b488 100644
+--- a/java/org/l2jmobius/gameserver/mechanics/script/LongTimeEvent.java
++++ b/java/org/l2jmobius/gameserver/mechanics/script/LongTimeEvent.java
+@@ -70,6 +70,36 @@ import org.l2jmobius.gameserver.mechanics.events.listeners.ConsumerEventListener
+  */
+ public class LongTimeEvent extends Script
+ {
++	// L2Hub: язык наших текстов (tools/l2hub_lang.py): L2HubLanguage в config/Custom/L2HubWorld.ini — ru или en, лаунчер пишет его
++	// по языку окна. Строки в коде — по-русски, tr() при en подменяет их английскими из L2HUB_EN; чего там нет — по-русски.
++	private static final boolean L2HUB_ENGLISH = l2hubEnglish();
++	private static final java.util.Map<String, String> L2HUB_EN = java.util.Map.ofEntries(
++		java.util.Map.entry("Рождество: событие окончено!", "Christmas: the event is over!"),
++		java.util.Map.entry("Рождество: с монстров падают части ёлки и эхо-кристаллы с колядками. Неси части ёлки ученику Санты в любом городе!", "Christmas: monsters drop Christmas tree parts and carol Echo Crystals. Bring the tree parts to Santa's Trainee in any town!"),
++		java.util.Map.entry("Heavy Medal: событие окончено!", "Heavy Medal: the event is over!"),
++		java.util.Map.entry("Heavy Medal: с монстров падают медали. Меняй их на значки у котов события в каждом городе!", "Heavy Medal: monsters drop medals. Trade them for badges at the Event Cats in every town!"),
++		java.util.Map.entry("L2 Day: событие окончено!", "L2 Day: the event is over!"),
++		java.util.Map.entry("L2 Day: с монстров падают буквы. Собери слова NCSOFT, CHRONICLE и LINEAGE II и отнеси менеджеру события — он в стартовых деревнях и в больших городах рядом с баффером. Там призы!", "L2 Day: monsters drop letters. Spell NCSOFT, CHRONICLE and LINEAGE II and bring them to the Event Manager, found in the starting villages and in big towns next to the buffer. Prizes await!"));
++	
++	private static boolean l2hubEnglish()
++	{
++		final java.util.Properties config = new java.util.Properties();
++		try (java.io.Reader reader = java.nio.file.Files.newBufferedReader(java.nio.file.Paths.get("./config/Custom/L2HubWorld.ini"), java.nio.charset.StandardCharsets.UTF_8))
++		{
++			config.load(reader);
++		}
++		catch (Exception e)
++		{
++			return false;
++		}
++		return "en".equalsIgnoreCase(config.getProperty("L2HubLanguage", "ru").trim());
++	}
++	
++	private static String tr(String text)
++	{
++		return L2HUB_ENGLISH ? L2HUB_EN.getOrDefault(text, text) : text;
++	}
++	
+ 	private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd MM yyyy", Locale.US);
+ 	
+ 	protected String _eventName;
+@@ -476,7 +506,7 @@ public class LongTimeEvent extends Script
+ 								if (d.getNodeName().equalsIgnoreCase("add"))
+ 								{
+ 									final String msgType = d.getAttributes().getNamedItem("type").getNodeValue();
+-									final String msgText = d.getAttributes().getNamedItem("text").getNodeValue();
++									final String msgText = tr(d.getAttributes().getNamedItem("text").getNodeValue());
+ 									if ((msgType != null) && (msgText != null))
+ 									{
+ 										if (msgType.equalsIgnoreCase("onEnd"))

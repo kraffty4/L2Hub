@@ -9,7 +9,9 @@
   - в начало класса — поле L2HUB_ENGLISH (читает L2HubLanguage), таблица L2HUB_EN «русская строка → английская» и tr();
     строки в коде остаются русскими, чего в таблице нет — остаётся по-русски (как переводчик окна лаунчера);
   - суперчемпион: текст объявления берётся из SuperChampionAnnounceText (у нас — русский); при en и русском тексте в ini
-    — английский текст Mobius по умолчанию.
+    — английский текст Mobius по умолчанию;
+  - сезонные события (LongTimeEvent): объявления начала и конца из config.xml событий идут через tr(), в таблицу класса —
+    русские тексты этих config.xml.
 Таблица — tools/l2hub_lang/en.json {русская строка (как в рантайме): английская}; одна на все хроники.
 Окна-html (доска Alt+B, окно моба по Shift+клику, диалоги событий) здесь не переводятся — у Mobius для них свои языковые
 папки (MultilingualSupport.ini, data/lang/<язык>/html).
@@ -19,6 +21,7 @@
     python -X utf8 tools/l2hub_lang.py <id> --write   — собрать патч в patches/<id>/ и наложить на дерево
 Наложен прежний patches/<id>/0029 — он снимается с копии дерева, и патч собирается заново (tools/patch_layers.py).
 """
+import html
 import json
 import re
 import sys
@@ -27,7 +30,7 @@ from pathlib import Path
 import l2hub_olympiad_small as small
 import patch_layers
 
-NAME = "0029-l2hub-language.patch"
+NAME = "0029-l2hub-language.patch"  # у хроники уже есть *-l2hub-language.patch под другим номером — берётся он (Classic: 0099)
 MARK = "L2Hub: язык наших текстов"
 TABLE = small.ROOT / "tools" / "l2hub_lang" / "en.json"
 # Файлы модов (путь от корня исходников хроники; glob — где путь у хроник разный).
@@ -37,7 +40,11 @@ TARGETS = [
     "dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java",
     "dist/game/data/scripts/**/events/Elpies/Elpies.java",
     "java/org/l2jmobius/gameserver/entity/actor/SuperChampion.java",
+    "java/org/l2jmobius/gameserver/mechanics/script/LongTimeEvent.java",
 ]
+EVENT_CONFIGS = "dist/game/data/scripts/events/*/config.xml"
+MSG_OLD = 'final String msgText = d.getAttributes().getNamedItem("text").getNodeValue();'
+MSG_NEW = 'final String msgText = tr(d.getAttributes().getNamedItem("text").getNodeValue());'
 CYR = re.compile(r"[А-Яа-яЁё]")
 ANNOUNCE_OLD = "ChampionMonstersConfig.SUPER_CHAMPION_ANNOUNCE_TEXT.replace("
 ANNOUNCE_NEW = ("(L2HUB_ENGLISH && ChampionMonstersConfig.SUPER_CHAMPION_ANNOUNCE_TEXT.matches(\"(?s).*[\\\\u0400-\\\\u04FF].*\") ? "
@@ -142,7 +149,18 @@ def helper(nl: str, indent: str, entries: list[tuple[str, str]]) -> list[str]:
     ]
 
 
-def edit(rel: str, data: bytes, table: dict[str, str]) -> tuple[bytes, list[str], list[str]]:
+def event_texts(src: Path) -> list[str]:
+    """Русские объявления сезонных событий из их config.xml (атрибут text)."""
+    out = []
+    for f in sorted(src.glob(EVENT_CONFIGS)):
+        for m in re.finditer(r'\btext="([^"]*)"', f.read_text(encoding="utf-8")):
+            text = html.unescape(m.group(1))
+            if CYR.search(text) and text not in out:
+                out.append(text)
+    return out
+
+
+def edit(rel: str, data: bytes, table: dict[str, str], events: list[str]) -> tuple[bytes, list[str], list[str]]:
     nl = "\r\n" if b"\r\n" in data else "\n"
     code = data.decode("utf-8")
     if re.search(r"\btr\s*\(", code):
@@ -152,6 +170,12 @@ def edit(rel: str, data: bytes, table: dict[str, str]) -> tuple[bytes, list[str]
         if code.count(ANNOUNCE_OLD) != 1:
             sys.exit(f"{rel}: не нашёл {ANNOUNCE_OLD}")
         code = code.replace(ANNOUNCE_OLD, ANNOUNCE_NEW)
+    if rel.endswith("LongTimeEvent.java"):
+        if code.count(MSG_OLD) != 1:
+            sys.exit(f"{rel}: не нашёл {MSG_OLD}")
+        code = code.replace(MSG_OLD, MSG_NEW)
+        used += [t for t in events if t not in used]
+        missing += [t for t in events if t not in table and t not in missing]
     lines = code.split(nl)
     head = next(i for i, l in enumerate(lines) if re.match(r"^public (final )?class \w+", l))
     brace = next(i for i in range(head, len(lines)) if lines[i].strip() == "{")
@@ -167,20 +191,23 @@ def main() -> None:
     todo = sys.argv[sys.argv.index("--todo") + 1] if "--todo" in sys.argv else None
     table = json.loads(TABLE.read_text(encoding="utf-8")) if TABLE.is_file() else {}
     src = small.tree(cid)
+    own = sorted((small.ROOT / "patches" / cid).glob("*-l2hub-language.patch"))
+    name = own[0].name if own else NAME
     files = files_of(src)
     if not files:
         sys.exit(f"{cid}: нет файлов модов L2Hub")
     current = {rel: (src / rel).read_bytes() for rel in files}
     upper, peeled = [], {}
     if any(MARK.encode() in data for data in current.values()):
-        if not (small.ROOT / "patches" / cid / NAME).is_file():
-            sys.exit(f"в дереве уже есть «{MARK}», а patches/{cid}/{NAME} нет — нечем снять")
-        peeled, upper = patch_layers.peel(cid, src, NAME, files)
+        if not (small.ROOT / "patches" / cid / name).is_file():
+            sys.exit(f"в дереве уже есть «{MARK}», а patches/{cid}/{name} нет — нечем снять")
+        peeled, upper = patch_layers.peel(cid, src, name, files)
         current = {rel: peeled[rel] for rel in files}
-        print(f"{cid}: прежний {NAME} снят с копии дерева, патч собирается заново")
+        print(f"{cid}: прежний {name} снят с копии дерева, патч собирается заново")
     new, missing, total = {}, [], 0
+    events = event_texts(src)
     for rel in files:
-        new[rel], used, miss = edit(rel, current[rel], table)
+        new[rel], used, miss = edit(rel, current[rel], table, events)
         total += len(used)
         missing += [m for m in miss if m not in missing]
         print(f"  {rel.split('/')[-1]}: строк {len(used)}, без перевода {len(miss)}")
@@ -193,10 +220,10 @@ def main() -> None:
     final = patch_layers.restack(new, upper, peeled)
     print(f"{cid}: файлов {len(new)}, строк {total}, без перевода {len(missing)}; наложение на копию — байт в байт")
     if write:
-        (small.ROOT / "patches" / cid / NAME).write_bytes(patch)
+        (small.ROOT / "patches" / cid / name).write_bytes(patch)
         for rel, data in final.items():
             (src / rel).write_bytes(data)
-        print(f"записано: patches/{cid}/{NAME} и дерево {src.relative_to(small.ROOT)}")
+        print(f"записано: patches/{cid}/{name} и дерево {src.relative_to(small.ROOT)}")
 
 
 if __name__ == "__main__":
