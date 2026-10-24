@@ -271,4 +271,8 @@
 		<gear grade="A" minLevel="61" rhand="80" head="90476" chest="2383" gloves="5774" feet="5786" shots="91927" /> <!-- Tallum Blade, Majestic Circlet (Heavy), Majestic Plate Armor, Majestic Gauntlets (Heavy), Majestic Boots (Heavy) -->
 		<gear grade="S" minLevel="76" rhand="6364" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" lhand="6377" shots="91927" /> <!-- Forgotten Blade, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots, Imperial Crusader Shield -->
 	</phantom>
+	<!-- Thanatos: Танатос, единственный ПК сервера; Orc Fighter, Monk, Tyrant, Grand Khavatari, всегда 76-й -->
+	<phantom name="Thanatos" kind="reaper" role="DAMAGE" female="false" face="2" hairStyle="1" hairColor="2" classes="44,47,48,114" x="-45264" y="-112512" z="-240">
+		<gear grade="S" minLevel="76" rhand="6371" head="6382" chest="6379" gloves="6380" feet="6381" neck="95407" ear="95379" ring="95392" shots="91927" /> <!-- Demon Splinter, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots, Tateossian Necklace, Tateossian Earring, Tateossian Ring -->
+	</phantom>
 </list>

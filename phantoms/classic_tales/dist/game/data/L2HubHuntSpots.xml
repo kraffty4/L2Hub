@@ -361,10 +361,10 @@
 	<spot level="54" min="53" max="55" region="Hunters" name="Enchanted Valley · South of Enchanted Valley" x="124844" y="56142" z="-3680" radius="1500" mobs="14" />
 	<spot level="54" min="53" max="55" region="Hunters" name="Enchanted Valley · северо-запад" x="107463" y="40015" z="-3672" radius="1500" mobs="10" />
 	<spot level="55" min="54" max="56" region="Hunters" name="Enchanted Valley · North of Enchanted Valley" x="115001" y="36553" z="-3552" radius="1500" mobs="11" />
-	<spot level="56" min="54" max="59" region="Aden" name="Tower Of Insolence · северо-восток" x="115968" y="14730" z="-5096" radius="1319" mobs="12" />
-	<spot level="56" min="54" max="59" region="Aden" name="Tower Of Insolence · северо-запад" x="113343" y="14754" z="-5096" radius="1229" mobs="12" />
-	<spot level="56" min="54" max="59" region="Aden" name="Tower Of Insolence · юго-восток" x="115958" y="17421" z="-5096" radius="1266" mobs="12" />
-	<spot level="56" min="54" max="59" region="Aden" name="Tower Of Insolence · юго-запад" x="113332" y="17389" z="-5096" radius="1323" mobs="12" />
+	<spot level="56" min="54" max="59" region="Aden" name="Tower Of Insolence" x="113343" y="14754" z="-5096" radius="1229" mobs="12" />
+	<spot level="56" min="54" max="59" region="Aden" name="Tower Of Insolence" x="115968" y="14730" z="-5096" radius="1319" mobs="12" />
+	<spot level="56" min="54" max="59" region="Aden" name="Tower Of Insolence" x="115958" y="17421" z="-5096" radius="1266" mobs="12" />
+	<spot level="56" min="54" max="59" region="Aden" name="Tower Of Insolence" x="113332" y="17389" z="-5096" radius="1323" mobs="12" />
 	<spot level="56" min="55" max="57" region="Hunters" name="Enchanted Valley · North of Enchanted Valley" x="118977" y="38789" z="-3496" radius="1500" mobs="14" />
 	<spot level="56" min="55" max="57" region="Hunters" name="Enchanted Valley · North of Enchanted Valley" x="113816" y="42271" z="-3840" radius="1500" mobs="8" />
 	<spot level="56" min="55" max="57" region="Hunters" name="Enchanted Valley · запад" x="103560" y="48898" z="-3528" radius="1500" mobs="17" />
@@ -374,11 +374,11 @@
 	<spot level="57" min="56" max="58" region="Hunters" name="Enchanted Valley · юго-запад" x="111879" y="54693" z="-3696" radius="1500" mobs="12" />
 	<spot level="57" min="56" max="58" region="Hunters" name="Enchanted Valley · юго-запад" x="108597" y="55802" z="-3592" radius="1500" mobs="9" />
 	<spot level="57" min="56" max="58" region="Hunters" name="Enchanted Valley · юго-запад" x="108944" y="59369" z="-3712" radius="1500" mobs="8" />
-	<spot level="58" min="55" max="60" region="Aden" name="Tower Of Insolence · северо-восток" x="115906" y="14853" z="-3608" radius="1218" mobs="14" />
-	<spot level="58" min="55" max="60" region="Aden" name="Tower Of Insolence · северо-запад" x="113409" y="14811" z="-3608" radius="1271" mobs="14" />
-	<spot level="58" min="55" max="60" region="Aden" name="Tower Of Insolence · юг" x="114648" y="16079" z="-3608" radius="841" mobs="8" />
-	<spot level="58" min="55" max="60" region="Aden" name="Tower Of Insolence · юго-восток" x="115931" y="17350" z="-3608" radius="1237" mobs="15" />
-	<spot level="58" min="55" max="60" region="Aden" name="Tower Of Insolence · юго-запад" x="113392" y="17344" z="-3608" radius="1216" mobs="14" />
+	<spot level="58" min="55" max="60" region="Aden" name="Tower Of Insolence" x="115931" y="17350" z="-3608" radius="1237" mobs="15" />
+	<spot level="58" min="55" max="60" region="Aden" name="Tower Of Insolence" x="113409" y="14811" z="-3608" radius="1271" mobs="14" />
+	<spot level="58" min="55" max="60" region="Aden" name="Tower Of Insolence" x="113392" y="17344" z="-3608" radius="1216" mobs="14" />
+	<spot level="58" min="55" max="60" region="Aden" name="Tower Of Insolence" x="115906" y="14853" z="-3608" radius="1218" mobs="14" />
+	<spot level="58" min="55" max="60" region="Aden" name="Tower Of Insolence" x="114648" y="16079" z="-3608" radius="841" mobs="8" />
 	<spot level="58" min="57" max="60" region="Giran" name="Dragon Valey · восток" x="121762" y="115355" z="-3648" radius="1500" mobs="16" />
 	<spot level="58" min="57" max="59" region="Giran" name="Dragon Valey · восток" x="122611" y="119630" z="-3160" radius="1500" mobs="9" />
 	<spot level="58" min="57" max="60" region="Hunters" name="Enchanted Valley · North of Enchanted Valley" x="119004" y="43759" z="-3728" radius="1500" mobs="12" />
@@ -393,19 +393,18 @@
 	<spot level="61" min="60" max="66" region="Aden" name="Plains Of Glory · юг" x="135076" y="28826" z="-3736" radius="1500" mobs="13" />
 	<spot level="61" min="60" max="66" region="Aden" name="Plains Of Glory · юг" x="132949" y="31235" z="-3808" radius="1500" mobs="11" />
 	<spot level="61" min="60" max="66" region="Aden" name="Plains Of Glory · юг" x="137098" y="31718" z="-3656" radius="1500" mobs="11" />
-	<spot level="62" min="61" max="65" region="Aden" name="Tower Of Insolence · северо-запад" x="113345" y="14741" z="-2128" radius="1299" mobs="13" />
-	<spot level="62" min="61" max="65" region="Aden" name="Tower Of Insolence · юго-восток" x="115975" y="17355" z="-2128" radius="1294" mobs="13" />
-	<spot level="63" min="60" max="66" region="Aden" name="Tower Of Insolence · запад" x="112866" y="15988" z="-640" radius="902" mobs="16" />
-	<spot level="63" min="60" max="66" region="Aden" name="Tower Of Insolence · северо-восток" x="115991" y="14917" z="-640" radius="567" mobs="9" />
-	<spot level="63" min="60" max="66" region="Aden" name="Tower Of Insolence · юго-восток" x="116151" y="16879" z="-640" radius="967" mobs="17" />
+	<spot level="62" min="61" max="65" region="Aden" name="Tower Of Insolence" x="113345" y="14741" z="-2128" radius="1299" mobs="13" />
+	<spot level="62" min="61" max="65" region="Aden" name="Tower Of Insolence" x="115975" y="17355" z="-2128" radius="1294" mobs="13" />
+	<spot level="63" min="60" max="66" region="Aden" name="Tower Of Insolence" x="116151" y="16879" z="-640" radius="967" mobs="17" />
+	<spot level="63" min="60" max="66" region="Aden" name="Tower Of Insolence" x="112866" y="15988" z="-640" radius="902" mobs="16" />
+	<spot level="63" min="60" max="66" region="Aden" name="Tower Of Insolence" x="115991" y="14917" z="-640" radius="567" mobs="9" />
 	<spot level="64" min="63" max="66" region="Aden" name="Plains Of Glory · север" x="136386" y="10909" z="-4056" radius="1500" mobs="26" />
 	<spot level="64" min="63" max="66" region="Aden" name="Plains Of Glory · север" x="138984" y="1479" z="-4512" radius="1500" mobs="14" />
 	<spot level="64" min="63" max="66" region="Aden" name="Plains Of Glory · север" x="139786" y="4647" z="-4424" radius="1500" mobs="14" />
 	<spot level="64" min="63" max="66" region="Aden" name="Plains Of Glory · север" x="136559" y="5258" z="-4464" radius="1500" mobs="14" />
 	<spot level="64" min="63" max="66" region="Aden" name="Plains Of Glory · север" x="135143" y="940" z="-3896" radius="1500" mobs="10" />
-	<spot level="64" min="64" max="64" region="Aden" name="Tower Of Insolence · Ancient Battleground" x="108481" y="2449" z="-3440" radius="640" mobs="8" />
-	<spot level="65" min="61" max="65" region="Aden" name="Tower Of Insolence · северо-восток" x="115958" y="14775" z="-2128" radius="1281" mobs="13" />
-	<spot level="65" min="61" max="65" region="Aden" name="Tower Of Insolence · юг" x="114647" y="16068" z="-2128" radius="1153" mobs="21" />
+	<spot level="65" min="61" max="65" region="Aden" name="Tower Of Insolence" x="114647" y="16068" z="-2128" radius="1153" mobs="21" />
+	<spot level="65" min="61" max="65" region="Aden" name="Tower Of Insolence" x="115958" y="14775" z="-2128" radius="1281" mobs="13" />
 	<spot level="67" min="65" max="69" region="Aden" name="Blazing Swamp · юг" x="147040" y="-6015" z="-4520" radius="1500" mobs="11" />
 	<spot level="67" min="65" max="69" region="Aden" name="Blazing Swamp · юг" x="144345" y="-4977" z="-4720" radius="1500" mobs="9" />
 	<spot level="67" min="65" max="69" region="Aden" name="Blazing Swamp · юго-восток" x="148469" y="-9406" z="-4576" radius="1500" mobs="17" />
@@ -421,11 +420,11 @@
 	<spot level="67" min="67" max="72" region="Aden" name="War Torn Plains · юго-восток" x="165925" y="17882" z="-3360" radius="1500" mobs="15" />
 	<spot level="68" min="67" max="69" region="Aden" name="Blazing Swamp · восток" x="158749" y="-9419" z="-3360" radius="1500" mobs="18" />
 	<spot level="68" min="67" max="69" region="Aden" name="Blazing Swamp · юго-запад" x="142071" y="-9810" z="-4488" radius="1500" mobs="14" />
-	<spot level="68" min="67" max="69" region="Aden" name="Tower Of Insolence · восток" x="115926" y="15866" z="920" radius="1500" mobs="9" />
-	<spot level="68" min="67" max="69" region="Aden" name="Tower Of Insolence · юго-запад" x="113477" y="16850" z="920" radius="1185" mobs="9" />
-	<spot level="69" min="68" max="70" region="Aden" name="Tower Of Insolence · северо-восток" x="115192" y="14854" z="1944" radius="574" mobs="12" />
-	<spot level="69" min="68" max="70" region="Aden" name="Tower Of Insolence · юг" x="114658" y="16066" z="1944" radius="810" mobs="8" />
-	<spot level="69" min="68" max="70" region="Aden" name="Tower Of Insolence · юго-запад" x="113801" y="16846" z="1944" radius="1007" mobs="20" />
+	<spot level="68" min="67" max="69" region="Aden" name="Tower Of Insolence" x="113477" y="16850" z="920" radius="1185" mobs="9" />
+	<spot level="68" min="67" max="69" region="Aden" name="Tower Of Insolence" x="115926" y="15866" z="920" radius="1500" mobs="9" />
+	<spot level="69" min="68" max="70" region="Aden" name="Tower Of Insolence" x="113801" y="16846" z="1944" radius="1007" mobs="20" />
+	<spot level="69" min="68" max="70" region="Aden" name="Tower Of Insolence" x="115192" y="14854" z="1944" radius="574" mobs="12" />
+	<spot level="69" min="68" max="70" region="Aden" name="Tower Of Insolence" x="114658" y="16066" z="1944" radius="810" mobs="8" />
 	<spot level="69" min="68" max="72" region="Aden" name="War Torn Plains · восток" x="167262" y="11008" z="-2712" radius="1500" mobs="13" />
 	<spot level="69" min="68" max="72" region="Aden" name="War Torn Plains · запад" x="155073" y="10993" z="-4248" radius="1500" mobs="16" />
 	<spot level="69" min="68" max="72" region="Aden" name="War Torn Plains · север" x="162260" y="7537" z="-3704" radius="1500" mobs="22" />
@@ -458,20 +457,15 @@
 	<spot level="72" min="70" max="73" region="Aden" name="Blazing Swamp · северо-запад" x="137452" y="-22977" z="-3208" radius="1500" mobs="9" />
 	<spot level="73" min="72" max="74" region="Aden" name="Silent Valley · запад" x="174040" y="54768" z="-6016" radius="1500" mobs="25" />
 	<spot level="73" min="72" max="74" region="Aden" name="Silent Valley · запад" x="178569" y="53526" z="-5984" radius="1500" mobs="25" />
-	<spot level="73" min="71" max="75" region="Aden" name="Tower Of Insolence · юг" x="114552" y="18090" z="2952" radius="511" mobs="10" />
 	<spot level="74" min="72" max="75" region="Aden" name="Silent Valley · северо-восток" x="181910" y="51042" z="-5992" radius="1500" mobs="24" />
 	<spot level="74" min="72" max="75" region="Aden" name="Silent Valley · северо-восток" x="185738" y="48104" z="-6000" radius="1500" mobs="24" />
-	<spot level="74" min="73" max="75" region="Aden" name="Tower Of Insolence · северо-восток" x="115122" y="15006" z="3960" radius="984" mobs="14" />
-	<spot level="74" min="73" max="75" region="Aden" name="Tower Of Insolence · юго-восток" x="115524" y="17064" z="3960" radius="701" mobs="8" />
 	<spot level="75" min="74" max="75" region="Aden" name="Silent Valley · восток" x="183606" y="53107" z="-5848" radius="1500" mobs="26" />
 	<spot level="75" min="74" max="75" region="Aden" name="Silent Valley · северо-восток" x="187468" y="50028" z="-5872" radius="1500" mobs="26" />
 	<spot level="75" min="74" max="75" region="Aden" name="Silent Valley · юг" x="179820" y="55934" z="-5888" radius="1500" mobs="25" />
 	<spot level="75" min="74" max="75" region="Aden" name="Silent Valley · юго-запад" x="175475" y="57600" z="-5896" radius="1500" mobs="25" />
+	<spot level="75" min="74" max="75" region="Aden" name="Tower Of Insolence" x="115229" y="15235" z="3960" radius="1020" mobs="9" />
 	<spot level="76" min="76" max="78" region="Aden" name="Giants Cave · запад" x="174848" y="62460" z="-4368" radius="1500" mobs="20" />
 	<spot level="76" min="76" max="78" region="Aden" name="Giants Cave · северо-восток" x="192089" y="52218" z="-4368" radius="1124" mobs="8" />
-	<spot level="76" min="75" max="77" region="Aden" name="Tower Of Insolence · север" x="114655" y="15021" z="4976" radius="925" mobs="9" />
-	<spot level="76" min="75" max="77" region="Aden" name="Tower Of Insolence · юг" x="114016" y="16974" z="4976" radius="1034" mobs="17" />
-	<spot level="76" min="75" max="77" region="Aden" name="Tower Of Insolence · юго-восток" x="115957" y="16308" z="4976" radius="864" mobs="9" />
 	<spot level="76" min="76" max="77" region="Innadril" name="Garden Of Eva · запад" x="79876" y="252068" z="-10872" radius="1500" mobs="8" />
 	<spot level="76" min="76" max="77" region="Innadril" name="Garden Of Eva · север" x="81911" y="249422" z="-10872" radius="1197" mobs="8" />
 	<spot level="76" min="76" max="77" region="Innadril" name="Garden Of Eva · северо-восток" x="83711" y="249691" z="-10872" radius="1500" mobs="8" />
@@ -504,8 +498,8 @@
 	<spot level="77" min="76" max="77" region="Aden" name="Giants Cave · юго-запад" x="184485" y="58933" z="-7240" radius="1232" mobs="13" />
 	<spot level="77" min="76" max="78" region="Aden" name="Giants Cave · юго-запад" x="182134" y="61959" z="-3992" radius="1140" mobs="12" />
 	<spot level="77" min="76" max="78" region="Aden" name="Giants Cave · юго-запад" x="184418" y="59968" z="-7240" radius="1500" mobs="10" />
-	<spot level="77" min="76" max="78" region="Aden" name="Tower Of Insolence · северо-восток" x="115629" y="13965" z="5984" radius="1032" mobs="9" />
-	<spot level="77" min="76" max="78" region="Aden" name="Tower Of Insolence · юго-запад" x="112470" y="16842" z="5984" radius="1039" mobs="8" />
+	<spot level="77" min="76" max="77" region="Aden" name="Tower Of Insolence" x="114059" y="16798" z="5008" radius="977" mobs="11" />
+	<spot level="77" min="76" max="78" region="Aden" name="Tower Of Insolence" x="114757" y="16060" z="7992" radius="1126" mobs="8" />
 	<spot level="77" min="76" max="78" region="Goddard" name="Wall Of Argos · Wall of the Argos" x="167423" y="-49250" z="-3600" radius="1500" mobs="12" />
 	<spot level="77" min="76" max="79" region="Goddard" name="Wall Of Argos · Wall of the Argos" x="171955" y="-47526" z="-3512" radius="1500" mobs="12" />
 	<spot level="77" min="76" max="79" region="Goddard" name="Wall Of Argos · Wall of the Argos" x="172405" y="-49755" z="-3528" radius="1500" mobs="10" />
@@ -520,10 +514,6 @@
 	<spot level="77" min="76" max="79" region="Innadril" name="Garden Of Eva · северо-запад" x="78930" y="250729" z="-10360" radius="1428" mobs="8" />
 	<spot level="77" min="76" max="77" region="Innadril" name="Garden Of Eva · юго-восток" x="84928" y="253644" z="-10872" radius="1221" mobs="8" />
 	<spot level="77" min="76" max="79" region="Innadril" name="Garden Of Eva · юго-запад" x="80392" y="255249" z="-10360" radius="1318" mobs="8" />
-	<spot level="78" min="76" max="78" region="Aden" name="Tower Of Insolence · северо-восток" x="115174" y="14610" z="6992" radius="553" mobs="8" />
-	<spot level="78" min="76" max="78" region="Aden" name="Tower Of Insolence · северо-запад" x="113719" y="15114" z="6992" radius="400" mobs="8" />
-	<spot level="78" min="76" max="78" region="Aden" name="Tower Of Insolence · юг" x="114564" y="16136" z="7992" radius="1075" mobs="15" />
-	<spot level="78" min="76" max="78" region="Aden" name="Tower Of Insolence · юг" x="113780" y="17451" z="6992" radius="663" mobs="10" />
 	<spot level="78" min="78" max="80" region="Goddard" name="Goddard 24 16 · юго-восток" x="157010" y="-49431" z="-3152" radius="1095" mobs="8" />
 	<spot level="78" min="76" max="79" region="Goddard" name="Wall Of Argos · Wall of the Argos" x="169807" y="-53590" z="-3448" radius="1500" mobs="15" />
 	<spot level="78" min="76" max="79" region="Goddard" name="Wall Of Argos · север" x="181666" y="-60419" z="-3120" radius="1500" mobs="23" />

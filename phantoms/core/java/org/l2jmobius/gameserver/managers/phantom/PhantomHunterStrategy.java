@@ -181,6 +181,12 @@ final class PhantomHunterStrategy
 		FakePlayerBrain.field(sb, "fpc", player.getName()).append(',');
 		sb.append("\"npcId\":").append(player.getObjectId()).append(',');
 		FakePlayerBrain.field(sb, "test", facts.test).append(',');
+		// «Разум 2.0»: охотник рядом с живым игроком (PhantomFocus) — мозги думают с размышлением.
+		final String focus = PhantomFocus.getInstance().of(player);
+		if (focus != null)
+		{
+			FakePlayerBrain.field(sb, "focus", focus).append(',');
+		}
 		sb.append("\"hunter\":{");
 		sb.append("\"level\":").append(player.getLevel()).append(',');
 		FakePlayerBrain.field(sb, "class", player.getPlayerClass().name()).append(',');

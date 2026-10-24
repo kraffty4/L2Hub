@@ -170,6 +170,13 @@ public class PhantomHunterManager
 	private static final Location GIRAN_SQUARE = new Location(82698, 148638, -3470);
 	private static final int STORE_SPACING = 80;
 	private static final int STORE_TRIES = 6;
+	/**
+	 * Место лавки — на уровне площади: не выше и не ниже её больше чем на столько, вокруг ровно (соседи в {@value #STORE_FLAT_RADIUS} — в пределах
+	 * {@value #STORE_FLAT_Z}), от центра площади — прямой путь. Иначе охотник садился на постамент статуи (баг с живого H5 2026-10-23: z −3243 при площади −3464).
+	 */
+	private static final int STORE_Z_TOLERANCE = 50;
+	private static final int STORE_FLAT_RADIUS = 48;
+	private static final int STORE_FLAT_Z = 16;
 	/** Рынок: не дошёл до продавца за столько — назад на кач. */
 	private static final long SHOP_TIMEOUT = 120000;
 	/** Ближе этого к продавцу — покупает. */
@@ -297,8 +304,8 @@ public class PhantomHunterManager
 		/** Махач (патч 0037): драку начал он сам — бьёт только того, кто ответил и флагнулся; когда начал. */
 		volatile boolean brawlAggressor;
 		volatile long brawlSince;
-		/** ПК (раздел 4.44, {@link PhantomPk}): напал на белого и добивает его — не отходит, как в махаче. */
-		volatile boolean pkHunt;
+		/** Кровь за кровь (раздел 4.44, {@link PhantomPk}): напал на обидчика и добивает его — не отходит, как в махаче. */
+		volatile boolean revenge;
 		/** Ответил «сорян» на предъяву за моба (патч 0037) — уйти на другой спот на ближайшем тике. */
 		volatile boolean yieldRequested;
 		// Экономика и пати.
@@ -608,6 +615,8 @@ public class PhantomHunterManager
 			_lastRealPlayer = now;
 		}
 
+		// Эпики малого мира (раздел 4.43): ослабить живых эпиков — и при выключенных охотниках, это свойство мира.
+		PhantomEpics.getInstance().control();
 		// Рейды охотников на РБ (раздел 4.32): лидер погиб — провал; пора — собрать новый из тех, кто на каче.
 		PhantomRaid.getInstance().check(now);
 		if (_wanted)
@@ -641,8 +650,25 @@ public class PhantomHunterManager
 			PhantomDuel.getInstance().control(onSpots, now);
 			// Семь печатей (раздел 4.42): смена периода — в летопись.
 			PhantomSevenSigns.getInstance().control(now);
-			// ПК (раздел 4.44): реакция на ПК вокруг, редко — кто-то из горячих становится ПК.
+			// ПК (раздел 4.44): ПК вокруг — приоритетная цель; кровь за кровь.
 			PhantomPk.getInstance().control(onSpots, now);
+			// Танатос (раздел 4.45): часть охотников-фантомов — охотники в мире, и он тоже.
+			PhantomThanatos.getInstance().control(now);
+			// «Разум 2.0»: кто из охотников рядом с живым игроком.
+			final List<Player> online = new ArrayList<>();
+			for (Hunter hunter : _hunters.values())
+			{
+				final Player player = PhantomManager.getInstance().getPhantom(hunter.template);
+				if (player != null)
+				{
+					online.add(player);
+				}
+			}
+			PhantomFocus.getInstance().update(online, now);
+		}
+		else
+		{
+			PhantomThanatos.getInstance().disable();
 		}
 
 		switch (PhantomHuntersConfig.HUNTERS_MODE)
@@ -722,6 +748,13 @@ public class PhantomHunterManager
 					FakePlayerBrain.field(sb, "thought", last.thought).append('}');
 				}
 				sb.append(",\"nextThink\":").append(hunter.nextThink);
+				// «Разум 2.0»: охотник рядом с живым игроком — окно покажет, кто думает расширенно.
+				final String focus = PhantomFocus.getInstance().of(player);
+				if (focus != null)
+				{
+					sb.append(',');
+					FakePlayerBrain.field(sb, "focus", focus);
+				}
 				// Занятие сверх фазы — PvP-ивент, рейд на РБ, сезонное событие; только пока идёт (разделы 4.32–4.34).
 				if (!PhantomEvents.getInstance().activity(sb, player) && !PhantomRaid.getInstance().activity(sb, player))
 				{
@@ -757,6 +790,8 @@ public class PhantomHunterManager
 			}
 			sb.append('}');
 		}
+		// Танатос (раздел 4.45) — последняя строка, только отметка и уровень.
+		PhantomThanatos.getInstance().status(sb, first);
 		sb.append(']');
 
 		// Для карты мира в лаунчере: живые игроки онлайн (не фантомы) и напарники из .buddy с владельцем.
@@ -2474,24 +2509,62 @@ public class PhantomHunterManager
 	}
 
 	/**
-	 * На площадь Гирана: точка в кольце вокруг гейткипера, по геодате; проверку зоны и соседей делает {@link #store} по прилёту.
+	 * На площадь Гирана: точка в кольце вокруг гейткипера на уровне площади ({@link #storePoint}); проверку зоны и соседей делает {@link #store} по прилёту.
 	 */
 	private static void goToStore(Hunter hunter, Player player)
 	{
 		hunter.phase = Phase.STORE;
 		hunter.storeOpen = false;
 		hunter.storeTries++;
-		final double angle = Rnd.nextDouble() * 2 * Math.PI;
-		final int r = Rnd.get(250, 800);
-		final int x = GIRAN_SQUARE.getX() + (int) (Math.cos(angle) * r);
-		final int y = GIRAN_SQUARE.getY() + (int) (Math.sin(angle) * r);
-		final int z = GeoEngine.getInstance().getHeight(x, y, GIRAN_SQUARE.getZ());
 		stop(player);
 		if (player.isSitting())
 		{
 			player.standUp();
 		}
-		player.teleToLocation(new Location(x, y, z, Rnd.get(65536)), false);
+		player.teleToLocation(storePoint(), false);
+	}
+
+	/**
+	 * @return точка лавки: в кольце 250–800 вокруг гейткипера, на уровне площади ({@value #STORE_Z_TOLERANCE}), на ровном и с прямым путём от центра площади —
+	 *         не постамент статуи и не ступени; не нашлось за 20 попыток — у самого центра площади
+	 */
+	private static Location storePoint()
+	{
+		final GeoEngine geo = GeoEngine.getInstance();
+		for (int i = 0; i < 20; i++)
+		{
+			final double angle = Rnd.nextDouble() * 2 * Math.PI;
+			final int r = Rnd.get(250, 800);
+			final int x = GIRAN_SQUARE.getX() + (int) (Math.cos(angle) * r);
+			final int y = GIRAN_SQUARE.getY() + (int) (Math.sin(angle) * r);
+			final int z = geo.getHeight(x, y, GIRAN_SQUARE.getZ());
+			if ((Math.abs(z - GIRAN_SQUARE.getZ()) > STORE_Z_TOLERANCE) || !flat(geo, x, y, z) || !PhantomCompat.canMoveToTarget(geo, GIRAN_SQUARE.getX(), GIRAN_SQUARE.getY(), GIRAN_SQUARE.getZ(), x, y, z, 0))
+			{
+				continue;
+			}
+			return new Location(x, y, z, Rnd.get(65536));
+		}
+		final int x = GIRAN_SQUARE.getX() + Rnd.get(-120, 120);
+		final int y = GIRAN_SQUARE.getY() + Rnd.get(-120, 120);
+		return new Location(x, y, geo.getHeight(x, y, GIRAN_SQUARE.getZ()), Rnd.get(65536));
+	}
+
+	/**
+	 * @return вокруг точки ровно: высота соседей в {@value #STORE_FLAT_RADIUS} — в пределах {@value #STORE_FLAT_Z} (бордюр, край постамента — нет)
+	 */
+	private static boolean flat(GeoEngine geo, int x, int y, int z)
+	{
+		for (int dx = -STORE_FLAT_RADIUS; dx <= STORE_FLAT_RADIUS; dx += STORE_FLAT_RADIUS)
+		{
+			for (int dy = -STORE_FLAT_RADIUS; dy <= STORE_FLAT_RADIUS; dy += STORE_FLAT_RADIUS)
+			{
+				if (Math.abs(geo.getHeight(x + dx, y + dy, z) - z) > STORE_FLAT_Z)
+				{
+					return false;
+				}
+			}
+		}
+		return true;
 	}
 
 	private void store(Hunter hunter, Player player, long now)
@@ -2789,6 +2862,18 @@ public class PhantomHunterManager
 			uiSelfTest(views.get(0).player);
 			return;
 		}
+		// Эпик без клиента (раздел 4.43): живого в рейде играет охотник.
+		if ("EPIC".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST))
+		{
+			PhantomRaid.getInstance().selfTestEpic();
+			return;
+		}
+		// Танатос сразу (раздел 4.45).
+		if ("THANATOS".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST))
+		{
+			PhantomThanatos.getInstance().selfTest();
+			return;
+		}
 		if (!"LFM".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST))
 		{
 			return;
@@ -3016,6 +3101,12 @@ public class PhantomHunterManager
 		{
 			hunter.thinkingSince = 0;
 		}
+		// «Разум 2.0»: охотник в фокусе при HunterMindExtended думает чаще — подтянуть срок, если он дальше.
+		final long focusGap = PhantomFocus.getInstance().strategyGap(player);
+		if ((focusGap > 0) && (hunter.thinkingSince == 0) && (hunter.nextThink > (now + focusGap)))
+		{
+			hunter.nextThink = now + focusGap;
+		}
 		if ((hunter.thinkingSince == 0) && (now >= hunter.nextThink))
 		{
 			ask(hunter, player, now);
@@ -3054,7 +3145,8 @@ public class PhantomHunterManager
 			return;
 		}
 
-		hunter.nextThink = now + PhantomHunterStrategy.nextDelay();
+		final long focusGap = PhantomFocus.getInstance().strategyGap(player);
+		hunter.nextThink = now + (focusGap > 0 ? focusGap : PhantomHunterStrategy.nextDelay());
 		hunter.thinkingSince = now;
 		final Facts facts = facts(hunter, player, now);
 		final Map<Decision, String> options = options(hunter, player, now);
@@ -3080,7 +3172,7 @@ public class PhantomHunterManager
 				_lastStrategyFailLog = time;
 				LOGGER.info(getClass().getSimpleName() + ": Strategy: " + player.getName() + " got no decision (brain failed or answered garbage), rules decide" + (facts.test.isEmpty() ? "." : " [SelfTest " + facts.test + "]."));
 			}
-		});
+		}, PhantomFocus.getInstance().of(player) != null ? PhantomChat.FOCUS_TIMEOUT : 0);
 	}
 
 	/**
@@ -3364,13 +3456,15 @@ public class PhantomHunterManager
 		final Player enemy = actingPlayer(attacker);
 		// Напал живой игрок или охотник (махач, патч 0037); напарники из .buddy — нет.
 		final boolean hunterEnemy = (enemy != null) && PhantomRelations.isHunter(enemy);
-		if ((enemy == null) || (enemy == player) || (PhantomManager.getInstance().isPhantom(enemy) && !hunterEnemy) || player.isDead() || (hunter.phase == Phase.PARTY) || (player.isInDuel() && enemy.isInDuel() && (player.getDuelId() == enemy.getDuelId())))
+		// Танатос (раздел 4.45) — тоже враг: фантом, но не напарник.
+		final boolean reaper = PhantomThanatos.is(enemy);
+		if ((enemy == null) || (enemy == player) || (PhantomManager.getInstance().isPhantom(enemy) && !hunterEnemy && !reaper) || player.isDead() || (hunter.phase == Phase.PARTY) || (player.isInDuel() && enemy.isInDuel() && (player.getDuelId() == enemy.getDuelId())))
 		{
 			return;
 		}
 
-		// ПК (раздел 4.44) напал: слабый или трус не отвечает, а убегает — тогда убийство даст ПК карму.
-		if (hunterEnemy && isPkHunting(enemy) && (hunter.enemyId != enemy.getObjectId()) && PhantomPk.getInstance().fleeFromAttacker(player, enemy))
+		// ПК или Танатос напал (раздел 4.44): слабый или трус не отвечает, а убегает — тогда убийство даст ПК карму.
+		if (((PhantomCompat.karma(enemy) > 0) || reaper) && (hunter.enemyId != enemy.getObjectId()) && PhantomPk.getInstance().fleeFromAttacker(player, enemy))
 		{
 			return;
 		}
@@ -3456,11 +3550,12 @@ public class PhantomHunterManager
 	}
 
 	/**
-	 * ПК (раздел 4.44, {@link PhantomPk} решил): нападение на белого — как махач ({@link #fight}), но не отходит, а добивает; карму даёт Mobius.
-	 * @param player ПК
-	 * @param victim жертва
+	 * Кровь за кровь (раздел 4.44, {@link PhantomPk} решил): нападение на живого обидчика — как махач ({@link #fight}), но не отходит, а добивает;
+	 * белого — с кармой, её даёт Mobius.
+	 * @param player охотник
+	 * @param victim обидчик
 	 */
-	void startPk(Player player, Player victim)
+	void startRevenge(Player player, Player victim)
 	{
 		final Hunter hunter = _hunters.get(player.getName().toLowerCase());
 		if (hunter == null)
@@ -3472,7 +3567,7 @@ public class PhantomHunterManager
 		hunter.enemySeen = now;
 		hunter.brawlAggressor = true;
 		hunter.brawlSince = now;
-		hunter.pkHunt = true;
+		hunter.revenge = true;
 		if (player.isSitting())
 		{
 			player.standUp();
@@ -3480,15 +3575,7 @@ public class PhantomHunterManager
 		AutoPlayTaskManager.getInstance().stopAutoPlay(player);
 		player.setTarget(victim);
 		player.getAI().setIntentionAttack(victim);
-	}
-
-	/**
-	 * @return охотник сейчас ПК — гонится за жертвой (раздел 4.44)
-	 */
-	boolean isPkHunting(Player player)
-	{
-		final Hunter hunter = _hunters.get(player.getName().toLowerCase());
-		return (hunter != null) && hunter.pkHunt;
+		PhantomChat.getInstance().hunterEvent(player, victim, "REVENGE", "мимо проходит " + describe(victim) + ", который " + (grudge(player, victim) > 0 ? "убивал тебя (" + grudge(player, victim) + " раз)" : "нападал на тебя") + ". Кровь за кровь — ты нападаешь первым, скажи ему это", "кровь за кровь!", 600000);
 	}
 
 	/**
@@ -3505,8 +3592,23 @@ public class PhantomHunterManager
 		hunter.enemyId = pk.getObjectId();
 		hunter.enemySeen = System.currentTimeMillis();
 		hunter.brawlAggressor = false;
-		hunter.pkHunt = false;
+		hunter.revenge = false;
 		return true;
+	}
+
+	/**
+	 * Рейд на эпика или охота на Танатоса (разделы 4.43, 4.45): лидер лёг — рейд ведёт этот охотник, он уже не напарник, а ведущий ({@link PhantomRaid#drive}).
+	 */
+	void takeRaidLead(Player player)
+	{
+		final Hunter hunter = _hunters.get(player.getName().toLowerCase());
+		if (hunter == null)
+		{
+			return;
+		}
+		hunter.phase = Phase.HUNT;
+		hunter.enemyId = 0;
+		raidStarts(player);
 	}
 
 	/**
@@ -3516,7 +3618,7 @@ public class PhantomHunterManager
 	{
 		hunter.enemyId = 0;
 		hunter.brawlAggressor = false;
-		hunter.pkHunt = false;
+		hunter.revenge = false;
 		// ПК (раздел 4.44) получил по заслугам — в летопись.
 		final Player pkKiller = actingPlayer(killer);
 		if ((pkKiller != null) && (pkKiller != player) && (PhantomCompat.karma(player) > 0))
@@ -3551,17 +3653,17 @@ public class PhantomHunterManager
 	private boolean fight(Hunter hunter, Player player, long now)
 	{
 		final Player enemy = World.getPlayer(hunter.enemyId);
-		// ПК гонится за жертвой, охотник бьёт ПК — пока он рядом (раздел 4.44); ПК — не дольше PhantomPk.CHASE.
-		if ((enemy != null) && (hunter.pkHunt || (PhantomCompat.karma(enemy) > 0)) && (player.calculateDistance2D(enemy) <= 2500))
+		// Охотник гонится за обидчиком, бьёт ПК — пока он рядом (раздел 4.44); за обидчиком — не дольше PhantomPk.CHASE.
+		if ((enemy != null) && (hunter.revenge || (PhantomCompat.karma(enemy) > 0)) && (player.calculateDistance2D(enemy) <= 2500))
 		{
 			hunter.enemySeen = now;
 		}
-		final boolean gone = (enemy == null) || !enemy.isOnline() || (player.calculateDistance2D(enemy) > 2500) || ((now - hunter.enemySeen) > 60000) || (hunter.pkHunt && ((now - hunter.brawlSince) > PhantomPk.CHASE));
+		final boolean gone = (enemy == null) || !enemy.isOnline() || (player.calculateDistance2D(enemy) > 2500) || ((now - hunter.enemySeen) > 60000) || (hunter.revenge && ((now - hunter.brawlSince) > PhantomPk.CHASE));
 		final boolean hunterEnemy = (enemy != null) && PhantomRelations.isHunter(enemy);
 
 		// Махач (патч 0037): страх ПК. Зачинщик бьёт только того, кто ответил и флагнулся; не ответил за GRACE или почти мёртв без флага — отойти, белого не добивать.
 		final boolean grace = hunter.brawlAggressor && ((now - hunter.brawlSince) < PhantomBrawl.GRACE);
-		if (!gone && hunter.brawlAggressor && !hunter.pkHunt && !enemy.isDead() && (enemy.getPvpFlag() == 0) && (!grace || (enemy.getCurrentHp() < (enemy.getMaxHp() * 0.4))))
+		if (!gone && hunter.brawlAggressor && !hunter.revenge && !enemy.isDead() && (enemy.getPvpFlag() == 0) && (!grace || (enemy.getCurrentHp() < (enemy.getMaxHp() * 0.4))))
 		{
 			player.abortAttack();
 			player.getAI().setIntentionActive();
@@ -3574,11 +3676,11 @@ public class PhantomHunterManager
 			return false;
 		}
 
-		if (gone || enemy.isDead() || (!enemy.isAutoAttackable(player) && !grace && !hunter.pkHunt))
+		if (gone || enemy.isDead() || (!enemy.isAutoAttackable(player) && !grace && !hunter.revenge))
 		{
-			if ((enemy != null) && enemy.isDead() && !gone && hunter.pkHunt)
+			if ((enemy != null) && enemy.isDead() && !gone && hunter.revenge)
 			{
-				PhantomPk.getInstance().onPkKill(player, enemy);
+				PhantomPk.getInstance().onRevengeKill(player, enemy);
 			}
 			else if ((enemy != null) && enemy.isDead() && !gone && (!hunterEnemy || PhantomBanter.audience(player)))
 			{
@@ -3595,7 +3697,7 @@ public class PhantomHunterManager
 		}
 
 		// Пока у врага нет флага, AutoPlay его не бьёт — зачинщик бьёт сам, как ctrl+клик.
-		if ((grace || hunter.pkHunt) && (enemy.getPvpFlag() == 0) && (PhantomCompat.karma(enemy) <= 0))
+		if ((grace || hunter.revenge) && (enemy.getPvpFlag() == 0) && (PhantomCompat.karma(enemy) <= 0))
 		{
 			if ((player.getTarget() != enemy) || (player.getAI().getIntention() != Intention.ATTACK))
 			{
@@ -3622,7 +3724,7 @@ public class PhantomHunterManager
 	{
 		hunter.enemyId = 0;
 		hunter.brawlAggressor = false;
-		hunter.pkHunt = false;
+		hunter.revenge = false;
 		player.getAutoPlaySettings().setNextTargetMode(1); // снова мобы
 		if ((player.getTarget() instanceof Player))
 		{

@@ -203,7 +203,6 @@
 	<spot level="14" min="14" max="15" region="DwarvenTerritory" name="Dwarven Starting · юго-запад" x="129036" y="-188769" z="-3216" radius="1500" mobs="9" />
 	<spot level="14" min="13" max="15" region="ElvenTerritory" name="Elven Starting · запад" x="9730" y="49233" z="-3640" radius="1500" mobs="12" />
 	<spot level="14" min="14" max="16" region="ElvenTerritory" name="Elven Starting · запад" x="6545" y="52429" z="-3512" radius="1500" mobs="10" />
-	<spot level="14" min="14" max="14" region="ElvenTerritory" name="Plague Zombie" x="34772" y="35928" z="-3640" radius="719" mobs="9" />
 	<spot level="14" min="13" max="16" region="Giran" name="Silent Horror · Elven Ruins" x="42617" y="246942" z="-6456" radius="1215" mobs="10" />
 	<spot level="14" min="14" max="16" region="Gludio" name="Vuku Orc" x="-11868" y="98843" z="-3160" radius="1153" mobs="8" />
 	<spot level="14" min="13" max="15" region="Kamael" name="Isle Of Souls · Stronghold III" x="-82374" y="39977" z="-2544" radius="1206" mobs="19" />
@@ -246,7 +245,7 @@
 	<spot level="16" min="14" max="17" region="ElvenTerritory" name="Terror · северо-запад" x="15970" y="76697" z="-4384" radius="1500" mobs="11" />
 	<spot level="16" min="14" max="16" region="Giran" name="Silent Horror · Elven Ruins" x="43194" y="245103" z="-6456" radius="894" mobs="8" />
 	<spot level="16" min="13" max="19" region="Giran" name="Undine Noble · Elven Ruins" x="44689" y="245917" z="-6496" radius="977" mobs="13" />
-	<spot level="16" min="15" max="17" region="Gludio" name="Ruin Imp" x="-17744" y="147532" z="-3608" radius="1137" mobs="9" />
+	<spot level="16" min="15" max="17" region="Gludio" name="Ruin Imp · запад" x="-17744" y="147532" z="-3608" radius="1137" mobs="9" />
 	<spot level="16" min="15" max="18" region="Gludio" name="Scavenger Bat" x="-20742" y="149460" z="-3080" radius="1309" mobs="10" />
 	<spot level="16" min="15" max="18" region="Gludio" name="Skeleton Infantryman · Windawood Manor" x="-24807" y="149530" z="-3072" radius="1191" mobs="10" />
 	<spot level="16" min="15" max="16" region="Kamael" name="Isle Of Souls · Isle of Souls Harbor" x="-79985" y="50439" z="-4360" radius="1110" mobs="13" />
@@ -269,7 +268,7 @@
 	<spot level="17" min="16" max="18" region="ElvenTerritory" name="Elven Starting · юго-запад" x="6900" y="71100" z="-3384" radius="1500" mobs="11" />
 	<spot level="17" min="17" max="18" region="Giran" name="Undine · Elven Ruins" x="45928" y="243009" z="-6456" radius="1179" mobs="11" />
 	<spot level="17" min="16" max="19" region="Gludio" name="Ratman · Evil Hunting Grounds" x="-4618" y="104630" z="-3032" radius="1206" mobs="14" />
-	<spot level="17" min="16" max="18" region="Gludio" name="Undead Priest" x="-13100" y="148705" z="-3088" radius="1158" mobs="17" />
+	<spot level="17" min="16" max="18" region="Gludio" name="Ruin Imp · восток" x="-12153" y="148932" z="-3224" radius="1053" mobs="10" />
 	<spot level="17" min="16" max="17" region="Kamael" name="Isle Of Souls · восток" x="-81523" y="53878" z="-4704" radius="1112" mobs="12" />
 	<spot level="17" min="16" max="17" region="Kamael" name="Isle Of Souls · восток" x="-84947" y="53760" z="-4664" radius="1080" mobs="10" />
 	<spot level="17" min="17" max="18" region="Kamael" name="Isle Of Souls · северо-восток" x="-86950" y="52434" z="-4352" radius="1074" mobs="12" />
@@ -304,7 +303,6 @@
 	<spot level="19" min="18" max="20" region="DwarvenTerritory" name="Dwarven Starting · Eastern Mining Zone" x="170946" y="-210393" z="-3600" radius="1500" mobs="9" />
 	<spot level="19" min="18" max="20" region="DwarvenTerritory" name="Dwarven Starting · северо-восток" x="157262" y="-217568" z="-3600" radius="1500" mobs="8" />
 	<spot level="19" min="18" max="19" region="ElvenTerritory" name="Elven Starting · юго-запад" x="1595" y="77168" z="-3552" radius="1500" mobs="11" />
-	<spot level="19" min="18" max="20" region="ElvenTerritory" name="Sukar Wererat" x="13617" y="80165" z="-4080" radius="1247" mobs="9" />
 	<spot level="19" min="17" max="20" region="Gludio" name="Ratman · Evil Hunting Grounds" x="-5488" y="114328" z="-3344" radius="1242" mobs="8" />
 	<spot level="19" min="17" max="22" region="Gludio" name="Zombie Soldier · Ruins of Despair" x="-20762" y="141035" z="-3896" radius="1368" mobs="11" />
 	<spot level="19" min="17" max="20" region="Gludio" name="Zombie Soldier · юго-восток" x="-10672" y="145485" z="-3768" radius="1295" mobs="12" />
@@ -320,13 +318,11 @@
 	<spot level="19" min="18" max="20" region="OrcTerritory" name="Orc Starting · юго-запад" x="-23950" y="-81258" z="-3168" radius="1500" mobs="8" />
 	<spot level="19" min="19" max="21" region="OrcTerritory" name="Skeleton Longbowman" x="21402" y="-110854" z="-3296" radius="1108" mobs="8" />
 	<spot level="19" min="19" max="19" region="OrcTerritory" name="Undead Slave" x="21352" y="-108087" z="-3040" radius="1449" mobs="16" />
-	<spot level="20" min="19" max="22" region="Giran" name="Dre Vanul · Elven Ruins" x="47182" y="246187" z="-6656" radius="1283" mobs="16" />
-	<spot level="20" min="18" max="20" region="Gludin" name="Umbar Orc" x="-74302" y="83594" z="-3344" radius="1155" mobs="9" />
-	<spot level="20" min="19" max="20" region="Gludin" name="Umbar Orc" x="-73876" y="81641" z="-3408" radius="864" mobs="8" />
+	<spot level="20" min="19" max="22" region="Giran" name="Dre Vanul · Elven Ruins" x="47206" y="246250" z="-6656" radius="1318" mobs="15" />
 	<spot level="20" min="18" max="20" region="Gludio" name="Ratman · Evil Hunting Grounds" x="-5441" y="110123" z="-3280" radius="1234" mobs="16" />
 	<spot level="20" min="17" max="20" region="Gludio" name="Ratman · Evil Hunting Grounds" x="-6241" y="111519" z="-3256" radius="1081" mobs="8" />
 	<spot level="21" min="18" max="24" region="Gludio" name="Skeleton Scout" x="-54650" y="107879" z="-3744" radius="951" mobs="10" />
-	<spot level="22" min="21" max="22" region="DarkElfTerritory" name="Lesser Succubus · School of Dark Arts" x="-47527" y="48288" z="-5656" radius="1166" mobs="9" />
+	<spot level="22" min="21" max="22" region="DarkElfTerritory" name="Lesser Succubus · School of Dark Arts" x="-47547" y="47941" z="-5912" radius="1294" mobs="8" />
 	<spot level="22" min="21" max="23" region="DwarvenTerritory" name="Dwarven Starting · Eastern Mining Zone" x="174866" y="-211396" z="-3712" radius="1500" mobs="9" />
 	<spot level="22" min="21" max="23" region="DwarvenTerritory" name="Dwarven Starting · Eastern Mining Zone" x="174068" y="-204983" z="-3496" radius="1500" mobs="8" />
 	<spot level="22" min="21" max="23" region="DwarvenTerritory" name="Dwarven Starting · восток" x="173099" y="-199169" z="-3464" radius="1500" mobs="9" />
@@ -448,6 +444,7 @@
 	<spot level="30" min="29" max="31" region="Dion" name="Cruma Marshlands · северо-запад" x="13830" y="104934" z="-3568" radius="1500" mobs="25" />
 	<spot level="30" min="27" max="30" region="Dion" name="Ol Mahum Captain" x="47134" y="106474" z="-912" radius="1296" mobs="16" />
 	<spot level="30" min="29" max="30" region="Dion" name="Plains Of Dion · юг" x="10928" y="179276" z="-3312" radius="1500" mobs="11" />
+	<spot level="30" min="29" max="32" region="Gludin" name="Lakin Salamander" x="-61781" y="183431" z="-4816" radius="1343" mobs="12" />
 	<spot level="30" min="27" max="31" region="Gludin" name="Lakin Undine · Forgotten Temple" x="-58166" y="185897" z="-4520" radius="1064" mobs="17" />
 	<spot level="30" min="30" max="31" region="Gludin" name="Ol Mahum Van Grunt" x="-42806" y="169836" z="-3176" radius="890" mobs="10" />
 	<spot level="30" min="29" max="31" region="Gludin" name="Patin Archer · Forgotten Temple" x="-58700" y="184298" z="-4808" radius="1071" mobs="8" />
@@ -467,7 +464,6 @@
 	<spot level="31" min="30" max="32" region="Giran" name="Brekas Stronghold · юго-восток" x="88920" y="129683" z="-3688" radius="1500" mobs="12" />
 	<spot level="31" min="30" max="32" region="Giran" name="Brekas Stronghold · юго-запад" x="82952" y="129589" z="-3568" radius="1500" mobs="11" />
 	<spot level="31" min="30" max="32" region="Gludin" name="Ol Mahum Van Grunt" x="-45939" y="168825" z="-3160" radius="868" mobs="13" />
-	<spot level="31" min="30" max="35" region="Gludin" name="Sentinel Of Water" x="-61693" y="182862" z="-4808" radius="999" mobs="13" />
 	<spot level="31" min="29" max="33" region="Gludio" name="Wasteland · северо-запад" x="-26742" y="177445" z="-5240" radius="1119" mobs="13" />
 	<spot level="32" min="30" max="34" region="Dion" name="Bee Hive · запад" x="20495" y="182925" z="-2960" radius="1500" mobs="34" />
 	<spot level="32" min="30" max="34" region="Dion" name="Bee Hive · северо-запад" x="20390" y="177992" z="-3568" radius="1500" mobs="9" />
@@ -477,10 +473,10 @@
 	<spot level="32" min="31" max="33" region="Giran" name="Gorgon Flower Garden · запад" x="104749" y="137419" z="-3504" radius="1500" mobs="15" />
 	<spot level="32" min="31" max="33" region="Giran" name="Gorgon Flower Garden · запад" x="105383" y="132630" z="-3424" radius="1500" mobs="12" />
 	<spot level="32" min="31" max="33" region="Giran" name="Gorgon Flower Garden · юго-запад" x="103713" y="145484" z="-3480" radius="1500" mobs="9" />
-	<spot level="32" min="30" max="33" region="Gludin" name="Dre Vanul Warrior · Forgotten Temple" x="-59578" y="181364" z="-4808" radius="1345" mobs="12" />
 	<spot level="32" min="29" max="33" region="Gludin" name="Kanil Succubus · Forgotten Temple" x="-55458" y="184387" z="-4512" radius="1395" mobs="20" />
 	<spot level="32" min="31" max="33" region="Gludin" name="Kanil Succubus · Forgotten Temple" x="-55038" y="181292" z="-4512" radius="1189" mobs="12" />
 	<spot level="32" min="32" max="33" region="Gludin" name="Salamander Rowin · Forgotten Temple" x="-61526" y="180012" z="-4808" radius="1106" mobs="8" />
+	<spot level="32" min="30" max="33" region="Gludin" name="Sentinel Of Water · Forgotten Temple" x="-59208" y="181633" z="-4808" radius="1117" mobs="13" />
 	<spot level="32" min="30" max="35" region="Gludio" name="Wasteland · Ant Nest" x="-14658" y="178665" z="-5304" radius="697" mobs="9" />
 	<spot level="33" min="32" max="34" region="Dion" name="Cruma Marshlands · Cruma Tower" x="20560" y="110956" z="-3712" radius="1500" mobs="10" />
 	<spot level="33" min="32" max="34" region="Dion" name="Cruma Marshlands · север" x="19460" y="103353" z="-3696" radius="1500" mobs="25" />
@@ -508,8 +504,6 @@
 	<spot level="36" min="35" max="37" region="Giran" name="Death Pass · Dragon Valley" x="67125" y="116010" z="-3616" radius="1500" mobs="8" />
 	<spot level="36" min="35" max="37" region="Giran" name="Death Pass · Dragon Valley" x="70265" y="114591" z="-3608" radius="1500" mobs="8" />
 	<spot level="36" min="35" max="37" region="Giran" name="Death Pass · Dragon Valley" x="68173" y="119957" z="-3672" radius="1500" mobs="8" />
-	<spot level="36" min="36" max="36" region="Gludio" name="Cave Ant Larva" x="-28725" y="191719" z="-3944" radius="1351" mobs="10" />
-	<spot level="36" min="36" max="36" region="Gludio" name="Cave Ant Larva" x="-27509" y="193638" z="-3944" radius="1244" mobs="10" />
 	<spot level="36" min="35" max="38" region="Gludio" name="Wasteland · северо-восток" x="-19411" y="183001" z="-5576" radius="961" mobs="9" />
 	<spot level="37" min="35" max="40" region="Dion" name="Bee Hive · Floran Agricultural Area" x="30217" y="178944" z="-3608" radius="1500" mobs="33" />
 	<spot level="37" min="35" max="40" region="Dion" name="Bee Hive · восток" x="34659" y="181379" z="-3200" radius="1500" mobs="29" />
@@ -521,7 +515,6 @@
 	<spot level="37" min="36" max="39" region="Innadril" name="Alligator Beach · Field of Whispers" x="104790" y="211060" z="-2680" radius="1500" mobs="10" />
 	<spot level="37" min="36" max="39" region="Innadril" name="Alligator Beach · запад" x="105066" y="202809" z="-3432" radius="1500" mobs="10" />
 	<spot level="37" min="36" max="39" region="Innadril" name="Alligator Beach · северо-запад" x="101753" y="200236" z="-3672" radius="1427" mobs="10" />
-	<spot level="38" min="38" max="38" region="Dion" name="Nameless Revenant" x="53641" y="143260" z="-3864" radius="715" mobs="8" />
 	<spot level="38" min="36" max="40" region="Innadril" name="Alligator Beach · Alligator Island" x="117464" y="199170" z="-3720" radius="1022" mobs="8" />
 	<spot level="38" min="36" max="40" region="Innadril" name="Alligator Beach · север" x="114550" y="201480" z="-3472" radius="1500" mobs="8" />
 	<spot level="38" min="36" max="40" region="Innadril" name="Alligator Beach · северо-восток" x="125000" y="201346" z="-2704" radius="1290" mobs="10" />
@@ -529,7 +522,6 @@
 	<spot level="39" min="38" max="40" region="Giran" name="Hardins Academy" x="70402" y="100686" z="-3680" radius="1500" mobs="10" />
 	<spot level="39" min="36" max="40" region="Innadril" name="Alligator Beach · северо-запад" x="109338" y="200362" z="-3576" radius="1500" mobs="10" />
 	<spot level="39" min="39" max="39" region="OrcTerritory" name="Ragna Orc" x="10167" y="-90732" z="-2872" radius="1137" mobs="8" />
-	<spot level="39" min="35" max="40" region="Oren" name="Divine Emissary" x="95795" y="76396" z="-3536" radius="1202" mobs="12" />
 	<spot level="40" min="39" max="40" region="Innadril" name="Alligator Beach · юго-восток" x="120607" y="210319" z="-3312" radius="1500" mobs="16" />
 	<spot level="40" min="39" max="40" region="Innadril" name="Alligator Beach · юго-восток" x="122717" y="214274" z="-3528" radius="1500" mobs="12" />
 	<spot level="40" min="39" max="40" region="Innadril" name="Alligator Beach · юго-восток" x="125129" y="219511" z="-3088" radius="1500" mobs="12" />
@@ -646,7 +638,6 @@
 	<spot level="47" min="46" max="48" region="Oren" name="Ivory Tower · север" x="89002" y="7867" z="-3160" radius="400" mobs="11" />
 	<spot level="47" min="46" max="48" region="Oren" name="Ivory Tower · юго-запад" x="76905" y="23617" z="-3512" radius="1500" mobs="11" />
 	<spot level="48" min="47" max="49" region="Dion" name="Ossiud · восток" x="23597" y="110189" z="-9048" radius="820" mobs="11" />
-	<spot level="48" min="45" max="49" region="Dion" name="Susceptor · Cruma Tower" x="17673" y="112953" z="-6584" radius="1180" mobs="25" />
 	<spot level="48" min="47" max="50" region="Dion" name="Tanor Canyon · север" x="67930" y="143126" z="-3512" radius="1500" mobs="10" />
 	<spot level="48" min="48" max="49" region="Giran" name="Devils Isle · юг" x="46743" y="217545" z="-3752" radius="966" mobs="10" />
 	<spot level="48" min="48" max="49" region="Giran" name="Devils Isle · юг" x="45055" y="220422" z="-3584" radius="885" mobs="9" />
@@ -656,7 +647,6 @@
 	<spot level="48" min="47" max="49" region="Hunters" name="Enchanted Valley · северо-восток" x="124715" y="39863" z="-4416" radius="1500" mobs="13" />
 	<spot level="48" min="47" max="49" region="Hunters" name="Enchanted Valley · юго-запад" x="104881" y="59646" z="-4512" radius="1500" mobs="10" />
 	<spot level="48" min="46" max="49" region="Oren" name="Ivory Tower · северо-запад" x="77325" y="7312" z="-3248" radius="1500" mobs="11" />
-	<spot level="48" min="48" max="49" region="Oren" name="Raikel" x="43591" y="16954" z="-4392" radius="1096" mobs="9" />
 	<spot level="49" min="48" max="50" region="Aden" name="Plains Of Glory · север" x="138984" y="1479" z="-4520" radius="1500" mobs="13" />
 	<spot level="49" min="48" max="50" region="Aden" name="Plains Of Glory · север" x="139786" y="4647" z="-4424" radius="1500" mobs="10" />
 	<spot level="49" min="48" max="50" region="Aden" name="Plains Of Glory · север" x="136559" y="5258" z="-4472" radius="1500" mobs="10" />
@@ -766,7 +756,7 @@
 	<spot level="56" min="55" max="57" region="Aden" name="Fields Of Massacre · юго-запад" x="165436" y="-5930" z="-2944" radius="1500" mobs="17" />
 	<spot level="56" min="55" max="57" region="Aden" name="Fields Of Massacre · юго-запад" x="168092" y="-8636" z="-2936" radius="1500" mobs="17" />
 	<spot level="56" min="55" max="57" region="Aden" name="Fields Of Massacre · юго-запад" x="168508" y="-6023" z="-2784" radius="1500" mobs="13" />
-	<spot level="56" min="55" max="59" region="Aden" name="Yintzu" x="171903" y="43352" z="-4952" radius="1260" mobs="9" />
+	<spot level="56" min="55" max="59" region="Aden" name="Yintzu" x="171926" y="43268" z="-4960" radius="1192" mobs="8" />
 	<spot level="56" min="54" max="59" region="Aden" name="Yintzu · Forsaken Plains" x="171023" y="42190" z="-4904" radius="1328" mobs="29" />
 	<spot level="56" min="54" max="57" region="Giran" name="Death Pass · юго-запад" x="65002" y="115864" z="-3640" radius="1500" mobs="8" />
 	<spot level="56" min="55" max="57" region="Schuttgart" name="Lost Gargoyle · восток" x="120700" y="-113601" z="-2312" radius="1157" mobs="9" />
@@ -786,9 +776,9 @@
 	<spot level="59" min="58" max="60" region="Aden" name="Fields Of Massacre · юго-запад" x="173663" y="-8803" z="-3096" radius="1500" mobs="30" />
 	<spot level="59" min="58" max="60" region="Aden" name="Fields Of Massacre · юго-запад" x="170623" y="-11738" z="-2736" radius="1500" mobs="28" />
 	<spot level="60" min="60" max="62" region="Aden" name="Tower Of Insolence" x="113343" y="14754" z="-5096" radius="1229" mobs="12" />
+	<spot level="60" min="60" max="62" region="Aden" name="Tower Of Insolence" x="115968" y="14730" z="-5096" radius="1319" mobs="12" />
 	<spot level="60" min="60" max="62" region="Aden" name="Tower Of Insolence" x="115958" y="17421" z="-5096" radius="1266" mobs="12" />
-	<spot level="60" min="60" max="62" region="Aden" name="Tower Of Insolence · северо-восток" x="115968" y="14730" z="-5096" radius="1319" mobs="12" />
-	<spot level="60" min="60" max="62" region="Aden" name="Tower Of Insolence · юго-запад" x="113332" y="17389" z="-5096" radius="1323" mobs="12" />
+	<spot level="60" min="60" max="62" region="Aden" name="Tower Of Insolence" x="113332" y="17389" z="-5096" radius="1323" mobs="12" />
 	<spot level="61" min="60" max="62" region="Aden" name="The Forbidden Gateway · Seal of Shilen" x="185434" y="16928" z="-3280" radius="1500" mobs="13" />
 	<spot level="61" min="60" max="62" region="Aden" name="The Forbidden Gateway · Seal of Shilen" x="185654" y="23398" z="-3320" radius="1500" mobs="12" />
 	<spot level="61" min="60" max="62" region="Aden" name="The Forbidden Gateway · север" x="185171" y="11497" z="-2720" radius="1500" mobs="14" />
@@ -804,11 +794,11 @@
 	<spot level="62" min="61" max="63" region="Aden" name="Fields Of Massacre · северо-восток" x="187231" y="-23299" z="-1976" radius="1500" mobs="15" />
 	<spot level="62" min="60" max="63" region="Aden" name="Tower Of Insolence" x="115931" y="17350" z="-3608" radius="1237" mobs="15" />
 	<spot level="62" min="60" max="63" region="Aden" name="Tower Of Insolence" x="113409" y="14811" z="-3608" radius="1271" mobs="14" />
+	<spot level="62" min="60" max="63" region="Aden" name="Tower Of Insolence" x="113392" y="17344" z="-3608" radius="1216" mobs="14" />
 	<spot level="62" min="60" max="63" region="Aden" name="Tower Of Insolence" x="115906" y="14853" z="-3608" radius="1218" mobs="14" />
 	<spot level="62" min="60" max="63" region="Aden" name="Tower Of Insolence" x="114648" y="16079" z="-3608" radius="841" mobs="8" />
-	<spot level="62" min="60" max="63" region="Aden" name="Tower Of Insolence · юго-запад" x="113392" y="17344" z="-3608" radius="1216" mobs="14" />
-	<spot level="62" min="61" max="63" region="Rune" name="Valley Of Saints · запад" x="79357" y="-80719" z="-4040" radius="1500" mobs="8" />
-	<spot level="62" min="61" max="63" region="Rune" name="Valley Of Saints · юг" x="82371" y="-79314" z="-4040" radius="1500" mobs="8" />
+	<spot level="62" min="61" max="63" region="Rune" name="Valley Of Saints · юго-восток" x="82371" y="-79314" z="-4040" radius="1500" mobs="8" />
+	<spot level="62" min="61" max="63" region="Rune" name="Valley Of Saints · юго-запад" x="79357" y="-80719" z="-4040" radius="1500" mobs="8" />
 	<spot level="62" min="62" max="63" region="Schuttgart" name="Frost Yeti" x="124798" y="-126778" z="-2576" radius="868" mobs="9" />
 	<spot level="62" min="59" max="63" region="Schuttgart" name="Yeti" x="127591" y="-119494" z="-2600" radius="1104" mobs="21" />
 	<spot level="63" min="63" max="65" region="Rune" name="Knight · Forest of the Dead" x="47971" y="-57154" z="-2552" radius="1500" mobs="29" />
@@ -829,19 +819,17 @@
 	<spot level="64" min="63" max="66" region="Aden" name="Tower Of Insolence" x="116192" y="16835" z="-640" radius="1027" mobs="16" />
 	<spot level="64" min="63" max="66" region="Aden" name="Tower Of Insolence" x="113345" y="14741" z="-2120" radius="1299" mobs="13" />
 	<spot level="64" min="63" max="66" region="Aden" name="Tower Of Insolence" x="115975" y="17355" z="-2120" radius="1294" mobs="13" />
-	<spot level="64" min="63" max="66" region="Aden" name="Tower Of Insolence · северо-восток" x="115991" y="14917" z="-640" radius="567" mobs="9" />
+	<spot level="64" min="63" max="66" region="Aden" name="Tower Of Insolence" x="115991" y="14917" z="-640" radius="567" mobs="9" />
 	<spot level="65" min="63" max="66" region="Aden" name="Tower Of Insolence" x="114647" y="16068" z="-2120" radius="1153" mobs="21" />
-	<spot level="65" min="63" max="66" region="Aden" name="Tower Of Insolence · северо-восток" x="115958" y="14775" z="-2120" radius="1281" mobs="13" />
+	<spot level="65" min="63" max="66" region="Aden" name="Tower Of Insolence" x="115958" y="14775" z="-2120" radius="1281" mobs="13" />
 	<spot level="65" min="64" max="66" region="Rune" name="Corrupted Guard · Forest of the Dead" x="53034" y="-59997" z="-3024" radius="1500" mobs="21" />
 	<spot level="65" min="64" max="66" region="Rune" name="Corrupted Guard · Forest of the Dead" x="51038" y="-58760" z="-2856" radius="1500" mobs="21" />
 	<spot level="65" min="64" max="66" region="Rune" name="Corrupted Guard · Forest of the Dead" x="55192" y="-58762" z="-3448" radius="1500" mobs="16" />
 	<spot level="65" min="64" max="66" region="Rune" name="Corrupted Guard · северо-запад" x="50376" y="-61053" z="-2624" radius="1500" mobs="18" />
 	<spot level="65" min="64" max="67" region="Rune" name="Valley Of Saints · восток" x="85972" y="-80126" z="-3680" radius="1500" mobs="16" />
-	<spot level="65" min="64" max="67" region="Rune" name="Valley Of Saints · северо-восток" x="87652" y="-84177" z="-3680" radius="1500" mobs="11" />
+	<spot level="65" min="64" max="67" region="Rune" name="Valley Of Saints · восток" x="87652" y="-84177" z="-3680" radius="1500" mobs="11" />
 	<spot level="65" min="64" max="67" region="Rune" name="Valley Of Saints · юго-восток" x="89531" y="-77805" z="-3792" radius="1500" mobs="11" />
-	<spot level="66" min="63" max="67" region="Rune" name="Corpse of Deadman · Forest of the Dead" x="57896" y="-56434" z="-3344" radius="1500" mobs="64" />
-	<spot level="66" min="63" max="68" region="Rune" name="Corpse of Deadman · Forest of the Dead" x="52190" y="-50845" z="-3096" radius="1500" mobs="53" />
-	<spot level="66" min="63" max="68" region="Rune" name="Corpse of Deadman · Forest of the Dead" x="51265" y="-52940" z="-2824" radius="1500" mobs="30" />
+	<spot level="66" min="66" max="67" region="Rune" name="Resurrected Guard · Forest of the Dead" x="57896" y="-56434" z="-3344" radius="1500" mobs="44" />
 	<spot level="67" min="65" max="69" region="Aden" name="Blazing Swamp · юг" x="148469" y="-9406" z="-4496" radius="1500" mobs="17" />
 	<spot level="67" min="65" max="69" region="Aden" name="Blazing Swamp · юг" x="147040" y="-6015" z="-4520" radius="1500" mobs="11" />
 	<spot level="67" min="65" max="69" region="Aden" name="Blazing Swamp · юг" x="149667" y="-6982" z="-4392" radius="1500" mobs="8" />
@@ -850,8 +838,8 @@
 	<spot level="67" min="65" max="69" region="Aden" name="Blazing Swamp · юго-запад" x="142133" y="-5608" z="-4784" radius="1500" mobs="12" />
 	<spot level="67" min="67" max="68" region="Goddard" name="Garden Of Beasts · юго-восток" x="157010" y="-49431" z="-3152" radius="1095" mobs="8" />
 	<spot level="67" min="65" max="69" region="Goddard" name="Heathen · Devil's Pass" x="102526" y="-60380" z="-2288" radius="1500" mobs="60" />
-	<spot level="67" min="63" max="69" region="Rune" name="Corpse of Deadman · Forest of the Dead" x="54541" y="-55552" z="-3200" radius="1500" mobs="71" />
-	<spot level="67" min="63" max="69" region="Rune" name="Corpse of Deadman · Forest of the Dead" x="56840" y="-52513" z="-3200" radius="1500" mobs="67" />
+	<spot level="67" min="66" max="68" region="Rune" name="Bone · Forest of the Dead" x="52190" y="-50845" z="-3096" radius="1500" mobs="32" />
+	<spot level="67" min="66" max="68" region="Rune" name="Bone · Forest of the Dead" x="51265" y="-52940" z="-2824" radius="1500" mobs="16" />
 	<spot level="67" min="66" max="69" region="Rune" name="Swamp Of Screams · Shyeed's Cavern" x="75688" y="-54915" z="-3136" radius="1500" mobs="14" />
 	<spot level="67" min="66" max="69" region="Rune" name="Swamp Of Screams · запад" x="73807" y="-51880" z="-3136" radius="1500" mobs="8" />
 	<spot level="67" min="66" max="67" region="Rune" name="Valley Of Saints · северо-восток" x="96315" y="-90362" z="-2768" radius="1500" mobs="9" />
@@ -866,6 +854,8 @@
 	<spot level="68" min="68" max="69" region="Goddard" name="Garden Of Beasts · северо-восток" x="151883" y="-61598" z="-3120" radius="681" mobs="9" />
 	<spot level="68" min="66" max="70" region="Hunters" name="Maluk · запад" x="75251" y="110956" z="-2456" radius="1216" mobs="8" />
 	<spot level="68" min="67" max="68" region="Rune" name="Bone Collector" x="60298" y="-51121" z="-2872" radius="1500" mobs="19" />
+	<spot level="68" min="67" max="69" region="Rune" name="Devil Bat · Forest of the Dead" x="54541" y="-55552" z="-3200" radius="1500" mobs="39" />
+	<spot level="68" min="67" max="69" region="Rune" name="Devil Bat · Forest of the Dead" x="56840" y="-52513" z="-3200" radius="1500" mobs="35" />
 	<spot level="68" min="67" max="68" region="Rune" name="Sacrificed Man" x="59995" y="-53157" z="-3048" radius="1409" mobs="18" />
 	<spot level="68" min="66" max="70" region="Rune" name="Swamp Of Screams · юг" x="81798" y="-45072" z="-3232" radius="1138" mobs="14" />
 	<spot level="68" min="66" max="70" region="Rune" name="Swamp Of Screams · юг" x="82456" y="-41493" z="-3240" radius="400" mobs="12" />
@@ -873,12 +863,14 @@
 	<spot level="68" min="66" max="70" region="Rune" name="Swamp Of Screams · юго-запад" x="72357" y="-45559" z="-3224" radius="687" mobs="13" />
 	<spot level="68" min="66" max="70" region="Rune" name="Swamp Of Screams · юго-запад" x="73313" y="-42346" z="-3224" radius="400" mobs="8" />
 	<spot level="69" min="68" max="70" region="Goddard" name="Garden Of Beasts · север" x="142643" y="-61022" z="-3176" radius="1204" mobs="11" />
+	<spot level="69" min="68" max="70" region="Rune" name="Ghost of Rebellion Soldier · Forest of the Dead" x="50698" y="-47377" z="-3376" radius="1500" mobs="30" />
 	<spot level="69" min="66" max="70" region="Rune" name="Swamp Of Screams · юг" x="79597" y="-41942" z="-3232" radius="447" mobs="11" />
 	<spot level="70" min="69" max="70" region="Goddard" name="Garden Of Beasts · Garden of Wild Beasts" x="133106" y="-55248" z="-3304" radius="1052" mobs="9" />
 	<spot level="70" min="69" max="70" region="Goddard" name="Garden Of Beasts · запад" x="132286" y="-52519" z="-3512" radius="1223" mobs="11" />
 	<spot level="70" min="69" max="70" region="Goddard" name="Garden Of Beasts · северо-запад" x="140568" y="-58185" z="-3152" radius="901" mobs="8" />
 	<spot level="70" min="69" max="71" region="Rune" name="Bone Grinder" x="48087" y="-41568" z="-2088" radius="1500" mobs="21" />
 	<spot level="70" min="69" max="71" region="Rune" name="Bone Sweeper · Forest of the Dead" x="49001" y="-43885" z="-2768" radius="1500" mobs="23" />
+	<spot level="70" min="69" max="71" region="Rune" name="Ghost of Guillotine · Forest of the Dead" x="55684" y="-48652" z="-3152" radius="1500" mobs="72" />
 	<spot level="70" min="69" max="71" region="Rune" name="Ghost · Cursed Village" x="60336" y="-46668" z="-2440" radius="1500" mobs="49" />
 	<spot level="70" min="69" max="72" region="Rune" name="Ghost · Forest of the Dead" x="51690" y="-43785" z="-2864" radius="1500" mobs="31" />
 	<spot level="71" min="70" max="72" region="Aden" name="Blazing Swamp · восток" x="151169" y="-14407" z="-4552" radius="1500" mobs="9" />
@@ -888,25 +880,12 @@
 	<spot level="71" min="70" max="72" region="Aden" name="Blazing Swamp · юг" x="147356" y="-12197" z="-4448" radius="1500" mobs="11" />
 	<spot level="71" min="70" max="72" region="Aden" name="Blazing Swamp · юго-восток" x="151049" y="-12014" z="-4480" radius="1500" mobs="15" />
 	<spot level="71" min="70" max="72" region="Aden" name="Blazing Swamp · юго-запад" x="145224" y="-9388" z="-4472" radius="1500" mobs="9" />
-	<spot level="71" min="70" max="72" region="Aden" name="Tower Of Insolence" x="115194" y="14979" z="3960" radius="968" mobs="14" />
-	<spot level="71" min="70" max="72" region="Aden" name="Tower Of Insolence" x="115515" y="17034" z="3960" radius="700" mobs="8" />
-	<spot level="71" min="70" max="72" region="Aden" name="Tower Of Insolence · юг" x="114552" y="18079" z="2952" radius="516" mobs="10" />
 	<spot level="71" min="70" max="71" region="Goddard" name="Wall Of Argos · северо-запад" x="177616" y="-57593" z="-3248" radius="1500" mobs="8" />
-	<spot level="71" min="70" max="75" region="Others" name="Krateis Cube · восток" x="-77988" y="-16410" z="-8320" radius="763" mobs="17" />
-	<spot level="71" min="70" max="75" region="Others" name="Krateis Cube · северо-запад" x="-83986" y="-20411" z="-8320" radius="764" mobs="17" />
-	<spot level="71" min="70" max="75" region="Others" name="Krateis Cube · северо-запад" x="-85985" y="-18410" z="-8320" radius="763" mobs="17" />
-	<spot level="71" min="70" max="75" region="Others" name="Krateis Cube · юго-восток" x="-77984" y="-14412" z="-8320" radius="764" mobs="17" />
-	<spot level="71" min="70" max="75" region="Others" name="Krateis Cube · юго-запад" x="-83985" y="-12410" z="-8320" radius="763" mobs="17" />
 	<spot level="71" min="69" max="72" region="Rune" name="Bone Scavenger · Forest of the Dead" x="51067" y="-39621" z="-2032" radius="1500" mobs="34" />
 	<spot level="71" min="70" max="74" region="Rune" name="Swamp Of Screams · юго-запад" x="78635" y="-51193" z="-2336" radius="1097" mobs="13" />
+	<spot level="72" min="71" max="72" region="Aden" name="Tower Of Insolence" x="115228" y="15238" z="3960" radius="1004" mobs="9" />
 	<spot level="72" min="71" max="72" region="Goddard" name="Wall Of Argos · северо-запад" x="177298" y="-50602" z="-3336" radius="1500" mobs="13" />
 	<spot level="72" min="71" max="72" region="Goddard" name="Wall Of Argos · юго-запад" x="176556" y="-37572" z="-3384" radius="1500" mobs="8" />
-	<spot level="72" min="70" max="75" region="Others" name="Krateis Cube · север" x="-81985" y="-20410" z="-8320" radius="763" mobs="16" />
-	<spot level="72" min="70" max="75" region="Others" name="Krateis Cube · северо-восток" x="-77989" y="-18416" z="-8320" radius="764" mobs="16" />
-	<spot level="72" min="70" max="75" region="Others" name="Krateis Cube · северо-запад" x="-83984" y="-18414" z="-8320" radius="763" mobs="16" />
-	<spot level="72" min="70" max="75" region="Others" name="Krateis Cube · юго-восток" x="-77984" y="-12412" z="-8320" radius="764" mobs="18" />
-	<spot level="72" min="70" max="75" region="Others" name="Krateis Cube · юго-восток" x="-79985" y="-14410" z="-8320" radius="764" mobs="16" />
-	<spot level="72" min="70" max="75" region="Others" name="Krateis Cube · юго-восток" x="-79988" y="-12414" z="-8320" radius="764" mobs="16" />
 	<spot level="72" min="71" max="73" region="Rune" name="Behemoth Zombie" x="47077" y="-39344" z="-1816" radius="1500" mobs="18" />
 	<spot level="72" min="70" max="74" region="Rune" name="Swamp Of Screams · восток" x="89433" y="-52104" z="-2616" radius="1140" mobs="18" />
 	<spot level="72" min="70" max="73" region="Rune" name="Swamp Of Screams · восток" x="93953" y="-51553" z="-2584" radius="951" mobs="11" />
@@ -923,9 +902,10 @@
 	<spot level="72" min="70" max="74" region="Rune" name="Swamp Of Screams · юго-восток" x="82922" y="-50830" z="-2336" radius="1106" mobs="12" />
 	<spot level="72" min="70" max="73" region="Rune" name="Swamp Of Screams · юго-восток" x="82329" y="-52562" z="-2328" radius="528" mobs="8" />
 	<spot level="72" min="71" max="73" region="Rune" name="Vampire Warlord" x="46706" y="-36850" z="-1632" radius="1500" mobs="20" />
+	<spot level="72" min="71" max="73" region="Rune" name="Vampire · Forest of the Dead" x="56283" y="-45098" z="-2968" radius="1500" mobs="53" />
 	<spot level="72" min="71" max="73" region="Rune" name="Vampire · юго-запад" x="49748" y="-36392" z="-1608" radius="1500" mobs="27" />
-	<spot level="72" min="72" max="73" region="Schuttgart" name="Golem · Pavel Ruins" x="86576" y="-121355" z="-4392" radius="1190" mobs="26" />
-	<spot level="72" min="72" max="73" region="Schuttgart" name="Golem · Pavel Ruins" x="90362" y="-113706" z="-3384" radius="1138" mobs="16" />
+	<spot level="72" min="72" max="73" region="Schuttgart" name="Golem · Pavel Ruins" x="86598" y="-121321" z="-4392" radius="1168" mobs="22" />
+	<spot level="72" min="72" max="73" region="Schuttgart" name="Golem · Pavel Ruins" x="90339" y="-113736" z="-3384" radius="1157" mobs="14" />
 	<spot level="72" min="72" max="73" region="Schuttgart" name="Golem · Pavel Ruins" x="88163" y="-114452" z="-3272" radius="664" mobs="9" />
 	<spot level="72" min="72" max="73" region="Schuttgart" name="Golem · восток" x="95630" y="-107539" z="-3320" radius="1199" mobs="12" />
 	<spot level="72" min="72" max="73" region="Schuttgart" name="Golem · северо-восток" x="90751" y="-110244" z="-3328" radius="1180" mobs="38" />
@@ -934,17 +914,15 @@
 	<spot level="72" min="72" max="73" region="Schuttgart" name="Golem · юго-запад" x="85807" y="-106418" z="-3320" radius="1104" mobs="18" />
 	<spot level="72" min="72" max="73" region="Schuttgart" name="Golem · юго-запад" x="86807" y="-105226" z="-3320" radius="1120" mobs="12" />
 	<spot level="72" min="72" max="73" region="Schuttgart" name="Golem · юго-запад" x="84473" y="-104130" z="-3320" radius="872" mobs="8" />
-	<spot level="72" min="72" max="73" region="Schuttgart" name="Horrifying Jackhammer Golem · Pavel Ruins" x="95566" y="-121813" z="-4568" radius="1163" mobs="18" />
-	<spot level="72" min="72" max="73" region="Schuttgart" name="Horrifying Jackhammer Golem · северо-запад" x="91766" y="-127403" z="-4272" radius="1237" mobs="27" />
-	<spot level="72" min="72" max="73" region="Schuttgart" name="Scout-type Golem No. 28 · Pavel Ruins" x="94326" y="-120048" z="-4552" radius="1192" mobs="25" />
-	<spot level="72" min="72" max="73" region="Schuttgart" name="Scout-type Golem No. 28 · Pavel Ruins" x="87052" y="-112828" z="-3008" radius="1173" mobs="20" />
-	<spot level="72" min="72" max="73" region="Schuttgart" name="Scout-type Golem No. 28 · Pavel Ruins" x="93838" y="-122780" z="-4552" radius="965" mobs="12" />
-	<spot level="72" min="72" max="73" region="Schuttgart" name="Scout-type Golem No. 28 · Pavel Ruins" x="92467" y="-121312" z="-4536" radius="608" mobs="9" />
-	<spot level="72" min="72" max="73" region="Schuttgart" name="Scout-type Golem No. 28 · северо-запад" x="85018" y="-122242" z="-4392" radius="1388" mobs="16" />
+	<spot level="72" min="72" max="73" region="Schuttgart" name="Horrifying Jackhammer Golem · Pavel Ruins" x="95583" y="-121828" z="-4568" radius="1171" mobs="17" />
+	<spot level="72" min="72" max="73" region="Schuttgart" name="Horrifying Jackhammer Golem · северо-запад" x="91762" y="-127402" z="-4272" radius="1235" mobs="24" />
+	<spot level="72" min="72" max="73" region="Schuttgart" name="Scout-type Golem No. 28 · Pavel Ruins" x="94276" y="-120025" z="-4552" radius="1192" mobs="22" />
+	<spot level="72" min="72" max="73" region="Schuttgart" name="Scout-type Golem No. 28 · Pavel Ruins" x="87006" y="-112829" z="-3008" radius="1178" mobs="18" />
+	<spot level="72" min="72" max="73" region="Schuttgart" name="Scout-type Golem No. 28 · Pavel Ruins" x="93748" y="-122729" z="-4544" radius="924" mobs="10" />
+	<spot level="72" min="72" max="73" region="Schuttgart" name="Scout-type Golem No. 28 · Pavel Ruins" x="92444" y="-121300" z="-4544" radius="619" mobs="8" />
+	<spot level="72" min="72" max="73" region="Schuttgart" name="Scout-type Golem No. 28 · северо-запад" x="84994" y="-122254" z="-4392" radius="1399" mobs="14" />
 	<spot level="73" min="73" max="74" region="Aden" name="Silent Valley · юго-запад" x="174365" y="55831" z="-5968" radius="1500" mobs="50" />
-	<spot level="73" min="72" max="74" region="Aden" name="Tower Of Insolence" x="113772" y="16747" z="5008" radius="1046" mobs="17" />
-	<spot level="73" min="72" max="74" region="Aden" name="Tower Of Insolence" x="114666" y="15026" z="4976" radius="932" mobs="9" />
-	<spot level="73" min="72" max="74" region="Aden" name="Tower Of Insolence" x="115986" y="16056" z="4976" radius="400" mobs="8" />
+	<spot level="73" min="73" max="74" region="Aden" name="Tower Of Insolence" x="113781" y="16835" z="5008" radius="1082" mobs="11" />
 	<spot level="73" min="73" max="74" region="Goddard" name="Scarab · Shrine of Loyalty" x="189070" y="-63353" z="-2776" radius="1175" mobs="8" />
 	<spot level="73" min="72" max="73" region="Rune" name="Vampire · Cursed Village" x="59508" y="-42326" z="-3000" radius="1500" mobs="12" />
 	<spot level="73" min="72" max="73" region="Rune" name="Vampire · Forest of the Dead" x="53564" y="-39699" z="-2000" radius="1500" mobs="18" />
@@ -955,12 +933,7 @@
 	<spot level="74" min="73" max="75" region="Aden" name="Blazing Swamp · северо-восток" x="150148" y="-18471" z="-3040" radius="1500" mobs="19" />
 	<spot level="74" min="73" max="75" region="Aden" name="Blazing Swamp · северо-запад" x="142544" y="-19397" z="-3240" radius="1500" mobs="19" />
 	<spot level="74" min="73" max="75" region="Aden" name="Blazing Swamp · северо-запад" x="144239" y="-21602" z="-3112" radius="1500" mobs="10" />
-	<spot level="74" min="73" max="75" region="Aden" name="Tower Of Insolence" x="114564" y="16136" z="7992" radius="1075" mobs="15" />
-	<spot level="74" min="73" max="75" region="Aden" name="Tower Of Insolence" x="113780" y="17451" z="6992" radius="663" mobs="10" />
-	<spot level="74" min="73" max="75" region="Aden" name="Tower Of Insolence" x="113719" y="15114" z="6992" radius="400" mobs="8" />
-	<spot level="74" min="73" max="75" region="Aden" name="Tower Of Insolence" x="115174" y="14610" z="6992" radius="553" mobs="8" />
-	<spot level="74" min="73" max="75" region="Aden" name="Tower Of Insolence · запад" x="112470" y="16842" z="5984" radius="1039" mobs="8" />
-	<spot level="74" min="73" max="75" region="Aden" name="Tower Of Insolence · северо-восток" x="115629" y="13965" z="5984" radius="1032" mobs="9" />
+	<spot level="74" min="73" max="75" region="Aden" name="Tower Of Insolence" x="114757" y="16060" z="7992" radius="1126" mobs="8" />
 	<spot level="74" min="74" max="75" region="Goddard" name="Grave Ant" x="191953" y="-67922" z="-2680" radius="1500" mobs="11" />
 	<spot level="74" min="73" max="76" region="Goddard" name="Hot Springs · восток" x="155026" y="-109278" z="-2672" radius="1500" mobs="10" />
 	<spot level="74" min="73" max="76" region="Goddard" name="Hot Springs · запад" x="144049" y="-110427" z="-3552" radius="1500" mobs="13" />
@@ -971,20 +944,6 @@
 	<spot level="74" min="73" max="76" region="Goddard" name="Hot Springs · юго-запад" x="144765" y="-106954" z="-3528" radius="1500" mobs="14" />
 	<spot level="74" min="74" max="74" region="Goddard" name="Wall Of Argos · запад" x="171955" y="-47526" z="-3512" radius="1500" mobs="8" />
 	<spot level="74" min="74" max="75" region="Goddard" name="Wall Of Argos · север" x="183627" y="-48811" z="-3128" radius="1500" mobs="9" />
-	<spot level="74" min="70" max="75" region="Others" name="Krateis Cube · восток" x="-79982" y="-16410" z="-8320" radius="764" mobs="17" />
-	<spot level="74" min="70" max="75" region="Others" name="Krateis Cube · запад" x="-83990" y="-16410" z="-8320" radius="764" mobs="17" />
-	<spot level="74" min="70" max="75" region="Others" name="Krateis Cube · запад" x="-85981" y="-16414" z="-8320" radius="764" mobs="15" />
-	<spot level="74" min="70" max="75" region="Others" name="Krateis Cube · север" x="-81984" y="-18410" z="-8320" radius="764" mobs="15" />
-	<spot level="74" min="70" max="75" region="Others" name="Krateis Cube · северо-восток" x="-79981" y="-18410" z="-8320" radius="763" mobs="17" />
-	<spot level="74" min="70" max="75" region="Others" name="Krateis Cube · северо-восток" x="-79982" y="-20414" z="-8320" radius="763" mobs="15" />
-	<spot level="74" min="70" max="75" region="Others" name="Krateis Cube · северо-восток" x="-77982" y="-20414" z="-8320" radius="764" mobs="15" />
-	<spot level="74" min="70" max="75" region="Others" name="Krateis Cube · северо-восток" x="-81982" y="-16414" z="-8320" radius="764" mobs="15" />
-	<spot level="74" min="70" max="75" region="Others" name="Krateis Cube · северо-запад" x="-85985" y="-20416" z="-8320" radius="764" mobs="17" />
-	<spot level="74" min="70" max="75" region="Others" name="Krateis Cube · юг" x="-81984" y="-14410" z="-8320" radius="764" mobs="15" />
-	<spot level="74" min="70" max="75" region="Others" name="Krateis Cube · юг" x="-81986" y="-12412" z="-8320" radius="764" mobs="15" />
-	<spot level="74" min="70" max="75" region="Others" name="Krateis Cube · юго-запад" x="-85982" y="-14410" z="-8320" radius="764" mobs="17" />
-	<spot level="74" min="70" max="75" region="Others" name="Krateis Cube · юго-запад" x="-83984" y="-14414" z="-8320" radius="764" mobs="15" />
-	<spot level="74" min="70" max="75" region="Others" name="Krateis Cube · юго-запад" x="-85982" y="-12412" z="-8320" radius="763" mobs="15" />
 	<spot level="75" min="73" max="76" region="Goddard" name="Hot Springs · запад" x="140915" y="-107406" z="-3632" radius="1500" mobs="13" />
 	<spot level="75" min="73" max="76" region="Goddard" name="Hot Springs · северо-восток" x="156528" y="-113673" z="-1744" radius="1500" mobs="15" />
 	<spot level="75" min="73" max="76" region="Goddard" name="Hot Springs · северо-восток" x="153110" y="-114305" z="-1624" radius="1500" mobs="9" />
@@ -993,41 +952,12 @@
 	<spot level="75" min="75" max="76" region="Goddard" name="Wall Of Argos · восток" x="193898" y="-48545" z="-2984" radius="1500" mobs="33" />
 	<spot level="75" min="74" max="75" region="Goddard" name="Wall Of Argos · северо-восток" x="187696" y="-50220" z="-3040" radius="1500" mobs="21" />
 	<spot level="75" min="75" max="75" region="Goddard" name="Wall Of Argos · юг" x="182678" y="-36587" z="-3096" radius="1500" mobs="19" />
-	<spot level="76" min="76" max="76" region="Aden" name="Reckless Sprite of Water" x="158008" y="20564" z="-4176" radius="1311" mobs="16" />
 	<spot level="76" min="75" max="78" region="Aden" name="Silent Valley · северо-восток" x="182575" y="51906" z="-6024" radius="1500" mobs="50" />
 	<spot level="76" min="76" max="77" region="Goddard" name="Imperial Tomb · юго-запад" x="181429" y="-78686" z="-2728" radius="1500" mobs="11" />
 	<spot level="76" min="75" max="76" region="Goddard" name="Wall Of Argos · северо-восток" x="192139" y="-50681" z="-2896" radius="1500" mobs="12" />
 	<spot level="76" min="75" max="76" region="Goddard" name="Wall Of Argos · юго-восток" x="191169" y="-42086" z="-2816" radius="1500" mobs="36" />
 	<spot level="76" min="75" max="76" region="Goddard" name="Wall Of Argos · юго-восток" x="193315" y="-36849" z="-2952" radius="1500" mobs="27" />
 	<spot level="76" min="75" max="76" region="Goddard" name="Wall Of Argos · юго-восток" x="189530" y="-37480" z="-3136" radius="1500" mobs="9" />
-	<spot level="76" min="76" max="76" region="Rune" name="Reckless Sprite of Air" x="41016" y="-65166" z="-2448" radius="833" mobs="15" />
-	<spot level="76" min="76" max="76" region="Rune" name="Valley Of Saints · северо-восток" x="93945" y="-88602" z="-3792" radius="900" mobs="10" />
-	<spot level="76" min="76" max="76" region="Rune" name="Valley Of Saints · юг" x="80157" y="-72858" z="-4464" radius="685" mobs="10" />
-	<spot level="77" min="75" max="80" region="FantasyIsland" name="Krateis Cube · запад" x="-77909" y="-77814" z="-8352" radius="763" mobs="15" />
-	<spot level="77" min="75" max="80" region="FantasyIsland" name="Krateis Cube · запад" x="-85906" y="-85812" z="-8352" radius="764" mobs="14" />
-	<spot level="77" min="75" max="80" region="FantasyIsland" name="Krateis Cube · запад" x="-83932" y="-85806" z="-8352" radius="764" mobs="14" />
-	<spot level="77" min="75" max="80" region="FantasyIsland" name="Krateis Cube · запад" x="-81931" y="-85806" z="-8352" radius="764" mobs="14" />
-	<spot level="77" min="75" max="80" region="FantasyIsland" name="Krateis Cube · запад" x="-79928" y="-85810" z="-8352" radius="764" mobs="14" />
-	<spot level="77" min="75" max="80" region="FantasyIsland" name="Krateis Cube · запад" x="-77928" y="-85810" z="-8352" radius="764" mobs="14" />
-	<spot level="77" min="75" max="80" region="FantasyIsland" name="Krateis Cube · запад" x="-85924" y="-83814" z="-8352" radius="763" mobs="14" />
-	<spot level="77" min="75" max="80" region="FantasyIsland" name="Krateis Cube · запад" x="-83908" y="-83816" z="-8352" radius="763" mobs="14" />
-	<spot level="77" min="75" max="80" region="FantasyIsland" name="Krateis Cube · запад" x="-81915" y="-83812" z="-8352" radius="764" mobs="14" />
-	<spot level="77" min="75" max="80" region="FantasyIsland" name="Krateis Cube · запад" x="-79906" y="-83820" z="-8352" radius="764" mobs="14" />
-	<spot level="77" min="75" max="80" region="FantasyIsland" name="Krateis Cube · запад" x="-77914" y="-83826" z="-8352" radius="764" mobs="14" />
-	<spot level="77" min="75" max="80" region="FantasyIsland" name="Krateis Cube · запад" x="-85906" y="-81816" z="-8352" radius="763" mobs="14" />
-	<spot level="77" min="75" max="80" region="FantasyIsland" name="Krateis Cube · запад" x="-83914" y="-81813" z="-8352" radius="764" mobs="14" />
-	<spot level="77" min="75" max="80" region="FantasyIsland" name="Krateis Cube · запад" x="-81906" y="-81818" z="-8352" radius="764" mobs="14" />
-	<spot level="77" min="75" max="80" region="FantasyIsland" name="Krateis Cube · запад" x="-79907" y="-81820" z="-8352" radius="763" mobs="14" />
-	<spot level="77" min="75" max="80" region="FantasyIsland" name="Krateis Cube · запад" x="-77905" y="-81820" z="-8352" radius="764" mobs="14" />
-	<spot level="77" min="75" max="80" region="FantasyIsland" name="Krateis Cube · запад" x="-85914" y="-79820" z="-8352" radius="764" mobs="14" />
-	<spot level="77" min="75" max="80" region="FantasyIsland" name="Krateis Cube · запад" x="-83902" y="-79818" z="-8352" radius="764" mobs="14" />
-	<spot level="77" min="75" max="80" region="FantasyIsland" name="Krateis Cube · запад" x="-81916" y="-79814" z="-8352" radius="763" mobs="14" />
-	<spot level="77" min="75" max="80" region="FantasyIsland" name="Krateis Cube · запад" x="-79910" y="-79814" z="-8352" radius="763" mobs="14" />
-	<spot level="77" min="75" max="80" region="FantasyIsland" name="Krateis Cube · запад" x="-77908" y="-79814" z="-8352" radius="763" mobs="14" />
-	<spot level="77" min="75" max="80" region="FantasyIsland" name="Krateis Cube · запад" x="-85906" y="-77808" z="-8352" radius="764" mobs="14" />
-	<spot level="77" min="75" max="80" region="FantasyIsland" name="Krateis Cube · запад" x="-83902" y="-77814" z="-8352" radius="764" mobs="14" />
-	<spot level="77" min="75" max="80" region="FantasyIsland" name="Krateis Cube · запад" x="-81903" y="-77822" z="-8352" radius="763" mobs="14" />
-	<spot level="77" min="75" max="80" region="FantasyIsland" name="Krateis Cube · запад" x="-79904" y="-77824" z="-8352" radius="764" mobs="14" />
 	<spot level="77" min="77" max="77" region="Goddard" name="Ketra Orc Outpost · восток" x="158471" y="-81342" z="-3896" radius="1500" mobs="10" />
 	<spot level="77" min="77" max="77" region="Goddard" name="Ketra Orc Outpost · северо-запад" x="137735" y="-90379" z="-3736" radius="1500" mobs="12" />
 	<spot level="77" min="77" max="78" region="Goddard" name="Ketra Orc Outpost · северо-запад" x="137839" y="-87200" z="-4192" radius="1500" mobs="12" />
@@ -1191,17 +1121,17 @@
 	<spot level="80" min="78" max="81" region="Innadril" name="Seychelles" x="145041" y="185200" z="-3720" radius="1408" mobs="9" />
 	<spot level="80" min="80" max="80" region="Rune" name="Primeval Isle · Primeval Isle Wharf" x="6123" y="-20955" z="-3448" radius="1500" mobs="15" />
 	<spot level="80" min="80" max="80" region="Rune" name="Primeval Isle · Primeval Isle Wharf" x="6821" y="-18775" z="-3704" radius="1500" mobs="14" />
-	<spot level="80" min="78" max="80" region="Rune" name="Primeval Isle · Primeval Isle Wharf" x="14391" y="-18562" z="-3168" radius="1500" mobs="16" />
-	<spot level="80" min="78" max="80" region="Rune" name="Primeval Isle · восток" x="24514" y="-11576" z="-2544" radius="1214" mobs="27" />
-	<spot level="80" min="78" max="80" region="Rune" name="Primeval Isle · восток" x="20666" y="-13804" z="-2968" radius="1064" mobs="23" />
-	<spot level="80" min="78" max="80" region="Rune" name="Primeval Isle · восток" x="24342" y="-18909" z="-2744" radius="1169" mobs="21" />
-	<spot level="80" min="78" max="80" region="Rune" name="Primeval Isle · восток" x="27171" y="-15627" z="-2624" radius="1230" mobs="19" />
-	<spot level="80" min="78" max="80" region="Rune" name="Primeval Isle · восток" x="26694" y="-12779" z="-2432" radius="840" mobs="25" />
-	<spot level="80" min="78" max="80" region="Rune" name="Primeval Isle · восток" x="20169" y="-16155" z="-3072" radius="751" mobs="26" />
-	<spot level="80" min="78" max="80" region="Rune" name="Primeval Isle · восток" x="27210" y="-17227" z="-2696" radius="1363" mobs="23" />
-	<spot level="80" min="78" max="80" region="Rune" name="Primeval Isle · восток" x="16096" y="-14910" z="-3160" radius="1088" mobs="28" />
-	<spot level="80" min="78" max="80" region="Rune" name="Primeval Isle · восток" x="27113" y="-19294" z="-2360" radius="400" mobs="11" />
-	<spot level="80" min="78" max="80" region="Rune" name="Primeval Isle · восток" x="22727" y="-16101" z="-3024" radius="1500" mobs="8" />
+	<spot level="80" min="78" max="80" region="Rune" name="Primeval Isle · Primeval Isle Wharf" x="14391" y="-18562" z="-3168" radius="1500" mobs="8" />
+	<spot level="80" min="78" max="80" region="Rune" name="Primeval Isle · восток" x="24517" y="-11574" z="-2544" radius="1210" mobs="26" />
+	<spot level="80" min="78" max="80" region="Rune" name="Primeval Isle · восток" x="20680" y="-13808" z="-2968" radius="1051" mobs="21" />
+	<spot level="80" min="78" max="80" region="Rune" name="Primeval Isle · восток" x="24323" y="-18901" z="-2752" radius="1165" mobs="20" />
+	<spot level="80" min="78" max="80" region="Rune" name="Primeval Isle · восток" x="15822" y="-14958" z="-3152" radius="1117" mobs="26" />
+	<spot level="80" min="78" max="80" region="Rune" name="Primeval Isle · восток" x="27138" y="-15662" z="-2624" radius="1187" mobs="17" />
+	<spot level="80" min="78" max="80" region="Rune" name="Primeval Isle · восток" x="26694" y="-12779" z="-2432" radius="840" mobs="24" />
+	<spot level="80" min="78" max="80" region="Rune" name="Primeval Isle · восток" x="20169" y="-16155" z="-3072" radius="751" mobs="25" />
+	<spot level="80" min="78" max="80" region="Rune" name="Primeval Isle · восток" x="27210" y="-17227" z="-2696" radius="1363" mobs="21" />
+	<spot level="80" min="78" max="80" region="Rune" name="Primeval Isle · восток" x="22314" y="-16566" z="-2976" radius="400" mobs="12" />
+	<spot level="80" min="78" max="80" region="Rune" name="Primeval Isle · восток" x="27113" y="-19296" z="-2360" radius="400" mobs="10" />
 	<spot level="80" min="80" max="80" region="Rune" name="Primeval Isle · запад" x="7413" y="-16482" z="-3664" radius="1500" mobs="18" />
 	<spot level="80" min="80" max="80" region="Rune" name="Primeval Isle · запад" x="2608" y="-14092" z="-3408" radius="1422" mobs="16" />
 	<spot level="80" min="80" max="80" region="Rune" name="Primeval Isle · запад" x="5134" y="-16679" z="-3760" radius="1500" mobs="14" />
@@ -1211,15 +1141,15 @@
 	<spot level="80" min="80" max="80" region="Rune" name="Primeval Isle · запад" x="4280" y="-11427" z="-3648" radius="1500" mobs="14" />
 	<spot level="80" min="80" max="80" region="Rune" name="Primeval Isle · запад" x="6098" y="-13838" z="-3704" radius="1255" mobs="10" />
 	<spot level="80" min="78" max="80" region="Rune" name="Primeval Isle · север" x="15371" y="-17176" z="-3216" radius="1500" mobs="8" />
-	<spot level="80" min="78" max="80" region="Rune" name="Primeval Isle · северо-восток" x="21022" y="-19587" z="-3272" radius="1032" mobs="21" />
-	<spot level="80" min="78" max="80" region="Rune" name="Primeval Isle · северо-восток" x="19289" y="-17832" z="-3208" radius="964" mobs="22" />
-	<spot level="80" min="78" max="80" region="Rune" name="Primeval Isle · северо-восток" x="23258" y="-20898" z="-2664" radius="741" mobs="21" />
-	<spot level="80" min="78" max="80" region="Rune" name="Primeval Isle · северо-восток" x="18651" y="-19632" z="-3296" radius="1500" mobs="18" />
+	<spot level="80" min="78" max="80" region="Rune" name="Primeval Isle · северо-восток" x="21023" y="-19573" z="-3272" radius="1018" mobs="20" />
+	<spot level="80" min="78" max="80" region="Rune" name="Primeval Isle · северо-восток" x="19327" y="-17836" z="-3216" radius="928" mobs="21" />
+	<spot level="80" min="78" max="80" region="Rune" name="Primeval Isle · северо-восток" x="23274" y="-21062" z="-2632" radius="1500" mobs="20" />
+	<spot level="80" min="78" max="80" region="Rune" name="Primeval Isle · северо-восток" x="18651" y="-19632" z="-3296" radius="1500" mobs="17" />
 	<spot level="80" min="80" max="80" region="Rune" name="Primeval Isle · северо-запад" x="4712" y="-19437" z="-3608" radius="1500" mobs="14" />
-	<spot level="80" min="78" max="80" region="Rune" name="Primeval Isle · юг" x="15352" y="-12874" z="-3160" radius="1075" mobs="26" />
-	<spot level="80" min="78" max="80" region="Rune" name="Primeval Isle · юг" x="16622" y="-9548" z="-3248" radius="1500" mobs="19" />
-	<spot level="80" min="78" max="80" region="Rune" name="Primeval Isle · юго-восток" x="22141" y="-11215" z="-2744" radius="1276" mobs="22" />
-	<spot level="80" min="78" max="80" region="Rune" name="Primeval Isle · юго-восток" x="19774" y="-10007" z="-2840" radius="614" mobs="27" />
+	<spot level="80" min="78" max="80" region="Rune" name="Primeval Isle · юг" x="15325" y="-12879" z="-3152" radius="1053" mobs="25" />
+	<spot level="80" min="78" max="80" region="Rune" name="Primeval Isle · юг" x="16622" y="-9548" z="-3248" radius="1500" mobs="18" />
+	<spot level="80" min="78" max="80" region="Rune" name="Primeval Isle · юго-восток" x="22151" y="-11206" z="-2744" radius="1263" mobs="21" />
+	<spot level="80" min="78" max="80" region="Rune" name="Primeval Isle · юго-восток" x="19774" y="-10007" z="-2840" radius="614" mobs="26" />
 	<spot level="80" min="80" max="80" region="Rune" name="Primeval Isle · юго-запад" x="4001" y="-9822" z="-3648" radius="1500" mobs="16" />
 	<spot level="80" min="80" max="80" region="Rune" name="Primeval Isle · юго-запад" x="6721" y="-7342" z="-3600" radius="1500" mobs="16" />
 	<spot level="80" min="80" max="80" region="Rune" name="Primeval Isle · юго-запад" x="4330" y="-7557" z="-3464" radius="1500" mobs="14" />
@@ -1235,11 +1165,11 @@
 	<spot level="81" min="81" max="81" region="Schuttgart" name="Contaminated · Crypts of Disgrace" x="44162" y="-120040" z="-3432" radius="1214" mobs="16" />
 	<spot level="81" min="81" max="82" region="Schuttgart" name="Contaminated · северо-восток" x="51003" y="-125320" z="-3672" radius="1202" mobs="19" />
 	<spot level="81" min="81" max="81" region="Schuttgart" name="Contaminated · северо-восток" x="52352" y="-126214" z="-4032" radius="1032" mobs="9" />
-	<spot level="81" min="80" max="82" region="Schuttgart" name="Ragna Orc · Den of Evil" x="68053" y="-116444" z="-2168" radius="1092" mobs="14" />
-	<spot level="81" min="80" max="82" region="Schuttgart" name="Ragna Orc · север" x="70908" y="-125401" z="-3016" radius="1103" mobs="13" />
+	<spot level="81" min="81" max="82" region="Schuttgart" name="Ragna Orc · Den of Evil" x="68048" y="-116470" z="-2168" radius="1084" mobs="13" />
+	<spot level="81" min="81" max="82" region="Schuttgart" name="Ragna Orc · север" x="70915" y="-125384" z="-3016" radius="1094" mobs="12" />
 	<spot level="81" min="81" max="82" region="Schuttgart" name="Varangka's" x="75424" y="-129858" z="-3216" radius="1136" mobs="8" />
-	<spot level="81" min="80" max="82" region="Schuttgart" name="Varangka's Dre Vanul · север" x="71633" y="-128876" z="-3360" radius="1153" mobs="12" />
-	<spot level="81" min="80" max="82" region="Schuttgart" name="Varangka's Dre Vanul · юг" x="69804" y="-119497" z="-2528" radius="1367" mobs="10" />
+	<spot level="81" min="81" max="82" region="Schuttgart" name="Varangka's Dre Vanul · север" x="71555" y="-129304" z="-3360" radius="1193" mobs="11" />
+	<spot level="81" min="81" max="82" region="Schuttgart" name="Varangka's Dre Vanul · юг" x="69774" y="-119556" z="-2528" radius="1319" mobs="9" />
 	<spot level="82" min="81" max="82" region="Aden" name="Giants Cave · Giant's Cave Lower Layer" x="191985" y="60787" z="-7232" radius="1500" mobs="27" />
 	<spot level="82" min="81" max="82" region="Aden" name="Giants Cave · Giant's Cave Lower Layer" x="187009" y="56339" z="-7240" radius="1500" mobs="22" />
 	<spot level="82" min="81" max="82" region="Aden" name="Giants Cave · Giant's Cave Lower Layer" x="187511" y="61348" z="-7232" radius="1500" mobs="13" />
@@ -1279,11 +1209,11 @@
 	<spot level="82" min="82" max="83" region="Rune" name="Spiked Stakato · юго-восток" x="82814" y="-45185" z="-4640" radius="982" mobs="11" />
 	<spot level="82" min="82" max="83" region="Rune" name="Spiked Stakato · юго-запад" x="79714" y="-44922" z="-5128" radius="1067" mobs="11" />
 	<spot level="82" min="81" max="82" region="Schuttgart" name="Contaminated Batur Warrior · Crypts of Disgrace" x="49353" y="-119522" z="-4136" radius="1120" mobs="12" />
-	<spot level="82" min="80" max="82" region="Schuttgart" name="Ragna Orc · северо-восток" x="74295" y="-121439" z="-3024" radius="1269" mobs="11" />
-	<spot level="82" min="80" max="82" region="Schuttgart" name="Ragna Orc · юго-восток" x="74313" y="-116937" z="-2216" radius="1164" mobs="13" />
+	<spot level="82" min="81" max="82" region="Schuttgart" name="Ragna Orc · северо-восток" x="74287" y="-121419" z="-3024" radius="1250" mobs="10" />
+	<spot level="82" min="81" max="82" region="Schuttgart" name="Ragna Orc · юго-восток" x="74312" y="-116939" z="-2216" radius="1162" mobs="12" />
 	<spot level="82" min="81" max="82" region="Schuttgart" name="Turka Follower's Ghost" x="49209" y="-125093" z="-3672" radius="1069" mobs="10" />
-	<spot level="82" min="80" max="82" region="Schuttgart" name="Varangka's" x="75991" y="-127833" z="-3144" radius="1201" mobs="14" />
-	<spot level="82" min="80" max="82" region="Schuttgart" name="Varangka's Destroyer · Den of Evil" x="67754" y="-107508" z="-1160" radius="1124" mobs="14" />
+	<spot level="82" min="81" max="82" region="Schuttgart" name="Varangka's" x="75979" y="-127864" z="-3144" radius="1174" mobs="13" />
+	<spot level="82" min="81" max="82" region="Schuttgart" name="Varangka's Destroyer · Den of Evil" x="67776" y="-107632" z="-1160" radius="1149" mobs="13" />
 	<spot level="83" min="83" max="84" region="Hunters" name="Drakos · восток" x="116824" y="110489" z="-2992" radius="1359" mobs="15" />
 	<spot level="83" min="83" max="83" region="Hunters" name="Drakos · восток" x="124955" y="110249" z="-3104" radius="974" mobs="11" />
 	<spot level="83" min="83" max="83" region="Hunters" name="Drakos · восток" x="119551" y="110029" z="-3048" radius="1272" mobs="9" />
@@ -1300,18 +1230,14 @@
 	<spot level="83" min="83" max="83" region="Innadril" name="Field Of Silence · восток" x="88039" y="184035" z="-3760" radius="1321" mobs="16" />
 	<spot level="83" min="83" max="83" region="Innadril" name="Field Of Silence · восток" x="93586" y="186519" z="-3680" radius="1082" mobs="11" />
 	<spot level="83" min="83" max="83" region="Innadril" name="Field Of Silence · восток" x="90243" y="184906" z="-3448" radius="1001" mobs="8" />
-	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Silence · запад" x="79644" y="181947" z="-3760" radius="1109" mobs="15" />
-	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Silence · север" x="85384" y="178248" z="-3760" radius="1159" mobs="16" />
-	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Silence · север" x="86833" y="174140" z="-3760" radius="1396" mobs="15" />
+	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Silence · север" x="85171" y="179305" z="-3760" radius="1319" mobs="15" />
 	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Silence · север" x="85140" y="182852" z="-3624" radius="1209" mobs="14" />
-	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Silence · север" x="85907" y="180062" z="-3760" radius="1053" mobs="11" />
-	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Silence · север" x="87200" y="178040" z="-3760" radius="1039" mobs="9" />
-	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Silence · север" x="88245" y="172850" z="-3632" radius="809" mobs="8" />
-	<spot level="83" min="83" max="83" region="Innadril" name="Field Of Silence · север" x="87589" y="176174" z="-3528" radius="641" mobs="8" />
-	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Silence · северо-восток" x="90638" y="174151" z="-3760" radius="1331" mobs="14" />
-	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Silence · северо-восток" x="91700" y="171432" z="-3760" radius="1127" mobs="13" />
-	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Silence · северо-восток" x="86918" y="181312" z="-3608" radius="1121" mobs="9" />
-	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Silence · северо-восток" x="90801" y="177152" z="-3312" radius="1149" mobs="9" />
+	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Silence · север" x="86866" y="174205" z="-3760" radius="1393" mobs="13" />
+	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Silence · север" x="87300" y="176487" z="-3576" radius="1175" mobs="11" />
+	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Silence · север" x="86245" y="180668" z="-3656" radius="701" mobs="8" />
+	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Silence · север" x="84885" y="177290" z="-3760" radius="1115" mobs="8" />
+	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Silence · северо-восток" x="90594" y="174111" z="-3760" radius="1283" mobs="13" />
+	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Silence · северо-запад" x="79644" y="181947" z="-3760" radius="1109" mobs="15" />
 	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Silence · северо-запад" x="81661" y="180984" z="-3680" radius="1036" mobs="8" />
 	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Silence · юг" x="83066" y="192526" z="-3648" radius="1301" mobs="17" />
 	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Silence · юг" x="84372" y="193693" z="-3760" radius="929" mobs="8" />
@@ -1326,32 +1252,26 @@
 	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Whispers · восток" x="89087" y="215184" z="-3760" radius="1214" mobs="8" />
 	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Whispers · восток" x="90957" y="213600" z="-3760" radius="1107" mobs="8" />
 	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Whispers · восток" x="92853" y="215731" z="-3760" radius="1232" mobs="8" />
-	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Whispers · запад" x="79512" y="217635" z="-3648" radius="1231" mobs="15" />
-	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Whispers · запад" x="78002" y="216339" z="-3736" radius="1141" mobs="10" />
-	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Whispers · запад" x="76765" y="213184" z="-3760" radius="1208" mobs="10" />
+	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Whispers · запад" x="79476" y="217655" z="-3648" radius="1190" mobs="12" />
+	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Whispers · запад" x="82662" y="214455" z="-3728" radius="1171" mobs="11" />
+	<spot level="83" min="83" max="83" region="Innadril" name="Field Of Whispers · запад" x="85338" y="215354" z="-3760" radius="1339" mobs="10" />
+	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Whispers · запад" x="77096" y="215014" z="-3760" radius="1143" mobs="8" />
 	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Whispers · север" x="85617" y="212108" z="-3760" radius="1343" mobs="13" />
 	<spot level="83" min="83" max="83" region="Innadril" name="Field Of Whispers · север" x="83894" y="206009" z="-3760" radius="1132" mobs="12" />
-	<spot level="83" min="83" max="83" region="Innadril" name="Field Of Whispers · север" x="85338" y="215354" z="-3760" radius="1339" mobs="10" />
 	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Whispers · север" x="88822" y="203914" z="-3760" radius="1142" mobs="9" />
 	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Whispers · север" x="87140" y="210934" z="-3760" radius="836" mobs="8" />
 	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Whispers · север" x="88005" y="209406" z="-3760" radius="1067" mobs="8" />
 	<spot level="83" min="83" max="83" region="Innadril" name="Field Of Whispers · северо-восток" x="88630" y="213450" z="-3664" radius="1000" mobs="11" />
 	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Whispers · северо-восток" x="91001" y="206744" z="-3760" radius="1282" mobs="11" />
 	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Whispers · северо-восток" x="91894" y="211085" z="-3752" radius="1460" mobs="11" />
-	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Whispers · северо-запад" x="83155" y="214436" z="-3608" radius="1137" mobs="13" />
 	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Whispers · северо-запад" x="81730" y="210655" z="-3680" radius="1243" mobs="10" />
 	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Whispers · юг" x="83586" y="221726" z="-3760" radius="1294" mobs="18" />
-	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Whispers · юг" x="85543" y="222003" z="-3504" radius="1208" mobs="12" />
+	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Whispers · юг" x="85614" y="221919" z="-3512" radius="782" mobs="11" />
 	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Whispers · юг" x="87771" y="224544" z="-3696" radius="1348" mobs="9" />
-	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Whispers · юг" x="86587" y="220159" z="-3760" radius="1168" mobs="8" />
 	<spot level="83" min="83" max="83" region="Innadril" name="Field Of Whispers · юго-восток" x="88210" y="216964" z="-3760" radius="1004" mobs="11" />
 	<spot level="83" min="83" max="83" region="Innadril" name="Field Of Whispers · юго-восток" x="88576" y="220230" z="-3760" radius="1076" mobs="9" />
 	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Whispers · юго-восток" x="90723" y="221853" z="-3688" radius="1091" mobs="9" />
 	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Whispers · юго-восток" x="91046" y="224803" z="-3760" radius="1163" mobs="9" />
-	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Whispers · юго-запад" x="79813" y="223063" z="-3608" radius="1289" mobs="12" />
-	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Whispers · юго-запад" x="78786" y="220504" z="-3576" radius="1223" mobs="9" />
-	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Whispers · юго-запад" x="79638" y="227019" z="-3760" radius="1269" mobs="9" />
-	<spot level="83" min="83" max="84" region="Innadril" name="Field Of Whispers · юго-запад" x="81204" y="220270" z="-3720" radius="1256" mobs="9" />
 	<spot level="83" min="82" max="83" region="Innadril" name="Pythia" x="143252" y="168076" z="-2688" radius="1189" mobs="8" />
 	<spot level="83" min="83" max="84" region="Oren" name="Sel Mahums · Sel Mahum Training Grounds" x="90779" y="64113" z="-3424" radius="554" mobs="22" />
 	<spot level="83" min="83" max="84" region="Oren" name="Sel Mahums · Sel Mahum Training Grounds" x="88357" y="56027" z="-3536" radius="400" mobs="21" />
@@ -1377,10 +1297,17 @@
 	<spot level="83" min="83" max="84" region="Oren" name="Sel Mahums · Sel Mahum Training Grounds" x="82540" y="68512" z="-3000" radius="400" mobs="17" />
 	<spot level="83" min="83" max="84" region="Oren" name="Sel Mahums · Sel Mahum Training Grounds" x="92042" y="63625" z="-3280" radius="400" mobs="16" />
 	<spot level="83" min="83" max="84" region="Oren" name="Sel Mahums · Sel Mahum Training Grounds" x="77577" y="66374" z="-3208" radius="400" mobs="13" />
-	<spot level="83" min="82" max="85" region="Oren" name="Sticky Mushroom · запад" x="85596" y="77176" z="-3632" radius="1107" mobs="8" />
-	<spot level="83" min="83" max="85" region="Oren" name="Tanta Lizardman · Plains of the Lizardmen" x="91774" y="81352" z="-3456" radius="973" mobs="9" />
-	<spot level="83" min="82" max="85" region="Oren" name="Tanta Lizardman · Sel Mahum Training Grounds" x="86940" y="73819" z="-3496" radius="1464" mobs="11" />
-	<spot level="83" min="83" max="85" region="Oren" name="Tanta Lizardman · северо-запад" x="87793" y="77407" z="-3448" radius="1205" mobs="9" />
+	<spot level="83" min="82" max="84" region="Oren" name="Tanta Lizardman · Plains of the Lizardmen" x="87315" y="92040" z="-3152" radius="1278" mobs="20" />
+	<spot level="83" min="82" max="84" region="Oren" name="Tanta Lizardman · Plains of the Lizardmen" x="91136" y="91130" z="-3368" radius="1263" mobs="19" />
+	<spot level="83" min="82" max="84" region="Oren" name="Tanta Lizardman · Plains of the Lizardmen" x="91895" y="85273" z="-3656" radius="1230" mobs="14" />
+	<spot level="83" min="82" max="84" region="Oren" name="Tanta Lizardman · Plains of the Lizardmen" x="91139" y="79199" z="-3240" radius="908" mobs="10" />
+	<spot level="83" min="82" max="84" region="Oren" name="Tanta Lizardman · Plains of the Lizardmen" x="84825" y="80214" z="-3712" radius="1159" mobs="8" />
+	<spot level="83" min="83" max="84" region="Oren" name="Tanta Lizardman · Plains of the Lizardmen" x="91850" y="81520" z="-3472" radius="1225" mobs="8" />
+	<spot level="83" min="82" max="84" region="Oren" name="Tanta Lizardman · Sel Mahum Training Grounds" x="86541" y="73697" z="-3520" radius="1281" mobs="12" />
+	<spot level="83" min="82" max="84" region="Oren" name="Tanta Lizardman · север" x="90343" y="75505" z="-3272" radius="1111" mobs="9" />
+	<spot level="83" min="83" max="84" region="Oren" name="Tanta Lizardman · северо-восток" x="92640" y="75599" z="-3304" radius="1192" mobs="8" />
+	<spot level="83" min="82" max="84" region="Oren" name="Tanta Lizardman · северо-запад" x="85956" y="77941" z="-3544" radius="1141" mobs="9" />
+	<spot level="83" min="82" max="84" region="Oren" name="Tanta Lizardman · юг" x="84560" y="94313" z="-3464" radius="1206" mobs="19" />
 	<spot level="83" min="82" max="83" region="Others" name="Castalia · восток" x="158114" y="155355" z="-3752" radius="927" mobs="10" />
 	<spot level="83" min="82" max="83" region="Others" name="Chrysocolla · восток" x="158232" y="152705" z="-3496" radius="1141" mobs="13" />
 	<spot level="83" min="82" max="83" region="Others" name="Chrysocolla · восток" x="156493" y="151499" z="-3640" radius="1186" mobs="8" />
@@ -1404,49 +1331,25 @@
 	<spot level="83" min="82" max="83" region="Rune" name="Spiked Stakato Sorcerer" x="88580" y="-50500" z="-5120" radius="951" mobs="11" />
 	<spot level="83" min="82" max="83" region="Rune" name="Spiked Stakato Worker" x="82624" y="-49270" z="-4640" radius="959" mobs="11" />
 	<spot level="83" min="82" max="83" region="Rune" name="Spiked Stakato · восток" x="85809" y="-46367" z="-4640" radius="1191" mobs="12" />
-	<spot level="84" min="80" max="86" region="FantasyIsland" name="Krateis Cube · восток" x="-52728" y="-86971" z="-8320" radius="764" mobs="14" />
-	<spot level="84" min="80" max="86" region="FantasyIsland" name="Krateis Cube · восток" x="-50720" y="-86978" z="-8320" radius="764" mobs="14" />
-	<spot level="84" min="80" max="86" region="FantasyIsland" name="Krateis Cube · восток" x="-48725" y="-86968" z="-8320" radius="763" mobs="14" />
-	<spot level="84" min="80" max="86" region="FantasyIsland" name="Krateis Cube · восток" x="-46718" y="-86972" z="-8320" radius="759" mobs="14" />
-	<spot level="84" min="80" max="86" region="FantasyIsland" name="Krateis Cube · восток" x="-44720" y="-86972" z="-8320" radius="764" mobs="14" />
-	<spot level="84" min="80" max="86" region="FantasyIsland" name="Krateis Cube · восток" x="-52719" y="-84968" z="-8320" radius="759" mobs="14" />
-	<spot level="84" min="80" max="86" region="FantasyIsland" name="Krateis Cube · восток" x="-50719" y="-84960" z="-8320" radius="755" mobs="14" />
-	<spot level="84" min="80" max="86" region="FantasyIsland" name="Krateis Cube · восток" x="-48721" y="-84968" z="-8320" radius="756" mobs="14" />
-	<spot level="84" min="80" max="86" region="FantasyIsland" name="Krateis Cube · восток" x="-46722" y="-84976" z="-8320" radius="757" mobs="14" />
-	<spot level="84" min="80" max="86" region="FantasyIsland" name="Krateis Cube · восток" x="-44718" y="-84969" z="-8320" radius="759" mobs="14" />
-	<spot level="84" min="80" max="86" region="FantasyIsland" name="Krateis Cube · восток" x="-52720" y="-82961" z="-8320" radius="754" mobs="14" />
-	<spot level="84" min="80" max="86" region="FantasyIsland" name="Krateis Cube · восток" x="-50721" y="-82962" z="-8320" radius="755" mobs="14" />
-	<spot level="84" min="80" max="86" region="FantasyIsland" name="Krateis Cube · восток" x="-48721" y="-82958" z="-8320" radius="752" mobs="14" />
-	<spot level="84" min="80" max="86" region="FantasyIsland" name="Krateis Cube · восток" x="-46721" y="-82961" z="-8320" radius="750" mobs="14" />
-	<spot level="84" min="80" max="86" region="FantasyIsland" name="Krateis Cube · восток" x="-44722" y="-82958" z="-8320" radius="750" mobs="14" />
-	<spot level="84" min="80" max="86" region="FantasyIsland" name="Krateis Cube · восток" x="-52719" y="-80960" z="-8320" radius="751" mobs="14" />
-	<spot level="84" min="80" max="86" region="FantasyIsland" name="Krateis Cube · восток" x="-50720" y="-80960" z="-8320" radius="752" mobs="14" />
-	<spot level="84" min="80" max="86" region="FantasyIsland" name="Krateis Cube · восток" x="-48720" y="-80960" z="-8320" radius="752" mobs="14" />
-	<spot level="84" min="80" max="86" region="FantasyIsland" name="Krateis Cube · восток" x="-46718" y="-80960" z="-8320" radius="755" mobs="14" />
-	<spot level="84" min="80" max="86" region="FantasyIsland" name="Krateis Cube · восток" x="-44721" y="-80961" z="-8320" radius="752" mobs="14" />
-	<spot level="84" min="80" max="86" region="FantasyIsland" name="Krateis Cube · восток" x="-52721" y="-78960" z="-8320" radius="750" mobs="14" />
-	<spot level="84" min="80" max="86" region="FantasyIsland" name="Krateis Cube · восток" x="-50720" y="-78958" z="-8320" radius="752" mobs="14" />
-	<spot level="84" min="80" max="86" region="FantasyIsland" name="Krateis Cube · восток" x="-48722" y="-78958" z="-8320" radius="749" mobs="14" />
-	<spot level="84" min="80" max="86" region="FantasyIsland" name="Krateis Cube · восток" x="-46726" y="-78984" z="-8320" radius="764" mobs="14" />
 	<spot level="84" min="84" max="84" region="Hunters" name="Drakos Guardian · Hardin's Private Academy" x="110952" y="112725" z="-2808" radius="718" mobs="12" />
 	<spot level="84" min="84" max="84" region="Hunters" name="Drakos Guardian · север" x="114369" y="109811" z="-3008" radius="565" mobs="9" />
 	<spot level="84" min="84" max="84" region="Hunters" name="Drakos Guardian · юг" x="113032" y="116084" z="-3184" radius="1297" mobs="19" />
 	<spot level="84" min="83" max="84" region="Hunters" name="Drakos Guardian · юго-восток" x="114526" y="115198" z="-3232" radius="707" mobs="9" />
 	<spot level="84" min="83" max="84" region="Innadril" name="Field Of Silence · запад" x="79981" y="183956" z="-3760" radius="1076" mobs="10" />
+	<spot level="84" min="83" max="84" region="Innadril" name="Field Of Silence · северо-восток" x="91749" y="171317" z="-3760" radius="1249" mobs="11" />
+	<spot level="84" min="83" max="84" region="Innadril" name="Field Of Silence · северо-восток" x="90788" y="177204" z="-3312" radius="1120" mobs="8" />
 	<spot level="84" min="83" max="84" region="Innadril" name="Field Of Silence · юг" x="83149" y="189596" z="-3760" radius="1245" mobs="17" />
-	<spot level="84" min="83" max="84" region="Innadril" name="Field Of Silence · юг" x="89036" y="192895" z="-3752" radius="1044" mobs="12" />
 	<spot level="84" min="83" max="84" region="Innadril" name="Field Of Silence · юго-восток" x="89039" y="189728" z="-3456" radius="1091" mobs="14" />
-	<spot level="84" min="83" max="84" region="Innadril" name="Field Of Whispers · запад" x="79262" y="215443" z="-3720" radius="1153" mobs="8" />
+	<spot level="84" min="83" max="84" region="Innadril" name="Field Of Silence · юго-восток" x="89036" y="192895" z="-3752" radius="1044" mobs="12" />
+	<spot level="84" min="83" max="84" region="Innadril" name="Field Of Whispers · запад" x="79031" y="215727" z="-3744" radius="1206" mobs="13" />
 	<spot level="84" min="83" max="84" region="Innadril" name="Field Of Whispers · север" x="85331" y="201309" z="-3720" radius="1251" mobs="8" />
 	<spot level="84" min="83" max="84" region="Innadril" name="Field Of Whispers · северо-восток" x="94947" y="208016" z="-3760" radius="1201" mobs="13" />
 	<spot level="84" min="83" max="84" region="Innadril" name="Field Of Whispers · северо-запад" x="79750" y="205408" z="-3752" radius="1348" mobs="12" />
 	<spot level="84" min="83" max="84" region="Innadril" name="Field Of Whispers · юг" x="85306" y="225838" z="-3704" radius="1209" mobs="10" />
-	<spot level="84" min="83" max="84" region="Innadril" name="Field Of Whispers · юго-запад" x="80232" y="225180" z="-3760" radius="1201" mobs="8" />
-	<spot level="84" min="82" max="85" region="Oren" name="Energy Plant · Plains of the Lizardmen" x="87131" y="92441" z="-3152" radius="1234" mobs="30" />
-	<spot level="84" min="82" max="85" region="Oren" name="Energy Plant · Plains of the Lizardmen" x="81107" y="81712" z="-3272" radius="1095" mobs="16" />
-	<spot level="84" min="82" max="85" region="Oren" name="Energy Plant · Plains of the Lizardmen" x="92424" y="86337" z="-3600" radius="1102" mobs="13" />
-	<spot level="84" min="82" max="85" region="Oren" name="Energy Plant · Plains of the Lizardmen" x="84846" y="80300" z="-3720" radius="1204" mobs="13" />
-	<spot level="84" min="82" max="85" region="Oren" name="Energy Plant · юг" x="85026" y="94042" z="-3432" radius="1211" mobs="28" />
+	<spot level="84" min="83" max="84" region="Innadril" name="Field Of Whispers · юго-запад" x="80117" y="225007" z="-3760" radius="1015" mobs="10" />
+	<spot level="84" min="83" max="84" region="Innadril" name="Field Of Whispers · юго-запад" x="79643" y="226894" z="-3760" radius="1183" mobs="8" />
+	<spot level="84" min="83" max="84" region="Innadril" name="Field Of Whispers · юго-запад" x="80104" y="222671" z="-3744" radius="1082" mobs="8" />
+	<spot level="84" min="83" max="84" region="Innadril" name="Field Of Whispers · юго-запад" x="81225" y="220299" z="-3720" radius="1220" mobs="8" />
 	<spot level="84" min="84" max="84" region="Oren" name="Sel Mahums · Sel Mahum Training Grounds" x="89403" y="57477" z="-3624" radius="400" mobs="23" />
 	<spot level="84" min="84" max="84" region="Oren" name="Sel Mahums · Sel Mahum Training Grounds" x="87295" y="57479" z="-3688" radius="400" mobs="21" />
 	<spot level="84" min="84" max="84" region="Oren" name="Sel Mahums · Sel Mahum Training Grounds" x="88360" y="57467" z="-3688" radius="400" mobs="21" />
@@ -1472,21 +1375,12 @@
 	<spot level="84" min="83" max="84" region="Oren" name="Sel Mahums · северо-восток" x="94174" y="55035" z="-3560" radius="1069" mobs="12" />
 	<spot level="84" min="84" max="84" region="Oren" name="Sel Mahums · юг" x="86516" y="68439" z="-3064" radius="1452" mobs="14" />
 	<spot level="84" min="84" max="84" region="Oren" name="Sel Mahums · юго-восток" x="89647" y="69686" z="-3416" radius="1127" mobs="11" />
-	<spot level="84" min="82" max="85" region="Oren" name="Sticky Mushroom · Plains of the Lizardmen" x="91072" y="79257" z="-3248" radius="1169" mobs="20" />
-	<spot level="84" min="82" max="85" region="Oren" name="Sticky Mushroom · северо-восток" x="91284" y="75843" z="-3184" radius="1182" mobs="15" />
-	<spot level="84" min="83" max="85" region="Oren" name="Tanta Lizardman Archer · Sel Mahum Training Grounds" x="82478" y="76864" z="-3680" radius="1208" mobs="19" />
-	<spot level="84" min="83" max="85" region="Oren" name="Tanta Lizardman Magician · Plains of the Lizardmen" x="89991" y="91694" z="-3256" radius="1016" mobs="8" />
-	<spot level="84" min="83" max="85" region="Oren" name="Tanta Lizardman Soldier · Plains of the Lizardmen" x="91347" y="87935" z="-3448" radius="1210" mobs="23" />
-	<spot level="84" min="83" max="85" region="Oren" name="Tanta Lizardman Summoner · Plains of the Lizardmen" x="87006" y="79016" z="-3496" radius="1068" mobs="16" />
-	<spot level="84" min="82" max="85" region="Oren" name="Tanta Lizardman · Plains of the Lizardmen" x="91425" y="90622" z="-3400" radius="1227" mobs="25" />
-	<spot level="84" min="82" max="85" region="Oren" name="Tanta Lizardman · Plains of the Lizardmen" x="92432" y="84393" z="-3664" radius="1239" mobs="22" />
-	<spot level="84" min="83" max="85" region="Oren" name="Tanta Lizardman · Plains of the Lizardmen" x="88270" y="91596" z="-3224" radius="1203" mobs="8" />
-	<spot level="84" min="83" max="85" region="Oren" name="Tanta Lizardman · Sel Mahum Training Grounds" x="83888" y="75853" z="-3688" radius="1003" mobs="10" />
-	<spot level="84" min="82" max="85" region="Oren" name="Tanta Lizardman · северо-восток" x="93343" y="79528" z="-3288" radius="1223" mobs="14" />
-	<spot level="84" min="83" max="85" region="Oren" name="Tanta Lizardman · северо-восток" x="93213" y="76530" z="-3344" radius="1115" mobs="8" />
-	<spot level="84" min="83" max="84" region="Rune" name="Bizarre Cocoon · Shyeed's Cavern" x="80680" y="-51611" z="-5640" radius="407" mobs="8" />
-	<spot level="84" min="83" max="84" region="Rune" name="Bizarre Cocoon · восток" x="88274" y="-53373" z="-5128" radius="702" mobs="8" />
-	<spot level="84" min="83" max="84" region="Rune" name="Bizarre Cocoon · юго-запад" x="79802" y="-49021" z="-5128" radius="628" mobs="8" />
+	<spot level="84" min="83" max="84" region="Oren" name="Tanta Lizardman · Plains of the Lizardmen" x="81260" y="82135" z="-3240" radius="1192" mobs="13" />
+	<spot level="84" min="83" max="84" region="Oren" name="Tanta Lizardman · Plains of the Lizardmen" x="91216" y="88945" z="-3440" radius="1302" mobs="12" />
+	<spot level="84" min="82" max="84" region="Oren" name="Tanta Lizardman · Plains of the Lizardmen" x="87310" y="79196" z="-3488" radius="972" mobs="11" />
+	<spot level="84" min="83" max="84" region="Oren" name="Tanta Lizardman · Plains of the Lizardmen" x="92457" y="87841" z="-3560" radius="825" mobs="8" />
+	<spot level="84" min="83" max="84" region="Oren" name="Tanta Lizardman · Sel Mahum Training Grounds" x="83063" y="76086" z="-3672" radius="1166" mobs="14" />
+	<spot level="84" min="82" max="84" region="Oren" name="Tanta Lizardman · северо-восток" x="93563" y="79525" z="-3312" radius="1146" mobs="13" />
 	<spot level="84" min="84" max="84" region="Rune" name="Divinity · восток" x="116209" y="-76602" z="-64" radius="1175" mobs="15" />
 	<spot level="84" min="84" max="84" region="Rune" name="Divinity · запад" x="108739" y="-75991" z="-1080" radius="1140" mobs="15" />
 	<spot level="84" min="84" max="84" region="Rune" name="Divinity · север" x="111734" y="-80861" z="-1632" radius="1158" mobs="10" />
@@ -1521,10 +1415,6 @@
 	<spot level="85" min="85" max="85" region="Hunters" name="Maluk · юг" x="145016" y="118071" z="-3912" radius="1129" mobs="17" />
 	<spot level="85" min="85" max="85" region="Hunters" name="Maluk · юг" x="141126" y="121366" z="-3912" radius="803" mobs="11" />
 	<spot level="85" min="85" max="85" region="Hunters" name="Maluk · юго-запад" x="140344" y="119226" z="-3912" radius="1423" mobs="21" />
-	<spot level="85" min="83" max="85" region="Oren" name="Energy Plant · Plains of the Lizardmen" x="92254" y="82796" z="-3624" radius="1298" mobs="10" />
-	<spot level="85" min="83" max="85" region="Oren" name="Energy Plant · север" x="88315" y="75434" z="-3320" radius="1190" mobs="17" />
-	<spot level="85" min="84" max="85" region="Oren" name="Energy Plant · северо-запад" x="82190" y="78693" z="-3600" radius="1179" mobs="12" />
-	<spot level="85" min="82" max="85" region="Oren" name="Energy Plant · юго-восток" x="93354" y="89680" z="-3536" radius="1182" mobs="12" />
 	<spot level="86" min="85" max="86" region="Hunters" name="Bloody · Heart of Antharas's Lair" x="149184" y="120539" z="-4864" radius="1266" mobs="40" />
 	<spot level="86" min="86" max="86" region="Hunters" name="Bloody · восток" x="153987" y="114974" z="-5248" radius="1294" mobs="31" />
 	<spot level="86" min="85" max="86" region="Hunters" name="Bloody · северо-восток" x="151338" y="114794" z="-5472" radius="1274" mobs="45" />

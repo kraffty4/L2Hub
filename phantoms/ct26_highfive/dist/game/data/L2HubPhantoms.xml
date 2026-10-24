@@ -331,4 +331,8 @@
 		<gear grade="S80" minLevel="80" rhand="10215" head="9422" chest="10231" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Sawsword, Dynasty Helmet, Dynasty Platinum Plate - Bard, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
 		<gear grade="S84" minLevel="84" rhand="15558" head="13140" chest="13435" legs="13448" gloves="13449" feet="13450" lhand="13471" shots="1467" /> <!-- Periel Sword, Vesper Noble Helmet, Vesper Noble Breastplate, Vesper Noble Gaiters, Vesper Noble Gauntlet, Vesper Noble Boots, Vesper Shield -->
 	</phantom>
+	<!-- Thanatos: Танатос, единственный ПК сервера; Orc Fighter, Monk, Tyrant, Grand Khavatari, всегда 76-й -->
+	<phantom name="Thanatos" kind="reaper" role="DAMAGE" female="false" face="2" hairStyle="1" hairColor="2" classes="44,47,48,114" x="-45264" y="-112512" z="-240">
+		<gear grade="S" minLevel="76" rhand="9878" head="6382" chest="6379" gloves="6380" feet="6381" neck="9456" ear="9455" ring="9457" shirt="9588" shots="1467" /> <!-- Dynasty Bagh-Nakh - Rsk. Evasion, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots, Dynasty Necklace, Dynasty Earrings, Dynasty Ring, Striped Mithril Shirt -->
+	</phantom>
 </list>

@@ -55,10 +55,9 @@ public class PhantomHuntersConfig
 	public static boolean HUNTER_EPIC_RAIDS;
 	public static int HUNTER_EPIC_MIN;
 	public static int HUNTER_EPIC_MAX;
-	public static float HUNTER_EPIC_DAMAGE;
 	public static float HUNTER_EPIC_ARMOR;
-	public static boolean HUNTER_PK;
-	public static int HUNTER_PK_CHANCE;
+	public static int HUNTER_EPIC_WAIT;
+	public static int HUNTER_EPIC_EXHAUST;
 	public static boolean HUNTER_PVP_EVENTS;
 	public static int HUNTER_PVP_EVENT_MAX;
 	public static int HUNTER_PVP_EVENT_CHANCE;
@@ -77,6 +76,10 @@ public class PhantomHuntersConfig
 	public static boolean HUNTER_STRATEGY;
 	public static String HUNTER_STRATEGY_WHEN;
 	public static int HUNTER_STRATEGY_PER_HOUR;
+	public static boolean HUNTER_MIND_EXTENDED;
+	public static int HUNTER_FOCUS_MAX;
+	public static int HUNTER_FOCUS_LINGER;
+	public static int HUNTER_FOCUS_STRATEGY_MINUTES;
 	public static int HUNTER_STRATEGY_PER_MINUTE;
 	public static int HUNTER_STRATEGY_SAY_CHANCE;
 	public static boolean HUNTER_INITIATIVE;
@@ -161,10 +164,9 @@ public class PhantomHuntersConfig
 		final int[] epicSize = levels(config.getString("HunterEpicSize", "5,9"));
 		HUNTER_EPIC_MIN = Math.max(2, epicSize.length > 0 ? epicSize[0] : 5);
 		HUNTER_EPIC_MAX = Math.max(HUNTER_EPIC_MIN, Math.min(9, epicSize.length > 1 ? epicSize[1] : 9));
-		HUNTER_EPIC_DAMAGE = Math.max(1, config.getFloat("HunterEpicDamage", 6));
-		HUNTER_EPIC_ARMOR = Math.max(1, config.getFloat("HunterEpicArmor", 15));
-		HUNTER_PK = config.getBoolean("HunterPk", false);
-		HUNTER_PK_CHANCE = Math.max(0, Math.min(100, config.getInt("HunterPkChance", 2)));
+		HUNTER_EPIC_ARMOR = Math.max(1, config.getFloat("HunterEpicArmor", 5));
+		HUNTER_EPIC_WAIT = Math.max(1, config.getInt("HunterEpicWait", 10));
+		HUNTER_EPIC_EXHAUST = Math.max(0, config.getInt("HunterEpicExhaust", 30));
 		HUNTER_PVP_EVENTS = config.getBoolean("HunterPvpEvents", true);
 		HUNTER_PVP_EVENT_MAX = Math.max(0, config.getInt("HunterPvpEventMax", 12));
 		HUNTER_PVP_EVENT_CHANCE = Math.max(0, Math.min(100, config.getInt("HunterPvpEventChance", 30)));
@@ -183,6 +185,10 @@ public class PhantomHuntersConfig
 		HUNTER_STRATEGY = config.getBoolean("HunterStrategy", true);
 		HUNTER_STRATEGY_WHEN = config.getString("HunterStrategyWhen", "WITH_PLAYERS").strip().toUpperCase();
 		HUNTER_STRATEGY_PER_HOUR = Math.max(1, config.getInt("HunterStrategyPerHour", 6));
+		HUNTER_MIND_EXTENDED = config.getBoolean("HunterMindExtended", false);
+		HUNTER_FOCUS_MAX = Math.max(0, config.getInt("HunterFocusMax", 5));
+		HUNTER_FOCUS_LINGER = Math.max(0, config.getInt("HunterFocusLinger", 180));
+		HUNTER_FOCUS_STRATEGY_MINUTES = Math.max(1, config.getInt("HunterFocusStrategyMinutes", 3));
 		HUNTER_STRATEGY_PER_MINUTE = config.getInt("HunterStrategyPerMinute", 6);
 		HUNTER_STRATEGY_SAY_CHANCE = config.getInt("HunterStrategySayChance", 20);
 		HUNTER_INITIATIVE = config.getBoolean("HunterInitiative", true);

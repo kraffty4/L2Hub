@@ -54,7 +54,7 @@ EDITS = [
      '		CHAMPION_BLUE = loadTier(config, "ChampionBlue", Team.BLUE, 2, 2, 2, "");\n'
      '		SUPER_CHAMPION_ENABLE = config.getBoolean("SuperChampionEnable", false);\n'
      '		CHAMPION_SUPER = loadTier(config, "SuperChampion", Team.RED, 20, 20, 10, "");\n'
-     '		SUPER_CHAMPION_EFFECTS = superChampionEffects(config.getString("SuperChampionEffects", "BIG_BODY,ULTIMATE_DEFENCE"));\n'
+     '		SUPER_CHAMPION_EFFECTS = superChampionEffects(config.getString("SuperChampionEffects", "BIG_BODY,ULTIMATE_DEFENCE,MAGIC_SQUARE"));\n'
      '		SUPER_CHAMPION_ANNOUNCE = config.getString("SuperChampionAnnounce", "Region");\n'
      '		SUPER_CHAMPION_ANNOUNCE_TEXT = config.getString("SuperChampionAnnounceText", "Legendary Champion %name% (%level%) has appeared near %town%!");\n'),
     (CONFIG, "List.copyOf(items));\n\t}\n}\n",
@@ -139,7 +139,7 @@ def originals(cid: str, src: Path) -> tuple[dict[str, bytes | None], list[Path],
 # Эффекты суперчемпиона хроники, если не как в ini_block.txt: (значение SuperChampionEffects, комментарий над ним).
 # Особые эффекты (тип 1 в AbnormalVisualEffect) H5 и Epilogue шлют клиенту в пакете NPC; Невит — только в клиенте H5.
 EFFECTS_BY_ID = {
-    "ct26_highfive": ("BIG_BODY,ULTIMATE_DEFENCE,NAVIT_ADVENT",
+    "ct26_highfive": ("BIG_BODY,ULTIMATE_DEFENCE,NAVIT_ADVENT,MAGIC_SQUARE",
                       "# High Five: NAVIT_ADVENT — золотое сияние Благословения Невита (особый эффект, клиент H5 его рисует)."),
 }
 
@@ -164,7 +164,7 @@ def changes(base: dict[str, bytes | None], cid: str) -> dict[str, tuple[bytes | 
     block = (HERE / "ini_block.txt").read_bytes()
     if cid in EFFECTS_BY_ID:
         value, note = EFFECTS_BY_ID[cid]
-        key = b"SuperChampionEffects = BIG_BODY,ULTIMATE_DEFENCE"
+        key = b"SuperChampionEffects = BIG_BODY,ULTIMATE_DEFENCE,MAGIC_SQUARE"
         if block.count(key) != 1:
             sys.exit("ini_block.txt: строка SuperChampionEffects не та — поправь EFFECTS_BY_ID")
         block = block.replace(key, f"{note}\nSuperChampionEffects = {value}".encode())

@@ -192,6 +192,14 @@ public final class PhantomCompat
 		return Math.max(0, -player.getReputation());
 	}
 
+	/**
+	 * Танатос (раздел 4.45): карма ПК — у хроник с репутацией это отрицательная репутация.
+	 */
+	public static void setKarma(Player player, int value)
+	{
+		player.setReputation(-value);
+	}
+
 	/** Город: зоны TOWN у Classic нет, города — мирные зоны. */
 	public static boolean isInTown(Player player)
 	{

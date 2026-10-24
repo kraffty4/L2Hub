@@ -19,6 +19,40 @@ SECRET_RE = re.compile(r"password|secret|token|^StatusPW$", re.IGNORECASE)  # St
 NOT_SECRET = {"AllowChangePassword"}
 # Конфиги по семейству сервера (servers.config_family); формат один: «# описание», «Ключ = значение».
 PATTERNS = {"l2j2": "*.properties"}  # старые L2J 2.0 — у сборок-комбайнов вроде La2offline
+COMMENT_RE = re.compile(r"<!--.*?-->", re.DOTALL)
+
+
+def _outside_comments(text: str, matches) -> list:
+    """Совпадения вне <!-- … --> (в комментариях конфигов Mobius лежат примеры с теми же тегами)."""
+    spans = [m.span() for m in COMMENT_RE.finditer(text)]
+    return [m for m in matches if not any(a <= m.start() < b for a, b in spans)]
+
+
+def xml_attr(text: str, key: str) -> str | None:
+    """Значение первого атрибута key="…" в XML-конфиге (ClassMaster.xml: classChangeEnabled); нет — None."""
+    found = _outside_comments(text, re.finditer(rf'\b{re.escape(key)}="([^"]*)"', text))
+    return found[0].group(1) if found else None
+
+
+def _set_xml_attr(text: str, key: str, value: str) -> str:
+    found = _outside_comments(text, re.finditer(rf'\b{re.escape(key)}="([^"]*)"', text))
+    if not found:
+        raise KeyError(key)
+    m = found[0]
+    return text[:m.start(1)] + value.replace('"', "&quot;") + text[m.end(1):]
+
+
+def _set_xml_block(text: str, parent: str, block: str, value: str) -> str:
+    """Все <block>…</block> внутри <parent …> (вне комментариев) — заменить на value сразу после открывающего тега."""
+    head = _outside_comments(text, re.finditer(rf"<{re.escape(parent)}\b[^>]*>[ \t]*\r?\n?", text))
+    if not head:
+        raise KeyError(parent)
+    newline = "\r\n" if "\r\n" in text else "\n"
+    old = _outside_comments(text, re.finditer(rf"[ \t]*<{re.escape(block)}\b.*?</{re.escape(block)}>[ \t]*\r?\n?", text, re.DOTALL))
+    for m in reversed(old):
+        text = text[:m.start()] + text[m.end():]
+    at = head[0].end()
+    return text[:at] + value.replace("\n", newline) + text[at:]
 
 
 def pattern(p: dict) -> str:
@@ -166,10 +200,12 @@ def ensure_value(server: Path, backup_root: Path, part: str, file: str, key: str
 
 def save_edits(server: Path, backup_root: Path, edits: list[dict]) -> dict:
     """Пишет правки {part, file, key, value} в .ini. Комментарии и порядок строк не трогаются,
-    меняется только значение в строке ключа. Оригиналы изменённых файлов копируются в backup_root."""
+    меняется только значение в строке ключа. Оригиналы изменённых файлов копируются в backup_root.
+    В .xml-конфиге key — атрибут (первый вне комментариев); правка {part, file, parent, block, value} заменяет все блоки
+    <block> внутри <parent> на value (ClassMaster.xml: цены профессий)."""
     by_file: dict[tuple[str, str], list[dict]] = {}
     for e in edits:
-        if is_secret(e["key"]):
+        if is_secret(e.get("key", "")):
             raise ValueError(f"Ключ {e['key']} правится только лаунчером")
         by_file.setdefault((e["part"], e["file"]), []).append(e)
 
@@ -184,6 +220,15 @@ def save_edits(server: Path, backup_root: Path, edits: list[dict]) -> dict:
         raw = path.read_bytes()
         bom = raw.startswith(b"\xef\xbb\xbf")
         text = raw.decode("utf-8-sig")
+        if path.suffix.lower() == ".xml":
+            for e in items:
+                value = str(e["value"])
+                try:
+                    text = _set_xml_block(text, e["parent"], e["block"], value) if e.get("block") else _set_xml_attr(text, e["key"], value.strip())
+                except KeyError as err:
+                    raise KeyError(f"В {part}/{file} нет {err.args[0]}") from err
+            planned.append((path, part, text, bom))
+            continue
         newline = "\r\n" if "\r\n" in text else "\n"
         lines = text.split(newline)
         for e in items:

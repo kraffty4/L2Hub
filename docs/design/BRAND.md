@@ -63,7 +63,11 @@ uv run --no-project --with fonttools --with uharfbuzz --with pillow python -X ut
 | Classic | `cover_classic_login.jpg` | летнее утро: мельница на холме, луга, деревня у реки, замок вдали, море и маяк |
 | Essence | `cover_essence_login.jpg` | закатное нагорье, врата из камня и бивней, четыре духа стихий в облаках, шпиль в чёрно-фиолетовом пламени |
 
-Прежние обложки (2026-10-18: `cover_c4.jpg`, `cover_interlude_v2.jpg`, `cover_gracia_final.jpg`, `cover_epilogue.jpg`, `cover_ct26_highfive_v2.jpg`, `cover_classic_v2.jpg`, `cover_essence.jpg`; их исходники — `covers/2026-10-18_cover_*.jpg`) и совсем старые (`cover_interlude.jpg`, `cover_ct26_highfive.jpg`, `cover_classic.jpg`, `cover_ertheia.jpg`) лежат как были: убирать — по команде автора. Сравнить старые и новые в окне — макет `shell_v3`, переключатель «Обложки».
+2026-10-23 по команде автора из `ui/assets` убраны в Корзину:
+- прежние обложки от 2026-10-18: `cover_c4.jpg`, `cover_interlude_v2.jpg`, `cover_epilogue.jpg`, `cover_ct26_highfive_v2.jpg`, `cover_classic_v2.jpg`, `cover_essence.jpg`;
+- совсем старые: `cover_interlude.jpg`, `cover_ct26_highfive.jpg`, `cover_classic.jpg`.
+
+Окно их не показывало, а в программу и снимок они попадали. В истории git они остались. Исходники прежних лежат в `covers/2026-10-18_cover_*.jpg`; туда же перенесена прежняя обложка Gracia Final (`2026-10-18_cover_gracia_final.jpg`), другой копии у неё не было. В `ui/assets` из старых осталась только `cover_ertheia.jpg`: её показывает Ertheia, своей обложки «в духе экрана входа» у неё нет. Сравнить прежние и новые — макет `shell_v3`, переключатель «Обложки»: прежние он берёт из `covers/`.
 
 ## Промпты Codex
 

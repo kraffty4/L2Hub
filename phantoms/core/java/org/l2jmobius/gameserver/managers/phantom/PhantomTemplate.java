@@ -44,6 +44,11 @@ public class PhantomTemplate
 		public final int gloves;
 		public final int feet;
 		public final int shots;
+		/** Бижутерия (Танатос, раздел 4.45): ожерелье, серьга и кольцо — серьги и кольца по две; рубаха. */
+		public final int neck;
+		public final int ear;
+		public final int ring;
+		public final int shirt;
 
 		public Gear(String grade, int minLevel, int rhand, int lhand, int head, int chest, int legs, int gloves, int feet, int shots)
 		{
@@ -57,6 +62,28 @@ public class PhantomTemplate
 			this.gloves = gloves;
 			this.feet = feet;
 			this.shots = shots;
+			neck = 0;
+			ear = 0;
+			ring = 0;
+			shirt = 0;
+		}
+
+		public Gear(String grade, int minLevel, int rhand, int lhand, int head, int chest, int legs, int gloves, int feet, int shots, int neck, int ear, int ring, int shirt)
+		{
+			this.grade = grade;
+			this.minLevel = minLevel;
+			this.rhand = rhand;
+			this.lhand = lhand;
+			this.head = head;
+			this.chest = chest;
+			this.legs = legs;
+			this.gloves = gloves;
+			this.feet = feet;
+			this.shots = shots;
+			this.neck = neck;
+			this.ear = ear;
+			this.ring = ring;
+			this.shirt = shirt;
 		}
 
 		public int[] items()
@@ -69,7 +96,13 @@ public class PhantomTemplate
 				gloves,
 				feet,
 				rhand,
-				lhand
+				lhand,
+				neck,
+				ear,
+				ear,
+				ring,
+				ring,
+				shirt
 			};
 		}
 	}
@@ -85,13 +118,15 @@ public class PhantomTemplate
 	private final List<Gear> _gear;
 	private final List<String> _aliases;
 	private final boolean _hunter;
+	private final boolean _reaper;
 	private final float _social;
 	private float _temper = 1;
 
-	public PhantomTemplate(String name, Role role, boolean female, byte face, byte hairStyle, byte hairColor, int[] classes, Location home, List<Gear> gear, String aliases, boolean hunter, float social)
+	public PhantomTemplate(String name, Role role, boolean female, byte face, byte hairStyle, byte hairColor, int[] classes, Location home, List<Gear> gear, String aliases, String kind, float social)
 	{
 		_name = name;
-		_hunter = hunter;
+		_hunter = "hunter".equals(kind);
+		_reaper = "reaper".equals(kind);
 		_social = Math.max(0, social);
 		final List<String> names = new ArrayList<>();
 		names.add(name.toLowerCase());
@@ -131,6 +166,14 @@ public class PhantomTemplate
 	public boolean isHunter()
 	{
 		return _hunter;
+	}
+
+	/**
+	 * @return {@code true} — Танатос (раздел 4.45, {@link PhantomThanatos}): не напарник и не охотник
+	 */
+	public boolean isReaper()
+	{
+		return _reaper;
 	}
 
 	/**

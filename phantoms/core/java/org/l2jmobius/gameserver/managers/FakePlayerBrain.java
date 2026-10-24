@@ -55,16 +55,30 @@ public class FakePlayerBrain
 	 */
 	public void send(String json, Consumer<String> onReply, Runnable onFail)
 	{
-		post(json, onReply, onFail, true);
+		post(json, onReply, onFail, true, FakePlayersConfig.FAKE_PLAYER_BRAIN_TIMEOUT);
+	}
+
+	/**
+	 * Как {@link #send(String, Consumer, Runnable)}, но ждать ответа до {@code timeoutSeconds} (не меньше обычного): «Разум 2.0» — охотник в фокусе думает
+	 * с размышлением, ответ идёт до 45 с (docs/MIND.md).
+	 */
+	public void send(String json, Consumer<String> onReply, Runnable onFail, int timeoutSeconds)
+	{
+		post(json, onReply, onFail, true, Math.max(FakePlayersConfig.FAKE_PLAYER_BRAIN_TIMEOUT, timeoutSeconds));
 	}
 
 	private void post(String json, Consumer<String> onReply, Runnable onFail, boolean replyEmpty)
+	{
+		post(json, onReply, onFail, replyEmpty, FakePlayersConfig.FAKE_PLAYER_BRAIN_TIMEOUT);
+	}
+
+	private void post(String json, Consumer<String> onReply, Runnable onFail, boolean replyEmpty, int timeoutSeconds)
 	{
 		final long start = System.currentTimeMillis();
 		final HttpRequest request;
 		try
 		{
-			request = HttpRequest.newBuilder(URI.create(FakePlayersConfig.FAKE_PLAYER_BRAIN_URL + "/chat")).timeout(Duration.ofSeconds(FakePlayersConfig.FAKE_PLAYER_BRAIN_TIMEOUT)).header("Content-Type", "application/json; charset=utf-8").POST(HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8)).build();
+			request = HttpRequest.newBuilder(URI.create(FakePlayersConfig.FAKE_PLAYER_BRAIN_URL + "/chat")).timeout(Duration.ofSeconds(timeoutSeconds)).header("Content-Type", "application/json; charset=utf-8").POST(HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8)).build();
 		}
 		catch (Exception e)
 		{

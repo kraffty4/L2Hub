@@ -357,7 +357,8 @@ class Api:
         if not only_db and servers.brain_port(p):
             steps.append(("Будим мозги фейков…", lambda: servers.start_brain(p)))
         if not only_db and p.get("type") == "mobius":
-            steps.append(("Язык модов в игре…", lambda: modes.sync_language(p, i18n.lang())))  # L2HubLanguage — до старта гейма
+            # До старта гейма: L2HubLanguage и «Расширенное обдумывание» (HunterMindExtended) — в конфиги модов.
+            steps.append(("Язык модов в игре…", lambda: (modes.sync_language(p, i18n.lang()), modes.sync_mind(p))))
         if not only_db:
             steps += [
                 ("Запускаю логин-сервер…", lambda: servers.start_part(p, "login")),
@@ -390,7 +391,7 @@ class Api:
             return self._start_job(chronicle_id, "restart", l2solo.restart_steps(p))
         return self._start_job(chronicle_id, "restart", [
             ("Сохраняю мир и останавливаю гейм…", lambda: servers.stop_part(p, "game")),
-            ("Язык модов в игре…", lambda: modes.sync_language(p, i18n.lang())),
+            ("Язык модов в игре…", lambda: (modes.sync_language(p, i18n.lang()), modes.sync_mind(p))),
             ("Гейм-сервер грузит мир…", lambda: servers.start_part(p, "game")),
         ])
 
@@ -422,20 +423,30 @@ class Api:
         game = catalog.server_dir(p) / "game"
         status = _hunters_status(game) if not servers.bundle(p) else None
         hunters = {h["name"]: h for h in (status or {}).get("hunters", [])}
-        kinds = {}
+        kinds, secret = {}, set()
         data = game / "data" / "L2HubPhantoms.xml"
         if data.is_file():
-            kinds = {el.get("name"): ("hunter" if el.get("kind") == "hunter" else "companion") for el in ET.parse(data).getroot().iter("phantom")}
+            # Фантомы не «hunter» и не напарники (kind="reaper" — Танатос, решение автора 2026-10-23) — секретные: на карте их нет.
+            for el in ET.parse(data).getroot().iter("phantom"):
+                kind = el.get("kind", "companion")
+                if kind in ("hunter", "companion"):
+                    kinds[el.get("name")] = kind
+                else:
+                    secret.add(el.get("name"))
         points, live = {}, False
         db = servers.db_running(p["ports"]["db"])
         if db:
             account = servers.phantom_account(p)
             where = "" if offline else " WHERE online=1"
             for name, level, cls, x, y, acc, online in servers.db_query(p, f"SELECT char_name, level, classid, x, y, account_name, online FROM characters{where}"):
+                if name in secret:
+                    continue
                 kind = kinds.get(name) or ("companion" if acc == account else "player")
                 points[name] = {"kind": kind, "name": name, "level": int(level), "classId": int(cls), "x": int(x), "y": int(y),
                                 "live": False, "online": online == "1"}
         for name, h in hunters.items():  # сервер знает охотников лучше базы: фаза, спот, лавка, а с координатами — и место
+            if name in secret or h.get("secret"):
+                continue
             pt = points.setdefault(name, {"kind": "hunter", "name": name, "level": h.get("level"), "classId": h.get("classId"), "live": False})
             pt.update(phase=h.get("phase"), spot=h.get("spot"), town=h.get("town"), party=h.get("party"), activity=h.get("activity"),
                       kind="store" if h.get("phase") == "STORE" else "hunter")
@@ -881,7 +892,11 @@ class Api:
         data = game / "data" / "L2HubPhantoms.xml"
         if not ini.is_file() or not data.is_file():
             return {"ok": False, "error": "В этой сборке нет охотников-фантомов."}
-        names = [el.get("name") for el in ET.parse(data).getroot().iter("phantom") if el.get("kind") == "hunter"]
+        phantoms = list(ET.parse(data).getroot().iter("phantom"))
+        names = [el.get("name") for el in phantoms if el.get("kind") == "hunter"]
+        # Секретные (kind="reaper" — Танатос, решение автора 2026-10-23): в окне только строка-глюк последней в «Населении» (world.js,
+        # secretRows) — без имени и данных, с еле видным уровнем. Есть, пока охотники не выключены: без них его нет и в мире.
+        secret = [el for el in phantoms if el.get("kind") not in (None, "hunter", "companion")]
         classes = _class_names(game)
         items = {n: {"name": n, "level": None, "cls": ""} for n in names}
         db = servers.db_running(p["ports"]["db"])
@@ -911,9 +926,14 @@ class Api:
                         strategy=h.get("strategy"), nextThink=h.get("nextThink"), mood=h.get("mood", ""), relations=h.get("relations") or [],
                         earnedPerHour=h.get("earnedPerHour"), quest=h.get("quest"), professionDue=h.get("professionDue"),
                         activity=h.get("activity"))  # PvP-ивент, рейд, сезонное событие — docs/PHANTOMS.md, после 4.34
-        return {"ok": True, "mode": _ini_value(ini, "HuntersMode", "ALWAYS").upper(), "db": db, "running": running, "live": live is not None,
+        mode = _ini_value(ini, "HuntersMode", "ALWAYS").upper()
+        live_secret = {h.get("name"): h for h in (live or {}).get("hunters", []) if h.get("secret")}
+        hidden = [] if mode == "OFF" else [
+            {"name": "", "secret": True, "level": live_secret.get(el.get("name"), {}).get("level") or next(
+                (int(g.get("minLevel")) for g in el.iter("gear") if (g.get("minLevel") or "").isdigit()), None)} for el in secret]
+        return {"ok": True, "mode": mode, "db": db, "running": running, "live": live is not None,
                 "liveAt": live_at, "players": players, "strategy": _strategy_info(p, game, len(names)), "world": _world_now(game),
-                "items": sorted(items.values(), key=lambda x: (-(x["level"] or 0), x["name"]))}
+                "items": sorted(items.values(), key=lambda x: (-(x["level"] or 0), x["name"])) + hidden}
 
     def companions(self, chronicle_id: str) -> dict:
         """Напарники-фантомы, только чтение: роль, прозвища, путь класса и характер — из данных сервера, уровень и класс — из базы.
@@ -930,7 +950,7 @@ class Api:
             personas = {}
         items = []
         for el in ET.parse(data).getroot().iter("phantom"):
-            if el.get("kind") == "hunter":
+            if el.get("kind", "companion") != "companion":  # охотники — в «Населении», секретные (Танатос) — нигде
                 continue
             per = personas.get(el.get("name"), {})
             items.append({"name": el.get("name"), "role": el.get("role", ""), "aliases": [a for a in el.get("aliases", "").split(";") if a],
@@ -1035,12 +1055,22 @@ class Api:
             if not brain.KEY_NAME_RE.match(key_file):
                 raise ValueError("файл ключа — имя вида deepseek.key")
             clean["api"]["keyFile"] = key_file
+            ext = settings.get("extended") or {}
+            clean["extended"] = {"enabled": bool(ext.get("enabled")), "dailyUsd": float(ext.get("dailyUsd", brain.EXT_DEFAULT["dailyUsd"])),
+                                 "focusMax": int(ext.get("focusMax", brain.EXT_DEFAULT["focusMax"]))}
+            if not 0 <= clean["extended"]["dailyUsd"] <= 100:
+                raise ValueError("лимит в день — от 0 до 100 $")
+            if not 1 <= clean["extended"]["focusMax"] <= 10:
+                raise ValueError("умных охотников рядом — от 1 до 10")
         except (KeyError, TypeError, ValueError) as e:
             return {"ok": False, "error": f"Не сохранил: {e}"}
         brain.BRAIN_DIR.mkdir(parents=True, exist_ok=True)
         tmp = brain.SETTINGS_FILE.with_suffix(".tmp")
         tmp.write_text(json.dumps(clean, ensure_ascii=False, indent=1), encoding="utf-8")
         tmp.replace(brain.SETTINGS_FILE)
+        # Тумблер «Расширенное обдумывание» — и серверам: PhantomHunters.ini перечитывается на ходу (у работающего мира — сразу).
+        for pid in catalog.load_profiles():
+            modes.sync_mind(catalog.profile(pid))
         return {"ok": True}
 
     def brain_models(self, chronicle_id: str, mode: str, base_url: str) -> dict:

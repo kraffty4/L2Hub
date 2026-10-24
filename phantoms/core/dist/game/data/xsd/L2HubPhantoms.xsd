@@ -19,16 +19,22 @@
 									<xs:attribute name="gloves" type="xs:nonNegativeInteger" />
 									<xs:attribute name="feet" type="xs:nonNegativeInteger" />
 									<xs:attribute name="shots" type="xs:nonNegativeInteger" />
+									<!-- Бижутерия (Танатос): серьги и кольца надеваются по две. -->
+									<xs:attribute name="neck" type="xs:nonNegativeInteger" />
+									<xs:attribute name="ear" type="xs:nonNegativeInteger" />
+									<xs:attribute name="ring" type="xs:nonNegativeInteger" />
+									<xs:attribute name="shirt" type="xs:nonNegativeInteger" />
 								</xs:complexType>
 							</xs:element>
 						</xs:sequence>
 						<xs:attribute name="name" type="xs:token" use="required" />
-						<!-- companion — напарник (.buddy), hunter — охотник: живёт сам, качается с 1 уровня. -->
+						<!-- companion — напарник (.buddy), hunter — охотник: живёт сам, качается с 1 уровня; reaper — Танатос (docs/PHANTOMS.md, 4.45). -->
 						<xs:attribute name="kind" default="companion">
 							<xs:simpleType>
 								<xs:restriction base="xs:token">
 									<xs:enumeration value="companion" />
 									<xs:enumeration value="hunter" />
+									<xs:enumeration value="reaper" />
 								</xs:restriction>
 							</xs:simpleType>
 						</xs:attribute>

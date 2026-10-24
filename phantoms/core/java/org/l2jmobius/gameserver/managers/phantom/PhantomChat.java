@@ -132,6 +132,12 @@ public class PhantomChat
 		{
 			return;
 		}
+		// Танатос (раздел 4.45, «Голос»): отвечает сам, редко.
+		if (template.isReaper())
+		{
+			PhantomThanatos.getInstance().onWhisper(speaker, phantom, text);
+			return;
+		}
 
 		final boolean owner = PhantomCompanionManager.getInstance().isOwner(speaker, template);
 		final List<Order> orders = owner ? PhantomOrders.parse(text) : List.of();
@@ -712,6 +718,24 @@ public class PhantomChat
 		return "trade";
 	}
 
+	/**
+	 * Тревога охотника (Танатос рядом, раздел 4.45): крик в общий чат на весь регион карты, как «!» у игрока.
+	 * @param hunter охотник
+	 * @param text крик
+	 */
+	public void hunterAlarm(Player hunter, String text)
+	{
+		final CreatureSay say = new CreatureSay(hunter, ChatType.SHOUT, hunter.getName(), text);
+		final int region = MapRegionData.getInstance().getMapRegionLocId(hunter);
+		for (Player player : World.getPlayers())
+		{
+			if ((player != hunter) && !BlockList.isBlocked(player, hunter) && (region == MapRegionData.getInstance().getMapRegionLocId(player)) && (player.getInstanceId() == hunter.getInstanceId()))
+			{
+				player.sendPacket(say);
+			}
+		}
+	}
+
 	// ---------- Разговор ----------
 
 	/**
@@ -786,6 +810,8 @@ public class PhantomChat
 			if (template.isHunter())
 			{
 				PhantomInitiative.getInstance().onSpoke(phantom, speaker);
+				// «Разум 2.0»: разговор с живым — повод для фокуса.
+				PhantomFocus.getInstance().talked(phantom, speaker);
 			}
 		}
 		if (!brainEnabled())
@@ -810,7 +836,7 @@ public class PhantomChat
 				_lastReply.put(pair(phantom, speaker), System.currentTimeMillis());
 				say(phantom, speaker, channel, line);
 			}
-		}, () -> fallback(speaker, phantom, channel, orders));
+		}, () -> fallback(speaker, phantom, channel, orders), PhantomFocus.getInstance().of(phantom) != null ? FOCUS_TIMEOUT : 0);
 	}
 
 	private static void fallback(Player speaker, Player phantom, String channel, List<Order> orders)
@@ -875,6 +901,9 @@ public class PhantomChat
 
 	// ---------- Запрос к мозгам ----------
 
+	/** «Разум 2.0»: ответ охотнику в фокусе ждать до стольких секунд — мозги думают с размышлением до 45 с. */
+	static final int FOCUS_TIMEOUT = 50;
+
 	/**
 	 * Тело POST /chat для brain.py: {@code "kind":"phantom"}, кто говорит, состояние напарника и пати.
 	 */
@@ -884,6 +913,12 @@ public class PhantomChat
 		sb.append('{');
 		FakePlayerBrain.field(sb, "kind", "phantom").append(',');
 		FakePlayerBrain.field(sb, "fpc", phantom.getName()).append(',');
+		// «Разум 2.0»: охотник рядом с живым игроком (PhantomFocus).
+		final String focus = template.isHunter() ? PhantomFocus.getInstance().of(phantom) : null;
+		if (focus != null)
+		{
+			FakePlayerBrain.field(sb, "focus", focus).append(',');
+		}
 		sb.append("\"npcId\":").append(phantom.getObjectId()).append(',');
 		FakePlayerBrain.field(sb, "channel", channel).append(',');
 		FakePlayerBrain.field(sb, "message", message).append(',');

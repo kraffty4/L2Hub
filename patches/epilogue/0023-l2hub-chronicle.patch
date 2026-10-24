@@ -1,9 +1,9 @@
 diff --git a/dist/game/data/scripts/custom/L2HubChronicle/L2HubChronicle.java b/dist/game/data/scripts/custom/L2HubChronicle/L2HubChronicle.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..fe27050103cc1be19c10c84fed66cace8af283dd
+index 0000000000000000000000000000000000000000..0d91b97b7102f1f91fa3ad4f7074eb203c4842dc
 --- /dev/null
 +++ b/dist/game/data/scripts/custom/L2HubChronicle/L2HubChronicle.java
-@@ -0,0 +1,528 @@
+@@ -0,0 +1,537 @@
 +/*
 + * This file is part of the L2J Mobius project.
 + *
@@ -280,6 +280,11 @@ index 0000000000000000000000000000000000000000..fe27050103cc1be19c10c84fed66cace
 +	private static void onLevel(OnPlayerLevelChanged event)
 +	{
 +		final Player player = event.getPlayer();
++		// Танатос (модуль фантомов) — секрет: его 76-й уровень и профа — не новость.
++		if (PhantomManager.getInstance().isSecret(player))
++		{
++			return;
++		}
 +		for (int level : MILESTONES)
 +		{
 +			if ((event.getOldLevel() < level) && (event.getNewLevel() >= level))
@@ -297,6 +302,10 @@ index 0000000000000000000000000000000000000000..fe27050103cc1be19c10c84fed66cace
 +			return;
 +		}
 +		final Player player = event.getPlayer();
++		if (PhantomManager.getInstance().isSecret(player))
++		{
++			return;
++		}
 +		final String name = (hunter(player) ? "Охотник " : "Игрок ") + player.getName();
 +		add("profession", name + " стал " + className(event.getTemplate().getPlayerClass().name()), player.getName(), null, null, null);
 +	}

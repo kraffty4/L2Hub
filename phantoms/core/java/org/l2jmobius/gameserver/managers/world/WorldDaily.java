@@ -96,6 +96,9 @@ public final class WorldDaily
 		}
 	}
 
+	/** «Место дня» не задано. */
+	static final int NO_SPOT = Integer.MIN_VALUE;
+
 	/** Задание дня. */
 	static final class Task
 	{
@@ -103,8 +106,15 @@ public final class WorldDaily
 		final int need;
 		int done;
 		boolean rewarded;
-		/** «Место дня»: номер спота в {@link HuntSpotData}; −1 — не спот. */
-		int spot = -1;
+		/**
+		 * «Место дня»: точка входа спота ({@link HuntSpot#entry}) — по ней спот находится и после пересборки списка спотов (номер в списке после неё
+		 * указывал бы на другой спот; docs/PHANTOMS.md, 4.47); {@link #NO_SPOT} — не спот.
+		 */
+		int spotX = NO_SPOT;
+		int spotY = NO_SPOT;
+		/** Найденный спот и список, в котором он найден: список пересобрали — искать заново. */
+		HuntSpot cached;
+		List<HuntSpot> cachedIn;
 
 		Task(Kind kind, int need)
 		{
@@ -378,11 +388,12 @@ public final class WorldDaily
 		day.tasks.add(new Task(Kind.HUNT, L2HubWorldConfig.WORLD_DAILY_HUNT_KILLS));
 
 		final List<Task> pool = new ArrayList<>();
-		final int spot = pickSpot(player, rnd);
-		if (spot >= 0)
+		final HuntSpot spot = pickSpot(player, rnd);
+		if (spot != null)
 		{
 			final Task task = new Task(Kind.SPOT, L2HubWorldConfig.WORLD_DAILY_SPOT_KILLS);
-			task.spot = spot;
+			task.spotX = spot.entry.getX();
+			task.spotY = spot.entry.getY();
 			pool.add(task);
 		}
 		if (ChampionMonstersConfig.CHAMPION_ENABLE && (player.getLevel() >= (ChampionMonstersConfig.CHAMP_MIN_LEVEL - 3)) && (player.getLevel() <= (ChampionMonstersConfig.CHAMP_MAX_LEVEL + 3)))
@@ -400,9 +411,9 @@ public final class WorldDaily
 
 	/**
 	 * «Место дня»: спот охотников с мобами на уровень-четыре ниже и до уровня выше своего; с {@value #LEAVE_HOME_LEVEL}-го — не в стартовых зонах.
-	 * @return номер спота в {@link HuntSpotData} или −1
+	 * @return спот или {@code null}
 	 */
-	private static int pickSpot(Player player, Random rnd)
+	private static HuntSpot pickSpot(Player player, Random rnd)
 	{
 		final int level = player.getLevel();
 		final List<HuntSpot> spots = HuntSpotData.getInstance().getSpots();
@@ -418,16 +429,33 @@ public final class WorldDaily
 				}
 			}
 		}
-		return fitting.isEmpty() ? -1 : fitting.get(rnd.nextInt(fitting.size()));
+		return fitting.isEmpty() ? null : spots.get(fitting.get(rnd.nextInt(fitting.size())));
 	}
 
 	/**
-	 * @return спот задания «Место дня» или {@code null}
+	 * @return спот задания «Место дня» (по точке входа) или {@code null} — не спот или такого спота больше нет
 	 */
 	static HuntSpot spot(Task task)
 	{
+		if (task.spotX == NO_SPOT)
+		{
+			return null;
+		}
 		final List<HuntSpot> spots = HuntSpotData.getInstance().getSpots();
-		return (task.spot >= 0) && (task.spot < spots.size()) ? spots.get(task.spot) : null;
+		if (task.cachedIn != spots)
+		{
+			task.cachedIn = spots;
+			task.cached = null;
+			for (HuntSpot spot : spots)
+			{
+				if ((spot.entry.getX() == task.spotX) && (spot.entry.getY() == task.spotY))
+				{
+					task.cached = spot;
+					break;
+				}
+			}
+		}
+		return task.cached;
 	}
 
 	/**
@@ -443,7 +471,7 @@ public final class WorldDaily
 		return String.format("%02d:%02d", L2HubWorldConfig.WORLD_DAILY_RESET_HOUR, L2HubWorldConfig.WORLD_DAILY_RESET_MINUTE);
 	}
 
-	// ---------- Хранение: «2026-10-21|B0|HUNT:100:37:0:-1;SPOT:50:0:0:812» ----------
+	// ---------- Хранение: «2026-10-21|B0|HUNT:100:37:0:-1;SPOT:50:0:0:81234,-150012» (у «Места дня» — точка входа спота; прежние записи — номер в списке) ----------
 
 	private static String encode(Day day)
 	{
@@ -451,7 +479,7 @@ public final class WorldDaily
 		for (int i = 0; i < day.tasks.size(); i++)
 		{
 			final Task task = day.tasks.get(i);
-			sb.append(i > 0 ? ";" : "").append(task.kind.name()).append(':').append(task.need).append(':').append(task.done).append(':').append(task.rewarded ? 1 : 0).append(':').append(task.spot);
+			sb.append(i > 0 ? ";" : "").append(task.kind.name()).append(':').append(task.need).append(':').append(task.done).append(':').append(task.rewarded ? 1 : 0).append(':').append(task.spotX == NO_SPOT ? "-1" : task.spotX + "," + task.spotY);
 		}
 		return sb.toString();
 	}
@@ -473,7 +501,23 @@ public final class WorldDaily
 				final Task task = new Task(Kind.valueOf(f[0]), Integer.parseInt(f[1]));
 				task.done = Integer.parseInt(f[2]);
 				task.rewarded = f[3].equals("1");
-				task.spot = Integer.parseInt(f[4]);
+				if (f[4].contains(","))
+				{
+					final String[] xy = f[4].split(",");
+					task.spotX = Integer.parseInt(xy[0]);
+					task.spotY = Integer.parseInt(xy[1]);
+				}
+				else
+				{
+					// Прежняя запись — номер в списке спотов (как было до 2026-10-23): в точку входа, если такой номер есть.
+					final int index = Integer.parseInt(f[4]);
+					final List<HuntSpot> spots = HuntSpotData.getInstance().getSpots();
+					if ((index >= 0) && (index < spots.size()))
+					{
+						task.spotX = spots.get(index).entry.getX();
+						task.spotY = spots.get(index).entry.getY();
+					}
+				}
 				day.tasks.add(task);
 			}
 			return day.tasks.isEmpty() ? null : day;

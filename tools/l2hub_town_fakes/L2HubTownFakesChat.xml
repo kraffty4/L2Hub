@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- L2Hub: заготовки реплик фейков в городах (скрипт custom/L2HubTownFakes, генератор tools/l2hub_town_fakes.py).
+     Язык — L2HubLanguage из config/Custom/L2HubWorld.ini (ru или en; нет английской строки — русская).
+     С мозгами фейков (FakePlayerBrain) заготовка — только подсказка тона, реплику пишет модель (кроме arrive, leave и trade.* — они всегда заготовкой).
+     Ключи: idle.<роль>[.day|.evening|.night] — болтовня в общий чат; idle.seasonal — пока идёт сезонное событие;
+     trade.<роль> — объявления в торговый чат (lfp — в крик); event.<вид> — реакции на события мира; arrive и leave — пришёл и ушёл.
+     Переменные: {town} — город, {in} — «в городе», {where} — где стоит, {store} — вывеска лавки, {cls} — класс, {level} — уровень;
+     в событиях — {boss}, {blevel}, {place} (у какого города), {leader}, {event}, {text}. -->
+<list>
+	<!-- Где стоит фейк (near у места в data/L2HubTownFakes.xml). -->
+	<word key="near.gk" ru="у ГК" en="by the GK" />
+	<word key="near.wh" ru="у склада" en="by the warehouse" />
+	<word key="near.shop" ru="у лавок" en="by the shops" />
+	<word key="near.master" ru="у гильдии" en="by the guild" />
+	<word key="near.oly" ru="у олимпиады" en="by the Olympiad" />
+	<word key="near.fish" ru="у рыбаков" en="by the fishermen" />
+	<!-- Сезонные события (имя скрипта LongTimeEvent); нет в списке — имя скрипта как есть. -->
+	<word key="event.L2Day" ru="День Lineage" en="L2 Day" />
+	<word key="event.HeavyMedal" ru="медальки" en="Medal event" />
+	<word key="event.Christmas" ru="Рождество" en="Christmas" />
+	<word key="event.SavingSanta" ru="Спасение Санты" en="Saving Santa" />
+	<word key="event.FreyaCelebration" ru="праздник Фреи" en="Freya Celebration" />
+	<word key="event.GiftOfVitality" ru="Дар Виталити" en="Gift of Vitality" />
+	<word key="event.LoveYourGatekeeper" ru="Люби своего ГК" en="Love Your Gatekeeper" />
+	<word key="event.MasterOfEnchanting" ru="Мастер заточки" en="Master of Enchanting" />
+	<word key="event.TheValentineEvent" ru="День святого Валентина" en="Valentine event" />
+	<word key="event.WatermelonNinja" ru="арбузы" en="Watermelon event" />
+	<word key="event.SquashEvent" ru="тыквы" en="Squash event" />
+	<word key="event.MerrySquashmas" ru="новогодние тыквы" en="Merry Squashmas" />
+	<word key="event.ChefMonkeyEvent" ru="Шеф-обезьяна" en="Chef Monkey" />
+	<word key="event.EveTheFortuneTeller" ru="гадалка Ева" en="Eve the Fortune Teller" />
+	<word key="event.HappyHours" ru="счастливые часы" en="Happy Hours" />
+	<word key="event.LetterCollector" ru="сбор букв" en="Letter Collector" />
+	<word key="event.ThePowerOfLove" ru="Сила любви" en="The Power of Love" />
+	<word key="event.TotalRecall" ru="Тотал Рекол" en="Total Recall" />
+
+	<!-- ===== Болтовня в общий чат ===== -->
+	<lines key="idle.talker">
+		<line ru="кто знает, где сейчас лучше качаться на мой лвл?" en="anyone knows a good spot for my level?" />
+		<line ru="дроп сегодня никакой, третий час ни одной рецы" en="drop is dead today, no recipes for hours" />
+		<line ru="раньше народу было больше, эх" en="server used to be busier, eh" />
+		<line ru="кто вечером на РБ? я бы сходил" en="anyone up for a raid boss tonight?" />
+		<line ru="рейты норм, но адена улетает как вода" en="rates are fine but adena just evaporates" />
+		<line ru="опять сс кончились, пойду фармить на сосы" en="out of soulshots again, back to farming for them" />
+		<line ru="кто видел, где суперчемпы вылезают? хочу посмотреть" en="where do super champions show up? wanna see one" />
+		<line ru="этот ГК дерёт за телепорт как за крыло" en="this GK charges way too much for teleports" />
+		<line ru="кто-нибудь знает, сколько сейчас стоит заточка на оружие?" en="anyone knows the price of weapon enchant scrolls now?" />
+		<line ru="у меня сегодня всё точится в ноль, не мой день" en="every enchant fails today, not my day" />
+		<line ru="а охотники тут вообще адекватные? один меня чуть не слил" en="are the hunters here sane? one almost killed me" />
+		<line ru="скоро профа, коплю на квест" en="almost at my next class, saving for the quest" />
+	</lines>
+	<lines key="idle.talker.evening">
+		<line ru="вечер, народ подтягивается, может пати соберём?" en="evening, people are coming, party anyone?" />
+		<line ru="кто сегодня что выбил? хвастайтесь" en="what did you all drop today? show off" />
+		<line ru="ещё пару часов покачаюсь и спать" en="couple more hours of grinding and bed" />
+	</lines>
+	<lines key="idle.talker.night">
+		<line ru="ночью тут тихо, даже ГК скучает" en="so quiet at night, even the GK is bored" />
+		<line ru="кто не спит — отзовитесь" en="anyone still awake?" />
+	</lines>
+	<lines key="idle.newbie">
+		<line ru="подскажите, где тут склад?" en="where is the warehouse here?" />
+		<line ru="а квест на первую профу где берут?" en="where do I get the first class quest?" />
+		<line ru="всем привет, я первый день тут)" en="hi all, my first day here :)" />
+		<line ru="а гейткипер бесплатно телепортит новичков?" en="does the GK teleport newbies for free?" />
+		<line ru="кто даст немного адены на сс? ну пожалуйста)" en="can someone spare some adena for soulshots? pls :)" />
+		<line ru="а где тут нормальные мобы на мой лвл?" en="where are good mobs for my level?" />
+		<line ru="как сделать, чтобы сосы сами заряжались?" en="how do I make soulshots auto-use?" />
+		<line ru="я заблудился, где магазин с бронёй?" en="i'm lost, where is the armor shop?" />
+		<line ru="а что выгоднее качать, воина или мага?" en="what's better to level, fighter or mage?" />
+		<line ru="ого, а кто это там в топовом шмоте стоит?" en="whoa, who's that guy in top gear?" />
+	</lines>
+	<lines key="idle.lfp">
+		<line ru="{cls} {level} ищу пати, кто качается?" en="{cls} {level} lf party, anyone leveling?" />
+		<line ru="соло скучно, возьмите в пати" en="solo is boring, take me in a party" />
+		<line ru="может кто-то тоже ищет пати {in}?" en="anyone else looking for a party {in}?" />
+	</lines>
+	<lines key="idle.runner">
+		<line ru="фух, только с фарма, сумка битком" en="phew, back from farming, bag is full" />
+		<line ru="сс докуплю и обратно на спот" en="buying shots and back to my spot" />
+		<line ru="кто-нибудь продаёт хп банки подешевле?" en="anyone selling HP potions cheap?" />
+		<line ru="бегу-бегу, не до разговоров" en="running, no time to chat" />
+		<line ru="опять перегруз, всё на склад" en="overweight again, everything to the warehouse" />
+	</lines>
+	<lines key="idle.showoff">
+		<line ru="+16 и не жалею" en="+16 and no regrets" />
+		<line ru="кто на дуэль? ну давайте, не бойтесь" en="anyone up for a duel? come on, don't be scared" />
+		<line ru="опять заточка удалась, кто завидует — молча" en="another successful enchant, envy in silence" />
+		<line ru="как вам мой сет? полгода на него фармил" en="how's my set? farmed it for half a year" />
+		<line ru="олимпиада — для слабаков, я просто красивый" en="olympiad is for the weak, i'm just pretty" />
+		<line ru="автограф не даю, проходим" en="no autographs, move along" />
+	</lines>
+	<lines key="idle.stroller">
+		<line ru="красиво тут, люблю {town}" en="it's pretty here, i love {town}" />
+		<line ru="музыка в этом городе лучшая" en="this town has the best music" />
+		<line ru="погуляю ещё немного и на фарм" en="a little walk and then back to farming" />
+		<line ru="кто-нибудь видел котика у склада? он был тут" en="anyone seen a cat by the warehouse? it was here" />
+	</lines>
+	<lines key="idle.stroller.evening">
+		<line ru="закат тут просто огонь" en="the sunset here is amazing" />
+		<line ru="вечером {town} совсем другой" en="{town} feels different in the evening" />
+	</lines>
+	<lines key="idle.nightowl">
+		<line ru="ночью мобы злее, а дроп тот же))" en="mobs are meaner at night, same drop lol" />
+		<line ru="кто не спит? я вот не сплю" en="who's awake? i am" />
+		<line ru="ночь — лучшее время для фарма, никого нет" en="night is the best farming time, nobody around" />
+		<line ru="{in} ночью тихо, хорошо" en="{town} is quiet at night, nice" />
+		<line ru="ещё одну банку кофе и на спот" en="one more coffee and back to my spot" />
+	</lines>
+	<lines key="idle.seasonal">
+		<line ru="{event} идёт, кто чем занимается?" en="{event} is on, what are you all doing?" />
+		<line ru="на {event} что-нибудь нормальное падает?" en="does {event} drop anything good?" />
+		<line ru="люблю ивенты, хоть какое-то движение" en="love events, at least something happens" />
+	</lines>
+
+	<!-- ===== Объявления в торговый чат и крик ===== -->
+	<lines key="trade.trader">
+		<line ru="{store} — лавка {where}, {town}" en="{store} - shop {where}, {town}" />
+		<line ru="{store}, недорого, заходите" en="{store}, cheap, come by" />
+		<line ru="{store}, торг уместен" en="{store}, open to offers" />
+	</lines>
+	<lines key="trade.buyer">
+		<line ru="{store}, скупаю дорого, лавка {where}" en="{store}, paying well, shop {where}" />
+		<line ru="{store} — {town}, {where}" en="{store} - {town}, {where}" />
+	</lines>
+	<lines key="trade.crafter">
+		<line ru="{store}, крафчу с вашими матами, {where}" en="{store}, crafting with your mats, {where}" />
+		<line ru="{store} — {town}, {where}, 100%" en="{store} - {town}, {where}, 100%" />
+	</lines>
+	<lines key="trade.lfp">
+		<line ru="LFP {cls} {level}, кто качается?" en="LFP {cls} {level}" />
+		<line ru="ищу пати, {cls} {level} лвл, {town}" en="looking for party, {cls} lvl {level}, {town}" />
+	</lines>
+
+	<!-- ===== Пришёл и ушёл ===== -->
+	<lines key="arrive">
+		<line ru="всем привет" en="hi all" />
+		<line ru="ку" en="hey" />
+		<line ru="я снова тут, что пропустил?" en="i'm back, what did i miss?" />
+		<line ru="доброе) кто уже фармит?" en="morning :) who's farming already?" />
+	</lines>
+	<lines key="leave">
+		<line ru="я спать, всем пока" en="going to sleep, bye all" />
+		<line ru="всё, ушёл, завтра на работу" en="that's it for me, work tomorrow" />
+		<line ru="gn" en="gn" />
+		<line ru="пока, до завтра" en="bye, see you tomorrow" />
+		<line ru="мама зовёт ужинать, бб" en="mom calls me for dinner, bb" />
+	</lines>
+
+	<!-- ===== Реакции на события мира ===== -->
+	<lines key="event.super_champion">
+		<line ru="суперчемп {boss} вылез {place}! кто идёт?" en="super champion {boss} spawned {place}! who's going?" />
+		<line ru="видели объявление? легендарный {boss} {place}, дроп с него жирный" en="saw the announce? legendary {boss} {place}, juicy drop" />
+		<line ru="суперчемп {place}… я пас, у меня даже сс нет))" en="super champ {place}... i'll pass, no shots lol" />
+		<line ru="{boss} {blevel} лвл — суперчемп, го пати на него!" en="{boss} lvl {blevel} is a super champ, let's party up!" />
+	</lines>
+	<lines key="event.hunter_raid">
+		<line ru="охотники собирают рейд на {boss}, впишемся?" en="hunters are gathering a raid on {boss}, join them?" />
+		<line ru="{leader} опять повёл охотников на {boss}, во дают" en="{leader} is leading the hunters on {boss} again, wow" />
+		<line ru="рейд на {boss} {place} — кто с ними? .raid и телепорт" en="raid on {boss} {place} - who's in? .raid to join" />
+		<line ru="охотники на {boss} пошли, надеюсь, не сольются" en="hunters went for {boss}, hope they don't wipe" />
+	</lines>
+	<lines key="event.epic_spawned">
+		<line ru="{boss} встал!! кто на эпика?" en="{boss} is up!! who's going for the epic?" />
+		<line ru="слышали? {boss} на месте, сейчас начнётся" en="heard that? {boss} is up, here we go" />
+		<line ru="{boss} проснулся, я туда не пойду ни за что" en="{boss} woke up, i'm not going there no way" />
+		<line ru="эпик {boss} {place}, собирайте народ" en="epic {boss} {place}, gather people" />
+	</lines>
+	<lines key="event.epic_killed">
+		<line ru="{boss} всё! красавцы, кто его положил" en="{boss} is down! whoever did it, respect" />
+		<line ru="эпика {boss} убили, дроп кому-то зашёл" en="{boss} is dead, someone got the drop" />
+		<line ru="{boss} пал, гг" en="{boss} fell, gg" />
+	</lines>
+	<lines key="event.seasonal_start">
+		<line ru="о, {event} начался!" en="oh, {event} started!" />
+		<line ru="{event} стартовал, пойду гляну, что дают" en="{event} is on, gonna check the rewards" />
+		<line ru="ивент! {event}! наконец-то" en="event! {event}! finally" />
+	</lines>
+	<lines key="event.pvp_event">
+		<line ru="{event}: регистрация открыта, кто идёт?" en="{event} registration is open, who's in?" />
+		<line ru="го на {event}, порвём их" en="let's go {event}, we'll wreck them" />
+		<line ru="опять {event}… ладно, запишусь" en="{event} again... fine, signing up" />
+		<line ru="{event} — я за синих, если что" en="{event} - i'm on blue team btw" />
+	</lines>
+	<!-- Танатос (epilogue-h5, docs/PHANTOMS.md): крючок notifyEvent("world:thanatos…:x,y:текст"). -->
+	<lines key="event.thanatos">
+		<line ru="говорят, Танатос объявился {place}, осторожнее за городом" en="they say Thanatos showed up {place}, careful out there" />
+		<line ru="Танатос опять вышел на охоту, я пока посижу {in}" en="Thanatos is hunting again, i'll stay {in} for now" />
+	</lines>
+	<lines key="event.thanatos_kill">
+		<line ru="Танатос положил {text}, жесть" en="Thanatos killed {text}, brutal" />
+		<line ru="видели? {text} слился Танатосу {place}" en="saw that? {text} got killed by Thanatos {place}" />
+	</lines>
+	<lines key="event.thanatos_dead">
+		<line ru="Танатоса завалили! {text} — красавцы" en="Thanatos is down! {text} - respect" />
+		<line ru="наконец-то Танатос лёг, можно спокойно фармить" en="finally Thanatos is dead, safe farming" />
+	</lines>
+</list>

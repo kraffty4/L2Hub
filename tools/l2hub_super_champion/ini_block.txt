@@ -47,9 +47,10 @@ SuperChampionSpdAtk = 1.5
 SuperChampionRewardItems = 6393,10
 
 # Эффекты над моделью (AbnormalVisualEffect через запятую, пусто — без эффектов): BIG_BODY — моб крупнее,
-# ULTIMATE_DEFENCE — свечение скилла Ultimate Defense. Примерить на цели в игре: //ave_abnormal <ЭФФЕКТ>.
+# ULTIMATE_DEFENCE — свечение скилла Ultimate Defense, MAGIC_SQUARE — белый круг под ногами («Magic Circle»).
+# Примерить на цели в игре: //ave_abnormal <ЭФФЕКТ>.
 # Interlude шлёт клиенту только обычные эффекты: особые (INVINCIBILITY и др.) там не видны.
-SuperChampionEffects = BIG_BODY,ULTIMATE_DEFENCE
+SuperChampionEffects = BIG_BODY,ULTIMATE_DEFENCE,MAGIC_SQUARE
 
 # Объявление при появлении: Region — игрокам в том же регионе карты, World — всем, Off — без объявления.
 SuperChampionAnnounce = Region

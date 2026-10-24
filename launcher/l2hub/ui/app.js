@@ -563,7 +563,7 @@ async function renderOverviewCards() {
   const card = (key, title, dot, big, m) => `<button class="ocard" data-go="${key}"><h3><span class="dot ${dot}"></span>${title}</h3><div class="big">${big}</div><div class="m">${m}</div><span class="go">${{ world: 'Мой мир →', friends: 'Друзья →', backups: 'Бэкапы →', diag: 'Проверить всё →' }[key]}</span></button>`;
   const cards = [wantCard(c, v)];
   if (h && h.ok) {
-    const n = h.items?.length || 0;
+    const n = h.items?.filter((x) => !x.secret).length || 0;  // секретного (Танатос) в счёте нет
     cards.push(card('world', 'Живой мир', last.running === id ? 'on' : '', `<b>${n}</b>охотников`, last.running === id ? 'мир живёт, пока сервер работает' : 'мир стоит — сервер выключен'));
   } else {
     cards.push(card('world', 'Живой мир', '', 'Без фантомов', esc(h?.error || 'модуль фантомов в этой сборке не стоит')));
@@ -1063,7 +1063,7 @@ const BASIC = [
     ['AutoLoot', 'Автоподбор дропа'], ['AutoLootHerbs', 'Автоподбор хербов'], ['EnableVitality', 'Виталити'], ['GlobalChat', 'Глобальный чат', ['ON', 'OFF', 'GM', 'GLOBAL']],
     ['DeleteCharAfterDays', 'Удалять персонажа через, дней'], ['OlympiadEnabled', 'Олимпиада'] ] },
   { title: 'Помощники для соло', opts: [
-    ['EnableFakePlayers', 'Боты-игроки'], ['EnableAutoPlay', 'Автобой .play'], ['EnableOfflinePlayCommand', 'Оффлайн-фарм .offlineplay'], ['OfflineTradeEnable', 'Оффлайн-торговля'],
+    ['EnableFakePlayers', 'Боты-игроки'], ['TownFakesDensity', 'Фейков в городах, %'], ['EnableAutoPlay', 'Автобой .play'], ['EnableOfflinePlayCommand', 'Оффлайн-фарм .offlineplay'], ['OfflineTradeEnable', 'Оффлайн-торговля'],
     ['ChampionEnable', 'Мобы-чемпионы'], ['RebirthAllow', 'Перерождения'], ['EnableFreeStrider', 'Бесплатный страйдер'], ['EnableFreeWyvern', 'Бесплатная виверна'], ['AllowWedding', 'Свадьбы'] ] },
   { title: 'GM', opts: [
     ['EverybodyHasAdminRights', 'Все игроки — админы'], ['GMStartupInvisible', 'GM входит невидимым'], ['GMStartupInvulnerable', 'GM входит бессмертным'],
@@ -1087,11 +1087,13 @@ async function renderModes() {
   const sw = groups.map((g) => `<div class="mode-group">${esc(g)}</div>` + avail.filter((s) => s.group === g).map((s) =>
     `<div class="opt"><div class="l">${esc(s.title)}<small>${esc(s.note)}</small></div><button class="switch" role="switch" aria-checked="${s.value}" data-sw="${s.id}"></button></div>`).join('')).join('');
   const missing = r.switches.filter((s) => !s.available).map((s) => s.title);
+  const cal = host.querySelector('.cal-card');  // календарь остаётся на месте, пока renderCalendar не поставит новый
   host.innerHTML = `<div class="card wide"><h3>Режим сервера<span class="src">${active ? esc(active.title) : 'свои настройки'}</span></h3>
       <div class="seg modes" id="modeSeg">${btns}</div>
       <div class="note" id="modeNote">${esc(active ? active.note : 'Рейты и моды — свои: правятся ниже и во «Все настройки».')}${r.restart ? ' Сервер работает — новое применится после перезапуска гейма.' : ''}</div></div>
     <div class="card wide"><h3>Моды и ивенты</h3>${sw || '<div class="note">У этой сборки выключателей нет.</div>'}
       ${missing.length ? `<div class="note" style="margin-top:6px">В этой сборке пока нет: ${esc(missing.join(', '))}.</div>` : ''}</div>`;
+  if (cal) host.appendChild(cal);
   // Ключ уже стоит выключателем выше (ChampionEnable и т. п.) — его строку из карточек ниже убираем, чтобы не было двух.
   const swKeys = new Set(avail.flatMap((s) => s.keys));
   $('basic').querySelectorAll('.opt small').forEach((sm) => {
@@ -1186,7 +1188,9 @@ async function renderCalendar(host, id) {
 
 function renderBasic() {
   const box = $('basic');
-  box.innerHTML = '<div class="modes-box" id="modesBox"></div>';
+  // Прежние карточки режимов держат место, пока грузятся новые: пустая коробка на миг сдвигала всё вверх, и после
+  // выключателя вид уезжал вниз (автор, 2026-10-23).
+  box.replaceChildren($('modesBox') || Object.assign(document.createElement('div'), { className: 'modes-box', id: 'modesBox' }));
   renderModes();
   for (const g of BASIC) {
     // Подпись — файлы, где ключи карточки нашлись в этой сборке (.ini у Mobius, .properties у La2offline); не нашлось ни одного — карточки нет.

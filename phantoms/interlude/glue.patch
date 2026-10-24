@@ -242,24 +242,29 @@ index 18877c4cca77f25e760c8df6947631f3a6107749..0e35613d94227f424cd26077084a3c03
  </list>
 \ No newline at end of file
 diff --git a/dist/game/data/stats/players/initialShortcuts.xml b/dist/game/data/stats/players/initialShortcuts.xml
-index 43f3b9f8f5eda743e6590f91bd784377c1e5ba17..c18274e5be151022557e53a9e2102186bab9821f 100644
+index 43f3b9f8f5eda743e6590f91bd784377c1e5ba17..c2836364b6cbc41e3f8514242c2717dce7934654 100644
 --- a/dist/game/data/stats/players/initialShortcuts.xml
 +++ b/dist/game/data/stats/players/initialShortcuts.xml
-@@ -5,6 +5,7 @@
+@@ -5,6 +5,8 @@
  		<page pageId="0">
  			<slot slotId="0" shortcutType="ACTION" shortcutId="2" /> <!-- Attack -->
  			<slot slotId="3" shortcutType="ACTION" shortcutId="5" /> <!-- Pick Up -->
 +			<slot slotId="4" shortcutType="MACRO" shortcutId="10100" /> <!-- L2Hub: Напарник (.buddy) -->
++			<slot slotId="5" shortcutType="MACRO" shortcutId="10101" /> <!-- L2Hub: Застрял (/unstuck) -->
  			<slot slotId="10" shortcutType="ACTION" shortcutId="0" /> <!-- Sit/Stand -->
  			<slot slotId="11" shortcutType="ITEM" shortcutId="5588" /> <!-- Tutorial Guide -->
  		</page>
-@@ -50,5 +51,9 @@
+@@ -50,5 +52,13 @@
  			<command type="TEXT">!Hellooooo world!</command> <!-- To define a text, just include the string as if it was typed in-game. -->
  			<command type="SHORTCUT" page="0" slot="11" /> <!-- To define a shortcut (to an equipped item in example), include page and slot number. -->
  		</macro>
 +		<!-- L2Hub: окно напарников-фантомов, в нём же шпаргалка приказов для чата пати. -->
 +		<macro macroId="10100" icon="1" name="Напарник" description="Окно напарников и приказы (.buddy)" acronym="BUDY">
 +			<command type="TEXT">.buddy</command>
++		</macro>
++		<!-- L2Hub: застрял — в ближайший город; мгновенно, если в «Модах и ивентах» включён «Мгновенный /unstuck». -->
++		<macro macroId="10101" icon="2" name="Застрял" description="Вернуться в город (/unstuck)" acronym="UNST">
++			<command type="TEXT">/unstuck</command>
 +		</macro>
  	</macros>
  </list>

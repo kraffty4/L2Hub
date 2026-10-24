@@ -243,24 +243,29 @@ index 7c6f14a5ff56cf1c16f13ffe35a494154bfb2593..4020121848b10e759e44800f0e6c30a3
  </list>
 \ No newline at end of file
 diff --git a/dist/game/data/stats/players/initialShortcuts.xml b/dist/game/data/stats/players/initialShortcuts.xml
-index 4fcb75a3c6bda496b9b89b5aab26da1fe45368b8..9e0509dd11943b6f23bdb3683a3830ea4c393af9 100644
+index 4fcb75a3c6bda496b9b89b5aab26da1fe45368b8..11b03b35a3d78899b1470a924fa1a3a3d79e276f 100644
 --- a/dist/game/data/stats/players/initialShortcuts.xml
 +++ b/dist/game/data/stats/players/initialShortcuts.xml
-@@ -7,6 +7,7 @@
+@@ -7,6 +7,8 @@
  			<slot slotId="3" shortcutType="ACTION" shortcutId="5" /> <!-- Pick Up -->
  			<slot slotId="4" shortcutType="ACTION" shortcutId="4" /> <!-- Next Target (Melee) -->
  			<slot slotId="5" shortcutType="ACTION" shortcutId="93" /> <!-- Next Target (Range) -->
 +			<slot slotId="6" shortcutType="MACRO" shortcutId="10100" /> <!-- L2Hub: Напарник (.buddy) -->
++			<slot slotId="7" shortcutType="MACRO" shortcutId="10101" /> <!-- L2Hub: Застрял (/unstuck) -->
  			<slot slotId="10" shortcutType="ACTION" shortcutId="0" /> <!-- Sit/Stand -->
  		</page>
  		<!-- Custom example. -->
-@@ -73,5 +74,9 @@
+@@ -73,5 +75,13 @@
  			<command type="TEXT">!Hellooooo world!</command> <!-- To define a text, just include the string as if it was typed in-game. -->
  			<command type="SHORTCUT" page="0" slot="11" /> <!-- To define a shortcut (to an equipped item in example), include page and slot number. -->
  		</macro>
 +		<!-- L2Hub: окно напарников-фантомов, в нём же шпаргалка приказов для чата пати. -->
 +		<macro macroId="10100" icon="1" name="Напарник" description="Окно напарников и приказы (.buddy)" acronym="BUDY">
 +			<command type="TEXT">.buddy</command>
++		</macro>
++		<!-- L2Hub: застрял — в ближайший город; мгновенно, если в «Модах и ивентах» включён «Мгновенный /unstuck». -->
++		<macro macroId="10101" icon="2" name="Застрял" description="Вернуться в город (/unstuck)" acronym="UNST">
++			<command type="TEXT">/unstuck</command>
 +		</macro>
  	</macros>
  </list>

@@ -281,6 +281,35 @@ public class PhantomCompanionManager
 	}
 
 	/**
+	 * Рейд на эпика или охота на Танатоса (разделы 4.43, 4.45): лидер лёг — ведёт другой. Напарники старого лидера — теперь его, сам новый лидер больше
+	 * не напарник (ведёт рейд сам), старый — его напарник (лежит, ждёт реса, как участник).
+	 */
+	synchronized void handOver(Player oldOwner, Player newOwner)
+	{
+		_companions.remove(key(newOwner.getName()));
+		for (Companion companion : _companions.values())
+		{
+			if (companion.ownerId == oldOwner.getObjectId())
+			{
+				companion.ownerId = newOwner.getObjectId();
+				companion.ownerAwaySince = 0;
+				companion.stayAt = null;
+			}
+		}
+		final PhantomTemplate old = PhantomData.getInstance().getTemplate(oldOwner.getName());
+		if ((old != null) && old.isHunter())
+		{
+			final Companion companion = new Companion(old.getName());
+			companion.ownerId = newOwner.getObjectId();
+			companion.mode = Mode.ASSIST;
+			companion.hunter = true;
+			companion.selfDead = oldOwner.isDead();
+			_companions.put(key(old.getName()), companion);
+			PhantomHunterManager.getInstance().joinedParty(old);
+		}
+	}
+
+	/**
 	 * @param template фантом
 	 * @return ходит ли он сейчас напарником (для охотника — в пати по крику)
 	 */
@@ -945,6 +974,13 @@ public class PhantomCompanionManager
 	 */
 	private static Creature chooseEnemy(Companion companion, Player phantom, Player owner)
 	{
+		// Рейд (разделы 4.43, 4.45): своё дело (личинка Королевы) и охота на Танатоса — цель-игрок, которую ниже не берут.
+		final Creature raidTarget = PhantomRaid.getInstance().companionTarget(phantom);
+		if (raidTarget != null)
+		{
+			return raidTarget;
+		}
+
 		final boolean hunt = companion.mode == Mode.HUNT;
 		final int leash = hunt ? (owner.isMoving() ? HUNT_RUN_LEASH : HUNT_LEASH) : CHASE_LEASH;
 		if (hunt && (phantom.calculateDistance2D(owner) > leash))

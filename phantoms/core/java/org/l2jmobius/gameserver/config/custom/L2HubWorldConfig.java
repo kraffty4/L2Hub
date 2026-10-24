@@ -23,6 +23,8 @@ public class L2HubWorldConfig
 	public static int WORLD_DAILY_EXP_PERCENT;
 	public static boolean WORLD_DAILY_BONUS;
 	public static int WORLD_DAILY_TELEPORT_FEE;
+	/** Язык текстов L2Hub в игре: {@code ru} или {@code en} (ключ L2HubLanguage — его пишет лаунчер по языку окна). */
+	public static String LANGUAGE;
 
 	public static void load()
 	{
@@ -39,6 +41,7 @@ public class L2HubWorldConfig
 		WORLD_DAILY_EXP_PERCENT = Math.max(0, Math.min(100, config.getInt("WorldDailyExpPercent", 2)));
 		WORLD_DAILY_BONUS = config.getBoolean("WorldDailyBonus", true);
 		WORLD_DAILY_TELEPORT_FEE = Math.max(0, config.getInt("WorldDailyTeleportFee", 15000));
+		LANGUAGE = "en".equalsIgnoreCase(config.getString("L2HubLanguage", "ru").strip()) ? "en" : "ru";
 	}
 
 	private static int parse(String[] parts, int index, int fallback, int max)

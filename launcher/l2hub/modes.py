@@ -28,7 +28,10 @@ def _read(p: dict, file: str, key: str, part: str = "game") -> str | None:
         path = configs._locate(catalog.server_dir(p), part, file)
     except (FileNotFoundError, ValueError):
         return None
-    m = re.search(rf"^\s*{re.escape(key)}\s*=[ \t]*(.*?)\s*$", path.read_text(encoding="utf-8-sig", errors="replace"), re.MULTILINE)
+    text = path.read_text(encoding="utf-8-sig", errors="replace")
+    if path.suffix.lower() == ".xml":  # выключатель на атрибутах XML-конфига (ClassMaster.xml)
+        return configs.xml_attr(text, key)
+    m = re.search(rf"^\s*{re.escape(key)}\s*=[ \t]*(.*?)\s*$", text, re.MULTILINE)
     return m[1] if m else None
 
 
@@ -61,8 +64,31 @@ def _present(p: dict, s: dict) -> dict[str, str]:
     return out
 
 
-def _edits(s: dict, keys, value: bool) -> list[dict]:
-    return [{"part": s.get("part", "game"), "file": s["file"], "key": k, "value": "True" if value else "False"} for k in keys]
+def _edits(p: dict, s: dict, keys, value: bool) -> list[dict]:
+    # Выключатель не только True/False: "on"/"off" в таблице — значения ключа (UnstuckInterval: 1 с или 300 с).
+    v = s.get("on", "True") if value else s.get("off", "False")
+    edits = [{"part": s.get("part", "game"), "file": s["file"], "key": k, "value": v} for k in keys]
+    if value and s.get("classPrices"):
+        edits.append({"part": s.get("part", "game"), "file": s["file"], "parent": "classMaster", "block": "classChangeOption",
+                      "value": _class_options(p, s["classPrices"])})
+    return edits
+
+
+CLASS_GROUPS = ("FIRST_CLASS_GROUP", "SECOND_CLASS_GROUP", "THIRD_CLASS_GROUP")
+
+
+def _class_options(p: dict, default: str) -> str:
+    """Цены мастера профессий (ClassMaster.xml Mobius) — как у охотников (HunterProfessionPrices в PhantomHunters.ini: игрок
+    платит столько же); нет модуля фантомов — default из таблицы. Первая цена — 1-я профа (20-й), вторая — 2-я, третья — 3-я."""
+    raw = _read(p, "PhantomHunters.ini", "HunterProfessionPrices") or default
+    prices = [int(b) for _, b in sorted((int(a), b) for a, b in re.findall(r"(\d+)\s*:\s*(\d+)", raw))][:len(CLASS_GROUPS)]
+    return "".join(f'\t\t<classChangeOption name="{f"{price:,} Adena" if price else "Free"}">\n\t\t\t<appliesTo>\n\t\t\t\t<category>{group}</category>\n\t\t\t</appliesTo>\n'
+                   + (f'\t\t\t<conditions>\n\t\t\t\t<item id="57" count="{price}" />\n\t\t\t</conditions>\n' if price else "")
+                   + "\t\t</classChangeOption>\n" for group, price in zip(CLASS_GROUPS, prices))
+
+
+def _is_on(s: dict, v: str) -> bool:
+    return v.strip() == s["on"] if "on" in s else v.strip().lower() == "true"
 
 
 def switches(p: dict) -> list[dict]:
@@ -70,7 +96,7 @@ def switches(p: dict) -> list[dict]:
     for s in table()["switches"]:
         vals = _present(p, s)
         out.append({**s, "keys": s.get("keys") or [s["key"]], "part": s.get("part", "game"), "available": bool(vals),
-                    "value": bool(vals) and all(v.strip().lower() == "true" for v in vals.values())})
+                    "value": bool(vals) and all(_is_on(s, v) for v in vals.values())})
     return out
 
 
@@ -123,12 +149,31 @@ def sync_language(p: dict, lang: str) -> None:
         pass
 
 
+def sync_mind(p: dict) -> None:
+    """«Расширенное обдумывание» из «Разума» (настройки мозгов, docs/MIND.md) — в PhantomHunters.ini модуля фантомов: сервер
+    перечитывает его на ходу и помечает мозгам охотников рядом с живым игроком (focus). Нет модуля фантомов — ничего;
+    сбой записи старт не ломает."""
+    if p.get("type") != "mobius":
+        return
+    from . import brain  # noqa: PLC0415 — brain запускается и отдельным сервисом, держим его импорт здесь
+
+    ext = brain.load_settings(p.get("brain", {}))["extended"]
+    keys = (("HunterMindExtended", "True" if ext["enabled"] else "False",
+             "Расширенное обдумывание (L2Hub, «Разум»): охотники рядом с живым игроком думают моделью с размышлением. Пишет лаунчер."),
+            ("HunterFocusMax", str(int(ext["focusMax"])), "Сколько охотников рядом с игроком думают расширенно — ближайшие. Пишет лаунчер."))
+    try:
+        for key, value, note in keys:
+            configs.ensure_value(catalog.server_dir(p), paths.BACKUPS / "config" / p["id"], "game", "PhantomHunters.ini", key, value, note)
+    except (OSError, ValueError, KeyError):
+        pass
+
+
 def set_switch(p: dict, switch_id: str, value: bool) -> dict:
     s = next((x for x in table()["switches"] if x["id"] == switch_id), None)
     keys = _present(p, s) if s else {}
     if not keys:
         raise ValueError(f"В этой сборке нет выключателя «{switch_id}»")
-    _save(p, _edits(s, keys, value))
+    _save(p, _edits(p, s, keys, value))
     return {"id": switch_id, "value": bool(value)}
 
 
@@ -158,7 +203,7 @@ def apply_mode(p: dict, mode_id: str) -> dict:
     for sid, value in mode["switches"].items():
         s = next(x for x in t["switches"] if x["id"] == sid)
         if keys := _present(p, s):
-            edits.extend(_edits(s, keys, value))
+            edits.extend(_edits(p, s, keys, value))
     # Прочие ключи режима (удобства: автоподбор, автоизучение скиллов, бесплатные маунты) — {файл: {ключ: значение}}.
     for file, keys in mode.get("settings", {}).items():
         for key, value in keys.items():

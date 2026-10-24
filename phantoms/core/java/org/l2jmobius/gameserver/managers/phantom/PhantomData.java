@@ -65,10 +65,10 @@ public class PhantomData implements IXmlReader
 				forEach(phantomNode, "gear", gearNode ->
 				{
 					final StatSet g = new StatSet(parseAttributes(gearNode));
-					gear.add(new PhantomTemplate.Gear(g.getString("grade"), g.getInt("minLevel"), g.getInt("rhand", 0), g.getInt("lhand", 0), g.getInt("head", 0), g.getInt("chest", 0), g.getInt("legs", 0), g.getInt("gloves", 0), g.getInt("feet", 0), g.getInt("shots", 0)));
+					gear.add(new PhantomTemplate.Gear(g.getString("grade"), g.getInt("minLevel"), g.getInt("rhand", 0), g.getInt("lhand", 0), g.getInt("head", 0), g.getInt("chest", 0), g.getInt("legs", 0), g.getInt("gloves", 0), g.getInt("feet", 0), g.getInt("shots", 0), g.getInt("neck", 0), g.getInt("ear", 0), g.getInt("ring", 0), g.getInt("shirt", 0)));
 				});
 
-				final PhantomTemplate template = new PhantomTemplate(name, PhantomTemplate.Role.valueOf(set.getString("role")), set.getBoolean("female"), (byte) set.getInt("face"), (byte) set.getInt("hairStyle"), (byte) set.getInt("hairColor"), classes, new Location(set.getInt("x"), set.getInt("y"), set.getInt("z")), gear, set.getString("aliases", ""), "hunter".equals(set.getString("kind", "companion")), set.getFloat("social", 1));
+				final PhantomTemplate template = new PhantomTemplate(name, PhantomTemplate.Role.valueOf(set.getString("role")), set.getBoolean("female"), (byte) set.getInt("face"), (byte) set.getInt("hairStyle"), (byte) set.getInt("hairColor"), classes, new Location(set.getInt("x"), set.getInt("y"), set.getInt("z")), gear, set.getString("aliases", ""), set.getString("kind", "companion"), set.getFloat("social", 1));
 				// Вспыльчивость (патч 0037): «сорян» или «пнх» в ответ на предъяву за моба.
 				template.setTemper(set.getFloat("temper", 1));
 				_loading.put(name.toLowerCase(), template);
@@ -113,12 +113,27 @@ public class PhantomData implements IXmlReader
 		return filter(true);
 	}
 
+	/**
+	 * @return Танатос (раздел 4.45) или {@code null}, если его нет в L2HubPhantoms.xml
+	 */
+	public PhantomTemplate getReaper()
+	{
+		for (PhantomTemplate template : _templates.values())
+		{
+			if (template.isReaper())
+			{
+				return template;
+			}
+		}
+		return null;
+	}
+
 	private List<PhantomTemplate> filter(boolean hunters)
 	{
 		final List<PhantomTemplate> result = new ArrayList<>();
 		for (PhantomTemplate template : _templates.values())
 		{
-			if (template.isHunter() == hunters)
+			if ((template.isHunter() == hunters) && !template.isReaper())
 			{
 				result.add(template);
 			}

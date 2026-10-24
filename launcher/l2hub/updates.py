@@ -15,11 +15,13 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-from . import __version__, paths
+from . import __version__, i18n, paths
 
 CONFIG = paths.PACKAGE / "updates.json"
 API = "https://api.github.com/repos/{repo}/releases/latest"
 TIMEOUT = 15
+# Строки-переключатели языка в заметках релиза: в окне они не нужны.
+LANG_LINES = {"Русский", "English", "Русский · English"}
 
 
 def repo() -> str:
@@ -43,11 +45,24 @@ def version_tuple(v: str) -> tuple:
     return tuple(int(x) for x in re.findall(r"\d+", v)[:3])
 
 
+def notes_text(body: str, lang: str) -> str:
+    """Заметки релиза для окна обновления: часть на языке окна и без разметки. Заметки пишутся так: русская часть,
+    строка «---», английская (docs/GITHUB.md); одной частью — она и показывается."""
+    parts = re.split(r"^\s*---\s*$", (body or "").replace("\r\n", "\n"), flags=re.MULTILINE)
+    text = parts[1] if lang == "en" and len(parts) > 1 else parts[0]
+    text = re.sub(r"<[^>]+>", "", text)
+    text = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", text)
+    text = re.sub(r"\*\*|__|`", "", text)
+    lines = [ln.rstrip() for ln in text.split("\n") if ln.strip() not in LANG_LINES]
+    return re.sub(r"\n{3,}", "\n\n", "\n".join(lines)).strip()
+
+
 def latest() -> dict:
     data = json.loads(_get(_api()))
     assets = {a["name"]: a for a in data.get("assets", [])}
     setup = next((a for n, a in assets.items() if n.endswith("-setup.exe")), None)
-    return {"version": str(data.get("tag_name", "")).lstrip("v"), "page": data.get("html_url"), "notes": (data.get("body") or "")[:3000],
+    return {"version": str(data.get("tag_name", "")).lstrip("v"), "page": data.get("html_url"),
+            "notes": notes_text(data.get("body") or "", i18n.lang())[:3000],
             "setup": setup and {"name": setup["name"], "url": setup["browser_download_url"], "size": setup.get("size")},
             "sums": (assets.get("SHA256SUMS.txt") or {}).get("browser_download_url")}
 

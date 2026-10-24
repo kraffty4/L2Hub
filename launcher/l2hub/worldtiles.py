@@ -29,6 +29,13 @@ BLOCK_PX, BLOCK_SIZE, MID = 900, 32768, {"x": 20, "y": 18}
 OVERVIEW_PX = 128
 TILES = 193  # тайлов {x}_{y}.jpg на закреплённом коммите (без вариантов _1)
 NAME = re.compile(r"(?:^|/)Maps/(\d+)_(\d+)\.jpg$", re.IGNORECASE)
+# Тайлы-схемы интерьеров (светлые линии на чёрном) и пустота вокруг мира — пергамент с чернилами, как туман войны
+# в Civilization VI (решение автора 2026-10-23): схема — от DARK_SHARE пикселей темнее DARK_LEVEL.
+PAPER, INK = (222, 205, 168), (88, 66, 42)
+DARK_LEVEL, DARK_SHARE = 28, 0.8
+# Швы: тон краёв соседних тайлов подводится друг к другу на SEAM_RAMP px вглубь; разница больше SEAM_MAX — настоящая
+# граница (берег, схема), её не трогаем.
+SEAM_BAND, SEAM_RAMP, SEAM_MAX = 8, 160, 48
 
 
 def sync() -> bool:
@@ -42,29 +49,98 @@ def sync() -> bool:
 
 
 def build(images, out: Path, note=lambda text, frac=None: None) -> dict:
-    """images — [(x, y, открыть() → файл картинки)]; пишет out/tiles/*.webp, overview.webp, index.json."""
+    """images — [(x, y, открыть() → файл картинки)]; пишет out/tiles/*.webp, overview.webp, index.json.
+    Идёт рядами: в памяти два ряда тайлов (текущий и следующий) — чтобы свести швы вправо и вниз."""
     from PIL import Image  # только здесь: остальному лаунчеру Pillow не нужен
 
     xs, ys = [t[0] for t in images], [t[1] for t in images]
     bounds = {"min": {"x": min(xs), "y": min(ys)}, "max": {"x": max(xs), "y": max(ys)}}
     (out / "tiles").mkdir(parents=True, exist_ok=True)
     cols, rows = bounds["max"]["x"] - bounds["min"]["x"] + 1, bounds["max"]["y"] - bounds["min"]["y"] + 1
-    overview = Image.new("RGB", (cols * OVERVIEW_PX, rows * OVERVIEW_PX), (14, 12, 10))
-    names = []
-    for i, (x, y, opener) in enumerate(sorted(images)):
-        with opener() as f:
-            img = Image.open(f).convert("RGB")
-        if img.size != (BLOCK_PX, BLOCK_PX):
-            img = img.resize((BLOCK_PX, BLOCK_PX), Image.LANCZOS)
-        img.save(out / "tiles" / f"{x}_{y}.webp", quality=80, method=4)
-        overview.paste(img.resize((OVERVIEW_PX, OVERVIEW_PX), Image.LANCZOS),
-                       ((x - bounds["min"]["x"]) * OVERVIEW_PX, (y - bounds["min"]["y"]) * OVERVIEW_PX))
-        names.append(f"{x}_{y}")
-        note(f"тайлов {i + 1} из {len(images)}", 0.5 + 0.5 * (i + 1) / len(images))
+    overview = Image.new("RGB", (cols * OVERVIEW_PX, rows * OVERVIEW_PX), PAPER)
+    openers = {(x, y): opener for x, y, opener in images}
+    names, parchment = [], set()
+
+    def load_row(y: int) -> dict:
+        row = {}
+        for x in sorted(k[0] for k in openers if k[1] == y):
+            with openers[(x, y)]() as f:
+                img = Image.open(f).convert("RGB")
+            if img.size != (BLOCK_PX, BLOCK_PX):
+                img = img.resize((BLOCK_PX, BLOCK_PX), Image.LANCZOS)
+            if _is_schematic(img):
+                img = _parchment(img)
+                parchment.add((x, y))
+            row[x] = img
+        return row
+
+    cur = load_row(bounds["min"]["y"])
+    for y in range(bounds["min"]["y"], bounds["max"]["y"] + 1):
+        nxt = load_row(y + 1) if y < bounds["max"]["y"] else {}
+        for x, img in cur.items():
+            if x + 1 in cur and not {(x, y), (x + 1, y)} & parchment:
+                _seam(img, cur[x + 1])
+            if x in nxt and not {(x, y), (x, y + 1)} & parchment:
+                cur[x], nxt[x] = _seam_down(img, nxt[x])
+        for x, img in cur.items():
+            img.save(out / "tiles" / f"{x}_{y}.webp", quality=80, method=4)
+            overview.paste(img.resize((OVERVIEW_PX, OVERVIEW_PX), Image.LANCZOS),
+                           ((x - bounds["min"]["x"]) * OVERVIEW_PX, (y - bounds["min"]["y"]) * OVERVIEW_PX))
+            names.append(f"{x}_{y}")
+            note(f"тайлов {len(names)} из {len(images)}", 0.5 + 0.5 * len(names) / len(images))
+        cur = nxt
     overview.save(out / "overview.webp", quality=82, method=4)
-    index = {"source": PAGE, "blockPx": BLOCK_PX, "blockSize": BLOCK_SIZE, "mid": MID, **bounds, "overviewPx": OVERVIEW_PX, "tiles": names}
+    index = {"source": PAGE, "blockPx": BLOCK_PX, "blockSize": BLOCK_SIZE, "mid": MID, **bounds, "overviewPx": OVERVIEW_PX,
+             "tiles": names, "parchment": sorted(f"{x}_{y}" for x, y in parchment)}
     (out / "index.json").write_text(json.dumps(index, ensure_ascii=False), encoding="utf-8")
     return index
+
+
+def _is_schematic(img) -> bool:
+    hist = img.convert("L").resize((90, 90)).histogram()
+    return sum(hist[:DARK_LEVEL]) / (90 * 90) >= DARK_SHARE
+
+
+def _parchment(img):
+    """Схема интерьера → чернила на пергаменте: чёрный фон становится бумагой, светлые линии — чернилами, плюс зерно."""
+    from PIL import Image, ImageFilter, ImageOps
+
+    drawn = ImageOps.colorize(ImageOps.invert(img.convert("L")), black=INK, white=PAPER)
+    grain = ImageOps.colorize(Image.effect_noise(img.size, 18).filter(ImageFilter.GaussianBlur(1.5)), black=INK, white=PAPER)
+    return Image.blend(drawn, grain, 0.1)
+
+
+def _seam(a, b) -> None:
+    """Шов «a слева, b справа», на месте: разница тона у шва по рядам (сглаженная вдоль шва) делится пополам и плавно
+    гаснет на SEAM_RAMP px вглубь каждого тайла. Текстура остаётся, пропадает ступенька цвета."""
+    from PIL import Image, ImageChops, ImageStat
+
+    w, h = a.size
+    edge_a = a.crop((w - SEAM_BAND, 0, w, h)).resize((1, h // 30), Image.BOX).resize((1, h), Image.BILINEAR)
+    edge_b = b.crop((0, 0, SEAM_BAND, h)).resize((1, h // 30), Image.BOX).resize((1, h), Image.BILINEAR)
+    if max(ImageStat.Stat(ImageChops.difference(edge_a, edge_b)).mean) > SEAM_MAX:
+        return
+    up = ImageChops.subtract(edge_b, edge_a).point(lambda v: v // 2).resize((SEAM_RAMP, h))
+    down = ImageChops.subtract(edge_a, edge_b).point(lambda v: v // 2).resize((SEAM_RAMP, h))
+    ramp = Image.linear_gradient("L").transpose(Image.Transpose.TRANSPOSE).resize((SEAM_RAMP, h))
+    ramp_a = Image.merge("RGB", (ramp, ramp, ramp))  # 0 вглубь тайла → 255 у шва
+    ramp_b = ramp_a.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+    band = a.crop((w - SEAM_RAMP, 0, w, h))
+    band = ImageChops.subtract(ImageChops.add(band, ImageChops.multiply(up, ramp_a)), ImageChops.multiply(down, ramp_a))
+    a.paste(band, (w - SEAM_RAMP, 0))
+    band = b.crop((0, 0, SEAM_RAMP, h))
+    band = ImageChops.subtract(ImageChops.add(band, ImageChops.multiply(down, ramp_b)), ImageChops.multiply(up, ramp_b))
+    b.paste(band, (0, 0))
+
+
+def _seam_down(a, b):
+    """Шов «a сверху, b снизу»: тот же _seam на отражённых по диагонали тайлах."""
+    from PIL import Image
+
+    t = Image.Transpose.TRANSPOSE
+    at, bt = a.transpose(t), b.transpose(t)
+    _seam(at, bt)
+    return at.transpose(t), bt.transpose(t)
 
 
 def install(note=lambda text, frac=None: None, cancelled=lambda: False) -> int:

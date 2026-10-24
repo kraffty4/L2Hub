@@ -136,6 +136,9 @@
     try {
       const r = await api.hunters(chron);
       if (chron !== W.chron) return;
+      // Секретные (Thanatos, решение автора 2026-10-23): ни в списке, ни в счётчиках, ни на карте — только строка-глюк
+      // последней в «Населении» (secretRows).
+      if (r.items) { r.secret = r.items.filter((x) => x.secret); r.items = r.items.filter((x) => !x.secret); }
       W.h = r; W.hErr = null;
       if (r.strategy && !W.strat) W.strat = stratFrom(r.strategy);
     } catch (e) {
@@ -162,6 +165,7 @@
     try {
       const r = await api.world_map(chron, W.mapOffline);
       if (chron !== W.chron) return;
+      if (r.points) r.points = r.points.filter((p) => !p.secret);
       W.map = r; W.mapErr = r.ok ? null : r.error;
     } catch (e) { if (chron === W.chron) W.mapErr = e.message || String(e); }
   }
@@ -623,7 +627,8 @@
         <td><span class="nm">${esc(x.name)}</span></td><td class="w-n">${x.level ?? '—'}</td><td>${esc(x.cls) || '<span class="w-muted">—</span>'}</td>
         <td title="${x.phase ? `${PH[x.phase]}: ${esc(where(x))}` : ''}">${x.phase ? `<span class="w-phase"><i class="w-sw w-ph-${x.phase}"></i>${esc(where(x))}</span>` : '<span class="w-muted">нет данных</span>'}</td>
         <td class="w-n">${x.adena != null ? money(x.adena) : '—'}</td><td class="w-n">${x.earnedPerHour ? money(x.earnedPerHour) : '—'}</td>
-        <td>${x.strategy ? `<span class="w-dec" title="«${esc(x.strategy.thought)}»">${esc(decisionText(x.strategy.decision))}</span>` : '<span class="w-muted">—</span>'}</td></tr>`).join('');
+        <td>${x.strategy ? `<span class="w-dec" title="«${esc(x.strategy.thought)}»">${esc(decisionText(x.strategy.decision))}</span>` : '<span class="w-muted">—</span>'}</td></tr>`).join('')
+      + (W.filter === 'ALL' && !W.query ? secretRows(h.secret) : '');
     const anyStarted = h.items.some((x) => x.level != null);
     const table = anyStarted || !running()
       ? `<table><colgroup><col style="width:15%"><col style="width:7%"><col style="width:17%"><col style="width:26%"><col style="width:11%"><col style="width:11%"><col style="width:13%"></colgroup>
@@ -644,10 +649,21 @@
     $('worldQuery').oninput = (e) => { W.query = e.target.value; render(true); };
     $('worldSort').onchange = (e) => { W.sort = e.target.value; render(true); };
     main.querySelectorAll('[data-f]').forEach((b) => (b.onclick = () => { W.filter = b.dataset.f; render(true); }));
-    main.querySelectorAll('tbody tr').forEach((tr) => (tr.onclick = () => { W.sel = tr.dataset.n; render(true); }));
+    main.querySelectorAll('tbody tr[data-n]').forEach((tr) => (tr.onclick = () => { W.sel = tr.dataset.n; render(true); }));
     $('worldResetAll').onclick = () => resetHunters(null);
     main.querySelectorAll('[data-reset]').forEach((b) => (b.onclick = () => resetHunters(b.dataset.reset)));
   }
+  // Строка секретного персонажа: последней, без данных, с глюками; от уровня — еле видное «76». Не выбирается.
+  const GLITCH = '▓▒░█▚▞#%&?¿§∆';
+  const glitchText = (n) => Array.from({ length: n }, () => GLITCH[Math.floor(Math.random() * GLITCH.length)]).join('');
+  function secretRows(list) {
+    return (list || []).map((x) => `<tr class="w-secret" translate="no" aria-hidden="true">
+        <td><span class="nm w-glitch" data-glitch="8">${glitchText(8)}</span></td><td class="w-n"><span class="w-ghost">${x.level ?? ''}</span></td>
+        <td><span class="w-glitch" data-glitch="6">${glitchText(6)}</span></td><td colspan="4"><span class="w-glitch w-glitch-dim" data-glitch="22">${glitchText(22)}</span></td></tr>`).join('');
+  }
+  setInterval(() => document.querySelectorAll('.w-glitch').forEach((el) => {
+    if (Math.random() < 0.5) el.textContent = glitchText(+el.dataset.glitch || 6);
+  }), 140);
   function hunterCard(x, h) {
     const st = h.strategy;
     const q = x.quest ? (x.quest.ready ? `${x.quest.level} ур. — сделан, несёт сдавать` : `${x.quest.level} ур. — до ${hhmm(x.quest.until)}`) : '—';
@@ -727,7 +743,8 @@
   const STRAT_KEYS = ['when', 'HunterStrategyPerHour', 'HunterStrategyPerMinute', 'HunterStrategySayChance'];
   const stratFrom = (st) => Object.fromEntries(STRAT_KEYS.map((k) => [k, st[k]]));
   const stratDirty = () => W.strat && W.h?.strategy && STRAT_KEYS.some((k) => String(W.strat[k]) !== String(W.h.strategy[k]));
-  const BRAIN_KEYS = (s) => [s.mode, s.maxTokens, s.priceIn, s.priceOut, s.api.baseUrl, s.api.model, s.local.baseUrl, s.local.model].map(String).join('|');
+  const BRAIN_KEYS = (s) => [s.mode, s.maxTokens, s.priceIn, s.priceOut, s.api.baseUrl, s.api.model, s.local.baseUrl, s.local.model,
+    s.extended?.enabled, s.extended?.dailyUsd].map(String).join('|');
   const brainDirty = () => W.brain?.ok && W.brainEdit && BRAIN_KEYS(W.brainEdit) !== BRAIN_KEYS(W.brain.settings);
   function mindView(main) {
     if (W.brainErr) { main.innerHTML = errorView(W.brainErr); return; }
@@ -781,6 +798,7 @@
           <input class="field" style="width:100%" id="worldBrainModel" list="worldModelList" value="${esc(part.model)}"><datalist id="worldModelList">${W.models.map((x) => `<option value="${esc(x)}">`).join('')}</datalist>
           ${m === 'api' ? `<div class="opt"><div class="l">Ключ<small>${esc(s.api.keyFile)} в папке мозгов; сам ключ здесь не показывается</small></div>${W.brain.key ? '<span class="ok-text">есть</span>' : '<span class="bad-text">нет</span>'}</div>` : ''}
           <div class="opt"><div class="l">Длина ответа<small>токенов, 16–1024</small></div><input class="field" style="width:70px" id="worldBrainTokens" value="${esc(s.maxTokens)}"></div>
+          ${extRows(s, u)}
           <div class="row2"><button class="sbtn" id="worldBrainModels">Список моделей</button><button class="sbtn" id="worldBrainTest" title="Один настоящий запрос к модели">Проверить</button><button class="sbtn primary" id="worldBrainSave" ${brainDirty() ? '' : 'disabled'}>Сохранить</button></div>
           <div class="w-muted" style="font-size:12px;margin-top:8px">${brainDirty() ? '<span class="hint">не сохранено · </span>' : ''}Применяется со следующей реплики, без перезапуска.</div></div>
         ${stratCard}
@@ -797,6 +815,15 @@
     $('worldBrainUrl').onchange = (e) => { W.brainEdit[m].baseUrl = e.target.value.trim(); render(true); };
     $('worldBrainModel').onchange = (e) => { W.brainEdit[m].model = e.target.value.trim(); render(true); };
     $('worldBrainTokens').onchange = (e) => { W.brainEdit.maxTokens = Number(e.target.value) || 0; render(true); };
+    const ext = $('worldBrainExt');
+    if (ext) ext.onclick = async () => {
+      const on = !W.brainEdit.extended.enabled;
+      if (on && !(await ask({ title: 'Расширенное обдумывание', ok: 'Включить', body: extWarning(W.brainEdit) }))) return;
+      W.brainEdit.extended.enabled = on;
+      render(true);
+    };
+    const extUsd = $('worldBrainExtUsd');
+    if (extUsd) extUsd.onchange = (e) => { W.brainEdit.extended.dailyUsd = Number(e.target.value.replace(',', '.')) || 0; render(true); };
     $('worldPriceIn').onchange = (e) => { W.brainEdit.priceIn = Number(e.target.value.replace(',', '.')) || 0; render(true); };
     $('worldPriceOut').onchange = (e) => { W.brainEdit.priceOut = Number(e.target.value.replace(',', '.')) || 0; render(true); };
     $('worldBrainModels').onclick = async () => {
@@ -835,6 +862,20 @@
       };
     }
     edit();
+  }
+
+  // «Расширенное обдумывание» (docs/MIND.md): охотники рядом с игроком решают моделью с размышлением; лимит денег в день.
+  function extRows(s, u) {
+    const e = s.extended;
+    if (s.mode !== 'api') return '<div class="opt"><div class="l">Расширенное обдумывание<small>только в облаке DeepSeek: у своей модели размышления нет</small></div></div>';
+    const spent = u.extendedToday || { cost: 0, requests: 0 };
+    return `<div class="opt"><div class="l">Расширенное обдумывание<small>охотники рядом с тобой (до ${e.focusMax}) думают с размышлением — дороже</small></div><button class="switch" role="switch" aria-checked="${e.enabled}" id="worldBrainExt"></button></div>
+      <div class="opt"><div class="l">Лимит в день, $<small>сегодня: ${usd(spent.cost)} за ${spent.requests} решений; дошли до лимита — до завтра обычные мозги</small></div><input class="field" style="width:56px" id="worldBrainExtUsd" value="${esc(e.dailyUsd)}"></div>`;
+  }
+  function extWarning(s) {
+    return `<p>Охотники рядом с тобой — до ${s.extended.focusMax} ближайших, кого ты видишь, с кем ты в пати или говоришь, — будут решать, что делать дальше, моделью DeepSeek с размышлением. Остальные живут по правилам, как сейчас.</p>
+      <p>Это дороже: решение около $0,002 — раз в пять дороже обычного. При 3–5 охотниках рядом выходит примерно $0,13–0,33 за час игры.</p>
+      <p class="note">Больше $${s.extended.dailyUsd} в день не уйдёт: лимит выбран — до завтра обычные мозги. Работает, когда сервер помечает охотников рядом (модуль фантомов).</p>`;
   }
 
   // ---------- Создатель ----------

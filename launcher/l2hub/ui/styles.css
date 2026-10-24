@@ -149,7 +149,7 @@ button { cursor: pointer; }
 .view-foot { border-top: 1px solid var(--line); padding: 10px 18px; display: flex; gap: 10px; align-items: center; }
 .view-foot .info { flex: 1; font-size: 12.5px; color: var(--muted); }
 
-.basic { overflow: auto; padding: 16px 18px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-content: start; width: 100%; }
+.basic { overflow: auto; overflow-anchor: none; padding: 16px 18px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-content: start; width: 100%; }
 .card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; }
 .card.wide { grid-column: 1 / -1; }
 .card h3 { margin: 0 0 10px; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 500; display: flex; align-items: center; gap: 8px; }
@@ -356,6 +356,13 @@ select { height: 30px; border-radius: 6px; border: 1px solid var(--line); backgr
 .w-tbl tbody tr { cursor: pointer; }
 .w-tbl tbody tr:hover { background: #1c1610; }
 .w-tbl tbody tr.sel { background: #2a2116; box-shadow: inset 2px 0 0 var(--gold); }
+/* Секретный персонаж в «Населении» (world.js, secretRows): строка-глюк последней, от уровня — еле видное число. */
+.w-tbl tbody tr.w-secret { cursor: default; }
+.w-tbl tbody tr.w-secret:hover { background: transparent; }
+.w-glitch { display: inline-block; font-family: var(--mono); color: #b9a98a; letter-spacing: 1px; text-shadow: 1px 0 rgba(210,72,60,.75), -1px 0 rgba(90,180,220,.6); animation: w-glitch 2.3s steps(1) infinite; }
+.w-glitch-dim { opacity: .35; }
+.w-ghost { font-family: var(--mono); opacity: .13; }
+@keyframes w-glitch { 0%, 100% { transform: none; opacity: 1; clip-path: none; } 7% { transform: translateX(-2px) skewX(-8deg); opacity: .7; } 9% { transform: translateX(2px); clip-path: inset(30% 0 40% 0); } 11% { transform: none; clip-path: none; } 52% { opacity: .85; } 53% { transform: translateX(1px) skewX(6deg); } 54% { transform: none; } }
 .w-tbl .nm { color: var(--text); font-weight: 500; }
 .w-tbl.stale tbody { opacity: .55; }
 .w-phase { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
@@ -629,7 +636,8 @@ table.mt { width: 100%; border-collapse: collapse; font-size: 13px; }
 .wm-find:focus { border-color: var(--gold); }
 .wm-src { margin-left: auto; font-size: 12px; color: var(--muted); }
 .wm-host { flex: 1; min-height: 0; position: relative; }
-.wm { position: absolute; inset: 0; overflow: hidden; background: #0d0b09; cursor: grab; user-select: none; touch-action: none; }
+/* Вокруг мира — пергамент, как туман войны Civilization VI: тот же цвет, что у схем-интерьеров в тайлах (worldtiles.PAPER). */
+.wm { position: absolute; inset: 0; overflow: hidden; background: radial-gradient(ellipse at 50% 45%, #e4d5b2 0%, #dccba5 55%, #c4ae86 100%); cursor: grab; user-select: none; touch-action: none; }
 .wm.grab { cursor: grabbing; }
 .wm-world { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
 .wm-over { position: absolute; left: 0; top: 0; image-rendering: auto; }
@@ -639,6 +647,13 @@ table.mt { width: 100%; border-collapse: collapse; font-size: 13px; }
 .wm-pt { position: absolute; width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px; border-radius: 50%; border: 1.5px solid rgba(10,8,6,.85); pointer-events: auto; cursor: pointer; }
 .wm-pt b { position: absolute; left: 11px; top: -5px; font: 600 11px var(--sans); color: #fff; white-space: nowrap; text-shadow: 0 1px 3px #000, 0 0 2px #000; pointer-events: none; }
 .wm-pt.off { opacity: .55; }
+.wm-grp { position: absolute; min-width: 20px; height: 20px; padding: 0 5px; transform: translate(-50%, -50%); border-radius: 10px; border: 1.5px solid rgba(10,8,6,.85); box-shadow: 0 0 0 3px rgba(10,8,6,.22); font: 700 11px/17px var(--sans); color: #1a140d; text-align: center; pointer-events: auto; cursor: zoom-in; }
+.wm-grp.off { opacity: .6; }
+.k-hunter.wm-grp { background: var(--gold); }
+.k-store.wm-grp { background: #d08a3c; }
+.k-companion.wm-grp { background: var(--info); }
+.k-superchampion.wm-grp { background: #f4c542; }
+.k-raidboss.wm-grp { background: #d2483c; color: #fff; border-radius: 4px; }
 .k-hunter.wm-pt, .wm-f.k-hunter i { background: var(--gold); }
 .k-store.wm-pt, .wm-f.k-store i { background: #d08a3c; }
 .k-store.wm-pt { border-radius: 2px; }

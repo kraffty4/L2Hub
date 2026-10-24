@@ -19,14 +19,12 @@ import org.l2jmobius.gameserver.entity.actor.Player;
 import org.l2jmobius.gameserver.entity.actor.SuperChampion;
 import org.l2jmobius.gameserver.entity.actor.instance.GrandBoss;
 import org.l2jmobius.gameserver.entity.actor.instance.Monster;
-import org.l2jmobius.gameserver.entity.groups.Party;
 import org.l2jmobius.gameserver.entity.groups.PartyDistributionType;
 import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
 import org.l2jmobius.gameserver.entity.zone.ZoneId;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
 import org.l2jmobius.gameserver.handler.VoicedCommandHandler;
 import org.l2jmobius.gameserver.managers.FakePlayerBrain;
-import org.l2jmobius.gameserver.managers.GrandBossManager;
 import org.l2jmobius.gameserver.managers.phantom.HuntSpotData.HuntSpot;
 import org.l2jmobius.gameserver.mechanics.events.EventType;
 import org.l2jmobius.gameserver.mechanics.events.holders.actor.creature.OnCreatureDamageReceived;
@@ -45,8 +43,21 @@ import org.l2jmobius.gameserver.network.serverpackets.NpcHtmlMessage;
  * Конец — босс убит (лут подбирается {@value #LOOT_TIME} мс), лидер лежит дольше {@value #LEADER_DEAD_GRACE} мс или легли все, бой дольше {@value #FIGHT_TIME} мс:
  * итог — в торговый чат, охотники — назад на кач.
  * Охотник-лидер на это время уходит из правил кача: его ведёт {@link #drive} из {@code PhantomHunterManager.think}.<br>
- * Эпики (раздел 4.43, {@code HunterEpicRaids}): из {@link #EPICS} — живые и без входа через NPC; пати {@code HunterEpicSize}, множители {@code HunterEpicDamage}
- * и {@code HunterEpicArmor}; сбор и провал — в «Летопись мира» ({@link PhantomNews}), убийство летопись пишет сама.
+ * Эпики (раздел 4.43, {@code HunterEpicRaids}; ослабление в малом мире и измор — {@link PhantomEpics}):
+ * <ul>
+ * <li>только с живым игроком: рейд собирается, когда в мире есть живой игрок под эпика; лидер зовёт криком, живым — сообщение и {@code .raid},
+ * ждут {@code HunterEpicWait} минут (раз в {@value #EPIC_CALL_GAP} мс зовут снова). Пришёл живой к сбору — бой через {@value #EPIC_READY} мс,
+ * не пришёл никто — расходятся: без живого эпика не бьют;</li>
+ * <li>без множителя урона (эпика ослабляет малый мир для всех), охотников бережёт только {@code HunterEpicArmor};</li>
+ * <li>провал — только когда легли все: лёг лидер — ведёт следующий ({@link #handOver}); хилеры держат танка и лидера ({@link #keepAlive});</li>
+ * <li>рецепты: кто из свиты бьёт рейд рядом с лидером — первым (Королева — гвардия, Ядро — рыцари и призраки зала, Орфен — Raikel Leos, Закен — нежить корабля),
+ * лекарей свиты не гонять; Королева — один охотник бьёт личинку, и няньки лечат её, а не Королеву ({@link #companionTarget}); Орфен уходит в гнездо на половине HP,
+ * Закен телепортируется по кораблю — рейд идёт следом ({@link #reRally}); раскиданных телепортом охотников лидер стягивает к себе;</li>
+ * <li>провал — эпик измотан ({@code HunterEpicExhaust}, {@link PhantomEpics#exhaust}), следующий заход — через {@value #EPIC_AFTER_FAIL} мс.</li>
+ * </ul>
+ * Охота на Танатоса (раздел 4.45, {@link #hunt}): его видели — охотники с {@value #HUNT_LEVEL}-го собирают на него рейд той же машиной, сбор — {@value #HUNT_GATHER} мс,
+ * рейд идёт за ним, пока он не ушёл дальше {@value #HUNT_RERALLIES} раз; живой вступает через {@code .raid}.<br>
+ * Сбор, провал и убийство эпика — в «Летопись мира» ({@link PhantomNews}), убийство летопись пишет сама.
  */
 public final class PhantomRaid
 {
@@ -104,34 +115,45 @@ public final class PhantomRaid
 	/** Суперчемпион: как часто искать (первый раз — через столько после старта: охотникам надо разойтись по спотам). */
 	private static final long SUPER_RETRY = 120000;
 	private static final long SUPER_FIRST = 300000;
-	/**
-	 * Эпики без входа через NPC и предмет: Королева муравьёв, Ядро, Орфен, старый Закен (на Devil's Isle; у H5 — инстанс, его нет). Баюма будят тканью у статуи,
-	 * к Антарасу и Валакасу пускают через NPC с камнем, Фринтеза и Белет — инстансы под командный канал: не здесь.
-	 */
-	private static final int[] EPICS =
-	{
-		29001, // Queen Ant
-		29006, // Core
-		29014, // Orfen
-		29022 // Zaken
-	};
 	/** Миньоны эпика, которые лечат его и встают через секунды (няньки Королевы — 10 с, Риба Ирен Орфена): их не гонять, бить босса. */
-	private static final Set<Integer> EPIC_HEALERS = Set.of(29003, 29018);
+	private static final Set<Integer> EPIC_HEALERS = Set.of(PhantomEpics.NURSE, 29018);
 	/**
-	 * Миньон эпика (не лекарь) ближе этого к лидеру и бьёт кого-то из рейда — бить его первым; не убит за {@value #EPIC_MINION_TIME} мс — бросить и бить босса
+	 * Моб (свита эпика) ближе этого к лидеру и бьёт кого-то из рейда — бить его первым; не убит за {@value #EPIC_MINION_TIME} мс — бросить и бить босса
 	 * (прогон H5 2026-10-22: лидер три минуты держал целью Raikel Leos, до которого не мог дойти, а Орфен рядом бил его — пати била миньона, Орфен остался на 100 %).
 	 */
 	private static final int EPIC_MINION_RANGE = 400;
 	private static final long EPIC_MINION_TIME = 30000;
-	/** Эпик: как часто искать; первый раз — через столько после старта. */
+	/** Эпик: как часто искать (есть ли живой игрок под эпика); первый раз — через столько после старта. */
 	private static final long EPIC_RETRY = 300000;
 	private static final long EPIC_FIRST = 600000;
+	/** Эпик: живой не пришёл — следующий сбор не раньше чем через столько; рейд не удался — через столько (эпик измотан, можно добить). */
+	private static final long EPIC_NO_SHOW = 2700000;
+	private static final long EPIC_AFTER_FAIL = 600000;
+	/** Эпик: на сборе звать живых снова — раз в столько; живой у сбора — бой через столько. */
+	private static final long EPIC_CALL_GAP = 180000;
+	private static final long EPIC_READY = 60000;
+	/** Эпик и Танатос: охотник рейда дальше этого от лидера (раскидал телепорт Закена, отстал) — телепорт к лидеру. */
+	private static final int REGROUP_RANGE = 2500;
+	/** Эпик ушёл от точки сбора (Орфен — в гнездо, Закен — по кораблю): рейд идёт следом не больше стольких раз. */
+	private static final int EPIC_RERALLIES = 6;
 	private static final String[] EPIC_GATHER_SHOUTS =
 	{
-		"собираем рейд на эпика %s (%d ур)! сбор у %s, через %d мин бьём — нужны все",
-		"го на %s %d лвл, эпик! сбор у %s, %d мин на подход",
-		"эпик %s (%d) у %s, идём большой пати, через %d мин начинаем — кто с нами?"
+		"собираем рейд на эпика %s (%d ур)! сбор у %s, ждём живых %d мин — без вас не пойдём",
+		"го на %s %d лвл, эпик! сбор у %s, %d мин ждём — кто с нами? (.raid)",
+		"эпик %s (%d) у %s, идём большой пати, %d мин на подход — нужен хоть один живой"
 	};
+	private static final String[] EPIC_CALL_SHOUTS =
+	{
+		"ещё ждём на %s у %s! кто с нами — .raid",
+		"на %s пати собрана, у %s, ждём живого, .raid",
+		"%s: стоим у %s, без живых не пойдём — .raid"
+	};
+	/** Охота на Танатоса: с этого уровня; сбор столько; рейд идёт за ним не больше стольких раз; пати — от стольких охотников. */
+	static final int HUNT_LEVEL = 70;
+	private static final long HUNT_GATHER = 60000;
+	private static final int HUNT_RERALLIES = 3;
+	private static final int HUNT_MIN = 3;
+	private static final long HUNT_TIME = 600000;
 	private static final String[] WIN_SHOUTS =
 	{
 		"%s лёг! спасибо %s, красавцы",
@@ -165,21 +187,31 @@ public final class PhantomRaid
 
 	private static final class Raid
 	{
-		final int leaderId;
-		final Npc boss;
+		/** Лидер: лёг на эпике — ведёт следующий ({@link #handOver}). */
+		volatile int leaderId;
+		final Creature boss;
 		final String bossName;
 		final int bossLevel;
-		final Location rally;
-		final String place;
+		volatile Location rally;
+		volatile String place;
 		final long started;
 		/** Цель — суперчемпион (патч 0020), а не РБ: без множителей урона и брони, конец — и когда он перестал быть суперчемпионом. */
 		final boolean superChampion;
-		/** Цель — эпик (раздел 4.43): свои множители урона и брони. */
+		/** Цель — эпик (раздел 4.43): только с живым игроком, своя броня, провал — когда легли все. */
 		final boolean epic;
+		/** Цель — Танатос (раздел 4.45): охота, рейд идёт за ним. */
+		final boolean thanatos;
 		/** Эпик: миньон, которого бьёт лидер, и с какого времени; брошенные (не убиты вовремя). */
 		int minionId;
 		long minionSince;
 		final Set<Integer> skipMinions = new LinkedHashSet<>();
+		/** Королева: охотник, который бьёт личинку ({@link #dutyOf}). */
+		volatile int dutyId;
+		/** Эпик и Танатос: сколько раз рейд шёл за ним на новое место. */
+		int rerallies;
+		/** Эпик: когда звали живых в последний раз; живой уже пришёл к сбору. */
+		long lastCall;
+		boolean playersArrived;
 		final Set<Integer> members = new LinkedHashSet<>();
 		/** Живые игроки, вступившие через .raid. */
 		final Set<Integer> players = new LinkedHashSet<>();
@@ -196,7 +228,7 @@ public final class PhantomRaid
 		/** На охотниках рейда на время боя: удар босса ослаблен в {@code HunterRaidArmor} раз. */
 		final java.util.Map<Integer, ConsumerEventListener> armor = new java.util.concurrent.ConcurrentHashMap<>();
 
-		Raid(Player leader, Npc boss, Location rally, String place, long now)
+		Raid(Player leader, Creature boss, Location rally, String place, long now, boolean thanatos)
 		{
 			leaderId = leader.getObjectId();
 			this.boss = boss;
@@ -205,9 +237,11 @@ public final class PhantomRaid
 			this.rally = rally;
 			this.place = place;
 			started = now;
-			superChampion = SuperChampion.isSuper(boss);
+			this.thanatos = thanatos;
+			superChampion = !thanatos && SuperChampion.isSuper(boss);
 			epic = boss instanceof GrandBoss;
-			stageUntil = now + (superChampion ? SUPER_GATHER : (PhantomHuntersConfig.HUNTER_RAID_GATHER * 60000L));
+			lastCall = now;
+			stageUntil = now + (thanatos ? HUNT_GATHER : epic ? (PhantomHuntersConfig.HUNTER_EPIC_WAIT * 60000L) : superChampion ? SUPER_GATHER : (PhantomHuntersConfig.HUNTER_RAID_GATHER * 60000L));
 		}
 	}
 
@@ -215,10 +249,12 @@ public final class PhantomRaid
 	private volatile long _nextRaid;
 	private long _nextSuper;
 	private long _nextEpic;
-	/** Кого можно позвать — с последнего {@link #control} (для рейда по заказу стратега). */
+	/** Кого можно позвать — с последнего {@link #control} (для рейда по заказу стратега и охоты на Танатоса). */
 	private volatile List<Player> _candidates = List.of();
 	private volatile long _lastRaidEnd;
 	private boolean _commandRegistered;
+	/** Самопроверка EPIC ({@code HuntersSelfTest}): ближайший рейд на эпика — без живого, его играет охотник рейда. */
+	private volatile boolean _selfTestEpic;
 
 	private PhantomRaid()
 	{
@@ -266,7 +302,7 @@ public final class PhantomRaid
 				return;
 			}
 		}
-		// Эпик (раздел 4.43): жив, без входа через NPC и под охотников — рейд на него, без общего интервала рейдов.
+		// Эпик (раздел 4.43): жив, без входа через NPC, под охотников и под живого игрока в мире — рейд на него, без общего интервала рейдов.
 		if (PhantomHuntersConfig.HUNTER_EPIC_RAIDS && (now >= _nextEpic))
 		{
 			_nextEpic = now + EPIC_RETRY;
@@ -293,20 +329,39 @@ public final class PhantomRaid
 	}
 
 	/**
-	 * @return живые эпики из {@link #EPICS} (каких нет у хроники — {@code null} у менеджера, пропускаются)
+	 * @return живые эпики ({@link PhantomEpics#EPICS}), под которых в мире есть живой игрок ({@link #livePlayerFor}): без живого эпика не бьют
 	 */
 	private static List<Npc> epics()
 	{
 		final List<Npc> epics = new ArrayList<>();
-		for (int id : EPICS)
+		for (Npc boss : PhantomEpics.alive())
 		{
-			final GrandBoss boss = GrandBossManager.getInstance().getBoss(id);
-			if (boss != null)
+			if (getInstance()._selfTestEpic || livePlayerFor(boss.getLevel()))
 			{
 				epics.add(boss);
 			}
 		}
 		return epics;
+	}
+
+	/**
+	 * @return в мире есть живой игрок (с клиентом), которого возьмут в рейд на босса этого уровня ({@link #join})
+	 */
+	private static boolean livePlayerFor(int bossLevel)
+	{
+		for (Player player : World.getPlayers())
+		{
+			if (live(player) && (player.getLevel() >= (bossLevel - PLAYER_LEVEL_GAP)) && (player.getLevel() <= (bossLevel + CURSE_GAP)))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private static boolean live(Player player)
+	{
+		return !PhantomManager.getInstance().isPhantom(player) && (player.getClient() != null) && !player.getClient().isDetached();
 	}
 
 	private static long interval()
@@ -320,7 +375,7 @@ public final class PhantomRaid
 	private Raid assemble(List<Player> hunting, long now, Iterable<? extends Npc> candidates)
 	{
 		final Plan plan = plan(hunting, candidates, null);
-		return plan == null ? null : start(plan.leader(), plan.team(), plan.boss(), plan.rally(), now);
+		return plan == null ? null : start(plan.leader(), plan.team(), plan.boss(), plan.rally(), now, false);
 	}
 
 	/**
@@ -345,7 +400,7 @@ public final class PhantomRaid
 			return false;
 		}
 		LOGGER.info(getClass().getSimpleName() + ": " + leader.getName() + " decided to lead a raid (strategy).");
-		_raid = start(plan.leader(), plan.team(), plan.boss(), plan.rally(), now);
+		_raid = start(plan.leader(), plan.team(), plan.boss(), plan.rally(), now, false);
 		_nextRaid = Math.max(_nextRaid, now + interval());
 		return true;
 	}
@@ -459,7 +514,7 @@ public final class PhantomRaid
 	/**
 	 * Точка сбора: в {@value #RALLY_DISTANCE} от босса, откуда к нему ведёт прямая по геодате; восемь сторон по очереди.
 	 */
-	private static Location rally(Npc boss)
+	private static Location rally(Creature boss)
 	{
 		final GeoEngine geo = GeoEngine.getInstance();
 		final double start = Rnd.nextDouble() * 2 * Math.PI;
@@ -480,10 +535,10 @@ public final class PhantomRaid
 	/**
 	 * Начать: участники — в пати лидера, «бей его цель»; бафы; лидер (участники — за ним, напарники догоняют сами) — к точке сбора; крик о сборе.
 	 */
-	private Raid start(Player leader, List<Player> team, Npc boss, Location rally, long now)
+	private Raid start(Player leader, List<Player> team, Creature boss, Location rally, long now, boolean thanatos)
 	{
-		final Raid raid = new Raid(leader, boss, rally, place(boss), now);
-		final String what = raid.epic ? "эпика " : raid.superChampion ? "легендарного чемпиона " : "";
+		final Raid raid = new Raid(leader, boss, rally, place(boss), now, thanatos);
+		final String what = raid.thanatos ? "" : raid.epic ? "эпика " : raid.superChampion ? "легендарного чемпиона " : "";
 		PhantomHunterManager.getInstance().raidStarts(leader);
 		PhantomHunterManager.payTeleportFee(leader);
 		leader.teleToLocation(rally, true);
@@ -499,29 +554,59 @@ public final class PhantomRaid
 		}
 		final List<String> names = names(raid);
 		final long gather = (raid.stageUntil - now) / 60000;
-		LOGGER.info(getClass().getSimpleName() + ": " + leader.getName() + " (" + leader.getLevel() + ") leads a raid on " + (raid.epic ? "epic " : raid.superChampion ? "super champion " : "") + raid.bossName + " (" + raid.bossLevel + ") at " + raid.place + ": " + String.join(", ", names) + "; fight in " + gather + " min.");
+		LOGGER.info(getClass().getSimpleName() + ": " + leader.getName() + " (" + leader.getLevel() + ") leads a raid on " + (raid.thanatos ? "the hunt for " : raid.epic ? "epic " : raid.superChampion ? "super champion " : "") + raid.bossName + " (" + raid.bossLevel + ") at " + raid.place + ": " + String.join(", ", names) + "; fight in " + ((raid.stageUntil - now) / 1000) + " s.");
 
-		final String[] shouts = raid.epic ? EPIC_GATHER_SHOUTS : raid.superChampion ? SUPER_GATHER_SHOUTS : GATHER_SHOUTS;
-		final String text = String.format(shouts[Rnd.get(shouts.length)], raid.bossName, raid.bossLevel, raid.place, gather);
-		PhantomChat.getInstance().hunterShout(leader, text);
-		if (raid.epic)
+		if (raid.thanatos)
 		{
-			PhantomNews.post("epic_raid", "Охотники " + leader.getName() + " (" + (raid.members.size() + 1) + ") собирают рейд на эпика " + raid.bossName + " (" + raid.bossLevel + " ур.) у " + raid.place, leader.getName(), leader);
+			shout(leader, Rnd.nextBoolean() ? "собираем охоту на Танатоса! он у " + raid.place + ", все 70+ — ко мне, .raid" : "Танатос у " + raid.place + " — идём его валить, кто 70+ — .raid, через минуту выходим");
+			PhantomNews.post("thanatos", "Охотники " + leader.getName() + " (" + (raid.members.size() + 1) + ") собирают охоту на Танатоса", leader.getName(), leader);
 		}
-		for (Player player : World.getPlayers())
+		else
 		{
-			if (!PhantomManager.getInstance().isPhantom(player) && (player.getLevel() >= (raid.bossLevel - PLAYER_LEVEL_GAP)))
+			final String[] shouts = raid.epic ? EPIC_GATHER_SHOUTS : raid.superChampion ? SUPER_GATHER_SHOUTS : GATHER_SHOUTS;
+			shout(leader, String.format(shouts[Rnd.get(shouts.length)], raid.bossName, raid.bossLevel, raid.place, gather));
+		}
+		// Самопроверка EPIC: живого играет охотник рейда (не хилер) — он и в пати, и в списке живых.
+		if (raid.epic && _selfTestEpic)
+		{
+			_selfTestEpic = false;
+			for (int id : raid.members)
 			{
-				player.sendMessage("Охотники собирают рейд на " + what + raid.bossName + " (" + raid.bossLevel + " ур.) — .raid: вступить и телепорт к сбору.");
+				final Player member = World.getPlayer(id);
+				if ((member != null) && !isHealer(member))
+				{
+					raid.players.add(id);
+					LOGGER.info(getClass().getSimpleName() + ": SelfTest: " + member.getName() + " plays the live player in the raid on " + raid.bossName + ".");
+					break;
+				}
 			}
 		}
+		if (raid.epic)
+		{
+			PhantomNews.post("epic_raid", "Охотники " + leader.getName() + " (" + (raid.members.size() + 1) + ") собирают рейд на эпика " + raid.bossName + " (" + raid.bossLevel + " ур.) у " + raid.place + " и ждут живых", leader.getName(), leader);
+		}
+		callPlayers(raid, what);
 		return raid;
+	}
+
+	/**
+	 * Живым игрокам, которых возьмут в рейд ({@link #join}), — сообщение и {@code .raid}.
+	 */
+	private static void callPlayers(Raid raid, String what)
+	{
+		for (Player player : World.getPlayers())
+		{
+			if (!PhantomManager.getInstance().isPhantom(player) && (player.getLevel() >= (raid.bossLevel - PLAYER_LEVEL_GAP)) && (raid.thanatos || (player.getLevel() <= (raid.bossLevel + CURSE_GAP))) && !raid.players.contains(player.getObjectId()))
+			{
+				player.sendMessage(raid.thanatos ? "Охотники собирают охоту на Танатоса — .raid: вступить и телепорт к сбору." : "Охотники собирают рейд на " + what + raid.bossName + " (" + raid.bossLevel + " ур.) — .raid: вступить и телепорт к сбору." + (raid.epic ? " Без живого игрока эпика они не бьют." : ""));
+			}
+		}
 	}
 
 	/**
 	 * Где сбор, словами: ближайший спот охотников (у них в имени ориентир) или зона карты.
 	 */
-	private static String place(Npc boss)
+	private static String place(Creature boss)
 	{
 		HuntSpot nearest = null;
 		double best = Double.MAX_VALUE;
@@ -535,6 +620,85 @@ public final class PhantomRaid
 			}
 		}
 		return nearest != null ? nearest.name : boss.getName();
+	}
+
+	// ---------- Охота на Танатоса ----------
+
+	/**
+	 * Танатоса видели ({@link PhantomThanatos}): охотники с {@value #HUNT_LEVEL}-го (не меньше {@value #HUNT_MIN}, хилер — если есть свободный) собирают на него рейд.
+	 * Лидер — самый сильный не хилер с кача; сбор — {@value #HUNT_GATHER} мс в {@value #RALLY_DISTANCE} от него.
+	 * @return охота началась
+	 */
+	synchronized boolean hunt(Player thanatos, long now)
+	{
+		if (!PhantomHuntersConfig.HUNTER_RAIDS || (_raid != null) || thanatos.isDead())
+		{
+			return false;
+		}
+		final List<Player> strong = new ArrayList<>();
+		for (Player player : _candidates)
+		{
+			if ((player.getLevel() >= HUNT_LEVEL) && !player.isDead() && !player.isInParty())
+			{
+				strong.add(player);
+			}
+		}
+		if (strong.size() < HUNT_MIN)
+		{
+			return false;
+		}
+		strong.sort(Comparator.comparingInt((Player p) -> -p.getLevel()));
+		Player leader = null;
+		for (Player player : strong)
+		{
+			if (!isHealer(player) && PhantomHunterManager.getInstance().isHunting(player))
+			{
+				leader = player;
+				break;
+			}
+		}
+		final Location rally = rally(thanatos);
+		if ((leader == null) || (rally == null))
+		{
+			return false;
+		}
+		strong.remove(leader);
+		strong.sort(Comparator.comparingInt((Player p) -> isHealer(p) ? 0 : 1).thenComparingInt(p -> -p.getLevel()));
+		_raid = start(leader, new ArrayList<>(strong.subList(0, Math.min(strong.size(), 8))), thanatos, rally, now, true);
+		return true;
+	}
+
+	/**
+	 * Самопроверка EPIC ({@code HuntersSelfTest}, для разработки): ближайший рейд на эпика собирается без живого игрока — его играет охотник рейда; проверка — сразу.
+	 */
+	synchronized void selfTestEpic()
+	{
+		_selfTestEpic = true;
+		_nextEpic = 0;
+		if (_nextRaid == 0)
+		{
+			_nextRaid = System.currentTimeMillis() + (PhantomHuntersConfig.HUNTER_RAID_FIRST * 60000L);
+			_nextSuper = System.currentTimeMillis() + SUPER_FIRST;
+		}
+		LOGGER.info(getClass().getSimpleName() + ": SelfTest EPIC: the next epic raid needs no live player.");
+	}
+
+	/**
+	 * @return сколько в охоте на Танатоса (охотники и живые) или 0 — охоты нет
+	 */
+	int huntSize()
+	{
+		final Raid raid = _raid;
+		return (raid != null) && raid.thanatos ? raid.members.size() + 1 + raid.players.size() : 0;
+	}
+
+	/**
+	 * @return идёт охота на Танатоса, и он в ней — охотник или живой, вступивший через .raid
+	 */
+	boolean hunting(Player player)
+	{
+		final Raid raid = _raid;
+		return (raid != null) && raid.thanatos && inRaid(raid, player.getObjectId());
 	}
 
 	// ---------- Бой ----------
@@ -566,7 +730,7 @@ public final class PhantomRaid
 				case GATHER:
 				{
 					// РБ бьёт кто-то другой (игрок, чужая пати) — не мешать: дольше BUSY_GRACE бой не стих — рейд распускается.
-					if (!raid.superChampion && raid.boss.isInCombat() && !fightsRaid(raid))
+					if (!raid.superChampion && !raid.thanatos && raid.boss.isInCombat() && !fightsRaid(raid))
 					{
 						if (raid.busySince == 0)
 						{
@@ -589,6 +753,28 @@ public final class PhantomRaid
 						fail(raid, player, "the super champion was killed by someone else");
 						finish(raid, player);
 						return Drive.DONE;
+					}
+					// Танатоса, пока собирались, убили или он ушёл из мира.
+					if (raid.thanatos && (raid.boss.isDead() || !raid.boss.isSpawned()))
+					{
+						dismiss(raid, player, "Thanatos is gone", "Танатос ушёл, расходимся");
+						return Drive.DONE;
+					}
+					// Эпик: живой пришёл к сбору — бой через минуту; не зовут давно — позвать снова.
+					if (raid.epic)
+					{
+						if (!raid.playersArrived && playersAtRally(raid))
+						{
+							raid.playersArrived = true;
+							raid.stageUntil = Math.min(raid.stageUntil, now + EPIC_READY);
+							PhantomCompanionManager.partySay(player, Rnd.nextBoolean() ? "о, живые подошли! минута — и начинаем" : "все в сборе, бафаемся, через минуту го");
+						}
+						else if (!raid.playersArrived && ((now - raid.lastCall) >= EPIC_CALL_GAP) && (now < raid.stageUntil))
+						{
+							raid.lastCall = now;
+							shout(player, String.format(EPIC_CALL_SHOUTS[Rnd.get(EPIC_CALL_SHOUTS.length)], raid.bossName, raid.place));
+							callPlayers(raid, "эпика ");
+						}
 					}
 					if (now < raid.stageUntil)
 					{
@@ -613,15 +799,23 @@ public final class PhantomRaid
 						}
 						return Drive.LEADS;
 					}
+					// Эпик без живого игрока у сбора не бьют: охотники не забирают эпиков себе (решение автора 2026-10-23).
+					if (raid.epic && !playersAtRally(raid))
+					{
+						dismiss(raid, player, "no live player came", Rnd.nextBoolean() ? "никто не пришёл на " + raid.bossName + ", расходимся" : "без живых " + raid.bossName + " не потянем, в другой раз");
+						_nextEpic = Math.max(_nextEpic, now + EPIC_NO_SHOW);
+						return Drive.DONE;
+					}
 					raid.stage = Stage.FIGHT;
-					raid.stageUntil = now + FIGHT_TIME;
-					// Множители — для РБ (их HP и защита не по силам пати своего уровня); суперчемпион — обычный моб x20 HP, бьют как есть.
-					if (!raid.superChampion && (damageOf(raid) > 1))
+					raid.stageUntil = now + (raid.thanatos ? HUNT_TIME : FIGHT_TIME);
+					// Множители — для РБ (их HP и защита не по силам пати своего уровня); суперчемпион — обычный моб x20 HP, бьют как есть;
+					// эпика ослабляет малый мир для всех (PhantomEpics), охотников бережёт только броня; Танатос — без множителей.
+					if (!raid.superChampion && !raid.epic && !raid.thanatos && (PhantomHuntersConfig.HUNTER_RAID_DAMAGE > 1))
 					{
 						raid.damage = new ConsumerEventListener(raid.boss, EventType.ON_CREATURE_DAMAGE_RECEIVED, (OnCreatureDamageReceived event) -> onBossDamaged(raid, event), this);
 						raid.boss.addListener(raid.damage);
 					}
-					if (!raid.superChampion && (armorOf(raid) > 1))
+					if (!raid.superChampion && !raid.thanatos && (armorOf(raid) > 1))
 					{
 						armor(raid, player);
 						for (int id : raid.members)
@@ -637,7 +831,12 @@ public final class PhantomRaid
 					{
 						player.standUp();
 					}
-					PhantomCompanionManager.partySay(player, Rnd.nextBoolean() ? "го, бьём " + raid.bossName + "!" : "погнали!");
+					PhantomCompanionManager.partySay(player, raid.thanatos ? (Rnd.nextBoolean() ? "за мной, валим жнеца!" : "все на Танатоса!") : Rnd.nextBoolean() ? "го, бьём " + raid.bossName + "!" : "погнали!");
+					// Голос Танатоса (раздел 4.45): охота вступила в бой — раз на охоту.
+					if (raid.thanatos)
+					{
+						PhantomThanatos.getInstance().onHunt(player, raid.members.size() + 1 + raid.players.size());
+					}
 					LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " starts the fight with " + raid.bossName + " (" + (raid.members.size() + 1) + " hunters, " + raid.players.size() + " players).");
 					return Drive.LEADS;
 				}
@@ -646,6 +845,11 @@ public final class PhantomRaid
 					// Суперчемпион мёртв и уже встал обычным мобом (респавн) — тоже конец.
 					if (raid.boss.isAlikeDead() || !raid.boss.isSpawned() || (raid.superChampion && !SuperChampion.isSuper(raid.boss)))
 					{
+						if (raid.thanatos && !raid.boss.isAlikeDead())
+						{
+							dismiss(raid, player, "Thanatos left the world", "Танатос исчез... расходимся");
+							return Drive.DONE;
+						}
 						raid.stage = Stage.LOOT;
 						raid.stageUntil = now + LOOT_TIME;
 						LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + "'s raid killed " + raid.bossName + " in " + ((now - raid.started) / 1000) + " s; " + participants(raid) + ".");
@@ -663,15 +867,21 @@ public final class PhantomRaid
 					{
 						raid.lastReport = now;
 						final WorldObject target = player.getTarget();
-						LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " fights " + raid.bossName + ": boss " + bossHp(raid) + "% HP, leader " + (int) ((player.getCurrentHp() * 100) / Math.max(1, player.getMaxHp())) + "% HP, alive " + alive(raid) + ", target " + (target == null ? "-" : target.getName() + " at " + (int) player.calculateDistance2D(target)) + ", boss at " + (int) player.calculateDistance2D(raid.boss) + (raid.epic ? ", minions " + minions(raid) : "") + ".");
+						LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " fights " + raid.bossName + ": boss " + bossHp(raid) + "% HP, leader " + (int) ((player.getCurrentHp() * 100) / Math.max(1, player.getMaxHp())) + "% HP, alive " + alive(raid) + ", target " + (target == null ? "-" : target.getName() + " at " + (int) player.calculateDistance2D(target)) + ", boss at " + (int) player.calculateDistance2D(raid.boss) + (raid.epic ? ", minions " + minions(raid) : "") + (raid.dutyId != 0 ? ", larva duty " + nameOf(raid.dutyId) : "") + ".");
 					}
 					if (player.isSitting())
 					{
 						player.standUp();
 						return Drive.LEADS;
 					}
-					if (raid.boss.calculateDistance2D(raid.rally) > BOSS_LEASH)
+					// Эпик ушёл (Орфен — в гнездо на половине HP, Закен — по кораблю), Танатос убежал — рейд идёт следом.
+					final int leash = raid.thanatos ? REGROUP_RANGE * 2 : BOSS_LEASH;
+					if (raid.boss.calculateDistance2D(raid.rally) > leash)
 					{
+						if ((raid.epic || raid.thanatos) && (raid.rerallies < (raid.thanatos ? HUNT_RERALLIES : EPIC_RERALLIES)) && reRally(raid, player))
+						{
+							return Drive.LEADS;
+						}
 						fail(raid, player, "the boss is gone");
 						finish(raid, player);
 						return Drive.DONE;
@@ -681,6 +891,14 @@ public final class PhantomRaid
 						fail(raid, player, "the leader is away");
 						finish(raid, player);
 						return Drive.DONE;
+					}
+					if (raid.epic || raid.thanatos)
+					{
+						regroup(raid, player);
+					}
+					if (raid.epic)
+					{
+						assignDuty(raid, player);
 					}
 					if (!player.isCastingNow())
 					{
@@ -705,32 +923,191 @@ public final class PhantomRaid
 	}
 
 	/**
-	 * Цель лидера в бою с эпиком: ближайший миньон-боец рядом, который бьёт кого-то из рейда, — первым (не дольше {@value #EPIC_MINION_TIME} мс на одного),
-	 * иначе сам эпик; лекарей ({@link #EPIC_HEALERS}) не гонять.
+	 * @return кто-то из живых игроков рейда жив и у точки сбора (или у лидера)
+	 */
+	private static boolean playersAtRally(Raid raid)
+	{
+		final Player leader = World.getPlayer(raid.leaderId);
+		for (int id : raid.players)
+		{
+			final Player player = World.getPlayer(id);
+			if ((player != null) && !player.isDead() && ((player.calculateDistance2D(raid.rally) <= PARTICIPATION_RANGE) || ((leader != null) && (player.calculateDistance2D(leader) <= PARTICIPATION_RANGE))))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Эпик ушёл от точки сбора (Орфен — в гнездо, Закен телепортировался), Танатос убежал: новая точка у него; охотники рейда — туда телепортом,
+	 * живым — сообщение ({@code .raid go} — к новому месту).
+	 * @return пошли следом
+	 */
+	private boolean reRally(Raid raid, Player leader)
+	{
+		final Location rally = rally(raid.boss);
+		if (rally == null)
+		{
+			return false;
+		}
+		raid.rerallies++;
+		raid.rally = rally;
+		raid.place = place(raid.boss);
+		raid.minionId = 0;
+		LOGGER.info(getClass().getSimpleName() + ": " + raid.bossName + " moved; " + leader.getName() + "'s raid follows to " + raid.place + " (" + raid.rerallies + ").");
+		leader.teleToLocation(rally, true);
+		for (int id : raid.members)
+		{
+			final Player member = World.getPlayer(id);
+			if ((member != null) && !member.isDead())
+			{
+				member.teleToLocation(near(rally), true);
+			}
+		}
+		for (int id : raid.players)
+		{
+			final Player player = World.getPlayer(id);
+			if (player != null)
+			{
+				player.sendMessage(raid.bossName + " ушёл к " + raid.place + " — рейд идёт следом: .raid go.");
+			}
+		}
+		PhantomCompanionManager.partySay(leader, raid.thanatos ? "он сбежал, за ним!" : raid.bossName + " ушёл, за ним!");
+		return true;
+	}
+
+	/**
+	 * Охотник рейда дальше {@value #REGROUP_RANGE} от лидера (Закен телепортом раскидал по кораблю, Орфен утащил к себе, отстал) — телепорт к лидеру.
+	 * Кто держит личинку Королевы, тот стоит у неё — его не трогать.
+	 */
+	private static void regroup(Raid raid, Player leader)
+	{
+		for (int id : raid.members)
+		{
+			final Player member = World.getPlayer(id);
+			if ((member != null) && (id != raid.dutyId) && !member.isDead() && !member.isTeleporting() && (member.calculateDistance2D(leader) > REGROUP_RANGE))
+			{
+				member.teleToLocation(near(leader.getLocation()), true);
+			}
+		}
+	}
+
+	private static Location near(Location at)
+	{
+		final double angle = Rnd.nextDouble() * 2 * Math.PI;
+		return new Location(at.getX() + (int) (Math.cos(angle) * 120), at.getY() + (int) (Math.sin(angle) * 120), at.getZ());
+	}
+
+	/**
+	 * Рецепт Королевы: один охотник рейда (не лидер, не хилер; стрелок или маг — первыми) бьёт личинку у входа в гнездо — няньки лечат её, а не Королеву.
+	 */
+	private static void assignDuty(Raid raid, Player leader)
+	{
+		if (raid.boss.getId() != PhantomEpics.QUEEN_ANT)
+		{
+			return;
+		}
+		final Player current = raid.dutyId == 0 ? null : World.getPlayer(raid.dutyId);
+		if ((current != null) && !current.isDead())
+		{
+			return;
+		}
+		Player best = null;
+		for (int id : raid.members)
+		{
+			final Player member = World.getPlayer(id);
+			if ((member == null) || member.isDead() || isHealer(member))
+			{
+				continue;
+			}
+			if ((best == null) || (PhantomHunterOutfit.isCaster(member) && !PhantomHunterOutfit.isCaster(best)))
+			{
+				best = member;
+			}
+		}
+		if ((best != null) && (best.getObjectId() != raid.dutyId))
+		{
+			raid.dutyId = best.getObjectId();
+			PhantomCompanionManager.partySay(best, "держу личинку, чтобы няньки королеву не лечили");
+			LOGGER.info(PhantomRaid.class.getSimpleName() + ": " + best.getName() + " keeps the Queen Ant larva busy.");
+		}
+	}
+
+	/**
+	 * Для {@link PhantomCompanionManager}: у охотника рейда своя цель в бою — не цель лидера, которую он берёт только среди мобов.
+	 * @return личинка Королевы для того, кто её держит; Танатос на охоте (он игрок); иначе {@code null}
+	 */
+	Creature companionTarget(Player member)
+	{
+		final Raid raid = _raid;
+		if ((raid == null) || (raid.stage != Stage.FIGHT) || !raid.members.contains(member.getObjectId()))
+		{
+			return null;
+		}
+		if (raid.dutyId == member.getObjectId())
+		{
+			return PhantomEpics.larva(raid.boss, member);
+		}
+		return raid.thanatos && !raid.boss.isDead() && (member.calculateDistance2D(raid.boss) <= REGROUP_RANGE) ? raid.boss : null;
+	}
+
+	/**
+	 * @return где это, словами — ближайший спот охотников
+	 */
+	static String placeOf(Creature creature)
+	{
+		return place(creature);
+	}
+
+	/**
+	 * Для хилера ({@link PhantomSupport}): кого держать первым — в бою с эпиком и с Танатосом это танк (кого бьёт босс, если он из рейда) и лидер.
+	 * @return пусто — не в таком рейде
+	 */
+	List<Player> keepAlive(Player healer)
+	{
+		final Raid raid = _raid;
+		if ((raid == null) || (raid.stage != Stage.FIGHT) || !(raid.epic || raid.thanatos) || !raid.members.contains(healer.getObjectId()))
+		{
+			return List.of();
+		}
+		final List<Player> vips = new ArrayList<>(2);
+		final Creature tank = PhantomCompat.attackTarget(raid.boss);
+		if ((tank instanceof Player) && ((tank.getObjectId() == raid.leaderId) || raid.members.contains(tank.getObjectId()) || raid.players.contains(tank.getObjectId())))
+		{
+			vips.add((Player) tank);
+		}
+		final Player leader = World.getPlayer(raid.leaderId);
+		if ((leader != null) && !vips.contains(leader))
+		{
+			vips.add(leader);
+		}
+		return vips;
+	}
+
+	/**
+	 * Цель лидера в бою с эпиком: ближайший моб рядом (свита, зал Ядра, нежить корабля), который бьёт кого-то из рейда, — первым (не дольше {@value #EPIC_MINION_TIME} мс на одного),
+	 * иначе сам эпик; лекарей свиты ({@link #EPIC_HEALERS}) и личинку не гонять.
 	 */
 	private static Creature epicTarget(Raid raid, Player leader, long now)
 	{
-		if (!(raid.boss instanceof Monster) || !((Monster) raid.boss).hasMinions())
-		{
-			return raid.boss;
-		}
 		Monster best = null;
 		double bestDistance = EPIC_MINION_RANGE;
-		for (Monster minion : ((Monster) raid.boss).getMinionList().getSpawnedMinions())
+		for (Monster mob : World.getVisibleObjectsInRange(leader, Monster.class, EPIC_MINION_RANGE))
 		{
-			if ((minion == null) || minion.isAlikeDead() || EPIC_HEALERS.contains(minion.getId()) || raid.skipMinions.contains(minion.getObjectId()))
+			if ((mob == raid.boss) || mob.isAlikeDead() || EPIC_HEALERS.contains(mob.getId()) || (mob.getId() == PhantomEpics.LARVA) || raid.skipMinions.contains(mob.getObjectId()))
 			{
 				continue;
 			}
-			final WorldObject victim = PhantomHunterOutfit.victimOf(minion);
-			if ((victim == null) || ((victim.getObjectId() != raid.leaderId) && !raid.members.contains(victim.getObjectId())))
+			final WorldObject victim = PhantomHunterOutfit.victimOf(mob);
+			if ((victim == null) || !inRaid(raid, victim.getObjectId()))
 			{
 				continue;
 			}
-			final double distance = leader.calculateDistance2D(minion);
+			final double distance = leader.calculateDistance2D(mob);
 			if (distance < bestDistance)
 			{
-				best = minion;
+				best = mob;
 				bestDistance = distance;
 			}
 		}
@@ -753,6 +1130,11 @@ public final class PhantomRaid
 		return best;
 	}
 
+	private static boolean inRaid(Raid raid, int objectId)
+	{
+		return (objectId == raid.leaderId) || raid.members.contains(objectId) || raid.players.contains(objectId);
+	}
+
 	/**
 	 * @return босс (эпик) бьёт кого-то из рейда — не «чужой бой»: Ядро на сборе сцепилось с охотниками у точки сбора (прогон H5 2026-10-22)
 	 */
@@ -763,7 +1145,7 @@ public final class PhantomRaid
 			return false;
 		}
 		final Creature target = PhantomCompat.attackTarget(raid.boss);
-		return (target != null) && ((target.getObjectId() == raid.leaderId) || raid.members.contains(target.getObjectId()));
+		return (target != null) && inRaid(raid, target.getObjectId());
 	}
 
 	/**
@@ -802,7 +1184,8 @@ public final class PhantomRaid
 	}
 
 	/**
-	 * Раз в 10 с: лидер погиб или пропал — рейд провален (сам лидер уже не ведёт его на тике).
+	 * Раз в 10 с: лидер погиб или пропал. РБ — ждать реса {@value #LEADER_DEAD_GRACE} мс, потом провал; эпик и Танатос — ведёт следующий живой охотник
+	 * ({@link #handOver}), провал — когда легли все (охотники и живые игроки рейда).
 	 */
 	synchronized void check(long now)
 	{
@@ -823,7 +1206,6 @@ public final class PhantomRaid
 		{
 			return;
 		}
-		// Лидер лёг — ждём, что поднимут (хилер в пати ресает); не подняли за минуту или легли все — провал.
 		if (!leader.isDead())
 		{
 			raid.leaderDeadSince = 0;
@@ -833,17 +1215,90 @@ public final class PhantomRaid
 		{
 			raid.leaderDeadSince = now;
 		}
-		boolean anyAlive = false;
+		final Player next = nextLeader(raid, leader);
+		if ((raid.epic || raid.thanatos) && (raid.stage == Stage.FIGHT))
+		{
+			if (next != null)
+			{
+				handOver(raid, leader, next);
+				return;
+			}
+			// Охотников на ногах нет: живой игрок ещё бьётся — ждём, пока поднимут; легли все или подождали — провал.
+			if (!livePlayersFighting(raid) || ((now - raid.leaderDeadSince) > LEADER_DEAD_GRACE))
+			{
+				fail(raid, leader, livePlayersFighting(raid) ? "all hunters died" : "everyone died");
+				finish(raid, leader);
+			}
+			return;
+		}
+		// РБ: лидер лёг — ждём, что поднимут (хилер в пати ресает); не подняли за минуту или легли все — провал.
+		if ((next == null) || ((now - raid.leaderDeadSince) > LEADER_DEAD_GRACE))
+		{
+			fail(raid, leader, next != null ? "the leader died" : "everyone died");
+			finish(raid, leader);
+		}
+	}
+
+	/**
+	 * @return живой охотник рейда в пати лидера, который поведёт вместо него: не хилер (хилер нужен на ресах), старше уровнем; нет таких — хилер; нет никого — {@code null}
+	 */
+	private static Player nextLeader(Raid raid, Player leader)
+	{
+		Player best = null;
 		for (int id : raid.members)
 		{
 			final Player member = World.getPlayer(id);
-			anyAlive |= (member != null) && !member.isDead() && member.isInParty() && (member.getParty() == leader.getParty());
+			if ((member == null) || member.isDead() || !member.isInParty() || (member.getParty() != leader.getParty()))
+			{
+				continue;
+			}
+			if ((best == null) || (isHealer(best) && !isHealer(member)) || ((isHealer(best) == isHealer(member)) && (member.getLevel() > best.getLevel())))
+			{
+				best = member;
+			}
 		}
-		if (!anyAlive || ((now - raid.leaderDeadSince) > LEADER_DEAD_GRACE))
+		return best;
+	}
+
+	/**
+	 * @return живой игрок рейда жив и у боя
+	 */
+	private static boolean livePlayersFighting(Raid raid)
+	{
+		for (int id : raid.players)
 		{
-			fail(raid, leader, anyAlive ? "the leader died" : "everyone died");
-			finish(raid, leader);
+			final Player player = World.getPlayer(id);
+			if ((player != null) && !player.isDead() && (player.calculateDistance2D(raid.boss) <= (PARTICIPATION_RANGE * 2)))
+			{
+				return true;
+			}
 		}
+		return false;
+	}
+
+	/**
+	 * Эпик, Танатос (раздел 4.43): лидер лёг — ведёт следующий. Новый лидер выходит из напарников и ведёт рейд сам ({@link #drive}), его напарники — теперь
+	 * напарники нового лидера, сам старый — тоже (лежит, ждёт реса, как участник), пати — новому лидеру.
+	 */
+	private void handOver(Raid raid, Player oldLeader, Player next)
+	{
+		raid.members.remove(next.getObjectId());
+		raid.members.add(oldLeader.getObjectId());
+		raid.leaderId = next.getObjectId();
+		raid.leaderDeadSince = 0;
+		raid.minionId = 0;
+		if (raid.dutyId == next.getObjectId())
+		{
+			raid.dutyId = 0;
+		}
+		PhantomCompanionManager.getInstance().handOver(oldLeader, next);
+		PhantomHunterManager.getInstance().takeRaidLead(next);
+		if (next.isInParty() && (next.getParty().getLeader() != next))
+		{
+			next.getParty().changePartyLeader(next.getName());
+		}
+		PhantomCompanionManager.partySay(next, Rnd.nextBoolean() ? oldLeader.getName() + " лёг, веду я! не расходимся" : "лидер упал — слушаем меня, бьём дальше");
+		LOGGER.info(getClass().getSimpleName() + ": " + oldLeader.getName() + " is down, " + next.getName() + " leads the raid on " + raid.bossName + " (boss " + bossHp(raid) + "% HP, alive " + alive(raid) + ").");
 	}
 
 	private void fail(Raid raid, Player leader, String why)
@@ -853,16 +1308,30 @@ public final class PhantomRaid
 		shout(leader, String.format(FAIL_SHOUTS[Rnd.get(FAIL_SHOUTS.length)], raid.bossName));
 		if (raid.epic)
 		{
-			PhantomNews.post("epic_raid", "Рейд охотников " + leader.getName() + " на эпика " + raid.bossName + " не удался: у босса " + bossHp(raid) + "% HP", leader.getName(), leader);
+			// Измор: не регенит HUNTER_EPIC_EXHAUST минут — следующий заход скоро и с того же HP.
+			final boolean fought = raid.stage != Stage.GATHER;
+			if (fought)
+			{
+				PhantomEpics.getInstance().exhaust(raid.boss, PhantomHuntersConfig.HUNTER_EPIC_EXHAUST);
+				_nextEpic = System.currentTimeMillis() + EPIC_AFTER_FAIL;
+			}
+			PhantomNews.post("epic_raid", "Рейд охотников " + leader.getName() + " на эпика " + raid.bossName + " не удался: у босса " + bossHp(raid) + "% HP" + (fought && (PhantomHuntersConfig.HUNTER_EPIC_EXHAUST > 0) ? ", он измотан и " + PhantomHuntersConfig.HUNTER_EPIC_EXHAUST + " мин не восстановится" : ""), leader.getName(), leader);
+		}
+		else if (raid.thanatos)
+		{
+			PhantomNews.post("thanatos", "Охота на Танатоса не удалась" + (raid.boss.isDead() ? "" : ": он ушёл живым"), leader.getName(), leader);
 		}
 	}
 
 	/**
-	 * @return во сколько раз удар охотника рейда по боссу сильнее: эпик — {@code HunterEpicDamage}, РБ — {@code HunterRaidDamage}
+	 * Рейд не начался (живой не пришёл, цель ушла): расходятся без провала — крик, без летописи и измора.
 	 */
-	private static float damageOf(Raid raid)
+	private void dismiss(Raid raid, Player leader, String why, String text)
 	{
-		return raid.epic ? PhantomHuntersConfig.HUNTER_EPIC_DAMAGE : PhantomHuntersConfig.HUNTER_RAID_DAMAGE;
+		raid.result = "dismissed";
+		LOGGER.info(getClass().getSimpleName() + ": " + leader.getName() + "'s raid on " + raid.bossName + " is dismissed (" + why + ").");
+		shout(leader, text);
+		finish(raid, leader);
 	}
 
 	/**
@@ -904,11 +1373,11 @@ public final class PhantomRaid
 		{
 			return;
 		}
-		raid.boss.reduceCurrentHp(event.getDamage() * (damageOf(raid) - 1), attacker, null);
+		raid.boss.reduceCurrentHp(event.getDamage() * (PhantomHuntersConfig.HUNTER_RAID_DAMAGE - 1), attacker, null);
 	}
 
 	/**
-	 * Охотнику рейда — слушатель: удар босса (и его миньонов) возвращается до 1/{@code HunterRaidArmor} — босс положил бы пятерых за минуту.
+	 * Охотнику рейда — слушатель: удар босса (и его миньонов, у эпика — любого моба у его логова) возвращается до 1/{@code HunterRaidArmor} — босс положил бы пятерых за минуту.
 	 */
 	private void armor(Raid raid, Player hunter)
 	{
@@ -920,7 +1389,12 @@ public final class PhantomRaid
 	private static void onHunterDamaged(Raid raid, Player hunter, OnCreatureDamageReceived event)
 	{
 		final Creature attacker = event.getAttacker();
-		if ((attacker == null) || hunter.isDead() || (event.getDamage() <= 0) || ((attacker != raid.boss) && !(attacker.isMonster() && attacker.asMonster().getLeader() == raid.boss)))
+		if ((attacker == null) || hunter.isDead() || (event.getDamage() <= 0))
+		{
+			return;
+		}
+		final boolean bossSide = (attacker == raid.boss) || (attacker.isMonster() && ((attacker.asMonster().getLeader() == raid.boss) || (raid.epic && (attacker.calculateDistance2D(raid.boss) < 3000))));
+		if (!bossSide)
 		{
 			return;
 		}
@@ -979,6 +1453,12 @@ public final class PhantomRaid
 		return raid.boss.isAlikeDead() ? 0 : (int) ((raid.boss.getCurrentHp() * 100) / Math.max(1, raid.boss.getMaxHp()));
 	}
 
+	private static String nameOf(int objectId)
+	{
+		final Player player = World.getPlayer(objectId);
+		return player != null ? player.getName() : "?";
+	}
+
 	private static void shout(Player leader, String text)
 	{
 		PhantomChat.getInstance().hunterShout(leader, text);
@@ -1002,7 +1482,7 @@ public final class PhantomRaid
 		{
 			return "Рано: на " + raid.bossName + " берут с " + (raid.bossLevel - PLAYER_LEVEL_GAP) + "-го уровня.";
 		}
-		if (player.getLevel() > (raid.bossLevel + CURSE_GAP))
+		if (!raid.thanatos && (player.getLevel() > (raid.bossLevel + CURSE_GAP)))
 		{
 			return "Ты выше " + raid.bossName + " больше чем на " + CURSE_GAP + " уровней — РБ положит на тебя проклятие. Рейд — до " + (raid.bossLevel + CURSE_GAP) + "-го уровня.";
 		}
@@ -1045,8 +1525,7 @@ public final class PhantomRaid
 		{
 			return "Не хватает адены на телепорт: " + fee + ".";
 		}
-		final double angle = Rnd.nextDouble() * 2 * Math.PI;
-		player.teleToLocation(new Location(raid.rally.getX() + (int) (Math.cos(angle) * 120), raid.rally.getY() + (int) (Math.sin(angle) * 120), raid.rally.getZ()), true);
+		player.teleToLocation(near(raid.rally), true);
 		LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " teleports to the raid on " + raid.bossName + ".");
 		return null;
 	}
@@ -1063,18 +1542,18 @@ public final class PhantomRaid
 		{
 			final long next = Math.max(0, (_nextRaid - System.currentTimeMillis()) / 60000);
 			sb.append("Сейчас рейда нет. Охотники собираются на РБ своего уровня примерно раз в ").append(intervalText()).append(PhantomHuntersConfig.HUNTER_RAIDS ? (_nextRaid > 0 ? " — следующий не раньше чем через " + next + " мин." : ".") : " (рейды выключены: HunterRaids).");
-			sb.append("<br><br><font color=\"808080\">Когда соберутся — в торговом чате будет крик лидера, а тебе — сообщение.</font></body></html>");
+			sb.append("<br><br><font color=\"808080\">Когда соберутся — в торговом чате будет крик лидера, а тебе — сообщение. На эпиков охотники без живого игрока не ходят: зовут и ждут.</font></body></html>");
 			player.sendPacket(new NpcHtmlMessage(sb.toString()));
 			return;
 		}
 
 		final long left = Math.max(0, (raid.stageUntil - System.currentTimeMillis()) / 1000);
-		sb.append("<font color=\"LEVEL\">").append(raid.bossName).append("</font> (").append(raid.bossLevel).append(" ур.)<br1>");
+		sb.append("<font color=\"LEVEL\">").append(raid.thanatos ? "Охота на Танатоса" : raid.bossName).append("</font> (").append(raid.bossLevel).append(" ур.)<br1>");
 		sb.append("Сбор: ").append(raid.place).append("<br1>");
-		sb.append(raid.stage == Stage.GATHER ? "Бой — через " + (left / 60) + " мин " + (left % 60) + " с." : raid.stage == Stage.FIGHT ? "Идёт бой." : "Босс убит, собирают лут.").append("<br><br>");
+		sb.append(raid.stage == Stage.GATHER ? "Бой — через " + (left / 60) + " мин " + (left % 60) + " с." + (raid.epic && !raid.playersArrived ? " Без живого игрока у сбора эпика не бьют." : "") : raid.stage == Stage.FIGHT ? "Идёт бой." : "Босс убит, собирают лут.").append("<br><br>");
 		sb.append("<font color=\"B09878\">Пати:</font><br1>");
 		final Player leaderPlayer = leader;
-		sb.append(leaderPlayer.getName()).append(" (").append(leaderPlayer.getLevel()).append(", лидер)<br1>");
+		sb.append(leaderPlayer.getName()).append(" (").append(leaderPlayer.getLevel()).append(", лидер").append(leaderPlayer.isDead() ? ", лежит" : "").append(")<br1>");
 		for (int id : raid.members)
 		{
 			final Player member = World.getPlayer(id);
@@ -1113,11 +1592,7 @@ public final class PhantomRaid
 	// ---------- Для других ----------
 
 	/**
-	 * @param player охотник
-	 * @return он лидер рейда — для мозгов и окна охотников
-	 */
-	/**
-	 * Для «Мой мир» ({@code activity} в L2HubHunters.json): охотник в рейде — лидер или участник.
+	 * Для «Мой мир» ({@code activity} в L2HubHunters.json): охотник в рейде — лидер или участник. На охоте на Танатоса места нет: где он — секрет (раздел 4.45).
 	 * @return дописал {@code ,"activity":{"kind":"raid",…}}
 	 */
 	boolean activity(StringBuilder sb, Player player)
@@ -1128,13 +1603,17 @@ public final class PhantomRaid
 			return false;
 		}
 		sb.append(",\"activity\":{\"kind\":\"raid\",");
-		FakePlayerBrain.field(sb, "title", raid.bossName).append(',');
+		FakePlayerBrain.field(sb, "title", raid.thanatos ? "Танатос" : raid.bossName).append(',');
 		FakePlayerBrain.field(sb, "stage", raid.stage.name()).append(',');
-		FakePlayerBrain.field(sb, "place", raid.place).append(",\"since\":").append(raid.started).append(",\"bossLevel\":").append(raid.bossLevel);
-		sb.append(",\"leader\":").append(raid.leaderId == player.getObjectId()).append(",\"superChampion\":").append(raid.superChampion).append(",\"epic\":").append(raid.epic).append('}');
+		FakePlayerBrain.field(sb, "place", raid.thanatos ? "" : raid.place).append(",\"since\":").append(raid.started).append(",\"bossLevel\":").append(raid.bossLevel);
+		sb.append(",\"leader\":").append(raid.leaderId == player.getObjectId()).append(",\"superChampion\":").append(raid.superChampion).append(",\"epic\":").append(raid.epic).append(",\"thanatos\":").append(raid.thanatos).append('}');
 		return true;
 	}
 
+	/**
+	 * @param player охотник
+	 * @return он лидер рейда — «босс (ур.)» для мозгов и окна охотников; иначе {@code null}
+	 */
 	public String raidOf(Player player)
 	{
 		final Raid raid = _raid;

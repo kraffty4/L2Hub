@@ -1,8 +1,8 @@
 diff --git a/dist/game/config/Custom/ChampionMonsters.ini b/dist/game/config/Custom/ChampionMonsters.ini
-index f540c58eb326087dfdfddba17f32fce3c71e37c8..79131e2feef86419ea8b08bea509f63533fa7e1e 100644
+index f540c58eb326087dfdfddba17f32fce3c71e37c8..15b953fdb8e9eb289bd7f20d78c2833d9ee0527f 100644
 --- a/dist/game/config/Custom/ChampionMonsters.ini
 +++ b/dist/game/config/Custom/ChampionMonsters.ini
-@@ -117,3 +117,61 @@ ChampionBlueSpdAtk = 1.0
+@@ -117,3 +117,62 @@ ChampionBlueSpdAtk = 1.0
  
  # Предметы-награды синего чемпиона: id,количество через ; (пусто — без наград).
  ChampionBlueRewardItems =
@@ -55,9 +55,10 @@ index f540c58eb326087dfdfddba17f32fce3c71e37c8..79131e2feef86419ea8b08bea509f635
 +SuperChampionRewardItems = 6393,10
 +
 +# Эффекты над моделью (AbnormalVisualEffect через запятую, пусто — без эффектов): BIG_BODY — моб крупнее,
-+# ULTIMATE_DEFENCE — свечение скилла Ultimate Defense. Примерить на цели в игре: //ave_abnormal <ЭФФЕКТ>.
++# ULTIMATE_DEFENCE — свечение скилла Ultimate Defense, MAGIC_SQUARE — белый круг под ногами («Magic Circle»).
++# Примерить на цели в игре: //ave_abnormal <ЭФФЕКТ>.
 +# Interlude шлёт клиенту только обычные эффекты: особые (INVINCIBILITY и др.) там не видны.
-+SuperChampionEffects = BIG_BODY,ULTIMATE_DEFENCE
++SuperChampionEffects = BIG_BODY,ULTIMATE_DEFENCE,MAGIC_SQUARE
 +
 +# Объявление при появлении: Region — игрокам в том же регионе карты, World — всем, Off — без объявления.
 +SuperChampionAnnounce = Region
@@ -65,7 +66,7 @@ index f540c58eb326087dfdfddba17f32fce3c71e37c8..79131e2feef86419ea8b08bea509f635
 +# Текст объявления: %name% — моб, %level% — его уровень, %town% — ближайший город.
 +SuperChampionAnnounceText = Легендарный чемпион %name% (%level% ур.) появился у %town%!
 diff --git a/java/org/l2jmobius/gameserver/config/custom/ChampionMonstersConfig.java b/java/org/l2jmobius/gameserver/config/custom/ChampionMonstersConfig.java
-index 007e9ea62a458fe94317c679c6216323446bab71..e38db2d6b88fb3f88f7ee3a5734f6e261c523348 100644
+index 007e9ea62a458fe94317c679c6216323446bab71..8afdb4b990f9a8c8143c7123c5f3da604a7182c2 100644
 --- a/java/org/l2jmobius/gameserver/config/custom/ChampionMonstersConfig.java
 +++ b/java/org/l2jmobius/gameserver/config/custom/ChampionMonstersConfig.java
 @@ -22,10 +22,12 @@ package org.l2jmobius.gameserver.config.custom;
@@ -108,7 +109,7 @@ index 007e9ea62a458fe94317c679c6216323446bab71..e38db2d6b88fb3f88f7ee3a5734f6e26
  		CHAMPION_BLUE = loadTier(config, "ChampionBlue", Team.BLUE, 2, 2, 2, "");
 +		SUPER_CHAMPION_ENABLE = config.getBoolean("SuperChampionEnable", false);
 +		CHAMPION_SUPER = loadTier(config, "SuperChampion", Team.RED, 20, 20, 10, "");
-+		SUPER_CHAMPION_EFFECTS = superChampionEffects(config.getString("SuperChampionEffects", "BIG_BODY,ULTIMATE_DEFENCE"));
++		SUPER_CHAMPION_EFFECTS = superChampionEffects(config.getString("SuperChampionEffects", "BIG_BODY,ULTIMATE_DEFENCE,MAGIC_SQUARE"));
 +		SUPER_CHAMPION_ANNOUNCE = config.getString("SuperChampionAnnounce", "Region");
 +		SUPER_CHAMPION_ANNOUNCE_TEXT = config.getString("SuperChampionAnnounceText", "Legendary Champion %name% (%level%) has appeared near %town%!");
  		CHAMPION_REWARD_LOWER_LEVEL_ITEM_CHANCE = config.getInt("ChampionRewardLowerLvlItemChance", 0);

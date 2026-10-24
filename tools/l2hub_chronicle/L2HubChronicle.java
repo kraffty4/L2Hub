@@ -274,6 +274,11 @@ public class L2HubChronicle
 	private static void onLevel(OnPlayerLevelChanged event)
 	{
 		final Player player = event.getPlayer();
+		// Танатос (модуль фантомов) — секрет: его 76-й уровень и профа — не новость.
+		if (PhantomManager.getInstance().isSecret(player))
+		{
+			return;
+		}
 		for (int level : MILESTONES)
 		{
 			if ((event.getOldLevel() < level) && (event.getNewLevel() >= level))
@@ -291,6 +296,10 @@ public class L2HubChronicle
 			return;
 		}
 		final Player player = event.getPlayer();
+		if (PhantomManager.getInstance().isSecret(player))
+		{
+			return;
+		}
 		final String name = (hunter(player) ? "Охотник " : "Игрок ") + player.getName();
 		add("profession", name + " стал " + className(event.getTemplate().getPlayerClass().name()), player.getName(), null, null, null);
 	}

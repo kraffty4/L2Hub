@@ -5,9 +5,11 @@
                                        боевые скиллы ветки классов, статы от мобов спота
   spawns/Custom/L2HubFakePlayers.xml — спавны: фармеры на спотах, торговцы и афкшник в городах (точки по геодате)
   L2HubPhantoms.xml                  — напарники-фантомы (настоящие игроки без клиента, патч 0007): ветка классов,
-                                       внешность, шмот и BSS на каждый грейд, домашняя точка у гейткипера Гирана
+                                       внешность, шмот и BSS на каждый грейд, домашняя точка у гейткипера Гирана;
+                                       охотники; Танатос (REAPER, docs/PHANTOMS.md, 4.45) — лучший шмот грейда с бижутерией
   L2HubFakePersonas.json             — характеры фейков для сервиса мозгов (launcher/l2hub/brain.py), плюс Evi из Mobius
   L2HubPhantomPersonas.json          — характеры напарников (отдельный файл патча 0007; brain.py читает оба)
+  L2HubHunterKnowledge.json          — база знаний охотников для мозгов: споты, грейды, профы, рейд-боссы (tools/hunter_knowledge.py)
 Кто есть кто — таблицы PERSONAS и COMPANIONS ниже; всё остальное считается из датапака. Результат детерминирован.
 
 Использование:
@@ -61,6 +63,7 @@ KITS = {
     "ancient": dict(weapon=("ANCIENTSWORD", "lrhand", False), armor="LIGHT", shield=False, ai="FIGHTER", atk="ANCIENTSWORD", aspd=450, range=40),
     "mage": dict(weapon=("BLUNT", "lrhand", True), armor="MAGIC", shield=False, ai="MAGE", atk="BLUNT", aspd=333, range=40),
     "healer": dict(weapon=("BLUNT", "rhand", True), armor="MAGIC", shield=True, ai="HEALER", atk="BLUNT", aspd=333, range=40),
+    "fist": dict(weapon=("DUALFIST", "lrhand", False), armor="LIGHT", shield=False, ai="FIGHTER", atk="DUALFIST", aspd=325, range=40),
 }
 
 RACE_RU = {"HUMAN": ("Человек", "Человек"), "ELF": ("Эльф", "Эльфийка"), "DARK_ELF": ("Тёмный эльф", "Тёмная эльфийка"),
@@ -204,6 +207,20 @@ COMPANIONS = [
 ]
 ROLE_RU = {"HEALER": "хилер", "BUFFER": "баффер", "TANK": "танк", "DAMAGE": "дамагер"}
 
+# Танатос (решения автора 2026-10-23, docs/PHANTOMS.md, раздел 4.45): единственный ПК сервера — орк-кастетчик линии Тирана,
+# всегда level-го уровня в лучшем шмоте хроники для этого уровня, с бижутерией и рубахой (заточку, бафы и карму ставит ядро, PhantomThanatos).
+# Лучший — по атаке оружия и защите бижутерии в грейде уровня; не эпическая бижутерия и не именное оружие (REAPER_SKIP_WORDS).
+# Характер для мозгов (запрос "kind": "reaper", launcher/l2hub/brain.py) — в L2HubPhantomPersonas.json с reaper: true;
+# говорит он только по событиям ядра (убил, убит, охота, шёпот ему) и чаще молчит.
+REAPER = dict(name="Thanatos", race="ORC", sex="M", chain=[44, 47, 48, 114], kit="fist", level=76,
+              bio="Никто не знает, откуда он. Однажды появился в мире и с тех пор идёт от одного места охоты к другому, "
+                  "забирает игроков и охотников и уходит дальше. В города не заходит.",
+              traits="холодный, терпеливый, неумолимый; не злорадствует, не торгуется и не оправдывается; "
+                     "тех, кто бьёт его в ответ, уважает больше тех, кто бежит",
+              style="коротко и ровно, как приговор; без сленга, мата и смайлов; о себе говорит редко, иногда «мы»")
+REAPER_SKIP_WORDS = ("Valakas", "Antharas", "Zaken", "Baium", "Queen Ant", "Frintezza", "Beleth", "Core", "Orfen", "Freya",
+                     "Sealed", "Common", "limited", "Family")
+
 # Охотники-фантомы (этап 5, решение автора 2026-10-18): фермеры из PERSONAS (spot — число) становятся настоящими
 # игроками без клиента: начинают с 1 уровня в стартовой деревне своей расы и качаются сами. Их NPC-фейки не ставятся.
 HUNTERS = True
@@ -312,11 +329,13 @@ class Data:
                                                      kinds=kinds, charges=s.find("chargeConsume") is not None,
                                                      items=s.find("itemConsumeId") is not None or s.find("itemConsumeCount") is not None)
         self.items = {}
+        self.item_stats: dict[int, dict] = {}
         for f in (data / "stats/items").glob("*.xml"):
             root = ET.parse(f).getroot()
             for it in (root.findall("item") if (data / "stats/armorsets/Sets.xml").exists() else root.iter("item")):
                 sets = {x.get("name"): x.get("val") for x in it.findall("set")}
                 self.items[int(it.get("id"))] = dict(type=it.get("type"), name=it.get("name"), **sets)
+                self.item_stats[int(it.get("id"))] = {st.get("type"): st.text for st in it.findall("stats/stat")}
         self.npcs = {}
         for f in (data / "stats/npcs").glob("*.xml"):
             for n in ET.parse(f).getroot().iter("npc"):
@@ -453,6 +472,40 @@ class Data:
             if found:
                 return pick(self.budget(found), name, "weapon")
         raise ValueError(f"нет оружия грейда {grade_} для {name}")
+
+    def stat(self, item_id: int, name: str) -> float:
+        try:
+            return float(self.item_stats.get(item_id, {}).get(name) or 0)
+        except ValueError:
+            return 0
+
+    def best_weapon(self, grade_: str, kit: dict) -> int:
+        """Танатос: самое сильное по атаке оружие набора в грейде (из равных — с SA, затем меньший id); нет такого — любого хвата."""
+        wtype, body, magic = kit["weapon"]
+        found = [i for i, it in self.items.items() if it["type"] == "Weapon" and it.get("crystal_type", "NONE") == grade_
+                 and it.get("weapon_type") == wtype and (it.get("is_magic_weapon") == "true") == magic
+                 and not any(w in (it["name"] or "") for w in SKIP_WEAPON_WORDS + REAPER_SKIP_WORDS)]
+        if not found:
+            return self.hunter_weapon(grade_, kit, REAPER["name"])
+        return max(found, key=lambda i: (self.stat(i, "pAtk"), " - " in (self.items[i]["name"] or ""), -i))
+
+    def best_shirt(self, grade_: str) -> int:
+        """Танатос: рубаха (слот underwear: рубахи и татуировки — не купальники и не кулоны, что там лежат у Interlude, Classic и Essence) —
+        лучшая по физической защите и цене в грейде уровня, нет — в грейде ниже; нет совсем — 0."""
+        names = [g for g, _ in GRADES]
+        for gr in reversed(names[: names.index(grade_) + 1] if grade_ in names else names):
+            found = [i for i, it in self.items.items() if it["type"] == "Armor" and it.get("crystal_type", "NONE") == gr
+                     and it.get("bodypart") == "underwear" and any(w in (it["name"] or "") for w in ("Shirt", "Tattoo"))
+                     and not any(w in (it["name"] or "") for w in REAPER_SKIP_WORDS)]
+            if found:
+                return max(found, key=lambda i: (self.stat(i, "pDef"), int(self.items[i].get("price") or 0), -i))
+        return 0
+
+    def best_jewel(self, grade_: str, bodyparts: tuple) -> int:
+        """Танатос: бижутерия слота в грейде — с наибольшей магической защитой, не эпическая; нет — 0."""
+        found = [i for i, it in self.items.items() if it["type"] == "Armor" and it.get("crystal_type", "NONE") == grade_
+                 and it.get("bodypart") in bodyparts and not any(w in (it["name"] or "") for w in REAPER_SKIP_WORDS)]
+        return max(found, key=lambda i: (self.stat(i, "mDef"), int(self.items[i].get("price") or 0), -i)) if found else 0
 
     @staticmethod
     def plain(it: dict) -> bool:
@@ -707,6 +760,15 @@ def cluster_spots(geo: tn.Geo, tiles: dict, loose: list[tuple], radius: int = HU
     return spots, [loose[i] for i in sorted(free)]
 
 
+def mob_exp(t: ET.Element) -> float:
+    """Опыт за моба из шаблона (<acquire exp>); нет — 0."""
+    acquire = t.find("acquire")
+    try:
+        return float(acquire.get("exp", "0")) if acquire is not None else 0.0
+    except ValueError:
+        return 0.0
+
+
 def hunt_spots(d: Data, geo: tn.Geo) -> list[dict]:
     """Споты охотников по датапаку: группа спавна мобов (не РБ) с узким разбросом уровней — уровень (медиана), точка входа
     по геодате у центра и радиус охоты. Мобы-точки из групп, которые спотом не стали (целый квадрат карты в spawns/Others,
@@ -722,7 +784,8 @@ def hunt_spots(d: Data, geo: tn.Geo) -> list[dict]:
             levels, names, points, mobs, count = [], [], [], [], 0
             for n in sp.findall("npc"):
                 t = d.npcs.get(int(n.get("id")))
-                if t is None or t.get("type") != "Monster":
+                # Мобы без опыта (арена Krateis Cube, свита Core, ивентовые) — не спот: охотник стоял бы там с нулём.
+                if t is None or t.get("type") != "Monster" or not mob_exp(t):
                     continue
                 c = int(n.get("count", "1"))
                 levels += [int(t.get("level", "0"))] * c
@@ -998,9 +1061,43 @@ def main(data: Path, geodata: Path, out: Path | None = None) -> int:
                                       traits=p["traits"], style=p["style"], bio=p["bio"], aliases=p["aliases"])
         phantom_report.append(f"охотник {name:<10} {classes}; дом — {tn.GATEKEEPERS[START_VILLAGE_GK[p['race']]]} {x} {y} {z}")
 
+    # Танатос (раздел 4.45): дом — у гейткипера деревни орков (в мир он выходит на спот, дом — только для создания персонажа).
+    if HUNTERS:
+        r = REAPER
+        name, kit = r["name"], KITS[r["kit"]]
+        if name in personas or name in phantom_personas:
+            sys.exit(f"{name}: имя Танатоса уже занято")
+        d.check_chain(r["chain"])
+        gr = grade(r["level"])
+        armor = d.armor_set(gr, kit["armor"], name) or d.armor_set(gr, "HEAVY", name)
+        parts = {"rhand": d.best_weapon(gr, kit)}
+        parts.update((slot, armor[slot]) for slot in ("head", "chest", "legs", "gloves", "feet") if slot in armor)
+        jewels = {"neck": d.best_jewel(gr, ("neck",)), "ear": d.best_jewel(gr, ("rear;lear", "lear;rear")), "ring": d.best_jewel(gr, ("rfinger;lfinger", "lfinger;rfinger"))}
+        parts.update((k, v) for k, v in jewels.items() if v)
+        shirt = d.best_shirt(gr)
+        if shirt:
+            parts["shirt"] = shirt
+        attrs = "".join(f' {k}="{v}"' for k, v in parts.items())
+        names = ", ".join(d.items[v]["name"] for v in parts.values())
+        g = gk[START_VILLAGE_GK[r["race"]]]
+        gz = geo.cell(g["x"], g["y"], g["z"])[0]
+        classes = ", ".join(d.classes[cid][0] for cid in r["chain"])
+        phantom_xml.append(
+            f'\t<!-- {name}: Танатос, единственный ПК сервера; {classes}, всегда {r["level"]}-й -->\n'
+            f'\t<phantom name="{name}" kind="reaper" role="DAMAGE" female="false" face="{rnd(name, "face") % 3}" hairStyle="{rnd(name, "hair") % 5}" '
+            f'hairColor="{rnd(name, "hc") % 4}" classes="{",".join(map(str, r["chain"]))}" x="{g["x"]}" y="{g["y"]}" z="{gz}">\n'
+            f'\t\t<gear grade="{gr}" minLevel="{r["level"]}"{attrs} shots="{d.soulshot(gr)}" /> <!-- {names} -->\n'
+            '\t</phantom>\n')
+        phantom_report.append(f"Танатос {name}: {classes}, {r['level']}-й, {gr}: {names}")
+        phantom_personas[name] = dict(race=RACE_RU[r["race"]][0], sex=r["sex"], **{"class": d.classes[r["chain"][-1]][0]}, role="жнец", reaper=True,
+                                      traits=r["traits"], style=r["style"], bio=r["bio"])
+
     spots = hunt_spots(d, geo) if HUNTERS else []
     (out / "stats/npcs/custom").mkdir(parents=True, exist_ok=True)
     (out / "L2HubHuntSpots.xml").write_bytes(hunt_spots_xml(spots))
+    if spots:
+        import hunter_knowledge  # здесь, а не наверху: он сам импортирует этот модуль
+        hunter_knowledge.write(d, spots, out)
     (out / "L2HubPhantoms.xml").write_bytes((
         '<?xml version="1.0" encoding="UTF-8"?>\n'
         '<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="xsd/L2HubPhantoms.xsd">\n'

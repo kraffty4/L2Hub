@@ -7,6 +7,9 @@ window.WorldMap = (() => {
   // Окно отдаёт интерфейс своим http-сервером с корнем в ui/, devserver — тоже из ui/: путь один.
   const BASE = 'maps/';
   const TILE_MIN_SCALE = 0.2; // мельче — хватает обзорной картинки (128 px на тайл)
+  // Точки одного вида ближе GROUP_PX на экране — одна группа с числом (решение автора 2026-10-23); игрок и эпики — всегда отдельно.
+  const GROUP_PX = 22;
+  const SOLO = new Set(['player', 'epic']);
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
   function create(host, meta, { tip } = {}) {
@@ -24,7 +27,7 @@ window.WorldMap = (() => {
     const H = rows * bp;
     const have = new Set(meta.tiles);
     const shown = new Map(); // «x_y» → img
-    let s = 0.05, tx = 0, ty = 0, points = [], raf = 0;
+    let s = 0.05, tx = 0, ty = 0, points = [], groups = [], raf = 0;
     const over = root.querySelector('.wm-over');
     over.src = BASE + 'overview.webp';
     over.style.width = W + 'px';
@@ -89,22 +92,45 @@ window.WorldMap = (() => {
     function drawPoints() {
       const w = root.clientWidth, h = root.clientHeight;
       const labels = s >= 0.3;
-      let html = '';
+      const off = (p) => p.online === false && !p.live;
+      // Группы — жадно по порядку: точка входит в первую группу, чей центр (среднее её точек) ближе GROUP_PX.
+      groups = [];
       points.forEach((p, i) => {
         const [px, py] = toPx(p.x, p.y);
         const sx = tx + px * s, sy = ty + py * s;
         if (sx < -20 || sy < -20 || sx > w + 20 || sy > h + 20) return;
-        const cls = `wm-pt k-${p.kind}${p.online === false && !p.live ? ' off' : ''}`;
-        html += `<i class="${cls}" data-i="${i}" style="left:${sx.toFixed(1)}px;top:${sy.toFixed(1)}px">${labels || p.kind === 'player' ? `<b>${esc(p.name)}</b>` : ''}</i>`;
+        const solo = SOLO.has(p.kind);
+        const g = !solo && groups.find((x) => x.kind === p.kind && Math.hypot(x.sx - sx, x.sy - sy) < GROUP_PX);
+        if (!g) { groups.push({ sx, sy, solo, kind: p.kind, items: [{ p, i, sx, sy }] }); return; }
+        g.items.push({ p, i, sx, sy });
+        g.sx += (sx - g.sx) / g.items.length;
+        g.sy += (sy - g.sy) / g.items.length;
       });
+      let html = '';
+      for (const solo of [false, true]) { // игрок и боссы — поверх групп
+        groups.forEach((g, gi) => {
+          if (g.solo !== solo) return;
+          if (g.items.length === 1) {
+            const { p, i, sx, sy } = g.items[0];
+            html += `<i class="wm-pt k-${p.kind}${off(p) ? ' off' : ''}" data-i="${i}" style="left:${sx.toFixed(1)}px;top:${sy.toFixed(1)}px">${labels || p.kind === 'player' ? `<b>${esc(p.name)}</b>` : ''}</i>`;
+            return;
+          }
+          html += `<i class="wm-grp k-${g.kind}${g.items.every(({ p }) => off(p)) ? ' off' : ''}" data-g="${gi}" style="left:${g.sx.toFixed(1)}px;top:${g.sy.toFixed(1)}px">${g.items.length}</i>`;
+        });
+      }
       ptsBox.innerHTML = html;
+    }
+    function groupTip(g) {
+      const names = g.items.map(({ p }) => p.name);
+      return `<b>Рядом: ${names.length}</b><br>${esc(names.slice(0, 8).join(', '))}${names.length > 8 ? `<br>и ещё ${names.length - 8}` : ''}`
+        + '<br><span class="w-muted">щелчок — ближе</span>';
     }
 
     // Мышь: перетаскивание, колесо, двойной щелчок, подсказка по точке.
     let drag = null;
     root.addEventListener('pointerdown', (e) => {
       if (e.target.closest('.wm-ctl')) return;
-      drag = { x: e.clientX, y: e.clientY, tx, ty };
+      drag = { x: e.clientX, y: e.clientY, tx, ty, grp: groups[+e.target.closest('.wm-grp')?.dataset.g] };
       root.setPointerCapture(e.pointerId);
       root.classList.add('grab');
     });
@@ -117,16 +143,23 @@ window.WorldMap = (() => {
         return;
       }
       const dot = e.target.closest('.wm-pt');
-      if (!dot) { tipBox.classList.remove('on'); return; }
-      const p = points[+dot.dataset.i];
+      const grp = e.target.closest('.wm-grp');
+      if (!dot && !grp) { tipBox.classList.remove('on'); return; }
+      const p = dot && points[+dot.dataset.i];
       const r = root.getBoundingClientRect();
-      tipBox.innerHTML = tip ? tip(p) : esc(p.name);
+      tipBox.innerHTML = grp ? groupTip(groups[+grp.dataset.g]) : tip ? tip(p) : esc(p.name);
       tipBox.style.left = Math.min(r.width - 230, e.clientX - r.left + 14) + 'px';
       tipBox.style.top = Math.max(6, e.clientY - r.top - 10) + 'px';
       tipBox.classList.add('on');
     });
     const endDrag = () => { drag = null; root.classList.remove('grab'); };
-    root.addEventListener('pointerup', endDrag);
+    root.addEventListener('pointerup', (e) => {
+      // Щелчок по группе (без перетаскивания) — ближе к ней, пока не разойдётся.
+      const g = drag?.grp;
+      const click = drag && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 4;
+      endDrag();
+      if (g && click) { tipBox.classList.remove('on'); zoomAt(g.sx, g.sy, 2.5); }
+    });
     root.addEventListener('pointercancel', endDrag);
     root.addEventListener('pointerleave', () => tipBox.classList.remove('on'));
     root.addEventListener('wheel', (e) => {

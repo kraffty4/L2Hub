@@ -465,6 +465,24 @@ final class PhantomSupport
 			return true;
 		}
 
+		// Рейд на эпика, охота на Танатоса (разделы 4.43, 4.45): танк (кого бьёт босс) и лидер — первыми.
+		for (Player vip : PhantomRaid.getInstance().keepAlive(phantom))
+		{
+			if (vip.isDead() || !members.contains(vip))
+			{
+				continue;
+			}
+			final double hp = hpPercent(vip);
+			if ((hp < 50) && cast(state, phantom, firstUsable(phantom, FAST_HEALS, null), vip, now))
+			{
+				return true;
+			}
+			if ((hp < 85) && cast(state, phantom, firstUsable(phantom, STRONG_HEALS, PhantomCompat.buffByAbnormal(vip, AbnormalType.LIFE_FORCE_OTHERS) != null ? GREATER_HEAL : null), vip, now))
+			{
+				return true;
+			}
+		}
+
 		if ((worst != null) && (worstHp < 35) && cast(state, phantom, firstUsable(phantom, FAST_HEALS, null), worst, now))
 		{
 			return true;

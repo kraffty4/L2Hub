@@ -12,7 +12,8 @@
     *_WAIT_TIME и BELETH_MIN_PLAYERS, какие есть у хроники;
   ai/bosses/Frintezza/Frintezza.java (старая Фринтеза с командным каналом 4–5 пати, если есть) — при SmallWorldEpics
     вход лидеру пати без канала (заходит его пати; канал — как раньше, но без требования 4–5 пати).
-Сила эпиков (HP, урон) не меняется: это рейды охотников (ядро фантомов, epilogue-h5).
+Силу эпиков патч не трогает: при SmallWorldEpics её режет ядро фантомов (PhantomEpics, docs/PHANTOMS.md, раздел 4.43) —
+Королева, Ядро, Орфен и Закен: урон по ним ×2,5 (как 40 % HP), свита урезана.
 
     python -X utf8 tools/l2hub_epics_small.py <id>           — только собрать и проверить патч (в дерево не пишет)
     python -X utf8 tools/l2hub_epics_small.py <id> --write   — собрать патч в patches/<id>/ и наложить на дерево

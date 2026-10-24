@@ -195,6 +195,14 @@ public final class PhantomCompat
 		return player.getKarma();
 	}
 
+	/**
+	 * Танатос (раздел 4.45): карма ПК.
+	 */
+	public static void setKarma(Player player, int value)
+	{
+		player.setKarma(value);
+	}
+
 	public static boolean isInTown(Player player)
 	{
 		return player.isInsideZone(ZoneId.TOWN);

@@ -98,6 +98,18 @@ public class PhantomManager
 	}
 
 	/**
+	 * Секретный персонаж модуля — Танатос (docs/PHANTOMS.md, раздел 4.45): о нём не пишут ни летопись, ни окна. По имени, а не по {@link #isPhantom}:
+	 * уровни и профессию он получает при сборке, ещё до входа в мир.
+	 * @param player игрок
+	 * @return это он
+	 */
+	public boolean isSecret(Player player)
+	{
+		final PhantomTemplate reaper = player == null ? null : PhantomData.getInstance().getReaper();
+		return (reaper != null) && reaper.getName().equalsIgnoreCase(player.getName());
+	}
+
+	/**
 	 * @param template напарник
 	 * @return его фантом в мире или {@code null}
 	 */

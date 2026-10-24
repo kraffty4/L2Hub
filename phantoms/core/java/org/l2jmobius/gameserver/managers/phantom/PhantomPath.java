@@ -49,7 +49,7 @@ public final class PhantomPath
 	public static List<Location> find(int sx, int sy, int sz, int tx, int ty, int tz, int reach, int instanceId)
 	{
 		final long start = System.nanoTime();
-		final List<Location> path = search(sx, sy, sz, tx, ty, tz, reach, instanceId);
+		final List<Location> path = search(sx, sy, sz, tx, ty, tz, reach, instanceId, MAX_EXPANDED);
 		final long nanos = System.nanoTime() - start;
 		synchronized (PhantomPath.class)
 		{
@@ -72,11 +72,20 @@ public final class PhantomPath
 	}
 
 	/**
+	 * С другим потолком раскрытых узлов и без сводки цены охотников: Танатосу — путь на весь перегон, до 45 тыс. (раздел 4.45); время выбора спота с поиском он пишет в свой лог (`picked in`).
+	 */
+	public static List<Location> find(int sx, int sy, int sz, int tx, int ty, int tz, int reach, int instanceId, int maxExpanded)
+	{
+		return search(sx, sy, sz, tx, ty, tz, reach, instanceId, maxExpanded);
+	}
+
+	/**
 	 * Поиск маршрута.
 	 * @param reach дойти ближе этого к цели — уже на месте (охотнику — радиус спота): сама точка входа бывает в «кармане» геодаты, куда прямой нет
+	 * @param maxExpanded потолок раскрытых узлов
 	 * @return точки пути от старта (без него) до цели или до места в {@code reach} от неё, каждая видна прямо из предыдущей; null — пути в окне нет
 	 */
-	private static List<Location> search(int sx, int sy, int sz, int tx, int ty, int tz, int reach, int instanceId)
+	private static List<Location> search(int sx, int sy, int sz, int tx, int ty, int tz, int reach, int instanceId, int maxExpanded)
 	{
 		final GeoEngine geo = GeoEngine.getInstance();
 		final int minI = (Math.min(sx, tx) - MARGIN - sx) / STEP;
@@ -98,7 +107,7 @@ public final class PhantomPath
 		open.add(new float[] { (float) Math.hypot(tx - sx, ty - sy), start });
 		int goal = -1;
 		int expanded = 0;
-		while (!open.isEmpty() && (expanded < MAX_EXPANDED))
+		while (!open.isEmpty() && (expanded < maxExpanded))
 		{
 			final int node = (int) open.poll()[1];
 			if (closed[node])
