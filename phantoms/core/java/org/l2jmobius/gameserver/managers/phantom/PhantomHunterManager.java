@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -19,6 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.l2jmobius.commons.threads.ThreadPool;
@@ -32,6 +34,7 @@ import org.l2jmobius.gameserver.data.xml.SkillData;
 import org.l2jmobius.gameserver.entity.Location;
 import org.l2jmobius.gameserver.entity.World;
 import org.l2jmobius.gameserver.entity.WorldObject;
+import org.l2jmobius.gameserver.entity.actor.Attackable;
 import org.l2jmobius.gameserver.entity.actor.Creature;
 import org.l2jmobius.gameserver.entity.actor.Npc;
 import org.l2jmobius.gameserver.entity.actor.Player;
@@ -44,6 +47,7 @@ import org.l2jmobius.gameserver.entity.actor.instance.Monster;
 import org.l2jmobius.gameserver.entity.actor.instance.Teleporter;
 import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
 import org.l2jmobius.gameserver.entity.item.instance.Item;
+import org.l2jmobius.gameserver.entity.itemcontainer.Inventory;
 import org.l2jmobius.gameserver.entity.zone.ZoneId;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
 import org.l2jmobius.gameserver.managers.FakePlayerBrain;
@@ -218,6 +222,20 @@ public class PhantomHunterManager
 	private static final long STRATEGY_TEST_DURATION = 600000;
 	/** Ответа мозгов нет столько — запрос считается потерянным. */
 	private static final long THINK_TIMEOUT = 60000;
+	/** Сервер отказал стратегу (нет спота, не по уровню, занято) — следующее решение не позже чем через столько: модель выберет другое. */
+	private static final long REFUSED_RETHINK = 60000;
+	/** [[PARTY имя]] (протокол v1): кого звать — в этом радиусе (тот же спот) и в ±этих уровнях. */
+	private static final int PARTY_ASK_RANGE = 3000;
+	private static final int PARTY_ASK_LEVEL_GAP = 5;
+	/** Живой игрок: ответ на окно «вступить в пати?» (у Mobius запрос живёт 15–30 с) и инвайт от лидера после просьбы в личку — ждать столько. */
+	private static final long PARTY_INVITE_WAIT = 40000;
+	private static final long PARTY_ASK_WAIT = 120000;
+	/** BUY и SELL: в город ушёл, а до дел там не дошло (рейд, ивент) — через столько забыть. */
+	private static final long TOWN_TASK_TTL = 600000;
+	/** Самопроверка MIND: между шагами сценария. */
+	private static final long MIND_TEST_GAP = 20000;
+	/** Самопроверка MIND ждёт, пока в мир войдут все охотники, но не дольше этого с первого подходящего. */
+	private static final long MIND_TEST_WAIT = 120000;
 	private static final long STRATEGY_LOG_INTERVAL = 60000;
 	/** Настроение (патч 0026): после нападения живого игрока или смерти охотник столько настороже. */
 	private static final long GUARDED_TIME = 600000;
@@ -348,6 +366,13 @@ public class PhantomHunterManager
 		long lastLfp;
 		/** Стратег решил сесть в лавку: в городе — в лавку, даже если с прошлой не прошло 30 минут. */
 		boolean wantStore;
+		/** Стратег велел купить или продать вещь по имени (BUY, SELL): в городе — первым делом, итог — в это решение. */
+		Choice townTask;
+		/** Стратег позвал живого игрока в пати или попросился к нему ([[PARTY имя]]): кого, до какого времени ждать и сам ли звал (окно «вступить в пати?»). */
+		volatile Choice partyAsk;
+		int partyAskId;
+		long partyAskUntil;
+		boolean partyAskInvited;
 		/** Рынок (патч 0035): за чем идёт в лавку на площади Гирана и до какого времени; {@code null} — не идёт. */
 		PhantomMarket.Offer shop;
 		long shopUntil;
@@ -373,8 +398,15 @@ public class PhantomHunterManager
 	private volatile boolean _wanted;
 	/** Живых игроков в игре (раз в 10 с). */
 	private volatile int _realPlayers;
+	/** Счёт убитых мобов для итога решения (result) подписан. */
+	private boolean _killListener;
 	private volatile long _strategyTestUntil;
 	private int _strategyTestCount;
+	/** Самопроверка MIND: чей сценарий и какой шаг. */
+	private volatile Hunter _mindTest;
+	/** С какого времени самопроверка MIND ждёт входа всех охотников; 0 — не ждёт. */
+	private long _mindWaitSince;
+	private int _mindStep;
 	private volatile long _lastLfp;
 	private volatile long _lastStrategyLog;
 	private volatile long _lastStrategyFailLog;
@@ -407,6 +439,11 @@ public class PhantomHunterManager
 
 		HuntSpotData.getInstance();
 		PhantomRelations.getInstance().start();
+		if (!_killListener)
+		{
+			_killListener = true;
+			PhantomCompat.addAttackableKillListener(this, this::onMobKilled);
+		}
 		LOGGER.info(getClass().getSimpleName() + ": " + _hunters.size() + " hunters, mode " + PhantomHuntersConfig.HUNTERS_MODE + ".");
 		if ((_task == null) || _task.isDone())
 		{
@@ -654,6 +691,8 @@ public class PhantomHunterManager
 			PhantomPk.getInstance().control(onSpots, now);
 			// Танатос (раздел 4.45): часть охотников-фантомов — охотники в мире, и он тоже.
 			PhantomThanatos.getInstance().control(now);
+			// Живые кланы (раздел 4.50): основание, набор, уровни, скиллы, роспуск.
+			PhantomHunterClans.getInstance().control(inWorld(), now);
 			// «Разум 2.0»: кто из охотников рядом с живым игроком.
 			final List<Player> online = new ArrayList<>();
 			for (Hunter hunter : _hunters.values())
@@ -740,12 +779,30 @@ public class PhantomHunterManager
 				}
 				sb.append(",\"relations\":");
 				PhantomRelations.getInstance().top(sb, player, 5);
+				// Клан и одиночка (раздел 4.50).
+				PhantomHunterClans.getInstance().status(sb, player);
 				final Choice last = hunter.lastChoice;
 				if (last != null)
 				{
 					sb.append(",\"strategy\":{\"at\":").append(last.at).append(',');
 					FakePlayerBrain.field(sb, "decision", last.toString()).append(',');
+					if (last.done)
+					{
+						// Протокол v1: выполнено ли, а нет — почему.
+						sb.append("\"ok\":").append(last.ok).append(',');
+						if (!last.ok)
+						{
+							FakePlayerBrain.field(sb, "reason", last.reason).append(',');
+						}
+					}
 					FakePlayerBrain.field(sb, "thought", last.thought).append('}');
+				}
+				// Цель охотника от стратега ([[GOAL текст]], протокол v1).
+				final String goal = player.getVariables().getString(PhantomHunterStrategy.GOAL_VARIABLE, "");
+				if (!goal.isEmpty())
+				{
+					sb.append(',');
+					FakePlayerBrain.field(sb, "goal", goal);
 				}
 				sb.append(",\"nextThink\":").append(hunter.nextThink);
 				// «Разум 2.0»: охотник рядом с живым игроком — окно покажет, кто думает расширенно.
@@ -911,6 +968,12 @@ public class PhantomHunterManager
 		hunter.nextThink = now + Rnd.get(60000L, Math.max(60000L, PhantomHunterStrategy.nextDelay()));
 		hunter.thinkingSince = 0;
 		hunter.choice = null;
+		// Был вне игры после прошлого решения — его итог неполный, result не шлётся.
+		final Choice last = hunter.lastChoice;
+		if (last != null)
+		{
+			last.away = true;
+		}
 		hunter.afkUntil = 0;
 		hunter.lfpUntil = 0;
 		hunter.wantStore = false;
@@ -924,6 +987,7 @@ public class PhantomHunterManager
 	private void think(Hunter hunter, Player player, long now)
 	{
 		played(hunter, player, now);
+		track(hunter, player, now);
 		// PvP-ивент (раздел 4.33): на арене охотника ведёт бой ивента, убитого поднимает сам ивент — до обработки смерти; кончился — назад на кач.
 		final PhantomEvents.Drive event = PhantomEvents.getInstance().drive(player, hunter.template, now);
 		if (event == PhantomEvents.Drive.FIGHTS)
@@ -950,6 +1014,8 @@ public class PhantomHunterManager
 		}
 		// Пати охотников (патч 0036): лидер ушёл с кача, погиб, время вышло — распустить.
 		PhantomHunterParty.getInstance().check(player, hunter.phase == Phase.HUNT, now);
+		// Стратег позвал живого игрока в пати ([[PARTY имя]]): согласился — в пати, нет ответа — отказ.
+		partyAsk(hunter, player, now);
 		if (player.isDead())
 		{
 			died(hunter, player, now);
@@ -987,6 +1053,7 @@ public class PhantomHunterManager
 		if ((pending != null) && (hunter.phase != Phase.HUNT))
 		{
 			hunter.choice = null;
+			pending.result(false, PhantomHunterStrategy.NOT_DONE);
 			LOGGER.info(getClass().getSimpleName() + ": Strategy: " + player.getName() + " drops " + pending + ", busy (" + hunter.phase + ").");
 		}
 
@@ -1191,6 +1258,16 @@ public class PhantomHunterManager
 			hunter.deadSince = now;
 			hunter.deaths.addLast(now);
 			hunter.lastDeath = now;
+			final Choice last = hunter.lastChoice;
+			if (last != null)
+			{
+				last.deaths++;
+			}
+			final Choice pending = hunter.choice;
+			if (pending != null)
+			{
+				pending.result(false, "не успел: умер");
+			}
 			hunter.choice = null;
 			endFight(hunter, player);
 			if (hunter.phase != Phase.PARTY)
@@ -1799,6 +1876,8 @@ public class PhantomHunterManager
 			{
 				turnInQuest(hunter, player);
 			}
+			// Стратег велел купить или продать вещь (BUY, SELL) — первым делом, до покупок по правилам.
+			townTask(hunter, player, now);
 			final List<String> done = PhantomHunterOutfit.townChores(player, hunter.template, hunter.unsold);
 			player.storeMe();
 			LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " (" + player.getLevel() + ") in " + MapRegionData.getInstance().getClosestTownName(player) + ": " + (done.isEmpty() ? "nothing to do" : String.join(", ", done)) + "; " + player.getAdena() + " adena.");
@@ -2849,6 +2928,39 @@ public class PhantomHunterManager
 		{
 			return;
 		}
+		// Стратегу нужен охотник на споте, лучше сильнее 20-го. Охотники входят по одному за тик, и сильный мог ещё не войти: ждём всех, но не дольше MIND_TEST_WAIT.
+		if ("MIND".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST))
+		{
+			if (mindTestHunter() == null)
+			{
+				return;
+			}
+			final long now = System.currentTimeMillis();
+			final long inWorld = _hunters.values().stream().filter(hunter -> PhantomManager.getInstance().getPhantom(hunter.template) != null).count();
+			if (_mindWaitSince == 0)
+			{
+				_mindWaitSince = now;
+				LOGGER.info(getClass().getSimpleName() + ": SelfTest MIND: waits for all hunters to enter (" + inWorld + " of " + _hunters.size() + "), at most " + (MIND_TEST_WAIT / 1000) + " s.");
+			}
+			if ((inWorld < _hunters.size()) && ((now - _mindWaitSince) < MIND_TEST_WAIT))
+			{
+				return;
+			}
+			LOGGER.info(getClass().getSimpleName() + ": SelfTest MIND: picks a hunter after " + ((now - _mindWaitSince) / 1000) + " s, " + inWorld + " of " + _hunters.size() + " hunters in the world.");
+			_mindWaitSince = 0;
+		}
+		// Кланам нужны двое охотников в мире (раздел 4.41).
+		final boolean clan = "CLAN".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
+		if (clan && (inWorld().size() < 2))
+		{
+			return;
+		}
+		// Живым кланам — пятеро свободных от 10-го уровня (раздел 4.50); охотники входят по одному — ждём.
+		final boolean clanLife = "CLANLIFE".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
+		if (clanLife && (inWorld().stream().filter(p -> (p.getLevel() >= 10) && (p.getClan() == null)).count() < 12))
+		{
+			return;
+		}
 
 		GlobalVariablesManager.getInstance().set(SELF_TEST_VARIABLE, PhantomHuntersConfig.HUNTERS_SELF_TEST_ID);
 		GlobalVariablesManager.getInstance().storeMe();
@@ -2860,6 +2972,24 @@ public class PhantomHunterManager
 		if (ui)
 		{
 			uiSelfTest(views.get(0).player);
+			return;
+		}
+		// Протокол v1 стратега (docs/MIND.md, шаг 3): решения по сценарию, без мозгов.
+		if ("MIND".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST))
+		{
+			mindSelfTest();
+			return;
+		}
+		// Кланы без клиента (раздел 4.41): живого игрока в клане играет охотник.
+		if (clan)
+		{
+			PhantomClans.getInstance().selfTest(inWorld());
+			return;
+		}
+		// Живые кланы (раздел 4.50): основание, набор, уровни, скиллы, верность, роспуск.
+		if (clanLife)
+		{
+			PhantomHunterClans.getInstance().selfTest(inWorld());
 			return;
 		}
 		// Эпик без клиента (раздел 4.43): живого в рейде играет охотник.
@@ -3083,6 +3213,7 @@ public class PhantomHunterManager
 			if ((now - choice.at) > PhantomHunterStrategy.CHOICE_TTL)
 			{
 				hunter.choice = null;
+				choice.result(false, "не успел: всё время был в бою");
 				LOGGER.info(getClass().getSimpleName() + ": Strategy: " + player.getName() + " drops " + choice + ", no chance to do it.");
 				return false;
 			}
@@ -3090,7 +3221,13 @@ public class PhantomHunterManager
 			final boolean anytime = (choice.decision == Decision.HUNT) || (choice.decision == Decision.PARTY);
 			if (!anytime && (player.isInCombat() || player.isAttackingNow() || player.isCastingNow()))
 			{
-				return false;
+				if ((now - choice.at) < (PhantomHunterStrategy.CHOICE_TTL / 2))
+				{
+					return false;
+				}
+				// Полсрока не было промежутка между боями (хил в пати охотников, моб за мобом): как живой со свитком — бросить бой и сделать, что решил.
+				stop(player);
+				LOGGER.info(getClass().getSimpleName() + ": Strategy: " + player.getName() + " breaks off the fight for " + choice + ".");
 			}
 
 			hunter.choice = null;
@@ -3127,6 +3264,11 @@ public class PhantomHunterManager
 	 */
 	private void ask(Hunter hunter, Player player, long now)
 	{
+		// Самопроверка MIND: ответ — по сценарию, без мозгов, бюджета и живых игроков; запрос — в лог.
+		if (mindTest(hunter, player, now))
+		{
+			return;
+		}
 		if (!strategyOn(now))
 		{
 			// Без живых игроков не думает; войдёт игрок — охотники начнут думать вразнобой, а не все разом.
@@ -3149,21 +3291,8 @@ public class PhantomHunterManager
 		hunter.nextThink = now + (focusGap > 0 ? focusGap : PhantomHunterStrategy.nextDelay());
 		hunter.thinkingSince = now;
 		final Facts facts = facts(hunter, player, now);
-		final Map<Decision, String> options = options(hunter, player, now);
-		FakePlayerBrain.getInstance().send(PhantomHunterStrategy.request(player, hunter.template, facts, options), reply ->
-		{
-			hunter.thinkingSince = 0;
-			final Choice choice = PhantomHunterStrategy.parse(reply, options.keySet(), System.currentTimeMillis());
-			if (choice == null)
-			{
-				LOGGER.info(getClass().getSimpleName() + ": Strategy: " + player.getName() + " got garbage from the brain («" + reply + "»), rules decide.");
-				return;
-			}
-
-			hunter.lastChoice = choice;
-			hunter.choice = choice;
-			LOGGER.info(getClass().getSimpleName() + ": Strategy: " + player.getName() + " (" + player.getLevel() + ", " + spotLabel(hunter.spot) + ") decides " + choice + ": «" + choice.thought + "»" + (facts.test.isEmpty() ? "." : " [SelfTest " + facts.test + "]."));
-		}, () ->
+		final Map<Decision, String> options = options(hunter, player, now, facts);
+		FakePlayerBrain.getInstance().send(PhantomHunterStrategy.request(player, hunter.template, facts, options), reply -> decided(hunter, player, facts, options, reply), () ->
 		{
 			hunter.thinkingSince = 0;
 			final long time = System.currentTimeMillis();
@@ -3173,6 +3302,73 @@ public class PhantomHunterManager
 				LOGGER.info(getClass().getSimpleName() + ": Strategy: " + player.getName() + " got no decision (brain failed or answered garbage), rules decide" + (facts.test.isEmpty() ? "." : " [SelfTest " + facts.test + "]."));
 			}
 		}, PhantomFocus.getInstance().of(player) != null ? PhantomChat.FOCUS_TIMEOUT : 0);
+	}
+
+	/**
+	 * Ответ стратега (поток HTTP): решение ждёт тика ({@link #strategy}), цель ([[GOAL текст]]) — сразу в переменную персонажа.
+	 */
+	private void decided(Hunter hunter, Player player, Facts facts, Map<Decision, String> options, String reply)
+	{
+		hunter.thinkingSince = 0;
+		final Choice choice = PhantomHunterStrategy.parse(reply, options.keySet(), System.currentTimeMillis());
+		if (choice == null)
+		{
+			LOGGER.info(getClass().getSimpleName() + ": Strategy: " + player.getName() + " got garbage from the brain («" + reply + "»), rules decide.");
+			return;
+		}
+
+		if ((choice.goal != null) && !choice.goal.equals(facts.goal))
+		{
+			player.getVariables().set(PhantomHunterStrategy.GOAL_VARIABLE, choice.goal);
+			ThreadPool.execute(() -> player.getVariables().storeMe());
+			LOGGER.info(getClass().getSimpleName() + ": Strategy: " + player.getName() + (choice.goal.isEmpty() ? " drops his goal." : " sets his goal «" + choice.goal + "»."));
+		}
+		choice.start(player, choice.at);
+		hunter.lastChoice = choice;
+		hunter.choice = choice;
+		LOGGER.info(getClass().getSimpleName() + ": Strategy: " + player.getName() + " (" + player.getLevel() + ", " + spotLabel(hunter.spot) + ") decides " + choice + ": «" + choice.thought + "»" + (facts.test.isEmpty() ? "." : " [SelfTest " + facts.test + "]."));
+	}
+
+	/**
+	 * Итог прошлого решения («Разум 2.0», шаг 4): где охотник был этот тик — на своём споте (в радиусе, где поводок считает, что дошёл) или нет — и в пати ли.
+	 */
+	private void track(Hunter hunter, Player player, long now)
+	{
+		final Choice last = hunter.lastChoice;
+		if ((last == null) || !last.started || last.away)
+		{
+			return;
+		}
+
+		final HuntSpot spot = hunter.spot;
+		final boolean onSpot = (spot != null) && ((hunter.phase == Phase.HUNT) || (hunter.phase == Phase.PARTY)) && (player.calculateDistance2D(spot.entry) <= (spot.radius * 1.3));
+		last.track(now, onSpot ? spot.name : "", player.isInParty());
+	}
+
+	/**
+	 * Моб убит (событие, не тик): засчитать в итог решения убийце-охотнику и охотникам из его пати — опыт за моба идёт всей пати.
+	 */
+	private void onMobKilled(Player killer, Attackable mob)
+	{
+		if (killer.isInParty())
+		{
+			for (Player member : killer.getParty().getMembers())
+			{
+				countKill(member);
+			}
+			return;
+		}
+		countKill(killer);
+	}
+
+	private void countKill(Player player)
+	{
+		final Hunter hunter = PhantomManager.getInstance().isPhantom(player) ? _hunters.get(player.getName().toLowerCase()) : null;
+		final Choice last = hunter != null ? hunter.lastChoice : null;
+		if (last != null)
+		{
+			last.kills.incrementAndGet();
+		}
 	}
 
 	/**
@@ -3194,6 +3390,8 @@ public class PhantomHunterManager
 		facts.townMinutes = (int) ((now - hunter.lastTown) / 60000);
 		facts.storeMinutes = hunter.lastStoreSession > 0 ? (int) ((now - hunter.lastStoreSession) / 60000) : -1;
 		facts.realPlayers = _realPlayers;
+		facts.goal = player.getVariables().getString(PhantomHunterStrategy.GOAL_VARIABLE, "");
+		facts.last = hunter.lastChoice;
 		if (now < _strategyTestUntil)
 		{
 			// Самопроверка: первый ответ — мусор (откат на правила), следующие шесть — случайный вариант без модели (выполнение).
@@ -3204,9 +3402,10 @@ public class PhantomHunterManager
 	}
 
 	/**
-	 * Что стратегу можно выбрать сейчас, с пометкой для модели: смены спота — если есть куда, лавка — если есть что продать и место в Гиране, пати — если крик кто-то услышит и не было крика недавно.
+	 * Что стратегу можно выбрать сейчас, с пометкой для модели: смены спота — если есть куда, лавка — если есть что продать и место в Гиране, пати — если крик кто-то услышит и не было крика недавно
+	 * или рядом есть кого позвать. У BUY, SELL и PARTY с именем выбор — в {@link Facts#choices} (протокол v1).
 	 */
-	private Map<Decision, String> options(Hunter hunter, Player player, long now)
+	private Map<Decision, String> options(Hunter hunter, Player player, long now, Facts facts)
 	{
 		final Map<Decision, String> options = new LinkedHashMap<>();
 		options.put(Decision.HUNT, hunter.spot != null ? spotNote(hunter.spot) : "");
@@ -3220,15 +3419,46 @@ public class PhantomHunterManager
 		{
 			options.put(Decision.SPOT_DOWN, spotNote(hunter.downSpot));
 		}
+		// Протокол v1: любой спот по имени ({@link #namedSpot}) — подойдёт, если он его не перерос и мобы ему не рано.
+		if (hunter.spot != null)
+		{
+			options.put(Decision.SPOT_TO, "имя спота из базы знаний; подойдёт, если мобы примерно от " + Math.max(1, player.getLevel() - 3) + " до " + (player.getLevel() + 4) + " ур.");
+		}
 		options.put(Decision.TOWN, MapRegionData.getInstance().getClosestTownName(player));
 		final String drop = PhantomHunterStrategy.drop(player);
 		if (!drop.isEmpty() && (stores() < PhantomHuntersConfig.HUNTER_MAX_STORES))
 		{
 			options.put(Decision.STORE, drop);
 		}
-		if (((_realPlayers > 0) || (now < _strategyTestUntil)) && ((now - hunter.lastLfp) >= LFP_COOLDOWN) && ((now - _lastLfp) >= LFP_GLOBAL_COOLDOWN))
+		// Протокол v1: купить у NPC вещь лучше надетой — если хоть одна по карману; продать NPC из сумки — если там есть вещь не дешевле порога лавки (мелочь TOWN сдаёт сам).
+		// В выборе BUY — только то, что продают в городе (торговцы NPC, GM-шоп): нечего купить лучше надетого — без варианта, но с признаком buy_empty.
+		final List<PhantomHunterOutfit.Offer> offers = PhantomHunterOutfit.buyOffers(player, hunter.template);
+		final String buy = PhantomHunterStrategy.buyChoices(offers);
+		if (buy != null)
 		{
-			options.put(Decision.PARTY, player.getLevel() >= 20 ? "крикнуть в торговый чат" : "крикнуть в общий чат рядом (торговый — с 20 ур.)");
+			options.put(Decision.BUY, "купить в " + MapRegionData.getInstance().getClosestTownName(player) + " у торговцев и надеть, по их цене; можно списком через «;» — купит по порядку, сколько хватит; свободно " + money(Math.max(0, PhantomHunterOutfit.buyBudget(player))) + " (остальное — на сосы и телепорт)");
+			facts.choices.put(Decision.BUY, buy);
+		}
+		facts.buyEmpty = offers.isEmpty();
+		if (!PhantomHunterOutfit.storeGoods(player).isEmpty())
+		{
+			final String sell = PhantomHunterStrategy.sellChoices(PhantomHunterOutfit.sellOffers(player));
+			if (sell != null)
+			{
+				options.put(Decision.SELL, "продать NPC в ближайшем городе за полцены — быстро, а лавка в Гиране дольше, но дороже");
+				facts.choices.put(Decision.SELL, sell);
+			}
+		}
+		final boolean shout = shoutReady(hunter, now);
+		final String party = PhantomHunterStrategy.partyChoices(partyCandidates(player));
+		if (shout || (party != null))
+		{
+			final String where = player.getLevel() >= 20 ? "крикнуть в торговый чат" : "крикнуть в общий чат рядом (торговый — с 20 ур.)";
+			options.put(Decision.PARTY, party == null ? where : (shout ? "без имени — " + where + "; " : "") + "с именем — позвать его в пати или попроситься к нему");
+			if (party != null)
+			{
+				facts.choices.put(Decision.PARTY, party);
+			}
 		}
 		options.put(Decision.AFK, "");
 		// Рейд по решению стратега (раздел 4.32): рейда нет, под него есть свободный РБ и команда с хилером.
@@ -3281,7 +3511,8 @@ public class PhantomHunterManager
 	}
 
 	/**
-	 * Выполнить решение стратега через фазы охотника. Не вышло (некуда, нечего продавать) — остаётся на споте, дальше правила.
+	 * Выполнить решение стратега через фазы охотника. Не вышло (некуда, нечего продавать) — остаётся на споте, дальше правила; причина — в итог решения
+	 * ({@link Choice#result}), её увидит модель, и думает он снова скоро ({@link #refuse}).
 	 * @return {@code true}, если охотник ушёл со спота
 	 */
 	private boolean apply(Hunter hunter, Player player, Choice choice, long now)
@@ -3296,11 +3527,27 @@ public class PhantomHunterManager
 				final HuntSpot target = choice.decision == Decision.SPOT_UP ? hunter.upSpot : hunter.downSpot;
 				if ((target == null) || outgrown(target, player.getLevel()))
 				{
-					LOGGER.info(who + ": no such spot now, keeps hunting.");
+					refuse(hunter, choice, now, who + ": no such spot now, keeps hunting.", "этого спота уже нет в вариантах");
 					return false;
 				}
 
 				LOGGER.info(who + ": " + spotLabel(hunter.spot) + " -> " + spotLabel(target) + ".");
+				choice.result(true, "");
+				moveToSpot(hunter, player, target);
+				return true;
+			}
+			case SPOT_TO:
+			{
+				final StringBuilder why = new StringBuilder();
+				final HuntSpot target = namedSpot(hunter, player, choice.arg, why);
+				if (target == null)
+				{
+					refuse(hunter, choice, now, who + ": refused (" + why + "), keeps hunting.", why.toString());
+					return false;
+				}
+
+				LOGGER.info(who + ": " + spotLabel(hunter.spot) + " -> " + spotLabel(target) + " (" + (int) player.calculateDistance2D(target.entry) + ").");
+				choice.result(true, "");
 				moveToSpot(hunter, player, target);
 				return true;
 			}
@@ -3308,59 +3555,417 @@ public class PhantomHunterManager
 			{
 				if ((now - hunter.lastTown) < TOWN_COOLDOWN)
 				{
-					LOGGER.info(who + ": was in town a minute ago, keeps hunting.");
+					refuse(hunter, choice, now, who + ": was in town a minute ago, keeps hunting.", "только что был в городе");
 					return false;
 				}
 
 				LOGGER.info(who + ": goes to town.");
+				choice.result(true, "");
 				goToTown(hunter, player, now);
 				return true;
 			}
 			case STORE:
 			{
-				if (PhantomHunterOutfit.storeGoods(player).isEmpty() || (stores() >= PhantomHuntersConfig.HUNTER_MAX_STORES))
+				final boolean nothing = PhantomHunterOutfit.storeGoods(player).isEmpty();
+				if (nothing || (stores() >= PhantomHuntersConfig.HUNTER_MAX_STORES))
 				{
-					LOGGER.info(who + ": nothing to sell or no place in Giran, keeps hunting.");
+					refuse(hunter, choice, now, who + ": nothing to sell or no place in Giran, keeps hunting.", nothing ? "нечего продать" : "в Гиране нет места для лавки");
 					return false;
 				}
 
 				hunter.wantStore = true;
 				LOGGER.info(who + ": town, then a store in Giran.");
+				choice.result(true, "");
 				goToTown(hunter, player, now);
+				return true;
+			}
+			case BUY:
+			case SELL:
+			{
+				// Протокол v1: проверить до похода (нет в списке, не по карману, надето), сделать — в городе первым делом ({@link #townTask}), итог — там.
+				final String why = choice.decision == Decision.BUY ? PhantomHunterOutfit.buyNamedList(player, hunter.template, choice.arg, true, null).why() : PhantomHunterOutfit.sellNamed(player, choice.arg, true, null);
+				if (why != null)
+				{
+					refuse(hunter, choice, now, who + ": refused (" + why + "), keeps hunting.", why);
+					return false;
+				}
+
+				LOGGER.info(who + ": goes to " + MapRegionData.getInstance().getClosestTownName(player) + " to " + (choice.decision == Decision.BUY ? "buy" : "sell") + " it.");
+				goToTown(hunter, player, now);
+				hunter.townTask = choice;
 				return true;
 			}
 			case PARTY:
 			{
+				if (!choice.arg.isEmpty())
+				{
+					return partyNamed(hunter, player, choice, now, who);
+				}
+				if (!shoutReady(hunter, now))
+				{
+					final boolean heard = (_realPlayers > 0) || (now < _strategyTestUntil);
+					refuse(hunter, choice, now, who + ": " + (heard ? "shouted not long ago" : "nobody to hear") + ", keeps hunting.", heard ? "кричал недавно" : "кричать некому: живых в игре нет");
+					return false;
+				}
+
 				final String text = String.format(LFP_SHOUTS[Rnd.get(LFP_SHOUTS.length)], roleWord(hunter.template, player), player.getLevel());
 				final String channel = PhantomChat.getInstance().hunterShout(player, text);
 				hunter.lastLfp = now;
 				hunter.lfpUntil = now + LFP_WINDOW;
 				_lastLfp = now;
 				LOGGER.info(who + ": shouts to " + channel + " chat «" + text + "», keeps hunting and waits for an invite.");
+				choice.result(true, "");
 				return false;
 			}
 			case RAID:
 			{
 				if (PhantomRaid.getInstance().request(player, now))
 				{
+					choice.result(true, "");
 					return true;
 				}
-				LOGGER.info(who + ": wanted to lead a raid, but it is not possible any more.");
+				refuse(hunter, choice, now, who + ": wanted to lead a raid, but it is not possible any more.", "рейд уже не собрать");
 				return false;
 			}
 			case AFK:
 			{
 				hunter.afkUntil = now + (choice.minutes * 60000L);
 				LOGGER.info(who + ": rests in town for " + choice.minutes + " min.");
+				choice.result(true, "");
 				goToTown(hunter, player, now);
 				return true;
 			}
 			default:
 			{
 				LOGGER.info(who + ": keeps hunting at " + spotLabel(hunter.spot) + ".");
+				choice.result(true, "");
 				return false;
 			}
 		}
+	}
+
+	/**
+	 * Сервер отказал: итог с причиной для модели, в лог, и следующее решение — не позже чем через {@link #REFUSED_RETHINK} мс: модель выберет другое.
+	 */
+	private static void refuse(Hunter hunter, Choice choice, long now, String log, String reason)
+	{
+		choice.result(false, reason);
+		hunter.nextThink = Math.min(hunter.nextThink, now + REFUSED_RETHINK);
+		LOGGER.info(log);
+	}
+
+	/**
+	 * BUY и SELL по решению стратега (протокол v1) — в городе первым делом, до покупок по правилам; итог — в решение, его увидит модель.
+	 */
+	private void townTask(Hunter hunter, Player player, long now)
+	{
+		final Choice task = hunter.townTask;
+		if (task == null)
+		{
+			return;
+		}
+
+		hunter.townTask = null;
+		final String who = getClass().getSimpleName() + ": Strategy: " + player.getName() + " (" + player.getLevel() + ") " + task;
+		if ((now - task.at) > TOWN_TASK_TTL)
+		{
+			task.result(false, PhantomHunterStrategy.NOT_DONE);
+			LOGGER.info(who + ": too late, forgets it.");
+			return;
+		}
+
+		final StringBuilder log = new StringBuilder();
+		// BUY списком: купил хоть одну — удача, а причина про первую некупленную уходит в last вместе с ok.
+		final PhantomHunterOutfit.Purchase purchase = task.decision == Decision.BUY ? PhantomHunterOutfit.buyNamedList(player, hunter.template, task.arg, false, log) : null;
+		final String why = purchase != null ? purchase.why() : PhantomHunterOutfit.sellNamed(player, task.arg, false, log);
+		if ((why != null) && ((purchase == null) || (purchase.bought() == 0)))
+		{
+			task.result(false, why);
+			LOGGER.info(who + ": refused in town (" + why + ").");
+			return;
+		}
+		task.result(true, why == null ? "" : why);
+		LOGGER.info(who + ": " + log + (why != null ? ", the rest not (" + why + ")" : "") + "; " + player.getAdena() + " adena.");
+	}
+
+	/**
+	 * @return можно крикнуть «лфп»: крик кто-то услышит (живой игрок в игре или самопроверка STRATEGY), а сам он и все вместе давно не кричали
+	 */
+	private boolean shoutReady(Hunter hunter, long now)
+	{
+		return ((_realPlayers > 0) || (now < _strategyTestUntil)) && ((now - hunter.lastLfp) >= LFP_COOLDOWN) && ((now - _lastLfp) >= LFP_GLOBAL_COOLDOWN);
+	}
+
+	/**
+	 * Кого стратег может позвать по имени ({@code [[PARTY имя]]}, протокол v1) — по правилам {@link #partyRefusal}.
+	 * @param player охотник
+	 * @return ближние первыми
+	 */
+	List<Player> partyCandidates(Player player)
+	{
+		final List<Player> result = new ArrayList<>();
+		if (player.isInParty() && !PhantomHunterParty.getInstance().isLeader(player))
+		{
+			return result;
+		}
+		for (Player other : World.getVisibleObjectsInRange(player, Player.class, PARTY_ASK_RANGE))
+		{
+			if (partyRefusal(player, other) == null)
+			{
+				result.add(other);
+			}
+		}
+		result.sort(Comparator.comparingDouble(player::calculateDistance2D));
+		return result;
+	}
+
+	/**
+	 * Можно ли позвать его по имени: рядом ({@value #PARTY_ASK_RANGE}, тот же спот), уровень ±{@value #PARTY_ASK_LEVEL_GAP}; охотник — свободный или лидер пати охотников с местом и на каче,
+	 * живой (не офлайн-торговец) — свободный или лидер пати с местом. Сам он — без пати или лидер пати охотников с местом; тогда — только свободных охотников.
+	 * @return {@code null} — можно; иначе причина отказа по-русски
+	 */
+	private String partyRefusal(Player player, Player other)
+	{
+		if ((other == null) || (other == player) || !other.isOnline() || other.isDead() || (player.calculateDistance2D(other) > PARTY_ASK_RANGE))
+		{
+			return "нет такого рядом";
+		}
+		final boolean real = !PhantomManager.getInstance().isPhantom(other);
+		if ((real && ((other.getClient() == null) || other.getClient().isDetached())) || (!real && !PhantomRelations.isHunter(other)))
+		{
+			return "нет такого рядом";
+		}
+		if (Math.abs(other.getLevel() - player.getLevel()) > PARTY_ASK_LEVEL_GAP)
+		{
+			return "не по уровню: он " + other.getLevel() + "-го, ты " + player.getLevel() + "-го";
+		}
+
+		final PhantomHunterParty parties = PhantomHunterParty.getInstance();
+		final boolean leads = parties.isLeader(player);
+		if (player.isInParty() && !leads)
+		{
+			return "ты уже в пати";
+		}
+		if (leads && (real || other.isInParty()))
+		{
+			return "ты уже ведёшь пати охотников — зови свободных охотников";
+		}
+		if (leads && !parties.hasRoom(player))
+		{
+			return "у тебя полная пати";
+		}
+		if (other.isInParty())
+		{
+			if (real ? !other.getParty().isLeader(other) : !parties.isLeader(other))
+			{
+				return "он в чужой пати — звать может только лидер";
+			}
+			if (real ? (other.getParty().getMemberCount() >= PhantomCompat.partyMax()) : !parties.hasRoom(other))
+			{
+				return "у него полная пати";
+			}
+		}
+		if (!real && (!isHunting(other) || PhantomEvents.getInstance().isBusy(other) || (PhantomRaid.getInstance().raidOf(other) != null)))
+		{
+			return "он сейчас занят, не качается";
+		}
+		return null;
+	}
+
+	/**
+	 * {@code [[PARTY имя]]} (протокол v1): охотника — позвать или попроситься к нему, решает он ({@link PhantomHunterParty#ask}); живого свободного — окно «вступить в пати?»,
+	 * живого лидера — просьба в личку. Ответ живого ждёт {@link #partyAsk}.
+	 * @return {@code true}, если вступил в чужую пати напарником и правилам на этом тике делать нечего
+	 */
+	private boolean partyNamed(Hunter hunter, Player player, Choice choice, long now, String who)
+	{
+		Player other = null;
+		for (Player candidate : World.getVisibleObjectsInRange(player, Player.class, PARTY_ASK_RANGE))
+		{
+			if (candidate.getName().equalsIgnoreCase(choice.arg.strip()))
+			{
+				other = candidate;
+				break;
+			}
+		}
+		final String why = partyRefusal(player, other);
+		if (why != null)
+		{
+			refuse(hunter, choice, now, who + ": refused (" + why + "), keeps hunting.", why);
+			return false;
+		}
+
+		if (PhantomManager.getInstance().isPhantom(other))
+		{
+			// Самопроверка MIND: позванный соглашается без броска — проверка механики.
+			final String no = PhantomHunterParty.getInstance().ask(player, other, _mindTest == hunter, now);
+			if (no != null)
+			{
+				refuse(hunter, choice, now, who + ": " + other.getName() + " says no (" + no + "), keeps hunting.", no);
+				return false;
+			}
+			choice.result(true, "");
+			LOGGER.info(who + ": in a party with " + other.getName() + (PhantomHunterParty.getInstance().isLeader(player) ? ", leads it." : ", goes along with him."));
+			return hunter.phase != Phase.HUNT;
+		}
+
+		final long until;
+		if (other.isInParty())
+		{
+			// Живой ведёт пати: самому позвать нельзя — попроситься в личку; инвайт от него охотник примет как обычно ({@link #acceptsInvite}).
+			PhantomCompanionManager.whisper(player, other, "возьмёшь в пати? " + roleWord(hunter.template, player) + " " + player.getLevel());
+			until = now + PARTY_ASK_WAIT;
+			hunter.partyAskInvited = false;
+			hunter.lfpUntil = Math.max(hunter.lfpUntil, until);
+			LOGGER.info(who + ": asks " + other.getName() + " in whisper to invite him, waits " + (PARTY_ASK_WAIT / 1000) + " s.");
+		}
+		else
+		{
+			if (!PhantomCompat.askJoinParty(player, other))
+			{
+				refuse(hunter, choice, now, who + ": " + other.getName() + " is busy with another request, keeps hunting.", "он сейчас занят другим запросом");
+				return false;
+			}
+			until = now + PARTY_INVITE_WAIT;
+			hunter.partyAskInvited = true;
+			LOGGER.info(who + ": invites " + other.getName() + " to his party, waits for the answer.");
+		}
+		hunter.partyAskId = other.getObjectId();
+		hunter.partyAskUntil = until;
+		hunter.partyAsk = choice;
+		return false;
+	}
+
+	/**
+	 * Ответ живого на {@code [[PARTY имя]]}: в одной пати с охотником — «да» (звал охотник — лидерство игроку, охотник — его напарник, {@link PhantomCompanionManager#adopt});
+	 * время вышло — «отказал» (окно «вступить в пати?») или «не позвал» (просьба в личку).
+	 */
+	private void partyAsk(Hunter hunter, Player player, long now)
+	{
+		final Choice ask = hunter.partyAsk;
+		if (ask == null)
+		{
+			return;
+		}
+
+		final Player other = World.getPlayer(hunter.partyAskId);
+		final String who = getClass().getSimpleName() + ": Strategy: " + player.getName() + " (" + player.getLevel() + ") " + ask;
+		if ((other != null) && player.isInParty() && (player.getParty() == other.getParty()))
+		{
+			hunter.partyAsk = null;
+			if (hunter.partyAskInvited && !PhantomCompanionManager.getInstance().isCompanion(hunter.template))
+			{
+				PhantomCompanionManager.getInstance().adopt(other, player);
+			}
+			ask.result(true, "");
+			LOGGER.info(who + ": " + other.getName() + (hunter.partyAskInvited ? " accepted, leads the party, he goes along." : " invited him."));
+			return;
+		}
+		if ((other == null) || !other.isOnline() || player.isDead() || (now >= hunter.partyAskUntil))
+		{
+			hunter.partyAsk = null;
+			final String why = hunter.partyAskInvited ? "отказал" : "не позвал";
+			ask.result(false, why);
+			LOGGER.info(who + ": no party (" + why + ").");
+		}
+	}
+
+	/**
+	 * Спот по имени из ответа стратега ({@code [[SPOT_TO имя]]}). Имена в L2HubHuntSpots.xml не уникальны (у Dark Elf Starting · восток две точки), а имя без уточнения
+	 * после « · » — вся группа: из таких — что он не перерос и где мобы ему не рано ({@link #outgrown}), не занятые (до {@link PhantomHuntersConfig#HUNTERS_PER_SPOT}
+	 * охотников), не тот, где стоит; ближайший. Дорогу не проверяет: дальше {@link #WALK_TRAVEL} или ногами не пройти — телепорт, как у гейткипера ({@link #travel}).
+	 * @param why причина отказа по-русски — для {@code last}
+	 * @return спот или {@code null} — отказ
+	 */
+	private HuntSpot namedSpot(Hunter hunter, Player player, String name, StringBuilder why)
+	{
+		final String wanted = spotKey(name);
+		if (wanted.isEmpty())
+		{
+			why.append("не назван спот");
+			return null;
+		}
+
+		final List<HuntSpot> named = new ArrayList<>();
+		for (HuntSpot spot : HuntSpotData.getInstance().getSpots())
+		{
+			if (spotKey(spot.name).equals(wanted))
+			{
+				named.add(spot);
+			}
+		}
+		if (named.isEmpty())
+		{
+			for (HuntSpot spot : HuntSpotData.getInstance().getSpots())
+			{
+				if (spotKey(spot.name).startsWith(wanted + " ·"))
+				{
+					named.add(spot);
+				}
+			}
+		}
+		if (named.isEmpty())
+		{
+			why.append("нет такого спота");
+			return null;
+		}
+
+		final int level = player.getLevel();
+		final List<HuntSpot> fit = new ArrayList<>();
+		int min = Integer.MAX_VALUE;
+		int max = 0;
+		for (HuntSpot spot : named)
+		{
+			min = Math.min(min, spot.min);
+			max = Math.max(max, spot.max);
+			if (!outgrown(spot, level))
+			{
+				fit.add(spot);
+			}
+		}
+		if (fit.isEmpty())
+		{
+			why.append(level < (min - 4) ? "рано: мобы " + min + "-" + max + " ур., а ты " + level + "-го" : "перерос: мобы " + min + "-" + max + " ур., а ты " + level + "-го");
+			return null;
+		}
+		fit.remove(hunter.spot);
+		if (fit.isEmpty())
+		{
+			why.append("ты уже на этом споте");
+			return null;
+		}
+
+		HuntSpot best = null;
+		double bestDistance = Double.MAX_VALUE;
+		int crowded = 0;
+		for (HuntSpot spot : fit)
+		{
+			final int crowd = crowd(spot, player);
+			if (crowd >= PhantomHuntersConfig.HUNTERS_PER_SPOT)
+			{
+				crowded = Math.max(crowded, crowd);
+				continue;
+			}
+			final double distance = player.calculateDistance2D(spot.entry);
+			if (distance < bestDistance)
+			{
+				best = spot;
+				bestDistance = distance;
+			}
+		}
+		if (best == null)
+		{
+			why.append("занято: там уже " + crowded + " охотников");
+		}
+		return best;
+	}
+
+	/**
+	 * @return имя спота для сравнения: без регистра и лишних пробелов
+	 */
+	private static String spotKey(String name)
+	{
+		return name == null ? "" : name.replaceAll("\\s+", " ").strip().toLowerCase(Locale.ROOT);
 	}
 
 	/**
@@ -3442,6 +4047,244 @@ public class PhantomHunterManager
 			hunter.nextThink = now + Rnd.get(5000, 180000);
 		}
 		LOGGER.info(getClass().getSimpleName() + ": SelfTest STRATEGY: " + _hunters.size() + " hunters ask the strategist within 3 minutes, test runs " + (STRATEGY_TEST_DURATION / 60000) + " minutes" + (PhantomHuntersConfig.HUNTER_STRATEGY && PhantomChat.brainEnabled() ? "." : ", but the strategist or the brains are off."));
+	}
+
+	/**
+	 * @return охотник для самопроверки MIND: на споте, в бою не занят; лучше сильнее 20-го (у них споты по уровню во всём мире), с вещью по карману у NPC, со свободным охотником рядом
+	 *         и с вещью на продажу — чтобы сценарий прошёл весь
+	 */
+	/**
+	 * @return охотники в мире, живые
+	 */
+	private List<Player> inWorld()
+	{
+		final List<Player> result = new ArrayList<>();
+		for (Hunter hunter : _hunters.values())
+		{
+			final Player player = PhantomManager.getInstance().getPhantom(hunter.template);
+			if ((player != null) && !player.isDead())
+			{
+				result.add(player);
+			}
+		}
+		return result;
+	}
+
+	private Hunter mindTestHunter()
+	{
+		Hunter best = null;
+		int bestScore = -1;
+		for (Hunter hunter : _hunters.values())
+		{
+			final Player player = PhantomManager.getInstance().getPhantom(hunter.template);
+			if ((player == null) || (hunter.phase != Phase.HUNT) || (hunter.spot == null) || player.isDead() || PhantomEvents.getInstance().isBusy(player))
+			{
+				continue;
+			}
+			final boolean affordable = PhantomHunterOutfit.buyOffers(player, hunter.template).stream().anyMatch(PhantomHunterOutfit.Offer::afford);
+			final boolean partner = partyCandidates(player).stream().anyMatch(other -> PhantomManager.getInstance().isPhantom(other) && !other.isInParty());
+			final int score = (player.getLevel() >= 20 ? 8 : 0) + (affordable ? 4 : 0) + (partner ? 2 : 0) + (PhantomHunterOutfit.sellOffers(player).isEmpty() ? 0 : 1);
+			if ((score > bestScore) || ((score == bestScore) && (Rnd.get(3) == 0)))
+			{
+				best = hunter;
+				bestScore = score;
+			}
+		}
+		return best;
+	}
+
+	/**
+	 * Самопроверка протокола v1 без клиента и без мозгов ({@code HuntersSelfTest = MIND}): охотник на споте получает ответы по сценарию — цель и спот, которого нет;
+	 * спот не по уровню; пати с тем, кого нет; пати со свободным охотником рядом (соглашается без броска); покупка не по карману; продажа надетого; покупка по карману;
+	 * продажа из сумки; подходящий спот (лучше — с одноимённой точкой); «качаться тут». Каждый запрос (с goal и last) и каждый итог — в лог с пометкой SelfTest MIND.
+	 */
+	private void mindSelfTest()
+	{
+		final Hunter hunter = mindTestHunter();
+		final Player player = hunter != null ? PhantomManager.getInstance().getPhantom(hunter.template) : null;
+		if (player == null)
+		{
+			return;
+		}
+		_mindTest = hunter;
+		_mindStep = 0;
+		hunter.nextThink = System.currentTimeMillis() + 5000;
+		LOGGER.info(getClass().getSimpleName() + ": SelfTest MIND: " + player.getName() + " (" + player.getLevel() + ", " + spotLabel(hunter.spot) + ", " + player.getAdena() + " adena) gets scripted decisions: unknown spot with a goal, a spot of wrong level, PARTY with nobody, PARTY with a hunter nearby (brought in if none), BUY too dear, SELL worn, BUY affordable, SELL from the bag, a fitting spot, then HUNT.");
+	}
+
+	/**
+	 * Самопроверка MIND, шаг «PARTY с охотником»: свободный охотник рядом, а нет его — привести. Из охотников на каче без пати с уровнем ±{@value #PARTY_ASK_LEVEL_GAP} —
+	 * ближайший по уровню: телепорт к проверяемому, спот — его же, чтобы там и качался. Самопроверка идёт на копии базы, так что «позвал → согласился → пати» видно в логе без клиента.
+	 * @return напарник или {@code null} — подходящего охотника в мире нет
+	 */
+	private Player mindPartner(Hunter hunter, Player player)
+	{
+		// Только те, кто не откажет ещё до броска (враги, устал, только что из пати): самопроверка проверяет «позвал → согласился → пати».
+		final long now = System.currentTimeMillis();
+		final PhantomHunterParty parties = PhantomHunterParty.getInstance();
+		final Player near = partyCandidates(player).stream().filter(other -> PhantomManager.getInstance().isPhantom(other) && !other.isInParty() && (parties.stateRefusal(player, other, now) == null)).findFirst().orElse(null);
+		if (near != null)
+		{
+			return near;
+		}
+
+		Hunter best = null;
+		Player bestPlayer = null;
+		for (Hunter other : _hunters.values())
+		{
+			final Player candidate = other == hunter ? null : PhantomManager.getInstance().getPhantom(other.template);
+			if ((candidate == null) || candidate.isInParty() || !isHunting(candidate) || PhantomEvents.getInstance().isBusy(candidate) || (PhantomRaid.getInstance().raidOf(candidate) != null) || (Math.abs(candidate.getLevel() - player.getLevel()) > PARTY_ASK_LEVEL_GAP) || (parties.stateRefusal(player, candidate, now) != null))
+			{
+				continue;
+			}
+			if ((bestPlayer == null) || (Math.abs(candidate.getLevel() - player.getLevel()) < Math.abs(bestPlayer.getLevel() - player.getLevel())))
+			{
+				best = other;
+				bestPlayer = candidate;
+			}
+		}
+		if (best == null)
+		{
+			return null;
+		}
+
+		stop(bestPlayer);
+		best.spot = hunter.spot;
+		best.roams = 0;
+		best.lastActive = now;
+		best.spotSince = best.lastActive;
+		best.spotExp = bestPlayer.getExp();
+		bestPlayer.teleToLocation(new Location(player.getX(), player.getY(), player.getZ()), true);
+		LOGGER.info(getClass().getSimpleName() + ": SelfTest MIND: brings " + bestPlayer.getName() + " (" + bestPlayer.getLevel() + ") to " + spotLabel(hunter.spot) + " for PARTY by name.");
+		return bestPlayer;
+	}
+
+	/**
+	 * Самопроверка MIND: этот охотник думает — ответ по сценарию, запрос в лог; дальше как с ответом мозгов ({@link #decided}).
+	 * @return {@code true}, если ответ дан по сценарию
+	 */
+	private boolean mindTest(Hunter hunter, Player player, long now)
+	{
+		if (_mindTest != hunter)
+		{
+			return false;
+		}
+
+		final Facts facts = facts(hunter, player, now);
+		final Map<Decision, String> options = options(hunter, player, now, facts);
+		final int level = player.getLevel();
+		final String reply;
+		switch (_mindStep++)
+		{
+			case 0:
+			{
+				reply = "[[GOAL проверка: до " + (level + 2) + "-го и новый шмот]] [[SPOT_TO Нет Такого Спота]] ищу, где покачаться";
+				break;
+			}
+			case 2:
+			{
+				reply = "[[PARTY Нет Такого]] го в пати";
+				break;
+			}
+			case 3:
+			{
+				// Свободный охотник рядом (нет — приведён на этот спот): позовёт к себе, тот согласится без броска.
+				final Player partner = mindPartner(hunter, player);
+				reply = partner != null ? "[[PARTY " + partner.getName() + "]] давай вместе" : "[[HUNT]] свободных охотников по уровню нет, пати пропускаю";
+				break;
+			}
+			case 4:
+			{
+				// Не по карману: из того, что лучше надетого, нет — вещь, которой нет в списке.
+				final PhantomHunterOutfit.Offer dear = PhantomHunterOutfit.buyOffers(player, hunter.template).stream().filter(offer -> !offer.afford()).findFirst().orElse(null);
+				reply = "[[BUY " + (dear != null ? dear.name() : "Нет Такой Вещи") + "]] хочу обновку";
+				break;
+			}
+			case 5:
+			{
+				final Item worn = player.getInventory().getPaperdollItem(Inventory.PAPERDOLL_RHAND) != null ? player.getInventory().getPaperdollItem(Inventory.PAPERDOLL_RHAND) : player.getInventory().getPaperdollItem(Inventory.PAPERDOLL_CHEST);
+				reply = "[[SELL " + (worn != null ? worn.getName() : "Нет Такой Вещи") + "]] продам старьё";
+				break;
+			}
+			case 6:
+			{
+				// Списком: первая по карману и ещё одна вещь на другую часть — купит, сколько хватит адены.
+				final List<PhantomHunterOutfit.Offer> offers = PhantomHunterOutfit.buyOffers(player, hunter.template);
+				final PhantomHunterOutfit.Offer cheap = offers.stream().filter(PhantomHunterOutfit.Offer::afford).findFirst().orElse(null);
+				final PhantomHunterOutfit.Offer next = cheap == null ? null : offers.stream().filter(offer -> !offer.part().equals(cheap.part())).findFirst().orElse(null);
+				reply = cheap == null ? "[[HUNT]] по карману ничего, покупку пропускаю" : "[[BUY " + cheap.name() + (next != null ? "; " + next.name() : "") + "]] беру, по карману";
+				break;
+			}
+			case 7:
+			{
+				final List<PhantomHunterOutfit.Offer> goods = PhantomHunterOutfit.sellOffers(player);
+				reply = "[[SELL " + (goods.isEmpty() ? "Нет Такой Вещи" : goods.get(0).name()) + "]] сдам барыге";
+				break;
+			}
+			case 9:
+			{
+				reply = "[[HUNT]] тут нормально";
+				break;
+			}
+			case 1:
+			{
+				// Не по уровню: самый низкий спот, где ему рано, — нет такого (капы), тогда самый высокий из переросших.
+				HuntSpot wrong = null;
+				for (HuntSpot spot : HuntSpotData.getInstance().getSpots())
+				{
+					if ((level < (spot.min - 4)) && ((wrong == null) || (spot.min < wrong.min)))
+					{
+						wrong = spot;
+					}
+				}
+				for (HuntSpot spot : HuntSpotData.getInstance().getSpots())
+				{
+					if ((wrong == null) && (level > (spot.max + 3)))
+					{
+						wrong = spot;
+					}
+				}
+				reply = "[[SPOT_TO " + (wrong != null ? wrong.name : "") + "]] рискну на мобов покрепче";
+				break;
+			}
+			case 8:
+			{
+				// Подходящий: лучше имя, у которого несколько точек, — проверка выбора из одноимённых.
+				final Map<String, Integer> points = new HashMap<>();
+				for (HuntSpot spot : HuntSpotData.getInstance().getSpots())
+				{
+					points.merge(spot.name, 1, Integer::sum);
+				}
+				HuntSpot fitting = null;
+				for (HuntSpot spot : HuntSpotData.getInstance().getSpots())
+				{
+					if ((spot != hunter.spot) && !outgrown(spot, level) && (crowd(spot, player) < PhantomHuntersConfig.HUNTERS_PER_SPOT) && ((fitting == null) || ((points.get(spot.name) > 1) && (points.get(fitting.name) == 1))))
+					{
+						fitting = spot;
+					}
+				}
+				reply = "[[SPOT_TO " + (fitting != null ? fitting.name : "") + "]] переезжаю" + (fitting != null ? " (точек с этим именем: " + points.get(fitting.name) + ")" : "");
+				break;
+			}
+			default:
+			{
+				_mindTest = null;
+				LOGGER.info(getClass().getSimpleName() + ": SelfTest MIND: done, request after the scenario: " + PhantomHunterStrategy.request(player, hunter.template, facts, options));
+				return false;
+			}
+		}
+		// Отказы проверяются и там, где варианта сейчас нет (никого рядом, по карману ничего): тег сценария — в варианты, иначе ответ был бы мусором.
+		final Matcher tag = Pattern.compile("\\[\\[([A-Z_]+)").matcher(reply.replaceFirst("^\\[\\[GOAL[^\\]]*\\]\\]\\s*", ""));
+		if (tag.find())
+		{
+			options.putIfAbsent(Decision.valueOf(tag.group(1)), "самопроверка MIND");
+		}
+		final String request = PhantomHunterStrategy.request(player, hunter.template, facts, options);
+		LOGGER.info(getClass().getSimpleName() + ": SelfTest MIND: step " + _mindStep + ", request: " + request);
+		LOGGER.info(getClass().getSimpleName() + ": SelfTest MIND: step " + _mindStep + ", reply: " + reply);
+		hunter.nextThink = now + MIND_TEST_GAP;
+		decided(hunter, player, facts, options, reply);
+		return true;
 	}
 
 	// ---------- ПвП ----------

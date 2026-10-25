@@ -300,6 +300,29 @@ def not_phantom_sql(p: dict) -> str:
 
 # ---------- Логин и гейм ----------
 
+# Память гейм-сервера Mobius — по объёму ОЗУ (решение автора 2026-10-25). 4 ГБ из java.cfg сборки миру с фантомами и
+# сезонками мало: 2026-10-25 нашествие эльпи довело кучу H5 до OutOfMemoryError, а задолго до него сборщик мусора ZGC
+# работал без пауз и клиент откликался с задержкой, как от пинга. Живых данных у H5 тогда было ~4,2 ГБ: геодата, регионы
+# мира, буферы поиска пути (у Mobius свои на каждый поток).
+HEAP_SHARE, HEAP_MIN_GB, HEAP_MAX_GB = 3 / 8, 4, 8
+
+
+def game_heap_gb() -> int:
+    """Сколько гигабайт дать гейм-серверу Mobius: 3/8 ОЗУ в пределах 4–8 ГБ (32 ГБ — 8, 16 ГБ — 5, 8 ГБ — 4)."""
+    return max(HEAP_MIN_GB, min(HEAP_MAX_GB, int(psutil.virtual_memory().total / 2 ** 30 * HEAP_SHARE)))
+
+
+def with_game_heap(java_args: list[str]) -> list[str]:
+    """Ключи Java из java.cfg с -Xmx не меньше game_heap_gb(); больший (правка руками) остаётся как есть."""
+    want = game_heap_gb()
+    for i, arg in enumerate(java_args):
+        m = re.fullmatch(r"-Xmx(\d+)([kmg]?)", arg, re.I)
+        if m:
+            have = int(m.group(1)) / {"": 2 ** 30, "k": 2 ** 20, "m": 2 ** 10, "g": 1}[m.group(2).lower()]
+            return java_args if have >= want else [*java_args[:i], f"-Xmx{want}g", *java_args[i + 1:]]
+    return [*java_args, f"-Xmx{want}g"]
+
+
 def _part_command(p: dict, part: str, d: Path) -> list:
     b = bundle(p)
     if b and b.get("runtime") == "ours":
@@ -315,6 +338,8 @@ def _part_command(p: dict, part: str, d: Path) -> list:
             raise RuntimeError(f"В {bat} нет строки запуска (шаблон batLine в bundles.json)")
         return [part_exe(p, part), *m.group(1).split()]
     java_args = (d / "java.cfg").read_text(encoding="utf-8").splitlines()[0].split()
+    if part == "game":
+        java_args = with_game_heap(java_args)
     return [paths.JAVA, *java_args, "-jar", f"../libs/{JARS[part]}"]
 
 

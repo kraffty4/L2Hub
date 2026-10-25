@@ -475,9 +475,41 @@ public class PhantomCompanionManager
 
 		PhantomCompat.acceptPartyJoin(requestor, type != null ? type : PartyDistributionType.FINDERS_KEEPERS);
 		member.joinParty(requestor.getParty());
+		register(requestor, member, template, existing, "тебя только что приняли в пати к " + requestor.getName() + ": поздоровайся и коротко скажи, что будешь делать");
+	}
 
+	/**
+	 * Охотник позвал живого игрока в пати (стратег, {@code [[PARTY имя]]}) окном «вступить в пати?», и тот согласился: пати по правилам Mobius — у охотника.
+	 * Лидерство — игроку, охотник — его напарник, как если бы игрок позвал его сам ({@link #onInvited}).
+	 * @param owner живой игрок
+	 * @param phantom охотник
+	 * @return стал напарником
+	 */
+	public synchronized boolean adopt(Player owner, Player phantom)
+	{
+		final PhantomTemplate template = PhantomData.getInstance().getTemplate(phantom.getName());
+		final Party party = phantom.getParty();
+		if ((template == null) || (party == null) || (owner.getParty() != party))
+		{
+			return false;
+		}
+
+		if (party.isLeader(phantom))
+		{
+			party.changePartyLeader(owner.getName());
+		}
+		register(owner, phantom, template, _companions.get(key(template.getName())), "ты позвал " + owner.getName() + " в пати, он согласился, и ты отдал ему лидерство: скажи коротко, что будешь делать");
+		return true;
+	}
+
+	/**
+	 * Фантом вступил в пати живого игрока: он — напарник владельца, охотник выходит из своих дел ({@link PhantomHunterManager#joinedParty}); приветствие — от мозгов.
+	 */
+	private void register(Player owner, Player member, PhantomTemplate template, Companion existing, String prompt)
+	{
+		final boolean hunter = template.isHunter();
 		final Companion companion = existing != null ? existing : new Companion(template.getName());
-		companion.ownerId = requestor.getObjectId();
+		companion.ownerId = owner.getObjectId();
 		companion.mode = Mode.ASSIST;
 		companion.ownerAwaySince = 0;
 		companion.stayAt = null;
@@ -491,8 +523,8 @@ public class PhantomCompanionManager
 		}
 		startTicking();
 		final String greeting = template.getRole() == PhantomTemplate.Role.HEALER ? "в пати, хилю" : template.getRole() == PhantomTemplate.Role.BUFFER ? "в пати, ща бафну" : "в пати, иду за тобой и бью твою цель";
-		PhantomChat.getInstance().event(member, requestor, Event.JOINED, "тебя только что приняли в пати к " + requestor.getName() + ": поздоровайся и коротко скажи, что будешь делать", greeting);
-		LOGGER.info(getClass().getSimpleName() + ": " + template.getName() + " joined the party of " + requestor.getName() + ".");
+		PhantomChat.getInstance().event(member, owner, Event.JOINED, prompt, greeting);
+		LOGGER.info(getClass().getSimpleName() + ": " + template.getName() + " joined the party of " + owner.getName() + ".");
 	}
 
 	/**
@@ -1464,7 +1496,7 @@ public class PhantomCompanionManager
 
 	// ---------- Служебные реплики-заготовки (кидай пати, ушёл); болтовня и события — PhantomChat ----------
 
-	private static void whisper(Player phantom, Player owner, String text)
+	static void whisper(Player phantom, Player owner, String text)
 	{
 		owner.sendPacket(new CreatureSay(phantom, ChatType.WHISPER, phantom.getName(), text));
 	}

@@ -19,17 +19,21 @@
 реплика жнеца или пусто; счёт встреч с игроком — из памяти пары.
 
 Мозги-стратег охотников (патч 0019) шлют "kind": "strategy" с состоянием охотника и списком доступных вариантов; ответ —
-«[[ТЕГ]] мысль» или «[[AFK 15]] мысль». Тега из списка нет — HTTP 502, сервер тогда живёт по правилам.
+«[[ТЕГ]] мысль» или «[[AFK 15]] мысль». Тега из списка нет — HTTP 502, сервер тогда живёт по правилам. С «Разумом 2.0»
+(docs/MIND.md, раздел 4) ядро шлёт ещё цель охотника (goal) и итог прошлого решения (last); ответ тогда может нести переход
+на спот по имени и новую цель: «[[SPOT_TO Cruma Tower · 1 этаж]] [[GOAL до 40-го и сет C]] мысль».
 
 Запуск:   python -m l2hub.brain <id>
 Проверка: python -m l2hub.brain <id> --test <фейк> "<что сказать>" [--echo]
+          python -m l2hub.brain <id> --test <охотник> - --clanname  (имя клана, который он основывает)
           python -m l2hub.brain <id> --test <напарник> "<что сказать>" --phantom [--event] [--order "<что сделано>"]
-          python -m l2hub.brain <id> --test <охотник> - --strategy [--echo]
+          python -m l2hub.brain <id> --test <охотник> - --strategy [--echo] [--goal "<цель>"] [--last "SPOT_TO <спот>: <причина>"]
           python -m l2hub.brain <id> --test Thanatos "<шёпот>" --reaper whisper  (или - --reaper kill|death|hunt|attacked|escaped)
   --echo — без модели: ответ «эхо: …», чтобы проверить связку с сервером, не тратя запросы.
 """
 
 import argparse
+import difflib
 import json
 import os
 import random
@@ -41,6 +45,7 @@ import time
 import urllib.error
 import urllib.request
 from collections import deque
+from contextlib import contextmanager
 from datetime import datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -210,6 +215,7 @@ ROLE_JOB = {"HEALER": "хилер: лечишь и поднимаешь пати
             "BUFFER": "баффер: держишь бафы на всей пати, в драку не лезешь; немного умеешь хилить и ресать",
             "TANK": "танк: держишь мобов на себе", "DAMAGE": "дамагер: бьёшь цель напарника"}
 CHANNEL_RU = {"whisper": "пишет тебе в личку (шёпот)", "party": "пишет в чат пати — это видят все в пати",
+              "clan": "пишет в чат клана — это видят все соклановцы в сети",
               "say": "обращается к тебе в общем чате рядом, это слышат все вокруг",
               "overheard": ("говорит в общем чате рядом — не тебе, тебя он не называл: ты просто стоишь неподалёку и слышишь. "
                             "Встревай, только если тебе правда есть что сказать по теме, как прохожий игрок; иначе — <молчу>")}
@@ -230,8 +236,12 @@ REASON_RU = {"killed": ("убил тебя", "убила тебя"), "attacked":
              "saved": ("спас тебя — добил моба, который тебя добивал", "спасла тебя — добила моба, который тебя добивал"),
              "hunted": ("качался с тобой в пати", "качалась с тобой в пати"),
              "duel_win": ("победил тебя на дуэли", "победила тебя на дуэли"),
-             "duel_loss": ("проиграл тебе дуэль", "проиграла тебе дуэль")}
-REASON_SHORT = {"killed": "убил", "attacked": "нападал", "contested": "отжал моба", "apologized": "извинился", "insulted": "послал", "healed": "хилил", "revived": "реснул", "saved": "спас", "hunted": "качались вместе", "duel_win": "победил на дуэли", "duel_loss": "проиграл дуэль"}
+             "duel_loss": ("проиграл тебе дуэль", "проиграла тебе дуэль"),
+             # Кланы охотников (раздел 4.50): доля обиды и благодарности соклановца.
+             "clan_harm": ("обидел твоего соклановца", "обидела твоего соклановца"),
+             "clan_help": ("выручил твоего соклановца", "выручила твоего соклановца")}
+REASON_SHORT = {"killed": "убил", "attacked": "нападал", "contested": "отжал моба", "apologized": "извинился", "insulted": "послал", "healed": "хилил", "revived": "реснул", "saved": "спас", "hunted": "качались вместе", "duel_win": "победил на дуэли", "duel_loss": "проиграл дуэль",
+                "clan_harm": "обидел соклановца", "clan_help": "выручил соклановца"}
 
 
 def times_word(n: int) -> str:
@@ -283,29 +293,176 @@ KB_SKIP_CHANNELS = ("event", "banter", "retort_sorry", "retort_rude", "overheard
 STRATEGY_PLAYER = "#strategy"   # «собеседник» решений стратега в памяти: в игровых именах # не бывает
 STRATEGY_HISTORY = 3            # прошлых решений в промпте
 STRATEGY_RATE_PER_MINUTE = 20   # запросов стратега в минуту на весь сервер: остальное из RATE_PER_MINUTE — разговорам
-STRATEGY_RE = re.compile(r"\[\[\s*([A-Z_]+)(?:[\s:]+(\d{1,3}))?\s*\]\]")
+STRATEGY_RE = re.compile(r"\[\[\s*([A-Z_]+)(?:[\s:]+([^\[\]]{1,120}?))?\s*\]\]")
 STRATEGY_HELP = {"HUNT": "качаться дальше тут", "SPOT_UP": "сменить спот на мобов посильнее",
                  "SPOT_DOWN": "сменить спот на мобов послабее",
+                 "SPOT_TO": "перейти на другой спот",
                  "TOWN": "сходить в город: сдать хлам, купить сосы, банки и шмот, ребафнуться — и обратно",
                  "STORE": "сходить в город и сесть в лавку в Гиране — продать ценный дроп",
                  "PARTY": "поискать пати: крикнуть «лфп» и качаться дальше, пока не позовут",
                  "AFK": "отдохнуть в городе N минут: посидеть афк",
-                 "RAID": "собрать рейд охотников на рейд-босса своего уровня и повести его — долго и опасно, зато лут и слава"}
+                 "RAID": "собрать рейд охотников на рейд-босса своего уровня и повести его — долго и опасно, зато лут и слава",
+                 "BUY": "сходить в город, первым делом купить у NPC и надеть, заодно всё, что делает поход в город, — и обратно; "
+                        "можно до 3 вещей через «;» — купит по порядку, на сколько хватит адены",
+                 "SELL": "сходить в город, первым делом сдать NPC эту вещь за полцены, заодно всё, что делает поход в город, — и обратно; "
+                         "быстрее, но дешевле, чем в лавке"}
+PARTY_NAMED = ("позвать в пати того, кто рядом: свободного — к себе, лидера пати охотников — попроситься к нему; "
+               "живой игрок решает сам. В пати мобы падают быстрее, с хилом и бафером умираешь реже, опыт делится")
 
 
-def parse_strategy(raw: str, fpc: str, options: list[str], afk: list[int]) -> tuple[str, int, str]:
-    """Тег из доступных и мысль из ответа модели: «[[SPOT_UP]] мысль», «[[AFK 15]] мысль» (и без скобок: «HUNT мысль»).
-    Тега из списка нет — ValueError: это мусор."""
+# «Разум 2.0», шаг 3 (docs/MIND.md, раздел 4): цель охотника и переход на спот по имени. Ядро шлёт "goal" (цель, которую охотник
+# держит; нет цели — нет ключа) и "last" (итог прошлого решения: выполнено или отказ с причиной); опция SPOT_TO может нести
+# свои "choices" — споты, куда ядро готово вести. Без них споты на выбор берутся из базы знаний под уровень.
+GOAL_LEN = 60       # символов в цели
+
+
+def v1_goals(req: dict) -> bool:
+    """Ядро понимает цели (протокол v1): цель есть, есть итог прошлого решения, вариант SPOT_TO или вариант со списком от ядра.
+    Без цели ядро ключ goal не шлёт, поэтому одного goal мало."""
+    return "goal" in req or "last" in req or any(o.get("tag") == "SPOT_TO" or o.get("choices") for o in req.get("options", []))
+SPOT_CHOICES = 4    # спотов на выбор у [[SPOT_TO]] из базы знаний
+SPOT_CHOICES_MAX = 8  # из списка ядра — не больше
+
+# BUY, SELL и PARTY с именем (2026-10-24, docs/PHANTOMS.md, 4.3): у варианта "choices" от ядра — вещи с ценой, люди рядом.
+# Имя в ответе сверяется со списком, как спот у SPOT_TO. [[PARTY]] без имени — крик «лфп», как раньше.
+CHOICES_MAX = {"BUY": 12, "SELL": 8, "PARTY": 8}
+NAME_REQUIRED = ("SPOT_TO", "BUY", "SELL")  # без имени из списка тег не в счёт
+BUY_MAX = 3  # вещей в [[BUY A; B; C]]: ядро покупает по порядку, на сколько хватит свободной адены
+
+
+def choice_name(c) -> str:
+    """Имя варианта из choices ядра: у вещей и людей — словарь с "name", у спотов — строка."""
+    return str(c.get("name", "") if isinstance(c, dict) else c).strip()
+
+
+def match_name(arg: str, choices: list[str]) -> str:
+    """Спот, вещь или человек из списка по имени из ответа модели: точно (без регистра), по началу или почти точно;
+    не узнан — пусто."""
+    a = " ".join(arg.split()).strip(" .,«»\"'").casefold()
+    if not a or not choices:
+        return ""
+    by = {c.casefold(): c for c in choices}
+    if a in by:
+        return by[a]
+    starts = [c for c in choices if c.casefold().startswith(a) or a.startswith(c.casefold())]
+    if len(starts) == 1:
+        return starts[0]
+    close = difflib.get_close_matches(a, list(by), n=1, cutoff=0.8)
+    return by[close[0]] if close else ""
+
+
+# «Разум 2.0», шаг 4 (docs/MIND.md, раздел 5): опыт и выводы. Ядро шлёт в last "result" — что было с охотником от решения до
+# нынешнего запроса; мозги копят итоги в журнале, показывают опыт по местам и раз в уровень или в сутки просят модель записать выводы.
+JOURNAL_DAYS = 2       # опыт по местам — за столько суток
+JOURNAL_LEVELS = 3     # и на уровнях ±столько от нынешнего
+JOURNAL_SPOTS = 4      # мест в промпте
+JOURNAL_MIN = 10       # минут на месте, чтобы показать его опыт
+LESSONS_KEY = "#lessons"  # ключ выводов в очереди фоновых задач (как пара у заметки): в игровых именах # не бывает
+LESSONS_MAX = 400      # символов в выводах
+LESSONS_EVERY = 8      # новых итогов в журнале до пересмотра выводов — и ещё новый уровень или сутки с прошлых
+LESSONS_ROWS = 40      # итогов в промпте пересмотра
+LESSONS_TOKENS = 300
+
+
+def init_db(db: sqlite3.Connection) -> None:
+    """Таблицы базы мозгов: реплики, заметки о собеседниках, журнал итогов и выводы (шаг 4), забытое из окна (шаг 5)."""
+    db.execute("CREATE TABLE IF NOT EXISTS lines (id INTEGER PRIMARY KEY, fpc TEXT, player TEXT, role TEXT, channel TEXT, text TEXT, ts REAL)")
+    db.execute("CREATE INDEX IF NOT EXISTS lines_pair ON lines (fpc, player, ts)")
+    db.execute("CREATE TABLE IF NOT EXISTS summaries (fpc TEXT, player TEXT, text TEXT, through_id INTEGER, ts REAL, PRIMARY KEY (fpc, player))")
+    # Шаг 4 «Разума 2.0»: итоги решений стратега (decided — когда решил) и выводы охотника из них.
+    db.execute("CREATE TABLE IF NOT EXISTS journal (id INTEGER PRIMARY KEY, fpc TEXT, decided REAL, ts REAL, level INTEGER, decision TEXT, "
+               "ok INTEGER, reason TEXT, minutes REAL, exp REAL, deaths INTEGER, adena INTEGER, kills INTEGER, spot TEXT, party REAL)")
+    db.execute("CREATE INDEX IF NOT EXISTS journal_fpc ON journal (fpc, ts)")
+    db.execute("CREATE TABLE IF NOT EXISTS lessons (fpc TEXT PRIMARY KEY, text TEXT, through_id INTEGER, level INTEGER, ts REAL)")
+    # Шаг 5: «забыть» в окне не стирает насовсем — строки уходят сюда (data — JSON), мозги эту таблицу не читают.
+    db.execute("CREATE TABLE IF NOT EXISTS forgotten (id INTEGER PRIMARY KEY, ts REAL, kind TEXT, fpc TEXT, player TEXT, data TEXT)")
+
+
+def experience_rows(db: sqlite3.Connection, fpc: str, level: int) -> list[tuple]:
+    """Опыт по местам из журнала: (спот, минут, опыт %, смертей, адена) за JOURNAL_DAYS суток на уровнях ±JOURNAL_LEVELS."""
+    return db.execute("SELECT spot, SUM(minutes), SUM(exp), SUM(deaths), SUM(adena) FROM journal WHERE fpc = ? AND ts >= ? AND spot != '' "
+                      "AND level BETWEEN ? AND ? GROUP BY spot HAVING SUM(minutes) >= ? ORDER BY SUM(minutes) DESC LIMIT ?",
+                      (fpc, time.time() - JOURNAL_DAYS * 86400, level - JOURNAL_LEVELS, level + JOURNAL_LEVELS, JOURNAL_MIN, JOURNAL_SPOTS)).fetchall()
+
+
+def per_hour(value: float, minutes: float) -> float:
+    return value * 60 / minutes if minutes else 0.0
+
+
+def signed_adena(n: int) -> str:
+    return ("+" if n >= 0 else "−") + knowledge.adena(abs(n))
+
+
+def result_words(r: dict) -> str:
+    """Итог решения словами: «за 11 мин: +2.4% уровня (~13% в час), 1 смерть, адена +38к, мобов 42, в пати 6 мин»."""
+    minutes, exp = float(r.get("minutes") or 0), float(r.get("exp") or 0)
+    deaths, kills, party = int(r.get("deaths") or 0), int(r.get("kills") or 0), float(r.get("party") or 0)
+    parts = [f"{exp:+.1f}% уровня" + (f" (~{per_hour(exp, minutes):.0f}% в час)" if minutes >= 5 and exp > 0 else ""),
+             f"смертей {deaths}" if deaths else "без смертей", f"адена {signed_adena(int(r.get('adena') or 0))}"]
+    if kills:
+        parts.append(f"мобов {kills}")
+    if party >= 1:
+        parts.append(f"в пати {party:.0f} мин")
+    return f"за {minutes:.0f} мин" + (f" на {r['spot']}" if r.get("spot") else "") + ": " + ", ".join(parts)
+
+
+def match_names(arg: str, choices: list[str], limit: int) -> str:
+    """Список имён через «;» (без «;» — через запятую или одно имя) из choices: по порядку, без повторов, не больше limit,
+    неузнанные выпадают. Ни одного не узнано — пусто."""
+    found = []
+    for part in arg.split(";" if ";" in arg else ","):
+        name = match_name(part, choices)
+        if name and name not in found:
+            found.append(name)
+    if ";" not in arg and len(found) < 2:
+        return match_name(arg, choices)  # запятые — внутри одного имени или хвоста: «Brigandine Helmet (шлем, D, 49к)»
+    return "; ".join(found[:limit])
+
+
+def parse_strategy(raw: str, fpc: str, options: list[str], afk: list[int], named: dict[str, list[str]] | None = None,
+                   goal: bool = False) -> tuple[str, str, str, str]:
+    """Тег из доступных, его аргумент, новая цель и мысль из ответа модели: «[[SPOT_UP]] мысль», «[[AFK 15]] мысль»,
+    «[[SPOT_TO Cruma Tower · 1 этаж]] [[GOAL до 40-го]] мысль», «[[BUY Brigandine Helmet]] мысль» (и без скобок: «HUNT мысль»).
+    Аргумент AFK — минуты в пределах afk; у тегов из named — имя из их списка: у SPOT_TO, BUY и SELL имя не из списка — тег
+    не в счёт, у PARTY — крик без имени. [[GOAL …]] берётся, только когда ядро держит цели (goal). Тега из списка нет —
+    ValueError: это мусор."""
     text = " ".join(raw.split())
-    m = next((m for m in STRATEGY_RE.finditer(text) if m.group(1) in options), None)
+    named = named or {}
+    m, arg = None, ""
+    for x in STRATEGY_RE.finditer(text):
+        tag = x.group(1)
+        if tag not in options:
+            continue
+        if tag in named and (found := match_names(x.group(2) or "", named[tag], BUY_MAX) if tag == "BUY" else match_name(x.group(2) or "", named[tag])):
+            m, arg = x, found
+            break
+        if tag not in NAME_REQUIRED:
+            m = x
+            break
     if m is None:
         m = re.match(r"^\W*([A-Z_]{3,9})\b(?:[\s:]+(\d{1,3}))?", text)
-        if m is None or m.group(1) not in options:
+        if m is None or m.group(1) not in options or m.group(1) in NAME_REQUIRED:
             raise ValueError(f"в ответе нет тега из {', '.join(options)}: {text[:80]!r}")
     tag = m.group(1)
-    minutes = max(afk[0], min(afk[1], int(m.group(2) or 15))) if tag == "AFK" else 0
-    thought = Brain.clean(STRATEGY_RE.sub(" ", text[:m.start()] + " " + text[m.end():]), fpc).lstrip("|-—–:. ").strip()
-    return tag, minutes, thought[:100]
+    if tag == "AFK":
+        n = re.match(r"\d{1,3}", (m.group(2) or "").strip())
+        arg = str(max(afk[0], min(afk[1], int(n.group() if n else 15))))
+    new_goal = ""
+    if goal:
+        g = next((x for x in STRATEGY_RE.finditer(text) if x.group(1) == "GOAL" and x.group(2)), None)
+        new_goal = Brain.clean(g.group(2), fpc).strip(" .") if g else ""
+        # Пустой тег и цель следом до следующего тега: «[[TOWN]] [[GOAL]] докупить сосы [[TOWN]] мысль» (DeepSeek так пишет).
+        bare = None if new_goal else re.search(r"\[\[\s*GOAL\s*\]\]\s*([^\[\]]{3,}?)\s*\[\[", text)
+        if bare:
+            new_goal = Brain.clean(bare.group(1), fpc).strip(" .")
+        if len(new_goal) > GOAL_LEN:
+            new_goal = new_goal[:GOAL_LEN + 1].rsplit(" ", 1)[0].rstrip(" ,;—-")
+    rest = text[:m.start()] + " " + text[m.end():]
+    if goal and bare:
+        rest = rest.replace(bare.group(1), " ", 1)
+    rest = STRATEGY_RE.sub(" ", rest).replace("[[", " ").replace("]]", " ")
+    thought = Brain.clean(rest, fpc).lstrip("|-—–:. ").strip()
+    return tag, arg, new_goal, thought[:100]
 
 
 def ago_words(seconds: int) -> str:
@@ -337,6 +494,118 @@ def _readable(enum_name: str) -> str:
     return enum_name.replace("_", " ").title() if enum_name else ""
 
 
+class ModelDown(RuntimeError):
+    """Модель не ответила: нет ключа, сеть, HTTP, таймаут, мусор вместо ответа API. Только это в окне — «LLM недоступна»."""
+
+
+class RateLimited(RuntimeError):
+    """Свой потолок запросов в минуту: модель не звали, она тут ни при чём."""
+
+
+# ---------- окно «Разум» (шаг 5) ----------
+# Лаунчер читает базу мозгов сам, без сервиса: окно работает и при выключенном сервере. Сервис пишет в ту же базу —
+# sqlite разводит их замками (timeout).
+
+FEED_ROWS = 80          # решений стратега в ленте
+FEED_EXT_RECENT = 900   # с: решал с размышлением за это время — «сейчас в расширенном режиме»
+TALKS_ROWS = 200        # пар «фантом — собеседник» в памяти
+TALK_RECENT = 4         # последних реплик пары в окне
+DECISION_LINE_RE = re.compile(r"^\[\[([A-Z_]+)(?: ([^\[\]]+))?\]\]\s*(?:\[\[GOAL ([^\[\]]+)\]\]\s*)?(.*)$", re.S)
+FORGET_KINDS = ("talk", "lessons")
+
+
+@contextmanager
+def mind_db(chronicle_id: str):
+    db = sqlite3.connect(BRAIN_DIR / f"{chronicle_id}.sqlite", timeout=10)
+    try:
+        with db:
+            init_db(db)
+            yield db
+    finally:
+        db.close()
+
+
+def _rows(db: sqlite3.Connection, sql: str, args: tuple = ()) -> list[dict]:
+    cur = db.execute(sql, args)
+    names = [c[0] for c in cur.description]
+    return [dict(zip(names, r)) for r in cur.fetchall()]
+
+
+def mind_view(chronicle_id: str) -> dict:
+    """Что помнят мозги мира: лента решений стратега с итогами из журнала, охотники с выводами и опытом по местам, разговоры
+    фантомов с заметками. Время — в мс (как в окне). Базы ещё нет — всё пустое."""
+    if not (BRAIN_DIR / f"{chronicle_id}.sqlite").exists():
+        return {"feed": [], "extNow": [], "hunters": [], "talks": [], "forgotten": 0}
+    now = time.time()
+    with mind_db(chronicle_id) as db:
+        lines = _rows(db, "SELECT fpc, channel, text, ts FROM lines WHERE player = ? ORDER BY ts DESC LIMIT ?", (STRATEGY_PLAYER, FEED_ROWS))
+        since = min((x["ts"] for x in lines), default=now) - 120
+        results: dict[tuple[str, str], list[dict]] = {}
+        for r in _rows(db, "SELECT fpc, decided, decision, ok, reason, minutes, exp, deaths, adena, kills, spot, party FROM journal WHERE decided >= ?", (since,)):
+            results.setdefault((r["fpc"], r["decision"]), []).append(r)
+        feed = []
+        for x in lines:
+            m = DECISION_LINE_RE.match(x["text"])
+            tag, arg, goal, thought = m.groups() if m else ("", "", "", x["text"])
+            decision = (tag or "") + (f" {arg}" if arg else "")
+            # Итог — запись журнала того же охотника с тем же решением, принятым в пределах двух минут от ответа мозгов.
+            near = [r for r in results.get((x["fpc"], decision), []) if abs(r["decided"] - x["ts"]) < 120]
+            res = min(near, key=lambda r: abs(r["decided"] - x["ts"])) if near else None
+            feed.append({"fpc": x["fpc"], "at": int(x["ts"] * 1000), "decision": decision, "goal": goal or "", "thought": thought.strip(),
+                         "ext": x["channel"] == "strategy+",
+                         "result": {k: res[k] for k in ("ok", "reason", "minutes", "exp", "deaths", "adena", "kills", "spot", "party")} if res else None})
+        ext_now = sorted({x["fpc"] for x in feed if x["ext"] and now - x["at"] / 1000 < FEED_EXT_RECENT})
+        hunters = []
+        stats = {r["fpc"]: r for r in _rows(db, "SELECT fpc, COUNT(*) AS n, MAX(ts) AS ts FROM journal GROUP BY fpc")}
+        decided = {r["fpc"]: r for r in _rows(db, "SELECT fpc, COUNT(*) AS n, MAX(ts) AS ts FROM lines WHERE player = ? GROUP BY fpc", (STRATEGY_PLAYER,))}
+        lessons = {r["fpc"]: r for r in _rows(db, "SELECT fpc, text, level, ts FROM lessons")}
+        for fpc in set(stats) | set(decided) | set(lessons):
+            row = db.execute("SELECT level FROM journal WHERE fpc = ? ORDER BY ts DESC LIMIT 1", (fpc,)).fetchone()
+            level = row[0] if row else (lessons.get(fpc) or {}).get("level") or 0
+            places = [{"spot": s, "minutes": mins, "exp": exp, "deaths": deaths, "adena": adena}
+                      for s, mins, exp, deaths, adena in (experience_rows(db, fpc, level) if level else [])]
+            les = lessons.get(fpc)
+            last = max((stats.get(fpc) or {}).get("ts") or 0, (decided.get(fpc) or {}).get("ts") or 0, (les or {}).get("ts") or 0)
+            hunters.append({"fpc": fpc, "level": level, "results": (stats.get(fpc) or {}).get("n", 0), "decisions": (decided.get(fpc) or {}).get("n", 0),
+                            "lessons": {"text": les["text"], "level": les["level"], "at": int(les["ts"] * 1000)} if les else None,
+                            "places": places, "at": int(last * 1000)})
+        hunters.sort(key=lambda h: -h["at"])
+        talks = _rows(db, "SELECT fpc, player, COUNT(*) AS n, COALESCE(SUM(role = 'player'), 0) AS said, MAX(ts) AS ts FROM lines "
+                          "WHERE player != ? GROUP BY fpc, player ORDER BY MAX(ts) DESC LIMIT ?", (STRATEGY_PLAYER, TALKS_ROWS))
+        notes = {(r["fpc"], r["player"]): r for r in _rows(db, "SELECT fpc, player, text, ts FROM summaries")}
+        recent: dict[tuple[str, str], list[dict]] = {}
+        for r in _rows(db, "SELECT fpc, player, role, text, ts FROM (SELECT fpc, player, role, text, ts, ROW_NUMBER() OVER "
+                           "(PARTITION BY fpc, player ORDER BY ts DESC, id DESC) AS k FROM lines WHERE player != ?) WHERE k <= ? ORDER BY ts", (STRATEGY_PLAYER, TALK_RECENT)):
+            recent.setdefault((r["fpc"], r["player"]), []).append({"role": r["role"], "text": r["text"], "at": int(r["ts"] * 1000)})
+        for t in talks:
+            note = notes.get((t["fpc"], t["player"]))
+            t.update(at=int(t.pop("ts") * 1000), note={"text": note["text"], "at": int(note["ts"] * 1000)} if note else None,
+                     recent=recent.get((t["fpc"], t["player"]), []))
+        forgotten = db.execute("SELECT COUNT(*) FROM forgotten").fetchone()[0]
+    return {"feed": feed, "extNow": ext_now, "hunters": hunters, "talks": talks, "forgotten": forgotten}
+
+
+def mind_forget(chronicle_id: str, kind: str, fpc: str, player: str = "") -> int:
+    """«Забыть» из окна. talk — разговор фантома fpc с player и заметка о нём (заметка сама по себе вернулась бы из старых
+    реплик); lessons — выводы охотника и журнал итогов, из которого они выведены. Насовсем не стирает: строки — в таблицу
+    forgotten (JSON), мозги её не читают. Возвращает, сколько строк забыто."""
+    if kind not in FORGET_KINDS or not fpc or (kind == "talk" and (not player or player == STRATEGY_PLAYER)):
+        raise ValueError(f"нечего забывать: {kind} {fpc} {player}".strip())
+    with mind_db(chronicle_id) as db:
+        if kind == "talk":
+            parts = {"lines": ("lines", "fpc = ? AND player = ?", (fpc, player)), "summaries": ("summaries", "fpc = ? AND player = ?", (fpc, player))}
+        else:
+            parts = {"journal": ("journal", "fpc = ?", (fpc,)), "lessons": ("lessons", "fpc = ?", (fpc,))}
+        data = {name: _rows(db, f"SELECT * FROM {table} WHERE {where}", args) for name, (table, where, args) in parts.items()}
+        n = sum(len(v) for v in data.values())
+        if n:
+            db.execute("INSERT INTO forgotten (ts, kind, fpc, player, data) VALUES (?, ?, ?, ?, ?)",
+                       (time.time(), kind, fpc, player, json.dumps(data, ensure_ascii=False)))
+            for table, where, args in parts.values():
+                db.execute(f"DELETE FROM {table} WHERE {where}", args)
+    return n
+
+
 class Brain:
     def __init__(self, chronicle_id: str, echo: bool = False):
         p = catalog.profile(chronicle_id)
@@ -358,10 +627,7 @@ class Brain:
         BRAIN_DIR.mkdir(parents=True, exist_ok=True)
         self.db_path = BRAIN_DIR / f"{chronicle_id}.sqlite"
         self.log_path = BRAIN_DIR / f"{chronicle_id}.log"
-        with self._db() as db:
-            db.execute("CREATE TABLE IF NOT EXISTS lines (id INTEGER PRIMARY KEY, fpc TEXT, player TEXT, role TEXT, channel TEXT, text TEXT, ts REAL)")
-            db.execute("CREATE INDEX IF NOT EXISTS lines_pair ON lines (fpc, player, ts)")
-            db.execute("CREATE TABLE IF NOT EXISTS summaries (fpc TEXT, player TEXT, text TEXT, through_id INTEGER, ts REAL, PRIMARY KEY (fpc, player))")
+        self._init_db()
         self.locks: dict[tuple[str, str], threading.Lock] = {}
         self.locks_guard = threading.Lock()
         self.summarizing: set[tuple[str, str]] = set()
@@ -369,7 +635,10 @@ class Brain:
         self.calls = deque()
         self.strategy_calls = deque()
         self.test_tags: dict[str, int] = {}
-        self.stats = {"requests": 0, "replies": 0, "silent": 0, "errors": 0, "lastError": "", "lastReplyAt": "", "decisions": 0, "summaries": 0, "extended": 0}
+        # errors и lastError — сбои модели (ModelDown), llmOk — удался ли последний запрос к ней (None — ещё не звали); bad и lastBad —
+        # модель ответила, но не в дело (у стратега — нет тега из вариантов), или запрос сломался не из-за неё; limited — свой лимит.
+        self.stats = {"requests": 0, "replies": 0, "silent": 0, "errors": 0, "lastError": "", "lastReplyAt": "", "decisions": 0, "summaries": 0,
+                      "extended": 0, "llmOk": None, "bad": 0, "lastBad": "", "limited": 0}
         self.ext_capped = ""  # день, когда лимит расширенного режима выбран (строка в журнале — раз в день)
 
     # ---------- данные ----------
@@ -383,6 +652,10 @@ class Brain:
 
     def _db(self) -> sqlite3.Connection:
         return sqlite3.connect(self.db_path, timeout=10)
+
+    def _init_db(self) -> None:
+        with self._db() as db:
+            init_db(db)
 
     def refresh(self) -> None:
         """Перечитать настройки из лаунчера, если файл изменился: модель меняется без перезапуска сервиса."""
@@ -487,7 +760,7 @@ class Brain:
             if len(stale) < (1 if force else SUMMARY_EVERY):
                 return ""
             if not self._rate_ok():
-                raise RuntimeError("слишком много запросов в минуту")
+                raise RateLimited("слишком много запросов в минуту")
             started = time.monotonic()
             raw = self.call_llm([{"role": "system", "content": self.summary_prompt(fpc, player, old, stale)},
                                  {"role": "user", "content": "Новая заметка:"}], max_tokens=SUMMARY_TOKENS, temperature=0.3)
@@ -503,6 +776,118 @@ class Brain:
         except Exception as e:  # noqa: BLE001 — заметка необязательна: без неё в промпте просто последние реплики
             self.summary_retry[key] = time.monotonic() + SUMMARY_RETRY
             self._log(f"[summary] {fpc} о {player}: не вышло: {e}")
+            return ""
+        finally:
+            with self.locks_guard:
+                self.summarizing.discard(key)
+
+    # ---------- опыт и выводы (шаг 4) ----------
+
+    def journal_add(self, fpc: str, level: int, last: dict) -> bool:
+        """Итог прошлого решения (last.result от ядра) — в журнал. Одно решение — одна запись: тот же last ещё раз (мозги не
+        ответили, сервер спросил снова) обновляет её. Без result — ничего."""
+        r = last.get("result") or {}
+        if not r or not last.get("tag"):
+            return False
+        now = time.time()
+        # Когда решил: last.at от ядра (unix-секунды) — точно; без него — по давности в минутах, с точностью до минуты.
+        decided = float(last["at"]) if last.get("at") else now - float(last.get("minutes") or r.get("minutes") or 0) * 60
+        window = 5 if last.get("at") else 30
+        decision = last["tag"] + (f" {last['arg']}" if last.get("arg") else "")
+        values = (int(r.get("level") or level or 0), int(bool(last.get("ok"))), str(last.get("reason") or ""), float(r.get("minutes") or 0),
+                  float(r.get("exp") or 0), int(r.get("deaths") or 0), int(r.get("adena") or 0), int(r.get("kills") or 0), str(r.get("spot") or ""),
+                  float(r.get("party") or 0))
+        with self._db() as db:
+            same = db.execute("SELECT id FROM journal WHERE fpc = ? AND decision = ? AND ABS(decided - ?) < ?", (fpc, decision, decided, window)).fetchone()
+            if same:
+                db.execute("UPDATE journal SET ts = ?, level = ?, ok = ?, reason = ?, minutes = ?, exp = ?, deaths = ?, adena = ?, kills = ?, spot = ?, "
+                           "party = ? WHERE id = ?", (now, *values, same[0]))
+            else:
+                db.execute("INSERT INTO journal (fpc, decided, ts, decision, level, ok, reason, minutes, exp, deaths, adena, kills, spot, party) "
+                           "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (fpc, decided, now, decision, *values))
+        return True
+
+    def experience(self, fpc: str, level: int) -> str:
+        """Опыт по местам из журнала: за JOURNAL_DAYS суток на уровнях ±JOURNAL_LEVELS — опыт, смерти и адена в час."""
+        with self._db() as db:
+            rows = experience_rows(db, fpc, level)
+        return "; ".join(f"{spot} — {span_words(int(m * 60))}: ~{per_hour(exp, m):.1f}% уровня в час, смертей {per_hour(deaths, m):.1f} в час, "
+                         f"адена {signed_adena(int(per_hour(adena, m)))} в час" for spot, m, exp, deaths, adena in rows)
+
+    def _lessons(self, fpc: str) -> tuple[str, int, int, float]:
+        """Выводы охотника: текст, id последнего учтённого итога, уровень и время; нет — ("", 0, 0, 0)."""
+        with self._db() as db:
+            row = db.execute("SELECT text, through_id, level, ts FROM lessons WHERE fpc = ?", (fpc,)).fetchone()
+        return tuple(row) if row else ("", 0, 0, 0.0)
+
+    def _journal_since(self, fpc: str, through_id: int) -> list[tuple]:
+        with self._db() as db:
+            rows = db.execute("SELECT id, decided, level, decision, ok, reason, minutes, exp, deaths, adena, kills, spot, party FROM journal "
+                              "WHERE fpc = ? AND id > ? ORDER BY id DESC LIMIT ?", (fpc, through_id, LESSONS_ROWS)).fetchall()
+        return list(reversed(rows))
+
+    def lessons_prompt(self, fpc: str, level: int, old: str, rows: list[tuple]) -> str:
+        p = self.personas.get(fpc, {})
+        lines = []
+        for _id, decided, lvl, decision, ok, reason, minutes, exp, deaths, adena, kills, spot, party in rows:
+            r = {"minutes": minutes, "exp": exp, "deaths": deaths, "adena": adena, "kills": kills, "spot": spot, "party": party}
+            lines.append(f"[{datetime.fromtimestamp(decided):%d.%m %H:%M}] {lvl} ур., решил {decision}" + ("" if ok else f" — не вышло: {reason}")
+                         + f"; {result_words(r)}")
+        return "\n".join(x for x in [
+            f"Ты ведёшь записную книжку {fpc} — игрока Lineage II (хроника {self.chronicle_name}) на маленьком сервере для своих, сейчас {level} уровень.",
+            f"Характер {fpc}: {p['traits']}." if p.get("traits") else "",
+            f"Прежние выводы: {old}" if old else "Прежних выводов нет.",
+            "Журнал: что он решал и что из этого вышло (опыт — в % уровня, адена — чистая разница с тратами на сосы, покупки и телепорт):",
+            *lines,
+            "Перепиши выводы целиком: 2–5 коротких правил на будущее от первого лица, каждое — с местом или уровнем и причиной из журнала. "
+            "Например: «Wasteland на 32-м — стрелки кладут, лучше Cruma», «в город ходить реже: поход съедает 15 минут и 30к». "
+            "Только то, что видно из журнала и прежних выводов, ничего не выдумывай; устаревшее (другой уровень, места не по уровню) выкидывай. "
+            f"По-русски, правила через «; », без кавычек и вступлений, не длиннее {LESSONS_MAX} символов.",
+        ] if x)
+
+    def maybe_lessons(self, fpc: str, level: int) -> None:
+        """После итога в журнале: набралось LESSONS_EVERY новых итогов и с прошлых выводов новый уровень или сутки (или выводов
+        ещё нет) — пересмотреть выводы в фоне, не задерживая решение."""
+        key = (fpc, LESSONS_KEY)
+        if self.echo:
+            return
+        _text, through, at_level, ts = self._lessons(fpc)
+        if through and at_level == level and time.time() - ts < 86400:
+            return
+        with self._db() as db:
+            fresh = db.execute("SELECT COUNT(*) FROM journal WHERE fpc = ? AND id > ?", (fpc, through)).fetchone()[0]
+        if fresh < LESSONS_EVERY:
+            return
+        with self.locks_guard:
+            if key in self.summarizing or self.summary_retry.get(key, 0) > time.monotonic():
+                return
+            self.summarizing.add(key)
+        threading.Thread(target=self.write_lessons, args=(fpc, level), daemon=True).start()
+
+    def write_lessons(self, fpc: str, level: int, force: bool = False) -> str:
+        """Пересмотреть выводы охотника по новым итогам журнала; force — хоть по одному. Возвращает новые выводы или ""."""
+        key = (fpc, LESSONS_KEY)
+        try:
+            old, through, _level, _ts = self._lessons(fpc)
+            rows = self._journal_since(fpc, through)
+            if len(rows) < (1 if force else LESSONS_EVERY):
+                return ""
+            if not self._rate_ok():
+                raise RateLimited("слишком много запросов в минуту")
+            started = time.monotonic()
+            raw = self.call_llm([{"role": "system", "content": self.lessons_prompt(fpc, level, old, rows)},
+                                 {"role": "user", "content": "Новые выводы:"}], max_tokens=LESSONS_TOKENS, temperature=0.3)
+            text = " ".join(raw.split()).strip().strip('"«»“”').strip()[:LESSONS_MAX]
+            if not text:
+                raise RuntimeError("модель вернула пустые выводы")
+            with self._db() as db:
+                db.execute("INSERT OR REPLACE INTO lessons (fpc, text, through_id, level, ts) VALUES (?, ?, ?, ?, ?)",
+                           (fpc, text, rows[-1][0], level, time.time()))
+            self._log(f"[lessons] {fpc} ({level} ур.): +{len(rows)} итогов => {text!r} ({time.monotonic() - started:.1f} с)")
+            return text
+        except Exception as e:  # noqa: BLE001 — выводы необязательны: без них в промпте опыт по местам и итог прошлого решения
+            self.summary_retry[key] = time.monotonic() + SUMMARY_RETRY
+            self._log(f"[lessons] {fpc}: не вышло: {e}")
             return ""
         finally:
             with self.locks_guard:
@@ -573,6 +958,9 @@ class Brain:
              if ph.get("hunter") else
              f"Ты ходишь напарником в пати. Твоя роль — {ROLE_JOB.get(role, 'напарник')}. Сейчас: {ph.get('state', '')}. {status}."),
             f"Настроение: {MOOD_RU[ph['mood']]}." if ph.get("mood") in MOOD_RU else "",
+            # Живые кланы (раздел 4.50): свой клан охотников или клан живого игрока.
+            (f"Ты в клане «{ph['clan']}»" + (", ты его глава" if ph.get("clanLeader") else "")
+             + ("; это клан охотников — таких же игроков, как ты." if ph.get("hunterClan") else "; это клан живого игрока.")) if ph.get("clan") else "",
             f"В пати с тобой: {'; '.join(party)}." if party else "",
             f"Рядом город {ph.get('town', '')}. Игровое время {req.get('gameTime', '')}{', ночь' if req.get('night') else ''}.",
         ]
@@ -660,11 +1048,48 @@ class Brain:
                "Если говорят явно не с тобой или отвечать нечего — ответь ровно словом <молчу>."))
         return "\n".join(x for x in lines if x)
 
-    def strategy_prompt(self, req: dict, ext: bool = False) -> str:
-        """Стратег охотника: что делать дальше — характер, состояние, прошлые решения и только доступные варианты.
+    def _spot_choices(self, req: dict) -> list[str]:
+        """Споты для [[SPOT_TO]]: список ядра (choices у опции — оно знает, куда дойдёт пешком) или из базы знаний под уровень,
+        по одному на место, кроме своего и того, куда ядро только что отказалось вести. Нет ни того, ни другого — пусто:
+        тег тогда не предлагается."""
+        opt = next((o for o in req.get("options", []) if o.get("tag") == "SPOT_TO"), None)
+        if opt is None:
+            return []
+        if opt.get("choices"):
+            return [str(c) for c in opt["choices"] if c][:SPOT_CHOICES_MAX]
+        kb = self.knowledge.kb()
+        h, last = req.get("hunter", {}), req.get("last") or {}
+        if not kb:
+            return []
+        # Мимо: свой спот, куда ведут SPOT_UP и SPOT_DOWN (те же места — другим тегом) и куда ядро только что не повело.
+        skip = {h.get("spot", "")} | {re.sub(r" \(мобы.*$", "", o.get("note", "")) for o in req.get("options", []) if o.get("tag") in ("SPOT_UP", "SPOT_DOWN")}
+        if last.get("tag") == "SPOT_TO" and not last.get("ok"):
+            skip.add(last.get("arg", ""))
+        return self.knowledge.choices(kb, int(h.get("level") or 0), skip, SPOT_CHOICES)
+
+    @staticmethod
+    def _option_choices(req: dict, tag: str) -> list[dict]:
+        """choices ядра у варианта BUY, SELL или PARTY — словари с "name", не больше CHOICES_MAX."""
+        opt = next((o for o in req.get("options", []) if o.get("tag") == tag), None) or {}
+        return [c for c in opt.get("choices") or [] if isinstance(c, dict) and choice_name(c)][:CHOICES_MAX[tag]]
+
+    def _named(self, req: dict) -> dict[str, list[str]]:
+        """Имена на выбор у вариантов с аргументом: споты у SPOT_TO, вещи у BUY и SELL, люди рядом у PARTY. Пустых списков нет."""
+        tags = {o.get("tag") for o in req.get("options", [])}
+        named = {"SPOT_TO": self._spot_choices(req)} if "SPOT_TO" in tags else {}
+        named |= {t: [choice_name(c) for c in self._option_choices(req, t)] for t in CHOICES_MAX if t in tags}
+        return {t: names for t, names in named.items() if names}
+
+    def strategy_prompt(self, req: dict, ext: bool = False, named: dict[str, list[str]] | None = None) -> str:
+        """Стратег охотника: что делать дальше — характер, состояние, цель, прошлые решения и только доступные варианты.
         ext — расширенный режим: ещё кусок базы знаний — свой спот и споты вариантов, шмот, профа. Других мест в нём нет:
-        сервер выполнит только свой вариант, и мысль «иду в X» разошлась бы с делом."""
+        сервер выполнит только свой вариант, и мысль «иду в X» разошлась бы с делом. named — имена на выбор у вариантов
+        с аргументом (decide считает их один раз, чтобы промпт и разбор ответа видели один список)."""
         fpc, h = req["fpc"], req.get("hunter", {})
+        if named is None:
+            named = self._named(req)
+        spots = named.get("SPOT_TO", [])
+        kb = self.knowledge.kb() or {}
         p = self.personas.get(fpc, {})
         who = ", ".join(x for x in (p.get("race"), _readable(h.get("class", "")), f"{h.get('level', '')} уровень") if x)
         if h.get("spot"):
@@ -692,6 +1117,8 @@ class Brain:
             spot,
             f"Смертей за последний час: {h['deathsHour']}." if h.get("deathsHour") else "За последний час ни разу не умирал.",
             f"В кармане {h.get('money', h.get('adena', 0))} адены. Шмот: {h.get('gear', '').rstrip('.')}.",
+            # Ядро: у торговцев города нет ничего лучше надетого — грейд выше, чем продают, или лучшее уже на нём.
+            f"У торговцев{' в ' + h['town'] if h.get('town') else ''} нет ничего лучше твоего шмота: у NPC его не улучшить." if h.get("buy_empty") else "",
             f"Расходники: {h.get('supplies', '')}. Инвентарь заполнен на {h.get('inventoryPct', 0)}%.",
             f"Ценный дроп на продажу: {h['drop']}." if h.get("drop") else "Ценного дропа на продажу нет.",
             f"В городе был {h.get('townMinutes', 0)} мин назад, " + (f"лавку ставил {store} мин назад." if store >= 0 else "лавку ещё не ставил."),
@@ -712,25 +1139,78 @@ class Brain:
         past = self._past_decisions(fpc)
         if past:
             lines.append("Твои прошлые решения: " + "; ".join(past) + ".")
+        goals = v1_goals(req)  # ядро держит цели (docs/MIND.md, раздел 4)
+        if goals:
+            lines.append(f"Твоя цель сейчас: {req['goal']}." if (req.get("goal") or "").strip() else "Цели у тебя пока нет.")
+        last = req.get("last") or {}
+        if last.get("tag"):
+            what = last["tag"] + (f" {last['arg']}" if last.get("arg") else "")
+            when = f" ({last['minutes']} мин назад)" if last.get("minutes") else ""
+            # Выполнено с причиной — только [[BUY A; B]]: купил не всё («не хватает адены на B: …»).
+            lines.append(f"Прошлое решение [[{what}]]{when} " + ((f"выполнено, но не всё: {last['reason']}." if last.get("reason") else "выполнено.")
+                                                                  if last.get("ok") else
+                                                                  f"не вышло: {last.get('reason') or 'не получилось'}. Это решение сейчас не повторяй.")
+                         + (f" Итог {result_words(last['result'])}." if last.get("result") else ""))
+        # Шаг 4: опыт по местам из журнала и выводы, которые охотник записал себе сам.
+        seen = self.experience(fpc, int(h.get("level") or 0))
+        if seen:
+            lines.append(f"Твой опыт по местам за последние дни (на твоём уровне): {seen}.")
+        lessons = self._lessons(fpc)[0]
+        if lessons:
+            lines.append(f"Твои выводы из опыта: {lessons}")
         lo, hi = (req.get("afk") or [5, 30])[:2]
         options = []
         for o in req.get("options", []):
             tag, note = o.get("tag", ""), o.get("note", "")
             if tag == "AFK":
                 options.append(f"[[AFK N]] — отдохнуть в городе N минут ({lo}–{hi}): посидеть афк")
+            elif tag == "SPOT_TO":
+                if spots:
+                    known = kb.get("spots", {})
+                    brief = [knowledge.Knowledge.spot_brief(n, known[n]) if n in known else n for n in spots]
+                    options.append(f"[[SPOT_TO имя спота]] — {STRATEGY_HELP[tag]}; имя — точно как тут, одно из: " + "; ".join(brief))
+            elif tag == "BUY":
+                if named.get(tag):
+                    items = [f"{c['name']} ({', '.join(str(x) for x in (c.get('part'), c.get('grade')) if x)}, {knowledge.adena(c.get('price') or 0)})"
+                             for c in self._option_choices(req, tag)]
+                    options.append(f"[[BUY вещь]] или [[BUY вещь; вещь]] — {STRATEGY_HELP[tag]}" + (f" ({note})" if note else "")
+                                   + "; вещь — точно как тут, одна из: " + "; ".join(items))
+            elif tag == "SELL":
+                if named.get(tag):
+                    items = [f"{c['name']}" + (f" ×{c['count']}" if int(c.get("count") or 1) > 1 else "") + f" — {knowledge.adena(c.get('price') or 0)}"
+                             for c in self._option_choices(req, tag)]
+                    options.append(f"[[SELL вещь]] — {STRATEGY_HELP[tag]}" + (f" ({note})" if note else "")
+                                   + "; вещь — точно как тут, одна из: " + "; ".join(items))
+            elif tag == "PARTY":
+                options.append(f"[[PARTY]] — {STRATEGY_HELP[tag]}" + (f": {note}" if note else ""))
+                if named.get(tag):
+                    people = [f"{c['name']} (" + ", ".join(str(x) for x in ("живой игрок" if c.get("real") else "", c.get("class"),
+                                                                             f"{c.get('level')} ур." if c.get("level") else "", c.get("role"),
+                                                                             f"в пати {c['party']}" if c.get("party") else "без пати") if x) + ")"
+                              for c in self._option_choices(req, tag)]
+                    options.append(f"[[PARTY имя]] — {PARTY_NAMED}; имя — точно как тут, одно из: " + "; ".join(people))
             elif tag in STRATEGY_HELP:
                 options.append(f"[[{tag}]] — {STRATEGY_HELP[tag]}" + (f": {note}" if note else ""))
         if ext:
-            spots = [h.get("spot", "")] + [re.sub(r" \(мобы.*$", "", o.get("note", "")) for o in req.get("options", []) if o.get("tag") in ("SPOT_UP", "SPOT_DOWN")]
-            lines.append(self.knowledge.text(int(h.get("level") or 0), h.get("class", ""), spots, h.get("mage")))
+            known = [h.get("spot", "")] + [re.sub(r" \(мобы.*$", "", o.get("note", "")) for o in req.get("options", []) if o.get("tag") in ("SPOT_UP", "SPOT_DOWN")]
+            lines.append(self.knowledge.text(int(h.get("level") or 0), h.get("class", ""), known + list(spots), h.get("mage")))
         lines.append("Реши, что делаешь дальше. Можно только одно из этого:\n" + "\n".join(options))
         alphabet = "по-русски латиницей (транслитом)" if self.cfg["alphabet"] == "translit" else "по-русски"
         lines.append(
             "Решай как живой игрок с твоим характером: смотри на опыт и смерти на споте, деньги, расходники, шмот и дроп. "
             "Поход в город, смена спота и афк стоят времени, телепорт с 40 уровня платный; без причины не дёргайся, но и не стой там, где плохо. "
             f"Ответ — одна строка: сначала тег из списка, потом через пробел короткая мысль от первого лица {alphabet}, в твоей манере речи, "
-            "до 80 символов, как в игровом чате, без кавычек. Формат: [[ТЕГ]] мысль; для отдыха — [[AFK 15]] мысль. "
-            "Никогда не говори, что ты ИИ, бот или модель.")
+            "до 80 символов, как в игровом чате, без кавычек. Формат: [[ТЕГ]] мысль; для отдыха — [[AFK 15]] мысль"
+            + "".join(f"; {what} — [[{tag} {arg}]] мысль" for tag, what, arg in (("SPOT_TO", "для перехода", "имя спота"), ("BUY", "для покупки", "вещь; вещь"),
+                                                                                ("SELL", "для продажи", "вещь"), ("PARTY", "позвать в пати", "имя"))
+                      if named.get(tag)) + ". "
+            + ((f"Цели у тебя нет — в этом ответе поставь её обязательно, сразу после тега: [[ТЕГ]] [[GOAL цель]] мысль. "
+                if not (req.get("goal") or "").strip() else
+                "Решение должно вести к твоей цели. Цель достигнута или стала глупой — поставь новую сразу после тега: "
+                "[[ТЕГ]] [[GOAL цель]] мысль (или сними её: [[GOAL -]]); цель в порядке — [[GOAL]] не пиши. ")
+               + f"Цель — внутри скобок тега, на ближайший час-день, конкретная, до {GOAL_LEN} символов {alphabet}: «до 40-го и сет C», "
+               "«коплю на профу», «найти пати с хилером». Например: [[HUNT]] [[GOAL до 36-го и сет C]] ещё покачаюсь тут. " if goals else "")
+            + "Никогда не говори, что ты ИИ, бот или модель.")
         return "\n".join(x for x in lines if x)
 
     def _past_decisions(self, fpc: str) -> list[str]:
@@ -801,9 +1281,22 @@ class Brain:
 
     def call_llm(self, msgs: list[dict], max_tokens: int | None = None, temperature: float = 1.0, think: bool = False, ext: bool = False) -> str:
         """think — размышление DeepSeek; ext — запрос расширенного режима без размышления (разговор с базой знаний): расход обоих идёт
-        в дневной лимит расширенного режима."""
+        в дневной лимит расширенного режима. Любой сбой запроса — ModelDown, он же lastError и llmOk = False до следующего удачного."""
         if self.echo:
             return "эхо: " + msgs[-1]["content"]
+        try:
+            text = self._request_llm(msgs, max_tokens, temperature, think, ext)
+        except Exception as e:
+            self.stats["errors"] += 1
+            self.stats["lastError"] = f"{datetime.now():%H:%M:%S} {e}"
+            self.stats["llmOk"] = False
+            if isinstance(e, ModelDown):
+                raise
+            raise ModelDown(str(e)) from e
+        self.stats["llmOk"] = True
+        return text
+
+    def _request_llm(self, msgs: list[dict], max_tokens: int | None, temperature: float, think: bool, ext: bool) -> str:
         self.refresh()
         local = self.cfg["mode"] == "local"
         key = "" if local else self.key()
@@ -824,9 +1317,12 @@ class Brain:
         if key:
             headers["Authorization"] = f"Bearer {key}"
         req = urllib.request.Request(self.cfg["baseUrl"].rstrip("/") + "/chat/completions", data=json.dumps(body).encode("utf-8"), headers=headers)
+        timeout = LOCAL_TIMEOUT if local else EXT_TIMEOUT if think else LLM_TIMEOUT
         try:
-            with urllib.request.urlopen(req, timeout=LOCAL_TIMEOUT if local else EXT_TIMEOUT if think else LLM_TIMEOUT) as r:
+            with urllib.request.urlopen(req, timeout=timeout) as r:
                 data = json.loads(r.read().decode("utf-8"))
+        except TimeoutError as e:
+            raise ModelDown(f"модель не ответила за {timeout} с ({self.cfg['baseUrl']})") from e
         except urllib.error.HTTPError as e:
             detail = e.read().decode("utf-8", "replace")[:300]
             raise RuntimeError(f"модель ответила HTTP {e.code}: {detail}") from e
@@ -865,14 +1361,23 @@ class Brain:
     # ---------- запрос ----------
 
     def decide(self, req: dict) -> str:
-        """Стратег охотника: «[[ТЕГ]] мысль» или «[[AFK 15]] мысль». Мусор, лимит, ошибка модели — исключение (HTTP 502):
-        сервер тогда живёт по правилам. Самопроверка сервера: test=garbage — мусор без модели, test=random — случайный вариант."""
+        """Стратег охотника: «[[ТЕГ]] мысль», «[[AFK 15]] мысль», с целями — «[[SPOT_TO имя]] [[GOAL цель]] мысль» (цель — только
+        новая). Мусор, лимит, ошибка модели — исключение (HTTP 502): сервер тогда живёт по правилам. Самопроверка сервера:
+        test=garbage — мусор без модели, test=random — случайный вариант."""
         fpc, h = req["fpc"], req.get("hunter", {})
         options = [o.get("tag") for o in req.get("options", []) if o.get("tag") in STRATEGY_HELP]
+        named = self._named(req)
+        for t in NAME_REQUIRED:
+            if t in options and t not in named:
+                options.remove(t)  # не из чего выбрать — тег не предлагается и не принимается
         if not options:
             raise RuntimeError(f"стратег {fpc}: нет вариантов")
+        goals = v1_goals(req)
         afk = list((req.get("afk") or [5, 30])[:2])
         test = req.get("test", "")
+        # Шаг 4: итог прошлого решения — в журнал (не у самопроверок и проверок из консоли), выводы — в фоне, когда пора.
+        if not test and not self.echo and self.journal_add(fpc, int(h.get("level") or 0), req.get("last") or {}):
+            self.maybe_lessons(fpc, int(h.get("level") or 0))
         self.stats["decisions"] += 1
         started = time.monotonic()
         think = False  # расширенное обдумывание (_think) — только для настоящего запроса к модели
@@ -883,24 +1388,33 @@ class Brain:
             least = min(self.test_tags.get(t, 0) for t in options)
             tag = random.choice([t for t in options if self.test_tags.get(t, 0) == least])
             self.test_tags[tag] = self.test_tags.get(tag, 0) + 1
-            raw = f"[[{tag}{f' {afk[0]}' if tag == 'AFK' else ''}]] проверка: {STRATEGY_HELP[tag]}"
+            # PARTY со списком — то с именем, то крик без него; BUY — то одна вещь, то две списком.
+            arg = f" {afk[0]}" if tag == "AFK" else f" {random.choice(named[tag] + ([''] if tag == 'PARTY' else []))}" if tag in named else ""
+            if tag == "BUY" and len(named[tag]) > 1 and random.random() < 0.5:
+                arg = " " + "; ".join(random.sample(named[tag], 2))
+            raw = f"[[{tag}{arg.rstrip()}]]" + (" [[GOAL проверка цели]]" if goals and self.test_tags[tag] == 1 else "") + f" проверка: {STRATEGY_HELP[tag]}"
         else:
             if not self._strategy_rate_ok():
-                raise RuntimeError(f"стратег {fpc}: слишком много запросов в минуту")
+                raise RateLimited(f"стратег {fpc}: слишком много запросов в минуту")
             think = self._think(req)
             if think:
                 self.stats["extended"] += 1
-            raw = self.call_llm([{"role": "system", "content": self.strategy_prompt(req, ext=think)}, {"role": "user", "content": "Что делаешь дальше?"}],
-                                max_tokens=EXT_MAX_TOKENS if think else None, think=think)
+            # С целью и именем спота, вещи или человека ответ длиннее: 120 токенов по умолчанию на него впритык.
+            raw = self.call_llm([{"role": "system", "content": self.strategy_prompt(req, ext=think, named=named)},
+                                 {"role": "user", "content": "Что делаешь дальше?"}],
+                                max_tokens=EXT_MAX_TOKENS if think else max(self.cfg["maxTokens"], 200) if goals or named else None, think=think)
         try:
-            tag, minutes, thought = parse_strategy(raw, fpc, options, afk)
+            tag, arg, goal, thought = parse_strategy(raw, fpc, options, afk, named, goals)
         except ValueError as e:
             raise RuntimeError(f"стратег {fpc}: {e}{f' [{test}]' if test else ''}") from e
         if self.cfg["alphabet"] == "translit":
-            thought = translit(thought)
-        reply = f"[[{tag}{f' {minutes}' if tag == 'AFK' else ''}]] {thought}".strip()
+            thought, goal = translit(thought), translit(goal)
+        # Имя спота, вещи или человека — как в списке, без транслита: по нему ядро их ищет.
+        reply = f"[[{tag}{f' {arg}' if arg else ''}]]{f' [[GOAL {goal}]]' if goal else ''} {thought}".strip()
         if not test and not self.echo:
-            self._remember(fpc, STRATEGY_PLAYER, "strategy", "strategy", reply)
+            self.stats["lastReplyAt"] = datetime.now().strftime("%H:%M:%S")
+            # Канал strategy+ — решение с размышлением: окно «Разум» показывает, кто сейчас в расширенном режиме.
+            self._remember(fpc, STRATEGY_PLAYER, "strategy", "strategy+" if think else "strategy", reply)
         self._log(f"[strategy{'+' if think else ''}] {fpc} ({h.get('level')} ур., {h.get('spot') or 'без спота'}, {h.get('money', h.get('adena'))}): "
                   f"{'/'.join(options)} => {reply!r}{f' [{test}]' if test else ''} ({time.monotonic() - started:.1f} с)")
         return reply
@@ -931,7 +1445,7 @@ class Brain:
         fpc = req["fpc"]
         self.stats["requests"] += 1
         if not self._rate_ok():
-            raise RuntimeError("слишком много запросов в минуту")
+            raise RateLimited("слишком много запросов в минуту")
         started = time.monotonic()
         raw = self.call_llm([{"role": "system", "content": self.town_prompt(req)}, {"role": "user", "content": "Что скажешь?"}])
         reply = self.clean(TAG_RE.sub(" ", raw), fpc)[:TOWN_REPLY]
@@ -943,6 +1457,34 @@ class Brain:
         self._log(f"[town:{req.get('event') or 'idle'}] {fpc} ({req.get('role', '')}, {req.get('town', '')}): {req.get('facts', '')!r} => {reply!r} "
                   f"({time.monotonic() - started:.1f} с)")
         return reply
+
+    def clan_name(self, req: dict) -> str:
+        """Имя клана, который основывает охотник (раздел 4.50): одно слово латиницей и цифрами, 3–16 знаков. Память пар не пишется, лимит — общий;
+        пусто или не то — сервер берёт имя из слогов."""
+        fpc = req["fpc"]
+        p = self.personas.get(fpc, {})
+        self.stats["requests"] += 1
+        if not self._rate_ok():
+            raise RateLimited("слишком много запросов в минуту")
+        started = time.monotonic()
+        who = ", ".join(x for x in (p.get("race"), _readable(req.get("class", "")) or p.get("class")) if x)
+        taken = ", ".join(req.get("taken") or [])
+        prompt = "\n".join(x for x in [
+            f"Ты — {fpc}, игрок в Lineage II (хроника {self.chronicle_name}) на маленьком сервере для своих. {who}.",
+            p.get("bio", ""),
+            f"Характер: {p['traits']}." if p.get("traits") else "",
+            "Ты основываешь свой клан. Придумай ему название в своём духе, как игроки называют кланы: коротко и звучно, можно с игрой слов.",
+            "Название — одно слово латинскими буквами, без пробелов, дефисов и кавычек, от 3 до 16 знаков, с большой буквы, не капсом.",
+            "Цифры — только если они часть шутки. Не вставляй в название свой ник, класс, расу и уровень.",
+            f"Уже заняты: {taken}." if taken else "",
+            "Ответь только названием.",
+        ] if x)
+        raw = self.call_llm([{"role": "system", "content": prompt}, {"role": "user", "content": "Как назовёшь клан?"}], max_tokens=20)
+        match = re.search(r"[A-Za-z0-9]{3,16}", raw or "")
+        name = match.group(0) if match else ""
+        self.stats["replies" if name else "silent"] += 1
+        self._log(f"[clanname] {fpc}: {raw!r} => {name!r} ({time.monotonic() - started:.1f} с)")
+        return name
 
     def _reaper_tally(self, fpc: str, player: str, female: bool) -> tuple[str, str]:
         """Счёт встреч с игроком (сколько раз забирал, был убит, упустил…) и кто его убивал вообще — из памяти, без потолка HISTORY."""
@@ -1000,7 +1542,7 @@ class Brain:
             lock = self.locks.setdefault((fpc, name), threading.Lock())
         with lock:
             if not self._rate_ok():
-                raise RuntimeError("слишком много запросов в минуту")
+                raise RateLimited("слишком много запросов в минуту")
             started = time.monotonic()
             tally, killers = self._reaper_tally(fpc, name, bool(player.get("female")))
             msgs = [{"role": "system", "content": self.reaper_prompt(req, tally, killers)}] + self._history_messages(fpc, name)
@@ -1032,6 +1574,8 @@ class Brain:
             return self.town(req)
         if req.get("kind") == "reaper":
             return self.reaper(req)
+        if req.get("kind") == "clanname":
+            return self.clan_name(req)
         if req.get("kind") == "acquaintance":
             # Охотник решает, заговорить ли первым (патч 0025): только память, без модели, вне лимитов и статистики.
             return json.dumps(self.acquaintance(req["fpc"], req.get("player", {}).get("name", "")))
@@ -1041,7 +1585,7 @@ class Brain:
             lock = self.locks.setdefault((fpc, player), threading.Lock())
         with lock:  # реплики одному игроку — по очереди, чтобы история не перепуталась
             if not self._rate_ok():
-                raise RuntimeError("слишком много запросов в минуту")
+                raise RateLimited("слишком много запросов в минуту")
             started = time.monotonic()
             # Охотник рядом с игроком в расширенном режиме говорит со знанием игры (база), но без размышления: ответ в чате ждать нельзя.
             ext = (req.get("kind") == "phantom" and bool(req.get("phantom", {}).get("hunter")) and req.get("channel") not in KB_SKIP_CHANNELS
@@ -1095,12 +1639,19 @@ def make_handler(brain: Brain):
             if self.path != "/chat":
                 self._send(404, "")
                 return
+            req = None
             try:
                 req = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))).decode("utf-8"))
                 self._send(200, brain.chat(req))
             except Exception as e:  # noqa: BLE001 — любая ошибка: сервер ответит заготовкой
-                brain.stats["errors"] += 1
-                brain.stats["lastError"] = f"{datetime.now():%H:%M:%S} {e}"
+                # Сбой модели call_llm уже записал (lastError, llmOk). Кривой ответ стратега или свой лимит — не «LLM недоступна»:
+                # отдельные счётчики. Самопроверки сервера (test=garbage — мусор нарочно) в них не идут.
+                if not isinstance(e, ModelDown) and not (isinstance(req, dict) and req.get("test")):
+                    if isinstance(e, RateLimited):
+                        brain.stats["limited"] += 1
+                    else:
+                        brain.stats["bad"] += 1
+                        brain.stats["lastBad"] = f"{datetime.now():%H:%M:%S} {e}"
                 brain._log(f"ошибка: {e}")
                 self._send(503 if "ключа" in str(e) else 502, str(e))
 
@@ -1129,6 +1680,13 @@ def main() -> int:
     ap.add_argument("--ext", action="store_true", help="расширенный режим без focus, тумблера и лимита: стратег с размышлением и базой знаний, "
                                                       "охотник в разговоре — с базой знаний (деньги тратит, как настоящий)")
     ap.add_argument("--spot", help="с --strategy и --phantom: спот охотника — имя из L2HubHuntSpots.xml (уровень мобов берётся из базы знаний)")
+    ap.add_argument("--goal", help="с --strategy: запрос «Разума 2.0» (docs/MIND.md, раздел 4) — цель охотника (\"\" — цели нет) и вариант [[SPOT_TO]]")
+    ap.add_argument("--last", help="с --strategy: итог прошлого решения — «ТЕГ [аргумент]» (выполнено) или «ТЕГ [аргумент]: причина» (отказ)")
+    ap.add_argument("--result", help="с --last: итог решения от ядра (шаг 4) — «минуты опыт%% смерти адена [мобы]», место — спот охотника")
+    ap.add_argument("--lessons", metavar="FPC", help="пересмотреть выводы охотника FPC по его журналу сейчас, даже если новых итогов мало")
+    ap.add_argument("--deals", action="store_true", help="с --strategy: варианты BUY, SELL и PARTY со списками, как их шлёт ядро (docs/PHANTOMS.md, 4.3); "
+                                                         "PARTY зовёт и --player — живого игрока рядом")
+    ap.add_argument("--clanname", action="store_true", help="FPC — охотник: имя клана, который он основывает (раздел 4.50; MESSAGE не нужен)")
     ap.add_argument("--summarize", metavar="FPC", help="свернуть старые реплики пары FPC — --player в заметку сейчас, даже если их мало")
     args = ap.parse_args()
     brain = Brain(args.chronicle, echo=args.echo)
@@ -1143,6 +1701,20 @@ def main() -> int:
         print(f"--- старых реплик сверх последних {HISTORY}: {len(stale)} ---")
         if stale:
             print(brain.summarize(args.summarize, args.player, force=True) or "(не вышло — см. data/brain/" + args.chronicle + ".log)")
+        return 0
+    if args.lessons:
+        old, through, level, _ts = brain._lessons(args.lessons)
+        rows = brain._journal_since(args.lessons, through)
+        print(f"--- прежние выводы ({level} ур.) ---\n{old or '(нет)'}")
+        print(f"--- новых итогов в журнале: {len(rows)} ---")
+        if rows:
+            level = max(r[2] for r in rows)
+            print(brain.lessons_prompt(args.lessons, level, old, rows))
+            print("--- выводы ---")
+            print(brain.write_lessons(args.lessons, level, force=True) or "(не вышло — см. data/brain/" + args.chronicle + ".log)")
+        return 0
+    if args.test and args.clanname:
+        print(brain.clan_name({"kind": "clanname", "fpc": args.test[0], "test": "cli", "level": 20, "taken": []}) or "(молчит — сервер возьмёт имя из слогов)")
         return 0
     if args.test and args.reaper:
         fpc, message = args.test
@@ -1176,6 +1748,36 @@ def main() -> int:
             spot_min, spot_max = kb_spot.get("min", 30), kb_spot.get("max", 35)
             req["hunter"].update(spot=args.spot, spotMin=spot_min, spotMax=spot_max)
             req["options"][0]["note"] = f"{args.spot} (мобы {spot_min}-{spot_max} ур.)"
+        if args.goal is not None:
+            req["goal"] = args.goal
+            req["options"].insert(3, {"tag": "SPOT_TO", "arg": "spot"})
+        if args.last:
+            head, _, reason = args.last.partition(":")
+            tag, _, arg = head.strip().partition(" ")
+            req["last"] = {"tag": tag, "arg": arg.strip(), "ok": not reason.strip(), "reason": reason.strip()}
+            if args.result:
+                n = (args.result.split() + ["0"] * 5)[:5]
+                req["last"].update(minutes=int(float(n[0])), result={"minutes": float(n[0]), "exp": float(n[1]), "level": req["hunter"]["level"],
+                                                                     "deaths": int(n[2]), "adena": int(n[3]), "kills": int(n[4]),
+                                                                     "spot": req["hunter"]["spot"], "party": 0})
+        if args.deals:
+            req.setdefault("goal", "")
+            opts = {o["tag"]: o for o in req["options"]}
+            opts["PARTY"].update(arg="name", choices=[
+                {"name": "Masha", "class": "elven wizard", "level": 33, "role": "нюкер", "real": False, "party": 0},
+                {"name": "Sova", "class": "elven oracle", "level": 36, "role": "хил", "real": False, "party": 2},
+                {"name": args.player, "class": "treasure hunter", "level": 37, "role": "мили", "real": True, "party": 0}])
+            at = req["options"].index(opts["STORE"])
+            req["options"][at:at] = [
+                {"tag": "BUY", "arg": "item", "note": "купить в Town of Dion у торговцев и надеть, по их цене; можно списком через «;» — купит по порядку, "
+                                                      "сколько хватит; свободно 372к (остальное — на сосы и телепорт)",
+                 "choices": [{"name": "Brigandine Helmet", "price": 49000, "part": "шлем", "grade": "D"},
+                             {"name": "Brigandine Gauntlets", "price": 36000, "part": "перчатки", "grade": "D"},
+                             {"name": "Necklace of Devotion", "price": 81000, "part": "ожерелье", "grade": "D"},
+                             {"name": "Elven Ring", "price": 37000, "part": "кольцо", "grade": "D"}]},
+                {"tag": "SELL", "arg": "item",
+                 "choices": [{"name": "Elven Earring", "count": 1, "price": 30000}, {"name": "Mithril Gloves", "count": 1, "price": 18200},
+                             {"name": "Coarse Bone Powder", "count": 40, "price": 6000}]}]
         print("--- system prompt ---")
         print(brain.strategy_prompt(req, ext=brain._think(req)))
         print("--- решение ---")

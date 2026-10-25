@@ -198,6 +198,81 @@ def ensure_value(server: Path, backup_root: Path, part: str, file: str, key: str
     return True
 
 
+KEY_LINE_RE = re.compile(r"^(\s*([^#!=\s][^=]*?)\s*=[ \t]*)(.*)$")
+BOM = b"\xef\xbb\xbf"
+
+
+def _ini_keys(lines: list[str]) -> dict[str, tuple[int, int, str]]:
+    """Ключи .ini по порядку в файле: первая строка, последняя (с продолжениями «\\»), значение. Повтор ключа — первый,
+    как у save_edits. Строки — без переводов строк."""
+    out, i = {}, 0
+    while i < len(lines):
+        m = KEY_LINE_RE.match(lines[i])
+        if not m:
+            i += 1
+            continue
+        value, last = _logical_value(lines, i, m.group(3))
+        out.setdefault(m.group(2), (i, last, value.strip()))
+        i = last + 1
+    return out
+
+
+def merge_ini(cur: bytes, new: bytes, base: bytes | None) -> tuple[bytes, dict]:
+    """Слить .ini новой сборки в .ini сервера, где его правили (окно, выключатели, руками). base — что выложила прошлая
+    сборка (None — неизвестно). Ключа нет в сервере — дописывается с комментарием над ним из сборки, после соседнего
+    ключа, который в сервере есть. Значение в сервере как в base, а сборка его поменяла — берётся из сборки. Значение
+    меняли и в сервере, и в сборке (или base неизвестен) — остаётся серверное, ключ — в отчёте "kept". Ключи, которых
+    в сборке больше нет, и всё прочее в файле не трогаются; кодировка, BOM и переводы строк — как были."""
+    def lines_of(data: bytes) -> list[str]:
+        return data.removeprefix(BOM).decode("utf-8", errors="surrogateescape").splitlines(keepends=True)
+
+    srv, nw = lines_of(cur), lines_of(new)
+    nl = "\r\n" if b"\r\n" in cur else "\n"
+    s_keys = _ini_keys([x.rstrip("\r\n") for x in srv])
+    n_bare = [x.rstrip("\r\n") for x in nw]
+    n_keys = _ini_keys(n_bare)
+    b_keys = _ini_keys([x.rstrip("\r\n") for x in lines_of(base)]) if base is not None else None
+    report = {"added": [], "updated": [], "kept": []}
+    ops: list[tuple[int, int, int, list[str]]] = []  # (строка, порядок, сколько заменить, новые строки)
+    pending: list[str] = []
+    anchor = None
+
+    def flush():
+        if pending:
+            pos = s_keys[anchor][1] + 1 if anchor else len(srv)
+            ops.append((pos, len(ops), 0, pending[:]))
+            pending.clear()
+
+    for key, (first, last, value) in n_keys.items():
+        if key not in s_keys:
+            top = first
+            while top > 0 and n_bare[top - 1].lstrip().startswith("#"):
+                top -= 1
+            pending.extend([nl, *(x + nl for x in n_bare[top:last + 1])])  # пустая строка перед блоком, как в конфигах Mobius
+            report["added"].append(key)
+            continue
+        flush()
+        anchor = key
+        s_first, s_last, s_val = s_keys[key]
+        if s_val == value:
+            continue
+        b_val = b_keys[key][2] if b_keys is not None and key in b_keys else None
+        if b_val is not None and s_val == b_val:
+            prefix = KEY_LINE_RE.match(srv[s_first].rstrip("\r\n")).group(1)
+            ops.append((s_first, len(ops), s_last - s_first + 1, [prefix + value + nl]))
+            report["updated"].append(key)
+        elif b_val is None or value != b_val:
+            report["kept"].append(key)
+    flush()
+    if srv and not srv[-1].endswith(("\n", "\r")) and any(op[0] == len(srv) for op in ops):
+        srv[-1] += nl  # дописываем после последней строки — ей нужен перевод строки
+    # С конца файла. На одной строке — сначала замена значения, потом вставка перед ней; вставки — в порядке сборки.
+    for pos, _, count, lines in sorted(ops, key=lambda op: (op[0], op[2] > 0, op[1]), reverse=True):
+        srv[pos:pos + count] = lines
+    data = "".join(srv).encode("utf-8", errors="surrogateescape")
+    return (BOM if cur.startswith(BOM) else b"") + data, report
+
+
 def save_edits(server: Path, backup_root: Path, edits: list[dict]) -> dict:
     """Пишет правки {part, file, key, value} в .ini. Комментарии и порядок строк не трогаются,
     меняется только значение в строке ключа. Оригиналы изменённых файлов копируются в backup_root.

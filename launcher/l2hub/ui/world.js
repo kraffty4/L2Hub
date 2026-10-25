@@ -9,6 +9,7 @@
     comps: null, compsErr: null,                           // companions()
     brain: null, brainErr: null, brainEdit: null, models: [], // brain_settings() и правки модели до «Сохранить»
     strat: null,                                           // правки стратега до «Сохранить»
+    mind: null, mindErr: null, mindTab: 'feed', mindWho: null, mindPlayer: 'ALL', mindOpen: new Set(), // mind_view(): лента, выводы, память
     schema: null, schemaErr: null, restart: null, crGroup: 'activity',
     editsBy: {},                                           // хроника → несохранённые правки «Создателя»: переживают смену разделов
     filter: 'ALL', query: '', sort: 'level', sel: null,
@@ -75,12 +76,25 @@
   const MOOD = { tired: 'устал', guarded: 'настороже', focused: 'занят делом', restless: 'скучает', sociable: 'хочет поболтать', calm: 'спокоен' };
   // Отношения охотника к живым игрокам (патч 0032): враг, друг или так, и последние поступки.
   const REL_KIND = { enemy: 'враг', friend: 'друг', neutral: 'знакомый' };
-  const REL_WHY = { killed: 'убил', attacked: 'нападал', healed: 'хилил', revived: 'реснул', saved: 'спас', hunted: 'качались вместе', contested: 'отжал моба', apologized: 'извинился', insulted: 'послал' };
+  const REL_WHY = { killed: 'убил', attacked: 'нападал', healed: 'хилил', revived: 'реснул', saved: 'спас', hunted: 'качались вместе', contested: 'отжал моба', apologized: 'извинился', insulted: 'послал',
+    duel_win: 'победил на дуэли', duel_loss: 'проиграл дуэль', clan_harm: 'обидел соклановца', clan_help: 'выручил соклановца' };
+  // Клан охотника (docs/PHANTOMS.md, 4.50): свой клан охотников или клан живого игрока; одиночка в кланы не идёт.
+  const clanText = (x) => (x.clan ? `${esc(x.clan)} <span class="w-muted">· ${x.clanLevel ?? 0} ур.${x.clanLeader ? ', глава' : ''}${x.hunterClan ? '' : ', клан игрока'}</span>`
+    : x.loner ? '<span class="w-muted">одиночка — в кланы не идёт</span>' : '—');
   const relationsText = (list) => (list && list.length
     ? list.map((r) => `${esc(r.name)} — ${REL_KIND[r.kind] || r.kind}${r.kills > 1 ? `, убил ${r.kills}` : ''}${r.reasons?.length ? ` (${[...new Set(r.reasons)].map((x) => REL_WHY[x] || x).join(', ')})` : ''}`).join('<br>')
     : '—');
-  const DECISION = { HUNT: 'качаться тут', SPOT_UP: 'спот выше', SPOT_DOWN: 'спот ниже', TOWN: 'в город', STORE: 'в лавку', PARTY: 'искать пати' };
-  const decisionText = (d) => { const a = /^AFK\s+(\d+)$/.exec(d || ''); return a ? `отдых ${a[1]} мин` : DECISION[d] || d; };
+  const DECISION = { HUNT: 'качаться тут', SPOT_UP: 'спот выше', SPOT_DOWN: 'спот ниже', TOWN: 'в город', STORE: 'в лавку', PARTY: 'искать пати', RAID: 'собрать рейд' };
+  // «Разум 2.0», шаг 3: решение с именем — «SPOT_TO <спот>», «BUY <вещь>», «SELL <вещь>», «PARTY <кого>»; ядро не выполнило
+  // решение — strategy.ok false и reason.
+  const decisionText = (d) => {
+    const a = /^AFK\s+(\d+)$/.exec(d || '');
+    if (a) return `отдых ${a[1]} мин`;
+    const s = /^(SPOT_TO|BUY|SELL|PARTY)\s+(.+)$/.exec(d || '');
+    if (s) return { SPOT_TO: `на спот ${s[2]}`, BUY: `купить ${s[2]}`, SELL: `продать ${s[2]}`, PARTY: `в пати с ${s[2]}` }[s[1]];
+    return DECISION[d] || d;
+  };
+  const refused = (st) => (st && st.ok === false ? `<span class="w-muted"> · не вышло</span>` : '');
   // 1 234 567 → «1,2кк», 12 345 → «12к» — как говорят в игре.
   const money = (n) => (n == null ? '—' : n >= 1e6 ? `${(n / 1e6).toFixed(1).replace('.', ',')}кк` : n >= 1e3 ? `${Math.floor(n / 1e3)}к` : String(n));
   const tokens = (n) => (n >= 1e6 ? `${(n / 1e6).toFixed(1).replace('.', ',')} млн` : n >= 1e3 ? `${Math.round(n / 1e3)} тыс.` : String(n));
@@ -157,6 +171,14 @@
       if (r.ok && !brainDirty()) W.brainEdit = JSON.parse(JSON.stringify(r.settings));
     } catch (e) { W.brainErr = e.message || String(e); }
   }
+  async function loadMind() {
+    const chron = W.chron;
+    try {
+      const r = await api.mind_view(chron);
+      if (chron !== W.chron) return;
+      W.mind = r; W.mindErr = null;
+    } catch (e) { if (chron === W.chron) W.mindErr = e.message || String(e); }
+  }
   async function loadSchema() {
     try { W.schema = await api.settings_schema(W.chron); W.schemaErr = null; } catch (e) { W.schemaErr = e.message || String(e); }
   }
@@ -204,6 +226,8 @@
     if (screen === 'overview' || screen === 'comp') jobs.push(loadComps());
     if (screen === 'overview' && !W.brain) jobs.push(loadBrain());
     if (screen === 'mind' && (!W.brain || !brainDirty())) jobs.push(loadBrain());
+    if (screen === 'mind') jobs.push(loadMind());
+    if (screen === 'mind' && !W.comps) jobs.push(loadComps()); // «Память»: собеседник-напарник — фантом, а не живой игрок
     if (screen === 'creator') { if (!W.schema) jobs.push(loadSchema()); jobs.push(loadRestart()); }
     if (screen === 'module') jobs.push(loadMods());
     if (screen === 'map') jobs.push(loadMap());
@@ -221,14 +245,16 @@
     if (W.screen === 'map') { await loadMap(); if (W.open) render(true); return; }
     if (W.screen === 'chronicle') { await loadChron(); if (W.open) render(true); return; }
     await loadHunters();
-    if (W.open && ['overview', 'people'].includes(W.screen)) render(true);
+    // «Разум»: лента и память — заново; модель и стратег не перерисовывать — там правят поля.
+    if (W.open && W.screen === 'mind' && W.mindTab !== 'settings') { await loadMind(); if (W.open && W.screen === 'mind') render(true); }
+    else if (W.open && ['overview', 'people'].includes(W.screen)) render(true);
     else renderHead();
   }
 
   // ---------- Открыть, закрыть, смена хроники и сервера ----------
   function reset(chron) {
     Object.assign(W, { chron, h: null, hErr: null, comps: null, compsErr: null, brain: null, brainErr: null, brainEdit: null, models: [],
-      strat: null, schema: null, schemaErr: null, restart: null, sel: null, lastRunning: last.running === chron, map: null, mapErr: null, chronicle: null, chronErr: null });
+      mind: null, mindErr: null, mindWho: null, mindPlayer: 'ALL', mindOpen: new Set(), strat: null, schema: null, schemaErr: null, restart: null, sel: null, lastRunning: last.running === chron, map: null, mapErr: null, chronicle: null, chronErr: null });
   }
   // «Мой мир» — раздел L2Hub, а не вид хроники: чей мир смотреть, решает app.js (window.worldId()).
   window.openWorld = async () => {
@@ -464,15 +490,18 @@
 
   // ---------- Обзор ----------
   function brainComp() { return running() ? window.compsOf(W.chron)?.brain || { state: 'off' } : { state: 'off' }; }
+  // Отвал модели — только сбой самого запроса к ней (brain.py: ModelDown, llmOk = false до следующего удачного). Кривой ответ
+  // стратега и свой лимит в минуту модель не роняют — это счётчики bad и limited. Сервис мозгов до 0.4.265 llmOk не знает: по lastError.
+  function llmDown(b) { return b.llmOk === false || (!('llmOk' in b) && !!b.lastError); }
   function mindDot() {
     const b = brainComp();
-    return b.state === 'off' ? '' : b.state === 'nokey' || b.lastError ? 'nokey' : 'on';
+    return b.state === 'off' ? '' : b.state === 'nokey' || llmDown(b) ? 'nokey' : 'on';
   }
   // «Летопись» (Api.world_chronicle, game/log/L2HubChronicle.json, патч 0023 c4-interlude): лента заметных событий,
   // новые сверху, по дням; фильтр по виду. Текст готов к показу — сервер пишет его по-русски.
   const CHRON_KINDS = [['all', 'Всё'], ['boss', 'Боссы', ['raid_killed', 'super_killed', 'epic_killed', 'epic_spawned']], ['pvp', 'PvP', ['pvp_result']],
-    ['events', 'События', ['seasonal_start', 'seasonal_end', 'elpies']], ['growth', 'Рост', ['level', 'profession']]];
-  const CHRON_MARK = { raid_killed: '⚔', super_killed: '★', epic_killed: '☠', epic_spawned: '◆', pvp_result: '⚑', seasonal_start: '✦', seasonal_end: '✧', elpies: '❀', level: '▲', profession: '♛' };
+    ['events', 'События', ['seasonal_start', 'seasonal_end', 'elpies']], ['growth', 'Рост', ['level', 'profession']], ['clans', 'Кланы', ['clan']]];
+  const CHRON_MARK = { raid_killed: '⚔', super_killed: '★', epic_killed: '☠', epic_spawned: '◆', pvp_result: '⚑', seasonal_start: '✦', seasonal_end: '✧', elpies: '❀', level: '▲', profession: '♛', clan: '⚜' };
   function chronicleView(main) {
     if (W.chronErr) { main.innerHTML = errorView(W.chronErr); return; }
     const r = W.chronicle;
@@ -541,7 +570,7 @@
     const started = items.filter((x) => x.level != null).length;
     const b = brainComp();
     const st = h.strategy;
-    const brainTxt = b.state === 'off' ? 'мозги спят вместе с сервером' : b.state === 'nokey' ? 'нет ключа API' : b.lastError ? 'не отвечает' : 'на связи';
+    const brainTxt = b.state === 'off' ? 'мозги спят вместе с сервером' : b.state === 'nokey' ? 'нет ключа API' : llmDown(b) ? 'не отвечает' : 'на связи';
     const comps = W.comps?.ok ? W.comps.items : [];
     const modeSeg = ['OFF', 'ALWAYS', 'WITH_PLAYERS'].map((m) => `<button data-mode="${m}" class="${h.mode === m ? 'on' : ''}">${{ OFF: 'выкл', ALWAYS: 'всегда', WITH_PLAYERS: 'с игроками' }[m]}</button>`).join('');
     let html = running() ? '' : serverOffNote() + '<div style="height:12px"></div>';
@@ -591,7 +620,7 @@
       <div class="w-grid w-g2" style="margin-top:12px">
         <div class="card"><h3>Уровни охотников</h3><div class="w-hist">${hist || '<span class="w-muted">—</span>'}</div></div>
         <div class="card"><h3>Последние решения стратега${st && st.when === 'OFF' ? ' <span class="r w-muted">стратег выключен</span>' : ''}</h3>
-          <div class="w-feed">${recent.length ? recent.map((x) => `<div class="it"><span class="who">${esc(x.name)}</span> <span class="w-dec">${esc(decisionText(x.strategy.decision))}</span> <span class="w-muted">${ago(x.strategy.at)}</span>${x.strategy.thought ? `<br><span class="th">«${esc(x.strategy.thought)}»</span>` : ''}</div>`).join('') : '<span class="w-muted">Пока никто не решал.</span>'}</div></div>
+          <div class="w-feed">${recent.length ? recent.map((x) => `<div class="it"><span class="who">${esc(x.name)}</span> <span class="w-dec">${esc(decisionText(x.strategy.decision))}</span>${refused(x.strategy)} <span class="w-muted">${ago(x.strategy.at)}</span>${x.strategy.thought ? `<br><span class="th">«${esc(x.strategy.thought)}»</span>` : ''}</div>`).join('') : '<span class="w-muted">Пока никто не решал.</span>'}</div></div>
       </div>
       <div class="card" style="margin-top:12px"><h3>Пати сейчас <span class="r w-muted">${Object.keys(parties).length}</span></h3><div class="w-feed">${partyRows || '<span class="w-muted">Никто ни с кем не в пати.</span>'}</div></div>`;
     } else if (running() && !started) {
@@ -627,7 +656,7 @@
         <td><span class="nm">${esc(x.name)}</span></td><td class="w-n">${x.level ?? '—'}</td><td>${esc(x.cls) || '<span class="w-muted">—</span>'}</td>
         <td title="${x.phase ? `${PH[x.phase]}: ${esc(where(x))}` : ''}">${x.phase ? `<span class="w-phase"><i class="w-sw w-ph-${x.phase}"></i>${esc(where(x))}</span>` : '<span class="w-muted">нет данных</span>'}</td>
         <td class="w-n">${x.adena != null ? money(x.adena) : '—'}</td><td class="w-n">${x.earnedPerHour ? money(x.earnedPerHour) : '—'}</td>
-        <td>${x.strategy ? `<span class="w-dec" title="«${esc(x.strategy.thought)}»">${esc(decisionText(x.strategy.decision))}</span>` : '<span class="w-muted">—</span>'}</td></tr>`).join('')
+        <td>${x.strategy ? `<span class="w-dec" title="${x.goal ? `цель: ${esc(x.goal)} · ` : ''}«${esc(x.strategy.thought)}»">${esc(decisionText(x.strategy.decision))}</span>${refused(x.strategy)}` : '<span class="w-muted">—</span>'}</td></tr>`).join('')
       + (W.filter === 'ALL' && !W.query ? secretRows(h.secret) : '');
     const anyStarted = h.items.some((x) => x.level != null);
     const table = anyStarted || !running()
@@ -678,8 +707,10 @@
       ...(x.activity ? [['Сейчас', `<b>${esc(actText(x.activity))}</b>${x.activity.since ? ` <span class="w-muted">· ${ago(x.activity.since)}</span>` : ''}`
         + (x.activity.place ? `<br>сбор: ${esc(x.activity.place)}${x.activity.leader ? ', ведёт он' : ''}` : '')
         + (x.activity.result ? `<br><span class="w-muted">${esc(x.activity.result)}</span>` : '')]] : []),
+      // Цель ставит мозг-стратег («Разум 2.0», шаг 3) — свободный текст модели, переводчик окна его не трогает.
+      ['Цель', x.goal ? `<span translate="no">${esc(x.goal)}</span>` : '—'],
       ['Настроение', MOOD[x.mood] || '—'], ['Отношения', relationsText(x.relations)],
-      ['Спот', esc(x.spot) || '—'], ['Ближайший город', esc(x.town) || '—'], ['Пати', esc(partyText(x)) || '—'],
+      ['Спот', esc(x.spot) || '—'], ['Ближайший город', esc(x.town) || '—'], ['Пати', esc(partyText(x)) || '—'], ['Клан', clanText(x)],
       ['Адена', x.adena != null ? money(x.adena) : '—'], ['Доход с охоты', x.earnedPerHour ? `~${money(x.earnedPerHour)}/ч` : '—'],
       ['Квест', q], ['На профу', x.professionDue ? `не хватает ${money(x.professionDue)}` : x.phase ? 'не копит' : '—'],
     ];
@@ -689,6 +720,7 @@
       <div class="w-goods">${x.store.items.map((i) => `${buy ? 'куплю ' : ''}${esc(i.name)}${i.count > 1 ? ` ×${i.count}` : ''} — ${money(i.price)}`).join('<br>')}</div></div>` : '';
     const think = x.strategy ? `<div class="card" style="margin-top:12px"><h3>Стратег <span class="r w-muted">${ago(x.strategy.at)}</span></h3>
       <span class="w-dec">${esc(decisionText(x.strategy.decision))}</span>${x.strategy.thought ? `<div class="w-t2" style="font-size:13px;margin-top:6px;font-style:italic;line-height:1.5">«${esc(x.strategy.thought)}»</div>` : ''}
+      ${x.strategy.ok === false ? `<div class="w-muted" style="font-size:12px;margin-top:6px">не вышло: <span translate="no">${esc(x.strategy.reason || '—')}</span></div>` : ''}
       <div class="w-muted" style="font-size:12px;margin-top:6px">следующее решение: ${next}</div></div>` : '';
     return `<div class="w-card-h"><span class="big">${esc(x.name)}</span><span class="w-muted">${x.level ? `${x.level} ур.` : ''}</span></div>
       <div class="w-facts">${facts.map(([k, v]) => `<span>${k}</span><span>${v}</span>`).join('')}</div>${store}${think}
@@ -746,24 +778,56 @@
   const BRAIN_KEYS = (s) => [s.mode, s.maxTokens, s.priceIn, s.priceOut, s.api.baseUrl, s.api.model, s.local.baseUrl, s.local.model,
     s.extended?.enabled, s.extended?.dailyUsd].map(String).join('|');
   const brainDirty = () => W.brain?.ok && W.brainEdit && BRAIN_KEYS(W.brainEdit) !== BRAIN_KEYS(W.brain.settings);
+  // «Разум» (docs/MIND.md, шаг 5): «Мысли» — лента решений стратега с итогами, «Выводы» — опыт охотников, «Память» — разговоры
+  // фантомов с заметками, «Модель и стратег» — настройки. Лента, выводы и память — из базы мозгов (Api.mind_view), и без сервера.
+  const MIND_TABS = [['feed', 'Мысли'], ['lessons', 'Выводы'], ['memory', 'Память'], ['settings', 'Модель и стратег']];
   function mindView(main) {
-    if (W.brainErr) { main.innerHTML = errorView(W.brainErr); return; }
-    if (!W.brain) { main.innerHTML = loadingView(); return; }
-    if (!W.brain.ok) { main.innerHTML = `<div class="note">${esc(W.brain.error)}</div>`; return; }
+    const head = mindState() + `<div class="w-mtabs"><span class="seg" id="worldMindTab">${MIND_TABS.map(([k, t]) => `<button data-t="${k}" class="${W.mindTab === k ? 'on' : ''}">${t}</button>`).join('')}</span></div>`;
+    if (W.mindTab === 'settings') mindSettings(main, head);
+    else if (W.mindErr) main.innerHTML = head + errorView(W.mindErr);
+    else if (!W.mind) main.innerHTML = head + loadingView();
+    else if (!W.mind.ok) main.innerHTML = head + `<div class="note">${esc(W.mind.error)}</div>`;
+    else { main.innerHTML = head + { feed: mindFeed, lessons: mindLessons, memory: mindMemory }[W.mindTab](); bindMind(main); }
+    main.querySelectorAll('#worldMindTab button').forEach((x) => (x.onclick = () => {
+      W.mindTab = x.dataset.t;
+      render();
+      if (x.dataset.t !== 'settings') loadMind().then(() => W.open && W.screen === 'mind' && render(true));
+    }));
+  }
+  // Связь с моделью — над всеми вкладками: пустая лента часто объясняется тем, что модели нет.
+  function mindState() {
+    if (!W.brain?.ok || !W.brainEdit) return '';
     const b = brainComp();
     const s = W.brainEdit;
     const st = W.h?.strategy;
-    if (st && !W.strat) W.strat = stratFrom(st);
     let state;
     if (!running()) state = ['var(--off)', 'Мозги спят вместе с сервером', 'Сервис мозгов поднимается вместе с сервером. Модель и тариф можно менять и сейчас.'];
     else if (b.state === 'nokey' || (s.mode === 'api' && !W.brain.key)) state = ['var(--warn)', 'Мир живёт без LLM: нет ключа', `Охотники качаются, торгуют и ходят в пати по правилам, фейки и напарники отвечают заготовками. Положи ключ одной строкой в data\\brain\\${esc(s.api.keyFile)} — подхватится со следующей реплики.`];
     else if (b.state === 'off') state = ['var(--bad)', 'Сервис мозгов не отвечает', 'Мир не остановился: решают правила, реплики — заготовки. Перезапуск сервера поднимет мозги заново.'];
-    else if (b.lastError) state = ['var(--bad)', 'LLM недоступна', `Последняя ошибка: <span class="w-cmd">${esc(b.lastError)}</span>. Мир не остановился: решают правила, реплики — заготовки.`];
-    else if (st && st.when === 'OFF') state = ['var(--warn)', 'LLM на связи, стратег выключен', 'Фейки и напарники говорят через модель, охотники решают по правилам — это не остановка мира.'];
+    else if (llmDown(b)) state = ['var(--bad)', 'LLM недоступна', `Последняя ошибка: <span class="w-cmd">${esc(b.lastError)}</span>. Мир не остановился: решают правила, реплики — заготовки.`];
+    else if (st && st.when === 'OFF') state = ['var(--warn)', 'LLM на связи, стратег выключен', 'Фейки и напарники говорят через модель, охотники решают по правилам — это не остановка мира.', llmNotes(b)];
     else {
       const think = !st ? '' : st.when === 'ALWAYS' ? ' Стратег думает всегда.' : W.h.players ? ` Стратег думает: живых игроков — ${W.h.players}.` : ' Стратег ждёт живых игроков: без них решают правила, запросы не тратятся.';
-      state = ['var(--ok)', `LLM на связи: ${esc(b.model || '')}`, `${b.lastReplyAt ? `Последний ответ в ${esc(b.lastReplyAt)}, ` : ''}ошибок с запуска — ${b.errors ?? 0}.${think}`];
+      state = ['var(--ok)', `LLM на связи: ${esc(b.model || '')}`, `${b.lastReplyAt ? `Последний ответ в ${esc(b.lastReplyAt)}, ` : ''}сбоев модели с запуска — ${b.errors ?? 0}.${think}`, llmNotes(b)];
     }
+    return `<div class="w-state"><span class="ic" style="border-color:${state[0]}"><i class="dot" style="background:${state[0]}"></i></span><div><b>${state[1]}</b><p>${state[2]}</p>${state[3] ? `<p>${state[3]}</p>` : ''}</div></div>`;
+  }
+  // Мелочи под «LLM на связи»: сбой, после которого модель снова ответила; ответы, которые не пошли в дело; свой лимит.
+  function llmNotes(b) {
+    return [
+      b.errors && b.lastError ? `<span>Модель снова отвечает, последний сбой — <span class="w-cmd" translate="no">${esc(b.lastError)}</span>.</span>` : '',
+      b.bad ? `<span>Неудачных ответов — ${b.bad}: за них решили правила, модель тут ни при чём. Последний — <span class="w-cmd" translate="no">${esc(b.lastBad || '')}</span>.</span>` : '',
+      b.limited ? `<span>Свой лимит запросов в минуту срабатывал: ${b.limited}.</span>` : '',
+    ].filter(Boolean).join(' ');
+  }
+  function mindSettings(main, head) {
+    if (W.brainErr) { main.innerHTML = head + errorView(W.brainErr); return; }
+    if (!W.brain) { main.innerHTML = head + loadingView(); return; }
+    if (!W.brain.ok) { main.innerHTML = head + `<div class="note">${esc(W.brain.error)}</div>`; return; }
+    const b = brainComp();
+    const s = W.brainEdit;
+    const st = W.h?.strategy;
+    if (st && !W.strat) W.strat = stratFrom(st);
     const m = s.mode;
     const part = s[m];
     const u = W.brain.usage;
@@ -788,7 +852,7 @@
         <div class="row2"><button class="sbtn primary" id="worldStratSave" ${stratDirty() ? '' : 'disabled'}>Сохранить</button><span class="hint">${stratDirty() ? 'не сохранено' : ''}</span><span class="w-muted" style="font-size:12px">сервер подхватит на ходу</span></div>
         <div class="note" style="margin-top:10px">${cost}</div></div>`;
     }
-    main.innerHTML = `<div class="w-state"><span class="ic" style="border-color:${state[0]}"><i class="dot" style="background:${state[0]}"></i></span><div><b>${state[1]}</b><p>${state[2]}</p></div></div>
+    main.innerHTML = `${head}
       <div class="w-grid w-g3">
         <div class="card"><h3>Модель <span class="r seg" id="worldBrainMode"><button data-m="api" class="${m === 'api' ? 'on' : ''}">облако</button><button data-m="local" class="${m === 'local' ? 'on' : ''}">своя</button></span></h3>
           <div class="opt"><div class="l">Адрес<small>${m === 'api' ? 'OpenAI-совместимый API' : 'LM Studio :1234, Ollama :11434'}</small></div></div>
@@ -862,6 +926,120 @@
       };
     }
     edit();
+  }
+
+  // Числа итогов: «+2,4%», «−38к», в час — по минутам на месте.
+  const num1 = (x) => Number(x || 0).toLocaleString(L2I18N.locale, { maximumFractionDigits: 1 });
+  const signed = (x, f) => (x < 0 ? `−${f(-x)}` : `+${f(x)}`);
+  const perHour = (x, min) => (min ? (x * 60) / min : 0);
+  // Давно — дата и время, недавно — «N мин назад».
+  const when = (ms) => (Date.now() - ms < 12 * 3600e3 ? ago(ms) : new Date(ms).toLocaleString(L2I18N.locale, { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }));
+  const hunterLevel = (fpc, level) => level || (W.h?.items || []).find((x) => x.name === fpc)?.level || 0;
+  // Итог решения из журнала (шаг 4): не вышло, вышло не всё, и что дало за время до следующего решения.
+  function resultHtml(r) {
+    if (!r) return '';
+    const parts = [];
+    if (r.minutes >= 1) {
+      // Поход в город — без опыта и мобов: там важны деньги и время, «+0% уровня, без смертей» — шум.
+      const hunted = r.exp || r.kills;
+      if (hunted) parts.push(`${signed(r.exp, num1)}% уровня`);
+      if (hunted || r.deaths) parts.push(r.deaths ? `смертей ${r.deaths}` : 'без смертей');
+      if (r.adena) parts.push(`адена ${signed(r.adena, money)}`);
+      if (r.kills) parts.push(`мобов ${r.kills}`);
+      if (r.party >= 1) parts.push(`в пати ${Math.round(r.party)} мин`);
+    }
+    const head = !r.ok ? '<span class="bad-text">не вышло</span>' : r.reason ? '<span class="w-t2">вышло не всё</span>' : '';
+    const why = r.reason ? `: <span translate="no">${esc(r.reason)}</span>` : '';
+    const span = r.minutes >= 1 ? `за ${Math.round(r.minutes)} мин` : '';
+    const spot = r.spot ? ` <span translate="no">${esc(r.spot)}</span>` : '';
+    return `<div class="w-res">${head}${why}${head && span ? ' · ' : ''}${span ? `${span}${spot}: ${parts.join(', ')}` : ''}</div>`;
+  }
+  function mindFeed() {
+    const m = W.mind;
+    const items = m.feed.filter((x) => !W.mindWho || x.fpc === W.mindWho);
+    const extOn = W.brain?.settings?.extended?.enabled;
+    const ext = m.extNow.length ? `<div class="note" style="margin-bottom:12px">Сейчас в расширенном режиме: <b>${m.extNow.map(esc).join(', ')}</b> — решают моделью с размышлением, рядом с живым игроком.</div>`
+      : extOn && running() ? '<div class="w-muted" style="font-size:12.5px;margin-bottom:10px">Расширенное обдумывание включено, но за 15 минут никто не решал с размышлением: оно — для охотников рядом с живым игроком.</div>' : '';
+    const who = W.mindWho ? `<span class="r"><span class="w-muted">только ${esc(W.mindWho)} · </span><button class="w-link" data-who="">все охотники</button></span>`
+      : m.feed.length ? `<span class="r w-muted">последние ${m.feed.length}</span>` : '';
+    const rows = items.map((x) => `<div class="it"><button class="w-link who" data-who="${esc(x.fpc)}">${esc(x.fpc)}</button> <span class="w-dec">${esc(decisionText(x.decision))}</span>${x.ext ? ' <span class="w-dec w-ext" title="Решал с размышлением: расширенный режим">думал</span>' : ''} <span class="w-muted">${when(x.at)}</span>`
+      + (x.goal ? `<div class="w-t2" style="font-size:12.5px">цель: <span translate="no">${esc(x.goal)}</span></div>` : '')
+      + (x.thought ? `<div class="th" translate="no">«${esc(x.thought)}»</div>` : '') + resultHtml(x.result) + '</div>').join('');
+    return `${ext}<div class="card"><h3><span>Лента мыслей</span>${who}</h3>
+      <div class="w-feed w-mfeed">${rows || `<div class="w-blank">${W.mindWho ? 'У этого охотника решений в ленте нет.' : 'Стратег в этом мире ещё ничего не решал. Решения появятся, когда стратег включён и думает — вкладка «Модель и стратег».'}</div>`}</div>
+      <div class="w-muted" style="font-size:12px;margin-top:10px">Итог под решением — что оно дало до следующего: его присылает сервер, когда охотник решает снова. Без итога — решение свежее или сервер собран до «Разума 2.0», шаг 4.</div></div>`;
+  }
+  function mindLessons() {
+    const all = W.mind.hunters;
+    if (!all.length) return '<div class="card"><div class="w-blank">Охотники этого мира ещё ничего не решали моделью — ни опыта, ни выводов нет.</div></div>';
+    // Без итогов и выводов — одной строкой: карточка «итогов нет» на каждого — шум.
+    const hs = all.filter((h) => h.results || h.lessons);
+    const bare = all.filter((h) => !h.results && !h.lessons);
+    const bareNote = bare.length ? `<div class="note" style="margin-top:12px">Ещё без итогов (${bare.length}): <span translate="no">${bare.map((h) => esc(h.fpc)).join(', ')}</span>. Итоги решений присылает сервер, собранный с «Разумом 2.0», шаг 4: если модуль фантомов устарел — пересобери.</div>` : '';
+    const cards = hs.map((h) => {
+      const lvl = hunterLevel(h.fpc, h.level);
+      const places = h.places.map((p) => `<span translate="no">${esc(p.spot)}</span><span>${Math.round(p.minutes)} мин</span><span>${signed(perHour(p.exp, p.minutes), num1)}%</span><span>${num1(perHour(p.deaths, p.minutes))}</span><span>${signed(Math.round(perHour(p.adena, p.minutes)), money)}</span>`).join('');
+      const les = h.lessons
+        ? `<div class="th" translate="no">${esc(h.lessons.text)}</div><div class="w-muted" style="font-size:12px;margin-top:4px">выводы на ${h.lessons.level} ур. · ${when(h.lessons.at)}</div>`
+        : `<div class="w-muted" style="font-size:12.5px">Выводов ещё нет: они пишутся, когда в журнале наберётся 8 итогов (сейчас ${h.results}).</div>`;
+      return `<div class="card"><h3><button class="w-link who" data-who="${esc(h.fpc)}" title="Его решения в ленте">${esc(h.fpc)}</button>${lvl ? ` <span class="w-muted w-lv">${lvl} ур.</span>` : ''}
+          <span class="r w-muted" style="font-size:12px">решений ${h.decisions} · итогов ${h.results}</span></h3>
+        ${les}
+        ${places ? `<div class="w-places"><span class="h">где качался</span><span class="h">время</span><span class="h">опыт/ч</span><span class="h">смертей/ч</span><span class="h">адена/ч</span>${places}</div>` : ''}
+        ${h.results || h.lessons ? `<div class="row2"><button class="sbtn" data-forget="lessons" data-fpc="${esc(h.fpc)}" data-n="${h.results}">Забыть опыт</button></div>` : ''}</div>`;
+    }).join('');
+    return `${cards ? `<div class="w-grid w-g2">${cards}</div>` : ''}${bareNote}
+      <div class="w-muted" style="font-size:12px;margin-top:10px">Опыт по местам — за двое суток на уровнях ±3 от нынешнего, места от 10 минут. Его и выводы охотник видит, когда решает, что делать дальше.</div>`;
+  }
+  function mindMemory() {
+    const m = W.mind;
+    if (!m.talks.length) return `<div class="card"><div class="w-blank">Фантомы этого мира ещё ни с кем не разговаривали.</div></div>${forgottenNote()}`;
+    // Живые игроки — отдельно от болтовни фантомов между собой (собеседник — охотник или напарник этого мира).
+    const bots = new Set([...(W.h?.items || []), ...(W.comps?.items || [])].map((x) => x.name));
+    const live = m.talks.filter((t) => !bots.has(t.player));
+    const byPlayer = {};
+    live.forEach((t) => (byPlayer[t.player] = (byPlayer[t.player] || 0) + 1));
+    const players = Object.entries(byPlayer).sort((a, b2) => b2[1] - a[1]).slice(0, 10);
+    if (!['ALL', 'BOTS'].includes(W.mindPlayer) && !byPlayer[W.mindPlayer]) W.mindPlayer = 'ALL';
+    const chip = (k, t, n) => `<button class="fchip ${W.mindPlayer === k ? 'on' : ''}" data-pl="${esc(k)}">${t} <small>${n}</small></button>`;
+    const chips = `<div class="w-chips" style="margin-bottom:12px">${chip('ALL', 'С игроками', live.length)}${players.map(([p, n]) => chip(p, esc(p), n)).join('')}`
+      + `${m.talks.length > live.length ? chip('BOTS', 'Фантомы между собой', m.talks.length - live.length) : ''}</div>`;
+    const shown = m.talks.filter((t) => (W.mindPlayer === 'ALL' ? !bots.has(t.player) : W.mindPlayer === 'BOTS' ? bots.has(t.player) : t.player === W.mindPlayer));
+    const said = (t, r) => (r.role === 'player' ? esc(t.player) : r.role === 'event' ? 'в игре' : esc(t.fpc));
+    const rel = (t) => {
+      const r = (W.h?.items || []).find((x) => x.name === t.fpc)?.relations?.find((x) => x.name === t.player);
+      return r ? ` · <span class="${r.kind === 'enemy' ? 'bad-text' : r.kind === 'friend' ? 'ok-text' : 'w-t2'}">${REL_KIND[r.kind] || r.kind}</span>` : '';
+    };
+    const cards = shown.map((t) => {
+      const key = `${t.fpc}|${t.player}`;
+      return `<div class="card w-talk"><h3 class="w-lv">${esc(t.fpc)} <span class="w-muted">↔</span> ${esc(t.player)}${rel(t)}</h3>
+        <div class="w-muted w-sub"><span>${t.said ? `реплик ${t.n}, от ${esc(t.player)} ${t.said}` : `реплик ${t.n}`}</span> · ${when(t.at)}</div>
+        ${t.note ? `<div class="th" translate="no">${esc(t.note.text)}</div><div class="w-muted" style="font-size:12px;margin-top:4px">заметка о давних разговорах · ${when(t.note.at)}</div>` : '<div class="w-muted" style="font-size:12.5px">Заметки пока нет: она пишется, когда реплик наберётся 24, — до тех пор фантом помнит последние 12 реплик как есть.</div>'}
+        <details data-open="${esc(key)}" ${W.mindOpen.has(key) ? 'open' : ''}><summary>последние реплики</summary>
+          <div class="w-lines" translate="no">${t.recent.map((r) => `<div><span class="w-muted">${hhmm(r.at)}</span> <b>${said(t, r)}</b>: ${esc(r.text)}</div>`).join('')}</div></details>
+        <div class="row2"><button class="sbtn" data-forget="talk" data-fpc="${esc(t.fpc)}" data-pl="${esc(t.player)}" data-n="${t.n}">Забыть разговор</button></div></div>`;
+    }).join('');
+    return `${chips}${cards ? `<div class="w-grid w-g2">${cards}</div>` : '<div class="card"><div class="w-blank">С живыми игроками фантомы этого мира ещё не разговаривали.</div></div>'}${forgottenNote()}`;
+  }
+  const forgottenNote = () => `<div class="w-muted" style="font-size:12px;margin-top:10px">«Забыть» не стирает насовсем: строки уходят в архив той же базы мозгов (таблица forgotten), мозги их больше не видят.${W.mind.forgotten ? ` В архиве — ${W.mind.forgotten}.` : ''}</div>`;
+  function bindMind(main) {
+    main.querySelectorAll('[data-who]').forEach((x) => (x.onclick = () => { W.mindWho = x.dataset.who || null; W.mindTab = 'feed'; render(); }));
+    main.querySelectorAll('.w-chips [data-pl]').forEach((x) => (x.onclick = () => { W.mindPlayer = x.dataset.pl; render(true); }));
+    main.querySelectorAll('details[data-open]').forEach((d) => (d.ontoggle = () => { if (d.open) W.mindOpen.add(d.dataset.open); else W.mindOpen.delete(d.dataset.open); }));
+    main.querySelectorAll('[data-forget]').forEach((x) => (x.onclick = async () => {
+      const { forget, fpc, pl, n } = x.dataset;
+      const talk = forget === 'talk';
+      const body = talk
+        ? `<p>${esc(fpc)} забудет разговор с ${esc(pl)}: реплики (${n}) и заметку о нём. При следующей встрече — как в первый раз.</p>`
+        : `<p>${esc(fpc)} забудет опыт: журнал итогов (${n}) и выводы из него. Опыт начнёт копиться заново.</p>`;
+      if (!(await ask({ title: talk ? 'Забыть разговор' : 'Забыть опыт', ok: 'Забыть', danger: true,
+        body: `${body}<p class="w-small">Насовсем не стирается: строки уйдут в архив базы мозгов (таблица forgotten).</p>` }))) return;
+      const r = await api.mind_forget(W.chron, forget, fpc, pl || '');
+      if (!r.ok) return toast(r.error, true);
+      toast(r.lines ? `Забыто строк: ${r.lines}.` : 'Забывать было нечего.');
+      await loadMind();
+      render(true);
+    }));
   }
 
   // «Расширенное обдумывание» (docs/MIND.md): охотники рядом с игроком решают моделью с размышлением; лимит денег в день.

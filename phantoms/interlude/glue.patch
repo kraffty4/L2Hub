@@ -380,7 +380,7 @@ index d1e7e7f373b634ca50df993aa6b4730ea1f5bb61..429a11cfc0cb36e02b8d40e77851e485
  						stm3.setInt(1, pc.getObjectId()); // Char Id
  						stm3.setLong(2, pc.getOfflineStartTime());
 diff --git a/java/org/l2jmobius/gameserver/entity/actor/Attackable.java b/java/org/l2jmobius/gameserver/entity/actor/Attackable.java
-index 89eb5455f0fc962d26302f9d43ee931a96ca585b..a9dfe6823e749f7475cd33bd703b6f541d06f060 100644
+index ae23436a1d49074f8c0b6620d7ac8ce741e0dd3a..a7c7759a9ce5437d68d4729cb0c4e51e681ef4e9 100644
 --- a/java/org/l2jmobius/gameserver/entity/actor/Attackable.java
 +++ b/java/org/l2jmobius/gameserver/entity/actor/Attackable.java
 @@ -66,6 +66,7 @@ import org.l2jmobius.gameserver.managers.CursedWeaponsManager;
@@ -632,6 +632,48 @@ index d0ce21d48cfc5c286419c8f2a832cec0e46c1f2e..4c364808ce72b3679ed4bceb943b08e1
  	
  	public void manageChat(Player player, String fpcName, String message, int minDelay, int maxDelay)
  	{
+diff --git a/java/org/l2jmobius/gameserver/network/clientpackets/RequestDuelStart.java b/java/org/l2jmobius/gameserver/network/clientpackets/RequestDuelStart.java
+index d4b8b5f0bfb4915aaa2673e1b50c4c91b06e2e22..c155261db8a40ce32b6dce58edc07ccdc52e303c 100644
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/RequestDuelStart.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/RequestDuelStart.java
+@@ -19,6 +19,8 @@ package org.l2jmobius.gameserver.network.clientpackets;
+ import org.l2jmobius.gameserver.entity.World;
+ import org.l2jmobius.gameserver.entity.actor.Player;
+ import org.l2jmobius.gameserver.entity.groups.Party;
++import org.l2jmobius.gameserver.managers.phantom.PhantomDuel;
++import org.l2jmobius.gameserver.managers.phantom.PhantomManager;
+ import org.l2jmobius.gameserver.network.SystemMessageId;
+ import org.l2jmobius.gameserver.network.serverpackets.ExDuelAskStart;
+ import org.l2jmobius.gameserver.network.serverpackets.SystemMessage;
+@@ -61,10 +63,18 @@ public class RequestDuelStart extends ClientPacket
+ 			return;
+ 		}
+ 		
++		// L2Hub: у фантома нет клиента и окна «принять дуэль?» — отвечает сервер (охотник — по характеру, docs/PHANTOMS.md 4.40).
++		if (PhantomManager.getInstance().isPhantom(targetChar) && (_partyDuel != 1) && player.canDuel())
++		{
++			PhantomDuel.getInstance().onChallenged(player, targetChar);
++			return;
++		}
++		
+ 		// Check if duel is possible.
+ 		if (!player.canDuel())
+ 		{
+-			player.sendPacket(SystemMessageId.YOU_ARE_UNABLE_TO_REQUEST_A_DUEL_AT_THIS_TIME);
++			// L2Hub: причина отказа (в бою, HP/MP ниже 50%, мирная зона…), а не общее «не можете».
++			player.sendPacket(player.getNoDuelReason());
+ 			return;
+ 		}
+ 		else if (!targetChar.canDuel())
+@@ -110,6 +120,8 @@ public class RequestDuelStart extends ClientPacket
+ 				if (!temp.canDuel())
+ 				{
+ 					player.sendMessage("Not all the members of your party are ready for a duel.");
++					// L2Hub: кто из своей пати не готов и почему.
++					player.sendPacket(temp.getNoDuelReason());
+ 					return;
+ 				}
+ 			}
 diff --git a/java/org/l2jmobius/gameserver/network/clientpackets/RequestJoinParty.java b/java/org/l2jmobius/gameserver/network/clientpackets/RequestJoinParty.java
 index dcc14d1ae8d26c1b54621ca831c56abd09b40e05..414a6a45a8c0df58c0dad278cc9cb452e4bd2691 100644
 --- a/java/org/l2jmobius/gameserver/network/clientpackets/RequestJoinParty.java

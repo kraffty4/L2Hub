@@ -1,6 +1,7 @@
 package org.l2jmobius.gameserver.managers.phantom;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -114,7 +115,10 @@ public class PhantomHunterParty
 			return;
 		}
 
-		for (Player other : World.getVisibleObjectsInRange(hunter, Player.class, RANGE))
+		// Соклановцы — первыми (раздел 4.50).
+		final List<Player> around = new ArrayList<>(World.getVisibleObjectsInRange(hunter, Player.class, RANGE));
+		around.sort(Comparator.comparingInt(other -> PhantomHunterClans.clanmates(hunter, other) ? 0 : 1));
+		for (Player other : around)
 		{
 			if (!PhantomRelations.isHunter(other) || other.isDead() || other.isInParty() || (Math.abs(other.getLevel() - hunter.getLevel()) > LEVEL_GAP) || (now < _restUntil.getOrDefault(other.getObjectId(), 0L)) || !PhantomHunterManager.getInstance().isHunting(other))
 			{
@@ -135,7 +139,7 @@ public class PhantomHunterParty
 			}
 			_pairNext.put(pair, now + PAIR_GAP);
 
-			final boolean friend = relations.isFriend(hunter, other) || relations.isFriend(other, hunter);
+			final boolean friend = relations.isFriend(hunter, other) || relations.isFriend(other, hunter) || PhantomHunterClans.clanmates(hunter, other);
 			final double chance = friend ? PhantomHuntersConfig.HUNTER_PARTY_CHANCE_FRIEND : Math.min(100, PhantomHuntersConfig.HUNTER_PARTY_CHANCE * template.getSocial());
 			final boolean yes = Rnd.get(100.0) < chance;
 			LOGGER.info(getClass().getSimpleName() + ": " + hunter.getName() + " -> " + other.getName() + " (" + (friend ? "друг" : "бросок") + ", шанс " + String.format(Locale.ROOT, "%.0f", chance) + "%) — " + (yes ? "зовёт в пати." : "нет."));
@@ -154,6 +158,97 @@ public class PhantomHunterParty
 	public boolean isLeader(Player player)
 	{
 		return _groups.containsKey(player.getObjectId());
+	}
+
+	/**
+	 * @param leader лидер пати охотников
+	 * @return в его пати есть место ({@link PhantomHuntersConfig#HUNTER_PARTY_MAX})
+	 */
+	public boolean hasRoom(Player leader)
+	{
+		final Group group = _groups.get(leader.getObjectId());
+		return (group != null) && ((group.members.size() + 1) < PhantomHuntersConfig.HUNTER_PARTY_MAX);
+	}
+
+	/**
+	 * Стратег позвал охотника по имени ({@code [[PARTY имя]]}, протокол v1): свободного — к себе, лидера пати охотников — просится к нему. Решает позванный по тем же правилам,
+	 * что и бросок на каче ({@link #tick}): враг хоть с одной стороны — никогда, устал или только что из пати — нет, друг — {@link PhantomHuntersConfig#HUNTER_PARTY_CHANCE_FRIEND},
+	 * остальные — {@link PhantomHuntersConfig#HUNTER_PARTY_CHANCE} × его общительность; одна пара — не чаще раза в {@value #PAIR_GAP} мс. Кто рядом и есть ли место, проверил менеджер.
+	 * @param asker кто зовёт
+	 * @param other кого
+	 * @param force самопроверка MIND: согласиться без броска
+	 * @param now текущее время
+	 * @return {@code null} — в одной пати; иначе причина отказа по-русски
+	 */
+	public String ask(Player asker, Player other, boolean force, long now)
+	{
+		if (!PhantomHuntersConfig.HUNTER_PARTIES)
+		{
+			return "пати охотников выключены";
+		}
+		final PhantomTemplate otherTemplate = PhantomData.getInstance().getTemplate(other.getName());
+		if (otherTemplate == null)
+		{
+			return "нет такого рядом";
+		}
+
+		final String state = stateRefusal(asker, other, now);
+		if (state != null)
+		{
+			return state;
+		}
+		final PhantomRelations relations = PhantomRelations.getInstance();
+		final long pair = pair(asker, other);
+		if (!force && (now < _pairNext.getOrDefault(pair, 0L)))
+		{
+			return "отказал: уже звал его недавно";
+		}
+		_pairNext.put(pair, now + PAIR_GAP);
+
+		final boolean friend = relations.isFriend(asker, other) || relations.isFriend(other, asker) || PhantomHunterClans.clanmates(asker, other);
+		final double chance = friend ? PhantomHuntersConfig.HUNTER_PARTY_CHANCE_FRIEND : Math.min(100, PhantomHuntersConfig.HUNTER_PARTY_CHANCE * otherTemplate.getSocial());
+		final boolean yes = force || (Rnd.get(100.0) < chance);
+		final Group theirs = _groups.get(other.getObjectId());
+		LOGGER.info(getClass().getSimpleName() + ": " + asker.getName() + " -> " + other.getName() + " по имени (" + (force ? "самопроверка" : friend ? "друг" : "бросок") + ", шанс " + String.format(Locale.ROOT, "%.0f", chance) + "%) — " + (yes ? (theirs != null ? "просится к нему." : "зовёт к себе.") : "отказ."));
+		if (!yes)
+		{
+			return "отказал";
+		}
+
+		if (theirs != null)
+		{
+			invite(other, asker, theirs, now);
+		}
+		else
+		{
+			invite(asker, other, _groups.get(asker.getObjectId()), now);
+		}
+		return asker.isInParty() && (asker.getParty() == other.getParty()) ? null : "отказал";
+	}
+
+	/**
+	 * Отказ {@link #ask} ещё до броска, по состоянию — его не обходит и самопроверка: враги, только что из пати, устал.
+	 * @param asker кто зовёт
+	 * @param other кого зовут
+	 * @param now текущее время
+	 * @return причина по-русски или {@code null} — решит бросок
+	 */
+	public String stateRefusal(Player asker, Player other, long now)
+	{
+		final PhantomRelations relations = PhantomRelations.getInstance();
+		if (relations.isEnemy(asker, other) || relations.isEnemy(other, asker))
+		{
+			return "отказал: вы враги";
+		}
+		if (now < _restUntil.getOrDefault(other.getObjectId(), 0L))
+		{
+			return "отказал: только что из пати";
+		}
+		if (PhantomHunterManager.getInstance().mood(other) == PhantomMood.TIRED)
+		{
+			return "отказал: устал";
+		}
+		return null;
 	}
 
 	private void invite(Player leader, Player member, Group existing, long now)

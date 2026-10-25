@@ -129,6 +129,11 @@ final class PhantomOutfit
 		}
 		player.setBaseClass(classId);
 		player.giveAvailableSkills(true, true, true);
+		// Клановые скиллы (раздел 4.41) Mobius вешает при входе и вступлении в клан, а здесь они снялись со всеми.
+		if (player.getClan() != null)
+		{
+			player.getClan().addSkillEffects(player);
+		}
 	}
 
 	static void dress(Player player, PhantomTemplate.Gear gear)

@@ -176,25 +176,45 @@ class Knowledge:
         when = f"с {at} ур." + (f" (тебе ещё {at - level} ур.)" if level < at else " — ты уже дорос")
         return f"Профа: ты {c['name']}; следующая {when} у мастера классов за {adena(price)} адены: {' или '.join(c['next'])}."
 
-    def near_spots(self, kb: dict, level: int, skip: set[str]) -> str:
+    def near(self, kb: dict, level: int, skip: set[str]) -> list[tuple[str, dict]]:
+        """Споты под уровень (мобы с опытом, середина — от −4 до +2 ур.), самые людные первыми; одно место — один раз:
+        «Devils Isle · восток» и «Devils Isle · юг» — это Devils Isle, берётся самый людный кусок. Места из skip — мимо."""
         found = []
         for name, s in kb.get("spots", {}).items():
             mid = (s["min"] + s["max"]) / 2
             if name not in skip and s.get("exp") and level - 4 <= mid <= level + 2:
                 found.append((-s["count"], name, s))
         found.sort(key=lambda x: (x[0], x[1]))
-        # Одно место — один раз: «Devils Isle · восток» и «Devils Isle · юг» — это Devils Isle, берётся самый людный кусок.
-        places, picked = set(), []
+        places, picked = {x.split(" · ")[0] for x in skip if x}, []
         for _, name, s in found:
             place = name.split(" · ")[0]
-            if place not in places and place not in {x.split(" · ")[0] for x in skip if x}:
+            if place not in places:
                 places.add(place)
                 picked.append((name, s))
-        if not picked:
-            return ""
-        return "Ещё споты под твой уровень: " + "; ".join(
-            f"{name} ({s['region']}, {s['min']}-{s['max']}" + (", агр" if s.get("aggro", 0) >= 0.5 else "") + ")"
-            for name, s in picked[:SPOTS_NEAR]) + "."
+        return picked
+
+    def choices(self, kb: dict, level: int, skip: set[str], count: int) -> list[str]:
+        """Споты для перехода по решению стратега ([[SPOT_TO]]): те, куда ядро поведёт, — он их не перерос и ему не рано
+        (уровень от min−4 до max+3 мобов спота, docs/PHANTOMS.md, 4.3, «Протокол v1»), мобы с опытом; ближе к его уровню —
+        первыми, одно место — один раз, места из skip — мимо."""
+        found = sorted((abs((s["min"] + s["max"]) / 2 - level), -s["count"], name) for name, s in kb.get("spots", {}).items()
+                       if name not in skip and s.get("exp") and s["min"] - 4 <= level <= s["max"] + 3)
+        places, picked = {x.split(" · ")[0] for x in skip if x}, []
+        for _, _, name in found:
+            place = name.split(" · ")[0]
+            if place not in places:
+                places.add(place)
+                picked.append(name)
+        return picked[:count]
+
+    @staticmethod
+    def spot_brief(name: str, s: dict) -> str:
+        """«Cruma Tower · 1 этаж (Dion, 34-38, агр)»."""
+        return f"{name} ({s['region']}, {s['min']}-{s['max']}" + (", агр" if s.get("aggro", 0) >= 0.5 else "") + ")"
+
+    def near_spots(self, kb: dict, level: int, skip: set[str]) -> str:
+        picked = self.near(kb, level, skip)[:SPOTS_NEAR]
+        return ("Ещё споты под твой уровень: " + "; ".join(self.spot_brief(n, s) for n, s in picked) + ".") if picked else ""
 
     def near_raids(self, kb: dict, level: int) -> str:
         found = sorted((r for r in kb.get("raids", []) if level - 2 <= r[1] <= level + 5), key=lambda r: (abs(r[1] - level - 1), r[1], r[0]))

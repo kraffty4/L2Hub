@@ -154,7 +154,7 @@ public final class WorldDaily
 	}
 
 	/**
-	 * Читает L2HubWorld.ini; включено — слушатели убийств и входа в игру и команда {@code .daily}.
+	 * Читает L2HubWorld.ini; включено — слушатели убийств и входа в игру. Команда {@code .daily} есть всегда: у нового персонажа она на панели (макрос), а выключенные поручения она так и называет.
 	 */
 	public synchronized void start()
 	{
@@ -164,6 +164,10 @@ public final class WorldDaily
 		}
 		_started = true;
 		L2HubWorldConfig.load();
+		// Кланы малого мира — не поручения: и при выключенных поручениях.
+		SmallWorldClans.apply();
+		// Без команды текст макроса «.daily» ушёл бы в общий чат.
+		VoicedCommandHandler.getInstance().registerHandler(new WorldDailyCommand());
 		if (!L2HubWorldConfig.WORLD_DAILY)
 		{
 			LOGGER.info(getClass().getSimpleName() + ": Disabled.");
@@ -172,7 +176,6 @@ public final class WorldDaily
 
 		PhantomCompat.addAttackableKillListener(this, this::onKill);
 		Containers.Global().addListener(new ConsumerEventListener(Containers.Global(), EventType.ON_PLAYER_LOGIN, (OnPlayerLogin event) -> onLogin(event.getPlayer()), this));
-		VoicedCommandHandler.getInstance().registerHandler(new WorldDailyCommand());
 		LOGGER.info(getClass().getSimpleName() + ": daily tasks on (.daily), new day at " + String.format("%02d:%02d", L2HubWorldConfig.WORLD_DAILY_RESET_HOUR, L2HubWorldConfig.WORLD_DAILY_RESET_MINUTE) + ".");
 	}
 

@@ -20,7 +20,7 @@ from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
 
-from . import catalog, paths, servers
+from . import catalog, configs, paths, servers
 
 Out = Callable[[str], None]
 
@@ -325,8 +325,124 @@ def ant(src: Path, log: Path) -> None:
         raise RuntimeError(f"Сборка упала (код {r.returncode}), смотри {log}")
 
 
+# ---------- Конфиги в развёрнутый сервер ----------
+
+CONFIG_RE = re.compile(r"^(game|login)/config/")
+CONFIG_SKIP = {"hexid.txt"}  # не настройка, а состояние: гейм пишет его сам при регистрации на логине
+INI_SUFFIXES = (".ini", ".properties")
+LIST_MAX = 8
+
+
+def zip_configs(archive: Path) -> dict[str, bytes]:
+    """Конфиги частей из архива сборки: путь в сервере (game/config/…, login/config/…) → содержимое."""
+    if not archive.is_file():
+        return {}
+    with zipfile.ZipFile(archive) as z:
+        return {n: z.read(n) for n in z.namelist()
+                if CONFIG_RE.match(n) and not n.endswith("/") and Path(n).name not in CONFIG_SKIP}
+
+
+def _names(keys: list[str]) -> str:
+    return ", ".join(keys[:LIST_MAX]) + (f" и ещё {len(keys) - LIST_MAX}" if len(keys) > LIST_MAX else "")
+
+
+def _build_states(rel: str, data: bytes, parsed: list[list[FilePatch]]) -> list[bytes]:
+    """Каким конфиг был после каждого из ранних патчей стопки: патчи снимаются с конца, как в applied_patches."""
+    states = []
+    for fps in reversed(parsed):
+        for fp in fps:
+            if fp.path != f"dist/{rel}":
+                continue
+            try:
+                data = apply_file(data, fp, reverse=True)
+            except PatchError:
+                return states
+            if data is None:  # файл создал этот патч — раньше его не было
+                return states
+            states.append(data)
+    return states
+
+
+def deploy_configs(cid: str, archive: Path, srv: Path, patches: list[Path], prev: dict[str, bytes] | None = None,
+                   out: Out = print) -> None:
+    """Конфиги новой сборки — в развёрнутый сервер, не затирая правок пользователя (окно «Настройки сервера»,
+    выключатели, руками). Что выложила прошлая сборка, помнит servers/<id>/.config_base/ — по нему правка пользователя
+    отличается от значения сборки. Записи ещё нет (сервер собран до 0.4.237) — вместо неё конфиги прошлого архива
+    сборки (prev), которые Ant перезаписал. Устройство — docs/RELEASE.md, «Что мешает сейчас».
+
+    Файла в сервере нет — копируется. Файл как в прошлой сборке (или как после любого из ранних патчей стопки) — его не
+    правили, заменяется целиком. .ini, который правили, — сливается (configs.merge_ini): недостающие ключи
+    дописываются, значения, не тронутые в сервере, берутся из сборки, тронутые — остаются. Прочие (.xml, .txt), которые
+    правили, а сборка тоже поменяла, — остаются как есть, версия сборки ложится в servers/<id>/.config_new/ для ручного
+    переноса. Перед любой записью — копия файла в data/backups/config/<id>/<время>/."""
+    new = zip_configs(archive)
+    home = paths.SERVERS / cid
+    record, pending = home / ".config_base", home / ".config_new"
+    backup = paths.BACKUPS / "config" / cid / datetime.now().strftime("%Y-%m-%d_%H-%M-%S_build")
+    n = 2
+    while backup.exists():
+        backup = backup.with_name(f"{backup.name.split('~')[0]}~{n}")
+        n += 1
+    parsed = [parse_patch(patch.read_bytes()) for patch in patches]
+    ours = {fp.path[5:] for fps in parsed for fp in fps if fp.path.startswith("dist/")}
+    for root in (paths.PHANTOMS / "core", paths.PHANTOMS / cid):
+        ours |= {f.relative_to(root / "dist").as_posix() for f in (root / "dist").rglob("*") if f.is_file()} if (root / "dist").is_dir() else set()
+
+    def save(rel: str, data: bytes, cur: bytes | None) -> None:
+        to = srv / rel
+        if cur is not None:
+            (backup / rel).parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(to, backup / rel)
+        to.parent.mkdir(parents=True, exist_ok=True)
+        to.write_bytes(data)
+
+    for rel, data in sorted(new.items()):
+        to = srv / rel
+        cur = to.read_bytes() if to.is_file() else None
+        recorded = (record / rel).read_bytes() if (record / rel).is_file() else None
+        base = recorded if recorded is not None else (prev or {}).get(rel)
+        if cur == data:
+            (pending / rel).unlink(missing_ok=True)  # версию сборки перенесли руками — подсказка больше не нужна
+            continue
+        if cur is None:
+            save(rel, data, None)
+            out(f"Новый конфиг в сервере: {rel}")
+        elif cur == base or cur in _build_states(rel, data, parsed):
+            save(rel, data, cur)
+            out(f"Конфиг из сборки (в сервере его не меняли): {rel}")
+        elif rel.endswith(INI_SUFFIXES):
+            merged, rep = configs.merge_ini(cur, data, base)
+            if merged != cur:
+                save(rel, merged, cur)
+            if rep["added"]:
+                out(f"{rel}: дописаны ключи сборки — {_names(rep['added'])}")
+            if rep["updated"]:
+                out(f"{rel}: значения из сборки (в сервере их не меняли) — {_names(rep['updated'])}")
+            # Без записи о прошлой выкладке о расхождениях говорим только в наших файлах: в остальных конфигах Mobius
+            # отличия от архива — заведомо правки сервера (пароль базы, адреса, выключатели окна).
+            if rep["kept"] and (recorded is not None or rel in ours):
+                out(f"{rel}: оставлены значения сервера (их меняли, а сборка — тоже) — {_names(rep['kept'])}")
+        elif base != data:
+            (pending / rel).parent.mkdir(parents=True, exist_ok=True)
+            (pending / rel).write_bytes(data)
+            out(f"{rel}: в сервере свои правки, а сборка его поменяла — оставлен как есть, версия сборки: {pending / rel}")
+    for rel, data in new.items():
+        (record / rel).parent.mkdir(parents=True, exist_ok=True)
+        (record / rel).write_bytes(data)
+    if backup.is_dir():
+        out(f"Копии конфигов до выкладки: {backup}")
+
+
+def deploy_built(p: dict, prev_archive: Path | None = None, out: Out = print) -> None:
+    """deploy_configs по уже собранному архиву — для scripts/server_build.ps1 (cli deploy-configs): скрипт передаёт
+    копию прошлого архива, снятую до Ant."""
+    cid = p["id"]
+    archive = paths.SERVERS / cid / "build" / f"{source_dir(cid).name}.zip"
+    deploy_configs(cid, archive, catalog.server_dir(p), chronicle_patches(cid), zip_configs(prev_archive) if prev_archive else None, out)
+
+
 def server_build(p: dict, out: Out = print) -> None:
-    """Исходники + модуль фантомов + патчи → Ant → jar-ы и данные в развёрнутый сервер (или распаковка целиком)."""
+    """Исходники + модуль фантомов + патчи → Ant → jar-ы, данные и конфиги в развёрнутый сервер (или распаковка целиком)."""
     cid = p["id"]
     base = paths.SERVERS / cid
     src = source_dir(cid)
@@ -345,12 +461,14 @@ def server_build(p: dict, out: Out = print) -> None:
                 raise RuntimeError(f"Патч не наложился: {patch.name} — {e}") from None
             out(f"{patch.name}: наложен")
 
-    ant(src, base / "build.log")
     archive = base / "build" / f"{src.name}.zip"
+    prev = zip_configs(archive)  # прошлый архив Ant перезапишет — его конфиги нужны выкладке
+    ant(src, base / "build.log")
     srv = base / "server"
     if not srv.is_dir():
         with zipfile.ZipFile(archive) as z:
             z.extractall(srv)
+        deploy_configs(cid, archive, srv, patches, out=out)  # всё уже как в архиве — только запись о выкладке
         out(f"Сборка готова и распакована в {srv}; дальше — настройка (server_setup)")
         return
 
@@ -360,27 +478,19 @@ def server_build(p: dict, out: Out = print) -> None:
             (srv / "libs" / Path(name).name).write_bytes(z.read(name))
     out(f"Сборка готова, jar-ы обновлены в {srv / 'libs'} ({len(jars)})")
 
-    # Данные из патчей и модуля Ant кладёт только в архив — копируем в развёрнутый сервер. Конфиг: нового в сервере
-    # нет — копируется; есть и отличается — там правки автора, только напоминание.
+    # Данные из патчей и модуля Ant кладёт только в архив — копируем в развёрнутый сервер; конфиги — deploy_configs.
     touched = {rel[5:] for patch in patches for rel in patch_files(patch) if rel.startswith("dist/")}
     touched |= {key[5:] for key in module if key.startswith("dist/")}
     for rel in sorted(touched):
         frm, to = src / "dist" / rel, srv / rel
-        if not frm.is_file():
+        if not frm.is_file() or not re.match(r"^(game|login)/data/", rel):
             continue
-        if re.match(r"^(game|login)/data/", rel):
-            if to.is_file() and _sha(to) == _sha(frm):
-                continue
-            to.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(frm, to)
-            out(f"Данные обновлены: {rel}")
-        elif re.match(r"^(game|login)/config/", rel):
-            if not to.is_file():
-                to.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(frm, to)
-                out(f"Новый конфиг скопирован в сервер: {rel}")
-            elif _sha(to) != _sha(frm):
-                out(f"Конфиг в сервере отличается от сборки (там правки автора) — новые ключи перенести вручную: {rel}")
+        if to.is_file() and _sha(to) == _sha(frm):
+            continue
+        to.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(frm, to)
+        out(f"Данные обновлены: {rel}")
+    deploy_configs(cid, archive, srv, patches, prev, out)
 
 
 # ---------- База ----------

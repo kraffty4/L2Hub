@@ -351,9 +351,15 @@ def diagnostics(p: dict) -> list[dict]:
             add("warn", "Мозги фейков", "сервис работает, но нет ключа API — фейки отвечают заготовками",
                 "Положи ключ DeepSeek одной строкой в data\\brain\\deepseek.key — подхватится сразу, без перезапуска")
         elif b["state"] == "on":
+            # Предупреждение — только когда модель отвалилась (llmOk = False до следующего удачного запроса); кривой ответ
+            # стратега (bad) и свой лимит — не сбой модели. Сервис мозгов до 0.4.265 llmOk не знает: по lastError, как раньше.
+            down = b.get("llmOk") is False or ("llmOk" not in b and bool(b.get("lastError")))
             detail = f"{b.get('model')} · характеров {b.get('personas', 0)} · ответов {b.get('replies', 0)}"
-            add("warn" if b.get("lastError") else "ok", "Мозги фейков", detail + (f" · последняя ошибка: {b['lastError']}" if b.get("lastError") else ""),
-                "Журнал — data\\brain\\" + p["id"] + ".log" if b.get("lastError") else "")
+            if b.get("lastError"):
+                detail += f" · {'последняя ошибка' if down else 'был сбой модели'}: {b['lastError']}"
+            if b.get("bad"):
+                detail += f" · неудачных ответов {b['bad']}"
+            add("warn" if down else "ok", "Мозги фейков", detail, "Журнал — data\\brain\\" + p["id"] + ".log" if down or b.get("bad") else "")
         elif st["game"]["state"] == "on":
             add("warn", "Мозги фейков", "сервис не запущен — фейки отвечают заготовками", f"Смотри {servers.brain_stderr(p)}")
         else:

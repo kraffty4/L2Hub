@@ -1,5 +1,7 @@
 package org.l2jmobius.gameserver.config.custom;
 
+import java.util.Arrays;
+
 import org.l2jmobius.commons.util.ConfigReader;
 
 /**
@@ -10,6 +12,8 @@ public class L2HubWorldConfig
 {
 	// File
 	public static final String L2HUB_WORLD_CONFIG_FILE = "./config/Custom/L2HubWorld.ini";
+	/** Члены клана на 6, 7, 8, 9, 10 и 11-й уровень по умолчанию (кланы малого мира). */
+	private static final String SMALL_WORLD_CLAN_MEMBERS_DEFAULT = "10,15,20,30,40,50";
 
 	// Constants
 	public static boolean WORLD_DAILY;
@@ -25,6 +29,10 @@ public class L2HubWorldConfig
 	public static int WORLD_DAILY_TELEPORT_FEE;
 	/** Язык текстов L2Hub в игре: {@code ru} или {@code en} (ключ L2HubLanguage — его пишет лаунчер по языку окна). */
 	public static String LANGUAGE;
+	/** Кланы малого мира ({@code SmallWorldClans}): меньше членов на 6-й уровень клана и выше ({@code SmallWorldClans.apply}). */
+	public static boolean SMALL_WORLD_CLANS;
+	/** Сколько членов нужно клану на 6, 7, 8… уровень ({@code SmallWorldClanMembers}). */
+	public static int[] SMALL_WORLD_CLAN_MEMBERS;
 
 	public static void load()
 	{
@@ -42,6 +50,21 @@ public class L2HubWorldConfig
 		WORLD_DAILY_BONUS = config.getBoolean("WorldDailyBonus", true);
 		WORLD_DAILY_TELEPORT_FEE = Math.max(0, config.getInt("WorldDailyTeleportFee", 15000));
 		LANGUAGE = "en".equalsIgnoreCase(config.getString("L2HubLanguage", "ru").strip()) ? "en" : "ru";
+		SMALL_WORLD_CLANS = config.getBoolean("SmallWorldClans", true);
+		SMALL_WORLD_CLAN_MEMBERS = numbers(config.getString("SmallWorldClanMembers", SMALL_WORLD_CLAN_MEMBERS_DEFAULT), SMALL_WORLD_CLAN_MEMBERS_DEFAULT);
+	}
+
+	/** Числа через запятую, каждое от 1; ошибка в строке — {@code fallback}. */
+	private static int[] numbers(String value, String fallback)
+	{
+		try
+		{
+			return Arrays.stream(value.split(",")).map(String::strip).filter(s -> !s.isEmpty()).mapToInt(s -> Math.max(1, Integer.parseInt(s))).toArray();
+		}
+		catch (NumberFormatException e)
+		{
+			return numbers(fallback, fallback);
+		}
 	}
 
 	private static int parse(String[] parts, int index, int fallback, int max)

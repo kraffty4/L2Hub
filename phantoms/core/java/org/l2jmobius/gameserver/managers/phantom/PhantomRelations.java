@@ -3,10 +3,12 @@ package org.l2jmobius.gameserver.managers.phantom;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
@@ -18,6 +20,8 @@ import org.l2jmobius.gameserver.entity.WorldObject;
 import org.l2jmobius.gameserver.entity.actor.Attackable;
 import org.l2jmobius.gameserver.entity.actor.Creature;
 import org.l2jmobius.gameserver.entity.actor.Player;
+import org.l2jmobius.gameserver.entity.clan.Clan;
+import org.l2jmobius.gameserver.entity.clan.ClanMember;
 import org.l2jmobius.gameserver.managers.FakePlayerBrain;
 import org.l2jmobius.gameserver.mechanics.effects.EffectType;
 import org.l2jmobius.gameserver.mechanics.events.Containers;
@@ -54,6 +58,8 @@ public class PhantomRelations
 	private static final long REVIVE_MARGIN = 3000;
 	/** Рес принят не позже стольких мс после конца каста — «реснул» тому, кто кастовал. */
 	private static final long REVIVE_ACCEPT = 30000;
+	/** Что расходится по клану охотников (раздел 4.50): убил, напал, послал; реснул, спас, подлечил. */
+	private static final Set<Kind> SHARED = EnumSet.of(Kind.KILLED, Kind.ATTACKED, Kind.INSULTED, Kind.REVIVED, Kind.SAVED, Kind.HEALED);
 
 	public enum Kind
 	{
@@ -72,7 +78,11 @@ public class PhantomRelations
 		/** Победил охотника на дуэли (раздел 4.40): уважение и чуть-чуть обиды. */
 		DUEL_WIN("duel_win", 0.5, 1),
 		/** Проиграл охотнику дуэль: хороший бой. */
-		DUEL_LOSS("duel_loss", 0, 1);
+		DUEL_LOSS("duel_loss", 0, 1),
+		/** Обидел соклановца из клана охотников (раздел 4.50): доля {@code HunterClanShare} от его обиды. */
+		CLAN_HARM("clan_harm", 1, 0),
+		/** Выручил соклановца: доля его благодарности. */
+		CLAN_HELP("clan_help", 0, 1);
 
 		final String key;
 		final double grudge;
@@ -183,6 +193,60 @@ public class PhantomRelations
 		}
 		_cooldowns.put(cooldownKey, now);
 
+		final Relation relation = store(hunter, player, kind, kind.grudge, kind.gratitude, now);
+		LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " " + kind.key + " " + hunter.getName() + " — обида " + format(relation.grudge) + ", благодарность " + format(relation.gratitude) + (relation.kills > 0 ? ", убийств " + relation.kills : "") + ".");
+		// Кланы охотников (раздел 4.41): стал врагом живого соклановца — уходит из клана.
+		if (kind.grudge > 0)
+		{
+			PhantomClans.getInstance().onGrudge(hunter, player);
+		}
+		shareWithClan(hunter, player, kind, now);
+		return relation.kills;
+	}
+
+	/**
+	 * Обида и благодарность расходятся по клану охотников (раздел 4.50, {@code HunterClanShare}): соклановцы охотника в мире помнят долю — «обидел
+	 * соклановца», «выручил соклановца». Не тот же клан; счётчик убийств соклановцам не растёт; пауза — своя на пару и поступок, убийство
+	 * расходится всегда.
+	 */
+	private void shareWithClan(Player hunter, Player player, Kind kind, long now)
+	{
+		final Clan clan = hunter.getClan();
+		if ((PhantomHuntersConfig.HUNTER_CLAN_SHARE <= 0) || !SHARED.contains(kind) || (clan == null) || (player.getClan() == clan) || !PhantomHunterClans.isHunterClan(clan))
+		{
+			return;
+		}
+
+		final double part = PhantomHuntersConfig.HUNTER_CLAN_SHARE / 100.0;
+		final Kind shared = kind.grudge > 0 ? Kind.CLAN_HARM : Kind.CLAN_HELP;
+		int count = 0;
+		for (ClanMember member : clan.getMembers())
+		{
+			final Player mate = member.getPlayer();
+			if ((mate == null) || (mate == hunter) || (mate == player) || !mate.isOnline() || !isHunter(mate))
+			{
+				continue;
+			}
+			final String cooldownKey = mate.getObjectId() + ":" + player.getObjectId() + ":" + shared.key + ":" + kind.key;
+			if ((kind != Kind.KILLED) && ((now - _cooldowns.getOrDefault(cooldownKey, 0L)) < COOLDOWN))
+			{
+				continue;
+			}
+			_cooldowns.put(cooldownKey, now);
+			store(mate, player, shared, kind.grudge * part, kind.gratitude * part, now);
+			count++;
+		}
+		if (count > 0)
+		{
+			LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " " + kind.key + " " + hunter.getName() + " — clan " + clan.getName() + " (" + count + " in the world) remembers " + PhantomHuntersConfig.HUNTER_CLAN_SHARE + "%.");
+		}
+	}
+
+	/**
+	 * Записать поступок в отношение охотника к игроку и сохранить (в фоне).
+	 */
+	private Relation store(Player hunter, Player player, Kind kind, double grudge, double gratitude, long now)
+	{
 		final double hour = PhantomHunterManager.getInstance().playedHours(hunter);
 		final Map<Integer, Relation> map = relations(hunter);
 		final String value;
@@ -190,15 +254,14 @@ public class PhantomRelations
 		synchronized (map)
 		{
 			relation = map.computeIfAbsent(player.getObjectId(), id -> new Relation());
-			apply(relation, kind, hour, now / 1000);
+			apply(relation, kind, grudge, gratitude, hour, now / 1000);
 			trim(map, hour);
 			value = serialize(map);
 		}
 
 		hunter.getVariables().set(VARIABLE, value);
 		ThreadPool.execute(() -> hunter.getVariables().storeMe());
-		LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " " + kind.key + " " + hunter.getName() + " — обида " + format(relation.grudge) + ", благодарность " + format(relation.gratitude) + (relation.kills > 0 ? ", убийств " + relation.kills : "") + ".");
-		return relation.kills;
+		return relation;
 	}
 
 	/**
@@ -541,8 +604,17 @@ public class PhantomRelations
 	 */
 	static void apply(Relation relation, Kind kind, double hour, long nowSeconds)
 	{
-		relation.grudge = relation.grudgeAt(hour) + kind.grudge;
-		relation.gratitude = relation.gratitudeAt(hour) + kind.gratitude;
+		apply(relation, kind, kind.grudge, kind.gratitude, hour, nowSeconds);
+	}
+
+	/**
+	 * @param grudge сколько обиды прибавить (у доли от соклановца — меньше веса поступка)
+	 * @param gratitude сколько благодарности
+	 */
+	static void apply(Relation relation, Kind kind, double grudge, double gratitude, double hour, long nowSeconds)
+	{
+		relation.grudge = relation.grudgeAt(hour) + grudge;
+		relation.gratitude = relation.gratitudeAt(hour) + gratitude;
 		relation.hour = hour;
 		if (kind == Kind.KILLED)
 		{

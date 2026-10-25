@@ -373,17 +373,21 @@ async function installFlow(c, wantOwn = false) {
       <p class="note">Другие семейства L2J (свои jar на нашей Java и MariaDB) — следующими шагами. Дальше по шагам:</p>`
     : `<p>Поставим сервер <b>${esc(plan.build)}</b> ${c.server === 'l2solo' ? 'с оверлеем L2Hub поверх их кода (русский у ботов, учёт расхода LLM)' : plan.mods ? 'с модами L2Hub' : '— как есть в L2J Mobius, без модов L2Hub (они пока только у хроник плана 1.0)'}. По шагам:</p>`;
   // C4 (L2Solo): их клиент протокола 656 и client mod не раздаём — ссылки на их раздачу, качаешь сам.
-  const cl = plan.client ? `<p class="note">Клиент — их: ${esc(plan.client.client.title)}, ${esc(plan.client.client.file)} (${gb(plan.client.client.size)}), и ${esc(plan.client.mod.title)}. Мы их не раздаём — качаешь с их Google Drive:</p>
-      <div class="row2"><button class="sbtn" data-l2s="client">Клиент C4 от L2Solo</button><button class="sbtn" data-l2s="mod">Client mod</button></div>` : '';
+  // Пункты — отдельными узлами: в названиях запятые, шаблон с ними переводчик окна (i18n.js) делит не там.
+  const cl = plan.client ? `<p class="note">Клиент и мод — их, мы их не раздаём: качаешь сам с их Google Drive.</p>
+      <ul class="plan-steps"><li>${esc(plan.client.client.title)} — ${esc(plan.client.client.file)}, ${gb(plan.client.client.size)}</li><li>${esc(plan.client.mod.title)} — ${esc(plan.client.mod.file)}, ${mb(plan.client.mod.size)}</li></ul>
+      ${L2SOLO_CLIENT_BTNS}<p class="note">${L2SOLO_MOD_HOWTO} Скачать можно и пока ставится сервер.</p>` : '';
   const body = intro + `<ul class="plan-steps">${plan.steps.map((s) => `<li>${esc(s)}</li>`).join('')}</ul>${cl}
-    <p class="note">${plan.download ? `Скачать — около ${mb(plan.download)}; в` : 'В'}сё ляжет в ${esc(plan.home)} (свободно ${gb(plan.free)}). Клиент игры — твой: папку укажешь после установки.</p>`
+    <p class="note">${plan.download ? `Скачать — около ${mb(plan.download)}; в` : 'В'}сё ляжет в ${esc(plan.home)} (свободно ${gb(plan.free)}). ${plan.client ? 'Папку клиента укажешь после установки.' : 'Клиент игры — твой: папку укажешь после установки.'}</p>`
     + (plan.homeBad ? `<p class="note bad-text">${esc(plan.homeBad)}</p>` : '')
     // Проверки мастера (docs/RELEASE.md): память — серверу Mobius 4–6 ГБ и клиенту 2–4; место — сервер с базой 3–6 ГБ.
-    + (plan.ramGB && plan.ramGB < 14 ? `<p class="note bad-text">Памяти ${plan.ramGB} ГБ: серверу нужно 4–6 ГБ и клиенту ещё 2–4 — меньше 16 ГБ будет тесно, на время игры закрой лишнее.</p>` : '')
-    + (plan.free && plan.free < 10 * 2 ** 30 ? `<p class="note bad-text">Свободно меньше 10 ГБ: сервер с базой и бэкапами займёт 3–6 ГБ, геодата — ещё до 2 ГБ.</p>` : '');
-  const asked = askModal({ title: `${own ? 'Подключить' : 'Установить'} ${esc(c.name)}`, body, ok: own ? 'Подключить' : 'Установить' });
+    // L2Solo (C4) — код, npm и геодата около 1,3 ГБ, их клиент распакованный — 4,8 ГБ; память ему Mobius-овая не нужна.
+    + (!plan.client && plan.ramGB && plan.ramGB < 14 ? `<p class="note bad-text">Памяти ${plan.ramGB} ГБ: серверу нужно 4–6 ГБ и клиенту ещё 2–4 — меньше 16 ГБ будет тесно, на время игры закрой лишнее.</p>` : '')
+    + (plan.client && plan.free && plan.free < 7 * 2 ** 30 ? `<p class="note bad-text">Свободно меньше 7 ГБ: L2Solo с геодатой займёт около 1,3 ГБ, их клиент — ещё 4,8 ГБ, если ляжет на этот же диск.</p>` : '')
+    + (!plan.client && plan.free && plan.free < 10 * 2 ** 30 ? `<p class="note bad-text">Свободно меньше 10 ГБ: сервер с базой и бэкапами займёт 3–6 ГБ, геодата — ещё до 2 ГБ.</p>` : '');
+  const asked = askModal({ title: own ? `Подключить ${esc(c.name)}` : `Установить ${esc(c.name)}`, body, ok: own ? 'Подключить' : 'Установить' });
   if (own) $('instPick').onclick = async () => { const r = await api.pick_folder(); if (r.ok) $('instFolder').value = r.path; else if (!r.cancelled) toast(r.error, true); };
-  $('uiModalBox').querySelectorAll('[data-l2s]').forEach((b) => (b.onclick = () => call(api.l2solo_client_open(b.dataset.l2s))));
+  l2soloClientButtons($('uiModalBox'));
   if (!(await asked)) return;
   call(own ? api.install(c.id, $('instFolder').value.trim()) : api.install(c.id));
 }
@@ -392,6 +396,11 @@ async function afterInstall(id) {
   profiles[id] = await api.profile(id);
   if (selected === id) { renderList(); renderMain(); }
 }
+// Клиент C4 для L2Solo — только их (протокол 656) с их client mod; раздача — их Google Drive (Api.l2solo_client_open).
+// Архив мода повторяет клиент: system и systextures — поверх, оригиналы заменяемых файлов мод не бережёт.
+const L2SOLO_CLIENT_BTNS = '<div class="row2"><button class="sbtn" data-l2s="client">Клиент C4 от L2Solo</button><button class="sbtn" data-l2s="mod">Client mod</button></div>';
+const L2SOLO_MOD_HOWTO = 'Клиент распакуй куда удобно, архив мода — в корень клиента с заменой файлов (в нём папки system и systextures).';
+const l2soloClientButtons = (box) => box.querySelectorAll('[data-l2s]').forEach((b) => (b.onclick = () => call(api.l2solo_client_open(b.dataset.l2s))));
 // Папка клиента: сначала — клиенты, найденные на дисках (Api.find_clients, clients.py), выбор системы щелчком;
 // «Другая папка…» — окно выбора папки Windows. В профиль пишется папка клиента и exe выбранной системы.
 async function pickClient(id) {
@@ -421,10 +430,14 @@ async function pickClient(id) {
     const r = await api.find_clients(refresh);
     const rows = r.items.map((c) => `<div class="client-row"><div class="client-path">${esc(c.path)}${c.used.length ? `<small>уже у: ${esc(c.used.join(', '))}</small>` : ''}</div>
         <div class="row2">${c.systems.map((s) => `<button class="sbtn" data-dir="${esc(c.path + '\\' + s)}">${esc(s)}</button>`).join('')}</div></div>`).join('');
+    const l2s = profiles[id]?.type === 'l2solo';
     box.innerHTML = `<h2>Клиент ${esc(byId(id)?.name || id)}</h2>
-      <p class="note">Найдено на дисках за ${String(r.seconds).replace('.', ',')} с${r.timeout ? ' (не всё — вышло время)' : ''}. Выбери систему клиента — папку с L2.exe: обычно <b>system</b>, для русского ввода — <b>system_ru</b>.</p>
+      ${l2s ? `<p class="note">L2Solo пускает только свой клиент C4 (протокол 656) — с их client mod. Другой клиент C4 или Interlude не войдёт. Нет его — скачай с их Google Drive:</p>${L2SOLO_CLIENT_BTNS}<p class="note">${L2SOLO_MOD_HOWTO}</p>` : ''}
+      ${l2s ? `<p class="note">Найдено на дисках за ${String(r.seconds).replace('.', ',')} с${r.timeout ? ' (не всё — вышло время)' : ''}. Выбери систему клиента — папку с L2.exe, у клиента L2Solo это <b>system</b>.</p>`
+        : `<p class="note">Найдено на дисках за ${String(r.seconds).replace('.', ',')} с${r.timeout ? ' (не всё — вышло время)' : ''}. Выбери систему клиента — папку с L2.exe: обычно <b>system</b>, для русского ввода — <b>system_ru</b>.</p>`}
       ${rows || '<p class="note">Клиентов не нашлось — укажи папку сам.</p>'}
       <div class="row2" style="margin-top:12px"><button class="sbtn" data-a="other">Другая папка…</button><button class="sbtn" data-a="again">Искать заново</button><span class="spacer" style="flex:1"></span><button class="sbtn" data-a="no">Отмена</button></div>`;
+    l2soloClientButtons(box);
     box.querySelectorAll('[data-dir]').forEach((b) => (b.onclick = async () => done(await api.set_client_path(id, b.dataset.dir))));
     box.querySelector('[data-a="other"]').onclick = async () => done(await api.pick_client(id));
     box.querySelector('[data-a="again"]').onclick = () => draw(true);

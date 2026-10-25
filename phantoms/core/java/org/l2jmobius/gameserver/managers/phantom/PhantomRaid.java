@@ -491,8 +491,8 @@ public final class PhantomRaid
 			{
 				continue;
 			}
-			// Хилер — первым, дальше — ближе по уровню к боссу.
-			members.sort(Comparator.comparingInt((Player p) -> isHealer(p) ? 0 : 1).thenComparingInt(p -> Math.abs(p.getLevel() - boss.getLevel())));
+			// Хилер — первым, дальше — соклановцы лидера (раздел 4.50), дальше — ближе по уровню к боссу.
+			members.sort(Comparator.comparingInt((Player p) -> isHealer(p) ? 0 : 1).thenComparingInt(p -> PhantomHunterClans.clanmates(leader, p) ? 0 : 1).thenComparingInt(p -> Math.abs(p.getLevel() - boss.getLevel())));
 			final List<Player> team = members.subList(0, Math.min(members.size(), maxSize - 1));
 
 			final Location rally = rally(boss);
@@ -853,6 +853,13 @@ public final class PhantomRaid
 						raid.stage = Stage.LOOT;
 						raid.stageUntil = now + LOOT_TIME;
 						LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + "'s raid killed " + raid.bossName + " in " + ((now - raid.started) / 1000) + " s; " + participants(raid) + ".");
+						// Кланы охотников (раздел 4.41): босс убит, а не исчез — репутация клану живого игрока рейда и кланам охотников рейда.
+						if (raid.boss.isDead() || (raid.superChampion && !SuperChampion.isSuper(raid.boss)))
+						{
+							final List<Integer> hunters = new ArrayList<>(raid.members);
+							hunters.add(raid.leaderId);
+							PhantomClans.getInstance().raidKilled(raid.boss, raid.bossName, raid.bossLevel, raid.epic, raid.superChampion, hunters, new ArrayList<>(raid.players));
+						}
 						final List<String> names = names(raid);
 						shout(player, String.format(WIN_SHOUTS[Rnd.get(WIN_SHOUTS.length)], raid.bossName, names.size() > 1 ? String.join(", ", names.subList(1, names.size())) : "всем"));
 						return Drive.LEADS;

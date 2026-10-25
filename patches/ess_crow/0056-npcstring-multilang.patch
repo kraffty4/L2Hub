@@ -1,0 +1,13 @@
+diff --git a/java/org/l2jmobius/gameserver/network/NpcStringId.java b/java/org/l2jmobius/gameserver/network/NpcStringId.java
+--- a/java/org/l2jmobius/gameserver/network/NpcStringId.java
++++ b/java/org/l2jmobius/gameserver/network/NpcStringId.java
+@@ -44647,6 +44647,9 @@
+ 	protected NpcStringId(int id)
+ 	{
+ 		_id = id;
++		// L2Hub (патч 0056): пустой список переводов, как у SystemMessageId. Без него attachLocalizedText падает на первом же
++		// data/lang/<язык>/NpcStringLocalisation.xml, когда включена многоязычность (MultiLangEnable, патч 0030).
++		_localisations = EMPTY_NSL_ARRAY;
+ 	}
+ 	
+ 	public int getId()

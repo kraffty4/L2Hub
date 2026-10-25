@@ -8,6 +8,7 @@
     {"id": "superchampion", "group": "Мир", "title": "Суперчемпионы", "note": "редкий легендарный чемпион: больше ростом, светится, белый круг под ногами; HP x20, дроп x10 — мини-РБ с объявлением в регионе", "file": "ChampionMonsters.ini", "key": "SuperChampionEnable"},
     {"id": "rbannounce", "group": "Мир", "title": "Объявления о РБ", "note": "на весь сервер: рейд-босс появился и убит", "file": "BossAnnouncements.ini", "keys": ["RaidBossSpawnAnnouncements", "RaidBossDefeatAnnouncements"]},
     {"id": "smallepics", "group": "Мир", "title": "Эпики малого мира", "note": "эпики встают в 4 раза чаще, Антарас и Валакас ждут 5 минут, к Фринтезе и Белету — малой группой; Королева, Ядро, Орфен и Закен слабее: 40 % HP, свита урезана", "file": "GrandBoss.ini", "key": "SmallWorldEpics"},
+    {"id": "smallclans", "group": "Мир", "title": "Кланы малого мира", "note": "клану на 6, 7 и 8-й уровень хватает 10, 15 и 20 членов (на официале — 30, 50 и 80), выше — 30, 40 и 50; репутация на уровень — прежняя; у Classic и Essence уровни выше 5-го — за клановый опыт, там не действует; применится после перезапуска сервера", "file": "L2HubWorld.ini", "key": "SmallWorldClans"},
     {"id": "fakes", "group": "Мир", "title": "Фейки", "note": "игроки-NPC в городах: стоят, торгуют, болтают в чате; охотников и напарников не трогает", "file": "FakePlayers.ini", "key": "EnableFakePlayers"},
     {"id": "calendar", "group": "Ивенты", "title": "Сезонные события по календарю", "note": "L2 Day, Heavy Medal, Рождество и другие", "file": "L2HubEvents.ini", "key": "Enabled"},
     {"id": "daily", "group": "Ивенты", "title": "Поручения дня (.daily)", "note": "задания на день с наградой", "file": "L2HubWorld.ini", "key": "WorldDaily"},
@@ -38,17 +39,17 @@
   "modes": [
     {"id": "hardcore", "title": "Хардкор", "note": "как на официале: всё x1, без баффера, GM-шопа, долгих бафов, чемпионов и поручений дня, без телепорта и хила с доски Alt+B, без автоподбора дропа и автоизучения скиллов, сабкласс — квестом, страйдер и виверна — не даром, эпики — по официальному расписанию",
      "rates": {"xp": 1, "sp": 1, "adena": 1, "drop": 1, "spoil": 1},
-     "switches": {"buffer": false, "gmshop": false, "durations": false, "champions": false, "daily": false, "pvpevents": false, "rbannounce": false, "superchampion": false, "elpies": false, "freemounts": false, "autopotions": false, "offlineplay": false, "unstuck": false, "classmaster": false, "smallepics": false, "attendance": true, "lcoin": true, "huntpass": true, "magiclamp": true},
+     "switches": {"buffer": false, "gmshop": false, "durations": false, "champions": false, "daily": false, "pvpevents": false, "rbannounce": false, "superchampion": false, "elpies": false, "freemounts": false, "autopotions": false, "offlineplay": false, "unstuck": false, "classmaster": false, "smallepics": false, "smallclans": false, "attendance": true, "lcoin": true, "huntpass": true, "magiclamp": true},
      "settings": {"Player.ini": {"AutoLoot": "False", "AutoLootHerbs": "False", "AutoLearnSkills": "False", "AltSubClassWithoutQuests": "False", "AltKarmaPlayerCanShop": "False"},
                   "CommunityBoard.ini": {"CommunityEnableTeleports": "False", "CommunityEnableHeal": "False", "CommunityEnableBuffs": "False"}}},
     {"id": "pvpcraft", "title": "PvP-крафт", "note": "опыт и SP x50, адена x10, дроп и спойл x5 — быстрый кач, крафт ещё важен",
      "rates": {"xp": 50, "sp": 50, "adena": 10, "drop": 5, "spoil": 5},
-     "switches": {"buffer": true, "gmshop": true, "durations": true, "champions": true, "rbannounce": true, "superchampion": true, "autopotions": true, "classmaster": true, "smallepics": true, "attendance": true, "lcoin": true, "huntpass": true, "magiclamp": true},
+     "switches": {"buffer": true, "gmshop": true, "durations": true, "champions": true, "rbannounce": true, "superchampion": true, "autopotions": true, "classmaster": true, "smallepics": true, "smallclans": true, "attendance": true, "lcoin": true, "huntpass": true, "magiclamp": true},
      "settings": {"Player.ini": {"AutoLoot": "True", "AutoLootHerbs": "True", "AutoLearnSkills": "True", "AltSubClassWithoutQuests": "True"},
                   "CommunityBoard.ini": {"CommunityEnableTeleports": "True", "CommunityEnableHeal": "True", "CommunityEnableBuffs": "True"}}},
     {"id": "pvp", "title": "PvP", "note": "опыт, SP и адена x1000, дроп и спойл x10 — сразу в PvP",
      "rates": {"xp": 1000, "sp": 1000, "adena": 1000, "drop": 10, "spoil": 10},
-     "switches": {"buffer": true, "gmshop": true, "durations": true, "champions": true, "pvpevents": true, "rbannounce": true, "superchampion": true, "autopotions": true, "classmaster": true, "smallepics": true, "attendance": true, "lcoin": true, "huntpass": true, "magiclamp": true},
+     "switches": {"buffer": true, "gmshop": true, "durations": true, "champions": true, "pvpevents": true, "rbannounce": true, "superchampion": true, "autopotions": true, "classmaster": true, "smallepics": true, "smallclans": true, "attendance": true, "lcoin": true, "huntpass": true, "magiclamp": true},
      "settings": {"Player.ini": {"AutoLoot": "True", "AutoLootHerbs": "True", "AutoLearnSkills": "True", "AltSubClassWithoutQuests": "True"},
                   "CommunityBoard.ini": {"CommunityEnableTeleports": "True", "CommunityEnableHeal": "True", "CommunityEnableBuffs": "True"}}}
   ]

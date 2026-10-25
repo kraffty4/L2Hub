@@ -101,6 +101,14 @@ def _class_names(game) -> dict[int, str]:
     return {int(c.get("classId")): c.get("name") for c in ET.parse(game / "data" / "stats" / "players" / "classList.xml").getroot().iter("class")}
 
 
+def _secret_phantoms(p: dict) -> set[str]:
+    """Имена секретных фантомов (kind не hunter и не companion — Танатос, решение автора 2026-10-23): в окне их нет."""
+    data = catalog.server_dir(p) / "game" / "data" / "L2HubPhantoms.xml"
+    if not data.is_file():
+        return set()
+    return {el.get("name") for el in ET.parse(data).getroot().iter("phantom") if el.get("kind") not in (None, "hunter", "companion")}
+
+
 def _hunters_status(game) -> dict | None:
     """Живое состояние охотников от сервера (game/log/L2HubHunters.json, пишется раз в 10 с, патч 0018); старше минуты — нет."""
     path = game / "log" / HUNTERS_STATUS
@@ -925,7 +933,11 @@ class Api:
                         spot=h.get("spot", ""), town=h.get("town", ""), party=h.get("party", ""), partyMembers=h.get("partyMembers") or [], store=h.get("store"),
                         strategy=h.get("strategy"), nextThink=h.get("nextThink"), mood=h.get("mood", ""), relations=h.get("relations") or [],
                         earnedPerHour=h.get("earnedPerHour"), quest=h.get("quest"), professionDue=h.get("professionDue"),
-                        activity=h.get("activity"))  # PvP-ивент, рейд, сезонное событие — docs/PHANTOMS.md, после 4.34
+                        activity=h.get("activity"),  # PvP-ивент, рейд, сезонное событие — docs/PHANTOMS.md, после 4.34
+                        goal=h.get("goal", ""),  # цель от мозга-стратега, docs/MIND.md, «Шаг 3 — как сделано»
+                        # клан и одиночка — docs/PHANTOMS.md, 4.50
+                        clan=h.get("clan", ""), clanLevel=h.get("clanLevel"), clanLeader=bool(h.get("clanLeader")), hunterClan=bool(h.get("hunterClan")),
+                        loner=bool(h.get("loner")))
         mode = _ini_value(ini, "HuntersMode", "ALWAYS").upper()
         live_secret = {h.get("name"): h for h in (live or {}).get("hunters", []) if h.get("secret")}
         hidden = [] if mode == "OFF" else [
@@ -1096,6 +1108,35 @@ class Api:
             return {"ok": False, "error": str(e)}
         return {"ok": True, "reply": " ".join(reply.split())[:200] or "(пустой ответ)", "ms": int((time.monotonic() - started) * 1000),
                 "mode": b.cfg["mode"], "model": b.cfg["model"] or "(загруженная)"}
+
+    def mind_view(self, chronicle_id: str) -> dict:
+        """«Разум»: лента решений стратега с итогами, опыт и выводы охотников, разговоры фантомов — из базы мозгов, и без сервера."""
+        p = catalog.profile(chronicle_id)
+        if not servers.brain_port(p):
+            return {"ok": False, "error": "У этой хроники нет мозгов фейков."}
+        try:
+            v = brain.mind_view(chronicle_id)
+            secret = _secret_phantoms(p)
+        except Exception as e:  # noqa: BLE001 — база занята дольше таймаута, битая
+            return {"ok": False, "error": f"База мозгов не читается: {e}"}
+        # Секретных — ни в ленте, ни в выводах, ни в памяти (их разговоры с игроками — тоже).
+        v["feed"] = [x for x in v["feed"] if x["fpc"] not in secret]
+        v["extNow"] = [x for x in v["extNow"] if x not in secret]
+        v["hunters"] = [x for x in v["hunters"] if x["fpc"] not in secret]
+        v["talks"] = [x for x in v["talks"] if x["fpc"] not in secret and x["player"] not in secret]
+        return {"ok": True, **v}
+
+    def mind_forget(self, chronicle_id: str, kind: str, fpc: str, player: str = "") -> dict:
+        """«Забыть» разговор фантома с игроком (talk) или опыт охотника (lessons): строки уходят в архив базы мозгов, не стираются."""
+        p = catalog.profile(chronicle_id)
+        if not servers.brain_port(p):
+            return {"ok": False, "error": "У этой хроники нет мозгов фейков."}
+        try:
+            if {fpc, player} & _secret_phantoms(p):
+                raise ValueError("такого в памяти нет")
+            return {"ok": True, "lines": brain.mind_forget(chronicle_id, kind, fpc, player)}
+        except Exception as e:  # noqa: BLE001
+            return {"ok": False, "error": f"Не забыл: {e}"}
 
     # ---------- Пульт L2Solo (C4): карта мира, рейты, LLM, вайп ----------
 

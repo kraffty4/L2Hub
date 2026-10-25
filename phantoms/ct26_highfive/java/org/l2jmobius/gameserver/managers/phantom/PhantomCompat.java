@@ -2,13 +2,17 @@ package org.l2jmobius.gameserver.managers.phantom;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
 import org.l2jmobius.gameserver.config.FeatureConfig;
+import org.l2jmobius.gameserver.config.PlayerConfig;
 import org.l2jmobius.gameserver.config.custom.AutoPlayConfig;
+import org.l2jmobius.gameserver.data.xml.BuyListData;
 import org.l2jmobius.gameserver.entity.WorldObject;
 import org.l2jmobius.gameserver.entity.actor.Attackable;
 import org.l2jmobius.gameserver.entity.actor.Creature;
@@ -16,6 +20,8 @@ import org.l2jmobius.gameserver.entity.actor.Npc;
 import org.l2jmobius.gameserver.entity.actor.Player;
 import org.l2jmobius.gameserver.entity.actor.Summon;
 import org.l2jmobius.gameserver.entity.actor.enums.creature.Race;
+import org.l2jmobius.gameserver.entity.actor.instance.Merchant;
+import org.l2jmobius.gameserver.entity.clan.Clan;
 import org.l2jmobius.gameserver.entity.groups.Party;
 import org.l2jmobius.gameserver.entity.groups.PartyDistributionType;
 import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
@@ -23,7 +29,11 @@ import org.l2jmobius.gameserver.entity.item.instance.Item;
 import org.l2jmobius.gameserver.entity.item.type.WeaponType;
 import org.l2jmobius.gameserver.entity.zone.ZoneId;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
+import org.l2jmobius.gameserver.managers.CastleManager;
+import org.l2jmobius.gameserver.managers.FortManager;
 import org.l2jmobius.gameserver.managers.RaidBossSpawnManager;
+import org.l2jmobius.gameserver.mechanics.buylist.BuyListHolder;
+import org.l2jmobius.gameserver.mechanics.buylist.Product;
 import org.l2jmobius.gameserver.mechanics.events.Containers;
 import org.l2jmobius.gameserver.mechanics.events.EventType;
 import org.l2jmobius.gameserver.mechanics.events.holders.actor.creature.OnCreatureSkillUse;
@@ -32,15 +42,23 @@ import org.l2jmobius.gameserver.mechanics.events.listeners.ConsumerEventListener
 import org.l2jmobius.gameserver.mechanics.olympiad.CompetitionType;
 import org.l2jmobius.gameserver.mechanics.olympiad.OlympiadManager;
 import org.l2jmobius.gameserver.mechanics.sevensigns.SevenSigns;
+import org.l2jmobius.gameserver.mechanics.siege.Castle;
+import org.l2jmobius.gameserver.mechanics.siege.Fort;
 import org.l2jmobius.gameserver.mechanics.skill.AbnormalType;
 import org.l2jmobius.gameserver.mechanics.skill.BuffInfo;
 import org.l2jmobius.gameserver.mechanics.skill.Skill;
 import org.l2jmobius.gameserver.mechanics.skill.targets.TargetType;
 import org.l2jmobius.gameserver.network.SystemMessageId;
+import org.l2jmobius.gameserver.network.clientpackets.RequestJoinPledge;
 import org.l2jmobius.gameserver.network.holders.RequestTrade;
 import org.l2jmobius.gameserver.network.holders.TradeItem;
 import org.l2jmobius.gameserver.network.holders.TradeList;
+import org.l2jmobius.gameserver.network.serverpackets.AskJoinParty;
+import org.l2jmobius.gameserver.network.serverpackets.AskJoinPledge;
 import org.l2jmobius.gameserver.network.serverpackets.JoinParty;
+import org.l2jmobius.gameserver.network.serverpackets.PledgeShowInfoUpdate;
+import org.l2jmobius.gameserver.network.serverpackets.PledgeShowMemberListAdd;
+import org.l2jmobius.gameserver.network.serverpackets.PledgeShowMemberListDelete;
 import org.l2jmobius.gameserver.network.serverpackets.SystemMessage;
 
 /**
@@ -387,5 +405,177 @@ public final class PhantomCompat
 			player.destroyItemByItemId(ItemProcessType.FEE, SevenSigns.SEAL_STONE_RED_ID, red, player, false);
 		}
 		return score;
+	}
+
+	/**
+	 * Охотник зовёт живого игрока в пати (стратег, {@code [[PARTY имя]]}): обычное окно «вступить в пати?», как из RequestJoinParty; ответ разбирает RequestAnswerJoinParty Mobius.
+	 * @return окно отправлено; {@code false} — у кого-то из двоих уже идёт другой запрос
+	 */
+	public static boolean askJoinParty(Player requestor, Player target)
+	{
+		if (requestor.isProcessingRequest() || target.isProcessingRequest())
+		{
+			return false;
+		}
+		target.sendPacket(new AskJoinParty(requestor.getName(), PartyDistributionType.FINDERS_KEEPERS));
+		target.setActiveRequester(requestor);
+		requestor.onTransactionRequest(target);
+		requestor.setPartyDistributionType(PartyDistributionType.FINDERS_KEEPERS);
+		return true;
+	}
+
+	/** Сколько человек в пати: у CT — 9, как в RequestJoinParty. */
+	public static int partyMax()
+	{
+		return 9;
+	}
+
+	/**
+	 * Для BUY стратега: кому из NPC разрешены списки торговцев.
+	 * @param listIds номера списков (имена файлов data/buylists)
+	 * @return id NPC-торговцев
+	 */
+	public static Set<Integer> merchantNpcIds(Collection<Integer> listIds)
+	{
+		final Set<Integer> npcs = new HashSet<>();
+		for (int listId : listIds)
+		{
+			final BuyListHolder list = BuyListData.getInstance().getBuyList(listId);
+			if ((list != null) && (list.getNpcsAllowed() != null))
+			{
+				npcs.addAll(list.getNpcsAllowed());
+			}
+		}
+		return npcs;
+	}
+
+	/**
+	 * Для BUY стратега: что торговец продаёт по своим спискам и почём — с налогом, как в RequestBuyItem (налог замка и базовый из MerchantPriceConfig).
+	 * @param npc торговец в мире
+	 * @param listIds номера списков (имена файлов data/buylists)
+	 * @param goods куда сложить: id вещи → цена; одно и то же в двух списках — дешевле
+	 */
+	public static void merchantGoods(Npc npc, Collection<Integer> listIds, Map<Integer, Long> goods)
+	{
+		double tax = 0.5;
+		if ((npc instanceof Merchant merchant) && (merchant.getMpc() != null))
+		{
+			tax = merchant.getMpc().getCastleTaxRate() + merchant.getMpc().getBaseTaxRate();
+		}
+		for (int listId : listIds)
+		{
+			final BuyListHolder list = BuyListData.getInstance().getBuyList(listId);
+			if ((list == null) || !list.isNpcAllowed(npc.getId()))
+			{
+				continue;
+			}
+			for (Product product : list.getProducts())
+			{
+				if (product.getPrice() > 0)
+				{
+					goods.merge(product.getItemId(), (long) (product.getPrice() * (1 + tax)), Math::min);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Охотник-друг принял приглашение в клан ({@link PhantomClans}, раздел 4.41): ветка «да» из RequestAnswerJoinPledge без пакетов самому фантому — клиента у него нет.
+	 * @param requestor кто позвал; условия Mobius ({@code checkClanJoinCondition}) уже проверены в RequestJoinPledge
+	 * @param phantom охотник
+	 * @param pledgeType подразделение клана
+	 */
+	public static void joinClan(Player requestor, Player phantom, int pledgeType)
+	{
+		final Clan clan = requestor.getClan();
+		phantom.setPledgeType(pledgeType);
+		if (pledgeType == Clan.SUBUNIT_ACADEMY)
+		{
+			phantom.setPowerGrade(9);
+			phantom.setLvlJoinedAcademy(phantom.getLevel());
+		}
+		else
+		{
+			phantom.setPowerGrade(5);
+		}
+		clan.addClanMember(phantom);
+		phantom.setClanPrivileges(clan.getRankPrivs(phantom.getPowerGrade()));
+
+		final SystemMessage sm = new SystemMessage(SystemMessageId.S1_HAS_JOINED_THE_CLAN);
+		sm.addString(phantom.getName());
+		clan.broadcastToOnlineMembers(sm);
+		if (clan.getCastleId() > 0)
+		{
+			final Castle castle = CastleManager.getInstance().getCastleByOwner(clan);
+			if (castle != null)
+			{
+				castle.giveResidentialSkills(phantom);
+			}
+		}
+		if (clan.getFortId() > 0)
+		{
+			final Fort fort = FortManager.getInstance().getFortByOwner(clan);
+			if (fort != null)
+			{
+				fort.giveResidentialSkills(phantom);
+			}
+		}
+		clan.broadcastToOtherOnlineMembers(new PledgeShowMemberListAdd(phantom), phantom);
+		clan.broadcastToOnlineMembers(new PledgeShowInfoUpdate(clan));
+		phantom.setClanJoinExpiryTime(0);
+		phantom.broadcastUserInfo();
+	}
+
+	/**
+	 * Охотник уходит из клана сам ({@link PhantomClans}: стал врагом соклановца) — как RequestWithdrawalPledge: штраф на вступление — ему, клану — нет.
+	 * @param phantom охотник
+	 */
+	public static void leaveClan(Player phantom)
+	{
+		final Clan clan = phantom.getClan();
+		if ((clan == null) || phantom.isClanLeader())
+		{
+			return;
+		}
+		clan.removeClanMember(phantom.getObjectId(), System.currentTimeMillis() + TimeUnit.DAYS.toMillis(PlayerConfig.ALT_CLAN_JOIN_DAYS));
+
+		final SystemMessage sm = new SystemMessage(SystemMessageId.S1_HAS_WITHDRAWN_FROM_THE_CLAN);
+		sm.addString(phantom.getName());
+		clan.broadcastToOnlineMembers(sm);
+		clan.broadcastToOnlineMembers(new PledgeShowMemberListDelete(phantom.getName()));
+	}
+
+	/**
+	 * Глава клана охотников берёт живого игрока, который попросился шёпотом ({@link PhantomHunterClans}, раздел 4.50): обычное окно «вступить в клан?»,
+	 * как из RequestJoinPledge; ответ разбирает RequestAnswerJoinPledge Mobius (условия — ещё раз там же).
+	 * @return окно отправлено; {@code false} — у кого-то из двоих уже идёт другой запрос
+	 */
+	public static boolean askJoinClan(Player leader, Player target)
+	{
+		final Clan clan = leader.getClan();
+		if ((clan == null) || !leader.getRequest().setRequest(target, new RequestJoinPledge()))
+		{
+			return false;
+		}
+		target.sendPacket(new AskJoinPledge(leader.getObjectId(), null, 0, clan.getName()));
+		return true;
+	}
+
+	/** До какого уровня клан охотников растёт сам ({@link PhantomHunterClans}): H5 — 10 (11-й — за территорию). */
+	public static int clanMaxLevel()
+	{
+		return 10;
+	}
+
+	/** Уровни клана выше 5-го — за клановый опыт Mobius (ClanLevelData), а не за репутацию и членов из Feature.ini ({@code ClanLevelNRequirement} не действует). */
+	public static boolean clanLevelByExp()
+	{
+		return false;
+	}
+
+	/** Адена главы за 1-й и 2-й уровень клана — как в Clan.levelUpClan; за остальные — 0. */
+	public static long clanLevelAdena(int level)
+	{
+		return level == 1 ? 650000 : level == 2 ? 2500000 : 0;
 	}
 }

@@ -1,4 +1,4 @@
-"""Патч «Язык текстов L2Hub» для хроники Mobius: patches/<id>/0029-l2hub-language.patch.
+"""Патч «Язык текстов L2Hub» для хроники Mobius: patches/<id>/0099-l2hub-language.patch.
 
 Наши моды пишут игроку и лаунчеру по-русски: окно .world («Мир сейчас»), «Летопись» (log/L2HubChronicle.json), объявления
 эльпи и суперчемпиона, самопроверка модов (log/L2HubSelfTest.json). Здесь у них появляется английский: ключ L2HubLanguage
@@ -19,7 +19,8 @@
     python -X utf8 tools/l2hub_lang.py <id>           — собрать и проверить патч (в дерево не пишет), сколько строк без перевода
     python -X utf8 tools/l2hub_lang.py <id> --todo F  — заодно строки без перевода — в JSON-список F
     python -X utf8 tools/l2hub_lang.py <id> --write   — собрать патч в patches/<id>/ и наложить на дерево
-Наложен прежний patches/<id>/0029 — он снимается с копии дерева, и патч собирается заново (tools/patch_layers.py).
+Наложен прежний patches/<id>/0099 — он снимается с копии дерева, и патч собирается заново (tools/patch_layers.py).
+Номер 0099 — последним: слой оборачивает в tr() строки всех наших патчей самопроверки и модов, которые ниже него.
 """
 import html
 import json
@@ -30,7 +31,7 @@ from pathlib import Path
 import l2hub_olympiad_small as small
 import patch_layers
 
-NAME = "0029-l2hub-language.patch"  # у хроники уже есть *-l2hub-language.patch под другим номером — берётся он (Classic: 0099)
+NAME = "0099-l2hub-language.patch"  # у хроники уже есть *-l2hub-language.patch под другим номером — берётся он
 MARK = "L2Hub: язык наших текстов"
 TABLE = small.ROOT / "tools" / "l2hub_lang" / "en.json"
 # Файлы модов (путь от корня исходников хроники; glob — где путь у хроник разный).

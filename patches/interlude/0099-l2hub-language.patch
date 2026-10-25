@@ -163,10 +163,10 @@ index fe27050103cc1be19c10c84fed66cace8af283dd..f78aaeb687eaa2e15582341e63a63502
  	}
  
 diff --git a/dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java b/dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java
-index 62e557a8e30a1148c52d8259ec8ef9a496424613..dcdb89403fde747aa95a8ea822e846cf4e964903 100644
+index 88bfdaa500d18180d0e5d8350c592e587f5db4a2..c0af538603f41de903ebd7bbdaf6190ffb93d661 100644
 --- a/dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java
 +++ b/dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java
-@@ -73,6 +73,112 @@ import org.l2jmobius.gameserver.mechanics.script.Quest;
+@@ -73,6 +73,160 @@ import org.l2jmobius.gameserver.mechanics.script.Quest;
   */
  public class L2HubSelfTest
  {
@@ -190,6 +190,10 @@ index 62e557a8e30a1148c52d8259ec8ef9a496424613..dcdb89403fde747aa95a8ea822e846cf
 +		java.util.Map.entry("Мир сейчас: .world", "World now: .world"),
 +		java.util.Map.entry("Нашествие эльпи", "Elpy invasion"),
 +		java.util.Map.entry("Летопись мира", "World Annals"),
++		java.util.Map.entry("Олимпиада малого мира", "Small-world Olympiad"),
++		java.util.Map.entry("Семь печатей малого мира", "Small-world Seven Signs"),
++		java.util.Map.entry("Эпики малого мира", "Small-world epic bosses"),
++		java.util.Map.entry("Фейки в городах", "Town fakes"),
 +		java.util.Map.entry("Автолут", "Auto loot"),
 +		java.util.Map.entry("живым — ", "regular mobs: "),
 +		java.util.Map.entry(", травы — ", ", herbs: "),
@@ -254,6 +258,50 @@ index 62e557a8e30a1148c52d8259ec8ef9a496424613..dcdb89403fde747aa95a8ea822e846cf
 +		java.util.Map.entry("доступен для записи", "writable"),
 +		java.util.Map.entry("только для чтения!", "read-only!"),
 +		java.util.Map.entry(", записей ", ", entries "),
++		java.util.Map.entry("подготовка", "preparation"),
++		java.util.Map.entry("соревнование", "competition"),
++		java.util.Map.entry("подсчёт итогов", "results"),
++		java.util.Map.entry("действие печатей", "seal validation"),
++		java.util.Map.entry(" дн. ", " d "),
++		java.util.Map.entry(" ч", " h"),
++		java.util.Map.entry(" ч ", " h "),
++		java.util.Map.entry(" мин", " min"),
++		java.util.Map.entry("в Olympiad.ini нет пометок «L2Hub (малый мир)» — мод 0025 не наложен", "Olympiad.ini has no «L2Hub (малый мир)» marks — mod 0025 is not applied"),
++		java.util.Map.entry("матч, как только записались: по классу ", "a match as soon as players sign up: class-based "),
++		java.util.Map.entry(", без класса ", ", non-class "),
++		java.util.Map.entry("; период героев ", "; hero period "),
++		java.util.Map.entry("выключена (OlympiadEnabled = False в Olympiad.ini); ", "disabled (OlympiadEnabled = False in Olympiad.ini); "),
++		java.util.Map.entry(", сейчас подсчёт героев", ", heroes are being counted now"),
++		java.util.Map.entry(", до конца нынешнего ", ", the current one ends in "),
++		java.util.Map.entry("; матчи сейчас ", "; matches are "),
++		java.util.Map.entry("идут", "running"),
++		java.util.Map.entry("не идут", "not running"),
++		java.util.Map.entry("в Feature.ini нет пометок «L2Hub (малый мир)» — мод 0026 не наложен", "Feature.ini has no «L2Hub (малый мир)» marks — mod 0026 is not applied"),
++		java.util.Map.entry("катакомбы — ", "catacombs — "),
++		java.util.Map.entry("открыты всем", "open to everyone"),
++		java.util.Map.entry("по печатям", "by the seals"),
++		java.util.Map.entry(", некрополи — ", ", necropolises — "),
++		java.util.Map.entry(", Фестиваль тьмы — от ", ", Festival of Darkness — from "),
++		java.util.Map.entry("; сейчас ", "; now "),
++		java.util.Map.entry("период ", "period "),
++		java.util.Map.entry(", до смены ", ", changes in "),
++		java.util.Map.entry("нет SmallWorldEpics в GrandBossConfig — мод 0028 не наложен", "no SmallWorldEpics in GrandBossConfig — mod 0028 is not applied"),
++		java.util.Map.entry("живых эпиков в мире нет", "no epic bosses alive in the world"),
++		java.util.Map.entry("живы: ", "alive: "),
++		java.util.Map.entry("выключены (SmallWorldEpics = False) — эпики как у Mobius; ", "disabled (SmallWorldEpics = False) — epic bosses as in Mobius; "),
++		java.util.Map.entry("вкл: респаун — ", "on: respawn — "),
++		java.util.Map.entry(" % официального (Антарас — раз в ", " % of official (Antharas — every "),
++		java.util.Map.entry(" ч вместо ", " h instead of "),
++		java.util.Map.entry(", а должно быть ", ", but should be "),
++		java.util.Map.entry(" — пересчёт не сработал", " — the recalculation did not work"),
++		java.util.Map.entry("), ожидание Антараса и Валакаса — ", "), Antharas and Valakas wait — "),
++		java.util.Map.entry(" мин; ", " min; "),
++		java.util.Map.entry("нет data/L2HubTownFakes.xml — мод 0031 не наложен", "no data/L2HubTownFakes.xml — mod 0031 is not applied"),
++		java.util.Map.entry("выключены (EnableFakePlayers = False в FakePlayers.ini)", "disabled (EnableFakePlayers = False in FakePlayers.ini)"),
++		java.util.Map.entry("выключены (TownFakesDensity = 0 в L2HubTownFakes.ini)", "disabled (TownFakesDensity = 0 in L2HubTownFakes.ini)"),
++		java.util.Map.entry("скрипт L2HubTownFakes не загрузился — причина в логе сервера", "the L2HubTownFakes script did not load — see the server log"),
++		java.util.Map.entry(" по расписанию (плотность ", " by schedule (density "),
++		java.util.Map.entry(" %; утром, вечером и ночью выходят не все)", " %; not all of them come out in the morning, evening and at night)"),
 +		java.util.Map.entry("вкл", "on"),
 +		java.util.Map.entry("выкл", "off"));
 +	
@@ -279,7 +327,7 @@ index 62e557a8e30a1148c52d8259ec8ef9a496424613..dcdb89403fde747aa95a8ea822e846cf
  	private static final Logger LOGGER = Logger.getLogger(L2HubSelfTest.class.getName());
  	private static final Path CONFIG = Paths.get("./config/Custom/L2HubSelfTest.ini");
  	private static final Path REPORT = Paths.get("./log/L2HubSelfTest.json");
-@@ -110,23 +216,23 @@ public class L2HubSelfTest
+@@ -110,27 +264,27 @@ public class L2HubSelfTest
  		}
  
  		final List<Check> checks = new ArrayList<>();
@@ -299,6 +347,10 @@ index 62e557a8e30a1148c52d8259ec8ef9a496424613..dcdb89403fde747aa95a8ea822e846cf
 -		probe(checks, "Мир сейчас: .world", L2HubSelfTest::worldInfo);
 -		probe(checks, "Нашествие эльпи", L2HubSelfTest::elpies);
 -		probe(checks, "Летопись мира", L2HubSelfTest::chronicle);
+-		probe(checks, "Олимпиада малого мира", L2HubSelfTest::olympiad); // L2Hub 0032: моды малого мира
+-		probe(checks, "Семь печатей малого мира", L2HubSelfTest::sevenSigns);
+-		probe(checks, "Эпики малого мира", L2HubSelfTest::epics);
+-		probe(checks, "Фейки в городах", L2HubSelfTest::townFakes);
 -		probe(checks, "Автолут", () -> new Check("", true, "живым — " + onOff(PlayerConfig.AUTO_LOOT) + ", травы — " + onOff(PlayerConfig.AUTO_LOOT_HERBS) + ", рейды — " + onOff(PlayerConfig.AUTO_LOOT_RAIDS)));
 +		probe(checks, tr("Баффер у гейткиперов"), () -> townNpc(TOWN_BUFFER));
 +		probe(checks, tr("GM-шоп у гейткиперов"), () -> townNpc(TOWN_SHOP));
@@ -316,11 +368,15 @@ index 62e557a8e30a1148c52d8259ec8ef9a496424613..dcdb89403fde747aa95a8ea822e846cf
 +		probe(checks, tr("Мир сейчас: .world"), L2HubSelfTest::worldInfo);
 +		probe(checks, tr("Нашествие эльпи"), L2HubSelfTest::elpies);
 +		probe(checks, tr("Летопись мира"), L2HubSelfTest::chronicle);
++		probe(checks, tr("Олимпиада малого мира"), L2HubSelfTest::olympiad); // L2Hub 0032: моды малого мира
++		probe(checks, tr("Семь печатей малого мира"), L2HubSelfTest::sevenSigns);
++		probe(checks, tr("Эпики малого мира"), L2HubSelfTest::epics);
++		probe(checks, tr("Фейки в городах"), L2HubSelfTest::townFakes);
 +		probe(checks, tr("Автолут"), () -> new Check("", true, tr("живым — ") + onOff(PlayerConfig.AUTO_LOOT) + tr(", травы — ") + onOff(PlayerConfig.AUTO_LOOT_HERBS) + tr(", рейды — ") + onOff(PlayerConfig.AUTO_LOOT_RAIDS)));
  
  		final long ok = checks.stream().filter(Check::ok).count();
  		LOGGER.info("L2Hub проверка модов: " + ok + " из " + checks.size() + " в порядке.");
-@@ -153,7 +259,7 @@ public class L2HubSelfTest
+@@ -157,7 +311,7 @@ public class L2HubSelfTest
  		}
  		catch (Throwable e)
  		{
@@ -329,7 +385,7 @@ index 62e557a8e30a1148c52d8259ec8ef9a496424613..dcdb89403fde747aa95a8ea822e846cf
  		}
  	}
  
-@@ -171,13 +277,13 @@ public class L2HubSelfTest
+@@ -175,13 +329,13 @@ public class L2HubSelfTest
  			}
  			if ("false".equalsIgnoreCase(properties.getProperty(key, "True").trim()))
  			{
@@ -345,7 +401,7 @@ index 62e557a8e30a1148c52d8259ec8ef9a496424613..dcdb89403fde747aa95a8ea822e846cf
  	}
  
  	@SuppressWarnings("unchecked")
-@@ -199,7 +305,7 @@ public class L2HubSelfTest
+@@ -203,7 +357,7 @@ public class L2HubSelfTest
  			}
  		}
  		final List<Integer> missing = ids.stream().filter(id -> !entries.containsKey(id)).toList();
@@ -354,7 +410,7 @@ index 62e557a8e30a1148c52d8259ec8ef9a496424613..dcdb89403fde747aa95a8ea822e846cf
  	}
  
  	private static Check bufferLevels()
-@@ -212,10 +318,10 @@ public class L2HubSelfTest
+@@ -216,10 +370,10 @@ public class L2HubSelfTest
  			final int max = SkillData.getInstance().getMaxLevel(id);
  			if ((holder != null) && (holder.getLevel() < max))
  			{
@@ -367,7 +423,7 @@ index 62e557a8e30a1148c52d8259ec8ef9a496424613..dcdb89403fde747aa95a8ea822e846cf
  	}
  
  	private static Check buffDurations()
-@@ -223,10 +329,10 @@ public class L2HubSelfTest
+@@ -227,10 +381,10 @@ public class L2HubSelfTest
  		final TreeSet<Integer> ids = bufferSkills();
  		if (!PlayerConfig.ENABLE_MODIFY_SKILL_DURATION || (PlayerConfig.SKILL_DURATION_LIST == null))
  		{
@@ -380,7 +436,7 @@ index 62e557a8e30a1148c52d8259ec8ef9a496424613..dcdb89403fde747aa95a8ea822e846cf
  	}
  
  	private static TreeSet<Integer> bufferSkills()
-@@ -264,9 +370,9 @@ public class L2HubSelfTest
+@@ -268,9 +422,9 @@ public class L2HubSelfTest
  		}
  		if (!ChampionMonstersConfig.CHAMPION_ENABLE)
  		{
@@ -392,7 +448,7 @@ index 62e557a8e30a1148c52d8259ec8ef9a496424613..dcdb89403fde747aa95a8ea822e846cf
  	}
  
  	private static Check board()
-@@ -274,14 +380,14 @@ public class L2HubSelfTest
+@@ -278,14 +432,14 @@ public class L2HubSelfTest
  		final IParseBoardHandler hub = CommunityBoardHandler.getInstance().getHandler("_bbshubbuff");
  		final IParseBoardHandler home = CommunityBoardHandler.getInstance().getHandler("_bbshome");
  		final boolean ok = (hub != null) && hub.getClass().getSimpleName().equals("L2HubBoard") && CommunityBoardConfig.CUSTOM_CB_ENABLED;
@@ -409,7 +465,7 @@ index 62e557a8e30a1148c52d8259ec8ef9a496424613..dcdb89403fde747aa95a8ea822e846cf
  	}
  
  	private static Check world()
-@@ -290,13 +396,13 @@ public class L2HubSelfTest
+@@ -294,13 +448,13 @@ public class L2HubSelfTest
  		final boolean daily = VoicedCommandHandler.getInstance().getHandler("daily") != null;
  		final boolean raid = VoicedCommandHandler.getInstance().getHandler("raid") != null;
  		final boolean dailyOn = L2HubWorldConfig.WORLD_DAILY;
@@ -425,7 +481,7 @@ index 62e557a8e30a1148c52d8259ec8ef9a496424613..dcdb89403fde747aa95a8ea822e846cf
  	}
  
  	private static Check phantoms()
-@@ -319,7 +425,7 @@ public class L2HubSelfTest
+@@ -323,7 +477,7 @@ public class L2HubSelfTest
  				live++;
  			}
  		}
@@ -434,7 +490,7 @@ index 62e557a8e30a1148c52d8259ec8ef9a496424613..dcdb89403fde747aa95a8ea822e846cf
  	}
  
  	private static Check seasonalEvents()
-@@ -336,12 +442,12 @@ public class L2HubSelfTest
+@@ -340,12 +494,12 @@ public class L2HubSelfTest
  					total++;
  					if (event.isEventPeriod())
  					{
@@ -449,7 +505,7 @@ index 62e557a8e30a1148c52d8259ec8ef9a496424613..dcdb89403fde747aa95a8ea822e846cf
  	}
  	
  	// ---------- L2Hub 0024: моды живого мира — суперчемпион, «Мир сейчас», эльпи, летопись ----------
-@@ -370,67 +476,67 @@ public class L2HubSelfTest
+@@ -374,67 +528,67 @@ public class L2HubSelfTest
  		final Properties config = customIni("ChampionMonsters.ini");
  		if (config.getProperty("SuperChampionEnable") == null)
  		{
@@ -530,12 +586,147 @@ index 62e557a8e30a1148c52d8259ec8ef9a496424613..dcdb89403fde747aa95a8ea822e846cf
  		}
  		long entries = 0;
  		for (String line : Files.readAllLines(file, StandardCharsets.UTF_8))
-@@ -441,12 +547,12 @@ public class L2HubSelfTest
+@@ -445,17 +599,17 @@ public class L2HubSelfTest
  			}
  		}
  		final boolean writable = Files.isWritable(file);
 -		return new Check("", writable, "log/L2HubChronicle.json " + (writable ? "доступен для записи" : "только для чтения!") + ", записей " + entries);
 +		return new Check("", writable, "log/L2HubChronicle.json " + (writable ? tr("доступен для записи") : tr("только для чтения!")) + tr(", записей ") + entries);
+ 	}
+ 
+ 	// ---------- L2Hub 0032: моды малого мира — олимпиада, семь печатей, эпики, фейки в городах ----------
+ 
+ 	private static final String[] SEVEN_SIGNS_PERIODS =
+ 	{
+-		"подготовка",
+-		"соревнование",
+-		"подсчёт итогов",
+-		"действие печатей"
++		tr("подготовка"),
++		tr("соревнование"),
++		tr("подсчёт итогов"),
++		tr("действие печатей")
+ 	};
+ 
+ 	private static Properties ini(String path) throws Exception
+@@ -476,7 +630,7 @@ public class L2HubSelfTest
+ 	private static boolean smallWorldMarks(String config) throws Exception
+ 	{
+ 		final Path path = Paths.get("./config/" + config);
+-		return Files.isRegularFile(path) && Files.readString(path, StandardCharsets.UTF_8).contains("L2Hub (малый мир)");
++		return Files.isRegularFile(path) && Files.readString(path, StandardCharsets.UTF_8).contains(tr("L2Hub (малый мир)"));
+ 	}
+ 
+ 	/** Статическое поле класса сервера; null — такого класса или поля у хроники нет. */
+@@ -502,42 +656,42 @@ public class L2HubSelfTest
+ 	private static String duration(long millis)
+ 	{
+ 		final long minutes = Math.max(0, millis) / 60000;
+-		return (minutes >= 2880) ? ((minutes / 1440) + " дн. " + ((minutes / 60) % 24) + " ч") : ((minutes / 60) + " ч " + (minutes % 60) + " мин");
++		return (minutes >= 2880) ? ((minutes / 1440) + tr(" дн. ") + ((minutes / 60) % 24) + tr(" ч")) : ((minutes / 60) + tr(" ч ") + (minutes % 60) + tr(" мин"));
+ 	}
+ 
+ 	private static Check olympiad() throws Exception
+ 	{
+ 		if (!smallWorldMarks("Olympiad.ini"))
+ 		{
+-			return new Check("", false, "в Olympiad.ini нет пометок «L2Hub (малый мир)» — мод 0025 не наложен");
++			return new Check("", false, tr("в Olympiad.ini нет пометок «L2Hub (малый мир)» — мод 0025 не наложен"));
+ 		}
+ 		final String config = "org.l2jmobius.gameserver.config.OlympiadConfig";
+ 		final String olympiad = "org.l2jmobius.gameserver.mechanics.olympiad.Olympiad";
+ 		// У хроник без OlympiadUseCustomPeriodSettings (Classic, Essence) период — сразу OlympiadPeriod.
+ 		final String period = Boolean.FALSE.equals(staticField(config, "OLYMPIAD_USE_CUSTOM_PERIOD_SETTINGS")) ? "MONTH (OlympiadUseCustomPeriodSettings = False)" : String.valueOf(staticField(config, "OLYMPIAD_PERIOD"));
+-		final String rules = "матч, как только записались: по классу " + staticField(config, "OLYMPIAD_CLASSED") + ", без класса " + staticField(config, "OLYMPIAD_NONCLASSED") + "; период героев " + period;
++		final String rules = tr("матч, как только записались: по классу ") + staticField(config, "OLYMPIAD_CLASSED") + tr(", без класса ") + staticField(config, "OLYMPIAD_NONCLASSED") + tr("; период героев ") + period;
+ 		if (Boolean.FALSE.equals(staticField(config, "OLYMPIAD_ENABLED")))
+ 		{
+-			return new Check("", true, "выключена (OlympiadEnabled = False в Olympiad.ini); " + rules);
++			return new Check("", true, tr("выключена (OlympiadEnabled = False в Olympiad.ini); ") + rules);
+ 		}
+ 		final boolean matches = Boolean.TRUE.equals(instanceCall(olympiad, "inCompPeriod"));
+ 		final long end = ((Number) instanceCall(olympiad, "getMillisToOlympiadEnd")).longValue();
+ 		// Период кончился — Mobius считает героев (validation), новый период начнётся после подсчёта.
+ 		final boolean validation = Boolean.TRUE.equals(instanceCall(olympiad, "isOlympiadEnd")) || (end <= 0);
+-		return new Check("", true, rules + (validation ? ", сейчас подсчёт героев" : (", до конца нынешнего " + duration(end))) + "; матчи сейчас " + (matches ? "идут" : "не идут"));
++		return new Check("", true, rules + (validation ? tr(", сейчас подсчёт героев") : (tr(", до конца нынешнего ") + duration(end))) + tr("; матчи сейчас ") + (matches ? tr("идут") : tr("не идут")));
+ 	}
+ 
+ 	private static Check sevenSigns() throws Exception
+ 	{
+ 		if (!smallWorldMarks("Feature.ini"))
+ 		{
+-			return new Check("", false, "в Feature.ini нет пометок «L2Hub (малый мир)» — мод 0026 не наложен");
++			return new Check("", false, tr("в Feature.ini нет пометок «L2Hub (малый мир)» — мод 0026 не наложен"));
+ 		}
+ 		final String config = "org.l2jmobius.gameserver.config.FeatureConfig";
+ 		final String signs = "org.l2jmobius.gameserver.mechanics.sevensigns.SevenSigns";
+ 		final int period = ((Number) instanceCall(signs, "getCurrentPeriod")).intValue();
+ 		final long change = ((Number) instanceCall(signs, "getMilliToPeriodChange")).longValue();
+-		return new Check("", true, "катакомбы — " + (Boolean.TRUE.equals(staticField(config, "ALT_SEVENSIGNS_OPEN_CATACUMBS")) ? "открыты всем" : "по печатям") + ", некрополи — " + (Boolean.TRUE.equals(staticField(config, "ALT_SEVENSIGNS_OPEN_NECROPOLIS")) ? "открыты всем" : "по печатям") + ", Фестиваль тьмы — от " + staticField(config, "ALT_FESTIVAL_MIN_PLAYER") + "; сейчас " + (((period >= 0) && (period < SEVEN_SIGNS_PERIODS.length)) ? SEVEN_SIGNS_PERIODS[period] : ("период " + period)) + ", до смены " + duration(change));
++		return new Check("", true, tr("катакомбы — ") + (Boolean.TRUE.equals(staticField(config, "ALT_SEVENSIGNS_OPEN_CATACUMBS")) ? tr("открыты всем") : tr("по печатям")) + tr(", некрополи — ") + (Boolean.TRUE.equals(staticField(config, "ALT_SEVENSIGNS_OPEN_NECROPOLIS")) ? tr("открыты всем") : tr("по печатям")) + tr(", Фестиваль тьмы — от ") + staticField(config, "ALT_FESTIVAL_MIN_PLAYER") + tr("; сейчас ") + (((period >= 0) && (period < SEVEN_SIGNS_PERIODS.length)) ? SEVEN_SIGNS_PERIODS[period] : (tr("период ") + period)) + tr(", до смены ") + duration(change));
+ 	}
+ 
+ 	private static Check epics() throws Exception
+@@ -546,7 +700,7 @@ public class L2HubSelfTest
+ 		final Object enabled = staticField(config, "SMALL_WORLD_EPICS");
+ 		if (enabled == null)
+ 		{
+-			return new Check("", false, "нет SmallWorldEpics в GrandBossConfig — мод 0028 не наложен");
++			return new Check("", false, tr("нет SmallWorldEpics в GrandBossConfig — мод 0028 не наложен"));
+ 		}
+ 		final Set<String> alive = new TreeSet<>();
+ 		for (WorldObject object : World.getVisibleObjects())
+@@ -556,17 +710,17 @@ public class L2HubSelfTest
+ 				alive.add(boss.getName());
+ 			}
+ 		}
+-		final String bosses = alive.isEmpty() ? "живых эпиков в мире нет" : ("живы: " + String.join(", ", alive));
++		final String bosses = alive.isEmpty() ? tr("живых эпиков в мире нет") : (tr("живы: ") + String.join(", ", alive));
+ 		if (!Boolean.TRUE.equals(enabled))
+ 		{
+-			return new Check("", true, "выключены (SmallWorldEpics = False) — эпики как у Mobius; " + bosses);
++			return new Check("", true, tr("выключены (SmallWorldEpics = False) — эпики как у Mobius; ") + bosses);
+ 		}
+ 		// Пересчёт GrandBossConfig: загруженный интервал Антараса — SmallWorldEpicsIntervalPercent % от записанного в GrandBoss.ini.
+ 		final int percent = ((Number) staticField(config, "SMALL_WORLD_EPICS_INTERVAL_PERCENT")).intValue();
+ 		final int official = Integer.parseInt(ini("./config/GrandBoss.ini").getProperty("IntervalOfAntharasSpawn", "264").trim());
+ 		final int antharas = ((Number) staticField(config, "ANTHARAS_SPAWN_INTERVAL")).intValue();
+ 		final int expected = Math.max(1, Math.round((official * percent) / 100f));
+-		return new Check("", antharas == expected, "вкл: респаун — " + percent + " % официального (Антарас — раз в " + antharas + " ч вместо " + official + ((antharas == expected) ? "" : (", а должно быть " + expected + " — пересчёт не сработал")) + "), ожидание Антараса и Валакаса — " + staticField(config, "ANTHARAS_WAIT_TIME") + " мин; " + bosses);
++		return new Check("", antharas == expected, tr("вкл: респаун — ") + percent + tr(" % официального (Антарас — раз в ") + antharas + tr(" ч вместо ") + official + ((antharas == expected) ? "" : (tr(", а должно быть ") + expected + tr(" — пересчёт не сработал"))) + tr("), ожидание Антараса и Валакаса — ") + staticField(config, "ANTHARAS_WAIT_TIME") + tr(" мин; ") + bosses);
+ 	}
+ 
+ 	private static Check townFakes() throws Exception
+@@ -574,16 +728,16 @@ public class L2HubSelfTest
+ 		final Path roster = Paths.get("./data/L2HubTownFakes.xml");
+ 		if (!Files.isRegularFile(roster))
+ 		{
+-			return new Check("", false, "нет data/L2HubTownFakes.xml — мод 0031 не наложен");
++			return new Check("", false, tr("нет data/L2HubTownFakes.xml — мод 0031 не наложен"));
+ 		}
+ 		if (!isTrue(customIni("FakePlayers.ini"), "EnableFakePlayers", "False"))
+ 		{
+-			return new Check("", true, "выключены (EnableFakePlayers = False в FakePlayers.ini)");
++			return new Check("", true, tr("выключены (EnableFakePlayers = False в FakePlayers.ini)"));
+ 		}
+ 		final String density = customIni("L2HubTownFakes.ini").getProperty("TownFakesDensity", "100").trim();
+ 		if (density.equals("0"))
+ 		{
+-			return new Check("", true, "выключены (TownFakesDensity = 0 в L2HubTownFakes.ini)");
++			return new Check("", true, tr("выключены (TownFakesDensity = 0 в L2HubTownFakes.ini)"));
+ 		}
+ 		final Set<Integer> ids = new HashSet<>();
+ 		final Matcher matcher = Pattern.compile("npcId=\"(\\d+)\"").matcher(Files.readString(roster, StandardCharsets.UTF_8));
+@@ -601,14 +755,14 @@ public class L2HubSelfTest
+ 		}
+ 		if ((present == 0) && (ScriptManager.getInstance().getScript("L2HubTownFakes") == null))
+ 		{
+-			return new Check("", false, "скрипт L2HubTownFakes не загрузился — причина в логе сервера");
++			return new Check("", false, tr("скрипт L2HubTownFakes не загрузился — причина в логе сервера"));
+ 		}
+-		return new Check("", present > 0, "в мире " + present + " из " + ids.size() + " по расписанию (плотность " + density + " %; утром, вечером и ночью выходят не все)");
++		return new Check("", present > 0, tr("в мире ") + present + tr(" из ") + ids.size() + tr(" по расписанию (плотность ") + density + tr(" %; утром, вечером и ночью выходят не все)"));
  	}
  
  	private static String onOff(boolean value)

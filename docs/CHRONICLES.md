@@ -109,9 +109,9 @@
 | 2 | High Five | `L2J_Mobius_CT_2.6_HighFive` | **готова** (0.1) |
 | 3 | Gracia Epilogue | `L2J_Mobius_CT_2.4_Epilogue` | **готова** (0.3, 2026-10-20): фантомы и все моды H5 — `docs/EPILOGUE.md` |
 | 4 | Gracia Final | La2offline 4.0 | **готова** (0.2), без наших модов: у La2offline нет исходников |
-| 5 | C4 | [L2Solo](https://github.com/pmbstyle/L2Solo) (Node.js, `docs/L2SOLO.md`) | подключена через L2Solo (2026-10-20), ждёт входа автора в мир |
-| 6 | Classic | `L2J_Mobius_Classic_3.5_TalesUntold` | играбельна (пробный вход агента 2026-10-21, русский ввод — `system_ru`), без наших модов и фантомов (`docs/CLASSIC.md`) |
-| 7 | Essence | `L2J_Mobius_Essence_10.1_SamuraiCrow` | играбельна (вход автора 2026-10-20), интерфейс по-русски (`system_ru`), без наших модов и фантомов (`docs/ESSENCE.md`) |
+| 5 | C4 | [L2Solo](https://github.com/pmbstyle/L2Solo) (Node.js, `docs/L2SOLO.md`); вариант — L2JLisvus (`c4_lisvus`, `docs/C4_EMULATORS.md`) | **готова** (0.5, 2026-10-25, решение автора): боты L2Solo с мозгами, пульт C4, режимы, русский оверлей, установка из окна |
+| 6 | Classic | `L2J_Mobius_Classic_3.5_TalesUntold` | играбельна, моды H5 и фантомы есть (с 2026-10-21; `docs/CLASSIC.md`), готовой не объявлена |
+| 7 | Essence | `L2J_Mobius_Essence_10.1_SamuraiCrow` | играбельна, интерфейс по-русски (`system_ru`), моды H5 и фантомы есть (с 2026-10-21; `docs/ESSENCE.md`), готовой не объявлена |
 
 Готова — значит, играбельна из L2Hub и в ней есть наши моды, которые технически можно перенести. Версии — `CHANGELOG.md`.
 

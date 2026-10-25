@@ -611,7 +611,7 @@ index d0ce21d48cfc5c286419c8f2a832cec0e46c1f2e..4c364808ce72b3679ed4bceb943b08e1
  	public void manageChat(Player player, String fpcName, String message, int minDelay, int maxDelay)
  	{
 diff --git a/java/org/l2jmobius/gameserver/network/clientpackets/RequestDuelStart.java b/java/org/l2jmobius/gameserver/network/clientpackets/RequestDuelStart.java
-index 81135588cf05fa57287d38d856d75a01dc1a569b..18d5cab54cf5548fb18c187f788c2bf3c8eecba1 100644
+index 81135588cf05fa57287d38d856d75a01dc1a569b..f628a107c943d7accf9782ca263272aa72d4317d 100644
 --- a/java/org/l2jmobius/gameserver/network/clientpackets/RequestDuelStart.java
 +++ b/java/org/l2jmobius/gameserver/network/clientpackets/RequestDuelStart.java
 @@ -23,6 +23,8 @@ import org.l2jmobius.gameserver.entity.actor.Npc;
@@ -623,7 +623,7 @@ index 81135588cf05fa57287d38d856d75a01dc1a569b..18d5cab54cf5548fb18c187f788c2bf3
  import org.l2jmobius.gameserver.network.SystemMessageId;
  import org.l2jmobius.gameserver.network.serverpackets.ExDuelAskStart;
  import org.l2jmobius.gameserver.network.serverpackets.SystemMessage;
-@@ -112,6 +114,13 @@ public class RequestDuelStart extends ClientPacket
+@@ -112,10 +114,18 @@ public class RequestDuelStart extends ClientPacket
  			return;
  		}
  		
@@ -637,6 +637,21 @@ index 81135588cf05fa57287d38d856d75a01dc1a569b..18d5cab54cf5548fb18c187f788c2bf3
  		// Check if duel is possible.
  		if (!player.canDuel())
  		{
+-			player.sendPacket(SystemMessageId.YOU_ARE_UNABLE_TO_REQUEST_A_DUEL_AT_THIS_TIME);
++			// L2Hub: причина — как для цели (в бою, HP или MP меньше половины, мирная зона…), а не общее «сейчас нельзя» (docs/PHANTOMS.md 4.40).
++			player.sendPacket(player.getNoDuelReason());
+ 			return;
+ 		}
+ 		else if (!targetChar.canDuel())
+@@ -161,6 +171,8 @@ public class RequestDuelStart extends ClientPacket
+ 				if (!temp.canDuel())
+ 				{
+ 					player.sendMessage("Not all the members of your party are ready for a duel.");
++					// L2Hub: кто из своей пати не готов и почему.
++					player.sendPacket(temp.getNoDuelReason());
+ 					return;
+ 				}
+ 			}
 diff --git a/java/org/l2jmobius/gameserver/network/clientpackets/RequestJoinParty.java b/java/org/l2jmobius/gameserver/network/clientpackets/RequestJoinParty.java
 index a922c9ddd341e3831a134036ab6a12b763f56745..f371454658cbbfd14eff7bedb75911c46b134ec9 100644
 --- a/java/org/l2jmobius/gameserver/network/clientpackets/RequestJoinParty.java

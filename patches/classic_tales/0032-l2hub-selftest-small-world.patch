@@ -1,0 +1,158 @@
+diff --git a/dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java b/dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java
+index bbb3c64f42f809c40fc760a86cfc8764d608c7b1..0e98ec28b63db927572788f29a4b19ae3d6864ba 100644
+--- a/dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java
++++ b/dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java
+@@ -126,6 +126,9 @@ public class L2HubSelfTest
+ 		probe(checks, "Мир сейчас: .world", L2HubSelfTest::worldInfo);
+ 		probe(checks, "Нашествие эльпи", L2HubSelfTest::elpies);
+ 		probe(checks, "Летопись мира", L2HubSelfTest::chronicle);
++		probe(checks, "Олимпиада малого мира", L2HubSelfTest::olympiad); // L2Hub 0032: моды малого мира
++		probe(checks, "Эпики малого мира", L2HubSelfTest::epics);
++		probe(checks, "Фейки в городах", L2HubSelfTest::townFakes);
+ 		probe(checks, "Автолут", () -> new Check("", true, "живым — " + onOff(PlayerConfig.AUTO_LOOT) + ", травы — " + onOff(PlayerConfig.AUTO_LOOT_HERBS) + ", рейды — " + onOff(PlayerConfig.AUTO_LOOT_RAIDS)));
+ 
+ 		final long ok = checks.stream().filter(Check::ok).count();
+@@ -437,6 +440,143 @@ public class L2HubSelfTest
+ 		return new Check("", writable, "log/L2HubChronicle.json " + (writable ? "доступен для записи" : "только для чтения!") + ", записей " + entries);
+ 	}
+ 
++	// ---------- L2Hub 0032: моды малого мира — олимпиада, эпики, фейки в городах ----------
++
++	private static Properties ini(String path) throws Exception
++	{
++		final Properties properties = new Properties();
++		final Path file = Paths.get(path);
++		if (Files.isRegularFile(file))
++		{
++			try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8))
++			{
++				properties.load(reader);
++			}
++		}
++		return properties;
++	}
++
++	/** Мод малого мира наложен: над изменёнными строками конфига — его пометки «L2Hub (малый мир)» (0025, 0026). */
++	private static boolean smallWorldMarks(String config) throws Exception
++	{
++		final Path path = Paths.get("./config/" + config);
++		return Files.isRegularFile(path) && Files.readString(path, StandardCharsets.UTF_8).contains("L2Hub (малый мир)");
++	}
++
++	/** Статическое поле класса сервера; null — такого класса или поля у хроники нет. */
++	private static Object staticField(String className, String field)
++	{
++		try
++		{
++			return Class.forName(className).getField(field).get(null);
++		}
++		catch (ReflectiveOperationException e)
++		{
++			return null;
++		}
++	}
++
++	/** Метод без аргументов у одиночки сервера (getInstance()). */
++	private static Object instanceCall(String className, String method) throws Exception
++	{
++		final Class<?> type = Class.forName(className);
++		return type.getMethod(method).invoke(type.getMethod("getInstance").invoke(null));
++	}
++
++	private static String duration(long millis)
++	{
++		final long minutes = Math.max(0, millis) / 60000;
++		return (minutes >= 2880) ? ((minutes / 1440) + " дн. " + ((minutes / 60) % 24) + " ч") : ((minutes / 60) + " ч " + (minutes % 60) + " мин");
++	}
++
++	private static Check olympiad() throws Exception
++	{
++		if (!smallWorldMarks("Olympiad.ini"))
++		{
++			return new Check("", false, "в Olympiad.ini нет пометок «L2Hub (малый мир)» — мод 0025 не наложен");
++		}
++		final String config = "org.l2jmobius.gameserver.config.OlympiadConfig";
++		final String olympiad = "org.l2jmobius.gameserver.mechanics.olympiad.Olympiad";
++		// У хроник без OlympiadUseCustomPeriodSettings (Classic, Essence) период — сразу OlympiadPeriod.
++		final String period = Boolean.FALSE.equals(staticField(config, "OLYMPIAD_USE_CUSTOM_PERIOD_SETTINGS")) ? "MONTH (OlympiadUseCustomPeriodSettings = False)" : String.valueOf(staticField(config, "OLYMPIAD_PERIOD"));
++		final String rules = "матч, как только записались: по классу " + staticField(config, "OLYMPIAD_CLASSED") + ", без класса " + staticField(config, "OLYMPIAD_NONCLASSED") + "; период героев " + period;
++		if (Boolean.FALSE.equals(staticField(config, "OLYMPIAD_ENABLED")))
++		{
++			return new Check("", true, "выключена (OlympiadEnabled = False в Olympiad.ini); " + rules);
++		}
++		final boolean matches = Boolean.TRUE.equals(instanceCall(olympiad, "inCompPeriod"));
++		final long end = ((Number) instanceCall(olympiad, "getMillisToOlympiadEnd")).longValue();
++		// Период кончился — Mobius считает героев (validation), новый период начнётся после подсчёта.
++		final boolean validation = Boolean.TRUE.equals(instanceCall(olympiad, "isOlympiadEnd")) || (end <= 0);
++		return new Check("", true, rules + (validation ? ", сейчас подсчёт героев" : (", до конца нынешнего " + duration(end))) + "; матчи сейчас " + (matches ? "идут" : "не идут"));
++	}
++
++	private static Check epics() throws Exception
++	{
++		final String config = "org.l2jmobius.gameserver.config.GrandBossConfig";
++		final Object enabled = staticField(config, "SMALL_WORLD_EPICS");
++		if (enabled == null)
++		{
++			return new Check("", false, "нет SmallWorldEpics в GrandBossConfig — мод 0028 не наложен");
++		}
++		final Set<String> alive = new TreeSet<>();
++		for (WorldObject object : World.getVisibleObjects())
++		{
++			if ((object instanceof Attackable boss) && boss.getClass().getSimpleName().equals("GrandBoss") && !boss.isDead())
++			{
++				alive.add(boss.getName());
++			}
++		}
++		final String bosses = alive.isEmpty() ? "живых эпиков в мире нет" : ("живы: " + String.join(", ", alive));
++		if (!Boolean.TRUE.equals(enabled))
++		{
++			return new Check("", true, "выключены (SmallWorldEpics = False) — эпики как у Mobius; " + bosses);
++		}
++		// Пересчёт GrandBossConfig: загруженный интервал Антараса — SmallWorldEpicsIntervalPercent % от записанного в GrandBoss.ini.
++		final int percent = ((Number) staticField(config, "SMALL_WORLD_EPICS_INTERVAL_PERCENT")).intValue();
++		final int official = Integer.parseInt(ini("./config/GrandBoss.ini").getProperty("IntervalOfAntharasSpawn", "264").trim());
++		final int antharas = ((Number) staticField(config, "ANTHARAS_SPAWN_INTERVAL")).intValue();
++		final int expected = Math.max(1, Math.round((official * percent) / 100f));
++		return new Check("", antharas == expected, "вкл: респаун — " + percent + " % официального (Антарас — раз в " + antharas + " ч вместо " + official + ((antharas == expected) ? "" : (", а должно быть " + expected + " — пересчёт не сработал")) + "), ожидание Антараса — " + staticField(config, "ANTHARAS_WAIT_TIME") + " мин; " + bosses);
++	}
++
++	private static Check townFakes() throws Exception
++	{
++		final Path roster = Paths.get("./data/L2HubTownFakes.xml");
++		if (!Files.isRegularFile(roster))
++		{
++			return new Check("", false, "нет data/L2HubTownFakes.xml — мод 0031 не наложен");
++		}
++		if (!isTrue(customIni("FakePlayers.ini"), "EnableFakePlayers", "False"))
++		{
++			return new Check("", true, "выключены (EnableFakePlayers = False в FakePlayers.ini)");
++		}
++		final String density = customIni("L2HubTownFakes.ini").getProperty("TownFakesDensity", "100").trim();
++		if (density.equals("0"))
++		{
++			return new Check("", true, "выключены (TownFakesDensity = 0 в L2HubTownFakes.ini)");
++		}
++		final Set<Integer> ids = new HashSet<>();
++		final Matcher matcher = Pattern.compile("npcId=\"(\\d+)\"").matcher(Files.readString(roster, StandardCharsets.UTF_8));
++		while (matcher.find())
++		{
++			ids.add(Integer.parseInt(matcher.group(1)));
++		}
++		int present = 0;
++		for (WorldObject object : World.getVisibleObjects())
++		{
++			if ((object instanceof org.l2jmobius.gameserver.entity.actor.Npc npc) && ids.contains(npc.getId()))
++			{
++				present++;
++			}
++		}
++		if ((present == 0) && (ScriptManager.getInstance().getScript("L2HubTownFakes") == null))
++		{
++			return new Check("", false, "скрипт L2HubTownFakes не загрузился — причина в логе сервера");
++		}
++		return new Check("", present > 0, "в мире " + present + " из " + ids.size() + " по расписанию (плотность " + density + " %; утром, вечером и ночью выходят не все)");
++	}
++
+ 	private static String onOff(boolean value)
+ 	{
+ 		return value ? "вкл" : "выкл";

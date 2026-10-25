@@ -1,8 +1,9 @@
 ﻿# Собирает сборку Mobius из исходников: накладывает патчи из patches\<Id>\ (уже наложенные
 # пропускает), копирует модуль фантомов (phantoms\core и phantoms\<Id>) и накладывает его врезки
 # (phantoms\<Id>\glue.patch), запускает Ant и обновляет jar-ы в servers\<Id>\server\libs, а также файлы данных
-# (game/data, login/data) из патчей и модуля. Геодату развёрнутого сервера не трогает, конфиги — только новые:
-# о расхождении в существующих напоминает. Если сервер ещё не развёрнут — распаковывает сборку целиком.
+# (game/data, login/data) из патчей и модуля. Геодату развёрнутого сервера не трогает. Конфиги выкладывает
+# python -m l2hub.cli deploy-configs (builder.deploy_configs): новые ключи и файлы — в сервер, правки пользователя
+# остаются. Если сервер ещё не развёрнут — распаковывает сборку целиком.
 # Пример: .\server_build.ps1 -Id ct26_highfive
 
 param([Parameter(Mandatory = $true)][string]$Id)
@@ -111,6 +112,22 @@ if ($patches.Count) {
     }
 }
 
+# Прошлый архив Ant перезапишет, а по нему выкладка конфигов отличает правки пользователя (пока нет записи
+# servers\<Id>\.config_base) — копия рядом до конца скрипта.
+$zip = Join-Path $base "build\$($src.Name).zip"
+$prevZip = Join-Path $base "build\$($src.Name).prev.zip"
+if (Test-Path $zip) { Copy-Item $zip $prevZip -Force }
+
+function Invoke-DeployConfigs {
+    $prevArgs = @()
+    if (Test-Path $prevZip) { $prevArgs = @('--prev', $prevZip) }
+    Push-Location (Join-Path $Root 'launcher')
+    try { & uv run python -X utf8 -m l2hub.cli deploy-configs $Id @prevArgs }
+    finally { Pop-Location }
+    if ($LASTEXITCODE -ne 0) { throw "Конфиги не выложены (код $LASTEXITCODE)" }
+    Remove-Item $prevZip -ErrorAction SilentlyContinue
+}
+
 $env:JAVA_HOME = $JavaHome
 $log = Join-Path $base 'build.log'
 $ErrorActionPreference = 'Continue'   # Ant пишет предупреждения в stderr
@@ -119,7 +136,6 @@ $antExit = $LASTEXITCODE
 $ErrorActionPreference = 'Stop'
 if ($antExit -ne 0) { throw "Сборка упала (код $antExit), смотри $log" }
 
-$zip = Join-Path $base "build\$($src.Name).zip"
 $srv = Join-Path $base 'server'
 if (Test-Path $srv) {
     & 7z e $zip 'libs/*.jar' "-o$srv\libs" -y | Out-Null
@@ -127,33 +143,23 @@ if (Test-Path $srv) {
     "Сборка готова, jar-ы обновлены в $srv\libs"
 
     # Данные из патчей и модуля Ant кладёт только в архив сборки — копируем их в развёрнутый сервер.
-    # Конфиги: нового файла в сервере нет — копируется; есть и отличается — там правки автора, только напоминание.
     $touched = @($patches | ForEach-Object { Select-String -Path $_.FullName -Pattern '^\+\+\+ b/dist/(\S+)' } |
         ForEach-Object { $_.Matches[0].Groups[1].Value })
     $touched += @($moduleFiles | Where-Object { $_ -like 'dist/*' } | ForEach-Object { $_.Substring(5) })
     foreach ($rel in ($touched | Sort-Object -Unique)) {
+        if ($rel -notmatch '^(game|login)/data/') { continue }
         $from = Join-Path $src.FullName "dist\$rel"
         $to = Join-Path $srv $rel
-        if ($rel -match '^(game|login)/data/') {
-            if ((Test-Path $to) -and ((Get-FileHash $to).Hash -eq (Get-FileHash $from).Hash)) { continue }
-            New-Item -ItemType Directory -Force (Split-Path $to) | Out-Null
-            Copy-Item $from $to -Force
-            "Данные обновлены: $rel"
-        }
-        elseif ($rel -match '^(game|login)/config/') {
-            if (-not (Test-Path $to)) {
-                New-Item -ItemType Directory -Force (Split-Path $to) | Out-Null
-                Copy-Item $from $to
-                "Новый конфиг скопирован в сервер: $rel"
-            }
-            elseif ((Get-FileHash $to).Hash -ne (Get-FileHash $from).Hash) {
-                "Конфиг в сервере отличается от сборки (там правки автора) — новые ключи перенести вручную: $rel"
-            }
-        }
+        if ((Test-Path $to) -and ((Get-FileHash $to).Hash -eq (Get-FileHash $from).Hash)) { continue }
+        New-Item -ItemType Directory -Force (Split-Path $to) | Out-Null
+        Copy-Item $from $to -Force
+        "Данные обновлены: $rel"
     }
+    Invoke-DeployConfigs
 }
 else {
     & 7z x $zip "-o$srv" -y | Out-Null
     if ($LASTEXITCODE -ne 0) { throw "Не удалось распаковать $zip" }
+    Invoke-DeployConfigs   # всё уже как в архиве — только запись о выкладке
     "Сборка готова и распакована в $srv; дальше — server_setup.ps1 -Id $Id"
 }

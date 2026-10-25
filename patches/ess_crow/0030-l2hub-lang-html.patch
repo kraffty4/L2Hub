@@ -1,0 +1,409 @@
+diff --git a/dist/game/config/Custom/MultilingualSupport.ini b/dist/game/config/Custom/MultilingualSupport.ini
+index 9e9566f5c9f73a8b5c5edb2e1114e8d670019199..ad7804a9a1c3b6154354623c2b0f7ac0a050f3de 100644
+--- a/dist/game/config/Custom/MultilingualSupport.ini
++++ b/dist/game/config/Custom/MultilingualSupport.ini
+@@ -4,7 +4,9 @@
+ 
+ # Enable or disable multilingual support.
+ # Default: False
+-MultiLangEnable = False
++# L2Hub: окна по языку (tools/l2hub_lang_html.py): наши русские окна — в data/lang/ru, язык по умолчанию —
++# L2HubLanguage из L2HubWorld.ini (MultiLangDefault ниже — запасной).
++MultiLangEnable = True
+ 
+ # Default language, if not defined.
+ # Default: en
+@@ -12,7 +14,7 @@ MultiLangDefault = en
+ 
+ # List of allowed languages, semicolon separated.
+ # Default: en;el
+-MultiLangAllowed = en;el
++MultiLangAllowed = en;el;ru
+ 
+ # Enable or disable voice command .lang for changing languages on the fly.
+ # Default: True
+diff --git a/dist/game/data/html/mods/NpcView/AggroList.htm b/dist/game/data/html/mods/NpcView/AggroList.htm
+index 474eafbde821e7c07258669e682debfba686540c..cc25ec34160c20c7e367edf00742f68018ae35ca 100644
+--- a/dist/game/data/html/mods/NpcView/AggroList.htm
++++ b/dist/game/data/html/mods/NpcView/AggroList.htm
+@@ -1,15 +1,15 @@
+ <html>
+ <head>
+-	<title>Агро: %npc_name% (%npcId%)</title>
++	<title>NPC Aggro List %npc_name% (%npcId%)</title>
+ </head>
+ <body>
+-<center><button value="Обновить" action="bypass NpcViewMod aggrolist %objid%" width=60 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></center>
++<center><button value="Refresh" action="bypass NpcViewMod aggrolist %objid%" width=60 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></center>
+ <table width=280 height=40 cellspacing=0 background="L2UI_CT1.Button_DF_Calculator">
+ 	<tr>
+ 		<td width=32></td>
+-		<td width=108>Кого</td>
+-		<td width=60 align=center>Агро</td>
+-		<td width=60 align=center>Урон</td>
++		<td width=108>Hated Name</td>
++		<td width=60 align=center>Hate</td>
++		<td width=60 align=center>Damage</td>
+ 		<td width=45></td>
+ 	</tr>
+ </table>
+diff --git a/dist/game/data/html/mods/NpcView/DropList.htm b/dist/game/data/html/mods/NpcView/DropList.htm
+index d1be7e39a781aa85c8774831d1a83bae0810f979..6000abdc9ca7f0ed3453abd66952b8425d7ba940 100644
+--- a/dist/game/data/html/mods/NpcView/DropList.htm
++++ b/dist/game/data/html/mods/NpcView/DropList.htm
+@@ -1,6 +1,6 @@
+ <html>
+ <head>
+-	<title>Дроп и спойл: %name%</title>
++	<title>NPC Drop List - %name%</title>
+ </head>
+ <body>
+ <center>
+diff --git a/dist/game/data/html/mods/NpcView/Info.htm b/dist/game/data/html/mods/NpcView/Info.htm
+index 73ecd309b958548b47306970dbedc05c844d57cc..d3a6d5f88c10acdb8c3912e4291a6e87c3368cdb 100644
+--- a/dist/game/data/html/mods/NpcView/Info.htm
++++ b/dist/game/data/html/mods/NpcView/Info.htm
+@@ -1,6 +1,6 @@
+ <html>
+ <head>
+-	<title>%name%</title>
++	<title>NPC Info - %name%</title>
+ </head>
+ <body>
+ <table width=275 cellpadding=0 cellspacing=0>
+@@ -18,71 +18,71 @@
+ </tr>
+ </table>
+ <br>
+-<center><font color="LEVEL">Респаун:</font> %respawn%</center><br>
+-<center><font color="LEVEL">Характеристики</font></center>
++<center><font color="LEVEL">Respawn:</font> %respawn%</center><br>
++<center><font color="LEVEL">Stats</font></center>
+ <table width=275 cellpadding=0 cellspacing=0>
+ 	<tr>
+-		<td width=68 align=right><font color="LEVEL">Тип атаки:</font></td>
++		<td width=68 align=right><font color="LEVEL">Atk. Type:</font></td>
+ 		<td width=70 align=center>%atktype%</td>
+-		<td width=67 align=right><font color="LEVEL">Дальность:</font></td>
++		<td width=67 align=right><font color="LEVEL">Atk. Range:</font></td>
+ 		<td width=70 align=center>%atkrange%</td>
+ 	</tr>
+ 	<tr>
+-		<td width=68 align=right><font color="LEVEL">Физ. атк:</font></td>
++		<td width=68 align=right><font color="LEVEL">P. Atk:</font></td>
+ 		<td width=70 align=center>%patk%</td>
+-		<td width=67 align=right><font color="LEVEL">Физ. защ:</font></td>
++		<td width=67 align=right><font color="LEVEL">P. Def:</font></td>
+ 		<td width=70 align=center>%pdef%</td>
+ 	</tr>
+ 	<tr>
+-		<td width=68 align=right><font color="LEVEL">Маг. атк:</font></td>
++		<td width=68 align=right><font color="LEVEL">M. Atk:</font></td>
+ 		<td width=70 align=center>%matk%</td>
+-		<td width=67 align=right><font color="LEVEL">Маг. защ:</font></td>
++		<td width=67 align=right><font color="LEVEL">M. Def:</font></td>
+ 		<td width=70 align=center>%mdef%</td>
+ 	</tr>
+ 	<tr>
+-		<td width=68 align=right><font color="LEVEL">Скор. атк:</font></td>
++		<td width=68 align=right><font color="LEVEL">Atk. Spd:</font></td>
+ 		<td width=70 align=center>%atkspd%</td>
+-		<td width=67 align=right><font color="LEVEL">Скор. маг:</font></td>
++		<td width=67 align=right><font color="LEVEL">Cast. Spd:</font></td>
+ 		<td width=70 align=center>%castspd%</td>
+ 	</tr>
+ 	<tr>
+-		<td width=68 align=right><font color="LEVEL">Крит:</font></td>
++		<td width=68 align=right><font color="LEVEL">Crit. Rate:</font></td>
+ 		<td width=70 align=center>%critrate%</td>
+-		<td width=67 align=right><font color="LEVEL">Уклонение:</font></td>
++		<td width=67 align=right><font color="LEVEL">Evasion:</font></td>
+ 		<td width=70 align=center>%evasion%</td>
+ 	</tr>
+ 	<tr>
+-		<td width=68 align=right><font color="LEVEL">Точность:</font></td>
++		<td width=68 align=right><font color="LEVEL">Accuracy:</font></td>
+ 		<td width=70 align=center>%accuracy%</td>
+-		<td width=67 align=right><font color="LEVEL">Скорость:</font></td>
++		<td width=67 align=right><font color="LEVEL">Speed:</font></td>
+ 		<td width=70 align=center>%speed%</td>
+ 	</tr>
+ </table>
+ <br>
+-<center><font color="LEVEL">Стихии</font></center>
++<center><font color="LEVEL">Attributes</font></center>
+ <table width=275 cellpadding=0 cellspacing=0>
+ 	<tr>
+-		<td width=68 align=right><font color="LEVEL">Стихия атк:</font></td>
++		<td width=68 align=right><font color="LEVEL">Atk. Type:</font></td>
+ 		<td width=70 align=center>%attributeatktype%</td>
+-		<td width=67 align=right><font color="LEVEL">Сила:</font></td>
++		<td width=67 align=right><font color="LEVEL">Atk. Value:</font></td>
+ 		<td width=70 align=center>%attributeatkvalue%</td>
+ 	</tr>
+ 	<tr>
+-		<td width=68 align=right><font color="LEVEL">Огонь:</font></td>
++		<td width=68 align=right><font color="LEVEL">Fire:</font></td>
+ 		<td width=70 align=center>%attributefire%</td>
+-		<td width=67 align=right><font color="LEVEL">Вода:</font></td>
++		<td width=67 align=right><font color="LEVEL">Water:</font></td>
+ 		<td width=70 align=center>%attributewater%</td>
+ 	</tr>
+ 	<tr>
+-		<td width=68 align=right><font color="LEVEL">Ветер:</font></td>
++		<td width=68 align=right><font color="LEVEL">Wind:</font></td>
+ 		<td width=70 align=center>%attributewind%</td>
+-		<td width=67 align=right><font color="LEVEL">Земля:</font></td>
++		<td width=67 align=right><font color="LEVEL">Earth:</font></td>
+ 		<td width=70 align=center>%attributeearth%</td>
+ 	</tr>
+ 	<tr>
+-		<td width=68 align=right><font color="LEVEL">Тьма:</font></td>
++		<td width=68 align=right><font color="LEVEL">Dark:</font></td>
+ 		<td width=70 align=center>%attributedark%</td>
+-		<td width=67 align=right><font color="LEVEL">Свет:</font></td>
++		<td width=67 align=right><font color="LEVEL">Holy:</font></td>
+ 		<td width=70 align=center>%attributeholy%</td>
+ 	</tr>
+ </table>
+diff --git a/dist/game/data/html/mods/NpcView/Skills.htm b/dist/game/data/html/mods/NpcView/Skills.htm
+index ce4bc1c26285ae8482c512424b70be0d990e41aa..2d66b2f424a7be4b2389d1c3018f32bd6419f1e1 100644
+--- a/dist/game/data/html/mods/NpcView/Skills.htm
++++ b/dist/game/data/html/mods/NpcView/Skills.htm
+@@ -1,14 +1,14 @@
+ <html>
+ <head>
+-	<title>Скиллы: %npc_name% (%npcId%)</title>
++	<title>NPC Skill List %npc_name% (%npcId%)</title>
+ </head>
+ <body>
+ <table width=280 height=40 cellspacing=0 background="L2UI_CT1.Button_DF_Calculator">
+ 	<tr>
+ 		<td width=32></td>
+-		<td width=108>Скилл</td>
++		<td width=108>Name</td>
+ 		<td width=45 align=center>ID</td>
+-		<td width=35 align=center>Ур.</td>
++		<td width=35 align=center>Lvl</td>
+ 		<td width=45></td>
+ 	</tr>
+ </table>
+diff --git a/dist/game/data/lang/ru/data/html/mods/NpcView/AggroList.htm b/dist/game/data/lang/ru/data/html/mods/NpcView/AggroList.htm
+new file mode 100644
+index 0000000000000000000000000000000000000000..474eafbde821e7c07258669e682debfba686540c
+--- /dev/null
++++ b/dist/game/data/lang/ru/data/html/mods/NpcView/AggroList.htm
+@@ -0,0 +1,18 @@
++<html>
++<head>
++	<title>Агро: %npc_name% (%npcId%)</title>
++</head>
++<body>
++<center><button value="Обновить" action="bypass NpcViewMod aggrolist %objid%" width=60 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></center>
++<table width=280 height=40 cellspacing=0 background="L2UI_CT1.Button_DF_Calculator">
++	<tr>
++		<td width=32></td>
++		<td width=108>Кого</td>
++		<td width=60 align=center>Агро</td>
++		<td width=60 align=center>Урон</td>
++		<td width=45></td>
++	</tr>
++</table>
++%aggrolist%
++</body>
++</html>
+\ No newline at end of file
+diff --git a/dist/game/data/lang/ru/data/html/mods/NpcView/DropList.htm b/dist/game/data/lang/ru/data/html/mods/NpcView/DropList.htm
+new file mode 100644
+index 0000000000000000000000000000000000000000..d1be7e39a781aa85c8774831d1a83bae0810f979
+--- /dev/null
++++ b/dist/game/data/lang/ru/data/html/mods/NpcView/DropList.htm
+@@ -0,0 +1,14 @@
++<html>
++<head>
++	<title>Дроп и спойл: %name%</title>
++</head>
++<body>
++<center>
++%dropListButtons%
++%pages%
++%items%
++<br>
++%pages%
++</center>
++</body>
++</html>
+\ No newline at end of file
+diff --git a/dist/game/data/lang/ru/data/html/mods/NpcView/Info.htm b/dist/game/data/lang/ru/data/html/mods/NpcView/Info.htm
+new file mode 100644
+index 0000000000000000000000000000000000000000..73ecd309b958548b47306970dbedc05c844d57cc
+--- /dev/null
++++ b/dist/game/data/lang/ru/data/html/mods/NpcView/Info.htm
+@@ -0,0 +1,92 @@
++<html>
++<head>
++	<title>%name%</title>
++</head>
++<body>
++<table width=275 cellpadding=0 cellspacing=0>
++<tr>
++	<td width=25 align=center>HP</td>
++	<td width=250>%hpGauge%</td>
++</tr>
++<tr>
++	<td><img height=7></td>
++	<td></td>
++</tr>
++<tr>
++	<td width=25 align=center>MP</td>
++	<td width=250>%mpGauge%</td>
++</tr>
++</table>
++<br>
++<center><font color="LEVEL">Респаун:</font> %respawn%</center><br>
++<center><font color="LEVEL">Характеристики</font></center>
++<table width=275 cellpadding=0 cellspacing=0>
++	<tr>
++		<td width=68 align=right><font color="LEVEL">Тип атаки:</font></td>
++		<td width=70 align=center>%atktype%</td>
++		<td width=67 align=right><font color="LEVEL">Дальность:</font></td>
++		<td width=70 align=center>%atkrange%</td>
++	</tr>
++	<tr>
++		<td width=68 align=right><font color="LEVEL">Физ. атк:</font></td>
++		<td width=70 align=center>%patk%</td>
++		<td width=67 align=right><font color="LEVEL">Физ. защ:</font></td>
++		<td width=70 align=center>%pdef%</td>
++	</tr>
++	<tr>
++		<td width=68 align=right><font color="LEVEL">Маг. атк:</font></td>
++		<td width=70 align=center>%matk%</td>
++		<td width=67 align=right><font color="LEVEL">Маг. защ:</font></td>
++		<td width=70 align=center>%mdef%</td>
++	</tr>
++	<tr>
++		<td width=68 align=right><font color="LEVEL">Скор. атк:</font></td>
++		<td width=70 align=center>%atkspd%</td>
++		<td width=67 align=right><font color="LEVEL">Скор. маг:</font></td>
++		<td width=70 align=center>%castspd%</td>
++	</tr>
++	<tr>
++		<td width=68 align=right><font color="LEVEL">Крит:</font></td>
++		<td width=70 align=center>%critrate%</td>
++		<td width=67 align=right><font color="LEVEL">Уклонение:</font></td>
++		<td width=70 align=center>%evasion%</td>
++	</tr>
++	<tr>
++		<td width=68 align=right><font color="LEVEL">Точность:</font></td>
++		<td width=70 align=center>%accuracy%</td>
++		<td width=67 align=right><font color="LEVEL">Скорость:</font></td>
++		<td width=70 align=center>%speed%</td>
++	</tr>
++</table>
++<br>
++<center><font color="LEVEL">Стихии</font></center>
++<table width=275 cellpadding=0 cellspacing=0>
++	<tr>
++		<td width=68 align=right><font color="LEVEL">Стихия атк:</font></td>
++		<td width=70 align=center>%attributeatktype%</td>
++		<td width=67 align=right><font color="LEVEL">Сила:</font></td>
++		<td width=70 align=center>%attributeatkvalue%</td>
++	</tr>
++	<tr>
++		<td width=68 align=right><font color="LEVEL">Огонь:</font></td>
++		<td width=70 align=center>%attributefire%</td>
++		<td width=67 align=right><font color="LEVEL">Вода:</font></td>
++		<td width=70 align=center>%attributewater%</td>
++	</tr>
++	<tr>
++		<td width=68 align=right><font color="LEVEL">Ветер:</font></td>
++		<td width=70 align=center>%attributewind%</td>
++		<td width=67 align=right><font color="LEVEL">Земля:</font></td>
++		<td width=70 align=center>%attributeearth%</td>
++	</tr>
++	<tr>
++		<td width=68 align=right><font color="LEVEL">Тьма:</font></td>
++		<td width=70 align=center>%attributedark%</td>
++		<td width=67 align=right><font color="LEVEL">Свет:</font></td>
++		<td width=70 align=center>%attributeholy%</td>
++	</tr>
++</table>
++<br>
++%dropListButtons%
++</body>
++</html>
+\ No newline at end of file
+diff --git a/dist/game/data/lang/ru/data/html/mods/NpcView/Skills.htm b/dist/game/data/lang/ru/data/html/mods/NpcView/Skills.htm
+new file mode 100644
+index 0000000000000000000000000000000000000000..ce4bc1c26285ae8482c512424b70be0d990e41aa
+--- /dev/null
++++ b/dist/game/data/lang/ru/data/html/mods/NpcView/Skills.htm
+@@ -0,0 +1,17 @@
++<html>
++<head>
++	<title>Скиллы: %npc_name% (%npcId%)</title>
++</head>
++<body>
++<table width=280 height=40 cellspacing=0 background="L2UI_CT1.Button_DF_Calculator">
++	<tr>
++		<td width=32></td>
++		<td width=108>Скилл</td>
++		<td width=45 align=center>ID</td>
++		<td width=35 align=center>Ур.</td>
++		<td width=45></td>
++	</tr>
++</table>
++%skills%
++</body>
++</html>
+\ No newline at end of file
+diff --git a/dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java b/dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java
+index 8fbae76e29819ae9e884dda08761aef0ae950972..bbb3c64f42f809c40fc760a86cfc8764d608c7b1 100644
+--- a/dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java
++++ b/dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java
+@@ -77,7 +77,7 @@ public class L2HubSelfTest
+ 	private static final Path CONFIG = Paths.get("./config/Custom/L2HubSelfTest.ini");
+ 	private static final Path REPORT = Paths.get("./log/L2HubSelfTest.json");
+ 	private static final Path TOWN_SPAWNS = Paths.get("./data/spawns/Custom/L2HubTownNpcs.xml");
+-	private static final Path NPC_VIEW_DROP = Paths.get("./data/html/mods/NpcView/DropList.htm");
++	private static final Path NPC_VIEW_DROP = Paths.get("./data/lang/ru/data/html/mods/NpcView/DropList.htm") /* L2Hub: окна по языку — русское окно в data/lang/ru */;
+ 	private static final Path MERCHANT_HTML = Paths.get("./data/html/merchant");
+ 	private static final int TOWN_BUFFER = 50008;
+ 	private static final int TOWN_SHOP = 50010;
+diff --git a/java/org/l2jmobius/gameserver/config/custom/MultilingualSupportConfig.java b/java/org/l2jmobius/gameserver/config/custom/MultilingualSupportConfig.java
+index e03709c9f49bae906a5c5902e379f2999a7e634c..056aa81d9fa3634978eeb3d3377e93b08b7124ac 100644
+--- a/java/org/l2jmobius/gameserver/config/custom/MultilingualSupportConfig.java
++++ b/java/org/l2jmobius/gameserver/config/custom/MultilingualSupportConfig.java
+@@ -48,6 +48,13 @@ public class MultilingualSupportConfig
+ 	{
+ 		final ConfigReader config = new ConfigReader(MULTILANGUAL_SUPPORT_CONFIG_FILE);
+ 		MULTILANG_DEFAULT = config.getString("MultiLangDefault", "en").toLowerCase();
++		// L2Hub: окна по языку (tools/l2hub_lang_html.py): язык по умолчанию — L2HubLanguage (ru | en) из config/Custom/L2HubWorld.ini,
++		// его пишет лаунчер по языку окна; MultiLangDefault — запасной.
++		final String l2hubLanguage = l2hubLanguage();
++		if (!l2hubLanguage.isEmpty())
++		{
++			MULTILANG_DEFAULT = l2hubLanguage;
++		}
+ 		
+ 		MULTILANG_ENABLE = config.getBoolean("MultiLangEnable", false);
+ 		if (MULTILANG_ENABLE)
+@@ -69,4 +76,18 @@ public class MultilingualSupportConfig
+ 		
+ 		MULTILANG_VOICED_ALLOW = config.getBoolean("MultiLangVoiceCommand", true);
+ 	}
++	
++	private static String l2hubLanguage()
++	{
++		final java.util.Properties config = new java.util.Properties();
++		try (java.io.Reader reader = java.nio.file.Files.newBufferedReader(java.nio.file.Paths.get("./config/Custom/L2HubWorld.ini"), java.nio.charset.StandardCharsets.UTF_8))
++		{
++			config.load(reader);
++		}
++		catch (Exception e)
++		{
++			return "";
++		}
++		return config.getProperty("L2HubLanguage", "").trim().toLowerCase();
++	}
+ }

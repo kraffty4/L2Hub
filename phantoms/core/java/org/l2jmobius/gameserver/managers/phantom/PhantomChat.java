@@ -18,6 +18,7 @@ import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.gameserver.config.GeneralConfig;
 import org.l2jmobius.gameserver.config.custom.FakePlayersConfig;
+import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
 import org.l2jmobius.gameserver.config.custom.PhantomPartyConfig;
 import org.l2jmobius.gameserver.config.custom.PhantomsConfig;
 import org.l2jmobius.gameserver.data.xml.MapRegionData;
@@ -27,6 +28,8 @@ import org.l2jmobius.gameserver.entity.actor.Creature;
 import org.l2jmobius.gameserver.entity.actor.Player;
 import org.l2jmobius.gameserver.entity.actor.enums.player.ChatBroadcastType;
 import org.l2jmobius.gameserver.entity.actor.holders.player.BlockList;
+import org.l2jmobius.gameserver.entity.clan.Clan;
+import org.l2jmobius.gameserver.entity.clan.ClanMember;
 import org.l2jmobius.gameserver.managers.FakePlayerBrain;
 import org.l2jmobius.gameserver.managers.phantom.PhantomOrders.Order;
 import org.l2jmobius.gameserver.network.enums.ChatType;
@@ -139,6 +142,12 @@ public class PhantomChat
 			return;
 		}
 
+		// Кланы охотников (раздел 4.50): «возьми в клан» — решает глава, слова — мозгам.
+		if (template.isHunter() && PhantomHunterClans.getInstance().onWhisper(speaker, phantom, text))
+		{
+			return;
+		}
+
 		final boolean owner = PhantomCompanionManager.getInstance().isOwner(speaker, template);
 		final List<Order> orders = owner ? PhantomOrders.parse(text) : List.of();
 		final String note = execute(speaker, template, orders);
@@ -178,6 +187,47 @@ public class PhantomChat
 		}
 
 		route(speaker, text, phantoms, othersHuman, "party");
+	}
+
+	/**
+	 * Сообщение в чат клана (из {@code ChatClan}): охотники клана в мире слышат его и отвечают туда же ({@link PhantomClans}, раздел 4.41) — как в пати:
+	 * названный, без имени — тот, с кем игрок уже говорит, а если других живых в сети нет — любой.
+	 * @param speaker кто пишет (живой игрок)
+	 * @param text что написал
+	 */
+	public void onClanChat(Player speaker, String text)
+	{
+		final Clan clan = speaker.getClan();
+		if (!PhantomsConfig.PHANTOMS_ENABLED || !PhantomHuntersConfig.HUNTER_CLAN_JOIN || (clan == null) || (PhantomManager.getInstance().isPhantom(speaker) && !PhantomClans.getInstance().isTestPlayer(speaker)))
+		{
+			return;
+		}
+
+		final Map<PhantomTemplate, Player> phantoms = new LinkedHashMap<>();
+		boolean othersHuman = false;
+		for (ClanMember member : clan.getMembers())
+		{
+			final Player player = member.getPlayer();
+			if ((player == null) || (player == speaker) || !player.isOnline())
+			{
+				continue;
+			}
+
+			final PhantomTemplate template = PhantomManager.getInstance().isPhantom(player) ? PhantomData.getInstance().getTemplate(player.getName()) : null;
+			if (template != null)
+			{
+				if (template.isHunter() && !player.isDead())
+				{
+					phantoms.put(template, player);
+				}
+			}
+			else if (!player.isInOfflineMode())
+			{
+				othersHuman = true;
+			}
+		}
+
+		route(speaker, text, phantoms, othersHuman, "clan");
 	}
 
 	/**
@@ -283,7 +333,7 @@ public class PhantomChat
 	/**
 	 * Кто из фантомов отвечает и что выполняет. Приказы — только своим напарникам: названным, а без имени — тем, чья это работа (баф — бафферу, хил и рес — хилеру).
 	 * Разговор — названному, без имени — тому, с кем игрок уже говорит, а если других живых рядом нет — любому.
-	 * @param channel куда отвечать: {@code party} — в чат пати, {@code say} — вслух рядом
+	 * @param channel куда отвечать: {@code party} — в чат пати, {@code clan} — в чат клана, {@code say} — вслух рядом
 	 * @return {@code true}, если кто-то взялся ответить
 	 */
 	private boolean route(Player speaker, String text, Map<PhantomTemplate, Player> phantoms, boolean othersHuman, String channel)
@@ -448,6 +498,31 @@ public class PhantomChat
 	 */
 	public void hunterEvent(Player hunter, Player other, String kind, String what, String fallback, long cooldown, boolean whisper)
 	{
+		// Обидчик мимо — непрошеная реплика: вокруг только что говорили — подождать.
+		event(hunter, other, kind, what, fallback, cooldown, !whisper && UNSOLICITED_EVENTS.contains(kind), text -> sayHunter(hunter, other, kind, text, whisper));
+	}
+
+	/**
+	 * Охотник говорит о клане в чат клана ({@link PhantomClans}: вступил, уходит). Кулдаун и бюджет — как у {@link #hunterEvent}.
+	 * @param hunter охотник
+	 * @param other игрок, о котором речь
+	 * @param clan клан: уходящий говорит в чат клана, в котором уже не состоит
+	 * @param kind вид события
+	 * @param what что случилось — от лица охотника
+	 * @param fallback заготовка или {@code null}
+	 * @param cooldown не чаще, мс
+	 */
+	public void clanEvent(Player hunter, Player other, Clan clan, String kind, String what, String fallback, long cooldown)
+	{
+		event(hunter, other, kind, what, fallback, cooldown, false, text -> clan.broadcastCSToOnlineMembers(new CreatureSay(hunter, ChatType.CLAN, hunter.getName(), text), hunter));
+	}
+
+	/**
+	 * @param unsolicited непрошеная реплика: вокруг только что говорили — промолчать (кулдаун не ставится, повод вернётся на следующем проходе)
+	 * @param out куда сказать
+	 */
+	private void event(Player hunter, Player other, String kind, String what, String fallback, long cooldown, boolean unsolicited, Consumer<String> out)
+	{
 		final long now = System.currentTimeMillis();
 		final String key = "h" + hunter.getObjectId() + ":" + other.getObjectId() + ":" + kind;
 		final Long until = _eventCooldowns.get(key);
@@ -455,15 +530,13 @@ public class PhantomChat
 		{
 			return;
 		}
-		// Обидчик мимо — непрошеная реплика: вокруг только что говорили — подождать (кулдаун не ставится, узнает на следующем проходе).
-		if (!whisper && UNSOLICITED_EVENTS.contains(kind) && !PhantomQuiet.getInstance().allowed(hunter, kind, now))
+		if (unsolicited && !PhantomQuiet.getInstance().allowed(hunter, kind, now))
 		{
 			return;
 		}
 		_eventCooldowns.put(key, now + cooldown);
 
 		final PhantomTemplate template = PhantomData.getInstance().getTemplate(hunter.getName());
-		final Consumer<String> out = text -> sayHunter(hunter, other, kind, text, whisper);
 		if ((template == null) || !brainEnabled() || !eventBudget(now))
 		{
 			if (fallback != null)
@@ -852,13 +925,17 @@ public class PhantomChat
 	}
 
 	/**
-	 * Ответ туда, откуда спросили: шёпот — шёпотом, общий чат — вслух рядом, пати и события — в чат пати (не в пати — шёпотом).
+	 * Ответ туда, откуда спросили: шёпот — шёпотом, общий чат — вслух рядом, клан — в чат клана, пати и события — в чат пати (не в пати — шёпотом).
 	 */
 	private static void say(Player phantom, Player listener, String channel, String text)
 	{
 		if ("say".equals(channel) || "overheard".equals(channel))
 		{
 			sayNear(phantom, text, channel);
+		}
+		else if ("clan".equals(channel) && (phantom.getClan() != null))
+		{
+			phantom.getClan().broadcastCSToOnlineMembers(new CreatureSay(phantom, ChatType.CLAN, phantom.getName(), text), phantom);
 		}
 		else if (!"whisper".equals(channel) && phantom.isInParty())
 		{
@@ -959,6 +1036,11 @@ public class PhantomChat
 		final WorldObject target = phantom.getTarget();
 		FakePlayerBrain.field(sb, "target", (target instanceof Creature) && (target != phantom) && !(target instanceof Player) ? target.getName() : "").append(',');
 		FakePlayerBrain.field(sb, "town", MapRegionData.getInstance().getClosestTownName(phantom)).append(',');
+		// Клан охотника (раздел 4.41): он в клане игрока — свой.
+		FakePlayerBrain.field(sb, "clan", phantom.getClan() != null ? phantom.getClan().getName() : "").append(',');
+		// Живые кланы (раздел 4.50): глава клана, клан охотников или клан живого игрока.
+		sb.append("\"clanLeader\":").append(phantom.isClanLeader()).append(',');
+		sb.append("\"hunterClan\":").append(PhantomHunterClans.isHunterClan(phantom.getClan())).append(',');
 		sb.append("\"party\":[");
 		if (phantom.isInParty())
 		{

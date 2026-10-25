@@ -1,19 +1,38 @@
 package org.l2jmobius.gameserver.managers.phantom;
 
+import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
+import javax.xml.parsers.DocumentBuilderFactory;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+
 import org.l2jmobius.gameserver.ai.Intention;
+import org.l2jmobius.gameserver.config.ServerConfig;
 import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
+import org.l2jmobius.gameserver.data.SpawnTable;
 import org.l2jmobius.gameserver.data.xml.ItemData;
+import org.l2jmobius.gameserver.data.xml.MapRegionData;
+import org.l2jmobius.gameserver.entity.Location;
 import org.l2jmobius.gameserver.entity.World;
 import org.l2jmobius.gameserver.entity.WorldObject;
 import org.l2jmobius.gameserver.entity.actor.Creature;
+import org.l2jmobius.gameserver.entity.actor.Npc;
 import org.l2jmobius.gameserver.entity.actor.Player;
 import org.l2jmobius.gameserver.entity.actor.enums.player.PlayerClass;
+import org.l2jmobius.gameserver.entity.actor.enums.player.TeleportWhereType;
 import org.l2jmobius.gameserver.entity.actor.holders.player.AutoPlaySettingsHolder;
 import org.l2jmobius.gameserver.entity.actor.holders.player.AutoUseSettingsHolder;
 import org.l2jmobius.gameserver.entity.actor.instance.Monster;
@@ -23,6 +42,7 @@ import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
 import org.l2jmobius.gameserver.entity.item.instance.Item;
 import org.l2jmobius.gameserver.entity.item.type.WeaponType;
 import org.l2jmobius.gameserver.entity.itemcontainer.Inventory;
+import org.l2jmobius.gameserver.entity.spawns.Spawn;
 import org.l2jmobius.gameserver.mechanics.effects.EffectType;
 import org.l2jmobius.gameserver.mechanics.skill.Skill;
 
@@ -33,6 +53,7 @@ import org.l2jmobius.gameserver.mechanics.skill.Skill;
  */
 final class PhantomHunterOutfit
 {
+	private static final Logger LOGGER = Logger.getLogger(PhantomHunterOutfit.class.getName());
 	/** Автоатака в AutoUse (как в AutoPlayTaskManager): без неё AutoPlay считает игрока кастером и не бьёт оружием. */
 	private static final Integer AUTO_ATTACK_ACTION = 2;
 	/** Моб ближе этого и бьёт мага — каст собьют, отмахнуться оружием. */
@@ -520,6 +541,736 @@ final class PhantomHunterOutfit
 			potions += count(player, potion);
 		}
 		return sb.append(", банок ").append(potions).append('/').append(PhantomHuntersConfig.HUNTER_POTION_COUNT).toString();
+	}
+
+	// ---------- Покупка и продажа по решению стратега (протокол v1: BUY и SELL) ----------
+
+	/** Названия бижи в порядке {@link #JEWEL_SLOTS}. */
+	private static final String[] JEWEL_NAMES =
+	{
+		"ожерелье",
+		"серьга",
+		"серьга",
+		"кольцо",
+		"кольцо"
+	};
+
+	/**
+	 * Вещь для стратега: шаблон, имя как в датапаке, цена (BUY — магазина, SELL — сколько даст NPC за все), сколько штук; у BUY — часть набора, грейд и по карману ли.
+	 */
+	record Offer(int itemId, String name, long price, long count, String part, String grade, boolean afford)
+	{
+	}
+
+	/**
+	 * @return свободная адена для BUY: всё, кроме запаса на {@value #SHOT_RESERVE} сосов своего грейда и платы за телепорт (с 40-го)
+	 */
+	static long buyBudget(Player player)
+	{
+		return player.getAdena() - (price(shotId(player)) * SHOT_RESERVE) - (player.getLevel() >= 40 ? PhantomHuntersConfig.HUNTER_TELEPORT_FEE : 0);
+	}
+
+	/**
+	 * Для BUY: что лучше надетого продают в городе, куда он пойдёт ({@link #townGoods}), — то, что живой игрок купил бы сам, по цене продавца.
+	 * Для каждой части набора — вещь лучшего разрешённого грейда, как у {@link #buyGear}: его набора, а не продают её — такая же того же грейда из продаваемых;
+	 * не хватает на неё — ещё и грейдом ниже (если это лучше надетого). Бижа — из продаваемой: грейд не выше набора, в пустой слот или вместо бижи грейдом ниже.
+	 * Грейд выше того, что продают в городе, сюда не попадает: его покупает TOWN по правилам ({@link #buyGear}).
+	 * @return вещи в порядке частей (оружие первым, бижа последней) с пометкой, по карману ли ({@link #buyBudget}); пусто — в городе нечего купить лучше надетого
+	 */
+	static List<Offer> buyOffers(Player player, PhantomTemplate template)
+	{
+		final List<Offer> offers = new ArrayList<>();
+		final Map<Integer, Long> goods = townGoods(player);
+		final List<PhantomTemplate.Gear> grades = allowedGrades(player, template);
+		if (goods.isEmpty() || grades.isEmpty())
+		{
+			return offers;
+		}
+
+		final long budget = buyBudget(player);
+		for (int i = 0; i < SLOTS.length; i++)
+		{
+			final int slot = SLOTS[i];
+			if (((slot == Inventory.PAPERDOLL_LEGS) && (wornBodyPart(player, Inventory.PAPERDOLL_CHEST) == BodyPart.FULL_ARMOR)) || ((slot == Inventory.PAPERDOLL_LHAND) && (wornBodyPart(player, Inventory.PAPERDOLL_RHAND) == BodyPart.LR_HAND)))
+			{
+				continue;
+			}
+
+			final Item current = player.getInventory().getPaperdollItem(slot);
+			final int currentGrade = (current == null) || current.isEtcItem() ? -1 : current.getTemplate().getCrystalType().getLevel();
+			for (PhantomTemplate.Gear gear : grades)
+			{
+				final int itemId = itemFor(gear, slot);
+				final ItemTemplate wanted = itemId > 0 ? ItemData.getInstance().getTemplate(itemId) : null;
+				if (wanted == null)
+				{
+					// Шлема, перчаток или ботинок в этом наборе нет (у NG-наборов так и задумано) — а продают: живой купил бы. Того же грейда, что набор.
+					final int setGrade = grade(gear.rhand);
+					if (!GENERIC_SLOTS.contains(slot) || (setGrade < 0))
+					{
+						continue;
+					}
+					if (setGrade <= currentGrade)
+					{
+						break;
+					}
+					final ItemTemplate item = soldForSlot(goods, slot, setGrade, budget);
+					if (item == null)
+					{
+						continue;
+					}
+					final long price = goods.get(item.getId());
+					offers.add(new Offer(item.getId(), item.getName(), price, 1, SLOT_NAMES[i], gradeName(item), price <= budget));
+					if (price <= budget)
+					{
+						break;
+					}
+					continue;
+				}
+				if ((wanted.getCrystalType().getLevel() <= currentGrade) || ((current != null) && (current.getId() == itemId)))
+				{
+					break; // надетое не хуже этого грейда, ниже искать нечего
+				}
+
+				final ItemTemplate item = goods.containsKey(itemId) ? wanted : sold(goods, wanted, budget);
+				if (item == null)
+				{
+					continue; // такого грейда в городе не продают — посмотреть грейд ниже
+				}
+
+				final long price = goods.get(item.getId());
+				offers.add(new Offer(item.getId(), item.getName(), price, 1, SLOT_NAMES[i], gradeName(item), price <= budget));
+				if (price <= budget)
+				{
+					break; // по карману — грейд ниже не нужен
+				}
+			}
+		}
+
+		final int setGrade = grade(grades.get(0).rhand);
+		final Set<Integer> seen = new HashSet<>();
+		for (int i = 0; i < JEWEL_SLOTS.length; i++)
+		{
+			final ItemTemplate item = soldJewel(goods, JEWEL_SLOTS[i], setGrade);
+			final Item current = player.getInventory().getPaperdollItem(JEWEL_SLOTS[i]);
+			if ((item == null) || seen.contains(item.getId()) || ((current != null) && (current.getTemplate().getCrystalType().getLevel() >= item.getCrystalType().getLevel())))
+			{
+				continue;
+			}
+
+			seen.add(item.getId());
+			final long price = goods.get(item.getId());
+			offers.add(new Offer(item.getId(), item.getName(), price, 1, JEWEL_NAMES[i], gradeName(item), price <= budget));
+		}
+		return offers;
+	}
+
+	/**
+	 * Вещь того же вида, что {@code wanted}, из продаваемых в городе: то же место, тот же тип оружия или брони (и магическое ли оружие), тот же грейд;
+	 * лучшая по карману (дороже — лучше), а не по карману ни одна — самая дешёвая.
+	 * @return вещь или {@code null} — такой в городе не продают
+	 */
+	private static ItemTemplate sold(Map<Integer, Long> goods, ItemTemplate wanted, long budget)
+	{
+		ItemTemplate best = null;
+		long bestPrice = 0;
+		for (Map.Entry<Integer, Long> entry : goods.entrySet())
+		{
+			final ItemTemplate item = ItemData.getInstance().getTemplate(entry.getKey());
+			if ((item == null) || (item.getBodyPart() != wanted.getBodyPart()) || (item.getItemType() != wanted.getItemType()) || (item.getCrystalType() != wanted.getCrystalType()) || (item.isWeapon() && (item.isMagicWeapon() != wanted.isMagicWeapon())) || item.isHeroItem() || item.isPvpItem())
+			{
+				continue;
+			}
+
+			final long price = entry.getValue();
+			final boolean better = price <= budget ? (bestPrice > budget) || (price > bestPrice) : (bestPrice > budget) && (price < bestPrice);
+			if ((best == null) || better)
+			{
+				best = item;
+				bestPrice = price;
+			}
+		}
+		return best;
+	}
+
+	/** Части, которые подходят любому классу: их BUY берёт из продаваемых, даже если в наборе шаблона их нет. */
+	private static final Set<Integer> GENERIC_SLOTS = Set.of(Inventory.PAPERDOLL_HEAD, Inventory.PAPERDOLL_GLOVES, Inventory.PAPERDOLL_FEET);
+
+	/**
+	 * Шлем, перчатки или ботинки грейда {@code grade} из продаваемых в городе — когда в наборе шаблона этой части нет: лучшие по карману (дороже — лучше), а не по карману — самые дешёвые.
+	 * @return вещь или {@code null} — такой в городе не продают
+	 */
+	private static ItemTemplate soldForSlot(Map<Integer, Long> goods, int slot, int grade, long budget)
+	{
+		ItemTemplate best = null;
+		long bestPrice = 0;
+		for (Map.Entry<Integer, Long> entry : goods.entrySet())
+		{
+			final ItemTemplate item = ItemData.getInstance().getTemplate(entry.getKey());
+			if ((item == null) || !item.isArmor() || item.isHeroItem() || item.isPvpItem() || (Inventory.getPaperdollIndex(item.getBodyPart()) != slot) || (item.getCrystalType().getLevel() != grade))
+			{
+				continue;
+			}
+
+			final long price = entry.getValue();
+			final boolean better = price <= budget ? (bestPrice > budget) || (price > bestPrice) : (bestPrice > budget) && (price < bestPrice);
+			if ((best == null) || better)
+			{
+				best = item;
+				bestPrice = price;
+			}
+		}
+		return best;
+	}
+
+	/**
+	 * Бижа для слота из продаваемой в городе: обычная (как в {@link #jewels}), лучшего грейда не выше {@code grade}, в нём — самая дешёвая.
+	 * @return вещь или {@code null} — такой в городе не продают
+	 */
+	private static ItemTemplate soldJewel(Map<Integer, Long> goods, int slot, int grade)
+	{
+		final int kind = slot == Inventory.PAPERDOLL_NECK ? 0 : (slot == Inventory.PAPERDOLL_REAR) || (slot == Inventory.PAPERDOLL_LEAR) ? 1 : 2;
+		ItemTemplate best = null;
+		long bestPrice = 0;
+		for (Map.Entry<Integer, Long> entry : goods.entrySet())
+		{
+			final ItemTemplate item = ItemData.getInstance().getTemplate(entry.getKey());
+			if ((item == null) || !item.isArmor() || item.isHeroItem() || item.isPvpItem() || (item.getName() == null) || JEWEL_SKIP.matcher(item.getName()).find() || (item.getCrystalType().getLevel() > grade))
+			{
+				continue;
+			}
+
+			final BodyPart part = item.getBodyPart();
+			final int itemKind = part == BodyPart.NECK ? 0 : (part == BodyPart.LR_EAR) || (part == BodyPart.R_EAR) || (part == BodyPart.L_EAR) ? 1 : (part == BodyPart.LR_FINGER) || (part == BodyPart.R_FINGER) || (part == BodyPart.L_FINGER) ? 2 : -1;
+			if (itemKind != kind)
+			{
+				continue;
+			}
+
+			final int level = item.getCrystalType().getLevel();
+			final int bestLevel = best == null ? -1 : best.getCrystalType().getLevel();
+			if ((level > bestLevel) || ((level == bestLevel) && (entry.getValue() < bestPrice)))
+			{
+				best = item;
+				bestPrice = entry.getValue();
+			}
+		}
+		return best;
+	}
+
+	// ---------- Товары городов для BUY: торговцы NPC и GM-шоп ----------
+
+	/** GM-шоп у гейткиперов (мод 0003): продаёт за адену по своим мультиселлам. Выключен TownGmShop — его нет в мире, и в выбор он не попадает. */
+	private static final int GM_SHOP = 50010;
+	/** Торговец дальше этого от точки возврата в свой город — не в городе (форт, деревня в округе): охотник со свитком туда не попадёт. */
+	private static final int TOWN_RADIUS = 6000;
+	/** Товары городов: город (как у {@link MapRegionData#getClosestTownName}) → id вещи → цена. Пересобираются раз в {@link #TOWN_GOODS_TTL}: первый запрос бывает сразу после старта, когда не все NPC в мире, а налог замка меняется. */
+	private static Map<String, Map<Integer, Long>> _townGoods;
+	private static long _townGoodsAt;
+	private static final long TOWN_GOODS_TTL = 30 * 60 * 1000;
+	/** Что GM-шоп продаёт за адену — читается из мультиселлов один раз. */
+	private static Map<Integer, Long> _gmShop;
+
+	/**
+	 * @return что продают в городе, куда он пойдёт (ближайший, как со свитком возврата): торговцы NPC — по своим спискам с налогом, как в RequestBuyItem, GM-шоп — по своим ценам; одно и то же — дешевле
+	 */
+	static Map<Integer, Long> townGoods(Player player)
+	{
+		return townGoods().getOrDefault(MapRegionData.getInstance().getClosestTownName(player), Map.of());
+	}
+
+	private static synchronized Map<String, Map<Integer, Long>> townGoods()
+	{
+		final long now = System.currentTimeMillis();
+		if ((_townGoods != null) && ((now - _townGoodsAt) < TOWN_GOODS_TTL))
+		{
+			return _townGoods;
+		}
+
+		final boolean first = _townGoods == null;
+		final Map<String, Map<Integer, Long>> towns = new HashMap<>();
+		final Set<Integer> listIds = fileIds("data/buylists", "data/buylists/custom");
+		int merchants = 0;
+		for (int npcId : PhantomCompat.merchantNpcIds(listIds))
+		{
+			for (Npc npc : townNpcs(npcId))
+			{
+				PhantomCompat.merchantGoods(npc, listIds, towns.computeIfAbsent(MapRegionData.getInstance().getClosestTownName(npc), town -> new HashMap<>()));
+				merchants++;
+			}
+		}
+
+		if (_gmShop == null)
+		{
+			_gmShop = gmShopGoods();
+		}
+		final Map<Integer, Long> gmShop = _gmShop;
+		int gmShops = 0;
+		if (!gmShop.isEmpty())
+		{
+			for (Npc npc : townNpcs(GM_SHOP))
+			{
+				final Map<Integer, Long> goods = towns.computeIfAbsent(MapRegionData.getInstance().getClosestTownName(npc), town -> new HashMap<>());
+				gmShop.forEach((itemId, price) -> goods.merge(itemId, price, Math::min));
+				gmShops++;
+			}
+		}
+		final String summary = PhantomHunterOutfit.class.getSimpleName() + ": goods for BUY: " + towns.size() + " towns, " + merchants + " merchants (" + listIds.size() + " buylists), " + gmShops + " GM shops (" + gmShop.size() + " items).";
+		if (first)
+		{
+			LOGGER.info(summary);
+		}
+		else
+		{
+			LOGGER.fine(summary);
+		}
+		_townGoods = towns;
+		_townGoodsAt = now;
+		return towns;
+	}
+
+	/**
+	 * @return NPC с этим id, что стоят в городах: в мире и не дальше {@value #TOWN_RADIUS} от точки возврата в свой город
+	 */
+	private static List<Npc> townNpcs(int npcId)
+	{
+		final List<Npc> npcs = new ArrayList<>();
+		for (Spawn spawn : SpawnTable.getInstance().getSpawns(npcId))
+		{
+			final Npc npc = spawn.getLastSpawn();
+			final Location town = npc == null ? null : MapRegionData.getInstance().getTeleToLocation(npc, TeleportWhereType.TOWN);
+			if ((town != null) && (npc.calculateDistance2D(town) <= TOWN_RADIUS))
+			{
+				npcs.add(npc);
+			}
+		}
+		return npcs;
+	}
+
+	/**
+	 * @return номера списков — имена файлов XML в папках датапака, как их читает BuyListData
+	 */
+	private static Set<Integer> fileIds(String... dirs)
+	{
+		final Set<Integer> ids = new LinkedHashSet<>();
+		for (String dir : dirs)
+		{
+			final File[] files = new File(ServerConfig.DATAPACK_ROOT, dir).listFiles((folder, name) -> name.endsWith(".xml"));
+			if (files == null)
+			{
+				continue;
+			}
+			for (File file : files)
+			{
+				try
+				{
+					ids.add(Integer.parseInt(file.getName().replace(".xml", "")));
+				}
+				catch (NumberFormatException e)
+				{
+					// не список
+				}
+			}
+		}
+		return ids;
+	}
+
+	/**
+	 * Что GM-шоп продаёт за адену: мультиселлы с его NPC ({@value #GM_SHOP}), у товара один ингредиент — адена, на выходе одна вещь. XML читается сам: у MultisellData хроник API разный.
+	 * @return id вещи → цена
+	 */
+	private static Map<Integer, Long> gmShopGoods()
+	{
+		final Map<Integer, Long> goods = new HashMap<>();
+		final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		for (String dir : new String[]
+		{
+			"data/multisell",
+			"data/multisell/custom"
+		})
+		{
+			final File[] files = new File(ServerConfig.DATAPACK_ROOT, dir).listFiles((folder, name) -> name.endsWith(".xml"));
+			if (files == null)
+			{
+				continue;
+			}
+			for (File file : files)
+			{
+				try
+				{
+					final Document document = factory.newDocumentBuilder().parse(file);
+					if (!forNpc(document, GM_SHOP))
+					{
+						continue;
+					}
+
+					final NodeList items = document.getElementsByTagName("item");
+					for (int i = 0; i < items.getLength(); i++)
+					{
+						final Element item = (Element) items.item(i);
+						final NodeList ingredients = item.getElementsByTagName("ingredient");
+						final NodeList productions = item.getElementsByTagName("production");
+						if ((ingredients.getLength() != 1) || (productions.getLength() != 1))
+						{
+							continue;
+						}
+
+						final Element ingredient = (Element) ingredients.item(0);
+						final Element production = (Element) productions.item(0);
+						if ("57".equals(ingredient.getAttribute("id")) && "1".equals(production.getAttribute("count")))
+						{
+							goods.merge(Integer.parseInt(production.getAttribute("id")), Long.parseLong(ingredient.getAttribute("count")), Math::min);
+						}
+					}
+				}
+				catch (Exception e)
+				{
+					LOGGER.warning(PhantomHunterOutfit.class.getSimpleName() + ": " + file.getName() + " — не прочитан для BUY: " + e.getMessage());
+				}
+			}
+		}
+		return goods;
+	}
+
+	/**
+	 * @return мультиселл разрешён этому NPC ({@code <npcs><npc>id</npc></npcs>})
+	 */
+	private static boolean forNpc(Document document, int npcId)
+	{
+		final NodeList npcs = document.getElementsByTagName("npc");
+		for (int i = 0; i < npcs.getLength(); i++)
+		{
+			if (String.valueOf(npcId).equals(npcs.item(i).getTextContent().strip()))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** Сколько вещей можно назвать в одном BUY: {@code [[BUY A; B; C]]}. */
+	static final int MAX_BUY_NAMES = 3;
+
+	/**
+	 * Итог BUY списком: сколько купил и почему не всё.
+	 * @param bought сколько вещей купил (купил бы — до похода проверяется только первая)
+	 * @param why {@code null} — купил всё; иначе причина по-русски: ничего не купил — отказ, купил часть — про первую некупленную
+	 */
+	record Purchase(int bought, String why)
+	{
+	}
+
+	/**
+	 * BUY по решению стратега: одна вещь или список через «;» ({@code [[BUY A; B]]}, не больше {@value #MAX_BUY_NAMES}) — по порядку, пока хватает свободной адены ({@link #buyNamed}).
+	 * До похода в город проверяется первая: не выйдет она — отказ; остальное — как хватит адены в городе. У списка причина — с именем: «не хватает адены на B: …», «B: нет в списке».
+	 * @param arg аргумент из ответа модели
+	 * @param dry только проверить — до похода в город
+	 * @param log что сделал — для лога
+	 */
+	static Purchase buyNamedList(Player player, PhantomTemplate template, String arg, boolean dry, StringBuilder log)
+	{
+		final List<String> names = new ArrayList<>();
+		for (String name : (arg == null ? "" : arg).split(";"))
+		{
+			if (!name.isBlank() && (names.size() < MAX_BUY_NAMES))
+			{
+				names.add(name.strip());
+			}
+		}
+		if (names.isEmpty())
+		{
+			return new Purchase(0, "не назвал, что купить");
+		}
+
+		int bought = 0;
+		for (String name : names)
+		{
+			final String why = buyNamed(player, template, name, dry, log);
+			if (why != null)
+			{
+				return new Purchase(bought, names.size() == 1 ? why : why.startsWith("не хватает адены") ? why.replaceFirst("не хватает адены", "не хватает адены на " + name) : name + ": " + why);
+			}
+			bought++;
+			if (dry)
+			{
+				break;
+			}
+		}
+		return new Purchase(bought, null);
+	}
+
+	/**
+	 * Купить у NPC вещь по имени из {@link #buyOffers} по цене продавца и надеть; снятое — {@link #retire}, как у покупок по правилам.
+	 * @param name имя из ответа модели (без регистра и лишних пробелов)
+	 * @param dry только проверить — до похода в город
+	 * @param log что сделал — для лога
+	 * @return {@code null} — купил (купил бы); иначе причина отказа по-русски — для {@code last}
+	 */
+	private static String buyNamed(Player player, PhantomTemplate template, String name, boolean dry, StringBuilder log)
+	{
+		final String wanted = normalize(name);
+		if (wanted.isEmpty())
+		{
+			return "не назвал, что купить";
+		}
+
+		Offer offer = null;
+		for (Offer candidate : buyOffers(player, template))
+		{
+			if (normalize(candidate.name()).equals(wanted))
+			{
+				offer = candidate;
+				break;
+			}
+		}
+		if (offer == null)
+		{
+			return notOffered(player, wanted);
+		}
+		if (!offer.afford())
+		{
+			return "не хватает адены: нужно " + PhantomHunterManager.money(offer.price()) + ", свободно " + PhantomHunterManager.money(Math.max(0, buyBudget(player)));
+		}
+		if (dry)
+		{
+			return null;
+		}
+
+		if (!PhantomCompat.reduceAdena(player, ItemProcessType.BUY, offer.price(), player, false))
+		{
+			return "не хватает адены: нужно " + PhantomHunterManager.money(offer.price()) + ", есть " + PhantomHunterManager.money(player.getAdena());
+		}
+		final Item added = player.getInventory().addItem(ItemProcessType.BUY, offer.itemId(), 1, player, null);
+		if ((added == null) || !added.isEquipable())
+		{
+			return "не вышло купить";
+		}
+
+		final Item old = wear(player, added);
+		PhantomCompat.refreshExpertisePenalty(player);
+		player.broadcastUserInfo();
+		syncShots(player);
+		log.append(log.isEmpty() ? "" : ", ").append("buys ").append(offer.name()).append(" for ").append(offer.price()).append(" and wears it").append(old != null ? " (was " + old.getName() + ")" : "");
+		return null;
+	}
+
+	/**
+	 * Почему вещи нет в выборе BUY: она надета или надетое в её слоте не хуже — «уже надето», «надето лучше»; иначе (не из его набора, не его грейд, такой нет) — «нет в списке».
+	 */
+	private static String notOffered(Player player, String wanted)
+	{
+		for (int slot = 0; slot < Inventory.PAPERDOLL_TOTALSLOTS; slot++)
+		{
+			final Item worn = player.getInventory().getPaperdollItem(slot);
+			if ((worn != null) && normalize(worn.getName()).equals(wanted))
+			{
+				return "уже надето: " + worn.getName();
+			}
+		}
+
+		for (ItemTemplate item : ItemData.getInstance().getAllItems())
+		{
+			if ((item == null) || (!item.isWeapon() && !item.isArmor()) || !normalize(item.getName()).equals(wanted))
+			{
+				continue;
+			}
+
+			final BodyPart part = item.getBodyPart();
+			final int[] slots = JEWELS.contains(part) ? jewelSlots(part) : new int[]
+			{
+				Inventory.getPaperdollIndex(part)
+			};
+			Item weakest = null;
+			for (int slot : slots)
+			{
+				final Item worn = slot < 0 ? null : player.getInventory().getPaperdollItem(slot);
+				if (worn == null)
+				{
+					weakest = null;
+					break;
+				}
+				if ((weakest == null) || weaker(worn, weakest))
+				{
+					weakest = worn;
+				}
+			}
+			if ((weakest != null) && (weakest.getTemplate().getCrystalType().getLevel() >= item.getCrystalType().getLevel()))
+			{
+				return "надето лучше: " + weakest.getName();
+			}
+			// Шлем, перчатки, ботинки вне набора: в выборе одна вещь на место — лучшая по карману. Эту продают, но она уже не по карману (списком купил что-то до неё).
+			final Long price = GENERIC_SLOTS.contains(Inventory.getPaperdollIndex(part)) ? townGoods(player).get(item.getId()) : null;
+			final long budget = buyBudget(player);
+			if ((price != null) && (price > budget))
+			{
+				return "не хватает адены: нужно " + PhantomHunterManager.money(price) + ", свободно " + PhantomHunterManager.money(Math.max(0, budget));
+			}
+			break;
+		}
+		return "нет в списке";
+	}
+
+	/**
+	 * Надеть купленное: бижу — в пустой слот её вида или вместо самой слабой (грейд, потом цена), остальное — в свой слот; снятое — {@link #retire}.
+	 * @return снятая вещь или {@code null}
+	 */
+	private static Item wear(Player player, Item item)
+	{
+		final BodyPart part = item.getTemplate().getBodyPart();
+		Item old = null;
+		if (JEWELS.contains(part))
+		{
+			int target = -1;
+			for (int slot : jewelSlots(part))
+			{
+				final Item worn = player.getInventory().getPaperdollItem(slot);
+				if (worn == null)
+				{
+					old = null;
+					target = -1;
+					break;
+				}
+				if ((old == null) || weaker(worn, old))
+				{
+					old = worn;
+					target = slot;
+				}
+			}
+			// Освободить слот самой слабой: Inventory.equipItem кладёт бижу в первый пустой слот её вида.
+			if (target >= 0)
+			{
+				player.getInventory().unEquipItemInSlot(target);
+			}
+		}
+		else
+		{
+			final int slot = Inventory.getPaperdollIndex(part);
+			old = slot < 0 ? null : player.getInventory().getPaperdollItem(slot);
+		}
+		player.getInventory().equipItem(item);
+		retire(player, old);
+		return old;
+	}
+
+	/**
+	 * @return {@code a} слабее {@code b}: грейд ниже, при равном — дешевле
+	 */
+	private static boolean weaker(Item a, Item b)
+	{
+		final int ga = a.getTemplate().getCrystalType().getLevel();
+		final int gb = b.getTemplate().getCrystalType().getLevel();
+		return (ga < gb) || ((ga == gb) && (a.getTemplate().getReferencePrice() < b.getTemplate().getReferencePrice()));
+	}
+
+	/**
+	 * Для SELL: что из сумки купит NPC ({@link #junk}: не надето, не адена, не квестовое, не свои сосы, стрелы, банки и кристаллы на призыв), одинаковые — вместе;
+	 * цена — сколько даст NPC (полцены магазина) за все.
+	 * @return вещи, дорогое первым
+	 */
+	static List<Offer> sellOffers(Player player)
+	{
+		final Map<Integer, Offer> stacks = new LinkedHashMap<>();
+		for (Item item : player.getInventory().getItems())
+		{
+			if (junk(player, item))
+			{
+				final long price = (item.getTemplate().getReferencePrice() / 2L) * item.getCount();
+				stacks.merge(item.getId(), new Offer(item.getId(), item.getName(), price, item.getCount(), "", "", true), (a, b) -> new Offer(a.itemId(), a.name(), a.price() + b.price(), a.count() + b.count(), "", "", true));
+			}
+		}
+		final List<Offer> offers = new ArrayList<>(stacks.values());
+		offers.sort((a, b) -> Long.compare(b.price(), a.price()));
+		return offers;
+	}
+
+	/**
+	 * SELL по решению стратега: продать NPC за полцены все такие вещи из сумки (не надетые).
+	 * @param name имя из ответа модели (без регистра и лишних пробелов)
+	 * @param dry только проверить — до похода в город
+	 * @param log что сделал — для лога
+	 * @return {@code null} — продал (продал бы); иначе причина отказа по-русски — для {@code last}
+	 */
+	static String sellNamed(Player player, String name, boolean dry, StringBuilder log)
+	{
+		final String wanted = normalize(name);
+		if (wanted.isEmpty())
+		{
+			return "не назвал, что продать";
+		}
+
+		final List<Item> items = new ArrayList<>();
+		boolean worn = false;
+		boolean kept = false;
+		for (Item item : player.getInventory().getItems())
+		{
+			if (!normalize(item.getName()).equals(wanted))
+			{
+				continue;
+			}
+			if (item.isEquipped())
+			{
+				worn = true;
+			}
+			else if (!junk(player, item))
+			{
+				kept = true;
+			}
+			else
+			{
+				items.add(item);
+			}
+		}
+		if (items.isEmpty())
+		{
+			return worn ? "надето — сначала смени" : kept ? "это не на продажу: расходники или квестовое" : "нет у тебя такого";
+		}
+		if (dry)
+		{
+			return null;
+		}
+
+		long count = 0;
+		long total = 0;
+		for (Item item : items)
+		{
+			count += item.getCount();
+			total += sell(player, item);
+		}
+		log.append("sells ").append(count).append(" for ").append(total);
+		return null;
+	}
+
+	/**
+	 * Грейды его набора, которые уже можно (по уровню и экспертизе), лучший — первым.
+	 */
+	private static List<PhantomTemplate.Gear> allowedGrades(Player player, PhantomTemplate template)
+	{
+		final int expertise = PhantomCompat.expertiseLevel(player);
+		final List<PhantomTemplate.Gear> grades = new ArrayList<>();
+		for (PhantomTemplate.Gear gear : template.getAllGear())
+		{
+			if ((gear.minLevel <= player.getLevel()) && (grade(gear.rhand) <= expertise))
+			{
+				grades.add(0, gear);
+			}
+		}
+		return grades;
+	}
+
+	/**
+	 * @return имя для сравнения с ответом модели: без регистра и лишних пробелов
+	 */
+	private static String normalize(String name)
+	{
+		return name == null ? "" : name.replaceAll("\\s+", " ").strip().toLowerCase(Locale.ROOT);
+	}
+
+	/**
+	 * @return грейд вещи как в датапаке хроники (NG, D … S84, R95, EVENT): без таблиц, поэтому и у грейдов Classic и Essence
+	 */
+	private static String gradeName(ItemTemplate item)
+	{
+		return item.getCrystalType().getLevel() == 0 ? "NG" : item.getCrystalType().name();
 	}
 
 	private static String gradeName(int grade)

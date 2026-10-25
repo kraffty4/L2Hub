@@ -2,7 +2,7 @@ diff --git a/dist/game/config/Custom/ChampionMonsters.ini b/dist/game/config/Cus
 index efc6a94..12f2da5 100644
 --- a/dist/game/config/Custom/ChampionMonsters.ini
 +++ b/dist/game/config/Custom/ChampionMonsters.ini
-@@ -117,3 +117,63 @@ ChampionBlueSpdAtk = 1.0
+@@ -117,3 +117,64 @@ ChampionBlueSpdAtk = 1.0
  
  # Предметы-награды синего чемпиона: id,количество через ; (пусто — без наград).
  ChampionBlueRewardItems =
@@ -56,10 +56,11 @@ index efc6a94..12f2da5 100644
 +SuperChampionRewardItems = 91663,30
 +
 +# Эффекты над моделью (AbnormalVisualEffect через запятую, пусто — без эффектов): BIG_BODY — моб крупнее,
-+# ULTIMATE_DEFENCE — свечение скилла Ultimate Defense, H_GOLD_STAR3_AVE — золотые звёзды. Клиент Classic знает
-+# 429 эффектов из таблицы AbnormalDefaultEffect.dat (ещё H_GOLD_STAR1_AVE…H_GOLD_STAR5_AVE, HEROIC_HOLY_AVE) и старые
-+# встроенные (BIG_BODY, ULTIMATE_DEFENCE). Примерить на цели в игре: //ave_abnormal (без имени — список).
-+SuperChampionEffects = BIG_BODY,ULTIMATE_DEFENCE,H_GOLD_STAR3_AVE
++# ULTIMATE_DEFENCE — свечение скилла Ultimate Defense, H_GOLD_STAR3_AVE — золотые звёзды, MAGIC_SQUARE — белый
++# круг под ногами («Magic Circle»). Клиент Classic знает 429 эффектов из таблицы AbnormalDefaultEffect.dat (ещё
++# H_GOLD_STAR1_AVE…H_GOLD_STAR5_AVE, HEROIC_HOLY_AVE) и старые встроенные (BIG_BODY, ULTIMATE_DEFENCE, MAGIC_SQUARE).
++# Примерить на цели в игре: //ave_abnormal (без имени — список).
++SuperChampionEffects = BIG_BODY,ULTIMATE_DEFENCE,H_GOLD_STAR3_AVE,MAGIC_SQUARE
 +
 +# Объявление при появлении: Region — игрокам в том же регионе карты, World — всем, Off — без объявления.
 +SuperChampionAnnounce = Region
@@ -110,7 +111,7 @@ index 007e9ea..e38db2d 100644
  		CHAMPION_BLUE = loadTier(config, "ChampionBlue", Team.BLUE, 2, 2, 2, "");
 +		SUPER_CHAMPION_ENABLE = config.getBoolean("SuperChampionEnable", false);
 +		CHAMPION_SUPER = loadTier(config, "SuperChampion", Team.RED, 20, 20, 10, "");
-+		SUPER_CHAMPION_EFFECTS = superChampionEffects(config.getString("SuperChampionEffects", "BIG_BODY,ULTIMATE_DEFENCE"));
++		SUPER_CHAMPION_EFFECTS = superChampionEffects(config.getString("SuperChampionEffects", "BIG_BODY,ULTIMATE_DEFENCE,MAGIC_SQUARE"));
 +		SUPER_CHAMPION_ANNOUNCE = config.getString("SuperChampionAnnounce", "Region");
 +		SUPER_CHAMPION_ANNOUNCE_TEXT = config.getString("SuperChampionAnnounceText", "Legendary Champion %name% (%level%) has appeared near %town%!");
  		CHAMPION_REWARD_LOWER_LEVEL_ITEM_CHANCE = config.getInt("ChampionRewardLowerLvlItemChance", 0);
