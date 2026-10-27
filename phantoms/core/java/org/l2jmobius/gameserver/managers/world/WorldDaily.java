@@ -13,6 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 import org.l2jmobius.commons.threads.ThreadPool;
+import org.l2jmobius.gameserver.config.PlayerConfig;
 import org.l2jmobius.gameserver.config.custom.ChampionMonstersConfig;
 import org.l2jmobius.gameserver.config.custom.L2HubWorldConfig;
 import org.l2jmobius.gameserver.config.custom.PhantomsConfig;
@@ -567,7 +568,7 @@ public final class WorldDaily
 				final HuntSpot spot = spot(task);
 				if ((spot != null) && !task.rewarded)
 				{
-					final int fee = level >= 40 ? L2HubWorldConfig.WORLD_DAILY_TELEPORT_FEE : 0;
+					final int fee = level > PlayerConfig.MAX_FREE_TELEPORT_LEVEL ? L2HubWorldConfig.WORLD_DAILY_TELEPORT_FEE : 0;
 					sb.append("<tr><td colspan=2 align=center><button value=\"Туда").append(fee > 0 ? " (" + fee + ")" : "").append("\" action=\"bypass voice .daily go\" width=120 height=21 back=\"").append(PhantomCompat.BUTTON_BACK).append("\" fore=\"").append(PhantomCompat.BUTTON_FORE).append("\"></td></tr>");
 				}
 				sb.append("<tr><td colspan=2 height=8></td></tr>");
@@ -610,7 +611,7 @@ public final class WorldDaily
 	}
 
 	/**
-	 * Телепорт на «Место дня» (проверки доски — в {@link WorldDailyCommand}): с 40-го уровня — за {@code WorldDailyTeleportFee}.
+	 * Телепорт на «Место дня» (проверки доски — в {@link WorldDailyCommand}): выше {@code MaxFreeTeleportLevel} — за {@code WorldDailyTeleportFee}.
 	 * @return ошибка или {@code null}
 	 */
 	String teleport(Player player)
@@ -623,7 +624,7 @@ public final class WorldDaily
 			{
 				continue;
 			}
-			final int fee = player.getLevel() >= 40 ? L2HubWorldConfig.WORLD_DAILY_TELEPORT_FEE : 0;
+			final int fee = player.getLevel() > PlayerConfig.MAX_FREE_TELEPORT_LEVEL ? L2HubWorldConfig.WORLD_DAILY_TELEPORT_FEE : 0;
 			if ((fee > 0) && !PhantomCompat.reduceAdena(player, ItemProcessType.FEE, fee, player, true))
 			{
 				return "Не хватает адены на телепорт: " + fee + ".";

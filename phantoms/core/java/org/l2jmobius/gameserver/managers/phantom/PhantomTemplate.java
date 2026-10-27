@@ -121,6 +121,7 @@ public class PhantomTemplate
 	private final boolean _reaper;
 	private final float _social;
 	private float _temper = 1;
+	private float _risk = 1;
 
 	public PhantomTemplate(String name, Role role, boolean female, byte face, byte hairStyle, byte hairColor, int[] classes, Location home, List<Gear> gear, String aliases, String kind, float social)
 	{
@@ -195,6 +196,35 @@ public class PhantomTemplate
 	void setTemper(float temper)
 	{
 		_temper = Math.max(0, temper);
+	}
+
+	/**
+	 * @return риск охотника («Разум 2.0», шаг 6, docs/MIND.md): меньше 1 — осторожный, больше 1 — рисковый, 1 — обычный ({@link #isCautious()}, {@link #isReckless()})
+	 */
+	public float getRisk()
+	{
+		return _risk;
+	}
+
+	void setRisk(float risk)
+	{
+		_risk = Math.max(0, risk);
+	}
+
+	/**
+	 * @return осторожный: отдыхает и идёт в город раньше, спот берёт пониже, после двух смертей за час уходит на мобов слабее
+	 */
+	public boolean isCautious()
+	{
+		return _risk <= 0.75f;
+	}
+
+	/**
+	 * @return рисковый: лезет на красных мобов, отдыхает и закупается поздно
+	 */
+	public boolean isReckless()
+	{
+		return _risk >= 1.25f;
 	}
 
 	/**

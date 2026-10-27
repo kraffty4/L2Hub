@@ -78,7 +78,25 @@ def _readme(p: dict, address: str, target: str, kind: str | None) -> str:
         f"Адрес сервера уже прописан в {target}\\{ini}: {address} (адрес хоста, {how}).",
         f"Если хост сменит адрес или способ, он пришлёт новый {target}\\{ini} — положить с заменой.",
         "",
+        *_bypass(address, target, kind),
     ])
+
+
+def _bypass(address: str, target: str, kind: str | None) -> list[str]:
+    """README: игра рядом с обходом блокировок (docs/FRIENDS.md, «Друг с Zapret и VPN»). Игре не нужны ни Zapret, ни VPN —
+    им надо сказать, чтобы не трогали адрес хоста; у Radmin это вся его сеть. Локальную сеть они и так не трогают."""
+    if kind == "lan":
+        return []
+    net = "26.0.0.0/8" if kind == "radmin" else address
+    return [
+        "Если у тебя стоит Zapret (обход для Discord и YouTube) или VPN для сайтов — игре они не нужны, пусть её не трогают:",
+        f"- Zapret: в его папке открой lists\\ipset-exclude.txt (так у сборки Flowseal), допиши отдельной строкой {net}",
+        "  и перезапусти Zapret (service.bat или как ты его запускаешь). Не пускает и так — выключи в нём Game Filter.",
+        "- VPN: в настройках найди исключения (раздельное туннелирование, split tunneling, «напрямую», direct/bypass)",
+        f"  и добавь туда {net} или программу {target}\\L2.exe. Иначе игра пойдёт через VPN — пинг и обрывы.",
+        f"- Игре нужны порты TCP 2106 (логин) и 7777 (мир) на адресе {address}.",
+        "",
+    ]
 
 
 def build(p: dict) -> dict:

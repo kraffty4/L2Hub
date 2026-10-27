@@ -4,10 +4,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 import org.l2jmobius.commons.util.Rnd;
+import org.l2jmobius.gameserver.ai.Intention;
 import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
 import org.l2jmobius.gameserver.entity.Location;
 import org.l2jmobius.gameserver.entity.World;
@@ -16,6 +18,8 @@ import org.l2jmobius.gameserver.entity.actor.Creature;
 import org.l2jmobius.gameserver.entity.actor.Npc;
 import org.l2jmobius.gameserver.entity.actor.Player;
 import org.l2jmobius.gameserver.entity.actor.enums.creature.Team;
+import org.l2jmobius.gameserver.entity.item.instance.Item;
+import org.l2jmobius.gameserver.entity.itemcontainer.Inventory;
 import org.l2jmobius.gameserver.entity.zone.ZoneId;
 import org.l2jmobius.gameserver.managers.FakePlayerBrain;
 import org.l2jmobius.gameserver.managers.ScriptManager;
@@ -38,7 +42,8 @@ import org.l2jmobius.gameserver.mechanics.script.Quest;
  * <li>ивент кончился ({@code isOnEvent} снялся) — назад на кач, в логе итог: сколько убил и сколько раз лёг.</li>
  * </ul>
  * Каждое убийство на арене, где убит охотник, — строка лога (счёт Mobius объявляет только в игре, а {@code pvpkills} на ивенте не растут).
- * Флаги CtF охотники пока не носят — только дерутся.
+ * CtF ({@link #flag}): у команды один бегун — бежит к штабу противника и берёт флаг разговором со штабом, как живой игрок, несёт к своему штабу
+ * и сдаёт; остальные дерутся, и первым — с тем, кто несёт их флаг.
  */
 public final class PhantomEvents
 {
@@ -50,6 +55,18 @@ public final class PhantomEvents
 	private static final int ENGAGE_RANGE = 1200;
 	/** Враг по отношениям годится, если не дальше ближайшего противника больше чем на столько. */
 	private static final int GRUDGE_EXTRA = 600;
+	/**
+	 * CtF: штабы команд — НПЦ с флагом на арене, у ворот своей базы, за краем её мирной зоны; места — как в {@code CtF.java} у всех пяти хроник.
+	 * Издалека штаб не найти: видимость Mobius — соседние регионы по 2048, а от базы до чужого штаба около 3000.
+	 */
+	private static final int BLUE_HQ = 82016;
+	private static final int RED_HQ = 82017;
+	private static final Location BLUE_HQ_LOC = new Location(148487, 46703, -3414);
+	private static final Location RED_HQ_LOC = new Location(150452, 46714, -3414);
+	/** CtF: флаг в руке носильщика — 13531 синий и 13534 красный, у Essence — 93331 и 93332. */
+	private static final Set<Integer> CTF_FLAGS = Set.of(13531, 13534, 93331, 93332);
+	/** Штаб ближе этого — говорить с ним: скрипт CtF берёт и сдаёт флаг с 70. */
+	private static final int HQ_TALK_RANGE = 60;
 
 	/** Что делает охотник на этом тике ({@link #drive}). */
 	public enum Drive
@@ -85,6 +102,8 @@ public final class PhantomEvents
 	private static final long NOTE_GAP = 30000;
 	private final Map<Integer, Long> _lastNote = new ConcurrentHashMap<>();
 	private Npc _manager;
+	/** CtF: бегун за флагом у команды (команда → objectId охотника) — один, пока он на ивенте. */
+	private final Map<Team, Integer> _runners = new ConcurrentHashMap<>();
 
 	private PhantomEvents()
 	{
@@ -220,6 +239,7 @@ public final class PhantomEvents
 			if (score != null)
 			{
 				player.removeListener(score.listener);
+				_runners.values().remove(player.getObjectId());
 				LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " is back from " + score.event + " (kills " + score.kills + ", deaths " + score.deaths + ").");
 				return Drive.DONE;
 			}
@@ -233,12 +253,21 @@ public final class PhantomEvents
 			return Drive.FIGHTS;
 		}
 
+		final Score score = _participants.get(player.getObjectId());
+		final boolean ctf = (score != null) && "CtF".equals(score.event);
+		if (ctf && flag(player, template, now))
+		{
+			return Drive.FIGHTS;
+		}
+
 		if ((template != null) && (template.getRole() == PhantomTemplate.Role.HEALER) && PhantomSupport.act(player, player, template.getRole(), now))
 		{
 			return Drive.FIGHTS;
 		}
 
-		final Player enemy = enemy(player);
+		// CtF: кто несёт флаг своей команды — первый противник, где бы он ни был на арене: убитый носильщик возвращает флаг.
+		final Player carrier = ctf ? enemyCarrier(player) : null;
+		final Player enemy = carrier != null ? carrier : enemy(player);
 		if (enemy == null)
 		{
 			note(player, "has no enemy on the arena", now);
@@ -260,7 +289,7 @@ public final class PhantomEvents
 			note(player, "runs to " + (peace ? "the middle of the arena" : enemy.getName()) + " (" + enemy.getName() + " " + distance + " away" + (enemy.isInsideZone(ZoneId.PEACE) ? ", at his base" : "") + ")", now);
 			return Drive.FIGHTS;
 		}
-		note(player, "attacks " + enemy.getName() + " (" + (int) player.calculateDistance2D(enemy) + ")", now);
+		note(player, "attacks " + enemy.getName() + " (" + (int) player.calculateDistance2D(enemy) + (enemy == carrier ? ", carries our flag" : "") + ")", now);
 		PhantomCompanionManager.fight(player, enemy);
 		return Drive.FIGHTS;
 	}
@@ -274,6 +303,137 @@ public final class PhantomEvents
 			_lastNote.put(player.getObjectId(), now);
 			LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " " + what + ".");
 		}
+	}
+
+	/**
+	 * CtF: флаг. Несёт чужой флаг — к своему штабу и сдать разговором со штабом ({@code notifyFirstTalk} скрипта, как клик живого игрока);
+	 * наш флаг у противника (свой штаб исчез, сдать некуда) — ждать у места штаба, пока свои не убьют носильщика. Флага у команды ни у кого нет —
+	 * бегун команды (один охотник не хилер, первый, кто спросил; держится, пока на ивенте) бежит к штабу противника и берёт флаг. Остальные — в бой.
+	 * @return охотник на этом тике занят флагом
+	 */
+	private boolean flag(Player player, PhantomTemplate template, long now)
+	{
+		final Team team = player.getTeam();
+		final Quest script = ScriptManager.getInstance().getScript("CtF");
+		if (((team != Team.BLUE) && (team != Team.RED)) || (script == null))
+		{
+			return false;
+		}
+		final boolean blue = team == Team.BLUE;
+		final String enemyFlag = blue ? "Red" : "Blue";
+		if (carriesFlag(player))
+		{
+			final Location home = blue ? BLUE_HQ_LOC : RED_HQ_LOC;
+			final int distance = (int) player.calculateDistance2D(home);
+			if (carrier(player, false) != null)
+			{
+				if (distance > HQ_TALK_RANGE)
+				{
+					runTo(player, home);
+				}
+				note(player, "waits with the " + enemyFlag + " flag at home: ours is taken", now);
+				return true;
+			}
+			final Npc headquarters = distance <= HQ_TALK_RANGE ? headquarters(player, blue ? BLUE_HQ : RED_HQ) : null;
+			if (headquarters != null)
+			{
+				script.notifyFirstTalk(headquarters, player);
+				if (!carriesFlag(player))
+				{
+					LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " captures the " + enemyFlag + " flag on CtF.");
+					return true;
+				}
+			}
+			runTo(player, home);
+			note(player, "carries the " + enemyFlag + " flag home (" + distance + " away)", now);
+			return true;
+		}
+
+		if ((carrier(player, true) != null) || ((template != null) && (template.getRole() == PhantomTemplate.Role.HEALER)))
+		{
+			return false;
+		}
+		final Integer runnerId = _runners.get(team);
+		final Player runner = runnerId == null ? null : World.getPlayer(runnerId);
+		if ((runner != null) && (runner != player) && runner.isOnEvent() && (runner.getTeam() == team) && _participants.containsKey(runnerId))
+		{
+			return false;
+		}
+		if (runner != player)
+		{
+			_runners.put(team, player.getObjectId());
+			LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " is the flag runner of " + team + " on CtF.");
+		}
+		final Location target = blue ? RED_HQ_LOC : BLUE_HQ_LOC;
+		final int distance = (int) player.calculateDistance2D(target);
+		final Npc headquarters = distance <= HQ_TALK_RANGE ? headquarters(player, blue ? RED_HQ : BLUE_HQ) : null;
+		if (headquarters != null)
+		{
+			script.notifyFirstTalk(headquarters, player);
+			if (carriesFlag(player))
+			{
+				LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " takes the " + enemyFlag + " flag on CtF.");
+				return true;
+			}
+			note(player, "can't take the " + enemyFlag + " flag", now);
+			return false;
+		}
+		runTo(player, target);
+		note(player, "runs for the " + enemyFlag + " flag (" + distance + " away)", now);
+		return true;
+	}
+
+	/** Бежать к месту, если уже не бежит туда (перебивает атаку и прочие намерения). */
+	private static void runTo(Player player, Location location)
+	{
+		if (!player.isMoving() || (player.getAI().getIntention() != Intention.MOVE_TO))
+		{
+			player.setRunning();
+			player.getAI().setIntentionMoveTo(location);
+		}
+	}
+
+	/** CtF: штаб с флагом рядом (в его инстансе). */
+	private static Npc headquarters(Player player, int npcId)
+	{
+		for (Npc npc : World.getVisibleObjectsInRange(player, Npc.class, HQ_TALK_RANGE * 3))
+		{
+			if ((npc.getId() == npcId) && !npc.isDecayed())
+			{
+				return npc;
+			}
+		}
+		return null;
+	}
+
+	/** CtF: в руке флаг. */
+	private static boolean carriesFlag(Player player)
+	{
+		final Item hand = player.getInventory().getPaperdollItem(Inventory.PAPERDOLL_RHAND);
+		return (hand != null) && CTF_FLAGS.contains(hand.getId());
+	}
+
+	/**
+	 * CtF: кто несёт флаг — участник ивента того же инстанса из своей команды ({@code own}) или чужой.
+	 * @return носильщик или null
+	 */
+	private static Player carrier(Player player, boolean own)
+	{
+		for (Player other : World.getPlayers())
+		{
+			if (other.isOnEvent() && (other.getInstanceId() == player.getInstanceId()) && (other.getTeam() != Team.NONE) && ((other.getTeam() == player.getTeam()) == own) && carriesFlag(other))
+			{
+				return other;
+			}
+		}
+		return null;
+	}
+
+	/** CtF: противник с нашим флагом, живой и вне мирной зоны — его бить первым. */
+	private static Player enemyCarrier(Player player)
+	{
+		final Player carrier = carrier(player, false);
+		return (carrier != null) && !carrier.isDead() && !carrier.isInsideZone(ZoneId.PEACE) ? carrier : null;
 	}
 
 	/**

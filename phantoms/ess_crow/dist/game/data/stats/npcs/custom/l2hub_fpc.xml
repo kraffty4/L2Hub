@@ -38,7 +38,7 @@
 			</speed>
 		</stats>
 		<status talkable="false" undying="true" attackable="false" />
-		<fakePlayer classId="8" hair="0" hairColor="2" face="1" equipRHand="4782" equipHead="90465" equipChest="2392" equipGloves="5723" equipFeet="5739" weaponEnchantLevel="2" armorEnchantLevel="2" sitting="true" privateStoreType="3" privateStoreMessage="WTB mats and recipes" />
+		<fakePlayer classId="8" hair="0" hairColor="2" face="1" equipRHand="95454" equipHead="90465" equipChest="2392" equipGloves="5723" equipFeet="5739" weaponEnchantLevel="2" armorEnchantLevel="2" sitting="true" privateStoreType="3" privateStoreMessage="WTB mats and recipes" />
 		<collision>
 			<radius normal="9" />
 			<height normal="23" />

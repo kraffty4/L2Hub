@@ -54,7 +54,7 @@ final class PhantomSupport
 	private static final int BENEDICTION = 1271;
 	private static final int RESURRECTION = 1016;
 	/** Recharge — мана другому (Elven Elder, Shillien Elder; у Bishop его нет): тому, у кого её меньше {@value #RECHARGE_BELOW_MP}%, маг — первым. */
-	private static final int RECHARGE = 1013;
+	static final int RECHARGE = 1013;
 	private static final int RECHARGE_BELOW_MP = 50;
 	/** Баффер в городе (патч 0018, config/Custom/L2HubTown.ini: TownBuffer). */
 	private static final String TOWN_CONFIG = "./config/Custom/L2HubTown.ini";
@@ -726,7 +726,7 @@ final class PhantomSupport
 	/**
 	 * @return выученный скилл, который можно кастовать прямо сейчас (не на откате, хватает MP), или {@code null}
 	 */
-	private static Skill usable(Player phantom, int skillId)
+	static Skill usable(Player phantom, int skillId)
 	{
 		final Skill skill = phantom.getKnownSkill(skillId);
 		if ((skill == null) || phantom.isSkillDisabled(skill) || (phantom.getCurrentMp() < (skill.getMpConsume() + skill.getMpInitialConsume())))
@@ -752,6 +752,80 @@ final class PhantomSupport
 			}
 		}
 		return null;
+	}
+
+	// ---------- Помощь живому рядом («Разум 2.0», шаг 6, {@link PhantomNear}) ----------
+
+	/**
+	 * @return выученный одиночный хил (откат и MP не важны) или {@code null} — не умеет
+	 */
+	static Skill knownHeal(Player phantom)
+	{
+		final Skill skill = known(phantom, STRONG_HEALS);
+		return skill != null ? skill : known(phantom, FAST_HEALS);
+	}
+
+	/**
+	 * @return одиночный хил, который можно кастовать сейчас, сильные первыми, или {@code null}
+	 */
+	static Skill usableHeal(Player phantom)
+	{
+		final Skill skill = firstUsable(phantom, STRONG_HEALS, null);
+		return skill != null ? skill : firstUsable(phantom, FAST_HEALS, null);
+	}
+
+	/**
+	 * @return выученный скилл, на который хватает MP (откат не важен: дождётся), или {@code null}
+	 */
+	static Skill affordable(Player phantom, int skillId)
+	{
+		final Skill skill = phantom.getKnownSkill(skillId);
+		return (skill == null) || (phantom.getCurrentMp() < (skill.getMpConsume() + skill.getMpInitialConsume())) ? null : skill;
+	}
+
+	/**
+	 * @return одиночный хил, на который хватает MP (откат не важен), сильные первыми, или {@code null}
+	 */
+	static Skill affordableHeal(Player phantom)
+	{
+		for (int[] heals : new int[][]
+		{
+			STRONG_HEALS,
+			FAST_HEALS
+		})
+		{
+			for (int skillId : heals)
+			{
+				final Skill skill = affordable(phantom, skillId);
+				if (skill != null)
+				{
+					return skill;
+				}
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * @return бафы из таблиц саппорта (воину или магу — по цели), которые охотник может кинуть сейчас и которых на цели нет; по приоритету таблицы
+	 */
+	static List<Skill> missingBuffs(Player buffer, Player target)
+	{
+		final List<Skill> result = new ArrayList<>();
+		for (int skillId : target.isMageClass() ? MAGE_BUFFS : FIGHTER_BUFFS)
+		{
+			final Integer replacement = REPLACED_BY.get(skillId);
+			if ((replacement != null) && (buffer.getKnownSkill(replacement) != null))
+			{
+				continue;
+			}
+			final Skill skill = usable(buffer, skillId);
+			if ((skill != null) && !covered(target, skill))
+			{
+				result.add(skill);
+			}
+		}
+		return result;
 	}
 
 	private static List<Player> partyNearby(Player phantom)

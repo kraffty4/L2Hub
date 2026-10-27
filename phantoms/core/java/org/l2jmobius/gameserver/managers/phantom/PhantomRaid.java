@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import org.l2jmobius.commons.util.Rnd;
+import org.l2jmobius.gameserver.config.PlayerConfig;
 import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
 import org.l2jmobius.gameserver.entity.Location;
 import org.l2jmobius.gameserver.entity.World;
@@ -1517,7 +1518,7 @@ public final class PhantomRaid
 	}
 
 	/**
-	 * Телепорт к точке сбора ({@code .raid go}): с 40-го уровня — за плату, как у охотников.
+	 * Телепорт к точке сбора ({@code .raid go}): выше {@code MaxFreeTeleportLevel} — за плату, как у охотников.
 	 * @return ошибка или {@code null}
 	 */
 	String teleport(Player player)
@@ -1527,7 +1528,7 @@ public final class PhantomRaid
 		{
 			return "Рейда сейчас нет.";
 		}
-		final int fee = player.getLevel() >= 40 ? PhantomHuntersConfig.HUNTER_TELEPORT_FEE : 0;
+		final int fee = player.getLevel() > PlayerConfig.MAX_FREE_TELEPORT_LEVEL ? PhantomHuntersConfig.HUNTER_TELEPORT_FEE : 0;
 		if ((fee > 0) && !PhantomCompat.reduceAdena(player, ItemProcessType.FEE, fee, player, true))
 		{
 			return "Не хватает адены на телепорт: " + fee + ".";
@@ -1581,7 +1582,7 @@ public final class PhantomRaid
 		if (raid.stage != Stage.LOOT)
 		{
 			sb.append("<button value=\"Вступить\" action=\"bypass voice .raid join\" width=120 height=21 back=\"").append(PhantomCompat.BUTTON_BACK).append("\" fore=\"").append(PhantomCompat.BUTTON_FORE).append("\"><br>");
-			final int fee = player.getLevel() >= 40 ? PhantomHuntersConfig.HUNTER_TELEPORT_FEE : 0;
+			final int fee = player.getLevel() > PlayerConfig.MAX_FREE_TELEPORT_LEVEL ? PhantomHuntersConfig.HUNTER_TELEPORT_FEE : 0;
 			sb.append("<button value=\"К сбору").append(fee > 0 ? " (" + fee + ")" : "").append("\" action=\"bypass voice .raid go\" width=120 height=21 back=\"").append(PhantomCompat.BUTTON_BACK).append("\" fore=\"").append(PhantomCompat.BUTTON_FORE).append("\">");
 		}
 		sb.append("</center><br><font color=\"808080\">Лут — по очереди (случайно) на всю пати. Телепорт — из мирной зоны.</font></body></html>");

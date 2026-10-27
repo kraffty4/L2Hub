@@ -19,11 +19,14 @@ import java.util.stream.Stream;
 import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.gameserver.data.xml.ItemData;
 import org.l2jmobius.gameserver.entity.World;
+import org.l2jmobius.gameserver.entity.WorldObject;
 import org.l2jmobius.gameserver.entity.actor.Npc;
 import org.l2jmobius.gameserver.entity.actor.Player;
 import org.l2jmobius.gameserver.entity.actor.instance.Folk;
 import org.l2jmobius.gameserver.entity.item.ItemTemplate;
 import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
+import org.l2jmobius.gameserver.entity.item.instance.Item;
+import org.l2jmobius.gameserver.entity.itemcontainer.Inventory;
 import org.l2jmobius.gameserver.managers.ScriptManager;
 import org.l2jmobius.gameserver.mechanics.script.Quest;
 
@@ -35,11 +38,14 @@ import org.l2jmobius.gameserver.mechanics.script.Quest;
  * <li>L2 Day — сдаёт слова LINEAGE II, NCSOFT, CHRONICLE из букв с монстров у менеджера ({@code collect_l2}, {@code collect_nc}, {@code collect_ch});</li>
  * <li>Heavy Medal — у кошки Винни «орёл или решка» на следующий значок за блестящие медали ({@code heads}/{@code tails});</li>
  * <li>Gift of Vitality — баф от Стива ({@code vitality}), Freya Celebration — зелье Фрейи за 1 адену ({@code give_potion}), Valentine — рецепт шоколада, если его нет;</li>
+ * <li>Master of Enchanting — посох мастера Йоги и его свитки, заточка посоха до своей цели (по риску; провал ломает посох) и награда за неё — у кого хватает адены;</li>
+ * <li>Saving Santa — ёлки из украшений с монстров, за 10 ёлок шапка Санты или особая ёлка, шапка «Спасти Санту» за 50к, оружие по билету (того же типа, что в руках),
+ * благословение Санты, когда он на свободе;</li>
  * <li>обмен по мультиселлам NPC (кот Рой — медали на призы, кот Базз — нектар на семена и хроно-оружие и подобные в других хрониках): списки — те, на которые
  * ссылается окно NPC, как его видит этот игрок ({@code onFirstTalk}, одна ссылка {@code Script … talk} — у Роя так выбирается список по уровню значка), меняется
  * только валюта события (складываемые предметы, не адена), самое дорогое из того, на что хватает, до трёх обменов за визит.</li>
  * </ul>
- * Остальное (Санта, посох и свитки мастера Йоги, превращение у гейткипера) — только подойти и постоять.
+ * Остальное (мини-игра с индюком Томасом, превращение у гейткипера) — только подойти и постоять.
  */
 final class PhantomSeasonal
 {
@@ -61,6 +67,68 @@ final class PhantomSeasonal
 	private static final int FREYA_POTION = 15440;
 	private static final int CHOCOLATE_RECIPE = 20191;
 	private static final String VITALITY_REUSE = "GiftOfVitality_reuse";
+	/** Master of Enchanting: посох и свиток мастера Йоги, цены скрипта. */
+	private static final int YOGI_STAFF = 13539;
+	private static final int YOGI_SCROLL = 13540;
+	private static final long YOGI_STAFF_PRICE = 1000000;
+	private static final long YOGI_SCROLL_PRICE = 500000;
+	private static final long YOGI_SCROLLS_24_PRICE = 5000000;
+	/** Награда — от +4 (скрипт события). */
+	private static final int YOGI_REWARD_FROM = 4;
+	/** Последний запас адены на Йоги не тратит: банки, сосы, бафы. */
+	private static final long YOGI_RESERVE = 1000000;
+	/** Свитков по одному за визит — не больше. */
+	private static final int YOGI_SCROLLS_PER_VISIT = 4;
+	/** До какого уровня точит посох (по риску; выбирается при покупке посоха). */
+	static final String YOGI_TARGET = "L2HubYogiTarget";
+	/** Saving Santa: украшения на ёлку (id, сколько), ёлка и особая ёлка, шапки, билеты на оружие, оружие по билету (порядок — как в скрипте), благословение. */
+	private static final int[][] TREE_PIECES =
+	{
+		{
+			5556,
+			4
+		},
+		{
+			5557,
+			4
+		},
+		{
+			5558,
+			10
+		},
+		{
+			5559,
+			1
+		}
+	};
+	private static final int X_MAS_TREE = 5560;
+	private static final int SPECIAL_TREE = 5561;
+	private static final int SANTAS_HAT = 7836;
+	private static final int SAVING_HAT = 20100;
+	private static final int TICKET_NORMAL = 20107;
+	private static final int TICKET_JACKPOT = 20108;
+	private static final int[] SANTA_WEAPONS =
+	{
+		14621,
+		14622,
+		14625,
+		14623,
+		14624,
+		14630,
+		14631,
+		14628,
+		14627,
+		14626,
+		14674,
+		14632,
+		14634,
+		14633
+	};
+	private static final int SANTA_BLESSING = 23017;
+	/** Ёлок за визит — не больше. */
+	private static final int TREES_PER_VISIT = 3;
+	/** Шапку «Спасти Санту» (50к) покупает, только если адены больше. */
+	private static final long SAVING_HAT_ADENA = 500000;
 	private static final int ADENA = 57;
 
 	/** Мультиселлы: ссылка в окне NPC, «Script событие talk» — показать окно по игроку, разметка списка. */
@@ -140,6 +208,22 @@ final class PhantomSeasonal
 		LOGGER.info(PhantomSeasonal.class.getSimpleName() + ": " + npcs.size() + " event NPC ids from data/scripts/events.");
 		_npcs = npcs;
 		return npcs;
+	}
+
+	/**
+	 * @return NPC события где угодно в мире (для самопроверки) или {@code null} — событие не идёт
+	 */
+	static Npc anyEventNpc(String event)
+	{
+		final Map<Integer, String> npcs = npcs();
+		for (WorldObject object : World.getVisibleObjects())
+		{
+			if ((object instanceof Npc) && (object instanceof Folk) && event.equals(npcs.get(((Npc) object).getId())) && ((Npc) object).isSpawned())
+			{
+				return (Npc) object;
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -263,6 +347,14 @@ final class PhantomSeasonal
 				script.notifyEvent("give_potion", npc, player);
 				return count(player, FREYA_POTION) > before ? "got Freya's potion" : null;
 			}
+			case "MasterOfEnchanting":
+			{
+				return yogi(player, npc, script);
+			}
+			case "SavingSanta":
+			{
+				return santa(player, npc, script);
+			}
 			case "TheValentineEvent":
 			{
 				if (count(player, CHOCOLATE_RECIPE) > 0)
@@ -276,6 +368,255 @@ final class PhantomSeasonal
 			{
 				return null;
 			}
+		}
+	}
+
+	/**
+	 * Мастер Йоги — как живой: посох за 1 кк, свитки (24 за 5 кк раз в 6 часов, иначе по одному за 500к), заточка посоха до своей цели и награда за неё —
+	 * надеть посох и попросить, потом снова своё оружие. Цель — по риску: осторожный — +4–5, обычный — +5–7, рисковый — +7–10; провал ломает посох.
+	 * Посох покупает, только если после него хватит на свиток и останется запас {@value #YOGI_RESERVE}.
+	 * @return что сделал — для лога; {@code null} — ничего
+	 */
+	private static String yogi(Player player, Npc npc, Quest script)
+	{
+		final List<String> done = new ArrayList<>();
+		Item staff = player.getInventory().getItemByItemId(YOGI_STAFF);
+		if (staff == null)
+		{
+			if (player.getAdena() <= (YOGI_STAFF_PRICE + YOGI_SCROLL_PRICE + YOGI_RESERVE))
+			{
+				return null;
+			}
+			script.notifyEvent("buy_staff", npc, player);
+			staff = player.getInventory().getItemByItemId(YOGI_STAFF);
+			if (staff == null)
+			{
+				return null;
+			}
+			player.getVariables().set(YOGI_TARGET, yogiTarget(player));
+			done.add("bought the staff, aims at +" + player.getVariables().getInt(YOGI_TARGET, 5));
+		}
+		final int target = Math.max(YOGI_REWARD_FROM, player.getVariables().getInt(YOGI_TARGET, 5));
+
+		// Свитки на недостающие уровни: 24 разом выгоднее (только у созданных до начала события), не вышло — по одному.
+		final int need = Math.max(0, target - staff.getEnchantLevel());
+		final long had = count(player, YOGI_SCROLL);
+		if ((had < need) && (player.getAdena() > (YOGI_SCROLLS_24_PRICE + YOGI_RESERVE)))
+		{
+			script.notifyEvent("buy_scroll_24", npc, player);
+		}
+		for (int i = 0; (i < YOGI_SCROLLS_PER_VISIT) && (count(player, YOGI_SCROLL) < need) && (player.getAdena() > (YOGI_SCROLL_PRICE + YOGI_RESERVE)); i++)
+		{
+			final long before = count(player, YOGI_SCROLL);
+			script.notifyEvent("buy_scroll_1", npc, player);
+			if (count(player, YOGI_SCROLL) <= before)
+			{
+				break;
+			}
+		}
+		final long bought = count(player, YOGI_SCROLL) - had;
+		if (bought > 0)
+		{
+			done.add("bought " + bought + " scrolls");
+		}
+
+		// Точит, пока не дойдёт до цели, не кончатся свитки или посох не сломается.
+		final int from = staff.getEnchantLevel();
+		int level = from;
+		while (level < target)
+		{
+			final Item scroll = player.getInventory().getItemByItemId(YOGI_SCROLL);
+			if (scroll == null)
+			{
+				break;
+			}
+			final int after = PhantomCompat.enchantEventItem(player, scroll, staff);
+			if (after == Integer.MIN_VALUE)
+			{
+				break;
+			}
+			if (after < 0)
+			{
+				player.getVariables().remove(YOGI_TARGET);
+				done.add("the staff broke at +" + level + (level > from ? " (enchanted from +" + from + ")" : ""));
+				return String.join("; ", done);
+			}
+			level = after;
+		}
+		if (level > from)
+		{
+			done.add("enchanted the staff +" + from + " -> +" + level);
+		}
+
+		// Дошёл до цели — надеть посох, попросить награду, вернуть своё оружие.
+		if (level >= target)
+		{
+			final Item weapon = player.getInventory().getPaperdollItem(Inventory.PAPERDOLL_RHAND);
+			player.getInventory().equipItem(staff);
+			script.notifyEvent("receive_reward", npc, player);
+			final boolean rewarded = player.getInventory().getItemByObjectId(staff.getObjectId()) == null;
+			if ((weapon != null) && (weapon != staff) && (player.getInventory().getItemByObjectId(weapon.getObjectId()) != null))
+			{
+				player.getInventory().equipItem(weapon);
+			}
+			player.broadcastUserInfo();
+			if (rewarded)
+			{
+				player.getVariables().remove(YOGI_TARGET);
+				done.add("got Master Yogi's reward for +" + level);
+			}
+		}
+		return done.isEmpty() ? null : String.join("; ", done);
+	}
+
+	/**
+	 * @return до какого уровня точить посох Йоги: осторожный — +4–5, обычный — +5–7, рисковый — +7–10
+	 */
+	private static int yogiTarget(Player player)
+	{
+		final PhantomTemplate template = PhantomData.getInstance().getTemplate(player.getName());
+		if ((template != null) && template.isCautious())
+		{
+			return Rnd.get(4, 5);
+		}
+		if ((template != null) && template.isReckless())
+		{
+			return Rnd.get(7, 10);
+		}
+		return Rnd.get(5, 7);
+	}
+
+	/**
+	 * Санта (Saving Santa) — как живой, по кнопкам окна помощника Санты: ёлки из украшений, пока хватает (до {@value #TREES_PER_VISIT} за визит); 10 ёлок — шапка Санты, если её нет,
+	 * иначе особая ёлка; шапка «Спасти Санту» за 50к, если её нет и адены больше {@value #SAVING_HAT_ADENA}; билет на оружие — оружие того же типа, что в руках; благословение Санты.
+	 * @return что сделал — для лога; {@code null} — ничего
+	 */
+	private static String santa(Player player, Npc npc, Quest script)
+	{
+		final List<String> done = new ArrayList<>();
+		int trees = 0;
+		while ((trees < TREES_PER_VISIT) && hasTreePieces(player))
+		{
+			final long before = count(player, X_MAS_TREE);
+			script.notifyEvent("buyTree", npc, player);
+			if (count(player, X_MAS_TREE) <= before)
+			{
+				break;
+			}
+			trees++;
+		}
+		if (trees > 0)
+		{
+			done.add("made " + trees + " Christmas trees");
+		}
+		if (count(player, X_MAS_TREE) >= 10)
+		{
+			final boolean hat = count(player, SANTAS_HAT) == 0;
+			final int item = hat ? SANTAS_HAT : SPECIAL_TREE;
+			final long before = count(player, item);
+			script.notifyEvent(hat ? "buyHat" : "buySpecialTree", npc, player);
+			if (count(player, item) > before)
+			{
+				done.add(hat ? "got Santa's hat for 10 trees" : "got a special Christmas tree for 10 trees");
+			}
+		}
+		if ((count(player, SAVING_HAT) == 0) && (player.getAdena() > SAVING_HAT_ADENA))
+		{
+			script.notifyEvent("buySavingHat", npc, player);
+			if (count(player, SAVING_HAT) > 0)
+			{
+				done.add("bought Saving Santa's hat for 50k");
+			}
+		}
+		if ((count(player, TICKET_NORMAL) > 0) || (count(player, TICKET_JACKPOT) > 0))
+		{
+			final int index = santaWeapon(player);
+			final long before = count(player, SANTA_WEAPONS[index]);
+			script.notifyEvent("weapon_" + (index + 1), npc, player);
+			if (count(player, SANTA_WEAPONS[index]) > before)
+			{
+				final ItemTemplate weapon = ItemData.getInstance().getTemplate(SANTA_WEAPONS[index]);
+				done.add("took " + (weapon != null ? weapon.getName() : SANTA_WEAPONS[index]) + " for a weapon ticket");
+			}
+		}
+		// Благословение — только когда Санта на свободе (не у индюка Томаса).
+		if (!player.isAffectedBySkill(SANTA_BLESSING))
+		{
+			script.notifyEvent("HolidayFestival", npc, player);
+			if (player.isAffectedBySkill(SANTA_BLESSING))
+			{
+				done.add("got Santa's blessing");
+			}
+		}
+		return done.isEmpty() ? null : String.join("; ", done);
+	}
+
+	private static boolean hasTreePieces(Player player)
+	{
+		for (int[] piece : TREE_PIECES)
+		{
+			if (count(player, piece[0]) < piece[1])
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * @return оружие Санты по билету — того же типа, что у него в руках (лук к луку), и магическое у мага (посох — это тоже дробящее: прогон H5 2026-10-26,
+	 *         маг с Bone Staff взял топор); таких несколько — любое из них, нет такого — случайное: номер в списке скрипта
+	 */
+	private static int santaWeapon(Player player)
+	{
+		final ItemTemplate held = player.getActiveWeaponItem();
+		final List<Integer> same = new ArrayList<>();
+		for (int i = 0; (held != null) && (i < SANTA_WEAPONS.length); i++)
+		{
+			final ItemTemplate weapon = ItemData.getInstance().getTemplate(SANTA_WEAPONS[i]);
+			if ((weapon != null) && (weapon.getItemType() == held.getItemType()) && (weapon.isMagicWeapon() == held.isMagicWeapon()))
+			{
+				same.add(i);
+			}
+		}
+		return same.isEmpty() ? Rnd.get(SANTA_WEAPONS.length) : same.get(Rnd.get(same.size()));
+	}
+
+	/**
+	 * Самопроверка SEASONAL: что у охотника по этому событию — для лога.
+	 */
+	static String testState(Player player, String event)
+	{
+		switch (event)
+		{
+			case "MasterOfEnchanting":
+			{
+				final Item staff = player.getInventory().getItemByItemId(YOGI_STAFF);
+				return "staff " + (staff != null ? "+" + staff.getEnchantLevel() + (staff.isEquipped() ? " (equipped)" : "") : "none") + ", target " + player.getVariables().getInt(YOGI_TARGET, 0) + ", scrolls " + count(player, YOGI_SCROLL);
+			}
+			case "SavingSanta":
+			{
+				return "trees " + count(player, X_MAS_TREE) + ", special trees " + count(player, SPECIAL_TREE) + ", Santa's hat " + count(player, SANTAS_HAT) + ", Saving Santa's hat " + count(player, SAVING_HAT) + ", tickets " + (count(player, TICKET_NORMAL) + count(player, TICKET_JACKPOT)) + ", blessing " + player.isAffectedBySkill(SANTA_BLESSING);
+			}
+			default:
+			{
+				return "";
+			}
+		}
+	}
+
+	/**
+	 * Самопроверка SEASONAL: дать охотнику, что нужно для события (копия базы): Санте — украшения на 12 ёлок и билет на оружие.
+	 */
+	static void testSupplies(Player player, String event)
+	{
+		if ("SavingSanta".equals(event))
+		{
+			for (int[] piece : TREE_PIECES)
+			{
+				PhantomCompat.addItem(player, ItemProcessType.REWARD, piece[0], piece[1] * 12L, null);
+			}
+			PhantomCompat.addItem(player, ItemProcessType.REWARD, TICKET_NORMAL, 1, null);
 		}
 	}
 
@@ -583,7 +924,7 @@ final class PhantomSeasonal
 	}
 
 	/**
-	 * @return у охотника есть что сдать на этом событии: буквы L2 Day, медали Heavy Medal (5 — столько берёт и Рой, и Винни на первый значок)
+	 * @return у охотника есть что сдать на этом событии: буквы L2 Day, медали Heavy Medal (5 — столько берёт и Рой, и Винни на первый значок); посох Йоги или адена на него; украшения на ёлку, 10 ёлок или билет на оружие Санты
 	 */
 	private static boolean useful(Player player, String event)
 	{
@@ -596,6 +937,14 @@ final class PhantomSeasonal
 			case "HeavyMedal":
 			{
 				return (count(player, EVENT_MEDAL) >= 5) || (count(player, GLITTERING_MEDAL) >= 5);
+			}
+			case "MasterOfEnchanting":
+			{
+				return (count(player, YOGI_STAFF) > 0) || (player.getAdena() > (YOGI_STAFF_PRICE + YOGI_SCROLL_PRICE + YOGI_RESERVE));
+			}
+			case "SavingSanta":
+			{
+				return hasTreePieces(player) || (count(player, X_MAS_TREE) >= 10) || (count(player, TICKET_NORMAL) > 0) || (count(player, TICKET_JACKPOT) > 0);
 			}
 			default:
 			{

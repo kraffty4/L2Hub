@@ -26,6 +26,7 @@ import java.util.regex.Pattern;
 import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.gameserver.ai.Intention;
+import org.l2jmobius.gameserver.config.PlayerConfig;
 import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
 import org.l2jmobius.gameserver.data.SchemeBufferTable;
 import org.l2jmobius.gameserver.data.xml.ItemData;
@@ -163,6 +164,14 @@ public class PhantomHunterManager
 	private static final int REVIVE_RANGE = 1500;
 	/** Квесты-симуляция: уровень последнего сданного квеста (переменная персонажа). */
 	private static final String QUEST_VARIABLE = "L2HubHunterQuest";
+	/**
+	 * Взятый квест-симуляция: «уровень;сколько мс ещё качаться» (переменная персонажа). Квест переживает выход охотника из мира и рестарт сервера:
+	 * в памяти он обнулялся при каждом входе, а охотники уходят из мира без живых игроков — сдавали единицы (логи 2026-10-26: Essence — взято 411,
+	 * сдано 0; Epilogue — 451 и 8; Interlude — 482 и 50; High Five — 444 и 196).
+	 */
+	private static final String QUEST_TAKEN_VARIABLE = "L2HubHunterQuestTaken";
+	/** Остаток взятого квеста — в переменную не реже этого (на случай рестарта без выхода охотников). */
+	private static final long QUEST_SAVE_INTERVAL = 300000;
 
 	// Экономика.
 	/** Между походами в город не меньше этого; по сосам и ценному дропу — не чаще {@link #TOWN_SOFT_COOLDOWN}. */
@@ -232,6 +241,35 @@ public class PhantomHunterManager
 	private static final long PARTY_ASK_WAIT = 120000;
 	/** BUY и SELL: в город ушёл, а до дел там не дошло (рейд, ивент) — через столько забыть. */
 	private static final long TOWN_TASK_TTL = 600000;
+	/** Риск охотника («Разум 2.0», шаг 6): спот «рано», если мобы выше его на столько уровней (обычному — 4). */
+	private static final int CAUTIOUS_EARLY = 2;
+	private static final int RECKLESS_EARLY = 6;
+	/** Риск: SPOT_UP — мобы не выше своего уровня на столько (обычному — 3). */
+	private static final int CAUTIOUS_UP = 1;
+	private static final int RECKLESS_UP = 5;
+	/** Риск: садится отдыхать при HP ниже (обычный — 45 %) и идёт в город, когда сосов и банок меньше (обычный — 20 %). */
+	private static final double CAUTIOUS_REST_HP = 0.6;
+	private static final double RECKLESS_REST_HP = 0.25;
+	private static final double CAUTIOUS_SUPPLIES = 0.35;
+	private static final double RECKLESS_SUPPLIES = 0.1;
+	/** Риск: осторожный после стольких смертей за час уходит на спот слабее — не чаще раза в {@link #CAUTIOUS_RETREAT_GAP} мс. */
+	private static final int CAUTIOUS_DEATHS = 2;
+	private static final long CAUTIOUS_RETREAT_GAP = 3600000;
+	/** Самопроверка NEAR: между шагами сценария; сколько потом думают настоящие мозги с «живым» рядом и как часто (кроме событий). */
+	private static final long NEAR_TEST_GAP = 20000;
+	private static final long NEAR_TEST_FREE = 300000;
+	private static final long NEAR_TEST_THINK = 90000;
+	/** Самопроверка NEAR: «живой» не оказался рядом с проверяемым за столько — отбой; проверяемый не дошёл до спота после YIELD — «живой» идёт к нему туда, где он есть. */
+	private static final long NEAR_TEST_MEET = 60000;
+	private static final long NEAR_TEST_YIELD = 120000;
+	/** Самопроверка NEAR: вещь для TRADE, если в сумке нечего предложить, — Hard Leather Shirt (есть во всех хрониках, 28 400 в магазине). */
+	private static final int NEAR_TEST_ITEM = 27;
+	/** Самопроверка NEAR: «живого» не подняли за столько — встаёт на месте сам. */
+	private static final long NEAR_TEST_DEAD = 90000;
+	/** TRADE: отойти от мобов и трупов, чтобы поставить лавку, — не дольше, потом пробовать как есть. */
+	private static final long TRADE_ROOM_WAIT = 30000;
+	/** Событие с живым рядом («Разум 2.0», шаг 6) старше этого — уже не повод и не идёт в запрос. */
+	private static final long TRIGGER_TTL = 60000;
 	/** Самопроверка MIND: между шагами сценария. */
 	private static final long MIND_TEST_GAP = 20000;
 	/** Самопроверка MIND ждёт, пока в мир войдут все охотники, но не дольше этого с первого подходящего. */
@@ -312,6 +350,7 @@ public class PhantomHunterManager
 		int questLevel;
 		long questUntil;
 		boolean questReady;
+		long questSaved;
 		// Доход с охоты для лаунчера: прирост адены, пока он на споте, с выхода в мир.
 		long earned;
 		long lastAdena = -1;
@@ -373,6 +412,12 @@ public class PhantomHunterManager
 		int partyAskId;
 		long partyAskUntil;
 		boolean partyAskInvited;
+		/** «Разум 2.0», шаг 6: событие с живым рядом — внеочередное решение стратега, когда было прошлое; куда уйти по YIELD (посчитано при вопросе). */
+		volatile PhantomNear.Trigger trigger;
+		long lastTrigger;
+		HuntSpot yieldSpot;
+		/** Риск: осторожный уходил на спот слабее после смертей. */
+		long lastRetreat;
 		/** Рынок (патч 0035): за чем идёт в лавку на площади Гирана и до какого времени; {@code null} — не идёт. */
 		PhantomMarket.Offer shop;
 		long shopUntil;
@@ -407,6 +452,13 @@ public class PhantomHunterManager
 	/** С какого времени самопроверка MIND ждёт входа всех охотников; 0 — не ждёт. */
 	private long _mindWaitSince;
 	private int _mindStep;
+	/** Самопроверка NEAR: проверяемый, «живой» (охотник, которого шаг 6 считает живым игроком), шаг и время следующего, начало сценария, до какого времени думают настоящие мозги (0 — сценарий). */
+	private volatile Hunter _nearTest;
+	private volatile Hunter _nearLive;
+	private int _nearStep;
+	private long _nearNext;
+	private long _nearStarted;
+	private long _nearFreeUntil;
 	private volatile long _lastLfp;
 	private volatile long _lastStrategyLog;
 	private volatile long _lastStrategyFailLog;
@@ -607,6 +659,10 @@ public class PhantomHunterManager
 						PhantomCompanionManager.getInstance().release(hunter.template, false);
 					}
 					closeStore(hunter, player);
+					if (hunter.questLevel > 0)
+					{
+						saveQuest(hunter, player, now);
+					}
 					PhantomManager.getInstance().despawnHunter(hunter.template);
 					continue;
 				}
@@ -665,7 +721,7 @@ public class PhantomHunterManager
 				// На каче (не в дороге) — кто угодно; в городе и в лавке — тоже: позовут в рейд — свернётся и пойдёт, как живой (лидера PhantomRaid берёт только с кача).
 				final boolean onSpot = (hunter.phase == Phase.HUNT) && (hunter.walkBackUntil == 0) && (hunter.gatekeeperSpot == null) && (hunter.spot != null);
 				final boolean idle = ((hunter.phase == Phase.TOWN) && (hunter.shop == null) && (hunter.afkUntil <= now)) || (hunter.phase == Phase.STORE);
-				if ((player != null) && (onSpot || idle) && !player.isDead() && !player.isInParty() && (hunter.enemyId == 0) && !player.isTeleporting() && !PhantomEvents.getInstance().isBusy(player) && !PhantomOlympiad.getInstance().isBusy(player) && !PhantomDuel.getInstance().isBusy(player))
+				if ((player != null) && (onSpot || idle) && !player.isDead() && !player.isInParty() && (hunter.enemyId == 0) && !player.isTeleporting() && !PhantomEvents.getInstance().isBusy(player) && !PhantomOlympiad.getInstance().isBusy(player) && !PhantomDuel.getInstance().isBusy(player) && !inNearTest(hunter))
 				{
 					hunting.add(player);
 				}
@@ -957,6 +1013,7 @@ public class PhantomHunterManager
 		hunter.enemyId = 0;
 		hunter.phase = Phase.HUNT;
 		hunter.storeOpen = false;
+		PhantomNear.getInstance().drop(player);
 		// ПвП: кто ударил и кто убил — события приходят от сервера (асинхронно).
 		player.addListener(new ConsumerEventListener(player, EventType.ON_CREATURE_DAMAGE_RECEIVED, (OnCreatureDamageReceived event) -> onDamaged(hunter, player, event.getAttacker()), this));
 		player.addListener(new ConsumerEventListener(player, EventType.ON_CREATURE_DEATH, (OnCreatureDeath event) -> onKilled(hunter, player, event.getAttacker()), this));
@@ -977,8 +1034,7 @@ public class PhantomHunterManager
 		hunter.afkUntil = 0;
 		hunter.lfpUntil = 0;
 		hunter.wantStore = false;
-		hunter.questLevel = 0;
-		hunter.questReady = false;
+		restoreQuest(hunter, player, now);
 		hunter.earned = 0;
 		hunter.lastAdena = player.getAdena();
 		hunter.earnedSince = now;
@@ -1016,6 +1072,12 @@ public class PhantomHunterManager
 		PhantomHunterParty.getInstance().check(player, hunter.phase == Phase.HUNT, now);
 		// Стратег позвал живого игрока в пати ([[PARTY имя]]): согласился — в пати, нет ответа — отказ.
 		partyAsk(hunter, player, now);
+		// Самопроверка NEAR: «живой» качается рядом с проверяемым и никуда не уходит — ни в город, ни в пати, ни в рейд.
+		if ((_nearLive == hunter) && nearLive(hunter, player, now))
+		{
+			hunter.lastActive = now;
+			return;
+		}
 		if (player.isDead())
 		{
 			died(hunter, player, now);
@@ -1142,7 +1204,7 @@ public class PhantomHunterManager
 			return;
 		}
 
-		if ((hunter.spot == null) || outgrown(hunter.spot, player.getLevel()))
+		if ((hunter.spot == null) || outgrown(hunter.spot, player.getLevel(), hunter.template))
 		{
 			// Вошёл в мир или перерос спот (патч 0030): ближайший подходящий — ногами; рядом нет — выбрать и телепорт, как раньше.
 			final HuntSpot near = nearestFreeSpot(player);
@@ -1169,6 +1231,13 @@ public class PhantomHunterManager
 		}
 		noticeGrudges(player);
 
+		// «Разум 2.0», шаг 6: помощь живому и лавка для него по решению стратега, делёж спота; событие с живым рядом — думать сейчас.
+		if (near(hunter, player, now))
+		{
+			hunter.lastActive = now;
+			return;
+		}
+
 		// Соседи-охотники (патч 0033): «отжал моба»; хилер хилит и ресает соседа — пока помогает, остальное ждёт.
 		if (PhantomNeighbors.getInstance().tick(player, hunter.template, now))
 		{
@@ -1183,8 +1252,11 @@ public class PhantomHunterManager
 			return;
 		}
 
-		// Пати охотников по отношениям (патч 0036): собрать или позвать ещё одного; лидер тоже копит «качались вместе».
-		PhantomHunterParty.getInstance().tick(player, hunter.template, now);
+		// Пати охотников по отношениям (патч 0036): собрать или позвать ещё одного; лидер тоже копит «качались вместе». Пара самопроверки NEAR — без пати.
+		if (!inNearTest(hunter))
+		{
+			PhantomHunterParty.getInstance().tick(player, hunter.template, now);
+		}
 		if (PhantomHunterParty.getInstance().isLeader(player))
 		{
 			together(hunter, player, now);
@@ -1192,6 +1264,12 @@ public class PhantomHunterManager
 
 		// Квест сделан — в город сдавать.
 		if (quest(hunter, player, now))
+		{
+			return;
+		}
+
+		// Риск («Разум 2.0», шаг 6): осторожный после двух смертей за час на этом споте уходит на мобов слабее.
+		if (cautiousRetreat(hunter, player, now))
 		{
 			return;
 		}
@@ -1208,7 +1286,7 @@ public class PhantomHunterManager
 			return;
 		}
 
-		if (rest(player))
+		if (rest(player, hunter.template))
 		{
 			hunter.lastActive = now;
 			// Сел отдохнуть в дороге — время в пути стоит: отдых не застревание (Pupsik на Interlude 2026-10-20 «застрял» в 2158 от спота).
@@ -1270,6 +1348,8 @@ public class PhantomHunterManager
 			}
 			hunter.choice = null;
 			endFight(hunter, player);
+			// «Разум 2.0», шаг 6: помощь и лавка для живого — с итогом «не дошло до дела».
+			PhantomNear.getInstance().drop(player);
 			if (hunter.phase != Phase.PARTY)
 			{
 				stop(player);
@@ -1344,6 +1424,22 @@ public class PhantomHunterManager
 	}
 
 	/**
+	 * То же по характеру («Разум 2.0», шаг 6): рисковому не рано на мобов до {@value #RECKLESS_EARLY} уровней выше себя («красных»), осторожному рано уже с {@value #CAUTIOUS_EARLY}.
+	 */
+	private static boolean outgrown(HuntSpot spot, int level, PhantomTemplate template)
+	{
+		return (level > (spot.max + 3)) || (level < (spot.min - early(template)));
+	}
+
+	/**
+	 * @return на сколько уровней ниже мобов спота охотнику ещё не рано: осторожному {@value #CAUTIOUS_EARLY}, рисковому {@value #RECKLESS_EARLY}, обычному 4
+	 */
+	private static int early(PhantomTemplate template)
+	{
+		return template == null ? 4 : template.isCautious() ? CAUTIOUS_EARLY : template.isReckless() ? RECKLESS_EARLY : 4;
+	}
+
+	/**
 	 * Новый спот по уровню: мобы на уровень-три ниже и до своего; до {@link #HOME_LEVEL} — в родной зоне расы, если там есть, потом — в мире вне стартовых зон;
 	 * не больше HuntersPerSpot охотников на место.
 	 */
@@ -1358,7 +1454,7 @@ public class PhantomHunterManager
 	}
 
 	/**
-	 * Телепорт на этот спот (у гейткипера, с платой с 40-го уровня); в городе — сначала бегом к гейткиперу.
+	 * Телепорт на этот спот (у гейткипера, с платой выше {@code MaxFreeTeleportLevel}); в городе — сначала бегом к гейткиперу.
 	 */
 	private static void moveToSpot(Hunter hunter, Player player, HuntSpot spot)
 	{
@@ -1582,11 +1678,12 @@ public class PhantomHunterManager
 	}
 
 	/**
-	 * Телепорт у гейткипера: до 40-го — бесплатно, как у новичков; дальше — {@link PhantomHuntersConfig#HUNTER_TELEPORT_FEE} (сколько есть).
+	 * Телепорт у гейткипера: до {@code MaxFreeTeleportLevel} из Player.ini включительно — бесплатно, как у живых (40, у Essence — 75); дальше —
+	 * {@link PhantomHuntersConfig#HUNTER_TELEPORT_FEE} (сколько есть).
 	 */
 	private static void payTeleport(Player player)
 	{
-		if (player.getLevel() >= 40)
+		if (player.getLevel() > PlayerConfig.MAX_FREE_TELEPORT_LEVEL)
 		{
 			final long fee = Math.min(player.getAdena(), PhantomHuntersConfig.HUNTER_TELEPORT_FEE);
 			if (fee > 0)
@@ -1622,13 +1719,17 @@ public class PhantomHunterManager
 	private HuntSpot pickSpot(Player player, HuntSpot avoid, String region, int maxTolerance, boolean skipHomes)
 	{
 		final int level = player.getLevel();
+		// Риск («Разум 2.0», шаг 6): обычный берёт мобов на 3 ниже и до своего уровня, осторожный — на 4 ниже и до уровня ниже своего, рисковый — на 2 ниже и до +2.
+		final PhantomTemplate template = PhantomData.getInstance().getTemplate(player.getName());
+		final int below = template == null ? 3 : template.isCautious() ? 4 : template.isReckless() ? 2 : 3;
+		final int above = template == null ? 0 : template.isCautious() ? -1 : template.isReckless() ? 2 : 0;
 		for (int tolerance = 0; tolerance <= maxTolerance; tolerance++)
 		{
 			final List<HuntSpot> fitting = new ArrayList<>();
 			for (HuntSpot spot : HuntSpotData.getInstance().getSpots())
 			{
 				// Перерос — не брать: иначе каждый тик телепорт на тот же спот (у тёмных эльфов дома споты только до 11-го).
-				if ((spot != avoid) && !outgrown(spot, level) && ((region == null) || spot.region.equals(region)) && (!skipHomes || !HOME_REGIONS.containsValue(spot.region)) && (spot.level >= (level - 3 - tolerance)) && (spot.level <= (level + tolerance)))
+				if ((spot != avoid) && !outgrown(spot, level, template) && ((region == null) || spot.region.equals(region)) && (!skipHomes || !HOME_REGIONS.containsValue(spot.region)) && (spot.level >= (level - below - tolerance)) && (spot.level <= (level + above + tolerance)))
 				{
 					fitting.add(spot);
 				}
@@ -1731,7 +1832,9 @@ public class PhantomHunterManager
 			return false;
 		}
 
-		if ((PhantomHunterOutfit.suppliesLeft(player) < 0.2) && PhantomHunterOutfit.canRestock(player))
+		// Риск («Разум 2.0», шаг 6): осторожный закупается раньше, рисковый — когда почти пусто.
+		final double supplies = hunter.template.isCautious() ? CAUTIOUS_SUPPLIES : hunter.template.isReckless() ? RECKLESS_SUPPLIES : 0.2;
+		if ((PhantomHunterOutfit.suppliesLeft(player) < supplies) && PhantomHunterOutfit.canRestock(player))
 		{
 			return true;
 		}
@@ -1776,9 +1879,14 @@ public class PhantomHunterManager
 				hunter.questLevel = next;
 				hunter.questReady = false;
 				hunter.questUntil = now + (Rnd.get(PhantomHuntersConfig.HUNTER_QUEST_MIN_MINUTES, PhantomHuntersConfig.HUNTER_QUEST_MAX_MINUTES) * 60000L);
+				saveQuest(hunter, player, now);
 				LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " (" + player.getLevel() + ") takes a quest (level " + next + ").");
 			}
 			return false;
+		}
+		if (!hunter.questReady && ((now - hunter.questSaved) >= QUEST_SAVE_INTERVAL))
+		{
+			saveQuest(hunter, player, now);
 		}
 
 		if (!hunter.questReady && (now >= hunter.questUntil))
@@ -1822,11 +1930,56 @@ public class PhantomHunterManager
 			PhantomCompat.addAdena(player, ItemProcessType.QUEST, reward, player, false);
 		}
 		player.getVariables().set(QUEST_VARIABLE, hunter.questLevel);
+		player.getVariables().remove(QUEST_TAKEN_VARIABLE);
 		player.getVariables().storeMe();
 		LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " turned in the quest (level " + hunter.questLevel + "): +" + reward + " adena.");
 		hunter.questLevel = 0;
 		hunter.questReady = false;
 		hunter.questUntil = 0;
+	}
+
+	/**
+	 * Взятый квест — в переменную персонажа: уровень и сколько ещё качаться ({@link #QUEST_TAKEN_VARIABLE}).
+	 */
+	private static void saveQuest(Hunter hunter, Player player, long now)
+	{
+		hunter.questSaved = now;
+		player.getVariables().set(QUEST_TAKEN_VARIABLE, hunter.questLevel + ";" + Math.max(0, hunter.questUntil - now));
+		player.getVariables().storeMe();
+	}
+
+	/**
+	 * Вход в мир: взятый раньше квест — из переменной персонажа, с тем же остатком; сделанный — сразу несёт сдавать. Уже сданный уровень не возвращается.
+	 */
+	private void restoreQuest(Hunter hunter, Player player, long now)
+	{
+		hunter.questLevel = 0;
+		hunter.questReady = false;
+		hunter.questUntil = 0;
+		hunter.questSaved = now;
+		final String taken = player.getVariables().getString(QUEST_TAKEN_VARIABLE, "");
+		final int split = taken.indexOf(';');
+		if (split <= 0)
+		{
+			return;
+		}
+		try
+		{
+			final int level = Integer.parseInt(taken.substring(0, split));
+			final long left = Math.max(0, Long.parseLong(taken.substring(split + 1)));
+			if (level <= player.getVariables().getInt(QUEST_VARIABLE, 0))
+			{
+				player.getVariables().remove(QUEST_TAKEN_VARIABLE);
+				return;
+			}
+			hunter.questLevel = level;
+			hunter.questUntil = now + left;
+			LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " (" + player.getLevel() + ") resumes the quest (level " + level + ", " + (left / 60000) + " min left).");
+		}
+		catch (NumberFormatException e)
+		{
+			player.getVariables().remove(QUEST_TAKEN_VARIABLE);
+		}
 	}
 
 	private static void enterTown(Hunter hunter, long now)
@@ -2387,7 +2540,7 @@ public class PhantomHunterManager
 			return false;
 		}
 		// Продажа дешевле двух плат за телепорт в Гиран и обратно — не стоит дороги.
-		if (offer.sale() && (player.calculateDistance2D(seller) > MARKET_WALK) && (player.getLevel() >= 40) && ((offer.count() * offer.price()) < (2L * PhantomHuntersConfig.HUNTER_TELEPORT_FEE)))
+		if (offer.sale() && (player.calculateDistance2D(seller) > MARKET_WALK) && (player.getLevel() > PlayerConfig.MAX_FREE_TELEPORT_LEVEL) && ((offer.count() * offer.price()) < (2L * PhantomHuntersConfig.HUNTER_TELEPORT_FEE)))
 		{
 			return false;
 		}
@@ -2564,6 +2717,11 @@ public class PhantomHunterManager
 
 	private boolean wantsStore(Hunter hunter, Player player, long now)
 	{
+		// Пара самопроверки NEAR в Гиран лавкой не садится: шаги сценария ждут, пока проверяемый не в лавке (прогон H5 2026-10-26 — встал на 20 минут).
+		if (inNearTest(hunter))
+		{
+			return false;
+		}
 		// Продавать нечего — может, скупка (раздел 4.29): копит на вещь и накопил на неё больше половины.
 		final boolean goods = !PhantomHunterOutfit.storeGoods(player).isEmpty();
 		if ((!hunter.wantStore && ((now - hunter.lastStoreSession) < STORE_COOLDOWN)) || (!goods && (PhantomMarket.buyOrder(player, hunter.template) == null)))
@@ -2929,9 +3087,16 @@ public class PhantomHunterManager
 			return;
 		}
 		// Стратегу нужен охотник на споте, лучше сильнее 20-го. Охотники входят по одному за тик, и сильный мог ещё не войти: ждём всех, но не дольше MIND_TEST_WAIT.
-		if ("MIND".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST))
+		// Шагу 6 (NEAR) — пара на споте: проверяемый (лучше хилер с ресом) и «живой» рядом по уровню.
+		// Сезонным (SEASONAL) — сильнейший охотник: ждём всех так же (прогон H5 2026-10-26 — сразу после старта «no hunter in the world»).
+		final boolean mind = "MIND".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
+		final boolean nearTest = "NEAR".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
+		final boolean seasonal = "SEASONAL".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
+		if (mind || nearTest || seasonal)
 		{
-			if (mindTestHunter() == null)
+			final String test = mind ? "MIND" : nearTest ? "NEAR" : "SEASONAL";
+			final boolean ready = mind ? (mindTestHunter() != null) : nearTest ? (nearTestPair() != null) : !inWorld().isEmpty();
+			if (!ready)
 			{
 				return;
 			}
@@ -2940,13 +3105,13 @@ public class PhantomHunterManager
 			if (_mindWaitSince == 0)
 			{
 				_mindWaitSince = now;
-				LOGGER.info(getClass().getSimpleName() + ": SelfTest MIND: waits for all hunters to enter (" + inWorld + " of " + _hunters.size() + "), at most " + (MIND_TEST_WAIT / 1000) + " s.");
+				LOGGER.info(getClass().getSimpleName() + ": SelfTest " + test + ": waits for all hunters to enter (" + inWorld + " of " + _hunters.size() + "), at most " + (MIND_TEST_WAIT / 1000) + " s.");
 			}
 			if ((inWorld < _hunters.size()) && ((now - _mindWaitSince) < MIND_TEST_WAIT))
 			{
 				return;
 			}
-			LOGGER.info(getClass().getSimpleName() + ": SelfTest MIND: picks a hunter after " + ((now - _mindWaitSince) / 1000) + " s, " + inWorld + " of " + _hunters.size() + " hunters in the world.");
+			LOGGER.info(getClass().getSimpleName() + ": SelfTest " + test + ": picks hunters after " + ((now - _mindWaitSince) / 1000) + " s, " + inWorld + " of " + _hunters.size() + " hunters in the world.");
 			_mindWaitSince = 0;
 		}
 		// Кланам нужны двое охотников в мире (раздел 4.41).
@@ -2955,9 +3120,11 @@ public class PhantomHunterManager
 		{
 			return;
 		}
-		// Живым кланам — пятеро свободных от 10-го уровня (раздел 4.50); охотники входят по одному — ждём.
+		// Живым кланам — пятеро свободных от 10-го уровня (раздел 4.50); охотники входят по одному — ждём. Войнам — так же.
 		final boolean clanLife = "CLANLIFE".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
-		if (clanLife && (inWorld().stream().filter(p -> (p.getLevel() >= 10) && (p.getClan() == null)).count() < 12))
+		final boolean clanWar = "CLANWAR".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
+		final boolean clanWarPlayer = "CLANWARPLAYER".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
+		if ((clanLife || clanWar || clanWarPlayer) && (inWorld().stream().filter(p -> (p.getLevel() >= 10) && (p.getClan() == null)).count() < 12))
 		{
 			return;
 		}
@@ -2975,9 +3142,15 @@ public class PhantomHunterManager
 			return;
 		}
 		// Протокол v1 стратега (docs/MIND.md, шаг 3): решения по сценарию, без мозгов.
-		if ("MIND".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST))
+		if (mind)
 		{
 			mindSelfTest();
+			return;
+		}
+		// Шаг 6 (docs/MIND.md, раздел 6): живого рядом играет охотник; сценарий, потом настоящие мозги.
+		if (nearTest)
+		{
+			nearSelfTest();
 			return;
 		}
 		// Кланы без клиента (раздел 4.41): живого игрока в клане играет охотник.
@@ -2990,6 +3163,24 @@ public class PhantomHunterManager
 		if (clanLife)
 		{
 			PhantomHunterClans.getInstance().selfTest(inWorld());
+			return;
+		}
+		// Войны кланов охотников (раздел 4.50, этап 3): объявление по обидам, драка без флага, счёт, перемирие.
+		if (clanWar)
+		{
+			PhantomClanWars.getInstance().selfTest(inWorld());
+			return;
+		}
+		// Войны с кланом игрока (раздел 4.50, этап 4): живого играет охотник со своим кланом.
+		if (clanWarPlayer)
+		{
+			PhantomClanWars.getInstance().selfTestPlayer(inWorld());
+			return;
+		}
+		// Сезонные события (раздел 4.34): сильнейший охотник у мастера Йоги и помощника Санты.
+		if (seasonal)
+		{
+			seasonalSelfTest();
 			return;
 		}
 		// Эпик без клиента (раздел 4.43): живого в рейде играет охотник.
@@ -3185,6 +3376,7 @@ public class PhantomHunterManager
 		hunter.togetherTick = 0;
 		hunter.recruiterId = 0;
 		hunter.gatekeeperSpot = null;
+		PhantomNear.getInstance().drop(player);
 		closeStore(hunter, player);
 		AutoPlayTaskManager.getInstance().stopAutoPlay(player);
 		AutoUseTaskManager.getInstance().startAutoUseTask(player);
@@ -3192,6 +3384,86 @@ public class PhantomHunterManager
 		{
 			player.standUp();
 		}
+	}
+
+	// ---------- Живой рядом («Разум 2.0», шаг 6) ----------
+
+	/**
+	 * Шаг 6 ({@link PhantomNear}, docs/MIND.md, раздел 6): помощь живому и лавка для него по решению стратега, делёж спота; у охотника в фокусе — события с живыми рядом.
+	 * Событие при расширенном режиме ({@code HunterMindExtended}, {@code HunterFocusEvents}) — внеочередное решение стратега, не чаще раза в {@code HunterFocusEventGap} секунд.
+	 * @return {@code true}, пока помогает или сидит в лавке: остальной тик ждёт
+	 */
+	private boolean near(Hunter hunter, Player player, long now)
+	{
+		final boolean test = _nearTest == hunter;
+		if (test)
+		{
+			nearTest(hunter, player, now);
+		}
+		final PhantomNear near = PhantomNear.getInstance();
+		if (near.tick(player, hunter.spot, now))
+		{
+			return true;
+		}
+		if (!test && (PhantomFocus.getInstance().of(player) == null))
+		{
+			return false;
+		}
+
+		final boolean events = test || (PhantomHuntersConfig.HUNTER_MIND_EXTENDED && PhantomHuntersConfig.HUNTER_FOCUS_EVENTS && strategyOn(now));
+		final PhantomNear.Trigger trigger = near.watch(player, hunter.spot, events, now);
+		if ((trigger == null) || ((now - trigger.at()) > TRIGGER_TTL))
+		{
+			return false;
+		}
+		hunter.trigger = trigger;
+		// Думать сейчас: не думает, решения не ждёт, с прошлого внеочередного прошло HunterFocusEventGap. В сценарии самопроверки NEAR событие идёт только в запрос.
+		final boolean scripted = test && (_nearFreeUntil == 0);
+		final boolean asks = !scripted && (hunter.choice == null) && (hunter.thinkingSince == 0) && ((now - hunter.lastTrigger) >= (PhantomHuntersConfig.HUNTER_FOCUS_EVENT_GAP * 1000L));
+		if (asks)
+		{
+			hunter.lastTrigger = now;
+			hunter.nextThink = now;
+		}
+		LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " sees " + trigger.event() + " of " + trigger.name() + (asks ? ", thinks now" : "") + (test ? " [SelfTest NEAR]." : "."));
+		return false;
+	}
+
+	/**
+	 * Риск («Разум 2.0», шаг 6): осторожного положили {@value #CAUTIOUS_DEATHS} раза за час — уходит на мобов слабее, как живой, которого тут дважды убили. Не чаще раза в час.
+	 * @return {@code true}, если ушёл
+	 */
+	private boolean cautiousRetreat(Hunter hunter, Player player, long now)
+	{
+		if (!hunter.template.isCautious() || (hunter.spot == null) || ((now - hunter.lastRetreat) < CAUTIOUS_RETREAT_GAP) || PhantomNear.fighting(player))
+		{
+			return false;
+		}
+		final long deaths = hunter.deaths.stream().filter(death -> (now - death) <= 3600000).count();
+		if (deaths < CAUTIOUS_DEATHS)
+		{
+			return false;
+		}
+
+		hunter.lastRetreat = now;
+		final HuntSpot lower = shiftedSpot(hunter, player, false);
+		if (lower == null)
+		{
+			LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " (cautious) died " + deaths + " times within an hour, but has no weaker spot than " + spotLabel(hunter.spot) + ".");
+			return false;
+		}
+		LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " (cautious) died " + deaths + " times within an hour, " + spotLabel(hunter.spot) + " -> " + spotLabel(lower) + ".");
+		moveToSpot(hunter, player, lower);
+		return true;
+	}
+
+	/**
+	 * @return спот охотника или {@code null} — не охотник, не на споте
+	 */
+	HuntSpot huntSpot(Player phantom)
+	{
+		final Hunter hunter = phantom != null ? _hunters.get(phantom.getName().toLowerCase()) : null;
+		return hunter != null ? hunter.spot : null;
 	}
 
 	// ---------- Мозги-стратег ----------
@@ -3218,8 +3490,23 @@ public class PhantomHunterManager
 				return false;
 			}
 
-			final boolean anytime = (choice.decision == Decision.HUNT) || (choice.decision == Decision.PARTY);
-			if (!anytime && (player.isInCombat() || player.isAttackingNow() || player.isCastingNow()))
+			// Шаг 6: помочь живому и поделить спот — и посреди боя.
+			final boolean anytime = (choice.decision == Decision.HUNT) || (choice.decision == Decision.PARTY) || (choice.decision == Decision.HELP) || (choice.decision == Decision.SHARE);
+			if (choice.decision == Decision.TRADE)
+			{
+				// Лавка на месте: своего моба добить без AutoPlay (новых не брать) и сесть, когда никто не бьёт; остальной тик ждёт — иначе он включит AutoPlay.
+				if (PhantomNear.fighting(player))
+				{
+					AutoPlayTaskManager.getInstance().stopAutoPlay(player);
+					return true;
+				}
+				// Лавку не открыть рядом с мобом, его трупом или NPC (PrivateStoreRange.ini) и кастуя: отойти и подождать, но не дольше TRADE_ROOM_WAIT.
+				if (((now - choice.at) < TRADE_ROOM_WAIT) && PhantomNear.makeRoom(player))
+				{
+					return true;
+				}
+			}
+			else if (!anytime && (player.isInCombat() || player.isAttackingNow() || player.isCastingNow()))
 			{
 				if ((now - choice.at) < (PhantomHunterStrategy.CHOICE_TTL / 2))
 				{
@@ -3269,7 +3556,14 @@ public class PhantomHunterManager
 		{
 			return;
 		}
-		if (!strategyOn(now))
+		// Самопроверка NEAR: по сценарию проверяемый сам не думает (шаги — в {@link #nearTest}); потом думают настоящие мозги, и без живых игроков.
+		final boolean nearFree = (_nearTest == hunter) && (_nearFreeUntil > 0);
+		if ((_nearTest == hunter) && !nearFree)
+		{
+			hunter.nextThink = now + NEAR_TEST_GAP;
+			return;
+		}
+		if (!strategyOn(now) && !(nearFree && PhantomChat.brainEnabled()))
 		{
 			// Без живых игроков не думает; войдёт игрок — охотники начнут думать вразнобой, а не все разом.
 			hunter.nextThink = now + Rnd.get(60000L, Math.max(60000L, PhantomHunterStrategy.nextDelay()));
@@ -3288,10 +3582,14 @@ public class PhantomHunterManager
 		}
 
 		final long focusGap = PhantomFocus.getInstance().strategyGap(player);
-		hunter.nextThink = now + (focusGap > 0 ? focusGap : PhantomHunterStrategy.nextDelay());
+		hunter.nextThink = now + (nearFree ? NEAR_TEST_THINK : focusGap > 0 ? focusGap : PhantomHunterStrategy.nextDelay());
 		hunter.thinkingSince = now;
 		final Facts facts = facts(hunter, player, now);
 		final Map<Decision, String> options = options(hunter, player, now, facts);
+		if (nearFree)
+		{
+			LOGGER.info(getClass().getSimpleName() + ": SelfTest NEAR: free phase, " + player.getName() + " asks the brain; near: " + facts.players.stream().map(other -> other.getName() + " " + (int) player.calculateDistance2D(other)).toList() + ", real players " + facts.realPlayers + ", options " + options.keySet() + (facts.choices.containsKey(Decision.PARTY) ? ", party " + facts.choices.get(Decision.PARTY) : "") + ".");
+		}
 		FakePlayerBrain.getInstance().send(PhantomHunterStrategy.request(player, hunter.template, facts, options), reply -> decided(hunter, player, facts, options, reply), () ->
 		{
 			hunter.thinkingSince = 0;
@@ -3389,9 +3687,21 @@ public class PhantomHunterManager
 		facts.deathsHour = hunter.deaths.size();
 		facts.townMinutes = (int) ((now - hunter.lastTown) / 60000);
 		facts.storeMinutes = hunter.lastStoreSession > 0 ? (int) ((now - hunter.lastStoreSession) / 60000) : -1;
-		facts.realPlayers = _realPlayers;
+		final boolean nearTest = _nearTest == hunter;
+		// «Живой» самопроверки NEAR — охотник без клиента, но мозгам проверяемого он живой игрок (иначе «живых на сервере: 0» — и мозги его не замечают).
+		facts.realPlayers = _realPlayers + (nearTest ? 1 : 0);
 		facts.goal = player.getVariables().getString(PhantomHunterStrategy.GOAL_VARIABLE, "");
 		facts.last = hunter.lastChoice;
+		// «Разум 2.0», шаг 6: живые рядом — у охотника в фокусе (и у проверяемого NEAR); событие, ради которого думает, — одно, свежее.
+		final PhantomNear.Trigger trigger = hunter.trigger;
+		hunter.trigger = null;
+		facts.trigger = (trigger != null) && ((now - trigger.at()) <= TRIGGER_TTL) ? trigger : null;
+		facts.players = nearTest || (PhantomFocus.getInstance().of(player) != null) ? PhantomNear.getInstance().players(player) : List.of();
+		if (nearTest)
+		{
+			// Мозги видят пометку и не пишут решения самопроверки ни в журнал, ни в память охотника.
+			facts.test = "near";
+		}
 		if (now < _strategyTestUntil)
 		{
 			// Самопроверка: первый ответ — мусор (откат на правила), следующие шесть — случайный вариант без модели (выполнение).
@@ -3422,7 +3732,7 @@ public class PhantomHunterManager
 		// Протокол v1: любой спот по имени ({@link #namedSpot}) — подойдёт, если он его не перерос и мобы ему не рано.
 		if (hunter.spot != null)
 		{
-			options.put(Decision.SPOT_TO, "имя спота из базы знаний; подойдёт, если мобы примерно от " + Math.max(1, player.getLevel() - 3) + " до " + (player.getLevel() + 4) + " ур.");
+			options.put(Decision.SPOT_TO, "имя спота из базы знаний; подойдёт, если мобы примерно от " + Math.max(1, player.getLevel() - 3) + " до " + (player.getLevel() + early(hunter.template)) + " ур.");
 		}
 		options.put(Decision.TOWN, MapRegionData.getInstance().getClosestTownName(player));
 		final String drop = PhantomHunterStrategy.drop(player);
@@ -3450,7 +3760,7 @@ public class PhantomHunterManager
 			}
 		}
 		final boolean shout = shoutReady(hunter, now);
-		final String party = PhantomHunterStrategy.partyChoices(partyCandidates(player));
+		final String party = PhantomHunterStrategy.partyChoices(partyCandidates(player), nearLiveFor(player));
 		if (shout || (party != null))
 		{
 			final String where = player.getLevel() >= 20 ? "крикнуть в торговый чат" : "крикнуть в общий чат рядом (торговый — с 20 ур.)";
@@ -3466,6 +3776,39 @@ public class PhantomHunterManager
 		if (raid != null)
 		{
 			options.put(Decision.RAID, raid);
+		}
+		// «Разум 2.0», шаг 6: с живыми рядом — помочь, поделить спот или позвать к себе, уступить спот, предложить вещь лавкой на месте.
+		hunter.yieldSpot = null;
+		if (!facts.players.isEmpty())
+		{
+			final PhantomNear near = PhantomNear.getInstance();
+			final String help = near.helpChoices(player, facts.players);
+			if (help != null)
+			{
+				options.put(Decision.HELP, "чем — решит игра по тому, что умеешь");
+				facts.choices.put(Decision.HELP, help);
+			}
+			final String share = near.shareChoices(player, hunter.spot, facts.players, now);
+			if (share != null)
+			{
+				options.put(Decision.SHARE, "на твоём споте — делить его " + PhantomHuntersConfig.HUNTER_SHARE_MINUTES + " мин; не на нём — шепнуть ему, где ты, и ждать 10 мин");
+				facts.choices.put(Decision.SHARE, share);
+			}
+			final HuntSpot spot = hunter.spot;
+			final List<Player> onSpot = spot == null ? List.of() : facts.players.stream().filter(other -> (PhantomNear.spotOf(other, spot) == spot) && !(player.isInParty() && (player.getParty() == other.getParty()))).toList();
+			final HuntSpot other = onSpot.isEmpty() ? null : nearestSpot(player, spot);
+			if ((other != null) && (other != spot) && !outgrown(other, player.getLevel(), hunter.template))
+			{
+				hunter.yieldSpot = other;
+				options.put(Decision.YIELD, "уйти на " + spotNote(other));
+				facts.choices.put(Decision.YIELD, PhantomHunterStrategy.nameChoices(onSpot));
+			}
+			final String trade = near.tradeChoices(player, facts.players);
+			if (trade != null)
+			{
+				options.put(Decision.TRADE, "шепнуть ему и сидеть лавкой тут " + PhantomHuntersConfig.HUNTER_TRADE_MINUTES + " мин");
+				facts.choices.put(Decision.TRADE, trade);
+			}
 		}
 		return options;
 	}
@@ -3484,12 +3827,14 @@ public class PhantomHunterManager
 		}
 
 		final int level = player.getLevel();
+		// Риск («Разум 2.0», шаг 6): выше — не больше чем на 3 уровня над собой, осторожному — на 1, рисковому — на 5.
+		final int upLimit = hunter.template.isCautious() ? CAUTIOUS_UP : hunter.template.isReckless() ? RECKLESS_UP : 3;
 		final String home = level < HOME_LEVEL ? HOME_REGIONS.get(player.getRace()) : null;
 		final List<HuntSpot> best = new ArrayList<>();
 		int bestScore = Integer.MAX_VALUE;
 		for (HuntSpot spot : HuntSpotData.getInstance().getSpots())
 		{
-			if ((spot == current) || outgrown(spot, level) || (up ? ((spot.level <= current.level) || (spot.level > (level + 3))) : ((spot.level >= current.level) || (spot.level < (level - 6)))))
+			if ((spot == current) || outgrown(spot, level, hunter.template) || (up ? ((spot.level <= current.level) || (spot.level > (level + upLimit))) : ((spot.level >= current.level) || (spot.level < (level - 6)))))
 			{
 				continue;
 			}
@@ -3525,7 +3870,7 @@ public class PhantomHunterManager
 			case SPOT_DOWN:
 			{
 				final HuntSpot target = choice.decision == Decision.SPOT_UP ? hunter.upSpot : hunter.downSpot;
-				if ((target == null) || outgrown(target, player.getLevel()))
+				if ((target == null) || outgrown(target, player.getLevel(), hunter.template))
 				{
 					refuse(hunter, choice, now, who + ": no such spot now, keeps hunting.", "этого спота уже нет в вариантах");
 					return false;
@@ -3625,6 +3970,55 @@ public class PhantomHunterManager
 					return true;
 				}
 				refuse(hunter, choice, now, who + ": wanted to lead a raid, but it is not possible any more.", "рейд уже не собрать");
+				return false;
+			}
+			case HELP:
+			{
+				// Шаг 6: чем помочь, решает сервер ({@link PhantomNear#startHelp}), итог — там, когда кончит.
+				final String why = PhantomNear.getInstance().startHelp(player, choice, now);
+				if (why != null)
+				{
+					refuse(hunter, choice, now, who + ": refused (" + why + "), keeps hunting.", why);
+				}
+				return false;
+			}
+			case SHARE:
+			{
+				final String why = PhantomNear.getInstance().share(player, hunter.spot, choice, now);
+				if (why != null)
+				{
+					refuse(hunter, choice, now, who + ": refused (" + why + "), keeps hunting.", why);
+				}
+				return false;
+			}
+			case YIELD:
+			{
+				// Живой всё ещё на его споте, и есть куда уйти (посчитано при вопросе): мысль — ему вслух, и ногами или телепортом на другой спот.
+				final Player other = PhantomNear.getInstance().find(player, choice.arg);
+				final HuntSpot target = hunter.yieldSpot;
+				final String why = other == null ? "нет такого рядом" : (hunter.spot == null) || (PhantomNear.spotOf(other, hunter.spot) != hunter.spot) ? "он не на твоём споте" : (target == null) || (target == hunter.spot) || outgrown(target, player.getLevel(), hunter.template) ? "уходить некуда" : null;
+				if (why != null)
+				{
+					refuse(hunter, choice, now, who + ": refused (" + why + "), keeps hunting.", why);
+					return false;
+				}
+
+				if (!choice.thought.isEmpty())
+				{
+					PhantomChat.getInstance().hunterSay(player, choice.thought, "near");
+				}
+				LOGGER.info(who + ": yields " + spotLabel(hunter.spot) + " to " + other.getName() + ", goes to " + spotLabel(target) + ".");
+				choice.result(true, "");
+				moveToSpot(hunter, player, target);
+				return true;
+			}
+			case TRADE:
+			{
+				final String why = PhantomNear.getInstance().trade(player, choice, now);
+				if (why != null)
+				{
+					refuse(hunter, choice, now, who + ": refused (" + why + "), keeps hunting.", why);
+				}
 				return false;
 			}
 			case AFK:
@@ -3730,8 +4124,9 @@ public class PhantomHunterManager
 		{
 			return "нет такого рядом";
 		}
-		final boolean real = !PhantomManager.getInstance().isPhantom(other);
-		if ((real && ((other.getClient() == null) || other.getClient().isDetached())) || (!real && !PhantomRelations.isHunter(other)))
+		final boolean live = other == nearLiveFor(player);
+		final boolean real = live || !PhantomManager.getInstance().isPhantom(other);
+		if ((real && !live && ((other.getClient() == null) || other.getClient().isDetached())) || (!real && !PhantomRelations.isHunter(other)))
 		{
 			return "нет такого рядом";
 		}
@@ -3795,7 +4190,8 @@ public class PhantomHunterManager
 			return false;
 		}
 
-		if (PhantomManager.getInstance().isPhantom(other))
+		// «Живой» самопроверки NEAR — путём живого игрока: окно «вступить в пати?» уходит в пустоту, ответа нет — через PARTY_INVITE_WAIT «отказал».
+		if (PhantomManager.getInstance().isPhantom(other) && (other != nearLiveFor(player)))
 		{
 			// Самопроверка MIND: позванный соглашается без броска — проверка механики.
 			final String no = PhantomHunterParty.getInstance().ask(player, other, _mindTest == hunter, now);
@@ -3918,14 +4314,14 @@ public class PhantomHunterManager
 		{
 			min = Math.min(min, spot.min);
 			max = Math.max(max, spot.max);
-			if (!outgrown(spot, level))
+			if (!outgrown(spot, level, hunter.template))
 			{
 				fit.add(spot);
 			}
 		}
 		if (fit.isEmpty())
 		{
-			why.append(level < (min - 4) ? "рано: мобы " + min + "-" + max + " ур., а ты " + level + "-го" : "перерос: мобы " + min + "-" + max + " ур., а ты " + level + "-го");
+			why.append(level < (min - early(hunter.template)) ? "рано: мобы " + min + "-" + max + " ур., а ты " + level + "-го" : "перерос: мобы " + min + "-" + max + " ур., а ты " + level + "-го");
 			return null;
 		}
 		fit.remove(hunter.spot);
@@ -3970,10 +4366,16 @@ public class PhantomHunterManager
 
 	/**
 	 * Мысль вслух в общий чат рядом — изредка ({@link PhantomHuntersConfig#HUNTER_STRATEGY_SAY_CHANCE}), только если рядом есть живой игрок и вокруг тихо ({@link PhantomQuiet}).
+	 * Шаг 6: у HELP, SHARE, YIELD и TRADE мысль — слова живому, их говорит само решение; охотник в фокусе думает чаще — и вслух вдвое реже.
 	 */
 	private static void thinkAloud(Player player, Choice choice)
 	{
-		if (choice.thought.isEmpty() || (Rnd.get(100) >= PhantomHuntersConfig.HUNTER_STRATEGY_SAY_CHANCE))
+		if ((choice.decision == Decision.HELP) || (choice.decision == Decision.SHARE) || (choice.decision == Decision.YIELD) || (choice.decision == Decision.TRADE))
+		{
+			return;
+		}
+		final int chance = PhantomFocus.getInstance().of(player) != null ? PhantomHuntersConfig.HUNTER_STRATEGY_SAY_CHANCE / 2 : PhantomHuntersConfig.HUNTER_STRATEGY_SAY_CHANCE;
+		if (choice.thought.isEmpty() || (Rnd.get(100) >= chance))
 		{
 			return;
 		}
@@ -4287,6 +4689,411 @@ public class PhantomHunterManager
 		return true;
 	}
 
+	/**
+	 * Пара для самопроверки NEAR: проверяемый — охотник на споте без пати (лучше с ресом, хил или бафер, где рядом нет агрессивных мобов — для TRADE), и «живой» —
+	 * другой охотник на каче без пати, не враг, ближайший по уровню (не дальше 10).
+	 * @return {проверяемый, «живой»} или {@code null}
+	 */
+	private Hunter[] nearTestPair()
+	{
+		// Проверяемым берём только того, у кого есть «живой» рядом по уровню: иначе сильный хилер с ресом без пары перекрывал всех.
+		Hunter[] pair = null;
+		int bestScore = -1;
+		for (Hunter hunter : _hunters.values())
+		{
+			final Player player = PhantomManager.getInstance().getPhantom(hunter.template);
+			if ((player == null) || (hunter.phase != Phase.HUNT) || (hunter.spot == null) || player.isDead() || player.isInParty() || (player.getLevel() < 10) || PhantomEvents.getInstance().isBusy(player) || (PhantomRaid.getInstance().raidOf(player) != null))
+			{
+				continue;
+			}
+			final boolean calm = World.getFirstVisibleObject(player, Monster.class, monster -> !monster.isDead() && monster.isAggressive() && (player.calculateDistance2D(monster) < 1500)) == null;
+			final PhantomTemplate.Role role = hunter.template.getRole();
+			final int score = (player.getKnownSkill(PhantomNeighbors.RESURRECTION) != null ? 8 : 0) + ((role == PhantomTemplate.Role.HEALER) || (role == PhantomTemplate.Role.BUFFER) ? 4 : 0) + (calm ? 3 : 0) + (player.getLevel() >= 20 ? 2 : 0);
+			if ((score < bestScore) || ((score == bestScore) && (Rnd.get(3) != 0)))
+			{
+				continue;
+			}
+			final Hunter live = nearTestLive(hunter, player);
+			if (live != null)
+			{
+				pair = new Hunter[]
+				{
+					hunter,
+					live
+				};
+				bestScore = score;
+			}
+		}
+		return pair;
+	}
+
+	/**
+	 * «Живой» для самопроверки NEAR: охотник на охоте, не в пати, не на ивенте и не в рейде, не враг проверяемому, ближе всех по уровню (не дальше 10).
+	 */
+	private Hunter nearTestLive(Hunter subject, Player player)
+	{
+		Hunter live = null;
+		int bestGap = Integer.MAX_VALUE;
+		for (Hunter hunter : _hunters.values())
+		{
+			final Player other = hunter == subject ? null : PhantomManager.getInstance().getPhantom(hunter.template);
+			if ((other == null) || (hunter.phase != Phase.HUNT) || other.isDead() || other.isInParty() || PhantomEvents.getInstance().isBusy(other) || (PhantomRaid.getInstance().raidOf(other) != null) || PhantomRelations.getInstance().isEnemy(player, other))
+			{
+				continue;
+			}
+			final int gap = Math.abs(other.getLevel() - player.getLevel());
+			if ((gap <= 10) && (gap < bestGap))
+			{
+				live = hunter;
+				bestGap = gap;
+			}
+		}
+		return live;
+	}
+
+	/**
+	 * Самопроверка шага 6 без клиента ({@code HuntersSelfTest = NEAR}): «живого» играет охотник ({@link PhantomNear#testPlayer}) — его приводят на спот проверяемого, и тот получает
+	 * ответы по сценарию: SHARE на своём споте; HELP с хилом (у «живого» 30 % HP); HELP с ресом (его убивает моб рядом); HELP с бафами; HELP тому, кого нет; TRADE вещи, которой нет;
+	 * TRADE вещи из сумки по цене впятеро выше магазинной (сервер зажмёт до втрое); [[PRICE]] из ответа мозгов разговора; лавку закрыли; YIELD — и «живой» приходит к нему на новый спот
+	 * (событие ARRIVED). Потом {@value #NEAR_TEST_FREE} мс думают настоящие мозги ({@code "test":"near"}: без журнала и памяти). Каждый запрос, событие и итог — в лог с пометкой SelfTest NEAR.
+	 */
+	private void nearSelfTest()
+	{
+		final Hunter[] pair = nearTestPair();
+		final Player player = pair != null ? PhantomManager.getInstance().getPhantom(pair[0].template) : null;
+		final Player live = pair != null ? PhantomManager.getInstance().getPhantom(pair[1].template) : null;
+		if ((player == null) || (live == null))
+		{
+			LOGGER.info(getClass().getSimpleName() + ": SelfTest NEAR: no pair of hunters to test with.");
+			return;
+		}
+
+		final long now = System.currentTimeMillis();
+		final Hunter subject = pair[0];
+		final Hunter other = pair[1];
+		stop(live);
+		other.spot = subject.spot;
+		other.roams = 0;
+		other.lastActive = now;
+		other.spotSince = now;
+		other.spotExp = live.getExp();
+		other.nextThink = now + 3600000;
+		other.choice = null;
+		live.teleToLocation(new Location(player.getX(), player.getY(), player.getZ()), true);
+		PhantomNear.getInstance().testPlayer(live);
+		_nearTest = subject;
+		_nearLive = other;
+		_nearStep = 0;
+		_nearStarted = now;
+		_nearNext = now + 5000;
+		_nearFreeUntil = 0;
+		subject.nextThink = now + NEAR_TEST_GAP;
+		final PhantomTemplate template = subject.template;
+		LOGGER.info(getClass().getSimpleName() + ": SelfTest NEAR: " + player.getName() + " (" + player.getLevel() + " " + template.getRole() + ", " + spotLabel(subject.spot) + ", res " + (player.getKnownSkill(PhantomNeighbors.RESURRECTION) != null) + ") meets «live» " + live.getName() + " (" + live.getLevel() + ") brought to his spot.");
+		LOGGER.info(getClass().getSimpleName() + ": SelfTest NEAR: risk of " + player.getName() + " " + template.getRisk() + (template.isCautious() ? " (cautious)" : template.isReckless() ? " (reckless)" : "") + ": spot early from +" + early(template) + " levels, SPOT_UP up to +" + (template.isCautious() ? CAUTIOUS_UP : template.isReckless() ? RECKLESS_UP : 3) + ", rests below " + (int) (100 * (template.isCautious() ? CAUTIOUS_REST_HP : template.isReckless() ? RECKLESS_REST_HP : 0.45)) + "% HP, town below " + (int) (100 * (template.isCautious() ? CAUTIOUS_SUPPLIES : template.isReckless() ? RECKLESS_SUPPLIES : 0.2)) + "% supplies" + (template.isCautious() ? ", leaves for weaker mobs after " + CAUTIOUS_DEATHS + " deaths within an hour" : "") + ".");
+	}
+
+	/**
+	 * Самопроверка NEAR, шаг сценария (из {@link #near}): шаг — когда прошлое решение выполнено и он не помогает и не сидит в лавке (кроме шагов с лавкой). Ответ — как от мозгов ({@link #decided}).
+	 */
+	private void nearTest(Hunter hunter, Player player, long now)
+	{
+		final Hunter liveHunter = _nearLive;
+		final Player live = liveHunter != null ? PhantomManager.getInstance().getPhantom(liveHunter.template) : null;
+		if ((live == null) || ((_nearFreeUntil > 0) && (now >= _nearFreeUntil)))
+		{
+			nearTestDone(hunter, player, live == null ? "the «live» player left the world" : "the free phase is over");
+			return;
+		}
+		// «Живой» сам не думает и качается на споте проверяемого.
+		liveHunter.nextThink = now + 3600000;
+		liveHunter.choice = null;
+		final PhantomNear near = PhantomNear.getInstance();
+		final int step = _nearStep;
+		if ((_nearFreeUntil > 0) || (now < _nearNext) || (hunter.choice != null) || (near.busy(player) && (step != 7) && (step != 8)))
+		{
+			return;
+		}
+
+		final String name = live.getName();
+		String reply = null;
+		switch (step)
+		{
+			case 0:
+			{
+				// «Живой» должен быть рядом: в его пределах фокуса и в прямой видимости.
+				if (!near.players(player).contains(live))
+				{
+					if ((now - _nearStarted) > NEAR_TEST_MEET)
+					{
+						nearTestDone(hunter, player, live.getName() + " is not near after " + (NEAR_TEST_MEET / 1000) + " s (" + (int) player.calculateDistance2D(live) + ")");
+					}
+					return;
+				}
+				LOGGER.info(getClass().getSimpleName() + ": SelfTest NEAR: " + name + " is near " + player.getName() + " (" + (int) player.calculateDistance2D(live) + "), focus " + PhantomFocus.getInstance().of(player) + ".");
+				reply = "[[SHARE " + name + "]] бей своих, я своих — места хватит";
+				break;
+			}
+			case 1:
+			{
+				live.setCurrentHp(live.getMaxHp() * 0.3);
+				reply = "[[HELP " + name + "]] держись, подлечу";
+				break;
+			}
+			case 2:
+			{
+				// Его убивает моб рядом — ресать, если есть чем; нет — отказ «нет реса».
+				final Monster mob = World.getVisibleObjectsInRange(live, Monster.class, 3000).stream().filter(monster -> !monster.isDead()).findFirst().orElse(null);
+				if ((mob != null) && !live.isDead())
+				{
+					live.reduceCurrentHp(live.getCurrentHp() + 1, mob, null);
+				}
+				LOGGER.info(getClass().getSimpleName() + ": SelfTest NEAR: " + name + (live.isDead() ? " is killed by " + (mob != null ? mob.getName() : "?") : " is alive (no mob nearby)") + ".");
+				reply = "[[HELP " + name + "]] лежи, щас подниму";
+				break;
+			}
+			case 3:
+			{
+				reply = "[[HELP " + name + "]] на, бафы";
+				break;
+			}
+			case 4:
+			{
+				reply = "[[HELP Нет Такого]] помогу";
+				break;
+			}
+			case 5:
+			{
+				reply = "[[TRADE " + name + "; Нет Такой Вещи; 1000]] продам";
+				break;
+			}
+			case 6:
+			{
+				List<Item> goods = PhantomNear.tradeGoods(player);
+				if (goods.isEmpty())
+				{
+					PhantomCompat.addItem(player, ItemProcessType.REWARD, NEAR_TEST_ITEM, 1, null);
+					goods = PhantomNear.tradeGoods(player);
+					LOGGER.info(getClass().getSimpleName() + ": SelfTest NEAR: nothing to offer, " + player.getName() + " gets item " + NEAR_TEST_ITEM + ".");
+				}
+				final Item item = goods.isEmpty() ? null : goods.get(0);
+				reply = item == null ? "[[HUNT]] продать нечего" : "[[TRADE " + name + "; " + item.getName() + "; " + (item.getTemplate().getReferencePrice() * 5) + "]] отдам " + item.getName() + ", лавка тут";
+				break;
+			}
+			case 7:
+			{
+				// Мозги разговора сторговались: цена из [[PRICE N]] — тому, кому лавка; чужому — нет (-1).
+				final StringBuilder trade = new StringBuilder();
+				near.tradeJson(trade, player, live, now);
+				final long current = trade.length() > 0 ? Long.parseLong(trade.toString().replaceAll(".*\"price\":(\\d+).*", "$1")) : 1000;
+				final String answer = "ну ладно, уступлю [[PRICE " + ((current * 2) / 3) + "]]";
+				final long tagged = PhantomChat.priceTag(answer);
+				final long set = near.price(player, live, tagged);
+				final long stranger = near.price(player, player, tagged);
+				final StringBuilder after = new StringBuilder();
+				near.tradeJson(after, player, live, now);
+				LOGGER.info(getClass().getSimpleName() + ": SelfTest NEAR: PRICE «" + answer + "» -> tag " + tagged + ", set for " + name + ": " + set + ", for a stranger: " + stranger + "; trade " + (after.length() > 0 ? after : "(no store)") + ".");
+				_nearStep++;
+				_nearNext = now + NEAR_TEST_GAP;
+				return;
+			}
+			case 8:
+			{
+				// Лавку закрыли (живой так и не купил): итог «лавку закрыли».
+				if (player.getPrivateStoreType() == PrivateStoreType.SELL)
+				{
+					player.setPrivateStoreType(PrivateStoreType.NONE);
+					player.broadcastUserInfo();
+					LOGGER.info(getClass().getSimpleName() + ": SelfTest NEAR: the store of " + player.getName() + " is closed from outside.");
+				}
+				_nearStep++;
+				_nearNext = now + 5000;
+				return;
+			}
+			case 9:
+			{
+				reply = "[[YIELD " + name + "]] ладно, занимай, я на другой";
+				break;
+			}
+			case 10:
+			{
+				// Ушёл по YIELD — «живой» приходит к нему на новый спот (событие ARRIVED), дальше думают настоящие мозги.
+				final boolean there = (hunter.spot != null) && (PhantomNear.spotOf(player, hunter.spot) == hunter.spot) && !player.isMoving();
+				if (!there && ((now - _nearNext) < NEAR_TEST_YIELD))
+				{
+					return;
+				}
+				stop(live);
+				liveHunter.spot = hunter.spot;
+				liveHunter.spotSince = now;
+				liveHunter.spotExp = live.getExp();
+				live.teleToLocation(new Location(player.getX(), player.getY(), player.getZ()), true);
+				_nearStep++;
+				_nearFreeUntil = now + NEAR_TEST_FREE;
+				hunter.nextThink = now + 5000;
+				LOGGER.info(getClass().getSimpleName() + ": SelfTest NEAR: " + name + " comes to " + player.getName() + " at " + spotLabel(hunter.spot) + (there ? "" : " (he did not reach it)") + "; real brains think for " + (NEAR_TEST_FREE / 1000) + " s" + (PhantomChat.brainEnabled() ? "." : ", but the brain is off."));
+				return;
+			}
+			default:
+			{
+				return;
+			}
+		}
+
+		_nearStep++;
+		_nearNext = now + NEAR_TEST_GAP;
+		final Facts facts = facts(hunter, player, now);
+		final Map<Decision, String> options = options(hunter, player, now, facts);
+		// Отказы проверяются и там, где варианта сейчас нет: тег сценария — в варианты, иначе ответ был бы мусором.
+		final Matcher tag = Pattern.compile("\\[\\[([A-Z_]+)").matcher(reply);
+		if (tag.find())
+		{
+			options.putIfAbsent(Decision.valueOf(tag.group(1)), "самопроверка NEAR");
+		}
+		LOGGER.info(getClass().getSimpleName() + ": SelfTest NEAR: step " + _nearStep + ", request: " + PhantomHunterStrategy.request(player, hunter.template, facts, options));
+		LOGGER.info(getClass().getSimpleName() + ": SelfTest NEAR: step " + _nearStep + ", reply: " + reply);
+		decided(hunter, player, facts, options, reply);
+	}
+
+	/**
+	 * @return охотник — проверяемый или «живой» идущей самопроверки NEAR: их не зовут в рейды и пати, сами они пати не собирают
+	 */
+	private boolean inNearTest(Hunter hunter)
+	{
+		return (_nearTest != null) && ((hunter == _nearTest) || (hunter == _nearLive));
+	}
+
+	/**
+	 * Самопроверка NEAR: «живой» держится рядом с проверяемым — бьёт мобов AutoPlay и никуда не уходит. Убили — лежит и ждёт реса, как живой, рес принимает;
+	 * не подняли за {@value #NEAR_TEST_DEAD} мс — встаёт на месте. Отстал дальше фокуса от проверяемого, который стоит на своём споте (в свободной фазе — где бы
+	 * тот ни был), — его приводят к проверяемому: прогон H5 2026-10-26 — проверяемый погиб, ушёл через город на другой спот, и полчаса шагов шли без «живого».
+	 * @return {@code true} — остальной тик «живому» не нужен
+	 */
+	private boolean nearLive(Hunter hunter, Player player, long now)
+	{
+		final Hunter subjectHunter = _nearTest;
+		final Player subject = subjectHunter != null ? PhantomManager.getInstance().getPhantom(subjectHunter.template) : null;
+		if (subject == null)
+		{
+			return false;
+		}
+		if (player.isDead())
+		{
+			// Общий «соглашаемся на рес» в think() до «живого» не доходит — тик кончается здесь.
+			if (player.isReviveRequested())
+			{
+				player.reviveAnswer(1);
+				hunter.deadSince = 0;
+				PhantomRelations.getInstance().revived(player);
+				LOGGER.info(getClass().getSimpleName() + ": SelfTest NEAR: " + player.getName() + " accepts the resurrection.");
+				return true;
+			}
+			if (hunter.deadSince == 0)
+			{
+				hunter.deadSince = now;
+			}
+			if ((now - hunter.deadSince) > NEAR_TEST_DEAD)
+			{
+				hunter.deadSince = 0;
+				player.doRevive();
+				player.setCurrentHp(player.getMaxHp());
+				LOGGER.info(getClass().getSimpleName() + ": SelfTest NEAR: " + player.getName() + " was not revived in " + (NEAR_TEST_DEAD / 1000) + " s, gets up.");
+			}
+			return true;
+		}
+		hunter.deadSince = 0;
+		if (player.isTeleporting())
+		{
+			return true;
+		}
+		final boolean settled = (subjectHunter.phase == Phase.HUNT) && (subjectHunter.spot != null) && (subjectHunter.walkBackUntil == 0) && (subjectHunter.gatekeeperSpot == null) && !subject.isMoving() && !subject.isTeleporting() && !subject.isDead() && (PhantomNear.spotOf(subject, subjectHunter.spot) == subjectHunter.spot);
+		if (((_nearFreeUntil > 0) || settled) && (player.calculateDistance2D(subject) > PhantomFocus.NEAR_RANGE))
+		{
+			stop(player);
+			if (settled)
+			{
+				hunter.spot = subjectHunter.spot;
+				hunter.spotSince = now;
+				hunter.spotExp = player.getExp();
+			}
+			player.teleToLocation(new Location(subject.getX(), subject.getY(), subject.getZ()), true);
+			LOGGER.info(getClass().getSimpleName() + ": SelfTest NEAR: " + player.getName() + " fell behind " + subject.getName() + (settled ? " (at " + spotLabel(subjectHunter.spot) + ")" : "") + ", brought back.");
+			return true;
+		}
+		if (!player.isAutoPlaying())
+		{
+			AutoPlayTaskManager.getInstance().startAutoPlay(player);
+			AutoUseTaskManager.getInstance().startAutoUseTask(player);
+		}
+		return true;
+	}
+
+	/**
+	 * Самопроверка {@code HuntersSelfTest = SEASONAL} (раздел 4.34), только на копии базы: охотник сильнее всех в мире (не в пати, не на ивенте) с 12 кк адены —
+	 * у NPC каждого идущего события, где охотник умеет больше, чем постоять (мастер Йоги, помощник Санты; Санте — украшения на 12 ёлок и билет на оружие),
+	 * четыре визита подряд ({@link PhantomSeasonal#act}). Каждый визит и что у него по событию, адена и оружие — в лог с пометкой SelfTest SEASONAL.
+	 */
+	private void seasonalSelfTest()
+	{
+		Player player = null;
+		for (Hunter hunter : _hunters.values())
+		{
+			final Player candidate = PhantomManager.getInstance().getPhantom(hunter.template);
+			if ((candidate != null) && !candidate.isDead() && !candidate.isInParty() && !PhantomEvents.getInstance().isBusy(candidate) && ((player == null) || (candidate.getLevel() > player.getLevel())))
+			{
+				player = candidate;
+			}
+		}
+		if (player == null)
+		{
+			LOGGER.info(getClass().getSimpleName() + ": SelfTest SEASONAL: no hunter in the world.");
+			return;
+		}
+		final long topUp = 12000000 - player.getAdena();
+		if (topUp > 0)
+		{
+			PhantomCompat.addAdena(player, ItemProcessType.REWARD, topUp, null, false);
+		}
+		final PhantomTemplate template = PhantomData.getInstance().getTemplate(player.getName());
+		LOGGER.info(getClass().getSimpleName() + ": SelfTest SEASONAL: " + player.getName() + " (" + player.getLevel() + ", risk " + (template != null ? template.getRisk() : 1) + ", weapon " + (player.getActiveWeaponItem() != null ? player.getActiveWeaponItem().getName() : "none") + "), " + player.getAdena() + " adena" + (topUp > 0 ? " (+" + topUp + ")" : "") + ".");
+		for (String event : List.of("MasterOfEnchanting", "SavingSanta"))
+		{
+			final Npc npc = PhantomSeasonal.anyEventNpc(event);
+			if (npc == null)
+			{
+				LOGGER.info(getClass().getSimpleName() + ": SelfTest SEASONAL: " + event + " is not running.");
+				continue;
+			}
+			PhantomSeasonal.testSupplies(player, event);
+			LOGGER.info(getClass().getSimpleName() + ": SelfTest SEASONAL: " + event + " at " + npc.getName() + ": " + PhantomSeasonal.testState(player, event) + ".");
+			for (int visit = 1; visit <= 4; visit++)
+			{
+				final String done = PhantomSeasonal.act(player, npc);
+				LOGGER.info(getClass().getSimpleName() + ": SelfTest SEASONAL: " + event + ", visit " + visit + ": " + (done != null ? done : "nothing") + "; " + PhantomSeasonal.testState(player, event) + ", " + player.getAdena() + " adena, weapon " + (player.getActiveWeaponItem() != null ? player.getActiveWeaponItem().getName() : "none") + ".");
+			}
+		}
+	}
+
+	private void nearTestDone(Hunter hunter, Player player, String why)
+	{
+		final long now = System.currentTimeMillis();
+		if (player != null)
+		{
+			final Facts facts = facts(hunter, player, now);
+			LOGGER.info(getClass().getSimpleName() + ": SelfTest NEAR: done (" + why + "), request after the scenario: " + PhantomHunterStrategy.request(player, hunter.template, facts, options(hunter, player, now, facts)));
+		}
+		final Hunter live = _nearLive;
+		if (live != null)
+		{
+			live.nextThink = now + Rnd.get(60000L, Math.max(60000L, PhantomHunterStrategy.nextDelay()));
+		}
+		PhantomNear.getInstance().testPlayer(null);
+		_nearTest = null;
+		_nearLive = null;
+		_nearFreeUntil = 0;
+		hunter.nextThink = now + Rnd.get(60000L, Math.max(60000L, PhantomHunterStrategy.nextDelay()));
+	}
+
 	// ---------- ПвП ----------
 
 	/**
@@ -4367,6 +5174,75 @@ public class PhantomHunterManager
 	 */
 	void startBrawl(Player player, Player enemy, String why)
 	{
+		engage(player, enemy, "BRAWL", "ты больше не можешь терпеть " + describe(enemy) + ": " + why + ". Ты на него нападаешь — скажи это ему в лицо", "всё, достал!", why);
+	}
+
+	/**
+	 * Война кланов ({@link PhantomClanWars}, {@link PhantomBrawl#warProvoked} решил): как махач, но повод — война. Враг по войне атакуем и без флага,
+	 * поэтому зачинщик не отходит, если тот не ответил ({@link #fight}).
+	 * @param player зачинщик
+	 * @param enemy враг из враждующего клана
+	 * @param enemyClan его клан
+	 */
+	void startWarFight(Player player, Player enemy, String enemyClan)
+	{
+		engage(player, enemy, "WAR_FIGHT", "твой клан воюет с кланом «" + enemyClan + "», а рядом " + describe(enemy) + " из этого клана. Ты нападаешь — скажи ему что-нибудь", Rnd.nextBoolean() ? "за клан!" : "о, " + enemyClan + ". ну держись", "clan war with " + enemyClan);
+	}
+
+	/**
+	 * Война с кланом игрока (раздел 4.50, этап 4): на одного живого нападают не больше {@code HunterClanWarPlayerAttackers} разом.
+	 * @return охотников, которые сейчас дерутся с ним (напали сами или отвечают)
+	 */
+	int attackers(Player target)
+	{
+		int count = 0;
+		for (Hunter hunter : _hunters.values())
+		{
+			if (hunter.enemyId == target.getObjectId())
+			{
+				count++;
+			}
+		}
+		return count;
+	}
+
+	/**
+	 * Самопроверка CLANWARPLAYER: спот другого охотника охотнику по уровню — перейдя на него, он там и останется (перерос — тик уведёт на другой).
+	 */
+	boolean fitsSpot(Player player, Player as)
+	{
+		final Hunter other = _hunters.get(as.getName().toLowerCase());
+		return (other != null) && (other.spot != null) && !outgrown(other.spot, player.getLevel());
+	}
+
+	/**
+	 * Самопроверка CLANWARPLAYER: охотник переходит на спот другого охотника, иначе тик «далеко от спота» вернёт его телепортом.
+	 * @return перешёл
+	 */
+	boolean sameSpot(Player player, Player as)
+	{
+		final Hunter hunter = _hunters.get(player.getName().toLowerCase());
+		final Hunter other = _hunters.get(as.getName().toLowerCase());
+		if ((hunter == null) || (other == null) || (other.spot == null))
+		{
+			return false;
+		}
+		hunter.spot = other.spot;
+		hunter.walkBackUntil = 0;
+		return true;
+	}
+
+	/**
+	 * @return охотник сейчас дерётся с этим игроком (самопроверка CLANWARPLAYER)
+	 */
+	boolean isFighting(Player player, Player enemy)
+	{
+		final Hunter hunter = _hunters.get(player.getName().toLowerCase());
+		return (hunter != null) && (hunter.enemyId == enemy.getObjectId());
+	}
+
+	private void engage(Player player, Player enemy, String kind, String what, String fallback, String why)
+	{
 		final Hunter hunter = _hunters.get(player.getName().toLowerCase());
 		if (hunter == null)
 		{
@@ -4387,7 +5263,7 @@ public class PhantomHunterManager
 		player.getAI().setIntentionAttack(enemy);
 		if (PhantomBanter.audience(player))
 		{
-			PhantomChat.getInstance().hunterEvent(player, enemy, "BRAWL", "ты больше не можешь терпеть " + describe(enemy) + ": " + why + ". Ты на него нападаешь — скажи это ему в лицо", "всё, достал!", 600000);
+			PhantomChat.getInstance().hunterEvent(player, enemy, kind, what, fallback, 600000);
 		}
 		LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " attacks " + enemy.getName() + " (" + why + ").");
 	}
@@ -4474,6 +5350,8 @@ public class PhantomHunterManager
 			return;
 		}
 		final Player enemy = actingPlayer(killer);
+		// Война кланов (раздел 4.50): счёт стороне убийцы.
+		PhantomClanWars.getInstance().onKill(player, enemy);
 		// Убил живой игрок или охотник в махаче (патч 0037).
 		final boolean hunterEnemy = (enemy != null) && PhantomRelations.isHunter(enemy);
 		if ((enemy == null) || (enemy == player) || (PhantomManager.getInstance().isPhantom(enemy) && !hunterEnemy))
@@ -4505,8 +5383,10 @@ public class PhantomHunterManager
 		final boolean hunterEnemy = (enemy != null) && PhantomRelations.isHunter(enemy);
 
 		// Махач (патч 0037): страх ПК. Зачинщик бьёт только того, кто ответил и флагнулся; не ответил за GRACE или почти мёртв без флага — отойти, белого не добивать.
+		// Враг по войне кланов (раздел 4.50) — не белый: Mobius даёт бить его без флага и кармы.
 		final boolean grace = hunter.brawlAggressor && ((now - hunter.brawlSince) < PhantomBrawl.GRACE);
-		if (!gone && hunter.brawlAggressor && !hunter.revenge && !enemy.isDead() && (enemy.getPvpFlag() == 0) && (!grace || (enemy.getCurrentHp() < (enemy.getMaxHp() * 0.4))))
+		final boolean war = !gone && PhantomClanWars.getInstance().atWar(player, enemy);
+		if (!gone && !war && hunter.brawlAggressor && !hunter.revenge && !enemy.isDead() && (enemy.getPvpFlag() == 0) && (!grace || (enemy.getCurrentHp() < (enemy.getMaxHp() * 0.4))))
 		{
 			player.abortAttack();
 			player.getAI().setIntentionActive();
@@ -4527,6 +5407,11 @@ public class PhantomHunterManager
 			}
 			else if ((enemy != null) && enemy.isDead() && !gone && (!hunterEnemy || PhantomBanter.audience(player)))
 			{
+				// Живого врага по войне кланов счёт берёт здесь; охотника — его собственная смерть (onKilled).
+				if (!hunterEnemy)
+				{
+					PhantomClanWars.getInstance().onKill(enemy, player);
+				}
 				PhantomChat.getInstance().hunterEvent(player, enemy, "WON", hunter.brawlAggressor ? "ты завалил " + enemy.getName() + " в махаче" : "ты завалил " + enemy.getName() + ", который на тебя напал", "изи)", 180000);
 			}
 			endFight(hunter, player);
@@ -4662,7 +5547,25 @@ public class PhantomHunterManager
 	{
 		final Hunter hunter = _hunters.get(player.getName().toLowerCase());
 		// Ждёт дуэли или дерётся на ней (раздел 4.40) — не на каче: в пати, рейд и махач его не звать (прогон H5 2026-10-22: принявших вызов разобрали в пати охотников).
-		return (hunter != null) && (hunter.phase == Phase.HUNT) && (hunter.enemyId == 0) && (hunter.spot != null) && !player.isDead() && !PhantomDuel.getInstance().isBusy(player);
+		// Пара самопроверки NEAR — тоже не звать: прогон 2026-10-26 — проверяемого увёл рейд посреди YIELD.
+		return (hunter != null) && (hunter.phase == Phase.HUNT) && (hunter.enemyId == 0) && (hunter.spot != null) && !player.isDead() && !PhantomDuel.getInstance().isBusy(player) && !inNearTest(hunter);
+	}
+
+	/**
+	 * Самопроверка NEAR (раздел 4.3): «живой» — охотник без клиента, но мозгам проверяемого и его {@code [[PARTY имя]]} он живой игрок —
+	 * в выборе PARTY {@code real:true}, позвать — окном «вступить в пати?», как настоящего (прогон 2026-10-26: «живого» в выборе не было — пару NEAR {@link #isHunting} не зовёт).
+	 * @param player охотник
+	 * @return «живой», если {@code player} — проверяемый NEAR; иначе {@code null}
+	 */
+	private Player nearLiveFor(Player player)
+	{
+		final Hunter subject = _nearTest;
+		final Hunter live = _nearLive;
+		if ((subject == null) || (live == null) || (PhantomManager.getInstance().getPhantom(subject.template) != player))
+		{
+			return null;
+		}
+		return PhantomManager.getInstance().getPhantom(live.template);
 	}
 
 	/**
@@ -4732,11 +5635,13 @@ public class PhantomHunterManager
 	// ---------- На споте ----------
 
 	/**
-	 * Отдых сидя: HP ниже 45 % или MP ниже 15 % (маг — ниже 30 %: держит ману на бой, раздел 4.38), рядом никто не бьёт — сесть; встать при 95 % HP и 90 % MP или при опасности.
+	 * Отдых сидя: HP ниже 45 % (осторожный — ниже 60 %, рисковый — ниже 25 %, «Разум 2.0», шаг 6) или MP ниже 15 % (маг — ниже 30 %: держит ману на бой, раздел 4.38),
+	 * рядом никто не бьёт — сесть; встать при 95 % HP и 90 % MP или при опасности.
 	 * @return {@code true}, если отдыхает
 	 */
-	private static boolean rest(Player player)
+	private static boolean rest(Player player, PhantomTemplate template)
 	{
+		final double restHp = template.isCautious() ? CAUTIOUS_REST_HP : template.isReckless() ? RECKLESS_REST_HP : 0.45;
 		final double hp = player.getCurrentHp() / Math.max(1, player.getMaxHp());
 		final double mp = player.getCurrentMp() / Math.max(1, player.getMaxMp());
 		final boolean danger = inDanger(player);
@@ -4749,7 +5654,7 @@ public class PhantomHunterManager
 			return true;
 		}
 
-		if (((hp < 0.45) || (mp < (PhantomHunterOutfit.isCaster(player) ? 0.3 : 0.15))) && !danger && !player.isAttackingNow() && !player.isCastingNow())
+		if (((hp < restHp) || (mp < (PhantomHunterOutfit.isCaster(player) ? 0.3 : 0.15))) && !danger && !player.isAttackingNow() && !player.isCastingNow())
 		{
 			player.setTarget(null);
 			player.abortAttack();

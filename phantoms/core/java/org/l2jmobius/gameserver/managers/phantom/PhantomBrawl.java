@@ -34,6 +34,10 @@ public class PhantomBrawl
 	static final long GRACE = 6000;
 	/** Зритель — живой игрок не дальше этого. */
 	private static final int WITNESS = 2000;
+	/** Война кланов ({@link PhantomClanWars}): та же пара охотников лезет в драку не чаще, мс. */
+	private static final long WAR_PAIR_GAP = 600000;
+	/** Война кланов: шанс полезть в драку при встрече, %. */
+	private static final int WAR_CHANCE = 50;
 
 	/** Пара (меньший objectId, больший) → не драться до. */
 	private final Map<Long, Long> _pairNext = new ConcurrentHashMap<>();
@@ -70,7 +74,7 @@ public class PhantomBrawl
 			return false;
 		}
 
-		final String refusal = refusal(angry, other);
+		final String refusal = refusal(angry, other, PhantomHuntersConfig.HUNTER_BRAWL_WITNESS);
 		if (refusal != null)
 		{
 			return false;
@@ -87,11 +91,122 @@ public class PhantomBrawl
 	}
 
 	/**
-	 * Оценка: почему сейчас не драться (или {@code null} — можно). Главное — второй должен ответить, а не умереть белым.
+	 * Война кланов ({@link PhantomClanWars}): охотники враждующих кланов встретились. Как махач, но повод — война, а не обида: оценка та же
+	 * ({@link #refusal}), зритель нужен, только если {@code HunterClanWarWitness}; та же пара — не чаще {@value #WAR_PAIR_GAP} мс, шанс {@value #WAR_CHANCE} %.
+	 * @param angry кто нападает
+	 * @param other на кого
+	 * @param enemyClan клан врага — для угрозы вслух
+	 * @param now текущее время
+	 * @return драка началась
 	 */
-	private static String refusal(Player angry, Player other)
+	public boolean warProvoked(Player angry, Player other, String enemyClan, long now)
 	{
-		if (PhantomHuntersConfig.HUNTER_BRAWL_WITNESS && (World.getFirstVisibleObject(angry, Player.class, p -> !PhantomManager.getInstance().isPhantom(p) && !p.isInvisible() && (angry.calculateDistance2D(p) < WITNESS)) == null))
+		if (!PhantomRelations.isHunter(angry) || !PhantomRelations.isHunter(other))
+		{
+			return false;
+		}
+		final long pair = pair(angry, other);
+		if (now < _pairNext.getOrDefault(pair, 0L))
+		{
+			return false;
+		}
+		final String refusal = refusal(angry, other, PhantomHuntersConfig.HUNTER_CLAN_WAR_WITNESS);
+		if (refusal != null)
+		{
+			return false;
+		}
+
+		_pairNext.put(pair, now + WAR_PAIR_GAP);
+		final boolean yes = Rnd.get(100) < WAR_CHANCE;
+		LOGGER.info(getClass().getSimpleName() + ": " + angry.getName() + " -> " + other.getName() + " (война с кланом " + enemyClan + ") — " + (yes ? "в бой." : "разошлись."));
+		if (yes)
+		{
+			PhantomHunterManager.getInstance().startWarFight(angry, other, enemyClan);
+		}
+		return yes;
+	}
+
+	/**
+	 * Война с кланом игрока ({@link PhantomClanWars}, этап 4): охотник встретил живого из клана, с которым воюет его клан. Оценка — своя
+	 * ({@link #livingRefusal}): зритель не нужен — игрок сам здесь; та же пара — не чаще {@value #WAR_PAIR_GAP} мс, шанс {@value #WAR_CHANCE} %.
+	 * Сколько охотников разом на одного — считает {@link PhantomClanWars}.
+	 * @param angry охотник
+	 * @param other живой игрок из враждующего клана
+	 * @param enemyClan его клан — для угрозы вслух
+	 * @param now текущее время
+	 * @param sure без броска (самопроверка)
+	 * @return драка началась
+	 */
+	public boolean warOnLiving(Player angry, Player other, String enemyClan, long now, boolean sure)
+	{
+		if (!PhantomRelations.isHunter(angry))
+		{
+			return false;
+		}
+		final long pair = pair(angry, other);
+		if (now < _pairNext.getOrDefault(pair, 0L))
+		{
+			return false;
+		}
+		if (livingRefusal(angry, other) != null)
+		{
+			return false;
+		}
+
+		_pairNext.put(pair, now + WAR_PAIR_GAP);
+		final boolean yes = sure || (Rnd.get(100) < WAR_CHANCE);
+		LOGGER.info(getClass().getSimpleName() + ": " + angry.getName() + " -> " + other.getName() + " (война с кланом игрока " + enemyClan + ") — " + (yes ? "в бой." : "разошлись."));
+		if (yes)
+		{
+			PhantomHunterManager.getInstance().startWarFight(angry, other, enemyClan);
+		}
+		return yes;
+	}
+
+	/**
+	 * Оценка для войны с кланом игрока: почему охотнику сейчас не нападать на живого врага (или {@code null} — можно). Как {@link #refusal}, но
+	 * «на каче» — только охотник, а живой не занят: не в олимпиаде, ивенте и торговле; бить его без флага даёт Mobius (не академия, не «хочет мира»).
+	 */
+	static String livingRefusal(Player angry, Player other)
+	{
+		if (!PhantomHunterManager.getInstance().isHunting(angry))
+		{
+			return "охотник не на каче";
+		}
+		if (other.isDead() || other.isInvisible() || other.isInOlympiadMode() || other.isOnEvent() || other.isInStoreMode())
+		{
+			return "игрок занят";
+		}
+		if (angry.isInParty() && (angry.getParty() == other.getParty()))
+		{
+			return "в одной пати";
+		}
+		if (angry.isInsideZone(ZoneId.PEACE) || other.isInsideZone(ZoneId.PEACE) || (PhantomCompat.karma(angry) > 0))
+		{
+			return "мирная зона или карма";
+		}
+		if (!other.isAutoAttackable(angry))
+		{
+			return "Mobius не даёт бить без флага";
+		}
+		if (angry.getCurrentHp() < (angry.getMaxHp() * 0.7))
+		{
+			return "мало HP";
+		}
+		if (Math.abs(angry.getLevel() - other.getLevel()) > PhantomHuntersConfig.HUNTER_BRAWL_LEVEL_GAP)
+		{
+			return "разные весовые категории";
+		}
+		return PhantomHunterManager.getInstance().mood(angry) == PhantomMood.TIRED ? "устал" : null;
+	}
+
+	/**
+	 * Оценка: почему сейчас не драться (или {@code null} — можно). Главное — второй должен ответить, а не умереть белым.
+	 * @param witness нужен живой зритель рядом
+	 */
+	static String refusal(Player angry, Player other, boolean witness)
+	{
+		if (witness && (World.getFirstVisibleObject(angry, Player.class, p -> !PhantomManager.getInstance().isPhantom(p) && !p.isInvisible() && (angry.calculateDistance2D(p) < WITNESS)) == null))
 		{
 			return "нет зрителя";
 		}
@@ -116,6 +231,14 @@ public class PhantomBrawl
 			return "разные весовые категории";
 		}
 		return PhantomHunterManager.getInstance().mood(angry) == PhantomMood.TIRED ? "устал" : null;
+	}
+
+	/**
+	 * @return сколько ещё мс эта пара не дерётся (самопроверка: почему драка не началась)
+	 */
+	long pairWait(Player a, Player b, long now)
+	{
+		return Math.max(0, _pairNext.getOrDefault(pair(a, b), 0L) - now);
 	}
 
 	private static long pair(Player a, Player b)

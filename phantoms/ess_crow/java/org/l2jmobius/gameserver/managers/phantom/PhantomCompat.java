@@ -10,6 +10,7 @@ import java.util.function.BiConsumer;
 
 import org.l2jmobius.gameserver.config.GeneralConfig;
 import org.l2jmobius.gameserver.config.PlayerConfig;
+import org.l2jmobius.gameserver.data.sql.ClanTable;
 import org.l2jmobius.gameserver.data.xml.BuyListData;
 import org.l2jmobius.gameserver.entity.WorldObject;
 import org.l2jmobius.gameserver.entity.actor.Attackable;
@@ -21,11 +22,15 @@ import org.l2jmobius.gameserver.entity.actor.enums.creature.Race;
 import org.l2jmobius.gameserver.entity.actor.holders.player.ClientSettings;
 import org.l2jmobius.gameserver.entity.actor.request.PartyRequest;
 import org.l2jmobius.gameserver.entity.clan.Clan;
+import org.l2jmobius.gameserver.entity.clan.ClanWar;
+import org.l2jmobius.gameserver.entity.clan.enums.ClanWarState;
 import org.l2jmobius.gameserver.entity.groups.Party;
 import org.l2jmobius.gameserver.entity.groups.PartyDistributionType;
 import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
+import org.l2jmobius.gameserver.entity.item.holders.ItemHolder;
 import org.l2jmobius.gameserver.entity.item.instance.Item;
 import org.l2jmobius.gameserver.entity.item.type.WeaponType;
+import org.l2jmobius.gameserver.entity.itemcontainer.Inventory;
 import org.l2jmobius.gameserver.entity.zone.ZoneId;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
 import org.l2jmobius.gameserver.managers.CastleManager;
@@ -48,6 +53,7 @@ import org.l2jmobius.gameserver.mechanics.skill.AbnormalType;
 import org.l2jmobius.gameserver.mechanics.skill.BuffInfo;
 import org.l2jmobius.gameserver.mechanics.skill.CommonSkill;
 import org.l2jmobius.gameserver.mechanics.skill.Skill;
+import org.l2jmobius.gameserver.mechanics.skill.holders.SkillLearn;
 import org.l2jmobius.gameserver.mechanics.skill.targets.TargetType;
 import org.l2jmobius.gameserver.network.SystemMessageId;
 import org.l2jmobius.gameserver.network.clientpackets.RequestJoinPledge;
@@ -548,5 +554,77 @@ public final class PhantomCompat
 	public static long clanLevelAdena(int level)
 	{
 		return level == 1 ? 150000 : level == 2 ? 300000 : 0;
+	}
+
+	/**
+	 * Война кланов охотников (раздел 4.50): сразу взаимная ({@link ClanWarState#MUTUAL}), как если бы второй клан ответил на объявление.
+	 * Счёт убийств и репутацию ведёт {@code ClanWar.onKill}.
+	 */
+	public static void startWar(Clan declarer, Clan other)
+	{
+		final ClanWar war = new ClanWar(declarer, other);
+		war.mutualClanWarAccepted(declarer, other);
+		war.mutualClanWarAccepted(other, declarer);
+		ClanTable.getInstance().storeClanWars(war);
+		refreshWar(declarer, other);
+	}
+
+	/** Конец войны — без победителя и штрафа репутации: запись войны просто убирается. */
+	public static void endWar(Clan a, Clan b)
+	{
+		ClanTable.getInstance().deleteClanWars(a.getId(), b.getId());
+		refreshWar(a, b);
+	}
+
+	/** Кланы воюют друг с другом (война взаимная). */
+	public static boolean atWar(Clan a, Clan b)
+	{
+		if ((a == null) || (b == null))
+		{
+			return false;
+		}
+		final ClanWar war = a.getWarWith(b.getId());
+		return (war != null) && (war.getState() == ClanWarState.MUTUAL);
+	}
+
+	private static void refreshWar(Clan a, Clan b)
+	{
+		for (Clan clan : List.of(a, b))
+		{
+			for (Player member : clan.getOnlineMembers(0))
+			{
+				member.broadcastUserInfo();
+			}
+		}
+	}
+
+	/**
+	 * Адена в цене клан-скилла ({@code RequestAcquireSkill}, PLEDGE): у Classic и Essence — список «одно из»; если среди вариантов есть адена, платится она.
+	 * Остальные предметы охотникам не нужны (раздел 4.50).
+	 */
+	public static long skillAdena(SkillLearn learn)
+	{
+		long adena = 0;
+		for (List<ItemHolder> oneOf : learn.getRequiredItems())
+		{
+			for (ItemHolder item : oneOf)
+			{
+				if (item.getId() == Inventory.ADENA_ID)
+				{
+					adena += item.getCount();
+					break;
+				}
+			}
+		}
+		return adena;
+	}
+
+	/**
+	 * Заточка ивентовой вещи свитком (посох мастера Йоги, раздел 4.34): события MasterOfEnchanting в этой хронике нет.
+	 * @return {@link Integer#MIN_VALUE} — свиток не подходит
+	 */
+	public static int enchantEventItem(Player player, Item scroll, Item item)
+	{
+		return Integer.MIN_VALUE;
 	}
 }

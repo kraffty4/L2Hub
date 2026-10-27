@@ -28,7 +28,7 @@ import org.l2jmobius.gameserver.geoengine.GeoEngine;
 public final class PhantomFocus
 {
 	/** Ближний — в этом радиусе от живого игрока. */
-	private static final int NEAR_RANGE = 2500;
+	static final int NEAR_RANGE = 2500;
 	/** Говорил с живым — столько считается «в разговоре». */
 	private static final long TALK_WINDOW = 120000;
 
@@ -57,7 +57,8 @@ public final class PhantomFocus
 		final List<Player> live = new ArrayList<>();
 		for (Player player : World.getPlayers())
 		{
-			if (!PhantomManager.getInstance().isPhantom(player) && (player.getClient() != null) && !player.getClient().isDetached() && !player.isInvisible())
+			// Живой — с клиентом; без клиента его играет охотник самопроверки NEAR ({@link PhantomNear#isLive}).
+			if (PhantomNear.getInstance().isLive(player))
 			{
 				live.add(player);
 			}
@@ -77,6 +78,10 @@ public final class PhantomFocus
 			Candidate best = null;
 			for (Player player : live)
 			{
+				if (player == hunter)
+				{
+					continue;
+				}
 				final double distance = hunter.calculateDistance2D(player);
 				final Candidate candidate;
 				if (hunter.isInParty() && (hunter.getParty() == player.getParty()))
@@ -142,6 +147,14 @@ public final class PhantomFocus
 		{
 			_talks.put(pair(hunter, player), System.currentTimeMillis());
 		}
+	}
+
+	/**
+	 * @return говорил с ним последние {@value #TALK_WINDOW} мс
+	 */
+	boolean talking(Player hunter, Player player)
+	{
+		return _talks.containsKey(pair(hunter, player));
 	}
 
 	/**

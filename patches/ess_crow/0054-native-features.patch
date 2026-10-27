@@ -37,16 +37,3 @@ diff --git a/dist/game/config/HuntPass.ini b/dist/game/config/HuntPass.ini
  
  # Period to end.
  # Retail 1 month.
-diff --git a/dist/game/config/MagicLamp.ini b/dist/game/config/MagicLamp.ini
---- a/dist/game/config/MagicLamp.ini
-+++ b/dist/game/config/MagicLamp.ini
-@@ -2,7 +2,8 @@
- # Magic Lamp Settings
- # ---------------------------------------------------------------------------
- 
--MagicLampEnabled = False
-+# L2Hub (малый мир): было False — волшебная лампа — копит опыт охоты и дарит бонус, как на официале.
-+MagicLampEnabled = True
- 
- MagicLampMaxLevelExp = 10000000
- 

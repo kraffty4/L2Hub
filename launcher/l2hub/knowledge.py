@@ -174,7 +174,8 @@ class Knowledge:
             return ""
         at, price = prices[c["tier"]]
         when = f"с {at} ур." + (f" (тебе ещё {at - level} ур.)" if level < at else " — ты уже дорос")
-        return f"Профа: ты {c['name']}; следующая {when} у мастера классов за {adena(price)} адены: {' или '.join(c['next'])}."
+        cost = f" у мастера классов за {adena(price)} адены" if price else ", даром (дают сразу на уровне)"  # 0 — у Essence
+        return f"Профа: ты {c['name']}; следующая {when}{cost}: {' или '.join(c['next'])}."
 
     def near(self, kb: dict, level: int, skip: set[str]) -> list[tuple[str, dict]]:
         """Споты под уровень (мобы с опытом, середина — от −4 до +2 ур.), самые людные первыми; одно место — один раз:

@@ -179,6 +179,17 @@ def translit(text: str) -> str:
         else:
             out.append(ch)
     return "".join(out)
+
+
+def clan_name_text(raw: str) -> str:
+    """Имя клана из ответа мозгов: латиница и цифры, 3–16 знаков (ClanNameTemplate Mobius). Модель иногда отвечает кириллицей («Вечерня»):
+    тогда транслит, слова — вместе, каждое с большой буквы («Ночные волки» — NochnyeVolki); длиннее 16 — первое слово."""
+    if re.search("[А-Яа-яЁё]", raw):
+        words = re.findall(r"[A-Za-z0-9]+", translit(raw))
+        joined = "".join(w[:1].upper() + w[1:].lower() for w in words)
+        raw = joined if len(joined) <= 16 or not words else words[0][:1].upper() + words[0][1:].lower()
+    match = re.search(r"[A-Za-z0-9]{3,16}", raw)
+    return match.group(0) if match else ""
 HISTORY = 12            # реплик разговора с игроком в промпте
 HISTORY_STALE = 1800    # с: событие старше — в промпте с давностью; пауза в разговоре дольше — пометка «прошло …»
 # Сжатие памяти (приём L2Solo, docs/PHANTOMS.md, раздел 4.10): реплики пары старше последних HISTORY модель сворачивает
@@ -305,7 +316,12 @@ STRATEGY_HELP = {"HUNT": "качаться дальше тут", "SPOT_UP": "с�
                  "BUY": "сходить в город, первым делом купить у NPC и надеть, заодно всё, что делает поход в город, — и обратно; "
                         "можно до 3 вещей через «;» — купит по порядку, на сколько хватит адены",
                  "SELL": "сходить в город, первым делом сдать NPC эту вещь за полцены, заодно всё, что делает поход в город, — и обратно; "
-                         "быстрее, но дешевле, чем в лавке"}
+                         "быстрее, но дешевле, чем в лавке",
+                 # Шаг 6 (docs/MIND.md, раздел 6): живой игрок рядом. Мысль у этих вариантов — то, что охотник скажет ему.
+                 "HELP": "помочь живому рядом тем, что умеешь (рес, хил, мана, бафы или добить моба, который его бьёт) — чем именно, решит игра",
+                 "SHARE": "поделить спот с живым: он на твоём споте — бьёте разных мобов и ты не обижаешься; он рядом — позвать его к себе",
+                 "YIELD": "уступить спот живому и уйти на другой",
+                 "TRADE": "предложить живому вещь из сумки за свою цену: шепнуть ему и посидеть лавкой прямо тут 5 минут"}
 PARTY_NAMED = ("позвать в пати того, кто рядом: свободного — к себе, лидера пати охотников — попроситься к нему; "
                "живой игрок решает сам. В пати мобы падают быстрее, с хилом и бафером умираешь реже, опыт делится")
 
@@ -325,9 +341,41 @@ SPOT_CHOICES_MAX = 8  # из списка ядра — не больше
 
 # BUY, SELL и PARTY с именем (2026-10-24, docs/PHANTOMS.md, 4.3): у варианта "choices" от ядра — вещи с ценой, люди рядом.
 # Имя в ответе сверяется со списком, как спот у SPOT_TO. [[PARTY]] без имени — крик «лфп», как раньше.
-CHOICES_MAX = {"BUY": 12, "SELL": 8, "PARTY": 8}
-NAME_REQUIRED = ("SPOT_TO", "BUY", "SELL")  # без имени из списка тег не в счёт
+CHOICES_MAX = {"BUY": 12, "SELL": 8, "PARTY": 8, "HELP": 3, "SHARE": 3, "YIELD": 3, "TRADE": 3}
+NAME_REQUIRED = ("SPOT_TO", "BUY", "SELL", "HELP", "SHARE", "YIELD", "TRADE")  # без имени из списка тег не в счёт
 BUY_MAX = 3  # вещей в [[BUY A; B; C]]: ядро покупает по порядку, на сколько хватит свободной адены
+TRADE_ITEMS = 6  # вещей одного игрока на выбор у [[TRADE]]
+
+# Шаг 6: что случилось с живым рядом — повод решить раньше срока ("trigger" в запросе стратега).
+TRIGGER_RU = {"ARRIVED": "{name} только что пришёл на твой спот и бьёт мобов", "LOW_HP": "{name} рядом в бою, у него мало HP",
+              "DIED": "{name} рядом только что умер", "SAME_MOB": "{name} бьёт того же моба, что и ты",
+              "AGGRO": "на {name} рядом навалились мобы — их несколько"}
+PRICE_RE = re.compile(r"\[\[\s*PRICE[\s:]+([^\[\]]{1,20}?)\s*\]\]", re.IGNORECASE)
+
+
+def parse_price(text: str) -> int | None:
+    """Цена из ответа модели, как пишут в игре: «36400», «36 400», «36к», «36.5k», «1кк», «1,2kk». Не цена — None."""
+    t = re.sub(r"\s+", "", text).lower()
+    t = re.sub(r"^(\d{1,3}(?:,\d{3})+)(?!\d)", lambda m: m[1].replace(",", ""), t)  # «36,400» — разряды, а не дробь
+    m = re.match(r"(\d+(?:[.,]\d+)?)(кк|kk|млн|к|k|m)?", t)
+    if not m:
+        return None
+    value = float(m[1].replace(",", ".")) * {"к": 1e3, "k": 1e3, "кк": 1e6, "kk": 1e6, "млн": 1e6, "m": 1e6}.get(m[2] or "", 1)
+    return int(value) if value >= 1 else None
+
+
+def match_trade(arg: str, combos: list[str]) -> str:
+    """[[TRADE имя; вещь; цена]]: имя и вещь — из пар «имя; вещь» от ядра, цена — числом (нет или не узнана — без неё, ядро
+    возьмёт цену магазина). Не узнаны имя или вещь — пусто."""
+    parts = [p.strip() for p in arg.split(";")]
+    if len(parts) < 2:
+        return ""
+    name = match_name(parts[0], list(dict.fromkeys(c.split("; ", 1)[0] for c in combos)))
+    item = match_name(parts[1], [c.split("; ", 1)[1] for c in combos if c.startswith(name + "; ")]) if name else ""
+    if not item:
+        return ""
+    price = parse_price(parts[2]) if len(parts) > 2 else None
+    return f"{name}; {item}" + (f"; {price}" if price else "")
 
 
 def choice_name(c) -> str:
@@ -433,7 +481,8 @@ def parse_strategy(raw: str, fpc: str, options: list[str], afk: list[int], named
         tag = x.group(1)
         if tag not in options:
             continue
-        if tag in named and (found := match_names(x.group(2) or "", named[tag], BUY_MAX) if tag == "BUY" else match_name(x.group(2) or "", named[tag])):
+        if tag in named and (found := match_names(x.group(2) or "", named[tag], BUY_MAX) if tag == "BUY"
+                             else match_trade(x.group(2) or "", named[tag]) if tag == "TRADE" else match_name(x.group(2) or "", named[tag])):
             m, arg = x, found
             break
         if tag not in NAME_REQUIRED:
@@ -961,11 +1010,26 @@ class Brain:
             # Живые кланы (раздел 4.50): свой клан охотников или клан живого игрока.
             (f"Ты в клане «{ph['clan']}»" + (", ты его глава" if ph.get("clanLeader") else "")
              + ("; это клан охотников — таких же игроков, как ты." if ph.get("hunterClan") else "; это клан живого игрока.")) if ph.get("clan") else "",
+            # Война кланов охотников (раздел 4.50, этапы 3 и 4): счёт — «наши:их» убийства; враг — клан охотников или клан живого игрока.
+            (f"Твой клан воюет с {'кланом живого игрока' if ph.get('clanWarPlayer') else 'кланом'} «{ph['clanWar']}»: их людей бьёшь при встрече, они — вас. "
+             f"Счёт убийств (ваши:их) — {ph.get('clanWarScore') or '0:0'}.")
+            if ph.get("clanWar") else "",
             f"В пати с тобой: {'; '.join(party)}." if party else "",
             f"Рядом город {ph.get('town', '')}. Игровое время {req.get('gameTime', '')}{', ночь' if req.get('night') else ''}.",
         ]
         name = player.get("name", "")
         grudge = player.get("grudge") or 0
+        # Шаг 6: что живой сейчас делает — чтобы охотник мог сказать «о, ты тоже на скелетов?».
+        doing = player.get("doing") or {}
+        if ph.get("hunter") and doing:
+            seen = [f"бьёт {doing['target']}" + (f" ({doing['targetLevel']} ур.)" if doing.get("targetLevel") else "")] if doing.get("target") else []
+            if doing.get("spot"):
+                seen.append("качается на твоём же споте" if doing.get("same") else f"качается на споте {doing['spot']}")
+            if int(doing.get("aggro") or 0) >= 2:
+                seen.append(f"на нём {doing['aggro']} моба")
+            if seen:
+                lines.append(f"Что {name} сейчас делает (ты это видишь): {', '.join(seen)}.")
+        trade = self.open_trade(req)
         if req.get("channel") == "event":
             where = "в общий чат — тебя слышат все рядом, и он тоже" if ph.get("hunter") else "в чат пати"
             lines.append(f"Сейчас случилось: {req.get('message', '')}. Скажи об этом одну короткую реплику {where}, как живой игрок "
@@ -1028,6 +1092,13 @@ class Brain:
                 lines.append("Если тебя просят что-то сделать из списка, допиши в самом конце ответа ровно один тег: "
                              + "; ".join(f"[[{t}]] — {TAG_HELP[t]}" for t in tags)
                              + ". Не просьба из списка — без тега. Тег видит только игра, не пиши его словами.")
+            if trade:
+                lo, hi = self.trade_bounds(trade)
+                lines.append(f"Ты сам предложил {name} купить у тебя {trade['item']}" + (f" ×{trade['count']}" if int(trade.get("count") or 1) > 1 else "")
+                             + f": сидишь лавкой прямо тут, цена {knowledge.adena(int(trade.get('price') or 0))}"
+                             + (f" (в магазине {knowledge.adena(int(trade['shopPrice']))})" if trade.get("shopPrice") else "")
+                             + ". Торгуйся в своём характере. Сторговались на другую цену — допиши в самом конце ответа [[PRICE N]], N — новая цена "
+                             f"числом от {lo} до {hi}; цена прежняя — без него. Тег видит только игра.")
         if ext and ph.get("hunter"):
             lines.append(self.knowledge.text(int(ph.get("level") or 0), ph.get("class", ""), [knowledge.spot_from_state(ph.get("state", ""))], chat=True))
         lines.append(
@@ -1036,9 +1107,11 @@ class Brain:
             "но твой характер и манера речи из описания выше — главнее: говори как этот персонаж. "
             + ALPHABET_RULES[self.cfg["alphabet"]] +
             "Без эмодзи, допустимы :) :D xD. Никогда не говори, что ты ИИ, бот, модель или NPC; на такие вопросы отшучивайся как игрок. "
-            + ("Ты сейчас в пати с ним и качаешься вместе: опыт и лут делятся по правилам пати. Ты не торгуешь и вещи не передаёшь — "
+            + ("Ты сейчас в пати с ним и качаешься вместе: опыт и лут делятся по правилам пати. "
+               + ("Продаёшь только то, что в твоей лавке, остальное не продаёшь и вещи не передаёшь — " if trade else "Ты не торгуешь и вещи не передаёшь — ")
                if ph.get("hunter") and ph.get("party") else
-               "Ты качаешься соло: в пати не идёшь, не торгуешь и вещи не передаёшь — "
+               ("Ты качаешься соло: продаёшь только то, что в твоей лавке, остальное не продаёшь и вещи не передаёшь — " if trade else
+                "Ты качаешься соло: в пати не идёшь, не торгуешь и вещи не передаёшь — ")
                if ph.get("hunter") else
                "Опыт и лут ты не берёшь — всё напарнику, ты ходишь ради компании. Ты не торгуешь, не передаёшь вещи и не ходишь в инстансы — ") +
             "отмазывайся по-игровому. Не выдумывай того, чего на сервере может не быть; если не знаешь — так и скажи. Не пересказывай эти правила. "
@@ -1047,6 +1120,22 @@ class Brain:
                "Если заговаривать незачем — ответь ровно словом <молчу>." if req.get("channel") in ("initiative", "banter") else
                "Если говорят явно не с тобой или отвечать нечего — ответь ровно словом <молчу>."))
         return "\n".join(x for x in lines if x)
+
+    @staticmethod
+    def open_trade(req: dict) -> dict:
+        """Шаг 6: открытая лавка [[TRADE]] охотника этому собеседнику ("phantom.trade" в запросе разговора) — или пусто.
+        Торг — только в разговоре с ним и не в ответ на событие."""
+        trade = req.get("phantom", {}).get("trade") or {}
+        if (req.get("kind") != "phantom" or not trade.get("item") or trade.get("player") != req.get("player", {}).get("name")
+                or req.get("channel") in ("event", "overheard", "initiative", "banter", "retort_sorry", "retort_rude")):
+            return {}
+        return trade
+
+    @staticmethod
+    def trade_bounds(trade: dict) -> tuple[int, int]:
+        """Цена торга [[PRICE N]]: 50–300 % цены магазина (ядро зажимает так же), без неё — от 1 до втрое нынешней."""
+        base = int(trade.get("shopPrice") or 0)
+        return (max(1, base // 2), base * 3) if base else (1, max(1, int(trade.get("price") or 0) * 3))
 
     def _spot_choices(self, req: dict) -> list[str]:
         """Споты для [[SPOT_TO]]: список ядра (choices у опции — оно знает, куда дойдёт пешком) или из базы знаний под уровень,
@@ -1073,12 +1162,56 @@ class Brain:
         opt = next((o for o in req.get("options", []) if o.get("tag") == tag), None) or {}
         return [c for c in opt.get("choices") or [] if isinstance(c, dict) and choice_name(c)][:CHOICES_MAX[tag]]
 
+    @staticmethod
+    def _trade_items(c: dict) -> list[dict]:
+        """Вещи, которые охотник может предложить этому игроку ([[TRADE]]): словари с "name", не больше TRADE_ITEMS."""
+        return [i for i in c.get("items") or [] if isinstance(i, dict) and choice_name(i)][:TRADE_ITEMS]
+
     def _named(self, req: dict) -> dict[str, list[str]]:
-        """Имена на выбор у вариантов с аргументом: споты у SPOT_TO, вещи у BUY и SELL, люди рядом у PARTY. Пустых списков нет."""
+        """Имена на выбор у вариантов с аргументом: споты у SPOT_TO, вещи у BUY и SELL, люди рядом у PARTY, живые рядом у HELP,
+        SHARE и YIELD, пары «имя; вещь» у TRADE. Пустых списков нет."""
         tags = {o.get("tag") for o in req.get("options", [])}
         named = {"SPOT_TO": self._spot_choices(req)} if "SPOT_TO" in tags else {}
-        named |= {t: [choice_name(c) for c in self._option_choices(req, t)] for t in CHOICES_MAX if t in tags}
+        named |= {t: [choice_name(c) for c in self._option_choices(req, t)] for t in CHOICES_MAX if t in tags and t != "TRADE"}
+        if "TRADE" in tags:
+            named["TRADE"] = [f"{choice_name(c)}; {choice_name(i)}" for c in self._option_choices(req, "TRADE") for i in self._trade_items(c)]
         return {t: names for t, names in named.items() if names}
+
+    @staticmethod
+    def players_text(players: list[dict]) -> str:
+        """Шаг 6: живые игроки рядом с охотником в фокусе — что видно глазами: кто, в каком состоянии, кого бьёт, где стоит."""
+        out = []
+        for pl in players[:3]:
+            about = [x for x in (_readable(pl.get("class", "")) if "_" in pl.get("class", "") else pl.get("class", ""),
+                                 f"{pl['level']} ур." if pl.get("level") else "", pl.get("role", "")) if x]
+            state = []
+            if pl.get("dead"):
+                state.append("лежит мёртвый")
+            else:
+                # MP чужого не видно: ядро шлёт его только у сопартийца (окно пати)
+                state.append(f"HP {pl.get('hpPct', 100)}%" + (f", MP {pl['mpPct']}%" if "mpPct" in pl else "") + (", сидит" if pl.get("sitting") else ""))
+            state.append("в пати с тобой" if pl.get("withMe") else f"в пати ({pl['party']} чел.)" if pl.get("party") else "без пати")
+            t = pl.get("target") or {}
+            if t.get("player"):
+                state.append(f"бьёт игрока {t.get('name')}")
+            elif t.get("name"):
+                state.append(f"бьёт {t['name']}" + (f" ({t['level']} ур., HP {t.get('hpPct', 100)}%)" if t.get("level") else "")
+                             + (" — того же моба, что и ты" if t.get("mine") else ""))
+            if int(pl.get("aggro") or 0) >= 2:
+                state.append(f"на нём {pl['aggro']} моба — тяжело")
+            if pl.get("spot"):
+                state.append(("на твоём споте" if pl.get("same") else f"на споте {pl['spot']}")
+                             + (f" уже {pl['minutes']} мин" if pl.get("minutes") else ""))
+            elif pl.get("minutes"):
+                state.append(f"рядом уже {pl['minutes']} мин")
+            if pl.get("pk"):
+                state.append("красный ник — PK")
+            elif pl.get("flag"):
+                state.append("во флаге")
+            if pl.get("relation") in ("friend", "enemy"):
+                state.append("помогал тебе раньше" if pl["relation"] == "friend" else "твой враг")
+            out.append(f"{pl.get('name')} ({', '.join(about)}): " + "; ".join(state))
+        return " | ".join(out)
 
     def strategy_prompt(self, req: dict, ext: bool = False, named: dict[str, list[str]] | None = None) -> str:
         """Стратег охотника: что делать дальше — характер, состояние, цель, прошлые решения и только доступные варианты.
@@ -1136,6 +1269,19 @@ class Brain:
                     f"{r.get('name')} ({', '.join(REASON_SHORT.get(x, x) for x in r.get('reasons', []))})" + (" — сейчас в игре" if r.get("online") else "")
                     for r in chosen) + ".")
         lines.append(f"Живых игроков на сервере сейчас: {req.get('realPlayers', 0)}. Игровое время {req.get('gameTime', '')}{', ночь' if req.get('night') else ''}.")
+        # Шаг 6: охотник в фокусе видит живых рядом; характер решает, как рисковать; событие с живым — повод решить сейчас.
+        temper, risk = h.get("temper", ""), float(h.get("risk") or 1)
+        temper = temper or ("осторожный" if risk <= 0.75 else "рисковый" if risk >= 1.25 else "")  # пороги ядра (PhantomTemplate)
+        if temper:
+            lines.append(f"По натуре ты {temper}: "
+                         + ("лучше уйти раньше, чем умереть; на сильных мобов не лезешь, отдыхаешь заранее." if temper == "осторожный" else
+                            "лезешь на мобов посильнее и отдыхаешь в последний момент — бывает, и умираешь из-за этого."))
+        if req.get("players"):
+            lines.append("Рядом живые игроки — настоящие люди, не охотники: " + self.players_text(req["players"]) + ".")
+        trig = req.get("trigger") or {}
+        if trig.get("event") in TRIGGER_RU:
+            lines.append("Только что: " + TRIGGER_RU[trig["event"]].format(name=trig.get("name", "игрок"))
+                         + ". Реши сейчас, как поступишь; если вмешиваться незачем — продолжай своё.")
         past = self._past_decisions(fpc)
         if past:
             lines.append("Твои прошлые решения: " + "; ".join(past) + ".")
@@ -1189,6 +1335,19 @@ class Brain:
                                                                              f"в пати {c['party']}" if c.get("party") else "без пати") if x) + ")"
                               for c in self._option_choices(req, tag)]
                     options.append(f"[[PARTY имя]] — {PARTY_NAMED}; имя — точно как тут, одно из: " + "; ".join(people))
+            elif tag in ("HELP", "SHARE", "YIELD"):
+                if named.get(tag):
+                    targets = [c["name"] + (f" ({c['need']}" + (f": {c['what']}" if c.get("what") else "") + ")" if c.get("need") else
+                                            (" (на твоём споте)" if c["here"] else " (позвать к себе)") if "here" in c else "")
+                               for c in self._option_choices(req, tag)]
+                    options.append(f"[[{tag} имя]] — {STRATEGY_HELP[tag]}" + (f" ({note})" if note else "") + "; имя — точно как тут, одно из: " + "; ".join(targets))
+            elif tag == "TRADE":
+                if named.get(tag):
+                    offers = [f"{c['name']}: " + ", ".join(f"{i['name']}" + (f" ×{i['count']}" if int(i.get("count") or 1) > 1 else "")
+                                                           + f" (в магазине {knowledge.adena(i.get('price') or 0)})" for i in self._trade_items(c))
+                              for c in self._option_choices(req, tag) if self._trade_items(c)]
+                    options.append(f"[[TRADE имя; вещь; цена]] — {STRATEGY_HELP[tag]}; цена — сколько просишь, числом (разумно от половины до втрое "
+                                   "от магазинной); имя и вещь — точно как тут: " + " | ".join(offers))
             elif tag in STRATEGY_HELP:
                 options.append(f"[[{tag}]] — {STRATEGY_HELP[tag]}" + (f": {note}" if note else ""))
         if ext:
@@ -1202,8 +1361,12 @@ class Brain:
             f"Ответ — одна строка: сначала тег из списка, потом через пробел короткая мысль от первого лица {alphabet}, в твоей манере речи, "
             "до 80 символов, как в игровом чате, без кавычек. Формат: [[ТЕГ]] мысль; для отдыха — [[AFK 15]] мысль"
             + "".join(f"; {what} — [[{tag} {arg}]] мысль" for tag, what, arg in (("SPOT_TO", "для перехода", "имя спота"), ("BUY", "для покупки", "вещь; вещь"),
-                                                                                ("SELL", "для продажи", "вещь"), ("PARTY", "позвать в пати", "имя"))
+                                                                                ("SELL", "для продажи", "вещь"), ("PARTY", "позвать в пати", "имя"),
+                                                                                ("HELP", "помочь", "имя"), ("SHARE", "поделить спот", "имя"),
+                                                                                ("YIELD", "уступить спот", "имя"), ("TRADE", "предложить вещь", "имя; вещь; цена"))
                       if named.get(tag)) + ". "
+            + ("У HELP, SHARE, YIELD и TRADE мысль — это то, что ты скажешь этому игроку (вслух или шёпотом): обращайся к нему, по делу, "
+               "в своей манере, без навязчивости. " if any(named.get(t) for t in ("HELP", "SHARE", "YIELD", "TRADE")) else "")
             + ((f"Цели у тебя нет — в этом ответе поставь её обязательно, сразу после тега: [[ТЕГ]] [[GOAL цель]] мысль. "
                 if not (req.get("goal") or "").strip() else
                 "Решение должно вести к твоей цели. Цель достигнута или стала глупой — поставь новую сразу после тега: "
@@ -1460,7 +1623,7 @@ class Brain:
 
     def clan_name(self, req: dict) -> str:
         """Имя клана, который основывает охотник (раздел 4.50): одно слово латиницей и цифрами, 3–16 знаков. Память пар не пишется, лимит — общий;
-        пусто или не то — сервер берёт имя из слогов."""
+        пусто или не то — сервер берёт имя из слогов. Ответ кириллицей — транслитом (clan_name_text)."""
         fpc = req["fpc"]
         p = self.personas.get(fpc, {})
         self.stats["requests"] += 1
@@ -1480,8 +1643,7 @@ class Brain:
             "Ответь только названием.",
         ] if x)
         raw = self.call_llm([{"role": "system", "content": prompt}, {"role": "user", "content": "Как назовёшь клан?"}], max_tokens=20)
-        match = re.search(r"[A-Za-z0-9]{3,16}", raw or "")
-        name = match.group(0) if match else ""
+        name = clan_name_text(raw or "")
         self.stats["replies" if name else "silent"] += 1
         self._log(f"[clanname] {fpc}: {raw!r} => {name!r} ({time.monotonic() - started:.1f} с)")
         return name
@@ -1595,6 +1757,13 @@ class Brain:
             # Тег приказа напарника: первый из разрешённых, остальные теги вырезаются.
             tags = phantom_tags(req) if req.get("kind") == "phantom" else []
             tag = next((t for t in TAG_RE.findall(raw) if t in tags), "")
+            # Шаг 6: новая цена в открытой лавке [[TRADE]] — в пределах торга; без лавки этому игроку тег просто вырезается.
+            trade, price = self.open_trade(req), None
+            pm = PRICE_RE.search(raw)
+            if trade and pm and (price := parse_price(pm.group(1))):
+                lo, hi = self.trade_bounds(trade)
+                price = max(lo, min(hi, price))
+            raw = PRICE_RE.sub(" ", raw)
             reply = self.clean(TAG_RE.sub(" ", raw), fpc)
             if self.cfg["alphabet"] == "translit":
                 reply = translit(reply)
@@ -1611,9 +1780,11 @@ class Brain:
             order = f" приказ: {req['order']}" if req.get("order") else ""
             mood = f" [{req['phantom']['mood']}]" if req.get("phantom", {}).get("mood") else ""
             self._log(f"[{req.get('channel')}{'+' if ext else ''}] {player} -> {fpc}{mood}: {req.get('message', '')!r}{order} => {reply!r}"
-                      f"{' [[' + tag + ']]' if tag else ''} ({time.monotonic() - started:.1f} с)")
+                      f"{' [[' + tag + ']]' if tag else ''}{f' [[PRICE {price}]]' if price else ''} ({time.monotonic() - started:.1f} с)")
         self.maybe_summarize(fpc, player)
-        return f"{reply} [[{tag}]]".strip() if tag else reply
+        out = f"{reply} [[{tag}]]".strip() if tag else reply
+        # Цена уходит и при пустой реплике: модель могла ответить одним тегом.
+        return f"{out} [[PRICE {price}]]".strip() if price else out
 
 
 def make_handler(brain: Brain):
@@ -1684,6 +1855,10 @@ def main() -> int:
     ap.add_argument("--last", help="с --strategy: итог прошлого решения — «ТЕГ [аргумент]» (выполнено) или «ТЕГ [аргумент]: причина» (отказ)")
     ap.add_argument("--result", help="с --last: итог решения от ядра (шаг 4) — «минуты опыт%% смерти адена [мобы]», место — спот охотника")
     ap.add_argument("--lessons", metavar="FPC", help="пересмотреть выводы охотника FPC по его журналу сейчас, даже если новых итогов мало")
+    ap.add_argument("--near", nargs="?", const="ARRIVED", choices=[*TRIGGER_RU, "none"],
+                    help="шаг 6 (docs/MIND.md, раздел 6): с --strategy — живой игрок (--player) рядом, событие с ним (none — без события), варианты "
+                         "HELP, SHARE, YIELD и TRADE; с --phantom — что он делает и открытая лавка [[TRADE]] ему")
+    ap.add_argument("--risk", type=float, choices=(0.5, 1.0, 1.5), help="с --strategy: черта характера risk (шаг 6) — 0.5 осторожный, 1.5 рисковый")
     ap.add_argument("--deals", action="store_true", help="с --strategy: варианты BUY, SELL и PARTY со списками, как их шлёт ядро (docs/PHANTOMS.md, 4.3); "
                                                          "PARTY зовёт и --player — живого игрока рядом")
     ap.add_argument("--clanname", action="store_true", help="FPC — охотник: имя клана, который он основывает (раздел 4.50; MESSAGE не нужен)")
@@ -1778,6 +1953,25 @@ def main() -> int:
                 {"tag": "SELL", "arg": "item",
                  "choices": [{"name": "Elven Earring", "count": 1, "price": 30000}, {"name": "Mithril Gloves", "count": 1, "price": 18200},
                              {"name": "Coarse Bone Powder", "count": 40, "price": 6000}]}]
+        if args.risk:
+            req["hunter"].update(risk=args.risk, temper={0.5: "осторожный", 1.5: "рисковый"}.get(args.risk, ""))
+        if args.near:
+            ev = args.near
+            req["players"] = [{"name": args.player, "level": 33, "class": "orc shaman", "role": "бафер", "hpPct": 0 if ev == "DIED" else 28 if ev in ("LOW_HP", "AGGRO") else 85,
+                               "dead": ev == "DIED", "sitting": False, "distance": 420, "party": 0, "withMe": False,
+                               "target": {} if ev == "DIED" else {"name": "Marsh Stakato", "level": 33, "hpPct": 60, "mine": ev == "SAME_MOB"},
+                               "aggro": 3 if ev == "AGGRO" else 1, "spot": req["hunter"]["spot"], "same": True, "minutes": 6,
+                               "pk": False, "flag": False, "relation": ""}]
+            if ev != "none":
+                req["trigger"] = {"event": ev, "name": args.player}
+            at = req["options"].index(next(o for o in req["options"] if o["tag"] == "STORE"))
+            near = [{"tag": "SHARE", "arg": "name", "choices": [{"name": args.player, "here": True}]},
+                    {"tag": "YIELD", "arg": "name", "note": "уйти на Execution Grounds (мобы 28-31 ур.)", "choices": [{"name": args.player}]},
+                    {"tag": "TRADE", "arg": "name", "choices": [{"name": args.player, "items": [{"name": "Mithril Gloves", "count": 1, "price": 36400},
+                                                                                                {"name": "Elven Earring", "count": 1, "price": 30000}]}]}]
+            if ev in ("LOW_HP", "AGGRO", "SAME_MOB"):  # у Artisan нет ни хила, ни реса — помочь он может только по мобу
+                near.insert(0, {"tag": "HELP", "arg": "name", "choices": [{"name": args.player, "need": "моб", "what": "Marsh Stakato"}]})
+            req["options"][at:at] = near
         print("--- system prompt ---")
         print(brain.strategy_prompt(req, ext=brain._think(req)))
         print("--- решение ---")
@@ -1816,6 +2010,9 @@ def main() -> int:
                               "party": [{"name": args.player, "level": 52, "class": "TREASURE_HUNTER", "hpPct": 100, "dead": False, "phantom": False}]}
             if args.spot and hunter:
                 req["phantom"]["state"] = f"качаешься на споте {args.spot} (мобы {kb_spot.get('min', 30)}-{kb_spot.get('max', 35)} ур.)"
+            if args.near and hunter:
+                req["player"]["doing"] = {"target": "Marsh Stakato", "targetLevel": 33, "aggro": 1, "spot": args.spot or "Cruma Marshlands", "same": True}
+                req["phantom"]["trade"] = {"player": args.player, "item": "Mithril Gloves", "count": 1, "price": 36400, "shopPrice": 36400, "minutes": 2}
         print("--- system prompt ---")
         print(brain.messages(req, ext=req.get("kind") == "phantom" and brain.force_ext)[0]["content"])
         print("--- ответ ---")

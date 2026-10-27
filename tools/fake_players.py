@@ -464,6 +464,15 @@ TEMPER = {
     **dict.fromkeys(("Kuzya", "Alenka", "Ded", "Tihon", "Ksenon", "Nyusha", "LunaTik", "Sova", "Romashka", "Ivushka", "Svetlyi",
                      "Shaolin", "Nadezhda", "Batya", "Lancelot", "TetyaValya", "Monashka"), 0.5),
 }
+# Риск охотника («Разум 2.0», шаг 6, docs/MIND.md; таблица — предложение агента, правится здесь): меньше 1 — осторожный (отдыхает и идёт в город
+# раньше, спот берёт пониже, после двух смертей за час уходит на мобов слабее), больше 1 — рисковый (лезет на красных мобов, отдыхает и закупается поздно).
+# Кого нет в таблице — 1 (обычный).
+RISK = {
+    **dict.fromkeys(("Tihon", "Freya", "Sova", "Snaiper", "Ochkarik", "Romashka", "Sundukov", "Zhadina", "Professor", "Ivushka",
+                     "Ded", "Batya", "TetyaValya", "Svetlyi"), 0.5),
+    **dict.fromkeys(("Rubaka", "Glad1ator", "Nagibator", "Pupsik", "Grom", "Krosh", "Kazachka", "Shustryi", "Fury", "Yarost",
+                     "Bizon", "Zharptica", "Ehidna", "Buran", "Kiberkotleta"), 1.5),
+}
 START_VILLAGE_GK ={"HUMAN": 30006, "ELF": 30146, "DARK_ELF": 30134, "ORC": 30576, "DWARF": 30540, "KAMAEL": 32163}
 SOULSHOTS = {"NONE": 1835, "D": 1463, "C": 1464, "B": 1465, "A": 1466, "S": 1467, "S80": 1467, "S84": 1467}
 # Споты охотников — группы спавна мобов: не меньше стольких мобов, разброс уровней не больше, не из этих папок.
@@ -643,10 +652,18 @@ class Data:
                 if self.items.get(parts.get("chest", 0), {}).get("armor_type") == armor_type]
         return pick(sets, name, "armor") or {}
 
+    @staticmethod
+    def npc_only(it: dict) -> bool:
+        """Вещь только для NPC: флаг for_npc (Dailaon Knife, Giant Cannon, Dusk) или монстровое оружие без него — иконка weapon_monster
+        (Silenos Blowgun, Dreadbane), имя «NPC only…» и «Monster Only…». У клиента нет на нём анимаций игрока — Т-поза. Тот же признак в ядре —
+        PhantomHunterOutfit.npcOnly."""
+        name = it.get("name") or ""
+        return it.get("for_npc") == "true" or "weapon_monster" in (it.get("icon") or "") or name.startswith(("NPC only", "Monster Only"))
+
     def weapon(self, grade_: str, kit: dict, name: str, plain: bool = False) -> int:
         """plain — только обычное оружие: без SA (« - » в имени) и наградного за 0 адены (охотники покупают его по цене предмета)."""
         wtype, body, magic = kit["weapon"]
-        found = [i for i, it in self.items.items() if it["type"] == "Weapon" and it.get("crystal_type", "NONE") == grade_
+        found = [i for i, it in self.items.items() if it["type"] == "Weapon" and not self.npc_only(it) and it.get("crystal_type", "NONE") == grade_
                  and it.get("weapon_type") == wtype and it.get("bodypart") == body and (it.get("is_magic_weapon") == "true") == magic
                  and not any(w in (it["name"] or "") for w in SKIP_WEAPON_WORDS) and (not plain or self.plain(it))]
         if not found:
@@ -664,7 +681,7 @@ class Data:
         skip = SKIP_WEAPON_WORDS + COMPANION_SKIP_WORDS
 
         def find(bodies):
-            return sorted(i for i, it in self.items.items() if it["type"] == "Weapon" and it.get("crystal_type", "NONE") == grade_
+            return sorted(i for i, it in self.items.items() if it["type"] == "Weapon" and not self.npc_only(it) and it.get("crystal_type", "NONE") == grade_
                           and it.get("weapon_type") == wtype and it.get("bodypart") in bodies and it.get("is_magic_weapon") == "true"
                           and not any(w in (it["name"] or "") for w in skip))
         found = find({body}) or find({"rhand", "lrhand"})
@@ -693,7 +710,7 @@ class Data:
             pass
         wtype, body, magic = kit["weapon"]
         for match in (lambda it: it.get("bodypart") == body, lambda it: True):
-            found = sorted(i for i, it in self.items.items() if it["type"] == "Weapon" and it.get("crystal_type", "NONE") == grade_
+            found = sorted(i for i, it in self.items.items() if it["type"] == "Weapon" and not self.npc_only(it) and it.get("crystal_type", "NONE") == grade_
                            and (it.get("is_magic_weapon") == "true") == magic and it.get("weapon_type") not in ("FISHINGROD", "ETC", None)
                            and match(it) and not any(w in (it["name"] or "") for w in SKIP_WEAPON_WORDS) and self.plain(it))
             if found:
@@ -709,7 +726,7 @@ class Data:
     def best_weapon(self, grade_: str, kit: dict) -> int:
         """Танатос: самое сильное по атаке оружие набора в грейде (из равных — с SA, затем меньший id); нет такого — любого хвата."""
         wtype, body, magic = kit["weapon"]
-        found = [i for i, it in self.items.items() if it["type"] == "Weapon" and it.get("crystal_type", "NONE") == grade_
+        found = [i for i, it in self.items.items() if it["type"] == "Weapon" and not self.npc_only(it) and it.get("crystal_type", "NONE") == grade_
                  and it.get("weapon_type") == wtype and (it.get("is_magic_weapon") == "true") == magic
                  and not any(w in (it["name"] or "") for w in SKIP_WEAPON_WORDS + REAPER_SKIP_WORDS)]
         if not found:
@@ -721,7 +738,7 @@ class Data:
         лучшая по физической защите и цене в грейде уровня, нет — в грейде ниже; нет совсем — 0."""
         names = [g for g, _ in GRADES]
         for gr in reversed(names[: names.index(grade_) + 1] if grade_ in names else names):
-            found = [i for i, it in self.items.items() if it["type"] == "Armor" and it.get("crystal_type", "NONE") == gr
+            found = [i for i, it in self.items.items() if it["type"] == "Armor" and not self.npc_only(it) and it.get("crystal_type", "NONE") == gr
                      and it.get("bodypart") == "underwear" and any(w in (it["name"] or "") for w in ("Shirt", "Tattoo"))
                      and not any(w in (it["name"] or "") for w in REAPER_SKIP_WORDS)]
             if found:
@@ -1280,7 +1297,7 @@ def main(data: Path, geodata: Path, out: Path | None = None) -> int:
             f'\t<!-- {name}: охотник, {classes} -->\n'
             f'\t<phantom name="{name}" kind="hunter" role="{role}" female="{"true" if p["sex"] == "F" else "false"}" '
             f'face="{rnd(name, "face") % 3}" hairStyle="{rnd(name, "hair") % (hair_max + 1)}" hairColor="{rnd(name, "hc") % 4}" '
-            f'classes="{",".join(map(str, p["chain"]))}" aliases="{p["aliases"]}" social="{SOCIAL.get(name, 1)}" temper="{TEMPER.get(name, 1)}" x="{x}" y="{y}" z="{z}">\n'
+            f'classes="{",".join(map(str, p["chain"]))}" aliases="{p["aliases"]}" social="{SOCIAL.get(name, 1)}" temper="{TEMPER.get(name, 1)}" risk="{RISK.get(name, 1)}" x="{x}" y="{y}" z="{z}">\n'
             + "".join(gear) + '\t</phantom>\n')
         race_ru = RACE_RU[p["race"]][1 if p["sex"] == "F" else 0]
         phantom_personas[name] = dict(race=race_ru, sex=p["sex"], **{"class": d.classes[p["chain"][-1]][0]}, role="охотник", hunter=True,

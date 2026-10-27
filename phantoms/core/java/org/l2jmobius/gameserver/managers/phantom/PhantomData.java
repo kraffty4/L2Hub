@@ -71,6 +71,8 @@ public class PhantomData implements IXmlReader
 				final PhantomTemplate template = new PhantomTemplate(name, PhantomTemplate.Role.valueOf(set.getString("role")), set.getBoolean("female"), (byte) set.getInt("face"), (byte) set.getInt("hairStyle"), (byte) set.getInt("hairColor"), classes, new Location(set.getInt("x"), set.getInt("y"), set.getInt("z")), gear, set.getString("aliases", ""), set.getString("kind", "companion"), set.getFloat("social", 1));
 				// Вспыльчивость (патч 0037): «сорян» или «пнх» в ответ на предъяву за моба.
 				template.setTemper(set.getFloat("temper", 1));
+				// Риск («Разум 2.0», шаг 6): осторожный или рисковый — ошибки по характеру.
+				template.setRisk(set.getFloat("risk", 1));
 				_loading.put(name.toLowerCase(), template);
 			}
 			catch (Exception e)

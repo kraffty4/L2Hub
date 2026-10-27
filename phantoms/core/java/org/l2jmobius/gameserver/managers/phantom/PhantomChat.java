@@ -55,6 +55,8 @@ public class PhantomChat
 	/** Сколько слышно общий чат — как у игроков. */
 	private static final int SAY_RANGE = 1250;
 	private static final Pattern TAG = Pattern.compile("\\[\\[([A-Z]+)\\]\\]");
+	/** «Разум 2.0», шаг 6: новая цена в лавке [[TRADE]] из ответа мозгов разговора (brain.py дописывает её в конец, ответ может быть одним тегом). */
+	private static final Pattern PRICE = Pattern.compile("\\[\\[\\s*PRICE[\\s:]+(\\d{1,12})\\s*\\]\\]");
 	/** События охотника, которые он говорит сам, без повода от игрока: ждут тишины в округе ({@link PhantomQuiet}). */
 	private static final Set<String> UNSOLICITED_EVENTS = Set.of("GRUDGE");
 
@@ -903,13 +905,28 @@ public class PhantomChat
 				execute(speaker, template, List.of(tagged));
 			}
 
-			final String line = TAG.matcher(reply).replaceAll("").strip();
+			// «Разум 2.0», шаг 6: сторговались — новая цена в лавке [[TRADE]] этому игроку (сервер зажимает её в 50–300 % цены магазина).
+			final long price = priceTag(reply);
+			if (template.isHunter() && (price > 0))
+			{
+				PhantomNear.getInstance().price(phantom, speaker, price);
+			}
+			final String line = TAG.matcher(PRICE.matcher(reply).replaceAll(" ")).replaceAll("").replaceAll("\\s+", " ").strip();
 			if (!line.isEmpty())
 			{
 				_lastReply.put(pair(phantom, speaker), System.currentTimeMillis());
 				say(phantom, speaker, channel, line);
 			}
 		}, () -> fallback(speaker, phantom, channel, orders), PhantomFocus.getInstance().of(phantom) != null ? FOCUS_TIMEOUT : 0);
+	}
+
+	/**
+	 * @return цена из блока {@code [[PRICE N]]} в ответе мозгов или -1 — блока нет
+	 */
+	static long priceTag(String reply)
+	{
+		final Matcher matcher = PRICE.matcher(reply == null ? "" : reply);
+		return matcher.find() ? Long.parseLong(matcher.group(1)) : -1;
 	}
 
 	private static void fallback(Player speaker, Player phantom, String channel, List<Order> orders)
@@ -1017,10 +1034,17 @@ public class PhantomChat
 			// Отношение охотника к игроку (патч 0032): обида, благодарность, причины.
 			PhantomRelations.getInstance().json(sb, phantom, player);
 		}
+		if (template.isHunter())
+		{
+			// «Разум 2.0», шаг 6: что живой собеседник делает у охотника на глазах — кого бьёт, на том же ли споте.
+			PhantomNear.getInstance().doing(sb, phantom, player, PhantomHunterManager.getInstance().huntSpot(phantom));
+		}
 		sb.append("\"hpPct\":").append(percent(player.getCurrentHp(), player.getMaxHp())).append(',');
 		sb.append("\"dead\":").append(player.isDead()).append(',');
 		sb.append("\"distance\":").append((int) phantom.calculateDistance2D(player));
 		sb.append("},\"phantom\":{");
+		// Шаг 6: охотник сидит лавкой [[TRADE]] для собеседника — вещь и цена, мозги торгуются и возвращают [[PRICE N]].
+		PhantomNear.getInstance().tradeJson(sb, phantom, player, System.currentTimeMillis());
 		FakePlayerBrain.field(sb, "role", template.getRole().name()).append(',');
 		sb.append("\"hunter\":").append(template.isHunter()).append(',');
 		final PhantomMood mood = template.isHunter() ? PhantomHunterManager.getInstance().mood(phantom) : null;
@@ -1041,6 +1065,16 @@ public class PhantomChat
 		// Живые кланы (раздел 4.50): глава клана, клан охотников или клан живого игрока.
 		sb.append("\"clanLeader\":").append(phantom.isClanLeader()).append(',');
 		sb.append("\"hunterClan\":").append(PhantomHunterClans.isHunterClan(phantom.getClan())).append(',');
+		final String[] clanWar = PhantomClanWars.getInstance().war(phantom.getClan());
+		if (clanWar != null)
+		{
+			FakePlayerBrain.field(sb, "clanWar", clanWar[0]).append(',');
+			FakePlayerBrain.field(sb, "clanWarScore", clanWar[1]).append(',');
+			if (!clanWar[2].isEmpty())
+			{
+				sb.append("\"clanWarPlayer\":true,");
+			}
+		}
 		sb.append("\"party\":[");
 		if (phantom.isInParty())
 		{

@@ -937,6 +937,8 @@ class Api:
                         goal=h.get("goal", ""),  # цель от мозга-стратега, docs/MIND.md, «Шаг 3 — как сделано»
                         # клан и одиночка — docs/PHANTOMS.md, 4.50
                         clan=h.get("clan", ""), clanLevel=h.get("clanLevel"), clanLeader=bool(h.get("clanLeader")), hunterClan=bool(h.get("hunterClan")),
+                        clanWar=h.get("clanWar", ""), clanWarScore=h.get("clanWarScore", ""),  # война кланов — 4.50, этапы 3 и 4
+                        clanWarPlayer=bool(h.get("clanWarPlayer")),
                         loner=bool(h.get("loner")))
         mode = _ini_value(ini, "HuntersMode", "ALWAYS").upper()
         live_secret = {h.get("name"): h for h in (live or {}).get("hunters", []) if h.get("secret")}

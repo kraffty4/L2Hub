@@ -342,6 +342,24 @@ def zip_configs(archive: Path) -> dict[str, bytes]:
                 if CONFIG_RE.match(n) and not n.endswith("/") and Path(n).name not in CONFIG_SKIP}
 
 
+def chronicle_configs(cid: str, data: dict[str, bytes]) -> dict[str, bytes]:
+    """Конфиги сборки со значениями хроники поверх: phantoms/<id>/config.json — ключи конфигов модуля, которые у хроники
+    свои (у Essence профы даром — HunterProfessionPrices). Строка ключа меняется на месте, переводы строк — как были."""
+    spec = paths.PHANTOMS / cid / "config.json"
+    if not spec.is_file():
+        return data
+    out = dict(data)
+    for rel, keys in json.loads(spec.read_text(encoding="utf-8"))["configs"].items():
+        if rel not in out:
+            continue
+        for key, value in keys.items():
+            out[rel], n = re.subn(rb"^([ \t]*" + re.escape(key.encode()) + rb"[ \t]*=)[^\r\n]*",
+                                  lambda m, v=value: m[1] + b" " + v.encode("utf-8"), out[rel], count=1, flags=re.M)
+            if not n:
+                raise RuntimeError(f"{spec}: в {rel} нет ключа {key}")
+    return out
+
+
 def _names(keys: list[str]) -> str:
     return ", ".join(keys[:LIST_MAX]) + (f" и ещё {len(keys) - LIST_MAX}" if len(keys) > LIST_MAX else "")
 
@@ -374,8 +392,10 @@ def deploy_configs(cid: str, archive: Path, srv: Path, patches: list[Path], prev
     правили, заменяется целиком. .ini, который правили, — сливается (configs.merge_ini): недостающие ключи
     дописываются, значения, не тронутые в сервере, берутся из сборки, тронутые — остаются. Прочие (.xml, .txt), которые
     правили, а сборка тоже поменяла, — остаются как есть, версия сборки ложится в servers/<id>/.config_new/ для ручного
-    переноса. Перед любой записью — копия файла в data/backups/config/<id>/<время>/."""
-    new = zip_configs(archive)
+    переноса. Перед любой записью — копия файла в data/backups/config/<id>/<время>/. Значения хроники
+    (phantoms/<id>/config.json) — часть сборки: файл как в архиве без них (только что распакованный сервер) тоже не правили."""
+    raw = zip_configs(archive)
+    new = chronicle_configs(cid, raw)
     home = paths.SERVERS / cid
     record, pending = home / ".config_base", home / ".config_new"
     backup = paths.BACKUPS / "config" / cid / datetime.now().strftime("%Y-%m-%d_%H-%M-%S_build")
@@ -407,7 +427,7 @@ def deploy_configs(cid: str, archive: Path, srv: Path, patches: list[Path], prev
         if cur is None:
             save(rel, data, None)
             out(f"Новый конфиг в сервере: {rel}")
-        elif cur == base or cur in _build_states(rel, data, parsed):
+        elif cur == base or cur == raw.get(rel) or cur in _build_states(rel, data, parsed):
             save(rel, data, cur)
             out(f"Конфиг из сборки (в сервере его не меняли): {rel}")
         elif rel.endswith(INI_SUFFIXES):
@@ -431,6 +451,22 @@ def deploy_configs(cid: str, archive: Path, srv: Path, patches: list[Path], prev
         (record / rel).write_bytes(data)
     if backup.is_dir():
         out(f"Копии конфигов до выкладки: {backup}")
+    custom_dirs(srv, out)
+
+
+# Папки, которые Mobius читает при включённом ключе General.ini, а в сборку CT-хроник не кладёт: пустой папки в
+# git-исходниках нет. Без неё — «Directory not found» на каждом старте.
+CUSTOM_DIRS = {"CustomBuyListLoad": "game/data/buylists/custom"}
+
+
+def custom_dirs(srv: Path, out: Out = print) -> None:
+    ini = srv / "game" / "config" / "General.ini"
+    if not ini.is_file():
+        return
+    for key, rel in CUSTOM_DIRS.items():
+        if (_prop(ini, key) or "").lower() == "true" and not (srv / rel).is_dir():
+            (srv / rel).mkdir(parents=True)
+            out(f"Пустая папка для {key}: {rel}")
 
 
 def deploy_built(p: dict, prev_archive: Path | None = None, out: Out = print) -> None:

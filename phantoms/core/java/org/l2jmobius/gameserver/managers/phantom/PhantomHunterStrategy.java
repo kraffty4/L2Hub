@@ -29,7 +29,9 @@ import org.l2jmobius.gameserver.taskmanagers.GameTimeTaskManager;
  * охотник живёт по правилам, как без стратега.<br>
  * Протокол v1 («Разум 2.0», шаг 3, docs/MIND.md): в запросе — цель охотника ({@code goal}) и итог прошлого решения ({@code last}: выполнено ли, а нет — почему);
  * в ответе, кроме тега, — новая цель {@code [[GOAL текст]]} и решение с аргументом: переезд на спот {@code [[SPOT_TO имя]]}, покупка и продажа вещи у NPC {@code [[BUY имя]]},
- * {@code [[SELL имя]]}, пати с тем, кто рядом, {@code [[PARTY имя]]} — у таких вариантов в запросе {@code "arg"} и {@code "choices"}. Старый ответ «[[ТЕГ]] мысль» работает как был.
+ * {@code [[SELL имя]]}, пати с тем, кто рядом, {@code [[PARTY имя]]} — у таких вариантов в запросе {@code "arg"} и {@code "choices"}. Старый ответ «[[ТЕГ]] мысль» работает как был.<br>
+ * Протокол v2 (шаг 6, docs/MIND.md, раздел 6): охотник в фокусе видит живых рядом ({@code "players"}, {@link PhantomNear#json}), событие с живым — повод думать раньше срока ({@code "trigger"}),
+ * черта характера {@code hunter.risk} и {@code hunter.temper}; новые решения с именем живого — {@code [[HELP имя]]}, {@code [[SHARE имя]]}, {@code [[YIELD имя]]}, {@code [[TRADE имя; вещь; цена]]}.
  */
 final class PhantomHunterStrategy
 {
@@ -57,7 +59,15 @@ final class PhantomHunterStrategy
 		/** Отдохнуть в городе N минут. */
 		AFK(null),
 		/** Собрать рейд охотников на РБ своего уровня и повести его (раздел 4.32). */
-		RAID(null);
+		RAID(null),
+		/** Помочь живому рядом: рес, хил, мана, бафы или его моб — чем, решает сервер (протокол v2). */
+		HELP("name"),
+		/** Делить спот с живым на своём споте или позвать его к себе (протокол v2). */
+		SHARE("name"),
+		/** Уступить спот живому и уйти на ближайший другой (протокол v2). */
+		YIELD("name"),
+		/** Предложить живому вещь лавкой на месте: аргумент «имя; вещь; цена» (протокол v2). */
+		TRADE("name");
 
 		/** Что называет аргумент ({@code "arg"} варианта в запросе); {@code null} — тег без аргумента. */
 		final String arg;
@@ -205,6 +215,9 @@ final class PhantomHunterStrategy
 		final Map<Decision, String> choices = new EnumMap<>(Decision.class);
 		/** В ближайшем городе нечего купить лучше надетого (торговцы NPC и GM-шоп): варианта BUY нет, в запросе — {@code "buy_empty":true}. */
 		boolean buyEmpty;
+		/** Протокол v2: живые рядом (только у охотника в фокусе) и событие с одним из них — повод этого запроса ({@code null} — плановый). */
+		List<Player> players = List.of();
+		PhantomNear.Trigger trigger;
 	}
 
 	/** Запросы стратега за последнюю минуту — на всех охотников. */
@@ -364,11 +377,25 @@ final class PhantomHunterStrategy
 		{
 			FakePlayerBrain.field(sb, "focus", focus).append(',');
 		}
+		// Протокол v2: что случилось с живым рядом (повод решить сейчас) и кто из живых рядом — только то, что видно глазами.
+		if (facts.trigger != null)
+		{
+			sb.append("\"trigger\":{");
+			FakePlayerBrain.field(sb, "event", facts.trigger.event()).append(',');
+			FakePlayerBrain.field(sb, "name", facts.trigger.name()).append("},");
+		}
+		PhantomNear.getInstance().json(sb, player, facts.spot, facts.players, System.currentTimeMillis());
 		sb.append("\"hunter\":{");
 		sb.append("\"level\":").append(player.getLevel()).append(',');
 		FakePlayerBrain.field(sb, "class", player.getPlayerClass().name()).append(',');
 		FakePlayerBrain.field(sb, "race", player.getRace().name()).append(',');
 		FakePlayerBrain.field(sb, "role", template.getRole().name()).append(',');
+		// Протокол v2: черта характера — как рисковать (спот, отдых, отход); temper — словом, только у крайних.
+		sb.append("\"risk\":").append(String.format(Locale.ROOT, "%.2f", template.getRisk())).append(',');
+		if (template.isCautious() || template.isReckless())
+		{
+			FakePlayerBrain.field(sb, "temper", template.isCautious() ? "осторожный" : "рисковый").append(',');
+		}
 		sb.append("\"mage\":").append(player.isMageClass()).append(',');
 		sb.append("\"adena\":").append(player.getAdena()).append(',');
 		FakePlayerBrain.field(sb, "money", PhantomHunterManager.money(player.getAdena())).append(',');
@@ -545,9 +572,10 @@ final class PhantomHunterStrategy
 
 	/**
 	 * Выбор для PARTY с именем: кто рядом и подходит ({@link PhantomHunterManager#partyCandidates}), не больше {@value #MAX_PARTY_CHOICES}.
+	 * @param live «живой» самопроверки NEAR для её проверяемого — {@code real:true}, хоть и охотник; иначе {@code null}
 	 * @return {@code [{"name":…,"class":…,"level":…,"role":…,"real":…,"party":…},…]} (party — 0, если свободен, иначе сколько в его пати) или {@code null} — никого
 	 */
-	static String partyChoices(List<Player> others)
+	static String partyChoices(List<Player> others, Player live)
 	{
 		final StringBuilder sb = new StringBuilder("[");
 		for (int i = 0; i < Math.min(MAX_PARTY_CHOICES, others.size()); i++)
@@ -558,8 +586,23 @@ final class PhantomHunterStrategy
 			FakePlayerBrain.field(sb, "class", other.getPlayerClass().name().replace('_', ' ').toLowerCase(Locale.ROOT)).append(',');
 			sb.append("\"level\":").append(other.getLevel()).append(',');
 			FakePlayerBrain.field(sb, "role", role(other)).append(',');
-			sb.append("\"real\":").append(!PhantomManager.getInstance().isPhantom(other)).append(',');
+			sb.append("\"real\":").append((other == live) || !PhantomManager.getInstance().isPhantom(other)).append(',');
 			sb.append("\"party\":").append(other.isInParty() ? other.getParty().getMemberCount() : 0).append('}');
+		}
+		return others.isEmpty() ? null : sb.append(']').toString();
+	}
+
+	/**
+	 * Выбор из одних имён (YIELD: кому уступить спот).
+	 * @return {@code [{"name":…},…]} или {@code null} — никого
+	 */
+	static String nameChoices(List<Player> others)
+	{
+		final StringBuilder sb = new StringBuilder("[");
+		for (int i = 0; i < others.size(); i++)
+		{
+			sb.append(i > 0 ? "," : "").append('{');
+			FakePlayerBrain.field(sb, "name", others.get(i).getName()).append('}');
 		}
 		return others.isEmpty() ? null : sb.append(']').toString();
 	}

@@ -89,6 +89,28 @@ index e4f5d00fc8ad6acb4904ba7eb72990886be8de81..8600a74563b6e2ed76ff9386145b3bbd
  			WeddingConfig.ALLOW_WEDDING ? Wedding.class : null,
  			BankingConfig.BANKING_SYSTEM_ENABLED ? Banking.class : null,
  			ChatModerationConfig.CHAT_ADMIN ? ChatAdmin.class : null,
+diff --git a/dist/game/data/scripts/handlers/chat/channels/ChatClan.java b/dist/game/data/scripts/handlers/chat/channels/ChatClan.java
+index 51f823485c942dc0c9f7c4b3467f4605a57ce9a3..faa4d21987bf51757232a0ea5b9a450b802ca54e 100644
+--- a/dist/game/data/scripts/handlers/chat/channels/ChatClan.java
++++ b/dist/game/data/scripts/handlers/chat/channels/ChatClan.java
+@@ -22,6 +22,7 @@ import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
+ import org.l2jmobius.gameserver.entity.itemcontainer.Inventory;
+ import org.l2jmobius.gameserver.entity.zone.ZoneId;
+ import org.l2jmobius.gameserver.handler.IChatHandler;
++import org.l2jmobius.gameserver.managers.phantom.PhantomChat;
+ import org.l2jmobius.gameserver.network.SystemMessageId;
+ import org.l2jmobius.gameserver.network.enums.ChatType;
+ import org.l2jmobius.gameserver.network.serverpackets.CreatureSay;
+@@ -76,6 +77,9 @@ public class ChatClan implements IChatHandler
+ 		}
+ 		
+ 		activeChar.getClan().broadcastCSToOnlineMembers(new CreatureSay(activeChar, type, activeChar.getName(), text, shareLocation), activeChar);
++		
++		// L2Hub: охотники в клане слышат клан-чат и отвечают (PhantomChat, docs/PHANTOMS.md 4.41).
++		PhantomChat.getInstance().onClanChat(activeChar, text);
+ 	}
+ 	
+ 	@Override
 diff --git a/dist/game/data/scripts/handlers/chat/channels/ChatGeneral.java b/dist/game/data/scripts/handlers/chat/channels/ChatGeneral.java
 index b00b64abe4fe940abae027f50ca3c8ddb760dafe..27aa2ae77e3a7d281d71ae88ae9cb8d370b534c9 100644
 --- a/dist/game/data/scripts/handlers/chat/channels/ChatGeneral.java
@@ -243,19 +265,27 @@ index 7c6f14a5ff56cf1c16f13ffe35a494154bfb2593..4020121848b10e759e44800f0e6c30a3
  </list>
 \ No newline at end of file
 diff --git a/dist/game/data/stats/players/initialShortcuts.xml b/dist/game/data/stats/players/initialShortcuts.xml
-index c7cc9a2fcbe366bdf6deb47b4598ff03fda91bb9..9b879a132c11cac164745ff66b19b54ff17297a1 100644
+index c7cc9a2fcbe366bdf6deb47b4598ff03fda91bb9..c74313f0aa39a4df742ae09eb6ee06dfdd91e682 100644
 --- a/dist/game/data/stats/players/initialShortcuts.xml
 +++ b/dist/game/data/stats/players/initialShortcuts.xml
-@@ -7,6 +7,8 @@
+@@ -4,10 +4,16 @@
+ 	<shortcuts>
+ 		<page pageId="0">
+ 			<slot slotId="0" shortcutType="ACTION" shortcutId="2" /> <!-- Attack -->
++			<slot slotId="2" shortcutType="MACRO" shortcutId="10105" /> <!-- L2Hub: Мир (.world) -->
  			<slot slotId="3" shortcutType="ACTION" shortcutId="5" /> <!-- Pick Up -->
  			<slot slotId="4" shortcutType="ACTION" shortcutId="4" /> <!-- Next Target (Melee) -->
  			<slot slotId="5" shortcutType="ACTION" shortcutId="93" /> <!-- Next Target (Range) -->
-+			<slot slotId="6" shortcutType="MACRO" shortcutId="10100" /> <!-- L2Hub: Напарник (.buddy) -->
-+			<slot slotId="7" shortcutType="MACRO" shortcutId="10101" /> <!-- L2Hub: Застрял (/unstuck) -->
++			<slot slotId="6" shortcutType="MACRO" shortcutId="10102" /> <!-- L2Hub: Охотники (.hunters) -->
++			<slot slotId="7" shortcutType="MACRO" shortcutId="10103" /> <!-- L2Hub: Поручения (.daily) -->
++			<slot slotId="8" shortcutType="MACRO" shortcutId="10104" /> <!-- L2Hub: Рейд (.raid) -->
++			<slot slotId="9" shortcutType="MACRO" shortcutId="10100" /> <!-- L2Hub: Напарник (.buddy) -->
  			<slot slotId="10" shortcutType="ACTION" shortcutId="0" /> <!-- Sit/Stand -->
++			<slot slotId="11" shortcutType="MACRO" shortcutId="10101" /> <!-- L2Hub: Застрял (/unstuck) -->
  		</page>
  		<!-- Custom example. -->
-@@ -51,5 +53,13 @@
+ 		<page pageId="1">
+@@ -51,5 +57,29 @@
  			<command type="TEXT">!Hellooooo world!</command> <!-- To define a text, just include the string as if it was typed in-game. -->
  			<command type="SHORTCUT" page="0" slot="11" /> <!-- To define a shortcut (to an equipped item in example), include page and slot number. -->
  		</macro>
@@ -266,6 +296,22 @@ index c7cc9a2fcbe366bdf6deb47b4598ff03fda91bb9..9b879a132c11cac164745ff66b19b54f
 +		<!-- L2Hub: застрял — в ближайший город; мгновенно, если в «Модах и ивентах» включён «Мгновенный /unstuck». -->
 +		<macro macroId="10101" icon="2" name="Застрял" description="Вернуться в город (/unstuck)" acronym="UNST">
 +			<command type="TEXT">/unstuck</command>
++		</macro>
++		<!-- L2Hub: охотники мира — кто где качается, позвать в пати (.hunters). -->
++		<macro macroId="10102" icon="3" name="Охотники" description="Кто где качается (.hunters)" acronym="HUNT">
++			<command type="TEXT">.hunters</command>
++		</macro>
++		<!-- L2Hub: поручения дня и награды за них (.daily). -->
++		<macro macroId="10103" icon="4" name="Поручения" description="Поручения дня, награды (.daily)" acronym="DAY">
++			<command type="TEXT">.daily</command>
++		</macro>
++		<!-- L2Hub: рейд охотников на РБ — вступить, телепорт к сбору (.raid). -->
++		<macro macroId="10104" icon="5" name="Рейд" description="Рейд охотников на РБ (.raid)" acronym="RAID">
++			<command type="TEXT">.raid</command>
++		</macro>
++		<!-- L2Hub: мир сейчас — суперчемпионы, сезонные события, ивенты (.world). -->
++		<macro macroId="10105" icon="6" name="Мир" description="Чемпионы, события, ивенты (.world)" acronym="WRLD">
++			<command type="TEXT">.world</command>
 +		</macro>
  	</macros>
  </list>
@@ -428,6 +474,28 @@ index d1ca28f668a2891fce9740b346493feb501a9065..32ea21deaadf694e4c9bf5b3874eafa9
  				}
  				
  				// premium chance
+diff --git a/java/org/l2jmobius/gameserver/entity/clan/ClanMember.java b/java/org/l2jmobius/gameserver/entity/clan/ClanMember.java
+index dd5811c90e2fdcb6e0db4e159e9758e72653b1b3..ff51a5ede83b19f2160af57e4219776da059ef47 100644
+--- a/java/org/l2jmobius/gameserver/entity/clan/ClanMember.java
++++ b/java/org/l2jmobius/gameserver/entity/clan/ClanMember.java
+@@ -32,6 +32,7 @@ import org.l2jmobius.gameserver.config.PlayerConfig;
+ import org.l2jmobius.gameserver.entity.actor.Player;
+ import org.l2jmobius.gameserver.entity.clan.enums.ClanRewardType;
+ import org.l2jmobius.gameserver.managers.SiegeManager;
++import org.l2jmobius.gameserver.managers.phantom.PhantomManager;
+ import org.l2jmobius.gameserver.mechanics.variables.PlayerVariables;
+ 
+ /**
+@@ -169,7 +170,8 @@ public class ClanMember
+ 			return false;
+ 		}
+ 		
+-		if ((_player.getClient() == null) || _player.getClient().isDetached())
++		// L2Hub: охотник в клане игрока — в сети, хоть клиента у него и нет (docs/PHANTOMS.md 4.41).
++		if (((_player.getClient() == null) || _player.getClient().isDetached()) && !PhantomManager.getInstance().isPhantom(_player))
+ 		{
+ 			return false;
+ 		}
 diff --git a/java/org/l2jmobius/gameserver/entity/groups/Party.java b/java/org/l2jmobius/gameserver/entity/groups/Party.java
 index 9bada7ce556e50ef7803b7b1e3f0f3ad2d01b7d9..b1cea0d3da73e3d99e638acfc36fa29a7a925eae 100644
 --- a/java/org/l2jmobius/gameserver/entity/groups/Party.java
@@ -610,6 +678,44 @@ index d0ce21d48cfc5c286419c8f2a832cec0e46c1f2e..4c364808ce72b3679ed4bceb943b08e1
  	
  	public void manageChat(Player player, String fpcName, String message, int minDelay, int maxDelay)
  	{
+diff --git a/java/org/l2jmobius/gameserver/network/clientpackets/RequestClanAskJoinByName.java b/java/org/l2jmobius/gameserver/network/clientpackets/RequestClanAskJoinByName.java
+index 3ea75f25de229065282b84ea691518f94f4cca1f..ac331d65add21ba667356419c1efbadc72b3d0c5 100644
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/RequestClanAskJoinByName.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/RequestClanAskJoinByName.java
+@@ -23,6 +23,8 @@ package org.l2jmobius.gameserver.network.clientpackets;
+ import org.l2jmobius.gameserver.entity.World;
+ import org.l2jmobius.gameserver.entity.actor.Player;
+ import org.l2jmobius.gameserver.entity.clan.Clan;
++import org.l2jmobius.gameserver.managers.phantom.PhantomClans;
++import org.l2jmobius.gameserver.managers.phantom.PhantomManager;
+ import org.l2jmobius.gameserver.network.serverpackets.AskJoinPledge;
+ 
+ /**
+@@ -56,11 +58,24 @@ public class RequestClanAskJoinByName extends ClientPacket
+ 		}
+ 		
+ 		final Player invitedPlayer = World.getPlayer(_playerName);
++		// L2Hub: охотник из клана охотников сначала решает, уйти ли к игроку (docs/PHANTOMS.md 4.50).
++		if (PhantomManager.getInstance().isPhantom(invitedPlayer) && PhantomClans.getInstance().beforeInvite(player, invitedPlayer))
++		{
++			return;
++		}
++		
+ 		if (!clan.checkClanJoinCondition(player, invitedPlayer, _pledgeType))
+ 		{
+ 			return;
+ 		}
+ 		
++		// L2Hub: у фантома нет клиента и окна «вступить в клан?» — приглашение принимает сервер (docs/PHANTOMS.md 4.41).
++		if (PhantomManager.getInstance().isPhantom(invitedPlayer))
++		{
++			PhantomClans.getInstance().onInvited(player, invitedPlayer, _pledgeType);
++			return;
++		}
++		
+ 		if (!player.getRequest().setRequest(invitedPlayer, this))
+ 		{
+ 			return;
 diff --git a/java/org/l2jmobius/gameserver/network/clientpackets/RequestDuelStart.java b/java/org/l2jmobius/gameserver/network/clientpackets/RequestDuelStart.java
 index 81135588cf05fa57287d38d856d75a01dc1a569b..f628a107c943d7accf9782ca263272aa72d4317d 100644
 --- a/java/org/l2jmobius/gameserver/network/clientpackets/RequestDuelStart.java
@@ -679,6 +785,44 @@ index a922c9ddd341e3831a134036ab6a12b763f56745..f371454658cbbfd14eff7bedb75911c4
  		if ((target.getClient() == null) || target.getClient().isDetached())
  		{
  			requestor.sendMessage("Player is in offline mode.");
+diff --git a/java/org/l2jmobius/gameserver/network/clientpackets/RequestJoinPledge.java b/java/org/l2jmobius/gameserver/network/clientpackets/RequestJoinPledge.java
+index da5116cb503145418fa8064331e93cc546fdb41c..ebb28ca3c40db210dee492fd097ccd3f0600fe7b 100644
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/RequestJoinPledge.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/RequestJoinPledge.java
+@@ -25,6 +25,8 @@ import org.l2jmobius.gameserver.data.xml.FakePlayerData;
+ import org.l2jmobius.gameserver.entity.World;
+ import org.l2jmobius.gameserver.entity.actor.Player;
+ import org.l2jmobius.gameserver.entity.clan.Clan;
++import org.l2jmobius.gameserver.managers.phantom.PhantomClans;
++import org.l2jmobius.gameserver.managers.phantom.PhantomManager;
+ import org.l2jmobius.gameserver.network.SystemMessageId;
+ import org.l2jmobius.gameserver.network.serverpackets.AskJoinPledge;
+ import org.l2jmobius.gameserver.network.serverpackets.SystemMessage;
+@@ -100,11 +102,24 @@ public class RequestJoinPledge extends ClientPacket
+ 			return;
+ 		}
+ 		
++		// L2Hub: охотник из клана охотников сначала решает, уйти ли к игроку (docs/PHANTOMS.md 4.50).
++		if (PhantomManager.getInstance().isPhantom(target) && PhantomClans.getInstance().beforeInvite(player, target))
++		{
++			return;
++		}
++		
+ 		if (!clan.checkClanJoinCondition(player, target, _pledgeType))
+ 		{
+ 			return;
+ 		}
+ 		
++		// L2Hub: у фантома нет клиента и окна «вступить в клан?» — приглашение принимает сервер (docs/PHANTOMS.md 4.41).
++		if (PhantomManager.getInstance().isPhantom(target))
++		{
++			PhantomClans.getInstance().onInvited(player, target, _pledgeType);
++			return;
++		}
++		
+ 		if (!player.getRequest().setRequest(target, this))
+ 		{
+ 			return;
 diff --git a/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTaskManager.java b/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTaskManager.java
 index 4d80cf29b36b59b34ba8999526d1d66d27544f5b..40c9b00ba97859442e05610a26dc992e078af1f3 100644
 --- a/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTaskManager.java

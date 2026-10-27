@@ -124,7 +124,8 @@ public class PhantomNeighbors
 		double worst = INJURED;
 		for (Player other : World.getVisibleObjectsInRange(healer, Player.class, HELP_RANGE))
 		{
-			if ((other == healer) || !PhantomRelations.isHunter(other) || PhantomRelations.getInstance().isEnemy(healer, other))
+			// «Живой» самопроверки NEAR — как живой игрок: ему помогают только по HELP.
+			if ((other == healer) || !PhantomRelations.isHunter(other) || PhantomNear.getInstance().isTestPlayer(other) || PhantomRelations.getInstance().isEnemy(healer, other))
 			{
 				continue;
 			}
@@ -208,7 +209,8 @@ public class PhantomNeighbors
 	{
 		final int id = hunter.getObjectId();
 		final WorldObject target = hunter.getTarget();
-		if (!(target instanceof Monster) || ((Monster) target).isDead())
+		// Охотник, который в самопроверке NEAR играет живого, не обижается: он «живой».
+		if (!(target instanceof Monster) || ((Monster) target).isDead() || PhantomNear.getInstance().isTestPlayer(hunter))
 		{
 			_targets.remove(id);
 			_seen.remove(id);
@@ -235,15 +237,15 @@ public class PhantomNeighbors
 			{
 				continue;
 			}
-			// Свои по пати и напарники из .buddy — не в счёт.
-			if ((hunter.isInParty() && (hunter.getParty() == other.getParty())) || (PhantomManager.getInstance().isPhantom(other) && !PhantomRelations.isHunter(other)))
+			// Свои по пати и напарники из .buddy — не в счёт; с кем делит спот («Разум 2.0», шаг 6, [[SHARE]]) — тоже.
+			if ((hunter.isInParty() && (hunter.getParty() == other.getParty())) || (PhantomManager.getInstance().isPhantom(other) && !PhantomRelations.isHunter(other)) || PhantomNear.getInstance().shared(hunter, other, now))
 			{
 				continue;
 			}
 
 			// Кто взял моба позже. У охотника — по его собственной отметке (иначе двое, взявшие моба почти разом, засчитали бы друг друга:
-			// тики разъезжаются); у живого игрока — когда охотник впервые увидел его на своём мобе.
-			final boolean otherHunter = PhantomRelations.isHunter(other);
+			// тики разъезжаются); у живого игрока — когда охотник впервые увидел его на своём мобе. «Живой» самопроверки NEAR — как живой.
+			final boolean otherHunter = PhantomRelations.isHunter(other) && !PhantomNear.getInstance().isTestPlayer(other);
 			final long[] theirs = otherHunter ? _targets.get(other.getObjectId()) : null;
 			if (otherHunter && ((theirs == null) || (theirs[0] != target.getObjectId())))
 			{
@@ -258,6 +260,8 @@ public class PhantomNeighbors
 			PhantomRelations.getInstance().record(hunter, other, Kind.CONTESTED);
 			if (!otherHunter)
 			{
+				// «Разум 2.0», шаг 6: у охотника в фокусе это ещё и событие SAME_MOB для стратега.
+				PhantomNear.getInstance().sameMob(hunter, other, now);
 				PhantomChat.getInstance().hunterEvent(hunter, other, "CONTESTED", other.getName() + " бьёт моба (" + target.getName() + "), которого ты бил первым, — отжимает его у тебя", "эй, это мой моб!", CONTEST_SAY_COOLDOWN);
 				continue;
 			}

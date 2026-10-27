@@ -12,7 +12,9 @@ import java.util.function.BiConsumer;
 import org.l2jmobius.gameserver.config.FeatureConfig;
 import org.l2jmobius.gameserver.config.PlayerConfig;
 import org.l2jmobius.gameserver.config.custom.AutoPlayConfig;
+import org.l2jmobius.gameserver.data.sql.ClanTable;
 import org.l2jmobius.gameserver.data.xml.BuyListData;
+import org.l2jmobius.gameserver.data.xml.EnchantItemData;
 import org.l2jmobius.gameserver.entity.WorldObject;
 import org.l2jmobius.gameserver.entity.actor.Attackable;
 import org.l2jmobius.gameserver.entity.actor.Creature;
@@ -24,9 +26,13 @@ import org.l2jmobius.gameserver.entity.actor.instance.Merchant;
 import org.l2jmobius.gameserver.entity.clan.Clan;
 import org.l2jmobius.gameserver.entity.groups.Party;
 import org.l2jmobius.gameserver.entity.groups.PartyDistributionType;
+import org.l2jmobius.gameserver.entity.item.enchant.EnchantResultType;
+import org.l2jmobius.gameserver.entity.item.enchant.EnchantScroll;
 import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
+import org.l2jmobius.gameserver.entity.item.holders.ItemHolder;
 import org.l2jmobius.gameserver.entity.item.instance.Item;
 import org.l2jmobius.gameserver.entity.item.type.WeaponType;
+import org.l2jmobius.gameserver.entity.itemcontainer.Inventory;
 import org.l2jmobius.gameserver.entity.zone.ZoneId;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
 import org.l2jmobius.gameserver.managers.CastleManager;
@@ -46,6 +52,7 @@ import org.l2jmobius.gameserver.mechanics.siege.Fort;
 import org.l2jmobius.gameserver.mechanics.skill.AbnormalType;
 import org.l2jmobius.gameserver.mechanics.skill.BuffInfo;
 import org.l2jmobius.gameserver.mechanics.skill.Skill;
+import org.l2jmobius.gameserver.mechanics.skill.holders.SkillLearn;
 import org.l2jmobius.gameserver.mechanics.skill.targets.TargetType;
 import org.l2jmobius.gameserver.network.SystemMessageId;
 import org.l2jmobius.gameserver.network.clientpackets.RequestJoinPledge;
@@ -576,5 +583,100 @@ public final class PhantomCompat
 	public static long clanLevelAdena(int level)
 	{
 		return level == 1 ? 650000 : level == 2 ? 2500000 : 0;
+	}
+
+	/**
+	 * Война кланов охотников (раздел 4.50): взаимная, как если бы оба главы объявили её друг другу ({@code RequestStartPledgeWar}).
+	 * Враг по войне атакуем без флага, его смерть — без кармы, репутацию переносит {@code Player.doDie}.
+	 */
+	public static void startWar(Clan declarer, Clan other)
+	{
+		ClanTable.getInstance().storeClanWars(declarer.getId(), other.getId());
+		ClanTable.getInstance().storeClanWars(other.getId(), declarer.getId());
+		refreshWar(declarer, other);
+	}
+
+	/** Конец войны — с обеих сторон, как {@code RequestStopPledgeWar}, но без штрафа репутации. */
+	public static void endWar(Clan a, Clan b)
+	{
+		ClanTable.getInstance().deleteClanWars(a.getId(), b.getId());
+		ClanTable.getInstance().deleteClanWars(b.getId(), a.getId());
+		refreshWar(a, b);
+	}
+
+	/** Кланы воюют друг с другом (оба объявили). */
+	public static boolean atWar(Clan a, Clan b)
+	{
+		return (a != null) && (b != null) && a.isAtWarWith(b.getId()) && b.isAtWarWith(a.getId());
+	}
+
+	private static void refreshWar(Clan a, Clan b)
+	{
+		for (Clan clan : List.of(a, b))
+		{
+			for (Player member : clan.getOnlineMembers(0))
+			{
+				member.broadcastUserInfo();
+			}
+		}
+	}
+
+	/**
+	 * Адена в цене клан-скилла ({@code RequestAcquireSkill}, PLEDGE): у CT — набор предметов, все нужны. Остальные предметы охотникам не нужны (раздел 4.50).
+	 */
+	public static long skillAdena(SkillLearn learn)
+	{
+		long adena = 0;
+		for (ItemHolder item : learn.getRequiredItems())
+		{
+			if (item.getId() == Inventory.ADENA_ID)
+			{
+				adena += item.getCount();
+			}
+		}
+		return adena;
+	}
+
+	/**
+	 * Заточка вещи свитком на сервере, как кнопка живого ({@code RequestEnchantItem} без пакетов и без поддержки): свиток уходит, шанс — Mobius.
+	 * Провал: защищённый свиток — уровень остаётся, благословлённый — 0, обычный — вещь ломается (кристаллы — как у Mobius). Охотникам — для посоха мастера Йоги (раздел 4.34).
+	 * @return уровень заточки после; -1 — вещь сломалась; {@link Integer#MIN_VALUE} — свиток к ней не подходит
+	 */
+	public static int enchantEventItem(Player player, Item scroll, Item item)
+	{
+		final EnchantScroll template = EnchantItemData.getInstance().getEnchantScroll(scroll);
+		if ((template == null) || !template.isValid(item, null) || (item.getEnchantLevel() >= template.getMaxEnchantLevel()) || (player.getInventory().destroyItem(ItemProcessType.FEE, scroll.getObjectId(), 1, player, item) == null))
+		{
+			return Integer.MIN_VALUE;
+		}
+		final EnchantResultType result = template.calculateSuccess(player, item, null);
+		if (result == EnchantResultType.SUCCESS)
+		{
+			item.setEnchantLevel(item.getEnchantLevel() + 1);
+			item.updateDatabase();
+			return item.getEnchantLevel();
+		}
+		if ((result != EnchantResultType.FAILURE) || template.isSafe())
+		{
+			return item.getEnchantLevel();
+		}
+		if (template.isBlessed())
+		{
+			item.setEnchantLevel(0);
+			item.updateDatabase();
+			return 0;
+		}
+		if (item.isEquipped())
+		{
+			player.getInventory().unEquipItemInSlotAndRecord(item.getLocationSlot());
+		}
+		final int crystalId = item.getTemplate().getCrystalItemId();
+		final int crystals = Math.max(1, item.getCrystalCount() - ((item.getTemplate().getCrystalCount() + 1) / 2));
+		player.getInventory().destroyItem(ItemProcessType.DESTROY, item, player, null);
+		if ((crystalId != 0) && item.getTemplate().isCrystallizable())
+		{
+			player.getInventory().addItem(ItemProcessType.COMPENSATE, crystalId, crystals, player, item);
+		}
+		return -1;
 	}
 }

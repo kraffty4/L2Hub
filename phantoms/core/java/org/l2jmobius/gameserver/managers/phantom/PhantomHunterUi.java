@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+import org.l2jmobius.gameserver.config.PlayerConfig;
 import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
 import org.l2jmobius.gameserver.data.xml.MapRegionData;
 import org.l2jmobius.gameserver.entity.Location;
@@ -21,7 +22,7 @@ import org.l2jmobius.gameserver.network.serverpackets.ShowBoard;
  * L2Hub: где охотники — окно ГМ {@code //hunters} и раздел «Охотники» на доске Alt+B.<br>
  * ГМ видит всех: что делает, адену, доход в час, квест, долг за профу, расстояние; «К нему» — телепорт к охотнику, он же становится целью.<br>
  * Игрок видит, кто качается на его уровне (±{@link #NEAR_LEVELS}), кто где и кто сидит в лавке. Кнопка ведёт на спот охотника или к его лавке
- * телепортом по правилам охотников: до 40-го уровня бесплатно, дальше {@link PhantomHuntersConfig#HUNTER_TELEPORT_FEE}. В пати и на зов — без кнопки.
+ * телепортом по правилам охотников: до {@code MaxFreeTeleportLevel} бесплатно, дальше {@link PhantomHuntersConfig#HUNTER_TELEPORT_FEE}. В пати и на зов — без кнопки.
  */
 public final class PhantomHunterUi
 {
@@ -247,7 +248,7 @@ public final class PhantomHunterUi
 
 		final StringBuilder sb = new StringBuilder(12288);
 		sb.append("<table width=" + W + "><tr><td width=" + W + "><font color=\"B09878\">Охотники — такие же игроки, только без клиента: качаются сами с 1-го уровня, сидят в лавках в Гиране и идут в пати, если рядом крикнуть «лфм». ");
-		sb.append("Кнопка — телепорт на их спот или к лавке: ").append(fee > 0 ? "за " + money(fee) + " адены (с 40-го уровня, как у них)." : "пока бесплатно (до 40-го уровня).").append("</font></td></tr></table><br>");
+		sb.append("Кнопка — телепорт на их спот или к лавке: ").append(fee > 0 ? "за " + money(fee) + " адены (с " + (PlayerConfig.MAX_FREE_TELEPORT_LEVEL + 1) + "-го уровня, как у них)." : player.getLevel() <= PlayerConfig.MAX_FREE_TELEPORT_LEVEL ? "пока бесплатно (до " + PlayerConfig.MAX_FREE_TELEPORT_LEVEL + "-го уровня включительно)." : "бесплатно.").append("</font></td></tr></table><br>");
 
 		sb.append("<table width=" + W + "><tr>");
 		for (Tab t : new Tab[]
@@ -362,7 +363,7 @@ public final class PhantomHunterUi
 
 	private static int fee(Player player)
 	{
-		return player.getLevel() >= 40 ? Math.max(0, PhantomHuntersConfig.HUNTER_TELEPORT_FEE) : 0;
+		return player.getLevel() > PlayerConfig.MAX_FREE_TELEPORT_LEVEL ? Math.max(0, PhantomHuntersConfig.HUNTER_TELEPORT_FEE) : 0;
 	}
 
 	private static String boardButton(String label, String action, int width)

@@ -58,6 +58,8 @@
 						<!-- Общительность охотника: множитель шанса заговорить первым (1 — обычный). -->
 						<xs:attribute name="social" type="xs:decimal" default="1" />
 						<xs:attribute name="temper" type="xs:decimal" default="1" />
+						<!-- Риск охотника («Разум 2.0», шаг 6): меньше 1 — осторожный, больше 1 — рисковый (tools/fake_players.py, RISK). -->
+						<xs:attribute name="risk" type="xs:decimal" default="1" />
 						<xs:attribute name="x" type="xs:integer" use="required" />
 						<xs:attribute name="y" type="xs:integer" use="required" />
 						<xs:attribute name="z" type="xs:integer" use="required" />

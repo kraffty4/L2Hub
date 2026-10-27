@@ -324,7 +324,7 @@ public final class PhantomClans
 	/**
 	 * @return живой игрок в игре (не фантом и не офлайн-торговец) или охотник, который играет его в самопроверке
 	 */
-	private boolean living(Player player)
+	boolean living(Player player)
 	{
 		if ((player == null) || !player.isOnline())
 		{
@@ -347,6 +347,15 @@ public final class PhantomClans
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * Самопроверка CLANWARPLAYER (раздел 4.50, этап 4): этот охотник играет живого игрока, как в CLAN.
+	 * @param player охотник или {@code null} — никто
+	 */
+	void testPlayer(Player player)
+	{
+		_testPlayerId = player != null ? player.getObjectId() : 0;
 	}
 
 	/**

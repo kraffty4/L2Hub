@@ -78,8 +78,9 @@
   const REL_KIND = { enemy: 'враг', friend: 'друг', neutral: 'знакомый' };
   const REL_WHY = { killed: 'убил', attacked: 'нападал', healed: 'хилил', revived: 'реснул', saved: 'спас', hunted: 'качались вместе', contested: 'отжал моба', apologized: 'извинился', insulted: 'послал',
     duel_win: 'победил на дуэли', duel_loss: 'проиграл дуэль', clan_harm: 'обидел соклановца', clan_help: 'выручил соклановца' };
-  // Клан охотника (docs/PHANTOMS.md, 4.50): свой клан охотников или клан живого игрока; одиночка в кланы не идёт.
+  // Клан охотника (docs/PHANTOMS.md, 4.50): свой клан охотников или клан живого игрока; одиночка в кланы не идёт. Война — этапы 3 и 4.
   const clanText = (x) => (x.clan ? `${esc(x.clan)} <span class="w-muted">· ${x.clanLevel ?? 0} ур.${x.clanLeader ? ', глава' : ''}${x.hunterClan ? '' : ', клан игрока'}</span>`
+      + (x.clanWar ? `<br><span class="w-muted">${x.clanWarPlayer ? 'воюет с кланом игрока' : 'воюет с'}</span> ${esc(x.clanWar)} <span class="w-muted">· счёт ${esc(x.clanWarScore || '0:0')}</span>` : '')
     : x.loner ? '<span class="w-muted">одиночка — в кланы не идёт</span>' : '—');
   const relationsText = (list) => (list && list.length
     ? list.map((r) => `${esc(r.name)} — ${REL_KIND[r.kind] || r.kind}${r.kills > 1 ? `, убил ${r.kills}` : ''}${r.reasons?.length ? ` (${[...new Set(r.reasons)].map((x) => REL_WHY[x] || x).join(', ')})` : ''}`).join('<br>')
@@ -90,8 +91,12 @@
   const decisionText = (d) => {
     const a = /^AFK\s+(\d+)$/.exec(d || '');
     if (a) return `отдых ${a[1]} мин`;
-    const s = /^(SPOT_TO|BUY|SELL|PARTY)\s+(.+)$/.exec(d || '');
-    if (s) return { SPOT_TO: `на спот ${s[2]}`, BUY: `купить ${s[2]}`, SELL: `продать ${s[2]}`, PARTY: `в пати с ${s[2]}` }[s[1]];
+    // Шаг 6 (docs/MIND.md, раздел 6): с живым рядом — «HELP <кого>», «SHARE <кого>», «YIELD <кому>», «TRADE <кому>; <вещь>; <цена>».
+    const t = /^TRADE\s+([^;]+);\s*([^;]+?)(?:;\s*(\d+))?$/.exec(d || '');
+    if (t) return `предложить ${t[1]}: ${t[2]}` + (t[3] ? ` за ${money(+t[3])}` : '');
+    const s = /^(SPOT_TO|BUY|SELL|PARTY|HELP|SHARE|YIELD)\s+(.+)$/.exec(d || '');
+    if (s) return { SPOT_TO: `на спот ${s[2]}`, BUY: `купить ${s[2]}`, SELL: `продать ${s[2]}`, PARTY: `в пати с ${s[2]}`,
+                    HELP: `помочь ${s[2]}`, SHARE: `делить спот с ${s[2]}`, YIELD: `уступить спот ${s[2]}` }[s[1]];
     return DECISION[d] || d;
   };
   const refused = (st) => (st && st.ok === false ? `<span class="w-muted"> · не вышло</span>` : '');
@@ -500,8 +505,8 @@
   // «Летопись» (Api.world_chronicle, game/log/L2HubChronicle.json, патч 0023 c4-interlude): лента заметных событий,
   // новые сверху, по дням; фильтр по виду. Текст готов к показу — сервер пишет его по-русски.
   const CHRON_KINDS = [['all', 'Всё'], ['boss', 'Боссы', ['raid_killed', 'super_killed', 'epic_killed', 'epic_spawned']], ['pvp', 'PvP', ['pvp_result']],
-    ['events', 'События', ['seasonal_start', 'seasonal_end', 'elpies']], ['growth', 'Рост', ['level', 'profession']], ['clans', 'Кланы', ['clan']]];
-  const CHRON_MARK = { raid_killed: '⚔', super_killed: '★', epic_killed: '☠', epic_spawned: '◆', pvp_result: '⚑', seasonal_start: '✦', seasonal_end: '✧', elpies: '❀', level: '▲', profession: '♛', clan: '⚜' };
+    ['events', 'События', ['seasonal_start', 'seasonal_end', 'elpies']], ['growth', 'Рост', ['level', 'profession']], ['clans', 'Кланы', ['clan', 'clan_war']]];
+  const CHRON_MARK = { raid_killed: '⚔', super_killed: '★', epic_killed: '☠', epic_spawned: '◆', pvp_result: '⚑', seasonal_start: '✦', seasonal_end: '✧', elpies: '❀', level: '▲', profession: '♛', clan: '⚜', clan_war: '⚒' };
   function chronicleView(main) {
     if (W.chronErr) { main.innerHTML = errorView(W.chronErr); return; }
     const r = W.chronicle;
@@ -1060,7 +1065,7 @@
   // Метаданные — здесь: в ini нет диапазонов и признака «на ходу». На ходу сервер перечитывает только PhantomHunters.ini (раз в 10 с),
   // остальное — после перезапуска гейм-сервера. Показываются только ключи, которые есть в схеме этой сборки.
   const GROUPS = [['activity', 'Активность охотников'], ['economy', 'Экономика и снабжение'], ['progress', 'Охота и прогрессия'],
-    ['players', 'Взаимодействие с игроками'], ['companions', 'Поведение напарников'], ['ai', 'Параметры ИИ']];
+    ['players', 'Взаимодействие с игроками'], ['clans', 'Кланы охотников'], ['companions', 'Поведение напарников'], ['ai', 'Параметры ИИ']];
   const META = {
     HuntersMode: ['activity', 'Когда живут охотники', 'enum', ['OFF', 'ALWAYS', 'WITH_PLAYERS'], 'OFF — их нет в мире, ALWAYS — пока запущен сервер, WITH_PLAYERS — только пока в игре есть живой игрок.'],
     HuntersIdleTimeout: ['activity', 'Уходят из мира без игроков через, с', 'int', [0, null], 'Только для «с игроками»: столько ждут после выхода последнего игрока.'],
@@ -1075,7 +1080,7 @@
     HunterAmmoCount: ['economy', 'Запас стрел у лучников', 'int', [0, null], 'Покупаются первыми: без них лук не стреляет.'],
     HunterPotionCount: ['economy', 'Запас хилок', 'int', [0, null], 'AutoUse пьёт их на 40 % HP.'],
     HunterTeleportFee: ['economy', 'Телепорт с 40-го уровня', 'int', [0, null], 'До 40-го бесплатно. Та же цена у телепорта игрока на спот охотника с Alt+B.'],
-    HunterProfessionPrices: ['economy', 'Цена профессии', 'list', null, '«уровень:цена;…» — не накопил, качается без профы и копит.'],
+    HunterProfessionPrices: ['economy', 'Цена профессии', 'list', null, '«уровень:цена;…» — не накопил, качается без профы и копит. 0 — даром (у Essence так по умолчанию).'],
     HunterStoreMinPrices: ['economy', 'Порог вещи для лавки', 'list', null, '«уровень:адена;…» — дороже порога не сдаёт NPC, а продаёт в Гиране.'],
     HunterMaxStores: ['economy', 'Лавок одновременно', 'int', [0, null], ''],
     HunterStoreMinMinutes: ['economy', 'Лавка сидит от, мин', 'int', [1, null], ''],
@@ -1127,6 +1132,24 @@
     HunterContestRudeChance: ['players', 'Шанс «пнх» на предъяву за моба, %', 'int', [0, 100], '× вспыльчивость (0,5–1,5); врагу чаще, другу реже. Иначе «сорян» и уходит на другой спот.'],
     HunterRelationEnemy: ['players', 'Враг — с обиды', 'int', [1, null], 'И если она больше благодарности. Убил — +3, напал — +1. Два реса перевешивают одно убийство.'],
     HunterMood: ['players', 'Настроение охотников', 'bool', null, 'Из состояния, без модели: устал, настороже, занят, скучает, хочет поболтать. Усталый и настороженный не встревают, скучающий заговаривает чаще; мозги говорят в настроении.'],
+    // Кланы охотников (docs/PHANTOMS.md, 4.41 и 4.50).
+    HunterClans: ['clans', 'Охотники основывают кланы', 'bool', null, 'Сами: основание, набор, уровни, скиллы, роспуск. Имя клана придумывают мозги, без них — из слогов. Кланы ложатся в базу; .clans reset (GM) — распустить все.'],
+    HunterClanFoundChance: ['clans', 'Шанс основать клан раз в 10 минут, %', 'int', [0, 100], '× лидерство охотника × доля охотников без клана × друзья рядом.'],
+    HunterClanSize: ['clans', 'Размер, к которому стремится клан', 'list', null, '«от,до»; у общительного главы — ближе к верху.'],
+    HunterClanShare: ['clans', 'Обида и благодарность расходятся по клану, %', 'int', [0, 100], 'Обидел одного — остальные в сети помнят столько. 0 — каждый помнит только своё.'],
+    HunterClanJoin: ['clans', 'Охотник вступает в клан игрока', 'bool', null, 'Приглашение из окна клана, как живому. Друг вступает, враг и незнакомый отказывают; из клана охотников уходит, только если ты для него сделал достаточно.'],
+    HunterClanJoinMax: ['clans', 'Охотников в клане игрока, не больше', 'int', [0, null], '0 — без предела (предел — лимит членов Mobius по уровню клана).'],
+    HunterClanReputation: ['clans', 'Репутация клану за рейды охотников', 'bool', null, 'Убит РБ — клану каждого живого из рейда (.raid). Клан, чьи охотники были там без своих живых, получает долю ниже; клан охотников — с 5-го уровня.'],
+    HunterClanRaidReputation: ['clans', 'Репутация за рейд', 'list', null, '«от,до»: РБ 20-го уровня и ниже — от, 80-го и выше — до; эпик — вдвое больше.'],
+    HunterClanReputationAway: ['clans', 'Без своих живых в рейде — доля, %', 'int', [0, 100], 'Клану, чьи охотники были в рейде без его живых игроков.'],
+    HunterClanWars: ['clans', 'Войны кланов охотников', 'bool', null, 'Обиды между кланами копятся — глава обиженного объявляет войну. Враги дерутся при встрече без флага и кармы, счёт и перемирие — в «Летописи». Выкл — идущие войны кончаются перемирием.'],
+    HunterClanWarGrudge: ['clans', 'Война — с суммы обид', 'int', [1, null], 'Обиды охотников одного клана на членов другого, в обе стороны. Убил — +3, напал — +1.'],
+    HunterClanWarLevel: ['clans', 'Воюют кланы с уровня', 'int', [0, null], ''],
+    HunterClanWarHours: ['clans', 'Перемирие через, ч', 'int', [1, null], 'Потом эта пара кланов сутки не воюет.'],
+    HunterClanWarKills: ['clans', 'Перемирие после убийств на двоих', 'int', [1, null], ''],
+    HunterClanWarWitness: ['clans', 'Драки войны только при живом зрителе', 'bool', null, 'Выкл — война идёт и без живых рядом.'],
+    HunterClanWarsPlayer: ['clans', 'Войны кланов охотников с кланом игрока', 'bool', null, 'Твой клан или соклановцы сильно обидели клан охотников — его глава объявляет войну твоему клану (у обоих — от уровня войн). Одна такая война за раз, после неё — сутки мира. Выйти можно и самому — окном клана, по правилам Mobius.'],
+    HunterClanWarPlayerAttackers: ['clans', 'На одного живого нападают разом, не больше', 'int', [1, null], 'Охотники клана-врага бьют тебя при встрече без флага и кармы.'],
     PhantomPartyExpShare: ['companions', 'Напарник берёт долю опыта', 'bool', null, 'Выкл — весь опыт живым.'],
     PhantomPartyLootShare: ['companions', 'Напарник берёт долю лута', 'bool', null, ''],
     PhantomCatchUpRange: ['companions', 'Отстал дальше — телепорт к тебе', 'int', [0, null], 'Игровые единицы.'],

@@ -44,7 +44,8 @@ import org.l2jmobius.gameserver.network.serverpackets.PledgeSkillList;
  * <li>набор — глава зовёт друзей клана, потом знакомых со спота, пока клан не дорос до «аппетита» ({@link #recruit}), кричит о наборе;
  * живой игрок просится шёпотом главе ({@link #onWhisper});</li>
  * <li>уровни, скиллы и репутация — {@link #levelUp}, {@link #learnSkills}; репутацию дают рейды охотников клана ({@link PhantomClans#raidKilled});</li>
- * <li>роспуск — клан из одного главы дольше {@value #LONELY_HOURS} ч.</li>
+ * <li>роспуск — клан из одного главы дольше {@value #LONELY_HOURS} ч;</li>
+ * <li>войны между кланами охотников и с кланом игрока — {@link PhantomClanWars} (этапы 3 и 4).</li>
  * </ul>
  * Кланы — обычные кланы Mobius: ложатся в базу и живут после перезапуска. {@code .clans} — список ({@link PhantomClansCommand}).
  */
@@ -297,6 +298,8 @@ public final class PhantomHunterClans
 			_commandRegistered = true;
 			VoicedCommandHandler.getInstance().registerHandler(new PhantomClansCommand());
 		}
+		// Войны — и при выключенных кланах: тогда идущие кончаются перемирием.
+		PhantomClanWars.getInstance().control(hunters, now);
 		if (!PhantomHuntersConfig.HUNTER_CLANS)
 		{
 			return;
@@ -340,7 +343,7 @@ public final class PhantomHunterClans
 					continue;
 				}
 				levelUp(clan, leader);
-				learnSkills(clan);
+				learnSkills(clan, leader);
 				recruit(clan, leader, hunters, now, false);
 				if (living)
 				{
@@ -410,7 +413,7 @@ public final class PhantomHunterClans
 		}
 	}
 
-	private static boolean canFound(Player hunter, long now)
+	static boolean canFound(Player hunter, long now)
 	{
 		return free(hunter, now) && (hunter.getLevel() >= FOUND_LEVEL) && (hunter.getClanCreateExpiryTime() <= now);
 	}
@@ -600,7 +603,15 @@ public final class PhantomHunterClans
 		return null;
 	}
 
-	private boolean join(Clan clan, Player leader, Player hunter, boolean friend)
+	/**
+	 * @return клан самопроверки CLANLIFE (0 — нет): живёт по её сценарию, войн у него нет
+	 */
+	int testClanId()
+	{
+		return _testClanId;
+	}
+
+	boolean join(Clan clan, Player leader, Player hunter, boolean friend)
 	{
 		if (!clan.checkClanJoinCondition(leader, hunter, 0))
 		{
@@ -807,28 +818,20 @@ public final class PhantomHunterClans
 	}
 
 	/**
-	 * Клан учит сам самый дешёвый доступный скилл за репутацию — один за ход; предметы не нужны. Членов на следующий уровень уже хватает — копит на него:
-	 * на скиллы — только сверх его цены.
+	 * Клан учит сам самый дешёвый доступный скилл — один за ход: репутация клана, адена из цены скилла — с главы (как за 1-й и 2-й уровень), прочие
+	 * предметы не нужны. У Classic и Essence многие скиллы стоят 0 репутации и только адену — без неё они были бы даром. Членов на следующий уровень
+	 * уже хватает — копит на него: на скиллы — только сверх его цены.
+	 * @param leader глава в мире — платит адену
 	 * @return выученный скилл или {@code null}
 	 */
-	Skill learnSkills(Clan clan)
+	Skill learnSkills(Clan clan, Player leader)
 	{
-		if (clan.getReputationScore() <= 0)
+		final List<SkillLearn> available = new ArrayList<>(SkillTreeData.getInstance().getAvailablePledgeSkills(clan));
+		if (available.isEmpty())
 		{
 			return null;
 		}
-		SkillLearn best = null;
-		for (SkillLearn learn : SkillTreeData.getInstance().getAvailablePledgeSkills(clan))
-		{
-			if ((best == null) || ((int) learn.getLevelUpSp() < (int) best.getLevelUpSp()))
-			{
-				best = learn;
-			}
-		}
-		if (best == null)
-		{
-			return null;
-		}
+		available.sort(Comparator.comparingLong((SkillLearn learn) -> (long) learn.getLevelUpSp()).thenComparingLong(PhantomCompat::skillAdena));
 		int reserve = 0;
 		final int level = clan.getLevel();
 		if ((level >= LEVEL_MEMBERS.length) && (level < PhantomCompat.clanMaxLevel()))
@@ -840,22 +843,30 @@ public final class PhantomHunterClans
 				reserve = cost;
 			}
 		}
-		final int cost = (int) best.getLevelUpSp();
-		if ((clan.getReputationScore() - reserve) < cost)
+		for (SkillLearn learn : available)
 		{
-			return null;
+			final int cost = (int) learn.getLevelUpSp();
+			final long adena = PhantomCompat.skillAdena(learn);
+			if (((clan.getReputationScore() - reserve) < cost) || ((adena > 0) && ((leader == null) || (leader.getAdena() < adena))))
+			{
+				continue;
+			}
+			final Skill skill = SkillData.getInstance().getSkill(learn.getSkillId(), learn.getSkillLevel());
+			if ((skill == null) || ((adena > 0) && !PhantomCompat.reduceAdena(leader, ItemProcessType.FEE, adena, null, false)))
+			{
+				continue;
+			}
+			if (cost > 0)
+			{
+				clan.takeReputationScore(cost);
+			}
+			clan.addNewSkill(skill);
+			clan.broadcastToOnlineMembers(new PledgeSkillList(clan));
+			ThreadPool.execute(clan::updateClanInDB);
+			LOGGER.info(getClass().getSimpleName() + ": clan " + clan.getName() + " learned " + skill.getName() + " " + skill.getLevel() + " for " + cost + " reputation" + (adena > 0 ? " and " + adena + " adena of " + leader.getName() : "") + " (left " + clan.getReputationScore() + (reserve > 0 ? ", saves " + reserve + " for the next level" : "") + ").");
+			return skill;
 		}
-		final Skill skill = SkillData.getInstance().getSkill(best.getSkillId(), best.getSkillLevel());
-		if (skill == null)
-		{
-			return null;
-		}
-		clan.takeReputationScore(cost);
-		clan.addNewSkill(skill);
-		clan.broadcastToOnlineMembers(new PledgeSkillList(clan));
-		ThreadPool.execute(clan::updateClanInDB);
-		LOGGER.info(getClass().getSimpleName() + ": clan " + clan.getName() + " learned " + skill.getName() + " " + skill.getLevel() + " for " + cost + " reputation (left " + clan.getReputationScore() + (reserve > 0 ? ", saves " + reserve + " for the next level" : "") + ").");
-		return skill;
+		return null;
 	}
 
 	private static int averageLevel(Clan clan)
@@ -964,6 +975,17 @@ public final class PhantomHunterClans
 			sb.append(',');
 			FakePlayerBrain.field(sb, "clan", clan.getName());
 			sb.append(",\"clanLevel\":").append(clan.getLevel()).append(",\"clanLeader\":").append(hunter.isClanLeader()).append(",\"hunterClan\":").append(isHunterClan(clan));
+			final String[] war = PhantomClanWars.getInstance().war(clan);
+			if (war != null)
+			{
+				sb.append(',');
+				FakePlayerBrain.field(sb, "clanWar", war[0]).append(',');
+				FakePlayerBrain.field(sb, "clanWarScore", war[1]);
+				if (!war[2].isEmpty())
+				{
+					sb.append(",\"clanWarPlayer\":true");
+				}
+			}
 		}
 		if (isLoner(hunter))
 		{
@@ -972,7 +994,7 @@ public final class PhantomHunterClans
 	}
 
 	/**
-	 * Текст {@code .clans}: кланы охотников — уровень, члены, сколько в игре, глава, репутация, набирает ли.
+	 * Текст {@code .clans}: кланы охотников — уровень, члены, сколько в игре, глава, репутация, набирает ли, с кем воюет и счёт.
 	 */
 	List<String> describe(Player viewer)
 	{
@@ -1002,7 +1024,8 @@ public final class PhantomHunterClans
 			}
 			final ClanMember head = clan.getLeader();
 			final boolean recruiting = clan.getMembersCount() < appetite(clan);
-			lines.add("«" + clan.getName() + "» — " + clan.getLevel() + " ур., " + clan.getMembersCount() + " чел. (в игре " + online + "), глава " + clan.getLeaderName() + (head != null ? " (" + head.getLevel() + ")" : "") + ", репутация " + clan.getReputationScore() + (recruiting ? ", набирает" : "") + ((viewer.getClan() == clan) ? " — твой клан" : ""));
+			final String[] war = PhantomClanWars.getInstance().war(clan);
+			lines.add("«" + clan.getName() + "» — " + clan.getLevel() + " ур., " + clan.getMembersCount() + " чел. (в игре " + online + "), глава " + clan.getLeaderName() + (head != null ? " (" + head.getLevel() + ")" : "") + ", репутация " + clan.getReputationScore() + (recruiting ? ", набирает" : "") + (war != null ? ", воюет с " + (war[2].isEmpty() ? "" : "кланом игрока ") + "«" + war[0] + "» (" + war[1] + ")" : "") + ((viewer.getClan() == clan) ? " — твой клан" : ""));
 		}
 		if (clans.size() > max)
 		{
@@ -1104,19 +1127,21 @@ public final class PhantomHunterClans
 			LOGGER.info(tag + "level 0 -> 1: " + (levelUp(clan, founder) ? "raised" : "NOT raised") + ", level " + clan.getLevel() + ", leader paid " + (before - founder.getAdena()) + " (expected " + adena + ").");
 			LOGGER.info(tag + "level 1 -> 2 with " + clan.getMembersCount() + " members: " + (levelUp(clan, founder) ? "RAISED (unexpected)" : "waits (needs " + LEVEL_MEMBERS[1] + ")") + ".");
 
-			// 5-й уровень: репутация и скиллы.
+			// 5-й уровень: репутация и скиллы; адену из цены скиллов платит глава.
 			clan.changeLevel(5);
 			clan.addReputationScore(20000);
+			PhantomCompat.addAdena(founder, ItemProcessType.REWARD, 1000000, null, false);
+			final long adenaBefore = founder.getAdena();
 			final List<String> learned = new ArrayList<>();
 			for (int i = 0; i < 5; i++)
 			{
-				final Skill skill = learnSkills(clan);
+				final Skill skill = learnSkills(clan, founder);
 				if (skill != null)
 				{
 					learned.add(skill.getName() + " " + skill.getLevel());
 				}
 			}
-			LOGGER.info(tag + "level 5, reputation 20000 -> learned " + (learned.isEmpty() ? "NOTHING" : String.join(", ", learned)) + "; reputation left " + clan.getReputationScore() + ".");
+			LOGGER.info(tag + "level 5, reputation 20000 -> learned " + (learned.isEmpty() ? "NOTHING" : String.join(", ", learned)) + "; reputation left " + clan.getReputationScore() + ", leader paid " + (adenaBefore - founder.getAdena()) + " adena.");
 			final boolean six = levelUp(clan, founder);
 			LOGGER.info(tag + "level 5 -> 6: " + (six ? "raised" : "waits") + " (max for the chronicle " + PhantomCompat.clanMaxLevel() + ", by clan EXP " + PhantomCompat.clanLevelByExp() + ", needs members " + feature("CLAN_LEVEL_6_REQUIREMENT") + " and reputation " + feature("CLAN_LEVEL_6_COST") + ", has " + clan.getMembersCount() + " and " + clan.getReputationScore() + ").");
 

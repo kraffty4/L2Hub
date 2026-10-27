@@ -9,6 +9,9 @@
     {"id": "rbannounce", "group": "Мир", "title": "Объявления о РБ", "note": "на весь сервер: рейд-босс появился и убит", "file": "BossAnnouncements.ini", "keys": ["RaidBossSpawnAnnouncements", "RaidBossDefeatAnnouncements"]},
     {"id": "smallepics", "group": "Мир", "title": "Эпики малого мира", "note": "эпики встают в 4 раза чаще, Антарас и Валакас ждут 5 минут, к Фринтезе и Белету — малой группой; Королева, Ядро, Орфен и Закен слабее: 40 % HP, свита урезана", "file": "GrandBoss.ini", "key": "SmallWorldEpics"},
     {"id": "smallclans", "group": "Мир", "title": "Кланы малого мира", "note": "клану на 6, 7 и 8-й уровень хватает 10, 15 и 20 членов (на официале — 30, 50 и 80), выше — 30, 40 и 50; репутация на уровень — прежняя; у Classic и Essence уровни выше 5-го — за клановый опыт, там не действует; применится после перезапуска сервера", "file": "L2HubWorld.ini", "key": "SmallWorldClans"},
+    {"id": "sepulchers", "group": "Мир", "title": "Гробницы малого мира", "note": "в Четыре гробницы (с 74-го, квест Four Goblets) — пати от двоих, а не от четырёх: напарнику и охотнику квест и пропуск не нужны; у Interlude, Epilogue и High Five", "file": "General.ini", "key": "SmallWorldSepulchers"},
+    {"id": "rift", "group": "Мир", "title": "Разлом малого мира", "note": "в Разлом измерений фрагменты за вход платят только живые: напарнику и охотнику они не нужны; у Interlude", "file": "General.ini", "key": "SmallWorldRift"},
+    {"id": "noblesse", "group": "Мир", "title": "Мастер дворянства", "note": "NPC в городах рядом с баффером: дворянство с 76-го уровня за 10кк адены — без квестов на дворянство и Баракиэля; дворянину открыты олимпиада и сабкласс без квестов; у Interlude; применится после перезапуска сервера", "file": "L2HubTown.ini", "key": "TownNoblesse"},
     {"id": "fakes", "group": "Мир", "title": "Фейки", "note": "игроки-NPC в городах: стоят, торгуют, болтают в чате; охотников и напарников не трогает", "file": "FakePlayers.ini", "key": "EnableFakePlayers"},
     {"id": "calendar", "group": "Ивенты", "title": "Сезонные события по календарю", "note": "L2 Day, Heavy Medal, Рождество и другие", "file": "L2HubEvents.ini", "key": "Enabled"},
     {"id": "daily", "group": "Ивенты", "title": "Поручения дня (.daily)", "note": "задания на день с наградой", "file": "L2HubWorld.ini", "key": "WorldDaily"},
@@ -24,7 +27,7 @@
     {"id": "attendance", "group": "Родное", "title": "Награды за вход", "note": "окно посещения: подарок за каждый день в игре, как на официале (Classic, Essence)", "file": "AttendanceRewards.ini", "key": "EnableAttendanceRewards"},
     {"id": "lcoin", "group": "Родное", "title": "L-Coin с мобов", "note": "мобы от 40-го уровня роняют L-Coin — на них магазин L-Coin клиента (Classic, Essence)", "file": "Rates.ini", "key": "LCoinDropEnable"},
     {"id": "huntpass", "group": "Родное", "title": "L2 Pass", "note": "награды за охоту по сезону (Essence)", "file": "HuntPass.ini", "key": "EnabledHuntPass"},
-    {"id": "magiclamp", "group": "Родное", "title": "Волшебная лампа", "note": "копит опыт охоты и дарит бонус (Essence)", "file": "MagicLamp.ini", "key": "MagicLampEnabled"},
+    {"id": "magiclamp", "group": "Родное", "title": "Волшебная лампа", "note": "копит опыт охоты и дарит бонус (Essence). Осторожно: у Mobius до 45-го уровня лампа полна за пару десятков убийств и даёт 100–800 тыс. опыта — с 6-го сразу 34–47-й, у охотников тоже. Режимы её не включают", "file": "MagicLamp.ini", "key": "MagicLampEnabled"},
     {"id": "npcinfo", "group": "Интерфейс", "title": "Уровень и агрессия моба", "note": "в окне цели; Shift+клик по NPC — подробности", "file": "NPC.ini", "keys": ["ShowNpcLevel", "ShowNpcAggression", "AltGameViewNpc"]},
     {"id": "licence", "group": "Интерфейс", "title": "Соглашение на входе", "note": "окно лицензии перед списком серверов; применится после перезапуска логина", "part": "login", "file": "Server.ini", "key": "ShowLicence"}
   ],
@@ -37,19 +40,19 @@
     "spoil": ["SpoilDropAmountMultiplier"]
   },
   "modes": [
-    {"id": "hardcore", "title": "Хардкор", "note": "как на официале: всё x1, без баффера, GM-шопа, долгих бафов, чемпионов и поручений дня, без телепорта и хила с доски Alt+B, без автоподбора дропа и автоизучения скиллов, сабкласс — квестом, страйдер и виверна — не даром, эпики — по официальному расписанию",
+    {"id": "hardcore", "title": "Хардкор", "note": "как на официале: всё x1, без баффера, GM-шопа, долгих бафов, чемпионов и поручений дня, без телепорта и хила с доски Alt+B, без автоподбора дропа и автоизучения скиллов, сабкласс — квестом, страйдер и виверна — не даром, эпики — по официальному расписанию, в Четыре гробницы — пати от четырёх, в Разлом — фрагменты у каждого, без мастера дворянства",
      "rates": {"xp": 1, "sp": 1, "adena": 1, "drop": 1, "spoil": 1},
-     "switches": {"buffer": false, "gmshop": false, "durations": false, "champions": false, "daily": false, "pvpevents": false, "rbannounce": false, "superchampion": false, "elpies": false, "freemounts": false, "autopotions": false, "offlineplay": false, "unstuck": false, "classmaster": false, "smallepics": false, "smallclans": false, "attendance": true, "lcoin": true, "huntpass": true, "magiclamp": true},
+     "switches": {"buffer": false, "gmshop": false, "durations": false, "champions": false, "daily": false, "pvpevents": false, "rbannounce": false, "superchampion": false, "elpies": false, "freemounts": false, "autopotions": false, "offlineplay": false, "unstuck": false, "classmaster": false, "smallepics": false, "smallclans": false, "sepulchers": false, "rift": false, "noblesse": false, "attendance": true, "lcoin": true, "huntpass": true},
      "settings": {"Player.ini": {"AutoLoot": "False", "AutoLootHerbs": "False", "AutoLearnSkills": "False", "AltSubClassWithoutQuests": "False", "AltKarmaPlayerCanShop": "False"},
                   "CommunityBoard.ini": {"CommunityEnableTeleports": "False", "CommunityEnableHeal": "False", "CommunityEnableBuffs": "False"}}},
     {"id": "pvpcraft", "title": "PvP-крафт", "note": "опыт и SP x50, адена x10, дроп и спойл x5 — быстрый кач, крафт ещё важен",
      "rates": {"xp": 50, "sp": 50, "adena": 10, "drop": 5, "spoil": 5},
-     "switches": {"buffer": true, "gmshop": true, "durations": true, "champions": true, "rbannounce": true, "superchampion": true, "autopotions": true, "classmaster": true, "smallepics": true, "smallclans": true, "attendance": true, "lcoin": true, "huntpass": true, "magiclamp": true},
+     "switches": {"buffer": true, "gmshop": true, "durations": true, "champions": true, "rbannounce": true, "superchampion": true, "autopotions": true, "classmaster": true, "smallepics": true, "smallclans": true, "sepulchers": true, "rift": true, "noblesse": true, "attendance": true, "lcoin": true, "huntpass": true},
      "settings": {"Player.ini": {"AutoLoot": "True", "AutoLootHerbs": "True", "AutoLearnSkills": "True", "AltSubClassWithoutQuests": "True"},
                   "CommunityBoard.ini": {"CommunityEnableTeleports": "True", "CommunityEnableHeal": "True", "CommunityEnableBuffs": "True"}}},
     {"id": "pvp", "title": "PvP", "note": "опыт, SP и адена x1000, дроп и спойл x10 — сразу в PvP",
      "rates": {"xp": 1000, "sp": 1000, "adena": 1000, "drop": 10, "spoil": 10},
-     "switches": {"buffer": true, "gmshop": true, "durations": true, "champions": true, "pvpevents": true, "rbannounce": true, "superchampion": true, "autopotions": true, "classmaster": true, "smallepics": true, "smallclans": true, "attendance": true, "lcoin": true, "huntpass": true, "magiclamp": true},
+     "switches": {"buffer": true, "gmshop": true, "durations": true, "champions": true, "pvpevents": true, "rbannounce": true, "superchampion": true, "autopotions": true, "classmaster": true, "smallepics": true, "smallclans": true, "sepulchers": true, "rift": true, "noblesse": true, "attendance": true, "lcoin": true, "huntpass": true},
      "settings": {"Player.ini": {"AutoLoot": "True", "AutoLootHerbs": "True", "AutoLearnSkills": "True", "AltSubClassWithoutQuests": "True"},
                   "CommunityBoard.ini": {"CommunityEnableTeleports": "True", "CommunityEnableHeal": "True", "CommunityEnableBuffs": "True"}}}
   ]

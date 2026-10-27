@@ -1,0 +1,310 @@
+diff --git a/dist/game/config/Custom/L2HubTown.ini b/dist/game/config/Custom/L2HubTown.ini
+index 233d9c519e595a228c014c2d25822a3c948c0b05..79cca9efc762773c2618677d8a3939f9000c957e 100644
+--- a/dist/game/config/Custom/L2HubTown.ini
++++ b/dist/game/config/Custom/L2HubTown.ini
+@@ -11,3 +11,7 @@ TownBuffer = True
+ # GM-шоп: расходники и снаряжение за адену.
+ # Default: True
+ TownGmShop = True
++# L2Hub (малый мир): мастер дворянства (NoblessMaster Mobius, NPC 1003000) у гейткиперов — по другую сторону баффера
++# от GM-шопа; дворянство с 76-го уровня за 10 000 000 адены (config/Custom/NoblessMaster.ini). Решение автора 2026-10-26.
++# Default: True
++TownNoblesse = True
+diff --git a/dist/game/config/Custom/NoblessMaster.ini b/dist/game/config/Custom/NoblessMaster.ini
+index 66c44cbec4f1907a176e25f17f3e61be9d5318e2..9311c924a964cd84c4ac8eb27f258c404eda9b71 100644
+--- a/dist/game/config/Custom/NoblessMaster.ini
++++ b/dist/game/config/Custom/NoblessMaster.ini
+@@ -7,7 +7,8 @@
+ 
+ # Enable or disable the Nobless Master NPC.
+ # Default: False
+-Enabled = False
++# L2Hub (малый мир): было False — мастер дворянства у гейткиперов, ставит его L2HubTown при TownNoblesse (решение автора 2026-10-26).
++Enabled = True
+ 
+ # NPC Settings
+ # ---------------------------------------------------------------------------
+@@ -19,7 +20,8 @@ NpcId = 1003000
+ # Level requirement to become Nobless.
+ # Note: If you modify this, ensure the corresponding HTMLs are updated.
+ # Default: 80
+-LevelRequirement = 80
++# L2Hub (малый мир): было 80 — с 76-го уровня (решение автора 2026-10-26).
++LevelRequirement = 76
+ 
+ # Item Requirements
+ # ---------------------------------------------------------------------------
+@@ -31,7 +33,8 @@ ItemId = 57
+ # The quantity of the required item.
+ # Set to 0 to disable the item requirement.
+ # Default: 0
+-ItemCount = 0
++# L2Hub (малый мир): было 0 — за 10 000 000 адены (решение автора 2026-10-26).
++ItemCount = 10000000
+ 
+ # Reward Settings
+ # ---------------------------------------------------------------------------
+diff --git b/dist/game/data/lang/ru/data/scripts/custom/NoblessMaster/1003000-1.htm b/dist/game/data/lang/ru/data/scripts/custom/NoblessMaster/1003000-1.htm
+new file mode 100644
+index 0000000000000000000000000000000000000000..5d661ea7d9a3030213d611f73a326e5f19e8a974
+--- /dev/null
++++ b/dist/game/data/lang/ru/data/scripts/custom/NoblessMaster/1003000-1.htm
+@@ -0,0 +1,5 @@
++<html><body>
++Мастер дворянства:<br>
++Поздравляю!<br1>
++Теперь ты дворянин.<br>
++</body></html>
+diff --git b/dist/game/data/lang/ru/data/scripts/custom/NoblessMaster/1003000-2.htm b/dist/game/data/lang/ru/data/scripts/custom/NoblessMaster/1003000-2.htm
+new file mode 100644
+index 0000000000000000000000000000000000000000..f916098d7167b01b7eea14b82634e91d2796239f
+--- /dev/null
++++ b/dist/game/data/lang/ru/data/scripts/custom/NoblessMaster/1003000-2.htm
+@@ -0,0 +1,4 @@
++<html><body>
++Мастер дворянства:<br>
++Нужен хотя бы 76-й уровень!
++</body></html>
+diff --git b/dist/game/data/lang/ru/data/scripts/custom/NoblessMaster/1003000-3.htm b/dist/game/data/lang/ru/data/scripts/custom/NoblessMaster/1003000-3.htm
+new file mode 100644
+index 0000000000000000000000000000000000000000..aa4a0a51c3691312ef1f0c5b87955fe0515c581d
+--- /dev/null
++++ b/dist/game/data/lang/ru/data/scripts/custom/NoblessMaster/1003000-3.htm
+@@ -0,0 +1,4 @@
++<html><body>
++Мастер дворянства:<br>
++Ты уже дворянин.
++</body></html>
+diff --git b/dist/game/data/lang/ru/data/scripts/custom/NoblessMaster/1003000-4.htm b/dist/game/data/lang/ru/data/scripts/custom/NoblessMaster/1003000-4.htm
+new file mode 100644
+index 0000000000000000000000000000000000000000..c15ffbe35acdfc2a47d312bdb006aaa9ddb67b1d
+--- /dev/null
++++ b/dist/game/data/lang/ru/data/scripts/custom/NoblessMaster/1003000-4.htm
+@@ -0,0 +1,5 @@
++<html><body>
++Мастер дворянства:<br>
++Погоди-ка...<br1>
++А где плата? Нужно 10 000 000 адены.
++</body></html>
+diff --git b/dist/game/data/lang/ru/data/scripts/custom/NoblessMaster/1003000.htm b/dist/game/data/lang/ru/data/scripts/custom/NoblessMaster/1003000.htm
+new file mode 100644
+index 0000000000000000000000000000000000000000..aff495a1a8019893625ec0410d5a757f5114d186
+--- /dev/null
++++ b/dist/game/data/lang/ru/data/scripts/custom/NoblessMaster/1003000.htm
+@@ -0,0 +1,13 @@
++<html><body>
++Мастер дворянства:<br>
++<br>
++С 76-го уровня я могу сделать тебя дворянином<br1>
++за 10 000 000 адены.<br>
++<br>
++Дворянину открыта олимпиада, а сабкласс берётся без квестов.<br>
++<br>
++<center>
++<a action="bypass -h Script NoblessMaster noblesse">Стать дворянином</a><br>
++<br>
++</center>
++</body></html>
+diff --git a/dist/game/data/scripts/custom/L2HubTown/L2HubTown.java b/dist/game/data/scripts/custom/L2HubTown/L2HubTown.java
+index 609676e96982fae47954d2ba5a1dff2c23ce2f47..645768fff0ab258209f8a154dae108f88fee5ff9 100644
+--- a/dist/game/data/scripts/custom/L2HubTown/L2HubTown.java
++++ b/dist/game/data/scripts/custom/L2HubTown/L2HubTown.java
+@@ -27,8 +27,10 @@ import java.util.logging.Logger;
+ 
+ import org.l2jmobius.commons.threads.ThreadPool;
+ import org.l2jmobius.gameserver.data.SpawnTable;
++import org.l2jmobius.gameserver.entity.World;
+ import org.l2jmobius.gameserver.entity.actor.Npc;
+ import org.l2jmobius.gameserver.entity.spawns.Spawn;
++import org.l2jmobius.gameserver.geoengine.GeoEngine;
+ 
+ /**
+  * L2Hub: выключатели городских NPC мода 0003 (config/Custom/L2HubTown.ini): {@code TownBuffer} — схем-баффер (50008), {@code TownGmShop} — GM-шоп (50010)
+@@ -43,17 +45,21 @@ public class L2HubTown
+ 	private static final Path CONFIG = Paths.get("./config/Custom/L2HubTown.ini");
+ 	private static final int TOWN_BUFFER = 50008;
+ 	private static final int TOWN_SHOP = 50010;
++	private static final int NOBLESSE_MASTER = 1003000;
++	private static final int NOBLESSE_GAP = 40;
+ 	private static final long FIRST_DELAY = 15_000;
+ 	private static final long RETRY_DELAY = 15_000;
+ 	private static final int ATTEMPTS = 20;
+ 
+ 	private final boolean _buffer;
+ 	private final boolean _shop;
++	private final boolean _noblesse;
+ 
+-	private L2HubTown(boolean buffer, boolean shop)
++	private L2HubTown(boolean buffer, boolean shop, boolean noblesse)
+ 	{
+ 		_buffer = buffer;
+ 		_shop = shop;
++		_noblesse = noblesse;
+ 		ThreadPool.schedule(() -> run(1), FIRST_DELAY);
+ 	}
+ 
+@@ -65,6 +71,10 @@ public class L2HubTown
+ 			ThreadPool.schedule(() -> run(attempt + 1), RETRY_DELAY);
+ 			return;
+ 		}
++		if (_noblesse)
++		{
++			LOGGER.info("L2HubTown: TownNoblesse = True — мастер дворянства у гейткиперов: " + spawnNoblesse() + " NPC.");
++		}
+ 		if (!_buffer)
+ 		{
+ 			LOGGER.info("L2HubTown: TownBuffer = False — баффер у гейткиперов убран: " + remove(TOWN_BUFFER) + " NPC.");
+@@ -75,6 +85,92 @@ public class L2HubTown
+ 		}
+ 	}
+ 
++	/**
++	 * Мастер дворянства (NoblessMaster Mobius, 1003000) — у каждого гейткипера рядом с баффером. Сначала по другую сторону
++	 * баффера от GM-шопа (за шопом стоит менеджер L2 Day), потом по бокам и наискосок от шопа: точка по геодате — перепад не
++	 * больше 32, от баффера дойти можно, рядом нет другого NPC (городские фейки бродят и не в счёт). Нет места нигде — город
++	 * пропускается с предупреждением, сколько точек отбито и чем.
++	 * @return сколько поставлено
++	 */
++	private static int spawnNoblesse()
++	{
++		int placed = 0;
++		for (Spawn bufferSpawn : new ArrayList<>(SpawnTable.getInstance().getSpawns(TOWN_BUFFER)))
++		{
++			final Npc buffer = bufferSpawn.getLastSpawn();
++			if (buffer == null)
++			{
++				continue;
++			}
++			Npc shop = null;
++			for (Spawn shopSpawn : SpawnTable.getInstance().getSpawns(TOWN_SHOP))
++			{
++				final Npc candidate = shopSpawn.getLastSpawn();
++				if ((candidate != null) && (buffer.calculateDistance2D(candidate) < 400) && ((shop == null) || (buffer.calculateDistance2D(candidate) < buffer.calculateDistance2D(shop))))
++				{
++					shop = candidate;
++				}
++			}
++			if ((shop == null) || (buffer.calculateDistance2D(shop) < 1))
++			{
++				LOGGER.warning("L2HubTown: у баффера " + buffer.getX() + ", " + buffer.getY() + " нет GM-шопа рядом — мастер дворянства не поставлен.");
++				continue;
++			}
++			final double gap = buffer.calculateDistance2D(shop);
++			final double ux = (buffer.getX() - shop.getX()) / gap;
++			final double uy = (buffer.getY() - shop.getY()) / gap;
++			// {вдоль «от шопа», поперёк, во сколько расстояний баффер—шоп}: от шопа, по бокам, наискосок от шопа
++			final double[][] tries = { { 1, 0, 1 }, { 1, 0, 1.5 }, { 1, 0, 2 }, { 0, 1, 1 }, { 0, -1, 1 }, { 0, 1, 1.5 }, { 0, -1, 1.5 }, { 0.7071, 0.7071, 1 }, { 0.7071, -0.7071, 1 }, { 0.7071, 0.7071, 1.5 }, { 0.7071, -0.7071, 1.5 } };
++			int steep = 0;
++			int wall = 0;
++			int busy = 0;
++			boolean done = false;
++			for (double[] t : tries)
++			{
++				final int x = buffer.getX() + (int) Math.round(((t[0] * ux) - (t[1] * uy)) * gap * t[2]);
++				final int y = buffer.getY() + (int) Math.round(((t[0] * uy) + (t[1] * ux)) * gap * t[2]);
++				final int z = GeoEngine.getInstance().getHeight(x, y, buffer.getZ());
++				if (Math.abs(z - buffer.getZ()) > 32)
++				{
++					steep++;
++					continue;
++				}
++				if (!GeoEngine.getInstance().canMoveToTarget(buffer.getX(), buffer.getY(), buffer.getZ(), x, y, z, buffer.getInstanceId()))
++				{
++					wall++;
++					continue;
++				}
++				if (!World.getVisibleObjectsInRange(buffer, Npc.class, 600, npc -> !npc.isFakePlayer() && (npc.calculateDistance2D(x, y, z) < NOBLESSE_GAP)).isEmpty())
++				{
++					busy++;
++					continue;
++				}
++				try
++				{
++					final Spawn spawn = new Spawn(NOBLESSE_MASTER);
++					spawn.setXYZ(x, y, z);
++					spawn.setHeading(buffer.getHeading());
++					spawn.setAmount(1);
++					spawn.setRespawnDelay(60);
++					SpawnTable.getInstance().addSpawn(spawn);
++					spawn.init();
++					placed++;
++				}
++				catch (Exception e)
++				{
++					LOGGER.warning("L2HubTown: мастер дворянства не поставлен у " + x + ", " + y + ": " + e.getMessage());
++				}
++				done = true;
++				break;
++			}
++			if (!done)
++			{
++				LOGGER.warning("L2HubTown: мастеру дворянства нет места у баффера " + buffer.getX() + ", " + buffer.getY() + ": из " + tries.length + " точек перепад высоты у " + steep + ", не дойти — " + wall + ", занято — " + busy + ".");
++			}
++		}
++		return placed;
++	}
++	
+ 	private static int remove(int npcId)
+ 	{
+ 		int removed = 0;
+@@ -92,7 +188,7 @@ public class L2HubTown
+ 	}
+ 
+ 	/**
+-	 * @param key TownBuffer или TownGmShop
++	 * @param key TownBuffer, TownGmShop или TownNoblesse
+ 	 * @return включено (нет файла или ключа — включено)
+ 	 */
+ 	public static boolean isOn(String key)
+@@ -117,9 +213,10 @@ public class L2HubTown
+ 	{
+ 		final boolean buffer = isOn("TownBuffer");
+ 		final boolean shop = isOn("TownGmShop");
+-		if (!buffer || !shop)
++		final boolean noblesse = isOn("TownNoblesse");
++		if (!buffer || !shop || noblesse)
+ 		{
+-			new L2HubTown(buffer, shop);
++			new L2HubTown(buffer, shop, noblesse);
+ 		}
+ 	}
+ }
+diff --git a/dist/game/data/scripts/custom/NoblessMaster/1003000-2.htm b/dist/game/data/scripts/custom/NoblessMaster/1003000-2.htm
+index 3b826ce3ccdffc466d201085d9e4d509d279df47..f5c8858ab84a455158c8bd15dd8d9cef4f047752 100644
+--- a/dist/game/data/scripts/custom/NoblessMaster/1003000-2.htm
++++ b/dist/game/data/scripts/custom/NoblessMaster/1003000-2.htm
+@@ -1,4 +1,4 @@
+ <html><body>
+ Noblesse Master:<br>
+-You must be at least level 80!
++You must be at least level 76!
+ </body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/scripts/custom/NoblessMaster/1003000-4.htm b/dist/game/data/scripts/custom/NoblessMaster/1003000-4.htm
+index 8082148f87a0fd7e5ffbff9ea5def3f3067809e9..9fc1bcb4ef954e8e0f8deb5dfc8aa0f8e4ba939b 100644
+--- a/dist/game/data/scripts/custom/NoblessMaster/1003000-4.htm
++++ b/dist/game/data/scripts/custom/NoblessMaster/1003000-4.htm
+@@ -1,5 +1,5 @@
+ <html><body>
+ Noblesse Master:<br>
+ Hold on a second there...<br1>
+-Where is my payment?
++Where is my payment? It is 10,000,000 adena.
+ </body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/scripts/custom/NoblessMaster/1003000.htm b/dist/game/data/scripts/custom/NoblessMaster/1003000.htm
+index f908fbc9edb3d1703193212d7a79d8615ba658ad..4234f46eb2df7466fb430e88aa089750998f2116 100644
+--- a/dist/game/data/scripts/custom/NoblessMaster/1003000.htm
++++ b/dist/game/data/scripts/custom/NoblessMaster/1003000.htm
+@@ -1,8 +1,9 @@
+ <html><body>
+ Noblesse Master:<br>
+ <br>
+-If you are at least level 80,<br>
+-I can promote you to Noblesse.<br>
++If you are at least level 76,<br>
++I can promote you to Noblesse<br1>
++for 10,000,000 adena.<br>
+ <br>
+ <br>
+ <br>

@@ -1,0 +1,9 @@
+{
+  "note": "Значения ключей конфигов модуля, которые у этой хроники свои, — поверх phantoms/core/dist. Подставляет выкладка конфигов (builder.deploy_configs, chronicle_configs): в сервер ложится конфиг сборки с этими значениями, правки пользователя в сервере остаются. HunterProfessionPrices — у Essence профы даром, как на официальных серверах: 1-я — квестом на 20-м, 2-я и 3-я — сами на 40-м и 76-м (ai/others/SecondClassChange, ThirdClassChange); адены с мобов до 75-го уровня почти нет, на 50 000 за 1-ю профу охотник не накопит (docs/ESSENCE.md). HunterTeleportFee — у Essence живой игрок до 75-го уровня телепортируется даром (MaxFreeTeleportLevel = 75 в Player.ini), а ядро берёт плату с 40-го, как у H5 и Classic; 0 — даром на любом уровне (docs/ESSENCE.md, «Экономика охотников»).",
+  "configs": {
+    "game/config/Custom/PhantomHunters.ini": {
+      "HunterProfessionPrices": "20:0;40:0;76:0",
+      "HunterTeleportFee": "0"
+    }
+  }
+}

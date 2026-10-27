@@ -20,6 +20,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import org.l2jmobius.gameserver.ai.Intention;
+import org.l2jmobius.gameserver.config.PlayerConfig;
 import org.l2jmobius.gameserver.config.ServerConfig;
 import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
 import org.l2jmobius.gameserver.data.SpawnTable;
@@ -119,12 +120,16 @@ final class PhantomHunterOutfit
 	private static final int SHOT_RESERVE = 300;
 	private static final int AMMO_RESERVE = 500;
 	private static final int AMMO_LOAN = 300;
-	/** Хилки по уровню: Lesser (1060, до 20), Greater (1061, до 40), Greater (1539, дальше) — так в датапаке H5. */
+	/**
+	 * Хилки по уровню: Lesser (1060, до 20), Greater (1061, до 40), Greater (1539, дальше) — так в датапаке H5; их охотник покупает ({@link #potionId}).
+	 * HP Potion (91912) — из наград заданий дня Essence и Classic, не продаётся: её не покупает, а пьёт, когда своей нет. В остальных хрониках такого id нет.
+	 */
 	private static final int[] HEALING_POTIONS =
 	{
 		1060,
 		1061,
-		1539
+		1539,
+		91912
 	};
 	private static final int POTION_HP_PERCENT = 40;
 	/** Левые слоты — первыми: так их заполняет Inventory.equipItem, иначе вторая серьга и второе кольцо не покупались бы. */
@@ -470,7 +475,7 @@ final class PhantomHunterOutfit
 			}
 
 			final Item current = player.getInventory().getPaperdollItem(slot);
-			final int currentGrade = (current == null) || current.isEtcItem() ? -1 : current.getTemplate().getCrystalType().getLevel();
+			final int currentGrade = wornGrade(current);
 			worn.append(' ').append(SLOT_NAMES[i]).append(' ').append(currentGrade < 0 ? "—" : gradeName(currentGrade)).append(',');
 
 			final ItemTemplate wanted = best == null ? null : ItemData.getInstance().getTemplate(itemFor(best, slot));
@@ -563,11 +568,11 @@ final class PhantomHunterOutfit
 	}
 
 	/**
-	 * @return свободная адена для BUY: всё, кроме запаса на {@value #SHOT_RESERVE} сосов своего грейда и платы за телепорт (с 40-го)
+	 * @return свободная адена для BUY: всё, кроме запаса на {@value #SHOT_RESERVE} сосов своего грейда и платы за телепорт (выше {@code MaxFreeTeleportLevel})
 	 */
 	static long buyBudget(Player player)
 	{
-		return player.getAdena() - (price(shotId(player)) * SHOT_RESERVE) - (player.getLevel() >= 40 ? PhantomHuntersConfig.HUNTER_TELEPORT_FEE : 0);
+		return player.getAdena() - (price(shotId(player)) * SHOT_RESERVE) - (player.getLevel() > PlayerConfig.MAX_FREE_TELEPORT_LEVEL ? PhantomHuntersConfig.HUNTER_TELEPORT_FEE : 0);
 	}
 
 	/**
@@ -597,7 +602,7 @@ final class PhantomHunterOutfit
 			}
 
 			final Item current = player.getInventory().getPaperdollItem(slot);
-			final int currentGrade = (current == null) || current.isEtcItem() ? -1 : current.getTemplate().getCrystalType().getLevel();
+			final int currentGrade = wornGrade(current);
 			for (PhantomTemplate.Gear gear : grades)
 			{
 				final int itemId = itemFor(gear, slot);
@@ -1070,7 +1075,7 @@ final class PhantomHunterOutfit
 
 		for (ItemTemplate item : ItemData.getInstance().getAllItems())
 		{
-			if ((item == null) || (!item.isWeapon() && !item.isArmor()) || !normalize(item.getName()).equals(wanted))
+			if ((item == null) || (!item.isWeapon() && !item.isArmor()) || npcOnly(item) || !normalize(item.getName()).equals(wanted))
 			{
 				continue;
 			}
@@ -1409,7 +1414,7 @@ final class PhantomHunterOutfit
 		final long[][] best = new long[8][3];
 		for (ItemTemplate item : ItemData.getInstance().getAllItems())
 		{
-			if ((item == null) || !item.isArmor() || (item.getReferencePrice() <= 0) || !item.isSellable() || !item.isTradeable() || item.isQuestItem() || item.isHeroItem() || item.isPvpItem())
+			if ((item == null) || !item.isArmor() || (item.getReferencePrice() <= 0) || !item.isSellable() || !item.isTradeable() || item.isQuestItem() || item.isHeroItem() || item.isPvpItem() || npcOnly(item))
 			{
 				continue;
 			}
@@ -1460,6 +1465,26 @@ final class PhantomHunterOutfit
 	 * Шмот по частям: оружие, потом броня. Для каждой части — лучший разрешённый грейд из своего набора, на который хватает адены (с запасом на сосы, стрелы и телепорт); не хватает — грейдом ниже, если это лучше надетого; и на это нет — копит, следующие части не покупает. Старое — NPC за полцены.
 	 * @return что купил — для лога
 	 */
+	/**
+	 * Вещь только для NPC: флаг {@code for_npc} (Dailaon Knife, Giant Cannon, Dusk) или монстровое оружие без него — иконка {@code weapon_monster}
+	 * (Silenos Blowgun, Dreadbane), имя «NPC only…» и «Monster Only…». У клиента нет на нём анимаций игрока — Т-поза. Тот же признак — в
+	 * {@code tools/fake_players.py} ({@code npc_only}).
+	 */
+	static boolean npcOnly(ItemTemplate item)
+	{
+		final String icon = item.getIcon();
+		final String name = item.getName();
+		return item.isForNpc() || ((icon != null) && icon.contains("weapon_monster")) || ((name != null) && (name.startsWith("NPC only") || name.startsWith("Monster Only")));
+	}
+
+	/**
+	 * Грейд надетого для сравнения с покупкой: пусто, не шмот или вещь только для NPC ({@link #npcOnly}) — -1, хуже любой: заменит первой же покупкой.
+	 */
+	private static int wornGrade(Item current)
+	{
+		return (current == null) || current.isEtcItem() || npcOnly(current.getTemplate()) ? -1 : current.getTemplate().getCrystalType().getLevel();
+	}
+
 	private static List<String> buyGear(Player player, PhantomTemplate template, long professionReserve)
 	{
 		final List<String> bought = new ArrayList<>();
@@ -1483,7 +1508,7 @@ final class PhantomHunterOutfit
 			}
 
 			final Item current = player.getInventory().getPaperdollItem(slot);
-			final int currentGrade = (current == null) || current.isEtcItem() ? -1 : current.getTemplate().getCrystalType().getLevel();
+			final int currentGrade = wornGrade(current);
 			boolean saving = false; // есть вещь лучше надетой, но не хватает ни на один грейд
 			for (PhantomTemplate.Gear gear : grades)
 			{
@@ -1503,7 +1528,7 @@ final class PhantomHunterOutfit
 				// Запас на расходники того грейда, под который покупается (новое оружие меняет грейд сосов).
 				final int g = Math.min(7, grade(gear.rhand));
 				final long ammoReserve = (slot == Inventory.PAPERDOLL_RHAND ? isRanged(gear.rhand) : ammoId(player) > 0) ? price(ARROWS[g]) * AMMO_RESERVE : 0;
-				final long reserve = (price(shotId(player.isMageClass(), g)) * SHOT_RESERVE) + ammoReserve + (player.getLevel() >= 40 ? PhantomHuntersConfig.HUNTER_TELEPORT_FEE : 0) + professionReserve;
+				final long reserve = (price(shotId(player.isMageClass(), g)) * SHOT_RESERVE) + ammoReserve + (player.getLevel() > PlayerConfig.MAX_FREE_TELEPORT_LEVEL ? PhantomHuntersConfig.HUNTER_TELEPORT_FEE : 0) + professionReserve;
 				if ((player.getAdena() - reserve) < item.getReferencePrice())
 				{
 					continue; // не хватает — посмотреть грейд ниже
@@ -1537,7 +1562,7 @@ final class PhantomHunterOutfit
 		if (!stopped && !grades.isEmpty())
 		{
 			final int g = Math.min(7, grade(grades.get(0).rhand));
-			final long reserve = (price(shotId(player.isMageClass(), g)) * SHOT_RESERVE) + (ammoId(player) > 0 ? price(ARROWS[g]) * AMMO_RESERVE : 0) + (player.getLevel() >= 40 ? PhantomHuntersConfig.HUNTER_TELEPORT_FEE : 0) + professionReserve;
+			final long reserve = (price(shotId(player.isMageClass(), g)) * SHOT_RESERVE) + (ammoId(player) > 0 ? price(ARROWS[g]) * AMMO_RESERVE : 0) + (player.getLevel() > PlayerConfig.MAX_FREE_TELEPORT_LEVEL ? PhantomHuntersConfig.HUNTER_TELEPORT_FEE : 0) + professionReserve;
 			bought.addAll(buyJewels(player, g, reserve));
 		}
 
@@ -1622,7 +1647,7 @@ final class PhantomHunterOutfit
 		int count = 0;
 		for (Item item : new ArrayList<>(player.getInventory().getItems()))
 		{
-			if (item.isEquipped() || !item.isEquipable() || (!item.isWeapon() && !item.isArmor()) || (item.getTemplate().getCrystalType().getLevel() > expertise))
+			if (item.isEquipped() || !item.isEquipable() || (!item.isWeapon() && !item.isArmor()) || npcOnly(item.getTemplate()) || (item.getTemplate().getCrystalType().getLevel() > expertise))
 			{
 				continue;
 			}
@@ -1639,7 +1664,7 @@ final class PhantomHunterOutfit
 
 			final int slot = Inventory.getPaperdollIndex(drop.getBodyPart());
 			final Item current = slot < 0 ? null : player.getInventory().getPaperdollItem(slot);
-			if ((current == null) || current.isEtcItem() || (current.getTemplate().getItemType() != drop.getItemType()) || (current.getTemplate().getBodyPart() != drop.getBodyPart()) || (drop.getReferencePrice() <= current.getTemplate().getReferencePrice()))
+			if ((current == null) || current.isEtcItem() || (current.getTemplate().getItemType() != drop.getItemType()) || (current.getTemplate().getBodyPart() != drop.getBodyPart()) || (!npcOnly(current.getTemplate()) && (drop.getReferencePrice() <= current.getTemplate().getReferencePrice())))
 			{
 				continue;
 			}
@@ -1671,7 +1696,7 @@ final class PhantomHunterOutfit
 	static boolean isUpgrade(Player player, Item item)
 	{
 		final ItemTemplate drop = item.getTemplate();
-		if (!item.isEquipable() || (!item.isWeapon() && !item.isArmor()) || (drop.getCrystalType().getLevel() > PhantomCompat.expertiseLevel(player)))
+		if (!item.isEquipable() || (!item.isWeapon() && !item.isArmor()) || npcOnly(drop) || (drop.getCrystalType().getLevel() > PhantomCompat.expertiseLevel(player)))
 		{
 			return false;
 		}
@@ -1682,7 +1707,7 @@ final class PhantomHunterOutfit
 
 		final int slot = Inventory.getPaperdollIndex(drop.getBodyPart());
 		final Item current = slot < 0 ? null : player.getInventory().getPaperdollItem(slot);
-		if ((current == null) || current.isEtcItem() || (current.getTemplate().getItemType() != drop.getItemType()) || (current.getTemplate().getBodyPart() != drop.getBodyPart()) || (drop.getReferencePrice() <= current.getTemplate().getReferencePrice()))
+		if ((current == null) || current.isEtcItem() || (current.getTemplate().getItemType() != drop.getItemType()) || (current.getTemplate().getBodyPart() != drop.getBodyPart()) || (!npcOnly(current.getTemplate()) && (drop.getReferencePrice() <= current.getTemplate().getReferencePrice())))
 		{
 			return false;
 		}
@@ -1696,7 +1721,7 @@ final class PhantomHunterOutfit
 	 */
 	static long freeAdena(Player player)
 	{
-		return player.getAdena() - professionDue(player) - (price(shotId(player)) * SHOT_RESERVE) - (player.getLevel() >= 40 ? PhantomHuntersConfig.HUNTER_TELEPORT_FEE : 0);
+		return player.getAdena() - professionDue(player) - (price(shotId(player)) * SHOT_RESERVE) - (player.getLevel() > PlayerConfig.MAX_FREE_TELEPORT_LEVEL ? PhantomHuntersConfig.HUNTER_TELEPORT_FEE : 0);
 	}
 
 	/**
@@ -1761,7 +1786,7 @@ final class PhantomHunterOutfit
 			}
 
 			final Item current = player.getInventory().getPaperdollItem(slot);
-			final int currentGrade = (current == null) || current.isEtcItem() ? -1 : current.getTemplate().getCrystalType().getLevel();
+			final int currentGrade = wornGrade(current);
 			Want missing = null;
 			boolean bought = false;
 			for (PhantomTemplate.Gear gear : grades)
@@ -1780,7 +1805,7 @@ final class PhantomHunterOutfit
 
 				final int g = Math.min(7, grade(gear.rhand));
 				final long ammoReserve = (slot == Inventory.PAPERDOLL_RHAND ? isRanged(gear.rhand) : ammoId(player) > 0) ? price(ARROWS[g]) * AMMO_RESERVE : 0;
-				final long reserve = (price(shotId(player.isMageClass(), g)) * SHOT_RESERVE) + ammoReserve + (player.getLevel() >= 40 ? PhantomHuntersConfig.HUNTER_TELEPORT_FEE : 0) + professionReserve;
+				final long reserve = (price(shotId(player.isMageClass(), g)) * SHOT_RESERVE) + ammoReserve + (player.getLevel() > PlayerConfig.MAX_FREE_TELEPORT_LEVEL ? PhantomHuntersConfig.HUNTER_TELEPORT_FEE : 0) + professionReserve;
 				if ((adena - reserve) >= item.getReferencePrice())
 				{
 					adena -= item.getReferencePrice();

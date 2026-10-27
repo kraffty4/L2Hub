@@ -675,7 +675,7 @@ index d0ce21d48cfc5c286419c8f2a832cec0e46c1f2e..4c364808ce72b3679ed4bceb943b08e1
  	public void manageChat(Player player, String fpcName, String message, int minDelay, int maxDelay)
  	{
 diff --git a/java/org/l2jmobius/gameserver/network/clientpackets/RequestDuelStart.java b/java/org/l2jmobius/gameserver/network/clientpackets/RequestDuelStart.java
-index fbe7c5c20254e33d45ebe81b037ed951509d1001..6b2ebaac620c385005d1cdd577882ef23a10e59d 100644
+index fbe7c5c20254e33d45ebe81b037ed951509d1001..b2a32c1d0d7bfdd20c96682599bc8551a8433d09 100644
 --- a/java/org/l2jmobius/gameserver/network/clientpackets/RequestDuelStart.java
 +++ b/java/org/l2jmobius/gameserver/network/clientpackets/RequestDuelStart.java
 @@ -19,6 +19,8 @@ package org.l2jmobius.gameserver.network.clientpackets;
@@ -707,6 +707,15 @@ index fbe7c5c20254e33d45ebe81b037ed951509d1001..6b2ebaac620c385005d1cdd577882ef2
  			return;
  		}
  		else if (!targetChar.canDuel())
+@@ -110,6 +120,8 @@ public class RequestDuelStart extends ClientPacket
+ 				if (!temp.canDuel())
+ 				{
+ 					player.sendMessage("Not all the members of your party are ready for a duel.");
++					// L2Hub: кто из своей пати не готов и почему.
++					player.sendPacket(temp.getNoDuelReason());
+ 					return;
+ 				}
+ 			}
 diff --git a/java/org/l2jmobius/gameserver/network/clientpackets/RequestJoinParty.java b/java/org/l2jmobius/gameserver/network/clientpackets/RequestJoinParty.java
 index cda9a3cdcc2995a3de3786b51df407a7b3dca746..e7187c23947a2c4d663fa35e3fc775f81b336a74 100644
 --- a/java/org/l2jmobius/gameserver/network/clientpackets/RequestJoinParty.java

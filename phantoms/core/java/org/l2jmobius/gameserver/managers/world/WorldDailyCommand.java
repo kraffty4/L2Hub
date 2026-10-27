@@ -10,7 +10,7 @@ import org.l2jmobius.gameserver.managers.phantom.PhantomCompat;
  * L2Hub: окно поручений дня ({@link WorldDaily}).
  * <ul>
  * <li>.daily — задания на сегодня, прогресс и награды</li>
- * <li>.daily go — телепорт на «Место дня» (с 40-го уровня — за адену), с теми же запретами, что у доски ({@code CommunityBoard.ini}): карма, бой, олимпиада, мирная зона</li>
+ * <li>.daily go — телепорт на «Место дня» (выше MaxFreeTeleportLevel — за адену), с теми же запретами, что у доски ({@code CommunityBoard.ini}): карма, бой, олимпиада, мирная зона</li>
  * </ul>
  * Регистрирует {@link WorldDaily#start} — без врезки в {@code MasterHandler}.
  */
