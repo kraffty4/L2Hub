@@ -1,16 +1,20 @@
 """Сеть хроники: как друзья доходят до сервера на этом ПК.
 
 Способы (KINDS): local — только этот ПК (всё на 127.0.0.1); radmin, tailscale, zerotier — VPN-сети; lan — локальная
-сеть (Wi-Fi, роутер). Выделенный сервер на арендованной машине — в планах: L2Hub поднимает сервер только на этом ПК.
+сеть (Wi-Fi, роутер); internet — напрямую через интернет на внешний (белый) адрес роутера, без VPN-программ: порты
+логина и гейма пробрасываются на роутере по UPnP (upnp.py) или вручную (docs/FRIENDS.md, «Способ „Интернет“»).
+Выделенный сервер на арендованной машине — в планах: L2Hub поднимает сервер только на этом ПК.
 Способ один на все хроники (решение автора 2026-10-20) — его ставит Api.set_network_all во все установленные.
 
 Режим живёт в самих конфигах сервера, отдельного файла нет:
 - Mobius: логин и гейм слушают 127.0.0.1 или все сети (0.0.0.0); ipconfig.xml отдаёт клиенту адрес гейма
   по его подсети: с этого ПК — 127.0.0.1, из сети способа (Radmin 26.0.0.0/8, сеть адаптера Tailscale, ZeroTier
-  или локальной сети) — адрес этого ПК в ней, остальным — тот же адрес.
+  или локальной сети) — адрес этого ПК в ней, остальным — тот же адрес. У «Интернета»: из локальной сети —
+  адрес этого ПК в ней (заход с внешнего адреса изнутри сети роутеры умеют не все), остальным — внешний адрес.
 - La2offline (L2J 2.0.6): Hostname в .properties («*» — все сети). Логин отдаёт клиентам из «внутренних» сетей
   (10, 172.16, 192.168, 127) InternalHostname гейма, остальным — ExternalHostname. Во внешний ставится адрес способа;
-  во внутренний — тоже он, если адрес частный (локальная сеть, обычно ZeroTier), иначе «*», как в оригинале.
+  во внутренний — тоже он, если адрес частный (локальная сеть, обычно ZeroTier), иначе «*», как в оригинале;
+  у «Интернета» внешний — адрес роутера, внутренний — адрес этого ПК в локальной сети.
 Сервер читает конфиги при старте: новый режим работает после перезапуска.
 
 Друзьям нужен их L2.ini с адресом этого ПК в сети способа — friend_l2ini() собирает его из L2.ini клиента профиля.
@@ -20,14 +24,17 @@ import ipaddress
 import re
 import shutil
 import socket
+import urllib.request
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
 import psutil
 
-from . import catalog, clientsys, configs, l2ini, paths, servers
+from . import catalog, clientsys, configs, l2ini, paths, servers, upnp
 
-KINDS = {"local": "Только этот ПК", "radmin": "Radmin VPN", "tailscale": "Tailscale", "zerotier": "ZeroTier", "lan": "Локальная сеть"}
+KINDS = {"local": "Только этот ПК", "radmin": "Radmin VPN", "tailscale": "Tailscale", "zerotier": "ZeroTier", "lan": "Локальная сеть",
+         "internet": "Интернет"}
+PORTS = {"логин": 2106, "гейм": 7777}  # общие у всех профилей (profiles/*.json, "ports")
 RADMIN = ipaddress.ip_network("26.0.0.0/8")
 TAILSCALE = ipaddress.ip_network("100.64.0.0/10")  # CGNAT, его раздаёт Tailscale
 L2J_INTERNAL = [ipaddress.ip_network(n) for n in ("10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "127.0.0.0/8")]
@@ -84,7 +91,64 @@ def _range_kind(address: str) -> str:
         ip = ipaddress.ip_address(address)
     except ValueError:
         return "custom"
-    return "radmin" if ip in RADMIN else "tailscale" if ip in TAILSCALE else "lan" if ip.is_private else "custom"
+    return ("radmin" if ip in RADMIN else "tailscale" if ip in TAILSCALE else "lan" if ip.is_private
+            else "internet" if ip.version == 4 and ip.is_global else "custom")
+
+
+# ---------- Интернет: внешний адрес роутера и проброс портов ----------
+
+def lan_sources() -> list[str]:
+    """Адреса этого ПК в локальной сети — с них ищется роутер."""
+    return [c["address"] for c in candidates() if c["kind"] == "lan"]
+
+
+def internet_probe(force: bool = False) -> dict:
+    """Роутер по UPnP: внешний адрес, серый ли он, проброшены ли порты (upnp.probe, кэш минуту) + адреса этого ПК в локальной сети."""
+    return {**upnp.probe(lan_sources(), PORTS, force=force), "lan": lan_sources(), "need": PORTS}
+
+
+def internet_cached() -> dict | None:
+    """Последний ответ роутера по UPnP без похода в сеть (или None — ещё не спрашивали)."""
+    return upnp.cached()
+
+
+def _internet_lan() -> tuple[str, str] | None:
+    """(адрес, сеть) этого ПК в локальной сети, за роутером: тот, с которого виден роутер по UPnP, иначе первый."""
+    lan = [c for c in candidates() if c["kind"] == "lan"]
+    seen = (upnp.cached() or {}).get("localIp")
+    c = next((c for c in lan if c["address"] == seen), lan[0] if lan else None)
+    return (c["address"], c["network"]) if c else None
+
+
+def internet_ports(open_: bool) -> dict:
+    """Открыть или закрыть на роутере по UPnP порты логина и гейма. Закрываются только свои (на этот ПК, «L2Hub …»).
+    Нет UPnP — {"ok": False, "error": почему}: тогда порты пробрасываются в роутере вручную."""
+    try:
+        gw = upnp.gateway(lan_sources())
+        done = []
+        for what, port in PORTS.items():
+            if open_:
+                upnp.open_port(gw, port, what)
+                done.append(port)
+            elif upnp.close_port(gw, port):
+                done.append(port)
+    except (RuntimeError, OSError, ET.ParseError) as e:
+        return {"ok": False, "error": str(e)}
+    upnp.probe(lan_sources(), PORTS, force=True)  # окно «Друзей» видит новые пробросы
+    return {"ok": True, "ports": done, "localIp": gw.local_ip}
+
+
+IPIFY = "https://api.ipify.org"
+
+
+def lookup_external() -> str:
+    """Внешний адрес через ipify.org — только по кнопке в окне (сторонний сервис узнаёт адрес), когда роутер без UPnP.
+    Мимо системного прокси; VPN в режиме TUN подменит адрес на свой — окно просит выключить его на время."""
+    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+    address = opener.open(IPIFY, timeout=6).read(64).decode("ascii", "replace").strip()
+    if _range_kind(address) != "internet":
+        raise RuntimeError(f"ipify.org ответил не внешним IPv4: {address[:40]!r}")
+    return address
 
 
 def label(kind: str | None) -> str:
@@ -153,8 +217,13 @@ def state(p: dict) -> dict:
         kind = "local"
     elif addr:
         kind = next((c["kind"] for c in cands if c["address"] == addr), None) or _range_kind(addr)
-    return {"mode": mode, "kind": kind, "label": label(kind), "address": addr,
-            "addressOk": mode != "friends" or any(c["address"] == addr for c in cands),
+    if kind == "internet":
+        # Внешний адрес — на роутере, не на адаптере: сверяется с последним ответом роутера по UPnP, если он был.
+        seen = (upnp.cached() or {}).get("external")
+        ok = not seen or seen == addr
+    else:
+        ok = mode != "friends" or any(c["address"] == addr for c in cands)
+    return {"mode": mode, "kind": kind, "label": label(kind), "address": addr, "addressOk": ok,
             "candidates": cands, "radmin": [c["address"] for c in cands if c["kind"] == "radmin"],
             "listen": {"login": login, "game": game}, "allNets": _all(p)}
 
@@ -166,11 +235,20 @@ def _l2j_internal(address: str) -> bool:
 
 def apply(p: dict, mode: str, address: str | None = None, kind: str | None = None) -> dict:
     """Переключить режим: local или friends (адрес этого ПК в сети способа; без адреса — первый найденный адрес
-    способа kind). Старое имя режима radmin — то же, что friends + radmin. Бэкап — как у настроек."""
+    способа kind; у internet — внешний адрес роутера: свой или по UPnP). Старое имя режима radmin — то же, что
+    friends + radmin. Бэкап — как у настроек. Порты на роутере здесь не трогаются — это internet_ports."""
     if mode == "radmin":
         mode, kind = "friends", "radmin"
-    net = None
-    if mode == "friends":
+    net = lan = None
+    if mode == "friends" and kind == "internet":
+        # Внешний адрес роутера: свой (введён или узнан) или от роутера по UPnP. Изнутри сети — адрес в локальной сети.
+        address = (address or "").strip() or (internet_probe().get("external") or "")
+        if _range_kind(address) != "internet":
+            raise RuntimeError(f"«{address or 'пусто'}» — не внешний адрес: нужен белый IPv4 роутера (не 10.x, 172.16–31.x, 192.168.x и не 100.64–127.x).")
+        lan = _internet_lan()
+        if not lan:
+            raise RuntimeError("У этого ПК нет адреса в локальной сети: «Интернет» идёт через роутер, ПК должен быть подключён к нему.")
+    elif mode == "friends":
         cands = candidates()
         if address is None:
             c = next((c for c in cands if c["kind"] == kind), None)
@@ -190,22 +268,32 @@ def apply(p: dict, mode: str, address: str | None = None, kind: str | None = Non
     edits = [{"part": lp, "file": lf, "key": "LoginserverHostname", "value": listen},
              {"part": gp, "file": gf, "key": "GameserverHostname", "value": listen}]
     if servers.config_family(p) == "l2j2":
+        inside = lan[0] if lan else address if address and _l2j_internal(address) else "*"
         edits.append({"part": gp, "file": gf, "key": "ExternalHostname", "value": address or LOCAL})
-        edits.append({"part": gp, "file": gf, "key": "InternalHostname", "value": address if address and _l2j_internal(address) else "*"})
+        edits.append({"part": gp, "file": gf, "key": "InternalHostname", "value": inside})
     backup_root = paths.BACKUPS / "config" / p["id"]
     result = configs.save_edits(catalog.server_dir(p), backup_root, edits)
     if not servers.config_family(p) == "l2j2":
-        _write_ipconfig(p, address, net, kind, Path(result["backup"]))
+        _write_ipconfig(p, address, net, kind, Path(result["backup"]), lan)
     return {"mode": mode, "kind": kind, "label": label(kind), "address": address, "backup": result["backup"]}
 
 
-def _write_ipconfig(p: dict, address: str | None, net: str | None, kind: str | None, backup_dir: Path) -> None:
+def _write_ipconfig(p: dict, address: str | None, net: str | None, kind: str | None, backup_dir: Path,
+                    lan: tuple[str, str] | None = None) -> None:
     f = _ipconfig(p)
     if f.is_file():
         target = backup_dir / f.relative_to(catalog.server_dir(p))
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(f, target)
-    if address:
+    if address and lan:
+        lines = [*IPCONFIG_HEAD,
+                 f"<!-- L2Hub, режим друзей ({label(kind)}): с этого ПК клиенту отдаётся {LOCAL}, из локальной сети {lan[1]} — {lan[0]}, "
+                 f"остальным — внешний адрес роутера {address}. -->",
+                 IPCONFIG_ROOT.format(address),
+                 f'\t<define subnet="127.0.0.0/8" address="{LOCAL}" />',
+                 f'\t<define subnet="{lan[1]}" address="{lan[0]}" />',
+                 "</gameserver>"]
+    elif address:
         lines = [*IPCONFIG_HEAD,
                  f"<!-- L2Hub, режим друзей ({label(kind)}): с этого ПК клиенту отдаётся {LOCAL}, из сети {net} и остальным — {address}. -->",
                  IPCONFIG_ROOT.format(address),

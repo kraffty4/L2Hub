@@ -115,7 +115,7 @@ final class PhantomHunterOutfit
 		Inventory.PAPERDOLL_FEET,
 		Inventory.PAPERDOLL_LHAND
 	};
-	private static final Set<BodyPart> JEWELS = Set.of(BodyPart.NECK, BodyPart.R_EAR, BodyPart.L_EAR, BodyPart.LR_EAR, BodyPart.R_FINGER, BodyPart.L_FINGER, BodyPart.LR_FINGER);
+	static final Set<BodyPart> JEWELS = Set.of(BodyPart.NECK, BodyPart.R_EAR, BodyPart.L_EAR, BodyPart.LR_EAR, BodyPart.R_FINGER, BodyPart.L_FINGER, BodyPart.LR_FINGER);
 	/** Сколько сосов и стрел держать в запасе при покупке шмота: новая вещь не оставит охотника без них. */
 	private static final int SHOT_RESERVE = 300;
 	private static final int AMMO_RESERVE = 500;
@@ -1083,7 +1083,7 @@ final class PhantomHunterOutfit
 			final BodyPart part = item.getBodyPart();
 			final int[] slots = JEWELS.contains(part) ? jewelSlots(part) : new int[]
 			{
-				Inventory.getPaperdollIndex(part)
+				BodyPart.getPaperdollIndex(part)
 			};
 			Item weakest = null;
 			for (int slot : slots)
@@ -1149,7 +1149,7 @@ final class PhantomHunterOutfit
 		}
 		else
 		{
-			final int slot = Inventory.getPaperdollIndex(part);
+			final int slot = BodyPart.getPaperdollIndex(part);
 			old = slot < 0 ? null : player.getInventory().getPaperdollItem(slot);
 		}
 		player.getInventory().equipItem(item);
@@ -1613,7 +1613,7 @@ final class PhantomHunterOutfit
 			return false;
 		}
 
-		final int slot = Inventory.getPaperdollIndex(item.getTemplate().getBodyPart());
+		final int slot = BodyPart.getPaperdollIndex(item.getTemplate().getBodyPart());
 		final Item current = slot < 0 ? null : player.getInventory().getPaperdollItem(slot);
 		player.getInventory().equipItem(item);
 		retire(player, current);
@@ -1662,7 +1662,7 @@ final class PhantomHunterOutfit
 				continue;
 			}
 
-			final int slot = Inventory.getPaperdollIndex(drop.getBodyPart());
+			final int slot = BodyPart.getPaperdollIndex(drop.getBodyPart());
 			final Item current = slot < 0 ? null : player.getInventory().getPaperdollItem(slot);
 			if ((current == null) || current.isEtcItem() || (current.getTemplate().getItemType() != drop.getItemType()) || (current.getTemplate().getBodyPart() != drop.getBodyPart()) || (!npcOnly(current.getTemplate()) && (drop.getReferencePrice() <= current.getTemplate().getReferencePrice())))
 			{
@@ -1705,7 +1705,7 @@ final class PhantomHunterOutfit
 			return jewelUpgrade(player, drop);
 		}
 
-		final int slot = Inventory.getPaperdollIndex(drop.getBodyPart());
+		final int slot = BodyPart.getPaperdollIndex(drop.getBodyPart());
 		final Item current = slot < 0 ? null : player.getInventory().getPaperdollItem(slot);
 		if ((current == null) || current.isEtcItem() || (current.getTemplate().getItemType() != drop.getItemType()) || (current.getTemplate().getBodyPart() != drop.getBodyPart()) || (!npcOnly(current.getTemplate()) && (drop.getReferencePrice() <= current.getTemplate().getReferencePrice())))
 		{

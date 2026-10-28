@@ -860,6 +860,7 @@ const WAYS = [
   { kind: 'tailscale', name: 'Tailscale', text: 'Друзья входят в твою сеть по приглашению, tailscale.com.', site: 'tailscale.com' },
   { kind: 'zerotier', name: 'ZeroTier', text: 'Сеть по ID, участников одобряешь сам, zerotier.com.', site: 'zerotier.com' },
   { kind: 'lan', name: 'Локальная сеть', text: 'Друг в той же квартире: тот же Wi-Fi или роутер, без VPN.' },
+  { kind: 'internet', name: 'Интернет', text: 'Без VPN-программ: друзья заходят на внешний адрес твоего роутера. Нужен белый адрес у провайдера и порты 2106 и 7777 на роутере — откроются по UPnP или пробрось вручную.' },
 ];
 const HOWTO = {
   radmin: ['Поставь Radmin VPN (radmin-vpn.com), создай сеть — имя и пароль придумай. Здесь выбери Radmin VPN и перезапусти сервер. При первом запуске Windows спросит про брандмауэр для Java — разреши и для частных, и для общественных сетей (сеть Radmin Windows обычно считает общественной).',
@@ -870,7 +871,62 @@ const HOWTO = {
     'ZeroTier One → «Join New Network» по ID твоей сети; ждать, пока ты одобришь.'],
   lan: ['Здесь выбери локальную сеть и перезапусти сервер; брандмауэр для Java — разреши для частных сетей. Адрес этого ПК в сети может смениться после перезагрузки роутера — тогда выбери способ заново.',
     'Подключиться к тому же Wi-Fi или роутеру.'],
+  internet: ['Нужен белый адрес у провайдера (часто платная услуга): с серым (CGNAT) снаружи не достучаться. Порты 2106 и 7777 L2Hub откроет на роутере по UPnP и проверит при каждом запуске сервера; нет UPnP — пробрось их в настройках роутера на адрес этого ПК в локальной сети. Брандмауэр для Java — разреши. Белый адрес у многих меняется — тогда включи способ заново и разошли новый L2.ini.',
+    'Ничего ставить не нужно — только присланный L2.ini или клиент целиком. Играть с домашнего интернета: мобильный в части регионов пускает только по «белым спискам». Стоят Zapret или VPN — смотри README пакета.'],
 };
+let inetProbing = false;
+// «Интернет»: спросить роутер по UPnP (~2 с) и перерисовать «Друзей».
+async function probeInternet() {
+  if (inetProbing) return;
+  inetProbing = true;
+  try { await api.internet_probe(); } finally { inetProbing = false; }
+  renderFriends();
+}
+function internetCard(w, r, common) {
+  const i = r.internet;
+  const active = common && common.mode === 'friends' && common.kind === 'internet';
+  const lan = r.lan.length ? r.lan.join(', ') : 'нет';
+  const port = (n) => { const x = i?.ports?.[n]; return x ? `${n} ${x.open && x.mine ? '<span class="yes">✓</span>' : x.open ? `<span class="warnc">на ${esc(x.client)}</span>` : '<span class="no">закрыт</span>'}` : `${n}`; };
+  const recheck = `<button class="sbtn" data-inet="probe"${inetProbing ? ' disabled' : ''}>${inetProbing ? 'Спрашиваю роутер…' : 'Проверить роутер'}</button>`;
+  let status, btns = '';
+  if (!i) {
+    status = 'спрашиваю роутер по UPnP…';
+    if (!inetProbing) setTimeout(probeInternet, 0);
+  } else if (i.found && i.external && !i.grey) {
+    status = `внешний адрес: <span class="w-cmd">${esc(i.external)}</span> · порты: ${Object.values(r.ports).map(port).join(', ')}`;
+    const closed = Object.values(r.ports).some((n) => !(i.ports?.[n]?.open && i.ports?.[n]?.mine));
+    btns = (active ? '<span class="way-on">выбрано</span>' + (closed ? ' <button class="sbtn primary" data-inet="open">Открыть порты</button>' : '')
+      : `<button class="sbtn primary" data-way="friends" data-kind="internet" data-addr="${esc(i.external)}">Включить везде</button>`) + ' ' + recheck;
+  } else if (i.found && i.grey) {
+    status = `<span class="no">внешний адрес роутера ${esc(i.external || '?')} — ${esc(i.grey)}.</span>`;
+    btns = recheck;
+  } else {
+    // Без UPnP: порты — руками в роутере, адрес — свой или через ipify.org (только по кнопке).
+    const now = active ? common.address : '';
+    status = `<span class="warnc">${esc(i.why || 'роутер не ответил')}.</span> Пробрось на роутере TCP ${Object.values(r.ports).join(' и ')} на адрес этого ПК: ${esc(lan)}.`
+      + `<input id="inetAddr" class="field" style="margin-top:6px" placeholder="внешний адрес роутера" value="${esc(now)}" spellcheck="false">`;
+    btns = (active ? '<span class="way-on">выбрано</span> ' : '') + `<button class="sbtn primary" data-inet="manual">${active ? 'Сменить адрес' : 'Включить везде'}</button>`
+      + ' <button class="sbtn" data-inet="lookup" title="Сторонний сервис узнает твой адрес. Включённый VPN подменит его — выключи на время.">Узнать через ipify.org</button>'
+      + ` ${recheck}`;
+  }
+  return `<div class="way${active ? ' on' : ''}${i && i.found && i.grey ? ' off' : ''}"><h4>${esc(w.name)}</h4><p>${esc(w.text)}</p><div class="way-st">${status}</div><div class="way-act">${btns}</div></div>`;
+}
+async function internetAction(what) {
+  if (what === 'probe') return probeInternet();
+  if (what === 'open') {
+    const r = await api.internet_ports(true);
+    if (!r.ok) return toast(`Порты не открылись: ${r.error}`, true);
+    toast('Порты 2106 и 7777 открыты на роутере.');
+    return renderFriends();
+  }
+  if (what === 'lookup') {
+    const r = await api.internet_lookup();
+    if (!r.ok) return toast(r.error, true);
+    $('inetAddr').value = r.address;
+    return toast(`ipify.org: ${r.address}. Проверь, что VPN выключен — иначе это адрес VPN.`);
+  }
+  if (what === 'manual') return setWay('friends', $('inetAddr').value.trim() || null, 'internet');
+}
 let netView = null;
 let packChron = load('packChron');
 
@@ -892,6 +948,7 @@ async function renderFriends() {
     + (restart.length ? `<div class="note bad-text" style="margin-top:8px">Сеть поменялась после запуска: перезапусти ${esc(restart.join(', '))}, чтобы применить.</div>` : '');
   // Карточки способов.
   const cards = WAYS.map((w) => {
+    if (w.kind === 'internet') return internetCard(w, r, common);
     const found = r.candidates.filter((c) => c.kind === w.kind);
     const active = common && (w.kind === 'local' ? common.mode === 'local' : common.mode === 'friends' && common.kind === w.kind);
     let status, btns;
@@ -912,6 +969,7 @@ async function renderFriends() {
     <div class="way-st">L2Hub пока поднимает сервер только на этом ПК.</div></div>`;
   $('netWays').innerHTML = cards;
   $('netWays').querySelectorAll('[data-way]').forEach((b) => (b.onclick = () => setWay(b.dataset.way, b.dataset.addr || null, b.dataset.kind || null)));
+  $('netWays').querySelectorAll('[data-inet]').forEach((b) => (b.onclick = () => internetAction(b.dataset.inet)));
   // Хроники.
   $('netChrons').innerHTML = r.items.map((x) => {
     const st = !x.supported ? `<span class="no">${esc(x.why || 'не поддерживается')}</span>`
@@ -958,9 +1016,12 @@ async function setWay(mode, address, kind) {
   const r = await api.set_network_all(mode, address, kind);
   if (!r.ok) return toast(r.error, true);
   const restart = r.done.filter((x) => x.restart).map((x) => x.name);
+  // «Интернет»: порты на роутере по UPnP — открылись или пробросить вручную.
+  const ports = r.kind !== 'internet' || !r.ports ? '' : r.ports.ok ? ' Порты 2106 и 7777 открыты на роутере.'
+    : ` Порты на роутере сами не открылись (${r.ports.error}) — пробрось 2106 и 7777 вручную.`;
   toast((mode === 'local' ? 'Только этот ПК — во всех хрониках.' : `${r.label}: ${r.address} — во всех хрониках.`)
-    + (restart.length ? ` Перезапусти ${restart.join(', ')}, чтобы применить.` : '')
-    + (r.failed.length ? ` Не вышло: ${r.failed.map((x) => x.name).join(', ')}.` : ''), r.failed.length > 0);
+    + ports + (restart.length ? ` Перезапусти ${restart.join(', ')}, чтобы применить.` : '')
+    + (r.failed.length ? ` Не вышло: ${r.failed.map((x) => x.name).join(', ')}.` : ''), r.failed.length > 0 || (r.kind === 'internet' && r.ports && !r.ports.ok));
   renderFriends();
 }
 $('packChron').onchange = (e) => { packChron = e.target.value; store('packChron', packChron); renderFriends(); };

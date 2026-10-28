@@ -1,0 +1,86 @@
+diff --git a/dist/game/config/General.ini b/dist/game/config/General.ini
+index 38a2b6e37879b2c56677c344ceaf94d51ef8d325..ec7d425fc142470555114c8232b70a430630c8d9 100644
+--- a/dist/game/config/General.ini
++++ b/dist/game/config/General.ini
+@@ -754,3 +754,13 @@ EnablePrimeShop = False
+ # Item Id used by prime shop.
+ # Default: -1
+ PrimeShopItemId = -1
++
++# ---------------------------------------------------------------------------
++# L2Hub (малый мир): Четыре гробницы малого мира (tools/l2hub_sepulchers_small.py)
++# ---------------------------------------------------------------------------
++# Выключатель «Гробницы малого мира» в лаунчере («Настройки сервера», «Мир»; режим «Хардкор» выключает). True — в Четыре
++# гробницы пускают пати от SmallWorldSepulchersMinParty (у Mobius — от 4), а квест 620 и пропуск нужны только живым:
++# напарник и охотник идут без них. False — как у Mobius.
++SmallWorldSepulchers = True
++# Пати от скольких человек, считая напарников и охотников. Range 2-9
++SmallWorldSepulchersMinParty = 2
+diff --git a/dist/game/data/scripts/ai/areas/ImperialTomb/FourSepulchers/FourSepulchers.java b/dist/game/data/scripts/ai/areas/ImperialTomb/FourSepulchers/FourSepulchers.java
+index 7cc4ba3d028540ae5c010027a811d8727e2c4e0d..8d3a236ad1714988efe652e71036651137c2578f 100644
+--- a/dist/game/data/scripts/ai/areas/ImperialTomb/FourSepulchers/FourSepulchers.java
++++ b/dist/game/data/scripts/ai/areas/ImperialTomb/FourSepulchers/FourSepulchers.java
+@@ -36,6 +36,7 @@ import org.w3c.dom.Node;
+ import org.l2jmobius.commons.threads.ThreadPool;
+ import org.l2jmobius.commons.util.IXmlReader;
+ import org.l2jmobius.gameserver.config.PlayerConfig;
++import org.l2jmobius.gameserver.config.GeneralConfig;
+ import org.l2jmobius.gameserver.entity.Location;
+ import org.l2jmobius.gameserver.entity.World;
+ import org.l2jmobius.gameserver.entity.actor.Creature;
+@@ -46,6 +47,7 @@ import org.l2jmobius.gameserver.entity.zone.ZoneType;
+ import org.l2jmobius.gameserver.entity.zone.type.EffectZone;
+ import org.l2jmobius.gameserver.geoengine.GeoEngine;
+ import org.l2jmobius.gameserver.managers.ZoneManager;
++import org.l2jmobius.gameserver.managers.phantom.PhantomManager;
+ import org.l2jmobius.gameserver.mechanics.script.QuestSound;
+ import org.l2jmobius.gameserver.mechanics.script.QuestState;
+ import org.l2jmobius.gameserver.mechanics.script.Script;
+@@ -573,7 +575,8 @@ public class FourSepulchers extends Script implements IXmlReader
+ 			return;
+ 		}
+ 		
+-		if (!player.isInParty() || (party.getMemberCount() < PARTY_MEMBER_COUNT))
++		// L2Hub (малый мир): с SmallWorldSepulchers — пати от SmallWorldSepulchersMinParty (с напарником), а не от четырёх.
++		if (!player.isInParty() || (party.getMemberCount() < (GeneralConfig.SMALL_WORLD_SEPULCHERS ? GeneralConfig.SMALL_WORLD_SEPULCHERS_MIN_PARTY : PARTY_MEMBER_COUNT)))
+ 		{
+ 			showHtmlFile(player, npcId + "-SP.html", npc, null);
+ 			return;
+@@ -593,6 +596,12 @@ public class FourSepulchers extends Script implements IXmlReader
+ 		
+ 		for (Player mem : party.getMembers())
+ 		{
++			// L2Hub (малый мир): квест 620, пропуск и вес — только у живых; напарник и охотник идут без них.
++			if (GeneralConfig.SMALL_WORLD_SEPULCHERS && PhantomManager.getInstance().isPhantom(mem))
++			{
++				continue;
++			}
++			
+ 			final QuestState qs = mem.getQuestState(Q00620_FourGoblets.class.getSimpleName());
+ 			if ((qs == null) || (!qs.isStarted() && !qs.isCompleted()))
+ 			{
+diff --git a/java/org/l2jmobius/gameserver/config/GeneralConfig.java b/java/org/l2jmobius/gameserver/config/GeneralConfig.java
+index dbb007e549352870d85288bd71340c0f03bff29c..2bef4575a37e54736eccfb534e0313d304ec0e16 100644
+--- a/java/org/l2jmobius/gameserver/config/GeneralConfig.java
++++ b/java/org/l2jmobius/gameserver/config/GeneralConfig.java
+@@ -196,6 +196,10 @@ public class GeneralConfig
+ 	public static boolean ENABLE_FALLING_DAMAGE;
+ 	public static boolean DEBUFF_DURATION_USES_RESISTS;
+ 	
++	// L2Hub (малый мир): выключатель «Гробницы малого мира» (tools/l2hub_sepulchers_small.py).
++	public static boolean SMALL_WORLD_SEPULCHERS;
++	public static int SMALL_WORLD_SEPULCHERS_MIN_PARTY;
++	
+ 	public static void load()
+ 	{
+ 		final ConfigReader config = new ConfigReader(GENERAL_CONFIG_FILE);
+@@ -386,5 +390,9 @@ public class GeneralConfig
+ 		MULTISELL_AMOUNT_LIMIT = config.getLong("MultisellAmountLimit", 10000);
+ 		ENABLE_FALLING_DAMAGE = config.getBoolean("EnableFallingDamage", true);
+ 		DEBUFF_DURATION_USES_RESISTS = config.getBoolean("DebuffDurationUsesResists", true);
++		
++		// L2Hub (малый мир): Четыре гробницы — пати от SmallWorldSepulchersMinParty, квест и пропуск — только у живых.
++		SMALL_WORLD_SEPULCHERS = config.getBoolean("SmallWorldSepulchers", false);
++		SMALL_WORLD_SEPULCHERS_MIN_PARTY = Math.max(2, Math.min(9, config.getInt("SmallWorldSepulchersMinParty", 2)));
+ 	}
+ }

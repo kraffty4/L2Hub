@@ -680,4 +680,56 @@ public final class PhantomCompat
 		}
 		return -1;
 	}
+
+	// ---------- Мировая биржа (только Essence; docs/PHANTOMS.md, раздел 4.51): здесь её нет ----------
+
+	public static boolean exchangeEnabled()
+	{
+		return false;
+	}
+
+	public static long lcoin(Player player)
+	{
+		return 0;
+	}
+
+	public static List<PhantomExchange.Lot> exchangeOffers(Player buyer)
+	{
+		return List.of();
+	}
+
+	public static List<PhantomExchange.Lot> exchangeOwnLots(Player owner)
+	{
+		return List.of();
+	}
+
+	public static long exchangeFee(long price)
+	{
+		return 0;
+	}
+
+	public static long exchangeNet(long price)
+	{
+		return 0;
+	}
+
+	public static long exchangeAverage(int itemId)
+	{
+		return 0;
+	}
+
+	public static boolean exchangeRegister(Player player, Item item, int category, long price)
+	{
+		return false;
+	}
+
+	public static boolean exchangeBuy(Player player, long lotId)
+	{
+		return false;
+	}
+
+	public static boolean exchangeSettle(Player player, PhantomExchange.Lot lot)
+	{
+		return false;
+	}
 }

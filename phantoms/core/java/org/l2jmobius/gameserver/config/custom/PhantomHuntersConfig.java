@@ -42,6 +42,9 @@ public class PhantomHuntersConfig
 	public static int HUNTER_STORE_MAX_MINUTES;
 	public static boolean HUNTER_BUY_STORES;
 	public static boolean HUNTER_SELL_OLD_GEAR;
+	public static boolean HUNTER_EXCHANGE;
+	public static int HUNTER_EXCHANGE_ADENA_PER_LCOIN;
+	public static int HUNTER_EXCHANGE_LOTS;
 	public static boolean HUNTER_RAIDS;
 	public static int HUNTER_RAID_FIRST;
 	public static int[] HUNTER_RAID_INTERVAL;
@@ -171,6 +174,9 @@ public class PhantomHuntersConfig
 		HUNTER_STORE_MAX_MINUTES = Math.max(HUNTER_STORE_MIN_MINUTES, config.getInt("HunterStoreMaxMinutes", 40));
 		HUNTER_BUY_STORES = config.getBoolean("HunterBuyStores", true);
 		HUNTER_SELL_OLD_GEAR = config.getBoolean("HunterSellOldGear", true);
+		HUNTER_EXCHANGE = config.getBoolean("HunterExchange", true);
+		HUNTER_EXCHANGE_ADENA_PER_LCOIN = Math.max(1, config.getInt("HunterExchangeAdenaPerLCoin", 50000));
+		HUNTER_EXCHANGE_LOTS = Math.max(0, config.getInt("HunterExchangeLots", 3));
 		HUNTER_RAIDS = config.getBoolean("HunterRaids", true);
 		HUNTER_RAID_FIRST = Math.max(1, config.getInt("HunterRaidFirst", 30));
 		HUNTER_RAID_INTERVAL = levels(config.getString("HunterRaidInterval", "60,120"));

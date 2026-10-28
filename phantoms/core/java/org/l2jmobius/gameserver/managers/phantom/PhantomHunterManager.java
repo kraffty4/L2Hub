@@ -1683,7 +1683,7 @@ public class PhantomHunterManager
 	 */
 	private static void payTeleport(Player player)
 	{
-		if (player.getLevel() > PlayerConfig.MAX_FREE_TELEPORT_LEVEL)
+		if (!teleportFree(player))
 		{
 			final long fee = Math.min(player.getAdena(), PhantomHuntersConfig.HUNTER_TELEPORT_FEE);
 			if (fee > 0)
@@ -1691,6 +1691,14 @@ public class PhantomHunterManager
 				PhantomCompat.reduceAdena(player, ItemProcessType.FEE, fee, player, false);
 			}
 		}
+	}
+
+	/**
+	 * @return телепорт у гейткипера охотнику сейчас даром: уровень не выше {@code MaxFreeTeleportLevel} или {@code HunterTeleportFee = 0} (мозгам — {@code teleportFree})
+	 */
+	static boolean teleportFree(Player player)
+	{
+		return (player.getLevel() <= PlayerConfig.MAX_FREE_TELEPORT_LEVEL) || (PhantomHuntersConfig.HUNTER_TELEPORT_FEE <= 0);
 	}
 
 	private HuntSpot pickSpot(Player player, HuntSpot avoid)
@@ -2031,6 +2039,8 @@ public class PhantomHunterManager
 			}
 			// Стратег велел купить или продать вещь (BUY, SELL) — первым делом, до покупок по правилам.
 			townTask(hunter, player, now);
+			// Мировая биржа (раздел 4.51, Essence): выручка, покупка за L-Coin, выставить лишнее — до сдачи хлама NPC.
+			PhantomExchange.visit(player);
 			final List<String> done = PhantomHunterOutfit.townChores(player, hunter.template, hunter.unsold);
 			player.storeMe();
 			LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " (" + player.getLevel() + ") in " + MapRegionData.getInstance().getClosestTownName(player) + ": " + (done.isEmpty() ? "nothing to do" : String.join(", ", done)) + "; " + player.getAdena() + " adena.");
@@ -3089,12 +3099,14 @@ public class PhantomHunterManager
 		// Стратегу нужен охотник на споте, лучше сильнее 20-го. Охотники входят по одному за тик, и сильный мог ещё не войти: ждём всех, но не дольше MIND_TEST_WAIT.
 		// Шагу 6 (NEAR) — пара на споте: проверяемый (лучше хилер с ресом) и «живой» рядом по уровню.
 		// Сезонным (SEASONAL) — сильнейший охотник: ждём всех так же (прогон H5 2026-10-26 — сразу после старта «no hunter in the world»).
+		// Бирже (EXCHANGE) — покупатель посильнее и продавец: ждём так же.
 		final boolean mind = "MIND".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
 		final boolean nearTest = "NEAR".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
 		final boolean seasonal = "SEASONAL".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
-		if (mind || nearTest || seasonal)
+		final boolean exchange = "EXCHANGE".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
+		if (mind || nearTest || seasonal || exchange)
 		{
-			final String test = mind ? "MIND" : nearTest ? "NEAR" : "SEASONAL";
+			final String test = mind ? "MIND" : nearTest ? "NEAR" : seasonal ? "SEASONAL" : "EXCHANGE";
 			final boolean ready = mind ? (mindTestHunter() != null) : nearTest ? (nearTestPair() != null) : !inWorld().isEmpty();
 			if (!ready)
 			{
@@ -3181,6 +3193,12 @@ public class PhantomHunterManager
 		if (seasonal)
 		{
 			seasonalSelfTest();
+			return;
+		}
+		// Мировая биржа (раздел 4.51, Essence): выставить, купить и надеть, забрать выручку.
+		if (exchange)
+		{
+			PhantomExchange.selfTest(inWorld());
 			return;
 		}
 		// Эпик без клиента (раздел 4.43): живого в рейде играет охотник.

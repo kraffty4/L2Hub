@@ -399,6 +399,8 @@ final class PhantomHunterStrategy
 		sb.append("\"mage\":").append(player.isMageClass()).append(',');
 		sb.append("\"adena\":").append(player.getAdena()).append(',');
 		FakePlayerBrain.field(sb, "money", PhantomHunterManager.money(player.getAdena())).append(',');
+		// Платит ли он сейчас за телепорт у гейткипера (MaxFreeTeleportLevel и HunterTeleportFee): мозги не гадают «с 40-го».
+		sb.append("\"teleportFree\":").append(PhantomHunterManager.teleportFree(player)).append(',');
 		sb.append("\"expPct\":").append(String.format(Locale.ROOT, "%.1f", levelPercent(player))).append(',');
 		sb.append("\"hpPct\":").append((int) ((player.getCurrentHp() * 100) / Math.max(1, player.getMaxHp()))).append(',');
 		sb.append("\"mpPct\":").append((int) ((player.getCurrentMp() * 100) / Math.max(1, player.getMaxMp()))).append(',');

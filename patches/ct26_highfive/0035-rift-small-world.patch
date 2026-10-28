@@ -1,0 +1,77 @@
+diff --git a/dist/game/config/General.ini b/dist/game/config/General.ini
+index ec7d425fc142470555114c8232b70a430630c8d9..3d98ec8391447272c3052d49522c0d7c4d858b39 100644
+--- a/dist/game/config/General.ini
++++ b/dist/game/config/General.ini
+@@ -764,3 +764,11 @@ PrimeShopItemId = -1
+ SmallWorldSepulchers = True
+ # Пати от скольких человек, считая напарников и охотников. Range 2-9
+ SmallWorldSepulchersMinParty = 2
++
++# ---------------------------------------------------------------------------
++# L2Hub (малый мир): Разлом измерений малого мира (tools/l2hub_rift_small.py)
++# ---------------------------------------------------------------------------
++# Выключатель «Разлом малого мира» в лаунчере («Настройки сервера», «Мир»; режим «Хардкор» выключает). True — фрагменты
++# измерений (Dimensional Fragment) за вход в Разлом проверяются и списываются только у живых: напарник и охотник идут без
++# них. False — как у Mobius: фрагменты нужны каждому в пати.
++SmallWorldRift = True
+diff --git a/java/org/l2jmobius/gameserver/config/GeneralConfig.java b/java/org/l2jmobius/gameserver/config/GeneralConfig.java
+index 2bef4575a37e54736eccfb534e0313d304ec0e16..59b180bdae171952338bc6166f9f970f9389a064 100644
+--- a/java/org/l2jmobius/gameserver/config/GeneralConfig.java
++++ b/java/org/l2jmobius/gameserver/config/GeneralConfig.java
+@@ -200,6 +200,9 @@ public class GeneralConfig
+ 	public static boolean SMALL_WORLD_SEPULCHERS;
+ 	public static int SMALL_WORLD_SEPULCHERS_MIN_PARTY;
+ 	
++	// L2Hub (малый мир): выключатель «Разлом малого мира» (tools/l2hub_rift_small.py).
++	public static boolean SMALL_WORLD_RIFT;
++	
+ 	public static void load()
+ 	{
+ 		final ConfigReader config = new ConfigReader(GENERAL_CONFIG_FILE);
+@@ -394,5 +397,8 @@ public class GeneralConfig
+ 		// L2Hub (малый мир): Четыре гробницы — пати от SmallWorldSepulchersMinParty, квест и пропуск — только у живых.
+ 		SMALL_WORLD_SEPULCHERS = config.getBoolean("SmallWorldSepulchers", false);
+ 		SMALL_WORLD_SEPULCHERS_MIN_PARTY = Math.max(2, Math.min(9, config.getInt("SmallWorldSepulchersMinParty", 2)));
++		
++		// L2Hub (малый мир): Разлом измерений — фрагменты только у живых.
++		SMALL_WORLD_RIFT = config.getBoolean("SmallWorldRift", false);
+ 	}
+ }
+diff --git a/java/org/l2jmobius/gameserver/managers/DimensionalRiftManager.java b/java/org/l2jmobius/gameserver/managers/DimensionalRiftManager.java
+index 05aba6e12defd93b239a8c8dd88ff157ed269889..633596e7891804f909acdc6b02a66f7c4b92f21c 100644
+--- a/java/org/l2jmobius/gameserver/managers/DimensionalRiftManager.java
++++ b/java/org/l2jmobius/gameserver/managers/DimensionalRiftManager.java
+@@ -44,6 +44,7 @@ import org.l2jmobius.gameserver.entity.groups.Party;
+ import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
+ import org.l2jmobius.gameserver.entity.item.instance.Item;
+ import org.l2jmobius.gameserver.entity.spawns.Spawn;
++import org.l2jmobius.gameserver.managers.phantom.PhantomManager;
+ import org.l2jmobius.gameserver.mechanics.sevensigns.DimensionalRift;
+ import org.l2jmobius.gameserver.mechanics.sevensigns.DimensionalRiftRoom;
+ import org.l2jmobius.gameserver.network.serverpackets.NpcHtmlMessage;
+@@ -311,6 +312,12 @@ public class DimensionalRiftManager
+ 		final int count = getNeededItems(type);
+ 		for (Player p : party.getMembers())
+ 		{
++			// L2Hub (малый мир): фрагменты (проверка) — только у живых; напарник и охотник идут без них.
++			if (GeneralConfig.SMALL_WORLD_RIFT && PhantomManager.getInstance().isPhantom(p))
++			{
++				continue;
++			}
++			
+ 			i = p.getInventory().getItemByItemId(DIMENSIONAL_FRAGMENT_ITEM_ID);
+ 			if (i == null)
+ 			{
+@@ -345,6 +352,12 @@ public class DimensionalRiftManager
+ 		
+ 		for (Player p : party.getMembers())
+ 		{
++			// L2Hub (малый мир): фрагменты (списание) — только у живых; напарник и охотник идут без них.
++			if (GeneralConfig.SMALL_WORLD_RIFT && PhantomManager.getInstance().isPhantom(p))
++			{
++				continue;
++			}
++			
+ 			i = p.getInventory().getItemByItemId(DIMENSIONAL_FRAGMENT_ITEM_ID);
+ 			if (!p.destroyItem(ItemProcessType.FEE, i, count, null, false))
+ 			{

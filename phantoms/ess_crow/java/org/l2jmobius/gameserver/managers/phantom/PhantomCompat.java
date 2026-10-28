@@ -10,6 +10,7 @@ import java.util.function.BiConsumer;
 
 import org.l2jmobius.gameserver.config.GeneralConfig;
 import org.l2jmobius.gameserver.config.PlayerConfig;
+import org.l2jmobius.gameserver.config.WorldExchangeConfig;
 import org.l2jmobius.gameserver.data.sql.ClanTable;
 import org.l2jmobius.gameserver.data.xml.BuyListData;
 import org.l2jmobius.gameserver.entity.WorldObject;
@@ -27,7 +28,11 @@ import org.l2jmobius.gameserver.entity.clan.enums.ClanWarState;
 import org.l2jmobius.gameserver.entity.groups.Party;
 import org.l2jmobius.gameserver.entity.groups.PartyDistributionType;
 import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
+import org.l2jmobius.gameserver.entity.item.enums.WorldExchangeItemStatusType;
+import org.l2jmobius.gameserver.entity.item.enums.WorldExchangeItemSubType;
+import org.l2jmobius.gameserver.entity.item.enums.WorldExchangeSortType;
 import org.l2jmobius.gameserver.entity.item.holders.ItemHolder;
+import org.l2jmobius.gameserver.entity.item.holders.WorldExchangeHolder;
 import org.l2jmobius.gameserver.entity.item.instance.Item;
 import org.l2jmobius.gameserver.entity.item.type.WeaponType;
 import org.l2jmobius.gameserver.entity.itemcontainer.Inventory;
@@ -37,6 +42,7 @@ import org.l2jmobius.gameserver.managers.CastleManager;
 import org.l2jmobius.gameserver.managers.DatabaseSpawnManager;
 import org.l2jmobius.gameserver.managers.FortManager;
 import org.l2jmobius.gameserver.managers.InstanceManager;
+import org.l2jmobius.gameserver.managers.WorldExchangeManager;
 import org.l2jmobius.gameserver.mechanics.buylist.Product;
 import org.l2jmobius.gameserver.mechanics.buylist.ProductList;
 import org.l2jmobius.gameserver.mechanics.events.Containers;
@@ -626,5 +632,138 @@ public final class PhantomCompat
 	public static int enchantEventItem(Player player, Item scroll, Item item)
 	{
 		return Integer.MIN_VALUE;
+	}
+
+	// ---------- Мировая биржа (docs/PHANTOMS.md, раздел 4.51): фантом — игрок, всё — прямыми вызовами WorldExchangeManager ----------
+
+	/**
+	 * @return биржа включена (WorldExchange.ini: EnableWorldExchange)
+	 */
+	public static boolean exchangeEnabled()
+	{
+		return WorldExchangeConfig.ENABLE_WORLD_EXCHANGE;
+	}
+
+	/**
+	 * @return L-Coin в сумке
+	 */
+	public static long lcoin(Player player)
+	{
+		return player.getInventory().getInventoryItemCount(Inventory.LCOIN_ID, -1);
+	}
+
+	/**
+	 * Чужие выставленные лоты в разделах оружия, брони и бижутерии — как их видит покупатель в окне биржи.
+	 * @param buyer охотник
+	 * @return лоты, дешёвые первыми
+	 */
+	public static List<PhantomExchange.Lot> exchangeOffers(Player buyer)
+	{
+		final List<PhantomExchange.Lot> lots = new ArrayList<>();
+		for (WorldExchangeItemSubType type : List.of(WorldExchangeItemSubType.WEAPON, WorldExchangeItemSubType.ARMOR, WorldExchangeItemSubType.ACCESSORY))
+		{
+			for (WorldExchangeHolder holder : WorldExchangeManager.getInstance().getItemBids(buyer.getObjectId(), type, WorldExchangeSortType.PRICE_ASCE, WorldExchangeConfig.WORLD_EXCHANGE_DEFAULT_LANG))
+			{
+				lots.add(exchangeLot(holder));
+			}
+		}
+		return lots;
+	}
+
+	/**
+	 * @param owner охотник
+	 * @return его лоты: выставленные, проданные (ждут выручку) и просроченные (ждут возврата)
+	 */
+	public static List<PhantomExchange.Lot> exchangeOwnLots(Player owner)
+	{
+		final List<PhantomExchange.Lot> lots = new ArrayList<>();
+		for (List<WorldExchangeHolder> holders : WorldExchangeManager.getInstance().getPlayerBids(owner.getObjectId()).values())
+		{
+			for (WorldExchangeHolder holder : holders)
+			{
+				lots.add(exchangeLot(holder));
+			}
+		}
+		return lots;
+	}
+
+	private static PhantomExchange.Lot exchangeLot(WorldExchangeHolder holder)
+	{
+		final PhantomExchange.Status status = holder.getStoreType() == WorldExchangeItemStatusType.WORLD_EXCHANGE_SOLD ? PhantomExchange.Status.SOLD : holder.getStoreType() == WorldExchangeItemStatusType.WORLD_EXCHANGE_OUT_TIME ? PhantomExchange.Status.OUT_TIME : PhantomExchange.Status.REGISTERED;
+		return new PhantomExchange.Lot(holder.getWorldExchangeId(), holder.getItemInstance(), holder.getPrice(), holder.getOldOwnerId(), status);
+	}
+
+	/**
+	 * @return плата адены за лот этой цены — как в registerItemBid (AdenaFee, MaxAdenaFee)
+	 */
+	public static long exchangeFee(long price)
+	{
+		final long fee = Math.round(price * WorldExchangeConfig.WORLD_EXCHANGE_ADENA_FEE);
+		return WorldExchangeConfig.WORLD_EXCHANGE_MAX_ADENA_FEE != -1 ? Math.min(fee, WorldExchangeConfig.WORLD_EXCHANGE_MAX_ADENA_FEE) : fee;
+	}
+
+	/**
+	 * @return сколько L-Coin получит продавец за лот этой цены — как в takeBidMoney: минус LCoinFee, но не меньше одного L-Coin и не больше 20 000 (MaxLCoinFee)
+	 */
+	public static long exchangeNet(long price)
+	{
+		final long fee = Math.max(1, Math.min(20000, Math.round((price * WorldExchangeConfig.WORLD_EXCHANGE_LCOIN_TAX * 100) / 100)));
+		return price - Math.min(fee, WorldExchangeConfig.WORLD_EXCHANGE_MAX_LCOIN_TAX != -1 ? WorldExchangeConfig.WORLD_EXCHANGE_MAX_LCOIN_TAX : Long.MAX_VALUE);
+	}
+
+	/**
+	 * @return средняя цена лотов этой вещи на бирже, с проданными (0 — не было)
+	 */
+	public static long exchangeAverage(int itemId)
+	{
+		return WorldExchangeManager.getInstance().getAveragePriceOfItem(itemId);
+	}
+
+	/**
+	 * Выставить вещь целиком. Раздел биржи Mobius узнаёт только из окна клиента (ExWorldExchangeItemList, putIfAbsent), а без раздела registerItemBid
+	 * отрывает вещь из сумки и лота не делает — раздел ставим сами, если клиент его ещё не поставил.
+	 * @param category раздел: 0 — оружие, 1 — броня, 2 — бижутерия
+	 * @param price цена лота в L-Coin
+	 * @return выставил
+	 */
+	public static boolean exchangeRegister(Player player, Item item, int category, long price)
+	{
+		final WorldExchangeManager manager = WorldExchangeManager.getInstance();
+		manager.addCategoryType(List.of(item.getId()), category);
+		final int before = manager.getPlayerBids(player.getObjectId()).getOrDefault(WorldExchangeItemStatusType.WORLD_EXCHANGE_REGISTERED, List.of()).size();
+		manager.registerItemBid(player, item.getObjectId(), item.getCount(), price);
+		return manager.getPlayerBids(player.getObjectId()).getOrDefault(WorldExchangeItemStatusType.WORLD_EXCHANGE_REGISTERED, List.of()).size() > before;
+	}
+
+	/**
+	 * Купить лот за L-Coin.
+	 * @return купил
+	 */
+	public static boolean exchangeBuy(Player player, long lotId)
+	{
+		final long before = lcoin(player);
+		WorldExchangeManager.getInstance().buyItem(player, lotId);
+		return lcoin(player) < before;
+	}
+
+	/**
+	 * Свой проданный лот — забрать L-Coin, просроченный — вернуть вещь. Выставленный не трогает: getItemStatusAndMakeAction снял бы его с продажи.
+	 * @return забрал
+	 */
+	public static boolean exchangeSettle(Player player, PhantomExchange.Lot lot)
+	{
+		if (lot.status() == PhantomExchange.Status.REGISTERED)
+		{
+			return false;
+		}
+		WorldExchangeManager.getInstance().getItemStatusAndMakeAction(player, lot.id());
+		for (PhantomExchange.Lot left : exchangeOwnLots(player))
+		{
+			if (left.id() == lot.id())
+			{
+				return false;
+			}
+		}
+		return true;
 	}
 }

@@ -23,6 +23,7 @@ import org.l2jmobius.gameserver.entity.Location;
 import org.l2jmobius.gameserver.entity.World;
 import org.l2jmobius.gameserver.entity.actor.Player;
 import org.l2jmobius.gameserver.entity.actor.appearance.PlayerAppearance;
+import org.l2jmobius.gameserver.entity.actor.stat.PlayerStat;
 import org.l2jmobius.gameserver.entity.actor.templates.PlayerTemplate;
 import org.l2jmobius.gameserver.managers.GlobalVariablesManager;
 import org.l2jmobius.gameserver.managers.world.WorldDaily;
@@ -359,6 +360,11 @@ public class PhantomManager
 			created.setCurrentHp(created.getMaxHp());
 			created.setCurrentMp(created.getMaxMp());
 			created.setCurrentCp(created.getMaxCp());
+			// И стартовая Sayha's Grace (vitality), как у живого: иначе созданный между недельными сбросами качается без её бонуса до ближайшего сброса.
+			if (PlayerConfig.ENABLE_VITALITY)
+			{
+				created.setVitalityPoints(Math.min(PlayerConfig.STARTING_VITALITY_POINTS, PlayerStat.MAX_VITALITY_POINTS), true);
+			}
 			final Location home = template.getHome();
 			created.setXYZInvisible(home.getX(), home.getY(), home.getZ());
 			created.setTitle("");

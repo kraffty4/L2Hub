@@ -367,6 +367,9 @@ class Api:
         if not only_db and p.get("type") == "mobius":
             # До старта гейма: L2HubLanguage и «Расширенное обдумывание» (HunterMindExtended) — в конфиги модов.
             steps.append(("Язык модов в игре…", lambda: (modes.sync_language(p, i18n.lang()), modes.sync_mind(p))))
+        if not only_db and network.state(p).get("kind") == "internet":
+            # Роутер мог забыть проброс после перезагрузки. Нет UPnP — порты проброшены вручную, молча дальше.
+            steps.append(("Порты на роутере…", lambda: network.internet_ports(True)))
         if not only_db:
             steps += [
                 ("Запускаю логин-сервер…", lambda: servers.start_part(p, "login")),
@@ -1328,10 +1331,29 @@ class Api:
         common = dict(zip(("mode", "kind", "address"), next(iter(same)))) if len(same) == 1 else None
         if common:
             common["label"] = network.label(common["kind"])
-        return {"candidates": network.candidates(), "items": items, "common": common}
+        # «Интернет»: последний ответ роутера (без похода в сеть — его делает internet_probe по запросу окна).
+        return {"candidates": network.candidates(), "items": items, "common": common,
+                "internet": network.internet_cached(), "lan": network.lan_sources(), "ports": network.PORTS}
+
+    def internet_probe(self) -> dict:
+        """«Интернет»: спросить роутер по UPnP — внешний адрес, серый ли он, проброшены ли порты (~2 с)."""
+        return {"ok": True, **network.internet_probe(force=True)}
+
+    def internet_ports(self, open_: bool = True) -> dict:
+        """«Интернет»: открыть или закрыть порты логина и гейма на роутере по UPnP."""
+        return network.internet_ports(open_)
+
+    def internet_lookup(self) -> dict:
+        """«Интернет» без UPnP: внешний адрес через ipify.org — только по кнопке, где окно называет сервис."""
+        try:
+            return {"ok": True, "address": network.lookup_external()}
+        except (OSError, RuntimeError) as e:
+            return {"ok": False, "error": f"ipify.org не ответил: {getattr(e, 'reason', e)}"}
 
     def set_network_all(self, mode: str, address: str | None = None, kind: str | None = None) -> dict:
-        """Один способ на все установленные хроники (кроме L2Solo: у него режима друзей пока нет)."""
+        """Один способ на все установленные хроники (кроме L2Solo: у него режима друзей пока нет).
+        «Интернет» заодно открывает порты на роутере по UPnP, уход с него — закрывает свои."""
+        was_internet = any(self.network_state(c["id"]).get("kind") == "internet" for c in catalog.load_catalog() if c["installed"])
         done, failed = [], []
         for c in catalog.load_catalog():
             if not c["installed"]:
@@ -1346,7 +1368,13 @@ class Api:
                 failed.append({"id": c["id"], "name": c["name"], "error": str(e)})
         if not done:
             return {"ok": False, "error": failed[0]["error"] if failed else "Нет хроник, где можно сменить сеть."}
-        return {"ok": True, "mode": r["mode"], "kind": r["kind"], "label": r["label"], "address": r["address"], "done": done, "failed": failed}
+        ports = None
+        if r["kind"] == "internet":
+            ports = network.internet_ports(True)
+        elif was_internet:
+            ports = network.internet_ports(False)
+        return {"ok": True, "mode": r["mode"], "kind": r["kind"], "label": r["label"], "address": r["address"], "done": done, "failed": failed,
+                "ports": ports}
 
     def make_client_pack(self, chronicle_id: str) -> dict:
         p = catalog.profile(chronicle_id)
