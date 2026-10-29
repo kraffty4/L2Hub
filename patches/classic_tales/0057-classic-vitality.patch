@@ -1,0 +1,13 @@
+diff --git a/dist/game/config/Player.ini b/dist/game/config/Player.ini
+--- a/dist/game/config/Player.ini
++++ b/dist/game/config/Player.ini
+@@ -245,7 +245,8 @@
+ 
+ # Enables vitality system
+ # Default: False
+-EnableVitality = False
++# L2Hub (решение автора 2026-10-28): было False — Sayha's Grace (Vitality) для одиночки: опыт x3, пока есть очки (Rates.ini: RateVitalityExpMultiplier). «Хардкор» (официал Classic) выключает.
++EnableVitality = True
+ 
+ # Option to set a lower vitality at character creation.
+ # Vitality needs to be enabled, and startingpoints needs to be lower

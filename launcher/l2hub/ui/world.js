@@ -558,7 +558,19 @@
       ${oly.periodEnd ? `<div class="kvline"><span>Период до</span><span>${ddmm(oly.periodEnd)}</span></div>` : ''}
       ${oly.nobles != null ? `<div class="kvline"><span>Дворян</span><span>${oly.nobles}${oly.registered != null ? ` · записались ${oly.registered}` : ''}</span></div>` : ''}
       ${oly.heroes?.length ? `<div class="kvline"><span>Герои</span><span>${oly.heroes.map(esc).join(', ')}</span></div>` : ''}</div>` : '';
-    return rbCard + olyCard + `<div class="w-grid w-g3" style="margin-top:12px">
+    // Зачистка (блок purge, classic-essence, есть только у Essence): топ-5 каждой зоны получает награду недели; живые ниже топа —
+    // отдельно, чтобы игрок видел, сколько ему до награды. Очки Mobius — очки + ключи × 1 000 000. Пустые зоны не показываем.
+    const pg = wn.purge;
+    const pgZones = (pg?.zones || []).filter((z) => z.top?.length || z.players?.length);
+    const pgPts = (n) => `${(n % 1e6).toLocaleString(L2I18N.locale)}${n >= 1e6 ? ` · <span>ключей ${Math.floor(n / 1e6)}</span>` : ''}`;
+    const pgWho = (x) => x.secret ? '<span class="w-muted" translate="no">???</span>' : x.phantom ? esc(x.name) : `<b>${esc(x.name)}</b> <span class="w-muted">живой</span>`;
+    const pgRow = (x) => `<div class="kvline"><span>${x.rank}. ${pgWho(x)}</span><span>${pgPts(x.points)}</span></div>`;
+    const pgAllHot = pg?.zones?.length && pg.zones.every((z) => z.hot);  // часы у зон обычно общие — тогда одной строкой в шапке
+    const pgCard = pg ? `<div class="card w-stat" style="margin-top:12px"><h3>Зачистка <span class="r w-muted">${pgAllHot ? '<span>горячий час, очки ×2</span> · ' : ''}<span>${pg.nextReward > Date.now() ? `награды недели — ${hhmmDay(pg.nextReward)}` : 'награды недели — сейчас'}</span></span></h3>
+      ${pgZones.length ? `<div class="w-grid w-g3">${pgZones.map((z) => `<div><div class="mode-group">${esc(z.name)}${z.hot && !pgAllHot ? ' <span class="w-muted">· горячий час, очки ×2</span>' : ''}</div>${(z.top || []).map(pgRow).join('')}${
+        z.players?.length ? `<div class="w-muted" style="font-size:12px;margin-top:4px">Ниже топ-5:</div>${z.players.map(pgRow).join('')}` : ''}</div>`).join('')}</div>` : '<div class="s">В рейтинге пока никого.</div>'}
+      <div class="w-muted" style="font-size:12px;margin-top:8px">Топ-5 зоны получает награду в воскресенье в 00:00. Живые — жирным.</div></div>` : '';
+    return rbCard + olyCard + pgCard + `<div class="w-grid w-g3" style="margin-top:12px">
       <div class="card w-stat"><h3>Суперчемпионы <span class="r w-muted">${sc.enabled ? alive.length : ''}</span></h3><div class="s" style="line-height:1.6">${scTxt}</div></div>
       <div class="card w-stat"><h3>Сезонные события</h3><div class="s" style="line-height:1.6">${seas}</div></div>
       <div class="card w-stat"><h3>Ближайшие ивенты</h3><div class="s" style="line-height:1.6">${nextTxt}</div></div></div>`;

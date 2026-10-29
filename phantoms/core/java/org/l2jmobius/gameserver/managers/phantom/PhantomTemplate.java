@@ -107,6 +107,16 @@ public class PhantomTemplate
 		}
 	}
 
+	/**
+	 * Тело Танатоса после смерти (раздел 4.45, «Новое тело»; решения автора 2026-10-25): тот же орк, а класс — сабкласс по своей ветке, комплект — свой.
+	 * @param kit вид оружия и брони (набор генератора: dual, mage…) — в лог
+	 * @param classes ветка саба: вторая профа (её даёт сабкласс), дальше — третья
+	 * @param gear комплект
+	 */
+	public record Body(String kit, int[] classes, Gear gear)
+	{
+	}
+
 	private final String _name;
 	private final Role _role;
 	private final boolean _female;
@@ -122,6 +132,8 @@ public class PhantomTemplate
 	private final float _social;
 	private float _temper = 1;
 	private float _risk = 1;
+	private int _startLevel;
+	private List<Body> _bodies = List.of();
 
 	public PhantomTemplate(String name, Role role, boolean female, byte face, byte hairStyle, byte hairColor, int[] classes, Location home, List<Gear> gear, String aliases, String kind, float social)
 	{
@@ -212,6 +224,19 @@ public class PhantomTemplate
 	}
 
 	/**
+	 * @return стартовый уровень охотника-ветерана (раздел 4.52): новый персонаж рождается сразу этого уровня; 0 — как все, с 1-го
+	 */
+	public int getStartLevel()
+	{
+		return _startLevel;
+	}
+
+	void setStartLevel(int startLevel)
+	{
+		_startLevel = Math.max(0, startLevel);
+	}
+
+	/**
 	 * @return осторожный: отдыхает и идёт в город раньше, спот берёт пониже, после двух смертей за час уходит на мобов слабее
 	 */
 	public boolean isCautious()
@@ -297,6 +322,19 @@ public class PhantomTemplate
 	public List<Gear> getAllGear()
 	{
 		return _gear;
+	}
+
+	/**
+	 * @return тела Танатоса после смерти ({@link Body}); у остальных фантомов — пусто
+	 */
+	public List<Body> getBodies()
+	{
+		return _bodies;
+	}
+
+	void setBodies(List<Body> bodies)
+	{
+		_bodies = List.copyOf(bodies);
 	}
 
 	/**

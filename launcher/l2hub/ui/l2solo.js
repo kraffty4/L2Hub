@@ -33,8 +33,13 @@
       ['.afksell · .afkbuy', 'AFK-лавка продажи / скупки в мирной зоне'], ['.afkstop', 'закрыть AFK-лавку'],
       ['.trade', 'обмен с ботом в цели'], ['.go', 'PvP на арене'], ['.admin', 'меню GM']]],
   ];
-  const ENCH_DRAFT = {};  // хроника → набранные, но не сохранённые поля заточки
+  // Население ботов — раздел [BotPopulation] (PopulationConfig.js): потолок и волна новичков на расу; ключ, подпись, максимум.
+  const POPULATION = [['maxPlayingPopulation', 'ботов в мире, не больше', 2000], ['starterBotsPerRace', 'новичков в волне, на расу', 200]];
+  const NEWBIE = 'General.newbieRewardPolicy';
+  const NEWBIE_SHORT = { strict: 'первому', grant: 'и старым', always: 'всем' };
+  const DRAFT = {};  // хроника → {заточка или население: набранные, но не сохранённые поля}
   const restartNote = (ctx) => (ctx.running ? 'после перезапуска сервера' : 'со следующего запуска');
+  const localNote = (t, key) => (t[key].source === 'local' ? ' · <span class="bad-text">задано в их local.ini — он главнее</span>' : '');
 
   // Режим сервера C4 (l2solo_modes.json): пресет рейтов, злость мира и заточка разом — как «Режим сервера» у Mobius.
   function modeCard(ctx, p, busy) {
@@ -49,8 +54,8 @@
   // Злость мира (pvpAggression) и квесты xN (questRewardRate, множится на пресет рейтов).
   function worldCard(ctx, p) {
     const t = p.tuning;
-    const local = (key) => (t[key].source === 'local' ? ' · <span class="bad-text">задано в их local.ini — он главнее</span>' : '');
-    const agg = Object.entries(p.aggressionLevels).map(([k, title]) => `<button data-agg="${k}" class="${k === p.aggression ? 'on' : ''}" title="${esc(title)}">${AGG_SHORT[k] || k}</button>`).join('');
+    const local = (key) => localNote(t, key);
+    const agg =Object.entries(p.aggressionLevels).map(([k, title]) => `<button data-agg="${k}" class="${k === p.aggression ? 'on' : ''}" title="${esc(title)}">${AGG_SHORT[k] || k}</button>`).join('');
     const q = t['General.questRewardRate'].value;
     const quests = QUESTS.map((n) => `<button data-quest="${n}" class="${q === n ? 'on' : ''}">x${n}</button>`).join('');
     return `<div class="card"><h3>Злость мира и квесты</h3>
@@ -69,6 +74,26 @@
     return `<div class="card"><h3>Заточка<span class="src">${custom ? 'своя' : 'как у L2Solo'}</span></h3>${groups}
       <div class="row2" style="margin-top:8px"><button class="sbtn primary" id="l2sEnchSave" disabled>Сохранить</button><button class="sbtn" id="l2sEnchReset" ${custom ? '' : 'disabled'}>Как у L2Solo</button>
         <span class="w-muted" style="font-size:12.5px">${restartNote(ctx)}</span></div></div>`;
+  }
+
+  // Заряды новичка (General.newbieRewardPolicy) и население ботов: потолок и волна новичков в стартовых деревнях.
+  function botsCard(ctx, p) {
+    const t = p.tuning;
+    const levels = p.choices?.[NEWBIE];
+    if (!levels || !t[NEWBIE]) return '';
+    const newbie = Object.keys(levels).map((k) => `<button data-newbie="${k}" class="${k === t[NEWBIE].value ? 'on' : ''}" title="${esc(levels[k])}">${NEWBIE_SHORT[k] || k}</button>`).join('');
+    const fields = POPULATION.map(([k, label, max]) => {
+      const key = `BotPopulation.${k}`;
+      return `<div class="num"><label>${esc(label)}</label><input type="number" min="0" max="${max}" data-pop="${key}" value="${t[key].value ?? ''}"${t[key].source === 'local' ? ' title="Задано в их local.ini — он главнее пульта"' : ''}></div>`;
+    }).join('');
+    const custom = POPULATION.some(([k]) => t[`BotPopulation.${k}`].source === 'hub');
+    return `<div class="card"><h3>Новички и население</h3>
+      <div class="opt"><div class="l">Заряды новичку<small>6000 зарядов души или 3000 духа за квесты-награды деревень, раз на персонажа; ${esc(levels[t[NEWBIE].value] || t[NEWBIE].value)}${localNote(t, NEWBIE)}</small></div><span class="seg" id="l2sNewbie">${newbie}</span></div>
+      <div class="mode-group">Население ботов<span class="w-muted"> · ${custom ? 'своё' : 'как у L2Solo'}</span></div>
+      <div class="rates" style="grid-template-columns:repeat(2,minmax(0,1fr))">${fields}</div>
+      <div class="row2" style="margin-top:8px"><button class="sbtn primary" id="l2sPopSave" disabled>Сохранить</button><button class="sbtn" id="l2sPopReset" ${custom ? '' : 'disabled'}>Как у L2Solo</button>
+        <span class="w-muted" style="font-size:12.5px">${restartNote(ctx)}</span></div>
+      <div class="w-muted" style="font-size:12.5px;margin-top:6px">Новых ботов заселяют волнами новичков в стартовых деревнях, пока их меньше потолка; уже заселённые остаются. 0 — новых не заселять.</div></div>`;
   }
 
   function commandsCard() {
@@ -168,7 +193,7 @@
           ${llm.usage ? `<div class="w-kv" style="margin-top:10px;font-size:12.5px"><span>Расход LLM ботов</span><span>${usageLine(llm.usage)}</span></div>` : ''}
           <div class="w-muted" style="font-size:12.5px;margin-top:8px">Частоты по видам болтовни — раздел <span class="w-cmd">config</span> профиля, таблица — docs/L2SOLO.md.</div>
         </div>
-        ${p.tuning ? worldCard(ctx, p) + enchantCard(ctx, p) : ''}
+        ${p.tuning ? worldCard(ctx, p) + enchantCard(ctx, p) + botsCard(ctx, p) : ''}
         <div class="card"><h3>Мир</h3><div class="w-kv">
           ${w.exists ? `<span>Игроков</span><span>${w.players ?? '—'}</span><span>Ботов</span><span>${w.bots ?? '—'}</span><span>База мира</span><span>${mb(w.size)}</span>` : '<span>Мир</span><span>ещё не создан</span>'}
         </div><div class="w-muted" style="font-size:12.5px;margin-top:8px">Сохранения мира — в «Сервисе», лаунчер снимает их сам перед каждым запуском.</div></div>
@@ -185,35 +210,42 @@
         </div>
         ${commandsCard()}
       </div>`;
-    // Пульт C4 перерисовывается раз в 10 секунд — набранную, но не сохранённую заточку не терять.
-    const draft = ENCH_DRAFT[ctx.chron] || {};
-    main.querySelectorAll('[data-ench]').forEach((inp) => {
-      if (inp.dataset.ench in draft) { inp.value = draft[inp.dataset.ench]; inp.classList.add('changed'); }
-    });
-    const enchChanges = () => {
-      const out = {};
-      main.querySelectorAll('[data-ench]').forEach((inp) => {
-        if (inp.value !== String(p.tuning[inp.dataset.ench].value ?? '')) out[inp.dataset.ench] = inp.value === '' ? null : Number(inp.value);
-      });
-      return out;
+    // Пульт C4 перерисовывается раз в 10 секунд — набранные, но не сохранённые поля (заточка, население) не терять.
+    const numFields = (attr, saveId) => {
+      const inputs = [...main.querySelectorAll(`[data-${attr}]`)];
+      const key = (inp) => inp.dataset[attr];
+      const drafts = (DRAFT[ctx.chron] ||= {});
+      const draft = drafts[attr] || {};
+      inputs.forEach((inp) => { if (key(inp) in draft) { inp.value = draft[key(inp)]; inp.classList.add('changed'); } });
+      const changes = () => Object.fromEntries(inputs.filter((inp) => inp.value !== String(p.tuning[key(inp)].value ?? ''))
+        .map((inp) => [key(inp), inp.value === '' ? null : Number(inp.value)]));
+      const sync = () => {
+        const ch = changes();
+        drafts[attr] = Object.fromEntries(Object.entries(ch).map(([k, v]) => [k, v ?? '']));
+        inputs.forEach((inp) => inp.classList.toggle('changed', key(inp) in ch));
+        if ($(saveId)) $(saveId).disabled = !Object.keys(ch).length;
+      };
+      inputs.forEach((inp) => (inp.oninput = sync));
+      if (inputs.length) sync();
+      return changes;
     };
-    const enchSync = () => {
-      const ch = enchChanges();
-      ENCH_DRAFT[ctx.chron] = Object.fromEntries(Object.entries(ch).map(([k, v]) => [k, v ?? '']));
-      main.querySelectorAll('[data-ench]').forEach((inp) => inp.classList.toggle('changed', inp.dataset.ench in ch));
-      if ($('l2sEnchSave')) $('l2sEnchSave').disabled = !Object.keys(ch).length;
-    };
-    main.querySelectorAll('[data-ench]').forEach((inp) => (inp.oninput = enchSync));
-    if (main.querySelector('[data-ench]')) enchSync();
+    const enchChanges = numFields('ench', 'l2sEnchSave');
+    const popChanges = numFields('pop', 'l2sPopSave');
     const worldSet = async (changes, what) => {
       const r = await api.l2solo_set_world(ctx.chron, changes);
       if (!r.ok) return toast(r.error, true);
-      delete ENCH_DRAFT[ctx.chron];
+      delete DRAFT[ctx.chron];
       toast(`${what} — ${r.restart ? 'после перезапуска сервера' : 'со следующего запуска'}${r.local.length ? `; в их local.ini задано своё (${r.local.join(', ')}) — оно главнее` : ''}.`);
       await load(ctx.chron); ctx.rerender();
     };
     if ($('l2sEnchSave')) $('l2sEnchSave').onclick = () => worldSet(enchChanges(), 'Заточка сохранена');
     if ($('l2sEnchReset')) $('l2sEnchReset').onclick = () => worldSet(Object.fromEntries(ENCHANT.flatMap(([, keys]) => keys.map(([k]) => [`Enchant.${k}`, null]))), 'Заточка как у L2Solo');
+    if ($('l2sPopSave')) $('l2sPopSave').onclick = () => worldSet(popChanges(), 'Население ботов сохранено');
+    if ($('l2sPopReset')) $('l2sPopReset').onclick = () => worldSet(Object.fromEntries(POPULATION.map(([k]) => [`BotPopulation.${k}`, null])), 'Население ботов как у L2Solo');
+    main.querySelectorAll('#l2sNewbie button').forEach((b) => (b.onclick = () => {
+      if (b.dataset.newbie === p.tuning[NEWBIE].value) return;
+      worldSet({ [NEWBIE]: b.dataset.newbie === 'strict' ? null : b.dataset.newbie }, `Заряды новичку: ${NEWBIE_SHORT[b.dataset.newbie]}`);
+    }));
     main.querySelectorAll('#l2sQuest button').forEach((b) => (b.onclick = () => {
       const n = Number(b.dataset.quest);
       if (n === p.tuning['General.questRewardRate'].value) return;
@@ -233,7 +265,7 @@
         body: `<p>${esc(m.note)}.</p><p class="note">Пресет рейтов, злость мира, квесты и заточка перепишутся разом — ${restartNote(ctx)}. Свои значения потом — полями ниже.</p>` }))) return;
       const r = await api.l2solo_set_mode(ctx.chron, m.id);
       if (!r.ok) return toast(r.error, true);
-      delete ENCH_DRAFT[ctx.chron];
+      delete DRAFT[ctx.chron];
       toast(`Режим «${r.title}» — ${r.restart ? 'после перезапуска сервера' : 'со следующего запуска'}${r.local.length ? `; в их local.ini задано своё (${r.local.length}) — оно главнее` : ''}.`);
       await load(ctx.chron); ctx.rerender();
     }));

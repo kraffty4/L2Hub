@@ -51,7 +51,6 @@ import org.l2jmobius.gameserver.mechanics.siege.Fort;
 import org.l2jmobius.gameserver.mechanics.siege.TaxType;
 import org.l2jmobius.gameserver.mechanics.skill.AbnormalType;
 import org.l2jmobius.gameserver.mechanics.skill.BuffInfo;
-import org.l2jmobius.gameserver.mechanics.skill.CommonSkill;
 import org.l2jmobius.gameserver.mechanics.skill.Skill;
 import org.l2jmobius.gameserver.mechanics.skill.holders.SkillLearn;
 import org.l2jmobius.gameserver.mechanics.skill.targets.TargetType;
@@ -266,13 +265,17 @@ public final class PhantomCompat
 		player.rechargeShots(true, true, false);
 	}
 
-	/** Грейд, который персонаж носит без штрафа: уровень скилла Expertise (239), как у CT. */
+	/**
+	 * Грейд персонажа по уровню (что носит охотник, какой свиток в бонусе .daily), как у игроков H5 — D с 20, C с 40, B с 52, A с 61, S с 76.
+	 * Expertise (239) у Classic нет ни в одном дереве скиллов, штрафа за грейд Mobius не считает — живой носит любой грейд, на какой хватит адены.
+	 */
 	public static int expertiseLevel(Player player)
 	{
-		return Math.max(0, player.getSkillLevel(CommonSkill.EXPERTISE.getId()));
+		final int level = player.getLevel();
+		return level >= 76 ? 5 : level >= 61 ? 4 : level >= 52 ? 3 : level >= 40 ? 2 : level >= 20 ? 1 : 0;
 	}
 
-	/** Штраф за грейд Classic считает сам в статах. */
+	/** Штрафа за грейд у Classic нет. */
 	public static void refreshExpertisePenalty(Player player)
 	{
 	}
@@ -678,5 +681,44 @@ public final class PhantomCompat
 	public static boolean exchangeSettle(Player player, PhantomExchange.Lot lot)
 	{
 		return false;
+	}
+
+	// ---------- Тело Танатоса: сабкласс (раздел 4.45) ----------
+
+	/**
+	 * Сабкласс фантому — тело Танатоса: тот же персонаж и раса базового класса, класс — другой. Сабклассов у хроники нет ({@code MaxSubclass = 0}),
+	 * а {@code addSubClass} Mobius сверяет только этот потолок: на время вызова он не ниже нужного. Живым сабклассы закрыты и так — им их негде взять.
+	 * @return добавлен
+	 */
+	public static boolean addSubClass(Player player, int classId, int classIndex)
+	{
+		final int max = PlayerConfig.MAX_SUBCLASS;
+		PlayerConfig.MAX_SUBCLASS = Math.max(max, classIndex);
+		try
+		{
+			return player.addSubClass(classId, classIndex, false);
+		}
+		finally
+		{
+			PlayerConfig.MAX_SUBCLASS = max;
+		}
+	}
+
+	/**
+	 * Сменить класс сабкласса (стереть прежний и добавить новый на том же месте) — с тем же потолком, что {@link #addSubClass}.
+	 * @return сменён
+	 */
+	public static boolean modifySubClass(Player player, int classIndex, int classId)
+	{
+		final int max = PlayerConfig.MAX_SUBCLASS;
+		PlayerConfig.MAX_SUBCLASS = Math.max(max, classIndex);
+		try
+		{
+			return player.modifySubClass(classIndex, classId, false);
+		}
+		finally
+		{
+			PlayerConfig.MAX_SUBCLASS = max;
+		}
 	}
 }

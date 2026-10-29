@@ -219,7 +219,9 @@ def main() -> None:
     if bad:
         sys.exit(f"патч не воспроизводит файлы: {bad}")
     final = patch_layers.restack(new, upper, peeled)
-    print(f"{cid}: файлов {len(new)}, строк {total}, без перевода {len(missing)}; наложение на копию — байт в байт")
+    same = (small.ROOT / "patches" / cid / name).is_file() and (small.ROOT / "patches" / cid / name).read_bytes() == patch
+    print(f"{cid}: файлов {len(new)}, строк {total}, без перевода {len(missing)}; наложение на копию — байт в байт"
+          + ("; патч тот же, что в patches/" if same else "; патч новый против patches/"))
     if write:
         (small.ROOT / "patches" / cid / name).write_bytes(patch)
         for rel, data in final.items():

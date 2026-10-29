@@ -409,6 +409,58 @@ NO_KAMAEL = {
     "Shpionka": dict(race="ELF", chain=[18, 22, 24, 102], kit="bow", bio="Мунлайт, знает, кто с кем в пати и кто кому должен."),
 }
 
+# Ветераны Зачистки (решение автора 2026-10-28, docs/PLAN.md, «Решения»; docs/ESSENCE.md, «Зачистка с охотниками»): мобы всех
+# девяти зон Зачистки — 72–90-го, а охотники сами до 72-го растут сотни часов. Ветеран — такой же охотник, только приходит в мир
+# сразу своего уровня (start_level → startLevel): ядро делает его таким при создании персонажа — уровень, класс по ветке, тир
+# шмота своего грейда, адена и Grace живого такого уровня; кто уже есть в базе, не меняется. Роли — на пати Зачистки: танк, хилер,
+# четыре дамагера. Только там, где есть Зачистка (SubjugationData.xml в датапаке — у Essence): у других хроник вывод прежний.
+VETERANS = [
+    dict(name="Kremen", aliases="кремень;крем", race="HUMAN", sex="M", chain=[0, 4, 5, 90], kit="tank", start_level=78,
+         traits="спокойный старожил, держит пати и не паникует", style="коротко и по делу, без смайлов",
+         bio="Играет с открытия сервера, вернулся ради Зачистки и знает её зоны наизусть."),
+    dict(name="Matushka", aliases="матушка;мать", race="HUMAN", sex="F", chain=[10, 15, 16, 97], kit="healer", start_level=77,
+         traits="строгая, но заботливая хилка, ворчит на тех, кто лезет без бафа", style="по-матерински: «деточка», «куда без хила»",
+         bio="Хилит пати Зачистки по вечерам, в горячие часы всегда онлайн."),
+    dict(name="Shmel", aliases="шмель;шмелик", race="DARK_ELF", sex="F", chain=[31, 35, 36, 108], kit="dagger", start_level=74,
+         traits="азартная, гоняется за ключами Зачистки и считает очки", style="быстро, с «ж-ж-ж» и «ещё ключик»",
+         bio="Даггерщица, долго не играла и вернулась, когда открыли Зачистку."),
+    dict(name="Lunnyi", aliases="лунный;луна-луч", race="ELF", sex="M", chain=[18, 22, 24, 102], kit="bow", start_level=75,
+         traits="неторопливый лучник, любит стоять на краю спота и смотреть", style="спокойно, с длинными фразами",
+         bio="Лучник со стажем, бьёт мобов Зачистки издалека и всегда приходит к горячему часу."),
+    dict(name="Groza", aliases="гроза;грозка", race="DARK_ELF", sex="F", chain=[38, 39, 40, 110], kit="mage", start_level=79,
+         traits="резкая, любит много мобов разом и красивые цифры урона", style="хлёстко, «бум» и «следующие»",
+         bio="Магиня, собирает Зачистку пачками и копит на оружие зоны из гачи."),
+    dict(name="Bulat", aliases="булат;булатик", race="ORC", sex="M", chain=[44, 45, 46, 113], kit="bigsword", start_level=80,
+         traits="добродушный здоровяк, старший в пати, помогает младшим", style="басом, «спокойно, щас разберёмся»",
+         bio="Титан с двуручником, ходит на Равнины ящеров и тянет туда пати."),
+]
+
+# Ветераны High Five и Epilogue (решение автора 2026-10-28, docs/PLAN.md, «Решения»): без охотников 76+ там пустуют олимпиада
+# (docs/PHANTOMS.md, 4.39), эпики (4.43) и охота на Танатоса, а сами охотники до 70+ растут сотни часов. Ветеран — как у Essence
+# (VETERANS выше, startLevel): приходит в мир сразу своего уровня, кто уже есть в базе — не меняется. Роли — на пати: танк, хилер,
+# лучник, маг, даггер, камаэль-двуручник. Только CT с камаэлями (старый формат спавнов и класс 123 — Epilogue и High Five):
+# у Interlude, Classic и Essence вывод прежний.
+VETERANS_CT = [
+    dict(name="Bastion", aliases="бастион;бастик", race="HUMAN", sex="M", chain=[0, 4, 5, 90], kit="tank", start_level=78,
+         traits="невозмутимый танк, первым идёт в пати и последним уходит", style="сухо и уверенно, «держу», «заходим»",
+         bio="Играет с самого открытия, вернулся, когда узнал, что на сервере снова собирают пати на эпиков."),
+    dict(name="Igumen", aliases="игумен;отче", race="HUMAN", sex="M", chain=[10, 15, 16, 97], kit="healer", start_level=77,
+         traits="спокойный и мудрый хилер, не суетится, когда пати ложится", style="размеренно, с «с богом» и «потерпи»",
+         bio="Кардинал, поднял на ноги не одну пати на рейдах и на олимпиаде всегда стоит до конца."),
+    dict(name="Berkut", aliases="беркут;беркутик", race="HUMAN", sex="M", chain=[0, 7, 9, 92], kit="bow", start_level=75,
+         traits="зоркий одиночка, любит дальние споты и чистый урон", style="коротко, по-охотничьи: «вижу», «лёг»",
+         bio="Стрелок старой школы, ходит туда, где мобы сильнее, и считает каждый выстрел."),
+    dict(name="Metel", aliases="метель;метелька", race="ELF", sex="F", chain=[25, 26, 27, 103], kit="mage", start_level=79,
+         traits="холодная и точная магиня, любит пачки мобов и красивые цифры", style="спокойно, с ледяной иронией",
+         bio="Мистик-муза, пришла за геройством на олимпиаде и не уйдёт без него."),
+    dict(name="Rys", aliases="рысь;рыська", race="ELF", sex="F", chain=[18, 22, 23, 101], kit="dagger", start_level=74,
+         traits="тихая и азартная, подкрадывается к самым жирным целям", style="шёпотом и с подколами: «мяу», «сзади»",
+         bio="Даггерщица, вернулась на сервер ради охоты на рейдов и ПК."),
+    dict(name="Tesak", aliases="тесак;тесачок", race="KAMAEL", sex="M", chain=[123, 125, 127, 131], kit="ancient", start_level=80,
+         traits="прямолинейный рубака, первым лезет в самую гущу", style="громко и коротко, «руби», «ещё!»",
+         bio="Камаэль-думбрингер, давно в игре, ищет достойных противников на эпиках."),
+]
+
 EVI = dict(race="Тёмная эльфийка", sex="F", **{"class": "Spectral Dancer"}, level=78, place="Гиран",
            activity="бегает по Гирану по делам: склад, лавки, менеджер олимпиады, клан-холлы",
            traits="деловитая и немного кокетливая", style="коротко, с :P",
@@ -443,6 +495,21 @@ REAPER = dict(name="Thanatos", race="ORC", sex="M", chain=[44, 47, 48, 114], kit
               style="коротко и ровно, как приговор; без сленга, мата и смайлов; о себе говорит редко, иногда «мы»")
 REAPER_SKIP_WORDS = ("Valakas", "Antharas", "Zaken", "Baium", "Queen Ant", "Frintezza", "Beleth", "Core", "Orfen", "Freya",
                      "Sealed", "Common", "limited", "Family")
+# Тела Танатоса после смерти (решения автора 2026-10-25, docs/PHANTOMS.md, 4.45, «Новое тело»): убили — возвращается другим классом
+# и в другом комплекте. Классов столько, сколько в хронике видов оружия и брони (KITS), раса одна — орк-воин, новый класс — сабклассом
+# на том же персонаже: с виду Тиран, а по факту, например, Spellsinger. Без Overlord и Warsmith (расовые) и без камаэлей — арбалет
+# и древний меч в пул не входят. Первое тело — сам Тиран (REAPER); chain — ветка саба от второй профы: её даёт сабкласс, третью ставит ядро.
+REAPER_BODIES = [
+    dict(kit="dual", chain=[2, 88]),        # Gladiator → Duelist
+    dict(kit="pole", chain=[3, 89]),        # Warlord → Dreadnought
+    dict(kit="bigsword", chain=[46, 113]),  # Destroyer → Titan
+    dict(kit="blunt", chain=[55, 117]),     # Bounty Hunter → Fortune Seeker
+    dict(kit="tank", chain=[5, 90]),        # Paladin → Phoenix Knight
+    dict(kit="dagger", chain=[8, 93]),      # Treasure Hunter → Adventurer
+    dict(kit="bow", chain=[9, 92]),         # Hawkeye → Sagittarius
+    dict(kit="mage", chain=[27, 103]),      # Spellsinger → Mystic Muse: посох и роба
+    dict(kit="healer", chain=[13, 95]),     # Necromancer → Soultaker: магпушка в одну руку, щит и роба
+]
 
 # Охотники-фантомы (этап 5, решение автора 2026-10-18): фермеры из PERSONAS (spot — число) становятся настоящими
 # игроками без клиента: начинают с 1 уровня в стартовой деревне своей расы и качаются сами. Их NPC-фейки не ставятся.
@@ -478,8 +545,12 @@ SOULSHOTS = {"NONE": 1835, "D": 1463, "C": 1464, "B": 1465, "A": 1466, "S": 1467
 # Споты охотников — группы спавна мобов: не меньше стольких мобов, разброс уровней не больше, не из этих папок.
 HUNT_MIN_MOBS = 8
 HUNT_MAX_SPREAD = 6
-HUNT_SKIP_DIRS = {"Custom", "Castles", "Catacombs", "Hellbound", "Gracia", "SevenSigns"}
+# LimitedZones (Classic, Essence) — временные зоны (zones/timed_hunting.xml): без своего таймера зоны фантома выкидывает в город.
+HUNT_SKIP_DIRS = {"Custom", "Castles", "Catacombs", "Hellbound", "Gracia", "SevenSigns", "LimitedZones"}
 HUNT_SKIP_FILES = {"Gremlins.xml"}
+# Спавны с spawnByDefault="false" Mobius не ставит сам: их поднимает скрипт по событию (замок, ивент, рейд) — споту там пусто.
+# Кроме этих: их скрипт держит в мире почти всё время (Essence: Долина Драконов без Антараса — все дни, кроме субботы).
+HUNT_SCRIPT_SPAWNS = {"Dragon Valley No Antharas"}
 # Мобы-точки, которые не сложились в спот своей группой (в spawns/Others группа — целый квадрат карты, в зонах — мелкие группы по 2–5),
 # собираются в кластеры: в этом радиусе от самого плотного места, ±HUNT_MAX_SPREAD/2 уровня, по высоте не дальше HUNT_CLUSTER_Z.
 HUNT_CLUSTER_RADIUS = 1200
@@ -566,12 +637,21 @@ class Data:
                                                      items=s.find("itemConsumeId") is not None or s.find("itemConsumeCount") is not None)
         self.items = {}
         self.item_stats: dict[int, dict] = {}
+        # Условия надевания (<conditions>): [(тег, атрибуты)] — <player …> и <and> из них; проверяет wearable().
+        self.item_conds: dict[int, list[tuple[str, dict]]] = {}
         for f in (data / "stats/items").glob("*.xml"):
             root = ET.parse(f).getroot()
             for it in (root.findall("item") if (data / "stats/armorsets/Sets.xml").exists() else root.iter("item")):
                 sets = {x.get("name"): x.get("val") for x in it.findall("set")}
                 self.items[int(it.get("id"))] = dict(type=it.get("type"), name=it.get("name"), **sets)
                 self.item_stats[int(it.get("id"))] = {st.get("type"): st.text for st in it.findall("stats/stat")}
+                cond = it.find("conditions")
+                if cond is not None:
+                    self.item_conds[int(it.get("id"))] = [(e.tag, dict(e.attrib)) for e in cond.iter() if e is not cond]
+        cats = data / "CategoryData.xml"
+        self.categories = ({c.get("name"): {int(i.text) for i in c.iter("id")} for c in ET.parse(cats).getroot().iter("category")}
+                           if cats.exists() else {})
+        self.unworn: list[str] = []
         self.npcs = {}
         for f in (data / "stats/npcs").glob("*.xml"):
             for n in ET.parse(f).getroot().iter("npc"):
@@ -647,10 +727,66 @@ class Data:
                     self._sets.setdefault(grade_, []).append(parts)
         return self._sets
 
-    def armor_set(self, grade_: str, armor_type: str, name: str) -> dict:
+    def wearable(self, item_id: int, who: dict | None) -> bool:
+        """Наденет ли предмет who — охотник или напарник на пороге грейда: race, sex, level и cls — класс на этом уровне. Условия
+        предмета — <player> и <and> из них: категория класса (CategoryData), список классов, раса, пол, уровень; герой, клан, замок, инстанс
+        и всё незнакомое, как и <or>/<not>, — не наденет. Без who — без проверки (фейки — NPC, им условия не нужны)."""
+        if who is None:
+            return True
+        for tag, attrs in self.item_conds.get(item_id, ()):
+            if tag == "and":
+                continue
+            if tag != "player":
+                return False
+            for k, v in attrs.items():
+                if k == "races":
+                    ok = who["race"] in v.split(",")
+                elif k == "categoryType":
+                    ok = who["cls"] in self.categories.get(v, ())
+                elif k == "class_id_restriction":
+                    ok = who["cls"] in {int(x) for x in v.split(",")}
+                elif k == "sex":
+                    ok = int(v) == (1 if who["sex"] == "F" else 0)
+                elif k == "level":
+                    ok = who["level"] >= int(v)
+                elif k in ("subclass", "chaotic", "isHero"):
+                    ok = v == "false"
+                elif k == "pkCount":
+                    ok = True  # «не больше N ПК»: охотники и напарники не ПК
+                else:
+                    ok = False
+                if not ok:
+                    return False
+        return True
+
+    def armor_set(self, grade_: str, armor_type: str, name: str, who: dict | None = None, shield: bool = False) -> dict:
+        """Сет брони грейда по имени. who — кто его наденет: выпавший сет, если who наденет его весь (щит — если shield), иначе — из тех,
+        что наденет (так выбор годного сета не сдвигается); таких нет — выпавший, с пометкой в unworn."""
         sets = [parts for parts in self.armor_sets().get(grade_, [])
                 if self.items.get(parts.get("chest", 0), {}).get("armor_type") == armor_type]
-        return pick(sets, name, "armor") or {}
+        got = pick(sets, name, "armor") or {}
+
+        def fits(parts):
+            return all(self.wearable(i, who) for slot, i in parts.items() if slot != "shield" or shield)
+
+        if got and not fits(got):
+            fit = pick([s for s in sets if fits(s)], name, "armor")
+            if not fit:
+                self.unworn.append(f"{name}: сет {grade_} {armor_type} — ни одного, что наденет класс {who['cls']}")
+            got = fit or got
+        return got
+
+    def pick_weapon(self, found: list, name: str, who: dict | None, plain: bool) -> int | None:
+        """Оружие из найденного по имени: из бюджета (plain) или из всего. Если выпавшее who не наденет — из того, что наденет (так выбор
+        годного не сдвигается): сначала в том же бюджете, затем в бюджете надеваемого; надеть нечего — None."""
+        if not found:
+            return None
+        seq = self.budget(found) if plain else sorted(found)
+        got = pick(seq, name, "weapon")
+        if self.wearable(got, who):
+            return got
+        fit = [i for i in found if self.wearable(i, who)]
+        return pick([i for i in seq if i in fit] or (self.budget(fit) if plain and fit else sorted(fit)), name, "weapon")
 
     @staticmethod
     def npc_only(it: dict) -> bool:
@@ -660,23 +796,25 @@ class Data:
         name = it.get("name") or ""
         return it.get("for_npc") == "true" or "weapon_monster" in (it.get("icon") or "") or name.startswith(("NPC only", "Monster Only"))
 
-    def weapon(self, grade_: str, kit: dict, name: str, plain: bool = False) -> int:
-        """plain — только обычное оружие: без SA (« - » в имени) и наградного за 0 адены (охотники покупают его по цене предмета)."""
+    def weapon(self, grade_: str, kit: dict, name: str, plain: bool = False, who: dict | None = None) -> int:
+        """plain — только обычное оружие: без SA (« - » в имени) и наградного за 0 адены (охотники покупают его по цене предмета).
+        who — кто наденет (wearable)."""
         wtype, body, magic = kit["weapon"]
         found = [i for i, it in self.items.items() if it["type"] == "Weapon" and not self.npc_only(it) and it.get("crystal_type", "NONE") == grade_
                  and it.get("weapon_type") == wtype and it.get("bodypart") == body and (it.get("is_magic_weapon") == "true") == magic
                  and not any(w in (it["name"] or "") for w in SKIP_WEAPON_WORDS) and (not plain or self.plain(it))]
-        if not found:
-            raise ValueError(f"нет оружия {wtype}/{body} грейда {grade_}")
-        return pick(self.budget(found) if plain else sorted(found), name, "weapon")
+        got = self.pick_weapon(found, name, who, plain)
+        if got is None:
+            raise ValueError(f"нет оружия {wtype}/{body} грейда {grade_}" + (f", что наденет класс {who['cls']}" if found else ""))
+        return got
 
     def budget(self, found) -> list:
         """Охотник на x1 покупает недорогое оружие грейда: не дороже 1,3 × самого дешёвого (модель — docs/PHANTOMS.md, раздел 4.2)."""
         cheapest = min(int(self.items[i]["price"]) for i in found)
         return sorted(i for i in found if int(self.items[i]["price"]) <= cheapest * 1.3)
 
-    def companion_weapon(self, grade_: str, kit: dict, name: str) -> int:
-        """Магическое оружие напарника: нужного хвата, а если такого в грейде нет (S80 — без посоха) — любого."""
+    def companion_weapon(self, grade_: str, kit: dict, name: str, who: dict | None = None) -> int:
+        """Магическое оружие напарника: нужного хвата, а если такого в грейде нет (S80 — без посоха) или его не наденет who — любого."""
         wtype, body, _ = kit["weapon"]
         skip = SKIP_WEAPON_WORDS + COMPANION_SKIP_WORDS
 
@@ -684,10 +822,12 @@ class Data:
             return sorted(i for i, it in self.items.items() if it["type"] == "Weapon" and not self.npc_only(it) and it.get("crystal_type", "NONE") == grade_
                           and it.get("weapon_type") == wtype and it.get("bodypart") in bodies and it.get("is_magic_weapon") == "true"
                           and not any(w in (it["name"] or "") for w in skip))
-        found = find({body}) or find({"rhand", "lrhand"})
-        if not found:
+        got = self.pick_weapon(find({body}) or find({"rhand", "lrhand"}), name, who, plain=False)
+        if got is None:
+            got = self.pick_weapon(find({"rhand", "lrhand"}), name, who, plain=False)
+        if got is None:
             raise ValueError(f"нет магического оружия {wtype} грейда {grade_}")
-        return pick(found, name, "weapon")
+        return got
 
     def initial_gear(self, class_id: int) -> dict:
         """Надетое стартовое снаряжение класса (stats/players/initialEquipment.xml): слот → id предмета."""
@@ -702,10 +842,11 @@ class Data:
                         out[slot] = int(it.get("id"))
         return out
 
-    def hunter_weapon(self, grade_: str, kit: dict, name: str) -> int:
-        """Оружие охотника по набору; если такого в грейде нет (например, древнего меча без грейда) — того же хвата, затем любое."""
+    def hunter_weapon(self, grade_: str, kit: dict, name: str, who: dict | None = None) -> int:
+        """Оружие охотника по набору; если такого в грейде нет (например, древнего меча без грейда) или его не наденет who — того же хвата,
+        затем любое."""
         try:
-            return self.weapon(grade_, kit, name, plain=True)
+            return self.weapon(grade_, kit, name, plain=True, who=who)
         except ValueError:
             pass
         wtype, body, magic = kit["weapon"]
@@ -713,8 +854,9 @@ class Data:
             found = sorted(i for i, it in self.items.items() if it["type"] == "Weapon" and not self.npc_only(it) and it.get("crystal_type", "NONE") == grade_
                            and (it.get("is_magic_weapon") == "true") == magic and it.get("weapon_type") not in ("FISHINGROD", "ETC", None)
                            and match(it) and not any(w in (it["name"] or "") for w in SKIP_WEAPON_WORDS) and self.plain(it))
-            if found:
-                return pick(self.budget(found), name, "weapon")
+            got = self.pick_weapon(found, name, who, plain=True)
+            if got is not None:
+                return got
         raise ValueError(f"нет оружия грейда {grade_} для {name}")
 
     def stat(self, item_id: int, name: str) -> float:
@@ -724,14 +866,16 @@ class Data:
             return 0
 
     def best_weapon(self, grade_: str, kit: dict) -> int:
-        """Танатос: самое сильное по атаке оружие набора в грейде (из равных — с SA, затем меньший id); нет такого — любого хвата."""
+        """Танатос: самое сильное оружие набора в грейде — по физической атаке, магическое — по магической (из равных — с SA, затем меньший id);
+        хват набора, если такой в грейде есть (посох мага — в две руки, магпушка со щитом — в одну); нет такого оружия — любого хвата."""
         wtype, body, magic = kit["weapon"]
         found = [i for i, it in self.items.items() if it["type"] == "Weapon" and not self.npc_only(it) and it.get("crystal_type", "NONE") == grade_
                  and it.get("weapon_type") == wtype and (it.get("is_magic_weapon") == "true") == magic
                  and not any(w in (it["name"] or "") for w in SKIP_WEAPON_WORDS + REAPER_SKIP_WORDS)]
         if not found:
             return self.hunter_weapon(grade_, kit, REAPER["name"])
-        return max(found, key=lambda i: (self.stat(i, "pAtk"), " - " in (self.items[i]["name"] or ""), -i))
+        held = [i for i in found if self.items[i].get("bodypart") == body]
+        return max(held or found, key=lambda i: (self.stat(i, "mAtk" if magic else "pAtk"), " - " in (self.items[i]["name"] or ""), -i))
 
     def best_shirt(self, grade_: str) -> int:
         """Танатос: рубаха (слот underwear: рубахи и татуировки — не купальники и не кулоны, что там лежат у Interlude, Classic и Essence) —
@@ -750,6 +894,12 @@ class Data:
         found = [i for i, it in self.items.items() if it["type"] == "Armor" and it.get("crystal_type", "NONE") == grade_
                  and it.get("bodypart") in bodyparts and not any(w in (it["name"] or "") for w in REAPER_SKIP_WORDS)]
         return max(found, key=lambda i: (self.stat(i, "mDef"), int(self.items[i].get("price") or 0), -i)) if found else 0
+
+    def best_shield(self, grade_: str) -> int:
+        """Тело Танатоса со щитом, когда у сета щита нет (у роб): лучший по защите щита щит грейда; нет — 0."""
+        found = [i for i, it in self.items.items() if it["type"] == "Armor" and not self.npc_only(it) and it.get("crystal_type", "NONE") == grade_
+                 and it.get("bodypart") == "lhand" and self.stat(i, "sDef") > 0 and not any(w in (it["name"] or "") for w in REAPER_SKIP_WORDS)]
+        return max(found, key=lambda i: (self.stat(i, "sDef"), int(self.items[i].get("price") or 0), -i)) if found else 0
 
     @staticmethod
     def plain(it: dict) -> bool:
@@ -791,10 +941,9 @@ def spot_camp(d: Data, geo: tn.Geo, spot, spawns) -> tuple[int, int, int, dict]:
         return t if t is not None and t.get("type") == "Monster" and level - 9 <= int(t.get("level", "0")) <= level else None
 
     best, points = None, []
-    for sp in ET.parse(d.data / "spawns" / rel).getroot().iter("spawn"):
-        terr = sp.find(".//territory")
+    for npcs, terr in (u for sp in ET.parse(d.data / "spawns" / rel).getroot().iter("spawn") for u in spawn_units(sp)):
         mobs = []
-        for n in sp.findall("npc"):
+        for n in npcs:
             t = fits(n)
             if t is None:
                 continue
@@ -1013,6 +1162,27 @@ def mob_exp(t: ET.Element) -> float:
         return 0.0
 
 
+def spawn_territory(el: ET.Element) -> ET.Element | None:
+    """Первая территория спавна или группы: у CT <territory> прямо в спавне, у Classic и Essence — в <territories>."""
+    terr = el.find("territory")
+    return terr if terr is not None else el.find("territories/territory")
+
+
+def spawn_units(sp: ET.Element) -> list[tuple[list[ET.Element], ET.Element | None]]:
+    """Части спавна, как их ставит Mobius: прямые <npc> спавна и каждая <group> — со своей территорией, а без неё — с территорией
+    спавна. У High Five, Interlude и Epilogue групп нет; у Classic и Essence в группах почти все мобы. Выключенное по умолчанию
+    (spawnByDefault="false" у спавна или группы) — мимо, кроме HUNT_SCRIPT_SPAWNS."""
+    if sp.get("spawnByDefault") == "false" and sp.get("name") not in HUNT_SCRIPT_SPAWNS:
+        return []
+    own = spawn_territory(sp)
+    units = [(sp.findall("npc"), own)]
+    for g in sp.findall("group"):
+        if g.get("spawnByDefault") != "false":
+            terr = spawn_territory(g)
+            units.append((g.findall("npc"), own if terr is None else terr))
+    return units
+
+
 def hunt_spots(d: Data, geo: tn.Geo) -> list[dict]:
     """Споты охотников по датапаку: группа спавна мобов (не РБ) с узким разбросом уровней — уровень (медиана), точка входа
     по геодате у центра и радиус охоты. Мобы-точки из групп, которые спотом не стали (целый квадрат карты в spawns/Others,
@@ -1024,9 +1194,9 @@ def hunt_spots(d: Data, geo: tn.Geo) -> list[dict]:
         rel = f.relative_to(d.data / "spawns")
         if rel.parts[0] in HUNT_SKIP_DIRS or f.name in HUNT_SKIP_FILES:
             continue
-        for sp in ET.parse(f).getroot().iter("spawn"):
+        for npcs, terr in (u for sp in ET.parse(f).getroot().iter("spawn") for u in spawn_units(sp)):
             levels, names, points, mobs, count = [], [], [], [], 0
-            for n in sp.findall("npc"):
+            for n in npcs:
                 t = d.npcs.get(int(n.get("id")))
                 # Мобы без опыта (арена Krateis Cube, свита Core, ивентовые) — не спот: охотник стоял бы там с нулём.
                 if t is None or t.get("type") != "Monster" or not mob_exp(t):
@@ -1040,7 +1210,6 @@ def hunt_spots(d: Data, geo: tn.Geo) -> list[dict]:
                     mobs += [(int(n.get("x")), int(n.get("y")), int(n.get("z")), int(t.get("level", "0")), t.get("name"), rel.as_posix())] * c
             if count == 0:
                 continue
-            terr = sp.find(".//territory")
             if count < HUNT_MIN_MOBS:
                 if terr is not None:
                     # Мелкая группа на территории — её мобы в центре территории.
@@ -1140,6 +1309,10 @@ def main(data: Path, geodata: Path, out: Path | None = None) -> int:
     RESPAWN = 'respawnTime="60sec"' if new_format else 'respawnDelay="60"'
     LIST_ENABLED = "" if new_format else 'enabled="true" '
     table = PERSONAS if 123 in d.classes else [dict(p, **NO_KAMAEL[p["name"]]) if p["race"] == "KAMAEL" else p for p in PERSONAS]
+    if HUNTERS and (data / "SubjugationData.xml").is_file():
+        table = table + [dict(v, spot=None) for v in VETERANS]  # ветераны — охотники; в конце, чтобы id NPC и места прочих не сдвинулись
+    if HUNTERS and not new_format and 123 in d.classes:
+        table = table + [dict(v, spot=None) for v in VETERANS_CT]  # ветераны Epilogue и High Five — так же, в конце
     # Свой прошлый вывод в датапаке сборки (туда его копирует server_build.ps1 из модуля) — не входные данные.
     own_spawn = data / "spawns/Custom/L2HubFakePlayers.xml"
     out_spawn = out / "spawns/Custom/L2HubFakePlayers.xml"
@@ -1241,8 +1414,9 @@ def main(data: Path, geodata: Path, out: Path | None = None) -> int:
         hair_max = 6 if c["sex"] == "F" else 4
         gear = []
         for gr, min_level in GRADES:
-            armor = d.armor_set(gr, "MAGIC", name)
-            parts = {"rhand": d.companion_weapon(gr, kit, name)}
+            who = dict(race=c["race"], sex=c["sex"], level=min_level, cls=c["chain"][min(tier_index(min_level), len(c["chain"]) - 1)])
+            armor = d.armor_set(gr, "MAGIC", name, who, kit["shield"])
+            parts = {"rhand": d.companion_weapon(gr, kit, name, who)}
             parts.update((slot, armor[slot]) for slot in ("head", "chest", "legs", "gloves", "feet") if slot in armor)
             if kit["shield"] and "shield" in armor:
                 parts["lhand"] = armor["shield"]
@@ -1276,13 +1450,15 @@ def main(data: Path, geodata: Path, out: Path | None = None) -> int:
         mage = kit_key in ("mage", "healer")
         gear = []
         for gr, min_level in GRADES:
+            # Кто наденет шмот грейда: класс на его пороге — как в ядре (PhantomTemplate.getClassId), условия предметов — Data.wearable.
+            who = dict(race=p["race"], sex=p["sex"], level=min_level, cls=p["chain"][min(tier_index(min_level), len(p["chain"]) - 1)])
             if gr == "NONE":
                 # Новичок одет как только что созданный персонаж своего класса.
                 parts = d.initial_gear(p["chain"][0])
-                parts.setdefault("rhand", d.hunter_weapon(gr, kit, name))
+                parts.setdefault("rhand", d.hunter_weapon(gr, kit, name, who))
             else:
-                armor = d.armor_set(gr, kit["armor"], name)
-                parts = {"rhand": d.hunter_weapon(gr, kit, name)}
+                armor = d.armor_set(gr, kit["armor"], name, who, kit["shield"])
+                parts = {"rhand": d.hunter_weapon(gr, kit, name, who)}
                 parts.update((slot, armor[slot]) for slot in ("head", "chest", "legs", "gloves", "feet") if slot in armor)
                 if kit["shield"] and "shield" in armor:
                     parts["lhand"] = armor["shield"]
@@ -1293,17 +1469,19 @@ def main(data: Path, geodata: Path, out: Path | None = None) -> int:
         classes = ", ".join(d.classes[cid][0] for cid in p["chain"])
         role = {"tank": "TANK", "healer": "HEALER"}.get(kit_key, "DAMAGE")
         hair_max = 6 if p["sex"] == "F" else 4
+        start = p.get("start_level")
         phantom_xml.append(
-            f'\t<!-- {name}: охотник, {classes} -->\n'
+            f'\t<!-- {name}: охотник, {classes}{f"; ветеран, приходит {start}-м" if start else ""} -->\n'
             f'\t<phantom name="{name}" kind="hunter" role="{role}" female="{"true" if p["sex"] == "F" else "false"}" '
             f'face="{rnd(name, "face") % 3}" hairStyle="{rnd(name, "hair") % (hair_max + 1)}" hairColor="{rnd(name, "hc") % 4}" '
-            f'classes="{",".join(map(str, p["chain"]))}" aliases="{p["aliases"]}" social="{SOCIAL.get(name, 1)}" temper="{TEMPER.get(name, 1)}" risk="{RISK.get(name, 1)}" x="{x}" y="{y}" z="{z}">\n'
+            f'classes="{",".join(map(str, p["chain"]))}" aliases="{p["aliases"]}" social="{SOCIAL.get(name, 1)}" temper="{TEMPER.get(name, 1)}" risk="{RISK.get(name, 1)}"{f' startLevel="{start}"' if start else ""} x="{x}" y="{y}" z="{z}">\n'
             + "".join(gear) + '\t</phantom>\n')
         race_ru = RACE_RU[p["race"]][1 if p["sex"] == "F" else 0]
         phantom_personas[name] = dict(race=race_ru, sex=p["sex"], **{"class": d.classes[p["chain"][-1]][0]}, role="охотник", hunter=True,
                                       place="", activity="качается сам, соло",
                                       traits=p["traits"], style=p["style"], bio=p["bio"], aliases=p["aliases"])
-        phantom_report.append(f"охотник {name:<10} {classes}; дом — {tn.GATEKEEPERS[START_VILLAGE_GK[p['race']]]} {x} {y} {z}")
+        phantom_report.append(f"охотник {name:<10} {classes}{f'; ветеран {start}-го' if start else ''}; дом — {tn.GATEKEEPERS[START_VILLAGE_GK[p['race']]]} {x} {y} {z}")
+    phantom_report.extend(f"ВНИМАНИЕ, не наденет: {u}" for u in d.unworn)
 
     # Танатос (раздел 4.45): дом — у гейткипера деревни орков (в мир он выходит на спот, дом — только для создания персонажа).
     if HUNTERS:
@@ -1313,16 +1491,46 @@ def main(data: Path, geodata: Path, out: Path | None = None) -> int:
             sys.exit(f"{name}: имя Танатоса уже занято")
         d.check_chain(r["chain"])
         gr = grade(r["level"])
-        armor = d.armor_set(gr, kit["armor"], name) or d.armor_set(gr, "HEAVY", name)
-        parts = {"rhand": d.best_weapon(gr, kit)}
-        parts.update((slot, armor[slot]) for slot in ("head", "chest", "legs", "gloves", "feet") if slot in armor)
         jewels = {"neck": d.best_jewel(gr, ("neck",)), "ear": d.best_jewel(gr, ("rear;lear", "lear;rear")), "ring": d.best_jewel(gr, ("rfinger;lfinger", "lfinger;rfinger"))}
-        parts.update((k, v) for k, v in jewels.items() if v)
         shirt = d.best_shirt(gr)
-        if shirt:
-            parts["shirt"] = shirt
+
+        def reaper_parts(kit_: dict, label: str) -> dict:
+            """Комплект тела: лучшее оружие набора, сет его брони (нет — тяжёлый), щит, если набору он нужен, бижутерия и рубаха."""
+            armor = d.armor_set(gr, kit_["armor"], label) or d.armor_set(gr, "HEAVY", label)
+            out_ = {"rhand": d.best_weapon(gr, kit_)}
+            if kit_["shield"]:
+                shield = armor.get("shield") or d.best_shield(gr)
+                if shield:
+                    out_["lhand"] = shield
+            out_.update((slot, armor[slot]) for slot in ("head", "chest", "legs", "gloves", "feet") if slot in armor)
+            out_.update((k, v) for k, v in jewels.items() if v)
+            if shirt:
+                out_["shirt"] = shirt
+            return out_
+
+        parts = reaper_parts(kit, name)
         attrs = "".join(f' {k}="{v}"' for k, v in parts.items())
         names = ", ".join(d.items[v]["name"] for v in parts.values())
+        # Тела после смерти (REAPER_BODIES): ветка саба — те её классы, что есть у хроники.
+        bodies, body_report = [], []
+        for b in REAPER_BODIES:
+            bkit = KITS[b["kit"]]
+            chain = [c for c in b["chain"] if c in d.classes]
+            try:
+                d.check_chain(chain)
+                bparts = reaper_parts(bkit, f"{name}:{b['kit']}") if chain else {}
+            except ValueError as e:
+                body_report.append(f"Танатос, тело {b['kit']}: пропущено — {e}")
+                continue
+            if not chain:
+                body_report.append(f"Танатос, тело {b['kit']}: пропущено — у хроники нет классов {b['chain']}")
+                continue
+            bshots = d.blessed_spiritshot(gr) if bkit["weapon"][2] else d.soulshot(gr)
+            battrs = "".join(f' {k}="{v}"' for k, v in bparts.items())
+            bnames = ", ".join(d.items[v]["name"] for v in bparts.values())
+            bclasses = ", ".join(d.classes[c][0] for c in chain)
+            bodies.append(f'\t\t<body kit="{b["kit"]}" classes="{",".join(map(str, chain))}"{battrs} shots="{bshots}" /> <!-- {bclasses}: {bnames} -->\n')
+            body_report.append(f"Танатос, тело {b['kit']}: {bclasses}: {bnames}")
         g = gk[START_VILLAGE_GK[r["race"]]]
         gz = geo.cell(g["x"], g["y"], g["z"])[0]
         classes = ", ".join(d.classes[cid][0] for cid in r["chain"])
@@ -1331,8 +1539,9 @@ def main(data: Path, geodata: Path, out: Path | None = None) -> int:
             f'\t<phantom name="{name}" kind="reaper" role="DAMAGE" female="false" face="{rnd(name, "face") % 3}" hairStyle="{rnd(name, "hair") % 5}" '
             f'hairColor="{rnd(name, "hc") % 4}" classes="{",".join(map(str, r["chain"]))}" x="{g["x"]}" y="{g["y"]}" z="{gz}">\n'
             f'\t\t<gear grade="{gr}" minLevel="{r["level"]}"{attrs} shots="{d.soulshot(gr)}" /> <!-- {names} -->\n'
-            '\t</phantom>\n')
+            + "".join(bodies) + '\t</phantom>\n')
         phantom_report.append(f"Танатос {name}: {classes}, {r['level']}-й, {gr}: {names}")
+        phantom_report.extend(body_report)
         phantom_personas[name] = dict(race=RACE_RU[r["race"]][0], sex=r["sex"], **{"class": d.classes[r["chain"][-1]][0]}, role="жнец", reaper=True,
                                       traits=r["traits"], style=r["style"], bio=r["bio"])
 

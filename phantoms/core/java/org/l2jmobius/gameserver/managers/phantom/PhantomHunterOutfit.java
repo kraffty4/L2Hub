@@ -160,7 +160,10 @@ final class PhantomHunterOutfit
 		// Лут и сосы весят: с перегрузом 4-й степени охотник встанет столбом.
 		player.setDietMode(true);
 		final int classId = template.getClassId(player.getLevel());
-		if ((player.getPlayerClass().getId() != classId) && !professionLocked(player, classId))
+		// Профу не отнимают: смерть уронила ниже 20/40/76 — класс остаётся, как у живого (раньше охотник терял купленную профу и платил за неё снова).
+		final PlayerClass target = PlayerClass.getPlayerClass(classId);
+		final boolean downgrade = (target != null) && (target.level() < player.getPlayerClass().level());
+		if ((player.getPlayerClass().getId() != classId) && !downgrade && !professionLocked(player, classId))
 		{
 			player.setPlayerClass(classId);
 			player.setBaseClass(classId);

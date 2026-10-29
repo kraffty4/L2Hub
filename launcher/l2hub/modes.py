@@ -53,6 +53,15 @@ def _num(v: str | None) -> float | None:
         return None
 
 
+def _settings(p: dict, mode: dict) -> dict[str, dict[str, str]]:
+    """Прочие ключи режима — {файл: {ключ: значение}}: общие и свои у хроники ("chronicles": {id: {файл: {…}}}).
+    Своё у хроники — то, где официал хроник расходится: Vitality у Classic в «Хардкоре» выключена, у Essence и H5 — нет."""
+    out = {f: dict(keys) for f, keys in mode.get("settings", {}).items()}
+    for f, keys in mode.get("chronicles", {}).get(p.get("chronicle") or p["id"], {}).items():
+        out.setdefault(f, {}).update(keys)
+    return out
+
+
 def _present(p: dict, s: dict) -> dict[str, str]:
     """Ключи выключателя, которые есть в сборке, и их значения. Выключатель бывает на несколько ключей разом
     (ShowNpcLevel, ShowNpcAggression, AltGameViewNpc) и в конфигах логина ("part": "login")."""
@@ -126,7 +135,7 @@ def state(p: dict) -> dict:
         same_rates = all(now.get(g) == float(v) for g, v in m["rates"].items() if now.get(g) is not None)
         same_sw = all(sw[k]["value"] == v for k, v in m["switches"].items() if sw.get(k, {}).get("available"))
         same_set = all((cur := _read(p, f, k)) is None or cur.strip().lower() == str(v).lower()
-                       for f, keys in m.get("settings", {}).items() for k, v in keys.items())
+                       for f, keys in _settings(p, m).items() for k, v in keys.items())
         modes.append({"id": m["id"], "title": m["title"], "note": m["note"], "active": same_rates and same_sw and same_set})
     return {"ok": True, "modes": modes, "switches": list(sw.values()), "rates": now,
             "restart": servers.part_process(p, "game") is not None}
@@ -204,8 +213,8 @@ def apply_mode(p: dict, mode_id: str) -> dict:
         s = next(x for x in t["switches"] if x["id"] == sid)
         if keys := _present(p, s):
             edits.extend(_edits(p, s, keys, value))
-    # Прочие ключи режима (удобства: автоподбор, автоизучение скиллов, бесплатные маунты) — {файл: {ключ: значение}}.
-    for file, keys in mode.get("settings", {}).items():
+    # Прочие ключи режима (удобства: автоподбор, автоизучение скиллов, бесплатные маунты) — {файл: {ключ: значение}}, с ключами хроники.
+    for file, keys in _settings(p, mode).items():
         for key, value in keys.items():
             if _read(p, file, key) is None:
                 skipped.append(f"{file}: {key}")

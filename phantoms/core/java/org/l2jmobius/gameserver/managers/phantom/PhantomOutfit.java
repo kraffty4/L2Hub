@@ -136,6 +136,93 @@ final class PhantomOutfit
 		}
 	}
 
+	/** Тело Танатоса — в этом сабклассе. */
+	private static final int BODY_INDEX = 1;
+	/** Стрел телу с луком. */
+	private static final int BODY_AMMO = 5000;
+
+	/**
+	 * Тело Танатоса (раздел 4.45, «Новое тело»; решения автора 2026-10-25): сабкласс {@value #BODY_INDEX} — класс тела (нет — добавить, другой — сменить),
+	 * он активный; уровень, последняя профа ветки, скиллы класса заново, комплект тела вместо прежнего, заряды, стрелы — по луку. Раса и вид — от базового класса:
+	 * при активном сабе Mobius берёт расу базы ({@code Player.getRace}) — с виду тот же орк.
+	 * @param player Танатос, в мире
+	 * @param body тело
+	 * @param level уровень
+	 * @return надето; {@code false} — сабкласс не дался (он остаётся в базовом классе)
+	 */
+	static boolean wearBody(Player player, PhantomTemplate.Body body, int level)
+	{
+		final int[] chain = body.classes();
+		toBase(player);
+		final var sub = player.getSubClasses().get(BODY_INDEX);
+		boolean ok = true;
+		if (sub == null)
+		{
+			ok = PhantomCompat.addSubClass(player, chain[0], BODY_INDEX);
+		}
+		else if (java.util.Arrays.stream(chain).noneMatch(id -> id == sub.getId()))
+		{
+			ok = PhantomCompat.modifySubClass(player, BODY_INDEX, chain[0]);
+		}
+		if (!ok || !player.getSubClasses().containsKey(BODY_INDEX))
+		{
+			LOGGER.warning("PhantomOutfit: " + player.getName() + " got no sub class " + chain[0] + " for body " + body.kit() + ".");
+			return false;
+		}
+		player.setActiveClass(BODY_INDEX);
+		if (!player.isSubClassActive())
+		{
+			LOGGER.warning("PhantomOutfit: " + player.getName() + " could not switch to sub class " + chain[0] + " for body " + body.kit() + ".");
+			return false;
+		}
+
+		player.setDietMode(true);
+		player.getInventory().destroyAllItems(ItemProcessType.DESTROY, player, null);
+		player.getAutoSoulShot().clear();
+		setLevel(player, level);
+		// Скиллы заново, как в relearn, но базовый класс не трогать: сменился бы сам персонаж (раса), а не сабкласс.
+		for (Skill skill : new ArrayList<>(player.getAllSkills()))
+		{
+			player.removeSkill(skill, true, true);
+		}
+		final int classId = chain[chain.length - 1];
+		if (player.getPlayerClass().getId() != classId)
+		{
+			player.setPlayerClass(classId);
+		}
+		player.giveAvailableSkills(true, true, true);
+		if (player.getClan() != null)
+		{
+			player.getClan().addSkillEffects(player);
+		}
+
+		dress(player, body.gear());
+		refill(player, body.gear());
+		final int ammo = PhantomHunterOutfit.ammoId(player);
+		if (ammo > 0)
+		{
+			final Item arrows = PhantomCompat.addItem(player, ItemProcessType.REWARD, ammo, BODY_AMMO, null);
+			if ((arrows != null) && arrows.isEquipable())
+			{
+				player.getInventory().equipItem(arrows);
+			}
+		}
+		fullBars(player);
+		LOGGER.info("PhantomOutfit: " + player.getName() + " wears body " + body.kit() + ": level " + player.getLevel() + " " + player.getPlayerClass().name() + " (sub class, race " + player.getRace() + "), " + player.getAllSkills().size() + " skills.");
+		return true;
+	}
+
+	/**
+	 * Из тела — назад в базовый класс (Танатос перед уходом: в базе он и поднимается, и собирается заново).
+	 */
+	static void toBase(Player player)
+	{
+		if (player.isSubClassActive())
+		{
+			player.setActiveClass(0);
+		}
+	}
+
 	static void dress(Player player, PhantomTemplate.Gear gear)
 	{
 		if (gear == null)

@@ -55,8 +55,21 @@ TUNING = {
                                                 "blessedArmorChance", "blessedAccessoryChance", "crystalWeaponChance",
                                                 "crystalArmorChance", "crystalAccessoryChance")},  # C4EnchantRules.js
     **{f"Enchant.{k}": (int, 0, 30) for k in ("safeMax", "safeMaxFull", "maxWeapon", "maxArmor", "maxAccessory")},
+    # Население ботов (PopulationConfig.js, PopulationSeedPlanner.js): новых заселяют волнами новичков в стартовых деревнях,
+    # пока их меньше потолка; заселённых не убирают. Потолок у них самих — 2000.
+    "BotPopulation.maxPlayingPopulation": (int, 0, 2000),
+    "BotPopulation.starterBotsPerRace": (int, 0, 200),
+    # General.maxLevel сюда не выведен: ниже 78 их код срезает уровень и опыт уже прокачанных — ботов при заселении
+    # (GeneratedColdSeeder.ensureCharacter), игрока при следующем опыте (ExperienceReward), — и подъём потолка их не вернёт.
 }
 TUNING_DEFAULTS = {"General.questRewardRate": 1.0}  # чего нет в их default.ini — как в их коде
+# Ручки-выбор: «раздел.ключ» → {значение: что значит}; первое — как у L2Solo.
+CHOICES = {
+    # src/GameServer/Quest/BeginnerReward.js: заряды за квесты-награды деревень (257, 260, 265, 273, 293) — раз на персонажа.
+    "General.newbieRewardPolicy": {"strict": "как у L2Solo: только первому персонажу аккаунта",
+                                   "grant": "и персонажам, созданным до этого правила у L2Solo",
+                                   "always": "каждому персонажу, и твинкам тоже"},
+}
 AGGRESSION = {"peace": (0.0, "мирный: боты первыми не нападают, самооборона остаётся"), "normal": (0.5, "как у L2Solo"),
               "angry": (1.0, "злой: нападают и мстят чаще, бьются до последнего")}
 WIPE_SCOPES = {"bots": "боты", "players": "игроки", "all": "весь мир"}
@@ -311,8 +324,8 @@ def set_chatter(p: dict, level: str) -> dict:
 
 
 def world_overrides(p: dict) -> dict:
-    """Ручки пульта, выбранные автором (только ключи из TUNING)."""
-    return {k: v for k, v in (user_settings(p).get("world") or {}).items() if k in TUNING}
+    """Ручки пульта, выбранные автором (только ключи из TUNING и CHOICES)."""
+    return {k: v for k, v in (user_settings(p).get("world") or {}).items() if k in TUNING or k in CHOICES}
 
 
 def _number(raw, kind):
@@ -320,6 +333,22 @@ def _number(raw, kind):
         return kind(float(raw))
     except (TypeError, ValueError):
         return None
+
+
+def _choice(raw, key: str):
+    """Значение ручки-выбора; чего нет в списке — None (их код тогда берёт своё по умолчанию)."""
+    value = str(raw).strip().lower() if raw is not None else None
+    return value if value in CHOICES[key] else None
+
+
+def _value(raw, key: str):
+    return _choice(raw, key) if key in CHOICES else _number(raw, TUNING[key][0])
+
+
+def _same(a, b) -> bool:
+    if isinstance(a, str) or isinstance(b, str):
+        return a == b
+    return abs(float(a) - float(b)) < 1e-9
 
 
 def tuning(p: dict) -> dict:
@@ -330,12 +359,17 @@ def tuning(p: dict) -> dict:
     local = _parse_ini(local_file.read_text(encoding="utf-8", errors="replace")) if local_file.is_file() else {}
     over = world_overrides(p)
     out = {}
-    for key, (kind, _lo, _hi) in TUNING.items():
+    for key in [*TUNING, *CHOICES]:
         section, name = key.split(".", 1)
-        value = _number(merged.get(section, {}).get(name), kind)
-        out[key] = {"value": TUNING_DEFAULTS.get(key) if value is None else value,
+        value = _value(merged.get(section, {}).get(name), key)
+        out[key] = {"value": _default(key) if value is None else value,
                     "source": "local" if name in local.get(section, {}) else "hub" if key in over else "l2solo"}
     return out
+
+
+def _default(key: str):
+    """Чего нет в настройках — как в их коде: у выбора — первое значение."""
+    return next(iter(CHOICES[key])) if key in CHOICES else TUNING_DEFAULTS.get(key)
 
 
 def _baseline(p: dict, key: str):
@@ -345,11 +379,16 @@ def _baseline(p: dict, key: str):
     raw = (p.get("config") or {}).get(section, {}).get(name)
     if raw is None and default.is_file():
         raw = _parse_ini(default.read_text(encoding="utf-8", errors="replace")).get(section, {}).get(name)
-    value = _number(raw, TUNING[key][0])
-    return TUNING_DEFAULTS.get(key) if value is None else value
+    value = _value(raw, key)
+    return _default(key) if value is None else value
 
 
 def _check(key: str, value):
+    if key in CHOICES:
+        choice = _choice(value, key)
+        if choice is None:
+            raise ValueError(f"{key}: одно из {', '.join(CHOICES[key])}")
+        return choice
     if key not in TUNING:
         raise ValueError(f"нет такой настройки: {key}")
     kind, lo, hi = TUNING[key]
@@ -365,13 +404,13 @@ def set_world(p: dict, changes: dict) -> dict:
     world = world_overrides(p)
     for key, value in changes.items():
         if value is None or value == "":
-            if key not in TUNING:
+            if key not in TUNING and key not in CHOICES:
                 raise ValueError(f"нет такой настройки: {key}")
             world.pop(key, None)
             continue
         number = _check(key, value)
         base = _baseline(p, key)
-        if base is not None and abs(number - base) < 1e-9:
+        if base is not None and _same(number, base):
             world.pop(key, None)
         else:
             world[key] = number
@@ -401,7 +440,7 @@ def modes(p: dict) -> list[dict]:
     values = {k: v["value"] for k, v in tuning(p).items()}
     return [{"id": m["id"], "title": m["title"], "note": m["note"],
              "active": progression(p) == m["progression"]
-             and all(values.get(k) is not None and abs(float(values[k]) - float(v)) < 1e-9 for k, v in m["world"].items())}
+             and all(values.get(k) is not None and _same(values[k], v) for k, v in m["world"].items())}
             for m in _modes()]
 
 
@@ -410,11 +449,11 @@ def set_mode(p: dict, mode_id: str) -> dict:
     m = next((x for x in _modes() if x["id"] == mode_id), None)
     if not m:
         raise ValueError(f"нет режима {mode_id}")
-    if m["progression"] not in PRESETS or any(k not in TUNING for k in m["world"]):
+    if m["progression"] not in PRESETS or any(k not in TUNING and k not in CHOICES for k in m["world"]):
         raise ValueError(f"l2solo_modes.json: режим {mode_id} — неизвестный пресет или ключ")
     world = {k: _check(k, v) for k, v in m["world"].items()}
     _save_user_settings(p, progression=m["progression"],
-                        world={k: v for k, v in world.items() if (b := _baseline(p, k)) is None or abs(v - b) >= 1e-9})
+                        world={k: v for k, v in world.items() if (b := _baseline(p, k)) is None or not _same(v, b)})
     t = tuning(p)
     return {"title": m["title"], "local": [k for k in m["world"] if t[k]["source"] == "local"], "restart": bool(server_process(p))}
 
@@ -1090,6 +1129,7 @@ def panel(p: dict) -> dict:
            "world": {"exists": world.is_file(), "size": sum(f.stat().st_size for f in (world, history) if f.is_file())},
            "wipeScopes": WIPE_SCOPES, "wipeBlocker": save_blocker(p),
            "tuning": tuning(p), "aggression": aggression(p), "aggressionLevels": {k: t for k, (_v, t) in AGGRESSION.items()},
+           "choices": CHOICES,
            "modes": modes(p), "settingsPending": bool(proc) and settings_pending(p)}
     if "map" in p["ports"]:
         out.update(mapUrl=map_url(p), mapUp=bool(proc) and servers.port_open(p["ports"]["map"]))

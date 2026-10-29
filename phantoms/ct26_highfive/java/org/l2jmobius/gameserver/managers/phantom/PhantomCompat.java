@@ -732,4 +732,24 @@ public final class PhantomCompat
 	{
 		return false;
 	}
+
+	// ---------- Тело Танатоса: сабкласс (раздел 4.45) ----------
+
+	/**
+	 * Сабкласс фантому — тело Танатоса: тот же персонаж и раса базового класса, класс — другой.
+	 * @return добавлен
+	 */
+	public static boolean addSubClass(Player player, int classId, int classIndex)
+	{
+		return player.addSubClass(classId, classIndex);
+	}
+
+	/**
+	 * Сменить класс сабкласса (стереть прежний и добавить новый на том же месте).
+	 * @return сменён
+	 */
+	public static boolean modifySubClass(Player player, int classIndex, int classId)
+	{
+		return player.modifySubClass(classIndex, classId);
+	}
 }

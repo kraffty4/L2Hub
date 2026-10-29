@@ -1,9 +1,9 @@
 diff --git a/dist/game/data/scripts/custom/L2HubWorldInfo/L2HubWorldInfo.java b/dist/game/data/scripts/custom/L2HubWorldInfo/L2HubWorldInfo.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..b72117957e3a671677a49fb31e23d275f5abb97f
+index 0000000000000000000000000000000000000000..2dd9ae64affefdd00be13d705e4080ece4b21b11
 --- /dev/null
 +++ b/dist/game/data/scripts/custom/L2HubWorldInfo/L2HubWorldInfo.java
-@@ -0,0 +1,689 @@
+@@ -0,0 +1,862 @@
 +/*
 + * This file is part of the L2J Mobius project.
 + *
@@ -139,6 +139,7 @@ index 0000000000000000000000000000000000000000..b72117957e3a671677a49fb31e23d275
 +		superChampions(sb, player);
 +		raidBosses(sb, player);
 +		olympiad(sb);
++		purge(sb, player); // Essence: Зачистка
 +		seasonal(sb);
 +		schedule(sb);
 +		sb.append("</body></html>");
@@ -622,6 +623,21 @@ index 0000000000000000000000000000000000000000..b72117957e3a671677a49fb31e23d275
 +			}
 +			sb.append("]}");
 +
++			// Essence: Зачистка — топ-5 зон и живые ниже топ-5, раздача наград недели.
++			sb.append(",\"purge\":{\"nextReward\":").append(nextPurgeReward()).append(",\"zones\":[");
++			first = true;
++			for (PurgeZone zone : purgeZones(0))
++			{
++				sb.append(first ? "{" : ",{").append("\"category\":").append(zone.category());
++				first = false;
++				field(sb.append(','), "name", zone.name()).append(",\"hot\":").append(zone.hot()).append(",\"top\":[");
++				purgeEntries(sb, zone.top());
++				sb.append("],\"players\":[");
++				purgeEntries(sb, zone.players());
++				sb.append("]}");
++			}
++			sb.append("]}");
++
 +			sb.append(",\"seasonal\":[");
 +			first = true;
 +			for (LongTimeEvent event : seasonalEvents())
@@ -654,6 +670,163 @@ index 0000000000000000000000000000000000000000..b72117957e3a671677a49fb31e23d275
 +		catch (Exception e)
 +		{
 +			LOGGER.warning("L2HubWorldInfo: " + STATUS_FILE + ": " + e.getMessage());
++		}
++	}
++
++	// ---------- Зачистка (Essence) ----------
++
++	/**
++	* Место в рейтинге Зачистки: ранг, имя, очки (очки + ключи × 1 000 000, как у PurgeRankingManager), фантом ли
++	* (охотник или напарник).
++	*/
++	private record PurgeEntry(int rank, String name, long points, boolean phantom)
++	{
++	}
++
++	/**
++	* Зона Зачистки: горячий ли час, топ-5 (награда недели), живые ниже топ-5 (до пяти), место смотрящего (null — его нет).
++	*/
++	private record PurgeZone(int category, String name, boolean hot, List<PurgeEntry> top, List<PurgeEntry> players, PurgeEntry viewer)
++	{
++	}
++
++	/** Зоны SubjugationData.xml по category, имя без «Purge». */
++	private static final String[] PURGE_ZONES =
++	{
++		"Cruma Tower",
++		"Silent Valley",
++		"Plains of the Lizardmen",
++		"Tower of Insolence",
++		"Dragon Valley",
++		"Sel Mahum Base",
++		"Orc Barracks",
++		"Giant Cave",
++		"Goddard Territory"
++	};
++
++	/**
++	* Рейтинг Зачистки — из базы тем же запросом, что у PurgeRankingManager: свой рейтинг Mobius пересчитывает раз в 5 минут
++	* и наружу отдаёт только топ-5 без рангов остальных. viewer — charId смотрящего (0 — никого).
++	*/
++	private static List<PurgeZone> purgeZones(int viewer)
++	{
++		final List<PurgeZone> zones = new ArrayList<>();
++		final int hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY);
++		try (java.sql.Connection con = org.l2jmobius.commons.database.DatabaseFactory.getConnection();
++			java.sql.PreparedStatement statement = con.prepareStatement("SELECT charId, points + `keys` * 1000000 AS total FROM character_purge WHERE category = ? ORDER BY total DESC"))
++		{
++			for (int category = 1; category <= PURGE_ZONES.length; category++)
++			{
++				// Горячие часы — как в скриптах *Purge.java: час не меньше начала и меньше конца.
++				boolean hot = false;
++				final org.l2jmobius.gameserver.data.holders.SubjugationHolder data = org.l2jmobius.gameserver.data.xml.SubjugationData.getInstance().getSubjugation(category);
++				for (int[] hours : data == null ? List.<int[]> of() : data.getHottimes())
++				{
++					hot |= (hour >= hours[0]) && (hour < hours[1]);
++				}
++				final List<PurgeEntry> top = new ArrayList<>();
++				final List<PurgeEntry> players = new ArrayList<>();
++				PurgeEntry seen = null;
++				statement.setInt(1, category);
++				try (java.sql.ResultSet rset = statement.executeQuery())
++				{
++					int rank = 0;
++					while (rset.next())
++					{
++						rank++;
++						final int charId = rset.getInt("charId");
++						final String name = org.l2jmobius.gameserver.data.sql.CharInfoTable.getInstance().getNameById(charId);
++						final boolean phantom = org.l2jmobius.gameserver.managers.phantom.PhantomData.getInstance().getTemplate(name) != null;
++						final PurgeEntry entry = new PurgeEntry(rank, name == null ? "?" : name, rset.getLong("total"), phantom);
++						if (charId == viewer)
++						{
++							seen = entry;
++						}
++						if (rank <= 5)
++						{
++							top.add(entry);
++						}
++						else if (!phantom && (players.size() < 5))
++						{
++							players.add(entry);
++						}
++					}
++				}
++				zones.add(new PurgeZone(category, PURGE_ZONES[category - 1], hot, top, players, seen));
++			}
++		}
++		catch (Exception e)
++		{
++			LOGGER.warning("L2HubWorldInfo: purge ranking: " + e.getMessage());
++		}
++		return zones;
++	}
++
++	/**
++	* Когда PurgeRankingManager разошлёт награды топ-5: в воскресенье, при пересчёте рейтинга (раз в 5 минут), если с прошлой
++	* раздачи прошла неделя. Сегодня воскресенье и ещё не раздавали — сейчас (до 5 минут), иначе — полночь ближайшего воскресенья.
++	*/
++	private static long nextPurgeReward()
++	{
++		final long now = System.currentTimeMillis();
++		final java.util.Calendar day = java.util.Calendar.getInstance();
++		final long last = org.l2jmobius.gameserver.managers.GlobalVariablesManager.getInstance().getLong(org.l2jmobius.gameserver.managers.GlobalVariablesManager.PURGE_REWARD_TIME, 0);
++		if ((day.get(java.util.Calendar.DAY_OF_WEEK) == java.util.Calendar.SUNDAY) && ((now - last) > (604800000L - 600000L)))
++		{
++			return now;
++		}
++		day.set(java.util.Calendar.HOUR_OF_DAY, 0);
++		day.set(java.util.Calendar.MINUTE, 0);
++		day.set(java.util.Calendar.SECOND, 0);
++		day.set(java.util.Calendar.MILLISECOND, 0);
++		do
++		{
++			day.add(java.util.Calendar.DAY_OF_MONTH, 1);
++		}
++		while (day.get(java.util.Calendar.DAY_OF_WEEK) != java.util.Calendar.SUNDAY);
++		return day.getTimeInMillis();
++	}
++
++	private static void purge(StringBuilder sb, Player player)
++	{
++		sb.append("<font color=\"LEVEL\">Зачистка</font><br1>");
++		sb.append("<font color=\"A0A0A0\">Награды недели топ-5 зоны — ").append(new SimpleDateFormat("dd.MM HH:mm").format(new Date(nextPurgeReward())));
++		sb.append(", серым — охотники и напарники, x2 — горячий час.</font><br1>");
++		boolean any = false;
++		for (PurgeZone zone : purgeZones(player.getObjectId()))
++		{
++			if (zone.top().isEmpty())
++			{
++				continue;
++			}
++			any = true;
++			sb.append(zone.name()).append(zone.hot() ? " <font color=\"6E8B3D\">x2</font>" : "").append(": ");
++			for (PurgeEntry entry : zone.top())
++			{
++				final String color = entry.name().equals(player.getName()) ? "LEVEL" : entry.phantom() ? "A0A0A0" : "FFFFFF";
++				sb.append(entry.rank() > 1 ? ", " : "").append(entry.rank()).append(". <font color=\"").append(color).append("\">").append(entry.name()).append("</font> ").append(entry.points());
++			}
++			if ((zone.viewer() != null) && (zone.viewer().rank() > 5))
++			{
++				sb.append("; ты — ").append(zone.viewer().rank()).append("-й, ").append(zone.viewer().points());
++			}
++			sb.append("<br1>");
++		}
++		if (!any)
++		{
++			sb.append("<font color=\"808080\">Очков пока ни у кого.</font><br1>");
++		}
++		sb.append("<br>");
++	}
++
++	private static void purgeEntries(StringBuilder sb, List<PurgeEntry> entries)
++	{
++		boolean first = true;
++		for (PurgeEntry entry : entries)
++		{
++			sb.append(first ? "{" : ",{").append("\"rank\":").append(entry.rank());
++			first = false;
++			field(sb.append(','), "name", entry.name()).append(",\"points\":").append(entry.points()).append(",\"phantom\":").append(entry.phantom()).append('}');
 +		}
 +	}
 +

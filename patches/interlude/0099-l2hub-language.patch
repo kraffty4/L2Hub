@@ -163,10 +163,10 @@ index fe27050103cc1be19c10c84fed66cace8af283dd..f78aaeb687eaa2e15582341e63a63502
  	}
  
 diff --git a/dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java b/dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java
-index 88bfdaa500d18180d0e5d8350c592e587f5db4a2..c0af538603f41de903ebd7bbdaf6190ffb93d661 100644
+index e90658c86d6a8bcf3b37e0340c0fc0bebd8a2001..d2fd1e5459732e91748a7d8130620202ca979008 100644
 --- a/dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java
 +++ b/dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java
-@@ -73,6 +73,160 @@ import org.l2jmobius.gameserver.mechanics.script.Quest;
+@@ -73,6 +73,184 @@ import org.l2jmobius.gameserver.mechanics.script.Quest;
   */
  public class L2HubSelfTest
  {
@@ -194,6 +194,9 @@ index 88bfdaa500d18180d0e5d8350c592e587f5db4a2..c0af538603f41de903ebd7bbdaf6190f
 +		java.util.Map.entry("Семь печатей малого мира", "Small-world Seven Signs"),
 +		java.util.Map.entry("Эпики малого мира", "Small-world epic bosses"),
 +		java.util.Map.entry("Фейки в городах", "Town fakes"),
++		java.util.Map.entry("Гробницы малого мира", "Small-world Four Sepulchers"),
++		java.util.Map.entry("Разлом малого мира", "Small-world Rift"),
++		java.util.Map.entry("Мастер дворянства", "Noblesse Master"),
 +		java.util.Map.entry("Автолут", "Auto loot"),
 +		java.util.Map.entry("живым — ", "regular mobs: "),
 +		java.util.Map.entry(", травы — ", ", herbs: "),
@@ -302,6 +305,27 @@ index 88bfdaa500d18180d0e5d8350c592e587f5db4a2..c0af538603f41de903ebd7bbdaf6190f
 +		java.util.Map.entry("скрипт L2HubTownFakes не загрузился — причина в логе сервера", "the L2HubTownFakes script did not load — see the server log"),
 +		java.util.Map.entry(" по расписанию (плотность ", " by schedule (density "),
 +		java.util.Map.entry(" %; утром, вечером и ночью выходят не все)", " %; not all of them come out in the morning, evening and at night)"),
++		java.util.Map.entry("нет SmallWorldSepulchers в GeneralConfig — мод 0033 не наложен", "no SmallWorldSepulchers in GeneralConfig — mod 0033 is not applied"),
++		java.util.Map.entry("скрипт FourSepulchers не загрузился — причина в логе сервера", "the FourSepulchers script did not load — see the server log for the reason"),
++		java.util.Map.entry("менеджеров гробниц в мире ", "sepulcher managers in the world: "),
++		java.util.Map.entry(" из 4", " of 4"),
++		java.util.Map.entry("выключены (SmallWorldSepulchers = False) — пати от четырёх, как у Mobius; ", "disabled (SmallWorldSepulchers = False) — a party of four, as in Mobius; "),
++		java.util.Map.entry("вкл: пати от ", "on: a party of "),
++		java.util.Map.entry(", квест 620 и пропуск — только у живых; ", ", quest 620 and the pass — living players only; "),
++		java.util.Map.entry("нет SmallWorldRift в GeneralConfig — мод 0035 не наложен", "no SmallWorldRift in GeneralConfig — mod 0035 is not applied"),
++		java.util.Map.entry("пати от ", "a party of "),
++		java.util.Map.entry(", вход новичков — ", ", Recruit entry — "),
++		java.util.Map.entry(" фрагментов; Rift Post в мире: ", " fragments; Rift Posts in the world: "),
++		java.util.Map.entry("выключен (SmallWorldRift = False) — фрагменты платит каждый, как у Mobius; ", "disabled (SmallWorldRift = False) — everyone pays fragments, as in Mobius; "),
++		java.util.Map.entry("вкл: фрагменты платят только живые; ", "on: only living players pay fragments; "),
++		java.util.Map.entry("нет TownNoblesse в L2HubTown.ini — мод 0034 не наложен", "no TownNoblesse in L2HubTown.ini — mod 0034 is not applied"),
++		java.util.Map.entry("выключен (TownNoblesse = False в L2HubTown.ini)", "disabled (TownNoblesse = False in L2HubTown.ini)"),
++		java.util.Map.entry("TownNoblesse включён, а в NoblessMaster.ini Enabled = False — мастер не ответит", "TownNoblesse is on, but NoblessMaster.ini has Enabled = False — the master will not respond"),
++		java.util.Map.entry(" (бафферов ", " (buffers: "),
++		java.util.Map.entry("), дворянство с ", "), Noblesse from level "),
++		java.util.Map.entry("-го уровня за ", " for "),
++		java.util.Map.entry(" адены", " adena"),
++		java.util.Map.entry(" предмета ", " of item "),
 +		java.util.Map.entry("вкл", "on"),
 +		java.util.Map.entry("выкл", "off"));
 +	
@@ -327,7 +351,7 @@ index 88bfdaa500d18180d0e5d8350c592e587f5db4a2..c0af538603f41de903ebd7bbdaf6190f
  	private static final Logger LOGGER = Logger.getLogger(L2HubSelfTest.class.getName());
  	private static final Path CONFIG = Paths.get("./config/Custom/L2HubSelfTest.ini");
  	private static final Path REPORT = Paths.get("./log/L2HubSelfTest.json");
-@@ -110,27 +264,27 @@ public class L2HubSelfTest
+@@ -110,30 +288,30 @@ public class L2HubSelfTest
  		}
  
  		final List<Check> checks = new ArrayList<>();
@@ -351,6 +375,9 @@ index 88bfdaa500d18180d0e5d8350c592e587f5db4a2..c0af538603f41de903ebd7bbdaf6190f
 -		probe(checks, "Семь печатей малого мира", L2HubSelfTest::sevenSigns);
 -		probe(checks, "Эпики малого мира", L2HubSelfTest::epics);
 -		probe(checks, "Фейки в городах", L2HubSelfTest::townFakes);
+-		probe(checks, "Гробницы малого мира", L2HubSelfTest::sepulchers);
+-		probe(checks, "Разлом малого мира", L2HubSelfTest::rift);
+-		probe(checks, "Мастер дворянства", L2HubSelfTest::noblesse);
 -		probe(checks, "Автолут", () -> new Check("", true, "живым — " + onOff(PlayerConfig.AUTO_LOOT) + ", травы — " + onOff(PlayerConfig.AUTO_LOOT_HERBS) + ", рейды — " + onOff(PlayerConfig.AUTO_LOOT_RAIDS)));
 +		probe(checks, tr("Баффер у гейткиперов"), () -> townNpc(TOWN_BUFFER));
 +		probe(checks, tr("GM-шоп у гейткиперов"), () -> townNpc(TOWN_SHOP));
@@ -372,11 +399,14 @@ index 88bfdaa500d18180d0e5d8350c592e587f5db4a2..c0af538603f41de903ebd7bbdaf6190f
 +		probe(checks, tr("Семь печатей малого мира"), L2HubSelfTest::sevenSigns);
 +		probe(checks, tr("Эпики малого мира"), L2HubSelfTest::epics);
 +		probe(checks, tr("Фейки в городах"), L2HubSelfTest::townFakes);
++		probe(checks, tr("Гробницы малого мира"), L2HubSelfTest::sepulchers);
++		probe(checks, tr("Разлом малого мира"), L2HubSelfTest::rift);
++		probe(checks, tr("Мастер дворянства"), L2HubSelfTest::noblesse);
 +		probe(checks, tr("Автолут"), () -> new Check("", true, tr("живым — ") + onOff(PlayerConfig.AUTO_LOOT) + tr(", травы — ") + onOff(PlayerConfig.AUTO_LOOT_HERBS) + tr(", рейды — ") + onOff(PlayerConfig.AUTO_LOOT_RAIDS)));
  
  		final long ok = checks.stream().filter(Check::ok).count();
  		LOGGER.info("L2Hub проверка модов: " + ok + " из " + checks.size() + " в порядке.");
-@@ -157,7 +311,7 @@ public class L2HubSelfTest
+@@ -160,7 +338,7 @@ public class L2HubSelfTest
  		}
  		catch (Throwable e)
  		{
@@ -385,7 +415,7 @@ index 88bfdaa500d18180d0e5d8350c592e587f5db4a2..c0af538603f41de903ebd7bbdaf6190f
  		}
  	}
  
-@@ -175,13 +329,13 @@ public class L2HubSelfTest
+@@ -178,13 +356,13 @@ public class L2HubSelfTest
  			}
  			if ("false".equalsIgnoreCase(properties.getProperty(key, "True").trim()))
  			{
@@ -401,7 +431,7 @@ index 88bfdaa500d18180d0e5d8350c592e587f5db4a2..c0af538603f41de903ebd7bbdaf6190f
  	}
  
  	@SuppressWarnings("unchecked")
-@@ -203,7 +357,7 @@ public class L2HubSelfTest
+@@ -206,7 +384,7 @@ public class L2HubSelfTest
  			}
  		}
  		final List<Integer> missing = ids.stream().filter(id -> !entries.containsKey(id)).toList();
@@ -410,7 +440,7 @@ index 88bfdaa500d18180d0e5d8350c592e587f5db4a2..c0af538603f41de903ebd7bbdaf6190f
  	}
  
  	private static Check bufferLevels()
-@@ -216,10 +370,10 @@ public class L2HubSelfTest
+@@ -219,10 +397,10 @@ public class L2HubSelfTest
  			final int max = SkillData.getInstance().getMaxLevel(id);
  			if ((holder != null) && (holder.getLevel() < max))
  			{
@@ -423,7 +453,7 @@ index 88bfdaa500d18180d0e5d8350c592e587f5db4a2..c0af538603f41de903ebd7bbdaf6190f
  	}
  
  	private static Check buffDurations()
-@@ -227,10 +381,10 @@ public class L2HubSelfTest
+@@ -230,10 +408,10 @@ public class L2HubSelfTest
  		final TreeSet<Integer> ids = bufferSkills();
  		if (!PlayerConfig.ENABLE_MODIFY_SKILL_DURATION || (PlayerConfig.SKILL_DURATION_LIST == null))
  		{
@@ -436,7 +466,7 @@ index 88bfdaa500d18180d0e5d8350c592e587f5db4a2..c0af538603f41de903ebd7bbdaf6190f
  	}
  
  	private static TreeSet<Integer> bufferSkills()
-@@ -268,9 +422,9 @@ public class L2HubSelfTest
+@@ -271,9 +449,9 @@ public class L2HubSelfTest
  		}
  		if (!ChampionMonstersConfig.CHAMPION_ENABLE)
  		{
@@ -448,7 +478,7 @@ index 88bfdaa500d18180d0e5d8350c592e587f5db4a2..c0af538603f41de903ebd7bbdaf6190f
  	}
  
  	private static Check board()
-@@ -278,14 +432,14 @@ public class L2HubSelfTest
+@@ -281,14 +459,14 @@ public class L2HubSelfTest
  		final IParseBoardHandler hub = CommunityBoardHandler.getInstance().getHandler("_bbshubbuff");
  		final IParseBoardHandler home = CommunityBoardHandler.getInstance().getHandler("_bbshome");
  		final boolean ok = (hub != null) && hub.getClass().getSimpleName().equals("L2HubBoard") && CommunityBoardConfig.CUSTOM_CB_ENABLED;
@@ -465,7 +495,7 @@ index 88bfdaa500d18180d0e5d8350c592e587f5db4a2..c0af538603f41de903ebd7bbdaf6190f
  	}
  
  	private static Check world()
-@@ -294,13 +448,13 @@ public class L2HubSelfTest
+@@ -297,13 +475,13 @@ public class L2HubSelfTest
  		final boolean daily = VoicedCommandHandler.getInstance().getHandler("daily") != null;
  		final boolean raid = VoicedCommandHandler.getInstance().getHandler("raid") != null;
  		final boolean dailyOn = L2HubWorldConfig.WORLD_DAILY;
@@ -481,7 +511,7 @@ index 88bfdaa500d18180d0e5d8350c592e587f5db4a2..c0af538603f41de903ebd7bbdaf6190f
  	}
  
  	private static Check phantoms()
-@@ -323,7 +477,7 @@ public class L2HubSelfTest
+@@ -326,7 +504,7 @@ public class L2HubSelfTest
  				live++;
  			}
  		}
@@ -490,7 +520,7 @@ index 88bfdaa500d18180d0e5d8350c592e587f5db4a2..c0af538603f41de903ebd7bbdaf6190f
  	}
  
  	private static Check seasonalEvents()
-@@ -340,12 +494,12 @@ public class L2HubSelfTest
+@@ -343,12 +521,12 @@ public class L2HubSelfTest
  					total++;
  					if (event.isEventPeriod())
  					{
@@ -505,7 +535,7 @@ index 88bfdaa500d18180d0e5d8350c592e587f5db4a2..c0af538603f41de903ebd7bbdaf6190f
  	}
  	
  	// ---------- L2Hub 0024: моды живого мира — суперчемпион, «Мир сейчас», эльпи, летопись ----------
-@@ -374,67 +528,67 @@ public class L2HubSelfTest
+@@ -377,67 +555,67 @@ public class L2HubSelfTest
  		final Properties config = customIni("ChampionMonsters.ini");
  		if (config.getProperty("SuperChampionEnable") == null)
  		{
@@ -586,7 +616,7 @@ index 88bfdaa500d18180d0e5d8350c592e587f5db4a2..c0af538603f41de903ebd7bbdaf6190f
  		}
  		long entries = 0;
  		for (String line : Files.readAllLines(file, StandardCharsets.UTF_8))
-@@ -445,17 +599,17 @@ public class L2HubSelfTest
+@@ -448,17 +626,17 @@ public class L2HubSelfTest
  			}
  		}
  		final boolean writable = Files.isWritable(file);
@@ -609,7 +639,7 @@ index 88bfdaa500d18180d0e5d8350c592e587f5db4a2..c0af538603f41de903ebd7bbdaf6190f
  	};
  
  	private static Properties ini(String path) throws Exception
-@@ -476,7 +630,7 @@ public class L2HubSelfTest
+@@ -479,7 +657,7 @@ public class L2HubSelfTest
  	private static boolean smallWorldMarks(String config) throws Exception
  	{
  		final Path path = Paths.get("./config/" + config);
@@ -618,7 +648,7 @@ index 88bfdaa500d18180d0e5d8350c592e587f5db4a2..c0af538603f41de903ebd7bbdaf6190f
  	}
  
  	/** Статическое поле класса сервера; null — такого класса или поля у хроники нет. */
-@@ -502,42 +656,42 @@ public class L2HubSelfTest
+@@ -505,42 +683,42 @@ public class L2HubSelfTest
  	private static String duration(long millis)
  	{
  		final long minutes = Math.max(0, millis) / 60000;
@@ -668,7 +698,7 @@ index 88bfdaa500d18180d0e5d8350c592e587f5db4a2..c0af538603f41de903ebd7bbdaf6190f
  	}
  
  	private static Check epics() throws Exception
-@@ -546,7 +700,7 @@ public class L2HubSelfTest
+@@ -549,7 +727,7 @@ public class L2HubSelfTest
  		final Object enabled = staticField(config, "SMALL_WORLD_EPICS");
  		if (enabled == null)
  		{
@@ -677,7 +707,7 @@ index 88bfdaa500d18180d0e5d8350c592e587f5db4a2..c0af538603f41de903ebd7bbdaf6190f
  		}
  		final Set<String> alive = new TreeSet<>();
  		for (WorldObject object : World.getVisibleObjects())
-@@ -556,17 +710,17 @@ public class L2HubSelfTest
+@@ -559,17 +737,17 @@ public class L2HubSelfTest
  				alive.add(boss.getName());
  			}
  		}
@@ -698,7 +728,7 @@ index 88bfdaa500d18180d0e5d8350c592e587f5db4a2..c0af538603f41de903ebd7bbdaf6190f
  	}
  
  	private static Check townFakes() throws Exception
-@@ -574,16 +728,16 @@ public class L2HubSelfTest
+@@ -577,16 +755,16 @@ public class L2HubSelfTest
  		final Path roster = Paths.get("./data/L2HubTownFakes.xml");
  		if (!Files.isRegularFile(roster))
  		{
@@ -718,7 +748,7 @@ index 88bfdaa500d18180d0e5d8350c592e587f5db4a2..c0af538603f41de903ebd7bbdaf6190f
  		}
  		final Set<Integer> ids = new HashSet<>();
  		final Matcher matcher = Pattern.compile("npcId=\"(\\d+)\"").matcher(Files.readString(roster, StandardCharsets.UTF_8));
-@@ -601,14 +755,14 @@ public class L2HubSelfTest
+@@ -604,9 +782,9 @@ public class L2HubSelfTest
  		}
  		if ((present == 0) && (ScriptManager.getInstance().getScript("L2HubTownFakes") == null))
  		{
@@ -727,6 +757,76 @@ index 88bfdaa500d18180d0e5d8350c592e587f5db4a2..c0af538603f41de903ebd7bbdaf6190f
  		}
 -		return new Check("", present > 0, "в мире " + present + " из " + ids.size() + " по расписанию (плотность " + density + " %; утром, вечером и ночью выходят не все)");
 +		return new Check("", present > 0, tr("в мире ") + present + tr(" из ") + ids.size() + tr(" по расписанию (плотность ") + density + tr(" %; утром, вечером и ночью выходят не все)"));
+ 	}
+ 
+ 	// ---------- L2Hub 0032: гробницы, Разлом и мастер дворянства малого мира (0033–0035) ----------
+@@ -638,19 +816,19 @@ public class L2HubSelfTest
+ 		final Object enabled = staticField(config, "SMALL_WORLD_SEPULCHERS");
+ 		if (enabled == null)
+ 		{
+-			return new Check("", false, "нет SmallWorldSepulchers в GeneralConfig — мод 0033 не наложен");
++			return new Check("", false, tr("нет SmallWorldSepulchers в GeneralConfig — мод 0033 не наложен"));
+ 		}
+ 		if (ScriptManager.getInstance().getScript("FourSepulchers") == null)
+ 		{
+-			return new Check("", false, "скрипт FourSepulchers не загрузился — причина в логе сервера");
++			return new Check("", false, tr("скрипт FourSepulchers не загрузился — причина в логе сервера"));
+ 		}
+ 		final int managers = npcsInWorld(31921, 31922, 31923, 31924);
+-		final String where = "менеджеров гробниц в мире " + managers + " из 4";
++		final String where = tr("менеджеров гробниц в мире ") + managers + tr(" из 4");
+ 		if (!Boolean.TRUE.equals(enabled))
+ 		{
+-			return new Check("", managers > 0, "выключены (SmallWorldSepulchers = False) — пати от четырёх, как у Mobius; " + where);
++			return new Check("", managers > 0, tr("выключены (SmallWorldSepulchers = False) — пати от четырёх, как у Mobius; ") + where);
+ 		}
+-		return new Check("", managers > 0, "вкл: пати от " + staticField(config, "SMALL_WORLD_SEPULCHERS_MIN_PARTY") + ", квест 620 и пропуск — только у живых; " + where);
++		return new Check("", managers > 0, tr("вкл: пати от ") + staticField(config, "SMALL_WORLD_SEPULCHERS_MIN_PARTY") + tr(", квест 620 и пропуск — только у живых; ") + where);
+ 	}
+ 
+ 	private static Check rift() throws Exception
+@@ -659,15 +837,15 @@ public class L2HubSelfTest
+ 		final Object enabled = staticField(config, "SMALL_WORLD_RIFT");
+ 		if (enabled == null)
+ 		{
+-			return new Check("", false, "нет SmallWorldRift в GeneralConfig — мод 0035 не наложен");
++			return new Check("", false, tr("нет SmallWorldRift в GeneralConfig — мод 0035 не наложен"));
+ 		}
+ 		final int posts = npcsInWorld(31488, 31489, 31490, 31491, 31492, 31493);
+-		final String rules = "пати от " + staticField(config, "RIFT_MIN_PARTY_SIZE") + ", вход новичков — " + staticField(config, "RIFT_ENTER_COST_RECRUIT") + " фрагментов; Rift Post в мире: " + posts;
++		final String rules = tr("пати от ") + staticField(config, "RIFT_MIN_PARTY_SIZE") + tr(", вход новичков — ") + staticField(config, "RIFT_ENTER_COST_RECRUIT") + tr(" фрагментов; Rift Post в мире: ") + posts;
+ 		if (!Boolean.TRUE.equals(enabled))
+ 		{
+-			return new Check("", posts > 0, "выключен (SmallWorldRift = False) — фрагменты платит каждый, как у Mobius; " + rules);
++			return new Check("", posts > 0, tr("выключен (SmallWorldRift = False) — фрагменты платит каждый, как у Mobius; ") + rules);
+ 		}
+-		return new Check("", posts > 0, "вкл: фрагменты платят только живые; " + rules);
++		return new Check("", posts > 0, tr("вкл: фрагменты платят только живые; ") + rules);
+ 	}
+ 
+ 	private static Check noblesse() throws Exception
+@@ -676,25 +854,25 @@ public class L2HubSelfTest
+ 		final Properties town = customIni("L2HubTown.ini");
+ 		if (town.getProperty("TownNoblesse") == null)
+ 		{
+-			return new Check("", false, "нет TownNoblesse в L2HubTown.ini — мод 0034 не наложен");
++			return new Check("", false, tr("нет TownNoblesse в L2HubTown.ini — мод 0034 не наложен"));
+ 		}
+ 		if (!isTrue(town, "TownNoblesse", "False"))
+ 		{
+-			return new Check("", true, "выключен (TownNoblesse = False в L2HubTown.ini)");
++			return new Check("", true, tr("выключен (TownNoblesse = False в L2HubTown.ini)"));
+ 		}
+ 		if (!Boolean.TRUE.equals(staticField(config, "NOBLESS_MASTER_ENABLED")))
+ 		{
+-			return new Check("", false, "TownNoblesse включён, а в NoblessMaster.ini Enabled = False — мастер не ответит");
++			return new Check("", false, tr("TownNoblesse включён, а в NoblessMaster.ini Enabled = False — мастер не ответит"));
+ 		}
+ 		final int masters = npcsInWorld(((Number) staticField(config, "NOBLESS_MASTER_NPCID")).intValue());
+ 		final int itemId = ((Number) staticField(config, "NOBLESS_MASTER_ITEM_ID")).intValue();
+ 		final String count = String.format(java.util.Locale.ROOT, "%,d", ((Number) staticField(config, "NOBLESS_MASTER_ITEM_COUNT")).longValue()).replace(',', ' ');
+-		return new Check("", masters > 0, "в мире " + masters + " (бафферов " + npcsInWorld(50008) + "), дворянство с " + staticField(config, "NOBLESS_MASTER_LEVEL_REQUIREMENT") + "-го уровня за " + count + ((itemId == 57) ? " адены" : (" предмета " + itemId)));
++		return new Check("", masters > 0, tr("в мире ") + masters + tr(" (бафферов ") + npcsInWorld(50008) + tr("), дворянство с ") + staticField(config, "NOBLESS_MASTER_LEVEL_REQUIREMENT") + tr("-го уровня за ") + count + ((itemId == 57) ? tr(" адены") : (tr(" предмета ") + itemId)));
  	}
  
  	private static String onOff(boolean value)

@@ -26,6 +26,25 @@
 									<xs:attribute name="shirt" type="xs:nonNegativeInteger" />
 								</xs:complexType>
 							</xs:element>
+							<!-- Тела Танатоса после смерти (docs/PHANTOMS.md, 4.45): класс — сабкласс по ветке classes (вторая профа, третья), комплект — как у gear. -->
+							<xs:element name="body" maxOccurs="unbounded" minOccurs="0">
+								<xs:complexType>
+									<xs:attribute name="kit" type="xs:token" use="required" />
+									<xs:attribute name="classes" type="xs:string" use="required" />
+									<xs:attribute name="rhand" type="xs:nonNegativeInteger" />
+									<xs:attribute name="lhand" type="xs:nonNegativeInteger" />
+									<xs:attribute name="head" type="xs:nonNegativeInteger" />
+									<xs:attribute name="chest" type="xs:nonNegativeInteger" />
+									<xs:attribute name="legs" type="xs:nonNegativeInteger" />
+									<xs:attribute name="gloves" type="xs:nonNegativeInteger" />
+									<xs:attribute name="feet" type="xs:nonNegativeInteger" />
+									<xs:attribute name="shots" type="xs:nonNegativeInteger" />
+									<xs:attribute name="neck" type="xs:nonNegativeInteger" />
+									<xs:attribute name="ear" type="xs:nonNegativeInteger" />
+									<xs:attribute name="ring" type="xs:nonNegativeInteger" />
+									<xs:attribute name="shirt" type="xs:nonNegativeInteger" />
+								</xs:complexType>
+							</xs:element>
 						</xs:sequence>
 						<xs:attribute name="name" type="xs:token" use="required" />
 						<!-- companion — напарник (.buddy), hunter — охотник: живёт сам, качается с 1 уровня; reaper — Танатос (docs/PHANTOMS.md, 4.45). -->
@@ -60,6 +79,8 @@
 						<xs:attribute name="temper" type="xs:decimal" default="1" />
 						<!-- Риск охотника («Разум 2.0», шаг 6): меньше 1 — осторожный, больше 1 — рисковый (tools/fake_players.py, RISK). -->
 						<xs:attribute name="risk" type="xs:decimal" default="1" />
+						<!-- Ветеран (раздел 4.52): новый охотник рождается сразу этого уровня — класс по цепочке, скиллы, шмот своего грейда, адена живого такого уровня. Кто уже есть в базе, того не трогает. -->
+						<xs:attribute name="startLevel" type="xs:positiveInteger" />
 						<xs:attribute name="x" type="xs:integer" use="required" />
 						<xs:attribute name="y" type="xs:integer" use="required" />
 						<xs:attribute name="z" type="xs:integer" use="required" />

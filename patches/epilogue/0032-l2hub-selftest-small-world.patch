@@ -1,8 +1,8 @@
 diff --git a/dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java b/dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java
-index 62e557a8e30a1148c52d8259ec8ef9a496424613..2d2a2dace1a55ddb011585858534199ce79cf928 100644
+index 62e557a8e30a1148c52d8259ec8ef9a496424613..bd29f3e9db7711c890584304975b7559b8335425 100644
 --- a/dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java
 +++ b/dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java
-@@ -126,6 +126,10 @@ public class L2HubSelfTest
+@@ -126,6 +126,12 @@ public class L2HubSelfTest
  		probe(checks, "Мир сейчас: .world", L2HubSelfTest::worldInfo);
  		probe(checks, "Нашествие эльпи", L2HubSelfTest::elpies);
  		probe(checks, "Летопись мира", L2HubSelfTest::chronicle);
@@ -10,10 +10,12 @@ index 62e557a8e30a1148c52d8259ec8ef9a496424613..2d2a2dace1a55ddb011585858534199c
 +		probe(checks, "Семь печатей малого мира", L2HubSelfTest::sevenSigns);
 +		probe(checks, "Эпики малого мира", L2HubSelfTest::epics);
 +		probe(checks, "Фейки в городах", L2HubSelfTest::townFakes);
++		probe(checks, "Гробницы малого мира", L2HubSelfTest::sepulchers);
++		probe(checks, "Разлом малого мира", L2HubSelfTest::rift);
  		probe(checks, "Автолут", () -> new Check("", true, "живым — " + onOff(PlayerConfig.AUTO_LOOT) + ", травы — " + onOff(PlayerConfig.AUTO_LOOT_HERBS) + ", рейды — " + onOff(PlayerConfig.AUTO_LOOT_RAIDS)));
  
  		final long ok = checks.stream().filter(Check::ok).count();
-@@ -444,6 +448,164 @@ public class L2HubSelfTest
+@@ -444,6 +450,225 @@ public class L2HubSelfTest
  		return new Check("", writable, "log/L2HubChronicle.json " + (writable ? "доступен для записи" : "только для чтения!") + ", записей " + entries);
  	}
  
@@ -173,6 +175,67 @@ index 62e557a8e30a1148c52d8259ec8ef9a496424613..2d2a2dace1a55ddb011585858534199c
 +			return new Check("", false, "скрипт L2HubTownFakes не загрузился — причина в логе сервера");
 +		}
 +		return new Check("", present > 0, "в мире " + present + " из " + ids.size() + " по расписанию (плотность " + density + " %; утром, вечером и ночью выходят не все)");
++	}
++
++	// ---------- L2Hub 0032: гробницы, Разлом и мастер дворянства малого мира (0033–0035) ----------
++
++	/** Сколько NPC с этими id сейчас в мире. */
++	private static int npcsInWorld(int... ids)
++	{
++		int count = 0;
++		for (WorldObject object : World.getVisibleObjects())
++		{
++			if (object instanceof org.l2jmobius.gameserver.entity.actor.Npc npc)
++			{
++				for (int id : ids)
++				{
++					if (npc.getId() == id)
++					{
++						count++;
++						break;
++					}
++				}
++			}
++		}
++		return count;
++	}
++
++	private static Check sepulchers() throws Exception
++	{
++		final String config = "org.l2jmobius.gameserver.config.GeneralConfig";
++		final Object enabled = staticField(config, "SMALL_WORLD_SEPULCHERS");
++		if (enabled == null)
++		{
++			return new Check("", false, "нет SmallWorldSepulchers в GeneralConfig — мод 0033 не наложен");
++		}
++		if (ScriptManager.getInstance().getScript("FourSepulchers") == null)
++		{
++			return new Check("", false, "скрипт FourSepulchers не загрузился — причина в логе сервера");
++		}
++		final int managers = npcsInWorld(31921, 31922, 31923, 31924);
++		final String where = "менеджеров гробниц в мире " + managers + " из 4";
++		if (!Boolean.TRUE.equals(enabled))
++		{
++			return new Check("", managers > 0, "выключены (SmallWorldSepulchers = False) — пати от четырёх, как у Mobius; " + where);
++		}
++		return new Check("", managers > 0, "вкл: пати от " + staticField(config, "SMALL_WORLD_SEPULCHERS_MIN_PARTY") + ", квест 620 и пропуск — только у живых; " + where);
++	}
++
++	private static Check rift() throws Exception
++	{
++		final String config = "org.l2jmobius.gameserver.config.GeneralConfig";
++		final Object enabled = staticField(config, "SMALL_WORLD_RIFT");
++		if (enabled == null)
++		{
++			return new Check("", false, "нет SmallWorldRift в GeneralConfig — мод 0035 не наложен");
++		}
++		final int posts = npcsInWorld(31488, 31489, 31490, 31491, 31492, 31493);
++		final String rules = "пати от " + staticField(config, "RIFT_MIN_PARTY_SIZE") + ", вход новичков — " + staticField(config, "RIFT_ENTER_COST_RECRUIT") + " фрагментов; Rift Post в мире: " + posts;
++		if (!Boolean.TRUE.equals(enabled))
++		{
++			return new Check("", posts > 0, "выключен (SmallWorldRift = False) — фрагменты платит каждый, как у Mobius; " + rules);
++		}
++		return new Check("", posts > 0, "вкл: фрагменты платят только живые; " + rules);
 +	}
 +
  	private static String onOff(boolean value)

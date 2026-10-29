@@ -16,7 +16,7 @@
 владелец напарника. События хранятся в памяти разговора с ролью event.
 
 Танатос (docs/PHANTOMS.md, 4.45) шлёт "kind": "reaper" с событием event (whisper, kill, death, hunt, attacked, escaped): ответ — одна
-реплика жнеца или пусто; счёт встреч с игроком — из памяти пары.
+реплика жнеца или пусто; счёт встреч с игроком — из памяти пары; reaper.class — класс его нынешнего тела после смерти.
 
 Мозги-стратег охотников (патч 0019) шлют "kind": "strategy" с состоянием охотника и списком доступных вариантов; ответ —
 «[[ТЕГ]] мысль» или «[[AFK 15]] мысль». Тега из списка нет — HTTP 502, сервер тогда живёт по правилам. С «Разумом 2.0»
@@ -29,6 +29,7 @@
           python -m l2hub.brain <id> --test <напарник> "<что сказать>" --phantom [--event] [--order "<что сделано>"]
           python -m l2hub.brain <id> --test <охотник> - --strategy [--echo] [--goal "<цель>"] [--last "SPOT_TO <спот>: <причина>"]
           python -m l2hub.brain <id> --test Thanatos "<шёпот>" --reaper whisper  (или - --reaper kill|death|hunt|attacked|escaped)
+                                                                       [--body MYSTIC_MUSE]  (класс тела)
   --echo — без модели: ответ «эхо: …», чтобы проверить связку с сервером, не тратя запросы.
 """
 
@@ -1674,7 +1675,10 @@ class Brain:
         r = req.get("reaper", {})
         forms = self._reaper_forms(bool(player.get("female")))
         pl = f"{player.get('name', '')} ({player.get('level', '')} ур., {_readable(player.get('class', ''))})"
-        who = ", ".join(x for x in (p.get("race"), p.get("class"), f"{r.get('level') or 76} уровень") if x)
+        # Тело после смерти (docs/PHANTOMS.md, 4.45, «Новое тело»): ядро шлёт класс нынешнего тела; с виду он тот же орк.
+        body = _readable(r.get("class", ""))
+        new_body = body and body.lower() != p.get("class", "").lower()
+        who = ", ".join(x for x in (p.get("race"), body or p.get("class"), f"{r.get('level') or 76} уровень") if x)
         if event == "whisper" or not req.get("lang"):
             lang = "на языке собеседника; по-русски — " + ("латиницей (транслитом)" if self.cfg["alphabet"] == "translit" else "кириллицей")
         else:
@@ -1685,6 +1689,8 @@ class Brain:
             f"Характер: {p['traits']}." if p.get("traits") else "",
             f"Манера речи: {p['style']}." if p.get("style") else "",
             "Ты забираешь игроков и охотников этого мира и уходишь дальше; мобов не трогаешь. Смерть от тебя не отнимает у них опыт.",
+            f"Тебя уже убивали, и ты вернулся в другом теле: с виду тот же орк, а бьёшь как {body}. Кто дрался с тобой прежним, "
+            "этого не ждёт." if new_body else "",
             f"HP у тебя {r['hpPct']}%." if r.get("hpPct") is not None and event in ("hunt", "attacked") else "",
             f"{player.get('name', '')} — один из охотников этого мира." if player.get("hunter") else "",
             f"Что было между вами раньше: {tally}." if tally else f"Раньше вы с {player.get('name', '')} не встречались.",
@@ -1851,6 +1857,7 @@ def main() -> int:
                          "rival и pal — собеседник тоже охотник (патч 0033): трижды отжал моба / качались вместе и реснул")
     ap.add_argument("--reaper", choices=sorted(REAPER_EVENTS), help="FPC — Танатос: реплика на событие ядра (whisper — MESSAGE шёпот, остальным MESSAGE не нужен)")
     ap.add_argument("--party", type=int, default=0, help="с --reaper hunt|death: сколько их в охоте")
+    ap.add_argument("--body", default="", help="с --reaper: класс нынешнего тела, как его шлёт ядро (MYSTIC_MUSE); пусто — базовый")
     ap.add_argument("--ext", action="store_true", help="расширенный режим без focus, тумблера и лимита: стратег с размышлением и базой знаний, "
                                                       "охотник в разговоре — с базой знаний (деньги тратит, как настоящий)")
     ap.add_argument("--spot", help="с --strategy и --phantom: спот охотника — имя из L2HubHuntSpots.xml (уровень мобов берётся из базы знаний)")
@@ -1898,7 +1905,7 @@ def main() -> int:
         fpc, message = args.test
         req = {"kind": "reaper", "fpc": fpc, "event": args.reaper, "message": message if args.reaper == "whisper" else "", "party": args.party,
                "player": {"name": args.player, "level": 58, "class": "TREASURE_HUNTER", "race": "HUMAN", "female": False, "hunter": False},
-               "reaper": {"level": 76, "hpPct": 64}}
+               "reaper": {"level": 76, "hpPct": 64, "class": args.body}}
         tally, killers = brain._reaper_tally(fpc, args.player, False)
         print("--- system prompt ---")
         print(brain.reaper_prompt(req, tally, killers))

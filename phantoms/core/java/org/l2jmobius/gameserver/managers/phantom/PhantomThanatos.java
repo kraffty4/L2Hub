@@ -36,6 +36,7 @@ import org.l2jmobius.gameserver.managers.GlobalVariablesManager;
 import org.l2jmobius.gameserver.managers.ScriptManager;
 import org.l2jmobius.gameserver.managers.ZoneManager;
 import org.l2jmobius.gameserver.managers.phantom.HuntSpotData.HuntSpot;
+import org.l2jmobius.gameserver.mechanics.effects.EffectType;
 import org.l2jmobius.gameserver.mechanics.events.Containers;
 import org.l2jmobius.gameserver.mechanics.events.EventType;
 import org.l2jmobius.gameserver.mechanics.events.holders.actor.creature.OnCreatureDamageReceived;
@@ -131,6 +132,16 @@ public final class PhantomThanatos
 	 * Magnus, дары серафима), щитовые (Bless Shield, Advanced Block) и вредные (Dance of Shadow режет скорость вдвое, Berserker Spirit и Dance of Berserker снимают защиту).
 	 */
 	private static final java.util.Set<Integer> NO_BUFFS = java.util.Set.of(1059, 1078, 1085, 1303, 1397, 273, 276, 365, 1002, 1355, 1357, 1413, 4702, 4703, 1243, 1304, 366, 1062, 915);
+	/** Тело мага ({@link PhantomTemplate.Body}): магические бафы — его; не его — щитовые и вредные. Тело со щитом берёт и щитовые (Bless Shield, Advanced Block). */
+	private static final java.util.Set<Integer> MAGE_NO_BUFFS = java.util.Set.of(1243, 1304, 366, 1062, 915);
+	private static final java.util.Set<Integer> SHIELD_BUFFS = java.util.Set.of(1243, 1304);
+	/**
+	 * Тело после смерти (решения автора 2026-10-25, «Новое тело»): 0 — Тиран шаблона, 1… — {@link PhantomTemplate#getBodies()}. Убили — следующее тело
+	 * другое, случайное; номер — в глобальной переменной, переживает рестарт.
+	 */
+	private static final String BODY_VARIABLE = "L2HubThanatosBody";
+	/** Удары тела не Тирана: столько самых сильных атакующих скиллов класса. */
+	private static final int BODY_ATTACKS = 4;
 	/** Первый выход — через столько после старта охотников. */
 	private static final long FIRST = 600000;
 	/** После смерти — столько без него; труп лежит столько. */
@@ -195,6 +206,10 @@ public final class PhantomThanatos
 	private static final int BLINK_MAX = 3200;
 	/** Самопроверка: выйти не дальше стольких от охотника. */
 	private static final int SELF_TEST_NEAR = 500;
+	/** Самопроверка THANATOS_DEATH: столько смертей; охотник убивает его через столько после выхода; сутки отсутствия — не короче стольких. */
+	private static final int DEATH_TEST_ROUNDS = 3;
+	private static final long DEATH_TEST_ALIVE = 30000;
+	private static final long DEATH_TEST_ABSENCE_MIN = DEATH_ABSENCE - 600000;
 	/** Охотники его видят в этом радиусе; кричат — не чаще; охоту собирают — не чаще. */
 	private static final int SEE_RANGE = 1500;
 	private static final long SHOUT_GAP = 300000;
@@ -297,6 +312,22 @@ public final class PhantomThanatos
 	/** Сколько раз кастовал какой скилл с выхода — в лог при убийстве и смерти (проверка боя). */
 	private static final Map<String, Integer> CASTS = new ConcurrentHashMap<>();
 	private ConsumerEventListener _damageListener;
+	/** Удары тела не Тирана ({@link #attacks}): в бою — первый готовый, с ctrl. У Тирана — свой бой ({@link #ATTACKS}). */
+	private volatile List<Skill> _attacks = List.of();
+	/** Самопроверка THANATOS_BODIES идёт ({@link #selfTestBodies}): тик молчит. */
+	private volatile boolean _bodyTest;
+	/** Когда вышел в мир последний раз. */
+	private long _appearedAt;
+	/**
+	 * Самопроверка THANATOS_DEATH ({@link #selfTestDeath}): сколько смертей ещё устроить, сколько раундов прошло и сколько из них в порядке; он мёртв и ждёт
+	 * возвращения — тело до смерти и сколько вещей было при нём.
+	 */
+	private int _deathTest;
+	private int _deathTestRound;
+	private int _deathTestOk;
+	private boolean _deathTestDied;
+	private int _deathTestBody;
+	private int _deathTestItems;
 
 	private PhantomThanatos()
 	{
@@ -347,6 +378,242 @@ public final class PhantomThanatos
 	}
 
 	/**
+	 * Самопроверка THANATOS_BODIES ({@code HuntersSelfTest}, для разработки; раздел 4.45, «Новое тело»): все тела по очереди выходят рядом с охотником на каче
+	 * и уходят — сабкласс, класс, уровень, раса, оружие, удары; итог — «done, N of M ok». Дальше — как THANATOS, в теле мага (самом непохожем на Тирана): бой и смерть.
+	 */
+	synchronized void selfTestBodies()
+	{
+		_bodyTest = true;
+		_selfTest = true;
+		LOGGER.info(getClass().getSimpleName() + ": SelfTest THANATOS_BODIES: every body in turn, next to a hunter.");
+		ThreadPool.schedule(this::runBodyTest, 1000);
+	}
+
+	/**
+	 * Самопроверка THANATOS_DEATH ({@code HuntersSelfTest}, для разработки; раздел 4.45, «Новое тело»): выходит рядом с охотником, как THANATOS, и
+	 * {@value #DEATH_TEST_ROUNDS} раза гибнет от руки ближайшего охотника через {@value #DEATH_TEST_ALIVE} мс после выхода. Дальше — штатно: летопись, голос,
+	 * карма роняет вещи, следующее тело, сутки отсутствия, минута трупа, уход в базу. Сутки самопроверка обнуляет и выпускает его сразу: тело другое, отсутствие —
+	 * около суток, новое тело — как в THANATOS_BODIES. Итог — «done, N of M ok», дальше — как THANATOS.
+	 */
+	synchronized void selfTestDeath()
+	{
+		_deathTest = DEATH_TEST_ROUNDS;
+		_deathTestRound = 0;
+		_deathTestOk = 0;
+		_deathTestDied = false;
+		selfTest();
+		LOGGER.info(getClass().getSimpleName() + ": SelfTest THANATOS_DEATH: he dies " + DEATH_TEST_ROUNDS + " times by a hunter's hand and comes back at once in another body.");
+	}
+
+	private void runBodyTest()
+	{
+		final PhantomTemplate template = PhantomData.getInstance().getReaper();
+		if (template == null)
+		{
+			LOGGER.warning(getClass().getSimpleName() + ": SelfTest THANATOS_BODIES: no reaper in L2HubPhantoms.xml.");
+			_bodyTest = false;
+			return;
+		}
+		final List<PhantomTemplate.Body> bodies = template.getBodies();
+		int ok = 0;
+		int mage = 0;
+		for (int i = 0; i <= bodies.size(); i++)
+		{
+			final PhantomTemplate.Body body = i == 0 ? null : bodies.get(i - 1);
+			if ((body != null) && "mage".equals(body.kit()))
+			{
+				mage = i;
+			}
+			final String kit = body == null ? "tyrant" : body.kit();
+			String why = "";
+			try
+			{
+				synchronized (this)
+				{
+					if (PhantomManager.getInstance().getPhantom(template) != null)
+					{
+						leave(template, "body test");
+					}
+					GlobalVariablesManager.getInstance().set(BODY_VARIABLE, i);
+					appear(template, System.currentTimeMillis());
+				}
+				final Player me = PhantomManager.getInstance().getPhantom(template);
+				if (me == null)
+				{
+					why = "did not appear";
+				}
+				else
+				{
+					why = checkBody(me, template, body);
+					LOGGER.info(getClass().getSimpleName() + ": SelfTest THANATOS_BODIES: body " + i + " " + kit + " — " + describe(me) + (why.isEmpty() ? ": ok." : ": FAIL —" + why));
+				}
+			}
+			catch (Exception e)
+			{
+				why = e.toString();
+				LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": SelfTest THANATOS_BODIES: body " + i + " " + kit + " failed: " + e.getMessage(), e);
+			}
+			if (why.isEmpty())
+			{
+				ok++;
+			}
+		}
+		synchronized (this)
+		{
+			leave(template, "body test done");
+			GlobalVariablesManager.getInstance().set(BODY_VARIABLE, mage);
+		}
+		LOGGER.info(getClass().getSimpleName() + ": SelfTest THANATOS_BODIES: done, " + ok + " of " + (bodies.size() + 1) + " ok; now as THANATOS in body " + (mage == 0 ? "tyrant" : "mage") + ".");
+		_bodyTest = false;
+		selfTest();
+	}
+
+	/**
+	 * Самопроверки тел: он такой, каким его делает тело ({@code null} — Тиран): 76-й, класс, сабкласс, раса орка, оружие, удары, стрелы луку.
+	 * @return пусто — в порядке; иначе — что не так
+	 */
+	private String checkBody(Player me, PhantomTemplate template, PhantomTemplate.Body body)
+	{
+		String why = "";
+		final int wantClass = body == null ? template.getClassId(LEVEL) : body.classes()[body.classes().length - 1];
+		final Item weapon = me.getInventory().getPaperdollItem(Inventory.PAPERDOLL_RHAND);
+		final int wantWeapon = body == null ? template.getGear(LEVEL).rhand : body.gear().rhand;
+		final int ammo = PhantomHunterOutfit.ammoId(me);
+		final Item lhand = me.getInventory().getPaperdollItem(Inventory.PAPERDOLL_LHAND);
+		if (me.getLevel() != LEVEL)
+		{
+			why += " level " + me.getLevel() + ";";
+		}
+		if (me.getPlayerClass().getId() != wantClass)
+		{
+			why += " class " + me.getPlayerClass().name() + " instead of " + wantClass + ";";
+		}
+		if (me.isSubClassActive() != (body != null))
+		{
+			why += " sub class active " + me.isSubClassActive() + ";";
+		}
+		if (!"ORC".equals(me.getRace().name()))
+		{
+			why += " race " + me.getRace() + ";";
+		}
+		if ((weapon == null) || (weapon.getId() != wantWeapon))
+		{
+			why += " weapon " + (weapon == null ? "none" : weapon.getName()) + " instead of " + wantWeapon + ";";
+		}
+		if ((body != null) && _attacks.isEmpty())
+		{
+			why += " no attack skills;";
+		}
+		if ((ammo > 0) && ((lhand == null) || (lhand.getId() != ammo)))
+		{
+			why += " no arrows;";
+		}
+		return why;
+	}
+
+	/**
+	 * @return для лога самопроверок: уровень, класс, раса, сабкласс, оружие с заточкой, левая рука, удары
+	 */
+	private String describe(Player me)
+	{
+		final Item weapon = me.getInventory().getPaperdollItem(Inventory.PAPERDOLL_RHAND);
+		final Item lhand = me.getInventory().getPaperdollItem(Inventory.PAPERDOLL_LHAND);
+		return me.getLevel() + " " + me.getPlayerClass().name() + ", race " + me.getRace() + ", sub " + me.isSubClassActive() + ", " + (weapon == null ? "no weapon" : weapon.getName() + " +" + weapon.getEnchantLevel()) + (lhand == null ? "" : ", left " + lhand.getName() + (lhand.getCount() > 1 ? " x" + lhand.getCount() : "")) + ", attacks " + _attacks.stream().map(Skill::getName).toList();
+	}
+
+	/**
+	 * @return вид тела по номеру — для лога
+	 */
+	private static String kitOf(PhantomTemplate template, int index)
+	{
+		return (index <= 0) || (index > template.getBodies().size()) ? "tyrant" : template.getBodies().get(index - 1).kit();
+	}
+
+	/**
+	 * THANATOS_DEATH, раунд: ближайший охотник убивает его — дальше смерть идёт штатно ({@link #onSelfDeath}, уход трупа в {@link #think}).
+	 */
+	private void deathTestKill(PhantomTemplate template, Player me)
+	{
+		Player killer = null;
+		double nearest = Double.MAX_VALUE;
+		for (Player other : World.getPlayers())
+		{
+			if ((other != me) && !other.isDead() && PhantomManager.getInstance().isPhantom(other) && PhantomRelations.isHunter(other))
+			{
+				final double distance = me.calculateDistance3D(other);
+				if (distance < nearest)
+				{
+					nearest = distance;
+					killer = other;
+				}
+			}
+		}
+		_deathTestRound++;
+		_deathTest--;
+		_deathTestBody = bodyIndex(template);
+		_deathTestItems = me.getInventory().getItems().size();
+		LOGGER.info(getClass().getSimpleName() + ": SelfTest THANATOS_DEATH: round " + _deathTestRound + ": " + (killer == null ? "nobody" : killer.getName() + " (" + killer.getLevel() + ", " + (int) nearest + " away)") + " kills him in body " + kitOf(template, _deathTestBody) + " — " + describe(me) + ", karma " + PhantomCompat.karma(me) + ", pk " + me.getPkKills() + ", " + _deathTestItems + " items.");
+		me.doDie(killer);
+		if (me.isDead())
+		{
+			_deathTestDied = true;
+			// Карма роняет вещи по правилам Mobius: с шансом и только от PvpConfig.KARMA_PK_LIMIT убийств (pk в строке выше) — ноль вещей не провал.
+			LOGGER.info(getClass().getSimpleName() + ": SelfTest THANATOS_DEATH: round " + _deathTestRound + ": dead; " + (_deathTestItems - me.getInventory().getItems().size()) + " items gone with karma; back variable in " + ((GlobalVariablesManager.getInstance().getLong(BACK_VARIABLE, 0) - System.currentTimeMillis()) / 60000) + " min, next body " + kitOf(template, bodyIndex(template)) + ".");
+		}
+		else
+		{
+			LOGGER.warning(getClass().getSimpleName() + ": SelfTest THANATOS_DEATH: round " + _deathTestRound + ": FAIL — he did not die.");
+			deathTestDone();
+		}
+	}
+
+	/**
+	 * THANATOS_DEATH: труп ушёл в базу — проверить, что смерть записала (сутки, другое тело), обнулить сутки и выпустить его в новом теле.
+	 */
+	private void deathTestReturn(PhantomTemplate template, long now)
+	{
+		_deathTestDied = false;
+		String why = "";
+		final long absence = GlobalVariablesManager.getInstance().getLong(BACK_VARIABLE, 0) - now;
+		if ((absence < DEATH_TEST_ABSENCE_MIN) || (absence > DEATH_ABSENCE))
+		{
+			why += " away for " + (absence / 60000) + " min instead of 24 h;";
+		}
+		final int index = bodyIndex(template);
+		if (index == _deathTestBody)
+		{
+			why += " same body;";
+		}
+		GlobalVariablesManager.getInstance().set(BACK_VARIABLE, 0L);
+		appear(template, now);
+		final Player me = PhantomManager.getInstance().getPhantom(template);
+		if (me == null)
+		{
+			why += " did not appear;";
+		}
+		else
+		{
+			why += checkBody(me, template, index == 0 ? null : template.getBodies().get(index - 1));
+		}
+		if (why.isEmpty())
+		{
+			_deathTestOk++;
+		}
+		LOGGER.info(getClass().getSimpleName() + ": SelfTest THANATOS_DEATH: round " + _deathTestRound + ": " + kitOf(template, _deathTestBody) + " -> " + kitOf(template, index) + ", away " + (absence / 60000) + " min" +(me == null ? "" : " — " + describe(me) + ", " + me.getInventory().getItems().size() + " items (" + _deathTestItems + " before death)") + (why.isEmpty() ? ": ok." : ": FAIL —" + why));
+		if (_deathTest == 0)
+		{
+			deathTestDone();
+		}
+	}
+
+	private void deathTestDone()
+	{
+		LOGGER.info(getClass().getSimpleName() + ": SelfTest THANATOS_DEATH: done, " + _deathTestOk + " of " + _deathTestRound + " ok; now as THANATOS.");
+		_deathTest = 0;
+		_deathTestDied = false;
+	}
+
+	/**
 	 * @return это он
 	 */
 	public static boolean is(Player player)
@@ -380,7 +647,7 @@ public final class PhantomThanatos
 	private synchronized void think(long now)
 	{
 		final PhantomTemplate template = PhantomData.getInstance().getReaper();
-		if (template == null)
+		if ((template == null) || _bodyTest)
 		{
 			return;
 		}
@@ -395,7 +662,11 @@ public final class PhantomThanatos
 		}
 		if (me == null)
 		{
-			if (now >= back())
+			if (_deathTestDied)
+			{
+				deathTestReturn(template, now);
+			}
+			else if (now >= back())
 			{
 				appear(template, now);
 			}
@@ -418,6 +689,11 @@ public final class PhantomThanatos
 			{
 				leave(template, "dead");
 			}
+			return;
+		}
+		if ((_deathTest > 0) && ((now - _appearedAt) >= DEATH_TEST_ALIVE))
+		{
+			deathTestKill(template, me);
 			return;
 		}
 		if (PhantomCompat.karma(me) < KARMA)
@@ -560,15 +836,31 @@ public final class PhantomThanatos
 		{
 			return;
 		}
+		// Тело (раздел 4.45, «Новое тело»): не Тиран — сабкласс тела и его комплект; Тиран, а из базы поднят в прежнем теле — назад в базу и сборка Тирана.
+		final int bodyIndex = bodyIndex(template);
+		final PhantomTemplate.Body body = bodyIndex == 0 ? null : template.getBodies().get(bodyIndex - 1);
+		if (body != null)
+		{
+			if (!PhantomOutfit.wearBody(me, body, LEVEL))
+			{
+				LOGGER.warning(getClass().getSimpleName() + ": " + me.getName() + " stays a Tyrant: body " + body.kit() + " did not take.");
+			}
+		}
+		else if (me.isSubClassActive())
+		{
+			PhantomOutfit.toBase(me);
+			PhantomOutfit.build(me, template, LEVEL);
+		}
+		_attacks = attacks(me);
 		if (me.getLevel() != LEVEL)
 		{
 			LOGGER.warning(getClass().getSimpleName() + ": " + me.getName() + " is level " + me.getLevel() + " instead of " + LEVEL + ".");
 		}
-		// Заточка: снять, заточить, надеть — бонусы заточки считаются при надевании.
+		// Заточка: снять, заточить, надеть — бонусы заточки считаются при надевании. Стрелы в левой руке — не точить.
 		for (int slot : SLOTS)
 		{
 			final Item item = me.getInventory().getPaperdollItem(slot);
-			if ((item != null) && (item.getEnchantLevel() == 0))
+			if ((item != null) && (item.getEnchantLevel() == 0) && (item.isWeapon() || item.isArmor()))
 			{
 				me.getInventory().unEquipItemInSlot(slot);
 				item.setEnchantLevel(slot == Inventory.PAPERDOLL_RHAND ? WEAPON_ENCHANT : slot == Inventory.PAPERDOLL_UNDER ? SHIRT_ENCHANT : ARMOR_ENCHANT);
@@ -598,6 +890,7 @@ public final class PhantomThanatos
 		_damageListener = new ConsumerEventListener(me, EventType.ON_CREATURE_DAMAGE_RECEIVED, (OnCreatureDamageReceived event) -> onDamaged(event), this);
 		me.addListener(_damageListener);
 		_spot = spot;
+		_appearedAt = now;
 		_arrivedAt = 0;
 		_visited.clear();
 		remember(spot);
@@ -613,8 +906,55 @@ public final class PhantomThanatos
 		_deathHandled = false;
 		_aggressors.clear();
 		CASTS.clear();
-		LOGGER.info(getClass().getSimpleName() + ": " + me.getName() + " (" + me.getLevel() + " " + me.getPlayerClass().name() + ") walks the world, heading to " + spot.name + ".");
+		LOGGER.info(getClass().getSimpleName() + ": " + me.getName() + " (" + me.getLevel() + " " + me.getPlayerClass().name() + ", body " + (body == null ? "tyrant" : body.kit()) + ") walks the world, heading to " + spot.name + ".");
 		townFakes("thanatos", me, "");
+	}
+
+	/**
+	 * @return номер тела ({@link #BODY_VARIABLE}): 0 — Тиран; номер вне списка тел хроники — тоже 0
+	 */
+	private static int bodyIndex(PhantomTemplate template)
+	{
+		final int index = GlobalVariablesManager.getInstance().getInt(BODY_VARIABLE, 0);
+		return (index < 0) || (index > template.getBodies().size()) ? 0 : index;
+	}
+
+	/**
+	 * Убили — следующее тело другое: случайное из остальных (Тиран тоже в их числе).
+	 * @return новое тело — в лог
+	 */
+	private static String nextBody(PhantomTemplate template)
+	{
+		final int count = template.getBodies().size() + 1;
+		if (count < 2)
+		{
+			return "tyrant";
+		}
+		int next = Rnd.get(count - 1);
+		if (next >= bodyIndex(template))
+		{
+			next++;
+		}
+		GlobalVariablesManager.getInstance().set(BODY_VARIABLE, next);
+		return next == 0 ? "tyrant" : template.getBodies().get(next - 1).kit();
+	}
+
+	/**
+	 * Удары тела не Тирана, как у охотников ({@code PhantomHunterOutfit.setupCombat}): активные атакующие скиллы класса без расхода предметов,
+	 * {@value #BODY_ATTACKS} самых сильных; скиллы на заряды — тоже (готов ли — {@link #ready}).
+	 */
+	private static List<Skill> attacks(Player me)
+	{
+		final List<Skill> attacks = new ArrayList<>();
+		for (Skill skill : me.getAllSkills())
+		{
+			if (skill.isActive() && !skill.isToggle() && (skill.getItemConsumeCount() == 0) && PhantomCompat.isAttackSkillTarget(skill) && skill.hasEffectType(EffectType.PHYSICAL_ATTACK, EffectType.MAGICAL_ATTACK, EffectType.HP_DRAIN, EffectType.DEATH_LINK, EffectType.PHYSICAL_ATTACK_HP_LINK))
+			{
+				attacks.add(skill);
+			}
+		}
+		attacks.sort((a, b) -> Double.compare(PhantomCompat.skillPower(b), PhantomCompat.skillPower(a)));
+		return List.copyOf(attacks.subList(0, Math.min(BODY_ATTACKS, attacks.size())));
 	}
 
 	private void leave(PhantomTemplate template, String why)
@@ -623,6 +963,11 @@ public final class PhantomThanatos
 		if ((me != null) && (_damageListener != null))
 		{
 			me.removeListener(_damageListener);
+		}
+		// В базу — в ней он поднимается и собирается заново при следующем выходе (тело надевается поверх).
+		if (me != null)
+		{
+			PhantomOutfit.toBase(me);
 		}
 		_damageListener = null;
 		PhantomManager.getInstance().despawn(template);
@@ -647,7 +992,7 @@ public final class PhantomThanatos
 			}
 			for (int skillId : table.getSkillsIdsByType(type))
 			{
-				if (NO_BUFFS.contains(skillId) || !done.add(skillId))
+				if (noBuff(me, skillId) || !done.add(skillId))
 				{
 					continue;
 				}
@@ -677,6 +1022,19 @@ public final class PhantomThanatos
 				skill.applyEffects(me, me);
 			}
 		}
+	}
+
+	/**
+	 * @return баф не его: воину — {@link #NO_BUFFS}, телу мага — {@link #MAGE_NO_BUFFS}; телу со щитом щитовые бафы ({@link #SHIELD_BUFFS}) — его
+	 */
+	private static boolean noBuff(Player me, int skillId)
+	{
+		final Item lhand = me.getInventory().getPaperdollItem(Inventory.PAPERDOLL_LHAND);
+		if ((lhand != null) && lhand.isArmor() && SHIELD_BUFFS.contains(skillId))
+		{
+			return false;
+		}
+		return (me.isMageClass() ? MAGE_NO_BUFFS : NO_BUFFS).contains(skillId);
 	}
 
 	// ---------- Ходьба ----------
@@ -1289,11 +1647,17 @@ public final class PhantomThanatos
 	 * Силу он копит до {@value #CHARGES_IDLE} заранее, между жертвами ({@link #charge}).
 	 * Сам собран как напарник ({@code PhantomOutfit.build}), AutoUse у него пуст: без этого он бил только рукой (прогон H5 2026-10-23 — охота четверых 70+ брала его за 35 с).
 	 */
-	private static void strike(Player me, Player victim)
+	private void strike(Player me, Player victim)
 	{
 		if (me.getTarget() != victim)
 		{
 			me.setTarget(victim);
+		}
+		// Тело не Тирана (силы Focused Force у него нет) — свои удары.
+		if ((me.getKnownSkill(FOCUSED_FORCE) == null) && !_attacks.isEmpty())
+		{
+			strikeAsBody(me, victim);
+			return;
 		}
 		// Хилер — сначала оглушить Soul Breaker: пока он стоит, его не лечат и он не лечит.
 		final Skill stun = healer(victim) ? me.getKnownSkill(SOUL_BREAKER) : null;
@@ -1326,6 +1690,30 @@ public final class PhantomThanatos
 		{
 			CASTS.merge(force.getName(), 1, Integer::sum);
 			return;
+		}
+		if ((me.getAI().getIntention() != Intention.ATTACK) || (!me.isAttackingNow() && !me.isMoving()))
+		{
+			me.setRunning();
+			me.getAI().setIntentionAttack(victim);
+		}
+	}
+
+	/**
+	 * Удар тела не Тирана: первый готовый из {@link #_attacks} (с ctrl — белого тоже); ничего не готово — оружием (маг — тоже: стоять хуже).
+	 */
+	private void strikeAsBody(Player me, Player victim)
+	{
+		for (Skill skill : _attacks)
+		{
+			if (ready(me, skill, victim))
+			{
+				me.setRunning();
+				if (PhantomCompat.useMagic(me, skill, true, false))
+				{
+					CASTS.merge(skill.getName(), 1, Integer::sum);
+					return;
+				}
+			}
 		}
 		if ((me.getAI().getIntention() != Intention.ATTACK) || (!me.isAttackingNow() && !me.isMoving()))
 		{
@@ -1592,8 +1980,11 @@ public final class PhantomThanatos
 		GlobalVariablesManager.getInstance().set(BACK_VARIABLE, now + DEATH_ABSENCE);
 		_deadSince = now;
 		_victimId = 0;
+		// Вернётся другим (решение автора 2026-10-24: «после убийства танатоса меняется его класс и шмотки»).
+		final PhantomTemplate template = PhantomData.getInstance().getReaper();
+		final String body = template == null ? "?" : nextBody(template);
 		final String by = killer == null ? "" : ": его убил " + (PhantomManager.getInstance().isPhantom(killer) ? "охотник " : "игрок ") + killer.getName() + " (" + killer.getLevel() + ")";
-		LOGGER.info(getClass().getSimpleName() + ": " + me.getName() + " died" + (killer != null ? " (" + killer.getName() + ")" : "") + "; back in 24 h; casts " + CASTS + ".");
+		LOGGER.info(getClass().getSimpleName() + ": " + me.getName() + " died" + (killer != null ? " (" + killer.getName() + ")" : "") + "; back in 24 h as body " + body + "; casts " + CASTS + ".");
 		PhantomNews.post("thanatos", "Танатос пал" + by + ". Сутки его не будет", killer != null ? killer.getName() : me.getName(), me);
 		// Голос: последнее слово вслух; party — сколько было в охоте, без охоты — сколько били его в последние полминуты.
 		if ((killer != null) && (liveNear(me) || _selfTest))
@@ -1685,7 +2076,9 @@ public final class PhantomThanatos
 		FakePlayerBrain.field(sb, "race", player.getRace().name()).append(',');
 		sb.append("\"female\":").append(player.getAppearance().isFemale()).append(',');
 		sb.append("\"hunter\":").append(PhantomRelations.isHunter(player));
-		sb.append("},\"reaper\":{\"level\":").append(me.getLevel()).append(",\"hpPct\":").append((int) ((me.getCurrentHp() * 100) / Math.max(1, me.getMaxHp()))).append("}}");
+		sb.append("},\"reaper\":{\"level\":").append(me.getLevel()).append(",\"hpPct\":").append((int) ((me.getCurrentHp() * 100) / Math.max(1, me.getMaxHp()))).append(',');
+		// Класс нынешнего тела (раздел 4.45, «Новое тело»): с виду орк-Тиран, а бьёт, например, как Spellsinger — реплики под класс у мозгов.
+		FakePlayerBrain.field(sb, "class", me.getPlayerClass().name()).append("}}");
 		FakePlayerBrain.getInstance().send(sb.toString(), reply ->
 		{
 			final String line = reply == null ? "" : reply.strip();

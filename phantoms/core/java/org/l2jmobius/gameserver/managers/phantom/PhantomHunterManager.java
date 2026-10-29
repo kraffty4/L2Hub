@@ -3207,6 +3207,18 @@ public class PhantomHunterManager
 			PhantomRaid.getInstance().selfTestEpic();
 			return;
 		}
+		// Тела Танатоса по очереди, потом он сам в теле мага (раздел 4.45, «Новое тело»).
+		if ("THANATOS_BODIES".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST))
+		{
+			PhantomThanatos.getInstance().selfTestBodies();
+			return;
+		}
+		// Смерть Танатоса от руки охотника и выход в новом теле, трижды (раздел 4.45, «Новое тело»).
+		if ("THANATOS_DEATH".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST))
+		{
+			PhantomThanatos.getInstance().selfTestDeath();
+			return;
+		}
 		// Танатос сразу (раздел 4.45).
 		if ("THANATOS".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST))
 		{

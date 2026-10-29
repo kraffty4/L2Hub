@@ -1,5 +1,5 @@
 diff --git a/dist/game/data/scripts/custom/L2HubChronicle/L2HubChronicle.java b/dist/game/data/scripts/custom/L2HubChronicle/L2HubChronicle.java
-index 8eaf0bbe41534ed45eaf9701e9eb268b678b43cb..de0198c4d8dcca2a57cf2695ae22408fdecba401 100644
+index 8c96b47b42c67860ca2b93c90b4640c67930913b..7ccc6181e7267bcf2f0e8fac08f665ac18307524 100644
 --- a/dist/game/data/scripts/custom/L2HubChronicle/L2HubChronicle.java
 +++ b/dist/game/data/scripts/custom/L2HubChronicle/L2HubChronicle.java
 @@ -66,6 +66,55 @@ import org.l2jmobius.gameserver.mechanics.script.Quest;
@@ -91,7 +91,7 @@ index 8eaf0bbe41534ed45eaf9701e9eb268b678b43cb..de0198c4d8dcca2a57cf2695ae22408f
  		}
  		else
  		{
-@@ -278,8 +327,8 @@ public class L2HubChronicle
+@@ -283,8 +332,8 @@ public class L2HubChronicle
  		{
  			if ((event.getOldLevel() < level) && (event.getNewLevel() >= level))
  			{
@@ -102,10 +102,10 @@ index 8eaf0bbe41534ed45eaf9701e9eb268b678b43cb..de0198c4d8dcca2a57cf2695ae22408f
  			}
  		}
  	}
-@@ -291,8 +340,8 @@ public class L2HubChronicle
+@@ -300,8 +349,8 @@ public class L2HubChronicle
+ 		{
  			return;
  		}
- 		final Player player = event.getPlayer();
 -		final String name = (hunter(player) ? "Охотник " : "Игрок ") + player.getName();
 -		add("profession", name + " стал " + className(event.getTemplate().getPlayerClass().name()), player.getName(), null, null, null);
 +		final String name = (hunter(player) ? tr("Охотник ") : tr("Игрок ")) + player.getName();
@@ -113,7 +113,7 @@ index 8eaf0bbe41534ed45eaf9701e9eb268b678b43cb..de0198c4d8dcca2a57cf2695ae22408f
  	}
  
  	/**
-@@ -354,7 +403,7 @@ public class L2HubChronicle
+@@ -363,7 +412,7 @@ public class L2HubChronicle
  				alive.add(id);
  				if ((_epicsAlive != null) && !_epicsAlive.contains(id))
  				{
@@ -122,7 +122,7 @@ index 8eaf0bbe41534ed45eaf9701e9eb268b678b43cb..de0198c4d8dcca2a57cf2695ae22408f
  				}
  			}
  		}
-@@ -388,7 +437,7 @@ public class L2HubChronicle
+@@ -397,7 +446,7 @@ public class L2HubChronicle
  				final Boolean before = _seasonal == null ? null : _seasonal.get(quest.getName());
  				if ((before != null) && (before != active))
  				{
@@ -131,7 +131,7 @@ index 8eaf0bbe41534ed45eaf9701e9eb268b678b43cb..de0198c4d8dcca2a57cf2695ae22408f
  				}
  			}
  		}
-@@ -433,7 +482,7 @@ public class L2HubChronicle
+@@ -442,7 +491,7 @@ public class L2HubChronicle
  					y = elpy.getY();
  				}
  			}
@@ -140,7 +140,7 @@ index 8eaf0bbe41534ed45eaf9701e9eb268b678b43cb..de0198c4d8dcca2a57cf2695ae22408f
  		}
  		_elpies = on;
  	}
-@@ -473,17 +522,17 @@ public class L2HubChronicle
+@@ -482,17 +531,17 @@ public class L2HubChronicle
  		final StringBuilder text = new StringBuilder(name).append(": ");
  		if ((staticField(script, "BLUE_SCORE") instanceof Integer blue) && (staticField(script, "RED_SCORE") instanceof Integer red))
  		{
@@ -697,10 +697,10 @@ index 1a16b3f04386c30f76072b39cc133faa6f08a44e..b159d7e012ec4c367ff78b79c51922dc
  
  	private static int count(String text, String needle)
 diff --git a/dist/game/data/scripts/custom/L2HubWorldInfo/L2HubWorldInfo.java b/dist/game/data/scripts/custom/L2HubWorldInfo/L2HubWorldInfo.java
-index b72117957e3a671677a49fb31e23d275f5abb97f..00c1d2e349fc5c3a6b1c74fca727d802d5de6e50 100644
+index 2dd9ae64affefdd00be13d705e4080ece4b21b11..452298fd45d1ca72f6b96b6b24ad60e009a2504a 100644
 --- a/dist/game/data/scripts/custom/L2HubWorldInfo/L2HubWorldInfo.java
 +++ b/dist/game/data/scripts/custom/L2HubWorldInfo/L2HubWorldInfo.java
-@@ -69,6 +69,69 @@ import org.l2jmobius.gameserver.util.StatSet;
+@@ -69,6 +69,75 @@ import org.l2jmobius.gameserver.util.StatSet;
   */
  public class L2HubWorldInfo implements IVoicedCommandHandler
  {
@@ -746,7 +746,13 @@ index b72117957e3a671677a49fb31e23d275f5abb97f..00c1d2e349fc5c3a6b1c74fca727d802
 +		java.util.Map.entry("<font color=\"808080\">PvP-ивенты выключены (PvpEvents в L2HubEvents.ini).</font><br1>", "<font color=\"808080\">PvP events are disabled (PvpEvents in L2HubEvents.ini).</font><br1>"),
 +		java.util.Map.entry(": нашествие эльпи на ", ": elpy invasion for "),
 +		java.util.Map.entry(" мин, в городе рядом с тобой<br1>", " min, in a town near you<br1>"),
-+		java.util.Map.entry("<font color=\"808080\">Стартуют, только когда ты в игре.</font>", "<font color=\"808080\">They start only while you are in the game.</font>"));
++		java.util.Map.entry("<font color=\"808080\">Стартуют, только когда ты в игре.</font>", "<font color=\"808080\">They start only while you are in the game.</font>"),
++		java.util.Map.entry("<font color=\"LEVEL\">Зачистка</font><br1>", "<font color=\"LEVEL\">Purge</font><br1>"),
++		java.util.Map.entry("<font color=\"A0A0A0\">Награды недели топ-5 зоны — ", "<font color=\"A0A0A0\">Weekly rewards for the top 5 of each zone: "),
++		java.util.Map.entry(", серым — охотники и напарники, x2 — горячий час.</font><br1>", "; hunters and companions in grey, x2 — hot hour.</font><br1>"),
++		java.util.Map.entry("; ты — ", "; you: #"),
++		java.util.Map.entry("-й, ", ", "),
++		java.util.Map.entry("<font color=\"808080\">Очков пока ни у кого.</font><br1>", "<font color=\"808080\">No points yet.</font><br1>"));
 +	
 +	private static boolean l2hubEnglish()
 +	{
@@ -770,7 +776,7 @@ index b72117957e3a671677a49fb31e23d275f5abb97f..00c1d2e349fc5c3a6b1c74fca727d802
  	private static final Logger LOGGER = Logger.getLogger(L2HubWorldInfo.class.getName());
  	private static final Path CONFIG = Paths.get("./config/Custom/L2HubEvents.ini");
  	private static final Path STATUS_FILE = Paths.get("./log/L2HubWorld.json");
-@@ -79,22 +142,22 @@ public class L2HubWorldInfo implements IVoicedCommandHandler
+@@ -79,22 +148,22 @@ public class L2HubWorldInfo implements IVoicedCommandHandler
  	};
  	private static final int SHOWN = 8;
  	private static final Map<String, String> SEASONAL = Map.of(
@@ -799,7 +805,7 @@ index b72117957e3a671677a49fb31e23d275f5abb97f..00c1d2e349fc5c3a6b1c74fca727d802
  		}
  	};
  	/** objectId суперчемпиона → когда он впервые попал в выгрузку. */
-@@ -129,7 +192,7 @@ public class L2HubWorldInfo implements IVoicedCommandHandler
+@@ -129,7 +198,7 @@ public class L2HubWorldInfo implements IVoicedCommandHandler
  
  	private static String html(Player player)
  	{
@@ -808,7 +814,7 @@ index b72117957e3a671677a49fb31e23d275f5abb97f..00c1d2e349fc5c3a6b1c74fca727d802
  		superChampions(sb, player);
  		raidBosses(sb, player);
  		olympiad(sb);
-@@ -247,16 +310,16 @@ public class L2HubWorldInfo implements IVoicedCommandHandler
+@@ -248,16 +317,16 @@ public class L2HubWorldInfo implements IVoicedCommandHandler
  				soon.add(raid);
  			}
  		}
@@ -828,7 +834,7 @@ index b72117957e3a671677a49fb31e23d275f5abb97f..00c1d2e349fc5c3a6b1c74fca727d802
  		for (Raid raid : near.subList(0, Math.min(SHOWN, near.size())))
  		{
  			sb.append("<tr><td width=170>").append(raid.name()).append(" (").append(raid.level()).append(")</td>");
-@@ -265,7 +328,7 @@ public class L2HubWorldInfo implements IVoicedCommandHandler
+@@ -266,7 +335,7 @@ public class L2HubWorldInfo implements IVoicedCommandHandler
  		for (Raid raid : soon.subList(0, Math.min(3, soon.size())))
  		{
  			sb.append("<tr><td width=170><font color=\"808080\">").append(raid.name()).append(" (").append(raid.level()).append(")</font></td>");
@@ -837,7 +843,7 @@ index b72117957e3a671677a49fb31e23d275f5abb97f..00c1d2e349fc5c3a6b1c74fca727d802
  		}
  		sb.append("</table><br>");
  	}
-@@ -277,23 +340,23 @@ public class L2HubWorldInfo implements IVoicedCommandHandler
+@@ -278,23 +347,23 @@ public class L2HubWorldInfo implements IVoicedCommandHandler
  
  	private static void superChampions(StringBuilder sb, Player player)
  	{
@@ -865,7 +871,7 @@ index b72117957e3a671677a49fb31e23d275f5abb97f..00c1d2e349fc5c3a6b1c74fca727d802
  		for (Attackable npc : alive.subList(0, Math.min(SHOWN, alive.size())))
  		{
  			sb.append("<tr><td width=170>").append(npc.getName()).append(" (").append(npc.getLevel()).append(")</td>");
-@@ -394,25 +457,25 @@ public class L2HubWorldInfo implements IVoicedCommandHandler
+@@ -395,25 +464,25 @@ public class L2HubWorldInfo implements IVoicedCommandHandler
  	private static void olympiad(StringBuilder sb)
  	{
  		final Oly oly = oly();
@@ -897,7 +903,7 @@ index b72117957e3a671677a49fb31e23d275f5abb97f..00c1d2e349fc5c3a6b1c74fca727d802
  		}
  		sb.append("<br>");
  	}
-@@ -439,10 +502,10 @@ public class L2HubWorldInfo implements IVoicedCommandHandler
+@@ -440,10 +509,10 @@ public class L2HubWorldInfo implements IVoicedCommandHandler
  	{
  		final SimpleDateFormat day = new SimpleDateFormat("dd.MM");
  		final List<LongTimeEvent> events = seasonalEvents();
@@ -910,7 +916,7 @@ index b72117957e3a671677a49fb31e23d275f5abb97f..00c1d2e349fc5c3a6b1c74fca727d802
  			return;
  		}
  
-@@ -450,7 +513,7 @@ public class L2HubWorldInfo implements IVoicedCommandHandler
+@@ -451,7 +520,7 @@ public class L2HubWorldInfo implements IVoicedCommandHandler
  		{
  			final String title = SEASONAL.getOrDefault(event.getName(), event.getName());
  			// Конец окна у Mobius — начало дня после последнего (01.12 — значит, по 30.11 включительно), как пишет и лаунчер.
@@ -919,7 +925,7 @@ index b72117957e3a671677a49fb31e23d275f5abb97f..00c1d2e349fc5c3a6b1c74fca727d802
  		}
  		sb.append("<br>");
  	}
-@@ -458,7 +521,7 @@ public class L2HubWorldInfo implements IVoicedCommandHandler
+@@ -459,7 +528,7 @@ public class L2HubWorldInfo implements IVoicedCommandHandler
  	private static void schedule(StringBuilder sb)
  	{
  		final Properties config = config();
@@ -928,7 +934,7 @@ index b72117957e3a671677a49fb31e23d275f5abb97f..00c1d2e349fc5c3a6b1c74fca727d802
  		if (on(config, "PvpEvents", false))
  		{
  			for (String[] pvp : PVP)
-@@ -469,21 +532,21 @@ public class L2HubWorldInfo implements IVoicedCommandHandler
+@@ -470,21 +539,21 @@ public class L2HubWorldInfo implements IVoicedCommandHandler
  					sb.append(when(next)).append(": ").append(pvp[1]).append("<br1>");
  				}
  			}
@@ -954,6 +960,35 @@ index b72117957e3a671677a49fb31e23d275f5abb97f..00c1d2e349fc5c3a6b1c74fca727d802
  		}
  	}
  
+@@ -783,9 +852,9 @@ public class L2HubWorldInfo implements IVoicedCommandHandler
+ 
+ 	private static void purge(StringBuilder sb, Player player)
+ 	{
+-		sb.append("<font color=\"LEVEL\">Зачистка</font><br1>");
+-		sb.append("<font color=\"A0A0A0\">Награды недели топ-5 зоны — ").append(new SimpleDateFormat("dd.MM HH:mm").format(new Date(nextPurgeReward())));
+-		sb.append(", серым — охотники и напарники, x2 — горячий час.</font><br1>");
++		sb.append(tr("<font color=\"LEVEL\">Зачистка</font><br1>"));
++		sb.append(tr("<font color=\"A0A0A0\">Награды недели топ-5 зоны — ")).append(new SimpleDateFormat("dd.MM HH:mm").format(new Date(nextPurgeReward())));
++		sb.append(tr(", серым — охотники и напарники, x2 — горячий час.</font><br1>"));
+ 		boolean any = false;
+ 		for (PurgeZone zone : purgeZones(player.getObjectId()))
+ 		{
+@@ -802,13 +871,13 @@ public class L2HubWorldInfo implements IVoicedCommandHandler
+ 			}
+ 			if ((zone.viewer() != null) && (zone.viewer().rank() > 5))
+ 			{
+-				sb.append("; ты — ").append(zone.viewer().rank()).append("-й, ").append(zone.viewer().points());
++				sb.append(tr("; ты — ")).append(zone.viewer().rank()).append(tr("-й, ")).append(zone.viewer().points());
+ 			}
+ 			sb.append("<br1>");
+ 		}
+ 		if (!any)
+ 		{
+-			sb.append("<font color=\"808080\">Очков пока ни у кого.</font><br1>");
++			sb.append(tr("<font color=\"808080\">Очков пока ни у кого.</font><br1>"));
+ 		}
+ 		sb.append("<br>");
+ 	}
 diff --git a/dist/game/data/scripts/custom/events/Elpies/Elpies.java b/dist/game/data/scripts/custom/events/Elpies/Elpies.java
 index c73ccb6b12f39f120407138b3de7d948d8ba6333..747e18aaf31a057471487bd779f1d356a362c45c 100644
 --- a/dist/game/data/scripts/custom/events/Elpies/Elpies.java

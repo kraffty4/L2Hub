@@ -9,7 +9,7 @@
 		<gear grade="B" minLevel="52" rhand="10899" head="503" chest="2397" legs="2402" gloves="5712" feet="5728" shots="3950" /> <!-- Spell Breaker - Hail - Acumen, Zubei's Helmet, Tunic of Zubei, Stockings of Zubei, Zubei's Gauntlets - Robe, Zubei's Boots - Robe -->
 		<gear grade="A" minLevel="61" rhand="7895" head="547" chest="2400" legs="2405" gloves="5770" feet="5782" shots="3951" /> <!-- Flaming Dragon Skull, Tallum Helm, Tallum Tunic, Tallum Stockings, Tallum Gloves - Robe, Tallum Boots - Robe -->
 		<gear grade="S" minLevel="76" rhand="11223" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- Arcana Mace - Nature - Acumen, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
-		<gear grade="S80" minLevel="80" rhand="10455" head="9438" chest="10238" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall - Mana Up, Dynasty Circlet, Dynasty Silver Satin Tunic - Summoner, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
+		<gear grade="S80" minLevel="80" rhand="10455" head="9438" chest="9432" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall - Mana Up, Dynasty Circlet, Dynasty Tunic, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
 		<gear grade="S84" minLevel="84" rhand="15892" head="13139" chest="13434" legs="13444" gloves="13445" feet="13446" shots="3952" /> <!-- Sacredium - Mana Up, Vesper Circlet, Vesper Tunic, Vesper Stockings, Vesper Gloves, Vesper Shoes -->
 	</phantom>
 	<!-- Mityai: баффер, Human Mystic, Cleric, Prophet, Hierophant -->
@@ -20,7 +20,7 @@
 		<gear grade="B" minLevel="52" rhand="209" head="2416" chest="2398" legs="2403" gloves="5720" feet="5736" shots="3950" /> <!-- Divine Staff, Blue Wolf Helmet, Blue Wolf Tunic, Blue Wolf Stockings, Blue Wolf Gloves - Robe, Blue Wolf Boots - Robe -->
 		<gear grade="A" minLevel="61" rhand="11106" head="2418" chest="2408" gloves="5773" feet="5785" shots="3951" /> <!-- Branch of the Mother Tree - Nature - Magic Damage, Helm of Nightmare, Robe of Nightmare, Gauntlets of Nightmare - Robe, Boots of Nightmare - Robe -->
 		<gear grade="S" minLevel="76" rhand="10529" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- Dynasty Staff - Acumen, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
-		<gear grade="S80" minLevel="80" rhand="11348" head="9438" chest="10238" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall - Hail - Acumen, Dynasty Circlet, Dynasty Silver Satin Tunic - Summoner, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
+		<gear grade="S80" minLevel="80" rhand="11348" head="9438" chest="9432" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall - Hail - Acumen, Dynasty Circlet, Dynasty Tunic, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
 		<gear grade="S84" minLevel="84" rhand="15854" head="13139" chest="13434" legs="13444" gloves="13445" feet="13446" shots="3952" /> <!-- Black Visage - Magic Hold, Vesper Circlet, Vesper Tunic, Vesper Stockings, Vesper Gloves, Vesper Shoes -->
 	</phantom>
 	<!-- Kuzya: охотник, Dwarf Fighter, Artisan, Warsmith, Maestro -->
@@ -31,8 +31,8 @@
 		<gear grade="B" minLevel="52" rhand="91" head="2415" chest="2376" legs="2379" gloves="5714" feet="5730" shots="1465" /> <!-- Heavy War Axe, Avadon Circlet, Avadon Breastplate, Avadon Gaiters, Avadon Gloves - Heavy Armor, Avadon Boots - Heavy Armor -->
 		<gear grade="A" minLevel="61" rhand="8763" head="547" chest="2382" gloves="5768" feet="5780" shots="1466" /> <!-- Elrokian Trap, Tallum Helm, Tallum Plate Armor, Tallum Gloves - Heavy Armor, Tallum Boots - Heavy Armor -->
 		<gear grade="S" minLevel="76" rhand="6365" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" shots="1467" /> <!-- Basalt Battlehammer, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots -->
-		<gear grade="S80" minLevel="80" rhand="10220" head="9422" chest="9417" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Hammer, Dynasty Helmet, Dynasty Breast Plate - Shield Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
-		<gear grade="S84" minLevel="84" rhand="15678" head="13140" chest="13435" legs="13448" gloves="13449" feet="13450" shots="1467" /> <!-- Triumph Hammer, Vesper Noble Helmet, Vesper Noble Breastplate, Vesper Noble Gaiters, Vesper Noble Gauntlet, Vesper Noble Boots -->
+		<gear grade="S80" minLevel="80" rhand="10220" head="9422" chest="9418" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Hammer, Dynasty Helmet, Dynasty Breast Plate - Weapon Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
+		<gear grade="S84" minLevel="84" rhand="13463" head="13140" chest="13435" legs="13448" gloves="13449" feet="13450" shots="1467" /> <!-- Vesper Avenger, Vesper Noble Helmet, Vesper Noble Breastplate, Vesper Noble Gaiters, Vesper Noble Gauntlet, Vesper Noble Boots -->
 	</phantom>
 	<!-- LunaTik: охотник, Elven Mystic, Elven Wizard, Spellsinger, Mystic Muse -->
 	<phantom name="LunaTik" kind="hunter" role="DAMAGE" female="true" face="0" hairStyle="3" hairColor="0" classes="25,26,27,103" aliases="луна;лунатик" social="1" temper="0.5" risk="1" x="46846" y="51112" z="-2992">
@@ -42,7 +42,7 @@
 		<gear grade="B" minLevel="52" rhand="208" head="2416" chest="2398" legs="2403" gloves="5720" feet="5736" shots="3950" /> <!-- Staff of Seal, Blue Wolf Helmet, Blue Wolf Tunic, Blue Wolf Stockings, Blue Wolf Gloves - Robe, Blue Wolf Boots - Robe -->
 		<gear grade="A" minLevel="61" rhand="4903" head="2418" chest="2408" gloves="5773" feet="5785" shots="3951" /> <!-- Dasparion's Staff, Helm of Nightmare, Robe of Nightmare, Gauntlets of Nightmare - Robe, Boots of Nightmare - Robe -->
 		<gear grade="S" minLevel="76" rhand="6366" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- Imperial Staff, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
-		<gear grade="S80" minLevel="80" rhand="10222" head="9438" chest="9435" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall, Dynasty Circlet, Dynasty Tunic - Summoner, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
+		<gear grade="S80" minLevel="80" rhand="10222" head="9438" chest="10239" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall, Dynasty Circlet, Dynasty Silver Satin Tunic - Wizard, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
 		<gear grade="S84" minLevel="84" rhand="15566" head="13139" chest="13434" legs="13444" gloves="13445" feet="13446" shots="3952" /> <!-- Black Visage, Vesper Circlet, Vesper Tunic, Vesper Stockings, Vesper Gloves, Vesper Shoes -->
 	</phantom>
 	<!-- Vovan: охотник, Human Fighter, Human Knight, Paladin, Phoenix Knight -->
@@ -53,7 +53,7 @@
 		<gear grade="B" minLevel="52" rhand="142" head="2415" chest="2376" legs="2379" gloves="5714" feet="5730" lhand="673" shots="1465" /> <!-- Keshanberk, Avadon Circlet, Avadon Breastplate, Avadon Gaiters, Avadon Gloves - Heavy Armor, Avadon Boots - Heavy Armor, Avadon Shield -->
 		<gear grade="A" minLevel="61" rhand="80" head="547" chest="2382" gloves="5768" feet="5780" shots="1466" /> <!-- Tallum Blade, Tallum Helm, Tallum Plate Armor, Tallum Gloves - Heavy Armor, Tallum Boots - Heavy Armor -->
 		<gear grade="S" minLevel="76" rhand="6364" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" lhand="6377" shots="1467" /> <!-- Forgotten Blade, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots, Imperial Crusader Shield -->
-		<gear grade="S80" minLevel="80" rhand="10215" head="9422" chest="9419" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Sawsword, Dynasty Helmet, Dynasty Breast Plate - Force Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
+		<gear grade="S80" minLevel="80" rhand="10215" head="9422" chest="10228" legs="9421" gloves="9423" feet="9424" lhand="9441" shots="1467" /> <!-- Icarus Sawsword, Dynasty Helmet, Dynasty Platinum Plate - Shield Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor, Dynasty Shield -->
 		<gear grade="S84" minLevel="84" rhand="21919" head="13140" chest="13435" legs="13448" gloves="13449" feet="13450" lhand="13471" shots="1467" /> <!-- Hellblade, Vesper Noble Helmet, Vesper Noble Breastplate, Vesper Noble Gaiters, Vesper Noble Gauntlet, Vesper Noble Boots, Vesper Shield -->
 	</phantom>
 	<!-- Shadowmoth: охотник, Dark Fighter, Assassin, Abyss Walker, Ghost Hunter -->
@@ -75,7 +75,7 @@
 		<gear grade="B" minLevel="52" rhand="78" head="2417" chest="2381" gloves="5722" feet="5738" shots="1465" /> <!-- Great Sword, Doom Helmet, Doom Plate Armor, Doom Gloves - Heavy Armor, Doom Boots - Heavy Armor -->
 		<gear grade="A" minLevel="61" rhand="7884" head="2419" chest="2383" gloves="5774" feet="5786" shots="1466" /> <!-- Infernal Master, Majestic Circlet, Majestic Plate Armor, Majestic Gauntlets - Heavy Armor, Majestic Boots - Heavy Armor -->
 		<gear grade="S" minLevel="76" rhand="6372" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" shots="1467" /> <!-- Heaven's Divider, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots -->
-		<gear grade="S80" minLevel="80" rhand="10218" head="9422" chest="9420" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Heavy Arms, Dynasty Helmet, Dynasty Breast Plate - Bard, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
+		<gear grade="S80" minLevel="80" rhand="10218" head="9422" chest="9418" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Heavy Arms, Dynasty Helmet, Dynasty Breast Plate - Weapon Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
 		<gear grade="S84" minLevel="84" rhand="13458" head="13140" chest="13435" legs="13448" gloves="13449" feet="13450" shots="1467" /> <!-- Vesper Slasher, Vesper Noble Helmet, Vesper Noble Breastplate, Vesper Noble Gaiters, Vesper Noble Gauntlet, Vesper Noble Boots -->
 	</phantom>
 	<!-- Bezumnyi: охотник, Human Fighter, Rogue, Hawkeye, Sagittarius -->
@@ -86,8 +86,8 @@
 		<gear grade="B" minLevel="52" rhand="284" head="2416" chest="2391" gloves="5719" feet="5735" shots="1465" /> <!-- Dark Elven Long Bow, Blue Wolf Helmet, Blue Wolf Leather Armor, Blue Wolf Gloves - Light Armor, Blue Wolf Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="288" head="2418" chest="2394" gloves="5772" feet="5784" shots="1466" /> <!-- Carnage Bow, Helm of Nightmare, Leather Armor of Nightmare, Gauntlets of Nightmare - Light Armor, Boots of Nightmare - Light Armor -->
 		<gear grade="S" minLevel="76" rhand="7575" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Draconic Bow, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
-		<gear grade="S80" minLevel="80" rhand="10223" head="9429" chest="10126" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Spitter, Dynasty Leather Helmet, Dynasty Leather Armor - Force Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
-		<gear grade="S84" minLevel="84" rhand="15686" head="13138" chest="13433" legs="13441" gloves="13442" feet="13443" shots="1467" /> <!-- Triumph Bow, Vesper Leather Helmet, Vesper Leather Breastplate, Vesper Leather Leggings, Vesper Leather Gloves, Vesper Leather Boots -->
+		<gear grade="S80" minLevel="80" rhand="10223" head="9429" chest="9425" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Spitter, Dynasty Leather Helmet, Dynasty Leather Armor, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
+		<gear grade="S84" minLevel="84" rhand="15568" head="13138" chest="13433" legs="13441" gloves="13442" feet="13443" shots="1467" /> <!-- Skull Carnium Bow, Vesper Leather Helmet, Vesper Leather Breastplate, Vesper Leather Leggings, Vesper Leather Gloves, Vesper Leather Boots -->
 	</phantom>
 	<!-- Glad1ator: охотник, Human Fighter, Warrior, Gladiator, Duelist -->
 	<phantom name="Glad1ator" kind="hunter" role="DAMAGE" female="false" face="1" hairStyle="3" hairColor="3" classes="0,1,2,88" aliases="глад;гладиатор" social="1" temper="1.5" risk="1.5" x="-84527" y="244303" z="-3728">
@@ -97,7 +97,7 @@
 		<gear grade="B" minLevel="52" rhand="2615" head="2415" chest="2376" legs="2379" gloves="5714" feet="5730" shots="1465" /> <!-- Sword of Limit*Tsurugi, Avadon Circlet, Avadon Breastplate, Avadon Gaiters, Avadon Gloves - Heavy Armor, Avadon Boots - Heavy Armor -->
 		<gear grade="A" minLevel="61" rhand="5233" head="547" chest="2382" gloves="5768" feet="5780" shots="1466" /> <!-- Keshanberk*Keshanberk, Tallum Helm, Tallum Plate Armor, Tallum Gloves - Heavy Armor, Tallum Boots - Heavy Armor -->
 		<gear grade="S" minLevel="76" rhand="6580" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" shots="1467" /> <!-- Tallum Blade*Dark Legion's Edge, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots -->
-		<gear grade="S80" minLevel="80" rhand="10415" head="9422" chest="10228" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Dual Sword, Dynasty Helmet, Dynasty Platinum Plate - Shield Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
+		<gear grade="S80" minLevel="80" rhand="10415" head="9422" chest="10230" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Dual Sword, Dynasty Helmet, Dynasty Platinum Plate - Force Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
 		<gear grade="S84" minLevel="84" rhand="52" head="13140" chest="13435" legs="13448" gloves="13449" feet="13450" shots="1467" /> <!-- Vesper Dual Sword, Vesper Noble Helmet, Vesper Noble Breastplate, Vesper Noble Gaiters, Vesper Noble Gauntlet, Vesper Noble Boots -->
 	</phantom>
 	<!-- Alenka: охотник, Elven Mystic, Elven Oracle, Elven Elder, Eva's Saint -->
@@ -108,7 +108,7 @@
 		<gear grade="B" minLevel="52" rhand="7892" head="2416" chest="2398" legs="2403" gloves="5720" feet="5736" shots="3950" /> <!-- Spell Breaker, Blue Wolf Helmet, Blue Wolf Tunic, Blue Wolf Stockings, Blue Wolf Gloves - Robe, Blue Wolf Boots - Robe -->
 		<gear grade="A" minLevel="61" rhand="7894" head="2418" chest="2408" gloves="5773" feet="5785" shots="3951" /> <!-- Spiritual Eye, Helm of Nightmare, Robe of Nightmare, Gauntlets of Nightmare - Robe, Boots of Nightmare - Robe -->
 		<gear grade="S" minLevel="76" rhand="6579" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- Arcana Mace, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
-		<gear grade="S80" minLevel="80" rhand="10222" head="9438" chest="10238" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall, Dynasty Circlet, Dynasty Silver Satin Tunic - Summoner, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
+		<gear grade="S80" minLevel="80" rhand="10222" head="9438" chest="9432" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall, Dynasty Circlet, Dynasty Tunic, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
 		<gear grade="S84" minLevel="84" rhand="15565" head="13139" chest="13434" legs="13444" gloves="13445" feet="13446" shots="3952" /> <!-- Rising Star, Vesper Circlet, Vesper Tunic, Vesper Stockings, Vesper Gloves, Vesper Shoes -->
 	</phantom>
 	<!-- Krosh: охотник, Male Kamael Soldier, Trooper, Berserker, Doombringer -->
@@ -119,7 +119,7 @@
 		<gear grade="B" minLevel="52" rhand="9308" head="503" chest="2384" legs="2388" gloves="5711" feet="5727" shots="1465" /> <!-- Innominate Victory, Zubei's Helmet, Zubei's Leather Shirt, Zubei's Leather Gaiters, Zubei's Gauntlets - Light Armor, Zubei's Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="9332" head="512" chest="2385" legs="2389" gloves="5766" feet="5778" shots="1466" /> <!-- Divine Pain, Dark Crystal Helmet, Dark Crystal Leather Armor, Dark Crystal Leggings, Dark Crystal Gloves - Light Armor, Dark Crystal Boots - Light Armor -->
 		<gear grade="S" minLevel="76" rhand="9368" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Gram, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
-		<gear grade="S80" minLevel="80" rhand="10225" head="9429" chest="10168" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Wingblade, Dynasty Leather Helmet, Dynasty Leather Armor - Enchanter, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
+		<gear grade="S80" minLevel="80" rhand="10225" head="9429" chest="10488" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Wingblade, Dynasty Leather Helmet, Dynasty Jeweled Leather Armor - Weapon Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
 		<gear grade="S84" minLevel="84" rhand="13470" head="13138" chest="13433" legs="13441" gloves="13442" feet="13443" shots="1467" /> <!-- Vesper Nagan, Vesper Leather Helmet, Vesper Leather Breastplate, Vesper Leather Leggings, Vesper Leather Gloves, Vesper Leather Boots -->
 	</phantom>
 	<!-- Morok: охотник, Dark Mystic, Dark Wizard, Spellhowler, Storm Screamer -->
@@ -142,7 +142,7 @@
 		<gear grade="A" minLevel="61" rhand="235" head="2418" chest="2394" gloves="5772" feet="5784" shots="1466" /> <!-- Bloody Orchid, Helm of Nightmare, Leather Armor of Nightmare, Gauntlets of Nightmare - Light Armor, Boots of Nightmare - Light Armor -->
 		<gear grade="S" minLevel="76" rhand="237" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Dragon's Tooth, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
 		<gear grade="S80" minLevel="80" rhand="10216" head="9429" chest="10233" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Disperser, Dynasty Leather Helmet, Dynasty Jewel Leather Armor - Dagger Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
-		<gear grade="S84" minLevel="84" rhand="15677" head="13138" chest="13433" legs="13441" gloves="13442" feet="13443" shots="1467" /> <!-- Triumph Dagger, Vesper Leather Helmet, Vesper Leather Breastplate, Vesper Leather Leggings, Vesper Leather Gloves, Vesper Leather Boots -->
+		<gear grade="S84" minLevel="84" rhand="13460" head="13138" chest="13433" legs="13441" gloves="13442" feet="13443" shots="1467" /> <!-- Vesper Shaper, Vesper Leather Helmet, Vesper Leather Breastplate, Vesper Leather Leggings, Vesper Leather Gloves, Vesper Leather Boots -->
 	</phantom>
 	<!-- Ryzhaya: охотник, Elven Fighter, Elven Scout, Silver Ranger, Moonlight Sentinel -->
 	<phantom name="Ryzhaya" kind="hunter" role="DAMAGE" female="true" face="2" hairStyle="6" hairColor="2" classes="18,22,24,102" aliases="рыжая;рыжик" social="1" temper="1.5" risk="1" x="47130" y="51289" z="-2992">
@@ -152,8 +152,8 @@
 		<gear grade="B" minLevel="52" rhand="284" head="2417" chest="2392" gloves="5723" feet="5739" shots="1465" /> <!-- Dark Elven Long Bow, Doom Helmet, Leather Armor of Doom, Doom Gloves - Light Armor, Doom Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="288" head="2419" chest="2395" gloves="5775" feet="5787" shots="1466" /> <!-- Carnage Bow, Majestic Circlet, Majestic Leather Armor, Majestic Gauntlets - Light Armor, Majestic Boots - Light Armor -->
 		<gear grade="S" minLevel="76" rhand="7575" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Draconic Bow, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
-		<gear grade="S80" minLevel="80" rhand="10223" head="9429" chest="10214" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Spitter, Dynasty Leather Helmet, Dynasty Leather Armor - Summoner, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
-		<gear grade="S84" minLevel="84" rhand="15686" head="13141" chest="13436" legs="13451" gloves="13452" feet="13453" shots="1467" /> <!-- Triumph Bow, Vesper Noble Leather Helmet, Vesper Noble Leather Breastplate, Vesper Noble Leather Leggings, Vesper Noble Leather Gloves, Vesper Noble Leather Boots -->
+		<gear grade="S80" minLevel="80" rhand="10223" head="9429" chest="9425" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Spitter, Dynasty Leather Helmet, Dynasty Leather Armor, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
+		<gear grade="S84" minLevel="84" rhand="15568" head="13141" chest="13436" legs="13451" gloves="13452" feet="13453" shots="1467" /> <!-- Skull Carnium Bow, Vesper Noble Leather Helmet, Vesper Noble Leather Breastplate, Vesper Noble Leather Leggings, Vesper Noble Leather Gloves, Vesper Noble Leather Boots -->
 	</phantom>
 	<!-- OldSchool: охотник, Human Mystic, Human Wizard, Necromancer, Soultaker -->
 	<phantom name="OldSchool" kind="hunter" role="DAMAGE" female="false" face="2" hairStyle="4" hairColor="2" classes="10,11,13,95" aliases="олдскул;олд;олдскулл" social="1" temper="1" risk="1" x="-84129" y="245039" z="-3728">
@@ -175,7 +175,7 @@
 		<gear grade="A" minLevel="61" rhand="8763" head="512" chest="365" legs="388" gloves="5765" feet="5777" shots="1466" /> <!-- Elrokian Trap, Dark Crystal Helmet, Dark Crystal Breastplate, Dark Crystal Gaiters, Dark Crystal Gloves - Heavy Armor, Dark Crystal Boots - Heavy Armor -->
 		<gear grade="S" minLevel="76" rhand="6365" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" shots="1467" /> <!-- Basalt Battlehammer, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots -->
 		<gear grade="S80" minLevel="80" rhand="10220" head="9422" chest="9418" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Hammer, Dynasty Helmet, Dynasty Breast Plate - Weapon Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
-		<gear grade="S84" minLevel="84" rhand="15683" head="13137" chest="13432" legs="13438" gloves="13439" feet="13440" shots="1467" /> <!-- Triumph Staff, Vesper Helmet, Vesper Breastplate, Vesper Gaiters, Vesper Gauntlet, Vesper Boots -->
+		<gear grade="S84" minLevel="84" rhand="13463" head="13137" chest="13432" legs="13438" gloves="13439" feet="13440" shots="1467" /> <!-- Vesper Avenger, Vesper Helmet, Vesper Breastplate, Vesper Gaiters, Vesper Gauntlet, Vesper Boots -->
 	</phantom>
 	<!-- Nyusha: охотник, Dark Mystic, Shillien Oracle, Shillien Elder, Shillien Saint -->
 	<phantom name="Nyusha" kind="hunter" role="HEALER" female="true" face="0" hairStyle="6" hairColor="0" classes="38,42,43,112" aliases="нюша;нюшка" social="1.5" temper="0.5" risk="1" x="9825" y="16038" z="-4568">
@@ -196,7 +196,7 @@
 		<gear grade="B" minLevel="52" rhand="78" head="2417" chest="2381" gloves="5722" feet="5738" shots="1465" /> <!-- Great Sword, Doom Helmet, Doom Plate Armor, Doom Gloves - Heavy Armor, Doom Boots - Heavy Armor -->
 		<gear grade="A" minLevel="61" rhand="7884" head="2419" chest="2383" gloves="5774" feet="5786" shots="1466" /> <!-- Infernal Master, Majestic Circlet, Majestic Plate Armor, Majestic Gauntlets - Heavy Armor, Majestic Boots - Heavy Armor -->
 		<gear grade="S" minLevel="76" rhand="6372" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" shots="1467" /> <!-- Heaven's Divider, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots -->
-		<gear grade="S80" minLevel="80" rhand="10218" head="9422" chest="10231" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Heavy Arms, Dynasty Helmet, Dynasty Platinum Plate - Bard, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
+		<gear grade="S80" minLevel="80" rhand="10218" head="9422" chest="10229" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Heavy Arms, Dynasty Helmet, Dynasty Platinum Plate - Weapon Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
 		<gear grade="S84" minLevel="84" rhand="15562" head="13140" chest="13435" legs="13448" gloves="13449" feet="13450" shots="1467" /> <!-- Feather Eye Blade, Vesper Noble Helmet, Vesper Noble Breastplate, Vesper Noble Gaiters, Vesper Noble Gauntlet, Vesper Noble Boots -->
 	</phantom>
 	<!-- Freya: охотник, Female Kamael Soldier, Warder, Arbalester, Trickster -->
@@ -207,7 +207,7 @@
 		<gear grade="B" minLevel="52" rhand="9312" head="2415" chest="2390" gloves="5715" feet="5731" shots="1465" /> <!-- Peacemaker, Avadon Circlet, Avadon Leather Armor, Avadon Gloves - Light Armor, Avadon Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="9336" head="547" chest="2393" gloves="5769" feet="5781" shots="1466" /> <!-- Doomchanter, Tallum Helm, Tallum Leather Armor, Tallum Gloves - Light Armor, Tallum Boots - Light Armor -->
 		<gear grade="S" minLevel="76" rhand="9372" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Sarunga, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
-		<gear grade="S80" minLevel="80" rhand="10226" head="9429" chest="10490" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Shooter, Dynasty Leather Helmet, Dynasty Jeweled Leather Armor - Summoner, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
+		<gear grade="S80" minLevel="80" rhand="10226" head="9429" chest="9425" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Shooter, Dynasty Leather Helmet, Dynasty Leather Armor, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
 		<gear grade="S84" minLevel="84" rhand="15571" head="13141" chest="13436" legs="13451" gloves="13452" feet="13453" shots="1467" /> <!-- Dominion Crossbow, Vesper Noble Leather Helmet, Vesper Noble Leather Breastplate, Vesper Noble Leather Leggings, Vesper Noble Leather Gloves, Vesper Noble Leather Boots -->
 	</phantom>
 	<!-- DarkLord: охотник, Dark Fighter, Palus Knight, Shillien Knight, Shillien Templar -->
@@ -218,7 +218,7 @@
 		<gear grade="B" minLevel="52" rhand="142" head="503" chest="357" legs="383" gloves="5710" feet="5726" shots="1465" /> <!-- Keshanberk, Zubei's Helmet, Zubei's Breastplate, Zubei's Gaiters, Zubei's Gauntlets - Heavy Armor, Zubei's Boots - Heavy Armor -->
 		<gear grade="A" minLevel="61" rhand="80" head="512" chest="365" legs="388" gloves="5765" feet="5777" lhand="641" shots="1466" /> <!-- Tallum Blade, Dark Crystal Helmet, Dark Crystal Breastplate, Dark Crystal Gaiters, Dark Crystal Gloves - Heavy Armor, Dark Crystal Boots - Heavy Armor, Dark Crystal Shield -->
 		<gear grade="S" minLevel="76" rhand="82" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" lhand="6377" shots="1467" /> <!-- Gaz Blade, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots, Imperial Crusader Shield -->
-		<gear grade="S80" minLevel="80" rhand="10215" head="9422" chest="10231" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Sawsword, Dynasty Helmet, Dynasty Platinum Plate - Bard, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
+		<gear grade="S80" minLevel="80" rhand="10215" head="9422" chest="10228" legs="9421" gloves="9423" feet="9424" lhand="9441" shots="1467" /> <!-- Icarus Sawsword, Dynasty Helmet, Dynasty Platinum Plate - Shield Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor, Dynasty Shield -->
 		<gear grade="S84" minLevel="84" rhand="21919" head="13137" chest="13432" legs="13438" gloves="13439" feet="13440" lhand="13471" shots="1467" /> <!-- Hellblade, Vesper Helmet, Vesper Breastplate, Vesper Gaiters, Vesper Gauntlet, Vesper Boots, Vesper Shield -->
 	</phantom>
 	<!-- Masha: охотник, Human Mystic, Human Wizard, Sorcerer, Archmage -->
@@ -240,7 +240,7 @@
 		<gear grade="B" minLevel="52" rhand="7892" head="2417" chest="2399" legs="2404" gloves="5724" feet="5740" shots="3950" /> <!-- Spell Breaker, Doom Helmet, Tunic of Doom, Stockings of Doom, Doom Gloves - Robe, Doom Boots - Robe -->
 		<gear grade="A" minLevel="61" rhand="7894" head="2419" chest="2409" gloves="5776" feet="5788" shots="3951" /> <!-- Spiritual Eye, Majestic Circlet, Majestic Robe, Majestic Gauntlets - Robe, Majestic Boots - Robe -->
 		<gear grade="S" minLevel="76" rhand="6579" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- Arcana Mace, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
-		<gear grade="S80" minLevel="80" rhand="10222" head="9438" chest="9436" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall, Dynasty Circlet, Dynasty Tunic - Wizard, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
+		<gear grade="S80" minLevel="80" rhand="10222" head="9438" chest="9433" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall, Dynasty Circlet, Dynasty Tunic - Healer, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
 		<gear grade="S84" minLevel="84" rhand="15565" head="13142" chest="13437" legs="13454" gloves="13455" feet="13456" shots="3952" /> <!-- Rising Star, Vesper Noble Circlet, Vesper Noble Tunic, Vesper Noble Stockings, Vesper Noble Gloves, Vesper Noble Shoes -->
 	</phantom>
 	<!-- Nagibator: охотник, Human Fighter, Rogue, Treasure Hunter, Adventurer -->
@@ -262,7 +262,7 @@
 		<gear grade="B" minLevel="52" rhand="229" head="2417" chest="2392" gloves="5723" feet="5739" shots="1465" /> <!-- Kris, Doom Helmet, Leather Armor of Doom, Doom Gloves - Light Armor, Doom Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="235" head="2419" chest="2395" gloves="5775" feet="5787" shots="1466" /> <!-- Bloody Orchid, Majestic Circlet, Majestic Leather Armor, Majestic Gauntlets - Light Armor, Majestic Boots - Light Armor -->
 		<gear grade="S" minLevel="76" rhand="6367" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Angel Slayer, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
-		<gear grade="S80" minLevel="80" rhand="10216" head="9429" chest="10126" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Disperser, Dynasty Leather Helmet, Dynasty Leather Armor - Force Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
+		<gear grade="S80" minLevel="80" rhand="10216" head="9429" chest="9425" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Disperser, Dynasty Leather Helmet, Dynasty Leather Armor, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
 		<gear grade="S84" minLevel="84" rhand="15559" head="13141" chest="13436" legs="13451" gloves="13452" feet="13453" shots="1467" /> <!-- Skull Edge, Vesper Noble Leather Helmet, Vesper Noble Leather Breastplate, Vesper Noble Leather Leggings, Vesper Noble Leather Gloves, Vesper Noble Leather Boots -->
 	</phantom>
 	<!-- Grom: охотник, Orc Fighter, Orc Raider, Destroyer, Titan -->
@@ -284,7 +284,7 @@
 		<gear grade="B" minLevel="52" rhand="208" head="503" chest="2397" legs="2402" gloves="5712" feet="5728" shots="3950" /> <!-- Staff of Seal, Zubei's Helmet, Tunic of Zubei, Stockings of Zubei, Zubei's Gauntlets - Robe, Zubei's Boots - Robe -->
 		<gear grade="A" minLevel="61" rhand="4904" head="547" chest="2400" legs="2405" gloves="5770" feet="5782" shots="3951" /> <!-- Dasparion's Staff, Tallum Helm, Tallum Tunic, Tallum Stockings, Tallum Gloves - Robe, Tallum Boots - Robe -->
 		<gear grade="S" minLevel="76" rhand="214" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- The Staff, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
-		<gear grade="S80" minLevel="80" rhand="10217" head="9438" chest="10236" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Spirit, Dynasty Circlet, Dynasty Silver Satin Tunic - Healer, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
+		<gear grade="S80" minLevel="80" rhand="10217" head="9438" chest="10239" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Spirit, Dynasty Circlet, Dynasty Silver Satin Tunic - Wizard, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
 		<gear grade="S84" minLevel="84" rhand="13466" head="13139" chest="13434" legs="13444" gloves="13445" feet="13446" shots="3952" /> <!-- Vesper Singer, Vesper Circlet, Vesper Tunic, Vesper Stockings, Vesper Gloves, Vesper Shoes -->
 	</phantom>
 	<!-- Zloy: охотник, Male Kamael Soldier, Trooper, Berserker, Doombringer -->
@@ -306,8 +306,8 @@
 		<gear grade="B" minLevel="52" rhand="284" head="503" chest="2384" legs="2388" gloves="5711" feet="5727" shots="1465" /> <!-- Dark Elven Long Bow, Zubei's Helmet, Zubei's Leather Shirt, Zubei's Leather Gaiters, Zubei's Gauntlets - Light Armor, Zubei's Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="288" head="512" chest="2385" legs="2389" gloves="5766" feet="5778" shots="1466" /> <!-- Carnage Bow, Dark Crystal Helmet, Dark Crystal Leather Armor, Dark Crystal Leggings, Dark Crystal Gloves - Light Armor, Dark Crystal Boots - Light Armor -->
 		<gear grade="S" minLevel="76" rhand="7575" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Draconic Bow, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
-		<gear grade="S80" minLevel="80" rhand="10223" head="9429" chest="10126" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Spitter, Dynasty Leather Helmet, Dynasty Leather Armor - Force Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
-		<gear grade="S84" minLevel="84" rhand="15686" head="13138" chest="13433" legs="13441" gloves="13442" feet="13443" shots="1467" /> <!-- Triumph Bow, Vesper Leather Helmet, Vesper Leather Breastplate, Vesper Leather Leggings, Vesper Leather Gloves, Vesper Leather Boots -->
+		<gear grade="S80" minLevel="80" rhand="10223" head="9429" chest="10234" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Spitter, Dynasty Leather Helmet, Dynasty Jewel Leather Armor - Bow Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
+		<gear grade="S84" minLevel="84" rhand="15568" head="13138" chest="13433" legs="13441" gloves="13442" feet="13443" shots="1467" /> <!-- Skull Carnium Bow, Vesper Leather Helmet, Vesper Leather Breastplate, Vesper Leather Leggings, Vesper Leather Gloves, Vesper Leather Boots -->
 	</phantom>
 	<!-- Arhimag: охотник, Human Mystic, Human Wizard, Sorcerer, Archmage -->
 	<phantom name="Arhimag" kind="hunter" role="DAMAGE" female="false" face="1" hairStyle="4" hairColor="0" classes="10,11,12,94" aliases="архимаг;архи" social="0.5" temper="1.2" risk="1" x="-84396" y="244788" z="-3728">
@@ -317,7 +317,7 @@
 		<gear grade="B" minLevel="52" rhand="92" head="2416" chest="2398" legs="2403" gloves="5720" feet="5736" shots="3950" /> <!-- Sprite's Staff, Blue Wolf Helmet, Blue Wolf Tunic, Blue Wolf Stockings, Blue Wolf Gloves - Robe, Blue Wolf Boots - Robe -->
 		<gear grade="A" minLevel="61" rhand="4903" head="2418" chest="2408" gloves="5773" feet="5785" shots="3951" /> <!-- Dasparion's Staff, Helm of Nightmare, Robe of Nightmare, Gauntlets of Nightmare - Robe, Boots of Nightmare - Robe -->
 		<gear grade="S" minLevel="76" rhand="6366" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- Imperial Staff, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
-		<gear grade="S80" minLevel="80" rhand="10222" head="9438" chest="10236" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall, Dynasty Circlet, Dynasty Silver Satin Tunic - Healer, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
+		<gear grade="S80" minLevel="80" rhand="10222" head="9438" chest="10239" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall, Dynasty Circlet, Dynasty Silver Satin Tunic - Wizard, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
 		<gear grade="S84" minLevel="84" rhand="15566" head="13139" chest="13434" legs="13444" gloves="13445" feet="13446" shots="3952" /> <!-- Black Visage, Vesper Circlet, Vesper Tunic, Vesper Stockings, Vesper Gloves, Vesper Shoes -->
 	</phantom>
 	<!-- Ksenon: охотник, Human Fighter, Human Knight, Paladin, Phoenix Knight -->
@@ -328,7 +328,7 @@
 		<gear grade="B" minLevel="52" rhand="142" head="2417" chest="2381" gloves="5722" feet="5738" lhand="110" shots="1465" /> <!-- Keshanberk, Doom Helmet, Doom Plate Armor, Doom Gloves - Heavy Armor, Doom Boots - Heavy Armor, Doom Shield -->
 		<gear grade="A" minLevel="61" rhand="80" head="2419" chest="2383" gloves="5774" feet="5786" shots="1466" /> <!-- Tallum Blade, Majestic Circlet, Majestic Plate Armor, Majestic Gauntlets - Heavy Armor, Majestic Boots - Heavy Armor -->
 		<gear grade="S" minLevel="76" rhand="82" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" lhand="6377" shots="1467" /> <!-- Gaz Blade, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots, Imperial Crusader Shield -->
-		<gear grade="S80" minLevel="80" rhand="10215" head="9422" chest="10231" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Sawsword, Dynasty Helmet, Dynasty Platinum Plate - Bard, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
+		<gear grade="S80" minLevel="80" rhand="10215" head="9422" chest="10228" legs="9421" gloves="9423" feet="9424" lhand="9441" shots="1467" /> <!-- Icarus Sawsword, Dynasty Helmet, Dynasty Platinum Plate - Shield Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor, Dynasty Shield -->
 		<gear grade="S84" minLevel="84" rhand="15558" head="13140" chest="13435" legs="13448" gloves="13449" feet="13450" lhand="13471" shots="1467" /> <!-- Periel Sword, Vesper Noble Helmet, Vesper Noble Breastplate, Vesper Noble Gaiters, Vesper Noble Gauntlet, Vesper Noble Boots, Vesper Shield -->
 	</phantom>
 	<!-- Rubaka: охотник, Human Fighter, Warrior, Gladiator, Duelist -->
@@ -339,7 +339,7 @@
 		<gear grade="B" minLevel="52" rhand="2588" head="2417" chest="2381" gloves="5722" feet="5738" shots="1465" /> <!-- Katana*Sword of Nightmare, Doom Helmet, Doom Plate Armor, Doom Gloves - Heavy Armor, Doom Boots - Heavy Armor -->
 		<gear grade="A" minLevel="61" rhand="5704" head="2419" chest="2383" gloves="5774" feet="5786" shots="1466" /> <!-- Keshanberk*Keshanberk, Majestic Circlet, Majestic Plate Armor, Majestic Gauntlets - Heavy Armor, Majestic Boots - Heavy Armor -->
 		<gear grade="S" minLevel="76" rhand="6580" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" shots="1467" /> <!-- Tallum Blade*Dark Legion's Edge, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots -->
-		<gear grade="S80" minLevel="80" rhand="10415" head="9422" chest="10228" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Dual Sword, Dynasty Helmet, Dynasty Platinum Plate - Shield Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
+		<gear grade="S80" minLevel="80" rhand="10415" head="9422" chest="10230" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Dual Sword, Dynasty Helmet, Dynasty Platinum Plate - Force Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
 		<gear grade="S84" minLevel="84" rhand="16154" head="13140" chest="13435" legs="13448" gloves="13449" feet="13450" shots="1467" /> <!-- Periel Dual Sword, Vesper Noble Helmet, Vesper Noble Breastplate, Vesper Noble Gaiters, Vesper Noble Gauntlet, Vesper Noble Boots -->
 	</phantom>
 	<!-- Amazonka: охотник, Human Fighter, Warrior, Gladiator, Duelist -->
@@ -350,7 +350,7 @@
 		<gear grade="B" minLevel="52" rhand="2571" head="2417" chest="2381" gloves="5722" feet="5738" shots="1465" /> <!-- Stormbringer*Samurai Long sword, Doom Helmet, Doom Plate Armor, Doom Gloves - Heavy Armor, Doom Boots - Heavy Armor -->
 		<gear grade="A" minLevel="61" rhand="5233" head="2419" chest="2383" gloves="5774" feet="5786" shots="1466" /> <!-- Keshanberk*Keshanberk, Majestic Circlet, Majestic Plate Armor, Majestic Gauntlets - Heavy Armor, Majestic Boots - Heavy Armor -->
 		<gear grade="S" minLevel="76" rhand="6580" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" shots="1467" /> <!-- Tallum Blade*Dark Legion's Edge, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots -->
-		<gear grade="S80" minLevel="80" rhand="10415" head="9422" chest="10229" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Dual Sword, Dynasty Helmet, Dynasty Platinum Plate - Weapon Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
+		<gear grade="S80" minLevel="80" rhand="10415" head="9422" chest="9419" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Dual Sword, Dynasty Helmet, Dynasty Breast Plate - Force Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
 		<gear grade="S84" minLevel="84" rhand="52" head="13140" chest="13435" legs="13448" gloves="13449" feet="13450" shots="1467" /> <!-- Vesper Dual Sword, Vesper Noble Helmet, Vesper Noble Breastplate, Vesper Noble Gaiters, Vesper Noble Gauntlet, Vesper Noble Boots -->
 	</phantom>
 	<!-- Samurai: охотник, Human Fighter, Warrior, Gladiator, Duelist -->
@@ -361,7 +361,7 @@
 		<gear grade="B" minLevel="52" rhand="2580" head="503" chest="357" legs="383" gloves="5710" feet="5726" shots="1465" /> <!-- Shamshir*Tsurugi, Zubei's Helmet, Zubei's Breastplate, Zubei's Gaiters, Zubei's Gauntlets - Heavy Armor, Zubei's Boots - Heavy Armor -->
 		<gear grade="A" minLevel="61" rhand="5233" head="512" chest="365" legs="388" gloves="5765" feet="5777" shots="1466" /> <!-- Keshanberk*Keshanberk, Dark Crystal Helmet, Dark Crystal Breastplate, Dark Crystal Gaiters, Dark Crystal Gloves - Heavy Armor, Dark Crystal Boots - Heavy Armor -->
 		<gear grade="S" minLevel="76" rhand="6580" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" shots="1467" /> <!-- Tallum Blade*Dark Legion's Edge, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots -->
-		<gear grade="S80" minLevel="80" rhand="10415" head="9422" chest="10229" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Dual Sword, Dynasty Helmet, Dynasty Platinum Plate - Weapon Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
+		<gear grade="S80" minLevel="80" rhand="10415" head="9422" chest="9419" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Dual Sword, Dynasty Helmet, Dynasty Breast Plate - Force Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
 		<gear grade="S84" minLevel="84" rhand="52" head="13137" chest="13432" legs="13438" gloves="13439" feet="13440" shots="1467" /> <!-- Vesper Dual Sword, Vesper Helmet, Vesper Breastplate, Vesper Gaiters, Vesper Gauntlet, Vesper Boots -->
 	</phantom>
 	<!-- Batya: охотник, Human Fighter, Warrior, Warlord, Dreadnought -->
@@ -372,7 +372,7 @@
 		<gear grade="B" minLevel="52" rhand="300" head="2416" chest="358" legs="2380" gloves="5718" feet="5734" shots="1465" /> <!-- Great Axe, Blue Wolf Helmet, Blue Wolf Breastplate, Blue Wolf Gaiters, Blue Wolf Gloves - Heavy Armor, Blue Wolf Boots - Heavy Armor -->
 		<gear grade="A" minLevel="61" rhand="98" head="2418" chest="374" gloves="5771" feet="5783" shots="1466" /> <!-- Halberd, Helm of Nightmare, Armor of Nightmare, Gauntlets of Nightmare - Heavy Armor, Boots of Nightmare - Heavy Armor -->
 		<gear grade="S" minLevel="76" rhand="6370" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" shots="1467" /> <!-- Saint Spear, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots -->
-		<gear grade="S80" minLevel="80" rhand="10219" head="9422" chest="9420" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Trident, Dynasty Helmet, Dynasty Breast Plate - Bard, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
+		<gear grade="S80" minLevel="80" rhand="10219" head="9422" chest="9418" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Trident, Dynasty Helmet, Dynasty Breast Plate - Weapon Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
 		<gear grade="S84" minLevel="84" rhand="13462" head="13137" chest="13432" legs="13438" gloves="13439" feet="13440" shots="1467" /> <!-- Vesper Stormer, Vesper Helmet, Vesper Breastplate, Vesper Gaiters, Vesper Gauntlet, Vesper Boots -->
 	</phantom>
 	<!-- Vahtovik: охотник, Human Fighter, Warrior, Warlord, Dreadnought -->
@@ -394,7 +394,7 @@
 		<gear grade="B" minLevel="52" rhand="300" head="2417" chest="2381" gloves="5722" feet="5738" shots="1465" /> <!-- Great Axe, Doom Helmet, Doom Plate Armor, Doom Gloves - Heavy Armor, Doom Boots - Heavy Armor -->
 		<gear grade="A" minLevel="61" rhand="98" head="2419" chest="2383" gloves="5774" feet="5786" shots="1466" /> <!-- Halberd, Majestic Circlet, Majestic Plate Armor, Majestic Gauntlets - Heavy Armor, Majestic Boots - Heavy Armor -->
 		<gear grade="S" minLevel="76" rhand="306" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" shots="1467" /> <!-- Dragon Claw Axe, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots -->
-		<gear grade="S80" minLevel="80" rhand="10219" head="9422" chest="9417" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Trident, Dynasty Helmet, Dynasty Breast Plate - Shield Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
+		<gear grade="S80" minLevel="80" rhand="10219" head="9422" chest="9418" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Trident, Dynasty Helmet, Dynasty Breast Plate - Weapon Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
 		<gear grade="S84" minLevel="84" rhand="13462" head="13140" chest="13435" legs="13448" gloves="13449" feet="13450" shots="1467" /> <!-- Vesper Stormer, Vesper Noble Helmet, Vesper Noble Breastplate, Vesper Noble Gaiters, Vesper Noble Gauntlet, Vesper Noble Boots -->
 	</phantom>
 	<!-- Lancelot: охотник, Human Fighter, Human Knight, Paladin, Phoenix Knight -->
@@ -405,7 +405,7 @@
 		<gear grade="B" minLevel="52" rhand="142" head="2415" chest="2376" legs="2379" gloves="5714" feet="5730" lhand="673" shots="1465" /> <!-- Keshanberk, Avadon Circlet, Avadon Breastplate, Avadon Gaiters, Avadon Gloves - Heavy Armor, Avadon Boots - Heavy Armor, Avadon Shield -->
 		<gear grade="A" minLevel="61" rhand="80" head="547" chest="2382" gloves="5768" feet="5780" shots="1466" /> <!-- Tallum Blade, Tallum Helm, Tallum Plate Armor, Tallum Gloves - Heavy Armor, Tallum Boots - Heavy Armor -->
 		<gear grade="S" minLevel="76" rhand="82" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" lhand="6377" shots="1467" /> <!-- Gaz Blade, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots, Imperial Crusader Shield -->
-		<gear grade="S80" minLevel="80" rhand="10215" head="9422" chest="10231" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Sawsword, Dynasty Helmet, Dynasty Platinum Plate - Bard, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
+		<gear grade="S80" minLevel="80" rhand="10215" head="9422" chest="10228" legs="9421" gloves="9423" feet="9424" lhand="9441" shots="1467" /> <!-- Icarus Sawsword, Dynasty Helmet, Dynasty Platinum Plate - Shield Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor, Dynasty Shield -->
 		<gear grade="S84" minLevel="84" rhand="15558" head="13140" chest="13435" legs="13448" gloves="13449" feet="13450" lhand="13471" shots="1467" /> <!-- Periel Sword, Vesper Noble Helmet, Vesper Noble Breastplate, Vesper Noble Gaiters, Vesper Noble Gauntlet, Vesper Noble Boots, Vesper Shield -->
 	</phantom>
 	<!-- Zhanna: охотник, Human Fighter, Human Knight, Paladin, Phoenix Knight -->
@@ -416,7 +416,7 @@
 		<gear grade="B" minLevel="52" rhand="142" head="2417" chest="2381" gloves="5722" feet="5738" lhand="110" shots="1465" /> <!-- Keshanberk, Doom Helmet, Doom Plate Armor, Doom Gloves - Heavy Armor, Doom Boots - Heavy Armor, Doom Shield -->
 		<gear grade="A" minLevel="61" rhand="80" head="2419" chest="2383" gloves="5774" feet="5786" shots="1466" /> <!-- Tallum Blade, Majestic Circlet, Majestic Plate Armor, Majestic Gauntlets - Heavy Armor, Majestic Boots - Heavy Armor -->
 		<gear grade="S" minLevel="76" rhand="82" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" lhand="6377" shots="1467" /> <!-- Gaz Blade, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots, Imperial Crusader Shield -->
-		<gear grade="S80" minLevel="80" rhand="10215" head="9422" chest="10231" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Sawsword, Dynasty Helmet, Dynasty Platinum Plate - Bard, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
+		<gear grade="S80" minLevel="80" rhand="10215" head="9422" chest="10228" legs="9421" gloves="9423" feet="9424" lhand="9441" shots="1467" /> <!-- Icarus Sawsword, Dynasty Helmet, Dynasty Platinum Plate - Shield Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor, Dynasty Shield -->
 		<gear grade="S84" minLevel="84" rhand="13457" head="13140" chest="13435" legs="13448" gloves="13449" feet="13450" lhand="13471" shots="1467" /> <!-- Vesper Cutter, Vesper Noble Helmet, Vesper Noble Breastplate, Vesper Noble Gaiters, Vesper Noble Gauntlet, Vesper Noble Boots, Vesper Shield -->
 	</phantom>
 	<!-- Kolobok: охотник, Human Fighter, Human Knight, Dark Avenger, Hell Knight -->
@@ -438,7 +438,7 @@
 		<gear grade="B" minLevel="52" rhand="142" head="2417" chest="2381" gloves="5722" feet="5738" lhand="110" shots="1465" /> <!-- Keshanberk, Doom Helmet, Doom Plate Armor, Doom Gloves - Heavy Armor, Doom Boots - Heavy Armor, Doom Shield -->
 		<gear grade="A" minLevel="61" rhand="80" head="2419" chest="2383" gloves="5774" feet="5786" shots="1466" /> <!-- Tallum Blade, Majestic Circlet, Majestic Plate Armor, Majestic Gauntlets - Heavy Armor, Majestic Boots - Heavy Armor -->
 		<gear grade="S" minLevel="76" rhand="82" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" lhand="6377" shots="1467" /> <!-- Gaz Blade, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots, Imperial Crusader Shield -->
-		<gear grade="S80" minLevel="80" rhand="10215" head="9422" chest="10230" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Sawsword, Dynasty Helmet, Dynasty Platinum Plate - Force Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
+		<gear grade="S80" minLevel="80" rhand="10215" head="9422" chest="9416" legs="9421" gloves="9423" feet="9424" lhand="9441" shots="1467" /> <!-- Icarus Sawsword, Dynasty Helmet, Dynasty Breast Plate, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor, Dynasty Shield -->
 		<gear grade="S84" minLevel="84" rhand="13457" head="13140" chest="13435" legs="13448" gloves="13449" feet="13450" lhand="13471" shots="1467" /> <!-- Vesper Cutter, Vesper Noble Helmet, Vesper Noble Breastplate, Vesper Noble Gaiters, Vesper Noble Gauntlet, Vesper Noble Boots, Vesper Shield -->
 	</phantom>
 	<!-- Ledyanaya: охотник, Human Fighter, Human Knight, Dark Avenger, Hell Knight -->
@@ -449,8 +449,8 @@
 		<gear grade="B" minLevel="52" rhand="142" head="2416" chest="358" legs="2380" gloves="5718" feet="5734" shots="1465" /> <!-- Keshanberk, Blue Wolf Helmet, Blue Wolf Breastplate, Blue Wolf Gaiters, Blue Wolf Gloves - Heavy Armor, Blue Wolf Boots - Heavy Armor -->
 		<gear grade="A" minLevel="61" rhand="80" head="2418" chest="374" gloves="5771" feet="5783" lhand="2498" shots="1466" /> <!-- Tallum Blade, Helm of Nightmare, Armor of Nightmare, Gauntlets of Nightmare - Heavy Armor, Boots of Nightmare - Heavy Armor, Shield of Nightmare -->
 		<gear grade="S" minLevel="76" rhand="6364" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" lhand="6377" shots="1467" /> <!-- Forgotten Blade, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots, Imperial Crusader Shield -->
-		<gear grade="S80" minLevel="80" rhand="10215" head="9422" chest="9420" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Sawsword, Dynasty Helmet, Dynasty Breast Plate - Bard, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
-		<gear grade="S84" minLevel="84" rhand="15676" head="13137" chest="13432" legs="13438" gloves="13439" feet="13440" lhand="13471" shots="1467" /> <!-- Triumph Blade, Vesper Helmet, Vesper Breastplate, Vesper Gaiters, Vesper Gauntlet, Vesper Boots, Vesper Shield -->
+		<gear grade="S80" minLevel="80" rhand="10215" head="9422" chest="9417" legs="9421" gloves="9423" feet="9424" lhand="9441" shots="1467" /> <!-- Icarus Sawsword, Dynasty Helmet, Dynasty Breast Plate - Shield Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor, Dynasty Shield -->
+		<gear grade="S84" minLevel="84" rhand="21919" head="13137" chest="13432" legs="13438" gloves="13439" feet="13440" lhand="13471" shots="1467" /> <!-- Hellblade, Vesper Helmet, Vesper Breastplate, Vesper Gaiters, Vesper Gauntlet, Vesper Boots, Vesper Shield -->
 	</phantom>
 	<!-- Shustryi: охотник, Human Fighter, Rogue, Treasure Hunter, Adventurer -->
 	<phantom name="Shustryi" kind="hunter" role="DAMAGE" female="false" face="2" hairStyle="2" hairColor="0" classes="0,7,8,93" aliases="шустрый;шустрик" social="1" temper="1" risk="1.5" x="-84207" y="244848" z="-3728">
@@ -460,7 +460,7 @@
 		<gear grade="B" minLevel="52" rhand="229" head="2416" chest="2391" gloves="5719" feet="5735" shots="1465" /> <!-- Kris, Blue Wolf Helmet, Blue Wolf Leather Armor, Blue Wolf Gloves - Light Armor, Blue Wolf Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="235" head="2418" chest="2394" gloves="5772" feet="5784" shots="1466" /> <!-- Bloody Orchid, Helm of Nightmare, Leather Armor of Nightmare, Gauntlets of Nightmare - Light Armor, Boots of Nightmare - Light Armor -->
 		<gear grade="S" minLevel="76" rhand="6367" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Angel Slayer, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
-		<gear grade="S80" minLevel="80" rhand="10216" head="9429" chest="10234" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Disperser, Dynasty Leather Helmet, Dynasty Jewel Leather Armor - Bow Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
+		<gear grade="S80" minLevel="80" rhand="10216" head="9429" chest="9425" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Disperser, Dynasty Leather Helmet, Dynasty Leather Armor, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
 		<gear grade="S84" minLevel="84" rhand="13460" head="13138" chest="13433" legs="13441" gloves="13442" feet="13443" shots="1467" /> <!-- Vesper Shaper, Vesper Leather Helmet, Vesper Leather Breastplate, Vesper Leather Leggings, Vesper Leather Gloves, Vesper Leather Boots -->
 	</phantom>
 	<!-- Murka: охотник, Human Fighter, Rogue, Treasure Hunter, Adventurer -->
@@ -472,7 +472,7 @@
 		<gear grade="A" minLevel="61" rhand="235" head="512" chest="2385" legs="2389" gloves="5766" feet="5778" shots="1466" /> <!-- Bloody Orchid, Dark Crystal Helmet, Dark Crystal Leather Armor, Dark Crystal Leggings, Dark Crystal Gloves - Light Armor, Dark Crystal Boots - Light Armor -->
 		<gear grade="S" minLevel="76" rhand="237" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Dragon's Tooth, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
 		<gear grade="S80" minLevel="80" rhand="10216" head="9429" chest="9426" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Disperser, Dynasty Leather Helmet, Dynasty Leather Armor - Dagger Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
-		<gear grade="S84" minLevel="84" rhand="15677" head="13138" chest="13433" legs="13441" gloves="13442" feet="13443" shots="1467" /> <!-- Triumph Dagger, Vesper Leather Helmet, Vesper Leather Breastplate, Vesper Leather Leggings, Vesper Leather Gloves, Vesper Leather Boots -->
+		<gear grade="S84" minLevel="84" rhand="13460" head="13138" chest="13433" legs="13441" gloves="13442" feet="13443" shots="1467" /> <!-- Vesper Shaper, Vesper Leather Helmet, Vesper Leather Breastplate, Vesper Leather Leggings, Vesper Leather Gloves, Vesper Leather Boots -->
 	</phantom>
 	<!-- Snaiper: охотник, Human Fighter, Rogue, Hawkeye, Sagittarius -->
 	<phantom name="Snaiper" kind="hunter" role="DAMAGE" female="false" face="2" hairStyle="1" hairColor="3" classes="0,7,9,92" aliases="снайпер;снайп" social="1" temper="1" risk="0.5" x="-84759" y="244387" z="-3728">
@@ -482,7 +482,7 @@
 		<gear grade="B" minLevel="52" rhand="284" head="2416" chest="2391" gloves="5719" feet="5735" shots="1465" /> <!-- Dark Elven Long Bow, Blue Wolf Helmet, Blue Wolf Leather Armor, Blue Wolf Gloves - Light Armor, Blue Wolf Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="288" head="2418" chest="2394" gloves="5772" feet="5784" shots="1466" /> <!-- Carnage Bow, Helm of Nightmare, Leather Armor of Nightmare, Gauntlets of Nightmare - Light Armor, Boots of Nightmare - Light Armor -->
 		<gear grade="S" minLevel="76" rhand="7575" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Draconic Bow, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
-		<gear grade="S80" minLevel="80" rhand="10223" head="9429" chest="9426" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Spitter, Dynasty Leather Helmet, Dynasty Leather Armor - Dagger Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
+		<gear grade="S80" minLevel="80" rhand="10223" head="9429" chest="9427" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Spitter, Dynasty Leather Helmet, Dynasty Leather Armor - Bow Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
 		<gear grade="S84" minLevel="84" rhand="13467" head="13138" chest="13433" legs="13441" gloves="13442" feet="13443" shots="1467" /> <!-- Vesper Thrower, Vesper Leather Helmet, Vesper Leather Breastplate, Vesper Leather Leggings, Vesper Leather Gloves, Vesper Leather Boots -->
 	</phantom>
 	<!-- Artemida: охотник, Human Fighter, Rogue, Hawkeye, Sagittarius -->
@@ -493,7 +493,7 @@
 		<gear grade="B" minLevel="52" rhand="284" head="2416" chest="2391" gloves="5719" feet="5735" shots="1465" /> <!-- Dark Elven Long Bow, Blue Wolf Helmet, Blue Wolf Leather Armor, Blue Wolf Gloves - Light Armor, Blue Wolf Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="288" head="2418" chest="2394" gloves="5772" feet="5784" shots="1466" /> <!-- Carnage Bow, Helm of Nightmare, Leather Armor of Nightmare, Gauntlets of Nightmare - Light Armor, Boots of Nightmare - Light Armor -->
 		<gear grade="S" minLevel="76" rhand="290" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- The Bow, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
-		<gear grade="S80" minLevel="80" rhand="10223" head="9429" chest="10489" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Spitter, Dynasty Leather Helmet, Dynasty Jeweled Leather Armor - Enchanter, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
+		<gear grade="S80" minLevel="80" rhand="10223" head="9429" chest="9425" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Spitter, Dynasty Leather Helmet, Dynasty Leather Armor, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
 		<gear grade="S84" minLevel="84" rhand="15568" head="13138" chest="13433" legs="13441" gloves="13442" feet="13443" shots="1467" /> <!-- Skull Carnium Bow, Vesper Leather Helmet, Vesper Leather Breastplate, Vesper Leather Leggings, Vesper Leather Gloves, Vesper Leather Boots -->
 	</phantom>
 	<!-- Kiberkotleta: охотник, Human Fighter, Rogue, Hawkeye, Sagittarius -->
@@ -504,8 +504,8 @@
 		<gear grade="B" minLevel="52" rhand="284" head="2415" chest="2390" gloves="5715" feet="5731" shots="1465" /> <!-- Dark Elven Long Bow, Avadon Circlet, Avadon Leather Armor, Avadon Gloves - Light Armor, Avadon Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="288" head="547" chest="2393" gloves="5769" feet="5781" shots="1466" /> <!-- Carnage Bow, Tallum Helm, Tallum Leather Armor, Tallum Gloves - Light Armor, Tallum Boots - Light Armor -->
 		<gear grade="S" minLevel="76" rhand="7575" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Draconic Bow, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
-		<gear grade="S80" minLevel="80" rhand="10223" head="9429" chest="10126" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Spitter, Dynasty Leather Helmet, Dynasty Leather Armor - Force Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
-		<gear grade="S84" minLevel="84" rhand="15686" head="13141" chest="13436" legs="13451" gloves="13452" feet="13453" shots="1467" /> <!-- Triumph Bow, Vesper Noble Leather Helmet, Vesper Noble Leather Breastplate, Vesper Noble Leather Leggings, Vesper Noble Leather Gloves, Vesper Noble Leather Boots -->
+		<gear grade="S80" minLevel="80" rhand="10223" head="9429" chest="9427" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Spitter, Dynasty Leather Helmet, Dynasty Leather Armor - Bow Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
+		<gear grade="S84" minLevel="84" rhand="15568" head="13141" chest="13436" legs="13451" gloves="13452" feet="13453" shots="1467" /> <!-- Skull Carnium Bow, Vesper Noble Leather Helmet, Vesper Noble Leather Breastplate, Vesper Noble Leather Leggings, Vesper Noble Leather Gloves, Vesper Noble Leather Boots -->
 	</phantom>
 	<!-- Zharptica: охотник, Human Mystic, Human Wizard, Sorcerer, Archmage -->
 	<phantom name="Zharptica" kind="hunter" role="DAMAGE" female="true" face="1" hairStyle="5" hairColor="2" classes="10,11,12,94" aliases="жарптица" social="1" temper="1.5" risk="1.5" x="-84589" y="244453" z="-3728">
@@ -515,7 +515,7 @@
 		<gear grade="B" minLevel="52" rhand="207" head="2417" chest="2399" legs="2404" gloves="5724" feet="5740" shots="3950" /> <!-- Staff of Phantom, Doom Helmet, Tunic of Doom, Stockings of Doom, Doom Gloves - Robe, Doom Boots - Robe -->
 		<gear grade="A" minLevel="61" rhand="4904" head="2419" chest="2409" gloves="5776" feet="5788" shots="3951" /> <!-- Dasparion's Staff, Majestic Circlet, Majestic Robe, Majestic Gauntlets - Robe, Majestic Boots - Robe -->
 		<gear grade="S" minLevel="76" rhand="214" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- The Staff, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
-		<gear grade="S80" minLevel="80" rhand="10217" head="9438" chest="9433" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Spirit, Dynasty Circlet, Dynasty Tunic - Healer, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
+		<gear grade="S80" minLevel="80" rhand="10217" head="9438" chest="9436" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Spirit, Dynasty Circlet, Dynasty Tunic - Wizard, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
 		<gear grade="S84" minLevel="84" rhand="13466" head="13142" chest="13437" legs="13454" gloves="13455" feet="13456" shots="3952" /> <!-- Vesper Singer, Vesper Noble Circlet, Vesper Noble Tunic, Vesper Noble Stockings, Vesper Noble Gloves, Vesper Noble Shoes -->
 	</phantom>
 	<!-- Professor: охотник, Human Mystic, Human Wizard, Sorcerer, Archmage -->
@@ -526,7 +526,7 @@
 		<gear grade="B" minLevel="52" rhand="207" head="2415" chest="2406" gloves="5716" feet="5732" shots="3950" /> <!-- Staff of Phantom, Avadon Circlet, Avadon Robe, Avadon Gloves - Robe, Avadon Boots - Robe -->
 		<gear grade="A" minLevel="61" rhand="4903" head="512" chest="2407" gloves="5767" feet="5779" shots="3951" /> <!-- Dasparion's Staff, Dark Crystal Helmet, Dark Crystal Robe, Dark Crystal Gloves - Robe, Dark Crystal Boots - Robe -->
 		<gear grade="S" minLevel="76" rhand="6366" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- Imperial Staff, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
-		<gear grade="S80" minLevel="80" rhand="10222" head="9438" chest="9433" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall, Dynasty Circlet, Dynasty Tunic - Healer, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
+		<gear grade="S80" minLevel="80" rhand="10222" head="9438" chest="9436" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall, Dynasty Circlet, Dynasty Tunic - Wizard, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
 		<gear grade="S84" minLevel="84" rhand="15566" head="13142" chest="13437" legs="13454" gloves="13455" feet="13456" shots="3952" /> <!-- Black Visage, Vesper Noble Circlet, Vesper Noble Tunic, Vesper Noble Stockings, Vesper Noble Gloves, Vesper Noble Shoes -->
 	</phantom>
 	<!-- Gotika: охотник, Human Mystic, Human Wizard, Necromancer, Soultaker -->
@@ -537,7 +537,7 @@
 		<gear grade="B" minLevel="52" rhand="207" head="503" chest="2397" legs="2402" gloves="5712" feet="5728" shots="3950" /> <!-- Staff of Phantom, Zubei's Helmet, Tunic of Zubei, Stockings of Zubei, Zubei's Gauntlets - Robe, Zubei's Boots - Robe -->
 		<gear grade="A" minLevel="61" rhand="212" head="547" chest="2400" legs="2405" gloves="5770" feet="5782" shots="3951" /> <!-- Dasparion's Staff, Tallum Helm, Tallum Tunic, Tallum Stockings, Tallum Gloves - Robe, Tallum Boots - Robe -->
 		<gear grade="S" minLevel="76" rhand="214" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- The Staff, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
-		<gear grade="S80" minLevel="80" rhand="10217" head="9438" chest="10237" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Spirit, Dynasty Circlet, Dynasty Silver Satin Tunic - Enchanter, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
+		<gear grade="S80" minLevel="80" rhand="10217" head="9438" chest="9436" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Spirit, Dynasty Circlet, Dynasty Tunic - Wizard, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
 		<gear grade="S84" minLevel="84" rhand="13466" head="13139" chest="13434" legs="13444" gloves="13445" feet="13446" shots="3952" /> <!-- Vesper Singer, Vesper Circlet, Vesper Tunic, Vesper Stockings, Vesper Gloves, Vesper Shoes -->
 	</phantom>
 	<!-- Mogilshik: охотник, Human Mystic, Human Wizard, Necromancer, Soultaker -->
@@ -559,7 +559,7 @@
 		<gear grade="B" minLevel="52" rhand="7892" head="2415" chest="2406" gloves="5716" feet="5732" shots="3950" /> <!-- Spell Breaker, Avadon Circlet, Avadon Robe, Avadon Gloves - Robe, Avadon Boots - Robe -->
 		<gear grade="A" minLevel="61" rhand="7894" head="512" chest="2407" gloves="5767" feet="5779" shots="3951" /> <!-- Spiritual Eye, Dark Crystal Helmet, Dark Crystal Robe, Dark Crystal Gloves - Robe, Dark Crystal Boots - Robe -->
 		<gear grade="S" minLevel="76" rhand="6579" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- Arcana Mace, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
-		<gear grade="S80" minLevel="80" rhand="10222" head="9438" chest="9436" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall, Dynasty Circlet, Dynasty Tunic - Wizard, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
+		<gear grade="S80" minLevel="80" rhand="10222" head="9438" chest="9433" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall, Dynasty Circlet, Dynasty Tunic - Healer, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
 		<gear grade="S84" minLevel="84" rhand="13465" head="13142" chest="13437" legs="13454" gloves="13455" feet="13456" shots="3952" /> <!-- Vesper Caster, Vesper Noble Circlet, Vesper Noble Tunic, Vesper Noble Stockings, Vesper Noble Gloves, Vesper Noble Shoes -->
 	</phantom>
 	<!-- Strazh: охотник, Elven Fighter, Elven Knight, Temple Knight, Eva's Templar -->
@@ -570,8 +570,8 @@
 		<gear grade="B" minLevel="52" rhand="142" head="2416" chest="358" legs="2380" gloves="5718" feet="5734" shots="1465" /> <!-- Keshanberk, Blue Wolf Helmet, Blue Wolf Breastplate, Blue Wolf Gaiters, Blue Wolf Gloves - Heavy Armor, Blue Wolf Boots - Heavy Armor -->
 		<gear grade="A" minLevel="61" rhand="80" head="2418" chest="374" gloves="5771" feet="5783" lhand="2498" shots="1466" /> <!-- Tallum Blade, Helm of Nightmare, Armor of Nightmare, Gauntlets of Nightmare - Heavy Armor, Boots of Nightmare - Heavy Armor, Shield of Nightmare -->
 		<gear grade="S" minLevel="76" rhand="82" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" lhand="6377" shots="1467" /> <!-- Gaz Blade, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots, Imperial Crusader Shield -->
-		<gear grade="S80" minLevel="80" rhand="10215" head="9422" chest="9418" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Sawsword, Dynasty Helmet, Dynasty Breast Plate - Weapon Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
-		<gear grade="S84" minLevel="84" rhand="15685" head="13137" chest="13432" legs="13438" gloves="13439" feet="13440" lhand="13471" shots="1467" /> <!-- Triumph Magic Sword, Vesper Helmet, Vesper Breastplate, Vesper Gaiters, Vesper Gauntlet, Vesper Boots, Vesper Shield -->
+		<gear grade="S80" minLevel="80" rhand="10215" head="9422" chest="9416" legs="9421" gloves="9423" feet="9424" lhand="9441" shots="1467" /> <!-- Icarus Sawsword, Dynasty Helmet, Dynasty Breast Plate, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor, Dynasty Shield -->
+		<gear grade="S84" minLevel="84" rhand="13457" head="13137" chest="13432" legs="13438" gloves="13439" feet="13440" lhand="13471" shots="1467" /> <!-- Vesper Cutter, Vesper Helmet, Vesper Breastplate, Vesper Gaiters, Vesper Gauntlet, Vesper Boots, Vesper Shield -->
 	</phantom>
 	<!-- Nadezhda: охотник, Elven Fighter, Elven Knight, Temple Knight, Eva's Templar -->
 	<phantom name="Nadezhda" kind="hunter" role="TANK" female="true" face="2" hairStyle="4" hairColor="1" classes="18,19,20,99" aliases="надежда;надя" social="1" temper="0.5" risk="1" x="46786" y="51298" z="-2992">
@@ -581,7 +581,7 @@
 		<gear grade="B" minLevel="52" rhand="142" head="2415" chest="2376" legs="2379" gloves="5714" feet="5730" lhand="673" shots="1465" /> <!-- Keshanberk, Avadon Circlet, Avadon Breastplate, Avadon Gaiters, Avadon Gloves - Heavy Armor, Avadon Boots - Heavy Armor, Avadon Shield -->
 		<gear grade="A" minLevel="61" rhand="80" head="547" chest="2382" gloves="5768" feet="5780" shots="1466" /> <!-- Tallum Blade, Tallum Helm, Tallum Plate Armor, Tallum Gloves - Heavy Armor, Tallum Boots - Heavy Armor -->
 		<gear grade="S" minLevel="76" rhand="6364" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" lhand="6377" shots="1467" /> <!-- Forgotten Blade, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots, Imperial Crusader Shield -->
-		<gear grade="S80" minLevel="80" rhand="10215" head="9422" chest="9420" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Sawsword, Dynasty Helmet, Dynasty Breast Plate - Bard, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
+		<gear grade="S80" minLevel="80" rhand="10215" head="9422" chest="9417" legs="9421" gloves="9423" feet="9424" lhand="9441" shots="1467" /> <!-- Icarus Sawsword, Dynasty Helmet, Dynasty Breast Plate - Shield Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor, Dynasty Shield -->
 		<gear grade="S84" minLevel="84" rhand="21919" head="13140" chest="13435" legs="13448" gloves="13449" feet="13450" lhand="13471" shots="1467" /> <!-- Hellblade, Vesper Noble Helmet, Vesper Noble Breastplate, Vesper Noble Gaiters, Vesper Noble Gauntlet, Vesper Noble Boots, Vesper Shield -->
 	</phantom>
 	<!-- Veterok: охотник, Elven Fighter, Elven Scout, Plains Walker, Wind Rider -->
@@ -592,8 +592,8 @@
 		<gear grade="B" minLevel="52" rhand="229" head="2417" chest="2392" gloves="5723" feet="5739" shots="1465" /> <!-- Kris, Doom Helmet, Leather Armor of Doom, Doom Gloves - Light Armor, Doom Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="235" head="2419" chest="2395" gloves="5775" feet="5787" shots="1466" /> <!-- Bloody Orchid, Majestic Circlet, Majestic Leather Armor, Majestic Gauntlets - Light Armor, Majestic Boots - Light Armor -->
 		<gear grade="S" minLevel="76" rhand="237" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Dragon's Tooth, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
-		<gear grade="S80" minLevel="80" rhand="10216" head="9429" chest="9427" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Disperser, Dynasty Leather Helmet, Dynasty Leather Armor - Bow Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
-		<gear grade="S84" minLevel="84" rhand="15677" head="13141" chest="13436" legs="13451" gloves="13452" feet="13453" shots="1467" /> <!-- Triumph Dagger, Vesper Noble Leather Helmet, Vesper Noble Leather Breastplate, Vesper Noble Leather Leggings, Vesper Noble Leather Gloves, Vesper Noble Leather Boots -->
+		<gear grade="S80" minLevel="80" rhand="10216" head="9429" chest="9425" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Disperser, Dynasty Leather Helmet, Dynasty Leather Armor, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
+		<gear grade="S84" minLevel="84" rhand="13460" head="13141" chest="13436" legs="13451" gloves="13452" feet="13453" shots="1467" /> <!-- Vesper Shaper, Vesper Noble Leather Helmet, Vesper Noble Leather Breastplate, Vesper Noble Leather Leggings, Vesper Noble Leather Gloves, Vesper Noble Leather Boots -->
 	</phantom>
 	<!-- Kolibri: охотник, Elven Fighter, Elven Scout, Plains Walker, Wind Rider -->
 	<phantom name="Kolibri" kind="hunter" role="DAMAGE" female="true" face="2" hairStyle="0" hairColor="2" classes="18,22,23,101" aliases="колибри" social="1.5" temper="1" risk="1" x="47464" y="51530" z="-2992">
@@ -603,8 +603,8 @@
 		<gear grade="B" minLevel="52" rhand="229" head="2417" chest="2392" gloves="5723" feet="5739" shots="1465" /> <!-- Kris, Doom Helmet, Leather Armor of Doom, Doom Gloves - Light Armor, Doom Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="235" head="2419" chest="2395" gloves="5775" feet="5787" shots="1466" /> <!-- Bloody Orchid, Majestic Circlet, Majestic Leather Armor, Majestic Gauntlets - Light Armor, Majestic Boots - Light Armor -->
 		<gear grade="S" minLevel="76" rhand="237" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Dragon's Tooth, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
-		<gear grade="S80" minLevel="80" rhand="10216" head="9429" chest="10487" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Disperser, Dynasty Leather Helmet, Dynasty Jeweled Leather Armor - Force Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
-		<gear grade="S84" minLevel="84" rhand="15677" head="13141" chest="13436" legs="13451" gloves="13452" feet="13453" shots="1467" /> <!-- Triumph Dagger, Vesper Noble Leather Helmet, Vesper Noble Leather Breastplate, Vesper Noble Leather Leggings, Vesper Noble Leather Gloves, Vesper Noble Leather Boots -->
+		<gear grade="S80" minLevel="80" rhand="10216" head="9429" chest="9425" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Disperser, Dynasty Leather Helmet, Dynasty Leather Armor, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
+		<gear grade="S84" minLevel="84" rhand="13460" head="13141" chest="13436" legs="13451" gloves="13452" feet="13453" shots="1467" /> <!-- Vesper Shaper, Vesper Noble Leather Helmet, Vesper Noble Leather Breastplate, Vesper Noble Leather Leggings, Vesper Noble Leather Gloves, Vesper Noble Leather Boots -->
 	</phantom>
 	<!-- Prizrak: охотник, Elven Fighter, Elven Scout, Plains Walker, Wind Rider -->
 	<phantom name="Prizrak" kind="hunter" role="DAMAGE" female="false" face="1" hairStyle="2" hairColor="0" classes="18,22,23,101" aliases="призрак;призя" social="0.5" temper="1" risk="1" x="47509" y="51686" z="-2992">
@@ -614,7 +614,7 @@
 		<gear grade="B" minLevel="52" rhand="229" head="2417" chest="2392" gloves="5723" feet="5739" shots="1465" /> <!-- Kris, Doom Helmet, Leather Armor of Doom, Doom Gloves - Light Armor, Doom Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="235" head="2419" chest="2395" gloves="5775" feet="5787" shots="1466" /> <!-- Bloody Orchid, Majestic Circlet, Majestic Leather Armor, Majestic Gauntlets - Light Armor, Majestic Boots - Light Armor -->
 		<gear grade="S" minLevel="76" rhand="237" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Dragon's Tooth, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
-		<gear grade="S80" minLevel="80" rhand="10216" head="9429" chest="9427" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Disperser, Dynasty Leather Helmet, Dynasty Leather Armor - Bow Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
+		<gear grade="S80" minLevel="80" rhand="10216" head="9429" chest="9426" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Disperser, Dynasty Leather Helmet, Dynasty Leather Armor - Dagger Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
 		<gear grade="S84" minLevel="84" rhand="15559" head="13141" chest="13436" legs="13451" gloves="13452" feet="13453" shots="1467" /> <!-- Skull Edge, Vesper Noble Leather Helmet, Vesper Noble Leather Breastplate, Vesper Noble Leather Leggings, Vesper Noble Leather Gloves, Vesper Noble Leather Boots -->
 	</phantom>
 	<!-- Ivushka: охотник, Elven Fighter, Elven Scout, Silver Ranger, Moonlight Sentinel -->
@@ -625,7 +625,7 @@
 		<gear grade="B" minLevel="52" rhand="284" head="2416" chest="2391" gloves="5719" feet="5735" shots="1465" /> <!-- Dark Elven Long Bow, Blue Wolf Helmet, Blue Wolf Leather Armor, Blue Wolf Gloves - Light Armor, Blue Wolf Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="288" head="2418" chest="2394" gloves="5772" feet="5784" shots="1466" /> <!-- Carnage Bow, Helm of Nightmare, Leather Armor of Nightmare, Gauntlets of Nightmare - Light Armor, Boots of Nightmare - Light Armor -->
 		<gear grade="S" minLevel="76" rhand="7575" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Draconic Bow, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
-		<gear grade="S80" minLevel="80" rhand="10223" head="9429" chest="10488" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Spitter, Dynasty Leather Helmet, Dynasty Jeweled Leather Armor - Weapon Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
+		<gear grade="S80" minLevel="80" rhand="10223" head="9429" chest="9425" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Spitter, Dynasty Leather Helmet, Dynasty Leather Armor, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
 		<gear grade="S84" minLevel="84" rhand="13467" head="13138" chest="13433" legs="13441" gloves="13442" feet="13443" shots="1467" /> <!-- Vesper Thrower, Vesper Leather Helmet, Vesper Leather Breastplate, Vesper Leather Leggings, Vesper Leather Gloves, Vesper Leather Boots -->
 	</phantom>
 	<!-- Leshiy: охотник, Elven Fighter, Elven Scout, Silver Ranger, Moonlight Sentinel -->
@@ -637,7 +637,7 @@
 		<gear grade="A" minLevel="61" rhand="288" head="2418" chest="2394" gloves="5772" feet="5784" shots="1466" /> <!-- Carnage Bow, Helm of Nightmare, Leather Armor of Nightmare, Gauntlets of Nightmare - Light Armor, Boots of Nightmare - Light Armor -->
 		<gear grade="S" minLevel="76" rhand="7575" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Draconic Bow, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
 		<gear grade="S80" minLevel="80" rhand="10223" head="9429" chest="9425" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Spitter, Dynasty Leather Helmet, Dynasty Leather Armor, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
-		<gear grade="S84" minLevel="84" rhand="15686" head="13138" chest="13433" legs="13441" gloves="13442" feet="13443" shots="1467" /> <!-- Triumph Bow, Vesper Leather Helmet, Vesper Leather Breastplate, Vesper Leather Leggings, Vesper Leather Gloves, Vesper Leather Boots -->
+		<gear grade="S84" minLevel="84" rhand="15568" head="13138" chest="13433" legs="13441" gloves="13442" feet="13443" shots="1467" /> <!-- Skull Carnium Bow, Vesper Leather Helmet, Vesper Leather Breastplate, Vesper Leather Leggings, Vesper Leather Gloves, Vesper Leather Boots -->
 	</phantom>
 	<!-- Feya: охотник, Elven Mystic, Elven Wizard, Spellsinger, Mystic Muse -->
 	<phantom name="Feya" kind="hunter" role="DAMAGE" female="true" face="0" hairStyle="2" hairColor="1" classes="25,26,27,103" aliases="фея;феечка" social="1.5" temper="1" risk="1" x="47431" y="51139" z="-2992">
@@ -647,7 +647,7 @@
 		<gear grade="B" minLevel="52" rhand="207" head="2416" chest="2398" legs="2403" gloves="5720" feet="5736" shots="3950" /> <!-- Staff of Phantom, Blue Wolf Helmet, Blue Wolf Tunic, Blue Wolf Stockings, Blue Wolf Gloves - Robe, Blue Wolf Boots - Robe -->
 		<gear grade="A" minLevel="61" rhand="4903" head="2418" chest="2408" gloves="5773" feet="5785" shots="3951" /> <!-- Dasparion's Staff, Helm of Nightmare, Robe of Nightmare, Gauntlets of Nightmare - Robe, Boots of Nightmare - Robe -->
 		<gear grade="S" minLevel="76" rhand="6366" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- Imperial Staff, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
-		<gear grade="S80" minLevel="80" rhand="10222" head="9438" chest="10237" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall, Dynasty Circlet, Dynasty Silver Satin Tunic - Enchanter, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
+		<gear grade="S80" minLevel="80" rhand="10222" head="9438" chest="9436" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall, Dynasty Circlet, Dynasty Tunic - Wizard, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
 		<gear grade="S84" minLevel="84" rhand="15566" head="13139" chest="13434" legs="13444" gloves="13445" feet="13446" shots="3952" /> <!-- Black Visage, Vesper Circlet, Vesper Tunic, Vesper Stockings, Vesper Gloves, Vesper Shoes -->
 	</phantom>
 	<!-- Snezhok: охотник, Elven Mystic, Elven Wizard, Spellsinger, Mystic Muse -->
@@ -658,7 +658,7 @@
 		<gear grade="B" minLevel="52" rhand="92" head="2417" chest="2399" legs="2404" gloves="5724" feet="5740" shots="3950" /> <!-- Sprite's Staff, Doom Helmet, Tunic of Doom, Stockings of Doom, Doom Gloves - Robe, Doom Boots - Robe -->
 		<gear grade="A" minLevel="61" rhand="4903" head="2419" chest="2409" gloves="5776" feet="5788" shots="3951" /> <!-- Dasparion's Staff, Majestic Circlet, Majestic Robe, Majestic Gauntlets - Robe, Majestic Boots - Robe -->
 		<gear grade="S" minLevel="76" rhand="6366" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- Imperial Staff, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
-		<gear grade="S80" minLevel="80" rhand="10222" head="9438" chest="9435" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall, Dynasty Circlet, Dynasty Tunic - Summoner, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
+		<gear grade="S80" minLevel="80" rhand="10222" head="9438" chest="10239" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall, Dynasty Circlet, Dynasty Silver Satin Tunic - Wizard, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
 		<gear grade="S84" minLevel="84" rhand="15566" head="13142" chest="13437" legs="13454" gloves="13455" feet="13456" shots="3952" /> <!-- Black Visage, Vesper Noble Circlet, Vesper Noble Tunic, Vesper Noble Stockings, Vesper Noble Gloves, Vesper Noble Shoes -->
 	</phantom>
 	<!-- Poetessa: охотник, Elven Mystic, Elven Wizard, Spellsinger, Mystic Muse -->
@@ -669,7 +669,7 @@
 		<gear grade="B" minLevel="52" rhand="208" head="2415" chest="2406" gloves="5716" feet="5732" shots="3950" /> <!-- Staff of Seal, Avadon Circlet, Avadon Robe, Avadon Gloves - Robe, Avadon Boots - Robe -->
 		<gear grade="A" minLevel="61" rhand="212" head="512" chest="2407" gloves="5767" feet="5779" shots="3951" /> <!-- Dasparion's Staff, Dark Crystal Helmet, Dark Crystal Robe, Dark Crystal Gloves - Robe, Dark Crystal Boots - Robe -->
 		<gear grade="S" minLevel="76" rhand="214" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- The Staff, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
-		<gear grade="S80" minLevel="80" rhand="10217" head="9438" chest="10238" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Spirit, Dynasty Circlet, Dynasty Silver Satin Tunic - Summoner, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
+		<gear grade="S80" minLevel="80" rhand="10217" head="9438" chest="9432" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Spirit, Dynasty Circlet, Dynasty Tunic, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
 		<gear grade="S84" minLevel="84" rhand="13466" head="13142" chest="13437" legs="13454" gloves="13455" feet="13456" shots="3952" /> <!-- Vesper Singer, Vesper Noble Circlet, Vesper Noble Tunic, Vesper Noble Stockings, Vesper Noble Gloves, Vesper Noble Shoes -->
 	</phantom>
 	<!-- Aranel: охотник, Elven Mystic, Elven Wizard, Spellsinger, Mystic Muse -->
@@ -680,7 +680,7 @@
 		<gear grade="B" minLevel="52" rhand="207" head="2417" chest="2399" legs="2404" gloves="5724" feet="5740" shots="3950" /> <!-- Staff of Phantom, Doom Helmet, Tunic of Doom, Stockings of Doom, Doom Gloves - Robe, Doom Boots - Robe -->
 		<gear grade="A" minLevel="61" rhand="4905" head="2419" chest="2409" gloves="5776" feet="5788" shots="3951" /> <!-- Dasparion's Staff, Majestic Circlet, Majestic Robe, Majestic Gauntlets - Robe, Majestic Boots - Robe -->
 		<gear grade="S" minLevel="76" rhand="6366" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- Imperial Staff, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
-		<gear grade="S80" minLevel="80" rhand="10222" head="9438" chest="9434" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall, Dynasty Circlet, Dynasty Tunic - Enchanter, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
+		<gear grade="S80" minLevel="80" rhand="10222" head="9438" chest="9432" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall, Dynasty Circlet, Dynasty Tunic, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
 		<gear grade="S84" minLevel="84" rhand="15566" head="13142" chest="13437" legs="13454" gloves="13455" feet="13456" shots="3952" /> <!-- Black Visage, Vesper Noble Circlet, Vesper Noble Tunic, Vesper Noble Stockings, Vesper Noble Gloves, Vesper Noble Shoes -->
 	</phantom>
 	<!-- Romashka: охотник, Elven Mystic, Elven Oracle, Elven Elder, Eva's Saint -->
@@ -691,7 +691,7 @@
 		<gear grade="B" minLevel="52" rhand="7892" head="2415" chest="2406" gloves="5716" feet="5732" shots="3950" /> <!-- Spell Breaker, Avadon Circlet, Avadon Robe, Avadon Gloves - Robe, Avadon Boots - Robe -->
 		<gear grade="A" minLevel="61" rhand="7894" head="512" chest="2407" gloves="5767" feet="5779" shots="3951" /> <!-- Spiritual Eye, Dark Crystal Helmet, Dark Crystal Robe, Dark Crystal Gloves - Robe, Dark Crystal Boots - Robe -->
 		<gear grade="S" minLevel="76" rhand="6579" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- Arcana Mace, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
-		<gear grade="S80" minLevel="80" rhand="10222" head="9438" chest="9434" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall, Dynasty Circlet, Dynasty Tunic - Enchanter, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
+		<gear grade="S80" minLevel="80" rhand="10222" head="9438" chest="9432" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall, Dynasty Circlet, Dynasty Tunic, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
 		<gear grade="S84" minLevel="84" rhand="15565" head="13142" chest="13437" legs="13454" gloves="13455" feet="13456" shots="3952" /> <!-- Rising Star, Vesper Noble Circlet, Vesper Noble Tunic, Vesper Noble Stockings, Vesper Noble Gloves, Vesper Noble Shoes -->
 	</phantom>
 	<!-- Svetlyi: охотник, Elven Mystic, Elven Oracle, Elven Elder, Eva's Saint -->
@@ -702,7 +702,7 @@
 		<gear grade="B" minLevel="52" rhand="7892" head="503" chest="2397" legs="2402" gloves="5712" feet="5728" shots="3950" /> <!-- Spell Breaker, Zubei's Helmet, Tunic of Zubei, Stockings of Zubei, Zubei's Gauntlets - Robe, Zubei's Boots - Robe -->
 		<gear grade="A" minLevel="61" rhand="7894" head="547" chest="2400" legs="2405" gloves="5770" feet="5782" shots="3951" /> <!-- Spiritual Eye, Tallum Helm, Tallum Tunic, Tallum Stockings, Tallum Gloves - Robe, Tallum Boots - Robe -->
 		<gear grade="S" minLevel="76" rhand="6579" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- Arcana Mace, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
-		<gear grade="S80" minLevel="80" rhand="10222" head="9438" chest="10237" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall, Dynasty Circlet, Dynasty Silver Satin Tunic - Enchanter, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
+		<gear grade="S80" minLevel="80" rhand="10222" head="9438" chest="9433" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall, Dynasty Circlet, Dynasty Tunic - Healer, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
 		<gear grade="S84" minLevel="84" rhand="13465" head="13139" chest="13434" legs="13444" gloves="13445" feet="13446" shots="3952" /> <!-- Vesper Caster, Vesper Circlet, Vesper Tunic, Vesper Stockings, Vesper Gloves, Vesper Shoes -->
 	</phantom>
 	<!-- Inkvizitor: охотник, Dark Fighter, Palus Knight, Shillien Knight, Shillien Templar -->
@@ -713,8 +713,8 @@
 		<gear grade="B" minLevel="52" rhand="142" head="2415" chest="2376" legs="2379" gloves="5714" feet="5730" lhand="673" shots="1465" /> <!-- Keshanberk, Avadon Circlet, Avadon Breastplate, Avadon Gaiters, Avadon Gloves - Heavy Armor, Avadon Boots - Heavy Armor, Avadon Shield -->
 		<gear grade="A" minLevel="61" rhand="80" head="547" chest="2382" gloves="5768" feet="5780" shots="1466" /> <!-- Tallum Blade, Tallum Helm, Tallum Plate Armor, Tallum Gloves - Heavy Armor, Tallum Boots - Heavy Armor -->
 		<gear grade="S" minLevel="76" rhand="82" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" lhand="6377" shots="1467" /> <!-- Gaz Blade, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots, Imperial Crusader Shield -->
-		<gear grade="S80" minLevel="80" rhand="10215" head="9422" chest="10231" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Sawsword, Dynasty Helmet, Dynasty Platinum Plate - Bard, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
-		<gear grade="S84" minLevel="84" rhand="15676" head="13140" chest="13435" legs="13448" gloves="13449" feet="13450" lhand="13471" shots="1467" /> <!-- Triumph Blade, Vesper Noble Helmet, Vesper Noble Breastplate, Vesper Noble Gaiters, Vesper Noble Gauntlet, Vesper Noble Boots, Vesper Shield -->
+		<gear grade="S80" minLevel="80" rhand="10215" head="9422" chest="10228" legs="9421" gloves="9423" feet="9424" lhand="9441" shots="1467" /> <!-- Icarus Sawsword, Dynasty Helmet, Dynasty Platinum Plate - Shield Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor, Dynasty Shield -->
+		<gear grade="S84" minLevel="84" rhand="15558" head="13140" chest="13435" legs="13448" gloves="13449" feet="13450" lhand="13471" shots="1467" /> <!-- Periel Sword, Vesper Noble Helmet, Vesper Noble Breastplate, Vesper Noble Gaiters, Vesper Noble Gauntlet, Vesper Noble Boots, Vesper Shield -->
 	</phantom>
 	<!-- Margo: охотник, Dark Fighter, Palus Knight, Shillien Knight, Shillien Templar -->
 	<phantom name="Margo" kind="hunter" role="TANK" female="true" face="2" hairStyle="5" hairColor="1" classes="31,32,33,106" aliases="марго;маргоша" social="1" temper="1.2" risk="1" x="9869" y="15748" z="-4568">
@@ -746,7 +746,7 @@
 		<gear grade="B" minLevel="52" rhand="142" head="2415" chest="2376" legs="2379" gloves="5714" feet="5730" lhand="673" shots="1465" /> <!-- Keshanberk, Avadon Circlet, Avadon Breastplate, Avadon Gaiters, Avadon Gloves - Heavy Armor, Avadon Boots - Heavy Armor, Avadon Shield -->
 		<gear grade="A" minLevel="61" rhand="80" head="547" chest="2382" gloves="5768" feet="5780" shots="1466" /> <!-- Tallum Blade, Tallum Helm, Tallum Plate Armor, Tallum Gloves - Heavy Armor, Tallum Boots - Heavy Armor -->
 		<gear grade="S" minLevel="76" rhand="6364" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" lhand="6377" shots="1467" /> <!-- Forgotten Blade, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots, Imperial Crusader Shield -->
-		<gear grade="S80" minLevel="80" rhand="10215" head="9422" chest="9420" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Sawsword, Dynasty Helmet, Dynasty Breast Plate - Bard, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
+		<gear grade="S80" minLevel="80" rhand="10215" head="9422" chest="9417" legs="9421" gloves="9423" feet="9424" lhand="9441" shots="1467" /> <!-- Icarus Sawsword, Dynasty Helmet, Dynasty Breast Plate - Shield Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor, Dynasty Shield -->
 		<gear grade="S84" minLevel="84" rhand="21919" head="13140" chest="13435" legs="13448" gloves="13449" feet="13450" lhand="13471" shots="1467" /> <!-- Hellblade, Vesper Noble Helmet, Vesper Noble Breastplate, Vesper Noble Gaiters, Vesper Noble Gauntlet, Vesper Noble Boots, Vesper Shield -->
 	</phantom>
 	<!-- Nindzya: охотник, Dark Fighter, Assassin, Abyss Walker, Ghost Hunter -->
@@ -768,7 +768,7 @@
 		<gear grade="B" minLevel="52" rhand="229" head="2417" chest="2392" gloves="5723" feet="5739" shots="1465" /> <!-- Kris, Doom Helmet, Leather Armor of Doom, Doom Gloves - Light Armor, Doom Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="235" head="2419" chest="2395" gloves="5775" feet="5787" shots="1466" /> <!-- Bloody Orchid, Majestic Circlet, Majestic Leather Armor, Majestic Gauntlets - Light Armor, Majestic Boots - Light Armor -->
 		<gear grade="S" minLevel="76" rhand="6367" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Angel Slayer, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
-		<gear grade="S80" minLevel="80" rhand="10216" head="9429" chest="10234" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Disperser, Dynasty Leather Helmet, Dynasty Jewel Leather Armor - Bow Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
+		<gear grade="S80" minLevel="80" rhand="10216" head="9429" chest="9426" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Disperser, Dynasty Leather Helmet, Dynasty Leather Armor - Dagger Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
 		<gear grade="S84" minLevel="84" rhand="13460" head="13141" chest="13436" legs="13451" gloves="13452" feet="13453" shots="1467" /> <!-- Vesper Shaper, Vesper Noble Leather Helmet, Vesper Noble Leather Breastplate, Vesper Noble Leather Leggings, Vesper Noble Leather Gloves, Vesper Noble Leather Boots -->
 	</phantom>
 	<!-- Ochkarik: охотник, Dark Fighter, Assassin, Abyss Walker, Ghost Hunter -->
@@ -779,8 +779,8 @@
 		<gear grade="B" minLevel="52" rhand="229" head="2417" chest="2392" gloves="5723" feet="5739" shots="1465" /> <!-- Kris, Doom Helmet, Leather Armor of Doom, Doom Gloves - Light Armor, Doom Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="235" head="2419" chest="2395" gloves="5775" feet="5787" shots="1466" /> <!-- Bloody Orchid, Majestic Circlet, Majestic Leather Armor, Majestic Gauntlets - Light Armor, Majestic Boots - Light Armor -->
 		<gear grade="S" minLevel="76" rhand="6367" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Angel Slayer, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
-		<gear grade="S80" minLevel="80" rhand="10216" head="9429" chest="10489" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Disperser, Dynasty Leather Helmet, Dynasty Jeweled Leather Armor - Enchanter, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
-		<gear grade="S84" minLevel="84" rhand="15677" head="13141" chest="13436" legs="13451" gloves="13452" feet="13453" shots="1467" /> <!-- Triumph Dagger, Vesper Noble Leather Helmet, Vesper Noble Leather Breastplate, Vesper Noble Leather Leggings, Vesper Noble Leather Gloves, Vesper Noble Leather Boots -->
+		<gear grade="S80" minLevel="80" rhand="10216" head="9429" chest="10233" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Disperser, Dynasty Leather Helmet, Dynasty Jewel Leather Armor - Dagger Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
+		<gear grade="S84" minLevel="84" rhand="15559" head="13141" chest="13436" legs="13451" gloves="13452" feet="13453" shots="1467" /> <!-- Skull Edge, Vesper Noble Leather Helmet, Vesper Noble Leather Breastplate, Vesper Noble Leather Leggings, Vesper Noble Leather Gloves, Vesper Noble Leather Boots -->
 	</phantom>
 	<!-- Sokol: охотник, Dark Fighter, Assassin, Phantom Ranger, Ghost Sentinel -->
 	<phantom name="Sokol" kind="hunter" role="DAMAGE" female="false" face="2" hairStyle="0" hairColor="1" classes="31,35,37,109" aliases="сокол;соколик" social="1" temper="1" risk="1" x="10279" y="15642" z="-4568">
@@ -790,8 +790,8 @@
 		<gear grade="B" minLevel="52" rhand="284" head="2417" chest="2392" gloves="5723" feet="5739" shots="1465" /> <!-- Dark Elven Long Bow, Doom Helmet, Leather Armor of Doom, Doom Gloves - Light Armor, Doom Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="288" head="2419" chest="2395" gloves="5775" feet="5787" shots="1466" /> <!-- Carnage Bow, Majestic Circlet, Majestic Leather Armor, Majestic Gauntlets - Light Armor, Majestic Boots - Light Armor -->
 		<gear grade="S" minLevel="76" rhand="7575" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Draconic Bow, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
-		<gear grade="S80" minLevel="80" rhand="10223" head="9429" chest="9426" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Spitter, Dynasty Leather Helmet, Dynasty Leather Armor - Dagger Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
-		<gear grade="S84" minLevel="84" rhand="15686" head="13141" chest="13436" legs="13451" gloves="13452" feet="13453" shots="1467" /> <!-- Triumph Bow, Vesper Noble Leather Helmet, Vesper Noble Leather Breastplate, Vesper Noble Leather Leggings, Vesper Noble Leather Gloves, Vesper Noble Leather Boots -->
+		<gear grade="S80" minLevel="80" rhand="10223" head="9429" chest="10234" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Spitter, Dynasty Leather Helmet, Dynasty Jewel Leather Armor - Bow Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
+		<gear grade="S84" minLevel="84" rhand="15568" head="13141" chest="13436" legs="13451" gloves="13452" feet="13453" shots="1467" /> <!-- Skull Carnium Bow, Vesper Noble Leather Helmet, Vesper Noble Leather Breastplate, Vesper Noble Leather Leggings, Vesper Noble Leather Gloves, Vesper Noble Leather Boots -->
 	</phantom>
 	<!-- Pantera: охотник, Dark Fighter, Assassin, Phantom Ranger, Ghost Sentinel -->
 	<phantom name="Pantera" kind="hunter" role="DAMAGE" female="true" face="2" hairStyle="0" hairColor="1" classes="31,35,37,109" aliases="пантера;пантерка" social="0.5" temper="1" risk="1" x="10093" y="15881" z="-4568">
@@ -801,8 +801,8 @@
 		<gear grade="B" minLevel="52" rhand="284" head="2415" chest="2390" gloves="5715" feet="5731" shots="1465" /> <!-- Dark Elven Long Bow, Avadon Circlet, Avadon Leather Armor, Avadon Gloves - Light Armor, Avadon Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="288" head="547" chest="2393" gloves="5769" feet="5781" shots="1466" /> <!-- Carnage Bow, Tallum Helm, Tallum Leather Armor, Tallum Gloves - Light Armor, Tallum Boots - Light Armor -->
 		<gear grade="S" minLevel="76" rhand="290" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- The Bow, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
-		<gear grade="S80" minLevel="80" rhand="10223" head="9429" chest="10168" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Spitter, Dynasty Leather Helmet, Dynasty Leather Armor - Enchanter, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
-		<gear grade="S84" minLevel="84" rhand="15686" head="13141" chest="13436" legs="13451" gloves="13452" feet="13453" shots="1467" /> <!-- Triumph Bow, Vesper Noble Leather Helmet, Vesper Noble Leather Breastplate, Vesper Noble Leather Leggings, Vesper Noble Leather Gloves, Vesper Noble Leather Boots -->
+		<gear grade="S80" minLevel="80" rhand="10223" head="9429" chest="9425" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Spitter, Dynasty Leather Helmet, Dynasty Leather Armor, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
+		<gear grade="S84" minLevel="84" rhand="13467" head="13141" chest="13436" legs="13451" gloves="13452" feet="13453" shots="1467" /> <!-- Vesper Thrower, Vesper Noble Leather Helmet, Vesper Noble Leather Breastplate, Vesper Noble Leather Leggings, Vesper Noble Leather Gloves, Vesper Noble Leather Boots -->
 	</phantom>
 	<!-- Buran: охотник, Dark Mystic, Dark Wizard, Spellhowler, Storm Screamer -->
 	<phantom name="Buran" kind="hunter" role="DAMAGE" female="false" face="2" hairStyle="2" hairColor="0" classes="38,39,40,110" aliases="буран" social="1" temper="1" risk="1.5" x="10219" y="15913" z="-4568">
@@ -812,7 +812,7 @@
 		<gear grade="B" minLevel="52" rhand="207" head="2417" chest="2399" legs="2404" gloves="5724" feet="5740" shots="3950" /> <!-- Staff of Phantom, Doom Helmet, Tunic of Doom, Stockings of Doom, Doom Gloves - Robe, Doom Boots - Robe -->
 		<gear grade="A" minLevel="61" rhand="4905" head="2419" chest="2409" gloves="5776" feet="5788" shots="3951" /> <!-- Dasparion's Staff, Majestic Circlet, Majestic Robe, Majestic Gauntlets - Robe, Majestic Boots - Robe -->
 		<gear grade="S" minLevel="76" rhand="6366" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- Imperial Staff, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
-		<gear grade="S80" minLevel="80" rhand="10222" head="9438" chest="9433" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall, Dynasty Circlet, Dynasty Tunic - Healer, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
+		<gear grade="S80" minLevel="80" rhand="10222" head="9438" chest="9436" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall, Dynasty Circlet, Dynasty Tunic - Wizard, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
 		<gear grade="S84" minLevel="84" rhand="15566" head="13142" chest="13437" legs="13454" gloves="13455" feet="13456" shots="3952" /> <!-- Black Visage, Vesper Noble Circlet, Vesper Noble Tunic, Vesper Noble Stockings, Vesper Noble Gloves, Vesper Noble Shoes -->
 	</phantom>
 	<!-- Koldunya: охотник, Dark Mystic, Dark Wizard, Spellhowler, Storm Screamer -->
@@ -845,7 +845,7 @@
 		<gear grade="B" minLevel="52" rhand="7892" head="2415" chest="2406" gloves="5716" feet="5732" shots="3950" /> <!-- Spell Breaker, Avadon Circlet, Avadon Robe, Avadon Gloves - Robe, Avadon Boots - Robe -->
 		<gear grade="A" minLevel="61" rhand="7894" head="512" chest="2407" gloves="5767" feet="5779" shots="3951" /> <!-- Spiritual Eye, Dark Crystal Helmet, Dark Crystal Robe, Dark Crystal Gloves - Robe, Dark Crystal Boots - Robe -->
 		<gear grade="S" minLevel="76" rhand="6579" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- Arcana Mace, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
-		<gear grade="S80" minLevel="80" rhand="10222" head="9438" chest="9435" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall, Dynasty Circlet, Dynasty Tunic - Summoner, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
+		<gear grade="S80" minLevel="80" rhand="10222" head="9438" chest="10236" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall, Dynasty Circlet, Dynasty Silver Satin Tunic - Healer, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
 		<gear grade="S84" minLevel="84" rhand="15565" head="13142" chest="13437" legs="13454" gloves="13455" feet="13456" shots="3952" /> <!-- Rising Star, Vesper Noble Circlet, Vesper Noble Tunic, Vesper Noble Stockings, Vesper Noble Gloves, Vesper Noble Shoes -->
 	</phantom>
 	<!-- Bizon: охотник, Orc Fighter, Orc Raider, Destroyer, Titan -->
@@ -857,7 +857,7 @@
 		<gear grade="A" minLevel="61" rhand="7884" head="2419" chest="2383" gloves="5774" feet="5786" shots="1466" /> <!-- Infernal Master, Majestic Circlet, Majestic Plate Armor, Majestic Gauntlets - Heavy Armor, Majestic Boots - Heavy Armor -->
 		<gear grade="S" minLevel="76" rhand="6372" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" shots="1467" /> <!-- Heaven's Divider, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots -->
 		<gear grade="S80" minLevel="80" rhand="10218" head="9422" chest="10229" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Heavy Arms, Dynasty Helmet, Dynasty Platinum Plate - Weapon Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
-		<gear grade="S84" minLevel="84" rhand="15680" head="13140" chest="13435" legs="13448" gloves="13449" feet="13450" shots="1467" /> <!-- Triumph Two Hand Sword, Vesper Noble Helmet, Vesper Noble Breastplate, Vesper Noble Gaiters, Vesper Noble Gauntlet, Vesper Noble Boots -->
+		<gear grade="S84" minLevel="84" rhand="13458" head="13140" chest="13435" legs="13448" gloves="13449" feet="13450" shots="1467" /> <!-- Vesper Slasher, Vesper Noble Helmet, Vesper Noble Breastplate, Vesper Noble Gaiters, Vesper Noble Gauntlet, Vesper Noble Boots -->
 	</phantom>
 	<!-- Rubilnik: охотник, Orc Fighter, Orc Raider, Destroyer, Titan -->
 	<phantom name="Rubilnik" kind="hunter" role="DAMAGE" female="false" face="0" hairStyle="2" hairColor="3" classes="44,45,46,113" aliases="рубильник" social="1" temper="1" risk="1" x="-44907" y="-113016" z="-240">
@@ -879,7 +879,7 @@
 		<gear grade="A" minLevel="61" rhand="7884" head="2419" chest="2383" gloves="5774" feet="5786" shots="1466" /> <!-- Infernal Master, Majestic Circlet, Majestic Plate Armor, Majestic Gauntlets - Heavy Armor, Majestic Boots - Heavy Armor -->
 		<gear grade="S" minLevel="76" rhand="6372" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" shots="1467" /> <!-- Heaven's Divider, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots -->
 		<gear grade="S80" minLevel="80" rhand="10218" head="9422" chest="9418" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Heavy Arms, Dynasty Helmet, Dynasty Breast Plate - Weapon Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
-		<gear grade="S84" minLevel="84" rhand="15680" head="13140" chest="13435" legs="13448" gloves="13449" feet="13450" shots="1467" /> <!-- Triumph Two Hand Sword, Vesper Noble Helmet, Vesper Noble Breastplate, Vesper Noble Gaiters, Vesper Noble Gauntlet, Vesper Noble Boots -->
+		<gear grade="S84" minLevel="84" rhand="13458" head="13140" chest="13435" legs="13448" gloves="13449" feet="13450" shots="1467" /> <!-- Vesper Slasher, Vesper Noble Helmet, Vesper Noble Breastplate, Vesper Noble Gaiters, Vesper Noble Gauntlet, Vesper Noble Boots -->
 	</phantom>
 	<!-- Vozhd: охотник, Orc Fighter, Orc Raider, Destroyer, Titan -->
 	<phantom name="Vozhd" kind="hunter" role="DAMAGE" female="false" face="1" hairStyle="0" hairColor="3" classes="44,45,46,113" aliases="вождь;вожак" social="1" temper="1" risk="1" x="-44854" y="-112515" z="-240">
@@ -889,8 +889,8 @@
 		<gear grade="B" minLevel="52" rhand="78" head="2415" chest="2376" legs="2379" gloves="5714" feet="5730" shots="1465" /> <!-- Great Sword, Avadon Circlet, Avadon Breastplate, Avadon Gaiters, Avadon Gloves - Heavy Armor, Avadon Boots - Heavy Armor -->
 		<gear grade="A" minLevel="61" rhand="7884" head="547" chest="2382" gloves="5768" feet="5780" shots="1466" /> <!-- Infernal Master, Tallum Helm, Tallum Plate Armor, Tallum Gloves - Heavy Armor, Tallum Boots - Heavy Armor -->
 		<gear grade="S" minLevel="76" rhand="6372" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" shots="1467" /> <!-- Heaven's Divider, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots -->
-		<gear grade="S80" minLevel="80" rhand="10218" head="9422" chest="9417" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Heavy Arms, Dynasty Helmet, Dynasty Breast Plate - Shield Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
-		<gear grade="S84" minLevel="84" rhand="15680" head="13140" chest="13435" legs="13448" gloves="13449" feet="13450" shots="1467" /> <!-- Triumph Two Hand Sword, Vesper Noble Helmet, Vesper Noble Breastplate, Vesper Noble Gaiters, Vesper Noble Gauntlet, Vesper Noble Boots -->
+		<gear grade="S80" minLevel="80" rhand="10218" head="9422" chest="9418" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Heavy Arms, Dynasty Helmet, Dynasty Breast Plate - Weapon Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
+		<gear grade="S84" minLevel="84" rhand="15562" head="13140" chest="13435" legs="13448" gloves="13449" feet="13450" shots="1467" /> <!-- Feather Eye Blade, Vesper Noble Helmet, Vesper Noble Breastplate, Vesper Noble Gaiters, Vesper Noble Gauntlet, Vesper Noble Boots -->
 	</phantom>
 	<!-- Orhideya: охотник, Orc Fighter, Orc Raider, Destroyer, Titan -->
 	<phantom name="Orhideya" kind="hunter" role="DAMAGE" female="true" face="1" hairStyle="6" hairColor="1" classes="44,45,46,113" aliases="орхидея;орхи" social="1" temper="1" risk="1" x="-45030" y="-112631" z="-240">
@@ -900,8 +900,8 @@
 		<gear grade="B" minLevel="52" rhand="78" head="503" chest="357" legs="383" gloves="5710" feet="5726" shots="1465" /> <!-- Great Sword, Zubei's Helmet, Zubei's Breastplate, Zubei's Gaiters, Zubei's Gauntlets - Heavy Armor, Zubei's Boots - Heavy Armor -->
 		<gear grade="A" minLevel="61" rhand="7884" head="512" chest="365" legs="388" gloves="5765" feet="5777" shots="1466" /> <!-- Infernal Master, Dark Crystal Helmet, Dark Crystal Breastplate, Dark Crystal Gaiters, Dark Crystal Gloves - Heavy Armor, Dark Crystal Boots - Heavy Armor -->
 		<gear grade="S" minLevel="76" rhand="6372" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" shots="1467" /> <!-- Heaven's Divider, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots -->
-		<gear grade="S80" minLevel="80" rhand="10218" head="9422" chest="10228" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Heavy Arms, Dynasty Helmet, Dynasty Platinum Plate - Shield Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
-		<gear grade="S84" minLevel="84" rhand="15680" head="13137" chest="13432" legs="13438" gloves="13439" feet="13440" shots="1467" /> <!-- Triumph Two Hand Sword, Vesper Helmet, Vesper Breastplate, Vesper Gaiters, Vesper Gauntlet, Vesper Boots -->
+		<gear grade="S80" minLevel="80" rhand="10218" head="9422" chest="10229" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Heavy Arms, Dynasty Helmet, Dynasty Platinum Plate - Weapon Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
+		<gear grade="S84" minLevel="84" rhand="15562" head="13137" chest="13432" legs="13438" gloves="13439" feet="13440" shots="1467" /> <!-- Feather Eye Blade, Vesper Helmet, Vesper Breastplate, Vesper Gaiters, Vesper Gauntlet, Vesper Boots -->
 	</phantom>
 	<!-- Shaolin: охотник, Orc Fighter, Monk, Tyrant, Grand Khavatari -->
 	<phantom name="Shaolin" kind="hunter" role="DAMAGE" female="false" face="1" hairStyle="4" hairColor="3" classes="44,47,48,114" aliases="шаолинь;шаолин" social="1" temper="0.5" risk="1" x="-44786" y="-113002" z="-240">
@@ -911,7 +911,7 @@
 		<gear grade="B" minLevel="52" rhand="264" head="2415" chest="2390" gloves="5715" feet="5731" shots="1465" /> <!-- Pata, Avadon Circlet, Avadon Leather Armor, Avadon Gloves - Light Armor, Avadon Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="269" head="547" chest="2393" gloves="5769" feet="5781" shots="1466" /> <!-- Blood Tornado, Tallum Helm, Tallum Leather Armor, Tallum Gloves - Light Armor, Tallum Boots - Light Armor -->
 		<gear grade="S" minLevel="76" rhand="6371" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Demon Splinter, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
-		<gear grade="S80" minLevel="80" rhand="10221" head="9429" chest="10234" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Hand, Dynasty Leather Helmet, Dynasty Jewel Leather Armor - Bow Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
+		<gear grade="S80" minLevel="80" rhand="10221" head="9429" chest="10487" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Hand, Dynasty Leather Helmet, Dynasty Jeweled Leather Armor - Force Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
 		<gear grade="S84" minLevel="84" rhand="15563" head="13141" chest="13436" legs="13451" gloves="13452" feet="13453" shots="1467" /> <!-- Octo Claw, Vesper Noble Leather Helmet, Vesper Noble Leather Breastplate, Vesper Noble Leather Leggings, Vesper Noble Leather Gloves, Vesper Noble Leather Boots -->
 	</phantom>
 	<!-- Bokser: охотник, Orc Fighter, Monk, Tyrant, Grand Khavatari -->
@@ -922,7 +922,7 @@
 		<gear grade="B" minLevel="52" rhand="264" head="2417" chest="2392" gloves="5723" feet="5739" shots="1465" /> <!-- Pata, Doom Helmet, Leather Armor of Doom, Doom Gloves - Light Armor, Doom Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="269" head="2419" chest="2395" gloves="5775" feet="5787" shots="1466" /> <!-- Blood Tornado, Majestic Circlet, Majestic Leather Armor, Majestic Gauntlets - Light Armor, Majestic Boots - Light Armor -->
 		<gear grade="S" minLevel="76" rhand="6371" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Demon Splinter, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
-		<gear grade="S80" minLevel="80" rhand="10221" head="9429" chest="10488" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Hand, Dynasty Leather Helmet, Dynasty Jeweled Leather Armor - Weapon Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
+		<gear grade="S80" minLevel="80" rhand="10221" head="9429" chest="10487" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Hand, Dynasty Leather Helmet, Dynasty Jeweled Leather Armor - Force Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
 		<gear grade="S84" minLevel="84" rhand="13461" head="13141" chest="13436" legs="13451" gloves="13452" feet="13453" shots="1467" /> <!-- Vesper Fighter, Vesper Noble Leather Helmet, Vesper Noble Leather Breastplate, Vesper Noble Leather Leggings, Vesper Noble Leather Gloves, Vesper Noble Leather Boots -->
 	</phantom>
 	<!-- Fury: охотник, Orc Fighter, Monk, Tyrant, Grand Khavatari -->
@@ -933,7 +933,7 @@
 		<gear grade="B" minLevel="52" rhand="264" head="2415" chest="2390" gloves="5715" feet="5731" shots="1465" /> <!-- Pata, Avadon Circlet, Avadon Leather Armor, Avadon Gloves - Light Armor, Avadon Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="269" head="547" chest="2393" gloves="5769" feet="5781" shots="1466" /> <!-- Blood Tornado, Tallum Helm, Tallum Leather Armor, Tallum Gloves - Light Armor, Tallum Boots - Light Armor -->
 		<gear grade="S" minLevel="76" rhand="6371" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Demon Splinter, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
-		<gear grade="S80" minLevel="80" rhand="10221" head="9429" chest="10127" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Hand, Dynasty Leather Helmet, Dynasty Leather Armor - Weapon Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
+		<gear grade="S80" minLevel="80" rhand="10221" head="9429" chest="10487" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Hand, Dynasty Leather Helmet, Dynasty Jeweled Leather Armor - Force Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
 		<gear grade="S84" minLevel="84" rhand="13461" head="13141" chest="13436" legs="13451" gloves="13452" feet="13453" shots="1467" /> <!-- Vesper Fighter, Vesper Noble Leather Helmet, Vesper Noble Leather Breastplate, Vesper Noble Leather Leggings, Vesper Noble Leather Gloves, Vesper Noble Leather Boots -->
 	</phantom>
 	<!-- Kulakov: охотник, Orc Fighter, Monk, Tyrant, Grand Khavatari -->
@@ -955,7 +955,7 @@
 		<gear grade="B" minLevel="52" rhand="267" head="2415" chest="2390" gloves="5715" feet="5731" shots="1465" /> <!-- Arthro Nail, Avadon Circlet, Avadon Leather Armor, Avadon Gloves - Light Armor, Avadon Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="269" head="547" chest="2393" gloves="5769" feet="5781" shots="1466" /> <!-- Blood Tornado, Tallum Helm, Tallum Leather Armor, Tallum Gloves - Light Armor, Tallum Boots - Light Armor -->
 		<gear grade="S" minLevel="76" rhand="6371" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Demon Splinter, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
-		<gear grade="S80" minLevel="80" rhand="10221" head="9429" chest="10489" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Hand, Dynasty Leather Helmet, Dynasty Jeweled Leather Armor - Enchanter, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
+		<gear grade="S80" minLevel="80" rhand="10221" head="9429" chest="10487" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Hand, Dynasty Leather Helmet, Dynasty Jeweled Leather Armor - Force Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
 		<gear grade="S84" minLevel="84" rhand="13461" head="13141" chest="13436" legs="13451" gloves="13452" feet="13453" shots="1467" /> <!-- Vesper Fighter, Vesper Noble Leather Helmet, Vesper Noble Leather Breastplate, Vesper Noble Leather Leggings, Vesper Noble Leather Gloves, Vesper Noble Leather Boots -->
 	</phantom>
 	<!-- Matrona: охотник, Orc Fighter, Monk, Tyrant, Grand Khavatari -->
@@ -966,8 +966,8 @@
 		<gear grade="B" minLevel="52" rhand="264" head="2417" chest="2392" gloves="5723" feet="5739" shots="1465" /> <!-- Pata, Doom Helmet, Leather Armor of Doom, Doom Gloves - Light Armor, Doom Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="269" head="2419" chest="2395" gloves="5775" feet="5787" shots="1466" /> <!-- Blood Tornado, Majestic Circlet, Majestic Leather Armor, Majestic Gauntlets - Light Armor, Majestic Boots - Light Armor -->
 		<gear grade="S" minLevel="76" rhand="6371" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Demon Splinter, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
-		<gear grade="S80" minLevel="80" rhand="10221" head="9429" chest="10489" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Hand, Dynasty Leather Helmet, Dynasty Jeweled Leather Armor - Enchanter, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
-		<gear grade="S84" minLevel="84" rhand="15681" head="13141" chest="13436" legs="13451" gloves="13452" feet="13453" shots="1467" /> <!-- Triumph Jamadhr, Vesper Noble Leather Helmet, Vesper Noble Leather Breastplate, Vesper Noble Leather Leggings, Vesper Noble Leather Gloves, Vesper Noble Leather Boots -->
+		<gear grade="S80" minLevel="80" rhand="10221" head="9429" chest="9425" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Hand, Dynasty Leather Helmet, Dynasty Leather Armor, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
+		<gear grade="S84" minLevel="84" rhand="13461" head="13141" chest="13436" legs="13451" gloves="13452" feet="13453" shots="1467" /> <!-- Vesper Fighter, Vesper Noble Leather Helmet, Vesper Noble Leather Breastplate, Vesper Noble Leather Leggings, Vesper Noble Leather Gloves, Vesper Noble Leather Boots -->
 	</phantom>
 	<!-- Kupets: охотник, Dwarf Fighter, Scavenger, Bounty Hunter, Fortune Seeker -->
 	<phantom name="Kupets" kind="hunter" role="DAMAGE" female="false" face="2" hairStyle="1" hairColor="1" classes="53,54,55,117" aliases="купец;купчина" social="1" temper="1" risk="1" x="115211" y="-177933" z="-912">
@@ -977,8 +977,8 @@
 		<gear grade="B" minLevel="52" rhand="91" head="2416" chest="358" legs="2380" gloves="5718" feet="5734" shots="1465" /> <!-- Heavy War Axe, Blue Wolf Helmet, Blue Wolf Breastplate, Blue Wolf Gaiters, Blue Wolf Gloves - Heavy Armor, Blue Wolf Boots - Heavy Armor -->
 		<gear grade="A" minLevel="61" rhand="8763" head="2418" chest="374" gloves="5771" feet="5783" shots="1466" /> <!-- Elrokian Trap, Helm of Nightmare, Armor of Nightmare, Gauntlets of Nightmare - Heavy Armor, Boots of Nightmare - Heavy Armor -->
 		<gear grade="S" minLevel="76" rhand="165" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" shots="1467" /> <!-- Yablonski's Hammer, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots -->
-		<gear grade="S80" minLevel="80" rhand="10220" head="9422" chest="9420" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Hammer, Dynasty Helmet, Dynasty Breast Plate - Bard, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
-		<gear grade="S84" minLevel="84" rhand="15683" head="13137" chest="13432" legs="13438" gloves="13439" feet="13440" shots="1467" /> <!-- Triumph Staff, Vesper Helmet, Vesper Breastplate, Vesper Gaiters, Vesper Gauntlet, Vesper Boots -->
+		<gear grade="S80" minLevel="80" rhand="10220" head="9422" chest="9418" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Hammer, Dynasty Helmet, Dynasty Breast Plate - Weapon Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
+		<gear grade="S84" minLevel="84" rhand="13463" head="13137" chest="13432" legs="13438" gloves="13439" feet="13440" shots="1467" /> <!-- Vesper Avenger, Vesper Helmet, Vesper Breastplate, Vesper Gaiters, Vesper Gauntlet, Vesper Boots -->
 	</phantom>
 	<!-- Zhadina: охотник, Dwarf Fighter, Scavenger, Bounty Hunter, Fortune Seeker -->
 	<phantom name="Zhadina" kind="hunter" role="DAMAGE" female="true" face="0" hairStyle="0" hairColor="3" classes="53,54,55,117" aliases="жадина;жадинка" social="1" temper="1.2" risk="0.5" x="115007" y="-178725" z="-856">
@@ -988,7 +988,7 @@
 		<gear grade="B" minLevel="52" rhand="91" head="2415" chest="2376" legs="2379" gloves="5714" feet="5730" shots="1465" /> <!-- Heavy War Axe, Avadon Circlet, Avadon Breastplate, Avadon Gaiters, Avadon Gloves - Heavy Armor, Avadon Boots - Heavy Armor -->
 		<gear grade="A" minLevel="61" rhand="8763" head="547" chest="2382" gloves="5768" feet="5780" shots="1466" /> <!-- Elrokian Trap, Tallum Helm, Tallum Plate Armor, Tallum Gloves - Heavy Armor, Tallum Boots - Heavy Armor -->
 		<gear grade="S" minLevel="76" rhand="165" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" shots="1467" /> <!-- Yablonski's Hammer, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots -->
-		<gear grade="S80" minLevel="80" rhand="10220" head="9422" chest="9419" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Hammer, Dynasty Helmet, Dynasty Breast Plate - Force Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
+		<gear grade="S80" minLevel="80" rhand="10220" head="9422" chest="10229" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Hammer, Dynasty Helmet, Dynasty Platinum Plate - Weapon Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
 		<gear grade="S84" minLevel="84" rhand="15560" head="13140" chest="13435" legs="13448" gloves="13449" feet="13450" shots="1467" /> <!-- Vigwik Axe, Vesper Noble Helmet, Vesper Noble Breastplate, Vesper Noble Gaiters, Vesper Noble Gauntlet, Vesper Noble Boots -->
 	</phantom>
 	<!-- Gnomych: охотник, Dwarf Fighter, Scavenger, Bounty Hunter, Fortune Seeker -->
@@ -999,8 +999,8 @@
 		<gear grade="B" minLevel="52" rhand="91" head="2417" chest="2381" gloves="5722" feet="5738" shots="1465" /> <!-- Heavy War Axe, Doom Helmet, Doom Plate Armor, Doom Gloves - Heavy Armor, Doom Boots - Heavy Armor -->
 		<gear grade="A" minLevel="61" rhand="8763" head="2419" chest="2383" gloves="5774" feet="5786" shots="1466" /> <!-- Elrokian Trap, Majestic Circlet, Majestic Plate Armor, Majestic Gauntlets - Heavy Armor, Majestic Boots - Heavy Armor -->
 		<gear grade="S" minLevel="76" rhand="165" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" shots="1467" /> <!-- Yablonski's Hammer, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots -->
-		<gear grade="S80" minLevel="80" rhand="10220" head="9422" chest="9417" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Hammer, Dynasty Helmet, Dynasty Breast Plate - Shield Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
-		<gear grade="S84" minLevel="84" rhand="15683" head="13140" chest="13435" legs="13448" gloves="13449" feet="13450" shots="1467" /> <!-- Triumph Staff, Vesper Noble Helmet, Vesper Noble Breastplate, Vesper Noble Gaiters, Vesper Noble Gauntlet, Vesper Noble Boots -->
+		<gear grade="S80" minLevel="80" rhand="10220" head="9422" chest="9418" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Hammer, Dynasty Helmet, Dynasty Breast Plate - Weapon Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
+		<gear grade="S84" minLevel="84" rhand="21939" head="13140" chest="13435" legs="13448" gloves="13449" feet="13450" shots="1467" /> <!-- Claw of Destruction, Vesper Noble Helmet, Vesper Noble Breastplate, Vesper Noble Gaiters, Vesper Noble Gauntlet, Vesper Noble Boots -->
 	</phantom>
 	<!-- Shpilka: охотник, Dwarf Fighter, Scavenger, Bounty Hunter, Fortune Seeker -->
 	<phantom name="Shpilka" kind="hunter" role="DAMAGE" female="true" face="1" hairStyle="5" hairColor="3" classes="53,54,55,117" aliases="шпилька;шпиля" social="1" temper="1" risk="1" x="115139" y="-177844" z="-896">
@@ -1010,8 +1010,8 @@
 		<gear grade="B" minLevel="52" rhand="91" head="2416" chest="358" legs="2380" gloves="5718" feet="5734" shots="1465" /> <!-- Heavy War Axe, Blue Wolf Helmet, Blue Wolf Breastplate, Blue Wolf Gaiters, Blue Wolf Gloves - Heavy Armor, Blue Wolf Boots - Heavy Armor -->
 		<gear grade="A" minLevel="61" rhand="8763" head="2418" chest="374" gloves="5771" feet="5783" shots="1466" /> <!-- Elrokian Trap, Helm of Nightmare, Armor of Nightmare, Gauntlets of Nightmare - Heavy Armor, Boots of Nightmare - Heavy Armor -->
 		<gear grade="S" minLevel="76" rhand="165" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" shots="1467" /> <!-- Yablonski's Hammer, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots -->
-		<gear grade="S80" minLevel="80" rhand="10220" head="9422" chest="9420" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Hammer, Dynasty Helmet, Dynasty Breast Plate - Bard, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
-		<gear grade="S84" minLevel="84" rhand="15683" head="13137" chest="13432" legs="13438" gloves="13439" feet="13440" shots="1467" /> <!-- Triumph Staff, Vesper Helmet, Vesper Breastplate, Vesper Gaiters, Vesper Gauntlet, Vesper Boots -->
+		<gear grade="S80" minLevel="80" rhand="10220" head="9422" chest="9418" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Hammer, Dynasty Helmet, Dynasty Breast Plate - Weapon Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
+		<gear grade="S84" minLevel="84" rhand="21939" head="13137" chest="13432" legs="13438" gloves="13439" feet="13440" shots="1467" /> <!-- Claw of Destruction, Vesper Helmet, Vesper Breastplate, Vesper Gaiters, Vesper Gauntlet, Vesper Boots -->
 	</phantom>
 	<!-- Sundukov: охотник, Dwarf Fighter, Scavenger, Bounty Hunter, Fortune Seeker -->
 	<phantom name="Sundukov" kind="hunter" role="DAMAGE" female="false" face="0" hairStyle="2" hairColor="0" classes="53,54,55,117" aliases="сундуков" social="1" temper="1" risk="0.5" x="115089" y="-178577" z="-888">
@@ -1021,8 +1021,8 @@
 		<gear grade="B" minLevel="52" rhand="91" head="2416" chest="358" legs="2380" gloves="5718" feet="5734" shots="1465" /> <!-- Heavy War Axe, Blue Wolf Helmet, Blue Wolf Breastplate, Blue Wolf Gaiters, Blue Wolf Gloves - Heavy Armor, Blue Wolf Boots - Heavy Armor -->
 		<gear grade="A" minLevel="61" rhand="8763" head="2418" chest="374" gloves="5771" feet="5783" shots="1466" /> <!-- Elrokian Trap, Helm of Nightmare, Armor of Nightmare, Gauntlets of Nightmare - Heavy Armor, Boots of Nightmare - Heavy Armor -->
 		<gear grade="S" minLevel="76" rhand="165" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" shots="1467" /> <!-- Yablonski's Hammer, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots -->
-		<gear grade="S80" minLevel="80" rhand="10220" head="9422" chest="9420" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Hammer, Dynasty Helmet, Dynasty Breast Plate - Bard, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
-		<gear grade="S84" minLevel="84" rhand="15678" head="13137" chest="13432" legs="13438" gloves="13439" feet="13440" shots="1467" /> <!-- Triumph Hammer, Vesper Helmet, Vesper Breastplate, Vesper Gaiters, Vesper Gauntlet, Vesper Boots -->
+		<gear grade="S80" minLevel="80" rhand="10220" head="9422" chest="9418" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Hammer, Dynasty Helmet, Dynasty Breast Plate - Weapon Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
+		<gear grade="S84" minLevel="84" rhand="21939" head="13137" chest="13432" legs="13438" gloves="13439" feet="13440" shots="1467" /> <!-- Claw of Destruction, Vesper Helmet, Vesper Breastplate, Vesper Gaiters, Vesper Gauntlet, Vesper Boots -->
 	</phantom>
 	<!-- Inzhener: охотник, Dwarf Fighter, Artisan, Warsmith, Maestro -->
 	<phantom name="Inzhener" kind="hunter" role="DAMAGE" female="false" face="1" hairStyle="1" hairColor="1" classes="53,56,57,118" aliases="инженер;инж" social="1" temper="1" risk="1" x="114890" y="-177846" z="-848">
@@ -1043,7 +1043,7 @@
 		<gear grade="B" minLevel="52" rhand="91" head="2416" chest="358" legs="2380" gloves="5718" feet="5734" shots="1465" /> <!-- Heavy War Axe, Blue Wolf Helmet, Blue Wolf Breastplate, Blue Wolf Gaiters, Blue Wolf Gloves - Heavy Armor, Blue Wolf Boots - Heavy Armor -->
 		<gear grade="A" minLevel="61" rhand="8763" head="2418" chest="374" gloves="5771" feet="5783" shots="1466" /> <!-- Elrokian Trap, Helm of Nightmare, Armor of Nightmare, Gauntlets of Nightmare - Heavy Armor, Boots of Nightmare - Heavy Armor -->
 		<gear grade="S" minLevel="76" rhand="6365" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" shots="1467" /> <!-- Basalt Battlehammer, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots -->
-		<gear grade="S80" minLevel="80" rhand="10220" head="9422" chest="10231" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Hammer, Dynasty Helmet, Dynasty Platinum Plate - Bard, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
+		<gear grade="S80" minLevel="80" rhand="10220" head="9422" chest="10229" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Hammer, Dynasty Helmet, Dynasty Platinum Plate - Weapon Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
 		<gear grade="S84" minLevel="84" rhand="13463" head="13137" chest="13432" legs="13438" gloves="13439" feet="13440" shots="1467" /> <!-- Vesper Avenger, Vesper Helmet, Vesper Breastplate, Vesper Gaiters, Vesper Gauntlet, Vesper Boots -->
 	</phantom>
 	<!-- Gornyak: охотник, Dwarf Fighter, Artisan, Warsmith, Maestro -->
@@ -1054,8 +1054,8 @@
 		<gear grade="B" minLevel="52" rhand="91" head="2416" chest="358" legs="2380" gloves="5718" feet="5734" shots="1465" /> <!-- Heavy War Axe, Blue Wolf Helmet, Blue Wolf Breastplate, Blue Wolf Gaiters, Blue Wolf Gloves - Heavy Armor, Blue Wolf Boots - Heavy Armor -->
 		<gear grade="A" minLevel="61" rhand="8763" head="2418" chest="374" gloves="5771" feet="5783" shots="1466" /> <!-- Elrokian Trap, Helm of Nightmare, Armor of Nightmare, Gauntlets of Nightmare - Heavy Armor, Boots of Nightmare - Heavy Armor -->
 		<gear grade="S" minLevel="76" rhand="165" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" shots="1467" /> <!-- Yablonski's Hammer, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots -->
-		<gear grade="S80" minLevel="80" rhand="10220" head="9422" chest="9420" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Hammer, Dynasty Helmet, Dynasty Breast Plate - Bard, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
-		<gear grade="S84" minLevel="84" rhand="15683" head="13137" chest="13432" legs="13438" gloves="13439" feet="13440" shots="1467" /> <!-- Triumph Staff, Vesper Helmet, Vesper Breastplate, Vesper Gaiters, Vesper Gauntlet, Vesper Boots -->
+		<gear grade="S80" minLevel="80" rhand="10220" head="9422" chest="9418" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Hammer, Dynasty Helmet, Dynasty Breast Plate - Weapon Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
+		<gear grade="S84" minLevel="84" rhand="13463" head="13137" chest="13432" legs="13438" gloves="13439" feet="13440" shots="1467" /> <!-- Vesper Avenger, Vesper Helmet, Vesper Breastplate, Vesper Gaiters, Vesper Gauntlet, Vesper Boots -->
 	</phantom>
 	<!-- Plavka: охотник, Dwarf Fighter, Artisan, Warsmith, Maestro -->
 	<phantom name="Plavka" kind="hunter" role="DAMAGE" female="true" face="2" hairStyle="6" hairColor="3" classes="53,56,57,118" aliases="плавка" social="1" temper="1" risk="1" x="114632" y="-177846" z="-848">
@@ -1066,7 +1066,7 @@
 		<gear grade="A" minLevel="61" rhand="8763" head="2419" chest="2383" gloves="5774" feet="5786" shots="1466" /> <!-- Elrokian Trap, Majestic Circlet, Majestic Plate Armor, Majestic Gauntlets - Heavy Armor, Majestic Boots - Heavy Armor -->
 		<gear grade="S" minLevel="76" rhand="6365" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" shots="1467" /> <!-- Basalt Battlehammer, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots -->
 		<gear grade="S80" minLevel="80" rhand="10220" head="9422" chest="10229" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Icarus Hammer, Dynasty Helmet, Dynasty Platinum Plate - Weapon Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
-		<gear grade="S84" minLevel="84" rhand="15683" head="13140" chest="13435" legs="13448" gloves="13449" feet="13450" shots="1467" /> <!-- Triumph Staff, Vesper Noble Helmet, Vesper Noble Breastplate, Vesper Noble Gaiters, Vesper Noble Gauntlet, Vesper Noble Boots -->
+		<gear grade="S84" minLevel="84" rhand="13463" head="13140" chest="13435" legs="13448" gloves="13449" feet="13450" shots="1467" /> <!-- Vesper Avenger, Vesper Noble Helmet, Vesper Noble Breastplate, Vesper Noble Gaiters, Vesper Noble Gauntlet, Vesper Noble Boots -->
 	</phantom>
 	<!-- Yarost: охотник, Male Kamael Soldier, Trooper, Berserker, Doombringer -->
 	<phantom name="Yarost" kind="hunter" role="DAMAGE" female="false" face="0" hairStyle="1" hairColor="0" classes="123,125,127,131" aliases="ярость;ярый" social="0.2" temper="1.5" risk="1.5" x="-117154" y="46751" z="360">
@@ -1076,8 +1076,8 @@
 		<gear grade="B" minLevel="52" rhand="9308" head="2415" chest="2390" gloves="5715" feet="5731" shots="1465" /> <!-- Innominate Victory, Avadon Circlet, Avadon Leather Armor, Avadon Gloves - Light Armor, Avadon Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="9332" head="547" chest="2393" gloves="5769" feet="5781" shots="1466" /> <!-- Divine Pain, Tallum Helm, Tallum Leather Armor, Tallum Gloves - Light Armor, Tallum Boots - Light Armor -->
 		<gear grade="S" minLevel="76" rhand="9368" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Gram, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
-		<gear grade="S80" minLevel="80" rhand="10225" head="9429" chest="10233" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Wingblade, Dynasty Leather Helmet, Dynasty Jewel Leather Armor - Dagger Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
-		<gear grade="S84" minLevel="84" rhand="15688" head="13141" chest="13436" legs="13451" gloves="13452" feet="13453" shots="1467" /> <!-- Triumph Ancientsword, Vesper Noble Leather Helmet, Vesper Noble Leather Breastplate, Vesper Noble Leather Leggings, Vesper Noble Leather Gloves, Vesper Noble Leather Boots -->
+		<gear grade="S80" minLevel="80" rhand="10225" head="9429" chest="10488" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Wingblade, Dynasty Leather Helmet, Dynasty Jeweled Leather Armor - Weapon Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
+		<gear grade="S84" minLevel="84" rhand="15570" head="13141" chest="13436" legs="13451" gloves="13452" feet="13453" shots="1467" /> <!-- Finale Blade, Vesper Noble Leather Helmet, Vesper Noble Leather Breastplate, Vesper Noble Leather Leggings, Vesper Noble Leather Gloves, Vesper Noble Leather Boots -->
 	</phantom>
 	<!-- Padshiy: охотник, Male Kamael Soldier, Trooper, Berserker, Doombringer -->
 	<phantom name="Padshiy" kind="hunter" role="DAMAGE" female="false" face="1" hairStyle="2" hairColor="2" classes="123,125,127,131" aliases="падший" social="1" temper="1" risk="1" x="-116675" y="46274" z="360">
@@ -1088,7 +1088,7 @@
 		<gear grade="A" minLevel="61" rhand="9332" head="512" chest="2385" legs="2389" gloves="5766" feet="5778" shots="1466" /> <!-- Divine Pain, Dark Crystal Helmet, Dark Crystal Leather Armor, Dark Crystal Leggings, Dark Crystal Gloves - Light Armor, Dark Crystal Boots - Light Armor -->
 		<gear grade="S" minLevel="76" rhand="9368" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Gram, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
 		<gear grade="S80" minLevel="80" rhand="10225" head="9429" chest="10127" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Wingblade, Dynasty Leather Helmet, Dynasty Leather Armor - Weapon Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
-		<gear grade="S84" minLevel="84" rhand="15688" head="13138" chest="13433" legs="13441" gloves="13442" feet="13443" shots="1467" /> <!-- Triumph Ancientsword, Vesper Leather Helmet, Vesper Leather Breastplate, Vesper Leather Leggings, Vesper Leather Gloves, Vesper Leather Boots -->
+		<gear grade="S84" minLevel="84" rhand="15570" head="13138" chest="13433" legs="13441" gloves="13442" feet="13443" shots="1467" /> <!-- Finale Blade, Vesper Leather Helmet, Vesper Leather Breastplate, Vesper Leather Leggings, Vesper Leather Gloves, Vesper Leather Boots -->
 	</phantom>
 	<!-- Shram: охотник, Male Kamael Soldier, Trooper, Berserker, Doombringer -->
 	<phantom name="Shram" kind="hunter" role="DAMAGE" female="false" face="0" hairStyle="3" hairColor="3" classes="123,125,127,131" aliases="шрам" social="0.2" temper="1" risk="1" x="-116480" y="46349" z="360">
@@ -1098,8 +1098,8 @@
 		<gear grade="B" minLevel="52" rhand="9308" head="2415" chest="2390" gloves="5715" feet="5731" shots="1465" /> <!-- Innominate Victory, Avadon Circlet, Avadon Leather Armor, Avadon Gloves - Light Armor, Avadon Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="9332" head="547" chest="2393" gloves="5769" feet="5781" shots="1466" /> <!-- Divine Pain, Tallum Helm, Tallum Leather Armor, Tallum Gloves - Light Armor, Tallum Boots - Light Armor -->
 		<gear grade="S" minLevel="76" rhand="9368" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Gram, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
-		<gear grade="S80" minLevel="80" rhand="10225" head="9429" chest="10234" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Wingblade, Dynasty Leather Helmet, Dynasty Jewel Leather Armor - Bow Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
-		<gear grade="S84" minLevel="84" rhand="15688" head="13141" chest="13436" legs="13451" gloves="13452" feet="13453" shots="1467" /> <!-- Triumph Ancientsword, Vesper Noble Leather Helmet, Vesper Noble Leather Breastplate, Vesper Noble Leather Leggings, Vesper Noble Leather Gloves, Vesper Noble Leather Boots -->
+		<gear grade="S80" minLevel="80" rhand="10225" head="9429" chest="10127" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Wingblade, Dynasty Leather Helmet, Dynasty Leather Armor - Weapon Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
+		<gear grade="S84" minLevel="84" rhand="13470" head="13141" chest="13436" legs="13451" gloves="13452" feet="13453" shots="1467" /> <!-- Vesper Nagan, Vesper Noble Leather Helmet, Vesper Noble Leather Breastplate, Vesper Noble Leather Leggings, Vesper Noble Leather Gloves, Vesper Noble Leather Boots -->
 	</phantom>
 	<!-- Osa: охотник, Female Kamael Soldier, Warder, Arbalester, Trickster -->
 	<phantom name="Osa" kind="hunter" role="DAMAGE" female="true" face="0" hairStyle="1" hairColor="0" classes="124,126,130,134" aliases="оса;осинка" social="1" temper="1.2" risk="1" x="-117202" y="45989" z="344">
@@ -1109,7 +1109,7 @@
 		<gear grade="B" minLevel="52" rhand="9312" head="503" chest="2384" legs="2388" gloves="5711" feet="5727" shots="1465" /> <!-- Peacemaker, Zubei's Helmet, Zubei's Leather Shirt, Zubei's Leather Gaiters, Zubei's Gauntlets - Light Armor, Zubei's Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="9336" head="512" chest="2385" legs="2389" gloves="5766" feet="5778" shots="1466" /> <!-- Doomchanter, Dark Crystal Helmet, Dark Crystal Leather Armor, Dark Crystal Leggings, Dark Crystal Gloves - Light Armor, Dark Crystal Boots - Light Armor -->
 		<gear grade="S" minLevel="76" rhand="9372" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Sarunga, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
-		<gear grade="S80" minLevel="80" rhand="10226" head="9429" chest="10490" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Shooter, Dynasty Leather Helmet, Dynasty Jeweled Leather Armor - Summoner, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
+		<gear grade="S80" minLevel="80" rhand="10226" head="9429" chest="9425" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Shooter, Dynasty Leather Helmet, Dynasty Leather Armor, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
 		<gear grade="S84" minLevel="84" rhand="13469" head="13138" chest="13433" legs="13441" gloves="13442" feet="13443" shots="1467" /> <!-- Vesper Shooter, Vesper Leather Helmet, Vesper Leather Breastplate, Vesper Leather Leggings, Vesper Leather Gloves, Vesper Leather Boots -->
 	</phantom>
 	<!-- Shpionka: охотник, Female Kamael Soldier, Warder, Arbalester, Trickster -->
@@ -1120,11 +1120,86 @@
 		<gear grade="B" minLevel="52" rhand="9312" head="2415" chest="2390" gloves="5715" feet="5731" shots="1465" /> <!-- Peacemaker, Avadon Circlet, Avadon Leather Armor, Avadon Gloves - Light Armor, Avadon Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="9336" head="547" chest="2393" gloves="5769" feet="5781" shots="1466" /> <!-- Doomchanter, Tallum Helm, Tallum Leather Armor, Tallum Gloves - Light Armor, Tallum Boots - Light Armor -->
 		<gear grade="S" minLevel="76" rhand="9372" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Sarunga, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
-		<gear grade="S80" minLevel="80" rhand="10226" head="9429" chest="10127" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Shooter, Dynasty Leather Helmet, Dynasty Leather Armor - Weapon Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
+		<gear grade="S80" minLevel="80" rhand="10226" head="9429" chest="9425" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Shooter, Dynasty Leather Helmet, Dynasty Leather Armor, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
 		<gear grade="S84" minLevel="84" rhand="13469" head="13141" chest="13436" legs="13451" gloves="13452" feet="13453" shots="1467" /> <!-- Vesper Shooter, Vesper Noble Leather Helmet, Vesper Noble Leather Breastplate, Vesper Noble Leather Leggings, Vesper Noble Leather Gloves, Vesper Noble Leather Boots -->
+	</phantom>
+	<!-- Bastion: охотник, Human Fighter, Human Knight, Paladin, Phoenix Knight; ветеран, приходит 78-м -->
+	<phantom name="Bastion" kind="hunter" role="TANK" female="false" face="1" hairStyle="0" hairColor="0" classes="0,4,5,90" aliases="бастион;бастик" social="1" temper="1" risk="1" startLevel="78" x="-84428" y="244180" z="-3728">
+		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
+		<gear grade="D" minLevel="20" rhand="123" head="47" chest="58" legs="59" lhand="628" shots="1463" /> <!-- Saber, Helmet, Mithril Breastplate, Mithril Gaiters, Hoplon -->
+		<gear grade="C" minLevel="40" rhand="73" head="517" chest="60" lhand="107" shots="1464" /> <!-- Shamshir, Composite Helmet, Composite Armor, Composite Shield -->
+		<gear grade="B" minLevel="52" rhand="142" head="503" chest="357" legs="383" gloves="5710" feet="5726" shots="1465" /> <!-- Keshanberk, Zubei's Helmet, Zubei's Breastplate, Zubei's Gaiters, Zubei's Gauntlets - Heavy Armor, Zubei's Boots - Heavy Armor -->
+		<gear grade="A" minLevel="61" rhand="80" head="512" chest="365" legs="388" gloves="5765" feet="5777" lhand="641" shots="1466" /> <!-- Tallum Blade, Dark Crystal Helmet, Dark Crystal Breastplate, Dark Crystal Gaiters, Dark Crystal Gloves - Heavy Armor, Dark Crystal Boots - Heavy Armor, Dark Crystal Shield -->
+		<gear grade="S" minLevel="76" rhand="82" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" lhand="6377" shots="1467" /> <!-- Gaz Blade, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots, Imperial Crusader Shield -->
+		<gear grade="S80" minLevel="80" rhand="10215" head="9422" chest="9416" legs="9421" gloves="9423" feet="9424" lhand="9441" shots="1467" /> <!-- Icarus Sawsword, Dynasty Helmet, Dynasty Breast Plate, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor, Dynasty Shield -->
+		<gear grade="S84" minLevel="84" rhand="15558" head="13137" chest="13432" legs="13438" gloves="13439" feet="13440" lhand="13471" shots="1467" /> <!-- Periel Sword, Vesper Helmet, Vesper Breastplate, Vesper Gaiters, Vesper Gauntlet, Vesper Boots, Vesper Shield -->
+	</phantom>
+	<!-- Igumen: охотник, Human Mystic, Cleric, Bishop, Cardinal; ветеран, приходит 77-м -->
+	<phantom name="Igumen" kind="hunter" role="HEALER" female="false" face="2" hairStyle="2" hairColor="2" classes="10,15,16,97" aliases="игумен;отче" social="1" temper="1" risk="1" startLevel="77" x="-84306" y="245101" z="-3728">
+		<gear grade="NONE" minLevel="1" rhand="6" chest="425" legs="461" shots="3947" /> <!-- Apprentice's Wand, Apprentice's Tunic, Apprentice's Stockings -->
+		<gear grade="D" minLevel="20" rhand="181" chest="436" legs="469" gloves="2447" shots="3948" /> <!-- Mace of Miracle, Tunic of Knowledge, Stockings of Knowledge, Gloves of Knowledge -->
+		<gear grade="C" minLevel="40" rhand="193" chest="439" legs="471" gloves="2454" shots="3949" /> <!-- Stick of Faith, Karmian Tunic, Karmian Stockings, Karmian Gloves -->
+		<gear grade="B" minLevel="52" rhand="7892" head="2416" chest="2398" legs="2403" gloves="5720" feet="5736" shots="3950" /> <!-- Spell Breaker, Blue Wolf Helmet, Blue Wolf Tunic, Blue Wolf Stockings, Blue Wolf Gloves - Robe, Blue Wolf Boots - Robe -->
+		<gear grade="A" minLevel="61" rhand="7894" head="2418" chest="2408" gloves="5773" feet="5785" shots="3951" /> <!-- Spiritual Eye, Helm of Nightmare, Robe of Nightmare, Gauntlets of Nightmare - Robe, Boots of Nightmare - Robe -->
+		<gear grade="S" minLevel="76" rhand="6579" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- Arcana Mace, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
+		<gear grade="S80" minLevel="80" rhand="10222" head="9438" chest="9433" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall, Dynasty Circlet, Dynasty Tunic - Healer, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
+		<gear grade="S84" minLevel="84" rhand="13465" head="13139" chest="13434" legs="13444" gloves="13445" feet="13446" shots="3952" /> <!-- Vesper Caster, Vesper Circlet, Vesper Tunic, Vesper Stockings, Vesper Gloves, Vesper Shoes -->
+	</phantom>
+	<!-- Berkut: охотник, Human Fighter, Rogue, Hawkeye, Sagittarius; ветеран, приходит 75-м -->
+	<phantom name="Berkut" kind="hunter" role="DAMAGE" female="false" face="0" hairStyle="4" hairColor="1" classes="0,7,9,92" aliases="беркут;беркутик" social="1" temper="1" risk="1" startLevel="75" x="-83773" y="244777" z="-3728">
+		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
+		<gear grade="D" minLevel="20" rhand="274" chest="394" legs="416" feet="2422" shots="1463" /> <!-- Reinforced Bow, Reinforced Leather Shirt, Reinforced Leather Gaiters, Reinforced Leather Boots -->
+		<gear grade="C" minLevel="40" rhand="281" chest="400" legs="420" feet="2436" shots="1464" /> <!-- Crystallized Ice Bow, Theca Leather Armor, Theca Leather Gaiters, Theca Leather Boots -->
+		<gear grade="B" minLevel="52" rhand="284" head="2416" chest="2391" gloves="5719" feet="5735" shots="1465" /> <!-- Dark Elven Long Bow, Blue Wolf Helmet, Blue Wolf Leather Armor, Blue Wolf Gloves - Light Armor, Blue Wolf Boots - Light Armor -->
+		<gear grade="A" minLevel="61" rhand="288" head="2418" chest="2394" gloves="5772" feet="5784" shots="1466" /> <!-- Carnage Bow, Helm of Nightmare, Leather Armor of Nightmare, Gauntlets of Nightmare - Light Armor, Boots of Nightmare - Light Armor -->
+		<gear grade="S" minLevel="76" rhand="290" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- The Bow, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
+		<gear grade="S80" minLevel="80" rhand="10223" head="9429" chest="9427" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Spitter, Dynasty Leather Helmet, Dynasty Leather Armor - Bow Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
+		<gear grade="S84" minLevel="84" rhand="13467" head="13138" chest="13433" legs="13441" gloves="13442" feet="13443" shots="1467" /> <!-- Vesper Thrower, Vesper Leather Helmet, Vesper Leather Breastplate, Vesper Leather Leggings, Vesper Leather Gloves, Vesper Leather Boots -->
+	</phantom>
+	<!-- Metel: охотник, Elven Mystic, Elven Wizard, Spellsinger, Mystic Muse; ветеран, приходит 79-м -->
+	<phantom name="Metel" kind="hunter" role="DAMAGE" female="true" face="0" hairStyle="6" hairColor="0" classes="25,26,27,103" aliases="метель;метелька" social="1" temper="1" risk="1" startLevel="79" x="47312" y="51425" z="-2992">
+		<gear grade="NONE" minLevel="1" rhand="6" chest="425" legs="461" shots="3947" /> <!-- Apprentice's Wand, Apprentice's Tunic, Apprentice's Stockings -->
+		<gear grade="D" minLevel="20" rhand="178" chest="436" legs="469" gloves="2447" shots="3948" /> <!-- Bone Staff, Tunic of Knowledge, Stockings of Knowledge, Gloves of Knowledge -->
+		<gear grade="C" minLevel="40" rhand="194" chest="439" legs="471" gloves="2454" shots="3949" /> <!-- Heavy Doom Axe, Karmian Tunic, Karmian Stockings, Karmian Gloves -->
+		<gear grade="B" minLevel="52" rhand="208" head="503" chest="2397" legs="2402" gloves="5712" feet="5728" shots="3950" /> <!-- Staff of Seal, Zubei's Helmet, Tunic of Zubei, Stockings of Zubei, Zubei's Gauntlets - Robe, Zubei's Boots - Robe -->
+		<gear grade="A" minLevel="61" rhand="4904" head="547" chest="2400" legs="2405" gloves="5770" feet="5782" shots="3951" /> <!-- Dasparion's Staff, Tallum Helm, Tallum Tunic, Tallum Stockings, Tallum Gloves - Robe, Tallum Boots - Robe -->
+		<gear grade="S" minLevel="76" rhand="214" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- The Staff, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
+		<gear grade="S80" minLevel="80" rhand="10217" head="9438" chest="9436" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Spirit, Dynasty Circlet, Dynasty Tunic - Wizard, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
+		<gear grade="S84" minLevel="84" rhand="13466" head="13139" chest="13434" legs="13444" gloves="13445" feet="13446" shots="3952" /> <!-- Vesper Singer, Vesper Circlet, Vesper Tunic, Vesper Stockings, Vesper Gloves, Vesper Shoes -->
+	</phantom>
+	<!-- Rys: охотник, Elven Fighter, Elven Scout, Plains Walker, Wind Rider; ветеран, приходит 74-м -->
+	<phantom name="Rys" kind="hunter" role="DAMAGE" female="true" face="0" hairStyle="6" hairColor="3" classes="18,22,23,101" aliases="рысь;рыська" social="1" temper="1" risk="1" startLevel="74" x="46997" y="51059" z="-2992">
+		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
+		<gear grade="D" minLevel="20" rhand="221" chest="395" legs="417" feet="2424" shots="1463" /> <!-- Assassin Knife, Manticore Skin Shirt, Manticore Skin Gaiters, Manticore Skin Boots -->
+		<gear grade="C" minLevel="40" rhand="227" chest="398" legs="418" feet="2431" shots="1464" /> <!-- Stiletto, Plated Leather, Plated Leather Gaiters, Plated Leather Boots -->
+		<gear grade="B" minLevel="52" rhand="229" head="2415" chest="2390" gloves="5715" feet="5731" shots="1465" /> <!-- Kris, Avadon Circlet, Avadon Leather Armor, Avadon Gloves - Light Armor, Avadon Boots - Light Armor -->
+		<gear grade="A" minLevel="61" rhand="235" head="547" chest="2393" gloves="5769" feet="5781" shots="1466" /> <!-- Bloody Orchid, Tallum Helm, Tallum Leather Armor, Tallum Gloves - Light Armor, Tallum Boots - Light Armor -->
+		<gear grade="S" minLevel="76" rhand="6367" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Angel Slayer, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
+		<gear grade="S80" minLevel="80" rhand="10216" head="9429" chest="9425" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Disperser, Dynasty Leather Helmet, Dynasty Leather Armor, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
+		<gear grade="S84" minLevel="84" rhand="15559" head="13141" chest="13436" legs="13451" gloves="13452" feet="13453" shots="1467" /> <!-- Skull Edge, Vesper Noble Leather Helmet, Vesper Noble Leather Breastplate, Vesper Noble Leather Leggings, Vesper Noble Leather Gloves, Vesper Noble Leather Boots -->
+	</phantom>
+	<!-- Tesak: охотник, Male Kamael Soldier, Trooper, Berserker, Doombringer; ветеран, приходит 80-м -->
+	<phantom name="Tesak" kind="hunter" role="DAMAGE" female="false" face="0" hairStyle="0" hairColor="0" classes="123,125,127,131" aliases="тесак;тесачок" social="1" temper="1" risk="1" startLevel="80" x="-116588" y="46495" z="360">
+		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
+		<gear grade="D" minLevel="20" rhand="9210" chest="395" legs="417" feet="2424" shots="1463" /> <!-- Talwar, Manticore Skin Shirt, Manticore Skin Gaiters, Manticore Skin Boots -->
+		<gear grade="C" minLevel="40" rhand="9232" chest="401" feet="2437" shots="1464" /> <!-- Schlager, Drake Leather Armor, Drake Leather Boots -->
+		<gear grade="B" minLevel="52" rhand="9308" head="2417" chest="2392" gloves="5723" feet="5739" shots="1465" /> <!-- Innominate Victory, Doom Helmet, Leather Armor of Doom, Doom Gloves - Light Armor, Doom Boots - Light Armor -->
+		<gear grade="A" minLevel="61" rhand="9332" head="2419" chest="2395" gloves="5775" feet="5787" shots="1466" /> <!-- Divine Pain, Majestic Circlet, Majestic Leather Armor, Majestic Gauntlets - Light Armor, Majestic Boots - Light Armor -->
+		<gear grade="S" minLevel="76" rhand="9368" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Gram, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
+		<gear grade="S80" minLevel="80" rhand="10225" head="9429" chest="10127" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Wingblade, Dynasty Leather Helmet, Dynasty Leather Armor - Weapon Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
+		<gear grade="S84" minLevel="84" rhand="13470" head="13141" chest="13436" legs="13451" gloves="13452" feet="13453" shots="1467" /> <!-- Vesper Nagan, Vesper Noble Leather Helmet, Vesper Noble Leather Breastplate, Vesper Noble Leather Leggings, Vesper Noble Leather Gloves, Vesper Noble Leather Boots -->
 	</phantom>
 	<!-- Thanatos: Танатос, единственный ПК сервера; Orc Fighter, Monk, Tyrant, Grand Khavatari, всегда 76-й -->
 	<phantom name="Thanatos" kind="reaper" role="DAMAGE" female="false" face="2" hairStyle="1" hairColor="2" classes="44,47,48,114" x="-45264" y="-112512" z="-240">
 		<gear grade="S" minLevel="76" rhand="9878" head="6382" chest="6379" gloves="6380" feet="6381" neck="9456" ear="9455" ring="9457" shirt="9588" shots="1467" /> <!-- Dynasty Bagh-Nakh - Rsk. Evasion, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots, Dynasty Necklace, Dynasty Earrings, Dynasty Ring, Striped Mithril Shirt -->
+		<body kit="dual" classes="2,88" rhand="11251" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" neck="9456" ear="9455" ring="9457" shirt="9588" shots="1467" /> <!-- Gladiator, Duelist: Dynasty Dual Sword - Earth, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots, Dynasty Necklace, Dynasty Earrings, Dynasty Ring, Striped Mithril Shirt -->
+		<body kit="pole" classes="3,89" rhand="9869" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" neck="9456" ear="9455" ring="9457" shirt="9588" shots="1467" /> <!-- Warlord, Dreadnought: Dynasty Halberd - Anger, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots, Dynasty Necklace, Dynasty Earrings, Dynasty Ring, Striped Mithril Shirt -->
+		<body kit="bigsword" classes="46,113" rhand="9857" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" neck="9456" ear="9455" ring="9457" shirt="9588" shots="1467" /> <!-- Destroyer, Titan: Dynasty Blade - Focus, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots, Dynasty Necklace, Dynasty Earrings, Dynasty Ring, Striped Mithril Shirt -->
+		<body kit="blunt" classes="55,117" rhand="9872" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" neck="9456" ear="9455" ring="9457" shirt="9588" shots="1467" /> <!-- Bounty Hunter, Fortune Seeker: Dynasty Cudgel - Anger, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots, Dynasty Necklace, Dynasty Earrings, Dynasty Ring, Striped Mithril Shirt -->
+		<body kit="tank" classes="5,90" rhand="9854" lhand="6377" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" neck="9456" ear="9455" ring="9457" shirt="9588" shots="1467" /> <!-- Paladin, Phoenix Knight: Dynasty Sword - Focus, Imperial Crusader Shield, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots, Dynasty Necklace, Dynasty Earrings, Dynasty Ring, Striped Mithril Shirt -->
+		<body kit="dagger" classes="8,93" rhand="9866" head="6382" chest="6379" gloves="6380" feet="6381" neck="9456" ear="9455" ring="9457" shirt="9588" shots="1467" /> <!-- Treasure Hunter, Adventurer: Dynasty Knife - Focus, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots, Dynasty Necklace, Dynasty Earrings, Dynasty Ring, Striped Mithril Shirt -->
+		<body kit="bow" classes="9,92" rhand="9863" head="6382" chest="6379" gloves="6380" feet="6381" neck="9456" ear="9455" ring="9457" shirt="9588" shots="1467" /> <!-- Hawkeye, Sagittarius: Dynasty Bow - Cheap Shot, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots, Dynasty Necklace, Dynasty Earrings, Dynasty Ring, Striped Mithril Shirt -->
+		<body kit="mage" classes="27,103" rhand="10527" head="6386" chest="6383" gloves="6384" feet="6385" neck="9456" ear="9455" ring="9457" shirt="9588" shots="3952" /> <!-- Spellsinger, Mystic Muse: Dynasty Staff - Mana Up, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots, Dynasty Necklace, Dynasty Earrings, Dynasty Ring, Striped Mithril Shirt -->
+		<body kit="healer" classes="13,95" rhand="9875" lhand="9441" head="6386" chest="6383" gloves="6384" feet="6385" neck="9456" ear="9455" ring="9457" shirt="9588" shots="3952" /> <!-- Necromancer, Soultaker: Dynasty Mace - Mana Up, Dynasty Shield, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots, Dynasty Necklace, Dynasty Earrings, Dynasty Ring, Striped Mithril Shirt -->
 	</phantom>
 </list>

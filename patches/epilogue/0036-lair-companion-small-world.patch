@@ -1,0 +1,79 @@
+diff --git a/java/org/l2jmobius/gameserver/entity/zone/type/BossZone.java b/java/org/l2jmobius/gameserver/entity/zone/type/BossZone.java
+index 81a19df8b275e5c734e0d5e7d5770d7e82c4ee33..7f37dfd7e03e7f1620d1a02897613c7ad6f62c21 100644
+--- a/java/org/l2jmobius/gameserver/entity/zone/type/BossZone.java
++++ b/java/org/l2jmobius/gameserver/entity/zone/type/BossZone.java
+@@ -22,6 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
+ import java.util.concurrent.CopyOnWriteArrayList;
+ 
+ import org.l2jmobius.gameserver.GameServer;
++import org.l2jmobius.gameserver.config.GrandBossConfig;
+ import org.l2jmobius.gameserver.entity.Location;
+ import org.l2jmobius.gameserver.entity.actor.Attackable;
+ import org.l2jmobius.gameserver.entity.actor.Creature;
+@@ -31,6 +32,7 @@ import org.l2jmobius.gameserver.entity.zone.AbstractZoneSettings;
+ import org.l2jmobius.gameserver.entity.zone.ZoneType;
+ import org.l2jmobius.gameserver.managers.GrandBossManager;
+ import org.l2jmobius.gameserver.managers.ZoneManager;
++import org.l2jmobius.gameserver.managers.phantom.PhantomManager;
+ 
+ /**
+  * @author DaRkRaGe
+@@ -152,6 +154,12 @@ public class BossZone extends ZoneType
+ 				return;
+ 			}
+ 			
++			// L2Hub (малый мир): фантом из пати живого игрока, которого логово пустило, входит с ним (напарник не прыгает по кругу).
++			if (isPhantomOfAllowedParty(player))
++			{
++				return;
++			}
++			
+ 			// if player has been (previously) cleared by npc/ai for entry and the zone is
+ 			// set to receive players (aka not waiting for boss to respawn)
+ 			if (getSettings().getPlayersAllowed().contains(player.getObjectId()))
+@@ -196,6 +204,12 @@ public class BossZone extends ZoneType
+ 			final Player player = creature.asPlayer();
+ 			if (player != null)
+ 			{
++				// L2Hub (малый мир): слуга такого фантома — тоже (tools/l2hub_lair_small.py).
++				if (isPhantomOfAllowedParty(player))
++				{
++					return;
++				}
++				
+ 				if (getSettings().getPlayersAllowed().contains(player.getObjectId()) || player.isGM())
+ 				{
+ 					return;
+@@ -217,6 +231,32 @@ public class BossZone extends ZoneType
+ 		}
+ 	}
+ 	
++	/**
++	 * L2Hub (малый мир), tools/l2hub_lair_small.py: с «Эпиками малого мира» ({@code SmallWorldEpics}) фантом — напарник или охотник — входит в логово
++	 * вместе с живым игроком из своей пати, которого логово пустило (NPC или скрипт эпика внёс его в список), или с GM в логове. Иначе напарника,
++	 * догоняющего хозяина телепортом, логово выкидывает в город, и он снова прыгает к хозяину — по кругу. Фантома без такой пати логово
++	 * не пускает, как и раньше.
++	 * @param player кто входит
++	 * @return пустить
++	 */
++	private boolean isPhantomOfAllowedParty(Player player)
++	{
++		if (!GrandBossConfig.SMALL_WORLD_EPICS || !player.isInParty() || !PhantomManager.getInstance().isPhantom(player))
++		{
++			return false;
++		}
++		
++		for (Player member : player.getParty().getMembers())
++		{
++			if ((member != player) && !PhantomManager.getInstance().isPhantom(member) && (getSettings().getPlayersAllowed().contains(member.getObjectId()) || (member.isGM() && isCharacterInZone(member))))
++			{
++				return true;
++			}
++		}
++		
++		return false;
++	}
++	
+ 	@Override
+ 	protected void onExit(Creature creature)
+ 	{

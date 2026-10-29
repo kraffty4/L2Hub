@@ -15,9 +15,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.l2jmobius.commons.database.DatabaseFactory;
+import org.l2jmobius.commons.threads.ThreadPool;
+import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.gameserver.config.PlayerConfig;
 import org.l2jmobius.gameserver.config.custom.PhantomsConfig;
 import org.l2jmobius.gameserver.data.sql.CharInfoTable;
+import org.l2jmobius.gameserver.data.xml.ExperienceData;
 import org.l2jmobius.gameserver.data.xml.PlayerTemplateData;
 import org.l2jmobius.gameserver.entity.Location;
 import org.l2jmobius.gameserver.entity.World;
@@ -25,6 +28,8 @@ import org.l2jmobius.gameserver.entity.actor.Player;
 import org.l2jmobius.gameserver.entity.actor.appearance.PlayerAppearance;
 import org.l2jmobius.gameserver.entity.actor.stat.PlayerStat;
 import org.l2jmobius.gameserver.entity.actor.templates.PlayerTemplate;
+import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
+import org.l2jmobius.gameserver.entity.itemcontainer.Inventory;
 import org.l2jmobius.gameserver.managers.GlobalVariablesManager;
 import org.l2jmobius.gameserver.managers.world.WorldDaily;
 import org.l2jmobius.gameserver.network.Disconnection;
@@ -47,7 +52,17 @@ public class PhantomManager
 	private static final String BAN_ACCOUNT = "INSERT INTO accounts (login, password, accessLevel) VALUES (?, ?, -1) ON DUPLICATE KEY UPDATE accessLevel = -1";
 
 	/** Фантомы в мире: objectId → напарник. */
+	/** Адена ветерана при рождении: столько × уровень² (40 × L² × 3 — запас живого такого уровня). */
+	private static final long VETERAN_ADENA = 120;
+	/** Опыт ветерана сверх стартового уровня: столько процентов уровня, от и до. */
+	private static final int VETERAN_EXP_MIN = 20;
+	private static final int VETERAN_EXP_MAX = 60;
+	/** Тишина в летописи после рождения ветерана, мс. */
+	private static final long QUIET_MS = 30_000;
+
 	private final Map<Integer, PhantomTemplate> _phantoms = new ConcurrentHashMap<>();
+	/** Ветераны, что сейчас рождаются (в нижнем регистре): {@link #isSecret}. */
+	private final Set<String> _quiet = ConcurrentHashMap.newKeySet();
 
 	protected PhantomManager()
 	{
@@ -100,12 +115,16 @@ public class PhantomManager
 
 	/**
 	 * Секретный персонаж модуля — Танатос (docs/PHANTOMS.md, раздел 4.45): о нём не пишут ни летопись, ни окна. По имени, а не по {@link #isPhantom}:
-	 * уровни и профессию он получает при сборке, ещё до входа в мир.
+	 * уровни и профессию он получает при сборке, ещё до входа в мир. Так же — ветеран при рождении (раздел 4.52): его уровни и профессии до стартового — не новость.
 	 * @param player игрок
 	 * @return это он
 	 */
 	public boolean isSecret(Player player)
 	{
+		if ((player != null) && _quiet.contains(player.getName().toLowerCase()))
+		{
+			return true;
+		}
 		final PhantomTemplate reaper = player == null ? null : PhantomData.getInstance().getReaper();
 		return (reaper != null) && reaper.getName().equalsIgnoreCase(player.getName());
 	}
@@ -242,10 +261,40 @@ public class PhantomManager
 		else
 		{
 			location = template.getHome();
+			if (!existed && (template.getStartLevel() > 1))
+			{
+				veteran(phantom, template);
+			}
 		}
 		PhantomHunterOutfit.update(phantom, template);
 		enterWorld(phantom, template, location);
 		return phantom;
+	}
+
+	/**
+	 * Ветеран (раздел 4.52; решение автора 2026-10-28 — ветераны для Зачистки Essence): новый охотник со {@code startLevel} рождается сразу этого уровня, как напарник, —
+	 * опыт, класс по своей цепочке, скиллы, тир {@code <gear>} своего грейда, заряды. Адена — как у живого такого уровня, {@value #VETERAN_ADENA} × уровень²
+	 * (около 0,7 млн на 76-м): на телепорты, сосы, гачу. Sayha's Grace — стартовая, как у любого нового ({@link #loadOrCreate}). Летопись его рождения не видит
+	 * ({@link #isSecret}: события уровня и профессии у Mobius асинхронные — тишина держится {@value #QUIET_MS} мс).
+	 */
+	private void veteran(Player phantom, PhantomTemplate template)
+	{
+		final int level = Math.min(template.getStartLevel(), PlayerConfig.PLAYER_MAXIMUM_LEVEL - 1);
+		final String key = template.getName().toLowerCase();
+		_quiet.add(key);
+		ThreadPool.schedule(() -> _quiet.remove(key), QUIET_MS);
+		PhantomOutfit.build(phantom, template, level);
+		// Живой этого уровня — посреди уровня, а не на самой границе: первая же смерть не роняет ветерана ниже стартового.
+		final long base = ExperienceData.getInstance().getExpForLevel(level);
+		final long next = ExperienceData.getInstance().getExpForLevel(level + 1);
+		if (next > base)
+		{
+			phantom.addExpAndSp(((next - base) * Rnd.get(VETERAN_EXP_MIN, VETERAN_EXP_MAX)) / 100, 0);
+		}
+		final long adena = VETERAN_ADENA * level * level;
+		PhantomCompat.addItem(phantom, ItemProcessType.REWARD, Inventory.ADENA_ID, adena, null);
+		phantom.storeMe();
+		LOGGER.info(getClass().getSimpleName() + ": " + template.getName() + " is born a veteran: level " + phantom.getLevel() + " " + phantom.getPlayerClass().name() + ", " + adena + " adena.");
 	}
 
 	/**

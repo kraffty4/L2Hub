@@ -1,5 +1,5 @@
 {
-  "_note": "Режимы сервера и выключатели модов в «Настройках сервера» (задачи автора 2026-10-21, docs/PLAN.md). Только для Mobius: файлы — в game/config или game/config/Custom сборки, с \"part\": \"login\" — в login/config. Выключатель показывается, если в сборке есть его файл и хоть один ключ; \"keys\" — несколько ключей одним выключателем. Режим ставит рейты, выключатели и свои ключи (settings: {файл: {ключ: значение}} — удобства вроде автоподбора) разом; чего в сборке нет — пропускает. Рейты PvP-крафт и PvP — предложение агента по объявлениям приватных серверов (средние x50, PvP — x1000), правятся здесь.",
+  "_note": "Режимы сервера и выключатели модов в «Настройках сервера» (задачи автора 2026-10-21, docs/PLAN.md). Только для Mobius: файлы — в game/config или game/config/Custom сборки, с \"part\": \"login\" — в login/config. Выключатель показывается, если в сборке есть его файл и хоть один ключ; \"keys\" — несколько ключей одним выключателем. Режим ставит рейты, выключатели и свои ключи (settings: {файл: {ключ: значение}} — удобства вроде автоподбора) разом; чего в сборке нет — пропускает. chronicles: {id хроники: {файл: {ключ: значение}}} — ключи режима только у этой хроники, где официал хроник расходится: у Classic официал — без Vitality (Sayha's Grace), а у Essence и High Five она есть. Рейты PvP-крафт и PvP — предложение агента по объявлениям приватных серверов (средние x50, PvP — x1000), правятся здесь.",
   "switches": [
     {"id": "buffer", "group": "Город", "title": "Баффер у гейткиперов", "note": "бафы на максимуме и на 3 часа", "file": "L2HubTown.ini", "key": "TownBuffer"},
     {"id": "gmshop", "group": "Город", "title": "GM-шоп у гейткиперов", "note": "расходники и снаряжение за адену", "file": "L2HubTown.ini", "key": "TownGmShop"},
@@ -7,7 +7,7 @@
     {"id": "champions", "group": "Мир", "title": "Чемпионы", "note": "усиленные мобы с наградой: синие и красные", "file": "ChampionMonsters.ini", "key": "ChampionEnable"},
     {"id": "superchampion", "group": "Мир", "title": "Суперчемпионы", "note": "редкий легендарный чемпион: больше ростом, светится, белый круг под ногами; HP x20, дроп x10 — мини-РБ с объявлением в регионе", "file": "ChampionMonsters.ini", "key": "SuperChampionEnable"},
     {"id": "rbannounce", "group": "Мир", "title": "Объявления о РБ", "note": "на весь сервер: рейд-босс появился и убит", "file": "BossAnnouncements.ini", "keys": ["RaidBossSpawnAnnouncements", "RaidBossDefeatAnnouncements"]},
-    {"id": "smallepics", "group": "Мир", "title": "Эпики малого мира", "note": "эпики встают в 4 раза чаще, Антарас и Валакас ждут 5 минут, к Фринтезе и Белету — малой группой; Королева, Ядро, Орфен и Закен слабее: 40 % HP, свита урезана", "file": "GrandBoss.ini", "key": "SmallWorldEpics"},
+    {"id": "smallepics", "group": "Мир", "title": "Эпики малого мира", "note": "эпики встают в 4 раза чаще, Антарас и Валакас ждут 5 минут, к Фринтезе и Белету — малой группой; Королева, Ядро, Орфен и Закен слабее: 40 % HP, свита урезана; напарник заходит в логово эпика вместе с тобой (Interlude, Epilogue, High Five)", "file": "GrandBoss.ini", "key": "SmallWorldEpics"},
     {"id": "smallclans", "group": "Мир", "title": "Кланы малого мира", "note": "клану на 6, 7 и 8-й уровень хватает 10, 15 и 20 членов (на официале — 30, 50 и 80), выше — 30, 40 и 50; репутация на уровень — прежняя; у Classic и Essence уровни выше 5-го — за клановый опыт, там не действует; применится после перезапуска сервера", "file": "L2HubWorld.ini", "key": "SmallWorldClans"},
     {"id": "sepulchers", "group": "Мир", "title": "Гробницы малого мира", "note": "в Четыре гробницы (с 74-го, квест Four Goblets) — пати от двоих, а не от четырёх: напарнику и охотнику квест и пропуск не нужны; у Interlude, Epilogue и High Five", "file": "General.ini", "key": "SmallWorldSepulchers"},
     {"id": "rift", "group": "Мир", "title": "Разлом малого мира", "note": "в Разлом измерений фрагменты за вход платят только живые: напарнику и охотнику они не нужны; у Interlude, Epilogue и High Five", "file": "General.ini", "key": "SmallWorldRift"},
@@ -44,16 +44,19 @@
      "rates": {"xp": 1, "sp": 1, "adena": 1, "drop": 1, "spoil": 1},
      "switches": {"buffer": false, "gmshop": false, "durations": false, "champions": false, "daily": false, "pvpevents": false, "rbannounce": false, "superchampion": false, "elpies": false, "freemounts": false, "autopotions": false, "offlineplay": false, "unstuck": false, "classmaster": false, "smallepics": false, "smallclans": false, "sepulchers": false, "rift": false, "noblesse": false, "attendance": true, "lcoin": true, "huntpass": true},
      "settings": {"Player.ini": {"AutoLoot": "False", "AutoLootHerbs": "False", "AutoLearnSkills": "False", "AltSubClassWithoutQuests": "False", "AltKarmaPlayerCanShop": "False"},
-                  "CommunityBoard.ini": {"CommunityEnableTeleports": "False", "CommunityEnableHeal": "False", "CommunityEnableBuffs": "False"}}},
+                  "CommunityBoard.ini": {"CommunityEnableTeleports": "False", "CommunityEnableHeal": "False", "CommunityEnableBuffs": "False"}},
+     "chronicles": {"classic_tales": {"Player.ini": {"EnableVitality": "False"}}}},
     {"id": "pvpcraft", "title": "PvP-крафт", "note": "опыт и SP x50, адена x10, дроп и спойл x5 — быстрый кач, крафт ещё важен",
      "rates": {"xp": 50, "sp": 50, "adena": 10, "drop": 5, "spoil": 5},
      "switches": {"buffer": true, "gmshop": true, "durations": true, "champions": true, "rbannounce": true, "superchampion": true, "autopotions": true, "classmaster": true, "smallepics": true, "smallclans": true, "sepulchers": true, "rift": true, "noblesse": true, "attendance": true, "lcoin": true, "huntpass": true},
      "settings": {"Player.ini": {"AutoLoot": "True", "AutoLootHerbs": "True", "AutoLearnSkills": "True", "AltSubClassWithoutQuests": "True"},
-                  "CommunityBoard.ini": {"CommunityEnableTeleports": "True", "CommunityEnableHeal": "True", "CommunityEnableBuffs": "True"}}},
+                  "CommunityBoard.ini": {"CommunityEnableTeleports": "True", "CommunityEnableHeal": "True", "CommunityEnableBuffs": "True"}},
+     "chronicles": {"classic_tales": {"Player.ini": {"EnableVitality": "True"}}}},
     {"id": "pvp", "title": "PvP", "note": "опыт, SP и адена x1000, дроп и спойл x10 — сразу в PvP",
      "rates": {"xp": 1000, "sp": 1000, "adena": 1000, "drop": 10, "spoil": 10},
      "switches": {"buffer": true, "gmshop": true, "durations": true, "champions": true, "pvpevents": true, "rbannounce": true, "superchampion": true, "autopotions": true, "classmaster": true, "smallepics": true, "smallclans": true, "sepulchers": true, "rift": true, "noblesse": true, "attendance": true, "lcoin": true, "huntpass": true},
      "settings": {"Player.ini": {"AutoLoot": "True", "AutoLootHerbs": "True", "AutoLearnSkills": "True", "AltSubClassWithoutQuests": "True"},
-                  "CommunityBoard.ini": {"CommunityEnableTeleports": "True", "CommunityEnableHeal": "True", "CommunityEnableBuffs": "True"}}}
+                  "CommunityBoard.ini": {"CommunityEnableTeleports": "True", "CommunityEnableHeal": "True", "CommunityEnableBuffs": "True"}},
+     "chronicles": {"classic_tales": {"Player.ini": {"EnableVitality": "True"}}}}
   ]
 }

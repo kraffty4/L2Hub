@@ -948,8 +948,15 @@ class Api:
         hidden = [] if mode == "OFF" else [
             {"name": "", "secret": True, "level": live_secret.get(el.get("name"), {}).get("level") or next(
                 (int(g.get("minLevel")) for g in el.iter("gear") if (g.get("minLevel") or "").isdigit()), None)} for el in secret]
+        world = _world_now(game)
+        # Рейтинг Зачистки (Essence, блок purge — classic-essence): секретный фантом там охотник с именем — в окне без имени.
+        secret_names = {el.get("name") for el in secret}
+        for zone in ((world or {}).get("purge") or {}).get("zones", []):
+            for row in (zone.get("top") or []) + (zone.get("players") or []):
+                if row.get("name") in secret_names:
+                    row.update(name="", secret=True)
         return {"ok": True, "mode": mode, "db": db, "running": running, "live": live is not None,
-                "liveAt": live_at, "players": players, "strategy": _strategy_info(p, game, len(names)), "world": _world_now(game),
+                "liveAt": live_at, "players": players, "strategy": _strategy_info(p, game, len(names)), "world": world,
                 "items": sorted(items.values(), key=lambda x: (-(x["level"] or 0), x["name"])) + hidden}
 
     def companions(self, chronicle_id: str) -> dict:

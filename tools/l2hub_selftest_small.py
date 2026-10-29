@@ -7,7 +7,10 @@
   - «Семь печатей малого мира» (0026) — открыты ли катакомбы и некрополи, от скольких Фестиваль тьмы, какой сейчас период;
   - «Эпики малого мира» (0028) — включены ли; пересчитан ли респаун (загруженный интервал Антараса сверяется с GrandBoss.ini
     и процентом), ожидание Антараса и Валакаса, порог к Белету, какие эпики живы;
-  - «Фейки в городах» (0031) — включены ли, сколько их в мире из расписания data/L2HubTownFakes.xml.
+  - «Фейки в городах» (0031) — включены ли, сколько их в мире из расписания data/L2HubTownFakes.xml;
+  - «Гробницы малого мира» (0033), «Разлом малого мира» (0035), «Мастер дворянства» (0034) — только у хроник, где мод
+    наложен (ключ SmallWorldSepulchers, SmallWorldRift в General.ini, TownNoblesse в L2HubTown.ini дерева): включён ли, от
+    скольких пати, сколько в мире менеджеров гробниц, Rift Post и мастеров, уровень и цена дворянства.
 Наложен ли мод: пометки «L2Hub (малый мир)» в его конфиге (0025, 0026), поле SMALL_WORLD_EPICS в GrandBossConfig (0028),
 файл расписания (0031); нет — пункт скажет «не наложен». Только конфиги, файлы и рефлексия: компиляция не зависит от классов,
 которых у хроники может не быть. Переводы строк скрипта сохраняются. Патч проверяется наложением на копию дерева байт в байт.
@@ -202,6 +205,99 @@ METHODS = r"""	// ---------- L2Hub 0032: моды малого мира — ол
 	}
 
 """
+# Пункты модов 0033–0035 — только у хроник, где мод наложен (по ключу в конфиге дерева): у прочих патч прежний байт в байт.
+EXTRA_HEAD = r"""	// ---------- L2Hub 0032: гробницы, Разлом и мастер дворянства малого мира (0033–0035) ----------
+
+	/** Сколько NPC с этими id сейчас в мире. */
+	private static int npcsInWorld(int... ids)
+	{
+		int count = 0;
+		for (WorldObject object : World.getVisibleObjects())
+		{
+			if (object instanceof org.l2jmobius.gameserver.entity.actor.Npc npc)
+			{
+				for (int id : ids)
+				{
+					if (npc.getId() == id)
+					{
+						count++;
+						break;
+					}
+				}
+			}
+		}
+		return count;
+	}
+
+"""
+EXTRA = [  # (ключ в конфиге дерева, конфиг, строка probe, метод)
+    ("SmallWorldSepulchers", "dist/game/config/General.ini",
+     '\t\tprobe(checks, "Гробницы малого мира", L2HubSelfTest::sepulchers);\n', r"""	private static Check sepulchers() throws Exception
+	{
+		final String config = "org.l2jmobius.gameserver.config.GeneralConfig";
+		final Object enabled = staticField(config, "SMALL_WORLD_SEPULCHERS");
+		if (enabled == null)
+		{
+			return new Check("", false, "нет SmallWorldSepulchers в GeneralConfig — мод 0033 не наложен");
+		}
+		if (ScriptManager.getInstance().getScript("FourSepulchers") == null)
+		{
+			return new Check("", false, "скрипт FourSepulchers не загрузился — причина в логе сервера");
+		}
+		final int managers = npcsInWorld(31921, 31922, 31923, 31924);
+		final String where = "менеджеров гробниц в мире " + managers + " из 4";
+		if (!Boolean.TRUE.equals(enabled))
+		{
+			return new Check("", managers > 0, "выключены (SmallWorldSepulchers = False) — пати от четырёх, как у Mobius; " + where);
+		}
+		return new Check("", managers > 0, "вкл: пати от " + staticField(config, "SMALL_WORLD_SEPULCHERS_MIN_PARTY") + ", квест 620 и пропуск — только у живых; " + where);
+	}
+
+"""),
+    ("SmallWorldRift", "dist/game/config/General.ini",
+     '\t\tprobe(checks, "Разлом малого мира", L2HubSelfTest::rift);\n', r"""	private static Check rift() throws Exception
+	{
+		final String config = "org.l2jmobius.gameserver.config.GeneralConfig";
+		final Object enabled = staticField(config, "SMALL_WORLD_RIFT");
+		if (enabled == null)
+		{
+			return new Check("", false, "нет SmallWorldRift в GeneralConfig — мод 0035 не наложен");
+		}
+		final int posts = npcsInWorld(31488, 31489, 31490, 31491, 31492, 31493);
+		final String rules = "пати от " + staticField(config, "RIFT_MIN_PARTY_SIZE") + ", вход новичков — " + staticField(config, "RIFT_ENTER_COST_RECRUIT") + " фрагментов; Rift Post в мире: " + posts;
+		if (!Boolean.TRUE.equals(enabled))
+		{
+			return new Check("", posts > 0, "выключен (SmallWorldRift = False) — фрагменты платит каждый, как у Mobius; " + rules);
+		}
+		return new Check("", posts > 0, "вкл: фрагменты платят только живые; " + rules);
+	}
+
+"""),
+    ("TownNoblesse", "dist/game/config/Custom/L2HubTown.ini",
+     '\t\tprobe(checks, "Мастер дворянства", L2HubSelfTest::noblesse);\n', r"""	private static Check noblesse() throws Exception
+	{
+		final String config = "org.l2jmobius.gameserver.config.custom.NoblessMasterConfig";
+		final Properties town = customIni("L2HubTown.ini");
+		if (town.getProperty("TownNoblesse") == null)
+		{
+			return new Check("", false, "нет TownNoblesse в L2HubTown.ini — мод 0034 не наложен");
+		}
+		if (!isTrue(town, "TownNoblesse", "False"))
+		{
+			return new Check("", true, "выключен (TownNoblesse = False в L2HubTown.ini)");
+		}
+		if (!Boolean.TRUE.equals(staticField(config, "NOBLESS_MASTER_ENABLED")))
+		{
+			return new Check("", false, "TownNoblesse включён, а в NoblessMaster.ini Enabled = False — мастер не ответит");
+		}
+		final int masters = npcsInWorld(((Number) staticField(config, "NOBLESS_MASTER_NPCID")).intValue());
+		final int itemId = ((Number) staticField(config, "NOBLESS_MASTER_ITEM_ID")).intValue();
+		final String count = String.format(java.util.Locale.ROOT, "%,d", ((Number) staticField(config, "NOBLESS_MASTER_ITEM_COUNT")).longValue()).replace(',', ' ');
+		return new Check("", masters > 0, "в мире " + masters + " (бафферов " + npcsInWorld(50008) + "), дворянство с " + staticField(config, "NOBLESS_MASTER_LEVEL_REQUIREMENT") + "-го уровня за " + count + ((itemId == 57) ? " адены" : (" предмета " + itemId)));
+	}
+
+"""),
+]
 
 
 def _cut(text: str, start: str, end: str) -> str:
@@ -230,6 +326,11 @@ def for_chronicle(src: Path) -> tuple[str, str]:
         methods = _once(methods, "ожидание Антараса и Валакаса — ", "ожидание Антараса — ")
     if "BELETH_MIN_PLAYERS" not in bosses:
         methods = _once(methods, '" мин, к Белету — от " + staticField(config, "BELETH_MIN_PLAYERS") + "; "', '" мин; "')
+    extra = [(probe, method) for key, config, probe, method in EXTRA
+             if (src / config).is_file() and key in (src / config).read_text(encoding="utf-8")]
+    if extra:
+        probes += "".join(probe for probe, _ in extra)
+        methods += EXTRA_HEAD + "".join(method for _, method in extra)
     return probes, methods
 
 
@@ -287,7 +388,10 @@ def main() -> None:
                 sys.exit(f"{language[0].name}: без него нет {rel} — снять слой языка не выйдет")
             new[rel] = peeled[rel]
     final = patch_layers.restack(new, [p for p in upper if p not in language], peeled)
-    print(f"{cid}: файлов в патче {patch.count(b'diff --git a/')}, наложение на копию — байт в байт")
+    own = ROOT / "patches" / cid / NAME
+    same = own.is_file() and own.read_bytes() == patch
+    print(f"{cid}: файлов в патче {patch.count(b'diff --git a/')}, наложение на копию — байт в байт"
+          + ("; патч тот же, что в patches/" if same else "; патч новый против patches/"))
     if write:
         (ROOT / "patches" / cid / NAME).write_bytes(patch)
         for rel, data in final.items():

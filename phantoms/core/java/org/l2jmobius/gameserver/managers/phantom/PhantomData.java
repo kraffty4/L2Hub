@@ -73,6 +73,27 @@ public class PhantomData implements IXmlReader
 				template.setTemper(set.getFloat("temper", 1));
 				// Риск («Разум 2.0», шаг 6): осторожный или рисковый — ошибки по характеру.
 				template.setRisk(set.getFloat("risk", 1));
+				// Ветеран (раздел 4.52): новый охотник рождается сразу этого уровня.
+				template.setStartLevel(set.getInt("startLevel", 0));
+				// Тела Танатоса после смерти (раздел 4.45): тело с классом без шаблона у хроники — мимо, остальные — в силе.
+				final List<PhantomTemplate.Body> bodies = new ArrayList<>();
+				forEach(phantomNode, "body", bodyNode ->
+				{
+					final StatSet b = new StatSet(parseAttributes(bodyNode));
+					final String[] ids = b.getString("classes").split(",");
+					final int[] chain = new int[ids.length];
+					for (int i = 0; i < ids.length; i++)
+					{
+						chain[i] = Integer.parseInt(ids[i].strip());
+						if (PlayerTemplateData.getInstance().getTemplate(chain[i]) == null)
+						{
+							LOGGER.warning(getClass().getSimpleName() + ": " + name + ": skipped body " + b.getString("kit") + " — no class template " + chain[i] + ".");
+							return;
+						}
+					}
+					bodies.add(new PhantomTemplate.Body(b.getString("kit"), chain, new PhantomTemplate.Gear("body", 1, b.getInt("rhand", 0), b.getInt("lhand", 0), b.getInt("head", 0), b.getInt("chest", 0), b.getInt("legs", 0), b.getInt("gloves", 0), b.getInt("feet", 0), b.getInt("shots", 0), b.getInt("neck", 0), b.getInt("ear", 0), b.getInt("ring", 0), b.getInt("shirt", 0))));
+				});
+				template.setBodies(bodies);
 				_loading.put(name.toLowerCase(), template);
 			}
 			catch (Exception e)

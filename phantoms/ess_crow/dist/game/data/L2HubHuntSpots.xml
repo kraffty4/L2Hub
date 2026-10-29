@@ -2,6 +2,8 @@
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="xsd/L2HubHuntSpots.xsd">
 	<!-- L2Hub: споты охотников-фантомов — группы спавна мобов с узким разбросом уровней и кластеры мобов-точек. Сгенерировано tools/fake_players.py. -->
 	<spot level="1" min="1" max="3" region="Kamael" name="Hill Of Hope · северо-восток" x="-119913" y="53196" z="-1168" radius="1019" mobs="9" />
+	<spot level="1" min="1" max="3" region="Oren" name="Oren Monster Spawns · Dark Elf Chief Mitraell" x="22590" y="8927" z="-3544" radius="1500" mobs="13" />
+	<spot level="1" min="1" max="3" region="Oren" name="Oren Monster Spawns · Dark Elf Chief Mitraell" x="25033" y="12644" z="-3632" radius="1267" mobs="9" />
 	<spot level="1" min="1" max="3" region="TalkingIsland" name="Talking Island Monsters · Talking Island Village" x="-81412" y="246563" z="-3752" radius="1500" mobs="32" />
 	<spot level="2" min="2" max="3" region="DwarvenTerritory" name="Dwarven Starting · Frozen Valley" x="114966" y="-172886" z="-672" radius="1492" mobs="10" />
 	<spot level="2" min="2" max="3" region="DwarvenTerritory" name="Dwarven Starting · Grocer Mion" x="117969" y="-173208" z="-432" radius="1500" mobs="20" />
@@ -17,6 +19,16 @@
 	<spot level="2" min="1" max="3" region="Kamael" name="Hill Of Hope · северо-восток" x="-120707" y="51918" z="-1128" radius="1298" mobs="42" />
 	<spot level="2" min="1" max="3" region="OrcTerritory" name="Orc Starting · Keeper Tanai" x="-49366" y="-115720" z="-160" radius="1500" mobs="58" />
 	<spot level="2" min="1" max="3" region="OrcTerritory" name="Orc Starting · Orc Village" x="-49644" y="-110570" z="-240" radius="1500" mobs="68" />
+	<spot level="2" min="1" max="4" region="Oren" name="Oren Monster Spawns · Dark Elf Chief Mitraell" x="24095" y="13302" z="-3600" radius="1500" mobs="18" />
+	<spot level="2" min="1" max="7" region="Oren" name="Oren Monster Spawns · северо-восток" x="21077" y="7528" z="-3616" radius="1168" mobs="12" />
+	<spot level="3" min="3" max="5" region="AssassinHideout" name="Assassin Hideout · Basic Training Zone" x="76748" y="-86224" z="-3608" radius="1354" mobs="42" />
+	<spot level="3" min="3" max="5" region="Dion" name="Execution Grounds · 1st Training Grounds" x="48676" y="144910" z="-3568" radius="1269" mobs="68" />
+	<spot level="3" min="3" max="5" region="Dion" name="Execution Grounds · 1st Training Grounds" x="46244" y="147996" z="-3688" radius="1196" mobs="59" />
+	<spot level="3" min="3" max="5" region="Dion" name="Execution Grounds · 1st Training Grounds" x="43248" y="146923" z="-3640" radius="689" mobs="39" />
+	<spot level="3" min="3" max="5" region="Dion" name="Execution Grounds · 1st Training Grounds" x="39802" y="146172" z="-3896" radius="1152" mobs="34" />
+	<spot level="3" min="3" max="5" region="Dion" name="Execution Grounds · 1st Training Grounds" x="48834" y="148556" z="-3536" radius="610" mobs="29" />
+	<spot level="3" min="3" max="5" region="Dion" name="Execution Grounds · 1st Training Grounds" x="43064" y="149121" z="-3696" radius="687" mobs="27" />
+	<spot level="3" min="3" max="5" region="Dion" name="Execution Grounds · 1st Training Grounds" x="48891" y="146278" z="-3520" radius="709" mobs="8" />
 	<spot level="3" min="2" max="3" region="DwarvenTerritory" name="Dwarven Starting · Priest of the Earth Gerald" x="116057" y="-175091" z="-1008" radius="1500" mobs="35" />
 	<spot level="3" min="1" max="3" region="JinKamaelVillage" name="Black Wolf · Hill of Hope" x="-119993" y="56010" z="-1616" radius="1323" mobs="57" />
 	<spot level="3" min="3" max="5" region="JinKamaelVillage" name="Black Wolf · Hill of Hope" x="-125217" y="61929" z="-2712" radius="1500" mobs="13" />
@@ -28,6 +40,14 @@
 	<spot level="3" min="1" max="3" region="Kamael" name="Hill Of Hope · северо-запад" x="-126749" y="53129" z="-1568" radius="1105" mobs="20" />
 	<spot level="3" min="3" max="5" region="Kamael" name="Hill Of Hope · юг" x="-124091" y="59610" z="-2584" radius="875" mobs="8" />
 	<spot level="3" min="1" max="4" region="TalkingIsland" name="Talking Island Monsters · Talking Island Village" x="-82695" y="250013" z="-3456" radius="1500" mobs="24" />
+	<spot level="4" min="3" max="5" region="AssassinHideout" name="Assassin Hideout · Basic Training Zone" x="79395" y="-77694" z="-4040" radius="981" mobs="40" />
+	<spot level="4" min="3" max="5" region="AssassinHideout" name="Assassin Hideout · Basic Training Zone" x="80457" y="-79925" z="-4040" radius="1220" mobs="40" />
+	<spot level="4" min="3" max="5" region="AssassinHideout" name="Assassin Hideout · Basic Training Zone" x="82025" y="-77327" z="-4016" radius="1214" mobs="40" />
+	<spot level="4" min="3" max="5" region="AssassinHideout" name="Assassin Hideout · Grocer Serp" x="79160" y="-86091" z="-3592" radius="1252" mobs="40" />
+	<spot level="4" min="4" max="6" region="DarkElfTerritory" name="Dark Elf Starting Area · Shillien's Garden" x="11969" y="5243" z="-2736" radius="1246" mobs="18" />
+	<spot level="4" min="4" max="6" region="DarkElfTerritory" name="Dark Elf Starting Area · Shillien's Garden" x="5577" y="4496" z="-2856" radius="1254" mobs="16" />
+	<spot level="4" min="4" max="6" region="DarkElfTerritory" name="Dark Elf Starting Area · Shillien's Garden" x="7465" y="3201" z="-2624" radius="1121" mobs="12" />
+	<spot level="4" min="3" max="5" region="Dion" name="Execution Grounds · 1st Training Grounds" x="46478" y="146043" z="-3648" radius="1263" mobs="80" />
 	<spot level="4" min="4" max="6" region="DwarvenTerritory" name="Dwarven Starting · Grocer Mion" x="119336" y="-180368" z="-2392" radius="1333" mobs="16" />
 	<spot level="4" min="4" max="6" region="DwarvenTerritory" name="Dwarven Starting · юго-запад" x="119266" y="-185474" z="-3200" radius="1500" mobs="27" />
 	<spot level="4" min="4" max="6" region="DwarvenTerritory" name="Dwarven Starting · юго-запад" x="121338" y="-181266" z="-1936" radius="1239" mobs="12" />
@@ -41,6 +61,21 @@
 	<spot level="4" min="3" max="4" region="OrcTerritory" name="Orc Starting · Keeper Tanai" x="-46277" y="-118995" z="-240" radius="1500" mobs="27" />
 	<spot level="4" min="4" max="5" region="OrcTerritory" name="Orc Starting · Valley of Heroes" x="-41437" y="-122574" z="-344" radius="1500" mobs="20" />
 	<spot level="4" min="3" max="4" region="TalkingIsland" name="Talking Island Monsters · Grand Magister Gallint" x="-91677" y="243859" z="-3760" radius="1500" mobs="25" />
+	<spot level="5" min="3" max="5" region="AssassinHideout" name="Assassin Hideout · Basic Training Zone" x="76879" y="-84072" z="-3584" radius="1035" mobs="38" />
+	<spot level="5" min="4" max="6" region="DarkElfTerritory" name="Dark Elf Starting Area · Shillien's Garden" x="8990" y="5190" z="-2560" radius="1225" mobs="31" />
+	<spot level="5" min="4" max="6" region="DarkElfTerritory" name="Dark Elf Starting Area · Shillien's Garden" x="7297" y="4982" z="-2688" radius="1194" mobs="21" />
+	<spot level="5" min="4" max="6" region="DarkElfTerritory" name="Dark Elf Starting Area · Shillien's Garden" x="6728" y="5790" z="-2816" radius="1500" mobs="16" />
+	<spot level="5" min="4" max="6" region="DarkElfTerritory" name="Dark Elf Starting Area · Shillien's Garden" x="13742" y="5387" z="-2944" radius="1214" mobs="14" />
+	<spot level="5" min="4" max="6" region="DarkElfTerritory" name="Dark Elf Starting Area · Shillien's Garden" x="10298" y="6058" z="-2712" radius="1027" mobs="12" />
+	<spot level="5" min="4" max="6" region="DarkElfTerritory" name="Dark Elf Starting Area · Shillien's Garden" x="11158" y="4009" z="-2536" radius="1500" mobs="12" />
+	<spot level="5" min="4" max="6" region="DarkElfTerritory" name="Dark Elf Starting Area · Shillien's Garden" x="10220" y="3726" z="-2496" radius="917" mobs="11" />
+	<spot level="5" min="4" max="6" region="DarkElfTerritory" name="Dark Elf Starting Area · Shillien's Garden" x="4268" y="4258" z="-3088" radius="1162" mobs="9" />
+	<spot level="5" min="3" max="5" region="Dion" name="Execution Grounds · 1st Training Grounds" x="49849" y="147225" z="-3512" radius="1310" mobs="72" />
+	<spot level="5" min="3" max="5" region="Dion" name="Execution Grounds · 1st Training Grounds" x="44809" y="149767" z="-3536" radius="1365" mobs="53" />
+	<spot level="5" min="3" max="5" region="Dion" name="Execution Grounds · 1st Training Grounds" x="39608" y="149538" z="-3904" radius="1307" mobs="34" />
+	<spot level="5" min="3" max="5" region="Dion" name="Execution Grounds · 1st Training Grounds" x="44986" y="146690" z="-3688" radius="1183" mobs="18" />
+	<spot level="5" min="3" max="5" region="Dion" name="Execution Grounds · 1st Training Grounds" x="47042" y="144556" z="-3688" radius="514" mobs="16" />
+	<spot level="5" min="3" max="5" region="Dion" name="Execution Grounds · 1st Training Grounds" x="40376" y="147420" z="-3792" radius="1500" mobs="10" />
 	<spot level="5" min="4" max="5" region="ElvenTerritory" name="Elven Starting · Elven Village" x="48788" y="55943" z="-3528" radius="1500" mobs="18" />
 	<spot level="5" min="4" max="6" region="ElvenTerritory" name="Elven Starting · Shadow of the Mother Tree" x="53637" y="45731" z="-3456" radius="1500" mobs="45" />
 	<spot level="5" min="4" max="5" region="ElvenTerritory" name="Elven Starting · Shadow of the Mother Tree" x="50556" y="46156" z="-3448" radius="1500" mobs="37" />
@@ -48,10 +83,28 @@
 	<spot level="5" min="3" max="5" region="Kamael" name="Hill Of Hope · юг" x="-123130" y="63563" z="-2616" radius="1072" mobs="25" />
 	<spot level="5" min="3" max="5" region="Kamael" name="Hill Of Hope · юго-запад" x="-124093" y="58060" z="-2304" radius="889" mobs="22" />
 	<spot level="5" min="3" max="5" region="Kamael" name="Hill Of Hope · юго-запад" x="-126395" y="62019" z="-2728" radius="1209" mobs="19" />
+	<spot level="5" min="5" max="5" region="MotherTreeVillage" name="Mother Tree Village Starting Zones · Lands of Light" x="16385" y="51168" z="-12736" radius="664" mobs="42" />
+	<spot level="5" min="5" max="5" region="MotherTreeVillage" name="Mother Tree Village Starting Zones · Lands of Light: 2nd Area" x="18861" y="53608" z="-12816" radius="1004" mobs="54" />
 	<spot level="5" min="4" max="7" region="OrcTerritory" name="Orc Starting · Valley of Heroes" x="-39501" y="-109525" z="-1800" radius="1500" mobs="58" />
 	<spot level="5" min="4" max="6" region="OrcTerritory" name="Orc Starting · Valley of Heroes" x="-38227" y="-121504" z="-1664" radius="1500" mobs="37" />
 	<spot level="5" min="4" max="7" region="OrcTerritory" name="Orc Starting · Valley of Heroes" x="-40459" y="-117988" z="-1920" radius="1500" mobs="47" />
 	<spot level="5" min="4" max="5" region="OrcTerritory" name="Orc Starting · запад" x="-39538" y="-105270" z="-2704" radius="1500" mobs="11" />
+	<spot level="5" min="4" max="7" region="Oren" name="Oren Monster Spawns · Abyss Warrior Rosania" x="29623" y="13042" z="-3712" radius="1500" mobs="11" />
+	<spot level="5" min="4" max="7" region="Oren" name="Oren Monster Spawns · северо-восток" x="22158" y="17989" z="-3536" radius="1500" mobs="10" />
+	<spot level="5" min="4" max="7" region="Oren" name="Oren Monster Spawns · северо-восток" x="19733" y="6523" z="-3480" radius="1500" mobs="8" />
+	<spot level="5" min="5" max="5" region="Oren" name="Oren Monster Spawns · северо-запад" x="-14999" y="10165" z="-3680" radius="1500" mobs="10" />
+	<spot level="5" min="3" max="5" region="SylphVillage" name="Sylph Village · Grocer Evia" x="105874" y="54720" z="-4632" radius="1051" mobs="19" />
+	<spot level="5" min="3" max="5" region="SylphVillage" name="Sylph Village · Master Kerkir" x="104576" y="54072" z="-4632" radius="683" mobs="15" />
+	<spot level="5" min="3" max="5" region="SylphVillage" name="Sylph Village · Quiet Plain" x="105038" y="42563" z="-4592" radius="1291" mobs="78" />
+	<spot level="5" min="3" max="5" region="SylphVillage" name="Sylph Village · Quiet Plain" x="107596" y="52665" z="-4640" radius="1219" mobs="57" />
+	<spot level="5" min="3" max="5" region="SylphVillage" name="Sylph Village · Quiet Plain" x="106338" y="48166" z="-4576" radius="1309" mobs="48" />
+	<spot level="5" min="3" max="5" region="SylphVillage" name="Sylph Village · Quiet Plain" x="105293" y="49628" z="-4464" radius="1337" mobs="37" />
+	<spot level="5" min="3" max="5" region="SylphVillage" name="Sylph Village · Quiet Plain" x="106375" y="53923" z="-4592" radius="1208" mobs="37" />
+	<spot level="5" min="3" max="5" region="SylphVillage" name="Sylph Village · Quiet Plain" x="105744" y="41398" z="-4640" radius="664" mobs="12" />
+	<spot level="5" min="3" max="5" region="SylphVillage" name="Sylph Village · Quiet Plain" x="105913" y="50438" z="-4496" radius="400" mobs="10" />
+	<spot level="5" min="3" max="5" region="SylphVillage" name="Sylph Village · Quiet Plain" x="105554" y="47300" z="-4584" radius="400" mobs="9" />
+	<spot level="5" min="3" max="5" region="SylphVillage" name="Sylph Village · Quiet Plain" x="103687" y="44240" z="-4584" radius="1500" mobs="9" />
+	<spot level="5" min="3" max="5" region="SylphVillage" name="Sylph Village · Quiet Plain" x="108679" y="53288" z="-4784" radius="770" mobs="8" />
 	<spot level="5" min="5" max="5" region="TalkingIsland" name="Talking Island Monsters · Grand Magister Gallint" x="-92890" y="245986" z="-3704" radius="1500" mobs="14" />
 	<spot level="5" min="4" max="7" region="TalkingIsland" name="Talking Island Monsters · Watermelon Talking Island" x="-95608" y="239708" z="-3720" radius="1500" mobs="32" />
 	<spot level="5" min="4" max="6" region="TalkingIsland" name="Talking Island Monsters · восток" x="-92604" y="235981" z="-3328" radius="1500" mobs="22" />
@@ -64,6 +117,7 @@
 	<spot level="6" min="5" max="7" region="ElvenTerritory" name="Elven Starting · восток" x="54539" y="50891" z="-3544" radius="1500" mobs="44" />
 	<spot level="6" min="5" max="7" region="OrcTerritory" name="Orc Starting · Valley of Heroes" x="-37520" y="-117467" z="-1664" radius="1500" mobs="45" />
 	<spot level="6" min="6" max="7" region="OrcTerritory" name="Orc Starting · запад" x="-41526" y="-103092" z="-2768" radius="1500" mobs="38" />
+	<spot level="6" min="5" max="7" region="Oren" name="Oren Monster Spawns · Abyss Warrior Rosania" x="29064" y="16371" z="-3648" radius="898" mobs="8" />
 	<spot level="7" min="7" max="8" region="ElvenTerritory" name="Elven Starting · Trader Herbiel" x="38324" y="50214" z="-3504" radius="1500" mobs="45" />
 	<spot level="7" min="7" max="8" region="ElvenTerritory" name="Elven Starting · юго-восток" x="49199" y="70307" z="-3336" radius="1500" mobs="17" />
 	<spot level="7" min="7" max="8" region="ElvenTerritory" name="Elven Starting · юго-восток" x="59860" y="72405" z="-3520" radius="1500" mobs="10" />
@@ -75,6 +129,7 @@
 	<spot level="7" min="7" max="8" region="OrcTerritory" name="Orc Starting · северо-запад" x="-28914" y="-124964" z="-1960" radius="1500" mobs="27" />
 	<spot level="7" min="7" max="8" region="OrcTerritory" name="Orc Starting · северо-запад" x="-22721" y="-132249" z="-712" radius="1500" mobs="14" />
 	<spot level="7" min="7" max="8" region="OrcTerritory" name="Orc Starting · северо-запад" x="-24854" y="-129650" z="-760" radius="1500" mobs="14" />
+	<spot level="7" min="5" max="7" region="Oren" name="Oren Monster Spawns · Dark Elf Chief Mitraell" x="26161" y="6037" z="-3648" radius="1500" mobs="10" />
 	<spot level="8" min="8" max="9" region="DwarvenTerritory" name="Dwarven Starting · Western Mining Zone" x="117458" y="-197595" z="-3688" radius="1500" mobs="22" />
 	<spot level="8" min="8" max="9" region="DwarvenTerritory" name="Dwarven Starting · Western Mining Zone" x="117569" y="-199562" z="-3600" radius="1500" mobs="20" />
 	<spot level="8" min="8" max="9" region="DwarvenTerritory" name="Dwarven Starting · Western Mining Zone" x="119878" y="-202135" z="-3456" radius="1458" mobs="20" />
@@ -85,6 +140,9 @@
 	<spot level="8" min="7" max="9" region="ElvenTerritory" name="Elven Starting · юго-восток" x="55570" y="72996" z="-3432" radius="1500" mobs="22" />
 	<spot level="8" min="8" max="9" region="OrcTerritory" name="Orc Starting · север" x="-19042" y="-137258" z="-1472" radius="1500" mobs="12" />
 	<spot level="8" min="8" max="9" region="OrcTerritory" name="Orc Starting · север" x="-15822" y="-136131" z="-992" radius="1500" mobs="12" />
+	<spot level="8" min="8" max="10" region="Oren" name="Oren Monster Spawns · северо-запад" x="-13425" y="17780" z="-3720" radius="1189" mobs="18" />
+	<spot level="8" min="8" max="9" region="Oren" name="Oren Monster Spawns · северо-запад" x="-11239" y="13378" z="-3672" radius="1056" mobs="14" />
+	<spot level="8" min="8" max="9" region="Oren" name="Oren Monster Spawns · северо-запад" x="-9879" y="23535" z="-3576" radius="1389" mobs="9" />
 	<spot level="8" min="7" max="8" region="TalkingIsland" name="Talking Island Monsters · Grand Magister Gallint" x="-91428" y="252936" z="-3680" radius="1500" mobs="14" />
 	<spot level="8" min="7" max="8" region="TalkingIsland" name="Talking Island Monsters · Grand Magister Gallint" x="-90222" y="255002" z="-3816" radius="1500" mobs="12" />
 	<spot level="9" min="8" max="10" region="ElvenTerritory" name="Elven Starting · Trader Herbiel" x="38499" y="46233" z="-3584" radius="1500" mobs="36" />
@@ -110,9 +168,13 @@
 	<spot level="10" min="9" max="11" region="ElvenTerritory" name="Elven Starting · юг" x="31011" y="62417" z="-3576" radius="1500" mobs="38" />
 	<spot level="10" min="9" max="11" region="ElvenTerritory" name="Elven Starting · юго-восток" x="58290" y="78465" z="-3568" radius="1500" mobs="16" />
 	<spot level="10" min="9" max="13" region="ElvenTerritory" name="Elven Starting · юго-восток" x="58286" y="82917" z="-3544" radius="1500" mobs="8" />
+	<spot level="10" min="10" max="10" region="MotherTreeVillage" name="Mother Tree Village Starting Zones · Lands of Light" x="16372" y="51127" z="-12736" radius="623" mobs="35" />
+	<spot level="10" min="10" max="10" region="MotherTreeVillage" name="Mother Tree Village Starting Zones · Lands of Light: 2nd Area" x="18870" y="53547" z="-12816" radius="1031" mobs="57" />
 	<spot level="10" min="9" max="11" region="OrcTerritory" name="Orc Starting · север" x="-10483" y="-138229" z="-2072" radius="1500" mobs="22" />
 	<spot level="10" min="9" max="11" region="OrcTerritory" name="Orc Starting · северо-запад" x="-22010" y="-116360" z="-3096" radius="1500" mobs="40" />
 	<spot level="10" min="9" max="10" region="OrcTerritory" name="Orc Starting · юго-запад" x="-18185" y="-101031" z="-2104" radius="1500" mobs="30" />
+	<spot level="10" min="8" max="12" region="Oren" name="Oren Monster Spawns · северо-запад" x="-14160" y="11037" z="-3696" radius="1114" mobs="17" />
+	<spot level="10" min="8" max="10" region="Oren" name="Oren Monster Spawns · северо-запад" x="-10733" y="5973" z="-3496" radius="1328" mobs="15" />
 	<spot level="11" min="10" max="11" region="DwarvenTerritory" name="Dwarven Starting · северо-запад" x="120300" y="-208334" z="-3728" radius="1500" mobs="8" />
 	<spot level="11" min="9" max="12" region="ElvenTerritory" name="Elven Starting · северо-запад" x="20272" y="40344" z="-3640" radius="1500" mobs="36" />
 	<spot level="11" min="9" max="12" region="ElvenTerritory" name="Elven Starting · северо-запад" x="24750" y="41077" z="-3696" radius="1500" mobs="18" />
@@ -124,6 +186,8 @@
 	<spot level="11" min="10" max="12" region="OrcTerritory" name="Orc Starting · север" x="-18696" y="-129371" z="-1816" radius="1500" mobs="22" />
 	<spot level="11" min="10" max="12" region="OrcTerritory" name="Orc Starting · север" x="-16248" y="-132277" z="-1784" radius="1500" mobs="18" />
 	<spot level="11" min="10" max="12" region="OrcTerritory" name="Orc Starting · юго-запад" x="-24938" y="-97286" z="-2576" radius="1500" mobs="18" />
+	<spot level="11" min="10" max="12" region="Oren" name="Oren Monster Spawns · Dark Forest" x="-15792" y="14380" z="-3632" radius="1044" mobs="17" />
+	<spot level="11" min="10" max="13" region="Oren" name="Oren Monster Spawns · юго-восток" x="24605" y="76289" z="-4096" radius="1269" mobs="10" />
 	<spot level="11" min="10" max="12" region="TalkingIsland" name="Talking Island Monsters · юг" x="-103023" y="250547" z="-3704" radius="1500" mobs="26" />
 	<spot level="11" min="11" max="12" region="TalkingIsland" name="Talking Island Monsters · юго-запад" x="-106707" y="246903" z="-3416" radius="1500" mobs="22" />
 	<spot level="12" min="11" max="13" region="ElvenTerritory" name="Elven Starting · северо-запад" x="22462" y="46189" z="-3608" radius="1500" mobs="48" />
@@ -135,12 +199,18 @@
 	<spot level="12" min="11" max="12" region="OrcTerritory" name="Orc Starting · юго-восток" x="-5818" y="-94262" z="-2448" radius="1500" mobs="54" />
 	<spot level="12" min="10" max="12" region="OrcTerritory" name="Orc Starting · юго-запад" x="-21359" y="-104604" z="-1024" radius="1500" mobs="30" />
 	<spot level="12" min="11" max="12" region="OrcTerritory" name="Orc Starting · юго-запад" x="-27248" y="-94305" z="-2808" radius="1500" mobs="18" />
+	<spot level="12" min="11" max="12" region="Oren" name="Oren Monster Spawns · запад" x="-28994" y="26155" z="-3568" radius="1156" mobs="19" />
+	<spot level="12" min="10" max="13" region="Schuttgart" name="Schuttgart Monster Spawns · запад" x="136506" y="-173513" z="-1768" radius="1009" mobs="13" />
+	<spot level="12" min="10" max="13" region="Schuttgart" name="Schuttgart Monster Spawns · запад" x="141319" y="-172154" z="-1776" radius="1251" mobs="10" />
+	<spot level="12" min="10" max="13" region="Schuttgart" name="Schuttgart Monster Spawns · запад" x="16927" y="-114539" z="-3120" radius="845" mobs="9" />
+	<spot level="12" min="10" max="15" region="Schuttgart" name="Schuttgart Monster Spawns · юго-запад" x="13537" y="-110436" z="-3480" radius="1043" mobs="11" />
 	<spot level="12" min="12" max="13" region="TalkingIsland" name="Talking Island Monsters · север" x="-102209" y="223089" z="-3432" radius="1500" mobs="26" />
 	<spot level="12" min="11" max="12" region="TalkingIsland" name="Talking Island Monsters · юго-запад" x="-108883" y="252352" z="-3032" radius="1500" mobs="26" />
 	<spot level="13" min="12" max="14" region="ElvenTerritory" name="Elven Starting · Elven Forest" x="17559" y="49679" z="-3672" radius="1500" mobs="28" />
 	<spot level="13" min="12" max="14" region="ElvenTerritory" name="Elven Starting · Elven Forest" x="12317" y="47264" z="-3696" radius="1500" mobs="26" />
 	<spot level="13" min="13" max="13" region="ElvenTerritory" name="Elven Starting · запад" x="28100" y="57769" z="-3360" radius="1500" mobs="8" />
 	<spot level="13" min="12" max="14" region="OrcTerritory" name="Orc Starting · юго-запад" x="-16307" y="-103597" z="-496" radius="1500" mobs="20" />
+	<spot level="13" min="13" max="13" region="Oren" name="Oren Monster Spawns · запад" x="-17537" y="34045" z="-3512" radius="1199" mobs="8" />
 	<spot level="13" min="13" max="14" region="TalkingIsland" name="Talking Island Monsters · север" x="-101295" y="214147" z="-3192" radius="1500" mobs="30" />
 	<spot level="13" min="13" max="14" region="TalkingIsland" name="Talking Island Monsters · север" x="-104508" y="216592" z="-3280" radius="1500" mobs="18" />
 	<spot level="14" min="14" max="15" region="DwarvenTerritory" name="Dwarven Starting · Western Mining Zone" x="128741" y="-195041" z="-3544" radius="1500" mobs="24" />
@@ -157,6 +227,7 @@
 	<spot level="14" min="14" max="14" region="DwarvenTerritory" name="Dwarven Starting · юго-восток" x="137645" y="-186162" z="-2160" radius="1500" mobs="8" />
 	<spot level="14" min="14" max="14" region="DwarvenTerritory" name="Dwarven Starting · юго-запад" x="126498" y="-193626" z="-3152" radius="1500" mobs="8" />
 	<spot level="14" min="13" max="15" region="ElvenTerritory" name="Elven Starting · Elven Forest" x="9730" y="49233" z="-3640" radius="1500" mobs="38" />
+	<spot level="14" min="14" max="16" region="Gludio" name="Gludio Monster Spawns · север" x="-11868" y="98843" z="-3160" radius="1153" mobs="8" />
 	<spot level="14" min="14" max="15" region="OrcTerritory" name="Orc Starting · Immortal Plateau" x="8079" y="-129202" z="-2536" radius="1500" mobs="41" />
 	<spot level="14" min="14" max="15" region="OrcTerritory" name="Orc Starting · Immortal Plateau" x="4537" y="-129291" z="-2944" radius="1500" mobs="39" />
 	<spot level="14" min="14" max="15" region="OrcTerritory" name="Orc Starting · Immortal Plateau" x="11600" y="-133301" z="-1032" radius="1500" mobs="24" />
@@ -166,8 +237,26 @@
 	<spot level="14" min="14" max="14" region="OrcTerritory" name="Orc Starting · север" x="-3005" y="-134389" z="-2792" radius="1500" mobs="8" />
 	<spot level="14" min="13" max="14" region="OrcTerritory" name="Orc Starting · юго-запад" x="-23443" y="-93268" z="-3544" radius="1500" mobs="42" />
 	<spot level="14" min="14" max="15" region="OrcTerritory" name="Orc Starting · юго-запад" x="-26267" y="-88856" z="-3232" radius="1500" mobs="40" />
+	<spot level="14" min="13" max="15" region="Oren" name="Oren Monster Spawns · Swampland" x="-18184" y="42906" z="-3672" radius="966" mobs="12" />
+	<spot level="14" min="13" max="16" region="Oren" name="Oren Monster Spawns · Swampland" x="-22378" y="44513" z="-3760" radius="1017" mobs="10" />
+	<spot level="14" min="13" max="15" region="Oren" name="Oren Monster Spawns · Swampland" x="-14427" y="37763" z="-3664" radius="1147" mobs="8" />
 	<spot level="14" min="14" max="15" region="TalkingIsland" name="Talking Island Monsters · север" x="-108290" y="216343" z="-3280" radius="1500" mobs="20" />
 	<spot level="14" min="14" max="15" region="TalkingIsland" name="Talking Island Monsters · северо-запад" x="-111946" y="217751" z="-3032" radius="1500" mobs="20" />
+	<spot level="15" min="15" max="17" region="AssassinHideout" name="Assassin Hideout · Combat Training Zone" x="85209" y="-81585" z="-3560" radius="887" mobs="29" />
+	<spot level="15" min="15" max="17" region="AssassinHideout" name="Assassin Hideout · Combat Training Zone" x="85861" y="-79494" z="-3704" radius="593" mobs="13" />
+	<spot level="15" min="15" max="16" region="DarkElfTerritory" name="Dark Horror · Swampland" x="-20230" y="46873" z="-3640" radius="1251" mobs="18" />
+	<spot level="15" min="15" max="16" region="DarkElfTerritory" name="Dark Horror · юго-восток" x="-17308" y="52320" z="-3696" radius="1244" mobs="17" />
+	<spot level="15" min="14" max="15" region="DarkElfTerritory" name="Lesser Dark Horror" x="-15586" y="51184" z="-3760" radius="1244" mobs="9" />
+	<spot level="15" min="14" max="15" region="DarkElfTerritory" name="Lesser Dark Horror · Swampland" x="-16775" y="49645" z="-3776" radius="1290" mobs="8" />
+	<spot level="15" min="15" max="15" region="DarkElfTerritory" name="Lesser Dark Horror · юго-восток" x="-14310" y="53890" z="-3704" radius="1166" mobs="11" />
+	<spot level="15" min="15" max="15" region="DarkElfTerritory" name="Swampland · север" x="-18809" y="48778" z="-3640" radius="929" mobs="9" />
+	<spot level="15" min="15" max="15" region="DarkElfTerritory" name="Swampland · северо-запад" x="-21859" y="47158" z="-3712" radius="1017" mobs="8" />
+	<spot level="15" min="15" max="15" region="DarkElfTerritory" name="Swampland · юго-восток" x="-15611" y="55788" z="-3704" radius="1064" mobs="9" />
+	<spot level="15" min="15" max="17" region="Dion" name="Execution Grounds · 1st Training Grounds" x="42378" y="142686" z="-3032" radius="1328" mobs="55" />
+	<spot level="15" min="15" max="17" region="Dion" name="Execution Grounds · 1st Training Grounds" x="44302" y="142738" z="-3032" radius="1500" mobs="39" />
+	<spot level="15" min="15" max="17" region="Dion" name="Execution Grounds · 2nd Training Grounds" x="55196" y="144280" z="-3008" radius="1314" mobs="55" />
+	<spot level="15" min="15" max="17" region="Dion" name="Execution Grounds · 2nd Training Grounds" x="55157" y="142367" z="-2840" radius="1076" mobs="39" />
+	<spot level="15" min="15" max="17" region="Dion" name="Execution Grounds · 2nd Training Grounds" x="52807" y="148472" z="-2432" radius="1326" mobs="25" />
 	<spot level="15" min="15" max="17" region="DwarvenTerritory" name="Dwarven Starting · северо-восток" x="144241" y="-204346" z="-3128" radius="1500" mobs="9" />
 	<spot level="15" min="14" max="15" region="DwarvenTerritory" name="Dwarven Starting · юг" x="135880" y="-183061" z="-2376" radius="1500" mobs="8" />
 	<spot level="15" min="14" max="16" region="ElvenTerritory" name="Elven Starting · Elven Forest" x="11150" y="56050" z="-3456" radius="1500" mobs="45" />
@@ -175,13 +264,36 @@
 	<spot level="15" min="14" max="16" region="ElvenTerritory" name="Elven Starting · Elven Forest" x="12663" y="59901" z="-3432" radius="1500" mobs="24" />
 	<spot level="15" min="14" max="15" region="ElvenTerritory" name="Elven Starting · Elven Forest" x="16090" y="52230" z="-3544" radius="1500" mobs="10" />
 	<spot level="15" min="15" max="15" region="ElvenTerritory" name="Elven Starting · Elven Forest" x="17881" y="57101" z="-3472" radius="1500" mobs="10" />
+	<spot level="15" min="13" max="16" region="Gludio" name="Gludio Monster Spawns · юго-восток" x="42598" y="246958" z="-6464" radius="1068" mobs="9" />
 	<spot level="15" min="15" max="16" region="Kamael" name="Golden Hills · запад" x="-111384" y="46742" z="-1024" radius="1343" mobs="23" />
 	<spot level="15" min="15" max="16" region="Kamael" name="Golden Hills · юго-запад" x="-108515" y="51183" z="-984" radius="1277" mobs="23" />
+	<spot level="15" min="15" max="17" region="MotherTreeVillage" name="Mother Tree Village Starting Zones · Lands of Light: 4th Area" x="14905" y="58360" z="-12856" radius="963" mobs="97" />
 	<spot level="15" min="14" max="17" region="OrcTerritory" name="Orc Starting · Immortal Plateau" x="5608" y="-125962" z="-2448" radius="1500" mobs="50" />
 	<spot level="15" min="14" max="16" region="OrcTerritory" name="Orc Starting · Immortal Plateau" x="15453" y="-136448" z="-1032" radius="1500" mobs="20" />
 	<spot level="15" min="14" max="15" region="OrcTerritory" name="Orc Starting · северо-восток" x="-3318" y="-126117" z="-2792" radius="1500" mobs="42" />
+	<spot level="15" min="14" max="16" region="Oren" name="Oren Monster Spawns · юг" x="18070" y="81489" z="-4384" radius="1152" mobs="10" />
+	<spot level="15" min="14" max="16" region="Oren" name="Oren Monster Spawns · юго-запад" x="-24806" y="50596" z="-3776" radius="1187" mobs="12" />
+	<spot level="15" min="14" max="17" region="Schuttgart" name="Schuttgart Monster Spawns · запад" x="142020" y="-172376" z="352" radius="818" mobs="10" />
+	<spot level="15" min="14" max="17" region="Schuttgart" name="Schuttgart Monster Spawns · северо-запад" x="144888" y="-175433" z="-1520" radius="1129" mobs="9" />
+	<spot level="15" min="13" max="17" region="Schuttgart" name="Schuttgart Monster Spawns · юго-запад" x="19237" y="-113178" z="-3232" radius="956" mobs="10" />
+	<spot level="15" min="15" max="17" region="SylphVillage" name="Sylph Village · Grocer Evia" x="110863" y="56684" z="-4256" radius="1293" mobs="52" />
+	<spot level="15" min="15" max="17" region="SylphVillage" name="Sylph Village · Grocer Evia" x="108852" y="58276" z="-4480" radius="1151" mobs="29" />
+	<spot level="15" min="15" max="17" region="SylphVillage" name="Sylph Village · Grocer Evia" x="109425" y="57479" z="-4544" radius="420" mobs="16" />
+	<spot level="15" min="15" max="17" region="SylphVillage" name="Sylph Village · Grocer Evia" x="107524" y="57885" z="-4576" radius="400" mobs="13" />
+	<spot level="15" min="15" max="17" region="SylphVillage" name="Sylph Village · Whispering Woods" x="114507" y="54284" z="-4560" radius="1112" mobs="50" />
+	<spot level="15" min="15" max="17" region="SylphVillage" name="Sylph Village · Whispering Woods" x="120613" y="53482" z="-4632" radius="1163" mobs="43" />
+	<spot level="15" min="15" max="17" region="SylphVillage" name="Sylph Village · Whispering Woods" x="117690" y="55139" z="-4632" radius="1365" mobs="41" />
+	<spot level="15" min="15" max="17" region="SylphVillage" name="Sylph Village · Whispering Woods" x="124566" y="52667" z="-4632" radius="1295" mobs="41" />
+	<spot level="15" min="15" max="17" region="SylphVillage" name="Sylph Village · Whispering Woods" x="110121" y="60533" z="-4576" radius="613" mobs="30" />
+	<spot level="15" min="15" max="17" region="SylphVillage" name="Sylph Village · Whispering Woods" x="122280" y="53334" z="-4632" radius="1097" mobs="28" />
+	<spot level="15" min="15" max="17" region="SylphVillage" name="Sylph Village · Whispering Woods" x="112034" y="61445" z="-4576" radius="645" mobs="28" />
+	<spot level="15" min="15" max="17" region="SylphVillage" name="Sylph Village · восток" x="126029" y="51928" z="-4576" radius="681" mobs="30" />
 	<spot level="15" min="14" max="15" region="TalkingIsland" name="Talking Island Monsters · северо-запад" x="-114508" y="220188" z="-3160" radius="1500" mobs="18" />
 	<spot level="15" min="15" max="16" region="TalkingIsland" name="Talking Island Monsters · северо-запад" x="-116629" y="224523" z="-3272" radius="1500" mobs="18" />
+	<spot level="16" min="15" max="17" region="Dion" name="Execution Grounds · 1st Training Grounds" x="43916" y="140622" z="-3024" radius="758" mobs="40" />
+	<spot level="16" min="15" max="17" region="Dion" name="Execution Grounds · 2nd Training Grounds" x="52749" y="142216" z="-2784" radius="1254" mobs="44" />
+	<spot level="16" min="15" max="17" region="Dion" name="Execution Grounds · 2nd Training Grounds" x="55807" y="146751" z="-2944" radius="707" mobs="40" />
+	<spot level="16" min="15" max="17" region="Dion" name="Execution Grounds · 2nd Training Grounds" x="52690" y="143973" z="-2936" radius="846" mobs="20" />
 	<spot level="16" min="15" max="17" region="DwarvenTerritory" name="Dwarven Starting · восток" x="142282" y="-201340" z="-3336" radius="1500" mobs="26" />
 	<spot level="16" min="15" max="17" region="DwarvenTerritory" name="Dwarven Starting · северо-восток" x="149781" y="-216906" z="-3480" radius="1500" mobs="32" />
 	<spot level="16" min="15" max="17" region="DwarvenTerritory" name="Dwarven Starting · северо-восток" x="138643" y="-207166" z="-3640" radius="1500" mobs="26" />
@@ -192,6 +304,12 @@
 	<spot level="16" min="15" max="17" region="DwarvenTerritory" name="Dwarven Starting · северо-восток" x="149225" y="-210033" z="-3136" radius="1500" mobs="24" />
 	<spot level="16" min="15" max="17" region="DwarvenTerritory" name="Dwarven Starting · северо-восток" x="152542" y="-211330" z="-3728" radius="1500" mobs="24" />
 	<spot level="16" min="15" max="16" region="DwarvenTerritory" name="Dwarven Starting · северо-восток" x="141441" y="-205862" z="-3696" radius="1500" mobs="10" />
+	<spot level="16" min="16" max="17" region="DwarvenTerritory" name="Q10071 Ore From The Strip Mine" x="126302" y="-200931" z="-3712" radius="1043" mobs="8" />
+	<spot level="16" min="15" max="18" region="Gludio" name="Gludio Monster Spawns · север" x="-24807" y="149530" z="-3072" radius="1191" mobs="10" />
+	<spot level="16" min="15" max="18" region="Gludio" name="Gludio Monster Spawns · северо-восток" x="-20742" y="149460" z="-3080" radius="1309" mobs="10" />
+	<spot level="16" min="15" max="17" region="Gludio" name="Gludio Monster Spawns · северо-восток" x="-17744" y="147532" z="-3608" radius="1137" mobs="9" />
+	<spot level="16" min="14" max="19" region="Gludio" name="Gludio Monster Spawns · юго-восток" x="44668" y="245842" z="-6472" radius="892" mobs="11" />
+	<spot level="16" min="14" max="16" region="Gludio" name="Gludio Monster Spawns · юго-восток" x="43238" y="245083" z="-6464" radius="875" mobs="8" />
 	<spot level="16" min="15" max="17" region="JinKamaelVillage" name="Mountain Fungus · Golden Hills" x="-107778" y="48685" z="-1408" radius="966" mobs="8" />
 	<spot level="16" min="15" max="17" region="JinKamaelVillage" name="Mountain Werewolf · Golden Hills" x="-108492" y="46710" z="-1392" radius="1185" mobs="38" />
 	<spot level="16" min="15" max="17" region="JinKamaelVillage" name="Mountain Werewolf · Golden Hills" x="-109955" y="47926" z="-1128" radius="1185" mobs="27" />
@@ -205,8 +323,18 @@
 	<spot level="16" min="15" max="17" region="OrcTerritory" name="Orc Starting · северо-восток" x="20358" y="-132034" z="-1720" radius="1500" mobs="20" />
 	<spot level="16" min="15" max="17" region="OrcTerritory" name="Orc Starting · северо-восток" x="20798" y="-130145" z="-1696" radius="1500" mobs="20" />
 	<spot level="16" min="15" max="17" region="OrcTerritory" name="Orc Starting · юго-запад" x="-21063" y="-89646" z="-2848" radius="1500" mobs="33" />
+	<spot level="16" min="15" max="16" region="Oren" name="Oren Monster Spawns · Swampland" x="-16555" y="46488" z="-3768" radius="1218" mobs="12" />
+	<spot level="16" min="14" max="17" region="Oren" name="Oren Monster Spawns · юг" x="15996" y="76766" z="-4384" radius="1500" mobs="10" />
+	<spot level="16" min="15" max="17" region="Schuttgart" name="Schuttgart Monster Spawns · запад" x="149343" y="-170141" z="368" radius="1158" mobs="11" />
 	<spot level="16" min="16" max="17" region="TalkingIsland" name="Talking Island Monsters · запад" x="-117815" y="240271" z="-2744" radius="1500" mobs="30" />
 	<spot level="16" min="15" max="16" region="TalkingIsland" name="Talking Island Monsters · запад" x="-118782" y="231006" z="-2880" radius="1500" mobs="15" />
+	<spot level="17" min="15" max="17" region="AssassinHideout" name="Assassin Hideout · Combat Training Zone" x="83555" y="-84810" z="-3488" radius="1334" mobs="27" />
+	<spot level="17" min="15" max="17" region="Dion" name="Execution Grounds · 1st Training Grounds" x="45760" y="140950" z="-3048" radius="1183" mobs="74" />
+	<spot level="17" min="15" max="17" region="Dion" name="Execution Grounds · 1st Training Grounds" x="47768" y="141247" z="-3120" radius="722" mobs="39" />
+	<spot level="17" min="15" max="17" region="Dion" name="Execution Grounds · 2nd Training Grounds" x="53436" y="145921" z="-2984" radius="1226" mobs="66" />
+	<spot level="17" min="15" max="17" region="Dion" name="Execution Grounds · 2nd Training Grounds" x="52099" y="150159" z="-2400" radius="1251" mobs="58" />
+	<spot level="17" min="15" max="17" region="Dion" name="Execution Grounds · северо-восток" x="55341" y="140992" z="-2784" radius="1323" mobs="32" />
+	<spot level="17" min="15" max="17" region="Dion" name="Execution Grounds · северо-запад" x="41943" y="140926" z="-3016" radius="1034" mobs="26" />
 	<spot level="17" min="16" max="17" region="DwarvenTerritory" name="Dwarven Starting · северо-восток" x="137373" y="-212541" z="-3472" radius="1500" mobs="11" />
 	<spot level="17" min="16" max="17" region="DwarvenTerritory" name="Dwarven Starting · северо-восток" x="146706" y="-212410" z="-3592" radius="1500" mobs="11" />
 	<spot level="17" min="15" max="17" region="DwarvenTerritory" name="Dwarven Starting · северо-восток" x="136514" y="-209979" z="-3488" radius="1500" mobs="10" />
@@ -217,16 +345,42 @@
 	<spot level="17" min="16" max="18" region="ElvenTerritory" name="Elven Starting · юго-запад" x="7387" y="66474" z="-3672" radius="1500" mobs="24" />
 	<spot level="17" min="16" max="18" region="ElvenTerritory" name="Elven Starting · юго-запад" x="4513" y="74434" z="-3696" radius="1500" mobs="22" />
 	<spot level="17" min="17" max="19" region="ElvenTerritory" name="Elven Starting · юго-запад" x="4864" y="77212" z="-3616" radius="1500" mobs="18" />
+	<spot level="17" min="15" max="19" region="Gludio" name="Gludio Monster Spawns · север" x="-18369" y="78645" z="-3640" radius="1207" mobs="16" />
+	<spot level="17" min="17" max="20" region="Gludio" name="Gludio Monster Spawns · северо-восток" x="-5178" y="112244" z="-3304" radius="1080" mobs="8" />
+	<spot level="17" min="17" max="18" region="Gludio" name="Gludio Monster Spawns · юго-восток" x="45492" y="243250" z="-6464" radius="1172" mobs="9" />
 	<spot level="17" min="15" max="18" region="JinKamaelVillage" name="Muertos Fighter · Golden Hills" x="-105225" y="47912" z="-1472" radius="1227" mobs="17" />
 	<spot level="17" min="16" max="18" region="Kamael" name="Golden Hills · восток" x="-102835" y="46919" z="-1152" radius="1350" mobs="35" />
 	<spot level="17" min="17" max="18" region="Kamael" name="Golden Hills · север" x="-104749" y="40564" z="-1800" radius="1128" mobs="23" />
 	<spot level="17" min="16" max="18" region="Kamael" name="Golden Hills · северо-восток" x="-103534" y="44322" z="-1448" radius="1386" mobs="31" />
 	<spot level="17" min="16" max="18" region="Kamael" name="Golden Hills · северо-восток" x="-105876" y="45235" z="-1448" radius="1102" mobs="27" />
+	<spot level="17" min="15" max="17" region="MotherTreeVillage" name="Mother Tree Village Starting Zones · Lands of Light: 3rd Area" x="17085" y="55996" z="-12864" radius="920" mobs="105" />
 	<spot level="17" min="17" max="17" region="OrcTerritory" name="Orc Starting · Immortal Plateau" x="11914" y="-129052" z="-1568" radius="1500" mobs="8" />
+	<spot level="17" min="16" max="17" region="Oren" name="Oren Monster Spawns · юго-запад" x="-47839" y="72246" z="-3520" radius="1326" mobs="9" />
+	<spot level="17" min="16" max="17" region="Oren" name="Oren Monster Spawns · юго-запад" x="-42448" y="62230" z="-3400" radius="1099" mobs="9" />
+	<spot level="17" min="14" max="17" region="Schuttgart" name="Schuttgart Monster Spawns · запад" x="143360" y="-169995" z="-1776" radius="1209" mobs="8" />
+	<spot level="17" min="17" max="19" region="Schuttgart" name="Schuttgart Monster Spawns · северо-запад" x="147506" y="-173564" z="2248" radius="1174" mobs="13" />
 	<spot level="18" min="17" max="19" region="ElvenTerritory" name="Elven Starting · запад" x="2650" y="66981" z="-3712" radius="1500" mobs="38" />
 	<spot level="18" min="17" max="19" region="ElvenTerritory" name="Elven Starting · юго-запад" x="1991" y="72849" z="-3600" radius="1500" mobs="31" />
+	<spot level="18" min="16" max="18" region="Gludio" name="Gludio Monster Spawns · север" x="-4027" y="101194" z="-3440" radius="1184" mobs="10" />
+	<spot level="18" min="15" max="19" region="Gludio" name="Gludio Monster Spawns · север" x="-19306" y="81114" z="-3656" radius="537" mobs="9" />
+	<spot level="18" min="17" max="20" region="Gludio" name="Gludio Monster Spawns · северо-восток" x="-4555" y="109678" z="-3288" radius="1288" mobs="9" />
+	<spot level="18" min="17" max="22" region="Gludio" name="Gludio Monster Spawns · северо-запад" x="-67073" y="106223" z="-3816" radius="1118" mobs="9" />
 	<spot level="18" min="17" max="18" region="Kamael" name="Golden Hills · север" x="-107438" y="42948" z="-1440" radius="1305" mobs="26" />
+	<spot level="18" min="16" max="19" region="Oren" name="Oren Monster Spawns · запад" x="-45002" y="44085" z="-5648" radius="1253" mobs="14" />
+	<spot level="18" min="17" max="20" region="Oren" name="Oren Monster Spawns · юг" x="12920" y="76313" z="-4224" radius="1099" mobs="17" />
+	<spot level="18" min="18" max="20" region="Oren" name="Oren Monster Spawns · юг" x="13132" y="78063" z="-4096" radius="818" mobs="10" />
+	<spot level="18" min="16" max="18" region="Oren" name="Oren Monster Spawns · юго-запад" x="-64869" y="71383" z="-3272" radius="1282" mobs="16" />
+	<spot level="18" min="17" max="19" region="Schuttgart" name="Schuttgart Monster Spawns · запад" x="148116" y="-169462" z="1928" radius="1169" mobs="14" />
+	<spot level="18" min="17" max="19" region="Schuttgart" name="Schuttgart Monster Spawns · север" x="151532" y="-174854" z="-1776" radius="894" mobs="10" />
+	<spot level="18" min="17" max="19" region="Schuttgart" name="Schuttgart Monster Spawns · северо-запад" x="142676" y="-178553" z="360" radius="1125" mobs="11" />
+	<spot level="18" min="17" max="19" region="Schuttgart" name="Schuttgart Monster Spawns · северо-запад" x="148050" y="-177181" z="104" radius="811" mobs="10" />
+	<spot level="18" min="17" max="19" region="Schuttgart" name="Schuttgart Monster Spawns · северо-запад" x="147520" y="-171573" z="2248" radius="886" mobs="8" />
+	<spot level="18" min="17" max="18" region="Schuttgart" name="Schuttgart Monster Spawns · юго-запад" x="16678" y="-112566" z="-3192" radius="737" mobs="8" />
 	<spot level="19" min="18" max="19" region="ElvenTerritory" name="Elven Starting · юго-запад" x="1595" y="77168" z="-3552" radius="1500" mobs="30" />
+	<spot level="19" min="15" max="19" region="ElvenTerritory" name="Neutral Zone" x="-16002" y="82507" z="-3576" radius="1500" mobs="11" />
+	<spot level="19" min="17" max="22" region="Gludio" name="Gludio Monster Spawns · север" x="-20830" y="141052" z="-3880" radius="1298" mobs="10" />
+	<spot level="19" min="17" max="20" region="Gludio" name="Gludio Monster Spawns · север" x="-13977" y="75462" z="-3296" radius="1018" mobs="10" />
+	<spot level="19" min="17" max="20" region="Gludio" name="Gludio Monster Spawns · северо-восток" x="-10672" y="145485" z="-3768" radius="1295" mobs="12" />
 	<spot level="19" min="18" max="20" region="OrcTerritory" name="Orc Starting · восток" x="6011" y="-110184" z="-1880" radius="1500" mobs="30" />
 	<spot level="19" min="18" max="20" region="OrcTerritory" name="Orc Starting · северо-восток" x="3299" y="-117689" z="-2480" radius="1500" mobs="30" />
 	<spot level="19" min="18" max="20" region="OrcTerritory" name="Orc Starting · северо-восток" x="-1891" y="-114587" z="-3440" radius="1500" mobs="12" />
@@ -236,6 +390,18 @@
 	<spot level="19" min="18" max="20" region="OrcTerritory" name="Orc Starting · юг" x="-22086" y="-79073" z="-2760" radius="1500" mobs="16" />
 	<spot level="19" min="18" max="20" region="OrcTerritory" name="Orc Starting · юг" x="-19544" y="-75724" z="-2384" radius="1500" mobs="16" />
 	<spot level="19" min="18" max="20" region="OrcTerritory" name="Orc Starting · юго-восток" x="-5818" y="-94262" z="-2448" radius="1500" mobs="16" />
+	<spot level="19" min="19" max="19" region="Schuttgart" name="Schuttgart Monster Spawns · юго-запад" x="21398" y="-108105" z="-3040" radius="1432" mobs="16" />
+	<spot level="19" min="19" max="21" region="Schuttgart" name="Schuttgart Monster Spawns · юго-запад" x="21228" y="-110891" z="-3296" radius="1103" mobs="8" />
+	<spot level="20" min="18" max="20" region="Gludio" name="Gludio Monster Spawns · северо-восток" x="-5993" y="110904" z="-3112" radius="1121" mobs="15" />
+	<spot level="20" min="19" max="20" region="Gludio" name="Gludio Monster Spawns · юго-восток" x="46770" y="246202" z="-6664" radius="1243" mobs="13" />
+	<spot level="21" min="19" max="21" region="Schuttgart" name="Schuttgart Monster Spawns · восток" x="174148" y="-177043" z="2320" radius="1222" mobs="15" />
+	<spot level="21" min="19" max="21" region="Schuttgart" name="Schuttgart Monster Spawns · восток" x="179214" y="-180326" z="248" radius="1081" mobs="15" />
+	<spot level="21" min="19" max="21" region="Schuttgart" name="Schuttgart Monster Spawns · восток" x="176275" y="-176088" z="2880" radius="1084" mobs="12" />
+	<spot level="21" min="19" max="21" region="Schuttgart" name="Schuttgart Monster Spawns · восток" x="175235" y="-172953" z="3304" radius="1135" mobs="11" />
+	<spot level="22" min="20" max="24" region="Gludio" name="Gludio Monster Spawns · север" x="-29223" y="116842" z="-3648" radius="1168" mobs="23" />
+	<spot level="22" min="20" max="24" region="Gludio" name="Gludio Monster Spawns · север" x="-27344" y="116800" z="-3728" radius="1096" mobs="9" />
+	<spot level="22" min="20" max="24" region="Gludio" name="Gludio Monster Spawns · север" x="-23068" y="123006" z="-3640" radius="1054" mobs="9" />
+	<spot level="22" min="19" max="23" region="Gludio" name="Gludio Monster Spawns · северо-восток" x="-16229" y="140723" z="-3872" radius="1016" mobs="10" />
 	<spot level="22" min="21" max="23" region="OrcTerritory" name="Orc Starting · восток" x="2556" y="-105941" z="-2584" radius="1500" mobs="36" />
 	<spot level="22" min="21" max="23" region="OrcTerritory" name="Orc Starting · восток" x="1230" y="-110304" z="-2400" radius="1500" mobs="18" />
 	<spot level="22" min="21" max="23" region="OrcTerritory" name="Orc Starting · юг" x="-15347" y="-72809" z="-2056" radius="1500" mobs="18" />
@@ -243,6 +409,8 @@
 	<spot level="22" min="21" max="23" region="OrcTerritory" name="Orc Starting · юг" x="-7752" y="-77194" z="-2696" radius="1500" mobs="12" />
 	<spot level="22" min="21" max="23" region="OrcTerritory" name="Orc Starting · юго-восток" x="-2772" y="-101459" z="-2688" radius="1500" mobs="36" />
 	<spot level="22" min="21" max="23" region="OrcTerritory" name="Orc Starting · юго-восток" x="-2167" y="-96605" z="-2432" radius="1500" mobs="20" />
+	<spot level="23" min="23" max="23" region="Dion" name="Dion Monster Spawns · юг" x="50692" y="127108" z="-3712" radius="1242" mobs="8" />
+	<spot level="23" min="20" max="24" region="Gludio" name="Gludio Monster Spawns · север" x="-22451" y="120791" z="-3552" radius="1119" mobs="10" />
 	<spot level="23" min="21" max="24" region="Gludio" name="Ruins Of Agony · восток" x="-43394" y="117002" z="-3552" radius="400" mobs="14" />
 	<spot level="23" min="21" max="24" region="Gludio" name="Ruins Of Agony · восток" x="-44232" y="116387" z="-3584" radius="400" mobs="14" />
 	<spot level="23" min="21" max="24" region="Gludio" name="Ruins Of Agony · восток" x="-41552" y="116184" z="-3144" radius="400" mobs="14" />
@@ -360,6 +528,14 @@
 	<spot level="23" min="21" max="24" region="Gludio" name="Ruins Of Agony · юго-запад" x="-55816" y="119349" z="-2968" radius="668" mobs="20" />
 	<spot level="23" min="21" max="24" region="Gludio" name="Ruins Of Agony · юго-запад" x="-57240" y="120301" z="-3056" radius="668" mobs="20" />
 	<spot level="23" min="21" max="24" region="Gludio" name="Ruins Of Agony · юго-запад" x="-57881" y="119018" z="-3080" radius="668" mobs="20" />
+	<spot level="23" min="22" max="24" region="Schuttgart" name="Schuttgart Monster Spawns · восток" x="179236" y="-173645" z="-240" radius="1282" mobs="21" />
+	<spot level="23" min="22" max="24" region="Schuttgart" name="Schuttgart Monster Spawns · восток" x="175444" y="-174294" z="-240" radius="1427" mobs="16" />
+	<spot level="23" min="22" max="24" region="Schuttgart" name="Schuttgart Monster Spawns · восток" x="176540" y="-179552" z="2016" radius="1125" mobs="15" />
+	<spot level="23" min="22" max="24" region="Schuttgart" name="Schuttgart Monster Spawns · восток" x="174684" y="-176324" z="736" radius="1151" mobs="11" />
+	<spot level="23" min="22" max="24" region="Schuttgart" name="Schuttgart Monster Spawns · восток" x="177298" y="-175370" z="1344" radius="1225" mobs="10" />
+	<spot level="23" min="22" max="24" region="Schuttgart" name="Schuttgart Monster Spawns · восток" x="175720" y="-178194" z="-520" radius="1108" mobs="9" />
+	<spot level="23" min="22" max="24" region="Schuttgart" name="Schuttgart Monster Spawns · восток" x="177599" y="-178667" z="1040" radius="1124" mobs="9" />
+	<spot level="23" min="22" max="24" region="Schuttgart" name="Schuttgart Monster Spawns · северо-восток" x="174451" y="-179669" z="1040" radius="1371" mobs="14" />
 	<spot level="24" min="23" max="25" region="OrcTerritory" name="Orc Starting · восток" x="6068" y="-103084" z="-2304" radius="1500" mobs="30" />
 	<spot level="24" min="23" max="25" region="OrcTerritory" name="Orc Starting · юг" x="1573" y="-74534" z="-1800" radius="1500" mobs="16" />
 	<spot level="24" min="23" max="25" region="OrcTerritory" name="Orc Starting · юго-восток" x="2194" y="-78218" z="-2232" radius="1500" mobs="26" />
@@ -375,6 +551,16 @@
 	<spot level="24" min="23" max="25" region="OrcTerritory" name="Orc Starting · юго-восток" x="1022" y="-85611" z="-2208" radius="1500" mobs="14" />
 	<spot level="24" min="23" max="25" region="OrcTerritory" name="Orc Starting · юго-восток" x="896" y="-82915" z="-2560" radius="1459" mobs="12" />
 	<spot level="24" min="23" max="25" region="OrcTerritory" name="Orc Starting · юго-восток" x="924" y="-80910" z="-2656" radius="1500" mobs="12" />
+	<spot level="25" min="23" max="25" region="Gludio" name="Gludio Monster Spawns · северо-запад" x="-81699" y="124873" z="-3560" radius="781" mobs="8" />
+	<spot level="26" min="25" max="27" region="Schuttgart" name="Schuttgart Monster Spawns · восток" x="179091" y="-180776" z="-1896" radius="1298" mobs="13" />
+	<spot level="26" min="25" max="27" region="Schuttgart" name="Schuttgart Monster Spawns · восток" x="183014" y="-182065" z="-1616" radius="1278" mobs="13" />
+	<spot level="26" min="23" max="27" region="Schuttgart" name="Schuttgart Monster Spawns · восток" x="176740" y="-176326" z="440" radius="972" mobs="9" />
+	<spot level="26" min="25" max="27" region="Schuttgart" name="Schuttgart Monster Spawns · восток" x="179771" y="-178378" z="-728" radius="1099" mobs="9" />
+	<spot level="26" min="25" max="27" region="Schuttgart" name="Schuttgart Monster Spawns · восток" x="182320" y="-179269" z="-832" radius="1176" mobs="9" />
+	<spot level="26" min="25" max="27" region="Schuttgart" name="Schuttgart Monster Spawns · восток" x="177572" y="-179315" z="-1928" radius="1308" mobs="8" />
+	<spot level="26" min="25" max="27" region="Schuttgart" name="Schuttgart Monster Spawns · северо-восток" x="178280" y="-183523" z="-1896" radius="1362" mobs="14" />
+	<spot level="26" min="25" max="27" region="Schuttgart" name="Schuttgart Monster Spawns · северо-восток" x="180166" y="-183634" z="-1896" radius="1093" mobs="12" />
+	<spot level="26" min="25" max="27" region="Schuttgart" name="Schuttgart Monster Spawns · северо-восток" x="174027" y="-184369" z="-1896" radius="1104" mobs="8" />
 	<spot level="27" min="26" max="29" region="Gludin" name="Abandoned Camp · Sel Mahum Base" x="-44684" y="141150" z="-2984" radius="731" mobs="20" />
 	<spot level="27" min="26" max="29" region="Gludin" name="Abandoned Camp · Sel Mahum Base" x="-43256" y="141111" z="-2928" radius="754" mobs="10" />
 	<spot level="27" min="26" max="29" region="Gludin" name="Abandoned Camp · Sel Mahum Base" x="-46084" y="142794" z="-2760" radius="731" mobs="10" />
@@ -392,8 +578,31 @@
 	<spot level="27" min="26" max="29" region="Gludin" name="Abandoned Camp · юг" x="-48207" y="152250" z="-3024" radius="731" mobs="10" />
 	<spot level="27" min="26" max="29" region="Gludin" name="Abandoned Camp · юг" x="-47058" y="152594" z="-2976" radius="731" mobs="10" />
 	<spot level="27" min="26" max="29" region="Gludin" name="Abandoned Camp · юг" x="-47944" y="153146" z="-3048" radius="731" mobs="10" />
+	<spot level="27" min="27" max="28" region="Gludio" name="Gludio Monster Spawns · юго-запад" x="-54761" y="186662" z="-4816" radius="1013" mobs="9" />
+	<spot level="27" min="26" max="30" region="Gludio" name="Maille Lizardman · восток" x="-24449" y="98362" z="-3728" radius="1020" mobs="8" />
+	<spot level="28" min="26" max="30" region="Gludio" name="Arachnid King" x="-27521" y="99395" z="-3704" radius="1172" mobs="12" />
+	<spot level="28" min="26" max="30" region="Gludio" name="Gludio Monster Spawns · север" x="-24134" y="100514" z="-3656" radius="1232" mobs="18" />
+	<spot level="28" min="27" max="29" region="Gludio" name="Gludio Monster Spawns · юго-запад" x="-56563" y="188250" z="-4512" radius="1282" mobs="9" />
+	<spot level="28" min="28" max="30" region="Schuttgart" name="Schuttgart Monster Spawns · восток" x="186745" y="-182245" z="-3760" radius="617" mobs="8" />
+	<spot level="29" min="28" max="30" region="Gludio" name="Gludio Monster Spawns · юго-запад" x="-56984" y="186075" z="-4816" radius="1000" mobs="8" />
+	<spot level="29" min="28" max="30" region="Gludio" name="Maille Lizardman · запад" x="-29768" y="98327" z="-3728" radius="1134" mobs="8" />
+	<spot level="29" min="28" max="30" region="Schuttgart" name="Schuttgart Monster Spawns · восток" x="186802" y="-175874" z="-3624" radius="1174" mobs="21" />
+	<spot level="29" min="28" max="30" region="Schuttgart" name="Schuttgart Monster Spawns · восток" x="185382" y="-181188" z="-3760" radius="1119" mobs="20" />
+	<spot level="29" min="28" max="30" region="Schuttgart" name="Schuttgart Monster Spawns · восток" x="181309" y="-175134" z="-3568" radius="1202" mobs="15" />
+	<spot level="29" min="28" max="30" region="Schuttgart" name="Schuttgart Monster Spawns · восток" x="181955" y="-172710" z="-2880" radius="1348" mobs="11" />
+	<spot level="29" min="28" max="30" region="Schuttgart" name="Schuttgart Monster Spawns · восток" x="186883" y="-178187" z="-3568" radius="1148" mobs="8" />
+	<spot level="29" min="28" max="30" region="Schuttgart" name="Schuttgart Monster Spawns · северо-восток" x="186260" y="-186245" z="-3312" radius="1338" mobs="15" />
+	<spot level="29" min="28" max="30" region="Schuttgart" name="Schuttgart Monster Spawns · северо-восток" x="175829" y="-185885" z="-3800" radius="1251" mobs="13" />
+	<spot level="29" min="28" max="30" region="Schuttgart" name="Schuttgart Monster Spawns · северо-восток" x="181323" y="-185648" z="-3512" radius="1007" mobs="12" />
+	<spot level="29" min="28" max="30" region="Schuttgart" name="Schuttgart Monster Spawns · северо-восток" x="186242" y="-184184" z="-3312" radius="1142" mobs="9" />
 	<spot level="30" min="29" max="30" region="Giran" name="Giran Territory · High Priest Maximilian" x="87951" y="141304" z="-3408" radius="1500" mobs="9" />
 	<spot level="30" min="29" max="30" region="Giran" name="Giran Territory · юго-запад" x="76695" y="158600" z="-3392" radius="1500" mobs="8" />
+	<spot level="30" min="27" max="31" region="Gludio" name="Gludio Monster Spawns · юго-запад" x="-58202" y="185406" z="-4512" radius="977" mobs="18" />
+	<spot level="30" min="29" max="32" region="Gludio" name="Gludio Monster Spawns · юго-запад" x="-61781" y="183431" z="-4816" radius="1343" mobs="12" />
+	<spot level="30" min="30" max="31" region="Gludio" name="Gludio Monster Spawns · юго-запад" x="-42806" y="169836" z="-3184" radius="890" mobs="10" />
+	<spot level="30" min="29" max="31" region="Gludio" name="Gludio Monster Spawns · юго-запад" x="-59209" y="183851" z="-4816" radius="932" mobs="8" />
+	<spot level="31" min="30" max="32" region="Gludio" name="Gludio Monster Spawns · юго-запад" x="-45867" y="168950" z="-3184" radius="868" mobs="13" />
+	<spot level="32" min="31" max="34" region="Giran" name="Breka Orc · юго-восток" x="91338" y="132162" z="-3648" radius="782" mobs="13" />
 	<spot level="32" min="31" max="36" region="Giran" name="Death Pass · Dragon Valley" x="103682" y="128205" z="-2128" radius="1500" mobs="11" />
 	<spot level="32" min="31" max="32" region="Giran" name="Death Pass · Gorgon Flower Garden" x="112871" y="136571" z="-3544" radius="1500" mobs="116" />
 	<spot level="32" min="31" max="36" region="Giran" name="Death Pass · Gorgon Flower Garden" x="125764" y="137912" z="-3480" radius="1500" mobs="102" />
@@ -401,9 +610,33 @@
 	<spot level="32" min="32" max="32" region="Giran" name="Death Pass · Gorgon Flower Garden" x="104618" y="136439" z="-3576" radius="1500" mobs="34" />
 	<spot level="32" min="31" max="36" region="Giran" name="Death Pass · юго-восток" x="129158" y="136008" z="-3032" radius="1500" mobs="102" />
 	<spot level="32" min="31" max="33" region="Giran" name="Giran Territory · Gorgon Flower Garden" x="96309" y="134380" z="-3568" radius="1500" mobs="10" />
-	<spot level="33" min="31" max="34" region="Giran" name="Amber Basilisk" x="91267" y="132216" z="-3648" radius="400" mobs="11" />
+	<spot level="32" min="29" max="33" region="Gludio" name="Gludio Monster Spawns · юго-запад" x="-55482" y="184347" z="-4512" radius="1425" mobs="20" />
+	<spot level="32" min="30" max="33" region="Gludio" name="Gludio Monster Spawns · юго-запад" x="-59072" y="181398" z="-4816" radius="1261" mobs="13" />
+	<spot level="32" min="32" max="33" region="Gludio" name="Gludio Monster Spawns · юго-запад" x="-55054" y="181193" z="-4512" radius="1217" mobs="11" />
+	<spot level="32" min="32" max="33" region="Gludio" name="Gludio Monster Spawns · юго-запад" x="-61494" y="180876" z="-4816" radius="1082" mobs="9" />
+	<spot level="32" min="30" max="33" region="Gludio" name="Wastland Ant Nest · Shifting Mirage" x="-37048" y="187502" z="-3632" radius="1500" mobs="8" />
+	<spot level="33" min="31" max="35" region="Giran" name="Breka Orc · Dragon Valley" x="93124" y="123983" z="-2456" radius="1084" mobs="15" />
 	<spot level="33" min="33" max="33" region="Giran" name="Death Pass · Gorgon Flower Garden" x="100470" y="133127" z="-3504" radius="1500" mobs="34" />
+	<spot level="33" min="30" max="35" region="Gludin" name="Ant · Shifting Mirage" x="-36519" y="191629" z="-3640" radius="1230" mobs="21" />
+	<spot level="33" min="30" max="36" region="Gludio" name="Ant" x="-30582" y="190967" z="-3624" radius="1289" mobs="13" />
+	<spot level="33" min="30" max="36" region="Gludio" name="Wastland Ant Nest · Shifting Mirage" x="-37512" y="189180" z="-3632" radius="1190" mobs="21" />
+	<spot level="33" min="30" max="35" region="Gludio" name="Wastland Ant Nest · Shifting Mirage" x="-35261" y="190030" z="-3592" radius="1022" mobs="15" />
+	<spot level="33" min="30" max="35" region="Gludio" name="Wastland Ant Nest · Shifting Mirage" x="-38659" y="185649" z="-3632" radius="1376" mobs="13" />
+	<spot level="33" min="30" max="35" region="Gludio" name="Wastland Ant Nest · Shifting Mirage" x="-33002" y="190476" z="-3648" radius="1163" mobs="8" />
+	<spot level="33" min="30" max="35" region="Gludio" name="Wastland Ant Nest · Shifting Mirage" x="-36712" y="186144" z="-3632" radius="773" mobs="8" />
+	<spot level="33" min="30" max="35" region="Gludio" name="Wastland Ant Nest · Shifting Mirage" x="-40916" y="185064" z="-3608" radius="822" mobs="8" />
+	<spot level="33" min="30" max="35" region="Gludio" name="Wastland Ant Nest · северо-запад" x="-45614" y="180689" z="-3712" radius="846" mobs="12" />
+	<spot level="33" min="30" max="35" region="Gludio" name="Wastland Ant Nest · северо-запад" x="-44670" y="183551" z="-3656" radius="1016" mobs="9" />
+	<spot level="33" min="30" max="36" region="Gludio" name="Wastland Ant Nest · юго-восток" x="-32183" y="191949" z="-3656" radius="1166" mobs="20" />
+	<spot level="33" min="30" max="35" region="Gludio" name="Wastland Ant Nest · юго-восток" x="-33111" y="193251" z="-3632" radius="941" mobs="9" />
+	<spot level="34" min="33" max="35" region="Giran" name="Breka Orc · Dragon Valley" x="78825" y="120887" z="-2256" radius="855" mobs="11" />
+	<spot level="34" min="33" max="35" region="Giran" name="Breka Orc · Dragon Valley" x="77042" y="123260" z="-2768" radius="749" mobs="10" />
+	<spot level="34" min="33" max="35" region="Giran" name="Breka Orc · Dragon Valley" x="84950" y="125796" z="-2608" radius="963" mobs="9" />
+	<spot level="34" min="33" max="35" region="Giran" name="Breka Orc · северо-запад" x="80840" y="123030" z="-2264" radius="1160" mobs="13" />
 	<spot level="34" min="32" max="34" region="Giran" name="Death Pass · Gorgon Flower Garden" x="100435" y="138522" z="-3456" radius="1500" mobs="62" />
+	<spot level="34" min="30" max="36" region="Gludio" name="Wastland Ant Nest · Shifting Mirage" x="-42599" y="184879" z="-3464" radius="1145" mobs="12" />
+	<spot level="35" min="35" max="35" region="Dion" name="Dion Monster Spawns · север" x="44656" y="108497" z="-2040" radius="1096" mobs="19" />
+	<spot level="35" min="30" max="36" region="Gludio" name="Wastland Ant Nest · юго-восток" x="-35381" y="192915" z="-3592" radius="928" mobs="11" />
 	<spot level="36" min="36" max="37" region="Giran" name="Death Pass · Dragon Valley" x="71280" y="116716" z="-3624" radius="1500" mobs="42" />
 	<spot level="36" min="36" max="37" region="Giran" name="Death Pass · Dragon Valley" x="71260" y="120706" z="-3624" radius="1500" mobs="38" />
 	<spot level="36" min="36" max="37" region="Giran" name="Death Pass · Dragon Valley" x="70081" y="113998" z="-3672" radius="1500" mobs="18" />
@@ -433,12 +666,17 @@
 	<spot level="37" min="36" max="37" region="Giran" name="Death Pass · северо-запад" x="66784" y="100585" z="-3688" radius="1500" mobs="18" />
 	<spot level="38" min="37" max="39" region="Giran" name="Death Pass · Dragon Valley" x="122704" y="105680" z="-2328" radius="1500" mobs="9" />
 	<spot level="38" min="37" max="39" region="Giran" name="Death Pass · Dragon Valley" x="116586" y="107680" z="-2360" radius="1500" mobs="8" />
-	<spot level="38" min="37" max="39" region="Giran" name="Death Pass · Inner Dragon Valley" x="128771" y="107384" z="-2664" radius="1500" mobs="16" />
+	<spot level="38" min="37" max="39" region="Giran" name="Death Pass · Inner Dragon Valley" x="128771" y="107384" z="-2664" radius="1500" mobs="27" />
 	<spot level="38" min="37" max="39" region="Giran" name="Death Pass · северо-восток" x="116800" y="103756" z="-3584" radius="1500" mobs="14" />
 	<spot level="38" min="37" max="39" region="Giran" name="Death Pass · северо-восток" x="129630" y="101173" z="-2200" radius="1500" mobs="13" />
 	<spot level="38" min="37" max="39" region="Giran" name="Death Pass · северо-восток" x="115408" y="99779" z="-2560" radius="1500" mobs="12" />
 	<spot level="38" min="37" max="39" region="Giran" name="Death Pass · северо-восток" x="124696" y="102622" z="-3224" radius="1500" mobs="11" />
 	<spot level="39" min="38" max="39" region="Giran" name="Death Pass · Dragon Area" x="94374" y="101674" z="-3296" radius="1500" mobs="22" />
+	<spot level="40" min="40" max="40" region="Dion" name="Dion Monster Spawns · север" x="44526" y="108866" z="-2040" radius="400" mobs="14" />
+	<spot level="41" min="40" max="42" region="Oren" name="Ivory Tower · север" x="86434" y="11531" z="-5272" radius="1356" mobs="20" />
+	<spot level="41" min="40" max="43" region="Oren" name="Ivory Tower · северо-восток" x="88803" y="12897" z="-5288" radius="1220" mobs="19" />
+	<spot level="41" min="40" max="42" region="Oren" name="Ivory Tower · северо-запад" x="83085" y="11240" z="-5288" radius="1392" mobs="15" />
+	<spot level="41" min="40" max="43" region="Oren" name="Ivory Tower · северо-запад" x="82673" y="14013" z="-5272" radius="1150" mobs="9" />
 	<spot level="41" min="41" max="42" region="Oren" name="Sea Of Spores · восток" x="62676" y="21142" z="-3816" radius="1500" mobs="81" />
 	<spot level="41" min="41" max="42" region="Oren" name="Sea Of Spores · северо-восток" x="61946" y="11148" z="-3912" radius="1500" mobs="108" />
 	<spot level="41" min="41" max="42" region="Oren" name="Sea Of Spores · северо-восток" x="61082" y="15746" z="-4104" radius="1500" mobs="81" />
@@ -447,6 +685,12 @@
 	<spot level="41" min="41" max="42" region="Oren" name="Sea Of Spores · юго-восток" x="61717" y="27371" z="-3760" radius="1500" mobs="90" />
 	<spot level="41" min="41" max="42" region="Oren" name="Sea Of Spores · юго-восток" x="62566" y="24358" z="-3784" radius="1500" mobs="57" />
 	<spot level="41" min="41" max="42" region="Oren" name="Sea Of Spores · юго-восток" x="59749" y="29809" z="-3800" radius="1500" mobs="45" />
+	<spot level="42" min="41" max="44" region="Oren" name="Ivory Tower · Outskirts of the Ivory Tower" x="89643" y="18637" z="-5280" radius="1387" mobs="12" />
+	<spot level="42" min="41" max="43" region="Oren" name="Ivory Tower · Outskirts of the Ivory Tower" x="90208" y="16856" z="-5288" radius="880" mobs="10" />
+	<spot level="42" min="41" max="43" region="Oren" name="Ivory Tower · восток" x="89233" y="14883" z="-5288" radius="851" mobs="12" />
+	<spot level="42" min="41" max="44" region="Oren" name="Ivory Tower · запад" x="80505" y="16204" z="-5288" radius="1253" mobs="24" />
+	<spot level="42" min="41" max="43" region="Oren" name="Ivory Tower · запад" x="82339" y="16086" z="-5264" radius="740" mobs="8" />
+	<spot level="42" min="41" max="44" region="Oren" name="Ivory Tower · юго-восток" x="87906" y="19411" z="-5280" radius="1202" mobs="25" />
 	<spot level="42" min="41" max="42" region="Oren" name="Sea Of Spores · восток" x="59875" y="21358" z="-4824" radius="1500" mobs="117" />
 	<spot level="42" min="41" max="42" region="Oren" name="Sea Of Spores · север" x="58847" y="12031" z="-4440" radius="1500" mobs="102" />
 	<spot level="42" min="41" max="42" region="Oren" name="Sea Of Spores · северо-восток" x="58571" y="17465" z="-4888" radius="1500" mobs="108" />
@@ -454,6 +698,8 @@
 	<spot level="42" min="41" max="42" region="Oren" name="Sea Of Spores · юг" x="56125" y="28457" z="-4968" radius="1500" mobs="51" />
 	<spot level="42" min="42" max="43" region="Oren" name="Sea Of Spores · юг" x="54285" y="27538" z="-5280" radius="1500" mobs="51" />
 	<spot level="42" min="41" max="42" region="Oren" name="Sea Of Spores · юго-восток" x="58885" y="25875" z="-4616" radius="1500" mobs="81" />
+	<spot level="43" min="42" max="44" region="Oren" name="Ivory Tower · юг" x="87068" y="21017" z="-5264" radius="1319" mobs="12" />
+	<spot level="43" min="43" max="43" region="Oren" name="Ivory Tower · юго-запад" x="82967" y="20947" z="-5256" radius="1090" mobs="8" />
 	<spot level="43" min="42" max="44" region="Oren" name="Sea Of Spores · запад" x="45326" y="23917" z="-5208" radius="1500" mobs="111" />
 	<spot level="43" min="43" max="44" region="Oren" name="Sea Of Spores · запад" x="51478" y="20327" z="-5424" radius="1500" mobs="72" />
 	<spot level="43" min="43" max="44" region="Oren" name="Sea Of Spores · запад" x="49877" y="22679" z="-5504" radius="1500" mobs="57" />
@@ -465,6 +711,9 @@
 	<spot level="43" min="43" max="44" region="Oren" name="Sea Of Spores · юго-запад" x="48706" y="24862" z="-4752" radius="1500" mobs="63" />
 	<spot level="43" min="42" max="43" region="Oren" name="Sea Of Spores · юго-запад" x="53010" y="23851" z="-5376" radius="1500" mobs="57" />
 	<spot level="43" min="42" max="43" region="Oren" name="Sea Of Spores · юго-запад" x="52427" y="26556" z="-5152" radius="1081" mobs="45" />
+	<spot level="44" min="43" max="45" region="Aden" name="Aden Monster Spawns" x="123256" y="91500" z="-2352" radius="930" mobs="12" />
+	<spot level="46" min="45" max="47" region="Oren" name="Oren Monster Spawns · Ivory Tower" x="80882" y="23293" z="-3560" radius="1052" mobs="8" />
+	<spot level="46" min="45" max="47" region="Oren" name="Oren Monster Spawns · Ivory Tower" x="86778" y="23705" z="-3648" radius="1053" mobs="8" />
 	<spot level="47" min="46" max="51" region="Aden" name="Cemetery · Aden's Royal Cemetery" x="181577" y="23181" z="-3168" radius="1500" mobs="164" />
 	<spot level="47" min="46" max="51" region="Aden" name="Cemetery · Aden's Royal Cemetery" x="181577" y="17459" z="-3176" radius="1500" mobs="164" />
 	<spot level="47" min="46" max="50" region="Aden" name="Cemetery · Aden's Royal Cemetery" x="180254" y="15860" z="-3168" radius="627" mobs="24" />
@@ -476,6 +725,7 @@
 	<spot level="47" min="46" max="50" region="Aden" name="Cemetery · Seal of Shillien's Priest Kastor" x="182250" y="15896" z="-3168" radius="627" mobs="24" />
 	<spot level="47" min="46" max="50" region="Aden" name="Cemetery · Seal of Shillien's Priest Kastor" x="182254" y="18300" z="-3168" radius="627" mobs="24" />
 	<spot level="47" min="46" max="50" region="Aden" name="Cemetery · запад" x="170045" y="17860" z="-3456" radius="1500" mobs="36" />
+	<spot level="48" min="48" max="49" region="Oren" name="Oren Monster Spawns · восток" x="43877" y="17001" z="-4400" radius="1097" mobs="13" />
 	<spot level="49" min="47" max="50" region="Aden" name="Cemetery · север" x="172190" y="7356" z="-2728" radius="1500" mobs="63" />
 	<spot level="49" min="47" max="50" region="Aden" name="Cemetery · северо-запад" x="170019" y="7344" z="-2728" radius="1500" mobs="63" />
 	<spot level="49" min="47" max="50" region="Aden" name="Cemetery · северо-запад" x="170012" y="11242" z="-2728" radius="1500" mobs="63" />
@@ -512,6 +762,7 @@
 	<spot level="54" min="53" max="55" region="Hunters" name="Enchanted Valley · северо-запад" x="112840" y="38522" z="-3552" radius="1500" mobs="54" />
 	<spot level="54" min="54" max="55" region="Hunters" name="Enchanted Valley · северо-запад" x="111190" y="40255" z="-3696" radius="1039" mobs="10" />
 	<spot level="54" min="53" max="54" region="Hunters" name="Enchanted Valley · юго-восток" x="122816" y="48667" z="-4544" radius="1500" mobs="13" />
+	<spot level="54" min="50" max="55" region="Oren" name="Oren Monster Spawns · северо-восток" x="101490" y="-12915" z="-3096" radius="1019" mobs="8" />
 	<spot level="55" min="55" max="56" region="Aden" name="Fields Of Massacre · запад" x="172114" y="-17729" z="-3048" radius="1500" mobs="66" />
 	<spot level="55" min="55" max="56" region="Aden" name="Fields Of Massacre · запад" x="172881" y="-15061" z="-3112" radius="1500" mobs="52" />
 	<spot level="55" min="55" max="56" region="Aden" name="Fields Of Massacre · запад" x="169477" y="-14383" z="-3024" radius="1500" mobs="47" />
@@ -581,10 +832,23 @@
 	<spot level="67" min="66" max="68" region="Aden" name="War Torn Plains · северо-запад" x="155395" y="6223" z="-4432" radius="1500" mobs="110" />
 	<spot level="67" min="66" max="68" region="Aden" name="War Torn Plains · юго-запад" x="160538" y="12690" z="-3904" radius="1500" mobs="160" />
 	<spot level="67" min="66" max="68" region="Aden" name="War Torn Plains · юго-запад" x="155261" y="16075" z="-3920" radius="1500" mobs="125" />
+	<spot level="68" min="67" max="68" region="Aden" name="Forsaken Plains · запад" x="164638" y="44489" z="-3496" radius="1344" mobs="15" />
+	<spot level="68" min="67" max="68" region="Aden" name="Forsaken Plains · юго-запад" x="166444" y="47492" z="-3520" radius="952" mobs="12" />
+	<spot level="68" min="67" max="68" region="Aden" name="Forsaken Plains · юго-запад" x="168947" y="47714" z="-3736" radius="1256" mobs="9" />
 	<spot level="68" min="67" max="68" region="Aden" name="War Torn Plains · север" x="158990" y="1298" z="-4096" radius="1500" mobs="40" />
 	<spot level="68" min="67" max="68" region="Aden" name="War Torn Plains · север" x="161629" y="1050" z="-3472" radius="1500" mobs="34" />
 	<spot level="68" min="67" max="68" region="Aden" name="War Torn Plains · север" x="160426" y="2924" z="-4280" radius="1378" mobs="29" />
 	<spot level="68" min="67" max="68" region="Aden" name="War Torn Plains · северо-запад" x="155555" y="1607" z="-4432" radius="1500" mobs="95" />
+	<spot level="69" min="69" max="72" region="Aden" name="Forsaken Plains · Silent Valley" x="167435" y="57218" z="-4160" radius="879" mobs="14" />
+	<spot level="69" min="69" max="71" region="Aden" name="Forsaken Plains · север" x="170718" y="37412" z="-4376" radius="1156" mobs="11" />
+	<spot level="69" min="69" max="72" region="Aden" name="Forsaken Plains · северо-восток" x="179613" y="37590" z="-4840" radius="1079" mobs="13" />
+	<spot level="70" min="69" max="72" region="Aden" name="Forsaken Plains · северо-восток" x="180590" y="40267" z="-3704" radius="1307" mobs="18" />
+	<spot level="70" min="69" max="71" region="Aden" name="Forsaken Plains · северо-восток" x="183632" y="38239" z="-3832" radius="965" mobs="10" />
+	<spot level="70" min="69" max="71" region="Aden" name="Forsaken Plains · северо-восток" x="175512" y="38536" z="-4704" radius="1283" mobs="9" />
+	<spot level="70" min="69" max="71" region="Aden" name="Forsaken Plains · юго-запад" x="167414" y="50415" z="-4096" radius="972" mobs="15" />
+	<spot level="70" min="69" max="71" region="Aden" name="Forsaken Plains · юго-запад" x="167219" y="52972" z="-4200" radius="1032" mobs="14" />
+	<spot level="72" min="71" max="72" region="Aden" name="Forsaken Plains · северо-восток" x="174164" y="42682" z="-4888" radius="1168" mobs="14" />
+	<spot level="72" min="71" max="72" region="Aden" name="Forsaken Plains · северо-восток" x="178055" y="41228" z="-3704" radius="1110" mobs="8" />
 	<spot level="72" min="71" max="74" region="Aden" name="Silent Valley · Giant's Cave" x="174977" y="58113" z="-5984" radius="777" mobs="30" />
 	<spot level="72" min="71" max="74" region="Aden" name="Silent Valley · Keber from the Silent Valley" x="185079" y="48753" z="-5984" radius="1206" mobs="36" />
 	<spot level="72" min="71" max="74" region="Aden" name="Silent Valley · Keber from the Silent Valley" x="187016" y="49574" z="-5976" radius="1079" mobs="24" />
@@ -621,42 +885,31 @@
 	<spot level="73" min="71" max="74" region="Aden" name="Silent Valley · северо-восток" x="187288" y="46198" z="-5992" radius="731" mobs="9" />
 	<spot level="73" min="71" max="74" region="Aden" name="Silent Valley · северо-восток" x="188066" y="46910" z="-5944" radius="731" mobs="9" />
 	<spot level="73" min="71" max="74" region="Aden" name="Silent Valley · северо-восток" x="188071" y="48036" z="-5968" radius="731" mobs="9" />
+	<spot level="75" min="75" max="77" region="Dion" name="Cruma Tower Monsters · северо-запад" x="14280" y="108192" z="-12088" radius="964" mobs="22" />
 	<spot level="76" min="76" max="76" region="Dion" name="Bee Hive · Guardian Manager Association Member Caro" x="29674" y="184161" z="-3664" radius="1165" mobs="63" />
 	<spot level="76" min="76" max="76" region="Dion" name="Bee Hive · Guardian Manager Association Member Caro" x="30236" y="186033" z="-3640" radius="1119" mobs="39" />
 	<spot level="76" min="76" max="76" region="Dion" name="Bee Hive · Guardian Manager Association Member Caro" x="31018" y="183488" z="-3448" radius="1197" mobs="21" />
 	<spot level="76" min="76" max="76" region="Dion" name="Bee Hive · Guardian Manager Association Member Caro" x="31376" y="185173" z="-3632" radius="542" mobs="9" />
-	<spot level="76" min="75" max="77" region="Dion" name="Cruma Tower Monsters · северо-восток" x="22370" y="109626" z="-12088" radius="1500" mobs="22" />
-	<spot level="76" min="75" max="77" region="Dion" name="Cruma Tower Monsters · северо-запад" x="13434" y="109640" z="-12088" radius="1500" mobs="38" />
-	<spot level="76" min="75" max="76" region="Dion" name="Cruma Tower Monsters · юго-восток" x="22432" y="118621" z="-12088" radius="1500" mobs="12" />
-	<spot level="76" min="75" max="76" region="Dion" name="Cruma Tower Monsters · юго-запад" x="12688" y="118652" z="-12088" radius="1500" mobs="14" />
-	<spot level="77" min="75" max="78" region="Dion" name="Cruma Tower Monsters · северо-восток" x="20848" y="111004" z="-12088" radius="1203" mobs="26" />
-	<spot level="77" min="75" max="77" region="Dion" name="Cruma Tower Monsters · северо-восток" x="20853" y="108364" z="-12088" radius="1239" mobs="21" />
-	<spot level="77" min="75" max="77" region="Dion" name="Cruma Tower Monsters · северо-восток" x="23723" y="110960" z="-12088" radius="1134" mobs="21" />
-	<spot level="77" min="75" max="77" region="Dion" name="Cruma Tower Monsters · северо-восток" x="23745" y="108348" z="-12088" radius="1123" mobs="21" />
-	<spot level="77" min="75" max="78" region="Dion" name="Cruma Tower Monsters · северо-запад" x="14576" y="111054" z="-12088" radius="1125" mobs="26" />
-	<spot level="77" min="75" max="77" region="Dion" name="Cruma Tower Monsters · северо-запад" x="11743" y="111026" z="-12088" radius="1038" mobs="20" />
-	<spot level="77" min="75" max="77" region="Dion" name="Cruma Tower Monsters · северо-запад" x="11742" y="108208" z="-12088" radius="1046" mobs="20" />
-	<spot level="77" min="75" max="77" region="Dion" name="Cruma Tower Monsters · северо-запад" x="14280" y="108192" z="-12088" radius="964" mobs="10" />
-	<spot level="77" min="75" max="78" region="Dion" name="Cruma Tower Monsters · юго-восток" x="20864" y="117285" z="-12088" radius="1230" mobs="26" />
-	<spot level="77" min="75" max="78" region="Dion" name="Cruma Tower Monsters · юго-восток" x="20639" y="119935" z="-12088" radius="1099" mobs="14" />
-	<spot level="77" min="75" max="78" region="Dion" name="Cruma Tower Monsters · юго-восток" x="23746" y="120001" z="-12088" radius="1107" mobs="14" />
-	<spot level="77" min="75" max="78" region="Dion" name="Cruma Tower Monsters · юго-восток" x="23768" y="117340" z="-12088" radius="1128" mobs="14" />
-	<spot level="77" min="75" max="78" region="Dion" name="Cruma Tower Monsters · юго-запад" x="14570" y="117269" z="-12088" radius="1211" mobs="26" />
+	<spot level="76" min="75" max="77" region="Dion" name="Cruma Tower Monsters · северо-восток" x="22370" y="109626" z="-12088" radius="1500" mobs="35" />
+	<spot level="76" min="75" max="77" region="Dion" name="Cruma Tower Monsters · северо-запад" x="13434" y="109640" z="-12088" radius="1500" mobs="56" />
+	<spot level="76" min="75" max="76" region="Dion" name="Cruma Tower Monsters · юго-восток" x="22432" y="118621" z="-12088" radius="1500" mobs="26" />
+	<spot level="76" min="75" max="76" region="Dion" name="Cruma Tower Monsters · юго-запад" x="12688" y="118652" z="-12088" radius="1500" mobs="28" />
+	<spot level="77" min="75" max="78" region="Dion" name="Cruma Tower Monsters · северо-восток" x="20848" y="111004" z="-12088" radius="1203" mobs="41" />
+	<spot level="77" min="75" max="77" region="Dion" name="Cruma Tower Monsters · северо-восток" x="20853" y="108364" z="-12088" radius="1239" mobs="35" />
+	<spot level="77" min="75" max="77" region="Dion" name="Cruma Tower Monsters · северо-восток" x="23723" y="110960" z="-12088" radius="1134" mobs="38" />
+	<spot level="77" min="75" max="77" region="Dion" name="Cruma Tower Monsters · северо-восток" x="23745" y="108348" z="-12088" radius="1123" mobs="36" />
+	<spot level="77" min="75" max="78" region="Dion" name="Cruma Tower Monsters · северо-запад" x="14576" y="111054" z="-12088" radius="1125" mobs="41" />
+	<spot level="77" min="75" max="77" region="Dion" name="Cruma Tower Monsters · северо-запад" x="11743" y="111026" z="-12088" radius="1038" mobs="34" />
+	<spot level="77" min="75" max="77" region="Dion" name="Cruma Tower Monsters · северо-запад" x="11742" y="108208" z="-12088" radius="1046" mobs="32" />
+	<spot level="77" min="75" max="78" region="Dion" name="Cruma Tower Monsters · юго-восток" x="20864" y="117285" z="-12088" radius="1230" mobs="41" />
+	<spot level="77" min="75" max="78" region="Dion" name="Cruma Tower Monsters · юго-восток" x="20639" y="119935" z="-12088" radius="1099" mobs="24" />
+	<spot level="77" min="75" max="78" region="Dion" name="Cruma Tower Monsters · юго-восток" x="23746" y="120001" z="-12088" radius="1107" mobs="26" />
+	<spot level="77" min="75" max="78" region="Dion" name="Cruma Tower Monsters · юго-восток" x="23768" y="117340" z="-12088" radius="1128" mobs="25" />
+	<spot level="77" min="75" max="78" region="Dion" name="Cruma Tower Monsters · юго-запад" x="14570" y="117269" z="-12088" radius="1211" mobs="41" />
 	<spot level="77" min="75" max="78" region="Dion" name="Cruma Tower Monsters · юго-запад" x="14426" y="120550" z="-12088" radius="1045" mobs="14" />
-	<spot level="77" min="75" max="78" region="Dion" name="Cruma Tower Monsters · юго-запад" x="11544" y="119930" z="-12088" radius="1027" mobs="14" />
-	<spot level="77" min="75" max="78" region="Dion" name="Cruma Tower Monsters · юго-запад" x="11523" y="117315" z="-12088" radius="1025" mobs="14" />
+	<spot level="77" min="75" max="78" region="Dion" name="Cruma Tower Monsters · юго-запад" x="11544" y="119930" z="-12088" radius="1027" mobs="23" />
+	<spot level="77" min="75" max="78" region="Dion" name="Cruma Tower Monsters · юго-запад" x="11523" y="117315" z="-12088" radius="1025" mobs="23" />
 	<spot level="78" min="75" max="78" region="Dion" name="Cruma Tower Monsters · юго-запад" x="14955" y="118929" z="-12088" radius="667" mobs="8" />
-	<spot level="78" min="78" max="78" region="LimitedZones" name="Alligator Island · запад" x="103607" y="181818" z="-3392" radius="1058" mobs="24" />
-	<spot level="78" min="78" max="78" region="LimitedZones" name="Alligator Island · юг" x="111539" y="185901" z="-3608" radius="927" mobs="18" />
-	<spot level="78" min="78" max="78" region="LimitedZones" name="Alligator Island · юг" x="116486" y="186090" z="-3608" radius="575" mobs="12" />
-	<spot level="78" min="78" max="78" region="LimitedZones" name="Alligator Island · юго-восток" x="122691" y="182954" z="-3320" radius="1265" mobs="36" />
-	<spot level="78" min="78" max="78" region="LimitedZones" name="Alligator Island · юго-восток" x="121233" y="181774" z="-3296" radius="701" mobs="18" />
-	<spot level="78" min="78" max="78" region="LimitedZones" name="Alligator Island · юго-восток" x="115941" y="181143" z="-3528" radius="580" mobs="12" />
-	<spot level="78" min="78" max="78" region="LimitedZones" name="Alligator Island · юго-запад" x="108092" y="189588" z="-3552" radius="746" mobs="18" />
-	<spot level="78" min="78" max="78" region="LimitedZones" name="Alligator Island · юго-запад" x="105129" y="189016" z="-3440" radius="793" mobs="18" />
-	<spot level="78" min="78" max="78" region="LimitedZones" name="Alligator Island · юго-запад" x="105064" y="182810" z="-3312" radius="524" mobs="12" />
-	<spot level="78" min="78" max="78" region="LimitedZones" name="Alligator Island · юго-запад" x="106102" y="181805" z="-3384" radius="534" mobs="12" />
-	<spot level="78" min="78" max="78" region="LimitedZones" name="Alligator Island · юго-запад" x="107180" y="182898" z="-3384" radius="529" mobs="12" />
 	<spot level="78" min="77" max="79" region="Oren" name="Plains Of The Lizardmen · Melat Lizardmen Lands" x="83547" y="75388" z="-3640" radius="731" mobs="10" />
 	<spot level="78" min="77" max="79" region="Oren" name="Plains Of The Lizardmen · Melat Lizardmen Lands" x="81360" y="76330" z="-3568" radius="730" mobs="10" />
 	<spot level="78" min="77" max="79" region="Oren" name="Plains Of The Lizardmen · Melat Lizardmen Lands" x="82372" y="76330" z="-3648" radius="731" mobs="10" />
@@ -763,43 +1016,124 @@
 	<spot level="78" min="77" max="79" region="Oren" name="Plains Of The Lizardmen · северо-восток" x="93496" y="75458" z="-3320" radius="730" mobs="20" />
 	<spot level="78" min="77" max="79" region="Oren" name="Plains Of The Lizardmen · северо-запад" x="84446" y="76338" z="-3664" radius="730" mobs="10" />
 	<spot level="78" min="77" max="79" region="Oren" name="Plains Of The Lizardmen · северо-запад" x="85462" y="76346" z="-3672" radius="731" mobs="10" />
+	<spot level="79" min="79" max="79" region="Giran" name="Dragon Valey · Dragon Area" x="89520" y="108089" z="-3040" radius="1285" mobs="39" />
+	<spot level="79" min="79" max="81" region="Giran" name="Dragon Valey · Dragon Area" x="90368" y="106972" z="-3160" radius="1173" mobs="11" />
+	<spot level="79" min="79" max="79" region="Giran" name="Dragon Valey · Dragon Area" x="91847" y="107760" z="-3064" radius="591" mobs="8" />
+	<spot level="79" min="79" max="80" region="Giran" name="Dragon Valey · Dragon Valley" x="91965" y="113321" z="-3072" radius="1223" mobs="53" />
+	<spot level="79" min="79" max="80" region="Giran" name="Dragon Valey · Dragon Valley" x="93775" y="112749" z="-3064" radius="1451" mobs="35" />
+	<spot level="79" min="79" max="80" region="Giran" name="Dragon Valey · Dragon Valley" x="92824" y="114898" z="-3152" radius="1054" mobs="27" />
+	<spot level="79" min="79" max="79" region="Giran" name="Dragon Valey · Dragon Valley" x="87694" y="107499" z="-3112" radius="946" mobs="21" />
+	<spot level="79" min="79" max="79" region="Giran" name="Dragon Valey · Dragon Valley" x="86360" y="108132" z="-3176" radius="989" mobs="19" />
+	<spot level="79" min="79" max="79" region="Giran" name="Dragon Valey · Dragon Valley" x="80973" y="109884" z="-3064" radius="1208" mobs="16" />
+	<spot level="79" min="79" max="79" region="Giran" name="Dragon Valey · Dragon Valley" x="84789" y="108362" z="-3224" radius="1004" mobs="14" />
+	<spot level="79" min="79" max="80" region="Giran" name="Dragon Valey · Dragon Valley" x="95054" y="112506" z="-3048" radius="652" mobs="13" />
+	<spot level="79" min="79" max="79" region="Giran" name="Dragon Valey · Dragon Valley" x="83469" y="108927" z="-3096" radius="1033" mobs="10" />
+	<spot level="79" min="79" max="80" region="Giran" name="Dragon Valey · Dragon Valley" x="85318" y="110420" z="-3776" radius="1127" mobs="9" />
+	<spot level="79" min="79" max="80" region="Giran" name="Dragon Valey · Dragon Valley" x="94122" y="114415" z="-3072" radius="645" mobs="8" />
+	<spot level="79" min="79" max="80" region="Giran" name="Dragon Valey · Monster Invasion: Dragon Valley" x="91431" y="112074" z="-2960" radius="1195" mobs="16" />
+	<spot level="79" min="79" max="80" region="Giran" name="Dragon Valey · Skeleton Area" x="86978" y="112160" z="-3264" radius="787" mobs="17" />
+	<spot level="79" min="79" max="80" region="Giran" name="Dragon Valey · Succubus Area" x="83895" y="112677" z="-3048" radius="1260" mobs="22" />
+	<spot level="79" min="79" max="80" region="Giran" name="Dragon Valey · Succubus Area" x="82309" y="113289" z="-3056" radius="427" mobs="8" />
+	<spot level="79" min="79" max="81" region="Giran" name="Dragon Valey · Wyrm Area" x="87024" y="110697" z="-3776" radius="1261" mobs="28" />
 	<spot level="80" min="80" max="80" region="Dion" name="Bee Hive · Guardian Manager Association Member Caro" x="24480" y="187137" z="-3520" radius="1139" mobs="60" />
 	<spot level="80" min="80" max="80" region="Dion" name="Bee Hive · Guardian Manager Association Member Caro" x="24536" y="188994" z="-3568" radius="1410" mobs="42" />
 	<spot level="80" min="80" max="80" region="Dion" name="Bee Hive · Guardian Manager Association Member Caro" x="26370" y="188900" z="-3496" radius="1201" mobs="42" />
 	<spot level="80" min="80" max="80" region="Dion" name="Bee Hive · Guardian Manager Association Member Caro" x="26336" y="186999" z="-3544" radius="1059" mobs="18" />
 	<spot level="80" min="80" max="80" region="Dion" name="Bee Hive · Guardian Manager Association Member Caro" x="25299" y="186238" z="-3312" radius="651" mobs="12" />
 	<spot level="80" min="80" max="80" region="Dion" name="Bee Hive · Guardian Manager Association Member Caro" x="27465" y="189634" z="-3480" radius="533" mobs="12" />
-	<spot level="80" min="80" max="80" region="LimitedZones" name="Primeval Isle · запад" x="7403" y="-16481" z="-3664" radius="1500" mobs="59" />
-	<spot level="80" min="80" max="80" region="LimitedZones" name="Primeval Isle · запад" x="4218" y="-15510" z="-3608" radius="1500" mobs="58" />
-	<spot level="80" min="80" max="80" region="LimitedZones" name="Primeval Isle · запад" x="2956" y="-11507" z="-3640" radius="1500" mobs="52" />
-	<spot level="80" min="80" max="80" region="LimitedZones" name="Primeval Isle · запад" x="5414" y="-17334" z="-3728" radius="1500" mobs="44" />
-	<spot level="80" min="80" max="80" region="LimitedZones" name="Primeval Isle · запад" x="5754" y="-11944" z="-3632" radius="1500" mobs="44" />
-	<spot level="80" min="80" max="80" region="LimitedZones" name="Primeval Isle · запад" x="4342" y="-13898" z="-3760" radius="1500" mobs="40" />
-	<spot level="80" min="80" max="80" region="LimitedZones" name="Primeval Isle · запад" x="2504" y="-14014" z="-3448" radius="1500" mobs="33" />
-	<spot level="80" min="80" max="80" region="LimitedZones" name="Primeval Isle · запад" x="7966" y="-14370" z="-3696" radius="1324" mobs="30" />
-	<spot level="80" min="80" max="80" region="LimitedZones" name="Primeval Isle · запад" x="3276" y="-17718" z="-3624" radius="1264" mobs="28" />
-	<spot level="80" min="80" max="80" region="LimitedZones" name="Primeval Isle · запад" x="6048" y="-13994" z="-3704" radius="1137" mobs="28" />
-	<spot level="80" min="80" max="80" region="LimitedZones" name="Primeval Isle · северо-запад" x="6758" y="-18721" z="-3704" radius="1500" mobs="53" />
-	<spot level="80" min="80" max="80" region="LimitedZones" name="Primeval Isle · северо-запад" x="4675" y="-19638" z="-3608" radius="1500" mobs="52" />
-	<spot level="80" min="80" max="80" region="LimitedZones" name="Primeval Isle · северо-запад" x="5274" y="-21021" z="-3600" radius="1405" mobs="36" />
-	<spot level="80" min="80" max="80" region="LimitedZones" name="Primeval Isle · северо-запад" x="7092" y="-20800" z="-3504" radius="1398" mobs="34" />
-	<spot level="80" min="80" max="80" region="LimitedZones" name="Primeval Isle · юго-запад" x="4489" y="-7502" z="-3520" radius="1500" mobs="76" />
-	<spot level="80" min="80" max="80" region="LimitedZones" name="Primeval Isle · юго-запад" x="6863" y="-7157" z="-3560" radius="1500" mobs="76" />
-	<spot level="80" min="80" max="80" region="LimitedZones" name="Primeval Isle · юго-запад" x="3491" y="-9274" z="-3624" radius="1500" mobs="63" />
-	<spot level="80" min="80" max="80" region="LimitedZones" name="Primeval Isle · юго-запад" x="6021" y="-9719" z="-3760" radius="1500" mobs="62" />
-	<spot level="81" min="81" max="83" region="Dion" name="Cruma Tower Monsters · запад" x="13686" y="113740" z="-9064" radius="1500" mobs="12" />
-	<spot level="81" min="81" max="83" region="Dion" name="Cruma Tower Monsters · запад" x="11768" y="114479" z="-9064" radius="1500" mobs="12" />
+	<spot level="80" min="79" max="80" region="Giran" name="Dragon Valey · Dragon Valley" x="90747" y="119466" z="-3048" radius="1319" mobs="54" />
+	<spot level="80" min="79" max="80" region="Giran" name="Dragon Valey · Dragon Valley" x="88422" y="120221" z="-3064" radius="1325" mobs="53" />
+	<spot level="80" min="79" max="80" region="Giran" name="Dragon Valey · Dragon Valley" x="83761" y="117785" z="-2992" radius="1191" mobs="42" />
+	<spot level="80" min="79" max="81" region="Giran" name="Dragon Valey · Dragon Valley" x="79893" y="115903" z="-3680" radius="1336" mobs="38" />
+	<spot level="80" min="79" max="81" region="Giran" name="Dragon Valey · Dragon Valley" x="82848" y="111067" z="-3704" radius="1238" mobs="35" />
+	<spot level="80" min="79" max="80" region="Giran" name="Dragon Valey · Dragon Valley" x="84997" y="120045" z="-2952" radius="1210" mobs="33" />
+	<spot level="80" min="79" max="80" region="Giran" name="Dragon Valey · Dragon Valley" x="77605" y="116968" z="-3800" radius="1330" mobs="29" />
+	<spot level="80" min="79" max="80" region="Giran" name="Dragon Valey · Dragon Valley" x="86432" y="120438" z="-3024" radius="1176" mobs="25" />
+	<spot level="80" min="79" max="80" region="Giran" name="Dragon Valey · Dragon Valley" x="80425" y="114003" z="-3728" radius="700" mobs="20" />
+	<spot level="80" min="80" max="81" region="Giran" name="Dragon Valey · Dragon Valley" x="91915" y="118493" z="-3064" radius="1156" mobs="18" />
+	<spot level="80" min="79" max="80" region="Giran" name="Dragon Valey · Dragon Valley" x="93588" y="118377" z="-3008" radius="840" mobs="17" />
+	<spot level="80" min="79" max="80" region="Giran" name="Dragon Valey · Dragon Valley" x="83864" y="119493" z="-2952" radius="1362" mobs="13" />
+	<spot level="80" min="80" max="80" region="Giran" name="Dragon Valey · Dragon Valley" x="94692" y="116983" z="-3048" radius="1078" mobs="13" />
+	<spot level="80" min="80" max="80" region="Giran" name="Dragon Valey · Dragon Valley" x="94754" y="115739" z="-3072" radius="1057" mobs="10" />
+	<spot level="80" min="79" max="80" region="Giran" name="Dragon Valey · Monster Invasion: Dragon Valley" x="93211" y="109746" z="-3688" radius="1190" mobs="27" />
+	<spot level="80" min="80" max="80" region="Giran" name="Dragon Valey · Skeleton Area" x="87801" y="114826" z="-2976" radius="1178" mobs="18" />
+	<spot level="80" min="80" max="80" region="Giran" name="Dragon Valey · Skeleton Area" x="85255" y="116289" z="-3064" radius="1239" mobs="10" />
+	<spot level="80" min="80" max="81" region="Giran" name="Dragon Valey · Skeleton Area" x="90605" y="117797" z="-3104" radius="400" mobs="8" />
+	<spot level="80" min="79" max="80" region="Giran" name="Dragon Valey · Succubus Area" x="81291" y="112192" z="-3632" radius="708" mobs="10" />
+	<spot level="80" min="79" max="80" region="Giran" name="Dragon Valey · Wyrm Area" x="88690" y="111112" z="-3760" radius="1216" mobs="10" />
+	<spot level="81" min="81" max="83" region="Dion" name="Cruma Tower Monsters · запад" x="13686" y="113740" z="-9064" radius="1500" mobs="27" />
+	<spot level="81" min="81" max="83" region="Dion" name="Cruma Tower Monsters · запад" x="11768" y="114479" z="-9064" radius="1500" mobs="27" />
 	<spot level="81" min="81" max="82" region="Dion" name="Cruma Tower Monsters · северо-восток" x="20311" y="109182" z="-9048" radius="985" mobs="21" />
 	<spot level="81" min="81" max="83" region="Dion" name="Cruma Tower Monsters · северо-восток" x="21542" y="110671" z="-9048" radius="944" mobs="12" />
 	<spot level="81" min="81" max="82" region="Dion" name="Cruma Tower Monsters · северо-запад" x="15128" y="109454" z="-9048" radius="1001" mobs="24" />
 	<spot level="81" min="81" max="82" region="Dion" name="Cruma Tower Monsters · юго-восток" x="20294" y="119050" z="-9048" radius="973" mobs="21" />
-	<spot level="81" min="81" max="83" region="Dion" name="Cruma Tower Monsters · юго-восток" x="23785" y="117858" z="-9048" radius="1209" mobs="12" />
+	<spot level="81" min="81" max="83" region="Dion" name="Cruma Tower Monsters · юго-восток" x="23785" y="117858" z="-9048" radius="1209" mobs="23" />
 	<spot level="81" min="81" max="82" region="Dion" name="Cruma Tower Monsters · юго-запад" x="15144" y="119036" z="-9048" radius="967" mobs="21" />
-	<spot level="82" min="81" max="83" region="Dion" name="Cruma Tower Monsters · северо-восток" x="23523" y="110455" z="-9048" radius="1256" mobs="8" />
-	<spot level="82" min="81" max="83" region="Dion" name="Cruma Tower Monsters · юго-восток" x="21824" y="117770" z="-9048" radius="1290" mobs="32" />
-	<spot level="83" min="81" max="83" region="Dion" name="Cruma Tower Monsters · восток" x="22680" y="114110" z="-9064" radius="1500" mobs="45" />
-	<spot level="83" min="81" max="83" region="Dion" name="Cruma Tower Monsters · северо-запад" x="12821" y="109982" z="-9064" radius="1500" mobs="54" />
-	<spot level="83" min="81" max="83" region="Dion" name="Cruma Tower Monsters · юго-запад" x="12568" y="118246" z="-9064" radius="1500" mobs="54" />
+	<spot level="82" min="81" max="83" region="Dion" name="Cruma Tower Monsters · северо-восток" x="23523" y="110455" z="-9048" radius="1256" mobs="18" />
+	<spot level="82" min="81" max="83" region="Dion" name="Cruma Tower Monsters · юго-восток" x="21824" y="117770" z="-9048" radius="1290" mobs="44" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Dragon Valley" x="104715" y="121954" z="-3776" radius="1156" mobs="58" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Dragon Valley" x="116922" y="117635" z="-3728" radius="1236" mobs="53" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Dragon Valley" x="112500" y="117105" z="-3008" radius="1292" mobs="50" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Dragon Valley" x="116010" y="120190" z="-3656" radius="1325" mobs="50" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Dragon Valley" x="101885" y="119761" z="-3592" radius="1268" mobs="48" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Dragon Valley" x="113454" y="111896" z="-3112" radius="1282" mobs="44" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Dragon Valley" x="102828" y="121618" z="-3696" radius="1294" mobs="43" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Dragon Valley" x="109833" y="112962" z="-3064" radius="1234" mobs="38" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Dragon Valley" x="110759" y="119280" z="-3056" radius="1292" mobs="38" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Dragon Valley" x="121466" y="108893" z="-2952" radius="1366" mobs="38" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Dragon Valley" x="108646" y="117688" z="-3040" radius="1224" mobs="35" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Dragon Valley" x="102570" y="112184" z="-3680" radius="1324" mobs="34" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Dragon Valley" x="109989" y="125707" z="-3688" radius="1160" mobs="32" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Dragon Valley" x="119519" y="109854" z="-3024" radius="1282" mobs="31" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Dragon Valley" x="116179" y="114421" z="-3072" radius="1120" mobs="28" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Dragon Valley" x="123922" y="108914" z="-3048" radius="1166" mobs="27" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Dragon Valley" x="114155" y="110249" z="-3032" radius="825" mobs="25" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Dragon Valley" x="104474" y="117151" z="-3064" radius="1222" mobs="25" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Dragon Valley" x="106966" y="120761" z="-3688" radius="1155" mobs="24" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Dragon Valley" x="114212" y="120334" z="-3784" radius="1121" mobs="21" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Dragon Valley" x="101492" y="116698" z="-3696" radius="846" mobs="21" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Dragon Valley" x="101695" y="118017" z="-3664" radius="1191" mobs="20" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Dragon Valley" x="117909" y="110481" z="-3000" radius="776" mobs="20" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Dragon Valley" x="110445" y="124016" z="-3640" radius="1093" mobs="20" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Dragon Valley" x="106584" y="122405" z="-3672" radius="1325" mobs="19" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Dragon Valley" x="101688" y="113978" z="-3712" radius="781" mobs="18" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Dragon Valley" x="117104" y="119212" z="-3688" radius="1092" mobs="16" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Dragon Valley" x="118528" y="116629" z="-3736" radius="961" mobs="16" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Dragon Valley" x="114331" y="115304" z="-3248" radius="829" mobs="16" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Dragon Valley" x="109703" y="122467" z="-3664" radius="1033" mobs="16" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Dragon Valley" x="120032" y="113045" z="-3784" radius="981" mobs="15" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Dragon Valley" x="101694" y="121950" z="-3664" radius="795" mobs="13" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Dragon Valley" x="111637" y="112441" z="-2776" radius="1140" mobs="13" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Dragon Valley" x="113293" y="121785" z="-3704" radius="782" mobs="13" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Dragon Valley" x="108346" y="120790" z="-3712" radius="1057" mobs="12" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Dragon Valley" x="115553" y="109953" z="-3040" radius="742" mobs="12" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Dragon Valley" x="101361" y="111472" z="-3664" radius="589" mobs="11" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Dragon Valley" x="109097" y="116071" z="-3104" radius="635" mobs="11" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Dragon Valley" x="111837" y="110877" z="-3000" radius="711" mobs="9" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Dragon Valley" x="116854" y="110348" z="-3000" radius="1298" mobs="9" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Dragon Valley" x="106419" y="117909" z="-3032" radius="810" mobs="9" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Dragon Valley" x="104418" y="120532" z="-3664" radius="639" mobs="8" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Dragon Valley" x="105688" y="123660" z="-3680" radius="517" mobs="8" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Dragon Valley" x="101336" y="115296" z="-3728" radius="454" mobs="8" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Dragon Valley" x="117402" y="113071" z="-3056" radius="606" mobs="8" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Inner Dragon Valley" x="125215" y="111893" z="-3184" radius="1201" mobs="54" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Inner Dragon Valley" x="121396" y="113094" z="-3792" radius="1137" mobs="43" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Inner Dragon Valley" x="123361" y="115031" z="-3664" radius="1376" mobs="37" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Inner Dragon Valley" x="121915" y="114995" z="-3648" radius="1259" mobs="21" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Inner Dragon Valley" x="122481" y="111853" z="-3840" radius="933" mobs="15" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Inner Dragon Valley" x="124818" y="110178" z="-3104" radius="1170" mobs="12" />
+	<spot level="82" min="82" max="82" region="Giran" name="Dragon Valey · Monster Invasion: Inner Dragon Valley" x="120846" y="115938" z="-3664" radius="1364" mobs="57" />
+	<spot level="83" min="81" max="83" region="Dion" name="Cruma Tower Monsters · восток" x="22680" y="114110" z="-9064" radius="1500" mobs="60" />
+	<spot level="83" min="81" max="83" region="Dion" name="Cruma Tower Monsters · северо-запад" x="12821" y="109982" z="-9064" radius="1500" mobs="69" />
+	<spot level="83" min="81" max="83" region="Dion" name="Cruma Tower Monsters · юго-запад" x="12568" y="118246" z="-9064" radius="1500" mobs="69" />
+	<spot level="85" min="85" max="85" region="Aden" name="Ancient Battleground" x="129040" y="-10910" z="-3704" radius="1500" mobs="65" />
+	<spot level="85" min="85" max="85" region="Aden" name="Anghel Waterfall" x="166320" y="85377" z="-2104" radius="1500" mobs="32" />
+	<spot level="85" min="85" max="85" region="Aden" name="Blazing Swamp" x="142181" y="-25142" z="-2000" radius="1500" mobs="46" />
+	<spot level="85" min="85" max="85" region="Aden" name="Giant Cave · Giant's Cave" x="174491" y="55426" z="-4368" radius="1277" mobs="16" />
+	<spot level="85" min="85" max="85" region="Aden" name="Giant Cave · Giant's Cave" x="178915" y="54623" z="-3944" radius="927" mobs="15" />
+	<spot level="85" min="85" max="85" region="Aden" name="Giant Cave · Keber from the Silent Valley" x="182838" y="52369" z="-4368" radius="1186" mobs="16" />
+	<spot level="85" min="85" max="85" region="Aden" name="Giant Cave · Silent Valley" x="185823" y="48867" z="-4368" radius="988" mobs="19" />
+	<spot level="85" min="85" max="85" region="Dion" name="Bee Hive Inner Area" x="21147" y="182847" z="-2872" radius="1500" mobs="103" />
 	<spot level="85" min="85" max="87" region="Gludin" name="Orc Barracks Monsters · Inner Orc Barracks" x="-96579" y="106884" z="-3408" radius="589" mobs="18" />
 	<spot level="85" min="85" max="87" region="Gludin" name="Orc Barracks Monsters · Inner Orc Barracks" x="-93591" y="105598" z="-3672" radius="589" mobs="18" />
 	<spot level="85" min="85" max="87" region="Gludin" name="Orc Barracks Monsters · Inner Orc Barracks" x="-89788" y="108580" z="-3448" radius="589" mobs="18" />
@@ -844,25 +1178,16 @@
 	<spot level="85" min="85" max="85" region="Goddard" name="Hot Spings · Hot Springs" x="157762" y="-106878" z="-2696" radius="1500" mobs="10" />
 	<spot level="85" min="85" max="85" region="Goddard" name="Hot Spings · Hot Springs" x="156528" y="-113673" z="-1736" radius="1500" mobs="9" />
 	<spot level="85" min="85" max="85" region="Goddard" name="Hot Spings · юго-запад" x="140915" y="-107406" z="-3632" radius="1500" mobs="9" />
-	<spot level="85" min="85" max="85" region="LimitedZones" name="Primeval Isle · восток" x="25959" y="-17161" z="-2760" radius="1500" mobs="65" />
-	<spot level="85" min="85" max="85" region="LimitedZones" name="Primeval Isle · восток" x="26470" y="-12673" z="-2520" radius="1500" mobs="65" />
-	<spot level="85" min="85" max="85" region="LimitedZones" name="Primeval Isle · восток" x="21086" y="-14161" z="-3072" radius="1500" mobs="64" />
-	<spot level="85" min="85" max="85" region="LimitedZones" name="Primeval Isle · восток" x="24844" y="-11064" z="-2528" radius="1500" mobs="64" />
-	<spot level="85" min="85" max="85" region="LimitedZones" name="Primeval Isle · восток" x="25057" y="-19204" z="-2640" radius="1500" mobs="63" />
-	<spot level="85" min="85" max="85" region="LimitedZones" name="Primeval Isle · восток" x="15623" y="-14726" z="-3144" radius="1500" mobs="63" />
-	<spot level="85" min="85" max="85" region="LimitedZones" name="Primeval Isle · восток" x="20490" y="-16214" z="-3048" radius="1500" mobs="58" />
-	<spot level="85" min="85" max="85" region="LimitedZones" name="Primeval Isle · восток" x="26739" y="-15145" z="-2696" radius="1500" mobs="48" />
-	<spot level="85" min="85" max="85" region="LimitedZones" name="Primeval Isle · восток" x="26968" y="-18881" z="-2448" radius="1235" mobs="34" />
-	<spot level="85" min="85" max="85" region="LimitedZones" name="Primeval Isle · север" x="14613" y="-18612" z="-3176" radius="1500" mobs="46" />
-	<spot level="85" min="85" max="85" region="LimitedZones" name="Primeval Isle · северо-восток" x="19216" y="-19483" z="-3328" radius="1292" mobs="63" />
-	<spot level="85" min="85" max="85" region="LimitedZones" name="Primeval Isle · северо-восток" x="21074" y="-19685" z="-3280" radius="1500" mobs="63" />
-	<spot level="85" min="85" max="85" region="LimitedZones" name="Primeval Isle · северо-восток" x="15875" y="-17047" z="-3232" radius="1500" mobs="62" />
-	<spot level="85" min="85" max="85" region="LimitedZones" name="Primeval Isle · северо-восток" x="18885" y="-17568" z="-3208" radius="1500" mobs="62" />
-	<spot level="85" min="85" max="85" region="LimitedZones" name="Primeval Isle · северо-восток" x="23416" y="-21028" z="-2640" radius="1389" mobs="44" />
-	<spot level="85" min="85" max="85" region="LimitedZones" name="Primeval Isle · юго-восток" x="15821" y="-12740" z="-3152" radius="1500" mobs="65" />
-	<spot level="85" min="85" max="85" region="LimitedZones" name="Primeval Isle · юго-восток" x="16008" y="-9555" z="-3264" radius="1500" mobs="65" />
-	<spot level="85" min="85" max="85" region="LimitedZones" name="Primeval Isle · юго-восток" x="21952" y="-11288" z="-2744" radius="1500" mobs="50" />
-	<spot level="85" min="85" max="85" region="LimitedZones" name="Primeval Isle · юго-восток" x="19704" y="-10038" z="-2840" radius="1500" mobs="48" />
+	<spot level="85" min="85" max="85" region="Oren" name="Enchanted Valley" x="124419" y="40212" z="-4440" radius="1500" mobs="39" />
+	<spot level="85" min="85" max="85" region="Oren" name="Ivory Tower Crater" x="83018" y="12560" z="-5288" radius="1500" mobs="42" />
+	<spot level="86" min="86" max="86" region="Oren" name="Melat Lizardmen Lands · Monster Invasion: Melat Lizardmen Lands" x="80719" y="69825" z="-3336" radius="1153" mobs="31" />
+	<spot level="86" min="86" max="86" region="Oren" name="Melat Lizardmen Lands · Monster Invasion: Melat Lizardmen Lands" x="78500" y="69108" z="-3248" radius="1138" mobs="29" />
+	<spot level="86" min="86" max="86" region="Oren" name="Melat Lizardmen Lands · Monster Invasion: Melat Lizardmen Lands" x="79457" y="67541" z="-3208" radius="1336" mobs="21" />
+	<spot level="86" min="86" max="86" region="Oren" name="Melat Lizardmen Lands · Monster Invasion: Melat Lizardmen Lands" x="82408" y="69349" z="-3168" radius="1281" mobs="21" />
+	<spot level="86" min="86" max="86" region="Oren" name="Melat Lizardmen Lands · Monster Invasion: Melat Lizardmen Lands" x="84569" y="68794" z="-3048" radius="1141" mobs="16" />
+	<spot level="86" min="86" max="86" region="Oren" name="Melat Lizardmen Lands · Monster Invasion: Melat Lizardmen Lands" x="81407" y="67827" z="-3280" radius="907" mobs="12" />
+	<spot level="86" min="86" max="86" region="Oren" name="Melat Lizardmen Lands · Monster Invasion: Melat Lizardmen Lands" x="86014" y="68487" z="-3064" radius="922" mobs="12" />
+	<spot level="86" min="86" max="86" region="Oren" name="Melat Lizardmen Lands · Monster Invasion: Melat Lizardmen Lands" x="77571" y="67561" z="-3192" radius="1070" mobs="10" />
 	<spot level="87" min="87" max="90" region="Gludin" name="Orc Barracks Monsters · Inner Orc Barracks" x="-92268" y="108367" z="-3856" radius="589" mobs="18" />
 	<spot level="87" min="87" max="88" region="Gludin" name="Orc Barracks Monsters · Inner Orc Barracks" x="-92121" y="109608" z="-3600" radius="589" mobs="18" />
 	<spot level="87" min="87" max="87" region="Goddard" name="Gorde Canyon · Assistant Crigon" x="168082" y="-44528" z="-3456" radius="1161" mobs="21" />
@@ -906,14 +1231,26 @@
 	<spot level="87" min="87" max="87" region="Goddard" name="Gorde Canyon · юго-запад" x="177843" y="-45694" z="-3440" radius="1472" mobs="10" />
 	<spot level="87" min="87" max="87" region="Goddard" name="Gorde Canyon · юго-запад" x="171833" y="-38547" z="-3528" radius="1145" mobs="9" />
 	<spot level="87" min="87" max="87" region="Goddard" name="Gorde Canyon · юго-запад" x="170157" y="-36726" z="-3376" radius="1500" mobs="8" />
-	<spot level="88" min="88" max="88" region="LimitedZones" name="Alligator Island · север" x="111101" y="168256" z="-3336" radius="1262" mobs="35" />
-	<spot level="88" min="88" max="88" region="LimitedZones" name="Alligator Island · север" x="114179" y="168408" z="-3328" radius="1239" mobs="35" />
-	<spot level="88" min="88" max="88" region="LimitedZones" name="Alligator Island · север" x="117199" y="168765" z="-3336" radius="1162" mobs="35" />
-	<spot level="88" min="88" max="88" region="LimitedZones" name="Alligator Island · северо-восток" x="121413" y="168233" z="-3304" radius="1264" mobs="28" />
-	<spot level="88" min="88" max="88" region="LimitedZones" name="Alligator Island · северо-восток" x="118719" y="168055" z="-3320" radius="681" mobs="21" />
-	<spot level="88" min="88" max="88" region="LimitedZones" name="Alligator Island · северо-восток" x="123555" y="168741" z="-3336" radius="659" mobs="21" />
-	<spot level="88" min="88" max="88" region="LimitedZones" name="Alligator Island · северо-восток" x="120257" y="175044" z="-3608" radius="519" mobs="14" />
-	<spot level="88" min="88" max="88" region="LimitedZones" name="Alligator Island · северо-запад" x="109368" y="169022" z="-3320" radius="510" mobs="14" />
+	<spot level="88" min="88" max="88" region="Aden" name="Giant Cave · Giant's Cave" x="174811" y="61845" z="-4368" radius="1500" mobs="24" />
+	<spot level="88" min="88" max="88" region="Aden" name="Giant Cave · Giant's Cave" x="180594" y="59610" z="-3992" radius="1500" mobs="19" />
+	<spot level="88" min="88" max="88" region="Aden" name="Giant Cave · Giant's Cave's Inner Area" x="191446" y="51344" z="-4368" radius="1500" mobs="27" />
+	<spot level="88" min="88" max="88" region="Aden" name="Giant Cave · Giant's Cave's Inner Area" x="183312" y="60534" z="-3992" radius="1500" mobs="24" />
+	<spot level="88" min="86" max="88" region="Gludin" name="Tayga Camp" x="-52600" y="144243" z="-2856" radius="1500" mobs="100" />
+	<spot level="88" min="88" max="88" region="Gludio" name="Wasteland Oasis" x="-39097" y="174015" z="-3616" radius="1218" mobs="32" />
+	<spot level="88" min="88" max="88" region="Gludio" name="Wasteland Oasis" x="-39721" y="176464" z="-3720" radius="1214" mobs="26" />
+	<spot level="89" min="89" max="90" region="MotherTreeVillage" name="Mother Tree Village High Level Zones · Lands of Light: 4th Area" x="10959" y="56914" z="-12584" radius="1252" mobs="99" />
+	<spot level="89" min="89" max="89" region="MotherTreeVillage" name="Mother Tree Village High Level Zones · Lands of Light: 4th Area" x="10511" y="58222" z="-12608" radius="768" mobs="10" />
+	<spot level="89" min="89" max="90" region="MotherTreeVillage" name="Mother Tree Village High Level Zones · Lands of Shadow" x="9334" y="53364" z="-12768" radius="1500" mobs="57" />
+	<spot level="89" min="89" max="90" region="MotherTreeVillage" name="Mother Tree Village High Level Zones · Lands of Shadow" x="10583" y="49639" z="-12824" radius="896" mobs="55" />
+	<spot level="89" min="89" max="90" region="MotherTreeVillage" name="Mother Tree Village High Level Zones · Lands of Shadow" x="13121" y="49970" z="-12816" radius="903" mobs="47" />
+	<spot level="89" min="89" max="90" region="MotherTreeVillage" name="Mother Tree Village High Level Zones · Lands of Shadow" x="11138" y="52115" z="-12840" radius="749" mobs="45" />
+	<spot level="89" min="89" max="90" region="MotherTreeVillage" name="Mother Tree Village High Level Zones · Lands of Shadow" x="10617" y="55658" z="-12592" radius="650" mobs="15" />
+	<spot level="90" min="90" max="90" region="Aden" name="Giant Cave · Giant's Cave's Inner Area" x="192190" y="61153" z="-4984" radius="1500" mobs="33" />
+	<spot level="90" min="90" max="90" region="Aden" name="Giant Cave · Giant's Cave's Inner Area" x="186795" y="56288" z="-4568" radius="1452" mobs="22" />
+	<spot level="90" min="90" max="90" region="Aden" name="Giant Cave · Giant's Cave's Inner Area" x="187642" y="61555" z="-4984" radius="1500" mobs="18" />
+	<spot level="90" min="90" max="90" region="Gludin" name="Fairy Captured Lands · Fairy-invaded Lands" x="-71789" y="175254" z="-3568" radius="1182" mobs="17" />
+	<spot level="90" min="90" max="90" region="Gludin" name="Fairy Captured Lands · Fairy-invaded Lands" x="-68598" y="175235" z="-3608" radius="1167" mobs="17" />
+	<spot level="90" min="90" max="90" region="Gludin" name="Fairy Captured Lands · Fairy-invaded Lands" x="-69290" y="173290" z="-3632" radius="913" mobs="11" />
 	<spot level="90" min="90" max="90" region="Goddard" name="Morgos Military Base · Morgos' Military Base's Central Barracks" x="146140" y="-83565" z="-5088" radius="656" mobs="16" />
 	<spot level="90" min="90" max="90" region="Goddard" name="Morgos Military Base · восток" x="154521" y="-79595" z="-4664" radius="545" mobs="21" />
 	<spot level="90" min="90" max="90" region="Goddard" name="Morgos Military Base · восток" x="156545" y="-78214" z="-4088" radius="520" mobs="10" />
@@ -935,4 +1272,15 @@
 	<spot level="90" min="90" max="90" region="Goddard" name="Xilenos Fortress · юг" x="111857" y="-39298" z="-3368" radius="1066" mobs="9" />
 	<spot level="90" min="90" max="90" region="Goddard" name="Xilenos Fortress · юг" x="111980" y="-41565" z="-3408" radius="1060" mobs="8" />
 	<spot level="90" min="90" max="90" region="Goddard" name="Xilenos Fortress · юго-запад" x="109310" y="-36872" z="-1032" radius="1500" mobs="17" />
+	<spot level="91" min="91" max="91" region="Gludin" name="Fairy Captured Lands · Fairy-invaded Lands" x="-69728" y="167731" z="-3488" radius="1092" mobs="21" />
+	<spot level="91" min="91" max="91" region="Gludin" name="Fairy Captured Lands · Fairy-invaded Lands" x="-72666" y="168518" z="-3520" radius="1214" mobs="19" />
+	<spot level="91" min="91" max="91" region="Gludin" name="Fairy Captured Lands · Fairy-invaded Lands" x="-67804" y="170695" z="-3472" radius="890" mobs="10" />
+	<spot level="91" min="91" max="91" region="Gludin" name="Fairy Captured Lands · Fairy-invaded Lands" x="-73880" y="167166" z="-3536" radius="976" mobs="9" />
+	<spot level="91" min="91" max="91" region="Gludin" name="Fairy Captured Lands · Fairy-invaded Lands" x="-68779" y="169337" z="-3472" radius="853" mobs="8" />
+	<spot level="94" min="94" max="94" region="CrowVillage" name="Crow Village · север" x="157577" y="213584" z="-80" radius="912" mobs="15" />
+	<spot level="94" min="94" max="94" region="CrowVillage" name="Crow Village · север" x="155762" y="213917" z="-216" radius="925" mobs="13" />
+	<spot level="94" min="94" max="94" region="CrowVillage" name="Crow Village · юг" x="154376" y="223267" z="-168" radius="1354" mobs="16" />
+	<spot level="94" min="94" max="94" region="CrowVillage" name="Crow Village · юго-восток" x="156216" y="220688" z="-88" radius="932" mobs="25" />
+	<spot level="94" min="94" max="94" region="CrowVillage" name="Crow Village · юго-восток" x="156466" y="222715" z="-112" radius="580" mobs="9" />
+	<spot level="95" min="95" max="95" region="CrowVillage" name="Crow Village · юго-запад" x="150572" y="224867" z="64" radius="1500" mobs="35" />
 </list>
