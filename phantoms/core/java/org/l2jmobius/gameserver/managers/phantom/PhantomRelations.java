@@ -79,10 +79,24 @@ public class PhantomRelations
 		DUEL_WIN("duel_win", 0.5, 1),
 		/** Проиграл охотнику дуэль: хороший бой. */
 		DUEL_LOSS("duel_loss", 0, 1),
+		/** Добавил охотника в друзья, и тот согласился (раздел 4.70). */
+		FRIENDED("friended", 0, 1),
+		/** Подарил охотнику вещи или адену через обмен (раздел 4.70). */
+		GIFTED("gifted", 0, 2),
+		/** Сам подарил живому новичку денег (раздел 4.77): к тому, кому помог, теплеют. */
+		GIFT_GIVEN("gift_given", 0, 0.5),
+		/** Ему досталась вещь, которая нужна была охотнику в пати (раздел 4.77). */
+		LOOT_FIGHT("loot_fight", 1, 0),
+		/** Кинул в обмене на адену (раздел 4.77). */
+		SCAMMED("scammed", 3, 0),
 		/** Обидел соклановца из клана охотников (раздел 4.50): доля {@code HunterClanShare} от его обиды. */
 		CLAN_HARM("clan_harm", 1, 0),
 		/** Выручил соклановца: доля его благодарности. */
-		CLAN_HELP("clan_help", 0, 1);
+		CLAN_HELP("clan_help", 0, 1),
+		/** Дал охотнику бафф (раздел 4.78, {@code HunterFavors}). */
+		BUFFED("buffed", 0, 1),
+		/** Продал охотнику то, что тот просил (раздел 4.78). */
+		SOLD("sold", 0, 1);
 
 		final String key;
 		final double grudge;
@@ -178,6 +192,11 @@ public class PhantomRelations
 		{
 			return 0;
 		}
+		// Просьбы (раздел 4.78): помог — это ответ, даже если поступок на кулдауне.
+		if (PhantomHuntersConfig.HUNTER_FAVORS && (kind.gratitude > 0))
+		{
+			PhantomFavors.getInstance().onHelped(hunter, player, kind);
+		}
 		// Выключено — как раньше: копятся только убийства.
 		if (!PhantomHuntersConfig.HUNTER_RELATIONS && (kind != Kind.KILLED))
 		{
@@ -193,11 +212,16 @@ public class PhantomRelations
 		}
 		_cooldowns.put(cooldownKey, now);
 
+		final boolean wasEnemy = PhantomStories.enabled() && isEnemy(hunter, player);
 		final Relation relation = store(hunter, player, kind, kind.grudge, kind.gratitude, now);
 		LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " " + kind.key + " " + hunter.getName() + " — обида " + format(relation.grudge) + ", благодарность " + format(relation.gratitude) + (relation.kills > 0 ? ", убийств " + relation.kills : "") + ".");
 		// Кланы охотников (раздел 4.41): стал врагом живого соклановца — уходит из клана.
 		if (kind.grudge > 0)
 		{
+			if (PhantomStories.enabled() && !wasEnemy && isEnemy(hunter, player))
+			{
+				PhantomStories.quarrel(hunter, player, kind);
+			}
 			PhantomClans.getInstance().onGrudge(hunter, player);
 		}
 		shareWithClan(hunter, player, kind, now);
@@ -302,7 +326,8 @@ public class PhantomRelations
 		final boolean heal = skill.hasEffectType(EffectType.HEAL);
 		final boolean revive = skill.hasEffectType(EffectType.RESURRECTION);
 		// Хилит и ресает живой игрок или охотник-хилер ({@link PhantomNeighbors}, патч 0033).
-		if ((!heal && !revive) || (PhantomManager.getInstance().isPhantom(caster.asPlayer()) && !isHunter(caster.asPlayer())))
+		final boolean buff = PhantomHuntersConfig.HUNTER_FAVORS && !heal && !revive && skill.isContinuous() && !skill.isDebuff();
+		if ((!heal && !revive && !buff) || (PhantomManager.getInstance().isPhantom(caster.asPlayer()) && !isHunter(caster.asPlayer())))
 		{
 			return;
 		}
@@ -330,6 +355,10 @@ public class PhantomRelations
 			else if (heal && !hunter.isDead() && hunter.isInCombat() && (hunter.getCurrentHp() < (hunter.getMaxHp() * INJURED)))
 			{
 				ThreadPool.execute(() -> record(hunter, helper, Kind.HEALED));
+			}
+			else if (buff && !hunter.isDead())
+			{
+				ThreadPool.execute(() -> record(hunter, helper, Kind.BUFFED));
 			}
 		}
 	}

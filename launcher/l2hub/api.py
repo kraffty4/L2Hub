@@ -19,7 +19,7 @@ from pathlib import Path
 
 import psutil
 
-from . import __version__, appsettings, backups, brain, builder, catalog, clients, clientsys, configs, feedback, friendpack, geodata, health, i18n, l2solo, modes, network, paths, report, runtimes, servers, updates, worldtiles
+from . import __version__, appsettings, backups, brain, builder, catalog, clients, clientsys, configs, feedback, forum, friendpack, geodata, health, i18n, l2ini, l2solo, modes, network, paths, report, runtimes, servers, society, updates, worldtiles
 
 CHAR_NAME_RE = re.compile(r"^[A-Za-z0-9_\-А-Яа-яЁё]{1,35}$")  # кириллица — для имён на La2offline
 ACCESS_LEVELS = {0: "Игрок", 70: "Admin", 100: "Master"}  # Mobius; у другой сборки — "accessLevels" в профиле
@@ -498,6 +498,33 @@ class Api:
         except (OSError, ValueError) as e:
             return {"ok": False, "error": f"Не прочитать летопись: {e}"}
         return {"ok": True, "entries": data.get("entries") or [], "time": data.get("time")}
+
+    def world_society(self, chronicle_id: str) -> dict:
+        """«Общество» (society.py): топы, кланы, войны, замки, герои, вражда и дружба. Только чтение."""
+        p = catalog.profile(chronicle_id)
+        try:
+            classes = _class_names(catalog.server_dir(p) / "game")
+        except (OSError, ET.ParseError):
+            classes = {}
+        return society.snapshot(p, classes)
+
+    def world_forum(self, chronicle_id: str) -> dict:
+        """Форум сервера (forum.py): что уже написано, без запросов к модели."""
+        return forum.state(chronicle_id)
+
+    def world_forum_refresh(self, chronicle_id: str, lang: str = "ru") -> dict:
+        """Страницу форума открыли: новая ветка, если подошло время."""
+        try:
+            return forum.refresh(chronicle_id, lang)
+        except Exception as e:  # noqa: BLE001
+            return {"ok": False, "error": str(e)}
+
+    def world_forum_reply(self, chronicle_id: str, thread_id: int, player: str, text: str, lang: str = "ru") -> dict:
+        """Живой написал в ветку форума."""
+        try:
+            return forum.reply(chronicle_id, int(thread_id), player, text, lang)
+        except Exception as e:  # noqa: BLE001
+            return {"ok": False, "error": str(e)}
 
     def world_tiles_get(self) -> dict:
         """«Скачать подложку» в «Мой мир»: архив npetrovski/l2-world-map → data/maps и ui/maps (worldtiles.py)."""
@@ -1086,6 +1113,8 @@ class Api:
                 raise ValueError("лимит в день — от 0 до 100 $")
             if not 1 <= clean["extended"]["focusMax"] <= 10:
                 raise ValueError("умных охотников рядом — от 1 до 10")
+            voice = settings.get("voice") or {}
+            clean["voice"] = {k: bool(voice.get(k, on)) for k, on in brain.VOICE_DEFAULT.items()}
         except (KeyError, TypeError, ValueError) as e:
             return {"ok": False, "error": f"Не сохранил: {e}"}
         brain.BRAIN_DIR.mkdir(parents=True, exist_ok=True)
@@ -1302,14 +1331,19 @@ class Api:
                     "pack": None, "unsupported": L2SOLO_NO_FRIENDS}
         ini = network.FRIENDS / p["id"] / (clientsys.INI if clientsys.is_4game(p) else "L2.ini")
         pack = friendpack.pack_path(p)
-        pack_info = {"path": str(pack), "size": pack.stat().st_size, "time": time.strftime("%Y-%m-%d %H:%M", time.localtime(pack.stat().st_mtime))} if pack.is_file() else None
+        pack_info = {"path": str(pack), "size": pack.stat().st_size, "time": time.strftime("%Y-%m-%d %H:%M", time.localtime(pack.stat().st_mtime)),
+                     "address": friendpack.pack_address(p)} if pack.is_file() else None
+        try:
+            ini_address = l2ini.server_addr(ini) if ini.is_file() else None
+        except (OSError, ValueError):
+            ini_address = None
         procs = [pr for pr in (servers.part_process(p, "login"), servers.part_process(p, "game")) if pr]
         try:
             restart = bool(procs) and network.config_mtime(p) > min(pr.create_time() for pr in procs)
         except Exception:  # noqa: BLE001 — процесс успел завершиться
             restart = False
         return {"ok": True, **network.state(p), "running": self.running() == chronicle_id, "restartNeeded": restart,
-                "friendIni": str(ini) if ini.is_file() else None, "clientDir": network.client_system_name(p), "pack": pack_info}
+                "friendIni": str(ini) if ini.is_file() else None, "friendIniAddress": ini_address, "clientDir": network.client_system_name(p), "pack": pack_info}
 
     def set_network(self, chronicle_id: str, mode: str, address: str | None = None, kind: str | None = None) -> dict:
         p = catalog.profile(chronicle_id)
@@ -1332,7 +1366,7 @@ class Api:
             items.append({"id": c["id"], "name": c["name"], "supported": not r.get("unsupported"), "why": r.get("unsupported"),
                           "mode": r["mode"], "kind": r.get("kind"), "label": r.get("label"), "address": r.get("address"),
                           "addressOk": r.get("addressOk"), "running": r["running"], "restartNeeded": r["restartNeeded"],
-                          "friendIni": r.get("friendIni"), "pack": r.get("pack"), "clientDir": r.get("clientDir")})
+                          "friendIni": r.get("friendIni"), "friendIniAddress": r.get("friendIniAddress"), "pack": r.get("pack"), "clientDir": r.get("clientDir")})
         mine = [x for x in items if x["supported"]]
         same = {(x["mode"], x["kind"], x["address"]) for x in mine}
         common = dict(zip(("mode", "kind", "address"), next(iter(same)))) if len(same) == 1 else None

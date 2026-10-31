@@ -28,12 +28,15 @@ import org.l2jmobius.gameserver.entity.actor.Player;
 import org.l2jmobius.gameserver.entity.actor.appearance.PlayerAppearance;
 import org.l2jmobius.gameserver.entity.actor.stat.PlayerStat;
 import org.l2jmobius.gameserver.entity.actor.templates.PlayerTemplate;
+import org.l2jmobius.gameserver.entity.clan.Clan;
+import org.l2jmobius.gameserver.entity.clan.ClanMember;
 import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
 import org.l2jmobius.gameserver.entity.itemcontainer.Inventory;
 import org.l2jmobius.gameserver.managers.GlobalVariablesManager;
 import org.l2jmobius.gameserver.managers.world.WorldDaily;
 import org.l2jmobius.gameserver.network.Disconnection;
 import org.l2jmobius.gameserver.network.GameClient;
+import org.l2jmobius.gameserver.network.serverpackets.PledgeShowMemberListUpdate;
 import org.l2jmobius.gameserver.taskmanagers.AutoPlayTaskManager;
 import org.l2jmobius.gameserver.taskmanagers.AutoUseTaskManager;
 
@@ -83,6 +86,9 @@ public class PhantomManager
 			LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": WorldDaily did not start.", e);
 		}
 
+		// Счётчик онлайна нужен и без фантомов: живые и городская толпа.
+		PhantomOnline.start();
+
 		if (!PhantomsConfig.PHANTOMS_ENABLED)
 		{
 			LOGGER.info(getClass().getSimpleName() + ": Disabled.");
@@ -90,6 +96,7 @@ public class PhantomManager
 		}
 
 		PhantomData.getInstance();
+		PhantomOfflineWorld.getInstance().start();
 		if (PhantomsConfig.PHANTOM_BAN_ACCOUNT_LOGIN)
 		{
 			banLogin();
@@ -102,6 +109,11 @@ public class PhantomManager
 
 		// Этап 5: охотники живут сами, по режиму из PhantomHunters.ini.
 		PhantomHunterManager.getInstance().start();
+		PhantomChatFlow.getInstance().start();
+		PhantomWelcome.getInstance().start();
+		PhantomSiege.getInstance().start();
+		PhantomFarWhisper.getInstance().start();
+		PhantomGestures.getInstance().start();
 	}
 
 	/**
@@ -252,6 +264,19 @@ public class PhantomManager
 		}
 
 		phantom.setOnlineStatus(true, false);
+		// Стартовый уровень — только новому (раздел 4.52), возраст мира — и тому, кто уже есть (раздел 4.90). Только вверх.
+		final int from = phantom.getLevel();
+		final int aged = PhantomWorldAge.levelFor(phantom, template);
+		final int start = Math.max(existed ? 0 : template.getStartLevel(), aged);
+		if (start > Math.max(1, from))
+		{
+			veteran(phantom, template, start);
+			if (aged > from)
+			{
+				PhantomWorldAge.risen(phantom, from);
+			}
+		}
+		PhantomWorldAge.mark(phantom);
 		final Location location;
 		if (existed && ((phantom.getX() != 0) || (phantom.getY() != 0)))
 		{
@@ -261,10 +286,6 @@ public class PhantomManager
 		else
 		{
 			location = template.getHome();
-			if (!existed && (template.getStartLevel() > 1))
-			{
-				veteran(phantom, template);
-			}
 		}
 		PhantomHunterOutfit.update(phantom, template);
 		enterWorld(phantom, template, location);
@@ -275,14 +296,17 @@ public class PhantomManager
 	 * Ветеран (раздел 4.52; решение автора 2026-10-28 — ветераны для Зачистки Essence): новый охотник со {@code startLevel} рождается сразу этого уровня, как напарник, —
 	 * опыт, класс по своей цепочке, скиллы, тир {@code <gear>} своего грейда, заряды. Адена — как у живого такого уровня, {@value #VETERAN_ADENA} × уровень²
 	 * (около 0,7 млн на 76-м): на телепорты, сосы, гачу. Sayha's Grace — стартовая, как у любого нового ({@link #loadOrCreate}). Летопись его рождения не видит
-	 * ({@link #isSecret}: события уровня и профессии у Mobius асинхронные — тишина держится {@value #QUIET_MS} мс).
+	 * ({@link #isSecret}: события уровня и профессии у Mobius асинхронные — тишина держится {@value #QUIET_MS} мс).<br>
+	 * Этим же путём возраст мира (раздел 4.90) поднимает того, кто уже живёт: сумка заменяется сборкой, адена не теряется.
 	 */
-	private void veteran(Player phantom, PhantomTemplate template)
+	private void veteran(Player phantom, PhantomTemplate template, int requestedLevel)
 	{
-		final int level = Math.min(template.getStartLevel(), PlayerConfig.PLAYER_MAXIMUM_LEVEL - 1);
+		final int level = Math.min(requestedLevel, PlayerConfig.PLAYER_MAXIMUM_LEVEL - 1);
 		final String key = template.getName().toLowerCase();
 		_quiet.add(key);
 		ThreadPool.schedule(() -> _quiet.remove(key), QUIET_MS);
+		// Сборка забирает всё, а поднятый возрастом мира (раздел 4.90) уже живёт: свою адену он не теряет.
+		final long had = phantom.getAdena();
 		PhantomOutfit.build(phantom, template, level);
 		// Живой этого уровня — посреди уровня, а не на самой границе: первая же смерть не роняет ветерана ниже стартового.
 		final long base = ExperienceData.getInstance().getExpForLevel(level);
@@ -291,12 +315,47 @@ public class PhantomManager
 		{
 			phantom.addExpAndSp(((next - base) * Rnd.get(VETERAN_EXP_MIN, VETERAN_EXP_MAX)) / 100, 0);
 		}
-		final long adena = VETERAN_ADENA * level * level;
+		final long adena = Math.max(had, VETERAN_ADENA * level * level);
 		PhantomCompat.addItem(phantom, ItemProcessType.REWARD, Inventory.ADENA_ID, adena, null);
+		// Ключ возраста мира выключен — ветеран как раньше (раздел 4.90).
+		if (PhantomWorldAge.days() > 0)
+		{
+			PhantomHunterOutfit.giveSupplies(phantom);
+		}
 		// Призыватель (раздел 4.55): кристаллы на призыв, как после закупки, — иначе слуги нет до первого похода в город.
 		final long crystals = PhantomSummoner.giveCrystals(phantom);
 		phantom.storeMe();
 		LOGGER.info(getClass().getSimpleName() + ": " + template.getName() + " is born a veteran: level " + phantom.getLevel() + " " + phantom.getPlayerClass().name() + ", " + adena + " adena" + (crystals > 0 ? ", " + crystals + " crystals to summon" : "") + ".");
+	}
+
+	/**
+	 * Гном-твинк (раздел 4.91) входит в мир на площади, сохранённый или новый. Уровень и шмот ему не собираются; уходит через {@link #despawnHunter}.
+	 * @param template описание твинка
+	 * @param location место в рядах
+	 * @return фантом или {@code null}, если не вышло (причина — в логе)
+	 */
+	public synchronized Player spawnTwink(PhantomTemplate template, Location location)
+	{
+		final Player online = getPhantom(template);
+		if (online != null)
+		{
+			return online;
+		}
+		if (World.getPlayer(template.getName()) != null)
+		{
+			LOGGER.warning(getClass().getSimpleName() + ": " + template.getName() + " is online as a real player, twink not spawned.");
+			return null;
+		}
+
+		final Player phantom = loadOrCreate(template);
+		if (phantom == null)
+		{
+			return null;
+		}
+
+		phantom.setOnlineStatus(true, false);
+		enterWorld(phantom, template, location);
+		return phantom;
 	}
 
 	/**
@@ -445,7 +504,33 @@ public class PhantomManager
 		phantom.setOnlineStatus(true, true);
 		phantom.setRunning();
 		phantom.broadcastUserInfo();
+		joinClanOnline(phantom);
+		PhantomFriends.getInstance().onEnter(phantom);
+		if (template.isHunter())
+		{
+			PhantomOfflineWorld.getInstance().onEnter(phantom);
+			PhantomAbsence.onEnter(phantom);
+		}
 		LOGGER.info(getClass().getSimpleName() + ": " + template.getName() + " entered the world at " + location.getX() + ", " + location.getY() + ", " + location.getZ() + ".");
+	}
+
+	/**
+	 * Живой член клана: у настоящего игрока это делает EnterWorld, фантом через него не идёт. Без этого {@code ClanMember.getPlayer()} после рестарта сервера
+	 * пуст, и клан охотника замирает: нет уровней, набора и войн. На выходе обратное делает {@code Player.deleteMe}.
+	 */
+	private void joinClanOnline(Player phantom)
+	{
+		final Clan clan = phantom.getClan();
+		if (clan == null)
+		{
+			return;
+		}
+		final ClanMember member = clan.getClanMember(phantom.getObjectId());
+		if (member != null)
+		{
+			member.setPlayer(phantom);
+		}
+		clan.broadcastToOtherOnlineMembers(new PledgeShowMemberListUpdate(phantom), phantom);
 	}
 
 	private int findCharId(String name)

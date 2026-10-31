@@ -33,6 +33,7 @@ import org.l2jmobius.gameserver.entity.WorldObject;
 import org.l2jmobius.gameserver.entity.actor.Npc;
 import org.l2jmobius.gameserver.entity.actor.Player;
 import org.l2jmobius.gameserver.managers.ScriptManager;
+import org.l2jmobius.gameserver.managers.phantom.PhantomManager;
 import org.l2jmobius.gameserver.mechanics.script.Event;
 import org.l2jmobius.gameserver.mechanics.script.Quest;
 
@@ -46,6 +47,7 @@ import org.l2jmobius.gameserver.mechanics.script.Quest;
  * скриптах (их константа MINIMUM_PARTICIPANT_LEVEL берёт его через minLevel). Пока идёт любой из трёх ивентов (в мире
  * стоит его менеджер или кто-то записан либо на арене), следующий не стартует: у Deathmatch на арене менеджера нет.
  * Перед ареной скрипты выкидывают вышедших из игры через offline: фантомы без клиента остаются в списке.
+ * Размеры и бой TvT (TvTMinParticipants, TvTMaxParticipants, TvTReservedSlots, TvTFightMinutes) скрипт берёт через tvt, места — через full.
  * Скрипт хронико-независимый: Interlude, Gracia Epilogue, High Five.
  * @author L2Hub
  */
@@ -200,6 +202,49 @@ public class L2HubPvpEvents
 		{
 			return original;
 		}
+	}
+
+	/**
+	 * Размер или время TvT: ключ из L2HubEvents.ini, если PvpEvents = True, иначе значение из скрипта ивента.
+	 * @param key ключ
+	 * @param original значение, зашитое в скрипте
+	 * @param min нижняя граница ключа
+	 * @param max верхняя граница ключа
+	 * @return значение; не число — значение из скрипта
+	 */
+	public static int tvt(String key, int original, int min, int max)
+	{
+		final Properties config = config();
+		if (!enabled(config))
+		{
+			return original;
+		}
+		try
+		{
+			return Math.max(min, Math.min(max, Integer.parseInt(config.getProperty(key, String.valueOf(original)).trim())));
+		}
+		catch (NumberFormatException e)
+		{
+			return original;
+		}
+	}
+
+	/**
+	 * Мест на TvT нет: заняты все или для охотника — все, кроме reserved мест живым игрокам.
+	 * @param registered записанные
+	 * @param player кто записывается
+	 * @param max всего мест
+	 * @param reserved мест только для живых игроков
+	 * @return записать нельзя
+	 */
+	public static boolean full(Set<Player> registered, Player player, int max, int reserved)
+	{
+		if (registered.size() >= max)
+		{
+			return true;
+		}
+		final PhantomManager phantoms = PhantomManager.getInstance();
+		return (reserved > 0) && phantoms.isPhantom(player) && (registered.stream().filter(phantoms::isPhantom).count() >= (max - reserved));
 	}
 
 	public static void main(String[] args)

@@ -108,8 +108,11 @@ def with_server_addr(raw: bytes, addr: str) -> bytes:
 
 
 def read_text(path: Path) -> tuple[str, str]:
+    return text_of(path.read_bytes())
+
+
+def text_of(raw: bytes) -> tuple[str, str]:
     """Текст зашифрованного или открытого ini клиента и способ: ncsoft, community или plain."""
-    raw = path.read_bytes()
     if raw.startswith(HEADER):
         key, data = decode(raw)
     else:
@@ -127,6 +130,10 @@ def packages_dir(l2ini: Path) -> str | None:
 
 
 def server_addr(l2ini: Path) -> str | None:
-    text, _ = read_text(l2ini)
+    return server_addr_of(l2ini.read_bytes())
+
+
+def server_addr_of(raw: bytes) -> str | None:
+    text, _ = text_of(raw)
     m = re.search(r"^\s*ServerAddr\s*=\s*(\S+)", text, re.MULTILINE)
     return m.group(1) if m else None

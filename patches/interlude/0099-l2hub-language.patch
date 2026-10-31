@@ -1,3 +1,305 @@
+diff --git a/dist/game/data/html/CommunityBoard/Custom/dropsearch/main.html b/dist/game/data/html/CommunityBoard/Custom/dropsearch/main.html
+index 66d0630f5945caf16b66241ed188571f1983d39e..95e9d40ea46665ae65927b995fd18e8aea991fa5 100644
+--- a/dist/game/data/html/CommunityBoard/Custom/dropsearch/main.html
++++ b/dist/game/data/html/CommunityBoard/Custom/dropsearch/main.html
+@@ -11,17 +11,17 @@
+ 		<td><center>
+ 			<table border=0 bgcolor="000000" cellpadding=0 cellspacing=0 width=500 height=415>
+ 			<tr><td height=15></td></tr>
+-			<tr><td height=25 align="center"><font color="CDB67F">Поиск дропа</font></td></tr>
++			<tr><td height=25 align="center"><font color="CDB67F">Drop search</font></td></tr>
+ 			<tr><td><center><img src="L2UI.SquareGray" width=500 height=1></center></td></tr>
+ 			<tr><td height=15></td></tr>
+-			<tr><td align="left"><font color="CDB67F">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1. Введи название предмета или его часть (по-английски, как в игре).</font></td></tr>
+-			<tr><td align="left"><font color="CDB67F">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2. Нажми на иконку предмета — покажет, с кого падает.</font></td></tr>
+-			<tr><td align="left"><font color="CDB67F">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3. Выбери моба — его место покажут на карте мира.</font></td></tr>
++			<tr><td align="left"><font color="CDB67F">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1. Enter an item name or a part of it.</font></td></tr>
++			<tr><td align="left"><font color="CDB67F">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2. Click the item icon to see what drops it.</font></td></tr>
++			<tr><td align="left"><font color="CDB67F">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3. Pick a monster to see where it lives on the world map.</font></td></tr>
+ 			<tr><td height=15></td></tr>
+ 			<tr><td height=15 align="center">
+ 			<table><tr>
+-			<td width=70>Предмет:</td><td><edit width=200 var="itemname"></td>
+-			<td><button value="Найти" action="bypass _bbs_search_item $itemname" width=45 height=15 back="sek.cbui94" fore="sek.cbui92"></td>
++			<td width=70>Item:</td><td><edit width=200 var="itemname"></td>
++			<td><button value="Search" action="bypass _bbs_search_item $itemname" width=45 height=15 back="sek.cbui94" fore="sek.cbui92"></td>
+ 			</tr></table></td></tr>
+ 			<tr><td height=15 align="center"></td></tr>
+ 			<tr><td height=15></td></tr>
+@@ -33,7 +33,7 @@
+ 			</table>
+ 			<table border=0 cellpadding=0 cellspacing=0 width=500><tr><td height=10></td></tr></table>
+ 			<table border=0 bgcolor="000000" cellpadding=0 cellspacing=0 width=500>
+-			<tr><td height=50 align=center><font color=696969><br>L2HUB · ДОСКА СООБЩЕСТВА</font></td></tr>
++			<tr><td height=50 align=center><font color=696969><br>L2HUB · COMMUNITY BOARD</font></td></tr>
+ 			</table></center></td></tr>
+ 		</table>
+ 	</body>
+diff --git a/dist/game/data/html/CommunityBoard/Custom/gatekeeper/main.html b/dist/game/data/html/CommunityBoard/Custom/gatekeeper/main.html
+index af3aceacb4074c07cd541a37d1b001c6ec22abd9..f00751fc4d58530dae67c944428e996404acb095 100644
+--- a/dist/game/data/html/CommunityBoard/Custom/gatekeeper/main.html
++++ b/dist/game/data/html/CommunityBoard/Custom/gatekeeper/main.html
+@@ -3,26 +3,26 @@
+ <table width=20><tr><td>%navigation%</td><td><center>
+ <table bgcolor="000000" width=500 height=415>
+ <tr><td height=23></td></tr>
+-<tr><td height=25 align="center"><font color="CDB67F">Телепорт</font></td></tr>
++<tr><td height=25 align="center"><font color="CDB67F">Teleport</font></td></tr>
+ <tr><td height=24></td></tr>
+ <tr><td><center><img src="L2UI.SquareGray" width=500 height=1></center></td></tr>
+-<tr><td height=25><center><br><br>Отсюда можно улететь в любой город.<br></td></tr>
++<tr><td height=25><center><br><br>From here you can fly to any town.<br></td></tr>
+ <tr><td align="center">
+ <table align=center border="0" height=45><tr>
+-<td><button value="Гиран" action="bypass _bbsteleport;Giran" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
+-<td><button value="Аден" action="bypass _bbsteleport;Aden" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
+-<td><button value="Годдард" action="bypass _bbsteleport;Goddard" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
++<td><button value="Giran" action="bypass _bbsteleport;Giran" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
++<td><button value="Aden" action="bypass _bbsteleport;Aden" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
++<td><button value="Goddard" action="bypass _bbsteleport;Goddard" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
+ </tr><tr>
+-<td><button value="Руна" action="bypass _bbsteleport;Rune" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
+-<td><button value="Дион" action="bypass _bbsteleport;Dion" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
+-<td><button value="Орен" action="bypass _bbsteleport;Oren" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
++<td><button value="Rune" action="bypass _bbsteleport;Rune" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
++<td><button value="Dion" action="bypass _bbsteleport;Dion" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
++<td><button value="Oren" action="bypass _bbsteleport;Oren" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
+ </tr><tr>
+-<td><button value="Глудио" action="bypass _bbsteleport;Gludio" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
+-<td><button value="Шутгарт" action="bypass _bbsteleport;Schuttgart" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
+-<td><button value="Хейн" action="bypass _bbsteleport;Heine" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
++<td><button value="Gludio" action="bypass _bbsteleport;Gludio" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
++<td><button value="Schuttgart" action="bypass _bbsteleport;Schuttgart" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
++<td><button value="Heine" action="bypass _bbsteleport;Heine" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
+ </tr><tr>
+-<td><button value="Глудин" action="bypass _bbsteleport;Gludin" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
+-<td><button value="Деревня Охотников" action="bypass _bbsteleport;Hunters" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
++<td><button value="Gludin" action="bypass _bbsteleport;Gludin" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
++<td><button value="Hunters Village" action="bypass _bbsteleport;Hunters" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
+ </tr></table>
+ <table align=center border="0">
+ <tr><td height=20></td></tr></table>
+@@ -30,5 +30,5 @@
+ <tr><td height=60></td></tr></table>
+ <table border=0 cellpadding=0 cellspacing=0 width=500><tr><td height=10></td></tr></table>
+ <table border=0 bgcolor="000000" cellpadding=0 cellspacing=0 width=500>
+-<tr><td height=50 align=center><font color=696969><br>L2HUB · ДОСКА СООБЩЕСТВА</font></td></tr>
++<tr><td height=50 align=center><font color=696969><br>L2HUB · COMMUNITY BOARD</font></td></tr>
+ </table></center></td></tr></table></body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/html/CommunityBoard/Custom/home.html b/dist/game/data/html/CommunityBoard/Custom/home.html
+index ccdf199e9a689aa140916c9a6b197ba5788ea63e..256236f90fa5335aefa2ee4ebfdc1b9d8f7487a0 100644
+--- a/dist/game/data/html/CommunityBoard/Custom/home.html
++++ b/dist/game/data/html/CommunityBoard/Custom/home.html
+@@ -27,7 +27,7 @@
+ 							<tr>
+ 								<td align="center" height=292>
+ 									<img src="L2UI_CH3.Etc.onscrmsg_pattern01_2" width="292" height="32"><br>
+-									<font name="hs12" color="CDB67F">L2Hub — сервер для своих</font><br><br><font color="B09878">Слева: баффер с наборами для воина и мага, GM-шоп, телепорт по городам,<br1>напарники (Весна лечит, Митяй бафает),<br1>охотники — кто где качается и торгует, и поиск дропа.</font><br><br><font color="808080">Напарникам можно писать в общий чат рядом или в чат пати: «за мной», «бафни», «хил», «рес», «пока».</font>
++									<font name="hs12" color="CDB67F">L2Hub — a server for friends</font><br><br><font color="B09878">On the left: a buffer with fighter and mage sets, a GM Shop, teleports to towns,<br1>companions (Vesna heals, Mityai buffs),<br1>hunters — who levels and trades where — and drop search.</font><br><br><font color="808080">You can tell companions in nearby general chat or in party chat: "follow", "buff", "heal", "res", "bye".</font>
+ 								</td>
+ 							</tr>
+ 						</table>
+@@ -38,7 +38,7 @@
+ 						</table>
+ 						<table border=0 bgcolor="000000" cellpadding=0 cellspacing=0 width=500>
+ 							<tr>
+-								<td height=50 align=center><font color=696969><br>L2HUB · ДОСКА СООБЩЕСТВА</font></td>
++								<td height=50 align=center><font color=696969><br>L2HUB · COMMUNITY BOARD</font></td>
+ 							</tr>
+ 						</table>
+ 					</center>
+diff --git a/dist/game/data/html/CommunityBoard/Custom/navigation.html b/dist/game/data/html/CommunityBoard/Custom/navigation.html
+index a2e254d954f430d1f549e5d5b6a7b7a263e463a6..a897410676a8e799f5bf7b1f941baf53643aabf1 100644
+--- a/dist/game/data/html/CommunityBoard/Custom/navigation.html
++++ b/dist/game/data/html/CommunityBoard/Custom/navigation.html
+@@ -1,12 +1,12 @@
+ <table valign="top" bgcolor="000000"><tr><td height=25></td></tr><tr><td>
+-<button value="Главная" action="bypass _bbstop;home.html" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
+-<button value="Баффер" action="bypass _bbshubbuff" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
+-<button value="GM-шоп" action="bypass _bbshubshop" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
+-<button value="Телепорт" action="bypass _bbstop;gatekeeper/main.html" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
+-<button value="Напарники" action="bypass _bbshubbuddy" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
+-<button value="Охотники" action="bypass _bbshubhunters" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
+-<button value="Поручения" action="bypass voice .daily" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
+-<button value="Рейд" action="bypass voice .raid" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
+-<button value="Мир" action="bypass voice .world" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
+-<button value="Поиск дропа" action="bypass _bbstop;dropsearch/main.html" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
++<button value="Home" action="bypass _bbstop;home.html" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
++<button value="Buffer" action="bypass _bbshubbuff" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
++<button value="GM Shop" action="bypass _bbshubshop" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
++<button value="Teleport" action="bypass _bbstop;gatekeeper/main.html" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
++<button value="Companions" action="bypass _bbshubbuddy" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
++<button value="Hunters" action="bypass _bbshubhunters" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
++<button value="Daily tasks" action="bypass voice .daily" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
++<button value="Raid" action="bypass voice .raid" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
++<button value="World" action="bypass voice .world" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
++<button value="Drop search" action="bypass _bbstop;dropsearch/main.html" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
+ </td><td height=440></td></tr></table>
+\ No newline at end of file
+diff --git a/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/dropsearch/main.html b/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/dropsearch/main.html
+new file mode 100644
+index 0000000000000000000000000000000000000000..66d0630f5945caf16b66241ed188571f1983d39e
+--- /dev/null
++++ b/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/dropsearch/main.html
+@@ -0,0 +1,40 @@
++<html>
++	<body>
++		<table width=500>
++			<tr>
++			<td height=10></td>
++		</tr>
++	</table>
++	<table width=10>
++		<tr>
++			<td>%navigation%</td>
++		<td><center>
++			<table border=0 bgcolor="000000" cellpadding=0 cellspacing=0 width=500 height=415>
++			<tr><td height=15></td></tr>
++			<tr><td height=25 align="center"><font color="CDB67F">Поиск дропа</font></td></tr>
++			<tr><td><center><img src="L2UI.SquareGray" width=500 height=1></center></td></tr>
++			<tr><td height=15></td></tr>
++			<tr><td align="left"><font color="CDB67F">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1. Введи название предмета или его часть (по-английски, как в игре).</font></td></tr>
++			<tr><td align="left"><font color="CDB67F">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2. Нажми на иконку предмета — покажет, с кого падает.</font></td></tr>
++			<tr><td align="left"><font color="CDB67F">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3. Выбери моба — его место покажут на карте мира.</font></td></tr>
++			<tr><td height=15></td></tr>
++			<tr><td height=15 align="center">
++			<table><tr>
++			<td width=70>Предмет:</td><td><edit width=200 var="itemname"></td>
++			<td><button value="Найти" action="bypass _bbs_search_item $itemname" width=45 height=15 back="sek.cbui94" fore="sek.cbui92"></td>
++			</tr></table></td></tr>
++			<tr><td height=15 align="center"></td></tr>
++			<tr><td height=15></td></tr>
++			<tr><td><center><img src="L2UI.SquareGray" width=500 height=1></center></td></tr>
++			<tr><td align="center">
++			<table bgcolor=434343>%header%</table>
++			<table align=center border=0 height=250>%searchResult%</table><br>
++			<table align=center border=0>%pages%</table></td></tr>
++			</table>
++			<table border=0 cellpadding=0 cellspacing=0 width=500><tr><td height=10></td></tr></table>
++			<table border=0 bgcolor="000000" cellpadding=0 cellspacing=0 width=500>
++			<tr><td height=50 align=center><font color=696969><br>L2HUB · ДОСКА СООБЩЕСТВА</font></td></tr>
++			</table></center></td></tr>
++		</table>
++	</body>
++</html>
+\ No newline at end of file
+diff --git a/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/gatekeeper/main.html b/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/gatekeeper/main.html
+new file mode 100644
+index 0000000000000000000000000000000000000000..af3aceacb4074c07cd541a37d1b001c6ec22abd9
+--- /dev/null
++++ b/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/gatekeeper/main.html
+@@ -0,0 +1,34 @@
++<html><body>
++<table width=700><tr><td height=10></td></tr></table>
++<table width=20><tr><td>%navigation%</td><td><center>
++<table bgcolor="000000" width=500 height=415>
++<tr><td height=23></td></tr>
++<tr><td height=25 align="center"><font color="CDB67F">Телепорт</font></td></tr>
++<tr><td height=24></td></tr>
++<tr><td><center><img src="L2UI.SquareGray" width=500 height=1></center></td></tr>
++<tr><td height=25><center><br><br>Отсюда можно улететь в любой город.<br></td></tr>
++<tr><td align="center">
++<table align=center border="0" height=45><tr>
++<td><button value="Гиран" action="bypass _bbsteleport;Giran" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
++<td><button value="Аден" action="bypass _bbsteleport;Aden" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
++<td><button value="Годдард" action="bypass _bbsteleport;Goddard" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
++</tr><tr>
++<td><button value="Руна" action="bypass _bbsteleport;Rune" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
++<td><button value="Дион" action="bypass _bbsteleport;Dion" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
++<td><button value="Орен" action="bypass _bbsteleport;Oren" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
++</tr><tr>
++<td><button value="Глудио" action="bypass _bbsteleport;Gludio" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
++<td><button value="Шутгарт" action="bypass _bbsteleport;Schuttgart" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
++<td><button value="Хейн" action="bypass _bbsteleport;Heine" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
++</tr><tr>
++<td><button value="Глудин" action="bypass _bbsteleport;Gludin" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
++<td><button value="Деревня Охотников" action="bypass _bbsteleport;Hunters" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"></td>
++</tr></table>
++<table align=center border="0">
++<tr><td height=20></td></tr></table>
++</td></tr>
++<tr><td height=60></td></tr></table>
++<table border=0 cellpadding=0 cellspacing=0 width=500><tr><td height=10></td></tr></table>
++<table border=0 bgcolor="000000" cellpadding=0 cellspacing=0 width=500>
++<tr><td height=50 align=center><font color=696969><br>L2HUB · ДОСКА СООБЩЕСТВА</font></td></tr>
++</table></center></td></tr></table></body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/home.html b/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/home.html
+new file mode 100644
+index 0000000000000000000000000000000000000000..ccdf199e9a689aa140916c9a6b197ba5788ea63e
+--- /dev/null
++++ b/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/home.html
+@@ -0,0 +1,49 @@
++<html>
++	<body>
++		<table width=700>
++			<tr>
++				<td height=10></td>
++			</tr>
++		</table>
++		<table width=20>
++			<tr>
++				<td>
++					%navigation%
++				</td>
++				<td>
++					<center>
++						<table border=0 bgcolor="000000" cellpadding=0 cellspacing=0 width=500 height=415>
++							<tr>
++								<td height=35></td>
++							</tr>
++							<tr>
++								<td align="center">
++									<img src="l2ui.bbs_lineage2" width="78" height="16">
++								</td>
++							</tr>
++							<tr>
++								<td height=25></td>
++							</tr>
++							<tr>
++								<td align="center" height=292>
++									<img src="L2UI_CH3.Etc.onscrmsg_pattern01_2" width="292" height="32"><br>
++									<font name="hs12" color="CDB67F">L2Hub — сервер для своих</font><br><br><font color="B09878">Слева: баффер с наборами для воина и мага, GM-шоп, телепорт по городам,<br1>напарники (Весна лечит, Митяй бафает),<br1>охотники — кто где качается и торгует, и поиск дропа.</font><br><br><font color="808080">Напарникам можно писать в общий чат рядом или в чат пати: «за мной», «бафни», «хил», «рес», «пока».</font>
++								</td>
++							</tr>
++						</table>
++						<table border=0 cellpadding=0 cellspacing=0 width=500>
++							<tr>
++								<td height=10></td>
++							</tr>
++						</table>
++						<table border=0 bgcolor="000000" cellpadding=0 cellspacing=0 width=500>
++							<tr>
++								<td height=50 align=center><font color=696969><br>L2HUB · ДОСКА СООБЩЕСТВА</font></td>
++							</tr>
++						</table>
++					</center>
++				</td>
++			</tr>
++		</table>
++	</body>
++</html>
+\ No newline at end of file
+diff --git a/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/navigation.html b/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/navigation.html
+new file mode 100644
+index 0000000000000000000000000000000000000000..a2e254d954f430d1f549e5d5b6a7b7a263e463a6
+--- /dev/null
++++ b/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/navigation.html
+@@ -0,0 +1,12 @@
++<table valign="top" bgcolor="000000"><tr><td height=25></td></tr><tr><td>
++<button value="Главная" action="bypass _bbstop;home.html" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
++<button value="Баффер" action="bypass _bbshubbuff" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
++<button value="GM-шоп" action="bypass _bbshubshop" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
++<button value="Телепорт" action="bypass _bbstop;gatekeeper/main.html" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
++<button value="Напарники" action="bypass _bbshubbuddy" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
++<button value="Охотники" action="bypass _bbshubhunters" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
++<button value="Поручения" action="bypass voice .daily" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
++<button value="Рейд" action="bypass voice .raid" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
++<button value="Мир" action="bypass voice .world" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
++<button value="Поиск дропа" action="bypass _bbstop;dropsearch/main.html" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
++</td><td height=440></td></tr></table>
+\ No newline at end of file
 diff --git a/dist/game/data/scripts/custom/L2HubChronicle/L2HubChronicle.java b/dist/game/data/scripts/custom/L2HubChronicle/L2HubChronicle.java
 index fe27050103cc1be19c10c84fed66cace8af283dd..f78aaeb687eaa2e15582341e63a635029c3d28e0 100644
 --- a/dist/game/data/scripts/custom/L2HubChronicle/L2HubChronicle.java
@@ -103,9 +405,9 @@ index fe27050103cc1be19c10c84fed66cace8af283dd..f78aaeb687eaa2e15582341e63a63502
  		}
  	}
 @@ -291,8 +340,8 @@ public class L2HubChronicle
+ 		{
  			return;
  		}
- 		final Player player = event.getPlayer();
 -		final String name = (hunter(player) ? "Охотник " : "Игрок ") + player.getName();
 -		add("profession", name + " стал " + className(event.getTemplate().getPlayerClass().name()), player.getName(), null, null, null);
 +		final String name = (hunter(player) ? tr("Охотник ") : tr("Игрок ")) + player.getName();
@@ -1177,6 +1479,296 @@ index 5ffdf166e2cb83a2d70a7601e039c0a701daf64c..eb5941e305427d670577ce6bcb7d90de
  				eventStop();
  			}
  		}
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+index 7668d1088aed9d5aa96e55f3c7158222178acaa4..1a3341c451663128d5dc81e80bb86696ecfd023c 100644
+--- a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+@@ -32,6 +32,63 @@ import org.l2jmobius.gameserver.mechanics.skill.Skill;
+  */
+ public class L2HubBoard implements IParseBoardHandler
+ {
++	// L2Hub: язык наших текстов (tools/l2hub_lang.py): L2HubLanguage в config/Custom/L2HubWorld.ini — ru или en, лаунчер пишет его
++	// по языку окна. Строки в коде — по-русски, tr() при en подменяет их английскими из L2HUB_EN; чего там нет — по-русски.
++	private static final boolean L2HUB_ENGLISH = l2hubEnglish();
++	private static final java.util.Map<String, String> L2HUB_EN = java.util.Map.ofEntries(
++		java.util.Map.entry("Баффер", "Buffer"),
++		java.util.Map.entry("<br><font color=\"808080\">Баффер выключен в настройках сервера (L2HubTown.ini, TownBuffer).</font>", "<br><font color=\"808080\">The buffer is turned off in the server settings (L2HubTown.ini, TownBuffer).</font>"),
++		java.util.Map.entry("GM-шоп", "GM Shop"),
++		java.util.Map.entry("<br><font color=\"808080\">GM-шоп выключен в настройках сервера (L2HubTown.ini, TownGmShop).</font>", "<br><font color=\"808080\">The GM Shop is turned off in the server settings (L2HubTown.ini, TownGmShop).</font>"),
++		java.util.Map.entry("У тебя нет питомца.", "You have no pet."),
++		java.util.Map.entry("Бафы наложены: ", "Buffs applied: "),
++		java.util.Map.entry("Такого бафа у баффера нет.", "The buffer has no such buff."),
++		java.util.Map.entry("HP, MP и CP восстановлены.", "HP, MP and CP restored."),
++		java.util.Map.entry("Бафы сняты.", "Buffs removed."),
++		java.util.Map.entry("Воину — всё", "All for a fighter"),
++		java.util.Map.entry("Магу — всё", "All for a mage"),
++		java.util.Map.entry("Хил", "Heal"),
++		java.util.Map.entry("Снять бафы", "Remove buffs"),
++		java.util.Map.entry("Питомцу: воин", "Pet: fighter"),
++		java.util.Map.entry("Питомцу: маг", "Pet: mage"),
++		java.util.Map.entry("</font> — нажми на иконку, чтобы наложить баф", "</font> — click an icon to apply the buff"),
++		java.util.Map.entry(" (ниже — питомцу)", " (below — for your pet)"),
++		java.util.Map.entry("<br><font color=\"B09878\">Питомцу</font><br1>", "<br><font color=\"B09878\">For your pet</font><br1>"),
++		java.util.Map.entry("С кармой доской пользоваться нельзя.", "You cannot use the board with karma."),
++		java.util.Map.entry("Сейчас нельзя: ты в бою, мёртв или на событии.", "Not now: you are in combat, dead or in an event."),
++		java.util.Map.entry("Доской можно пользоваться только в мирной зоне.", "The board works only in a peace zone."),
++		java.util.Map.entry("Бафы", "Buffs"),
++		java.util.Map.entry("Танцы", "Dances"),
++		java.util.Map.entry("Песни", "Songs"),
++		java.util.Map.entry("Чанты", "Chants"),
++		java.util.Map.entry("Особые", "Special"),
++		java.util.Map.entry("Резисты", "Resists"),
++		java.util.Map.entry("Нет страниц GM-шопа (NPC ", "No GM Shop pages (NPC "),
++		java.util.Map.entry("В начало GM-шопа", "GM Shop start"),
++		java.util.Map.entry("Напарники", "Companions"),
++		java.util.Map.entry("Напарники выключены (EnablePhantoms в Phantoms.ini).", "Companions are turned off (EnablePhantoms in Phantoms.ini)."),
++		java.util.Map.entry("Охотники", "Hunters"),
++		java.util.Map.entry("Фантомы выключены (EnablePhantoms в Phantoms.ini).", "Phantoms are turned off (EnablePhantoms in Phantoms.ini)."));
++	
++	private static boolean l2hubEnglish()
++	{
++		final java.util.Properties config = new java.util.Properties();
++		try (java.io.Reader reader = java.nio.file.Files.newBufferedReader(java.nio.file.Paths.get("./config/Custom/L2HubWorld.ini"), java.nio.charset.StandardCharsets.UTF_8))
++		{
++			config.load(reader);
++		}
++		catch (Exception e)
++		{
++			return false;
++		}
++		return "en".equalsIgnoreCase(config.getProperty("L2HubLanguage", "ru").trim());
++	}
++	
++	private static String tr(String text)
++	{
++		return L2HUB_ENGLISH ? L2HUB_EN.getOrDefault(text, text) : text;
++	}
++	
+ 	private static final String NAVIGATION_PATH = "data/html/CommunityBoard/Custom/navigation.html";
+ 	private static final String BUFF = "_bbshubbuff";
+ 	private static final String SHOP = "_bbshubshop";
+@@ -64,11 +121,11 @@ public class L2HubBoard implements IParseBoardHandler
+ 		final String html;
+ 		if (args[0].equalsIgnoreCase(BUFF))
+ 		{
+-			html = townOn("TownBuffer") ? buffer(player, args) : page(player, "Баффер", "<br><font color=\"808080\">Баффер выключен в настройках сервера (L2HubTown.ini, TownBuffer).</font>");
++			html = townOn("TownBuffer") ? buffer(player, args) : page(player, tr("Баффер"), tr("<br><font color=\"808080\">Баффер выключен в настройках сервера (L2HubTown.ini, TownBuffer).</font>"));
+ 		}
+ 		else if (args[0].equalsIgnoreCase(SHOP))
+ 		{
+-			html = townOn("TownGmShop") ? shop(player, args) : page(player, "GM-шоп", "<br><font color=\"808080\">GM-шоп выключен в настройках сервера (L2HubTown.ini, TownGmShop).</font>");
++			html = townOn("TownGmShop") ? shop(player, args) : page(player, tr("GM-шоп"), tr("<br><font color=\"808080\">GM-шоп выключен в настройках сервера (L2HubTown.ini, TownGmShop).</font>"));
+ 		}
+ 		else if (args[0].equalsIgnoreCase(BUDDY))
+ 		{
+@@ -136,7 +193,7 @@ public class L2HubBoard implements IParseBoardHandler
+ 					final Creature target = pet ? player.getSummon() : player;
+ 					if (target == null)
+ 					{
+-						player.sendMessage("У тебя нет питомца.");
++						player.sendMessage(tr("У тебя нет питомца."));
+ 					}
+ 					else
+ 					{
+@@ -148,7 +205,7 @@ public class L2HubBoard implements IParseBoardHandler
+ 								count++;
+ 							}
+ 						}
+-						player.sendMessage("Бафы наложены: " + count + ".");
++						player.sendMessage(tr("Бафы наложены: ") + count + ".");
+ 					}
+ 				}
+ 				break;
+@@ -163,11 +220,11 @@ public class L2HubBoard implements IParseBoardHandler
+ 					final BuffSkillHolder holder = table.getAvailableBuff(category, parseInt(args[2]));
+ 					if (target == null)
+ 					{
+-						player.sendMessage("У тебя нет питомца.");
++						player.sendMessage(tr("У тебя нет питомца."));
+ 					}
+ 					else if ((holder == null) || !table.getSkillsIdsByType(category).contains(holder.getId()))
+ 					{
+-						player.sendMessage("Такого бафа у баффера нет.");
++						player.sendMessage(tr("Такого бафа у баффера нет."));
+ 					}
+ 					else if (pay(player, holder.getPrice()))
+ 					{
+@@ -187,7 +244,7 @@ public class L2HubBoard implements IParseBoardHandler
+ 					{
+ 						player.getSummon().setCurrentHpMp(player.getSummon().getMaxHp(), player.getSummon().getMaxMp());
+ 					}
+-					player.sendMessage("HP, MP и CP восстановлены.");
++					player.sendMessage(tr("HP, MP и CP восстановлены."));
+ 				}
+ 				break;
+ 			}
+@@ -198,7 +255,7 @@ public class L2HubBoard implements IParseBoardHandler
+ 				{
+ 					player.getEffectList().stopAllBuffs(true);
+ 					player.getEffectList().stopAllDances(true);
+-					player.sendMessage("Бафы сняты.");
++					player.sendMessage(tr("Бафы сняты."));
+ 				}
+ 				break;
+ 			}
+@@ -211,22 +268,22 @@ public class L2HubBoard implements IParseBoardHandler
+ 				break;
+ 			}
+ 		}
+-		return page(player, "Баффер", bufferContent(player, table, types, category));
++		return page(player, tr("Баффер"), bufferContent(player, table, types, category));
+ 	}
+ 
+ 	private static String bufferContent(Player player, SchemeBufferTable table, List<String> types, String category)
+ 	{
+ 		final StringBuilder sb = new StringBuilder(12288);
+ 		sb.append("<table width=480><tr>");
+-		sb.append("<td align=center>").append(button("Воину — всё", BUFF + " set fighter", 120)).append("</td>");
+-		sb.append("<td align=center>").append(button("Магу — всё", BUFF + " set mage", 120)).append("</td>");
+-		sb.append("<td align=center>").append(button("Хил", BUFF + " heal " + category, 120)).append("</td>");
+-		sb.append("<td align=center>").append(button("Снять бафы", BUFF + " cancel " + category, 120)).append("</td>");
++		sb.append("<td align=center>").append(button(tr("Воину — всё"), BUFF + " set fighter", 120)).append("</td>");
++		sb.append("<td align=center>").append(button(tr("Магу — всё"), BUFF + " set mage", 120)).append("</td>");
++		sb.append("<td align=center>").append(button(tr("Хил"), BUFF + " heal " + category, 120)).append("</td>");
++		sb.append("<td align=center>").append(button(tr("Снять бафы"), BUFF + " cancel " + category, 120)).append("</td>");
+ 		sb.append("</tr>");
+ 		if (player.hasSummon())
+ 		{
+-			sb.append("<tr><td align=center>").append(button("Питомцу: воин", BUFF + " set fighter pet", 120)).append("</td>");
+-			sb.append("<td align=center>").append(button("Питомцу: маг", BUFF + " set mage pet", 120)).append("</td><td></td><td></td></tr>");
++			sb.append("<tr><td align=center>").append(button(tr("Питомцу: воин"), BUFF + " set fighter pet", 120)).append("</td>");
++			sb.append("<td align=center>").append(button(tr("Питомцу: маг"), BUFF + " set mage pet", 120)).append("</td><td></td><td></td></tr>");
+ 		}
+ 		sb.append("</table><br>");
+ 
+@@ -243,11 +300,11 @@ public class L2HubBoard implements IParseBoardHandler
+ 		}
+ 		sb.append("</tr></table><br>");
+ 
+-		sb.append("<font color=\"LEVEL\">").append(categoryName(category)).append("</font> — нажми на иконку, чтобы наложить баф").append(player.hasSummon() ? " (ниже — питомцу)" : "").append("<br1>");
++		sb.append("<font color=\"LEVEL\">").append(categoryName(category)).append(tr("</font> — нажми на иконку, чтобы наложить баф")).append(player.hasSummon() ? tr(" (ниже — питомцу)") : "").append("<br1>");
+ 		sb.append(iconGrid(table, category, ""));
+ 		if (player.hasSummon())
+ 		{
+-			sb.append("<br><font color=\"B09878\">Питомцу</font><br1>").append(iconGrid(table, category, " pet"));
++			sb.append(tr("<br><font color=\"B09878\">Питомцу</font><br1>")).append(iconGrid(table, category, " pet"));
+ 		}
+ 		return sb.toString();
+ 	}
+@@ -298,19 +355,19 @@ public class L2HubBoard implements IParseBoardHandler
+ 	{
+ 		if (CommunityBoardConfig.COMMUNITYBOARD_KARMA_DISABLED && (player.getKarma() > 0))
+ 		{
+-			player.sendMessage("С кармой доской пользоваться нельзя.");
++			player.sendMessage(tr("С кармой доской пользоваться нельзя."));
+ 			return false;
+ 		}
+ 
+ 		if (CommunityBoardConfig.COMMUNITYBOARD_COMBAT_DISABLED && (player.isCastingNow() || player.isInCombat() || player.isInDuel() || player.isInOlympiadMode() || player.isInsideZone(ZoneId.SIEGE) || player.isInsideZone(ZoneId.PVP) || (player.getPvpFlag() > 0) || player.isAlikeDead() || player.isOnEvent() || player.isInStoreMode()))
+ 		{
+-			player.sendMessage("Сейчас нельзя: ты в бою, мёртв или на событии.");
++			player.sendMessage(tr("Сейчас нельзя: ты в бою, мёртв или на событии."));
+ 			return false;
+ 		}
+ 
+ 		if (CommunityBoardConfig.COMMUNITYBOARD_PEACE_ONLY && !player.isInsideZone(ZoneId.PEACE))
+ 		{
+-			player.sendMessage("Доской можно пользоваться только в мирной зоне.");
++			player.sendMessage(tr("Доской можно пользоваться только в мирной зоне."));
+ 			return false;
+ 		}
+ 		return true;
+@@ -322,27 +379,27 @@ public class L2HubBoard implements IParseBoardHandler
+ 		{
+ 			case "buffs":
+ 			{
+-				return "Бафы";
++				return tr("Бафы");
+ 			}
+ 			case "dances":
+ 			{
+-				return "Танцы";
++				return tr("Танцы");
+ 			}
+ 			case "songs":
+ 			{
+-				return "Песни";
++				return tr("Песни");
+ 			}
+ 			case "chants":
+ 			{
+-				return "Чанты";
++				return tr("Чанты");
+ 			}
+ 			case "special":
+ 			{
+-				return "Особые";
++				return tr("Особые");
+ 			}
+ 			case "resist":
+ 			{
+-				return "Резисты";
++				return tr("Резисты");
+ 			}
+ 			default:
+ 			{
+@@ -386,7 +443,7 @@ public class L2HubBoard implements IParseBoardHandler
+ 		}
+ 		if (htm == null)
+ 		{
+-			return page(player, "GM-шоп", "Нет страниц GM-шопа (NPC " + npcId + ").");
++			return page(player, tr("GM-шоп"), tr("Нет страниц GM-шопа (NPC ") + npcId + ").");
+ 		}
+ 
+ 		final Matcher body = BODY.matcher(htm);
+@@ -395,9 +452,9 @@ public class L2HubBoard implements IParseBoardHandler
+ 		content = NPC_MULTISELL.matcher(content).replaceAll("bypass " + SHOP + " ms $1 " + pageId);
+ 		if (pageId > 0)
+ 		{
+-			content = button("В начало GM-шопа", SHOP, 150) + "<br>" + content;
++			content = button(tr("В начало GM-шопа"), SHOP, 150) + "<br>" + content;
+ 		}
+-		return page(player, "GM-шоп", content);
++		return page(player, tr("GM-шоп"), content);
+ 	}
+ 
+ 	// ---------- Напарники ----------
+@@ -409,7 +466,7 @@ public class L2HubBoard implements IParseBoardHandler
+ 	{
+ 		if (!PhantomsConfig.PHANTOMS_ENABLED)
+ 		{
+-			return page(player, "Напарники", "Напарники выключены (EnablePhantoms в Phantoms.ini).");
++			return page(player, tr("Напарники"), tr("Напарники выключены (EnablePhantoms в Phantoms.ini)."));
+ 		}
+ 
+ 		if (args.length > 1)
+@@ -420,7 +477,7 @@ public class L2HubBoard implements IParseBoardHandler
+ 				player.sendMessage(error);
+ 			}
+ 		}
+-		return page(player, "Напарники", PhantomUi.render(player, "bypass " + BUDDY));
++		return page(player, tr("Напарники"), PhantomUi.render(player, "bypass " + BUDDY));
+ 	}
+ 
+ 	// ---------- Охотники ----------
+@@ -432,7 +489,7 @@ public class L2HubBoard implements IParseBoardHandler
+ 	{
+ 		if (!PhantomsConfig.PHANTOMS_ENABLED)
+ 		{
+-			return page(player, "Охотники", "Фантомы выключены (EnablePhantoms в Phantoms.ini).");
++			return page(player, tr("Охотники"), tr("Фантомы выключены (EnablePhantoms в Phantoms.ini)."));
+ 		}
+ 
+ 		int i = 1;
+@@ -449,7 +506,7 @@ public class L2HubBoard implements IParseBoardHandler
+ 			}
+ 			i = 3;
+ 		}
+-		return page(player, "Охотники", PhantomHunterUi.board(player, args.length > i ? args[i] : null, args.length > (i + 1) ? parseInt(args[i + 1]) : 0, "bypass " + HUNTERS));
++		return page(player, tr("Охотники"), PhantomHunterUi.board(player, args.length > i ? args[i] : null, args.length > (i + 1) ? parseInt(args[i + 1]) : 0, "bypass " + HUNTERS));
+ 	}
+ 
+ 	// ---------- Общее ----------
 diff --git a/java/org/l2jmobius/gameserver/entity/actor/SuperChampion.java b/java/org/l2jmobius/gameserver/entity/actor/SuperChampion.java
 index 97e2837dafa24323abcfe6665b5f66c4051048a5..74d072d3b31b216281a424252b7371c529299ece 100644
 --- a/java/org/l2jmobius/gameserver/entity/actor/SuperChampion.java

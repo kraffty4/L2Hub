@@ -1,0 +1,96 @@
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/Creature.java b/java/org/l2jmobius/gameserver/entity/actor/Creature.java
+index 98b04466260e0f4dcc66b980ce2821b4c25082a3..fa86efcaa62e0efff695f66aa9b4b3cde4b4f7a2 100644
+--- a/java/org/l2jmobius/gameserver/entity/actor/Creature.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/Creature.java
+@@ -3206,6 +3206,12 @@ public abstract class Creature extends WorldObject
+ 		_isInvul = value;
+ 	}
+ 	
++	/** L2Hub: только выставленная через setInvul неуязвимость, без телепорта и эффектов. */
++	public boolean isInvulSet()
++	{
++		return _isInvul;
++	}
++	
+ 	public boolean isInvul()
+ 	{
+ 		return _isInvul || _isTeleporting || isAffected(EffectFlag.INVUL);
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/Player.java b/java/org/l2jmobius/gameserver/entity/actor/Player.java
+index 0690ba1ce20f78fac80e4b1164bf70bed7d457e6..c6bca9f04492ac412d0bae0593ac969f3fce0f52 100644
+--- a/java/org/l2jmobius/gameserver/entity/actor/Player.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/Player.java
+@@ -587,6 +587,8 @@ public class Player extends Playable
+ 	/** Location before entering Observer Mode */
+ 	private final Location _lastLoc = new Location(0, 0, 0);
+ 	private boolean _observerMode = false;
++	private boolean _observerPriorInvisible;
++	private boolean _observerPriorInvul;
+ 	
+ 	/** Stored from last ValidatePosition **/
+ 	private final Location _lastServerPosition = new Location(0, 0, 0);
+@@ -9993,6 +9995,7 @@ public class Player extends Playable
+ 		
+ 		// Remove Hide.
+ 		getEffectList().stopSkillEffects(SkillFinishType.REMOVED, AbnormalType.HIDE);
++		rememberObserverPrior();
+ 		_observerMode = true;
+ 		setTarget(null);
+ 		setParalyzed(true);
+@@ -10004,6 +10007,23 @@ public class Player extends Playable
+ 		broadcastUserInfo();
+ 	}
+ 	
++	/** L2Hub: состояние до наблюдения; смена арены его не переписывает. */
++	private void rememberObserverPrior()
++	{
++		if (!_observerMode)
++		{
++			_observerPriorInvisible = isInvisible();
++			_observerPriorInvul = isInvulSet();
++		}
++	}
++	
++	/** L2Hub: игрок выходит обычным, GM — каким вошёл: раньше он оставался невидимым и неуязвимым, даже если входил без этого. */
++	private void restoreObserverPrior()
++	{
++		setInvisible(isGM() && _observerPriorInvisible);
++		setInvul(isGM() && _observerPriorInvul);
++	}
++	
+ 	public void setLastLocation()
+ 	{
+ 		_lastLoc.setXYZ(getX(), getY(), getZ());
+@@ -10051,6 +10071,7 @@ public class Player extends Playable
+ 			setLastLocation();
+ 		}
+ 		
++		rememberObserverPrior();
+ 		_observerMode = true;
+ 		setTarget(null);
+ 		setInvul(true);
+@@ -10068,11 +10089,7 @@ public class Player extends Playable
+ 		unsetLastLocation();
+ 		sendPacket(new ObservationReturn(getLocation()));
+ 		setParalyzed(false);
+-		if (!isGM())
+-		{
+-			setInvisible(false);
+-			setInvul(false);
+-		}
++		restoreObserverPrior();
+ 		
+ 		if (hasAI())
+ 		{
+@@ -10097,11 +10114,7 @@ public class Player extends Playable
+ 		sendPacket(new ExOlympiadMode(0));
+ 		setInstanceId(0);
+ 		teleToLocation(_lastLoc, true);
+-		if (!isGM())
+-		{
+-			setInvisible(false);
+-			setInvul(false);
+-		}
++		restoreObserverPrior();
+ 		
+ 		if (hasAI())
+ 		{

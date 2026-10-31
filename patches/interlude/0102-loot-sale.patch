@@ -1,0 +1,82 @@
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+index e13f530dd806c8a1e43b54b5498fbffebad16bb9..eac9e673738a3811140220c34095ed84cf4ab8d2 100644
+--- a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+@@ -4,6 +4,7 @@ import java.util.List;
+ import java.util.regex.Matcher;
+ import java.util.regex.Pattern;
+ 
++import org.l2jmobius.commons.threads.ThreadPool;
+ import org.l2jmobius.gameserver.cache.HtmCache;
+ import org.l2jmobius.gameserver.config.custom.CommunityBoardConfig;
+ import org.l2jmobius.gameserver.config.custom.PhantomsConfig;
+@@ -20,8 +21,10 @@ import org.l2jmobius.gameserver.handler.IParseBoardHandler;
+ import org.l2jmobius.gameserver.managers.phantom.PhantomClanBoard;
+ import org.l2jmobius.gameserver.managers.phantom.PhantomBufferSets;
+ import org.l2jmobius.gameserver.managers.phantom.PhantomHunterUi;
++import org.l2jmobius.gameserver.managers.phantom.PhantomLootSell;
+ import org.l2jmobius.gameserver.managers.phantom.PhantomUi;
+ import org.l2jmobius.gameserver.mechanics.skill.Skill;
++import org.l2jmobius.gameserver.network.serverpackets.SellList;
+ 
+ /**
+  * L2Hub: доска Alt+B — баффер, GM-шоп и напарники.
+@@ -436,10 +439,24 @@ public class L2HubBoard implements IParseBoardHandler
+ 	// ---------- GM-шоп ----------
+ 
+ 	/**
+-	 * _bbshubshop [страница] | ms &lt;мультиселл&gt; &lt;страница&gt;
++	 * _bbshubshop [страница] | ms &lt;мультиселл&gt; &lt;страница&gt; | sell
+ 	 */
+ 	private static String shop(Player player, String[] args)
+ 	{
++		if ((args.length > 1) && args[1].equalsIgnoreCase("sell"))
++		{
++			if (canUse(player) && PhantomLootSell.canUse(player))
++			{
++				ThreadPool.schedule(() ->
++				{
++					if (PhantomLootSell.canUse(player))
++					{
++						player.sendPacket(new SellList(player));
++					}
++				}, 100);
++			}
++			return page(player, PhantomLootSell.title(), PhantomLootSell.content(SHOP));
++		}
+ 		int pageId = 0;
+ 		if ((args.length > 3) && args[1].equalsIgnoreCase("ms"))
+ 		{
+@@ -474,6 +491,7 @@ public class L2HubBoard implements IParseBoardHandler
+ 		{
+ 			content = button(tr("В начало GM-шопа"), SHOP, 150) + "<br>" + content;
+ 		}
++		content = button(PhantomLootSell.label(), SHOP + " sell", 170) + "<br>" + content;
+ 		return page(player, tr("GM-шоп"), content);
+ 	}
+ 
+diff --git a/java/org/l2jmobius/gameserver/network/clientpackets/RequestSellItem.java b/java/org/l2jmobius/gameserver/network/clientpackets/RequestSellItem.java
+index 1675361ccbd0a8b974542a85af28e3a7c33a03c2..fd240d19807557b6d6bd7a4144b2231d8e5a940f 100644
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/RequestSellItem.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/RequestSellItem.java
+@@ -38,6 +38,7 @@ import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
+ import org.l2jmobius.gameserver.entity.item.holders.UniqueItemHolder;
+ import org.l2jmobius.gameserver.entity.item.instance.Item;
+ import org.l2jmobius.gameserver.managers.PunishmentManager;
++import org.l2jmobius.gameserver.managers.phantom.PhantomLootSell;
+ import org.l2jmobius.gameserver.mechanics.buylist.BuyListHolder;
+ import org.l2jmobius.gameserver.network.SystemMessageId;
+ import org.l2jmobius.gameserver.network.serverpackets.ActionFailed;
+@@ -110,6 +111,12 @@ public class RequestSellItem extends ClientPacket
+ 		
+ 		final WorldObject target = player.getTarget();
+ 		Creature merchant = null;
++		// L2Hub: продажа лута с доски (PhantomLootSell). Номер списка 0 у любой продажи: настоящий торговец — цель рядом, иначе это доска, и условия проверяются здесь.
++		if (!player.isGM() && (_listId == CUSTOM_CB_SELL_LIST) && !((target instanceof Merchant) && player.isInsideRadius3D(target, INTERACTION_DISTANCE)) && !PhantomLootSell.canUse(player))
++		{
++			player.sendPacket(ActionFailed.STATIC_PACKET);
++			return;
++		}
+ 		if (!player.isGM() && (_listId != CUSTOM_CB_SELL_LIST))
+ 		{
+ 			if ((target == null) || (!player.isInsideRadius3D(target, INTERACTION_DISTANCE)) || (player.getInstanceId() != target.getInstanceId()))

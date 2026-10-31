@@ -36,6 +36,8 @@ import org.l2jmobius.gameserver.mechanics.events.holders.actor.player.OnPlayerLo
 import org.l2jmobius.gameserver.mechanics.events.listeners.ConsumerEventListener;
 import org.l2jmobius.gameserver.network.serverpackets.ExShowScreenMessage;
 import org.l2jmobius.gameserver.network.serverpackets.NpcHtmlMessage;
+import org.l2jmobius.gameserver.managers.phantom.PhantomText;
+import static org.l2jmobius.gameserver.managers.phantom.PhantomText.tr;
 
 /**
  * L2Hub: поручения дня (docs/WORLD.md, раздел 1; {@code WorldDaily} в L2HubWorld.ini). У каждого персонажа три задания на день по его уровню:
@@ -84,10 +86,10 @@ public final class WorldDaily
 	/** Вид задания. */
 	public enum Kind
 	{
-		HUNT("Охота"),
-		SPOT("Место дня"),
-		CHAMPION("Чемпион"),
-		HUNTER_PARTY("Вместе с охотником");
+		HUNT(tr("Охота")),
+		SPOT(tr("Место дня")),
+		CHAMPION(tr("Чемпион")),
+		HUNTER_PARTY(tr("Вместе с охотником"));
 
 		final String title;
 
@@ -234,7 +236,7 @@ public final class WorldDaily
 			}
 			final Day day = day(player);
 			final int done = day.rewarded();
-			player.sendMessage(done >= day.tasks.size() ? "Поручения дня выполнены. Новые — в " + resetTime() + "." : "Поручения дня: выполнено " + done + " из " + day.tasks.size() + " — команда .daily.");
+			player.sendMessage(done >= day.tasks.size() ? tr("Поручения дня выполнены. Новые — в ") + resetTime() + "." : tr("Поручения дня: выполнено ") + done + tr(" из ") + day.tasks.size() + tr(" — команда .daily."));
 		}, 8000);
 	}
 
@@ -266,7 +268,7 @@ public final class WorldDaily
 				{
 					if ((task.need >= 8) && (task.done == (((task.need * step) + 99) / 100)))
 					{
-						player.sendMessage("Поручение «" + task.kind.title + "»: " + task.done + " из " + task.need + ".");
+						player.sendMessage(tr("Поручение «") + task.kind.title + "»: " + task.done + tr(" из ") + task.need + ".");
 					}
 				}
 			}
@@ -319,8 +321,8 @@ public final class WorldDaily
 		{
 			player.addExpAndSp(exp, 0);
 		}
-		player.sendPacket(new ExShowScreenMessage("Поручение выполнено: " + task.kind.title, 5000));
-		player.sendMessage("Поручение «" + task.kind.title + "» выполнено: +" + adena + " адены" + (exp > 0 ? ", +" + exp + " опыта" : "") + ". Осталось: " + (day.tasks.size() - day.rewarded()) + ".");
+		player.sendPacket(new ExShowScreenMessage(tr("Поручение выполнено: ") + task.kind.title, 5000));
+		player.sendMessage(tr("Поручение «") + task.kind.title + tr("» выполнено: +") + adena + tr(" адены") + (exp > 0 ? ", +" + exp + tr(" опыта") : "") + tr(". Осталось: ") + (day.tasks.size() - day.rewarded()) + ".");
 		LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " (" + level + ") done " + task.kind + " (" + task.need + "): +" + adena + " adena, +" + exp + " exp.");
 
 		if ((day.rewarded() >= day.tasks.size()) && !day.bonus && L2HubWorldConfig.WORLD_DAILY_BONUS)
@@ -331,16 +333,16 @@ public final class WorldDaily
 			{
 				final int scroll = ARMOR_SCROLLS[grade - 1];
 				PhantomCompat.addItem(player, ItemProcessType.REWARD, scroll, 1, player);
-				player.sendMessage("Все поручения дня выполнены! Бонус: " + ItemData.getInstance().getTemplate(scroll).getName() + ".");
+				player.sendMessage(tr("Все поручения дня выполнены! Бонус: ") + ItemData.getInstance().getTemplate(scroll).getName() + ".");
 				LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " did all daily tasks: bonus " + ItemData.getInstance().getTemplate(scroll).getName() + ".");
 			}
 			else if (adena > 0)
 			{
 				PhantomCompat.addAdena(player, ItemProcessType.REWARD, adena, player, true);
-				player.sendMessage("Все поручения дня выполнены! Бонус: +" + adena + " адены.");
+				player.sendMessage(tr("Все поручения дня выполнены! Бонус: +") + adena + tr(" адены."));
 				LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " did all daily tasks: bonus " + adena + " adena.");
 			}
-			player.sendPacket(new ExShowScreenMessage("Все поручения дня выполнены!", 6000));
+			player.sendPacket(new ExShowScreenMessage(tr("Все поручения дня выполнены!"), 6000));
 		}
 		player.getVariables().set(VARIABLE, encode(day));
 		player.getVariables().storeMe();
@@ -550,39 +552,48 @@ public final class WorldDaily
 	 */
 	void show(Player player)
 	{
+		player.sendPacket(new NpcHtmlMessage(html(player)));
+	}
+
+	/**
+	 * @param player кто смотрит
+	 * @return окно поручений целиком
+	 */
+	public String html(Player player)
+	{
 		final Day day = day(player);
 		final int level = player.getLevel();
 		final long adena = (long) L2HubWorldConfig.WORLD_DAILY_ADENA * level * level;
 		final long exp = expPercent(level, L2HubWorldConfig.WORLD_DAILY_EXP_PERCENT);
-		final StringBuilder sb = new StringBuilder("<html><title>Поручения дня</title><body><center><font color=\"LEVEL\">Поручения дня</font></center><br>");
-		sb.append("<font color=\"B09878\">Выполнено ").append(day.rewarded()).append(" из ").append(day.tasks.size()).append(". Новые — в ").append(resetTime()).append(".</font><br><br>");
+		final StringBuilder sb = new StringBuilder(tr("<html><title>Поручения дня</title><body><center><font color=\"LEVEL\">Поручения дня</font></center><br>"));
+		sb.append(tr("<font color=\"B09878\">Выполнено ")).append(day.rewarded()).append(tr(" из ")).append(day.tasks.size()).append(tr(". Новые — в ")).append(resetTime()).append(".</font><br><br>");
 		sb.append("<table width=280>");
 		synchronized (day)
 		{
 			for (Task task : day.tasks)
 			{
 				final String color = task.rewarded ? "808080" : "FFFFFF";
-				sb.append("<tr><td width=200><font color=\"").append(task.rewarded ? "6E8B3D" : "LEVEL").append("\">").append(task.rewarded ? "(готово) " : "").append(task.kind.title).append("</font></td>");
+				sb.append("<tr><td width=200><font color=\"").append(task.rewarded ? "6E8B3D" : "LEVEL").append("\">").append(task.rewarded ? tr("(готово) ") : "").append(task.kind.title).append("</font></td>");
 				sb.append("<td width=80 align=right><font color=\"").append(color).append("\">").append(Math.min(task.done, task.need)).append(" / ").append(task.need).append("</font></td></tr>");
 				sb.append("<tr><td colspan=2><font color=\"").append(task.rewarded ? "808080" : "A0A0A0").append("\">").append(text(task, player)).append("</font></td></tr>");
 				final HuntSpot spot = spot(task);
 				if ((spot != null) && !task.rewarded)
 				{
 					final int fee = level > PlayerConfig.MAX_FREE_TELEPORT_LEVEL ? L2HubWorldConfig.WORLD_DAILY_TELEPORT_FEE : 0;
-					sb.append("<tr><td colspan=2 align=center><button value=\"Туда").append(fee > 0 ? " (" + fee + ")" : "").append("\" action=\"bypass voice .daily go\" width=120 height=21 back=\"").append(PhantomCompat.BUTTON_BACK).append("\" fore=\"").append(PhantomCompat.BUTTON_FORE).append("\"></td></tr>");
+					sb.append(tr("<tr><td colspan=2 align=center><button value=\"Туда")).append(fee > 0 ? " (" + fee + ")" : "").append("\" action=\"bypass voice .daily go\" width=120 height=21 back=\"").append(PhantomCompat.BUTTON_BACK).append("\" fore=\"").append(PhantomCompat.BUTTON_FORE).append("\"></td></tr>");
 				}
 				sb.append("<tr><td colspan=2 height=8></td></tr>");
 			}
 		}
 		sb.append("</table><br>");
-		sb.append("<font color=\"B09878\">За каждое: ").append(adena).append(" адены").append(exp > 0 ? " и " + L2HubWorldConfig.WORLD_DAILY_EXP_PERCENT + "% уровня (" + exp + " опыта)" : "").append(".");
+		sb.append(tr("<font color=\"B09878\">За каждое: ")).append(adena).append(tr(" адены")).append(exp > 0 ? tr(" и ") + L2HubWorldConfig.WORLD_DAILY_EXP_PERCENT + tr("% уровня (") + exp + tr(" опыта)") : "").append(".");
 		if (L2HubWorldConfig.WORLD_DAILY_BONUS)
 		{
 			final int grade = Math.min(ARMOR_SCROLLS.length, PhantomCompat.expertiseLevel(player));
-			sb.append(" За все три — ").append((grade > 0) && (level >= LEAVE_HOME_LEVEL) ? ItemData.getInstance().getTemplate(ARMOR_SCROLLS[grade - 1]).getName() : "ещё столько же адены").append(day.bonus ? " (получено)" : "").append('.');
+			sb.append(tr(" За все три — ")).append((grade > 0) && (level >= LEAVE_HOME_LEVEL) ? ItemData.getInstance().getTemplate(ARMOR_SCROLLS[grade - 1]).getName() : tr("ещё столько же адены")).append(day.bonus ? tr(" (получено)") : "").append('.');
 		}
-		sb.append(" В пати засчитывается всё, что убила пати рядом с тобой.</font></body></html>");
-		player.sendPacket(new NpcHtmlMessage(sb.toString()));
+		sb.append(tr(" В пати засчитывается всё, что убила пати рядом с тобой.</font></body></html>"));
+		return sb.toString();
 	}
 
 	private static String text(Task task, Player player)
@@ -591,20 +602,20 @@ public final class WorldDaily
 		{
 			case HUNT:
 			{
-				return "Убей мобов не слабее " + Math.max(1, player.getLevel() - HUNT_LEVEL_GAP) + "-го уровня.";
+				return tr("Убей мобов не слабее ") + Math.max(1, player.getLevel() - HUNT_LEVEL_GAP) + tr("-го уровня.");
 			}
 			case SPOT:
 			{
 				final HuntSpot spot = spot(task);
-				return spot == null ? "Спот пропал — задание засчитается любым мобом." : "Поохоться здесь: " + spot.name + " (" + spot.region + ", мобы " + spot.min + "–" + spot.max + ").";
+				return spot == null ? tr("Спот пропал — задание засчитается любым мобом.") : tr("Поохоться здесь: ") + PhantomText.spotName(spot.name) + " (" + spot.region + tr(", мобы ") + spot.min + "–" + spot.max + ").";
 			}
 			case CHAMPION:
 			{
-				return "Убей чемпиона — синего или красного (" + ChampionMonstersConfig.CHAMP_MIN_LEVEL + "–" + ChampionMonstersConfig.CHAMP_MAX_LEVEL + " ур.). Окно моба по Shift+клику покажет.";
+				return tr("Убей чемпиона — синего или красного (") + ChampionMonstersConfig.CHAMP_MIN_LEVEL + "–" + ChampionMonstersConfig.CHAMP_MAX_LEVEL + tr(" ур.). Окно моба по Shift+клику покажет.");
 			}
 			case HUNTER_PARTY:
 			{
-				return "Качайся в пати с охотником: крикни «лфм» в общий чат рядом с ними или пригласи сам (.hunters — кто где).";
+				return tr("Качайся в пати с охотником: крикни «лфм» в общий чат рядом с ними или пригласи сам (.hunters — кто где).");
 			}
 		}
 		return "";
@@ -627,14 +638,14 @@ public final class WorldDaily
 			final int fee = player.getLevel() > PlayerConfig.MAX_FREE_TELEPORT_LEVEL ? L2HubWorldConfig.WORLD_DAILY_TELEPORT_FEE : 0;
 			if ((fee > 0) && !PhantomCompat.reduceAdena(player, ItemProcessType.FEE, fee, player, true))
 			{
-				return "Не хватает адены на телепорт: " + fee + ".";
+				return tr("Не хватает адены на телепорт: ") + fee + ".";
 			}
 			final double angle = Math.random() * 2 * Math.PI;
 			player.teleToLocation(new Location(spot.entry.getX() + (int) (Math.cos(angle) * 80), spot.entry.getY() + (int) (Math.sin(angle) * 80), spot.entry.getZ()), true);
 			LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " teleports to the daily spot " + spot + ".");
 			return null;
 		}
-		return "Места дня нет или оно уже выполнено.";
+		return tr("Места дня нет или оно уже выполнено.");
 	}
 
 	public static WorldDaily getInstance()

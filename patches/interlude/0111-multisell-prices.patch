@@ -1,0 +1,22 @@
+diff --git a/dist/game/data/multisell/custom/600010.xml b/dist/game/data/multisell/custom/600010.xml
+index 21b0642a2fc4f426bfee933515157e71ffb131f1..f59116a65851188de32ad259bd8bf6e9930ea502 100644
+--- a/dist/game/data/multisell/custom/600010.xml
++++ b/dist/game/data/multisell/custom/600010.xml
+@@ -5,7 +5,7 @@
+ 	</npcs>
+ 	<item>
+ 		<!-- Adena -->
+-		<ingredient count="250000" id="57" />
++		<ingredient count="860000" id="57" />
+ 		<!-- Ring of Seal -->
+ 		<production count="1" id="886" />
+ 		<production count="1" id="886" />
+@@ -17,7 +17,7 @@
+ 	</item>
+ 	<item>
+ 		<!-- Adena -->
+-		<ingredient count="500000" id="57" />
++		<ingredient count="1500000" id="57" />
+ 		<!-- Earring of Aid -->
+ 		<production count="1" id="873" />
+ 		<production count="1" id="873" />

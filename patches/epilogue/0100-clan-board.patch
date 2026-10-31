@@ -1,0 +1,87 @@
+diff --git a/dist/game/data/html/CommunityBoard/Custom/navigation.html b/dist/game/data/html/CommunityBoard/Custom/navigation.html
+index 8b316d45ef1ce2852d092f35d787339e87dc0e07..831d4f77a93a94a3619e1d616d70d0e4a25afead 100644
+--- a/dist/game/data/html/CommunityBoard/Custom/navigation.html
++++ b/dist/game/data/html/CommunityBoard/Custom/navigation.html
+@@ -27,6 +27,12 @@
+ 	<td><button value="Hunters' raid" action="bypass voice .raid" width=200 height=30 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td></tr>
+ <button value="World" action="bypass voice .world" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
+ </tr>
++<tr>
++	<td><button value="Clan wars" action="bypass _bbshubwars" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Fight1None_Down" fore="L2UI_CT1.OlympiadWnd_DF_Fight1None"></td>
++</tr>
++<tr>
++	<td><button value="Clan recruiting" action="bypass _bbshubclan" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Fight1None_Down" fore="L2UI_CT1.OlympiadWnd_DF_Fight1None"></td>
++</tr>
+ <tr>
+ 	<td><button value="Drop search" action="bypass _bbstop;dropsearch/main.html" width=200 height=30 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+ </tr>
+diff --git a/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/navigation.html b/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/navigation.html
+index 0b80002b8e11cbe4d6b165fb455fecd96d693570..c307ac47ab3cb6a6252494d193c835c12a824df0 100644
+--- a/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/navigation.html
++++ b/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/navigation.html
+@@ -27,6 +27,12 @@
+ 	<td><button value="Рейд охотников" action="bypass voice .raid" width=200 height=30 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td></tr>
+ <button value="Мир" action="bypass voice .world" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
+ </tr>
++<tr>
++	<td><button value="Войны кланов" action="bypass _bbshubwars" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Fight1None_Down" fore="L2UI_CT1.OlympiadWnd_DF_Fight1None"></td>
++</tr>
++<tr>
++	<td><button value="Набор в клан" action="bypass _bbshubclan" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Fight1None_Down" fore="L2UI_CT1.OlympiadWnd_DF_Fight1None"></td>
++</tr>
+ <tr>
+ 	<td><button value="Поиск дропа" action="bypass _bbstop;dropsearch/main.html" width=200 height=30 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+ </tr>
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+index 0f74b05cf8f660b757ddd2ef29cfbec0cdf5601d..3d4858af77f6ff474cc101368835caa11153391f 100644
+--- a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+@@ -17,6 +17,7 @@ import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
+ import org.l2jmobius.gameserver.entity.zone.ZoneId;
+ import org.l2jmobius.gameserver.handler.CommunityBoardHandler;
+ import org.l2jmobius.gameserver.handler.IParseBoardHandler;
++import org.l2jmobius.gameserver.managers.phantom.PhantomClanBoard;
+ import org.l2jmobius.gameserver.managers.phantom.PhantomHunterUi;
+ import org.l2jmobius.gameserver.managers.phantom.PhantomUi;
+ import org.l2jmobius.gameserver.mechanics.skill.Skill;
+@@ -28,6 +29,7 @@ import org.l2jmobius.gameserver.mechanics.skill.Skill;
+  * <li>_bbshubshop [страница] — GM-шоп из страниц NPC GM-шопа (html/merchant/&lt;CommunityShopNpc&gt;*.htm) с переписанными кнопками; мультиселлы — MultisellData.separateAndSendFromBoard</li>
+  * <li>_bbshubbuddy [действие имя] — окно напарников ({@link PhantomUi})</li>
+  * <li>_bbshubhunters [near|all|store] [страница] | go &lt;имя&gt; … — кто из охотников где и телепорт на их спот или к лавке ({@link PhantomHunterUi})</li>
++ * <li>_bbshubwars [all|hunters|players] [страница] … — кланы и объявление войны, _bbshubclan … — набор в клан ({@link PhantomClanBoard})</li>
+  * </ul>
+  */
+ public class L2HubBoard implements IParseBoardHandler
+@@ -94,12 +96,16 @@ public class L2HubBoard implements IParseBoardHandler
+ 	private static final String SHOP = "_bbshubshop";
+ 	private static final String BUDDY = "_bbshubbuddy";
+ 	private static final String HUNTERS = "_bbshubhunters";
++	private static final String CLAN_WARS = "_bbshubwars";
++	private static final String CLAN_RECRUIT = "_bbshubclan";
+ 	private static final String[] COMMANDS =
+ 	{
+ 		BUFF,
+ 		SHOP,
+ 		BUDDY,
+-		HUNTERS
++		HUNTERS,
++		CLAN_WARS,
++		CLAN_RECRUIT
+ 	};
+ 
+ 	private static final Pattern NPC_CHAT = Pattern.compile("bypass (?:-h )?npc_%objectId%_Chat (\\d+)");
+@@ -135,6 +141,14 @@ public class L2HubBoard implements IParseBoardHandler
+ 		{
+ 			html = hunters(player, args);
+ 		}
++		else if (args[0].equalsIgnoreCase(CLAN_WARS))
++		{
++			html = page(player, PhantomClanBoard.warsTitle(), canUse(player) ? PhantomClanBoard.getInstance().wars(player, args) : PhantomClanBoard.busy());
++		}
++		else if (args[0].equalsIgnoreCase(CLAN_RECRUIT))
++		{
++			html = page(player, PhantomClanBoard.recruitTitle(), canUse(player) ? PhantomClanBoard.getInstance().recruit(player, args) : PhantomClanBoard.busy());
++		}
+ 		else
+ 		{
+ 			return false;

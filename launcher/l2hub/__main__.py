@@ -78,7 +78,7 @@ def main() -> None:
         min_size=MIN_SIZE,
         frameless=True,
         easy_drag=False,
-        background_color="#16120e",
+        background_color=appsettings.THEMES.get(appsettings.load()["theme"], appsettings.THEMES["gold"]),
         **geo,
     )
     api._window = window

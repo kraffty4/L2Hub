@@ -27,6 +27,8 @@ import org.l2jmobius.gameserver.entity.clan.ClanWar;
 import org.l2jmobius.gameserver.entity.clan.enums.ClanWarState;
 import org.l2jmobius.gameserver.entity.groups.Party;
 import org.l2jmobius.gameserver.entity.groups.PartyDistributionType;
+import org.l2jmobius.gameserver.entity.item.enchant.EnchantResultType;
+import org.l2jmobius.gameserver.entity.item.enchant.EnchantScroll;
 import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
 import org.l2jmobius.gameserver.entity.item.enums.WorldExchangeItemStatusType;
 import org.l2jmobius.gameserver.entity.item.enums.WorldExchangeItemSubType;
@@ -36,6 +38,7 @@ import org.l2jmobius.gameserver.entity.item.holders.WorldExchangeHolder;
 import org.l2jmobius.gameserver.entity.item.instance.Item;
 import org.l2jmobius.gameserver.entity.item.type.WeaponType;
 import org.l2jmobius.gameserver.entity.itemcontainer.Inventory;
+import org.l2jmobius.gameserver.entity.spawns.Spawn;
 import org.l2jmobius.gameserver.entity.zone.ZoneId;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
 import org.l2jmobius.gameserver.managers.CastleManager;
@@ -49,6 +52,8 @@ import org.l2jmobius.gameserver.mechanics.events.Containers;
 import org.l2jmobius.gameserver.mechanics.events.EventType;
 import org.l2jmobius.gameserver.mechanics.events.holders.actor.creature.OnCreatureSkillUse;
 import org.l2jmobius.gameserver.mechanics.events.holders.actor.npc.OnAttackableKill;
+import org.l2jmobius.gameserver.mechanics.events.holders.actor.player.OnPlayerItemAdd;
+import org.l2jmobius.gameserver.mechanics.events.holders.actor.player.OnPlayerSocialAction;
 import org.l2jmobius.gameserver.mechanics.events.listeners.ConsumerEventListener;
 import org.l2jmobius.gameserver.mechanics.olympiad.CompetitionType;
 import org.l2jmobius.gameserver.mechanics.olympiad.OlympiadManager;
@@ -72,7 +77,12 @@ import org.l2jmobius.gameserver.network.serverpackets.JoinParty;
 import org.l2jmobius.gameserver.network.serverpackets.PledgeShowInfoUpdate;
 import org.l2jmobius.gameserver.network.serverpackets.PledgeShowMemberListAdd;
 import org.l2jmobius.gameserver.network.serverpackets.PledgeShowMemberListDelete;
+import org.l2jmobius.gameserver.network.serverpackets.SendTradeRequest;
 import org.l2jmobius.gameserver.network.serverpackets.SystemMessage;
+import org.l2jmobius.gameserver.network.serverpackets.TradeOtherAdd;
+import org.l2jmobius.gameserver.network.serverpackets.friend.FriendAddRequestResult;
+import org.l2jmobius.gameserver.network.serverpackets.friend.FriendStatus;
+import org.l2jmobius.gameserver.util.StatSet;
 
 /**
  * L2Hub: отличия API хроник для общего кода фантомов (phantoms/core). У каждой хроники своя копия класса
@@ -91,6 +101,15 @@ public final class PhantomCompat
 	public static final String WIDE_BUTTON_FORE = "L2UI_CT1.Button_DF";
 	/** Ширина таблиц окна охотников на доске Alt+B (поле справа от меню). */
 	public static final int BOARD_WIDTH = 520;
+
+	/**
+	 * @param castle замок на идущей осаде
+	 * @return спавны его стражи (раздел 4.74)
+	 */
+	public static Collection<org.l2jmobius.gameserver.entity.spawns.Spawn> siegeGuards(Castle castle)
+	{
+		return org.l2jmobius.gameserver.managers.SiegeGuardManager.getInstance().getSpawnedGuards(castle.getResidenceId());
+	}
 
 	private PhantomCompat()
 	{
@@ -126,6 +145,19 @@ public final class PhantomCompat
 	public static Collection<? extends Npc> raidBosses()
 	{
 		return DatabaseSpawnManager.getInstance().getNpcs().values().stream().filter(Npc::isRaid).toList();
+	}
+
+	/** Караул у респа (раздел 4.81): время респов, поставленных при старте сервера; менеджер держит их только в таймере. */
+	public static final String RAID_RESPAWNS_SQL = "SELECT id, respawnTime FROM npc_respawns WHERE respawnTime > 0";
+
+	public static Map<Integer, Spawn> raidSpawns()
+	{
+		return DatabaseSpawnManager.getInstance().getSpawns();
+	}
+
+	public static Map<Integer, StatSet> raidStoredInfo()
+	{
+		return DatabaseSpawnManager.getInstance().getStoredInfo();
 	}
 
 	public static RequestTrade requestTrade(int objectId, int itemId, long count, long price)
@@ -567,11 +599,12 @@ public final class PhantomCompat
 
 	/**
 	 * Война кланов охотников (раздел 4.50): сразу взаимная ({@link ClanWarState#MUTUAL}), как если бы второй клан ответил на объявление.
-	 * Счёт убийств и репутацию ведёт {@code ClanWar.onKill}.
+	 * Счёт убийств и репутацию ведёт {@code ClanWar.onKill}. Объявленная война принимается в той же записи: новая обнулила бы счёт и оставила таймер отмены старой.
 	 */
 	public static void startWar(Clan declarer, Clan other)
 	{
-		final ClanWar war = new ClanWar(declarer, other);
+		final ClanWar declared = declarer.getWarWith(other.getId());
+		final ClanWar war = (declared != null) && (declared.getState() == ClanWarState.BLOOD_DECLARATION) ? declared : new ClanWar(declarer, other);
 		war.mutualClanWarAccepted(declarer, other);
 		war.mutualClanWarAccepted(other, declarer);
 		ClanTable.getInstance().storeClanWars(war);
@@ -583,6 +616,35 @@ public final class PhantomCompat
 	{
 		ClanTable.getInstance().deleteClanWars(a.getId(), b.getId());
 		refreshWar(a, b);
+	}
+
+	/** Нижняя граница уровня клана для войны игрока: здесь уровень задаёт только ключ {@code HunterClanWarLevel}. */
+	public static int warLevelFloor()
+	{
+		return 1;
+	}
+
+	/** Война объявлена только с одной стороны: {@code source} объявил, {@code target} ещё не ответил. */
+	public static boolean warDeclaredBy(Clan source, Clan target)
+	{
+		if ((source == null) || (target == null))
+		{
+			return false;
+		}
+		final ClanWar war = source.getWarWith(target.getId());
+		return (war != null) && (war.getState() == ClanWarState.BLOOD_DECLARATION) && (war.getAttackerClanId() == source.getId());
+	}
+
+	/** Объявление с одной стороны, как {@code RequestStartPledgeWar}. Ответ на уже объявленную войну делает её взаимной: так её понимает доска Alt+B. */
+	public static void declareWar(Clan source, Clan target)
+	{
+		if (warDeclaredBy(target, source))
+		{
+			startWar(source, target);
+			return;
+		}
+		ClanTable.getInstance().storeClanWars(new ClanWar(source, target));
+		refreshWar(source, target);
 	}
 
 	/** Кланы воюют друг с другом (война взаимная). */
@@ -635,6 +697,15 @@ public final class PhantomCompat
 	public static int enchantEventItem(Player player, Item scroll, Item item)
 	{
 		return Integer.MIN_VALUE;
+	}
+
+	/**
+	 * Настоящий бросок заточки простым свитком (docs/LIVE_SERVER.md, п. 14).
+	 * @return {@code null} — свиток к этой вещи не подходит
+	 */
+	public static EnchantResultType enchantRoll(Player player, EnchantScroll scroll, Item item)
+	{
+		return scroll.isValid(item, null) ? scroll.calculateSuccess(player, item, null) : null;
 	}
 
 	// ---------- Мировая биржа (docs/PHANTOMS.md, раздел 4.51): фантом — игрок, всё — прямыми вызовами WorldExchangeManager ----------
@@ -807,5 +878,64 @@ public final class PhantomCompat
 		{
 			PlayerConfig.MAX_SUBCLASS = max;
 		}
+	}
+
+	/** Вещь из инвентаря фантома в инвентарь другого (раздел 4.91): настоящий перенос, как со склада. */
+	static Item transferItem(Player from, int objectId, long count, Player to)
+	{
+		return from.getInventory().transferItem(ItemProcessType.TRANSFER, objectId, count, to.getInventory(), from, to);
+	}
+
+	/** Фантом сам зовёт живого в обмен (раздел 4.77): конец {@code TradeRequest}, условия проверяет вызывающий. Ответ придёт штатно, в {@code AnswerTradeRequest}. */
+	static void sendTradeRequest(Player from, Player to)
+	{
+		from.onTransactionRequest(to);
+		to.sendPacket(new SendTradeRequest(from.getObjectId(), from.getLevel()));
+	}
+
+	/** Глобальный слушатель вещей в инвентаре (раздел 4.77): пакет события у хроник разный. */
+	static void addItemAddListener(Object owner, BiConsumer<Player, Item> handler)
+	{
+		Containers.Global().addListener(new ConsumerEventListener(Containers.Global(), EventType.ON_PLAYER_ITEM_ADD, (OnPlayerItemAdd event) -> handler.accept(event.getPlayer(), event.getItem()), owner));
+	}
+
+	/** Жест живого (раздел 4.80): событие Mobius. */
+	static void addSocialActionListener(Object owner, BiConsumer<Player, Integer> handler)
+	{
+		Containers.Global().addListener(new ConsumerEventListener(Containers.Global(), EventType.ON_PLAYER_SOCIAL_ACTION, (OnPlayerSocialAction event) -> handler.accept(event.getPlayer(), event.getSocialActionId()), owner));
+	}
+
+	/** Фантом отказал в обмене (раздел 4.70): то же, что шлёт {@code AnswerTradeRequest}. */
+	static void tradeDenied(Player player, Player phantom)
+	{
+		final SystemMessage msg = new SystemMessage(SystemMessageId.C1_HAS_DENIED_YOUR_REQUEST_TO_TRADE);
+		msg.addString(phantom.getName());
+		player.sendPacket(msg);
+	}
+
+	/** Вещь фантома в окне обмена живого (раздел 4.70): то же, что шлёт {@code AddTradeItem}. */
+	static void tradeOtherAdd(Player player, TradeItem item)
+	{
+		player.sendPacket(new TradeOtherAdd(1, item));
+		player.sendPacket(new TradeOtherAdd(2, item));
+	}
+
+	/** Фантом принял заявку в друзья (раздел 4.70): то, что живому шлёт {@code RequestAnswerFriendInvite}. */
+	static void friendAdded(Player player, Player phantom)
+	{
+		player.sendPacket(new SystemMessage(SystemMessageId.THAT_PERSON_HAS_BEEN_SUCCESSFULLY_ADDED_TO_YOUR_FRIEND_LIST));
+		final SystemMessage msg = new SystemMessage(SystemMessageId.S1_HAS_BEEN_ADDED_TO_YOUR_FRIEND_LIST);
+		msg.addString(phantom.getName());
+		player.sendPacket(msg);
+		player.sendPacket(new FriendAddRequestResult(phantom, 1));
+	}
+
+	/** Фантом вошёл в мир (раздел 4.70): другу то, что шлют {@code EnterWorld} и {@code notifyFriends}. */
+	static void friendLoggedIn(Player friend, Player phantom)
+	{
+		final SystemMessage msg = new SystemMessage(SystemMessageId.YOUR_FRIEND_S1_JUST_LOGGED_IN);
+		msg.addString(phantom.getName());
+		friend.sendPacket(msg);
+		friend.sendPacket(new FriendStatus(phantom, FriendStatus.MODE_ONLINE));
 	}
 }

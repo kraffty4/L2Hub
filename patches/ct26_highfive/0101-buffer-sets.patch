@@ -1,0 +1,40 @@
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+index 0f1889b13c13fcad5c72c37cb4a87e7734dd1590..278016cec5d5d1c1ef45df1e48618835dd4765ee 100644
+--- a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+@@ -18,6 +18,7 @@ import org.l2jmobius.gameserver.entity.zone.ZoneId;
+ import org.l2jmobius.gameserver.handler.CommunityBoardHandler;
+ import org.l2jmobius.gameserver.handler.IParseBoardHandler;
+ import org.l2jmobius.gameserver.managers.phantom.PhantomClanBoard;
++import org.l2jmobius.gameserver.managers.phantom.PhantomBufferSets;
+ import org.l2jmobius.gameserver.managers.phantom.PhantomHunterUi;
+ import org.l2jmobius.gameserver.managers.phantom.PhantomUi;
+ import org.l2jmobius.gameserver.mechanics.skill.Skill;
+@@ -188,7 +189,7 @@ public class L2HubBoard implements IParseBoardHandler
+ 	// ---------- Баффер ----------
+ 
+ 	/**
+-	 * _bbshubbuff [категория] | set fighter|mage [pet] | one &lt;id&gt; &lt;категория&gt; [pet] | heal &lt;категория&gt; | cancel &lt;категория&gt;
++	 * _bbshubbuff [категория] | set fighter|mage [pet] | one &lt;id&gt; &lt;категория&gt; [pet] | heal &lt;категория&gt; | cancel &lt;категория&gt; | schemes, scheme_* — свои наборы ({@link PhantomBufferSets})
+ 	 */
+ 	private static String buffer(Player player, String[] args)
+ 	{
+@@ -196,6 +197,10 @@ public class L2HubBoard implements IParseBoardHandler
+ 		final List<String> types = table.getSkillTypes();
+ 		String category = types.isEmpty() ? "" : types.get(0);
+ 		final String action = args.length > 1 ? args[1].toLowerCase() : "";
++		if (action.equals("schemes") || action.startsWith("scheme_"))
++		{
++			return page(player, PhantomBufferSets.title(), PhantomBufferSets.handle(player, args, !action.equals("scheme_cast") || canUse(player), player.getSummon()));
++		}
+ 		switch (action)
+ 		{
+ 			case "set":
+@@ -288,6 +293,7 @@ public class L2HubBoard implements IParseBoardHandler
+ 	private static String bufferContent(Player player, SchemeBufferTable table, List<String> types, String category)
+ 	{
+ 		final StringBuilder sb = new StringBuilder(12288);
++		sb.append(button(PhantomBufferSets.title(), BUFF + " schemes", 150)).append("<br>");
+ 		sb.append("<table width=520><tr>");
+ 		sb.append("<td align=center>").append(button(tr("Воину — всё"), BUFF + " set fighter", 120)).append("</td>");
+ 		sb.append("<td align=center>").append(button(tr("Магу — всё"), BUFF + " set mage", 120)).append("</td>");

@@ -14,6 +14,10 @@
 	<word key="near.master" ru="у гильдии" en="by the guild" />
 	<word key="near.oly" ru="у олимпиады" en="by the Olympiad" />
 	<word key="near.fish" ru="у рыбаков" en="by the fishermen" />
+	<word key="near.square" ru="на площади" en="on the square" />
+	<word key="market.up" ru="цена на рынке выросла на" en="market price is up" />
+	<word key="market.down" ru="цена на рынке упала на" en="market price is down" />
+	<word key="market.short" ru="дефицит, цена выросла на" en="shortage, price is up" />
 	<!-- Сезонные события (имя скрипта LongTimeEvent); нет в списке — имя скрипта как есть. -->
 	<word key="event.L2Day" ru="День Lineage" en="L2 Day" />
 	<word key="event.HeavyMedal" ru="медальки" en="Medal event" />
@@ -46,7 +50,7 @@
 		<line ru="этот ГК дерёт за телепорт как за крыло" en="this GK charges way too much for teleports" />
 		<line ru="кто-нибудь знает, сколько сейчас стоит заточка на оружие?" en="anyone knows the price of weapon enchant scrolls now?" />
 		<line ru="у меня сегодня всё точится в ноль, не мой день" en="every enchant fails today, not my day" />
-		<line ru="а охотники тут вообще адекватные? один меня чуть не слил" en="are the hunters here sane? one almost killed me" />
+		<line ru="а народ тут вообще адекватный? один меня чуть не слил" en="are people here sane? one almost killed me" />
 		<line ru="скоро профа, коплю на квест" en="almost at my next class, saving for the quest" />
 	</lines>
 	<lines key="idle.talker.evening">
@@ -123,6 +127,20 @@
 		<line ru="{store}, скупаю дорого, лавка {where}" en="{store}, paying well, shop {where}" />
 		<line ru="{store} — {town}, {where}" en="{store} - {town}, {where}" />
 	</lines>
+	<lines key="trade.market.up">
+		<line ru="{item} +{percent}% за день, у меня ещё старая цена, налетай" en="{item} up {percent}% today, I still have the old price" />
+		<line ru="кто скупает {item}? цена уже {price}" en="who's buying up all the {item}? already {price}" />
+		<line ru="{item} по {price}, завтра будет дороже" en="{item} at {price}, more expensive tomorrow" />
+	</lines>
+	<lines key="trade.market.down">
+		<line ru="{item} просел на {percent}%, сдают все кому не лень" en="{item} fell {percent}%, everyone's dumping it" />
+		<line ru="{item} всего {price}, дешевле уже не найдёшь" en="{item} just {price}, won't find it cheaper" />
+	</lines>
+	<lines key="trade.market.short">
+		<line ru="{item} нигде нет, дефицит, цена +{percent}%" en="no {item} anywhere, shortage, price +{percent}%" />
+		<line ru="дефицит: {item}, кто запасся — тому повезло" en="{item} shortage, lucky if you stocked up" />
+		<line ru="ищу {item}, в рядах всё вымели, плачу выше рынка" en="looking for {item}, market's empty, paying above average" />
+	</lines>
 	<lines key="trade.crafter">
 		<line ru="{store}, крафчу с вашими матами, {where}" en="{store}, crafting with your mats, {where}" />
 		<line ru="{store} — {town}, {where}, 100%" en="{store} - {town}, {where}, 100%" />
@@ -155,10 +173,10 @@
 		<line ru="{boss} {blevel} лвл — суперчемп, го пати на него!" en="{boss} lvl {blevel} is a super champ, let's party up!" />
 	</lines>
 	<lines key="event.hunter_raid">
-		<line ru="охотники собирают рейд на {boss}, впишемся?" en="hunters are gathering a raid on {boss}, join them?" />
-		<line ru="{leader} опять повёл охотников на {boss}, во дают" en="{leader} is leading the hunters on {boss} again, wow" />
+		<line ru="народ собирает рейд на {boss}, впишемся?" en="people are gathering a raid on {boss}, join them?" />
+		<line ru="{leader} опять повёл пати на {boss}, во дают" en="{leader} is leading a party on {boss} again, wow" />
 		<line ru="рейд на {boss} {place} — кто с ними? .raid и телепорт" en="raid on {boss} {place} - who's in? .raid to join" />
-		<line ru="охотники на {boss} пошли, надеюсь, не сольются" en="hunters went for {boss}, hope they don't wipe" />
+		<line ru="пати на {boss} пошла, надеюсь, не сольются" en="a party went for {boss}, hope they don't wipe" />
 	</lines>
 	<lines key="event.epic_spawned">
 		<line ru="{boss} встал!! кто на эпика?" en="{boss} is up!! who's going for the epic?" />

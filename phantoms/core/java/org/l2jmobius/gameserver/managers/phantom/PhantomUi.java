@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.l2jmobius.gameserver.entity.actor.Player;
 import org.l2jmobius.gameserver.managers.phantom.PhantomOrders.Order;
+import static org.l2jmobius.gameserver.managers.phantom.PhantomText.tr;
 
 /**
  * L2Hub: окно напарников — одно и то же в .buddy (окно NPC) и на вкладке «Напарники» доски Alt+B.<br>
@@ -45,7 +46,7 @@ public final class PhantomUi
 		final PhantomTemplate template = key == null ? null : find(key);
 		if (template == null)
 		{
-			return "Нет такого напарника. Список — .buddy";
+			return tr("Нет такого напарника. Список — .buddy");
 		}
 
 		final PhantomCompanionManager companions = PhantomCompanionManager.getInstance();
@@ -68,12 +69,12 @@ public final class PhantomUi
 				final Order order = ORDERS.get(action.toLowerCase());
 				if (order == null)
 				{
-					return "Не понял: " + action + ". Можно summon, invite, dismiss, assist, follow, stay, sit, stand, buff, heal, res.";
+					return tr("Не понял: ") + action + tr(". Можно summon, invite, dismiss, assist, follow, stay, sit, stand, buff, heal, res.");
 				}
 
 				if (!companions.isPartiedWith(player, template))
 				{
-					return template.getName() + " не в пати с тобой — нажми «Позвать» или «В пати».";
+					return template.getName() + tr(" не в пати с тобой — нажми «Позвать» или «В пати».");
 				}
 
 				PhantomChat.getInstance().command(player, template, order, SAID.get(order));
@@ -105,11 +106,11 @@ public final class PhantomUi
 			sb.append("</td></tr><tr><td width=280><font color=\"B09878\">").append(companions.describe(player, template)).append("</font></td></tr></table>");
 
 			sb.append("<table width=280><tr>");
-			cell(sb, bypass, "Позвать", "summon", name);
-			cell(sb, bypass, "Отпустить", "dismiss", name);
+			cell(sb, bypass, tr("Позвать"), "summon", name);
+			cell(sb, bypass, tr("Отпустить"), "dismiss", name);
 			if (mine && !partied)
 			{
-				cell(sb, bypass, "В пати", "invite", name);
+				cell(sb, bypass, tr("В пати"), "invite", name);
 			}
 			else
 			{
@@ -125,31 +126,31 @@ public final class PhantomUi
 				{
 					case HEALER:
 					{
-						cell(sb, bypass, "За мной", "follow", name);
-						cell(sb, bypass, "Стой", "stay", name);
-						cell(sb, bypass, "Хильни", "heal", name);
+						cell(sb, bypass, tr("За мной"), "follow", name);
+						cell(sb, bypass, tr("Стой"), "stay", name);
+						cell(sb, bypass, tr("Хильни"), "heal", name);
 						sb.append("</tr><tr>");
-						cell(sb, bypass, "Рес", "res", name);
-						cell(sb, bypass, "Сядь", "sit", name);
-						cell(sb, bypass, "Встань", "stand", name);
+						cell(sb, bypass, tr("Рес"), "res", name);
+						cell(sb, bypass, tr("Сядь"), "sit", name);
+						cell(sb, bypass, tr("Встань"), "stand", name);
 						break;
 					}
 					case BUFFER:
 					{
-						cell(sb, bypass, "За мной", "follow", name);
-						cell(sb, bypass, "Стой", "stay", name);
-						cell(sb, bypass, "Бафни", "buff", name);
+						cell(sb, bypass, tr("За мной"), "follow", name);
+						cell(sb, bypass, tr("Стой"), "stay", name);
+						cell(sb, bypass, tr("Бафни"), "buff", name);
 						sb.append("</tr><tr>");
-						cell(sb, bypass, "Рес", "res", name);
-						cell(sb, bypass, "Сядь", "sit", name);
-						cell(sb, bypass, "Встань", "stand", name);
+						cell(sb, bypass, tr("Рес"), "res", name);
+						cell(sb, bypass, tr("Сядь"), "sit", name);
+						cell(sb, bypass, tr("Встань"), "stand", name);
 						break;
 					}
 					default:
 					{
-						cell(sb, bypass, "Бей мою цель", "assist", name);
-						cell(sb, bypass, "За мной", "follow", name);
-						cell(sb, bypass, "Стой", "stay", name);
+						cell(sb, bypass, tr("Бей мою цель"), "assist", name);
+						cell(sb, bypass, tr("За мной"), "follow", name);
+						cell(sb, bypass, tr("Стой"), "stay", name);
 						break;
 					}
 				}
@@ -157,8 +158,8 @@ public final class PhantomUi
 			}
 			sb.append("</table><br>");
 		}
-		sb.append("<table width=280><tr><td width=280><font color=\"808080\">«Позвать» — напарник прибежит, подтянется до твоего уровня и сразу вступит в пати. Идёт следом, отставший телепортируется к тебе. Хилер лечит и поднимает, баффер держит бафы, оба садятся на MP. Опыт и лут — тебе.</font></td></tr>");
-		sb.append("<tr><td width=280><font color=\"808080\">Кнопки — то же, что словами в чате пати или шёпотом: «за мной», «стой», «бафни», «хил», «рес», «сядь», «встань», «пока». По имени — только одному: «Митяй, бафни». Просто поговорить с ними тоже можно.</font></td></tr></table><br>");
+		sb.append(tr("<table width=280><tr><td width=280><font color=\"808080\">«Позвать» — напарник прибежит, подтянется до твоего уровня и сразу вступит в пати. Идёт следом, отставший телепортируется к тебе. Хилер лечит и поднимает, баффер держит бафы, оба садятся на MP. Опыт и лут — тебе.</font></td></tr>"));
+		sb.append(tr("<tr><td width=280><font color=\"808080\">Кнопки — то же, что словами в чате пати или шёпотом: «за мной», «стой», «бафни», «хил», «рес», «сядь», «встань», «пока». По имени — только одному: «Митяй, бафни». Просто поговорить с ними тоже можно.</font></td></tr></table><br>"));
 		commands(sb);
 		return sb.toString();
 	}
@@ -168,16 +169,16 @@ public final class PhantomUi
 	 */
 	private static void commands(StringBuilder sb)
 	{
-		sb.append("<table width=280><tr><td width=280><font color=\"LEVEL\">Приказы в чате пати</font> <font color=\"808080\">(# перед текстом — в пати)</font></td></tr>");
-		order(sb, "за мной", "идут следом");
-		order(sb, "стой", "ждут на месте");
-		order(sb, "бей", "бьют твою цель");
-		order(sb, "кач тут", "сами бьют всех мобов вокруг тебя");
-		order(sb, "веди", "охотник качается, ты идёшь за ним");
-		order(sb, "сядь / встань", "отдых на HP и MP");
-		order(sb, "бафни / хил / рес", "работа баффера и хилера");
-		order(sb, "пока", "уходит из пати");
-		sb.append("<tr><td width=280><font color=\"808080\">Охотника в пати — подойди и напиши «лфм» в общий чат. Где они сейчас — .hunters.</font></td></tr></table>");
+		sb.append(tr("<table width=280><tr><td width=280><font color=\"LEVEL\">Приказы в чате пати</font> <font color=\"808080\">(# перед текстом — в пати)</font></td></tr>"));
+		order(sb, tr("за мной"), tr("идут следом"));
+		order(sb, tr("стой"), tr("ждут на месте"));
+		order(sb, tr("бей"), tr("бьют твою цель"));
+		order(sb, tr("кач тут"), tr("сами бьют всех мобов вокруг тебя"));
+		order(sb, tr("веди"), tr("охотник качается, ты идёшь за ним"));
+		order(sb, tr("сядь / встань"), tr("отдых на HP и MP"));
+		order(sb, tr("бафни / хил / рес"), tr("работа баффера и хилера"));
+		order(sb, tr("пока"), tr("уходит из пати"));
+		sb.append(tr("<tr><td width=280><font color=\"808080\">Охотника в пати — подойди и напиши «лфм» в общий чат. Где они сейчас — .hunters.</font></td></tr></table>"));
 	}
 
 	private static void order(StringBuilder sb, String phrase, String meaning)
@@ -217,19 +218,19 @@ public final class PhantomUi
 		{
 			case HEALER:
 			{
-				return "хилер";
+				return tr("хилер");
 			}
 			case BUFFER:
 			{
-				return "баффер";
+				return tr("баффер");
 			}
 			case TANK:
 			{
-				return "танк";
+				return tr("танк");
 			}
 			default:
 			{
-				return "дамагер";
+				return tr("дамагер");
 			}
 		}
 	}

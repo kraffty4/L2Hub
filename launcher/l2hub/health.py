@@ -64,6 +64,18 @@ def _online(p: dict) -> int | None:
     return value
 
 
+def _world_online(p: dict) -> dict | None:
+    """Онлайн от сервера (game/log/L2HubOnline.json, PhantomOnline, раз в 10 с): общая цифра и из кого она.
+    Файл остаётся после остановки сервера, поэтому старше минуты — нет."""
+    try:
+        data = json.loads((catalog.server_dir(p) / "game" / "log" / "L2HubOnline.json").read_text(encoding="utf-8"))
+        if time.time() - data["time"] / 1000 > 60:
+            return None
+        return {k: int(data[k]) for k in ("total", "live", "hunters", "phantoms")}
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+
+
 def game_facts(p: dict) -> dict:
     text = _tail(log_path(p, "game"))
     facts = {}
@@ -145,6 +157,8 @@ def state(p: dict) -> dict:
         comps["game"].update(game_facts(p))
         if db_on:
             comps["game"]["online"] = _online(p)
+        if world := _world_online(p):
+            comps["game"]["world"] = world
     if servers.brain_port(p):
         comps["brain"] = brain_state(p)
     return comps

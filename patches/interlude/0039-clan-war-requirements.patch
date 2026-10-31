@@ -1,0 +1,41 @@
+diff --git a/java/org/l2jmobius/gameserver/network/clientpackets/RequestStartPledgeWar.java b/java/org/l2jmobius/gameserver/network/clientpackets/RequestStartPledgeWar.java
+index 098e7de5ddda33aba7b3481b969bf654c1637118..a9ee5d145b5e4fcd3c0d0b7dd3a262731a654e0c 100644
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/RequestStartPledgeWar.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/RequestStartPledgeWar.java
+@@ -20,11 +20,11 @@
+  */
+ package org.l2jmobius.gameserver.network.clientpackets;
+ 
+-import org.l2jmobius.gameserver.config.PlayerConfig;
+ import org.l2jmobius.gameserver.data.sql.ClanTable;
+ import org.l2jmobius.gameserver.entity.actor.Player;
+ import org.l2jmobius.gameserver.entity.clan.Clan;
+ import org.l2jmobius.gameserver.entity.clan.ClanAccess;
++import org.l2jmobius.gameserver.managers.phantom.PhantomClanWars;
+ import org.l2jmobius.gameserver.network.SystemMessageId;
+ import org.l2jmobius.gameserver.network.serverpackets.ActionFailed;
+ import org.l2jmobius.gameserver.network.serverpackets.SystemMessage;
+@@ -54,9 +54,9 @@ public class RequestStartPledgeWar extends ClientPacket
+ 			return;
+ 		}
+ 		
+-		if ((playerClan.getLevel() < 3) || (playerClan.getMembersCount() < PlayerConfig.ALT_CLAN_MEMBERS_FOR_WAR))
++		if (!PhantomClanWars.eligible(playerClan))
+ 		{
+-			player.sendPacket(SystemMessageId.A_CLAN_WAR_CAN_BE_DECLARED_ONLY_IF_THE_CLAN_IS_LEVEL_THREE_OR_ABOVE_AND_THE_NUMBER_OF_CLAN_MEMBERS_IS_FIFTEEN_OR_GREATER);
++			player.sendMessage(PhantomClanWars.requirements());
+ 			player.sendPacket(ActionFailed.STATIC_PACKET);
+ 			return;
+ 		}
+@@ -80,9 +80,9 @@ public class RequestStartPledgeWar extends ClientPacket
+ 			player.sendPacket(ActionFailed.STATIC_PACKET);
+ 			return;
+ 		}
+-		else if ((clan.getLevel() < 3) || (clan.getMembersCount() < PlayerConfig.ALT_CLAN_MEMBERS_FOR_WAR))
++		else if (!PhantomClanWars.eligible(clan))
+ 		{
+-			player.sendPacket(SystemMessageId.A_CLAN_WAR_CAN_BE_DECLARED_ONLY_IF_THE_CLAN_IS_LEVEL_THREE_OR_ABOVE_AND_THE_NUMBER_OF_CLAN_MEMBERS_IS_FIFTEEN_OR_GREATER);
++			player.sendMessage(PhantomClanWars.requirements());
+ 			player.sendPacket(ActionFailed.STATIC_PACKET);
+ 			return;
+ 		}

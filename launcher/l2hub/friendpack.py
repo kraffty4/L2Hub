@@ -25,11 +25,32 @@ from . import backups, catalog, clientsys, l2ini, network
 
 SKIP_FILES = re.compile(r"(?i)^(.*\.log|windowsinfo\.ini|s_info\.ini|l2compiledshader\.bin|shot\d+\.(bmp|jpg|png))$")
 STORE_DIRS = {"sounds", "music", "voice"}  # ogg/uax — почти несжимаемы
+_addresses: dict[Path, tuple[tuple[int, int], str | None]] = {}  # pack_address: архив → (его время и размер, адрес)
 
 
 def pack_path(p: dict) -> Path:
     client = catalog.client_exe(p).parent.parent
     return network.FRIENDS / p["id"] / f"{client.name.replace(' ', '_')}.zip"
+
+
+def pack_address(p: dict) -> str | None:
+    """ServerAddr внутри собранного пакета или None, если его не прочесть. Оглавление архива читается не мгновенно,
+    а окно перерисовывается часто: ответ держится, пока не изменится сам архив."""
+    pack = pack_path(p)
+    st = pack.stat()
+    mark = (st.st_mtime_ns, st.st_size)
+    seen = _addresses.get(pack)
+    if seen and seen[0] == mark:
+        return seen[1]
+    system = catalog.client_exe(p).parent
+    inside = f"{system.parent.name}/{network.client_system_name(p)}/{clientsys.INI if clientsys.is_4game(p) else 'L2.ini'}"
+    try:
+        with zipfile.ZipFile(pack) as z:
+            address = l2ini.server_addr_of(z.read(inside))
+    except (OSError, KeyError, ValueError, zipfile.BadZipFile):
+        address = None
+    _addresses[pack] = (mark, address)
+    return address
 
 
 def _files(p: dict, target: str):

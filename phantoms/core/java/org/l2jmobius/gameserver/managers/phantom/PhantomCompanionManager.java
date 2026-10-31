@@ -29,6 +29,7 @@ import org.l2jmobius.gameserver.network.SystemMessageId;
 import org.l2jmobius.gameserver.network.enums.ChatType;
 import org.l2jmobius.gameserver.network.serverpackets.CreatureSay;
 import org.l2jmobius.gameserver.taskmanagers.AutoPlayTaskManager;
+import static org.l2jmobius.gameserver.managers.phantom.PhantomText.tr;
 
 /**
  * L2Hub: напарники — фантомы в пати с живым игроком (этап 2: пати, follow, assist, защита, догоняющий телепорт).<br>
@@ -147,17 +148,17 @@ public class PhantomCompanionManager
 	{
 		if (!PhantomsConfig.PHANTOMS_ENABLED)
 		{
-			return "Напарники выключены (EnablePhantoms в Phantoms.ini).";
+			return tr("Напарники выключены (EnablePhantoms в Phantoms.ini).");
 		}
 
 		if (template.isHunter())
 		{
-			return template.getName() + " — не напарник, качается сам.";
+			return template.getName() + tr(" — не напарник, качается сам.");
 		}
 
 		if (owner.isDead() || owner.isInOlympiadMode() || owner.isJailed() || (owner.getInstanceId() != 0))
 		{
-			return "Сейчас позвать нельзя: ты мёртв, на олимпиаде, в тюрьме или в инстансе.";
+			return tr("Сейчас позвать нельзя: ты мёртв, на олимпиаде, в тюрьме или в инстансе.");
 		}
 
 		final Companion existing = _companions.get(key(template.getName()));
@@ -165,7 +166,7 @@ public class PhantomCompanionManager
 		final Player current = PhantomManager.getInstance().getPhantom(template);
 		if ((other != null) && (other != owner) && other.isOnline() && (current != null) && current.isInParty() && current.getParty().containsPlayer(other))
 		{
-			return template.getName() + " сейчас в пати с " + other.getName() + ".";
+			return template.getName() + tr(" сейчас в пати с ") + other.getName() + ".";
 		}
 
 		final Companion companion = existing != null ? existing : new Companion(template.getName());
@@ -182,7 +183,7 @@ public class PhantomCompanionManager
 		if (phantom == null)
 		{
 			_companions.remove(key(template.getName()));
-			return "Не вышло позвать " + template.getName() + ", подробности — в логе сервера.";
+			return tr("Не вышло позвать ") + template.getName() + tr(", подробности — в логе сервера.");
 		}
 
 		if (phantom.isInParty() && !phantom.getParty().containsPlayer(owner))
@@ -231,7 +232,7 @@ public class PhantomCompanionManager
 		final Player other = companion == null ? null : World.getPlayer(companion.ownerId);
 		if ((other != null) && (other != owner) && other.isOnline())
 		{
-			return template.getName() + " ходит с " + other.getName() + ", отпустить его может только он.";
+			return template.getName() + tr(" ходит с ") + other.getName() + tr(", отпустить его может только он.");
 		}
 
 		if ((companion != null) && companion.hunter)
@@ -245,7 +246,7 @@ public class PhantomCompanionManager
 		final Player phantom = PhantomManager.getInstance().getPhantom(template);
 		if (phantom == null)
 		{
-			return template.getName() + " и так не в мире.";
+			return template.getName() + tr(" и так не в мире.");
 		}
 
 		if (phantom.isInParty())
@@ -353,12 +354,12 @@ public class PhantomCompanionManager
 		final Player phantom = PhantomManager.getInstance().getPhantom(template);
 		if ((phantom == null) || !isOwner(owner, template))
 		{
-			return template.getName() + " не с тобой — сначала позови его.";
+			return template.getName() + tr(" не с тобой — сначала позови его.");
 		}
 
 		if (isPartiedWith(owner, phantom))
 		{
-			return template.getName() + " уже в пати с тобой.";
+			return template.getName() + tr(" уже в пати с тобой.");
 		}
 
 		onInvited(owner, phantom, null);
@@ -376,7 +377,7 @@ public class PhantomCompanionManager
 		final Companion companion = _companions.get(key(template.getName()));
 		if ((companion == null) || (companion.ownerId != owner.getObjectId()))
 		{
-			return template.getName() + " не с тобой — сначала позови его.";
+			return template.getName() + tr(" не с тобой — сначала позови его.");
 		}
 
 		final Mode previous = companion.mode;
@@ -430,7 +431,7 @@ public class PhantomCompanionManager
 		final Player other = existing == null ? null : World.getPlayer(existing.ownerId);
 		if ((other != null) && (other != requestor) && other.isOnline())
 		{
-			requestor.sendMessage(phantom.getName() + " ходит с " + other.getName() + ".");
+			requestor.sendMessage(phantom.getName() + tr(" ходит с ") + other.getName() + ".");
 			return;
 		}
 
@@ -457,7 +458,7 @@ public class PhantomCompanionManager
 
 		if (phantom.isDead())
 		{
-			requestor.sendMessage(phantom.getName() + " лежит без сознания: подними его или позови заново через .buddy.");
+			requestor.sendMessage(phantom.getName() + tr(" лежит без сознания: подними его или позови заново через .buddy."));
 			return;
 		}
 
@@ -468,7 +469,7 @@ public class PhantomCompanionManager
 			member = PhantomManager.getInstance().spawn(template, new Location(phantom.getX(), phantom.getY(), phantom.getZ(), phantom.getHeading()), requestor.getLevel());
 			if (member == null)
 			{
-				requestor.sendMessage("Не вышло пригласить " + template.getName() + ", подробности — в логе сервера.");
+				requestor.sendMessage(tr("Не вышло пригласить ") + template.getName() + tr(", подробности — в логе сервера."));
 				return;
 			}
 		}
@@ -537,30 +538,30 @@ public class PhantomCompanionManager
 		final Player phantom = PhantomManager.getInstance().getPhantom(template);
 		if (phantom == null)
 		{
-			return "не в мире";
+			return tr("не в мире");
 		}
 
 		if (phantom.isDead())
 		{
-			return "лежит без сознания — позови заново";
+			return tr("лежит без сознания — позови заново");
 		}
 
 		final Companion companion = _companions.get(key(template.getName()));
 		final Player owner = companion == null ? null : World.getPlayer(companion.ownerId);
 		if ((owner != null) && (owner != viewer) && owner.isOnline())
 		{
-			return "ходит с " + owner.getName();
+			return tr("ходит с ") + owner.getName();
 		}
 
 		if ((owner == viewer) && (companion != null))
 		{
 			if (isPartiedWith(viewer, phantom))
 			{
-				return "в пати с тобой: " + (PhantomSupport.isSupport(template) ? supportLabel(template.getRole(), companion.mode) : modeLabel(companion.mode));
+				return tr("в пати с тобой: ") + (PhantomSupport.isSupport(template) ? supportLabel(template.getRole(), companion.mode) : modeLabel(companion.mode));
 			}
-			return "рядом, ждёт пати: «В пати» или /invite " + template.getName();
+			return tr("рядом, ждёт пати: «В пати» или /invite ") + template.getName();
 		}
-		return "в мире, свободен";
+		return tr("в мире, свободен");
 	}
 
 	/**
@@ -730,8 +731,8 @@ public class PhantomCompanionManager
 
 	private static String supportLabel(PhantomTemplate.Role role, Mode mode)
 	{
-		final String job = role == PhantomTemplate.Role.HEALER ? "лечит и поднимает" : "держит бафы на пати";
-		return (mode == Mode.STAY ? "стоит на месте, " : "идёт за тобой, ") + job;
+		final String job = role == PhantomTemplate.Role.HEALER ? tr("лечит и поднимает") : tr("держит бафы на пати");
+		return (mode == Mode.STAY ? tr("стоит на месте, ") : tr("идёт за тобой, ")) + job;
 	}
 
 	private static String modeLabel(Mode mode)
@@ -740,15 +741,15 @@ public class PhantomCompanionManager
 		{
 			case FOLLOW:
 			{
-				return "идёт за тобой, только защищается";
+				return tr("идёт за тобой, только защищается");
 			}
 			case STAY:
 			{
-				return "стоит на месте";
+				return tr("стоит на месте");
 			}
 			default:
 			{
-				return "идёт за тобой и бьёт твою цель";
+				return tr("идёт за тобой и бьёт твою цель");
 			}
 		}
 	}
@@ -1152,6 +1153,12 @@ public class PhantomCompanionManager
 			{
 				phantom.abortAttack();
 				phantom.getAI().setIntentionActive();
+			}
+			// Цель за геодатой: скиллы не берутся (Cannot see target), а сам к цели он не пойдёт. Vedma простояла так две минуты боя с РБ, пока босс не пришёл к ней сам.
+			if (!phantom.isMoving() && !GeoEngine.getInstance().canSeeTarget(phantom, target))
+			{
+				phantom.setRunning();
+				phantom.getAI().setIntentionMoveTo(target);
 			}
 			return;
 		}

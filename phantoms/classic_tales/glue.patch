@@ -46,6 +46,17 @@ index eed194154fcdca6e16cc6f114d6dfa1edda36ac4..49da44b8a694cd48b0acbd76827af280
 +
 +# Фейк отвечает в общий чат, если рядом назвать его по имени: радиус в игровых единицах (0 — выключить).
 +FakePlayerBrainSayRange = 900
+diff --git a/dist/game/config/Custom/OnlineInfo.ini b/dist/game/config/Custom/OnlineInfo.ini
+index 299d36b71c8260af5a2fb516fa5a3c3e5320a443..9aed8db1e8d212a2da5d2735ce62c6ae4fac2164 100644
+--- a/dist/game/config/Custom/OnlineInfo.ini
++++ b/dist/game/config/Custom/OnlineInfo.ini
+@@ -4,4 +4,5 @@
+ 
+ # Enable player .online voiced command.
+ # Shows how many players are online.
+-EnableOnlineCommand = False
++# L2Hub: общая цифра и из кого она: живых, охотников, фантомов (PhantomOnline).
++EnableOnlineCommand = True
 diff --git a/dist/game/data/scripts/handlers/MasterHandler.java b/dist/game/data/scripts/handlers/MasterHandler.java
 index e4f5d00fc8ad6acb4904ba7eb72990886be8de81..8600a74563b6e2ed76ff9386145b3bbd69caf1a1 100644
 --- a/dist/game/data/scripts/handlers/MasterHandler.java
@@ -204,21 +215,23 @@ diff --git a/dist/game/data/scripts/handlers/chat/channels/ChatTrade.java b/dist
 index b6848b4dd58185d6d8744c5e7da76911b899c059..d4266d46c39d9935ce40e0cb7a2360d69ce0a21a 100644
 --- a/dist/game/data/scripts/handlers/chat/channels/ChatTrade.java
 +++ b/dist/game/data/scripts/handlers/chat/channels/ChatTrade.java
-@@ -27,6 +27,7 @@ import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
+@@ -27,6 +27,8 @@ import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
  import org.l2jmobius.gameserver.entity.itemcontainer.Inventory;
  import org.l2jmobius.gameserver.entity.zone.ZoneId;
  import org.l2jmobius.gameserver.handler.IChatHandler;
++import org.l2jmobius.gameserver.managers.phantom.PhantomChatFlow;
 +import org.l2jmobius.gameserver.managers.phantom.PhantomHunterManager;
  import org.l2jmobius.gameserver.network.SystemMessageId;
  import org.l2jmobius.gameserver.network.enums.ChatType;
  import org.l2jmobius.gameserver.network.serverpackets.CreatureSay;
-@@ -82,6 +83,9 @@ public class ChatTrade implements IChatHandler
+@@ -82,6 +84,10 @@ public class ChatTrade implements IChatHandler
  		}
  		
  		final CreatureSay cs = new CreatureSay(activeChar, type, activeChar.getName(), text, shareLocation);
 +
 +		// L2Hub: охотники-фантомы слышат «лфм», «нужен хил» и просятся в пати.
 +		PhantomHunterManager.getInstance().onLfm(activeChar, type, text);
++		PhantomChatFlow.getInstance().onTrade(activeChar, text);
  		if ((GeneralConfig.DEFAULT_GLOBAL_CHAT == ChatBroadcastType.ON) || ((GeneralConfig.DEFAULT_GLOBAL_CHAT == ChatBroadcastType.GM) && activeChar.isGM()))
  		{
  			final int region = MapRegionData.getInstance().getMapRegionLocId(activeChar);
@@ -250,6 +263,38 @@ index 8dbed49947b9d1afc9bf9dcc8a6ba343541cc301..a656be5fb6522b6e7db89f99b94ab8ac
  			if ((receiver.getClient() == null) || receiver.getClient().isDetached())
  			{
  				activeChar.sendMessage("Player is in offline mode.");
+diff --git a/dist/game/data/scripts/handlers/chat/commands/voiced/Online.java b/dist/game/data/scripts/handlers/chat/commands/voiced/Online.java
+index d5440d205f7b39162deaad5ed71503720965ed61..4a0c404bfaf03f5ec0c43350fb75b201928d7852 100644
+--- a/dist/game/data/scripts/handlers/chat/commands/voiced/Online.java
++++ b/dist/game/data/scripts/handlers/chat/commands/voiced/Online.java
+@@ -21,9 +21,9 @@
+ package handlers.chat.commands.voiced;
+ 
+ import org.l2jmobius.gameserver.config.custom.OnlineInfoConfig;
+-import org.l2jmobius.gameserver.entity.World;
+ import org.l2jmobius.gameserver.entity.actor.Player;
+ import org.l2jmobius.gameserver.handler.IVoicedCommandHandler;
++import org.l2jmobius.gameserver.managers.phantom.PhantomOnline;
+ 
+ /**
+  * @author Mobius
+@@ -40,14 +40,9 @@ public class Online implements IVoicedCommandHandler
+ 	{
+ 		if (command.equals("online") && OnlineInfoConfig.ENABLE_ONLINE_COMMAND)
+ 		{
+-			final int count = World.getPlayers().size();
+-			if (count > 1)
++			for (String line : PhantomOnline.lines())
+ 			{
+-				player.sendMessage("There are " + count + " players online!");
+-			}
+-			else
+-			{
+-				player.sendMessage("There is 1 player online!");
++				player.sendMessage(line);
+ 			}
+ 		}
+ 		
 diff --git a/dist/game/data/stats/npcs/custom/fpc_passive.xml b/dist/game/data/stats/npcs/custom/fpc_passive.xml
 index 7c6f14a5ff56cf1c16f13ffe35a494154bfb2593..4020121848b10e759e44800f0e6c30a3ef56831f 100644
 --- a/dist/game/data/stats/npcs/custom/fpc_passive.xml
@@ -823,6 +868,84 @@ index da5116cb503145418fa8064331e93cc546fdb41c..ebb28ca3c40db210dee492fd097ccd3f
  		if (!player.getRequest().setRequest(target, this))
  		{
  			return;
+diff --git a/java/org/l2jmobius/gameserver/network/clientpackets/TradeRequest.java b/java/org/l2jmobius/gameserver/network/clientpackets/TradeRequest.java
+index e455e0260fadb532096182888ad79f571a8b5e3e..86d078d11904d0f8d3f9f3753f35f67f85c0f251 100644
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/TradeRequest.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/TradeRequest.java
+@@ -30,6 +30,8 @@ import org.l2jmobius.gameserver.entity.WorldObject;
+ import org.l2jmobius.gameserver.entity.actor.Npc;
+ import org.l2jmobius.gameserver.entity.actor.Player;
+ import org.l2jmobius.gameserver.entity.actor.holders.player.BlockList;
++import org.l2jmobius.gameserver.managers.phantom.PhantomManager;
++import org.l2jmobius.gameserver.managers.phantom.PhantomTrade;
+ import org.l2jmobius.gameserver.mechanics.effects.AbstractEffect;
+ import org.l2jmobius.gameserver.mechanics.skill.AbnormalType;
+ import org.l2jmobius.gameserver.mechanics.skill.BuffInfo;
+@@ -229,5 +231,11 @@ public class TradeRequest extends ClientPacket
+ 		sm = new SystemMessage(SystemMessageId.YOU_HAVE_REQUESTED_A_TRADE_WITH_C1);
+ 		sm.addString(partner.getName());
+ 		player.sendPacket(sm);
++		
++		// L2Hub: у фантома нет клиента и окна «обмен?» — отвечает сервер.
++		if (PhantomManager.getInstance().isPhantom(partner))
++		{
++			PhantomTrade.getInstance().onRequest(player, partner);
++		}
+ 	}
+ }
+diff --git a/java/org/l2jmobius/gameserver/network/clientpackets/friend/RequestFriendInvite.java b/java/org/l2jmobius/gameserver/network/clientpackets/friend/RequestFriendInvite.java
+index 84f36c83ac73383dcf9ba18e85c6ca8103c69785..62411eee725acab69b896b39f79ed55d3271d0bf 100644
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/friend/RequestFriendInvite.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/friend/RequestFriendInvite.java
+@@ -26,6 +26,8 @@ import org.l2jmobius.gameserver.entity.World;
+ import org.l2jmobius.gameserver.entity.actor.Player;
+ import org.l2jmobius.gameserver.entity.actor.holders.player.BlockList;
+ import org.l2jmobius.gameserver.entity.actor.holders.player.ClientSettings;
++import org.l2jmobius.gameserver.managers.phantom.PhantomFriends;
++import org.l2jmobius.gameserver.managers.phantom.PhantomManager;
+ import org.l2jmobius.gameserver.network.SystemMessageId;
+ import org.l2jmobius.gameserver.network.clientpackets.ClientPacket;
+ import org.l2jmobius.gameserver.network.serverpackets.SystemMessage;
+@@ -155,6 +157,12 @@ public class RequestFriendInvite extends ClientPacket
+ 		sm = new SystemMessage(SystemMessageId.YOU_VE_REQUESTED_C1_TO_BE_ON_YOUR_FRIENDS_LIST);
+ 		sm.addString(_name);
+ 		player.sendPacket(sm);
++		
++		// L2Hub: у фантома нет клиента и окна «добавить в друзья?» — отвечает сервер.
++		if (PhantomManager.getInstance().isPhantom(friend))
++		{
++			PhantomFriends.getInstance().onInvited(player, friend);
++		}
+ 	}
+ 	
+ 	private boolean checkInviteByIgnoredSettings(Player target, Player requestor)
+diff --git a/java/org/l2jmobius/gameserver/network/clientpackets/friend/RequestSendFriendMsg.java b/java/org/l2jmobius/gameserver/network/clientpackets/friend/RequestSendFriendMsg.java
+index e4c71a82de9ae7eeb590b573c3cc6928363e8224..1e2f732b31a0c343bc014a8c1a0f1e35d5321b9d 100644
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/friend/RequestSendFriendMsg.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/friend/RequestSendFriendMsg.java
+@@ -21,6 +21,8 @@ import java.util.logging.Logger;
+ import org.l2jmobius.gameserver.config.GeneralConfig;
+ import org.l2jmobius.gameserver.entity.World;
+ import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.managers.phantom.PhantomChat;
++import org.l2jmobius.gameserver.managers.phantom.PhantomManager;
+ import org.l2jmobius.gameserver.network.SystemMessageId;
+ import org.l2jmobius.gameserver.network.clientpackets.ClientPacket;
+ import org.l2jmobius.gameserver.network.serverpackets.L2FriendSay;
+@@ -76,6 +78,13 @@ public class RequestSendFriendMsg extends ClientPacket
+ 			LOGGER_CHAT.info(sb.toString());
+ 		}
+ 		
++		// L2Hub: письмо фантому-другу — он отвечает сам, как на шёпот.
++		if (PhantomManager.getInstance().isPhantom(targetPlayer))
++		{
++			PhantomChat.getInstance().onWhisper(player, targetPlayer, _message);
++			return;
++		}
++		
+ 		targetPlayer.sendPacket(new L2FriendSay(player.getName(), _receiver, _message));
+ 	}
+ }
 diff --git a/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTaskManager.java b/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTaskManager.java
 index 4d80cf29b36b59b34ba8999526d1d66d27544f5b..40c9b00ba97859442e05610a26dc992e078af1f3 100644
 --- a/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTaskManager.java
@@ -896,3 +1019,72 @@ index c9d88a87ba7c7fa860d92d15364c6ace9722db77..52921e1ae6ccd74e840d1b9c20ca0f8e
  			if (player.isOfflinePlay() && OfflinePlayConfig.OFFLINE_PLAY_LOGOUT_ON_DEATH)
  			{
  				delay = 10; // 10 seconds
+diff --git a/java/org/l2jmobius/loginserver/network/serverpackets/ServerList.java b/java/org/l2jmobius/loginserver/network/serverpackets/ServerList.java
+index bd7e952497c34ef7d621d1753f0c9d76528dff29..f57026d3a6f76b30fa9896a02a07331dc47e9b08 100644
+--- a/java/org/l2jmobius/loginserver/network/serverpackets/ServerList.java
++++ b/java/org/l2jmobius/loginserver/network/serverpackets/ServerList.java
+@@ -22,10 +22,15 @@ package org.l2jmobius.loginserver.network.serverpackets;
+ 
+ import java.net.InetAddress;
+ import java.net.UnknownHostException;
++import java.nio.charset.StandardCharsets;
++import java.nio.file.Files;
++import java.nio.file.Path;
+ import java.util.ArrayList;
+ import java.util.List;
+ import java.util.Map;
+ import java.util.logging.Logger;
++import java.util.regex.Matcher;
++import java.util.regex.Pattern;
+ 
+ import org.l2jmobius.commons.network.buffer.WriteBuffer;
+ import org.l2jmobius.loginserver.data.GameServerTable;
+@@ -64,6 +69,10 @@ import org.l2jmobius.loginserver.network.gameserverpackets.receive.ServerStatus;
+ public class ServerList extends LoginServerPacket
+ {
+ 	protected static final Logger LOGGER = Logger.getLogger(ServerList.class.getName());
++	/** L2Hub: общая цифра онлайна от гейм-сервера (PhantomOnline), пишется раз в 10 с. */
++	private static final Path ONLINE_FILE = Path.of("../game/log/L2HubOnline.json");
++	private static final Pattern ONLINE_LINE = Pattern.compile("\"time\":(\\d+),\"total\":(\\d+)");
++	private static final long ONLINE_FRESH = 60000;
+ 	
+ 	private final List<ServerData> _servers;
+ 	private final int _lastServer;
+@@ -102,7 +111,7 @@ public class ServerList extends LoginServerPacket
+ 			_port = gsi.getPort();
+ 			_pvp = gsi.isPvp();
+ 			_serverType = gsi.getServerType();
+-			_currentPlayers = gsi.getCurrentPlayerCount();
++			_currentPlayers = shownOnline(gsi.getCurrentPlayerCount());
+ 			_maxPlayers = gsi.getMaxPlayers();
+ 			_ageLimit = 0;
+ 			_brackets = gsi.isShowingBrackets();
+@@ -113,6 +122,28 @@ public class ServerList extends LoginServerPacket
+ 		}
+ 	}
+ 	
++	/**
++	 * Только цифра на экране: заполненность сервера логин-сервер считает по своему счётчику, как и раньше.
++	 * @param accounts сколько аккаунтов в игре по счётчику логин-сервера
++	 * @return общая цифра от гейм-сервера, а если файла нет или он старше минуты — счётчик логин-сервера
++	 */
++	private static int shownOnline(int accounts)
++	{
++		try
++		{
++			final Matcher matcher = ONLINE_LINE.matcher(Files.readString(ONLINE_FILE, StandardCharsets.UTF_8));
++			if (matcher.find() && ((System.currentTimeMillis() - Long.parseLong(matcher.group(1))) < ONLINE_FRESH))
++			{
++				return Integer.parseInt(matcher.group(2));
++			}
++		}
++		catch (Exception e)
++		{
++			// Гейм-сервер файла не писал.
++		}
++		return accounts;
++	}
++
+ 	public ServerList(LoginClient client)
+ 	{
+ 		_servers = new ArrayList<>(GameServerTable.getInstance().getRegisteredGameServers().size());

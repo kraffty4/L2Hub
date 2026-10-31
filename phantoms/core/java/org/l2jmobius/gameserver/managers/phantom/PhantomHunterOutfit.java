@@ -328,6 +328,26 @@ final class PhantomHunterOutfit
 	}
 
 	/**
+	 * Поднятый и ветеран при включённом возрасте мира ({@link PhantomManager}): банки, стрелы и сосы своего грейда, как после закупки в городе. Иначе до первого похода в город
+	 * (без нужды — через {@code HunterTownInterval}) он на споте своего уровня без хилки.
+	 */
+	static void giveSupplies(Player player)
+	{
+		topUp(player, potionId(player), PhantomHuntersConfig.HUNTER_POTION_COUNT);
+		topUp(player, ammoId(player), PhantomHuntersConfig.HUNTER_AMMO_COUNT);
+		topUp(player, shotId(player), PhantomHuntersConfig.HUNTER_SHOT_COUNT);
+	}
+
+	private static void topUp(Player player, int itemId, int count)
+	{
+		final long have = count(player, itemId);
+		if ((itemId > 0) && (have < count))
+		{
+			PhantomCompat.addItem(player, ItemProcessType.REWARD, itemId, count - have, null);
+		}
+	}
+
+	/**
 	 * Сосы с умом: на них — не больше HunterShotBudget % свободной адены (всё, кроме отложенного на профу).
 	 */
 	private static long shotBudget(Player player)
@@ -406,6 +426,18 @@ final class PhantomHunterOutfit
 		final long reserve = professionDue(player);
 
 		done.addAll(buyGear(player, template, reserve));
+
+		// Заточка — на то, что осталось; сломал — новая вещь на что хватит, совсем без оружия — стартовое, как у нового персонажа.
+		final List<String> enchanted = PhantomEnchant.chore(player, template);
+		done.addAll(enchanted);
+		if (enchanted.stream().anyMatch(line -> line.startsWith("сломал")))
+		{
+			done.addAll(buyGear(player, template, reserve));
+			if (player.getInventory().getPaperdollItem(Inventory.PAPERDOLL_RHAND) == null)
+			{
+				update(player, template);
+			}
+		}
 
 		// Стрелы — первыми: без них лук не стреляет. На сосы — не больше половины того, что осталось.
 		final long arrows = buy(player, ammoId(player), PhantomHuntersConfig.HUNTER_AMMO_COUNT, player.getAdena());

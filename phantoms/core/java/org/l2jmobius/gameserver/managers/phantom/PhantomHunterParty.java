@@ -287,7 +287,7 @@ public class PhantomHunterParty
 		final PhantomTemplate leaderTemplate = PhantomData.getInstance().getTemplate(leader.getName());
 		if ((leaderTemplate != null) && PhantomBanter.audience(leader))
 		{
-			PhantomChat.getInstance().banter(leader, member, leaderTemplate, "ты позвал " + PhantomHunterManager.describe(member) + " — такого же охотника, как ты, — к себе в пати качаться вместе на этом споте, и он вступил. Скажи ему это вслух, по-игровому");
+			PhantomChat.getInstance().banter(leader, member, leaderTemplate, "ты позвал " + PhantomHunterManager.describe(member) + " — такого же игрока, как ты, — к себе в пати качаться вместе на этом споте, и он вступил. Скажи ему это вслух, по-игровому");
 		}
 	}
 

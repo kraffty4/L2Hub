@@ -47,8 +47,8 @@ PERSONAS = "dist/game/data/L2HubTownFakePersonas.json"
 INI = "dist/game/config/Custom/L2HubTownFakes.ini"
 FILES = [SCRIPT, NPCS, POPULATION, CHAT, PERSONAS, INI]
 EOL_FROM = "dist/game/data/scripts/handlers/MasterHandler.java"  # переводы строк скриптов хроники
-NPC_ID_BASE = 80300  # 80300–80499; у tools/fake_players.py — 80100+, Evi — 80000
-NPC_ID_MAX = 80499
+NPC_ID_BASE = 80300  # 80300–80599; у tools/fake_players.py — 80100+, Evi — 80000
+NPC_ID_MAX = 80599
 
 # Города: id гейткипера → (вид, en, ru, «в …», «у …», уровни жителей, раса стартовой деревни).
 TOWNS = {
@@ -96,7 +96,7 @@ ROLES = {
 ROLE_RU = {"trader": "торговец на лавке", "buyer": "скупщик на лавке", "crafter": "крафтер на лавке", "afk": "AFK у склада",
            "talker": "болтун у гейткипера", "newbie": "новичок", "lfp": "ищет пати", "runner": "бегает по делам",
            "showoff": "понторез", "stroller": "гуляка", "nightowl": "полуночник"}
-NEAR_RU = {"gk": "у ГК", "wh": "у склада", "shop": "у лавок", "master": "у гильдии", "oly": "у олимпиады", "fish": "у рыбаков"}
+NEAR_RU = {"gk": "у ГК", "wh": "у склада", "shop": "у лавок", "master": "у гильдии", "oly": "у олимпиады", "fish": "у рыбаков", "square": "на площади"}
 ANCHOR_RADIUS = 3500
 ANCHOR_DZ = 600
 
@@ -187,6 +187,68 @@ STORES = {
     5: ["Craft SS {g} 100%", "Craft BSS {g}", "Craft mats 100%", "Craft Cokes/Asofe", "Craft {g} armor, your mats"],
 }
 
+# Торговые ряды: площадь Гирана, как на живом сервере (PhantomMarket.GIRAN_SQUARE). Дополнительные жители, у которых лавка настоящая
+# (PhantomStores), селятся после всех городов: id и имена остальных не сдвигаются. Без TownFakesStores их нет в мире.
+ROW_TOWN = 30080
+ROW_SQUARE = (82698, 148638, -3470)
+ROW_RADIUS = 700
+ROW_ROSTER = ["trader", "trader", "buyer"] * 8 + ["trader", "trader"]
+ROW_FIRST_SLOT = 100
+ROW_LEVEL_MIN = 20  # в рядах есть и дешёвый грейд D, поэтому не с 40, как у остальных торговцев
+ROW_STORES = {1: STORES[1] + ["WTS {g} armor", "WTS {g} jewels", "WTS dyes"], 3: STORES[3]}
+
+# Что лежит в лавке под вывеской. Заряды и заточки — по id, они у хроник общие; остальное — по типу, грейду и цене.
+GRADE_TAG = {"NONE": "D", "S80": "S", "S84": "S", "R": "S", "R95": "S", "R99": "S"}
+SHOT_IDS = {"SS": [1463, 1464, 1465, 1466, 1467], "SpS": [2510, 2511, 2512, 2513, 2514], "BSS": [3948, 3949, 3950, 3951, 3952],
+            "EW": [955, 951, 947, 729, 959], "EA": [956, 952, 948, 730, 960]}
+GRADE_INDEX = {"D": 0, "C": 1, "B": 2, "A": 3, "S": 4}
+PART_RX = re.compile(r"Design|Part|Fragment|Pattern|Fabric|Lining|Texture|Temper|Blade|Edge|Stockings|Gauntlet|Head|Shaft|Gemstone|Mold|Ornament|Pendant|Earring Gem|Ring Gem")
+MATERIAL_PRICES = {"D": (20, 500), "C": (100, 1500), "B": (300, 4000), "A": (1000, 12000), "S": (3000, 100000)}
+PART_PRICES = {"D": (500, 3000), "C": (2000, 8000), "B": (5000, 25000), "A": (15000, 80000), "S": (40000, 400000)}
+NOT_FOR_SALE_RX = re.compile(r"Shadow|Event|Test|Common Item|Monster|Agathion|Formal|Wedding|Bracelet|Talisman|Cloak|Hat|Circlet")
+
+
+def for_sale(d: fp.Data, it: dict) -> bool:
+    """Обычная вещь, которую можно выставить: есть цена магазина, передаётся, не квестовая, не для NPC, без срока жизни."""
+    return (int(it.get("price") or 0) > 0 and it.get("is_tradable", "true") != "false" and it.get("is_questitem", "false") != "true"
+            and not d.npc_only(it) and "time" not in it and "duration" not in it and not NOT_FOR_SALE_RX.search(it["name"] or ""))
+
+
+def store_goods(d: fp.Data, sign: str, g: str) -> list[int]:
+    """id вещей под вывеску-шаблон sign (STORES, ROW_STORES) и грейд g. Пусто — лавка так и останется вывеской."""
+    items = {i: it for i, it in d.items.items() if for_sale(d, it)}
+    shots = [i for key in SHOT_KEYS.get(sign, ()) for i in [SHOT_IDS[key][GRADE_INDEX[g]]] if i in items]
+    if SHOT_KEYS.get(sign):
+        return shots
+    if sign.startswith("WTB "):
+        word = sign[4:]
+        return sorted(i for i, it in items.items() if it["name"] == word)[:1]
+    of_grade = lambda it: GRADE_TAG.get(it.get("crystal_type", "NONE"), it.get("crystal_type", "NONE")) == g and it.get("crystal_type", "NONE") != "NONE"
+    between = lambda it, prices: prices[0] <= int(it["price"]) <= prices[1]
+    material = {i: it for i, it in items.items() if it.get("etcitem_type") == "MATERIAL"}
+    jewel = ("neck", "rear;lear", "rfinger;lfinger")
+    if sign == "WTS {g} mats":
+        return sorted(i for i, it in material.items() if not PART_RX.search(it["name"] or "") and between(it, MATERIAL_PRICES[g]))
+    if sign == "WTS {g} armor parts":
+        return sorted(i for i, it in material.items() if PART_RX.search(it["name"] or "") and between(it, PART_PRICES[g]))
+    if sign == "WTS recipes 60%":
+        recipes = sorted(i for i, it in items.items() if it.get("etcitem_type") == "RECIPE")
+        return [i for i in recipes if "60%" in items[i]["name"]] or recipes
+    if sign == "WTS cheap {g} weapons":
+        found = sorted((i for i, it in items.items() if it["type"] == "Weapon" and d.plain(it) and of_grade(it)), key=lambda i: (int(items[i]["price"]), i))
+        return sorted(found[: max(1, len(found) // 2)])
+    if sign == "WTS {g} armor":
+        return sorted(i for i, it in items.items() if it["type"] == "Armor" and d.plain(it) and of_grade(it) and it.get("bodypart") not in jewel)
+    if sign == "WTS {g} jewels":
+        return sorted(i for i, it in items.items() if it["type"] == "Armor" and d.plain(it) and of_grade(it) and it.get("bodypart") in jewel)
+    if sign == "WTS dyes":
+        return sorted(i for i, it in items.items() if it.get("etcitem_type") == "DYE")
+    return []
+
+
+SHOT_KEYS = {"WTS SS {g} / BSS {g}": ("SS", "SpS", "BSS"), "WTS EW{g} EA{g}": ("EW", "EA"), "WTB EW{g}": ("EW",)}
+
+
 # Характеры для мозгов (launcher/l2hub/brain.py: race, class, level, place, activity, traits, style, bio, aliases).
 TRAITS = {
     "trader": ["хитрый торгаш, торгуется за каждую адену", "добродушный барыга, любит поболтать о ценах",
@@ -256,6 +318,17 @@ TownFakesReactions = True
 
 # Реплики пишут мозги фейков (FakePlayerBrain в FakePlayers.ini); False — только заготовки.
 TownFakesBrain = True
+
+# Лавки торговцев и скупщиков настоящие: по щелчку — окно личной лавки, вещи и адена настоящие, товар и цены конечны (PhantomStores),
+# а на площади Гирана сидят дополнительные торговые ряды. False — только вывески, как раньше, и рядов нет.
+TownFakesStores = True
+
+# Память рынка: средняя цена по сделкам, спрос и дефицит сдвигают цены лавок при пополнении, торговцы обсуждают это в торговом чате,
+# фейки торгуют между собой, файл log/L2HubMarket.json. Цены магазинов не меняются. False — цены лавок только от цены магазина и характера. Без TownFakesStores не работает.
+TownFakesMarketMemory = True
+
+# Самопроверка лавок при старте, пишет в лог «лавки, самопроверка: ...». Только на копии базы: двигает персонажа и меняет его вещи.
+TownFakesStoreTest = False
 """
 
 
@@ -363,7 +436,16 @@ def hair_items(d: fp.Data) -> list[tuple[int, str, str]]:
     return sorted(out.values())
 
 
-def build(cid: str, src: Path) -> tuple[dict[str, bytes], list[str]]:
+def pinned_names(cid: str, name: str) -> dict[int, tuple[str, str]]:
+    """Кто уже живёт: {id: (имя, роль)} из текущего патча. Иначе новый охотник в датапаке переименовал бы половину города: имена берутся из пула по очереди."""
+    patch = ROOT / "patches" / cid / name
+    if not patch.is_file():
+        return {}
+    found = re.findall(rb'(?m)^\+\s*<fake npcId="(\d+)" name="([^"]+)" role="(\w+)"', patch.read_bytes())
+    return {int(i): (n.decode("utf-8"), r.decode("ascii")) for i, n, r in found}
+
+
+def build(cid: str, src: Path, pins: dict[int, tuple[str, str]]) -> tuple[dict[str, bytes], list[str]]:
     """Новые файлы патча {путь: содержимое} и отчёт."""
     data = src / "dist/game/data"
     geodata = ROOT / "servers" / cid / "server/game/data/geodata"
@@ -391,20 +473,18 @@ def build(cid: str, src: Path) -> tuple[dict[str, bytes], list[str]]:
     report, towns, fakes = [], [], []
     taken: list[tuple] = []
     npc_id = NPC_ID_BASE
+    pinned = {n for n, _ in pins.values()}
+    known_names = {n[0]: n for names in NAMES.values() for n in names}
+    goods_cache: dict[tuple[str, str], list[int]] = {}
 
-    for gk_id in TOWNS:
-        gks = by_id.get(gk_id, [])
-        if len(gks) != 1 or geo.cell(gks[0]["x"], gks[0]["y"], gks[0]["z"]) is None:
-            report.append(f"{TOWNS[gk_id][1]}: нет в этой хронике (гейткипер {gk_id} найден {len(gks)} раз) — пропущен")
-            continue
-        town = Town(gk_id, gks[0], geo, spawns, npcs)
-        # Спавны вокруг города: точки фейков — не дальше ANCHOR_RADIUS + 360 от гейткипера (у Essence в мире 32 тыс. спавнов).
-        local = [s for s in spawns if math.dist((s["x"], s["y"]), (town.x, town.y)) < ANCHOR_RADIUS + 1000]
-        towns.append(town)
+    def settle(town, local, roster, first=0, row=False):
+        """Поселить жителей города: roster — роли по порядку, first — номер первого (от него зависят расы и ветки), row — торговые ряды."""
+        nonlocal npc_id
+        gk_id = town.gk_id
         lo, hi = town.levels
-        for slot, role in enumerate(ROSTER[town.kind]):
+        for slot, role in enumerate(roster, first):
             seed = f"{cid}:{gk_id}:{slot}:{role}"
-            r = ROLES[role]
+            r = dict(ROLES[role], anchors=["square"]) if row else ROLES[role]
             # Раса, пол, ветка
             if role == "crafter":
                 race = "DWARF"
@@ -420,18 +500,27 @@ def build(cid: str, src: Path) -> tuple[dict[str, bytes], list[str]]:
             chain, kit_key, sex = fp.pick(branches, seed, "branch")
             sex = sex or ("F" if fp.rnd(seed, "sex") % 100 < 45 else "M")
             # Имя
-            pool = [n for n in NAMES[(race, sex)] if n[0].lower() not in used_names]
-            if not pool:  # свои кончились — ник с той же расой другого пола, затем любой (в игре так и бывает)
-                pool = [n for key in sorted(NAMES) for n in NAMES[key] if key[0] == race and n[0].lower() not in used_names]
-            if not pool:
-                pool = [n for key in sorted(NAMES) for n in NAMES[key] if n[0].lower() not in used_names]
-            if not pool:
-                sys.exit("кончились имена — добавь в NAMES")
-            name, alias = fp.pick(pool, seed, "name")
+            pin = pins.get(npc_id + 1)
+            if pin and pin[1] == role and pin[0] in known_names and pin[0].lower() not in used_names:
+                name, alias = known_names[pin[0]]
+            else:  # новый житель или прежнее имя занял охотник: шёпот по имени ушёл бы не тому
+                free = lambda n: n[0].lower() not in used_names and n[0] not in pinned
+                pool = [n for n in NAMES[(race, sex)] if free(n)]
+                if not pool:  # свои кончились — ник с той же расой другого пола, затем любой (в игре так и бывает)
+                    pool = [n for key in sorted(NAMES) for n in NAMES[key] if key[0] == race and free(n)]
+                if not pool:
+                    pool = [n for key in sorted(NAMES) for n in NAMES[key] if free(n)]
+                if not pool:
+                    sys.exit("кончились имена — добавь в NAMES")
+                name, alias = fp.pick(pool, seed, "name")
+                if pin:
+                    report.append(f"{town.en}: {pin[0]} ({pin[1]}) → {name} ({role})")
             used_names.add(name.lower())
             # Уровень, класс
             if role == "newbie":
                 level = lo + fp.rnd(name, "lvl") % max(1, min(hi, lo + 9) - lo)
+            elif row:
+                level = ROW_LEVEL_MIN + fp.rnd(name, "lvl") % (top_level - ROW_LEVEL_MIN - 1)
             elif role in ("trader", "buyer", "crafter"):
                 level = 40 + fp.rnd(name, "lvl") % (top_level - 40 - 1)
             elif role == "showoff":
@@ -489,12 +578,16 @@ def build(cid: str, src: Path) -> tuple[dict[str, bytes], list[str]]:
                 if town.kind == "capital" and slot == ROSTER[town.kind].index("showoff"):
                     attrs.append('hero="true"')
             store = ""
+            goods = []
             if r.get("seated"):
                 attrs.append('sitting="true"')
             if r.get("store"):
-                g = {"NONE": "D", "S80": "S", "S84": "S"}.get(gr, gr)
-                store = fp.pick(STORES[r["store"]], name, "store").replace("{g}", g)
+                g = GRADE_TAG.get(gr, gr)
+                sign = fp.pick((ROW_STORES if row else STORES)[r["store"]], name, "store")
+                store = sign.replace("{g}", g)
                 attrs.append(f'privateStoreType="{r["store"]}" privateStoreMessage={quoteattr(store)}')
+                if r["store"] in (1, 3):
+                    goods = goods_cache.setdefault((sign, g), store_goods(d, sign, g))
             attrs = [a for a in attrs if f'name="{a.split("=")[0]}"' in xsd]
             pool_t = TITLES.get(role) if role in ("afk", "showoff") else (TITLES.get(role) if roll(name, "tit", TITLE_CHANCE) else None)
             if pool_t is None and roll(name, "tit2", TITLE_CHANCE) and role not in ("newbie",):
@@ -518,7 +611,7 @@ def build(cid: str, src: Path) -> tuple[dict[str, bytes], list[str]]:
             if home is None:
                 for kind in dict.fromkeys((r.get("anchors") or []) + ["gk"]):  # нет своих якорей или места у них — у гейткипера
                     if kind in town.anchors:
-                        p = place_near(geo, local, town.anchors[kind], taken, name, 80 if r.get("seated") else 60, 260)
+                        p = place_near(geo, local, town.anchors[kind], taken, name, 80 if r.get("seated") else 60, ROW_RADIUS if row else 260)
                         if p:
                             ax, ay, _ = town.anchors[kind]
                             home = ("stand", (*p, kind, heading_to(p[0], p[1], ax, ay)))
@@ -552,13 +645,37 @@ def build(cid: str, src: Path) -> tuple[dict[str, bytes], list[str]]:
             where_kind = home[1][0][3] if home[0] == "route" else home[1][3]
             fakes.append(dict(npc_id=npc_id, name=name, alias=alias, race=race, sex=sex, level=level, class_name=class_name, kit=kit_key, kit_d=kit,
                               role=role, town=town, attrs=attrs, title=title, store=store, spots=spots, radius=radius, height=height,
-                              where=where_kind, seed=seed, gr=gr))
-    # Ранги для плотности: в каждом городе — равномерно по 0–99 в случайном (детерминированном) порядке.
+                              where=where_kind, seed=seed, gr=gr, goods=goods, row=row))
+
+    for gk_id in TOWNS:
+        gks = by_id.get(gk_id, [])
+        if len(gks) != 1 or geo.cell(gks[0]["x"], gks[0]["y"], gks[0]["z"]) is None:
+            report.append(f"{TOWNS[gk_id][1]}: нет в этой хронике (гейткипер {gk_id} найден {len(gks)} раз) — пропущен")
+            continue
+        town = Town(gk_id, gks[0], geo, spawns, npcs)
+        # Спавны вокруг города: точки фейков — не дальше ANCHOR_RADIUS + 360 от гейткипера (у Essence в мире 32 тыс. спавнов).
+        local = [s for s in spawns if math.dist((s["x"], s["y"]), (town.x, town.y)) < ANCHOR_RADIUS + 1000]
+        towns.append(town)
+        settle(town, local, ROSTER[town.kind])
     for town in towns:
-        mine = sorted((f for f in fakes if f["town"] is town), key=lambda f: fp.rnd(f["name"], "rank"))
-        for i, f in enumerate(mine):
-            f["rank"] = (i * 100 + 50) // len(mine)
-            f["shift"] = fp.rnd(f["name"], "shift") % 91
+        if town.gk_id == ROW_TOWN:
+            cell = geo.cell(ROW_SQUARE[0], ROW_SQUARE[1], ROW_SQUARE[2])
+            town.anchors["square"] = (ROW_SQUARE[0], ROW_SQUARE[1], cell[0] if cell else ROW_SQUARE[2])
+            local = [s for s in spawns if math.dist((s["x"], s["y"]), ROW_SQUARE[:2]) < ROW_RADIUS + 1000]
+            settle(town, local, ROW_ROSTER, ROW_FIRST_SLOT, True)
+    # Ранги для плотности: в каждом городе — равномерно по 0–99 в случайном (детерминированном) порядке. Ряды — своим счётом: у остальных ранги не меняются.
+    for town in towns:
+        for row in (False, True):
+            mine = sorted((f for f in fakes if f["town"] is town and f["row"] is row), key=lambda f: fp.rnd(f["name"], "rank"))
+            for i, f in enumerate(mine):
+                f["rank"] = (i * 100 + 50) // len(mine)
+                f["shift"] = fp.rnd(f["name"], "shift") % 91
+    stores = [f for f in fakes if f["role"] in ("trader", "buyer")]
+    empty = sorted({f["store"] for f in stores if not f["goods"]})
+    if empty:
+        report.append(f"вывески без товара: {', '.join(empty)}")
+    report.append(f"лавок {len(stores)}, из них в рядах {sum(1 for f in stores if f['row'])}; вывесок {len(goods_cache)}: " + "; ".join(
+        f"{sign.replace('{g}', g)} {len(ids)}" for (sign, g), ids in sorted(goods_cache.items())))
     return render(cid, src, d, towns, fakes), report + summary(towns, fakes)
 
 
@@ -591,15 +708,18 @@ def render(cid: str, src: Path, d: fp.Data, towns: list, fakes: list) -> dict[st
            "<!-- L2Hub: фейки в городах (скрипт custom/L2HubTownFakes). Сгенерировано tools/l2hub_town_fakes.py.",
            "     rank — порядок для плотности (TownFakesDensity: в мире те, у кого rank меньше), shift — сдвиг распорядка в игровых минутах.",
            "     day — утро и день 6:00–18:00, evening — вечер 18:00–24:00, night — ночь 0:00–6:00; нет элемента — в эту часть суток не в игре.",
-           "     Место — точка (стоит или сидит, heading — куда смотрит) или маршрут из point (ходит по кругу, run — бегом). -->",
+           "     Место — точка (стоит или сидит, heading — куда смотрит) или маршрут из point (ходит по кругу, run — бегом).",
+           "     goods — id вещей под вывеску лавки (PhantomStores), row — торговые ряды: без TownFakesStores их нет в мире. -->",
            "<list>"]
     for town in towns:
         pop.append(f'\t<town id="{town.gk_id}" en={quoteattr(town.en)} ru={quoteattr(town.ru)} ruIn={quoteattr(town.ru_in)} '
                    f'ruNear={quoteattr(town.ru_near)} x="{town.x}" y="{town.y}" z="{town.z}">')
         for f in (f for f in fakes if f["town"] is town):
             store = f' store={quoteattr(f["store"])}' if f["store"] else ""
+            goods = f' goods="{",".join(map(str, f["goods"]))}"' if f["goods"] else ""
+            row = ' row="1"' if f["row"] else ""
             pop.append(f'\t\t<fake npcId="{f["npc_id"]}" name="{f["name"]}" role="{f["role"]}" cls={quoteattr(f["class_name"])} '
-                       f'rank="{f["rank"]}" shift="{f["shift"]}"{store}>')
+                       f'rank="{f["rank"]}" shift="{f["shift"]}"{store}{goods}{row}>')
             for phase in ("day", "evening", "night"):
                 spot = f["spots"].get(phase)
                 if spot is None:
@@ -679,7 +799,7 @@ def build_patch(plan: dict) -> tuple[bytes, list[str]]:
 def main() -> None:
     if len(sys.argv) < 2:
         sys.exit(__doc__)
-    cid, write = sys.argv[1], "--write" in sys.argv
+    cid, write, patch_only = sys.argv[1], "--write" in sys.argv, "--patch-only" in sys.argv
     verbose = "-v" in sys.argv
     src = tree(cid)
     own = sorted((ROOT / "patches" / cid).glob("*-town-fakes.patch"))
@@ -688,14 +808,19 @@ def main() -> None:
     if applied and not (ROOT / "patches" / cid / name).is_file():
         sys.exit(f"в дереве уже есть файлы фейков в городах, а patches/{cid}/{name} нет — нечем снять")
     current = {rel: None for rel in FILES}
-    if applied:
+    if patch_only:  # дерево могло быть собрано с другой версией патча: снимать нечего, все файлы патча — новые
+        upper = patch_layers.later(cid, name, FILES)
+        applied = False
+    elif applied:
         peeled, upper = patch_layers.peel(cid, src, name, FILES)
         current = {rel: peeled.get(rel) for rel in FILES}
-        if upper:
-            sys.exit(f"поздние патчи трогают файлы фейков: {[p.name for p in upper]} — так не задумано")
+    else:
+        upper = []
+    if upper:
+        sys.exit(f"поздние патчи трогают файлы фейков: {[p.name for p in upper]} — так не задумано")
     if any(v is not None for v in current.values()):
         sys.exit(f"файлы фейков есть и без патча: {[k for k, v in current.items() if v is not None]}")
-    files, report = build(cid, src)
+    files, report = build(cid, src, pinned_names(cid, name))
     plan = {rel: (None, data) for rel, data in files.items()}
     patch, bad = build_patch(plan)
     if bad:
@@ -707,6 +832,9 @@ def main() -> None:
         for rel, data in files.items():
             (out / rel).parent.mkdir(parents=True, exist_ok=True)
             (out / rel).write_bytes(data)
+    if patch_only:
+        (ROOT / "patches" / cid / name).write_bytes(patch)
+        print(f"записано: patches/{cid}/{name} (дерево не тронуто)")
     if write:
         (ROOT / "patches" / cid / name).write_bytes(patch)
         for rel, data in files.items():

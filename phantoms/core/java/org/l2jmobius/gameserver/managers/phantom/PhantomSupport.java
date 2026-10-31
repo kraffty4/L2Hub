@@ -199,7 +199,12 @@ final class PhantomSupport
 		// Кастует или идёт на дистанцию каста: ждём, но не вечно.
 		if (phantom.isCastingNow() || (phantom.getAI().getIntention() == Intention.CAST))
 		{
-			if ((state.castSince > 0) && ((now - state.castSince) > CAST_WATCHDOG))
+			// Намерение могло остаться от чужого каста (атака напарника, цель пропала): тогда отсчёт начинается здесь.
+			if (state.castSince == 0)
+			{
+				state.castSince = now;
+			}
+			if ((now - state.castSince) > CAST_WATCHDOG)
 			{
 				phantom.abortCast();
 				phantom.getAI().setIntentionActive();

@@ -17,8 +17,25 @@ PvpOnlyWithPlayers = True
 # Default: 1
 PvpMinLevel = 1
 
+# Размеры и бой TvT действуют, пока PvpEvents = True, иначе как в Mobius.
+# Сколько участников нужно для старта.
+# Default: 4
+TvTMinParticipants = 4
+
+# Всего мест, до 200: счёт на экране показывает первых 25. Охотников за ивент не больше HunterPvpEventMax в PhantomHunters.ini.
+# Default: 24
+TvTMaxParticipants = 24
+
+# Сколько мест из TvTMaxParticipants охотники не занимают — они остаются живым игрокам.
+# Default: 0
+TvTReservedSlots = 0
+
+# Длительность боя, минуты (от 1 до 120).
+# Default: 20
+TvTFightMinutes = 20
+
 # Расписание — крон «минуты часы день месяц день_недели», как schedule у Mobius; пусто — не запускать.
-# Пока идёт один PvP-ивент (менеджер в мире), следующий не стартует. Регистрация 10 мин, бой 20 мин (Deathmatch — 1 и 3).
+# Пока идёт один PvP-ивент (менеджер в мире), следующий не стартует. Регистрация 10 мин, бой 20 мин (у TvT — TvTFightMinutes; Deathmatch — 1 и 3).
 TvT = 0 */3 * * *
 Deathmatch = 0 1-23/3 * * *
 CtF = 0 2-23/3 * * *

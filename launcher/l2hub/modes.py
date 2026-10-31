@@ -97,7 +97,11 @@ def _class_options(p: dict, default: str) -> str:
 
 
 def _is_on(s: dict, v: str) -> bool:
-    return v.strip() == s["on"] if "on" in s else v.strip().lower() == "true"
+    v = v.strip()
+    if "on" not in s:
+        return v.lower() == "true"
+    # anyOn: числовой выключатель включён при любом значении, кроме "off": свои 24 строки в час — тоже поток.
+    return v != s.get("off") if s.get("anyOn") else v == s["on"]
 
 
 def switches(p: dict) -> list[dict]:
@@ -136,7 +140,7 @@ def state(p: dict) -> dict:
         same_sw = all(sw[k]["value"] == v for k, v in m["switches"].items() if sw.get(k, {}).get("available"))
         same_set = all((cur := _read(p, f, k)) is None or cur.strip().lower() == str(v).lower()
                        for f, keys in _settings(p, m).items() for k, v in keys.items())
-        modes.append({"id": m["id"], "title": m["title"], "note": m["note"], "active": same_rates and same_sw and same_set})
+        modes.append({"id": m["id"], "title": m["title"], "note": m["note"], "active": same_rates and same_sw and same_set, "keepsRates": not m["rates"]})
     return {"ok": True, "modes": modes, "switches": list(sw.values()), "rates": now,
             "restart": servers.part_process(p, "game") is not None}
 
@@ -229,7 +233,7 @@ def apply_mode(p: dict, mode_id: str) -> dict:
 CAL_FILE = "L2HubEvents.ini"
 # Ключи расписаний рядом с окнами событий (не окна): PvP-ивенты (0019) и нашествие эльпи (Interlude, 0021). Выключатели
 # PvpEvents и Elpies — в «Моды и ивенты» (server_modes.json); в карточке календаря — остальные.
-PVP_KEYS = {"PvpEvents": "bool", "PvpOnlyWithPlayers": "bool", "PvpMinLevel": "int", "TvT": "cron", "Deathmatch": "cron", "CtF": "cron",
+PVP_KEYS = {"PvpEvents": "bool", "PvpOnlyWithPlayers": "bool", "PvpMinLevel": "int", "TvTMinParticipants": "int", "TvTMaxParticipants": "int", "TvTReservedSlots": "int", "TvTFightMinutes": "int", "TvT": "cron", "Deathmatch": "cron", "CtF": "cron",
             "Elpies": "bool", "ElpiesSchedule": "cron", "ElpiesMinutes": "int", "ElpiesOnlyWithPlayers": "bool"}
 WINDOW = re.compile(r"^(?:(\d{2}) (\d{2})(?: \d{4})?-(\d{2}) (\d{2})(?: \d{4})?|Off)?$", re.IGNORECASE)
 CRON = re.compile(r"^(?:\S+(?:\s+\S+){4})?$")

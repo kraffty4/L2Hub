@@ -111,6 +111,20 @@ public final class PhantomClans
 	}
 
 	/**
+	 * Охотник сам подал заявку в клан ({@link PhantomClanBoard}), и её приняли. Условия Mobius уже проверены; правило приглашения {@link #decide} тут не при чём: он пришёл сам.
+	 * @param requestor кто принял
+	 * @param phantom охотник
+	 */
+	void joinByApplication(Player requestor, Player phantom)
+	{
+		final Clan clan = requestor.getClan();
+		LOGGER.info(getClass().getSimpleName() + ": " + requestor.getName() + " accepts the application of " + phantom.getName() + " (" + phantom.getLevel() + ") to clan " + clan.getName() + ".");
+		PhantomCompat.joinClan(requestor, phantom, 0);
+		ThreadPool.execute(phantom::storeMe);
+		PhantomChat.getInstance().clanEvent(phantom, requestor, clan, "CLAN_JOIN", "ты сам подал заявку в клан «" + clan.getName() + "», и " + PhantomHunterManager.describe(requestor) + " тебя принял: поздоровайся с кланом, скажи, что качаться будешь сам, а на рейды пусть зовут", "всем привет) спасибо что взяли. качаюсь сам, на рб зовите", SAY_GAP);
+	}
+
+	/**
 	 * Живой игрок зовёт охотника, который уже в клане охотников (врезка в {@code RequestJoinPledge} до условий Mobius, раздел 4.50). Глава своего клана
 	 * и верный своим отказывают со словами; друг, благодарный сверх верности ({@link PhantomHunterClans#switchGratitude}: от 3 до 9), уходит из своего клана
 	 * без штрафа — дальше решает {@link #onInvited}, как свободный.
@@ -152,7 +166,7 @@ public final class PhantomClans
 			phantom.setClanJoinExpiryTime(0);
 			ThreadPool.execute(phantom::storeMe);
 			LOGGER.info(getClass().getSimpleName() + ": " + phantom.getName() + " leaves hunter clan " + own.getName() + " for " + requestor.getName() + "'s clan " + clan.getName() + String.format(Locale.ROOT, " (gratitude %.1f of %.1f).", gratitude, need));
-			PhantomNews.post("clan", phantom.getName() + " ушёл" + (template.isFemale() ? "а" : "") + " из клана охотников «" + own.getName() + "» в клан «" + clan.getName() + "» к " + requestor.getName(), phantom.getName(), phantom);
+			PhantomNews.post("clan", phantom.getName() + (template.isFemale() ? " ушла" : " ушёл") + " из клана охотников «" + own.getName() + "» в клан «" + clan.getName() + "» к " + requestor.getName(), phantom.getName(), phantom);
 			return false;
 		}
 		LOGGER.info(getClass().getSimpleName() + ": " + requestor.getName() + " invites " + phantom.getName() + " of hunter clan " + own.getName() + " — stays (" + answer.why + ").");
@@ -223,6 +237,7 @@ public final class PhantomClans
 		}
 		ThreadPool.execute(hunter::storeMe);
 		LOGGER.info(getClass().getSimpleName() + ": " + hunter.getName() + " leaves clan " + clan.getName() + ": " + player.getName() + " is an enemy now.");
+		PhantomStories.leftClan(hunter, clan, player);
 		PhantomChat.getInstance().clanEvent(hunter, player, clan, "CLAN_LEAVE", PhantomHunterManager.describe(player) + " из твоего клана «" + clan.getName() + "» стал твоим врагом, и ты уходишь из клана — скажи соклановцам коротко, почему", "всё, я из клана. с " + player.getName() + " в одном клане не буду", SAY_GAP);
 	}
 

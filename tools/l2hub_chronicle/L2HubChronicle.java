@@ -93,6 +93,12 @@ public class L2HubChronicle
 	private static Map<String, Boolean> _seasonal;
 	private static Boolean _elpies;
 	private static final Map<String, Boolean> PVP_FIGHTING = new HashMap<>();
+	private static final Map<String, Integer> PVP_REPORTED = new HashMap<>();
+	/** Охотники бьют суперчемпионов часто, и лента из них одних уже не лента: их победа — запись не чаще этого; победа с живым — всегда. */
+	private static final long SUPER_GAP = 7200000;
+	private static long _nextSuper;
+	/** Сколько побед охотников не попало в ленту: следующая запись — одним числом. */
+	private static int _skippedSupers;
 
 	private L2HubChronicle()
 	{
@@ -210,6 +216,19 @@ public class L2HubChronicle
 	}
 
 	/**
+	 * @return убил охотник, и в его пати нет живых
+	 */
+	private static boolean onlyHunters(Player player)
+	{
+		if (!hunter(player))
+		{
+			return false;
+		}
+		final Party party = player.getParty();
+		return (party == null) || party.getMembers().stream().allMatch(L2HubChronicle::hunter);
+	}
+
+	/**
 	 * «игрок Имя», «охотник Имя», «пати Лидера (5)», «охотники Лидера (5)».
 	 */
 	private static String who(Player player)
@@ -244,6 +263,25 @@ public class L2HubChronicle
 		if ((target == null) || (killer == null))
 		{
 			return;
+		}
+
+		if (SuperChampion.isSuper(target) && !target.isRaid() && onlyHunters(killer))
+		{
+			final long now = System.currentTimeMillis();
+			if (now < _nextSuper)
+			{
+				_skippedSupers++;
+				return;
+			}
+			_nextSuper = now + SUPER_GAP;
+			if (_skippedSupers > 0)
+			{
+				final String name = target.getName() + " (" + target.getLevel() + ")";
+				final int count = _skippedSupers + 1;
+				_skippedSupers = 0;
+				add("super_killed", "en".equals(org.l2jmobius.gameserver.config.custom.L2HubWorldConfig.LANGUAGE) ? "Hunters killed " + count + " super champions, the last one " + name : "Охотники убили суперчемпионов: " + count + ", последний — " + name, who(killer), town(target), target.getX(), target.getY());
+				return;
+			}
 		}
 
 		final String by = who(killer);
@@ -475,6 +513,13 @@ public class L2HubChronicle
 		final boolean before = PVP_FIGHTING.getOrDefault(name, false);
 		PVP_FIGHTING.put(name, fighting);
 		if (!before || fighting || scores.isEmpty())
+		{
+			return;
+		}
+		// Счёт живёт до следующего старта скрипта, а его участник уходит на другой ивент и возвращается: тот же счёт второй раз не пишем.
+		final int signature = scores.hashCode();
+		final Integer reported = PVP_REPORTED.put(name, signature);
+		if ((reported != null) && (reported == signature))
 		{
 			return;
 		}

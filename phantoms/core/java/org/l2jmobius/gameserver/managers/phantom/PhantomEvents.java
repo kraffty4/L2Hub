@@ -221,7 +221,7 @@ public final class PhantomEvents
 	 */
 	public boolean isBusy(Player player)
 	{
-		return player.isRegisteredOnEvent() || player.isOnEvent();
+		return player.isRegisteredOnEvent() || player.isOnEvent() || PhantomSiege.getInstance().inBattle(player);
 	}
 
 	/**
@@ -250,6 +250,14 @@ public final class PhantomEvents
 		if (player.isDead() || player.isTeleporting() || player.isImmobilized() || player.isCastingNow())
 		{
 			note(player, "waits on the arena (" + (player.isDead() ? "dead" : player.isTeleporting() ? "teleporting" : player.isImmobilized() ? "immobilized" : "casting") + ")", now);
+			return Drive.FIGHTS;
+		}
+
+		// Сидящему движение не дойдёт: при намерении REST setIntentionMoveTo отбрасывается (прогон CtF 2026-10-30: носильщик просидел весь бой).
+		if (player.isSitting())
+		{
+			player.standUp();
+			note(player, "stands up on the arena", now);
 			return Drive.FIGHTS;
 		}
 

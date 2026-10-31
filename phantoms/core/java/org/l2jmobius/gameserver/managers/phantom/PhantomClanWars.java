@@ -1,5 +1,7 @@
 package org.l2jmobius.gameserver.managers.phantom;
 
+import static org.l2jmobius.gameserver.managers.phantom.PhantomText.tr;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -16,6 +18,7 @@ import java.util.logging.Logger;
 
 import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.commons.util.Rnd;
+import org.l2jmobius.gameserver.config.PlayerConfig;
 import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
 import org.l2jmobius.gameserver.data.sql.ClanTable;
 import org.l2jmobius.gameserver.entity.Location;
@@ -31,13 +34,14 @@ import org.l2jmobius.gameserver.managers.GlobalVariablesManager;
  * {@code HunterClanWarGrudge}, оба клана от {@code HunterClanWarLevel}-го уровня и ни с кем не воюют — глава обиженного клана (в мире) объявляет
  * войну ({@link #declare});</li>
  * <li>война с кланом игрока (этап 4) — так же, но обиды только охотников клана охотников на членов клана живого игрока в мире; у клана игрока одна
- * такая война за раз и сутки мира после неё ({@link #declarePlayer});</li>
+ * такая война за раз и {@code HunterClanWarTruceHours} ч мира после неё ({@link #declarePlayer}); на войну, которую игрок объявил сам, глава отвечает
+ * при {@code HunterClanWarReply} ({@link #replies});</li>
  * <li>война — штатная война Mobius, объявленная сразу с обеих сторон ({@link PhantomCompat#startWar}): враги бьют друг друга без флага и кармы,
  * репутацию за убийства переводит Mobius;</li>
  * <li>драки — раз в минуту охотники враждующих кланов рядом лезут в драку, как в махаче, но повод — война ({@link PhantomBrawl#warProvoked}); на живого
  * врага — не больше {@code HunterClanWarPlayerAttackers} разом ({@link PhantomBrawl#warOnLiving});</li>
- * <li>перемирие — через {@code HunterClanWarHours} ч или после {@code HunterClanWarKills} убийств на двоих; та же пара кланов потом не воюет
- * {@value #TRUCE_HOURS} ч. Клан игрока может выйти из войны и сам — окном клана, по правилам Mobius.</li>
+ * <li>перемирие — через {@code HunterClanWarHours} ч или после {@code HunterClanWarKills} убийств на двоих (0 — этого предела нет); та же пара кланов
+ * потом не воюет {@code HunterClanWarTruceHours} ч. Клан игрока может выйти из войны и сам — окном клана, по правилам Mobius.</li>
  * </ul>
  * Начало и конец со счётом — в «Летопись» (вид {@code clan_war}), война и счёт — в {@code .clans} и в окне «Охотники». Счёт и начало войны
  * переживают перезапуск: войну Mobius хранит в базе, счёт — глобальная переменная {@value #WAR_VARIABLE}.
@@ -52,8 +56,6 @@ public final class PhantomClanWars
 	private static final long FIGHT_GAP = 60000;
 	/** «Рядом» — не дальше. */
 	private static final int FIGHT_RANGE = 1500;
-	/** После перемирия та же пара кланов не воюет столько часов; клан игрока после войны с охотниками — тоже. */
-	private static final int TRUCE_HOURS = 24;
 	/** Реплика о войне в клан-чат — не чаще. */
 	private static final long SAY_GAP = 60000;
 	/** Драка в самопроверке CLANWAR длится столько, потом — счёт и перемирие. */
@@ -73,6 +75,12 @@ public final class PhantomClanWars
 		"%2$s, вы перешли черту. клан %1$s объявляет вам войну",
 		"%1$s объявляет войну клану %2$s. за наших ответите",
 		"%2$s, ждите гостей. %1$s идёт войной"
+	};
+	private static final String[] REPLY_SHOUTS =
+	{
+		"%2$s, войну хотели? %1$s принимает",
+		"%1$s отвечает клану %2$s: принято. сами напросились",
+		"%2$s, объявили — получайте. %1$s на войне"
 	};
 
 	/** Война: кланы (меньший id, больший), их имена, когда началась, кто объявил, клан игрока (0 — оба кланы охотников), убийства каждой стороны. */
@@ -178,6 +186,10 @@ public final class PhantomClanWars
 			if (PhantomHuntersConfig.HUNTER_CLAN_WARS_PLAYER)
 			{
 				declarePlayer(now);
+				if (PhantomHuntersConfig.HUNTER_CLAN_WAR_REPLY)
+				{
+					replies(now);
+				}
 			}
 		}
 		if (now >= _nextFight)
@@ -288,7 +300,7 @@ public final class PhantomClanWars
 			{
 				final Clan a = clans.get(i);
 				final Clan b = clans.get(j);
-				if (now < truceUntil(a, b))
+				if ((now < truceUntil(a, b)) || PhantomClanPower.allied(a, b))
 				{
 					continue;
 				}
@@ -315,7 +327,7 @@ public final class PhantomClanWars
 	/**
 	 * Война с кланом игрока (этап 4): обиды охотников клана охотников на членов клана живого игрока в мире — на живых и на охотников в нём, только в
 	 * одну сторону. Не меньше {@code HunterClanWarGrudge} — глава клана охотников (в мире) объявляет войну. Оба клана от {@code HunterClanWarLevel}-го
-	 * уровня и ни с кем не воюют, у клана игрока прошли сутки мира после прошлой войны с охотниками. Не больше одной войны за проход.
+	 * уровня и ни с кем не воюют, у клана игрока прошло перемирие после прошлой войны с охотниками. Не больше одной войны за проход.
 	 */
 	private void declarePlayer(long now)
 	{
@@ -361,6 +373,32 @@ public final class PhantomClanWars
 	}
 
 	/**
+	 * Ответ на войну, которую объявил сам игрок: глава клана охотников в мире принимает её при тех же условиях, что и свою. У обоих кланов нет другой войны с
+	 * охотниками, перемирие пары и клана игрока прошло, в клане игрока кто-то живой в мире. Не вышло — война остаётся односторонней до следующего прохода.
+	 * Не больше одной войны за проход.
+	 */
+	private void replies(long now)
+	{
+		for (Clan hunterClan : hunterClans())
+		{
+			final Player leader = hunterLeader(hunterClan);
+			if ((leader == null) || (hunterClan.getLevel() < PhantomHuntersConfig.HUNTER_CLAN_WAR_LEVEL) || (war(hunterClan) != null))
+			{
+				continue;
+			}
+			for (Clan playerClan : ClanTable.getInstance().getClans())
+			{
+				if (PhantomHunterClans.isHunterClan(playerClan) || !PhantomCompat.warDeclaredBy(playerClan, hunterClan) || (war(playerClan) != null) || (now < playerTruceUntil(playerClan)) || (now < truceUntil(hunterClan, playerClan)) || !PhantomClans.getInstance().livingOnline(playerClan))
+				{
+					continue;
+				}
+				start(new Candidate(hunterClan, playerClan, 0, 0), leader, now, true);
+				return;
+			}
+		}
+	}
+
+	/**
 	 * @return сумма обид охотников из {@code from} на всех из {@code to}
 	 */
 	private static double grudges(List<Player> from, List<Player> to)
@@ -388,6 +426,14 @@ public final class PhantomClanWars
 	 */
 	private War start(Candidate candidate, Player leader, long now)
 	{
+		return start(candidate, leader, now, false);
+	}
+
+	/**
+	 * @param reply клан охотников отвечает на объявленную ему войну, а не объявляет свою
+	 */
+	private War start(Candidate candidate, Player leader, long now, boolean reply)
+	{
 		final Clan offended = candidate.offended();
 		final Clan other = candidate.other();
 		final boolean player = !PhantomHunterClans.isHunterClan(other);
@@ -400,6 +446,19 @@ public final class PhantomClanWars
 		final War war = new War(offended, other, now, offended.getId());
 		_wars.put(key(offended.getId(), other.getId()), war);
 		save(war);
+		if (reply)
+		{
+			LOGGER.info(getClass().getSimpleName() + ": clan " + offended.getName() + " (" + leader.getName() + ") answers the war declared by the player clan " + other.getName() + ".");
+			PhantomNews.post("clan_war", "Клан «" + offended.getName() + "» принял войну клана игрока «" + other.getName() + "»", leader.getName(), leader);
+			PhantomChat.getInstance().hunterShout(leader, String.format(REPLY_SHOUTS[Rnd.get(REPLY_SHOUTS.length)], offended.getName(), other.getName()));
+			say(offended, leader, "ты глава клана «" + offended.getName() + "», клан «" + other.getName() + "» объявил вам войну, и ты её принял. Скажи своим в клан-чат", "война с " + other.getName() + ". сами полезли, видите их — бейте");
+			final Player answered = voice(other);
+			if (answered != null)
+			{
+				say(other, answered, "клан «" + offended.getName() + "» принял войну, которую объявил твой клан «" + other.getName() + "»; скажи своим в клан-чат", offended.getName() + " приняли войну. держимся вместе");
+			}
+			return war;
+		}
 		LOGGER.info(getClass().getSimpleName() + ": clan " + offended.getName() + " (" + leader.getName() + ") declares war on " + (player ? "the player clan " : "") + other.getName() + (player ? String.format(Locale.ROOT, " — grudges %.1f (needs %d).", candidate.grudge(), PhantomHuntersConfig.HUNTER_CLAN_WAR_GRUDGE) : String.format(Locale.ROOT, " — grudges %.1f, back %.1f (needs %d together).", candidate.grudge(), candidate.back(), PhantomHuntersConfig.HUNTER_CLAN_WAR_GRUDGE)));
 		PhantomNews.post("clan_war", "Клан «" + offended.getName() + "» объявил войну " + (player ? "клану игрока «" : "клану «") + other.getName() + "»", leader.getName(), leader);
 		if (PhantomHunterManager.getInstance().getRealPlayers() > 0)
@@ -593,11 +652,11 @@ public final class PhantomClanWars
 				}
 				continue;
 			}
-			if (war.total() >= PhantomHuntersConfig.HUNTER_CLAN_WAR_KILLS)
+			if ((PhantomHuntersConfig.HUNTER_CLAN_WAR_KILLS > 0) && (war.total() >= PhantomHuntersConfig.HUNTER_CLAN_WAR_KILLS))
 			{
 				end(war, now, null, "kills");
 			}
-			else if ((now - war.start) >= (PhantomHuntersConfig.HUNTER_CLAN_WAR_HOURS * 3600000L))
+			else if ((PhantomHuntersConfig.HUNTER_CLAN_WAR_HOURS > 0) && ((now - war.start) >= (PhantomHuntersConfig.HUNTER_CLAN_WAR_HOURS * 3600000L)))
 			{
 				end(war, now, null, "time");
 			}
@@ -605,7 +664,7 @@ public final class PhantomClanWars
 	}
 
 	/**
-	 * Перемирие: войну снять, счёт — в летопись, пара кланов не воюет {@value #TRUCE_HOURS} ч; клан игрока — ни с одним кланом охотников.
+	 * Перемирие: войну снять, счёт — в летопись, пара кланов не воюет {@code HunterClanWarTruceHours} ч; клан игрока — ни с одним кланом охотников.
 	 * @param reason почему, для летописи ({@code null} — счёт решил или время вышло)
 	 * @param why для лога
 	 */
@@ -670,16 +729,43 @@ public final class PhantomClanWars
 	private static long truceUntil(Clan a, Clan b)
 	{
 		final long since = GlobalVariablesManager.getInstance().getLong(variable(TRUCE_VARIABLE, a.getId(), b.getId()), 0);
-		return since == 0 ? 0 : since + (TRUCE_HOURS * 3600000L);
+		return since == 0 ? 0 : since + (PhantomHuntersConfig.HUNTER_CLAN_WAR_TRUCE_HOURS * 3600000L);
 	}
 
 	/**
-	 * @return до каких пор клан игрока не воюет с охотниками: сутки после прошлой такой войны
+	 * @return до каких пор клан игрока не воюет с охотниками: {@code HunterClanWarTruceHours} ч после прошлой такой войны
 	 */
 	private static long playerTruceUntil(Clan clan)
 	{
 		final long since = GlobalVariablesManager.getInstance().getLong(PLAYER_TRUCE_VARIABLE + clan.getId(), 0);
-		return since == 0 ? 0 : since + (TRUCE_HOURS * 3600000L);
+		return since == 0 ? 0 : since + (PhantomHuntersConfig.HUNTER_CLAN_WAR_TRUCE_HOURS * 3600000L);
+	}
+
+	// ---------- Требования ----------
+
+	/**
+	 * @return уровень клана, с которого игрок может объявить войну и ему могут её объявить: {@code HunterClanWarLevel}, не ниже {@link PhantomCompat#warLevelFloor}
+	 */
+	public static int requiredLevel()
+	{
+		return Math.max(PhantomCompat.warLevelFloor(), PhantomHuntersConfig.HUNTER_CLAN_WAR_LEVEL);
+	}
+
+	/**
+	 * Для объявления игроком: пакет и доска Alt+B. Клану охотников число членов не важно: они малы, ход войн их тоже не считает.
+	 * @return клан подходит для войны
+	 */
+	public static boolean eligible(Clan clan)
+	{
+		return (clan != null) && (clan.getLevel() >= requiredLevel()) && (PhantomHunterClans.isHunterClan(clan) || (clan.getMembersCount() >= PlayerConfig.ALT_CLAN_MEMBERS_FOR_WAR));
+	}
+
+	/**
+	 * @return условия войны для игрока, на языке сервера
+	 */
+	public static String requirements()
+	{
+		return tr("Для войны клан должен быть от ") + requiredLevel() + tr("-го уровня и иметь не меньше ") + PlayerConfig.ALT_CLAN_MEMBERS_FOR_WAR + tr(" участников; у клана охотников число участников не важно.");
 	}
 
 	// ---------- Видимость ----------
@@ -921,7 +1007,7 @@ public final class PhantomClanWars
 					{
 						declare(System.currentTimeMillis());
 					}
-					LOGGER.info(tag + "declare again right after the truce: " + (war(clanA) == null ? "no war — truce for " + TRUCE_HOURS + " h" : "WAR (unexpected)") + ".");
+					LOGGER.info(tag + "declare again right after the truce: " + (war(clanA) == null ? "no war — truce for " + PhantomHuntersConfig.HUNTER_CLAN_WAR_TRUCE_HOURS + " h" : PhantomHuntersConfig.HUNTER_CLAN_WAR_TRUCE_HOURS > 0 ? "WAR (unexpected)" : "war — no truce by the key") + ".");
 				}
 				catch (Exception e)
 				{
@@ -1153,7 +1239,7 @@ public final class PhantomClanWars
 					{
 						declarePlayer(System.currentTimeMillis());
 					}
-					LOGGER.info(tag + "declare again right after the truce: " + (war(playerClan) == null ? "no war — the player clan has " + TRUCE_HOURS + " h of peace" : "WAR (unexpected)") + ".");
+					LOGGER.info(tag + "declare again right after the truce: " + (war(playerClan) == null ? "no war — the player clan has " + PhantomHuntersConfig.HUNTER_CLAN_WAR_TRUCE_HOURS + " h of peace" : PhantomHuntersConfig.HUNTER_CLAN_WAR_TRUCE_HOURS > 0 ? "WAR (unexpected)" : "war — no truce by the key") + ".");
 
 					// Вторая война без суток мира — и клан «игрока» выходит из неё сам, как «прекратить войну» в окне клана.
 					final GlobalVariablesManager variables = GlobalVariablesManager.getInstance();
@@ -1177,6 +1263,7 @@ public final class PhantomClanWars
 						}
 						LOGGER.info(tag + "after the pass: " + (war(playerClan) == null ? "truce" : "STILL AT WAR") + ", the hunter clan at war with it " + hunterClan.isAtWarWith(playerClan.getId()) + ", the player clan at war " + playerClan.isAtWarWith(hunterClan.getId()) + ", peace for the player clan " + (playerTruceUntil(playerClan) > System.currentTimeMillis() ? "set" : "NOT set") + ".");
 					}
+					selfTestReply(tag, playerClan, hunterClan);
 				}
 				catch (Exception e)
 				{
@@ -1192,6 +1279,37 @@ public final class PhantomClanWars
 		{
 			LOGGER.log(Level.WARNING, tag + "failed: " + e.getMessage(), e);
 			selfTestPlayerCleanup(tag, playerClan, hunterClan);
+		}
+	}
+
+	/**
+	 * Ответ на войну: «игрок» объявляет сам. При перемирии глава молчит, после него принимает; второй проход новой войны не начинает; война снята, идёт перемирие.
+	 */
+	private void selfTestReply(String tag, Clan playerClan, Clan hunterClan)
+	{
+		final GlobalVariablesManager variables = GlobalVariablesManager.getInstance();
+		if (war(playerClan) != null)
+		{
+			end(_wars.get(key(playerClan.getId(), hunterClan.getId())), System.currentTimeMillis(), null, "self-test");
+		}
+		LOGGER.info(tag + "requirements: from level " + requiredLevel() + ", the hunter clan of level " + hunterClan.getLevel() + " eligible " + eligible(hunterClan) + ", the player clan of level " + playerClan.getLevel() + " and " + playerClan.getMembersCount() + " members eligible " + eligible(playerClan) + ".");
+		PhantomCompat.declareWar(playerClan, hunterClan);
+		LOGGER.info(tag + "the player clan declares by itself: one-sided " + PhantomCompat.warDeclaredBy(playerClan, hunterClan) + ", Mobius at war " + PhantomCompat.atWar(hunterClan, playerClan) + ".");
+		synchronized (this)
+		{
+			variables.set(PLAYER_TRUCE_VARIABLE + playerClan.getId(), System.currentTimeMillis());
+			replies(System.currentTimeMillis());
+			LOGGER.info(tag + "reply during the truce: " + (PhantomCompat.atWar(hunterClan, playerClan) ? "ANSWERED (unexpected)" : "silence — right") + ".");
+			variables.remove(PLAYER_TRUCE_VARIABLE + playerClan.getId());
+			variables.remove(variable(TRUCE_VARIABLE, playerClan.getId(), hunterClan.getId()));
+			replies(System.currentTimeMillis());
+			final String[] war = war(playerClan);
+			LOGGER.info(tag + "reply after the truce: " + (war != null ? "war with " + war[0] : "NO WAR") + ", Mobius at war " + PhantomCompat.atWar(hunterClan, playerClan) + ", one-sided " + PhantomCompat.warDeclaredBy(playerClan, hunterClan) + ".");
+			if (war != null)
+			{
+				end(_wars.get(key(playerClan.getId(), hunterClan.getId())), System.currentTimeMillis(), null, "self-test");
+			}
+			LOGGER.info(tag + "after the answered war: " + (war(playerClan) == null ? "truce" : "STILL AT WAR") + ", Mobius at war " + PhantomCompat.atWar(hunterClan, playerClan) + ", peace for the player clan " + (playerTruceUntil(playerClan) > System.currentTimeMillis() ? "set" : "NOT set") + ".");
 		}
 	}
 

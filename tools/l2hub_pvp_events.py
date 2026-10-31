@@ -8,6 +8,10 @@ L2HubPvpEvents.java, ключи для config/Custom/L2HubEvents.ini — tools/l
     L2HubPvpEvents.minLevel(N) — у хроник N разный, поэтому патч считается по дереву, а не один на всех; проверка
     участников перед ареной (isOnlineInt() != 1) — через L2HubPvpEvents.offline: фантомов без клиента не выкидывать;
     в TvT и CtF onEnterZone/onExitZone — только свои участники (общие зоны Колизея, NPE у TvT во время CtF);
+  - в TvT и CtF запись (Participate) — под замком PLAYER_LIST и только при открытой регистрации, смена фазы на STARTING —
+    под тем же замком: две записи разом не обгонят лимит, а запись из окна менеджера во время боя не пройдёт (по вкладу пользователя);
+    у Deathmatch фаз нет (EVENT_ACTIVE на весь ивент), менеджера на арене тоже — его это не касается;
+  - в TvT бой, минимум и максимум участников и резерв мест — ключами через L2HubPvpEvents.tvt и .full, значения по умолчанию прежние;
   - блок ключей дописывается в конец L2HubEvents.ini (его создаёт патч календаря 0016).
 Переводы строк каждого файла сохраняются. Патч проверяется наложением на копию исходного дерева байт в байт.
 
@@ -46,6 +50,22 @@ ZONE_TAIL = b"\t\t{\n\t\t\tfinal Player player = creature.asPlayer();\n\t\t\tif 
 ZONE_GUARD = ("\t\t{\n\t\t\tfinal Player player = creature.asPlayer();\n\t\t\tif (player.isOnEvent() && (PVP_WORLD != null) && "
               "PLAYER_LIST.contains(player)) // L2Hub: зоны Колизея общие у TvT и CtF — только свои участники\n").encode()
 ZONE_SCRIPTS = (EVENTS[0], EVENTS[2])  # TvT, CtF
+# Запись: проверка места и добавление разом и только при открытой регистрации. Блок Mobius одинаков у TvT и CtF всех хроник.
+PARTICIPATE = re.compile(rb'\t{4}if \(canRegister\(player\)\)\r?\n.*?\t{5}htmltext = "registration-failed\.html";\r?\n\t{4}\}\r?\n', re.S)
+STARTING = b"\t\t\t\tsetState(EventState.STARTING);"
+PVP = b"custom.L2HubPvpEvents.L2HubPvpEvents."
+# TvT: «как в Mobius» → ключ L2HubEvents.ini; имя, значение по умолчанию и границы.
+TVT_CONSTANTS = (
+    (b"private static final int FIGHT_TIME = 20; // Minutes",
+     b'private static final int FIGHT_TIME = ' + PVP + 'tvt("TvTFightMinutes", 20, 1, 120); // L2Hub: минуты'.encode()),
+    (b"private static final int MINIMUM_PARTICIPANT_COUNT = 4;",
+     b'private static final int MINIMUM_PARTICIPANT_COUNT = ' + PVP + b'tvt("TvTMinParticipants", 4, 2, 200); // L2Hub'),
+    (b"private static final int MAXIMUM_PARTICIPANT_COUNT = 24; // Scoreboard has 25 slots",
+     b'private static final int MAXIMUM_PARTICIPANT_COUNT = ' + PVP + 'tvt("TvTMaxParticipants", 24, 2, 200); // L2Hub: счёт показывает первых 25%(nl)s'.encode()
+     + b'\tprivate static final int RESERVED_SLOTS = ' + PVP + 'tvt("TvTReservedSlots", 0, 0, 200); // L2Hub: места живым игрокам'.encode()),
+    (b"if (PLAYER_LIST.size() >= MAXIMUM_PARTICIPANT_COUNT)",
+     b'if (' + PVP + 'full(PLAYER_LIST, player, MAXIMUM_PARTICIPANT_COUNT, RESERVED_SLOTS)) // L2Hub: резерв мест'.encode()),
+)
 
 
 def tree(cid: str) -> Path:
@@ -96,6 +116,9 @@ def changes(base: dict[str, bytes | None]) -> dict[str, tuple[bytes | None, byte
                 if new.count(anchor) != 1:
                     sys.exit(f"{rel}: обработчик {signature.split(b'(')[0].decode()} не найден ровно один раз")
                 new = new.replace(anchor, (signature + ZONE_GUARD).replace(b"\n", nl))
+            new = guard_registration(new, rel)
+        if rel == EVENTS[0]:
+            new = tvt_sizes(new, rel)
         out[rel] = (old, new)
     old = base[INI]
     if b"PvpEvents" in old:
@@ -105,6 +128,28 @@ def changes(base: dict[str, bytes | None]) -> dict[str, tuple[bytes | None, byte
         block = crlf(block)
     out[INI] = (old, old.rstrip(b"\r\n") + (b"\r\n" if b"\r\n" in old else b"\n") + block)
     return out
+
+
+def guard_registration(text: bytes, rel: str) -> bytes:
+    """Запись под замком PLAYER_LIST и при открытой регистрации; смена фазы на STARTING — под тем же замком."""
+    nl = b"\r\n" if b"\r\n" in text else b"\n"
+    blocks = PARTICIPATE.findall(text)
+    if len(blocks) != 1 or text.count(STARTING) != 1:
+        sys.exit(f"{rel}: блок записи или смена фазы на STARTING не найдены ровно один раз")
+    inner = b"".join(b"\t" + line for line in blocks[0].splitlines(keepends=True)).replace(
+        b"if (canRegister(player))", b"if (IS_PARTICIPATING() && canRegister(player))")
+    block = "\t\t\t\tsynchronized (PLAYER_LIST) // L2Hub: место и запись разом, только при открытой регистрации".encode() + nl + b"\t\t\t\t{" + nl + inner + b"\t\t\t\t}" + nl
+    flip = "\t\t\t\tsynchronized (PLAYER_LIST) // L2Hub: запись на замке не проскочит мимо команд".encode() + nl + b"\t\t\t\t{" + nl + b"\t" + STARTING + nl + b"\t\t\t\t}"
+    return text.replace(blocks[0], block).replace(STARTING, flip)
+
+
+def tvt_sizes(text: bytes, rel: str) -> bytes:
+    nl = b"\r\n" if b"\r\n" in text else b"\n"
+    for old, new in TVT_CONSTANTS:
+        if text.count(old) != 1:
+            sys.exit(f"{rel}: не найдено ровно один раз: {old.decode()}")
+        text = text.replace(old, new.replace(b"%(nl)s", nl))
+    return text
 
 
 def build_patch(cid: str, plan: dict) -> tuple[bytes, list[str]]:

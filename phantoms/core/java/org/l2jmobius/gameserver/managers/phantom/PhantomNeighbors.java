@@ -316,7 +316,7 @@ public class PhantomNeighbors
 
 		if (PhantomBanter.audience(victim) && PhantomQuiet.getInstance().allowed(victim, CONTEST_TOPIC, now))
 		{
-			PhantomChat.getInstance().warn(victim, taker, victimTemplate, PhantomHunterManager.describe(taker) + " — такой же охотник, как ты, — бьёт моба (" + mob + "), которого ты бил первым: отжимает его у тебя. Предъяви ему это вслух", rude, after);
+			PhantomChat.getInstance().warn(victim, taker, victimTemplate, PhantomHunterManager.describe(taker) + " — такой же игрок, как ты, — бьёт моба (" + mob + "), которого ты бил первым: отжимает его у тебя. Предъяви ему это вслух", rude, after);
 		}
 		else
 		{

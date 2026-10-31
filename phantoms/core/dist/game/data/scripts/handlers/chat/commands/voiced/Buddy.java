@@ -5,6 +5,7 @@ import org.l2jmobius.gameserver.entity.actor.Player;
 import org.l2jmobius.gameserver.handler.IVoicedCommandHandler;
 import org.l2jmobius.gameserver.managers.phantom.PhantomUi;
 import org.l2jmobius.gameserver.network.serverpackets.NpcHtmlMessage;
+import static org.l2jmobius.gameserver.managers.phantom.PhantomText.tr;
 
 /**
  * L2Hub: напарники-фантомы. Окно и кнопки — {@link PhantomUi} (то же окно — вкладка «Напарники» на доске Alt+B).
@@ -28,7 +29,7 @@ public class Buddy implements IVoicedCommandHandler
 	{
 		if (!PhantomsConfig.PHANTOMS_ENABLED)
 		{
-			player.sendMessage("Напарники выключены (EnablePhantoms в Phantoms.ini).");
+			player.sendMessage(tr("Напарники выключены (EnablePhantoms в Phantoms.ini)."));
 			return false;
 		}
 
@@ -42,7 +43,7 @@ public class Buddy implements IVoicedCommandHandler
 			}
 		}
 
-		player.sendPacket(new NpcHtmlMessage("<html><title>Напарники</title><body><center>" + PhantomUi.render(player, "bypass voice .buddy") + "</center></body></html>"));
+		player.sendPacket(new NpcHtmlMessage(tr("<html><title>Напарники</title><body><center>") + PhantomUi.render(player, "bypass voice .buddy") + "</center></body></html>"));
 		return true;
 	}
 

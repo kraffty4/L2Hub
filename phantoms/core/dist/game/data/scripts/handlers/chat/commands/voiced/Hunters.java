@@ -8,6 +8,7 @@ import org.l2jmobius.gameserver.handler.CommunityBoardHandler;
 import org.l2jmobius.gameserver.handler.IVoicedCommandHandler;
 import org.l2jmobius.gameserver.managers.phantom.PhantomCompat;
 import org.l2jmobius.gameserver.managers.phantom.PhantomHunterUi;
+import static org.l2jmobius.gameserver.managers.phantom.PhantomText.tr;
 
 /**
  * L2Hub: охотники-фантомы для игроков — то же окно, что «Охотники» на доске Alt+B High Five ({@link PhantomHunterUi#board}),
@@ -31,7 +32,7 @@ public class Hunters implements IVoicedCommandHandler
 	{
 		if (!PhantomsConfig.PHANTOMS_ENABLED)
 		{
-			player.sendMessage("Фантомы выключены (EnablePhantoms в Phantoms.ini).");
+			player.sendMessage(tr("Фантомы выключены (EnablePhantoms в Phantoms.ini)."));
 			return false;
 		}
 
@@ -52,7 +53,7 @@ public class Hunters implements IVoicedCommandHandler
 		}
 
 		final String content = PhantomHunterUi.board(player, args.length > i ? args[i] : null, args.length > (i + 1) ? parseInt(args[i + 1]) : 0, BYPASS);
-		CommunityBoardHandler.separateAndSend("<html><body><br><center><font color=\"LEVEL\">Охотники</font><br><br>" + content + "</center></body></html>", player);
+		CommunityBoardHandler.separateAndSend(tr("<html><body><br><center><font color=\"LEVEL\">Охотники</font><br><br>") + content + "</center></body></html>", player);
 		return true;
 	}
 
@@ -60,19 +61,19 @@ public class Hunters implements IVoicedCommandHandler
 	{
 		if (CommunityBoardConfig.COMMUNITYBOARD_KARMA_DISABLED && (PhantomCompat.karma(player) > 0))
 		{
-			player.sendMessage("С кармой телепорт к охотникам закрыт.");
+			player.sendMessage(tr("С кармой телепорт к охотникам закрыт."));
 			return false;
 		}
 
 		if (CommunityBoardConfig.COMMUNITYBOARD_COMBAT_DISABLED && (player.isCastingNow() || player.isInCombat() || player.isInDuel() || player.isInOlympiadMode() || player.isInsideZone(ZoneId.SIEGE) || player.isInsideZone(ZoneId.PVP) || (player.getPvpFlag() > 0) || player.isAlikeDead() || player.isOnEvent() || player.isInStoreMode()))
 		{
-			player.sendMessage("Сейчас нельзя: ты в бою, мёртв или на событии.");
+			player.sendMessage(tr("Сейчас нельзя: ты в бою, мёртв или на событии."));
 			return false;
 		}
 
 		if (CommunityBoardConfig.COMMUNITYBOARD_PEACE_ONLY && !player.isInsideZone(ZoneId.PEACE))
 		{
-			player.sendMessage("Телепорт к охотникам — только из мирной зоны.");
+			player.sendMessage(tr("Телепорт к охотникам — только из мирной зоны."));
 			return false;
 		}
 		return true;

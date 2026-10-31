@@ -77,9 +77,10 @@
   // Отношения охотника к живым игрокам (патч 0032): враг, друг или так, и последние поступки.
   const REL_KIND = { enemy: 'враг', friend: 'друг', neutral: 'знакомый' };
   const REL_WHY = { killed: 'убил', attacked: 'нападал', healed: 'хилил', revived: 'реснул', saved: 'спас', hunted: 'качались вместе', contested: 'отжал моба', apologized: 'извинился', insulted: 'послал',
-    duel_win: 'победил на дуэли', duel_loss: 'проиграл дуэль', clan_harm: 'обидел соклановца', clan_help: 'выручил соклановца' };
+    duel_win: 'победил на дуэли', duel_loss: 'проиграл дуэль', clan_harm: 'обидел соклановца', clan_help: 'выручил соклановца',
+    friended: 'добавил в друзья', gifted: 'подарил вещь', buffed: 'дал бафф', sold: 'продал, что просили', gift_given: 'получил подарок', loot_fight: 'забрал дроп', scammed: 'кинул в обмене' };
   // Клан охотника (docs/PHANTOMS.md, 4.50): свой клан охотников или клан живого игрока; одиночка в кланы не идёт. Война — этапы 3 и 4.
-  const clanText = (x) => (x.clan ? `${esc(x.clan)} <span class="w-muted">· ${x.clanLevel ?? 0} ур.${x.clanLeader ? ', глава' : ''}${x.hunterClan ? '' : ', клан игрока'}</span>`
+  const clanText = (x) => (x.clan ? `${esc(x.clan)} <span class="w-muted">· ${x.clanLevel ?? 0} ур.${x.clanLeader ? ', глава' : ''}${x.hunterClan ? '' : ', клан игрока'}${x.clanAlly ? `, союз ${esc(x.clanAlly)}` : ''}</span>`
       + (x.clanWar ? `<br><span class="w-muted">${x.clanWarPlayer ? 'воюет с кланом игрока' : 'воюет с'}</span> ${esc(x.clanWar)} <span class="w-muted">· счёт ${esc(x.clanWarScore || '0:0')}</span>` : '')
     : x.loner ? '<span class="w-muted">одиночка — в кланы не идёт</span>' : '—');
   const relationsText = (list) => (list && list.length
@@ -128,6 +129,7 @@
     module: '<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/>',
     map: '<path d="M3 6.5l6-3 6 3 6-3v14l-6 3-6-3-6 3z"/><path d="M9 3.5v14M15 6.5v14"/>',
     chronicle: '<path d="M6 3h11a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6z"/><path d="M6 3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2"/><path d="M9 8h7M9 12h7M9 16h4"/>',
+    society: '<path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"/><path d="M12 8v8M8.5 11.5h7"/>',
   };
   const svg = (k) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">${ICONS[k]}</svg>`;
 
@@ -204,6 +206,14 @@
       W.chronicle = r; W.chronErr = r.ok ? null : r.error;
     } catch (e) { if (chron === W.chron) W.chronErr = e.message || String(e); }
   }
+  async function loadSociety() {
+    const chron = W.chron;
+    try {
+      const r = await api.world_society(chron);
+      if (chron !== W.chron) return;
+      W.society = r; W.socErr = r.ok ? null : r.error; W.socAt = Date.now();
+    } catch (e) { if (chron === W.chron) W.socErr = e.message || String(e); }
+  }
   async function loadMods() {
     try { W.mods = await api.phantoms_status(); W.modsErr = null; } catch (e) { W.modsErr = e.message || String(e); }
   }
@@ -237,6 +247,8 @@
     if (screen === 'module') jobs.push(loadMods());
     if (screen === 'map') jobs.push(loadMap());
     if (screen === 'chronicle') jobs.push(loadChron());
+    if (screen === 'society') jobs.push(loadSociety());
+    if (screen === 'society' && W.socTab === 'forum') openForum();
     await Promise.all(jobs);
     if (W.open && W.screen === screen) render();
   }
@@ -249,6 +261,12 @@
     }
     if (W.screen === 'map') { await loadMap(); if (W.open) render(true); return; }
     if (W.screen === 'chronicle') { await loadChron(); if (W.open) render(true); return; }
+    if (W.screen === 'society') { // форум сам не меняется, а строка ввода живёт в DOM
+      if (W.socTab === 'forum') return;
+      if (Date.now() - (W.socAt || 0) > 30000) await loadSociety();
+      if (W.open && W.screen === 'society' && W.socTab !== 'forum') render(true);
+      return;
+    }
     await loadHunters();
     // «Разум»: лента и память — заново; модель и стратег не перерисовывать — там правят поля.
     if (W.open && W.screen === 'mind' && W.mindTab !== 'settings') { await loadMind(); if (W.open && W.screen === 'mind') render(true); }
@@ -259,7 +277,7 @@
   // ---------- Открыть, закрыть, смена хроники и сервера ----------
   function reset(chron) {
     Object.assign(W, { chron, h: null, hErr: null, comps: null, compsErr: null, brain: null, brainErr: null, brainEdit: null, models: [],
-      mind: null, mindErr: null, mindWho: null, mindPlayer: 'ALL', mindOpen: new Set(), strat: null, schema: null, schemaErr: null, restart: null, sel: null, lastRunning: last.running === chron, map: null, mapErr: null, chronicle: null, chronErr: null });
+      mind: null, mindErr: null, mindWho: null, mindPlayer: 'ALL', mindOpen: new Set(), strat: null, schema: null, schemaErr: null, restart: null, sel: null, lastRunning: last.running === chron, map: null, mapErr: null, chronicle: null, chronErr: null, society: null, socErr: null, socAt: 0, forum: null, forumErr: null, forumOpen: null, forumBusy: false, forumDraft: '' });
   }
   // «Мой мир» — раздел L2Hub, а не вид хроники: чей мир смотреть, решает app.js (window.worldId()).
   window.openWorld = async () => {
@@ -308,7 +326,7 @@
     else if (!supported()) srv = pill('', '<i class="dot"></i>без живого мира');
     else if (running()) {
       const g = window.compsOf(W.chron)?.game || {};
-      srv = pill('', `<i class="dot on"></i>сервер работает${g.uptime_s ? ` · ${fmtUptime(g.uptime_s)}` : ''}${g.online != null ? ` · живых ${g.online}` : ''}`);
+      srv = pill('', `<i class="dot on"></i>сервер работает${g.uptime_s ? ` · ${fmtUptime(g.uptime_s)}` : ''}${g.world ? ` · онлайн ${g.world.total}` : ''}${g.online != null ? ` · живых ${g.online}` : ''}`);
     } else srv = pill('', '<i class="dot"></i>сервер выключен — мир стоит');
     setHtml('worldSrv', srv);
     let fresh = '';
@@ -323,7 +341,7 @@
     renderNav();
   }
   function setHtml(id, html) { const el = $(id); if (el.dataset.html !== html) { el.dataset.html = html; el.innerHTML = html; return true; } return false; }
-  const SCREENS = [['overview', 'Обзор'], ['map', 'Карта'], ['people', 'Население'], ['chronicle', 'Летопись'], ['comp', 'Напарники'], ['mind', 'Разум'], ['creator', 'Создатель']];
+  const SCREENS = [['overview', 'Обзор'], ['map', 'Карта'], ['people', 'Население'], ['chronicle', 'Летопись'], ['society', 'Общество'], ['comp', 'Напарники'], ['mind', 'Разум'], ['creator', 'Создатель']];
   const WSTATE = { fresh: 'модуль свежий', stale: 'модуль устарел — пересобрать', notbuilt: 'модуль не собран' };
   function renderNav() {
     const dirty = Object.keys(edits()).length > 0;
@@ -343,8 +361,7 @@
       if (k === 'mind' && supported() && W.h) extra = `<span class="cnt"><i class="dot ${mindDot()}"></i></span>`;
       if (k === 'creator' && dirty) extra = '<span class="unsaved" title="Есть несохранённые правки"></span>';
       return `<button data-s="${k}" class="${k === W.screen ? 'on' : ''}">${svg(k)}${t}${extra}</button>`;
-    }).join('') + `<div class="nav-h">Для всех миров</div><button data-s="module" class="${W.screen === 'module' ? 'on' : ''}">${svg('module')}Модуль фантомов${W.mods?.items?.some((x) => x.state === 'stale') ? '<span class="unsaved" title="Где-то модуль устарел"></span>' : ''}</button>`
-      + '<div class="later">Позже: «Общество» — связи и кланы ботов (docs/WORLD_CONTROL.md).</div>';
+    }).join('') + `<div class="nav-h">Для всех миров</div><button data-s="module" class="${W.screen === 'module' ? 'on' : ''}">${svg('module')}Модуль фантомов${W.mods?.items?.some((x) => x.state === 'stale') ? '<span class="unsaved" title="Где-то модуль устарел"></span>' : ''}</button>`;
     if (setHtml('worldNav', html)) {
       $('worldNav').querySelectorAll('button[data-s]').forEach((b) => (b.onclick = () => enter(b.dataset.s)));
       $('worldNav').querySelectorAll('button[data-w]').forEach((b) => (b.onclick = () => b.dataset.w !== W.chron && pickWorld(b.dataset.w)));
@@ -366,6 +383,7 @@
     else if (W.h && !supported()) main.innerHTML = unsupportedView();
     else if (!W.h && !W.hErr && W.screen !== 'creator') main.innerHTML = loadingView();
     else if (W.screen === 'chronicle') chronicleView(main);
+    else if (W.screen === 'society') societyView(main);
     else ({ overview: overviewView, people: peopleView, comp: compView, mind: mindView, creator: creatorView })[W.screen](main);
     bindCommon(main);
     if (state) restoreUi(main, state);
@@ -505,8 +523,9 @@
   // «Летопись» (Api.world_chronicle, game/log/L2HubChronicle.json, патч 0023 c4-interlude): лента заметных событий,
   // новые сверху, по дням; фильтр по виду. Текст готов к показу — сервер пишет его по-русски.
   const CHRON_KINDS = [['all', 'Всё'], ['boss', 'Боссы', ['raid_killed', 'super_killed', 'epic_killed', 'epic_spawned']], ['pvp', 'PvP', ['pvp_result']],
-    ['events', 'События', ['seasonal_start', 'seasonal_end', 'elpies']], ['growth', 'Рост', ['level', 'profession']], ['clans', 'Кланы', ['clan', 'clan_war']]];
-  const CHRON_MARK = { raid_killed: '⚔', super_killed: '★', epic_killed: '☠', epic_spawned: '◆', pvp_result: '⚑', seasonal_start: '✦', seasonal_end: '✧', elpies: '❀', level: '▲', profession: '♛', clan: '⚜', clan_war: '⚒' };
+    ['events', 'События', ['seasonal_start', 'seasonal_end', 'elpies']], ['growth', 'Рост', ['level', 'profession', 'enchant', 'world_offline']], ['clans', 'Кланы', ['clan', 'clan_war']],
+    ['stories', 'Истории', ['quarrel', 'drop_fight', 'scam', 'left', 'gone', 'back']]];
+  const CHRON_MARK = { raid_killed: '⚔', super_killed: '★', epic_killed: '☠', epic_spawned: '◆', pvp_result: '⚑', seasonal_start: '✦', seasonal_end: '✧', elpies: '❀', level: '▲', profession: '♛', enchant: '✚', clan: '⚜', clan_war: '⚒', world_offline: '☾', quarrel: '✖', drop_fight: '✕', scam: '$', left: '←', gone: '○', back: '●' };
   function chronicleView(main) {
     if (W.chronErr) { main.innerHTML = errorView(W.chronErr); return; }
     const r = W.chronicle;
@@ -525,6 +544,129 @@
       <div class="seg w-chron-f">${chips}</div>
       <div class="w-chron-list" data-keep="chron">${rows || '<div class="note">Пока пусто — летопись пишется по ходу игры: убитые боссы, ивенты, уровни охотников.</div>'}</div></div>`;
     main.querySelectorAll('[data-cf]').forEach((b) => (b.onclick = () => { W.chronFilter = b.dataset.cf; render(true); }));
+  }
+
+  // «Общество» (Api.world_society, l2hub/society.py): страница сервера — топы, кланы, войны, замки, герои, вражда и дружба.
+  const SOC_TABS = [['top', 'Топ'], ['clans', 'Кланы'], ['castles', 'Замки и герои'], ['ties', 'Вражда и дружба'], ['forum', 'Форум']];
+  const SOC_SORT = [['level', 'По уровню'], ['pvp', 'PvP'], ['pk', 'ПК']];
+  const SOC_ROWS = 100;
+  const socDate = (ms) => (ms ? new Date(ms).toLocaleDateString(L2I18N.locale, { day: 'numeric', month: 'long' }) : '');
+  const socName = (name, kind, online) => `${online ? '<i class="dot on"></i> ' : ''}<span class="nm">${esc(name)}</span>${kind === 'player' ? ' <span class="w-muted">· живой</span>' : ''}`;
+  function socTop(r) {
+    const by = W.socSort || 'level';
+    const list = r.people.filter((x) => by === 'level' || x[by] > 0).sort((a, b) => (b[by] || 0) - (a[by] || 0) || b.level - a.level || a.name.localeCompare(b.name));
+    const row = (x, i) => `<tr class="${x.kind === 'player' ? 'w-soc-me ' : ''}${x.kind === 'hunter' ? '' : 'w-soc-static'}" data-sn="${x.kind === 'hunter' ? esc(x.name) : ''}"><td class="w-n w-muted">${i + 1}</td><td>${socName(x.name, x.kind, x.online)}</td><td class="w-n">${x.level}</td><td>${esc(x.cls) || '<span class="w-muted">—</span>'}</td><td>${esc(x.clan) || '<span class="w-muted">—</span>'}</td><td class="w-n">${x.pvp ?? '—'}</td><td class="w-n">${x.pk ?? '—'}</td></tr>`;
+    const shown = list.slice(0, SOC_ROWS).map(row);
+    list.forEach((x, i) => { if (i >= SOC_ROWS && x.kind === 'player') shown.push(row(x, i)); }); // живого видно и за пределами сотни
+    const sort = SOC_SORT.map(([k, t]) => `<button data-ss="${k}" class="${k === by ? 'on' : ''}">${t}</button>`).join('');
+    return `<div class="seg w-chron-f">${sort}</div><div class="w-tbl" data-keep="soc" style="max-height:60vh"><table><colgroup><col style="width:7%"><col style="width:29%"><col style="width:7%"><col style="width:22%"><col style="width:19%"><col style="width:8%"><col style="width:8%"></colgroup>
+      <thead><tr><th class="w-n">#</th><th>Имя</th><th class="w-n">Ур.</th><th>Профессия</th><th>Клан</th><th class="w-n">PvP</th><th class="w-n">ПК</th></tr></thead><tbody>${shown.join('')}</tbody></table>${shown.length ? '' : '<div class="w-blank">Здесь пока никого: никто никого не убивал.</div>'}</div>`;
+  }
+  function socClans(r) {
+    if (!r.clans.length) return '<div class="w-blank">Кланов пока нет.</div>';
+    const list = r.clans.slice().sort((a, b) => b.level - a.level || (b.rep || 0) - (a.rep || 0) || b.members - a.members);
+    const rows = list.map((c) => `<tr class="w-soc-static"><td><span class="nm">${esc(c.name)}</span>${c.ally ? ` <span class="w-muted">· ${esc(c.ally)}</span>` : ''}</td><td class="w-n">${c.level}</td><td class="w-n">${c.rep ?? '—'}</td><td class="w-n">${c.online}/${c.members}</td><td>${esc(c.leader) || '<span class="w-muted">—</span>'}</td><td>${esc(c.castle) || '<span class="w-muted">—</span>'}</td><td title="${esc(c.wars.join(', '))}">${esc(c.wars.join(', ')) || '<span class="w-muted">—</span>'}</td></tr>`).join('');
+    const wars = r.wars.map((w) => `<div class="w-soc-tie"><span class="nm">${esc(w.a)}</span> ⚒ <span class="nm">${esc(w.b)}</span>${w.killsA != null ? ` <span class="w-muted">· убийств ${w.killsA}:${w.killsB}</span>` : ''}</div>`).join('');
+    return `<div class="w-tbl" data-keep="soc" style="max-height:60vh"><table><colgroup><col style="width:26%"><col style="width:6%"><col style="width:9%"><col style="width:10%"><col style="width:17%"><col style="width:12%"><col style="width:20%"></colgroup>
+      <thead><tr><th>Клан</th><th class="w-n">Ур.</th><th class="w-n">Реп.</th><th class="w-n" title="В сети из всех">Состав</th><th>Глава</th><th>Замок</th><th>Воюет с</th></tr></thead><tbody>${rows}</tbody></table>
+      ${wars ? `<div class="mode-group">Идут войны</div>${wars}` : ''}</div>`;
+  }
+  function socCastles(r) {
+    const hasTax = r.castles.some((c) => c.tax != null);
+    const castles = r.castles.map((c) => `<tr class="w-soc-static"><td><span class="nm">${esc(c.name)}</span></td><td>${esc(c.owner) || '<span class="w-muted">NPC</span>'}</td>${hasTax ? `<td class="w-n">${c.tax ?? '—'}${c.tax != null ? ' %' : ''}</td>` : ''}<td>${socDate(c.siege) || '<span class="w-muted">—</span>'}</td></tr>`).join('');
+    const heroes = r.heroes.slice().sort((a, b) => b.now - a.now || b.count - a.count).map((h) => `<tr class="w-soc-static"><td>${socName(h.name, h.kind)}${h.now ? ' <span class="w-muted">· сейчас</span>' : ''}</td><td>${esc(h.cls)}</td><td>${esc(h.clan) || '<span class="w-muted">—</span>'}</td><td class="w-n">${h.count}</td></tr>`).join('');
+    return `<div class="w-tbl" data-keep="soc" style="max-height:60vh">
+      ${castles ? `<table><thead><tr><th>Замок</th><th>Владелец</th>${hasTax ? '<th class="w-n">Налог</th>' : ''}<th>Осада</th></tr></thead><tbody>${castles}</tbody></table>` : '<div class="w-blank">О замках пока нет данных.</div>'}
+      <div class="mode-group">Герои</div>
+      ${heroes ? `<table><thead><tr><th>Имя</th><th>Профессия</th><th>Клан</th><th class="w-n">Раз</th></tr></thead><tbody>${heroes}</tbody></table>` : '<div class="w-blank">Героев пока нет: олимпиада их ещё не выбрала.</div>'}</div>`;
+  }
+  function socTies(r) {
+    const t = r.ties || { enemies: [], friends: [] };
+    const row = (x) => `<div class="w-soc-tie${x.living ? ' w-soc-me' : ''}"><span class="nm">${esc(x.a)}</span> и <span class="nm">${esc(x.b)}</span>${x.reasons.length ? `<div class="w-muted">${[...new Set(x.reasons)].map((w) => REL_WHY[w] || w).join(', ')}${x.kills > 1 ? ` · убийств ${x.kills}` : ''}</div>` : ''}</div>`;
+    const col = (title, list, blank) => `<div><div class="mode-group">${title}</div>${list.map(row).join('') || `<div class="w-blank">${blank}</div>`}</div>`;
+    return `<div class="w-soc-ties" data-keep="soc">${col('Вражда', t.enemies, 'Пока никто ни с кем не враждует.')}${col('Дружба', t.friends, 'Пока никто ни с кем не сдружился.')}</div>`;
+  }
+  // Форум сервера (l2hub/forum.py): темы из летописи и вечные, пишут охотники, живой может ответить.
+  const forumLang = () => (L2I18N.locale.startsWith('en') ? 'en' : 'ru');
+  function socForum(r) {
+    if (W.forumErr) return errorView(W.forumErr);
+    const f = W.forum;
+    if (!f) return loadingView();
+    if (f.enabled === false) return '<div class="note">Форум выключен: «Разум» → «Модель и стратег».</div>';
+    const notes = `${W.forumBusy ? '<div class="note" style="margin-bottom:8px">Кто-то пишет…</div>' : ''}${f.error ? `<div class="note w-note-warn" style="margin-bottom:8px">Мозги не ответили: ${esc(f.error)}</div>` : ''}`;
+    const t = W.forumOpen && f.threads.find((x) => x.id === W.forumOpen);
+    if (t) {
+      const posts = t.posts.map((p) => `<div class="w-soc-tie${p.you ? ' w-soc-me' : ''}"><span class="nm">${esc(p.by)}</span> <span class="w-muted" style="font-size:11.5px">${hhmmDay(p.time)}</span><div>${esc(p.text)}</div></div>`).join('');
+      const mine = r.people.filter((x) => x.kind === 'player').sort((a, b) => b.level - a.level);
+      const form = mine.length ? `<div class="row2" style="margin-top:10px"><select id="worldForumNick">${mine.map((x) => `<option${x.name === W.forumNick ? ' selected' : ''}>${esc(x.name)}</option>`).join('')}</select>
+          <input class="field" style="flex:1" id="worldForumText" maxlength="400" placeholder="Написать в ветку" value="${esc(W.forumDraft || '')}"><button class="sbtn primary" id="worldForumSend" ${W.forumSending ? 'disabled' : ''}>${W.forumSending ? 'Отправляю…' : 'Ответить'}</button></div>`
+        : '<div class="note" style="margin-top:10px">Ответить можно, когда в этом мире есть твой персонаж.</div>';
+      return `${notes}<div class="row2" style="margin-bottom:6px"><button class="sbtn" id="worldForumBack">← К темам</button></div><div class="mode-group">${esc(t.title)}</div><div data-keep="soc" style="max-height:48vh;overflow:auto">${posts}</div>${form}`;
+    }
+    if (f.nobody) return `${notes}<div class="note">Форум появится, когда в мире появятся жители: запусти его хотя бы раз.</div>`;
+    const rows = f.threads.map((x) => `<tr data-ft="${x.id}"><td title="${esc(x.title)}"><span class="nm">${esc(x.title)}</span></td><td>${esc(x.by)}</td><td class="w-n">${x.posts.length}</td><td>${hhmmDay(x.updated)}</td></tr>`).join('');
+    return `${notes}<div class="w-tbl" data-keep="soc" style="max-height:56vh"><table><colgroup><col style="width:55%"><col style="width:18%"><col style="width:10%"><col style="width:17%"></colgroup>
+      <thead><tr><th>Тема</th><th>Автор</th><th class="w-n">Постов</th><th>Обновлена</th></tr></thead><tbody>${rows}</tbody></table>${rows ? '' : `<div class="w-blank">${W.forumBusy ? 'Первые темы пишутся.' : 'Тем пока нет.'}</div>`}</div>
+      <div class="w-muted" style="font-size:12px;margin-top:8px">Пишут охотники через мозги: темы из летописи мира, новая ветка раз в 4 часа, и то когда страница открыта.</div>`;
+  }
+  async function loadForum(fresh = false) {
+    const chron = W.chron;
+    try {
+      const r = await (fresh ? api.world_forum_refresh(chron, forumLang()) : api.world_forum(chron));
+      if (chron !== W.chron) return;
+      W.forum = r; W.forumErr = r.ok ? null : r.error;
+    } catch (e) { if (chron === W.chron) W.forumErr = e.message || String(e); }
+  }
+  async function openForum() {
+    const same = () => W.open && W.screen === 'society' && W.socTab === 'forum';
+    await loadForum();
+    if (same()) render(true);
+    if (W.forum?.enabled === false || W.forumBusy) return;
+    W.forumBusy = true;
+    if (same()) render(true);
+    await loadForum(true);
+    W.forumBusy = false;
+    if (same()) render(true);
+  }
+  async function sendForum() {
+    const text = (W.forumDraft || '').trim();
+    if (!text || W.forumSending) return;
+    const chron = W.chron, id = W.forumOpen;
+    W.forumNick = $('worldForumNick').value;
+    W.forumSending = true; render(true);
+    try {
+      const r = await api.world_forum_reply(chron, id, W.forumNick, text, forumLang());
+      if (chron !== W.chron) return;
+      if (r.ok) { W.forum = r; W.forumDraft = ''; } else toast(r.error, true);
+    } catch (e) { toast(e.message || String(e), true); }
+    W.forumSending = false;
+    if (!W.open || W.screen !== 'society') return;
+    render();
+    const list = document.querySelector('#worldMain [data-keep="soc"]'); // свой пост и ответы — внизу ветки
+    if (list) list.scrollTop = list.scrollHeight;
+  }
+  function societyView(main) {
+    if (W.socErr) { main.innerHTML = errorView(W.socErr); return; }
+    const r = W.society;
+    if (!r) { main.innerHTML = loadingView(); return; }
+    if (r.empty) { main.innerHTML = '<div class="note">Пока пусто: страница заполнится, когда мир запустится хотя бы раз.</div>'; return; }
+    const tab = W.socTab || 'top';
+    const tabs = SOC_TABS.map(([k, t]) => `<button data-st="${k}" class="${k === tab ? 'on' : ''}">${t}</button>`).join('');
+    const note = r.partial ? '<div class="note" style="margin-bottom:10px">База выключена, снимка ещё нет: тут только уровни и кланы из файлов сервера. PvP, ПК, замки и войны появятся, когда мир запустится.</div>'
+      : r.live ? '' : `<div class="note" style="margin-bottom:10px">База выключена: это снимок за ${socDate(r.time)}. Свежие цифры появятся, когда мир запустится.</div>`;
+    const online = r.people.filter((x) => x.online).length;
+    main.innerHTML = `<div class="card"><h3>Общество <span class="r w-muted">персонажей ${r.people.length}${r.partial ? '' : ` · в сети ${online}`} · кланов ${r.clans.length}${r.partial ? '' : ` · войн ${r.wars.length}`}</span></h3>${note}
+      <div class="seg w-chron-f">${tabs}</div>${{ top: socTop, clans: socClans, castles: socCastles, ties: socTies, forum: socForum }[tab](r)}</div>`;
+    main.querySelectorAll('[data-st]').forEach((b) => (b.onclick = () => { W.socTab = b.dataset.st; render(); if (W.socTab === 'forum') openForum(); }));
+    main.querySelectorAll('[data-ft]').forEach((b) => (b.onclick = () => { W.forumOpen = Number(b.dataset.ft); W.forumDraft = ''; render(); }));
+    if ($('worldForumBack')) $('worldForumBack').onclick = () => { W.forumOpen = null; render(); };
+    if ($('worldForumText')) {
+      $('worldForumText').oninput = (e) => { W.forumDraft = e.target.value; };
+      $('worldForumText').onkeydown = (e) => { if (e.key === 'Enter') sendForum(); };
+    }
+    if ($('worldForumSend')) $('worldForumSend').onclick = sendForum;
+    main.querySelectorAll('[data-ss]').forEach((b) => (b.onclick = () => { W.socSort = b.dataset.ss; render(); }));
+    main.querySelectorAll('[data-sn]').forEach((b) => { if (b.dataset.sn) b.onclick = () => { W.sel = b.dataset.sn; enter('people'); }; });
   }
 
   // «Мир сейчас» (game/log/L2HubWorld.json, патч 0022 c4-interlude): суперчемпионы, сезонные события, ближайшие ивенты.
@@ -793,7 +935,7 @@
   const stratFrom = (st) => Object.fromEntries(STRAT_KEYS.map((k) => [k, st[k]]));
   const stratDirty = () => W.strat && W.h?.strategy && STRAT_KEYS.some((k) => String(W.strat[k]) !== String(W.h.strategy[k]));
   const BRAIN_KEYS = (s) => [s.mode, s.maxTokens, s.priceIn, s.priceOut, s.api.baseUrl, s.api.model, s.local.baseUrl, s.local.model,
-    s.extended?.enabled, s.extended?.dailyUsd].map(String).join('|');
+    s.extended?.enabled, s.extended?.dailyUsd, s.voice?.live, s.voice?.swear, s.voice?.world, s.voice?.forum].map(String).join('|');
   const brainDirty = () => W.brain?.ok && W.brainEdit && BRAIN_KEYS(W.brainEdit) !== BRAIN_KEYS(W.brain.settings);
   // «Разум» (docs/MIND.md, шаг 5): «Мысли» — лента решений стратега с итогами, «Выводы» — опыт охотников, «Память» — разговоры
   // фантомов с заметками, «Модель и стратег» — настройки. Лента, выводы и память — из базы мозгов (Api.mind_view), и без сервера.
@@ -880,6 +1022,7 @@
           ${m === 'api' ? `<div class="opt"><div class="l">Ключ<small>${esc(s.api.keyFile)} в папке мозгов; сам ключ здесь не показывается</small></div>${W.brain.key ? '<span class="ok-text">есть</span>' : '<span class="bad-text">нет</span>'}</div>` : ''}
           <div class="opt"><div class="l">Длина ответа<small>токенов, 16–1024</small></div><input class="field" style="width:70px" id="worldBrainTokens" value="${esc(s.maxTokens)}"></div>
           ${extRows(s, u)}
+          ${voiceRows(s)}
           <div class="row2"><button class="sbtn" id="worldBrainModels">Список моделей</button><button class="sbtn" id="worldBrainTest" title="Один настоящий запрос к модели">Проверить</button><button class="sbtn primary" id="worldBrainSave" ${brainDirty() ? '' : 'disabled'}>Сохранить</button></div>
           <div class="w-muted" style="font-size:12px;margin-top:8px">${brainDirty() ? '<span class="hint">не сохранено · </span>' : ''}Применяется со следующей реплики, без перезапуска.</div></div>
         ${stratCard}
@@ -903,6 +1046,11 @@
       W.brainEdit.extended.enabled = on;
       render(true);
     };
+    $('worldBrainVoice').onclick = () => { W.brainEdit.voice.live = !W.brainEdit.voice.live; render(true); };
+    const swear = $('worldBrainSwear');
+    if (swear) swear.onclick = () => { W.brainEdit.voice.swear = !W.brainEdit.voice.swear; render(true); };
+    $('worldBrainWorld').onclick = () => { W.brainEdit.voice.world = !W.brainEdit.voice.world; render(true); };
+    $('worldBrainForum').onclick = () => { W.brainEdit.voice.forum = !W.brainEdit.voice.forum; render(true); };
     const extUsd = $('worldBrainExtUsd');
     if (extUsd) extUsd.onchange = (e) => { W.brainEdit.extended.dailyUsd = Number(e.target.value.replace(',', '.')) || 0; render(true); };
     $('worldPriceIn').onchange = (e) => { W.brainEdit.priceIn = Number(e.target.value.replace(',', '.')) || 0; render(true); };
@@ -1067,6 +1215,14 @@
     return `<div class="opt"><div class="l">Расширенное обдумывание<small>охотники рядом с тобой (до ${e.focusMax}) думают с размышлением — дороже</small></div><button class="switch" role="switch" aria-checked="${e.enabled}" id="worldBrainExt"></button></div>
       <div class="opt"><div class="l">Лимит в день, $<small>сегодня: ${usd(spent.cost)} за ${spent.requests} решений; дошли до лимита — до завтра обычные мозги</small></div><input class="field" style="width:56px" id="worldBrainExtUsd" value="${esc(e.dailyUsd)}"></div>`;
   }
+  // Живая речь (docs/MIND.md): манера письма и жизнь за окном у фейков, напарников и охотников; мат — отдельно.
+  function voiceRows(s) {
+    const v = s.voice;
+    return `<div class="opt"><div class="l">Живая речь<small>пишут как люди в чате: обрывки, опечатки, жизнь за окном по часам ПК</small></div><button class="switch" role="switch" aria-checked="${v.live}" id="worldBrainVoice"></button></div>
+      ${v.live ? `<div class="opt"><div class="l">Мат<small>у кого есть, решает ник: кто-то не матерится совсем</small></div><button class="switch" role="switch" aria-checked="${v.swear}" id="worldBrainSwear"></button></div>` : ''}
+      <div class="opt"><div class="l">Слухи мира<small>знают, что случилось на сервере: кто взял РБ, кто с кем воюет, кто сломал пуху, что ты делал другим</small></div><button class="switch" role="switch" aria-checked="${v.world}" id="worldBrainWorld"></button></div>
+      <div class="opt"><div class="l">Форум сервера<small>«Общество» → «Форум»: темы из летописи пишут сами жители; новая ветка раз в 4 часа, пока страница открыта</small></div><button class="switch" role="switch" aria-checked="${v.forum}" id="worldBrainForum"></button></div>`;
+  }
   function extWarning(s) {
     return `<p>Охотники рядом с тобой — до ${s.extended.focusMax} ближайших, кого ты видишь, с кем ты в пати или говоришь, — будут решать, что делать дальше, моделью DeepSeek с размышлением. Остальные живут по правилам, как сейчас.</p>
       <p>Это дороже: решение около $0,002 — раз в пять дороже обычного. При 3–5 охотниках рядом выходит примерно $0,13–0,33 за час игры.</p>
@@ -1157,8 +1313,44 @@
     HunterClanWars: ['clans', 'Войны кланов охотников', 'bool', null, 'Обиды между кланами копятся — глава обиженного объявляет войну. Враги дерутся при встрече без флага и кармы, счёт и перемирие — в «Летописи». Выкл — идущие войны кончаются перемирием.'],
     HunterClanWarGrudge: ['clans', 'Война — с суммы обид', 'int', [1, null], 'Обиды охотников одного клана на членов другого, в обе стороны. Убил — +3, напал — +1.'],
     HunterClanWarLevel: ['clans', 'Воюют кланы с уровня', 'int', [0, null], ''],
-    HunterClanWarHours: ['clans', 'Перемирие через, ч', 'int', [1, null], 'Потом эта пара кланов сутки не воюет.'],
-    HunterClanWarKills: ['clans', 'Перемирие после убийств на двоих', 'int', [1, null], ''],
+    HunterClanWarHours: ['clans', 'Перемирие через, ч', 'int', [0, null], '0 — без предела.'],
+    HunterClanWarKills: ['clans', 'Перемирие после убийств на двоих', 'int', [0, null], '0 — без предела.'],
+    HunterClanWarTruceHours: ['clans', 'Мир после войны, ч', 'int', [0, null], '0 — без перемирия.'],
+    DailyRhythmStrength: ['players', 'Настоящие сутки: живут по расписанию, %', 'int', [0, 100], 'Остальные весь день в сети.'],
+    DailyRhythmShift: ['players', 'Настоящие сутки: сдвиг часов', 'int', [-12, 12], 'Играешь ночью — поставь 6, и твои 2 часа ночи станут вечерними 8.'],
+    HunterRegularsShare: ['activity', 'Завсегдатаи: любят людные места, %', 'int', [0, 100], ''],
+    HunterRegularsPlaces: ['activity', 'Завсегдатаи: людных мест на диапазон уровней', 'int', [1, null], 'Несколько, чтобы все не сбились в одно.'],
+    HunterRegularsCrowd: ['activity', 'Завсегдатаи: человек на людном месте', 'int', [1, null], ''],
+    HunterRegularsNearLiving: ['players', 'Завсегдатаи: приходят на твой спот', 'int', [0, null], '0 — специально не приходят.'],
+    HunterSpotDisputeShare: ['players', 'Споры за спот: доля горячих, %', 'int', [0, 100], 'Кроме них спорят рисковые, осторожные никогда.'],
+    HunterSpotDisputeMinutes: ['players', 'Споры за спот: та же пара не чаще, мин', 'int', [1, null], ''],
+    HunterRaidRivalChance: ['activity', 'Очередь за РБ: шанс второго рейда, %', 'int', [0, 100], ''],
+    HunterRaidWatchMinutes: ['activity', 'Караул у респа: выходят заранее, не больше чем за, мин', 'int', [3, null], ''],
+    HunterStoryGapMinutes: ['activity', 'Истории: ссора и махач на весь мир не чаще, мин', 'int', [0, null], '0 — без предела.'],
+    HunterAbsenceChance: ['activity', 'Перерывы в игре: шанс раз в 4 недели, %', 'int', [0, 100], 'При 35 % отсутствуют в среднем 7 охотников из 109.'],
+    HunterAbsenceDaysMin: ['activity', 'Перерывы в игре: дней от', 'int', [1, 28], ''],
+    HunterAbsenceDaysMax: ['activity', 'Перерывы в игре: дней до', 'int', [1, 28], ''],
+    HunterAbsenceRageChance: ['activity', 'Уход сгоряча после поломки, %', 'int', [0, 100], 'Сломал заточку от +6 и бросил игру на 2–6 дней.'],
+    HunterMomentGapMinutes: ['activity', 'Случайности: случай одного вида на мир не чаще, мин', 'int', [1, null], 'Подарки, разборки за дроп, кидалы.'],
+    HunterFavorChance: ['players', 'Просьбы встреченных: шанс, %', 'int', [0, 100], '× общительность охотника. Только мозгами.'],
+    HunterFarWhisperCooldown: ['players', 'Знакомый пишет издалека: одному игроку не чаще, с', 'int', [60, null], ''],
+    HunterFarWhisperChance: ['players', 'Знакомый пишет издалека: шанс за минуту, %', 'int', [0, 100], 'Когда прошло время выше. Только мозгами.'],
+    HunterChatFlowBranchChance: ['players', 'Поток в трейде: другой ответит на строку, %', 'int', [0, 100], 'Только мозгами.'],
+    HunterChatFlowAnswerChance: ['players', 'Поток в трейде: ответят тебе, %', 'int', [0, 100], 'Только мозгами.'],
+    HunterWelcomeMinAway: ['players', 'Что было без тебя: после перерыва от, мин', 'int', [1, null], ''],
+    HunterWelcomeLines: ['players', 'Что было без тебя: строк сводки', 'int', [0, null], '0 — без сводки.'],
+    HunterWelcomeWhispers: ['players', 'Что было без тебя: сколько знакомых напишут', 'int', [0, null], '0 — никто. Только мозгами.'],
+    HunterOfflineWorldShare: ['activity', 'Мир при выключенном сервере: играли от простоя, %', 'int', [0, 100], ''],
+    HunterOfflineWorldMaxDays: ['activity', 'Мир при выключенном сервере: не больше дней за раз', 'int', [1, null], ''],
+    HunterSiegeAttackers: ['clans', 'Осады: кланов нападает на замок', 'int', [1, null], ''],
+    HunterSiegeMinMembers: ['clans', 'Осады: бойцов клана в сети от 20-го уровня', 'int', [1, null], ''],
+    HunterSiegeMinLevel: ['clans', 'Осады: уровень главы от', 'int', [1, null], ''],
+    HunterSiegeRegisterHours: ['clans', 'Осады: запись до осады за, ч', 'int', [1, null], ''],
+    HunterSiegeGarrison: ['clans', 'Осады: стражи в замке без владельца, %', 'int', [0, 100], '100 — вся, а это сотни на замок.'],
+    HunterClanCrestLevel: ['clans', 'Эмблема клана с уровня', 'int', [0, null], ''],
+    HunterClanRecruitPerMinute: ['clans', 'Заявки в твой клан: в минуту', 'int', [1, null], 'Пока глава в игре.'],
+    HunterClanRecruitMax: ['clans', 'Заявки в твой клан: лежит разом', 'int', [1, null], ''],
+    HunterClanDramaHours: ['clans', 'Драма кланов на весь мир не чаще, ч', 'int', [0, null], '0 — без ограничения.'],
     HunterClanWarWitness: ['clans', 'Драки войны только при живом зрителе', 'bool', null, 'Выкл — война идёт и без живых рядом.'],
     HunterClanWarsPlayer: ['clans', 'Войны кланов охотников с кланом игрока', 'bool', null, 'Твой клан или соклановцы сильно обидели клан охотников — его глава объявляет войну твоему клану (у обоих — от уровня войн). Одна такая война за раз, после неё — сутки мира. Выйти можно и самому — окном клана, по правилам Mobius.'],
     HunterClanWarPlayerAttackers: ['clans', 'На одного живого нападают разом, не больше', 'int', [1, null], 'Охотники клана-врага бьют тебя при встрече без флага и кармы.'],

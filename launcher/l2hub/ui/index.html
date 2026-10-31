@@ -9,6 +9,9 @@
   // Версия из адреса окна (?v=, ставит __main__.py): иначе WebView2 отдаёт старые styles.css и app.js из кэша.
   const UI_VERSION = new URLSearchParams(location.search).get('v') || Date.now();
   document.write('<link rel="stylesheet" href="styles.css?v=' + UI_VERSION + '">');
+  document.write('<link rel="stylesheet" href="themes.css?v=' + UI_VERSION + '">');
+  // Тема — до первого кадра: настройка живёт в data/launcher.json, здесь её копия (app.js, applyTheme).
+  try { document.documentElement.dataset.theme = localStorage.getItem('l2hub.theme') || 'gold'; } catch (e) { /* без хранилища — когда придут настройки */ }
   // Переводчик — до разметки и app.js: английский словарь грузится, только когда он нужен (i18n.js, ?lang=).
   const LANG_ASK = new URLSearchParams(location.search);
   const LANG_WANT = LANG_ASK.get('lang') || (LANG_ASK.has('dev') ? 'ru' : 'auto');
@@ -196,6 +199,17 @@
       <section class="secpage page-scroll" id="sec-app">
         <div class="page-inner">
           <h1 class="page-title">L2Hub</h1>
+          <div class="group"><h3>Оформление<span class="h3-note">только цвета окна, на игру не влияет</span></h3>
+            <div class="themes" data-seg="theme">
+              <button class="theme-card" data-v="gold" data-theme="gold"><span class="th-mock"><i></i><span><i></i><i></i><i></i></span></span><b>Золото Адена</b></button>
+              <button class="theme-card" data-v="parchment" data-theme="parchment"><span class="th-mock"><i></i><span><i></i><i></i><i></i></span></span><b>Пергамент</b></button>
+              <button class="theme-card" data-v="elven" data-theme="elven"><span class="th-mock"><i></i><span><i></i><i></i><i></i></span></span><b>Эльфийский лес</b></button>
+              <button class="theme-card" data-v="darkelf" data-theme="darkelf"><span class="th-mock"><i></i><span><i></i><i></i><i></i></span></span><b>Тёмные эльфы</b></button>
+              <button class="theme-card" data-v="orc" data-theme="orc"><span class="th-mock"><i></i><span><i></i><i></i><i></i></span></span><b>Орда орков</b></button>
+              <button class="theme-card" data-v="freya" data-theme="freya"><span class="th-mock"><i></i><span><i></i><i></i><i></i></span></span><b>Лёд Фрейи</b></button>
+              <button class="theme-card" data-v="graphite" data-theme="graphite"><span class="th-mock"><i></i><span><i></i><i></i><i></i></span></span><b>Графит</b></button>
+            </div>
+          </div>
           <div class="group"><h3>Язык</h3>
             <div class="set-row"><div class="lbl">Язык интерфейса<small>окно переключится сразу, меню значка в трее — после перезапуска L2Hub. Тексты модов в игре и речь ботов — пока по-русски</small></div>
               <div class="seg" data-seg="language"><button data-v="auto">Как в Windows</button><button data-v="ru" translate="no">Русский</button><button data-v="en">English</button></div></div>

@@ -34,6 +34,7 @@ import org.l2jmobius.gameserver.managers.GlobalVariablesManager;
 import org.l2jmobius.gameserver.mechanics.skill.Skill;
 import org.l2jmobius.gameserver.mechanics.skill.holders.SkillLearn;
 import org.l2jmobius.gameserver.network.serverpackets.PledgeSkillList;
+import static org.l2jmobius.gameserver.managers.phantom.PhantomText.tr;
 
 /**
  * L2Hub: живые кланы охотников (docs/PHANTOMS.md, раздел 4.50, этапы 1 и 2; {@code HunterClans} в PhantomHunters.ini). Ни списка кланов, ни их числа:
@@ -300,6 +301,9 @@ public final class PhantomHunterClans
 		}
 		// Войны — и при выключенных кланах: тогда идущие кончаются перемирием.
 		PhantomClanWars.getInstance().control(hunters, now);
+		PhantomClanPower.getInstance().control(hunters, now);
+		PhantomClanBoard.getInstance().control(hunters, now);
+		PhantomClanCrests.getInstance().control(now);
 		if (!PhantomHuntersConfig.HUNTER_CLANS)
 		{
 			return;
@@ -975,6 +979,11 @@ public final class PhantomHunterClans
 			sb.append(',');
 			FakePlayerBrain.field(sb, "clan", clan.getName());
 			sb.append(",\"clanLevel\":").append(clan.getLevel()).append(",\"clanLeader\":").append(hunter.isClanLeader()).append(",\"hunterClan\":").append(isHunterClan(clan));
+			if (clan.getAllyName() != null)
+			{
+				sb.append(',');
+				FakePlayerBrain.field(sb, "clanAlly", clan.getAllyName());
+			}
 			final String[] war = PhantomClanWars.getInstance().war(clan);
 			if (war != null)
 			{
@@ -1010,7 +1019,7 @@ public final class PhantomHunterClans
 			}
 		}
 		clans.sort(Comparator.comparingInt((Clan c) -> -c.getLevel()).thenComparingInt(c -> -c.getMembersCount()).thenComparing(Clan::getName));
-		lines.add("Кланы охотников: " + clans.size() + ", в них " + members + " чел." + (PhantomHuntersConfig.HUNTER_CLANS ? "" : " Живые кланы выключены (HunterClans в PhantomHunters.ini): новые не появятся, старые не растут."));
+		lines.add(tr("Кланы охотников: ") + clans.size() + tr(", в них ") + members + tr(" чел.") + (PhantomHuntersConfig.HUNTER_CLANS ? "" : tr(" Живые кланы выключены (HunterClans в PhantomHunters.ini): новые не появятся, старые не растут.")));
 		final int max = 15;
 		for (Clan clan : clans.subList(0, Math.min(max, clans.size())))
 		{
@@ -1025,15 +1034,19 @@ public final class PhantomHunterClans
 			final ClanMember head = clan.getLeader();
 			final boolean recruiting = clan.getMembersCount() < appetite(clan);
 			final String[] war = PhantomClanWars.getInstance().war(clan);
-			lines.add("«" + clan.getName() + "» — " + clan.getLevel() + " ур., " + clan.getMembersCount() + " чел. (в игре " + online + "), глава " + clan.getLeaderName() + (head != null ? " (" + head.getLevel() + ")" : "") + ", репутация " + clan.getReputationScore() + (recruiting ? ", набирает" : "") + (war != null ? ", воюет с " + (war[2].isEmpty() ? "" : "кланом игрока ") + "«" + war[0] + "» (" + war[1] + ")" : "") + ((viewer.getClan() == clan) ? " — твой клан" : ""));
+			lines.add("«" + clan.getName() + "» — " + clan.getLevel() + tr(" ур., ") + clan.getMembersCount() + tr(" чел. (в игре ") + online + tr("), глава ") + clan.getLeaderName() + (head != null ? " (" + head.getLevel() + ")" : "") + tr(", репутация ") + clan.getReputationScore() + (recruiting ? tr(", набирает") : "") + PhantomClanPower.allyNote(clan) + (war != null ? tr(", воюет с ") + (war[2].isEmpty() ? "" : tr("кланом игрока ")) + "«" + war[0] + "» (" + war[1] + ")" : "") + ((viewer.getClan() == clan) ? tr(" — твой клан") : ""));
 		}
 		if (clans.size() > max)
 		{
-			lines.add("…и ещё " + (clans.size() - max) + ".");
+			lines.add(tr("…и ещё ") + (clans.size() - max) + ".");
 		}
 		if (viewer.getClan() == null)
 		{
-			lines.add("Вступить — шепни главе, например «возьмёшь в клан?».");
+			lines.add(tr("Вступить — шепни главе, например «возьмёшь в клан?»."));
+		}
+		if (PhantomHuntersConfig.HUNTER_CLAN_TOP)
+		{
+			lines.add(tr("Все кланы сервера по силе: .clans top"));
 		}
 		return lines;
 	}
@@ -1210,6 +1223,7 @@ public final class PhantomHunterClans
 			_testClanId = 0;
 		}
 		LOGGER.info(tag + "done.");
+		PhantomClanPower.getInstance().selfTest();
 	}
 
 	private static boolean female(Player player)

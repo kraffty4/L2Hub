@@ -5,6 +5,7 @@ import org.l2jmobius.gameserver.entity.actor.Player;
 import org.l2jmobius.gameserver.entity.zone.ZoneId;
 import org.l2jmobius.gameserver.handler.IVoicedCommandHandler;
 import org.l2jmobius.gameserver.managers.phantom.PhantomCompat;
+import static org.l2jmobius.gameserver.managers.phantom.PhantomText.tr;
 
 /**
  * L2Hub: окно поручений дня ({@link WorldDaily}).
@@ -26,7 +27,7 @@ public class WorldDailyCommand implements IVoicedCommandHandler
 	{
 		if (!WorldDaily.getInstance().isEnabled())
 		{
-			player.sendMessage("Поручения дня выключены (WorldDaily в L2HubWorld.ini).");
+			player.sendMessage(tr("Поручения дня выключены (WorldDaily в L2HubWorld.ini)."));
 			return false;
 		}
 
@@ -47,19 +48,19 @@ public class WorldDailyCommand implements IVoicedCommandHandler
 	{
 		if (CommunityBoardConfig.COMMUNITYBOARD_KARMA_DISABLED && (PhantomCompat.karma(player) > 0))
 		{
-			player.sendMessage("С кармой телепорт закрыт.");
+			player.sendMessage(tr("С кармой телепорт закрыт."));
 			return false;
 		}
 
 		if (CommunityBoardConfig.COMMUNITYBOARD_COMBAT_DISABLED && (player.isCastingNow() || player.isInCombat() || player.isInDuel() || player.isInOlympiadMode() || player.isInsideZone(ZoneId.SIEGE) || player.isInsideZone(ZoneId.PVP) || (player.getPvpFlag() > 0) || player.isAlikeDead() || player.isOnEvent() || player.isInStoreMode()))
 		{
-			player.sendMessage("Сейчас нельзя: ты в бою, мёртв или на событии.");
+			player.sendMessage(tr("Сейчас нельзя: ты в бою, мёртв или на событии."));
 			return false;
 		}
 
 		if (CommunityBoardConfig.COMMUNITYBOARD_PEACE_ONLY && !player.isInsideZone(ZoneId.PEACE))
 		{
-			player.sendMessage("Телепорт на место дня — только из мирной зоны.");
+			player.sendMessage(tr("Телепорт на место дня — только из мирной зоны."));
 			return false;
 		}
 		return true;

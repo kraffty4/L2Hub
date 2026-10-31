@@ -17,6 +17,7 @@ import org.l2jmobius.gameserver.entity.groups.Party;
 import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
 import org.l2jmobius.gameserver.managers.phantom.PhantomHunterManager.HunterView;
 import org.l2jmobius.gameserver.network.serverpackets.ShowBoard;
+import static org.l2jmobius.gameserver.managers.phantom.PhantomText.tr;
 
 /**
  * L2Hub: где охотники — окно ГМ {@code //hunters} и раздел «Охотники» на доске Alt+B.<br>
@@ -35,12 +36,12 @@ public final class PhantomHunterUi
 	/** Вкладки: ключ в bypass, подпись. ГМ видит все, игрок — первые три. */
 	private enum Tab
 	{
-		NEAR("Мой уровень"),
-		ALL("Все"),
-		STORE("Лавки"),
-		HUNT("На каче"),
-		TOWN("В городе"),
-		PARTY("В пати");
+		NEAR(tr("Мой уровень")),
+		ALL(tr("Все")),
+		STORE(tr("Лавки")),
+		HUNT(tr("На каче")),
+		TOWN(tr("В городе")),
+		PARTY(tr("В пати"));
 
 		final String label;
 
@@ -64,9 +65,9 @@ public final class PhantomHunterUi
 
 	private enum Sort
 	{
-		LEVEL("По уровню"),
-		NAME("По имени"),
-		NEAR("Ближе ко мне");
+		LEVEL(tr("По уровню")),
+		NAME(tr("По имени")),
+		NEAR(tr("Ближе ко мне"));
 
 		final String label;
 
@@ -119,9 +120,9 @@ public final class PhantomHunterUi
 
 		final List<HunterView> all = PhantomHunterManager.getInstance().views();
 		final StringBuilder sb = new StringBuilder(12288);
-		sb.append("<html><title>Охотники</title><body><center>");
-		sb.append("<font color=\"LEVEL\">Охотников в мире: ").append(all.size()).append("</font><br1>");
-		sb.append("<font color=\"808080\">").append(counts(all)).append(" · живых игроков: ").append(PhantomHunterManager.getInstance().getRealPlayers()).append("</font><br>");
+		sb.append(tr("<html><title>Охотники</title><body><center>"));
+		sb.append(tr("<font color=\"LEVEL\">Охотников в мире: ")).append(all.size()).append("</font><br1>");
+		sb.append("<font color=\"808080\">").append(counts(all)).append(tr(" · живых игроков: ")).append(PhantomHunterManager.getInstance().getRealPlayers()).append("</font><br>");
 
 		// Вкладки — две строки по три, сортировка — третья.
 		sb.append("<table width=270><tr>");
@@ -147,13 +148,13 @@ public final class PhantomHunterUi
 		sb.append("<img src=\"L2UI.SquareGray\" width=270 height=1><br1>");
 		if (list.isEmpty())
 		{
-			sb.append("<font color=\"808080\">Никого.</font><br>");
+			sb.append(tr("<font color=\"808080\">Никого.</font><br>"));
 		}
 		for (HunterView view : list.subList(current * GM_PAGE, Math.min(list.size(), (current + 1) * GM_PAGE)))
 		{
 			final Player hunter = view.player;
 			sb.append("<table width=270><tr><td width=200><font color=\"LEVEL\">").append(hunter.getName()).append("</font> ").append(hunter.getLevel()).append(' ').append(PhantomUi.className(hunter)).append("</td>");
-			sb.append("<td width=70>").append(gmButton("К нему", "goto " + hunter.getName() + " " + state + " " + current, 66)).append("</td></tr></table>");
+			sb.append("<td width=70>").append(gmButton(tr("К нему"), "goto " + hunter.getName() + " " + state + " " + current, 66)).append("</td></tr></table>");
 			sb.append("<table width=270><tr><td width=270><font color=\"").append(phaseColor(view.phase)).append("\">").append(doing(view)).append("</font></td></tr></table>");
 			sb.append("<table width=270><tr><td width=270><font color=\"808080\">").append(economy(view, gm)).append("</font></td></tr></table>");
 			sb.append("<img src=\"L2UI.SquareGray\" width=270 height=1><br1>");
@@ -161,11 +162,11 @@ public final class PhantomHunterUi
 
 		if (pages > 1)
 		{
-			sb.append("<table width=270><tr><td width=90>").append(current > 0 ? gmButton("Назад", state + " " + (current - 1), 60) : "").append("</td>");
+			sb.append("<table width=270><tr><td width=90>").append(current > 0 ? gmButton(tr("Назад"), state + " " + (current - 1), 60) : "").append("</td>");
 			sb.append("<td width=90 align=center>").append(current + 1).append(" / ").append(pages).append("</td>");
-			sb.append("<td width=90 align=right>").append((current + 1) < pages ? gmButton("Дальше", state + " " + (current + 1), 60) : "").append("</td></tr></table>");
+			sb.append("<td width=90 align=right>").append((current + 1) < pages ? gmButton(tr("Дальше"), state + " " + (current + 1), 60) : "").append("</td></tr></table>");
 		}
-		sb.append("<br><font color=\"808080\">Цель после прыжка — охотник. Позвать к себе (//recall) не выйдет: поводок вернёт его на спот.</font>");
+		sb.append(tr("<br><font color=\"808080\">Цель после прыжка — охотник. Позвать к себе (//recall) не выйдет: поводок вернёт его на спот.</font>"));
 		sb.append("</center></body></html>");
 		return sb.toString();
 	}
@@ -197,26 +198,26 @@ public final class PhantomHunterUi
 	{
 		final Player hunter = view.player;
 		final StringBuilder sb = new StringBuilder(128);
-		sb.append(money(hunter.getAdena())).append(" адены");
+		sb.append(money(hunter.getAdena())).append(tr(" адены"));
 		if (view.earnedPerHour > 0)
 		{
-			sb.append(" · ~").append(money(view.earnedPerHour)).append("/ч");
+			sb.append(" · ~").append(money(view.earnedPerHour)).append(tr("/ч"));
 		}
 		if (view.questReady)
 		{
-			sb.append(" · сдаёт квест ").append(view.questLevel);
+			sb.append(tr(" · сдаёт квест ")).append(view.questLevel);
 		}
 		else if (view.questLevel > 0)
 		{
-			sb.append(" · квест ").append(view.questLevel).append(" до ").append(TIME.format(Instant.ofEpochMilli(view.questUntil)));
+			sb.append(tr(" · квест ")).append(view.questLevel).append(tr(" до ")).append(TIME.format(Instant.ofEpochMilli(view.questUntil)));
 		}
 		if (view.professionDue > 0)
 		{
-			sb.append(" · на профу не хватает ").append(money(view.professionDue));
+			sb.append(tr(" · на профу не хватает ")).append(money(view.professionDue));
 		}
 		if (hunter.getInstanceId() == gm.getInstanceId())
 		{
-			sb.append(" · ").append(distance(gm, hunter)).append(" от тебя");
+			sb.append(" · ").append(distance(gm, hunter)).append(tr(" от тебя"));
 		}
 		return sb.toString();
 	}
@@ -247,8 +248,8 @@ public final class PhantomHunterUi
 		final int fee = fee(player);
 
 		final StringBuilder sb = new StringBuilder(12288);
-		sb.append("<table width=" + W + "><tr><td width=" + W + "><font color=\"B09878\">Охотники — такие же игроки, только без клиента: качаются сами с 1-го уровня, сидят в лавках в Гиране и идут в пати, если рядом крикнуть «лфм». ");
-		sb.append("Кнопка — телепорт на их спот или к лавке: ").append(fee > 0 ? "за " + money(fee) + " адены (с " + (PlayerConfig.MAX_FREE_TELEPORT_LEVEL + 1) + "-го уровня, как у них)." : player.getLevel() <= PlayerConfig.MAX_FREE_TELEPORT_LEVEL ? "пока бесплатно (до " + PlayerConfig.MAX_FREE_TELEPORT_LEVEL + "-го уровня включительно)." : "бесплатно.").append("</font></td></tr></table><br>");
+		sb.append("<table width=" + W + "><tr><td width=" + W + tr("><font color=\"B09878\">Охотники — такие же игроки, только без клиента: качаются сами с 1-го уровня, сидят в лавках в Гиране и идут в пати, если рядом крикнуть «лфм». "));
+		sb.append(tr("Кнопка — телепорт на их спот или к лавке: ")).append(fee > 0 ? tr("за ") + money(fee) + tr(" адены (с ") + (PlayerConfig.MAX_FREE_TELEPORT_LEVEL + 1) + tr("-го уровня, как у них).") : player.getLevel() <= PlayerConfig.MAX_FREE_TELEPORT_LEVEL ? tr("пока бесплатно (до ") + PlayerConfig.MAX_FREE_TELEPORT_LEVEL + tr("-го уровня включительно).") : tr("бесплатно.")).append("</font></td></tr></table><br>");
 
 		sb.append("<table width=" + W + "><tr>");
 		for (Tab t : new Tab[]
@@ -262,14 +263,18 @@ public final class PhantomHunterUi
 			sb.append("<td align=center>").append(boardButton(t == tab ? "[" + label + "]" : label, bypass + " " + t.name().toLowerCase() + " 0", px(160))).append("</td>");
 		}
 		sb.append("</tr></table><br>");
+		if (PhantomHuntersConfig.HUNTER_CLAN_TOP)
+		{
+			sb.append("<table width=" + W + "><tr><td align=center>").append(boardButton(tr("Топ кланов"), "bypass voice .clans top", px(160))).append("</td></tr></table><br>");
+		}
 
 		if (list.isEmpty())
 		{
-			sb.append("<font color=\"808080\">").append(tab == Tab.STORE ? "Сейчас никто не торгует." : tab == Tab.NEAR ? "На твоём уровне сейчас никого — загляни во вкладку «Все»." : "Охотников в мире нет.").append("</font>");
+			sb.append("<font color=\"808080\">").append(tab == Tab.STORE ? tr("Сейчас никто не торгует.") : tab == Tab.NEAR ? tr("На твоём уровне сейчас никого — загляни во вкладку «Все».") : tr("Охотников в мире нет.")).append("</font>");
 			return sb.toString();
 		}
 
-		sb.append("<table width=" + W + "><tr><td width=" + px(90) + "><font color=\"LEVEL\">Имя</font></td><td width=" + px(30) + "><font color=\"LEVEL\">Ур.</font></td><td width=" + px(105) + "><font color=\"LEVEL\">Класс</font></td><td width=" + px(210) + "><font color=\"LEVEL\">Где и что делает</font></td><td width=" + px(85) + "></td></tr></table>");
+		sb.append("<table width=" + W + "><tr><td width=" + px(90) + tr("><font color=\"LEVEL\">Имя</font></td><td width=") + px(30) + tr("><font color=\"LEVEL\">Ур.</font></td><td width=") + px(105) + tr("><font color=\"LEVEL\">Класс</font></td><td width=") + px(210) + tr("><font color=\"LEVEL\">Где и что делает</font></td><td width=") + px(85) + "></td></tr></table>");
 		sb.append("<img src=\"L2UI.SquareGray\" width=" + W + " height=1>");
 		for (HunterView view : list.subList(current * BOARD_PAGE, Math.min(list.size(), (current + 1) * BOARD_PAGE)))
 		{
@@ -279,7 +284,7 @@ public final class PhantomHunterUi
 			sb.append("<td width=" + px(210) + "><font color=\"").append(phaseColor(view.phase)).append("\">").append(doing(view, true)).append("</font></td><td width=" + px(85) + ">");
 			if (target != null)
 			{
-				sb.append(boardButton(view.phase.equals("STORE") || view.phase.equals("TOWN") ? "К нему" : "На спот", bypass + " go " + hunter.getName() + " " + tab.name().toLowerCase() + " " + current, 80));
+				sb.append(boardButton(view.phase.equals("STORE") || view.phase.equals("TOWN") ? tr("К нему") : tr("На спот"), bypass + " go " + hunter.getName() + " " + tab.name().toLowerCase() + " " + current, 80));
 			}
 			sb.append("</td></tr></table>");
 		}
@@ -287,11 +292,11 @@ public final class PhantomHunterUi
 
 		if (pages > 1)
 		{
-			sb.append("<table width=300><tr><td width=100>").append(current > 0 ? boardButton("Назад", bypass + " " + tab.name().toLowerCase() + " " + (current - 1), 60) : "").append("</td>");
+			sb.append("<table width=300><tr><td width=100>").append(current > 0 ? boardButton(tr("Назад"), bypass + " " + tab.name().toLowerCase() + " " + (current - 1), 60) : "").append("</td>");
 			sb.append("<td width=100 align=center>").append(current + 1).append(" / ").append(pages).append("</td>");
-			sb.append("<td width=100 align=right>").append((current + 1) < pages ? boardButton("Дальше", bypass + " " + tab.name().toLowerCase() + " " + (current + 1), 60) : "").append("</td></tr></table><br>");
+			sb.append("<td width=100 align=right>").append((current + 1) < pages ? boardButton(tr("Дальше"), bypass + " " + tab.name().toLowerCase() + " " + (current + 1), 60) : "").append("</td></tr></table><br>");
 		}
-		sb.append("<font color=\"808080\">Позвать в пати: подойди и напиши «лфм» в общий чат (с 20-го — можно в торговый). Поговорить — просто назови по имени в общем чате.</font>");
+		sb.append(tr("<font color=\"808080\">Позвать в пати: подойди и напиши «лфм» в общий чат (с 20-го — можно в торговый). Поговорить — просто назови по имени в общем чате.</font>"));
 		return sb.toString();
 	}
 
@@ -306,23 +311,23 @@ public final class PhantomHunterUi
 		final HunterView view = find(name);
 		if (view == null)
 		{
-			return "Такого охотника сейчас нет в игре.";
+			return tr("Такого охотника сейчас нет в игре.");
 		}
 
 		final Location target = destination(view);
 		if (target == null)
 		{
-			return view.phase.equals("PARTY") || view.phase.equals("RECRUIT") ? view.player.getName() + " сейчас в пати — спроси шёпотом, где он." : "Сейчас к " + view.player.getName() + " не попасть.";
+			return view.phase.equals("PARTY") || view.phase.equals("RECRUIT") ? view.player.getName() + tr(" сейчас в пати — спроси шёпотом, где он.") : tr("Сейчас к ") + view.player.getName() + tr(" не попасть.");
 		}
 		if (player.isJailed() || (player.getInstanceId() != 0))
 		{
-			return "Отсюда телепорт не работает.";
+			return tr("Отсюда телепорт не работает.");
 		}
 
 		final int fee = fee(player);
 		if ((fee > 0) && !player.reduceAdena(ItemProcessType.FEE, fee, player, true))
 		{
-			return "Не хватает адены: телепорт стоит " + money(fee) + ".";
+			return tr("Не хватает адены: телепорт стоит ") + money(fee) + ".";
 		}
 
 		player.sendPacket(new ShowBoard());
@@ -397,40 +402,40 @@ public final class PhantomHunterUi
 		{
 			case "DEAD":
 			{
-				return "лежит мёртвый" + (view.spot != null ? " — " + view.spot.name : "");
+				return tr("лежит мёртвый") + (view.spot != null ? " — " + PhantomText.spotName(view.spot.name) : "");
 			}
 			case "HUNT":
 			{
 				if (view.spot == null)
 				{
-					return "выбирает спот";
+					return tr("выбирает спот");
 				}
 				final String party = hunter.isInParty() ? " · " + partyText(hunter) : "";
-				return (brief ? view.spot.name + ", мобы " + view.spot.min + "–" + view.spot.max : "качается: " + view.spot.name + " (мобы " + view.spot.min + "–" + view.spot.max + ")") + party;
+				return (brief ? PhantomText.spotName(view.spot.name) + tr(", мобы ") + view.spot.min + "–" + view.spot.max : tr("качается: ") + PhantomText.spotName(view.spot.name) + tr(" (мобы ") + view.spot.min + "–" + view.spot.max + ")") + party;
 			}
 			case "TOWN":
 			{
-				return "в городе: " + MapRegionData.getInstance().getClosestTownName(hunter);
+				return tr("в городе: ") + MapRegionData.getInstance().getClosestTownName(hunter);
 			}
 			case "STORE":
 			{
 				if (!view.storeOpen)
 				{
-					return "идёт в лавку";
+					return tr("идёт в лавку");
 				}
 				if (hunter.getPrivateStoreType() == PrivateStoreType.BUY)
 				{
-					return "скупка «" + escape(hunter.getBuyList().getTitle()) + "»";
+					return tr("скупка «") + escape(hunter.getBuyList().getTitle()) + "»";
 				}
-				return "лавка «" + escape(hunter.getSellList().getTitle()) + "», товаров: " + hunter.getSellList().getItemCount();
+				return tr("лавка «") + escape(hunter.getSellList().getTitle()) + tr("», товаров: ") + hunter.getSellList().getItemCount();
 			}
 			case "RECRUIT":
 			{
-				return view.recruiter.isEmpty() ? "бежит на зов в пати" : "бежит в пати к " + view.recruiter;
+				return view.recruiter.isEmpty() ? tr("бежит на зов в пати") : tr("бежит в пати к ") + view.recruiter;
 			}
 			case "PARTY":
 			{
-				return hunter.isInParty() ? partyText(hunter) : "в пати";
+				return hunter.isInParty() ? partyText(hunter) : tr("в пати");
 			}
 			default:
 			{
@@ -456,9 +461,9 @@ public final class PhantomHunterUi
 		}
 		if (leader == hunter)
 		{
-			return "ведёт пати: " + String.join(", ", others);
+			return tr("ведёт пати: ") + String.join(", ", others);
 		}
-		return "в пати у " + leader.getName() + (others.isEmpty() ? "" : " (ещё " + String.join(", ", others) + ")");
+		return tr("в пати у ") + leader.getName() + (others.isEmpty() ? "" : tr(" (ещё ") + String.join(", ", others) + ")");
 	}
 
 	private static String phaseColor(String phase)
@@ -528,7 +533,7 @@ public final class PhantomHunterUi
 				}
 			}
 		}
-		return "на каче " + hunt + " · в городе " + town + " · в лавках " + store + " · в пати " + party + " · мёртвых " + dead;
+		return tr("на каче ") + hunt + tr(" · в городе ") + town + tr(" · в лавках ") + store + tr(" · в пати ") + party + tr(" · мёртвых ") + dead;
 	}
 
 	private static List<HunterView> filter(List<HunterView> all, Tab tab, Player viewer)
@@ -624,11 +629,11 @@ public final class PhantomHunterUi
 		if (value >= 1000000)
 		{
 			final long tenths = value / 100000;
-			return (tenths / 10) + ((tenths % 10) != 0 ? "," + (tenths % 10) : "") + "кк";
+			return (tenths / 10) + ((tenths % 10) != 0 ? "," + (tenths % 10) : "") + tr("кк");
 		}
 		if (value >= 10000)
 		{
-			return (value / 1000) + "к";
+			return (value / 1000) + tr("к");
 		}
 		return String.valueOf(value);
 	}
@@ -636,7 +641,7 @@ public final class PhantomHunterUi
 	private static String distance(Player from, Player to)
 	{
 		final int d = (int) from.calculateDistance2D(to);
-		return d >= 10000 ? (d / 1000) + "к" : String.valueOf(d);
+		return d >= 10000 ? (d / 1000) + tr("к") : String.valueOf(d);
 	}
 
 	private static String escape(String text)

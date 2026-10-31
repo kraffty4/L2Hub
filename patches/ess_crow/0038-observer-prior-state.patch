@@ -1,0 +1,95 @@
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/Creature.java b/java/org/l2jmobius/gameserver/entity/actor/Creature.java
+index 16f3c7c61d5d460b281c1a8d96b815ec97e93785..3ed85dc03585253339e4bbc6094ab357f8f93e69 100644
+--- a/java/org/l2jmobius/gameserver/entity/actor/Creature.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/Creature.java
+@@ -2518,6 +2518,12 @@ public abstract class Creature extends WorldObject
+ 		_isInvul = value;
+ 	}
+ 	
++	/** L2Hub: только выставленная через setInvul неуязвимость, без телепорта и эффектов. */
++	public boolean isInvulSet()
++	{
++		return _isInvul;
++	}
++	
+ 	@Override
+ 	public boolean isInvul()
+ 	{
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/Player.java b/java/org/l2jmobius/gameserver/entity/actor/Player.java
+index 5a62e5c0d992d9a43c75e7dc771beeb1a5c72578..9f18a66f1bdacc968da25b09f6494a76c7b1adcd 100644
+--- a/java/org/l2jmobius/gameserver/entity/actor/Player.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/Player.java
+@@ -730,6 +730,8 @@ public class Player extends Playable
+ 	/** Location before entering Observer Mode */
+ 	private Location _lastLoc;
+ 	private boolean _observerMode = false;
++	private boolean _observerPriorInvisible;
++	private boolean _observerPriorInvul;
+ 	
+ 	private Location _teleportLocation;
+ 	private boolean _castingTeleportSkill = false;
+@@ -10758,12 +10760,30 @@ public class Player extends Playable
+ 		// Remove Hide.
+ 		getEffectList().stopEffects(AbnormalType.HIDE);
+ 		
++		rememberObserverPrior();
+ 		setObserving(true);
+ 		sendPacket(new ObservationMode(loc));
+ 		teleToLocation(loc, false);
+ 		broadcastUserInfo();
+ 	}
+ 	
++	/** L2Hub: состояние до наблюдения; смена арены его не переписывает. */
++	private void rememberObserverPrior()
++	{
++		if (!_observerMode)
++		{
++			_observerPriorInvisible = isInvisible();
++			_observerPriorInvul = isInvulSet();
++		}
++	}
++	
++	/** L2Hub: игрок выходит обычным, GM — каким вошёл: раньше он оставался невидимым и неуязвимым, даже если входил без этого. */
++	private void restoreObserverPrior()
++	{
++		setInvisible(isGM() && _observerPriorInvisible);
++		setInvul(isGM() && _observerPriorInvul);
++	}
++	
+ 	public void setLastLocation()
+ 	{
+ 		_lastLoc = new Location(getX(), getY(), getZ());
+@@ -10812,6 +10832,7 @@ public class Player extends Playable
+ 			setLastLocation();
+ 		}
+ 		
++		rememberObserverPrior();
+ 		_observerMode = true;
+ 		setTarget(null);
+ 		setInvul(true);
+@@ -10830,11 +10851,7 @@ public class Player extends Playable
+ 		unsetLastLocation();
+ 		sendPacket(new ObservationReturn(getLocation()));
+ 		setBlockActions(false);
+-		if (!isGM())
+-		{
+-			setInvisible(false);
+-			setInvul(false);
+-		}
++		restoreObserverPrior();
+ 		
+ 		if (hasAI())
+ 		{
+@@ -10859,11 +10876,7 @@ public class Player extends Playable
+ 		sendPacket(new ExOlympiadMode(OlympiadMode.NONE));
+ 		setInstance(null);
+ 		teleToLocation(_lastLoc, true);
+-		if (!isGM())
+-		{
+-			setInvisible(false);
+-			setInvul(false);
+-		}
++		restoreObserverPrior();
+ 		
+ 		if (hasAI())
+ 		{

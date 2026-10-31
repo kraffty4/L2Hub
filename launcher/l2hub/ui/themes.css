@@ -1,0 +1,58 @@
+/* Темы окна. Только цвета: тема по умолчанию и производные тона — в начале styles.css, смысл переменных — там же.
+   Блок ставится на <html> и на образцы в настройках L2Hub, поэтому карточка каждой темы показывает её настоящие цвета. */
+
+/* Светлая. Поля ввода светлее панелей, обложка остаётся тёмной (styles.css). */
+[data-theme="parchment"] {
+  --bg: #e4dac3; --win: #f1eadb; --panel: #faf5e9; --panel-2: #efe7d5; --panel-3: #e5dbc5;
+  --sunk: #fffdf8; --bar: #e8dfcb; --tile: #f5efe0; --hover: #eee5d1; --sel: #e6d8b6;
+  --line: #c6b591; --line-2: #e0d6bf; --scroll: #c4b594; --bronze: #9c8254;
+  --gold: #8a6520; --gold-hi: #6b4c10; --on-gold: #fff9ea;
+  --text: #2b2316; --text-2: #574a35; --muted: #74664f;
+  --ok: #357f2c; --warn: #96600a; --bad: #b03d2a; --off: #857d6d; --info: #38619c;
+  --c-epic: #7b36b0; --c-raid: #b02b20; --c-super: #8a6508;
+}
+
+[data-theme="elven"] {
+  --bg: #0b100c; --win: #101611; --panel: #161d17; --panel-2: #1d261e; --panel-3: #252f26;
+  --sunk: #0d120e; --bar: #0f1510; --tile: #131a14; --hover: #182019; --sel: #223024;
+  --line: #34483a; --line-2: #212c23; --scroll: #2e3d31; --bronze: #557a5f;
+  --gold: #7fbf8a; --gold-hi: #b4e0b4; --on-gold: #0f2013;
+  --text: #e4efe0; --text-2: #a6baa4; --muted: #71876f;
+  --ok: #a3d67c; --warn: #e3b44a; --bad: #d9735f; --off: #667066; --info: #86b8c9;
+}
+
+[data-theme="darkelf"] {
+  --bg: #0f0b14; --win: #15101b; --panel: #1c1623; --panel-2: #241c2d; --panel-3: #2c2337;
+  --sunk: #110d17; --bar: #130e19; --tile: #18131f; --hover: #1e1826; --sel: #2d2239;
+  --line: #42344f; --line-2: #281f32; --scroll: #3a2e47; --bronze: #6f5588;
+  --gold: #b48be0; --gold-hi: #d7bcf5; --on-gold: #1d1029;
+  --text: #ece4f2; --text-2: #b3a5c0; --muted: #837494;
+  --ok: #82c46c; --warn: #e3a63c; --bad: #e0697a; --off: #6c6577; --info: #8fa9e0;
+}
+
+[data-theme="orc"] {
+  --bg: #120b0a; --win: #18100e; --panel: #201513; --panel-2: #2a1b18; --panel-3: #33211d;
+  --sunk: #140d0c; --bar: #160e0d; --tile: #1c1210; --hover: #221614; --sel: #3a1f1a;
+  --line: #543029; --line-2: #301d19; --scroll: #452a24; --bronze: #8a4a38;
+  --gold: #e2753d; --gold-hi: #f5a27a; --on-gold: #2a0e05;
+  --text: #f0e3dc; --text-2: #c0a79c; --muted: #927a6e;
+  --ok: #8cc46c; --warn: #e8b13c; --bad: #ec5f5f; --off: #72635d; --info: #8fa9cf;
+}
+
+[data-theme="freya"] {
+  --bg: #0a0e13; --win: #0f141a; --panel: #151b23; --panel-2: #1c242e; --panel-3: #242d39;
+  --sunk: #0c1116; --bar: #0e1319; --tile: #12181f; --hover: #182029; --sel: #1f2c3a;
+  --line: #33445a; --line-2: #1f2935; --scroll: #2e3b4b; --bronze: #4f7196;
+  --gold: #7db7e8; --gold-hi: #b9dcf7; --on-gold: #0b1a29;
+  --text: #e3ecf5; --text-2: #a3b4c5; --muted: #718396;
+  --ok: #7fc98f; --warn: #e3b04a; --bad: #e0736a; --off: #636d78; --info: #a5b4f0;
+}
+
+[data-theme="graphite"] {
+  --bg: #0e0e10; --win: #141416; --panel: #1b1b1e; --panel-2: #232327; --panel-3: #2b2b30;
+  --sunk: #101012; --bar: #121214; --tile: #18181b; --hover: #1e1e22; --sel: #2a2a30;
+  --line: #3d3d44; --line-2: #26262b; --scroll: #37373d; --bronze: #62626c;
+  --gold: #c8c8d2; --gold-hi: #f0f0f5; --on-gold: #16161a;
+  --text: #ececf0; --text-2: #acacb6; --muted: #7e7e8a;
+  --ok: #7fc47f; --warn: #e3ae48; --bad: #e0736a; --off: #6a6a72; --info: #8fa9cf;
+}

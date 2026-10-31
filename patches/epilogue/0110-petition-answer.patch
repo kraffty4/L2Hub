@@ -1,0 +1,20 @@
+diff --git a/java/org/l2jmobius/gameserver/network/clientpackets/RequestPetition.java b/java/org/l2jmobius/gameserver/network/clientpackets/RequestPetition.java
+index 4298b3ff34632bfa377eacd4aa325859d7ac0776..1d3384fab890cf7704f058606ebe7b9bae59a3eb 100644
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/RequestPetition.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/RequestPetition.java
+@@ -20,6 +20,7 @@ import org.l2jmobius.gameserver.config.PlayerConfig;
+ import org.l2jmobius.gameserver.data.xml.AdminData;
+ import org.l2jmobius.gameserver.entity.actor.Player;
+ import org.l2jmobius.gameserver.managers.PetitionManager;
++import org.l2jmobius.gameserver.managers.phantom.PhantomPetition;
+ import org.l2jmobius.gameserver.network.SystemMessageId;
+ import org.l2jmobius.gameserver.network.serverpackets.SystemMessage;
+ 
+@@ -62,6 +63,7 @@ public class RequestPetition extends ClientPacket
+ 		if (!AdminData.getInstance().isGmOnline(false))
+ 		{
+ 			player.sendPacket(SystemMessageId.THERE_ARE_NO_GMS_CURRENTLY_VISIBLE_IN_THE_PUBLIC_LIST_AS_THEY_MAY_BE_PERFORMING_OTHER_FUNCTIONS_AT_THE_MOMENT);
++			PhantomPetition.answer(player, _content);
+ 			return;
+ 		}
+ 		

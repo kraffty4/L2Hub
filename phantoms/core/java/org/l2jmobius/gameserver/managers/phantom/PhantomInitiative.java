@@ -124,7 +124,11 @@ public class PhantomInitiative
 		{
 			if (allowed(hunter, player, now))
 			{
-				consider(hunter, template, player, now);
+				// Просьба встреченного (раздел 4.78): есть нужда — просит, а не здоровается.
+				if (!PhantomFavors.getInstance().ask(hunter, template, player, now))
+				{
+					consider(hunter, template, player, now);
+				}
 				return;
 			}
 		}
@@ -144,6 +148,72 @@ public class PhantomInitiative
 			store(hunter, player.getObjectId(), entry[0], false);
 			LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " заговорил с " + hunter.getName() + " сам — пометка игнора снята.");
 		}
+	}
+
+	/**
+	 * Игрок сделал охотнику доброе ({@link PhantomFavors#onHelped}): это ответ, молчанием не считается. Пометка «проигнорировал» не снимается — её снимают только слова.
+	 * @param hunter охотник
+	 * @param player игрок
+	 */
+	void onHelped(Player hunter, Player player)
+	{
+		_waiting.remove(pair(hunter, player));
+	}
+
+	/**
+	 * Можно ли обратиться к игроку первым: просьба ({@link PhantomFavors}) и письмо издалека ({@link PhantomFarWhisper}) идут через те же фильтры и кулдауны.
+	 * @param hunter охотник
+	 * @param player игрок
+	 * @param now текущее время
+	 * @return правила разрешают
+	 */
+	boolean mayAddress(Player hunter, Player player, long now)
+	{
+		return (now >= _hunterNext.getOrDefault(hunter.getObjectId(), 0L)) && allowed(hunter, player, now);
+	}
+
+	/**
+	 * Охотник обращается к игроку первым: кулдауны охотника, игрока и пары, потолок в час.
+	 * @param hunter охотник
+	 * @param player игрок
+	 * @param now текущее время
+	 * @return что сделать, когда он правда сказал: ждать ответа
+	 */
+	Runnable book(Player hunter, Player player, long now)
+	{
+		final int playerId = player.getObjectId();
+		_hunterNext.put(hunter.getObjectId(), now + (PhantomHuntersConfig.HUNTER_INITIATIVE_HUNTER_COOLDOWN * 1000L));
+		_playerNext.put(playerId, now + (PhantomHuntersConfig.HUNTER_INITIATIVE_PLAYER_GAP * 1000L));
+		final Deque<Long> hour = _playerHour.computeIfAbsent(playerId, k -> new ArrayDeque<>());
+		synchronized (hour)
+		{
+			hour.addLast(now);
+		}
+		store(hunter, playerId, now / 1000, false);
+
+		final long pair = pair(hunter, player);
+		return () -> _waiting.put(pair, System.currentTimeMillis() + (PhantomHuntersConfig.HUNTER_INITIATIVE_ANSWER_WAIT * 1000L));
+	}
+
+	/**
+	 * Самопроверка: забыть кулдауны этого персонажа и его пары, кроме пометки «проигнорировал».
+	 */
+	void forget(Player player)
+	{
+		final int id = player.getObjectId();
+		_hunterNext.remove(id);
+		_playerNext.remove(id);
+		_playerHour.remove(id);
+		_pairRoll.keySet().removeIf(key -> ((int) (key & 0xffffffffL) == id) || ((int) (key >>> 32) == id));
+		final StringBuilder kept = new StringBuilder();
+		for (String entry : player.getVariables().getString(SOCIAL_VARIABLE, "").split(";"))
+		{
+			if (entry.endsWith(":1"))
+			{
+				kept.append(kept.length() > 0 ? ";" : "").append(entry);
+			}
+		}
+		player.getVariables().set(SOCIAL_VARIABLE, kept.toString());
 	}
 
 	// ---------- Правила ----------
@@ -234,17 +304,7 @@ public class PhantomInitiative
 			return;
 		}
 
-		_hunterNext.put(hunter.getObjectId(), now + (PhantomHuntersConfig.HUNTER_INITIATIVE_HUNTER_COOLDOWN * 1000L));
-		_playerNext.put(playerId, now + (PhantomHuntersConfig.HUNTER_INITIATIVE_PLAYER_GAP * 1000L));
-		final Deque<Long> hour = _playerHour.computeIfAbsent(playerId, k -> new ArrayDeque<>());
-		synchronized (hour)
-		{
-			hour.addLast(now);
-		}
-		store(hunter, playerId, now / 1000, false);
-
-		final long pair = pair(hunter, player);
-		PhantomChat.getInstance().initiative(hunter, player, template, situation(player), () -> _waiting.put(pair, System.currentTimeMillis() + (PhantomHuntersConfig.HUNTER_INITIATIVE_ANSWER_WAIT * 1000L)));
+		PhantomChat.getInstance().initiative(hunter, player, template, situation(player), book(hunter, player, now));
 	}
 
 	/**
@@ -306,6 +366,17 @@ public class PhantomInitiative
 	}
 
 	// ---------- Пары: переменная персонажа охотника ----------
+
+	/**
+	 * @param hunter охотник
+	 * @param playerId objectId игрока
+	 * @return игрок не ответил на его инициативу: сам он этому игроку больше не пишет
+	 */
+	static boolean ignored(Player hunter, int playerId)
+	{
+		final long[] entry = entry(hunter, playerId);
+		return (entry != null) && (entry[1] == 1);
+	}
 
 	/**
 	 * @return {время последней инициативы, с; 1 — проигнорировал} или {@code null}

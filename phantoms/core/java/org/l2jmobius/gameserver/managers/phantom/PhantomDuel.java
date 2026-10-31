@@ -260,6 +260,12 @@ public final class PhantomDuel
 		}
 	}
 
+	/** Самопроверка: дуэль двух охотников без вызова, сразу принята. */
+	void testBegin(Player a, Player b)
+	{
+		begin(a, b, true);
+	}
+
 	private void begin(Player a, Player b, boolean rivals)
 	{
 		final Bout bout = new Bout(a, b, rivals, System.currentTimeMillis());
@@ -541,6 +547,7 @@ public final class PhantomDuel
 		}
 		if (winner != null)
 		{
+			PhantomGestures.getInstance().onVictory(winner);
 			PhantomNews.post("pvp_result", "Дуэль: " + who(winner, false) + " победил" + (winner.getAppearance().isFemale() ? "а" : "") + " " + who(loser, true), winner.getName(), winner);
 		}
 	}

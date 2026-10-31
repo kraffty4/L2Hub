@@ -1,8 +1,8 @@
 diff --git a/dist/game/config/Custom/L2HubEvents.ini b/dist/game/config/Custom/L2HubEvents.ini
-index 84d5e635e2f934fd1c1fb739549e0316ba212289..fcd06563420c3ee8a44302747df635e2a0e9ea26 100644
+index 84d5e635e2f934fd1c1fb739549e0316ba212289..0c4cb3ef5d9cb7af537e5a3567cc7163fc384655 100644
 --- a/dist/game/config/Custom/L2HubEvents.ini
 +++ b/dist/game/config/Custom/L2HubEvents.ini
-@@ -42,3 +42,27 @@ TotalRecall = 01 11-01 12
+@@ -42,3 +42,44 @@ TotalRecall = 01 11-01 12
  
  # Merry Squashmas: снежный нектар с монстров (50%) — у Деда Мороза.
  MerrySquashmas = 01 12-01 01
@@ -25,17 +25,34 @@ index 84d5e635e2f934fd1c1fb739549e0316ba212289..fcd06563420c3ee8a44302747df635e2
 +# Default: 1
 +PvpMinLevel = 1
 +
++# Размеры и бой TvT действуют, пока PvpEvents = True, иначе как в Mobius.
++# Сколько участников нужно для старта.
++# Default: 4
++TvTMinParticipants = 4
++
++# Всего мест, до 200: счёт на экране показывает первых 25. Охотников за ивент не больше HunterPvpEventMax в PhantomHunters.ini.
++# Default: 24
++TvTMaxParticipants = 24
++
++# Сколько мест из TvTMaxParticipants охотники не занимают — они остаются живым игрокам.
++# Default: 0
++TvTReservedSlots = 0
++
++# Длительность боя, минуты (от 1 до 120).
++# Default: 20
++TvTFightMinutes = 20
++
 +# Расписание — крон «минуты часы день месяц день_недели», как schedule у Mobius; пусто — не запускать.
-+# Пока идёт один PvP-ивент (менеджер в мире), следующий не стартует. Регистрация 10 мин, бой 20 мин (Deathmatch — 1 и 3).
++# Пока идёт один PvP-ивент (менеджер в мире), следующий не стартует. Регистрация 10 мин, бой 20 мин (у TvT — TvTFightMinutes; Deathmatch — 1 и 3).
 +TvT = 0 */3 * * *
 +Deathmatch = 0 1-23/3 * * *
 +CtF = 0 2-23/3 * * *
 diff --git a/dist/game/data/scripts/custom/L2HubPvpEvents/L2HubPvpEvents.java b/dist/game/data/scripts/custom/L2HubPvpEvents/L2HubPvpEvents.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..49eaebfb4ed853da0592048f2a8430e7cb9f9f98
+index 0000000000000000000000000000000000000000..c2339c0dcb69a3ef77e8c7238439a59ad33098f7
 --- /dev/null
 +++ b/dist/game/data/scripts/custom/L2HubPvpEvents/L2HubPvpEvents.java
-@@ -0,0 +1,217 @@
+@@ -0,0 +1,262 @@
 +/*
 + * This file is part of the L2J Mobius project.
 + *
@@ -71,6 +88,7 @@ index 0000000000000000000000000000000000000000..49eaebfb4ed853da0592048f2a8430e7
 +import org.l2jmobius.gameserver.entity.actor.Npc;
 +import org.l2jmobius.gameserver.entity.actor.Player;
 +import org.l2jmobius.gameserver.managers.ScriptManager;
++import org.l2jmobius.gameserver.managers.phantom.PhantomManager;
 +import org.l2jmobius.gameserver.mechanics.script.Event;
 +import org.l2jmobius.gameserver.mechanics.script.Quest;
 +
@@ -84,6 +102,7 @@ index 0000000000000000000000000000000000000000..49eaebfb4ed853da0592048f2a8430e7
 + * скриптах (их константа MINIMUM_PARTICIPANT_LEVEL берёт его через minLevel). Пока идёт любой из трёх ивентов (в мире
 + * стоит его менеджер или кто-то записан либо на арене), следующий не стартует: у Deathmatch на арене менеджера нет.
 + * Перед ареной скрипты выкидывают вышедших из игры через offline: фантомы без клиента остаются в списке.
++ * Размеры и бой TvT (TvTMinParticipants, TvTMaxParticipants, TvTReservedSlots, TvTFightMinutes) скрипт берёт через tvt, места — через full.
 + * Скрипт хронико-независимый: Interlude, Gracia Epilogue, High Five.
 + * @author L2Hub
 + */
@@ -240,6 +259,49 @@ index 0000000000000000000000000000000000000000..49eaebfb4ed853da0592048f2a8430e7
 +		}
 +	}
 +
++	/**
++	 * Размер или время TvT: ключ из L2HubEvents.ini, если PvpEvents = True, иначе значение из скрипта ивента.
++	 * @param key ключ
++	 * @param original значение, зашитое в скрипте
++	 * @param min нижняя граница ключа
++	 * @param max верхняя граница ключа
++	 * @return значение; не число — значение из скрипта
++	 */
++	public static int tvt(String key, int original, int min, int max)
++	{
++		final Properties config = config();
++		if (!enabled(config))
++		{
++			return original;
++		}
++		try
++		{
++			return Math.max(min, Math.min(max, Integer.parseInt(config.getProperty(key, String.valueOf(original)).trim())));
++		}
++		catch (NumberFormatException e)
++		{
++			return original;
++		}
++	}
++
++	/**
++	 * Мест на TvT нет: заняты все или для охотника — все, кроме reserved мест живым игрокам.
++	 * @param registered записанные
++	 * @param player кто записывается
++	 * @param max всего мест
++	 * @param reserved мест только для живых игроков
++	 * @return записать нельзя
++	 */
++	public static boolean full(Set<Player> registered, Player player, int max, int reserved)
++	{
++		if (registered.size() >= max)
++		{
++			return true;
++		}
++		final PhantomManager phantoms = PhantomManager.getInstance();
++		return (reserved > 0) && phantoms.isPhantom(player) && (registered.stream().filter(phantoms::isPhantom).count() >= (max - reserved));
++	}
++
 +	public static void main(String[] args)
 +	{
 +		final Properties config = config();
@@ -254,7 +316,7 @@ index 0000000000000000000000000000000000000000..49eaebfb4ed853da0592048f2a8430e7
 +	}
 +}
 diff --git a/dist/game/data/scripts/custom/events/CaptureTheFlag/CtF.java b/dist/game/data/scripts/custom/events/CaptureTheFlag/CtF.java
-index 008b32d19f373498bd7259fc01fabd4fd4792a7b..10c2abb10f6b54efad7c2ab47f8b559fb3cd5071 100644
+index 008b32d19f373498bd7259fc01fabd4fd4792a7b..1ca28aa0b5e36db9e2e702a1d2b64b837cb74b56 100644
 --- a/dist/game/data/scripts/custom/events/CaptureTheFlag/CtF.java
 +++ b/dist/game/data/scripts/custom/events/CaptureTheFlag/CtF.java
 @@ -181,7 +181,7 @@ public class CtF extends Event
@@ -266,7 +328,57 @@ index 008b32d19f373498bd7259fc01fabd4fd4792a7b..10c2abb10f6b54efad7c2ab47f8b559f
  	private static final int MAXIMUM_PARTICIPANT_LEVEL = 200;
  	private static final int MINIMUM_PARTICIPANT_COUNT = 4;
  	private static final int MAXIMUM_PARTICIPANT_COUNT = 24; // Scoreboard has 25 slots
-@@ -361,7 +361,7 @@ public class CtF extends Event
+@@ -282,25 +282,28 @@ public class CtF extends Event
+ 		{
+ 			case "Participate":
+ 			{
+-				if (canRegister(player))
++				synchronized (PLAYER_LIST) // L2Hub: место и запись разом, только при открытой регистрации
+ 				{
+-					if ((DualboxCheckConfig.DUALBOX_CHECK_MAX_L2EVENT_PARTICIPANTS_PER_IP == 0) || AntiFeedManager.getInstance().tryAddPlayer(AntiFeedManager.L2EVENT_ID, player, DualboxCheckConfig.DUALBOX_CHECK_MAX_L2EVENT_PARTICIPANTS_PER_IP))
++					if (IS_PARTICIPATING() && canRegister(player))
+ 					{
+-						PLAYER_LIST.add(player);
+-						PLAYER_SCORES.put(player, 0);
+-						player.setRegisteredOnEvent(true);
+-						addLogoutListener(player);
+-						htmltext = "registration-success.html";
++						if ((DualboxCheckConfig.DUALBOX_CHECK_MAX_L2EVENT_PARTICIPANTS_PER_IP == 0) || AntiFeedManager.getInstance().tryAddPlayer(AntiFeedManager.L2EVENT_ID, player, DualboxCheckConfig.DUALBOX_CHECK_MAX_L2EVENT_PARTICIPANTS_PER_IP))
++						{
++							PLAYER_LIST.add(player);
++							PLAYER_SCORES.put(player, 0);
++							player.setRegisteredOnEvent(true);
++							addLogoutListener(player);
++							htmltext = "registration-success.html";
++						}
++						else
++						{
++							htmltext = "registration-ip.html";
++						}
+ 					}
+ 					else
+ 					{
+-						htmltext = "registration-ip.html";
++						htmltext = "registration-failed.html";
+ 					}
+ 				}
+-				else
+-				{
+-					htmltext = "registration-failed.html";
+-				}
+ 				break;
+ 			}
+ 			case "CancelParticipation":
+@@ -356,12 +359,15 @@ public class CtF extends Event
+ 			case "TeleportToArena":
+ 			{
+ 				// Set state to STARTING.
+-				setState(EventState.STARTING);
++				synchronized (PLAYER_LIST) // L2Hub: запись на замке не проскочит мимо команд
++				{
++					setState(EventState.STARTING);
++				}
+ 				
  				// Remove offline players.
  				for (Player participant : PLAYER_LIST)
  				{
@@ -275,7 +387,7 @@ index 008b32d19f373498bd7259fc01fabd4fd4792a7b..10c2abb10f6b54efad7c2ab47f8b559f
  					{
  						PLAYER_LIST.remove(participant);
  						PLAYER_SCORES.remove(participant);
-@@ -970,7 +970,7 @@ public class CtF extends Event
+@@ -970,7 +976,7 @@ public class CtF extends Event
  		if (creature.isPlayable())
  		{
  			final Player player = creature.asPlayer();
@@ -284,7 +396,7 @@ index 008b32d19f373498bd7259fc01fabd4fd4792a7b..10c2abb10f6b54efad7c2ab47f8b559f
  			{
  				// Kick enemy players.
  				if ((zone == BLUE_PEACE_ZONE) && (creature.getTeam() == Team.RED))
-@@ -1016,7 +1016,7 @@ public class CtF extends Event
+@@ -1016,7 +1022,7 @@ public class CtF extends Event
  		if (creature.isPlayer())
  		{
  			final Player player = creature.asPlayer();
@@ -316,19 +428,80 @@ index 23a98b689a5c048c7dd18e99f10dee6853e2d25c..fed5884c852de11bba3b20afa1101413
  						PLAYER_LIST.remove(participant);
  						PLAYER_SCORES.remove(participant);
 diff --git a/dist/game/data/scripts/custom/events/TeamVsTeam/TvT.java b/dist/game/data/scripts/custom/events/TeamVsTeam/TvT.java
-index 6d570e5b3c2bb59b02c28530a1bd3cabf83e2afb..3d6f8f0dcb3d66713bc072efc0aef1b2789a6d69 100644
+index 6d570e5b3c2bb59b02c28530a1bd3cabf83e2afb..c6a0ae0919b673cfb82e7d5a918c73f618ff5c7a 100644
 --- a/dist/game/data/scripts/custom/events/TeamVsTeam/TvT.java
 +++ b/dist/game/data/scripts/custom/events/TeamVsTeam/TvT.java
-@@ -142,7 +142,7 @@ public class TvT extends Event
+@@ -140,12 +140,13 @@ public class TvT extends Event
+ 	// Settings
+ 	private static final int REGISTRATION_TIME = 10; // Minutes
  	private static final int WAIT_TIME = 1; // Minutes
- 	private static final int FIGHT_TIME = 20; // Minutes
+-	private static final int FIGHT_TIME = 20; // Minutes
++	private static final int FIGHT_TIME = custom.L2HubPvpEvents.L2HubPvpEvents.tvt("TvTFightMinutes", 20, 1, 120); // L2Hub: минуты
  	private static final int INACTIVITY_TIME = 2; // Minutes
 -	private static final int MINIMUM_PARTICIPANT_LEVEL = 76;
 +	private static final int MINIMUM_PARTICIPANT_LEVEL = custom.L2HubPvpEvents.L2HubPvpEvents.minLevel(76); // L2Hub: PvpMinLevel
  	private static final int MAXIMUM_PARTICIPANT_LEVEL = 200;
- 	private static final int MINIMUM_PARTICIPANT_COUNT = 4;
- 	private static final int MAXIMUM_PARTICIPANT_COUNT = 24; // Scoreboard has 25 slots
-@@ -319,7 +319,7 @@ public class TvT extends Event
+-	private static final int MINIMUM_PARTICIPANT_COUNT = 4;
+-	private static final int MAXIMUM_PARTICIPANT_COUNT = 24; // Scoreboard has 25 slots
++	private static final int MINIMUM_PARTICIPANT_COUNT = custom.L2HubPvpEvents.L2HubPvpEvents.tvt("TvTMinParticipants", 4, 2, 200); // L2Hub
++	private static final int MAXIMUM_PARTICIPANT_COUNT = custom.L2HubPvpEvents.L2HubPvpEvents.tvt("TvTMaxParticipants", 24, 2, 200); // L2Hub: счёт показывает первых 25
++	private static final int RESERVED_SLOTS = custom.L2HubPvpEvents.L2HubPvpEvents.tvt("TvTReservedSlots", 0, 0, 200); // L2Hub: места живым игрокам
+ 	private static final int PARTY_MEMBER_COUNT = 7;
+ 	private static final ItemHolder REWARD = new ItemHolder(57, 100000); // Adena
+ 	
+@@ -238,25 +239,28 @@ public class TvT extends Event
+ 		{
+ 			case "Participate":
+ 			{
+-				if (canRegister(player))
++				synchronized (PLAYER_LIST) // L2Hub: место и запись разом, только при открытой регистрации
+ 				{
+-					if ((DualboxCheckConfig.DUALBOX_CHECK_MAX_L2EVENT_PARTICIPANTS_PER_IP == 0) || AntiFeedManager.getInstance().tryAddPlayer(AntiFeedManager.L2EVENT_ID, player, DualboxCheckConfig.DUALBOX_CHECK_MAX_L2EVENT_PARTICIPANTS_PER_IP))
++					if (IS_PARTICIPATING() && canRegister(player))
+ 					{
+-						PLAYER_LIST.add(player);
+-						PLAYER_SCORES.put(player, 0);
+-						player.setRegisteredOnEvent(true);
+-						addLogoutListener(player);
+-						htmltext = "registration-success.html";
++						if ((DualboxCheckConfig.DUALBOX_CHECK_MAX_L2EVENT_PARTICIPANTS_PER_IP == 0) || AntiFeedManager.getInstance().tryAddPlayer(AntiFeedManager.L2EVENT_ID, player, DualboxCheckConfig.DUALBOX_CHECK_MAX_L2EVENT_PARTICIPANTS_PER_IP))
++						{
++							PLAYER_LIST.add(player);
++							PLAYER_SCORES.put(player, 0);
++							player.setRegisteredOnEvent(true);
++							addLogoutListener(player);
++							htmltext = "registration-success.html";
++						}
++						else
++						{
++							htmltext = "registration-ip.html";
++						}
+ 					}
+ 					else
+ 					{
+-						htmltext = "registration-ip.html";
++						htmltext = "registration-failed.html";
+ 					}
+ 				}
+-				else
+-				{
+-					htmltext = "registration-failed.html";
+-				}
+ 				break;
+ 			}
+ 			case "CancelParticipation":
+@@ -312,14 +316,17 @@ public class TvT extends Event
+ 			case "TeleportToArena":
+ 			{
+ 				// Set state to STARTING.
+-				setState(EventState.STARTING);
++				synchronized (PLAYER_LIST) // L2Hub: запись на замке не проскочит мимо команд
++				{
++					setState(EventState.STARTING);
++				}
+ 				
+ 				TEAM_FORFEIT = false;
+ 				
  				// Remove offline players.
  				for (Player participant : PLAYER_LIST)
  				{
@@ -337,7 +510,7 @@ index 6d570e5b3c2bb59b02c28530a1bd3cabf83e2afb..3d6f8f0dcb3d66713bc072efc0aef1b2
  					{
  						PLAYER_LIST.remove(participant);
  						PLAYER_SCORES.remove(participant);
-@@ -788,7 +788,7 @@ public class TvT extends Event
+@@ -788,7 +795,7 @@ public class TvT extends Event
  		if (creature.isPlayable())
  		{
  			final Player player = creature.asPlayer();
@@ -346,7 +519,7 @@ index 6d570e5b3c2bb59b02c28530a1bd3cabf83e2afb..3d6f8f0dcb3d66713bc072efc0aef1b2
  			{
  				// Kick enemy players.
  				if ((zone == BLUE_PEACE_ZONE) && (creature.getTeam() == Team.RED))
-@@ -820,7 +820,7 @@ public class TvT extends Event
+@@ -820,7 +827,7 @@ public class TvT extends Event
  		if (creature.isPlayer())
  		{
  			final Player player = creature.asPlayer();
@@ -355,3 +528,12 @@ index 6d570e5b3c2bb59b02c28530a1bd3cabf83e2afb..3d6f8f0dcb3d66713bc072efc0aef1b2
  			{
  				cancelQuestTimer("KickPlayer" + player.getObjectId(), null, player);
  				cancelQuestTimer("KickPlayerWarning" + player.getObjectId(), null, player);
+@@ -860,7 +867,7 @@ public class TvT extends Event
+ 			return false;
+ 		}
+ 		
+-		if (PLAYER_LIST.size() >= MAXIMUM_PARTICIPANT_COUNT)
++		if (custom.L2HubPvpEvents.L2HubPvpEvents.full(PLAYER_LIST, player, MAXIMUM_PARTICIPANT_COUNT, RESERVED_SLOTS)) // L2Hub: резерв мест
+ 		{
+ 			player.sendMessage("There are too many players registered on the event.");
+ 			return false;

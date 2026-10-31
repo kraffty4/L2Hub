@@ -4,6 +4,7 @@ import org.l2jmobius.gameserver.config.custom.CommunityBoardConfig;
 import org.l2jmobius.gameserver.entity.actor.Player;
 import org.l2jmobius.gameserver.entity.zone.ZoneId;
 import org.l2jmobius.gameserver.handler.IVoicedCommandHandler;
+import static org.l2jmobius.gameserver.managers.phantom.PhantomText.tr;
 
 /**
  * L2Hub: рейд охотников для живого игрока ({@link PhantomRaid}, раздел 4.32).
@@ -50,19 +51,19 @@ public class PhantomRaidCommand implements IVoicedCommandHandler
 	{
 		if (CommunityBoardConfig.COMMUNITYBOARD_KARMA_DISABLED && (PhantomCompat.karma(player) > 0))
 		{
-			player.sendMessage("С кармой телепорт закрыт.");
+			player.sendMessage(tr("С кармой телепорт закрыт."));
 			return false;
 		}
 
 		if (CommunityBoardConfig.COMMUNITYBOARD_COMBAT_DISABLED && (player.isCastingNow() || player.isInCombat() || player.isInDuel() || player.isInOlympiadMode() || player.isInsideZone(ZoneId.SIEGE) || player.isInsideZone(ZoneId.PVP) || (player.getPvpFlag() > 0) || player.isAlikeDead() || player.isOnEvent() || player.isInStoreMode()))
 		{
-			player.sendMessage("Сейчас нельзя: ты в бою, мёртв или на событии.");
+			player.sendMessage(tr("Сейчас нельзя: ты в бою, мёртв или на событии."));
 			return false;
 		}
 
 		if (CommunityBoardConfig.COMMUNITYBOARD_PEACE_ONLY && !player.isInsideZone(ZoneId.PEACE))
 		{
-			player.sendMessage("Телепорт к рейду — только из мирной зоны.");
+			player.sendMessage(tr("Телепорт к рейду — только из мирной зоны."));
 			return false;
 		}
 		return true;

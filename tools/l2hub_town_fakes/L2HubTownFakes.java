@@ -57,7 +57,10 @@ import org.l2jmobius.gameserver.managers.FakePlayerBrain;
 import org.l2jmobius.gameserver.managers.GrandBossManager;
 import org.l2jmobius.gameserver.managers.ScriptManager;
 import org.l2jmobius.gameserver.managers.phantom.PhantomManager;
+import org.l2jmobius.gameserver.managers.phantom.PhantomDayCycle;
+import org.l2jmobius.gameserver.managers.phantom.PhantomMarketMemory;
 import org.l2jmobius.gameserver.managers.phantom.PhantomRaid;
+import org.l2jmobius.gameserver.managers.phantom.PhantomStores;
 import org.l2jmobius.gameserver.mechanics.script.LongTimeEvent;
 import org.l2jmobius.gameserver.mechanics.script.Quest;
 import org.l2jmobius.gameserver.mechanics.script.Script;
@@ -74,7 +77,8 @@ import org.l2jmobius.gameserver.taskmanagers.GameTimeTaskManager;
  * Говорят, только если рядом живой игрок: реплики в общий чат, торговцы — в торговый (не чаще TownFakesChatMinutes на город), плюс короткие
  * реакции на события мира — суперчемпион, рейд охотников, эпик, сезонное событие, PvP-ивент. Реплики пишут мозги фейков (FakePlayerBrain,
  * запрос "kind": "town"), без них — заготовки data/L2HubTownFakesChat.xml на языке L2HubLanguage. Фейки — в SpawnTable, поэтому шёпот им
- * идёт обычным путём FakePlayerChatManager.
+ * идёт обычным путём FakePlayerChatManager. Лавка торговца и скупщика настоящая: по щелчку — окно личной лавки (PhantomStores, TownFakesStores), на площади
+ * Гирана сидят ещё и торговые ряды.
  * <p>
  * Крючок для других модулей (Танатос и др.): {@code ScriptManager.getInstance().getScript("L2HubTownFakes").notifyEvent("world:<вид>:<x>,<y>:<текст>", null, null)}
  * — фейки в городах с живыми игроками откликнутся репликами из «event.<вид>» (место — ближайший город к x,y; {text} — текст).
@@ -90,6 +94,9 @@ public class L2HubTownFakes extends Script
 	private static final long FIRST_DELAY = 20000;
 	private static final long TICK = 3000;
 	private static final long POLL = 20000;
+	private static final long STORE_TEST_RETRY = 20000;
+	/** Сколько объявлений торговцев, %, — разговор о ценах, если на рынке есть о чём. */
+	private static final int MARKET_TALK_CHANCE = 25;
 	private static final int SAY_RANGE = 1250;
 	private static final int TRADE_RANGE = 15000;
 	private static final int LIVE_RANGE = 2500;
@@ -204,6 +211,8 @@ public class L2HubTownFakes extends Script
 		final String role;
 		final String cls;
 		final String store;
+		final int[] goods;
+		final boolean row;
 		final int rank;
 		final int shift;
 		final Town town;
@@ -222,6 +231,8 @@ public class L2HubTownFakes extends Script
 			role = el.getAttribute("role");
 			cls = el.getAttribute("cls");
 			store = el.getAttribute("store");
+			goods = el.hasAttribute("goods") ? java.util.Arrays.stream(el.getAttribute("goods").split(",")).mapToInt(Integer::parseInt).toArray() : new int[0];
+			row = el.hasAttribute("row");
 			rank = Integer.parseInt(el.getAttribute("rank"));
 			shift = Integer.parseInt(el.getAttribute("shift"));
 			this.town = town;
@@ -237,6 +248,8 @@ public class L2HubTownFakes extends Script
 	private final long _chatPeriod;
 	private final boolean _reactions;
 	private final boolean _brain;
+	private final boolean _stores;
+	private final boolean _market;
 	private boolean _started;
 	private Phase _worldPhase;
 	private Set<Integer> _supers;
@@ -253,6 +266,8 @@ public class L2HubTownFakes extends Script
 		_chatPeriod = Math.max(0, integer(config, "TownFakesChatMinutes", 3)) * 60000L;
 		_reactions = !"false".equalsIgnoreCase(config.getProperty("TownFakesReactions", "True").trim());
 		_brain = !"false".equalsIgnoreCase(config.getProperty("TownFakesBrain", "True").trim());
+		_stores = !"false".equalsIgnoreCase(config.getProperty("TownFakesStores", "True").trim());
+		_market = _stores && !"false".equalsIgnoreCase(config.getProperty("TownFakesMarketMemory", "True").trim());
 		int count = 0;
 		try
 		{
@@ -267,6 +282,14 @@ public class L2HubTownFakes extends Script
 		LOGGER.info("L2HubTownFakes: городов " + _towns.size() + ", фейков " + count + " (плотность " + _density + " %), реплики — " + (_english ? "en" : "ru") + (_brain && FakePlayersConfig.FAKE_PLAYER_BRAIN ? ", пишут мозги." : ", заготовки."));
 		ThreadPool.scheduleAtFixedRate(this::tick, FIRST_DELAY, TICK);
 		ThreadPool.scheduleAtFixedRate(this::poll, FIRST_DELAY + 5000, POLL);
+		if (_market)
+		{
+			PhantomMarketMemory.start();
+		}
+		if (_stores && "true".equalsIgnoreCase(config.getProperty("TownFakesStoreTest", "False").trim()))
+		{
+			ThreadPool.schedule(this::storeTest, FIRST_DELAY + STORE_TEST_RETRY);
+		}
 	}
 
 	// ---------- Данные ----------
@@ -281,9 +304,14 @@ public class L2HubTownFakes extends Script
 			for (Element fakeEl : children(townEl, "fake"))
 			{
 				final Fake fake = new Fake(fakeEl, town);
-				if (fake.rank >= _density)
+				if ((fake.rank >= _density) || (fake.row && !_stores))
 				{
 					continue;
+				}
+				if (_stores && (fake.goods.length > 0))
+				{
+					PhantomStores.register(fake.npcId, fake.name, "buyer".equals(fake.role), fake.goods);
+					addFirstTalkId(fake.npcId);
 				}
 				final Map<String, Spot> known = new HashMap<>();
 				for (Phase phase : Phase.values())
@@ -376,12 +404,20 @@ public class L2HubTownFakes extends Script
 		return m < 360 ? Phase.NIGHT : m < 1080 ? Phase.DAY : Phase.EVENING;
 	}
 
+	/**
+	 * @return минута суток распорядка: игровое время или при настоящих сутках ({@code DailyRhythm}) реальные часы
+	 */
+	private static int clock()
+	{
+		return PhantomDayCycle.enabled() ? PhantomDayCycle.minuteOfDay(System.currentTimeMillis()) : GameTimeTaskManager.getInstance().getGameTime();
+	}
+
 	private void tick()
 	{
 		try
 		{
 			final long now = System.currentTimeMillis();
-			final int time = GameTimeTaskManager.getInstance().getGameTime();
+			final int time = clock();
 			for (Town town : _towns)
 			{
 				for (Fake fake : town.fakes)
@@ -586,6 +622,10 @@ public class L2HubTownFakes extends Script
 		if (!advertisers.isEmpty() && (talkers.isEmpty() || (Rnd.get(100) < 40)))
 		{
 			final Fake fake = advertisers.get(Rnd.get(advertisers.size()));
+			if (_market && ("trader".equals(fake.role) || "buyer".equals(fake.role)) && (Rnd.get(100) < MARKET_TALK_CHANCE) && talkMarket(fake))
+			{
+				return;
+			}
 			final String text = line("trade." + fake.role, fake, null);
 			if (text != null)
 			{
@@ -599,7 +639,7 @@ public class L2HubTownFakes extends Script
 		}
 
 		final Fake fake = talkers.get(Rnd.get(talkers.size()));
-		final Phase phase = phase(GameTimeTaskManager.getInstance().getGameTime() - fake.shift);
+		final Phase phase = phase(clock() - fake.shift);
 		String text = null;
 		String event = "idle";
 		final Map<String, String> vars = new HashMap<>();
@@ -621,6 +661,27 @@ public class L2HubTownFakes extends Script
 			text = line("idle." + fake.role, fake, null);
 		}
 		speak(fake, ChatType.GENERAL, event, text, "");
+	}
+
+	/**
+	 * Торговец говорит о ценах: что подорожало, подешевело или кончилось на рынке мира.
+	 * @return было о чём
+	 */
+	private boolean talkMarket(Fake fake)
+	{
+		final PhantomMarketMemory.Rumor rumor = PhantomMarketMemory.rumor();
+		if (rumor == null)
+		{
+			return false;
+		}
+		final Map<String, String> vars = new HashMap<>();
+		vars.put("item", rumor.item());
+		vars.put("percent", String.valueOf(rumor.percent()));
+		vars.put("price", String.valueOf(rumor.price()));
+		final String word = word("market." + rumor.kind(), rumor.kind());
+		final String facts = rumor.item() + ": " + word + " " + rumor.percent() + "%, " + rumor.price() + " adena";
+		speak(fake, ChatType.TRADE, "market", line("trade.market." + rumor.kind(), fake, vars), facts);
+		return true;
 	}
 
 	/**
@@ -727,6 +788,48 @@ public class L2HubTownFakes extends Script
 			return fallback != null ? fallback : key.substring(key.indexOf('.') + 1);
 		}
 		return (_english && !pair[1].isEmpty()) ? pair[1] : pair[0];
+	}
+
+	// ---------- Лавки ----------
+
+	@Override
+	public String onFirstTalk(Npc npc, Player player)
+	{
+		PhantomStores.open(player, npc);
+		return null;
+	}
+
+	/**
+	 * TownFakesStoreTest: самопроверка лавок на любом персонаже в мире (только копия базы: двигает его и меняет вещи).
+	 */
+	private void storeTest()
+	{
+		Npc seller = null;
+		Npc buyer = null;
+		for (Town town : _towns)
+		{
+			for (Fake fake : town.fakes)
+			{
+				if ((fake.npc != null) && (fake.goods.length > 0))
+				{
+					if ("buyer".equals(fake.role))
+					{
+						buyer = fake.row || (buyer == null) ? fake.npc : buyer;
+					}
+					else
+					{
+						seller = fake.row || (seller == null) ? fake.npc : seller;
+					}
+				}
+			}
+		}
+		final Player player = World.getPlayers().stream().findFirst().orElse(null);
+		if ((seller == null) || (buyer == null) || (player == null))
+		{
+			ThreadPool.schedule(this::storeTest, STORE_TEST_RETRY); // персонажи выходят в мир позже фейков
+			return;
+		}
+		LOGGER.info("L2HubTownFakes: лавки, самопроверка: " + PhantomStores.selfTest(player, seller, buyer) + " (персонаж " + player.getName() + ", " + seller.getName() + ", " + buyer.getName() + ").");
 	}
 
 	// ---------- Живые игроки ----------
@@ -917,7 +1020,7 @@ public class L2HubTownFakes extends Script
 		vars.put("leader", leader == null ? "" : leader.getName());
 		final Object boss = field(raid, "boss");
 		vars.put("place", boss instanceof Creature creature ? near(creature.getX(), creature.getY()) : "");
-		react("hunter_raid", vars, "Охотники " + vars.get("leader") + " собирают рейд на " + vars.get("boss") + " (" + vars.get("blevel") + " ур.) " + vars.get("place"));
+		react("hunter_raid", vars, vars.get("leader") + " собирает народ на рейд на " + vars.get("boss") + " (" + vars.get("blevel") + " ур.) " + vars.get("place"));
 	}
 
 	private static Object field(Object owner, String name)

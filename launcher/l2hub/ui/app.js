@@ -35,6 +35,7 @@ function toast(text, err = false) {
 function store(key, value) { try { localStorage.setItem('l2hub.' + key, value); } catch (e) { /* без хранилища тоже работаем */ } }
 function load(key) { try { return localStorage.getItem('l2hub.' + key); } catch (e) { return null; } }
 function fmtUptime(s) { if (s == null) return ''; const m = Math.floor(s / 60); return m < 60 ? `${m} мин` : `${Math.floor(m / 60)} ч ${m % 60} мин`; }
+const onlineParts = (w) => `живых ${w.live}, охотников ${w.hunters}, фантомов ${w.phantoms}`; // L2HubOnline.json, health.py
 
 const ICON = {
   play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l12.5-7.5z"/></svg>',
@@ -241,7 +242,7 @@ function renderHealth() {
   $('hDot').className = 'dot ' + dot;
   $('hSum').textContent = sum;
   const sub = [];
-  if (gm.state === 'on') sub.push(gm.online != null ? `онлайн ${gm.online}` : '', gm.registered ? `на логине как ${gm.registered}` : '',
+  if (gm.state === 'on') sub.push(gm.world ? `онлайн ${gm.world.total}: ${onlineParts(gm.world)}` : gm.online != null ? `онлайн ${gm.online}` : '', gm.registered ? `на логине как ${gm.registered}` : '',
     gm.bots != null ? `ботов ${gm.bots}` : '', gm.rates ? `рейты ${gm.rates}` : '');
   if (gm.state === 'on' && cl.state !== 'on') sub.push('клиент не запущен');
   if (other && !(job && !job.done)) sub.push(`сейчас работает ${byId(last.running)?.name || last.running}`);
@@ -273,13 +274,15 @@ function renderDock() {
   if (!job && run) {
     meta.push(gm.state === 'on' ? 'работает' : gm.state === 'starting' ? 'гейм запускается' : 'без гейма');
     if (gm.uptime_s) meta.push(fmtUptime(gm.uptime_s));
-    if (gm.online != null) meta.push(`в игре ${gm.online}`);
+    if (gm.world) meta.push(`онлайн ${gm.world.total}`);
+    else if (gm.online != null) meta.push(`в игре ${gm.online}`);
   }
   $('dockMeta').textContent = meta.length ? '· ' + meta.join(' · ') : '';
   if (job) $('footLog').textContent = job.step;
   else if (run) {
     const pr = profiles[run];
-    $('footLog').textContent = pr ? `логин ${pr.ports.login} · гейм ${pr.ports.game}` : '';
+    // Общая цифра слева, а тут честно, из кого она: решение автора 2026-10-31. Порты — после неё, их и обрежет, если узко.
+    $('footLog').textContent = [gm.world && onlineParts(gm.world), pr && `логин ${pr.ports.login} · гейм ${pr.ports.game}`].filter(Boolean).join(' · ');
   } else $('footLog').textContent = 'Выбери хронику и жми «Играть».';
   $('dockBar').style.width = job ? Math.round(job.progress * 100) + '%' : '0';
   $('railPip').classList.toggle('on', !!run);
@@ -789,11 +792,14 @@ function renderAppSettings() {
   document.querySelectorAll('[data-set]').forEach((b) => b.setAttribute('aria-checked', String(!!appSet[b.dataset.set])));
   document.querySelectorAll('[data-seg]').forEach((s) => s.querySelectorAll('button').forEach((b) => b.classList.toggle('on', appSet[s.dataset.seg] === b.dataset.v)));
 }
+// Тема окна (ui/themes.css): настройка — в data/launcher.json, копия в localStorage нужна для первого кадра (index.html).
+function applyTheme(id) { document.documentElement.dataset.theme = id; store('theme', id); }
 async function saveApp(patch) {
   const r = await api.save_app_settings(patch);
   if (!r.ok) return toast(r.error, true);
   appSet = r.settings;
   if ('language' in patch) return L2I18N.use(appSet.language); // окно перегружается на новом языке (ui/i18n.js)
+  if ('theme' in patch) applyTheme(appSet.theme);
   renderAppSettings();
   renderList();
   if (!visibleChron(byId(selected))) select(catalog.find((c) => c.id === 'ct26_highfive') ? 'ct26_highfive' : catalog.find(visibleChron).id);
@@ -983,8 +989,12 @@ async function renderFriends() {
   if (!mine.some((x) => x.id === packChron)) packChron = (mine.find((x) => x.id === last.running) || mine.find((x) => x.id === selected) || mine[0])?.id;
   sel.innerHTML = mine.map((x) => `<option value="${x.id}"${x.id === packChron ? ' selected' : ''}>${esc(x.name)}</option>`).join('');
   const pc = mine.find((x) => x.id === packChron);
+  // Способ или адрес сменились после сборки: такой файл другу не подойдёт.
+  const stale = (address) => pc.mode === 'friends' && pc.address && address && address !== pc.address;
   $('friendIni').innerHTML = !pc ? '' : (pc.pack ? `<div class="note">Клиент целиком: ${esc(pc.pack.path)} · ${mb(pc.pack.size)} · ${esc(pc.pack.time)}.</div>` : '<div class="note">Клиент целиком ещё не собран.</div>')
-    + (pc.friendIni ? `<div class="note">${esc(pc.friendIni.split('\\').pop())}: ${esc(pc.friendIni)} — друзьям в ${esc(pc.clientDir)}\\${esc(pc.friendIni.split('\\').pop())} их клиента${pc.friendIni.endsWith('L2Hub.ini') ? ' (клиент 4game: запуск — L2.exe -INI=.\\L2Hub.ini)' : ', с заменой'}.</div>` : '');
+    + (pc.pack && stale(pc.pack.address) ? `<div class="note bad-text">В этом архиве адрес ${esc(pc.pack.address)}, а друзья сейчас подключаются на ${esc(pc.address)}: другу он не подойдёт, собери заново.</div>` : '')
+    + (pc.friendIni ? `<div class="note">${esc(pc.friendIni.split('\\').pop())}: ${esc(pc.friendIni)} — друзьям в ${esc(pc.clientDir)}\\${esc(pc.friendIni.split('\\').pop())} их клиента${pc.friendIni.endsWith('L2Hub.ini') ? ' (клиент 4game: запуск — L2.exe -INI=.\\L2Hub.ini)' : ', с заменой'}.</div>` : '')
+    + (pc.friendIni && stale(pc.friendIniAddress) ? `<div class="note bad-text">В этом файле адрес ${esc(pc.friendIniAddress)}, а друзья сейчас подключаются на ${esc(pc.address)}: другу он не подойдёт, собери заново.</div>` : '');
   // Как подключить — под выбранный способ.
   const kind = common?.mode === 'friends' ? common.kind : pc?.mode === 'friends' ? pc.kind : null;
   const how = HOWTO[kind];
@@ -1180,7 +1190,7 @@ async function renderModes() {
     const m = r.modes.find((x) => x.id === b.dataset.mode);
     if (!m) return document.querySelector('.tab[data-tab="all"]').click();
     if (Object.keys(edits).length) return toast('Сначала сохрани или отмени правки ниже.', true);
-    if (!(await askModal({ title: `Режим «${esc(m.title)}»`, ok: 'Включить', body: `<p>${esc(m.note)}.</p><p class="note">Рейты и выключатели перепишутся разом, прежние конфиги — в бэкап (data\\backups\\config). Вернуть свои — «Все настройки» или другой режим.</p>` }))) return;
+    if (!(await askModal({ title: `Режим «${esc(m.title)}»`, ok: 'Включить', body: `<p>${esc(m.note)}.</p><p class="note">${m.keepsRates ? 'Выключатели перепишутся разом' : 'Рейты и выключатели перепишутся разом'}, прежние конфиги — в бэкап (data\\backups\\config). Вернуть свои — «Все настройки» или другой режим.</p>` }))) return;
     const res = await api.apply_server_mode(id, m.id);
     if (!res.ok) return toast(res.error, true);
     toast(`Режим «${res.title}»: правок ${res.changed}${res.skipped.length ? `, в сборке нет: ${res.skipped.join(', ')}` : ''}${res.restart ? '. Перезапусти гейм-сервер, чтобы применить.' : '.'}`);
@@ -1216,7 +1226,7 @@ async function renderCalendar(host, id) {
   const name = (e) => { const i = e.note.indexOf(':'); return i > 0 && i < 40 ? [e.note.slice(0, i), e.note.slice(i + 1).trim()] : [e.key, e.note]; };
   const rows = r.events.map((e) => { const [n, d] = name(e); return `<div class="cal-row"><div class="cal-name" title="${esc(e.key)}: ${esc(e.note)}">${esc(n)}<small>${esc(d || e.key)}</small></div>
     ${calBar(e.value)}<input class="field cal-in" data-cal="${esc(e.key)}" data-was="${esc(e.value)}" value="${esc(e.value)}" placeholder="как в Mobius" spellcheck="false"></div>`; }).join('');
-  const PVP = { PvpOnlyWithPlayers: 'Только при живом игроке', PvpMinLevel: 'Минимальный уровень', TvT: 'TvT — расписание', Deathmatch: 'Deathmatch — расписание', CtF: 'CtF — расписание' };
+  const PVP = { PvpOnlyWithPlayers: 'Только при живом игроке', PvpMinLevel: 'Минимальный уровень', TvTMinParticipants: 'TvT — минимум участников', TvTMaxParticipants: 'TvT — всего мест', TvTReservedSlots: 'TvT — места живым игрокам', TvTFightMinutes: 'TvT — бой, минут', TvT: 'TvT — расписание', Deathmatch: 'Deathmatch — расписание', CtF: 'CtF — расписание' };
   const ELP = { ElpiesSchedule: 'Расписание', ElpiesMinutes: 'Длительность, мин', ElpiesOnlyWithPlayers: 'Только при живом игроке' };
   const rowsOf = (labels) => Object.entries(labels).filter(([k]) => r.pvp[k]).map(([k, t]) => { const x = r.pvp[k];
     const input = x.type === 'bool' ? `<select class="field cal-in" data-cal="${k}" data-was="${esc(x.value)}"><option${x.value === 'True' ? ' selected' : ''}>True</option><option${x.value === 'False' ? ' selected' : ''}>False</option></select>`
@@ -1537,6 +1547,7 @@ document.querySelectorAll('.fchip').forEach((b) => (b.onclick = () => {
 (async function init() {
   catalog = await api.catalog();
   appSet = await api.app_settings();
+  applyTheme(appSet.theme);
   fbEnabled = await api.feedback_enabled().catch(() => false);
   if (appSet.checkUpdates) setTimeout(async () => {
     const r = await api.update_check(false).catch(() => null);

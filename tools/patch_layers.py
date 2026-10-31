@@ -21,7 +21,12 @@ def touched(patch: Path) -> set[str]:
 def later(cid: str, name: str, files: list[str]) -> list[Path]:
     """Патчи хроники после name (по имени, как их накладывает сборка), которые трогают те же файлы."""
     want = set(files)
-    return [p for p in sorted((ROOT / "patches" / cid).glob("*.patch")) if p.name > name and touched(p) & want]
+    rest = [(p, touched(p)) for p in sorted((ROOT / "patches" / cid).glob("*.patch")) if p.name > name]
+    picked: set[Path] = set()
+    while found := [p for p, rels in rest if p not in picked and rels & want]:  # и те, что пересекаются с выбранными: иначе те не снять
+        picked.update(found)
+        want.update(*(touched(p) for p in found))
+    return [p for p, _ in rest if p in picked]
 
 
 def _git_apply(cwd: Path, patch: Path, reverse: bool = False) -> subprocess.CompletedProcess:

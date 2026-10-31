@@ -234,6 +234,7 @@ final class PhantomMarket
 			buyer.setPrivateStoreType(PrivateStoreType.NONE);
 			buyer.broadcastUserInfo();
 		}
+		PhantomMarketMemory.deal(offer.itemId(), offer.count(), offer.price(), false);
 		LOGGER.info(PhantomMarket.class.getSimpleName() + ": " + seller.getName() + " sold " + offer.name() + (offer.count() > 1 ? " x" + offer.count() : "") + " to " + buyer.getName() + " for " + (seller.getAdena() - before) + "; " + seller.getAdena() + " adena.");
 		return true;
 	}
@@ -264,7 +265,7 @@ final class PhantomMarket
 	/**
 	 * Характер в скупке: 0,55–0,85 цены магазина, у каждого своя (по имени).
 	 */
-	private static double buyFactor(PhantomTemplate template)
+	static double buyFactor(PhantomTemplate template)
 	{
 		return 0.55 + ((Math.abs((template.getName() + "buy").toLowerCase().hashCode()) % 31) / 100.0);
 	}
@@ -302,6 +303,7 @@ final class PhantomMarket
 		}
 
 		PhantomHunterOutfit.equipBetterDrops(buyer);
+		PhantomMarketMemory.deal(offer.itemId(), 1, offer.price(), true);
 		LOGGER.info(PhantomMarket.class.getSimpleName() + ": " + buyer.getName() + " bought " + offer.name() + " from " + seller.getName() + " for " + offer.price() + "; " + buyer.getAdena() + " adena.");
 		return true;
 	}

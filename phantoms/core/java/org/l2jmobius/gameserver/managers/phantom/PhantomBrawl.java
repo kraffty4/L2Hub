@@ -86,6 +86,7 @@ public class PhantomBrawl
 		if (yes)
 		{
 			PhantomHunterManager.getInstance().startBrawl(angry, other, why);
+			PhantomStories.brawl(angry, other);
 		}
 		return yes;
 	}

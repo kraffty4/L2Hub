@@ -1,0 +1,155 @@
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+index 654bc28380bfdd43c63ca8e4d463d03a6dc8886f..dc8ee3d85c21e7efaeaf531e88b70e48e2bd7e48 100644
+--- a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+@@ -4,6 +4,7 @@ import java.util.List;
+ import java.util.regex.Matcher;
+ import java.util.regex.Pattern;
+ 
++import org.l2jmobius.commons.threads.ThreadPool;
+ import org.l2jmobius.gameserver.cache.HtmCache;
+ import org.l2jmobius.gameserver.config.custom.CommunityBoardConfig;
+ import org.l2jmobius.gameserver.config.custom.PhantomsConfig;
+@@ -21,8 +22,11 @@ import org.l2jmobius.gameserver.handler.IParseBoardHandler;
+ import org.l2jmobius.gameserver.managers.phantom.PhantomClanBoard;
+ import org.l2jmobius.gameserver.managers.phantom.PhantomBufferSets;
+ import org.l2jmobius.gameserver.managers.phantom.PhantomHunterUi;
++import org.l2jmobius.gameserver.managers.phantom.PhantomLootSell;
+ import org.l2jmobius.gameserver.managers.phantom.PhantomUi;
++import org.l2jmobius.gameserver.mechanics.buylist.ProductList;
+ import org.l2jmobius.gameserver.mechanics.skill.Skill;
++import org.l2jmobius.gameserver.network.serverpackets.ExBuySellList;
+ 
+ /**
+  * L2Hub: доска Alt+B — баффер, GM-шоп и напарники.
+@@ -445,10 +449,27 @@ public class L2HubBoard implements IParseBoardHandler
+ 	// ---------- GM-шоп ----------
+ 
+ 	/**
+-	 * _bbshubshop [страница] | ms &lt;мультиселл&gt; &lt;страница&gt;
++	 * _bbshubshop [страница] | ms &lt;мультиселл&gt; &lt;страница&gt; | sell
+ 	 */
+ 	private static String shop(Player player, String[] args)
+ 	{
++		if ((args.length > 1) && args[1].equalsIgnoreCase("sell"))
++		{
++			if (canUse(player) && PhantomLootSell.canUse(player))
++			{
++				ThreadPool.schedule(() ->
++				{
++					if (PhantomLootSell.canUse(player))
++					{
++						final ProductList list = new ProductList(PhantomLootSell.LIST_ID);
++						player.sendPacket(new ExBuySellList(list, player, 0));
++						player.sendPacket(new ExBuySellList(player, false));
++						player.sendPacket(new ExBuySellList());
++					}
++				}, 100);
++			}
++			return page(player, PhantomLootSell.title(), PhantomLootSell.content(SHOP));
++		}
+ 		int pageId = 0;
+ 		if ((args.length > 3) && args[1].equalsIgnoreCase("ms"))
+ 		{
+@@ -483,6 +504,7 @@ public class L2HubBoard implements IParseBoardHandler
+ 		{
+ 			content = button(tr("В начало GM-шопа"), SHOP, 150) + "<br>" + content;
+ 		}
++		content = button(PhantomLootSell.label(), SHOP + " sell", 170) + "<br>" + content;
+ 		return page(player, tr("GM-шоп"), content);
+ 	}
+ 
+diff --git a/java/org/l2jmobius/gameserver/network/clientpackets/RequestRefundItem.java b/java/org/l2jmobius/gameserver/network/clientpackets/RequestRefundItem.java
+index ea83f390e4bc6a0ef87c1331411e42613275b8a3..4c22240ff0a415072db050750d735d534ffafb61 100644
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/RequestRefundItem.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/RequestRefundItem.java
+@@ -33,6 +33,7 @@ import org.l2jmobius.gameserver.entity.item.ItemTemplate;
+ import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
+ import org.l2jmobius.gameserver.entity.item.instance.Item;
+ import org.l2jmobius.gameserver.managers.PunishmentManager;
++import org.l2jmobius.gameserver.managers.phantom.PhantomLootSell;
+ import org.l2jmobius.gameserver.mechanics.buylist.ProductList;
+ import org.l2jmobius.gameserver.network.PacketLogger;
+ import org.l2jmobius.gameserver.network.SystemMessageId;
+@@ -89,9 +90,17 @@ public class RequestRefundItem extends ClientPacket
+ 			return;
+ 		}
+ 		
++		// L2Hub: продажа лута с доски (PhantomLootSell). Открытие окна сделку не разрешает: условия проверяются здесь.
++		final boolean boardSale = PhantomLootSell.isList(_listId);
++		if (boardSale && !PhantomLootSell.canUse(player))
++		{
++			player.sendPacket(ActionFailed.STATIC_PACKET);
++			return;
++		}
++
+ 		final WorldObject target = player.getTarget();
+ 		Merchant merchant = null;
+-		if (!player.isGM() && (_listId != CUSTOM_CB_SELL_LIST))
++		if (!player.isGM() && !boardSale && (_listId != CUSTOM_CB_SELL_LIST))
+ 		{
+ 			if (!(target instanceof Merchant) || !player.isInsideRadius3D(target, INTERACTION_DISTANCE) || (player.getInstanceId() != target.getInstanceId()))
+ 			{
+@@ -102,13 +111,13 @@ public class RequestRefundItem extends ClientPacket
+ 			merchant = (Merchant) target;
+ 		}
+ 		
+-		if ((merchant == null) && !player.isGM() && (_listId != CUSTOM_CB_SELL_LIST))
++		if ((merchant == null) && !player.isGM() && !boardSale && (_listId != CUSTOM_CB_SELL_LIST))
+ 		{
+ 			player.sendPacket(ActionFailed.STATIC_PACKET);
+ 			return;
+ 		}
+ 		
+-		final ProductList buyList = BuyListData.getInstance().getBuyList(_listId);
++		final ProductList buyList = boardSale ? new ProductList(_listId) : BuyListData.getInstance().getBuyList(_listId);
+ 		if (buyList == null)
+ 		{
+ 			PunishmentManager.handleIllegalPlayerAction(player, "Warning!! Character " + player.getName() + " of account " + player.getAccountName() + " sent a false BuyList list_id " + _listId, GeneralConfig.DEFAULT_PUNISH);
+diff --git a/java/org/l2jmobius/gameserver/network/clientpackets/RequestSellItem.java b/java/org/l2jmobius/gameserver/network/clientpackets/RequestSellItem.java
+index 208752ff92c4d2c95843da5ba98c0bb32d277efc..27c2537dac97c86e08eb9566525efde502dae115 100644
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/RequestSellItem.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/RequestSellItem.java
+@@ -37,6 +37,7 @@ import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
+ import org.l2jmobius.gameserver.entity.item.holders.UniqueItemHolder;
+ import org.l2jmobius.gameserver.entity.item.instance.Item;
+ import org.l2jmobius.gameserver.managers.PunishmentManager;
++import org.l2jmobius.gameserver.managers.phantom.PhantomLootSell;
+ import org.l2jmobius.gameserver.mechanics.buylist.ProductList;
+ import org.l2jmobius.gameserver.network.SystemMessageId;
+ import org.l2jmobius.gameserver.network.serverpackets.ActionFailed;
+@@ -108,9 +109,17 @@ public class RequestSellItem extends ClientPacket
+ 			return;
+ 		}
+ 		
++		// L2Hub: продажа лута с доски (PhantomLootSell). Открытие окна сделку не разрешает: условия проверяются здесь.
++		final boolean boardSale = PhantomLootSell.isList(_listId);
++		if (boardSale && !PhantomLootSell.canUse(player))
++		{
++			player.sendPacket(ActionFailed.STATIC_PACKET);
++			return;
++		}
++
+ 		final WorldObject target = player.getTarget();
+ 		Merchant merchant = null;
+-		if (!player.isGM() && (_listId != CUSTOM_CB_SELL_LIST))
++		if (!player.isGM() && !boardSale && (_listId != CUSTOM_CB_SELL_LIST))
+ 		{
+ 			if ((target == null) || !player.isInsideRadius3D(target, INTERACTION_DISTANCE) || (player.getInstanceId() != target.getInstanceId()))
+ 			{
+@@ -129,13 +138,13 @@ public class RequestSellItem extends ClientPacket
+ 			}
+ 		}
+ 		
+-		if ((merchant == null) && !player.isGM() && (_listId != CUSTOM_CB_SELL_LIST))
++		if ((merchant == null) && !player.isGM() && !boardSale && (_listId != CUSTOM_CB_SELL_LIST))
+ 		{
+ 			player.sendPacket(ActionFailed.STATIC_PACKET);
+ 			return;
+ 		}
+ 		
+-		final ProductList buyList = BuyListData.getInstance().getBuyList(_listId);
++		final ProductList buyList = boardSale ? new ProductList(_listId) : BuyListData.getInstance().getBuyList(_listId);
+ 		if (buyList == null)
+ 		{
+ 			PunishmentManager.handleIllegalPlayerAction(player, "Warning!! Character " + player.getName() + " of account " + player.getAccountName() + " sent a false BuyList list_id " + _listId, GeneralConfig.DEFAULT_PUNISH);

@@ -117,6 +117,8 @@ public class PhantomChat
 	private final Map<Long, Long> _lastReply = new ConcurrentHashMap<>();
 	/** Событие → не раньше чем. */
 	private final Map<String, Long> _eventCooldowns = new ConcurrentHashMap<>();
+	/** Последний крик в торговый чат по регионам: директор чата ({@link PhantomChatFlow}) не перебивает. */
+	private final Map<Integer, Long> _lastShout = new ConcurrentHashMap<>();
 	/** Запросы к мозгам на события за последнюю минуту. */
 	private final Deque<Long> _eventCalls = new ArrayDeque<>();
 
@@ -570,6 +572,7 @@ public class PhantomChat
 		{
 			if (other.isOnline())
 			{
+				LOGGER.info(PhantomChat.class.getSimpleName() + ": " + kind + " " + hunter.getName() + " whispers to " + other.getName() + ": «" + text + "»");
 				other.sendPacket(new CreatureSay(hunter, ChatType.WHISPER, hunter.getName(), text));
 			}
 			return;
@@ -586,6 +589,7 @@ public class PhantomChat
 		PhantomQuiet.getInstance().said(speaker, topic, System.currentTimeMillis());
 		final CreatureSay say = new CreatureSay(speaker, ChatType.GENERAL, speaker.getName(), text);
 		World.forEachVisibleObjectInRange(speaker, Player.class, 1250, player -> player.sendPacket(say));
+		PhantomGestures.getInstance().onSaid(speaker, text);
 	}
 
 	/**
@@ -650,7 +654,7 @@ public class PhantomChat
 	 */
 	void banter(Player first, Player second, PhantomTemplate template, boolean enemy)
 	{
-		banter(first, second, template, "рядом " + PhantomHunterManager.describe(second) + " — такой же охотник, как ты, " + (enemy ? "ты на него в обиде" : "ты ему благодарен") + "; вокруг стоят и слышат другие игроки");
+		banter(first, second, template, "рядом " + PhantomHunterManager.describe(second) + " — такой же игрок, как ты, " + (enemy ? "ты на него в обиде" : "ты ему благодарен") + "; вокруг стоят и слышат другие игроки");
 	}
 
 	/**
@@ -783,6 +787,7 @@ public class PhantomChat
 
 		final CreatureSay say = new CreatureSay(hunter, ChatType.TRADE, hunter.getName(), text);
 		final int region = MapRegionData.getInstance().getMapRegionLocId(hunter);
+		_lastShout.put(trade == ChatBroadcastType.GLOBAL ? -1 : region, System.currentTimeMillis());
 		for (Player player : World.getPlayers())
 		{
 			if ((player != hunter) && !BlockList.isBlocked(player, hunter) && ((trade == ChatBroadcastType.GLOBAL) || ((region == MapRegionData.getInstance().getMapRegionLocId(player)) && (player.getInstanceId() == hunter.getInstanceId()))))
@@ -791,6 +796,103 @@ public class PhantomChat
 			}
 		}
 		return "trade";
+	}
+
+	/**
+	 * @param region регион торгового чата (-1 — весь мир при TradeChat = GLOBAL)
+	 * @return когда в нём в последний раз кричали, мс; 0 — не кричали
+	 */
+	long lastShout(int region)
+	{
+		return _lastShout.getOrDefault(region, 0L);
+	}
+
+	/**
+	 * Ответ охотника в торговый чат ({@link PhantomChatFlow}): только мозги и в их бюджете; мозги молчат, недоступны или бюджет кончился — тишина.
+	 * @param other кому отвечает
+	 * @param hunter кто отвечает
+	 * @param channel канал мозгов: {@code banter} — сказать по ситуации, {@code say} — ответить на реплику
+	 * @param what ситуация от его лица или реплика
+	 * @param said что сказал, или {@code null}
+	 */
+	void tradeReply(Player other, Player hunter, String channel, String what, Consumer<String> said)
+	{
+		final PhantomTemplate template = PhantomData.getInstance().getTemplate(hunter.getName());
+		if ((template == null) || !brainEnabled() || !eventBudget(System.currentTimeMillis()))
+		{
+			return;
+		}
+
+		// Канал для мозгов: торговый чат видит весь регион, а не только те, кто рядом.
+		final String body = "{\"chat\":\"trade\"," + request(other, hunter, template, channel, what, null, false).substring(1);
+		FakePlayerBrain.getInstance().send(body, reply ->
+		{
+			final String line = TAG.matcher(reply).replaceAll("").strip();
+			if (!line.isEmpty() && !hunter.isDead() && hunter.isOnline())
+			{
+				hunterShout(hunter, line);
+				LOGGER.info(PhantomChatFlow.class.getSimpleName() + ": " + hunter.getName() + " -> " + other.getName() + ": «" + line + "»");
+				if (said != null)
+				{
+					said.accept(line);
+				}
+			}
+		}, () ->
+		{
+			// Мозги недоступны — ветки нет.
+		});
+	}
+
+	/**
+	 * Просьба ({@link PhantomFavors}) или письмо издалека ({@link PhantomFarWhisper}): правила уже разрешили, как у {@link #initiative}. Отличия: просит и мёртвый, письмо уходит шёпотом и не становится адресатом для ответа без имени.
+	 * Модель промолчала, мозги недоступны или бюджет исчерпан — тишина, без заготовок.
+	 * @param hunter охотник
+	 * @param player к кому он обращается
+	 * @param template шаблон охотника
+	 * @param chat вид реплики для мозгов: {@code favor} или {@code far}
+	 * @param what что нужно сказать — для мозгов, от его лица
+	 * @param whisper шёпотом, а не в общий чат рядом
+	 * @param onSaid охотник что-то сказал: ждать ответа
+	 */
+	void favor(Player hunter, Player player, PhantomTemplate template, String chat, String what, boolean whisper, Runnable onSaid)
+	{
+		final long now = System.currentTimeMillis();
+		if (!whisper && !PhantomQuiet.getInstance().allowed(hunter, PhantomQuiet.INITIATIVE, now))
+		{
+			LOGGER.info(PhantomFavors.class.getSimpleName() + ": " + hunter.getName() + " -> " + player.getName() + ": рядом только что говорили — промолчал.");
+			return;
+		}
+		if (!brainEnabled() || !eventBudget(now))
+		{
+			return;
+		}
+
+		final String body = "{\"chat\":\"" + chat + "\"," + request(player, hunter, template, "initiative", what, null, false).substring(1);
+		FakePlayerBrain.getInstance().send(body, reply ->
+		{
+			final String line = TAG.matcher(reply).replaceAll("").strip();
+			if (line.isEmpty() || !hunter.isOnline() || !player.isOnline())
+			{
+				return;
+			}
+
+			final long saidAt = System.currentTimeMillis();
+			if (whisper)
+			{
+				sayHunter(hunter, player, chat, line, true);
+			}
+			else
+			{
+				_lastReply.put(pair(hunter, player), saidAt);
+				_eventCooldowns.put("overhear:" + hunter.getObjectId(), saidAt + (PhantomPartyConfig.PHANTOM_OVERHEAR_COOLDOWN * 1000L));
+				LOGGER.info(PhantomFavors.class.getSimpleName() + ": " + hunter.getName() + " -> " + player.getName() + ": «" + line + "»");
+				sayNear(hunter, line, PhantomQuiet.INITIATIVE);
+			}
+			onSaid.run();
+		}, () ->
+		{
+			// Мозги недоступны — охотник молчит.
+		});
 	}
 
 	/**
@@ -885,6 +987,7 @@ public class PhantomChat
 			if (template.isHunter())
 			{
 				PhantomInitiative.getInstance().onSpoke(phantom, speaker);
+				PhantomGestures.getInstance().heard(phantom, text);
 				// «Разум 2.0»: разговор с живым — повод для фокуса.
 				PhantomFocus.getInstance().talked(phantom, speaker);
 			}

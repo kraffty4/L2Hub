@@ -1,0 +1,149 @@
+diff --git a/java/org/l2jmobius/gameserver/network/clientpackets/RequestPrivateStoreBuy.java b/java/org/l2jmobius/gameserver/network/clientpackets/RequestPrivateStoreBuy.java
+index fea319f731940ac674e384a539c8ff3518d6224a..a292289b3b5ca62c6f81bbd9973e5e93a2c60c8c 100644
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/RequestPrivateStoreBuy.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/RequestPrivateStoreBuy.java
+@@ -34,6 +34,7 @@ import org.l2jmobius.gameserver.entity.WorldObject;
+ import org.l2jmobius.gameserver.entity.actor.Player;
+ import org.l2jmobius.gameserver.entity.actor.enums.player.PrivateStoreType;
+ import org.l2jmobius.gameserver.managers.PunishmentManager;
++import org.l2jmobius.gameserver.managers.phantom.PhantomStores;
+ import org.l2jmobius.gameserver.network.PacketLogger;
+ import org.l2jmobius.gameserver.network.holders.RequestTrade;
+ import org.l2jmobius.gameserver.network.holders.TradeList;
+@@ -102,6 +103,13 @@ public class RequestPrivateStoreBuy extends ClientPacket
+ 			return;
+ 		}
+ 		
++		// L2Hub: лавка фейка-NPC.
++		if (PhantomStores.isStore(_storePlayerId))
++		{
++			PhantomStores.buy(player, _storePlayerId, _items);
++			return;
++		}
++		
+ 		final WorldObject object = World.getPlayer(_storePlayerId);
+ 		if ((object == null) || player.isCursedWeaponEquipped())
+ 		{
+diff --git a/java/org/l2jmobius/gameserver/network/clientpackets/RequestPrivateStoreSell.java b/java/org/l2jmobius/gameserver/network/clientpackets/RequestPrivateStoreSell.java
+index 7c199559c1af05914bc545d5cb9f3cdd97bf9177..f2b10fa61f13a040379cdfdd4eb9ffcc11ef2f81 100644
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/RequestPrivateStoreSell.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/RequestPrivateStoreSell.java
+@@ -28,6 +28,7 @@ import org.l2jmobius.gameserver.data.sql.OfflineTraderTable;
+ import org.l2jmobius.gameserver.entity.World;
+ import org.l2jmobius.gameserver.entity.actor.Player;
+ import org.l2jmobius.gameserver.entity.actor.enums.player.PrivateStoreType;
++import org.l2jmobius.gameserver.managers.phantom.PhantomStores;
+ import org.l2jmobius.gameserver.network.PacketLogger;
+ import org.l2jmobius.gameserver.network.holders.RequestTrade;
+ import org.l2jmobius.gameserver.network.holders.TradeList;
+@@ -112,6 +113,13 @@ public class RequestPrivateStoreSell extends ClientPacket
+ 			return;
+ 		}
+ 		
++		// L2Hub: лавка фейка-NPC.
++		if (PhantomStores.isStore(_storePlayerId))
++		{
++			PhantomStores.sell(player, _storePlayerId, _items);
++			return;
++		}
++		
+ 		final Player storePlayer = World.getPlayer(_storePlayerId);
+ 		if ((storePlayer == null) || !player.isInsideRadius3D(storePlayer, INTERACTION_DISTANCE))
+ 		{
+diff --git a/java/org/l2jmobius/gameserver/network/serverpackets/PrivateStoreListBuy.java b/java/org/l2jmobius/gameserver/network/serverpackets/PrivateStoreListBuy.java
+index 93614605cc5961744d78bbfd520fa024cb2e54c9..ad773652289a650791853e523ca9edd8cd263bdb 100644
+--- a/java/org/l2jmobius/gameserver/network/serverpackets/PrivateStoreListBuy.java
++++ b/java/org/l2jmobius/gameserver/network/serverpackets/PrivateStoreListBuy.java
+@@ -27,6 +27,7 @@ import org.l2jmobius.gameserver.entity.actor.Player;
+ import org.l2jmobius.gameserver.network.GameClient;
+ import org.l2jmobius.gameserver.network.ServerPackets;
+ import org.l2jmobius.gameserver.network.holders.TradeItem;
++import org.l2jmobius.gameserver.network.holders.TradeList;
+ 
+ /**
+  * @author Mobius
+@@ -45,6 +46,19 @@ public class PrivateStoreListBuy extends AbstractItemPacket
+ 		_items = storePlayer.getBuyList().getAvailableItems(player.getInventory());
+ 	}
+ 	
++	/**
++	 * L2Hub: скупка фейка-NPC (PhantomStores): хозяин не игрок, список свой.
++	 * @param player кто продаёт
++	 * @param storeId id фейка
++	 * @param list что скупает
++	 */
++	public PrivateStoreListBuy(Player player, int storeId, TradeList list)
++	{
++		_objId = storeId;
++		_playerAdena = player.getAdena();
++		_items = list.getAvailableItems(player.getInventory());
++	}
++	
+ 	@Override
+ 	public void writeImpl(GameClient client, WriteBuffer buffer)
+ 	{
+diff --git a/java/org/l2jmobius/gameserver/network/serverpackets/PrivateStoreListSell.java b/java/org/l2jmobius/gameserver/network/serverpackets/PrivateStoreListSell.java
+index 3186470df3cf931525e2e227a4b9a80dcb6a56ff..db34041b931b6cb044d53de1e2a98252df9e8f04 100644
+--- a/java/org/l2jmobius/gameserver/network/serverpackets/PrivateStoreListSell.java
++++ b/java/org/l2jmobius/gameserver/network/serverpackets/PrivateStoreListSell.java
+@@ -26,6 +26,7 @@ import org.l2jmobius.gameserver.managers.SellBuffsManager;
+ import org.l2jmobius.gameserver.network.GameClient;
+ import org.l2jmobius.gameserver.network.ServerPackets;
+ import org.l2jmobius.gameserver.network.holders.TradeItem;
++import org.l2jmobius.gameserver.network.holders.TradeList;
+ 
+ /**
+  * @author Mobius
+@@ -34,29 +35,47 @@ public class PrivateStoreListSell extends AbstractItemPacket
+ {
+ 	private final Player _player;
+ 	private final Player _seller;
++	private final int _sellerId;
++	private final TradeList _list;
+ 	
+ 	public PrivateStoreListSell(Player player, Player seller)
+ 	{
+ 		_player = player;
+ 		_seller = seller;
++		_sellerId = seller.getObjectId();
++		_list = seller.getSellList();
++	}
++	
++	/**
++	 * L2Hub: лавка фейка-NPC (PhantomStores): хозяин не игрок, список свой.
++	 * @param player покупатель
++	 * @param sellerId id фейка
++	 * @param list что продаёт
++	 */
++	public PrivateStoreListSell(Player player, int sellerId, TradeList list)
++	{
++		_player = player;
++		_seller = null;
++		_sellerId = sellerId;
++		_list = list;
+ 	}
+ 	
+ 	@Override
+ 	public void writeImpl(GameClient client, WriteBuffer buffer)
+ 	{
+-		if (_seller.isSellingBuffs())
++		if ((_seller != null) && _seller.isSellingBuffs())
+ 		{
+ 			SellBuffsManager.getInstance().sendBuffMenu(_player, _seller, 0);
+ 		}
+ 		else
+ 		{
+ 			ServerPackets.PRIVATE_STORE_LIST.writeId(this, buffer);
+-			buffer.writeInt(_seller.getObjectId());
+-			buffer.writeInt(_seller.getSellList().isPackaged());
++			buffer.writeInt(_sellerId);
++			buffer.writeInt(_list.isPackaged());
+ 			buffer.writeLong(_player.getAdena());
+ 			buffer.writeInt(0);
+-			buffer.writeInt(_seller.getSellList().getItems().size());
+-			for (TradeItem item : _seller.getSellList().getItems())
++			buffer.writeInt(_list.getItems().size());
++			for (TradeItem item : _list.getItems())
+ 			{
+ 				writeItem(item, buffer);
+ 				buffer.writeLong(item.getPrice());
