@@ -973,6 +973,24 @@
 		<gear grade="A" minLevel="61" rhand="8109" head="90467" chest="2382" gloves="5768" feet="5780" shots="91927" /> <!-- Infernal Master, Tallum Helmet (Heavy), Tallum Plate Armor, Tallum Gloves (Heavy), Tallum Boots (Heavy) -->
 		<gear grade="S" minLevel="76" rhand="6372" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" shots="91927" /> <!-- Heaven's Divider, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots -->
 	</phantom>
+	<!-- Koshatnik: охотник, Human Mystic, Human Wizard, Warlock, Arcana Lord; ветеран, приходит 46-м -->
+	<phantom name="Koshatnik" kind="hunter" role="DAMAGE" female="false" face="1" hairStyle="3" hairColor="2" classes="10,11,14,96" aliases="кошатник;кошак" social="1" temper="1" risk="1" startLevel="46" x="-84343" y="245233" z="-3528">
+		<gear grade="NONE" minLevel="1" rhand="6" chest="425" legs="461" shots="91930" /> <!-- Apprentice's Wand, Apprentice's Tunic, Apprentice's Stockings -->
+		<gear grade="D" minLevel="20" rhand="94966" chest="436" legs="469" gloves="2447" shots="91930" /> <!-- Bone Staff, Tunic of Knowledge, Stockings of Knowledge, Gloves of Knowledge -->
+		<gear grade="C" minLevel="40" rhand="194" chest="442" legs="473" gloves="2463" shots="91930" /> <!-- Heavy Doom Axe, Divine Tunic, Divine Stockings, Divine Gloves -->
+		<gear grade="B" minLevel="52" rhand="96721" head="90460" chest="2397" legs="2402" gloves="5712" feet="5728" shots="91930" /> <!-- Giant's Two-handed Staff, Zubei's Helmet (Robe), Zubei's Tunic, Zubei's Stockings, Zubei's Gauntlets (Robe), Zubei's Boots (Robe) -->
+		<gear grade="A" minLevel="61" rhand="5598" head="90469" chest="2400" legs="2405" gloves="5770" feet="5782" shots="91930" /> <!-- Dasparion's Staff, Tallum Helmet (Robe), Tallum Tunic, Tallum Stockings, Tallum Gloves (Robe), Tallum Boots (Robe) -->
+		<gear grade="S" minLevel="76" rhand="6366" head="6386" chest="6383" gloves="6384" feet="6385" shots="91930" /> <!-- Imperial Staff, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
+	</phantom>
+	<!-- Sumrak: охотник, Dark Mystic, Dark Wizard, Phantom Summoner, Spectral Master; ветеран, приходит 58-м -->
+	<phantom name="Sumrak" kind="hunter" role="DAMAGE" female="false" face="2" hairStyle="2" hairColor="3" classes="38,39,41,111" aliases="сумрак;сумрачный" social="1" temper="1" risk="1" startLevel="58" x="9587" y="15720" z="-4576">
+		<gear grade="NONE" minLevel="1" rhand="6" chest="425" legs="461" shots="91930" /> <!-- Apprentice's Wand, Apprentice's Tunic, Apprentice's Stockings -->
+		<gear grade="D" minLevel="20" rhand="94966" chest="2396" legs="2401" gloves="606" shots="91930" /> <!-- Bone Staff, Elven Mithril Tunic, Elven Mithril Stockings, Rip Gauntlets -->
+		<gear grade="C" minLevel="40" rhand="4872" chest="442" legs="473" gloves="2463" shots="91930" /> <!-- Heavy Doom Axe, Divine Tunic, Divine Stockings, Divine Gloves -->
+		<gear grade="B" minLevel="52" rhand="96721" head="90457" chest="2406" gloves="5716" feet="5732" shots="91930" /> <!-- Giant's Two-handed Staff, Avadon Circlet (Robe), Avadon Robe, Avadon Gloves (Robe), Avadon Boots (Robe) -->
+		<gear grade="A" minLevel="61" rhand="5596" head="90478" chest="2409" gloves="5776" feet="5788" shots="91930" /> <!-- Dasparion's Staff, Majestic Circlet (Robe), Majestic Robe, Majestic Gauntlets (Robe), Majestic Boots (Robe) -->
+		<gear grade="S" minLevel="76" rhand="6366" head="6386" chest="6383" gloves="6384" feet="6385" shots="91930" /> <!-- Imperial Staff, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
+	</phantom>
 	<!-- Thanatos: Танатос, единственный ПК сервера; Orc Fighter, Monk, Tyrant, Grand Khavatari, всегда 76-й -->
 	<phantom name="Thanatos" kind="reaper" role="DAMAGE" female="false" face="2" hairStyle="1" hairColor="2" classes="44,47,48,114" x="-45264" y="-112512" z="-240">
 		<gear grade="S" minLevel="76" rhand="6371" head="6382" chest="6379" gloves="6380" feet="6381" neck="95407" ear="95379" ring="95392" shots="91927" /> <!-- Demon Splinter, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots, Tateossian Necklace, Tateossian Earring, Tateossian Ring -->

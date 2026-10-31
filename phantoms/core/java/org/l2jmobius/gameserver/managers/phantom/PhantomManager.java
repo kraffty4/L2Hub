@@ -293,8 +293,10 @@ public class PhantomManager
 		}
 		final long adena = VETERAN_ADENA * level * level;
 		PhantomCompat.addItem(phantom, ItemProcessType.REWARD, Inventory.ADENA_ID, adena, null);
+		// Призыватель (раздел 4.55): кристаллы на призыв, как после закупки, — иначе слуги нет до первого похода в город.
+		final long crystals = PhantomSummoner.giveCrystals(phantom);
 		phantom.storeMe();
-		LOGGER.info(getClass().getSimpleName() + ": " + template.getName() + " is born a veteran: level " + phantom.getLevel() + " " + phantom.getPlayerClass().name() + ", " + adena + " adena.");
+		LOGGER.info(getClass().getSimpleName() + ": " + template.getName() + " is born a veteran: level " + phantom.getLevel() + " " + phantom.getPlayerClass().name() + ", " + adena + " adena" + (crystals > 0 ? ", " + crystals + " crystals to summon" : "") + ".");
 	}
 
 	/**

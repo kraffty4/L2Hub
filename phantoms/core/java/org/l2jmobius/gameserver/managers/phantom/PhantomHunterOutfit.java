@@ -145,6 +145,10 @@ final class PhantomHunterOutfit
 	private static int[][] _jewels;
 	/** Идти в город за сосами есть смысл, если хватает хотя бы на столько. */
 	private static final int RESTOCK_MIN = 100;
+	/** Сумка почти полна с этой доли лимита слотов ({@link #bagFull}). */
+	static final double BAG_FULL = 0.7;
+	/** Полную сумку город разгружает до этой доли ({@link #sellCheapGoods}). */
+	private static final double BAG_ROOMY = 0.6;
 
 	private PhantomHunterOutfit()
 	{
@@ -341,6 +345,15 @@ final class PhantomHunterOutfit
 	}
 
 	/**
+	 * Сумка почти полна: занято {@value #BAG_FULL} лимита слотов (надетое тоже в счёте, вес — нет: у охотников {@code dietMode}). Один порог и для города, и для лавки
+	 * от нужды: до 2026-10-29 у лавки было 75 %, и охотник с сумкой на 70–75 % шёл в город, а в лавку не садился (раздел 4.56).
+	 */
+	static boolean bagFull(Player player)
+	{
+		return player.getInventory().getSize() >= (player.getInventoryLimit() * BAG_FULL);
+	}
+
+	/**
 	 * Автососки — на сосы своего грейда, если они есть.
 	 */
 	static void syncShots(Player player)
@@ -377,6 +390,11 @@ final class PhantomHunterOutfit
 		if (sold > 0)
 		{
 			done.add("сдал хлам на " + sold);
+		}
+		final long dumped = sellCheapGoods(player, unsold);
+		if (dumped > 0)
+		{
+			done.add("сдал дешёвый товар на " + dumped);
 		}
 
 		// Профа — первой; не накопил — откладывает на неё всё: шмот, банки и сосы — только со свободной адены.
@@ -418,14 +436,14 @@ final class PhantomHunterOutfit
 			done.add("купил сосов: " + shots);
 		}
 
-		// Призыватель (раздел 4.37): кристаллы, которые ест его призыв, — запас на CRYSTAL_STOCK призывов, на четверть свободной адены.
-		final Skill summon = PhantomSummoner.summonSkill(player);
-		if ((summon != null) && (summon.getItemConsumeId() > 0))
+		// Призыватель и рыцари с кубиками (разделы 4.37, 4.55): кристаллы, которые едят призыв и свои кубики, — запас на CRYSTAL_STOCK призывов и CUBIC_STOCK
+		// кастов кубика, на четверть свободной адены. У Interlude и Epilogue кубики едят D-кристаллы, а призыв со второй профы — C.
+		for (Map.Entry<Integer, Long> need : PhantomSummoner.crystalNeeds(player).entrySet())
 		{
-			final long crystals = buy(player, summon.getItemConsumeId(), PhantomSummoner.CRYSTAL_STOCK * Math.max(1, summon.getItemConsumeCount()), free > 0 ? free / 4 : player.getAdena() / 10);
+			final long crystals = buy(player, need.getKey(), need.getValue().intValue(), free > 0 ? free / 4 : player.getAdena() / 10);
 			if (crystals > 0)
 			{
-				done.add("купил на призыв " + ItemData.getInstance().getTemplate(summon.getItemConsumeId()).getName() + ": " + crystals);
+				done.add("купил на призыв " + ItemData.getInstance().getTemplate(need.getKey()).getName() + ": " + crystals);
 			}
 		}
 
@@ -1458,7 +1476,7 @@ final class PhantomHunterOutfit
 		return want;
 	}
 
-	private static long price(int itemId)
+	static long price(int itemId)
 	{
 		final ItemTemplate template = itemId > 0 ? ItemData.getInstance().getTemplate(itemId) : null;
 		return template == null ? 0 : template.getReferencePrice();
@@ -1929,6 +1947,28 @@ final class PhantomHunterOutfit
 	}
 
 	/**
+	 * Сумка почти полна и после хлама — NPC за полцены самое дешёвое из товара для лавки, пока сумка не станет меньше {@value #BAG_ROOMY} лимита. Самые дорогие вещи
+	 * (столько, сколько влезает в лавку) остаются для неё. Лавка выставляет только их, а дешёвый товар до неё не доходил и копился: LunaTik на H5 носил 27 вещей
+	 * «для лавки», сумка 60 из 80 (раздел 4.56).
+	 * @return сколько адены выручил
+	 */
+	private static long sellCheapGoods(Player player, Map<Integer, Integer> unsold)
+	{
+		if (!bagFull(player))
+		{
+			return 0;
+		}
+		final List<Item> goods = storeGoods(player);
+		long total = 0;
+		for (int i = goods.size() - 1; (i >= player.getPrivateSellStoreLimit()) && (player.getInventory().getSize() >= (player.getInventoryLimit() * BAG_ROOMY)); i--)
+		{
+			total += sell(player, goods.get(i));
+			unsold.remove(goods.get(i).getObjectId());
+		}
+		return total;
+	}
+
+	/**
 	 * @return ценное для лавки: ненадетое, продаваемое, не дешевле порога; дорогое — первым
 	 */
 	static List<Item> storeGoods(Player player)
@@ -1963,9 +2003,8 @@ final class PhantomHunterOutfit
 				return false;
 			}
 		}
-		final Skill summon = PhantomSummoner.summonSkill(player);
-		// Печатные камни (6360–6362) — жрецу Семи печатей, а не в магазин (раздел 4.42).
-		return (id != shotId(player)) && (id != ammoId(player)) && ((summon == null) || (id != summon.getItemConsumeId())) && ((id < 6360) || (id > 6362));
+		// Печатные камни (6360–6362) — жрецу Семи печатей, а не в магазин (раздел 4.42). Кристаллы на свои призыв и кубики — тоже не хлам.
+		return (id != shotId(player)) && (id != ammoId(player)) && !PhantomSummoner.crystalNeeds(player).containsKey(id) && ((id < 6360) || (id > 6362));
 	}
 
 	/**

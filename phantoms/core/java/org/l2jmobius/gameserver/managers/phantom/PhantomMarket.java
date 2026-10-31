@@ -39,8 +39,6 @@ final class PhantomMarket
 	private static final int MARKET_RANGE = 2500;
 	/** На рынке — не дороже цены магазина × это. */
 	private static final double MAX_PRICE_FACTOR = 1.0;
-	/** Сумка заполнена больше чем на столько — продать, даже если ни на что не копит. */
-	private static final double FULL_BAG = 0.75;
 	/** Скидка от нужды: не хватает всего — цена × (1 − это). */
 	private static final double DESPERATION = 0.3;
 	/** Вещь уже не продалась раз — ещё × это. */
@@ -83,11 +81,11 @@ final class PhantomMarket
 	/**
 	 * @param player охотник
 	 * @param template его шаблон
-	 * @return есть зачем садиться в лавку: не хватает адены на цель или сумка почти полна
+	 * @return есть зачем садиться в лавку: не хватает адены на цель или сумка почти полна ({@link PhantomHunterOutfit#bagFull}) — продать, даже если ни на что не копит
 	 */
 	static boolean needsStore(Player player, PhantomTemplate template)
 	{
-		return (PhantomHunterOutfit.shortfall(player, template) > 0) || (player.getInventory().getSize() > (player.getInventoryLimit() * FULL_BAG));
+		return (PhantomHunterOutfit.shortfall(player, template) > 0) || PhantomHunterOutfit.bagFull(player);
 	}
 
 	/**

@@ -37,7 +37,10 @@
   const POPULATION = [['maxPlayingPopulation', 'ботов в мире, не больше', 2000], ['starterBotsPerRace', 'новичков в волне, на расу', 200]];
   const NEWBIE = 'General.newbieRewardPolicy';
   const NEWBIE_SHORT = { strict: 'первому', grant: 'и старым', always: 'всем' };
-  const DRAFT = {};  // хроника → {заточка или население: набранные, но не сохранённые поля}
+  // SP с мобов и спойл отдельно от пресета (ProgressionRates.js): ключ, подпись. Выше их x50 итог SP — предупреждение: SP у них без потолка.
+  const RATES = [['General.spRate', 'SP с мобов'], ['General.spoilRate', 'спойл']];
+  const SP_WARN = 50;
+  const DRAFT = {};  // хроника → {заточка, население или рейты: набранные, но не сохранённые поля}
   const restartNote = (ctx) => (ctx.running ? 'после перезапуска сервера' : 'со следующего запуска');
   const localNote = (t, key) => (t[key].source === 'local' ? ' · <span class="bad-text">задано в их local.ini — он главнее</span>' : '');
 
@@ -94,6 +97,22 @@
       <div class="row2" style="margin-top:8px"><button class="sbtn primary" id="l2sPopSave" disabled>Сохранить</button><button class="sbtn" id="l2sPopReset" ${custom ? '' : 'disabled'}>Как у L2Solo</button>
         <span class="w-muted" style="font-size:12.5px">${restartNote(ctx)}</span></div>
       <div class="w-muted" style="font-size:12.5px;margin-top:6px">Новых ботов заселяют волнами новичков в стартовых деревнях, пока их меньше потолка; уже заселённые остаются. 0 — новых не заселять.</div></div>`;
+  }
+
+  // Рейты SP и спойла: множатся на пресет; без них SP идёт за опытом, спойл — за шансом дропа.
+  function ratesCard(ctx, p) {
+    const t = p.tuning;
+    if (!RATES.every(([k]) => t[k])) return '';
+    const total = (k) => +(t[k].value * Number(p.progression.slice(1))).toFixed(2);
+    const fields = RATES.map(([k, label]) => `<div class="num"><label>${esc(label)}</label><input type="number" min="0.1" max="10" step="0.1" data-mul="${k}" value="${t[k].value ?? ''}"${t[k].source === 'local' ? ' title="Задано в их local.ini — он главнее пульта"' : ''}></div>`).join('');
+    const custom = RATES.some(([k]) => t[k].source === 'hub');
+    const sp = total(RATES[0][0]);
+    return `<div class="card"><h3>Рейты SP и спойла<span class="src">${custom ? 'свои' : 'как у L2Solo'}</span></h3>
+      <div class="rates" style="grid-template-columns:repeat(2,minmax(0,1fr))">${fields}</div>
+      <div class="w-muted" style="font-size:12.5px;margin-top:6px">Итог с пресетом ${esc(p.progression)}: SP x${sp}, спойл x${total(RATES[1][0])}. Множатся на пресет, от 0,1 до 10. Квесты — своей ручкой; спойл выше 100 % шанса даёт больше предметов. Накопленное не пересчитывается.</div>
+      ${sp > SP_WARN ? `<div class="note w-note-warn">SP x${sp} — выше их x50. У L2Solo SP без потолка, а рейдбосс даёт больше миллиона × рейт: накопленное быстро уйдёт за предел счётчика. Сначала минус в окне игры, потом персонаж не войдёт в мир.</div>` : ''}
+      <div class="row2" style="margin-top:8px"><button class="sbtn primary" id="l2sMulSave" disabled>Сохранить</button><button class="sbtn" id="l2sMulReset" ${custom ? '' : 'disabled'}>Как у L2Solo</button>
+        <span class="w-muted" style="font-size:12.5px">${restartNote(ctx)}</span></div></div>`;
   }
 
   function commandsCard() {
@@ -174,6 +193,12 @@
     const scopes = Object.entries(p.wipeScopes).map(([k, t]) => `<button class="sbtn" data-wipe="${k}" ${p.wipeBlocker || busy ? 'disabled' : ''}>${esc(t)}</button>`).join('');
     main.innerHTML = `<div class="w-title"><h3 class="w-h">Пульт L2Solo</h3><span class="w-pill">${ctx.running ? `работает · рейты ${esc(p.livePreset || '—')}` : 'сервер выключен'}</span></div>
       <div class="w-grid w-g2">
+        <div class="card wide"><h3>Код L2Solo</h3>
+          <div class="w-t2" style="font-size:13px;line-height:1.5;margin-bottom:8px">Обновление от авторов L2Solo: сохранение мира, <span class="w-cmd">git pull</span>, <span class="w-cmd">npm install</span> — только у выключенного сервера. Базу их код мигрирует сам при следующем запуске.</div>
+          <div id="l2sUpd">${updView(ctx.chron)}</div>
+          <div class="row2"><button class="sbtn" id="l2sUpdCheck" ${busy ? 'disabled' : ''}>Проверить обновление</button>
+            <button class="sbtn primary" id="l2sUpdGo" ${busy || ctx.running || !(U[ctx.chron]?.behind) ? 'disabled' : ''} title="${ctx.running ? 'Сначала останови сервер' : ''}">Обновить</button></div>
+        </div>
         ${p.modes ? modeCard(ctx, p, busy) : ''}
         <div class="card"><h3>Рейты</h3>
           <div class="opt"><div class="l">Пресет опыта, SP, адены и дропа<small>x1 — ${RATE_NOTE.x1}, x10 и x50 — быстрее; меняется в любой момент</small></div><span class="seg" id="l2sRates">${rates}</span></div>
@@ -193,7 +218,7 @@
           ${llm.usage ? `<div class="w-kv" style="margin-top:10px;font-size:12.5px"><span>Расход LLM ботов</span><span>${usageLine(llm.usage)}</span></div>` : ''}
           <div class="w-muted" style="font-size:12.5px;margin-top:8px">Частоты по видам болтовни — раздел <span class="w-cmd">config</span> профиля, таблица — docs/L2SOLO.md.</div>
         </div>
-        ${p.tuning ? worldCard(ctx, p) + enchantCard(ctx, p) + botsCard(ctx, p) : ''}
+        ${p.tuning ? worldCard(ctx, p) + enchantCard(ctx, p) + botsCard(ctx, p) + ratesCard(ctx, p) : ''}
         <div class="card"><h3>Мир</h3><div class="w-kv">
           ${w.exists ? `<span>Игроков</span><span>${w.players ?? '—'}</span><span>Ботов</span><span>${w.bots ?? '—'}</span><span>База мира</span><span>${mb(w.size)}</span>` : '<span>Мир</span><span>ещё не создан</span>'}
         </div><div class="w-muted" style="font-size:12.5px;margin-top:8px">Сохранения мира — в «Сервисе», лаунчер снимает их сам перед каждым запуском.</div></div>
@@ -202,15 +227,9 @@
           <div class="row2">${scopes}</div>
           ${p.wipeBlocker ? `<div class="w-muted" style="font-size:12.5px;margin-top:6px">${esc(p.wipeBlocker)}</div>` : ''}
         </div>
-        <div class="card"><h3>Код L2Solo</h3>
-          <div class="w-t2" style="font-size:13px;line-height:1.5;margin-bottom:8px">Обновление от авторов L2Solo: сохранение мира, <span class="w-cmd">git pull</span>, <span class="w-cmd">npm install</span> — только у выключенного сервера. Базу их код мигрирует сам при следующем запуске.</div>
-          <div id="l2sUpd">${updView(ctx.chron)}</div>
-          <div class="row2"><button class="sbtn" id="l2sUpdCheck" ${busy ? 'disabled' : ''}>Проверить обновление</button>
-            <button class="sbtn primary" id="l2sUpdGo" ${busy || ctx.running || !(U[ctx.chron]?.behind) ? 'disabled' : ''} title="${ctx.running ? 'Сначала останови сервер' : ''}">Обновить</button></div>
-        </div>
         ${commandsCard()}
       </div>`;
-    // Пульт C4 перерисовывается раз в 10 секунд — набранные, но не сохранённые поля (заточка, население) не терять.
+    // Пульт C4 перерисовывается раз в 10 секунд — набранные, но не сохранённые поля (заточка, население, рейты) не терять.
     const numFields = (attr, saveId) => {
       const inputs = [...main.querySelectorAll(`[data-${attr}]`)];
       const key = (inp) => inp.dataset[attr];
@@ -231,6 +250,7 @@
     };
     const enchChanges = numFields('ench', 'l2sEnchSave');
     const popChanges = numFields('pop', 'l2sPopSave');
+    const mulChanges = numFields('mul', 'l2sMulSave');
     const worldSet = async (changes, what) => {
       const r = await api.l2solo_set_world(ctx.chron, changes);
       if (!r.ok) return toast(r.error, true);
@@ -242,6 +262,8 @@
     if ($('l2sEnchReset')) $('l2sEnchReset').onclick = () => worldSet(Object.fromEntries(ENCHANT.flatMap(([, keys]) => keys.map(([k]) => [`Enchant.${k}`, null]))), 'Заточка как у L2Solo');
     if ($('l2sPopSave')) $('l2sPopSave').onclick = () => worldSet(popChanges(), 'Население ботов сохранено');
     if ($('l2sPopReset')) $('l2sPopReset').onclick = () => worldSet(Object.fromEntries(POPULATION.map(([k]) => [`BotPopulation.${k}`, null])), 'Население ботов как у L2Solo');
+    if ($('l2sMulSave')) $('l2sMulSave').onclick = () => worldSet(mulChanges(), 'Рейты SP и спойла сохранены');
+    if ($('l2sMulReset')) $('l2sMulReset').onclick = () => worldSet(Object.fromEntries(RATES.map(([k]) => [k, null])), 'Рейты SP и спойла как у L2Solo');
     main.querySelectorAll('#l2sNewbie button').forEach((b) => (b.onclick = () => {
       if (b.dataset.newbie === p.tuning[NEWBIE].value) return;
       worldSet({ [NEWBIE]: b.dataset.newbie === 'strict' ? null : b.dataset.newbie }, `Заряды новичку: ${NEWBIE_SHORT[b.dataset.newbie]}`);
@@ -262,7 +284,7 @@
       const m = p.modes.find((x) => x.id === b.dataset.c4mode);
       if (!m || m.active) return;
       if (!(await askModal({ title: `Режим «${esc(m.title)}»`, ok: 'Включить',
-        body: `<p>${esc(m.note)}.</p><p class="note">Пресет рейтов, злость мира, квесты и заточка перепишутся разом — ${restartNote(ctx)}. Свои значения потом — полями ниже.</p>` }))) return;
+        body: `<p>${esc(m.note)}.</p><p class="note">Пресет рейтов, рейты SP и спойла, злость мира, квесты и заточка перепишутся разом — ${restartNote(ctx)}. Свои значения потом — полями ниже.</p>` }))) return;
       const r = await api.l2solo_set_mode(ctx.chron, m.id);
       if (!r.ok) return toast(r.error, true);
       delete DRAFT[ctx.chron];

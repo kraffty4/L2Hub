@@ -180,9 +180,10 @@ def _sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest().upper()  # как Get-FileHash: манифест общий со scripts/
 
 
-def copy_module(cid: str, src: Path, base: Path, out: Out) -> list[str]:
+def copy_module(cid: str, src: Path, base: Path, out: Out, fresh: bool = False) -> list[str]:
     """phantoms/core и phantoms/<id> (java/, dist/) — в исходники, байт в байт. Файл в исходниках правили мимо модуля
-    (не совпадает ни с модулем, ни с прошлой копией из .module_manifest.json) — его копия уходит в .module_overwritten."""
+    (не совпадает ни с модулем, ни с прошлой копией из .module_manifest.json) — его копия уходит в .module_overwritten.
+    fresh — дерево только что из архива (reset_sources): сверять не с чем, старое уже в бэкапе."""
     module = paths.PHANTOMS / cid
     if not module.is_dir():
         return []
@@ -199,7 +200,7 @@ def copy_module(cid: str, src: Path, base: Path, out: Out) -> list[str]:
                 key = rel.as_posix()
                 to = src / rel
                 digest = _sha(f)
-                if to.is_file():
+                if to.is_file() and not fresh:
                     tree = _sha(to)
                     if tree != digest and key in manifest and tree != manifest[key]:
                         keep = base / ".module_overwritten" / stamp / rel
@@ -259,16 +260,11 @@ def source_archive(pin: dict) -> tuple[str, Path]:
     return url, paths.HOME / "downloads" / f"{pin['build']}_{pin['commit'][:8]}.zip"
 
 
-def fetch_sources(cid: str, out: Out = print, progress=None, pin: dict | None = None) -> Path:
-    """Скачать исходники хроники (если ещё нет) и разложить в servers/<id>/<сборка>. SHA в комментарии zip
-    (его пишет git archive) сверяется с ожидаемым: не тот коммит — ошибка, ничего не распаковано."""
+def _source_zip(pin: dict, out: Out, progress=None) -> Path:
+    """Архив исходников на коммите: скачать, если его ещё нет."""
     import urllib.request  # noqa: PLC0415 — сеть нужна только мастеру
 
-    pin = pin or pins()["chronicles"][cid]
     url, archive = source_archive(pin)
-    dst = paths.SERVERS / cid / pin["build"]
-    if dst.exists():
-        raise RuntimeError(f"Исходники уже разложены: {dst}")
     if not archive.is_file():
         archive.parent.mkdir(parents=True, exist_ok=True)
         part = archive.with_suffix(".part")
@@ -282,20 +278,71 @@ def fetch_sources(cid: str, out: Out = print, progress=None, pin: dict | None = 
                 if progress:
                     progress(done, total)
         part.replace(archive)
+    return archive
+
+
+def _source_members(z: zipfile.ZipFile, archive: Path, pin: dict) -> dict[str, str]:
+    """Файлы сборки в архиве: путь в дереве → имя в zip. SHA в комментарии zip (его пишет git archive) сверяется
+    с ожидаемым: не тот коммит — ошибка, ничего не распаковано."""
+    commit = z.comment.decode("ascii", "replace").strip()
+    if commit != pin["commit"]:
+        raise RuntimeError(f"В {archive.name} коммит {commit or '(нет)'}, а ждали {pin['commit']}")
+    prefix = next((n[: -len("build.xml")] for n in z.namelist() if n.endswith(f"{pin['build']}/build.xml")), None)
+    if prefix is None:
+        raise RuntimeError(f"В {archive.name} нет {pin['build']}/build.xml")
+    return {n[len(prefix):]: n for n in z.namelist() if n.startswith(prefix) and not n.endswith("/")}
+
+
+def fetch_sources(cid: str, out: Out = print, progress=None, pin: dict | None = None) -> Path:
+    """Скачать исходники хроники (если ещё нет) и разложить в servers/<id>/<сборка>."""
+    pin = pin or pins()["chronicles"][cid]
+    dst = paths.SERVERS / cid / pin["build"]
+    if dst.exists():
+        raise RuntimeError(f"Исходники уже разложены: {dst}")
+    archive = _source_zip(pin, out, progress)
     with zipfile.ZipFile(archive) as z:
-        commit = z.comment.decode("ascii", "replace").strip()
-        if commit != pin["commit"]:
-            raise RuntimeError(f"В {archive.name} коммит {commit or '(нет)'}, а ждали {pin['commit']}")
-        prefix = next((n[: -len("build.xml")] for n in z.namelist() if n.endswith(f"{pin['build']}/build.xml")), None)
-        if prefix is None:
-            raise RuntimeError(f"В {archive.name} нет {pin['build']}/build.xml")
-        for name in z.namelist():
-            if name.startswith(prefix) and not name.endswith("/"):
-                to = dst / name[len(prefix):]
-                to.parent.mkdir(parents=True, exist_ok=True)
-                to.write_bytes(z.read(name))
+        for rel, name in _source_members(z, archive, pin).items():
+            to = dst / rel
+            to.parent.mkdir(parents=True, exist_ok=True)
+            to.write_bytes(z.read(name))
     out(f"Исходники на месте: {dst}")
     return dst
+
+
+def reset_sources(p: dict, src: Path, base: Path, out: Out = print) -> None:
+    """Дерево исходников снова как в архиве на закреплённом коммите. Нужно, когда стопка патчей не ложится: после
+    обновления программы патч или врезки изменились, а в дереве лежит их прошлая версия, которую снять нечем. Своего в
+    дереве быть не должно (AGENTS.md: правки — в patches/ и phantoms/), но всё, что отличается от архива, сначала
+    уходит копией в .module_overwritten/<время>_before_reset. Файл без копии в архиве — наш прошлый, он убирается."""
+    pin = pins()["chronicles"].get(p["id"]) or p.get("source") or {}
+    if not pin.get("commit"):
+        raise RuntimeError(f"Неизвестно, на каком коммите собран {p['id']}: заново разложить исходники неоткуда")
+    pin = {"build": src.name, **pin}
+    if pin["build"] != src.name:
+        raise RuntimeError(f"Сборка в профиле — {pin['build']}, а на диске — {src.name}")
+    archive = _source_zip(pin, out)
+    keep = base / ".module_overwritten" / f"{datetime.now():%Y-%m-%d_%H-%M-%S}_before_reset"
+    saved = 0
+    with zipfile.ZipFile(archive) as z:
+        members = _source_members(z, archive, pin)
+        for f in [x for x in src.rglob("*") if x.is_file()]:
+            rel = f.relative_to(src).as_posix()
+            data = f.read_bytes()
+            clean = z.read(members[rel]) if rel in members else None
+            if data == clean:
+                continue
+            (keep / rel).parent.mkdir(parents=True, exist_ok=True)
+            (keep / rel).write_bytes(data)
+            saved += 1
+            if clean is None:
+                f.unlink()
+            else:
+                f.write_bytes(clean)
+        for rel, name in members.items():
+            if not (src / rel).is_file():
+                (src / rel).parent.mkdir(parents=True, exist_ok=True)
+                (src / rel).write_bytes(z.read(name))
+    out(f"Исходники заново из {archive.name}; файлов, отличавшихся от архива, — {saved}, их копии: {keep}")
 
 
 # ---------- Сборка ----------
@@ -477,6 +524,22 @@ def deploy_built(p: dict, prev_archive: Path | None = None, out: Out = print) ->
     deploy_configs(cid, archive, catalog.server_dir(p), chronicle_patches(cid), zip_configs(prev_archive) if prev_archive else None, out)
 
 
+def apply_stack(patches: list[Path], src: Path, base: Path, out: Out) -> None:
+    """Стопка на дерево: что уже наложено, пропускается. Не лёг патч — PatchError с его именем."""
+    if not patches:
+        return
+    applied = applied_patches(patches, src, base)
+    for patch in patches:
+        if patch.name in applied:
+            out(f"{patch.name}: уже наложен")
+            continue
+        try:
+            apply_patch(src, patch)
+        except PatchError as e:
+            raise PatchError(f"{patch.name} — {e}") from None
+        out(f"{patch.name}: наложен")
+
+
 def server_build(p: dict, out: Out = print) -> None:
     """Исходники + модуль фантомов + патчи → Ant → jar-ы, данные и конфиги в развёрнутый сервер (или распаковка целиком)."""
     cid = p["id"]
@@ -485,17 +548,16 @@ def server_build(p: dict, out: Out = print) -> None:
     module = copy_module(cid, src, base, out)
 
     patches = chronicle_patches(cid)
-    if patches:
-        applied = applied_patches(patches, src, base)
-        for patch in patches:
-            if patch.name in applied:
-                out(f"{patch.name}: уже наложен")
-                continue
-            try:
-                apply_patch(src, patch)
-            except PatchError as e:
-                raise RuntimeError(f"Патч не наложился: {patch.name} — {e}") from None
-            out(f"{patch.name}: наложен")
+    try:
+        apply_stack(patches, src, base, out)
+    except PatchError as e:
+        out(f"Патчи не легли на прошлую сборку: {e}")
+        reset_sources(p, src, base, out)
+        module = copy_module(cid, src, base, out, fresh=True)
+        try:
+            apply_stack(patches, src, base, out)
+        except PatchError as e2:
+            raise RuntimeError(f"Патч не наложился и на чистые исходники: {e2}") from None
 
     archive = base / "build" / f"{src.name}.zip"
     prev = zip_configs(archive)  # прошлый архив Ant перезапишет — его конфиги нужны выкладке

@@ -177,6 +177,8 @@ public class PhantomHunterManager
 	/** Между походами в город не меньше этого; по сосам и ценному дропу — не чаще {@link #TOWN_SOFT_COOLDOWN}. */
 	private static final long TOWN_COOLDOWN = 60000;
 	private static final long TOWN_SOFT_COOLDOWN = 600000;
+	/** По сумке в город — когда с прошлого города она выросла на столько от лимита слотов (не больше половины того, что тогда оставалось свободным). */
+	private static final double TOWN_BAG_GROWTH = 0.1;
 	/** С прошлой лавки прошло столько — ценный дроп снова повод идти в город. */
 	private static final long STORE_COOLDOWN = 1800000;
 	/** Площадь Гирана у гейткипера: тут охотники ставят лавки. */
@@ -370,6 +372,8 @@ public class PhantomHunterManager
 		long phaseUntil;
 		boolean choresDone;
 		long lastTown;
+		/** Сколько слотов сумки занято после прошлого города (и лавки): по сумке в город — только когда она с тех пор выросла ({@link #bagNeedsTown}). */
+		int bagAfterTown;
 		long lastStoreSession;
 		boolean storeOpen;
 		int storeTries;
@@ -1825,7 +1829,7 @@ public class PhantomHunterManager
 			return false;
 		}
 
-		if (PhantomHunterOutfit.outOfAmmo(player) || (player.getInventory().getSize() >= (player.getInventoryLimit() * 0.7)))
+		if (PhantomHunterOutfit.outOfAmmo(player) || bagNeedsTown(hunter, player))
 		{
 			return true;
 		}
@@ -1840,6 +1844,12 @@ public class PhantomHunterManager
 			return false;
 		}
 
+		// Призыватель без слуги и без кристаллов на призыв (раздел 4.55) — в город за ними, если хватит адены.
+		if (PhantomSummoner.needsCrystals(player))
+		{
+			return true;
+		}
+
 		// Риск («Разум 2.0», шаг 6): осторожный закупается раньше, рисковый — когда почти пусто.
 		final double supplies = hunter.template.isCautious() ? CAUTIOUS_SUPPLIES : hunter.template.isReckless() ? RECKLESS_SUPPLIES : 0.2;
 		if ((PhantomHunterOutfit.suppliesLeft(player) < supplies) && PhantomHunterOutfit.canRestock(player))
@@ -1849,6 +1859,18 @@ public class PhantomHunterManager
 
 		// Ценный дроп — повод идти в город, только если нужна адена (лавка от нужды, патч 0035).
 		return ((now - hunter.lastStoreSession) >= STORE_COOLDOWN) && !PhantomHunterOutfit.storeGoods(player).isEmpty() && PhantomMarket.needsStore(player, hunter.template);
+	}
+
+	/**
+	 * Сумка — повод для города, когда она почти полна ({@link PhantomHunterOutfit#bagFull}) и с прошлого города выросла на {@link #TOWN_BAG_GROWTH} лимита.
+	 * Что город не берёт — товар для лавки у того, кому адена не нужна, вещи событий, которые NPC не покупает, — остаётся в сумке, и до 2026-10-29 такой охотник
+	 * ходил в город каждую минуту: «nothing to do» или «сдал хлам на 50» (H5: Sova — 10 походов из 12 пустые, LunaTik, Vovan, Zloy; раздел 4.56).
+	 */
+	private static boolean bagNeedsTown(Hunter hunter, Player player)
+	{
+		final int limit = player.getInventoryLimit();
+		final int growth = Math.max(1, Math.min((int) (limit * TOWN_BAG_GROWTH), (limit - hunter.bagAfterTown) / 2));
+		return PhantomHunterOutfit.bagFull(player) && (player.getInventory().getSize() >= (hunter.bagAfterTown + growth));
 	}
 
 	private static void goToTown(Hunter hunter, Player player, long now)
@@ -2042,6 +2064,7 @@ public class PhantomHunterManager
 			// Мировая биржа (раздел 4.51, Essence): выручка, покупка за L-Coin, выставить лишнее — до сдачи хлама NPC.
 			PhantomExchange.visit(player);
 			final List<String> done = PhantomHunterOutfit.townChores(player, hunter.template, hunter.unsold);
+			hunter.bagAfterTown = player.getInventory().getSize();
 			player.storeMe();
 			LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " (" + player.getLevel() + ") in " + MapRegionData.getInstance().getClosestTownName(player) + ": " + (done.isEmpty() ? "nothing to do" : String.join(", ", done)) + "; " + player.getAdena() + " adena.");
 			final boolean afk = hunter.afkUntil > now;
@@ -2971,6 +2994,7 @@ public class PhantomHunterManager
 			}
 		}
 		player.getSellList().clear();
+		hunter.bagAfterTown = Math.min(hunter.bagAfterTown, player.getInventory().getSize());
 		if (player.getPrivateStoreType() != PrivateStoreType.NONE)
 		{
 			player.setPrivateStoreType(PrivateStoreType.NONE);
@@ -3217,6 +3241,12 @@ public class PhantomHunterManager
 		if ("THANATOS_DEATH".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST))
 		{
 			PhantomThanatos.getInstance().selfTestDeath();
+			return;
+		}
+		// Призыватели (раздел 4.55): каждый на споте теряет слугу и должен призвать снова.
+		if ("SUMMON".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST))
+		{
+			PhantomSummoner.selfTest();
 			return;
 		}
 		// Танатос сразу (раздел 4.45).

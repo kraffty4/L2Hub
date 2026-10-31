@@ -61,8 +61,13 @@ TUNING = {
     "BotPopulation.starterBotsPerRace": (int, 0, 200),
     # General.maxLevel сюда не выведен: ниже 78 их код срезает уровень и опыт уже прокачанных — ботов при заселении
     # (GeneratedColdSeeder.ensureCharacter), игрока при следующем опыте (ExperienceReward), — и подъём потолка их не вернёт.
+    # Рейты поверх пресета (ProgressionRates.js): итог — значение × пресет. Ноль нельзя: при spRate = 0 SP не приходит и с квестов
+    # (QuestService делит на него). Потолок низкий: SP у них без предела, а writeD с 6,44 млрд падает (docs/L2SOLO.md).
+    "General.spRate": (float, 0.1, 10),
+    "General.spoilRate": (float, 0.1, 10),
 }
 TUNING_DEFAULTS = {"General.questRewardRate": 1.0}  # чего нет в их default.ini — как в их коде
+FOLLOWS = {"General.spRate": "General.expRate", "General.spoilRate": "General.dropChanceRate"}  # без ключа их код берёт этот
 # Ручки-выбор: «раздел.ключ» → {значение: что значит}; первое — как у L2Solo.
 CHOICES = {
     # src/GameServer/Quest/BeginnerReward.js: заряды за квесты-награды деревень (257, 260, 265, 273, 293) — раз на персонажа.
@@ -75,7 +80,7 @@ AGGRESSION = {"peace": (0.0, "мирный: боты первыми не нап�
 WIPE_SCOPES = {"bots": "боты", "players": "игроки", "all": "весь мир"}
 WRAPPER = "scripts/run-server.js"
 NODE_MIN = (22, 15)       # README L2Solo; в package.json — 22.5, но они сами просят 22.15+
-GEODATA_FILES = 203       # scripts/geodata-bootstrap.js, DEFAULT_FILE_COUNT
+GEODATA_FILES = 203       # регионов у кода без манифеста пакета (закреплённый коммит); новее — geodata_needed
 START_TIMEOUT = 600       # мир с ботами грузится долго, а первый запуск ещё и заселяет его
 STOP_TIMEOUT = 60
 KEEP_AUTO = 3             # сохранение — полная копия мира, поэтому авто-сохранений держим меньше, чем дампов MariaDB
@@ -362,14 +367,20 @@ def tuning(p: dict) -> dict:
     for key in [*TUNING, *CHOICES]:
         section, name = key.split(".", 1)
         value = _value(merged.get(section, {}).get(name), key)
-        out[key] = {"value": _default(key) if value is None else value,
+        out[key] = {"value": _default(p, key) if value is None else value,
                     "source": "local" if name in local.get(section, {}) else "hub" if key in over else "l2solo"}
     return out
 
 
-def _default(key: str):
-    """Чего нет в настройках — как в их коде: у выбора — первое значение."""
-    return next(iter(CHOICES[key])) if key in CHOICES else TUNING_DEFAULTS.get(key)
+def _default(p: dict, key: str):
+    """Чего нет в настройках — как в их коде: у выбора — первое значение, у рейта — тот рейт, за которым он идёт."""
+    if key in CHOICES:
+        return next(iter(CHOICES[key]))
+    if key in FOLLOWS:
+        section, name = FOLLOWS[key].split(".", 1)
+        value = _number(config(p).get(section, {}).get(name), float)
+        return 1.0 if value is None else value  # numberOr(..., 1) в ProgressionRates.js
+    return TUNING_DEFAULTS.get(key)
 
 
 def _baseline(p: dict, key: str):
@@ -380,7 +391,7 @@ def _baseline(p: dict, key: str):
     if raw is None and default.is_file():
         raw = _parse_ini(default.read_text(encoding="utf-8", errors="replace")).get(section, {}).get(name)
     value = _value(raw, key)
-    return _default(key) if value is None else value
+    return _default(p, key) if value is None else value
 
 
 def _check(key: str, value):
@@ -544,7 +555,7 @@ def install_problem(p: dict) -> str | None:
         return f"Node.js {'.'.join(map(str, v)) if v else '?'} старый, L2Solo нужен 22.15+: {exe}"
     if not (server / "node_modules").is_dir():
         return f"Не установлены зависимости: npm install --ignore-scripts в {p['server']}"
-    if geodata_count(p) < GEODATA_FILES:
+    if geodata_count(p) < geodata_needed(p):
         return f"Нет геодаты: npm run geodata в {p['server']} (209 МиБ с l2solo.com)"
     return None
 
@@ -552,6 +563,16 @@ def install_problem(p: dict) -> str | None:
 def geodata_count(p: dict) -> int:
     d = server_dir(p) / "data" / "Geodata"
     return _cached(("geo", str(d)), 30, lambda: len(list(d.glob("*.l2j"))) if d.is_dir() else 0)
+
+
+def geodata_needed(p: dict) -> int:
+    """Сколько регионов ждёт этот код L2Solo. С пакета 2026-10-27 он описан в scripts/geodata-release.json (141 регион): чужой
+    пакет их обёртка при запуске заменит сама, оставив прежний рядом (data/Geodata.backup-*). Коду без манифеста нужны все 203."""
+    try:
+        release = json.loads((server_dir(p) / "scripts" / "geodata-release.json").read_text(encoding="utf-8"))
+        return len(release["manifest"]["regions"])
+    except (OSError, ValueError, KeyError, TypeError):
+        return GEODATA_FILES
 
 
 # ---------- Процесс ----------
@@ -894,7 +915,8 @@ def diagnostics(p: dict, backups_info: dict) -> list[dict]:
     add("ok" if deps else "bad", "Зависимости npm", "node_modules на месте" if deps else "нет node_modules",
         "" if deps else f"npm install --ignore-scripts в {p['server']}")
     geo = geodata_count(p)
-    add("ok" if geo >= GEODATA_FILES else "bad", "Геодата", f"регионов: {geo} из {GEODATA_FILES}", "" if geo >= GEODATA_FILES else "npm run geodata")
+    need = geodata_needed(p)
+    add("ok" if geo >= need else "bad", "Геодата", f"регионов: {geo} из {need}", "" if geo >= need else "npm run geodata")
 
     names = {"login": "логина", "game": "гейма"}
     for part in ("login", "game"):
@@ -1331,7 +1353,7 @@ def install_plan(template: dict) -> dict:
     if not (server_dir(p) / "node_modules").is_dir():
         steps.append(f"зависимости npm (npm install --ignore-scripts) — около {pn['sizes']['npm'] / 2**20:.0f} МБ")
         size += pn["sizes"]["npm"]
-    if geodata_count(p) < GEODATA_FILES:
+    if geodata_count(p) < geodata_needed(p):
         steps.append(f"геодата C4 с l2solo.com — {pn['sizes']['geodata'] / 2**20:.0f} МБ, распакуется около 940 МБ")
         size += pn["sizes"]["geodata"]
     steps.append("профиль хроники; клиент — следующим шагом: «Укажи папку клиента»")
@@ -1416,11 +1438,11 @@ def install_steps(template: dict, out=print) -> list:
             _exec([_npm(p), "install", "--ignore-scripts", "--no-audit", "--no-fund"], server_dir(p), timeout=1800, env=_node_env(p))
 
     def geodata():
-        if geodata_count(p) < GEODATA_FILES:
+        if geodata_count(p) < geodata_needed(p):
             _exec([node_exe(p), "scripts/ensure-geodata.js"], server_dir(p), timeout=3600, env=_node_env(p))
             _cache.pop(("geo", str(server_dir(p) / "data" / "Geodata")), None)
-            if geodata_count(p) < GEODATA_FILES:
-                raise RuntimeError(f"Геодата не встала: регионов {geodata_count(p)} из {GEODATA_FILES}")
+            if geodata_count(p) < geodata_needed(p):
+                raise RuntimeError(f"Геодата не встала: регионов {geodata_count(p)} из {geodata_needed(p)}")
 
     def profile():
         paths.PROFILES.mkdir(parents=True, exist_ok=True)

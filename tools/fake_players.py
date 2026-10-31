@@ -461,6 +461,23 @@ VETERANS_CT = [
          bio="Камаэль-думбрингер, давно в игре, ищет достойных противников на эпиках."),
 ]
 
+# Охотники-призыватели (решение автора 2026-10-28, docs/PLAN.md, «Решения»; docs/PHANTOMS.md, 4.55): настоящие Warlock, Elemental и Phantom Summoner.
+# Призывателем класс становится на 40-м, а охотники до него растут десятки часов — поэтому они, как ветераны, приходят в мир сразу своего
+# уровня (start_level → startLevel, кто уже есть в базе — не меняется), с запасом кристаллов на призыв. Пишутся всем хроникам, где у ветки
+# к этому уровню есть призыв слуги (эффект Summon): у Essence Elemental Summoner призывает Elemental Unicorn эффектом SummonGuardian,
+# которого Mobius не делает, — его там нет. В конце таблицы, как ветераны: id NPC и места остальных не сдвигаются.
+SUMMONERS = [
+    dict(name="Koshatnik", aliases="кошатник;кошак", race="HUMAN", sex="M", chain=[10, 11, 14, 96], kit="mage", start_level=46,
+         traits="добродушный кошатник, разговаривает со своими котами больше, чем с людьми", style="мягко, с «мур» и «котик, фас»",
+         bio="Варлок, у каждого его кота есть имя, и пати он собирает так, чтобы котам было кого бить."),
+    dict(name="Fialka", aliases="фиалка;фиалочка", race="ELF", sex="F", chain=[25, 26, 28, 104], kit="mage", start_level=52,
+         traits="мечтательная и упрямая, уверена, что её единорог умнее половины сервера", style="нежно, но с подколами: «мой единорожек тебя переиграет»",
+         bio="Элементал-саммонер, водит единорогов по спотам и лечит их чаще, чем себя."),
+    dict(name="Sumrak", aliases="сумрак;сумрачный", race="DARK_ELF", sex="M", chain=[38, 39, 41, 111], kit="mage", start_level=58,
+         traits="мрачный и немногословный, доверяет только своим теням", style="тихо и коротко, «тень знает»",
+         bio="Фантом-саммонер, его слуги приходят из темноты раньше, чем мобы его замечают."),
+]
+
 EVI = dict(race="Тёмная эльфийка", sex="F", **{"class": "Spectral Dancer"}, level=78, place="Гиран",
            activity="бегает по Гирану по делам: склад, лавки, менеджер олимпиады, клан-холлы",
            traits="деловитая и немного кокетливая", style="коротко, с :P",
@@ -621,11 +638,16 @@ class Data:
         self.classes = {int(c.get("classId")): (c.get("name"), int(c.get("parentClassId", "-1")))
                         for c in ET.parse(data / "stats/players/classList.xml").getroot().iter("class")}
         self.trees: dict[int, list[tuple[int, int, int]]] = {}
+        # Родитель класса по дереву скиллов (parentClassId): у CT в classList.xml Mobius у Elemental Master (104) родитель — Elven Wizard (26),
+        # а в дереве и в PlayerClass — Elemental Summoner (28), как в игре. check_chain принимает оба.
+        self.tree_parent: dict[int, int] = {}
         for f in (data / "stats/players/skillTrees").rglob("*.xml"):
             for t in ET.parse(f).getroot().iter("skillTree"):
                 if t.get("type") == "classSkillTree" and t.get("classId"):
                     self.trees.setdefault(int(t.get("classId")), []).extend(
                         (int(s.get("skillId")), int(s.get("skillLevel")), int(s.get("getLevel", "1"))) for s in t.iter("skill"))
+                    if t.get("parentClassId"):
+                        self.tree_parent[int(t.get("classId"))] = int(t.get("parentClassId"))
         self.skills = {}
         for f in (data / "stats/skills").glob("*.xml"):
             for s in ET.parse(f).getroot().iter("skill"):
@@ -663,7 +685,7 @@ class Data:
 
     def check_chain(self, chain: list[int]) -> None:
         for parent, child in zip(chain, chain[1:]):
-            if self.classes[child][1] != parent:
+            if parent not in (self.classes[child][1], self.tree_parent.get(child)):
                 raise ValueError(f"класс {child} {self.classes[child][0]} не наследует {parent}")
 
     def class_skills(self, chain: list[int], level: int) -> dict[int, tuple[int, int]]:
@@ -674,6 +696,10 @@ class Data:
                 if glv <= level and (sid not in out or slv > out[sid][0]):
                     out[sid] = (slv, min(glv, out.get(sid, (0, glv))[1]))
         return out
+
+    def summons_servitor(self, chain: list[int], level: int) -> bool:
+        """Есть ли у ветки к этому уровню призыв слуги — скилл с эффектом Summon (не кубик и не SummonGuardian Essence, которого Mobius не делает)."""
+        return any("Summon" in self.skills.get(sid, {}).get("effects", []) for sid in self.class_skills(chain[: tier_index(level) + 1], level))
 
     def combat_skills(self, chain, level, kit_key) -> list[tuple[int, int]]:
         kit = KITS[kit_key]
@@ -1313,6 +1339,9 @@ def main(data: Path, geodata: Path, out: Path | None = None) -> int:
         table = table + [dict(v, spot=None) for v in VETERANS]  # ветераны — охотники; в конце, чтобы id NPC и места прочих не сдвинулись
     if HUNTERS and not new_format and 123 in d.classes:
         table = table + [dict(v, spot=None) for v in VETERANS_CT]  # ветераны Epilogue и High Five — так же, в конце
+    if HUNTERS:
+        # призыватели — там, где у ветки к стартовому уровню есть призыв слуги; так же, в конце
+        table = table + [dict(s, spot=None) for s in SUMMONERS if d.summons_servitor(s["chain"], s["start_level"])]
     # Свой прошлый вывод в датапаке сборки (туда его копирует server_build.ps1 из модуля) — не входные данные.
     own_spawn = data / "spawns/Custom/L2HubFakePlayers.xml"
     out_spawn = out / "spawns/Custom/L2HubFakePlayers.xml"

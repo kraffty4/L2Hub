@@ -1189,6 +1189,39 @@
 		<gear grade="S80" minLevel="80" rhand="10225" head="9429" chest="10127" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Icarus Wingblade, Dynasty Leather Helmet, Dynasty Leather Armor - Weapon Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
 		<gear grade="S84" minLevel="84" rhand="13470" head="13141" chest="13436" legs="13451" gloves="13452" feet="13453" shots="1467" /> <!-- Vesper Nagan, Vesper Noble Leather Helmet, Vesper Noble Leather Breastplate, Vesper Noble Leather Leggings, Vesper Noble Leather Gloves, Vesper Noble Leather Boots -->
 	</phantom>
+	<!-- Koshatnik: охотник, Human Mystic, Human Wizard, Warlock, Arcana Lord; ветеран, приходит 46-м -->
+	<phantom name="Koshatnik" kind="hunter" role="DAMAGE" female="false" face="1" hairStyle="3" hairColor="2" classes="10,11,14,96" aliases="кошатник;кошак" social="1" temper="1" risk="1" startLevel="46" x="-84577" y="244362" z="-3728">
+		<gear grade="NONE" minLevel="1" rhand="6" chest="425" legs="461" shots="3947" /> <!-- Apprentice's Wand, Apprentice's Tunic, Apprentice's Stockings -->
+		<gear grade="D" minLevel="20" rhand="178" chest="436" legs="469" gloves="2447" shots="3948" /> <!-- Bone Staff, Tunic of Knowledge, Stockings of Knowledge, Gloves of Knowledge -->
+		<gear grade="C" minLevel="40" rhand="195" chest="442" legs="473" gloves="2463" shots="3949" /> <!-- Cursed Staff, Divine Tunic, Divine Stockings, Divine Gloves -->
+		<gear grade="B" minLevel="52" rhand="207" head="503" chest="2397" legs="2402" gloves="5712" feet="5728" shots="3950" /> <!-- Staff of Phantom, Zubei's Helmet, Tunic of Zubei, Stockings of Zubei, Zubei's Gauntlets - Robe, Zubei's Boots - Robe -->
+		<gear grade="A" minLevel="61" rhand="4905" head="547" chest="2400" legs="2405" gloves="5770" feet="5782" shots="3951" /> <!-- Dasparion's Staff, Tallum Helm, Tallum Tunic, Tallum Stockings, Tallum Gloves - Robe, Tallum Boots - Robe -->
+		<gear grade="S" minLevel="76" rhand="6366" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- Imperial Staff, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
+		<gear grade="S80" minLevel="80" rhand="10222" head="9438" chest="9435" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall, Dynasty Circlet, Dynasty Tunic - Summoner, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
+		<gear grade="S84" minLevel="84" rhand="15566" head="13139" chest="13434" legs="13444" gloves="13445" feet="13446" shots="3952" /> <!-- Black Visage, Vesper Circlet, Vesper Tunic, Vesper Stockings, Vesper Gloves, Vesper Shoes -->
+	</phantom>
+	<!-- Fialka: охотник, Elven Mystic, Elven Wizard, Elemental Summoner, Elemental Master; ветеран, приходит 52-м -->
+	<phantom name="Fialka" kind="hunter" role="DAMAGE" female="true" face="2" hairStyle="4" hairColor="2" classes="25,26,28,104" aliases="фиалка;фиалочка" social="1" temper="1" risk="1" startLevel="52" x="46806" y="52046" z="-2992">
+		<gear grade="NONE" minLevel="1" rhand="6" chest="425" legs="461" shots="3947" /> <!-- Apprentice's Wand, Apprentice's Tunic, Apprentice's Stockings -->
+		<gear grade="D" minLevel="20" rhand="178" chest="436" legs="469" gloves="2447" shots="3948" /> <!-- Bone Staff, Tunic of Knowledge, Stockings of Knowledge, Gloves of Knowledge -->
+		<gear grade="C" minLevel="40" rhand="192" chest="441" legs="472" gloves="2459" shots="3949" /> <!-- Crystal Staff, Demon's Tunic, Demon's Stockings, Demon's Gloves -->
+		<gear grade="B" minLevel="52" rhand="207" head="2416" chest="2398" legs="2403" gloves="5720" feet="5736" shots="3950" /> <!-- Staff of Phantom, Blue Wolf Helmet, Blue Wolf Tunic, Blue Wolf Stockings, Blue Wolf Gloves - Robe, Blue Wolf Boots - Robe -->
+		<gear grade="A" minLevel="61" rhand="4903" head="2418" chest="2408" gloves="5773" feet="5785" shots="3951" /> <!-- Dasparion's Staff, Helm of Nightmare, Robe of Nightmare, Gauntlets of Nightmare - Robe, Boots of Nightmare - Robe -->
+		<gear grade="S" minLevel="76" rhand="6366" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- Imperial Staff, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
+		<gear grade="S80" minLevel="80" rhand="10222" head="9438" chest="10238" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall, Dynasty Circlet, Dynasty Silver Satin Tunic - Summoner, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
+		<gear grade="S84" minLevel="84" rhand="15566" head="13139" chest="13434" legs="13444" gloves="13445" feet="13446" shots="3952" /> <!-- Black Visage, Vesper Circlet, Vesper Tunic, Vesper Stockings, Vesper Gloves, Vesper Shoes -->
+	</phantom>
+	<!-- Sumrak: охотник, Dark Mystic, Dark Wizard, Phantom Summoner, Spectral Master; ветеран, приходит 58-м -->
+	<phantom name="Sumrak" kind="hunter" role="DAMAGE" female="false" face="2" hairStyle="2" hairColor="3" classes="38,39,41,111" aliases="сумрак;сумрачный" social="1" temper="1" risk="1" startLevel="58" x="9935" y="15561" z="-4568">
+		<gear grade="NONE" minLevel="1" rhand="6" chest="425" legs="461" shots="3947" /> <!-- Apprentice's Wand, Apprentice's Tunic, Apprentice's Stockings -->
+		<gear grade="D" minLevel="20" rhand="178" chest="437" legs="470" gloves="2450" shots="3948" /> <!-- Bone Staff, Mithril Tunic, Mithril Stockings, Mithril Gloves -->
+		<gear grade="C" minLevel="40" rhand="192" chest="442" legs="473" gloves="2463" shots="3949" /> <!-- Crystal Staff, Divine Tunic, Divine Stockings, Divine Gloves -->
+		<gear grade="B" minLevel="52" rhand="208" head="2417" chest="2399" legs="2404" gloves="5724" feet="5740" shots="3950" /> <!-- Staff of Seal, Doom Helmet, Tunic of Doom, Stockings of Doom, Doom Gloves - Robe, Doom Boots - Robe -->
+		<gear grade="A" minLevel="61" rhand="4903" head="2419" chest="2409" gloves="5776" feet="5788" shots="3951" /> <!-- Dasparion's Staff, Majestic Circlet, Majestic Robe, Majestic Gauntlets - Robe, Majestic Boots - Robe -->
+		<gear grade="S" minLevel="76" rhand="6366" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- Imperial Staff, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
+		<gear grade="S80" minLevel="80" rhand="10222" head="9438" chest="10238" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Icarus Hall, Dynasty Circlet, Dynasty Silver Satin Tunic - Summoner, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
+		<gear grade="S84" minLevel="84" rhand="15566" head="13142" chest="13437" legs="13454" gloves="13455" feet="13456" shots="3952" /> <!-- Black Visage, Vesper Noble Circlet, Vesper Noble Tunic, Vesper Noble Stockings, Vesper Noble Gloves, Vesper Noble Shoes -->
+	</phantom>
 	<!-- Thanatos: Танатос, единственный ПК сервера; Orc Fighter, Monk, Tyrant, Grand Khavatari, всегда 76-й -->
 	<phantom name="Thanatos" kind="reaper" role="DAMAGE" female="false" face="2" hairStyle="1" hairColor="2" classes="44,47,48,114" x="-45264" y="-112512" z="-240">
 		<gear grade="S" minLevel="76" rhand="9878" head="6382" chest="6379" gloves="6380" feet="6381" neck="9456" ear="9455" ring="9457" shirt="9588" shots="1467" /> <!-- Dynasty Bagh-Nakh - Rsk. Evasion, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots, Dynasty Necklace, Dynasty Earrings, Dynasty Ring, Striped Mithril Shirt -->

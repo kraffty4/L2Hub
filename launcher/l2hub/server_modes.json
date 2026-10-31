@@ -17,6 +17,7 @@
     {"id": "daily", "group": "Ивенты", "title": "Поручения дня (.daily)", "note": "задания на день с наградой", "file": "L2HubWorld.ini", "key": "WorldDaily"},
     {"id": "raids", "group": "Ивенты", "title": "Рейды охотников на РБ", "note": "охотники собираются и идут на рейд-боссов", "file": "PhantomHunters.ini", "key": "HunterRaids"},
     {"id": "pvpevents", "group": "Ивенты", "title": "PvP-ивенты по расписанию", "note": "TvT, Deathmatch, CtF — охотники записываются; только при живом игроке", "file": "L2HubEvents.ini", "key": "PvpEvents"},
+    {"id": "hunterpvp", "group": "Ивенты", "title": "Охотники на PvP-ивентах", "note": "сами записываются на TvT, Deathmatch и CtF; без них одному игроку участников не набрать", "file": "PhantomHunters.ini", "key": "HunterPvpEvents"},
     {"id": "elpies", "group": "Ивенты", "title": "Нашествие эльпи", "note": "кролики с расходниками в городе рядом с тобой, по расписанию; только при живом игроке", "file": "L2HubEvents.ini", "key": "Elpies"},
     {"id": "autopotions", "group": "Помощники", "title": "Автопоты (.apon)", "note": "персонаж сам пьёт HP, MP и CP по порогам; включает игрок командой .apon", "file": "AutoPotions.ini", "key": "AutoPotionsEnabled"},
     {"id": "offlineplay", "group": "Помощники", "title": "Игра офлайн (.offlineplay)", "note": "закрыл клиент — персонаж продолжает автоохоту", "file": "OfflinePlay.ini", "key": "EnableOfflinePlayCommand"},
