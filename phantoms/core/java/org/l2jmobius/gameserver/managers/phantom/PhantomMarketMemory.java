@@ -117,7 +117,7 @@ public final class PhantomMarketMemory
 	}
 
 	/**
-	 * Сделка на рынке.
+	 * Сделка на рынке по цене без наценки за рейты.
 	 * @param itemId вещь
 	 * @param count сколько
 	 * @param price цена за штуку
@@ -125,13 +125,26 @@ public final class PhantomMarketMemory
 	 */
 	public static void deal(int itemId, long count, long price, boolean demand)
 	{
+		deal(itemId, count, price, demand, 1);
+	}
+
+	/**
+	 * Сделка на рынке.
+	 * @param itemId вещь
+	 * @param count сколько
+	 * @param price цена за штуку
+	 * @param demand вещь купили (спрос растёт), иначе сдали в скупку (затоваривание)
+	 * @param rates наценка за рейты в этой цене ({@link PhantomMarket#rateFactor()}): вес сделки считается без неё, иначе рейты разгоняли бы спрос
+	 */
+	public static void deal(int itemId, long count, long price, boolean demand, double rates)
+	{
 		if (_on && (count > 0) && (price > 0))
 		{
-			deal(itemId, count, price, demand, System.currentTimeMillis());
+			deal(itemId, count, price, demand, rates, System.currentTimeMillis());
 		}
 	}
 
-	private static void deal(int itemId, long count, long price, boolean demand, long now)
+	private static void deal(int itemId, long count, long price, boolean demand, double rates, long now)
 	{
 		final Entry entry = ITEMS.computeIfAbsent(itemId, k -> new Entry());
 		synchronized (entry)
@@ -140,7 +153,7 @@ public final class PhantomMarketMemory
 			entry.last = price;
 			entry.deals++;
 			entry.units += count;
-			final double weight = Math.max(MIN_DEAL_WEIGHT, Math.min(1, (count * price) / BATCH_ADENA));
+			final double weight = Math.max(MIN_DEAL_WEIGHT, Math.min(1, ((count * price) / rates) / BATCH_ADENA));
 			entry.pressure = Math.max(-1, Math.min(1, entry.pressure(now) + (demand ? weight : -weight)));
 			entry.at = now;
 		}
@@ -199,7 +212,8 @@ public final class PhantomMarketMemory
 		{
 			for (PhantomStores.Trade trade : PhantomStores.trade(now))
 			{
-				deal(trade.itemId(), trade.count(), trade.price(), trade.demand(), now);
+				// Спрос — это покупка в лавке продажи: в её цене есть наценка за рейты, в цене скупки нет.
+				deal(trade.itemId(), trade.count(), trade.price(), trade.demand(), trade.demand() ? PhantomMarket.rateFactor() : 1, now);
 			}
 			if (Rnd.get(100) < SHORTAGE_CHANCE)
 			{
@@ -337,7 +351,16 @@ public final class PhantomMarketMemory
 		final List<String> failed = new ArrayList<>();
 		final long now = System.currentTimeMillis();
 		ITEMS.remove(itemId);
-		deal(itemId, 1000, 1000, true, now);
+		deal(itemId, 10, 1500, true, 1.5, now);
+		final double withRates = ITEMS.get(itemId).pressure;
+		ITEMS.remove(itemId);
+		deal(itemId, 10, 1000, true, 1, now);
+		if (Math.abs(withRates - ITEMS.get(itemId).pressure) > 0.0001)
+		{
+			failed.add("наценка за рейты разгоняет спрос: " + ITEMS.get(itemId).pressure + " → " + withRates);
+		}
+		ITEMS.remove(itemId);
+		deal(itemId, 1000, 1000, true, 1, now);
 		final double up = ITEMS.get(itemId).factor(now);
 		if (up <= 1)
 		{
@@ -350,7 +373,7 @@ public final class PhantomMarketMemory
 		}
 		for (int i = 0; i < 4; i++)
 		{
-			deal(itemId, 1000, 1000, false, now);
+			deal(itemId, 1000, 1000, false, 1, now);
 		}
 		final double down = ITEMS.get(itemId).factor(now);
 		if (down >= 1)

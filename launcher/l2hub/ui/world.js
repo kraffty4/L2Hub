@@ -1210,7 +1210,7 @@
   // «Расширенное обдумывание» (docs/MIND.md): охотники рядом с игроком решают моделью с размышлением; лимит денег в день.
   function extRows(s, u) {
     const e = s.extended;
-    if (s.mode !== 'api') return '<div class="opt"><div class="l">Расширенное обдумывание<small>только в облаке DeepSeek: у своей модели размышления нет</small></div></div>';
+    if (s.mode !== 'api') return '<div class="opt"><div class="l">Расширенное обдумывание<small>только в облаке: у своей модели размышления нет</small></div></div>';
     const spent = u.extendedToday || { cost: 0, requests: 0 };
     return `<div class="opt"><div class="l">Расширенное обдумывание<small>охотники рядом с тобой (до ${e.focusMax}) думают с размышлением — дороже</small></div><button class="switch" role="switch" aria-checked="${e.enabled}" id="worldBrainExt"></button></div>
       <div class="opt"><div class="l">Лимит в день, $<small>сегодня: ${usd(spent.cost)} за ${spent.requests} решений; дошли до лимита — до завтра обычные мозги</small></div><input class="field" style="width:56px" id="worldBrainExtUsd" value="${esc(e.dailyUsd)}"></div>`;
@@ -1224,7 +1224,7 @@
       <div class="opt"><div class="l">Форум сервера<small>«Общество» → «Форум»: темы из летописи пишут сами жители; новая ветка раз в 4 часа, пока страница открыта</small></div><button class="switch" role="switch" aria-checked="${v.forum}" id="worldBrainForum"></button></div>`;
   }
   function extWarning(s) {
-    return `<p>Охотники рядом с тобой — до ${s.extended.focusMax} ближайших, кого ты видишь, с кем ты в пати или говоришь, — будут решать, что делать дальше, моделью DeepSeek с размышлением. Остальные живут по правилам, как сейчас.</p>
+    return `<p>Охотники рядом с тобой — до ${s.extended.focusMax} ближайших, кого ты видишь, с кем ты в пати или говоришь, — будут решать, что делать дальше, моделью с размышлением. Остальные живут по правилам, как сейчас.</p>
       <p>Это дороже: решение около $0,002 — раз в пять дороже обычного. При 3–5 охотниках рядом выходит примерно $0,13–0,33 за час игры.</p>
       <p class="note">Больше $${s.extended.dailyUsd} в день не уйдёт: лимит выбран — до завтра обычные мозги. Работает, когда сервер помечает охотников рядом (модуль фантомов).</p>`;
   }

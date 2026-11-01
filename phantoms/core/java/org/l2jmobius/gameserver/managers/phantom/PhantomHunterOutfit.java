@@ -227,6 +227,37 @@ final class PhantomHunterOutfit
 	}
 
 	/**
+	 * Оружие отстало от уровня: без грейда при экспертизе C и выше или на три грейда ниже экспертизы. Так бывает после рейда, поднявшего за один килл на десятки уровней
+	 * (на x10 и x15 в пати — с 23-го на 57-й). Таким оружием на мобах своего уровня не заработать, а запас на профу не давал купить другое: круг «смерть, город, телепорт за плату» до нуля адены (раздел 4.97).
+	 */
+	static boolean gearBehind(Player player)
+	{
+		final int worn = Math.max(0, wornGrade(player.getInventory().getPaperdollItem(Inventory.PAPERDOLL_RHAND)));
+		return (PhantomCompat.expertiseLevel(player) - worn) >= (worn == 0 ? 2 : 3);
+	}
+
+	/**
+	 * @return сколько адены отложено на профу: пока оружие отстало от уровня ({@link #gearBehind}) — ничего, сначала шмот
+	 */
+	static long professionReserve(Player player)
+	{
+		return gearBehind(player) ? 0 : professionDue(player);
+	}
+
+	/**
+	 * @return на сколько уровней ниже своего охотник может уйти за мобами, пока оружие отстало от уровня ({@link #gearBehind}): до тех, под которых это оружие сделано; 0 — не отстало
+	 */
+	static int behindLevels(Player player)
+	{
+		if (!gearBehind(player))
+		{
+			return 0;
+		}
+		final int worn = Math.max(0, wornGrade(player.getInventory().getPaperdollItem(Inventory.PAPERDOLL_RHAND)));
+		return Math.max(0, player.getLevel() - expertiseLevel(worn + 1));
+	}
+
+	/**
 	 * Профа в городе, как у классмастера: дорос и накопил — платит и получает класс со скиллами; не накопил — копит.
 	 * @return что сделал — для лога, {@code null} — профа не нужна
 	 */
@@ -352,7 +383,12 @@ final class PhantomHunterOutfit
 	 */
 	private static long shotBudget(Player player)
 	{
-		return (Math.max(0, player.getAdena() - professionDue(player)) * PhantomHuntersConfig.HUNTER_SHOT_BUDGET) / 100;
+		return shotBudget(player, professionReserve(player));
+	}
+
+	private static long shotBudget(Player player, long reserve)
+	{
+		return (Math.max(0, player.getAdena() - reserve) * PhantomHuntersConfig.HUNTER_SHOT_BUDGET) / 100;
 	}
 
 	/**
@@ -418,21 +454,23 @@ final class PhantomHunterOutfit
 		}
 
 		// Профа — первой; не накопил — откладывает на неё всё: шмот, банки и сосы — только со свободной адены.
-		final String profession = buyProfession(player, template);
+		// Оружие отстало от уровня — наоборот, сначала шмот и без заточки (раздел 4.97). Решение на весь заход: купил оружие — запас на профу вернётся со следующего.
+		final boolean behind = gearBehind(player);
+		final String profession = behind ? "оружие отстало: сначала шмот" : buyProfession(player, template);
 		if (profession != null)
 		{
 			done.add(profession);
 		}
-		final long reserve = professionDue(player);
+		final long reserve = behind ? 0 : professionDue(player);
 
-		done.addAll(buyGear(player, template, reserve));
+		done.addAll(buyGear(player, template, reserve, behind));
 
 		// Заточка — на то, что осталось; сломал — новая вещь на что хватит, совсем без оружия — стартовое, как у нового персонажа.
-		final List<String> enchanted = PhantomEnchant.chore(player, template);
+		final List<String> enchanted = behind ? List.of() : PhantomEnchant.chore(player, template);
 		done.addAll(enchanted);
 		if (enchanted.stream().anyMatch(line -> line.startsWith("сломал")))
 		{
-			done.addAll(buyGear(player, template, reserve));
+			done.addAll(buyGear(player, template, reserve, behind));
 			if (player.getInventory().getPaperdollItem(Inventory.PAPERDOLL_RHAND) == null)
 			{
 				update(player, template);
@@ -461,7 +499,7 @@ final class PhantomHunterOutfit
 		}
 
 		// Сосы с умом: бюджет — HunterShotBudget % свободной адены; меньше чем на RESTOCK_MIN — не берёт вовсе, бьёт без них.
-		final long budget = shotBudget(player);
+		final long budget = shotBudget(player, reserve);
 		final long shots = budget >= (price(shotId(player)) * RESTOCK_MIN) ? buy(player, shotId(player), PhantomHuntersConfig.HUNTER_SHOT_COUNT, budget) : 0;
 		if (shots > 0)
 		{
@@ -575,7 +613,7 @@ final class PhantomHunterOutfit
 		final long due = professionDue(player);
 		if (due > 0)
 		{
-			worn.append("; профа: дорос до следующей, но она стоит ").append(PhantomHunterManager.money(due)).append(" — копишь, шмот пока не покупаешь");
+			worn.append("; профа: дорос до следующей, но она стоит ").append(PhantomHunterManager.money(due)).append(gearBehind(player) ? " — оружие отстало от уровня, сначала шмот" : " — копишь, шмот пока не покупаешь");
 		}
 		return worn.toString();
 	}
@@ -1515,7 +1553,8 @@ final class PhantomHunterOutfit
 	}
 
 	/**
-	 * Шмот по частям: оружие, потом броня. Для каждой части — лучший разрешённый грейд из своего набора, на который хватает адены (с запасом на сосы, стрелы и телепорт); не хватает — грейдом ниже, если это лучше надетого; и на это нет — копит, следующие части не покупает. Старое — NPC за полцены.
+	 * Шмот по частям: оружие, потом броня. Для каждой части — лучший разрешённый грейд из своего набора, на который хватает адены (с запасом на сосы, стрелы и телепорт); не хватает — грейдом ниже, если это лучше надетого; и на это нет — копит, следующие части не покупает.
+	 * Оружие отстало от уровня ({@code behind}, {@link #gearBehind}) — не копит: оружие берёт из продаваемых ({@link #spareWeapon}), броня его не ждёт, только бижа ждёт всех. Старое — NPC за полцены.
 	 * @return что купил — для лога
 	 */
 	/**
@@ -1538,7 +1577,7 @@ final class PhantomHunterOutfit
 		return (current == null) || current.isEtcItem() || npcOnly(current.getTemplate()) ? -1 : current.getTemplate().getCrystalType().getLevel();
 	}
 
-	private static List<String> buyGear(Player player, PhantomTemplate template, long professionReserve)
+	private static List<String> buyGear(Player player, PhantomTemplate template, long professionReserve, boolean behind)
 	{
 		final List<String> bought = new ArrayList<>();
 		final int expertise = PhantomCompat.expertiseLevel(player);
@@ -1607,7 +1646,22 @@ final class PhantomHunterOutfit
 			if (saving)
 			{
 				stopped = true;
-				break;
+				if (!behind)
+				{
+					break;
+				}
+
+				final ItemTemplate spare = slot == Inventory.PAPERDOLL_RHAND ? spareWeapon(player, ItemData.getInstance().getTemplate(grades.get(0).rhand), currentGrade) : null;
+				if ((spare != null) && PhantomCompat.reduceAdena(player, ItemProcessType.BUY, townGoods(player).get(spare.getId()), player, false))
+				{
+					final Item added = player.getInventory().addItem(ItemProcessType.BUY, spare.getId(), 1, player, null);
+					if ((added != null) && added.isEquipable())
+					{
+						player.getInventory().equipItem(added);
+						retire(player, current);
+						bought.add(spare.getName());
+					}
+				}
 			}
 		}
 
@@ -1625,6 +1679,57 @@ final class PhantomHunterOutfit
 			player.broadcastUserInfo();
 		}
 		return bought;
+	}
+
+	/**
+	 * Оружие для того, кто отстал от уровня, а на своё из набора не хватает ни в одном грейде: продаётся в городе, лучше надетого, по экспертизе, по карману (с запасом на сосы, стрелы и телепорт).
+	 * Того же рода, что своё: магическое к магическому, лук к луку; ближнему бою годятся ещё мечи и дубины, если своего вида ему не по карману. Лучший грейд, в нём — самое дешёвое: останется на броню.
+	 * @param wanted оружие из его набора
+	 * @param currentGrade грейд надетого
+	 * @return вещь или {@code null} — такой нет
+	 */
+	private static ItemTemplate spareWeapon(Player player, ItemTemplate wanted, int currentGrade)
+	{
+		if (wanted == null)
+		{
+			return null;
+		}
+
+		final int expertise = PhantomCompat.expertiseLevel(player);
+		final boolean ranged = isRanged(wanted.getId());
+		final long teleport = player.getLevel() > PlayerConfig.MAX_FREE_TELEPORT_LEVEL ? PhantomHuntersConfig.HUNTER_TELEPORT_FEE : 0;
+		ItemTemplate best = null;
+		long bestPrice = 0;
+		for (Map.Entry<Integer, Long> entry : townGoods(player).entrySet())
+		{
+			final ItemTemplate item = ItemData.getInstance().getTemplate(entry.getKey());
+			if ((item == null) || !item.isWeapon() || item.isHeroItem() || item.isPvpItem() || npcOnly(item) || (item.getName() == null) || JEWEL_SKIP.matcher(item.getName()).find() || (item.isMagicWeapon() != wanted.isMagicWeapon()))
+			{
+				continue;
+			}
+
+			final boolean kind = (item.getItemType() == wanted.getItemType()) || (!ranged && ((item.getItemType() == WeaponType.SWORD) || (item.getItemType() == WeaponType.BLUNT)));
+			final int grade = item.getCrystalType().getLevel();
+			if (!kind || (grade <= currentGrade) || (grade > expertise) || (entry.getValue() <= 0))
+			{
+				continue;
+			}
+
+			final int g = Math.min(7, grade);
+			final long reserve = (price(shotId(player.isMageClass(), g)) * SHOT_RESERVE) + (ranged ? price(ARROWS[g]) * AMMO_RESERVE : 0) + teleport;
+			if ((player.getAdena() - reserve) < entry.getValue())
+			{
+				continue;
+			}
+
+			final int bestGrade = best == null ? -1 : best.getCrystalType().getLevel();
+			if ((grade > bestGrade) || ((grade == bestGrade) && (entry.getValue() < bestPrice)))
+			{
+				best = item;
+				bestPrice = entry.getValue();
+			}
+		}
+		return best;
 	}
 
 	/**
@@ -1774,7 +1879,7 @@ final class PhantomHunterOutfit
 	 */
 	static long freeAdena(Player player)
 	{
-		return player.getAdena() - professionDue(player) - (price(shotId(player)) * SHOT_RESERVE) - (player.getLevel() > PlayerConfig.MAX_FREE_TELEPORT_LEVEL ? PhantomHuntersConfig.HUNTER_TELEPORT_FEE : 0);
+		return player.getAdena() - professionReserve(player) - (price(shotId(player)) * SHOT_RESERVE) - (player.getLevel() > PlayerConfig.MAX_FREE_TELEPORT_LEVEL ? PhantomHuntersConfig.HUNTER_TELEPORT_FEE : 0);
 	}
 
 	/**
@@ -1785,7 +1890,7 @@ final class PhantomHunterOutfit
 	 */
 	static long shortfall(Player player, PhantomTemplate template)
 	{
-		final long due = professionDue(player);
+		final long due = professionReserve(player);
 		if (due > player.getAdena())
 		{
 			return due - player.getAdena();
@@ -1811,7 +1916,7 @@ final class PhantomHunterOutfit
 	 */
 	static Want want(Player player, PhantomTemplate template)
 	{
-		final long due = professionDue(player);
+		final long due = professionReserve(player);
 		return due > player.getAdena() ? null : gearWant(player, template, due);
 	}
 
@@ -2115,6 +2220,52 @@ final class PhantomHunterOutfit
 	{
 		final ItemTemplate item = itemId > 0 ? ItemData.getInstance().getTemplate(itemId) : null;
 		return item == null ? 0 : item.getCrystalType().getLevel();
+	}
+
+	/**
+	 * Самопроверка GEARBEHIND (раздел 4.97, только на копии базы): всё снаряжение — в ничто, на нём стартовое оружие набора, адены ровно {@code adena}.
+	 */
+	static void testStrip(Player player, PhantomTemplate template, long adena)
+	{
+		for (Item item : new ArrayList<>(player.getInventory().getItems()))
+		{
+			if (item.isEquipable())
+			{
+				if (item.isEquipped())
+				{
+					player.getInventory().unEquipItemInSlot(item.getLocationSlot());
+				}
+				player.getInventory().destroyItem(ItemProcessType.NONE, item, player, null);
+			}
+		}
+		update(player, template);
+		if (player.getAdena() > adena)
+		{
+			PhantomCompat.reduceAdena(player, ItemProcessType.FEE, player.getAdena() - adena, player, false);
+		}
+		else if (player.getAdena() < adena)
+		{
+			PhantomCompat.addAdena(player, ItemProcessType.REWARD, adena - player.getAdena(), null, false);
+		}
+	}
+
+	/**
+	 * @return род оружия из набора для самопроверки GEARBEHIND: {@code magic}, {@code ranged} или {@code melee}
+	 */
+	static String testKind(PhantomTemplate template)
+	{
+		final List<PhantomTemplate.Gear> all = template.getAllGear();
+		final int weapon = all.isEmpty() ? 0 : all.get(all.size() - 1).rhand;
+		final ItemTemplate item = weapon > 0 ? ItemData.getInstance().getTemplate(weapon) : null;
+		return (item != null) && item.isMagicWeapon() ? "magic" : isRanged(weapon) ? "ranged" : "melee";
+	}
+
+	/**
+	 * @return грейд оружия в руках для самопроверки GEARBEHIND
+	 */
+	static int testWeaponGrade(Player player)
+	{
+		return weaponGrade(player);
 	}
 
 	// ---------- Бой ----------

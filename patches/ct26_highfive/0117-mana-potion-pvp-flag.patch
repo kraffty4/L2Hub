@@ -1,0 +1,24 @@
+diff --git a/dist/game/data/stats/items/00700-00799.xml b/dist/game/data/stats/items/00700-00799.xml
+index ee2d3a6e674f..00c5294d0ac6 100644
+--- a/dist/game/data/stats/items/00700-00799.xml
++++ b/dist/game/data/stats/items/00700-00799.xml
+@@ -379,9 +379,6 @@
+ 		<conditions msgId="113" addName="1">
+ 			<player flyMounted="false" />
+ 		</conditions>
+-		<conditions msgId="113" addName="1">
+-			<player isPvpFlagged="false" />
+-		</conditions>
+ 		<skills>
+ 			<skill id="10000" level="1" />
+ 		</skills>
+@@ -416,9 +413,6 @@
+ 		<set name="for_npc" val="true" />
+ 		<conditions msgId="113" addName="1">
+ 			<player flyMounted="false" />
+-		</conditions>
+-		<conditions msgId="113" addName="1">
+-			<player isPvpFlagged="false" />
+ 		</conditions>
+ 		<skills>
+ 			<skill id="10001" level="1" />

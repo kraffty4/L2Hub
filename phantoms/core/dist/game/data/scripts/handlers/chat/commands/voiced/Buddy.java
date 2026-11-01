@@ -11,7 +11,7 @@ import static org.l2jmobius.gameserver.managers.phantom.PhantomText.tr;
  * L2Hub: напарники-фантомы. Окно и кнопки — {@link PhantomUi} (то же окно — вкладка «Напарники» на доске Alt+B).
  * <ul>
  * <li>.buddy — окно: кто есть, где он, кнопки</li>
- * <li>.buddy summon &lt;имя|роль&gt; — позвать к себе, подтянуть до своего уровня и сразу взять в пати</li>
+ * <li>.buddy summon &lt;имя|роль&gt; — позвать к себе, подтянуть до своего уровня и сразу взять в пати; по роли берёт свободного</li>
  * <li>.buddy invite &lt;имя|роль&gt; — взять в пати позванного (если сразу не вышло: ты не лидер, пати полная)</li>
  * <li>.buddy dismiss &lt;имя|роль&gt; — отпустить (уходит из мира)</li>
  * <li>.buddy assist|follow|stay|sit|stand|buff|heal|res &lt;имя|роль&gt; — приказ, как словами в чате пати: напарник выполнит и ответит</li>

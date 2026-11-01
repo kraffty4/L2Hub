@@ -6,14 +6,15 @@
 или пустая строка (фейк промолчал). Ошибка (нет ключа, модель не ответила) — HTTP 503/502: сервер тогда
 отвечает заготовками.
 
-Ключ API — data/brain/deepseek.key (одна строка) или переменная DEEPSEEK_API_KEY. В git не попадает.
+Ключ API — файл в data/brain (одна строка), имя — в настройках, api.keyFile (deepseek.key, minimax.key), или переменная DEEPSEEK_API_KEY: она главнее файла. В git не попадает.
 Настройки — profiles/<id>.json, раздел brain: port, model, baseUrl, maxTokens, alphabet (умолчания); поверх — выбор
 из лаунчера в data/brain/settings.json: облако (api, ключ) или своя модель (local: LM Studio, Ollama), адрес, модель,
 длина ответа, цена облака. Файл перечитывается на ходу. Расход токенов — data/brain/usage.json.
 
 Напарники-фантомы (патч 0010) шлют "kind": "phantom" с ролью, состоянием и пати; каналы whisper, party и event
 (реплика на событие в игре). Ответ может кончаться тегом приказа [[FOLLOW]] и т. п. — сервер выполнит его, если говорил
-владелец напарника. События хранятся в памяти разговора с ролью event.
+владелец напарника. События хранятся в памяти разговора с ролью event. Охотник, с которым заговорили о реках, приходит с phantom.rec
+(docs/PHANTOMS.md, 4.95): {"can": true} — можно ответить тегом [[REC]], сервер проверит правила и кинет сам; {"can": false, "why": "…"} — отказ.
 
 Танатос (docs/PHANTOMS.md, 4.45) шлёт "kind": "reaper" с событием event (whisper, kill, death, hunt, attacked, escaped): ответ — одна
 реплика жнеца или пусто; счёт встреч с игроком — из памяти пары; reaper.class — класс его нынешнего тела после смерти.
@@ -26,7 +27,7 @@
 Запуск:   python -m l2hub.brain <id>
 Проверка: python -m l2hub.brain <id> --test <фейк> "<что сказать>" [--echo]
           python -m l2hub.brain <id> --test <охотник> - --clanname  (имя клана, который он основывает)
-          python -m l2hub.brain <id> --test <напарник> "<что сказать>" --phantom [--event] [--order "<что сделано>"]
+          python -m l2hub.brain <id> --test <напарник> "<что сказать>" --phantom [--event] [--order "<что сделано>"] [--rec can|"<почему нельзя>"]
           python -m l2hub.brain <id> --test <охотник> - --strategy [--echo] [--goal "<цель>"] [--last "SPOT_TO <спот>: <причина>"]
           python -m l2hub.brain <id> --test Thanatos "<шёпот>" --reaper whisper  (или - --reaper kill|death|hunt|attacked|escaped)
                                                                        [--body MYSTIC_MUSE]  (класс тела)
@@ -68,6 +69,11 @@ LOCAL_DEFAULT = {"baseUrl": "http://127.0.0.1:1234/v1", "model": ""}
 EXT_DEFAULT = {"enabled": False, "dailyUsd": 1.0, "focusMax": 5}
 EXT_SUFFIX = ":ext"     # строки usage.json расширенного режима — его дневной расход считается отдельно
 EXT_PRICE = (0.30, 1.20)  # $ за 1 млн токенов, вход и выход (deepseek-flash): тариф в «Разуме» не вписан — лимит в $ считается по нему
+# MiniMax-M3.1-Flash думает всегда (отключение — HTTP 400), по умолчанию на максимуме, и размышление идёт в тот же лимит токенов, что и ответ:
+# без запаса сверх длины ответа content приходит пустым. Глубину задаёт reasoning_effort.
+MINIMAX_THINK_TOKENS = 1000
+MINIMAX_EFFORT = "low"
+MINIMAX_EFFORT_EXT = "high"
 # Живая речь (цель автора 2026-10-30, docs/LIVE_SERVER.md, п. 4): фейки, напарники и охотники пишут, как люди в чате старого сервера. live — манера письма
 # и жизнь за окном по реальным часам; swear — мат по характеру; оба выключаются в «Разуме». Какая манера у кого, решает ник (voice_mask): между запусками
 # одна и та же, таблицы характеров и генератор не трогаем; манера из таблицы главнее.
@@ -245,7 +251,8 @@ TAG_HELP = {"FOLLOW": "идти за ним следом", "STAY": "стоять
             "BUFF": "перебафать пати", "HEAL": "подлечить его", "RES": "поднять павшего", "SIT": "сесть отдохнуть",
             "STAND": "встать", "LEAVE": "уйти из пати совсем — когда он прощается или отпускает тебя («пока», «на сегодня всё», «свободен»)",
             "HUNT": "качать его тут: самому бить и добивать всех мобов вокруг него, держась рядом, — и когда он сидит («качаемся тут», «фармим», «бей всех», «качай меня», «сижу, качай»)",
-            "LEAD": "вести кач самому: качаться как на своём споте, а он идёт за тобой («веди», «паровозиком», «я за тобой»)"}
+            "LEAD": "вести кач самому: качаться как на своём споте, а он идёт за тобой («веди», «паровозиком», «я за тобой»)",
+            "REC": "кинуть ему реку (рекомендацию в игре), когда он просит именно её; реки на карте и совет, куда пойти, не в счёт"}
 ROLE_TAGS = {"HEALER": ["HEAL", "RES"], "BUFFER": ["BUFF", "HEAL", "RES"], "TANK": ["ASSIST", "HUNT", "LEAD"], "DAMAGE": ["ASSIST", "HUNT", "LEAD"]}
 ROLE_JOB = {"HEALER": "хилер: лечишь и поднимаешь пати, в драку не лезешь",
             "BUFFER": "баффер: держишь бафы на всей пати, в драку не лезешь; немного умеешь хилить и ресать",
@@ -577,10 +584,13 @@ def span_words(seconds: int) -> str:
 
 
 def phantom_tags(req: dict) -> list[str]:
-    """Теги, которые модели можно ставить: только владельцу напарника, не в ответ на событие, не на подслушанное и не когда заговаривает сам."""
-    if req.get("channel") in ("event", "overheard", "initiative", "banter", "retort_sorry", "retort_rude") or req.get("order") or not req.get("player", {}).get("owner"):
+    """Теги, которые модели можно ставить: приказы — только владельцу напарника, реку — когда сервер разрешил (4.95); не в ответ на событие, не на подслушанное и не когда заговаривает сам."""
+    if req.get("channel") in ("event", "overheard", "initiative", "banter", "retort_sorry", "retort_rude") or req.get("order"):
         return []
-    return ["FOLLOW", "STAY", *ROLE_TAGS.get(req.get("phantom", {}).get("role", ""), []), "SIT", "STAND", "LEAVE"]
+    rec = ["REC"] if (req.get("phantom", {}).get("rec") or {}).get("can") else []
+    if not req.get("player", {}).get("owner"):
+        return rec
+    return ["FOLLOW", "STAY", *ROLE_TAGS.get(req.get("phantom", {}).get("role", ""), []), "SIT", "STAND", "LEAVE", *rec]
 
 
 def _readable(enum_name: str) -> str:
@@ -1219,6 +1229,10 @@ class Brain:
                 lines.append("Если тебя просят что-то сделать из списка, допиши в самом конце ответа ровно один тег: "
                              + "; ".join(f"[[{t}]] — {TAG_HELP[t]}" for t in tags)
                              + ". Не просьба из списка — без тега. Тег видит только игра, не пиши его словами.")
+            rec_refusal = (req.get("phantom", {}).get("rec") or {}).get("why")
+            if rec_refusal and not req.get("order"):
+                lines.append(f"Если {he.lower()} просит реку (рекомендацию в игре), служебная пометка игры: «{rec_refusal}». "
+                             "Откажи по-игровому своими словами, не обещай кинуть потом, слов пометки не повторяй, тег не ставь. Реки на карте и совет, куда пойти, — обычный разговор.")
             if trade:
                 lo, hi = self.trade_bounds(trade)
                 lines.append(f"Ты сам предложил {name} купить у тебя {trade['item']}" + (f" ×{trade['count']}" if int(trade.get("count") or 1) > 1 else "")
@@ -1608,6 +1622,9 @@ class Brain:
         if "deepseek" in self.cfg["baseUrl"]:
             # Параметр DeepSeek: без «размышлений» быстрее и дешевле; с ними — только расширенный режим (_think).
             body["thinking"] = {"type": "enabled" if think else "disabled"}
+        elif "minimax" in self.cfg["baseUrl"]:
+            body["reasoning_effort"] = MINIMAX_EFFORT_EXT if think else MINIMAX_EFFORT
+            body["max_completion_tokens"] = body.pop("max_tokens") + MINIMAX_THINK_TOKENS
         headers = {"Content-Type": "application/json"}
         if key:
             headers["Authorization"] = f"Bearer {key}"
@@ -1627,13 +1644,13 @@ class Brain:
         return data["choices"][0]["message"]["content"] or ""
 
     def _think(self, req: dict) -> bool:
-        """Расширенное обдумывание: охотник рядом с игроком (focus от сервера), тумблер в «Разуме» включён, облако DeepSeek
+        """Расширенное обдумывание: охотник рядом с игроком (focus от сервера), тумблер в «Разуме» включён, облако DeepSeek или MiniMax
         и дневной лимит не выбран. Выбран — до конца дня обычные мозги, в журнале одна строка."""
         self.refresh()
         if self.force_ext:
             return True
         ext = self.settings.get("extended") or {}
-        if not (req.get("focus") and ext.get("enabled") and self.cfg["mode"] == "api" and "deepseek" in self.cfg["baseUrl"]):
+        if not (req.get("focus") and ext.get("enabled") and self.cfg["mode"] == "api" and ("deepseek" in self.cfg["baseUrl"] or "minimax" in self.cfg["baseUrl"])):
             return False
         spent = usage_summary(self.settings)["extendedToday"]["cost"]
         if spent < float(ext.get("dailyUsd") or 0):
@@ -1991,6 +2008,7 @@ def main() -> int:
                     help="с --phantom: откуда реплика — чат пати, общий чат с обращением, подслушанное в общем чате "
                          "или initiative: охотник заговаривает первым, MESSAGE — что он видит («рядом с тобой остановился …»)")
     ap.add_argument("--order", default="", help="с --phantom: что сервер уже сделал по приказу («сделано: идёшь за ним следом»)")
+    ap.add_argument("--rec", help="с --phantom: реки, как их шлёт сервер (4.95): can — можно тегом [[REC]], иначе — текст отказа")
     ap.add_argument("--strategy", action="store_true", help="FPC — охотник: спросить стратега, что делать дальше (MESSAGE не нужен)")
     ap.add_argument("--mood", choices=sorted(MOOD_RU), help="с --phantom: настроение охотника, как его присылает сервер")
     ap.add_argument("--relation", choices=("enemy", "friend", "mixed", "faded", "rival", "pal"),
@@ -2164,6 +2182,8 @@ def main() -> int:
             if args.near and hunter:
                 req["player"]["doing"] = {"target": "Marsh Stakato", "targetLevel": 33, "aggro": 1, "spot": args.spot or "Cruma Marshlands", "same": True}
                 req["phantom"]["trade"] = {"player": args.player, "item": "Mithril Gloves", "count": 1, "price": 36400, "shopPrice": 36400, "minutes": 2}
+            if args.rec:
+                req["phantom"]["rec"] = {"can": True} if args.rec == "can" else {"can": False, "why": args.rec}
         print("--- system prompt ---")
         print(brain.messages(req, ext=req.get("kind") == "phantom" and brain.force_ext)[0]["content"])
         print("--- ответ ---")

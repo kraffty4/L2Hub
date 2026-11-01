@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import org.l2jmobius.gameserver.config.RatesConfig;
 import org.l2jmobius.gameserver.config.custom.OfflineTradeConfig;
 import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
 import org.l2jmobius.gameserver.data.sql.OfflineTraderTable;
@@ -14,6 +15,7 @@ import org.l2jmobius.gameserver.entity.actor.Player;
 import org.l2jmobius.gameserver.entity.actor.enums.player.PrivateStoreType;
 import org.l2jmobius.gameserver.entity.item.ItemTemplate;
 import org.l2jmobius.gameserver.entity.item.instance.Item;
+import org.l2jmobius.gameserver.entity.itemcontainer.Inventory;
 import org.l2jmobius.gameserver.network.holders.RequestTrade;
 import org.l2jmobius.gameserver.network.holders.TradeItem;
 import org.l2jmobius.gameserver.network.holders.TradeList;
@@ -76,6 +78,47 @@ final class PhantomMarket
 	{
 	}
 
+	// ---------- Цены вслед за рейтами ----------
+
+	/**
+	 * Во сколько раз фантом продаёт дороже из-за рейтов (docs/PHANTOMS.md, раздел 4.92, {@code HunterStorePricesFollowRates}). Считается при каждом обращении: так подхватывается {@code //reload config}.
+	 * Только там, где фантом продаёт: покупай он у живого по той же наценке, купленное в магазине можно было бы сдавать ему без конца.
+	 * @return множитель цены, не меньше 1
+	 */
+	static double rateFactor()
+	{
+		if (!PhantomHuntersConfig.HUNTER_STORE_PRICES_FOLLOW_RATES)
+		{
+			return 1;
+		}
+		// Записи для адены нет — она падает по общему множителю дропа, как в NpcTemplate.calculateDrop.
+		final Float adena = RatesConfig.RATE_DROP_AMOUNT_BY_ID.get(Inventory.ADENA_ID);
+		return rateFactor(adena != null ? adena : RatesConfig.RATE_DEATH_DROP_AMOUNT_MULTIPLIER, RatesConfig.RATE_XP);
+	}
+
+	/**
+	 * @param adena рейт адены
+	 * @param xp рейт опыта
+	 * @return адена / опыт, не меньше 1
+	 */
+	static double rateFactor(double adena, double xp)
+	{
+		return xp > 0 ? Math.max(1, adena / xp) : 1;
+	}
+
+	/**
+	 * Дороже этого охотник на рынке не купит. Фантом поднял цены вслед за рейтами, и потолок поднимается с ними, иначе охотники перестанут покупать друг у друга.
+	 * У живого продавца потолок прежний: он и так может поставить любую цену, а охотник не должен переплачивать ему за купленное в магазине.
+	 * @param reference цена магазина
+	 * @param phantomSeller продаёт фантом
+	 * @param rates множитель {@link #rateFactor()}
+	 * @return потолок цены за штуку
+	 */
+	static double priceCeiling(long reference, boolean phantomSeller, double rates)
+	{
+		return reference * MAX_PRICE_FACTOR * (phantomSeller ? rates : 1);
+	}
+
 	// ---------- Лавка от нужды ----------
 
 	/**
@@ -106,7 +149,7 @@ final class PhantomMarket
 	// ---------- Рынок ----------
 
 	/**
-	 * Лучшее предложение для охотника в лавках Гирана: вещь лучше надетой ({@link PhantomHunterOutfit#isUpgrade}), не дороже магазина, по карману со свободной адены;
+	 * Лучшее предложение для охотника в лавках Гирана: вещь лучше надетой ({@link PhantomHunterOutfit#isUpgrade}), не дороже потолка ({@link #priceCeiling}), по карману со свободной адены;
 	 * из таких — самая сильная (дороже по цене магазина).
 	 * @param buyer охотник
 	 * @return предложение или {@code null}
@@ -119,6 +162,7 @@ final class PhantomMarket
 			return null;
 		}
 
+		final double rates = rateFactor();
 		Offer best = null;
 		long bestValue = 0;
 		for (Player seller : World.getPlayers())
@@ -128,10 +172,11 @@ final class PhantomMarket
 				continue;
 			}
 
+			final boolean phantom = PhantomManager.getInstance().isPhantom(seller);
 			for (TradeItem trade : seller.getSellList().getItems())
 			{
 				final Item item = seller.getInventory().getItemByObjectId(trade.getObjectId());
-				if ((item == null) || (trade.getPrice() > free) || (trade.getPrice() > (item.getTemplate().getReferencePrice() * MAX_PRICE_FACTOR)) || !PhantomHunterOutfit.isUpgrade(buyer, item))
+				if ((item == null) || (trade.getPrice() > free) || (trade.getPrice() > priceCeiling(item.getTemplate().getReferencePrice(), phantom, rates)) || !PhantomHunterOutfit.isUpgrade(buyer, item))
 				{
 					continue;
 				}
@@ -303,7 +348,7 @@ final class PhantomMarket
 		}
 
 		PhantomHunterOutfit.equipBetterDrops(buyer);
-		PhantomMarketMemory.deal(offer.itemId(), 1, offer.price(), true);
+		PhantomMarketMemory.deal(offer.itemId(), 1, offer.price(), true, PhantomManager.getInstance().isPhantom(seller) ? rateFactor() : 1);
 		LOGGER.info(PhantomMarket.class.getSimpleName() + ": " + buyer.getName() + " bought " + offer.name() + " from " + seller.getName() + " for " + offer.price() + "; " + buyer.getAdena() + " adena.");
 		return true;
 	}

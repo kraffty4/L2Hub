@@ -1,0 +1,14 @@
+diff --git a/dist/game/data/stats/items/00700-00799.xml b/dist/game/data/stats/items/00700-00799.xml
+index e429252a022b..b7087b78dd0f 100644
+--- a/dist/game/data/stats/items/00700-00799.xml
++++ b/dist/game/data/stats/items/00700-00799.xml
+@@ -373,9 +373,6 @@
+ 		<set name="is_oly_restricted" val="true" />
+ 		<set name="handler" val="ItemSkills" />
+ 		<set name="for_npc" val="true" />
+-		<conditions msgId="113" addName="1">
+-			<player isPvpFlagged="false" />
+-		</conditions>
+ 		<skills>
+ 			<skill id="10000" level="1" />
+ 		</skills>

@@ -40,7 +40,8 @@ import org.l2jmobius.gameserver.network.serverpackets.SystemMessage;
  * <p>
  * Что продаёт и скупает — список id у каждого фейка (data/L2HubTownFakes.xml, tools/l2hub_town_fakes.py) под его вывеску. Запас конечен и обновляется раз в
  * {@value #RESTOCK_MINUTES} минут: часть непроданного остаётся, остальное заменяется. Цены — от цены магазина: продажа не ниже {@value #SELL_MIN} и скупка не выше
- * {@value #BUY_MAX} от неё. NPC платит половину, поэтому купить у фейка и сдать NPC или купить у одного фейка и сдать другому себе в прибыль нельзя.
+ * {@value #BUY_MAX} от неё. NPC платит половину, поэтому купить у фейка и сдать NPC или купить у одного фейка и сдать другому себе в прибыль нельзя. Продажа ещё и дороже
+ * вслед за рейтами ({@link PhantomMarket#rateFactor()}), скупка от них не зависит.
  */
 public final class PhantomStores
 {
@@ -163,7 +164,7 @@ public final class PhantomStores
 			{
 				return null;
 			}
-			final long price = price(item.getReferencePrice(), buying, character, PhantomMarketMemory.factor(itemId));
+			final long price = price(item.getReferencePrice(), buying, character, PhantomMarketMemory.factor(itemId), PhantomMarket.rateFactor());
 			if (price <= 0)
 			{
 				return null;
@@ -358,7 +359,7 @@ public final class PhantomStores
 				good.count -= count;
 				notice(player, count > 1 ? YOU_BOUGHT_MANY : YOU_BOUGHT_ONE, store.name, good.itemId, count);
 				LOGGER.info(PhantomStores.class.getSimpleName() + ": " + player.getName() + " bought " + ItemData.getInstance().getTemplate(good.itemId).getName() + " x" + count + " from " + store.name + " for " + (count * good.price) + ".");
-				PhantomMarketMemory.deal(good.itemId, count, good.price, true);
+				PhantomMarketMemory.deal(good.itemId, count, good.price, true, PhantomMarket.rateFactor());
 			}
 			player.sendInventoryUpdate(update);
 			store.spent(System.currentTimeMillis());
@@ -518,18 +519,23 @@ public final class PhantomStores
 	 * @param buying скупка, иначе продажа
 	 * @param character характер хозяина, 0–1
 	 * @param market множитель памяти рынка
-	 * @return цена за штуку; продажа никогда не ниже {@value #SELL_MIN} и не выше {@value #SELL_MAX} от магазина, скупка никогда не выше {@value #BUY_MAX}
+	 * @param rates наценка за рейты ({@link PhantomMarket#rateFactor()}), только на продажу
+	 * @return цена за штуку; продажа никогда не ниже {@value #SELL_MIN} и не выше {@value #SELL_MAX} от магазина с наценкой, скупка никогда не выше {@value #BUY_MAX} от магазина
 	 */
-	private static long price(long reference, boolean buying, double character, double market)
+	private static long price(long reference, boolean buying, double character, double market, double rates)
 	{
-		final double noise = 0.95 + (Rnd.nextDouble() * 0.10);
+		return price(reference, buying, character, market, rates, 0.95 + (Rnd.nextDouble() * 0.10));
+	}
+
+	private static long price(long reference, boolean buying, double character, double market, double rates, double noise)
+	{
 		if (buying)
 		{
 			final double factor = (BUY_MIN + (character * (BUY_MAX - BUY_MIN))) * noise * market;
 			return human(Math.max(1, (long) (reference * Math.min(BUY_MAX, factor))), false);
 		}
 		final double factor = (SELL_MIN + (character * SELL_SPREAD)) * noise * market;
-		return human((long) Math.ceil(reference * Math.max(SELL_MIN, Math.min(SELL_MAX, factor))), true);
+		return human((long) Math.ceil(reference * rates * Math.max(SELL_MIN, Math.min(SELL_MAX, factor))), true);
 	}
 
 	/** Цена, как у людей: две-три значащие цифры, 12 437 → 12 500. */
@@ -579,6 +585,7 @@ public final class PhantomStores
 		int checks = 0;
 
 		// Цены всех лавок.
+		final double rates = PhantomMarket.rateFactor();
 		for (Store store : STORES.values())
 		{
 			list(store);
@@ -588,7 +595,7 @@ public final class PhantomStores
 				{
 					checks++;
 					final long reference = ItemData.getInstance().getTemplate(good.itemId).getReferencePrice();
-					if (store.buying ? (good.price > Math.ceil(reference * BUY_MAX)) : (good.price < (reference * SELL_MIN)))
+					if (store.buying ? (good.price > Math.ceil(reference * BUY_MAX)) : (good.price < (reference * SELL_MIN * rates)))
 					{
 						failed.add("цена " + store.name + " " + good.itemId + ": " + good.price + " при магазине " + reference);
 					}
@@ -604,14 +611,45 @@ public final class PhantomStores
 				for (double character : new double[] { 0, 0.5, 1 })
 				{
 					checks++;
-					final long ask = price(reference, false, character, market);
-					final long bid = price(reference, true, character, market);
-					if ((ask < (reference * SELL_MIN)) || (ask > Math.ceil(reference * SELL_MAX * 1.05)) || (bid > Math.max(1, Math.ceil(reference * BUY_MAX))) || (bid > ask))
+					final long ask = price(reference, false, character, market, rates);
+					final long bid = price(reference, true, character, market, rates);
+					if ((ask < (reference * SELL_MIN * rates)) || (ask > Math.ceil(reference * SELL_MAX * 1.05 * rates)) || (bid > Math.max(1, Math.ceil(reference * BUY_MAX))) || (bid > ask))
 					{
 						failed.add("границы цен при магазине " + reference + ", рынке " + market + ": продаёт " + ask + ", скупает " + bid);
 					}
 				}
 			}
+		}
+
+		// Наценка за рейты: k = адена / опыт и не меньше 1.
+		for (double[] rate : new double[][] { { 15, 10, 1.5 }, { 10, 10, 1 }, { 10, 50, 1 }, { 1000, 1000, 1 }, { 5, 0, 1 } })
+		{
+			checks++;
+			if (PhantomMarket.rateFactor(rate[0], rate[1]) != rate[2])
+			{
+				failed.add("k при адене " + rate[0] + " и опыте " + rate[1] + ": " + PhantomMarket.rateFactor(rate[0], rate[1]));
+			}
+		}
+
+		// k = 1 — цена прежняя; k = 1,5 — лавка продажи дороже, скупка та же.
+		for (long reference : new long[] { 137, 4900, 123456 })
+		{
+			checks++;
+			final long plain = price(reference, false, 0.5, 1, 1, 1);
+			final long dear = price(reference, false, 0.5, 1, 1.5, 1);
+			final long bid = price(reference, true, 0.5, 1, 1, 1);
+			if ((plain != human((long) Math.ceil(reference * (SELL_MIN + (0.5 * SELL_SPREAD))), true)) || (dear < (plain * 1.4)) || (bid != price(reference, true, 0.5, 1, 1.5, 1)))
+			{
+				failed.add("наценка за рейты при магазине " + reference + ": при k = 1 продаёт " + plain + ", при k = 1,5 продаёт " + dear + ", скупает " + bid);
+			}
+		}
+
+		// Потолок охотника на рынке: у фантома растёт с k, у живого прежний.
+		checks++;
+		final double ceiling = PhantomMarket.priceCeiling(1000, true, 1);
+		if ((PhantomMarket.priceCeiling(1000, true, 1.5) != (ceiling * 1.5)) || (PhantomMarket.priceCeiling(1000, false, 1.5) != ceiling) || (PhantomMarket.priceCeiling(1000, false, 1) != ceiling))
+		{
+			failed.add("потолок цены: у фантома " + PhantomMarket.priceCeiling(1000, true, 1.5) + ", у живого " + PhantomMarket.priceCeiling(1000, false, 1.5) + ", без рейтов " + ceiling);
 		}
 
 		// Окна: клиента нет, пакет собирается напрямую.

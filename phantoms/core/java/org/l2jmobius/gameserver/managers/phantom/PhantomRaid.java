@@ -1,5 +1,6 @@
 package org.l2jmobius.gameserver.managers.phantom;
 
+import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -41,6 +42,7 @@ import org.l2jmobius.gameserver.mechanics.events.EventType;
 import org.l2jmobius.gameserver.mechanics.events.holders.actor.creature.OnCreatureDamageReceived;
 import org.l2jmobius.gameserver.mechanics.events.listeners.ConsumerEventListener;
 import org.l2jmobius.gameserver.network.serverpackets.NpcHtmlMessage;
+import org.l2jmobius.gameserver.taskmanagers.CreatureFollowTaskManager;
 import org.l2jmobius.gameserver.util.StatSet;
 import static org.l2jmobius.gameserver.managers.phantom.PhantomText.tr;
 
@@ -1081,7 +1083,7 @@ public final class PhantomRaid
 					{
 						raid.lastReport = now;
 						final WorldObject target = player.getTarget();
-						LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " fights " + raid.bossName + ": boss " + bossHp(raid) + "% HP, leader " + (int) ((player.getCurrentHp() * 100) / Math.max(1, player.getMaxHp())) + "% HP, alive " + alive(raid) + ", target " + (target == null ? "-" : target.getName() + " at " + (int) player.calculateDistance2D(target)) + ", boss at " + (int) player.calculateDistance2D(raid.boss) + (raid.epic ? ", minions " + minions(raid) : "") + (raid.dutyId != 0 ? ", larva duty " + nameOf(raid.dutyId) : "") + ", " + state(player) + ".");
+						LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " fights " + raid.bossName + ": boss " + bossHp(raid) + "% HP, leader " + (int) ((player.getCurrentHp() * 100) / Math.max(1, player.getMaxHp())) + "% HP, alive " + alive(raid) + ", target " + (target == null ? "-" : target.getName() + " at " + (int) player.calculateDistance2D(target)) + ", boss at " + (int) player.calculateDistance2D(raid.boss) + (raid.epic ? ", minions " + minions(raid) : "") + (raid.dutyId != 0 ? ", larva duty " + nameOf(raid.dutyId) : "") + ", " + state(player) + membersState(raid) + ".");
 					}
 					if (player.isSitting())
 					{
@@ -1142,6 +1144,23 @@ public final class PhantomRaid
 	private static String state(Player player)
 	{
 		return "cast " + player.isCastingNow() + ", attack " + player.isAttackingNow() + ", move " + player.isMoving() + ", blocked " + player.isMovementDisabled() + ", intent " + player.getAI().getIntention();
+	}
+
+	/**
+	 * @return что делает свита, для отчёта боя: по одному лидеру не понять, стоит ли весь рейд (раздел 4.98)
+	 */
+	private static String membersState(Raid raid)
+	{
+		final StringBuilder state = new StringBuilder();
+		for (int id : raid.members)
+		{
+			final Player member = World.getPlayer(id);
+			if (member != null)
+			{
+				state.append("; ").append(member.getName()).append(" at ").append((int) member.calculateDistance2D(raid.boss)).append(member.isDead() ? " dead" : "").append(member.isCastingNow() ? " cast" : "").append(member.isAttackingNow() ? " attack" : "").append(member.isMoving() ? " move" : "").append(' ').append(member.getAI().getIntention());
+			}
+		}
+		return state.toString();
 	}
 
 	/**
@@ -2275,6 +2294,31 @@ public final class PhantomRaid
 		}
 		dismiss(raid, leader, "lost the race for the boss: " + (int) raid.damageDone + " damage against " + (int) other.damageDone, String.format(RIVAL_LOST_SHOUTS[Rnd.get(RIVAL_LOST_SHOUTS.length)], raid.bossName));
 		return true;
+	}
+
+	/**
+	 * Самопроверка RAIDREACH (из {@code PhantomHunterManager}, раздел 4.98, только на копии базы): атакующая задача следования выключена, как при её смерти до патча 0118, и следующий рейд обязан дойти до босса и бить.
+	 * Итог читается по строкам {@code fights}: дистанция лидера и свиты падает, HP босса падает, намерения CAST вдали нет. Флаг и ключ не возвращаются: только перезапуск.
+	 */
+	synchronized void selfTestReach()
+	{
+		final long now = System.currentTimeMillis();
+		try
+		{
+			final Field working = CreatureFollowTaskManager.class.getDeclaredField("_workingAttack");
+			working.setAccessible(true);
+			working.setBoolean(null, true);
+		}
+		catch (ReflectiveOperationException e)
+		{
+			LOGGER.warning(getClass().getSimpleName() + ": SelfTest RAIDREACH: " + e);
+			return;
+		}
+		PhantomHuntersConfig.HUNTER_RAIDS = true;
+		_nextRaid = now;
+		_nextSuper = now + TEST_POSTPONE;
+		_nextEpic = now + TEST_POSTPONE;
+		LOGGER.info(getClass().getSimpleName() + ": SelfTest RAIDREACH: attack follow task is off, the next raid starts now, " + _candidates.size() + " candidates.");
 	}
 
 	/**

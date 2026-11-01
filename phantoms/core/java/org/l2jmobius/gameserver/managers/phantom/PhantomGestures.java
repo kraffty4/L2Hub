@@ -18,7 +18,6 @@ import org.l2jmobius.gameserver.entity.World;
 import org.l2jmobius.gameserver.entity.actor.Player;
 import org.l2jmobius.gameserver.network.serverpackets.SocialAction;
 import org.l2jmobius.gameserver.network.serverpackets.StopMove;
-import org.l2jmobius.gameserver.taskmanagers.AttackStanceTaskManager;
 import org.l2jmobius.gameserver.taskmanagers.AutoPlayTaskManager;
 
 /**
@@ -590,6 +589,8 @@ public final class PhantomGestures
 
 		_test = true;
 		PhantomHuntersConfig.HUNTER_GESTURES = true;
+		// Опоздавшие не заморожены: зовут замороженного в пати, и он уходит из города к лидеру.
+		PhantomHuntersConfig.HUNTER_PARTIES = false;
 		final Player live = found;
 		hunters.remove(live);
 		// Стоят все: иначе пати и дорога уводят их от «живого».
@@ -657,7 +658,8 @@ public final class PhantomGestures
 		onPlayerSocial(live, GREETING);
 		live.setTarget(far);
 		onPlayerSocial(live, GREETING);
-		AttackStanceTaskManager.getInstance().addAttackStanceTask(fighter);
+		// Как в настоящем бою: одна задача стойки isInCombat не включает, нужен ещё флаг AI.
+		fighter.getAI().clientStartAutoAttack();
 		live.setTarget(fighter);
 		onPlayerSocial(live, GREETING);
 		dead.doDie(null);
@@ -849,9 +851,11 @@ public final class PhantomGestures
 		long firstMin = Long.MAX_VALUE;
 		long firstMax = 0;
 		long gapMin = Long.MAX_VALUE;
+		int gestured = 0;
 		for (Player hunter : crowd)
 		{
 			final List<long[]> entries = byHunter.getOrDefault((long) hunter.getObjectId(), List.of());
+			gestured += entries.isEmpty() ? 0 : 1;
 			final int[] own = own(hunter);
 			for (int i = 0; i < entries.size(); i++)
 			{
@@ -868,24 +872,43 @@ public final class PhantomGestures
 				}
 			}
 		}
-		check("the crowd gestured " + sent("idle") + " times, " + byHunter.size() + " of " + crowd.size() + " hunters", byHunter.size() == crowd.size());
+		// Опоздавший, оказавшийся в городе, тоже машет рядом с живым: в счёт идёт только толпа.
+		check("the crowd gestured " + idleBy(crowd) + " times, " + gestured + " of " + crowd.size() + " hunters", gestured == crowd.size());
 		check("own gestures only", ownOnly);
 		check("not at once: first gestures spread over " + ((firstMax - firstMin) / 1000) + " s", (firstMax - firstMin) >= 3000);
 		check("the cooldown holds: shortest gap " + (gapMin / 1000) + " s of 20 x 0.5", gapMin >= 9000);
 
 		// Настоящий путь: тик из прохода охотника, заморозку снимаем.
-		final int before = sent("idle");
-		for (Player hunter : crowd.subList(0, 3))
+		final List<Player> released = crowd.subList(0, 3);
+		final int before = idleBy(released);
+		for (Player hunter : released)
 		{
 			_idleNext.put(hunter.getObjectId(), 0L);
 			PhantomFavors.getInstance().unfreeze(hunter);
 		}
 		ThreadPool.schedule(() ->
 		{
-			check("through the hunter's own pass: " + (sent("idle") - before) + " gestures", sent("idle") > before);
+			check("through the hunter's own pass: " + (idleBy(released) - before) + " gestures", idleBy(released) > before);
 			line("sent: reply " + sent("reply") + ", refuse " + sent("refuse") + ", wave " + sent("wave") + ", victory " + sent("victory") + ", idle " + sent("idle") + "; ignored by an enemy " + sent("silent") + "; players around in total " + _recipients.get() + ", seen by the live one " + _seenByLive.get() + ".");
 			line("done: " + _ok.get() + " ok, " + _wrong.get() + " wrong.");
 		}, 20000);
+	}
+
+	/** Сколько раз эти охотники сделали жест в городе. */
+	private int idleBy(List<Player> hunters)
+	{
+		int count = 0;
+		synchronized (_idleLog)
+		{
+			for (long[] entry : _idleLog)
+			{
+				for (Player hunter : hunters)
+				{
+					count += entry[0] == hunter.getObjectId() ? 1 : 0;
+				}
+			}
+		}
+		return count;
 	}
 
 	public static PhantomGestures getInstance()

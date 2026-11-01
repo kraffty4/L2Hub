@@ -12,10 +12,12 @@ import java.util.Comparator;
 import java.util.Deque;
 import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.logging.Level;
@@ -30,6 +32,7 @@ import org.l2jmobius.gameserver.config.PlayerConfig;
 import org.l2jmobius.gameserver.config.custom.L2HubWorldConfig;
 import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
 import org.l2jmobius.gameserver.data.SchemeBufferTable;
+import org.l2jmobius.gameserver.data.xml.ExperienceData;
 import org.l2jmobius.gameserver.data.xml.ItemData;
 import org.l2jmobius.gameserver.data.xml.MapRegionData;
 import org.l2jmobius.gameserver.data.xml.SkillData;
@@ -1467,7 +1470,7 @@ public class PhantomHunterManager
 			// Погиб на споте от мобов, а не в рейде, на ивенте или в драке с обидчиком: дальше мобы послабее, иначе круг «спот, смерть, город, телепорт за плату» (раздел 4.56).
 			if ((hunter.spot != null) && (hunter.phase == Phase.HUNT) && (hunter.enemyId == 0) && (PhantomRaid.getInstance().raidOf(player) == null) && !PhantomRaid.getInstance().justLeft(player, now) && !PhantomEvents.getInstance().isBusy(player))
 			{
-				hunter.shy = Math.min(shy(hunter, now) + SHY_STEP, SHY_MAX);
+				hunter.shy = nextShy(shy(hunter, now), PhantomHunterOutfit.behindLevels(player));
 				hunter.shyUntil = now + SHY_TIME;
 			}
 			// После смерти охотник просто оказывается в городе: без этой строки её не отличить от похода по делу (PHANTOMS 4.56).
@@ -1611,6 +1614,24 @@ public class PhantomHunterManager
 	{
 		final Hunter hunter = _hunters.get(player.getName().toLowerCase());
 		return hunter == null ? 0 : shy(hunter, System.currentTimeMillis());
+	}
+
+	/**
+	 * @param shy на сколько уровней ниже берёт мобов сейчас
+	 * @param behind {@link PhantomHunterOutfit#behindLevels}: оружие отстало от уровня — восьми уровней вниз ему мало, он там так же никого не убьёт и не заработает
+	 * @return на сколько уровней ниже после новой смерти: на {@link #SHY_STEP}, всего не больше {@link #SHY_MAX}; оружие отстало — втрое быстрее и до мобов под это оружие (раздел 4.97)
+	 */
+	private static int nextShy(int shy, int behind)
+	{
+		return behind > SHY_MAX ? Math.min(shy + (SHY_STEP * 3), behind) : Math.min(shy + SHY_STEP, SHY_MAX);
+	}
+
+	/**
+	 * Оружие догнало уровень (купил, подарили): глубже обычного после смертей больше не держит.
+	 */
+	private static void relaxShy(Hunter hunter, Player player)
+	{
+		hunter.shy = Math.min(hunter.shy, Math.max(SHY_MAX, PhantomHunterOutfit.behindLevels(player)));
 	}
 
 	/**
@@ -2259,6 +2280,7 @@ public class PhantomHunterManager
 			// Гном-твинк (раздел 4.91): не к спеху — ценное отдать ему, до сдачи хлама NPC.
 			PhantomTwinks.getInstance().handOff(player, hunter.template);
 			final List<String> done = PhantomHunterOutfit.townChores(player, hunter.template, hunter.unsold);
+			relaxShy(hunter, player);
 			hunter.bagAfterTown = player.getInventory().getSize();
 			player.storeMe();
 			LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " (" + player.getLevel() + ") in " + MapRegionData.getInstance().getClosestTownName(player) + ": " + (done.isEmpty() ? "nothing to do" : String.join(", ", done)) + "; " + player.getAdena() + " adena.");
@@ -3120,9 +3142,9 @@ public class PhantomHunterManager
 			return false;
 		}
 
-		// Цена — по характеру и от нужды (патч 0035): чем больше не хватает до цели, тем дешевле; не продалось раньше — ещё дешевле.
+		// Цена — по характеру и от нужды (патч 0035): чем больше не хватает до цели, тем дешевле; не продалось раньше — ещё дешевле. И вслед за рейтами (раздел 4.92).
 		final boolean unsoldBefore = goods.stream().anyMatch(item -> hunter.unsold.containsKey(item.getObjectId()));
-		final double factor = priceFactor(hunter.template) * PhantomMarket.desperation(player, hunter.template, unsoldBefore);
+		final double factor = priceFactor(hunter.template) * PhantomMarket.desperation(player, hunter.template, unsoldBefore) * PhantomMarket.rateFactor();
 		final TradeList list = player.getSellList();
 		list.clear();
 		list.setPackaged(false);
@@ -3550,6 +3572,77 @@ public class PhantomHunterManager
 	/**
 	 * Самопроверка пати по крику без клиента ({@code HuntersSelfTest = LFM}, один раз на каждое новое {@code HuntersSelfTestId}): охотник «кричит» «лфм нужен дд», через 40 с — инвайт тому, кто откликнулся, через 100 с — отпустить. Каждый шаг — в лог с пометкой SelfTest.
 	 */
+	/**
+	 * Самопроверка {@code HuntersSelfTest = GEARBEHIND} (раздел 4.97, только на копии базы): охотник ближнего боя, маг и лучник на 57-м с первой профой, в стартовом оружии — как после рейда, поднявшего за один килл.
+	 * С 460к: профу не берёт, оружие и что осталось на броню покупает. Дальше оружие в грейде: запас на профу вернулся, шмот ждёт. Без денег: смерти уводят глубже обычных восьми уровней, спот находится; оружие догнало уровень — обычные восемь.
+	 */
+	private void gearBehindSelfTest()
+	{
+		final String tag = "SelfTest GEARBEHIND: ";
+		final List<String> failed = new ArrayList<>();
+		final Set<String> kinds = new HashSet<>();
+		for (Player player : inWorld())
+		{
+			final Hunter hunter = _hunters.get(player.getName().toLowerCase());
+			if ((hunter != null) && !player.isDead() && !player.isInParty() && (player.getLevel() < 57) && !hunter.template.isReaper() && kinds.add(PhantomHunterOutfit.testKind(hunter.template)))
+			{
+				gearBehindCase(tag + player.getName() + " (" + PhantomHunterOutfit.testKind(hunter.template) + "): ", hunter, player, failed);
+			}
+		}
+		LOGGER.info(tag + "done, kinds " + kinds + ", " + (failed.isEmpty() ? "passed." : "FAILED: " + failed));
+	}
+
+	private void gearBehindCase(String tag, Hunter hunter, Player player, List<String> failed)
+	{
+		final PhantomTemplate template = hunter.template;
+		player.setPlayerClass(template.getClassId(20));
+		player.setBaseClass(template.getClassId(20));
+		player.addExpAndSp(ExperienceData.getInstance().getExpForLevel(57) - player.getExp(), 0);
+		PhantomHunterOutfit.testStrip(player, template, 460000);
+		final int tier = player.getPlayerClass().level();
+		final long due = PhantomHunterOutfit.professionDue(player);
+		gearCheck(tag, failed, "1. отстал, запаса нет", PhantomHunterOutfit.gearBehind(player) && (PhantomHunterOutfit.professionReserve(player) == 0) && (due > 0), "уровень " + player.getLevel() + ", грейд " + PhantomHunterOutfit.testWeaponGrade(player) + ", профа " + due);
+
+		List<String> done = PhantomHunterOutfit.townChores(player, template, hunter.unsold);
+		gearCheck(tag, failed, "2. сначала оружие, профу не взял", (PhantomHunterOutfit.testWeaponGrade(player) >= 1) && (player.getPlayerClass().level() == tier) && done.contains("оружие отстало: сначала шмот"), done + ", адена " + player.getAdena());
+		final int weapon = player.getInventory().getPaperdollItemId(Inventory.PAPERDOLL_RHAND);
+		final int chest = player.getInventory().getPaperdollItemId(Inventory.PAPERDOLL_CHEST);
+		gearCheck(tag, failed, "3. оружие догнало, запас вернулся", !PhantomHunterOutfit.gearBehind(player) && (PhantomHunterOutfit.professionReserve(player) == due), "оружие " + weapon + ", запас " + PhantomHunterOutfit.professionReserve(player));
+
+		done = PhantomHunterOutfit.townChores(player, template, hunter.unsold);
+		gearCheck(tag, failed, "4. копит на профу, шмот ждёт", (player.getInventory().getPaperdollItemId(Inventory.PAPERDOLL_RHAND) == weapon) && (player.getInventory().getPaperdollItemId(Inventory.PAPERDOLL_CHEST) == chest) && done.stream().anyMatch(line -> line.startsWith("копит на профу")), done.toString());
+
+		PhantomHunterOutfit.testStrip(player, template, 0);
+		final int limit = PhantomHunterOutfit.behindLevels(player);
+		int shy = nextShy(0, limit);
+		final int first = shy;
+		for (int death = 0; death < 20; death++)
+		{
+			shy = nextShy(shy, limit);
+		}
+		gearCheck(tag, failed, "5. без денег смерти уводят до мобов под оружие", (first == (SHY_STEP * 3)) && (shy == limit) && (limit > SHY_MAX), "первая " + first + ", предел " + limit + ", итог " + shy);
+
+		hunter.shy = limit;
+		hunter.shyUntil = System.currentTimeMillis() + SHY_TIME;
+		final HuntSpot low = pickSpot(player, null, null, 6, false);
+		gearCheck(tag, failed, "6. спот для него есть и по оружию", (low != null) && (low.level <= ((player.getLevel() - limit) + 8)), low == null ? "нет" : low.name + ", мобы " + low.min + "-" + low.max);
+
+		PhantomHunterOutfit.testStrip(player, template, 3000000);
+		done = PhantomHunterOutfit.townChores(player, template, hunter.unsold);
+		relaxShy(hunter, player);
+		gearCheck(tag, failed, "7. оделся — обычные восемь уровней", !PhantomHunterOutfit.gearBehind(player) && (hunter.shy == SHY_MAX) && (nextShy(0, PhantomHunterOutfit.behindLevels(player)) == SHY_STEP), done + ", вниз " + hunter.shy);
+		hunter.shy = 0;
+	}
+
+	private static void gearCheck(String tag, List<String> failed, String step, boolean ok, String detail)
+	{
+		LOGGER.info(tag + step + (ok ? ": ok" : ": FAIL") + " (" + detail + ").");
+		if (!ok)
+		{
+			failed.add(tag + step);
+		}
+	}
+
 	private void selfTest()
 	{
 		final int done = GlobalVariablesManager.getInstance().getInt(SELF_TEST_VARIABLE, 0);
@@ -3605,7 +3698,12 @@ public class PhantomHunterManager
 		final boolean moments = "MOMENTS".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
 		final boolean petition = "PETITION".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
 		final boolean twinks = "TWINKS".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
-		if (((moments || twinks) && (inWorld().size() < 12)) || (petition && inWorld().isEmpty()))
+		final boolean buddies = "BUDDIES".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
+		final boolean recs = "RECS".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
+		final boolean eventBoard = "EVENTBOARD".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
+		final boolean gearBehind = "GEARBEHIND".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
+		final boolean raidReach = "RAIDREACH".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
+		if (((moments || twinks || buddies || recs || eventBoard || gearBehind || raidReach) && (inWorld().size() < 12)) || (petition && inWorld().isEmpty()))
 		{
 			return;
 		}
@@ -3656,6 +3754,31 @@ public class PhantomHunterManager
 		if ("ONLINE".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST))
 		{
 			PhantomOnline.selfTest(inWorld());
+			return;
+		}
+		if (buddies)
+		{
+			PhantomCompanionManager.getInstance().selfTest(inWorld());
+			return;
+		}
+		if (recs)
+		{
+			PhantomRecs.getInstance().selfTest(inWorld());
+			return;
+		}
+		if (eventBoard)
+		{
+			PhantomEventBoard.getInstance().selfTest(inWorld());
+			return;
+		}
+		if (gearBehind)
+		{
+			ThreadPool.execute(this::gearBehindSelfTest);
+			return;
+		}
+		if (raidReach)
+		{
+			PhantomRaid.getInstance().selfTestReach();
 			return;
 		}
 		if (ui)

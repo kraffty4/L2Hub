@@ -1,0 +1,39 @@
+diff --git a/dist/game/data/stats/skills/custom/10000-10099.xml b/dist/game/data/stats/skills/custom/10000-10099.xml
+index 51813ce4a77e..a3bc6b1594c1 100644
+--- a/dist/game/data/stats/skills/custom/10000-10099.xml
++++ b/dist/game/data/stats/skills/custom/10000-10099.xml
+@@ -27,7 +27,7 @@
+ 		<reuseDelay>500</reuseDelay>
+ 		<effects>
+ 			<effect name="ManaHeal">
+-				<power>100</power>
++				<power>1000</power>
+ 			</effect>
+ 		</effects>
+ 	</skill>
+diff --git a/dist/game/data/stats/items/00700-00799.xml b/dist/game/data/stats/items/00700-00799.xml
+index 87ffb9fe07b9..207e6871e9e4 100644
+--- a/dist/game/data/stats/items/00700-00799.xml
++++ b/dist/game/data/stats/items/00700-00799.xml
+@@ -406,7 +406,7 @@
+ 		<set name="immediate_effect" val="true" />
+ 		<set name="material" val="LIQUID" />
+ 		<set name="weight" val="5" />
+-		<set name="price" val="2000" />
++		<set name="price" val="20000" />
+ 		<set name="is_stackable" val="true" />
+ 		<set name="is_oly_restricted" val="true" />
+ 		<set name="handler" val="ItemSkills" />
+diff --git a/dist/game/data/multisell/custom/50039928.xml b/dist/game/data/multisell/custom/50039928.xml
+index f0b3e3d876ab..750a5a6a40e6 100644
+--- a/dist/game/data/multisell/custom/50039928.xml
++++ b/dist/game/data/multisell/custom/50039928.xml
+@@ -20,7 +20,7 @@
+ 		<production id="726" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="2000" />
++		<ingredient id="57" count="20000" />
+ 		<production id="728" count="1" />
+ 	</item>
+ 	<item>

@@ -1,5 +1,8 @@
 package org.l2jmobius.gameserver.managers.phantom;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -8,7 +11,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
+import org.l2jmobius.commons.database.DatabaseFactory;
 import org.l2jmobius.gameserver.config.FeatureConfig;
 import org.l2jmobius.gameserver.config.PlayerConfig;
 import org.l2jmobius.gameserver.config.custom.AutoPlayConfig;
@@ -83,6 +89,8 @@ import org.l2jmobius.gameserver.util.StatSet;
  */
 public final class PhantomCompat
 {
+	private static final Logger LOGGER = Logger.getLogger(PhantomCompat.class.getName());
+
 	/** Текстуры кнопок HTML-окон фантомов: нажатая и обычная. */
 	public static final String BUTTON_BACK = "L2UI_CT1.Button_DF_Down";
 	public static final String BUTTON_FORE = "L2UI_CT1.Button_DF";
@@ -312,6 +320,101 @@ public final class PhantomCompat
 	public static void leave7sDungeon(Player player)
 	{
 		player.setIn7sDungeon(false);
+	}
+
+	/**
+	 * Сколько рек у охотника на сутки (раздел 4.95): столько же, сколько у живого на этой хронике.
+	 * @param hunter охотник
+	 * @return запас; 0 — ещё не может кидать
+	 */
+	public static int recomAllowance(Player hunter)
+	{
+		if (hunter.getLevel() < 10)
+		{
+			return 0;
+		}
+		if (hunter.getLevel() < 20)
+		{
+			return 3;
+		}
+		return hunter.getLevel() < 40 ? 6 : 9;
+	}
+
+	/**
+	 * На этой хронике реки держит ядро: грузит из базы и сбрасывает раз в сутки у всех, фантомы не исключение.
+	 * @param hunter охотник
+	 * @param left сколько осталось
+	 */
+	public static void recomBudget(Player hunter, int left)
+	{
+	}
+
+	/**
+	 * @param hunter охотник
+	 * @param target кому
+	 * @return ядро не помнит, что уже кидал этому игроку (как проверка в {@code RequestEvaluate})
+	 */
+	public static boolean recomFree(Player hunter, Player target)
+	{
+		return PlayerConfig.ALT_RECOMMEND || hunter.canRecom(target);
+	}
+
+	/**
+	 * Кинуть реку: то же, что после проверок делает пакет живого.
+	 * @param hunter кто
+	 * @param target кому
+	 */
+	public static void giveRecom(Player hunter, Player target)
+	{
+		hunter.giveRecom(target);
+		final SystemMessage message = new SystemMessage(SystemMessageId.YOU_HAVE_BEEN_RECOMMENDED_BY_C1);
+		message.addPcName(hunter);
+		target.sendPacket(message);
+		target.broadcastUserInfo();
+		storeRecom(hunter);
+		storeRecom(target);
+	}
+
+	/**
+	 * Записать реки игрока в базу.
+	 * @param player игрок
+	 */
+	public static void storeRecom(Player player)
+	{
+		try (Connection con = DatabaseFactory.getConnection();
+			PreparedStatement ps = con.prepareStatement("UPDATE characters SET rec_have=?, rec_left=? WHERE charId=?"))
+		{
+			ps.setInt(1, player.getRecomHave());
+			ps.setInt(2, player.getRecomLeft());
+			ps.setInt(3, player.getObjectId());
+			ps.executeUpdate();
+		}
+		catch (Exception e)
+		{
+			LOGGER.log(Level.WARNING, PhantomCompat.class.getSimpleName() + ": could not store recommendations of " + player.getName() + ".", e);
+		}
+	}
+
+	/**
+	 * @param player игрок
+	 * @return сколько у него рек в базе (для самопроверки)
+	 */
+	public static int storedRecomHave(Player player)
+	{
+		try (Connection con = DatabaseFactory.getConnection();
+			PreparedStatement ps = con.prepareStatement("SELECT rec_have FROM characters WHERE charId=?"))
+		{
+			ps.setInt(1, player.getObjectId());
+			try (ResultSet rs = ps.executeQuery())
+			{
+				return rs.next() ? rs.getInt(1) : -1;
+			}
+		}
+		catch (Exception e)
+		{
+			LOGGER.log(Level.WARNING, PhantomCompat.class.getSimpleName() + ": could not read recommendations of " + player.getName() + ".", e);
+			return -1;
+		}
 	}
 
 	public static BuffInfo buffByAbnormal(Creature creature, AbnormalType type)

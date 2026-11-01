@@ -72,6 +72,8 @@ public class PhantomHuntersConfig
 	public static int HUNTER_STORE_MIN_MINUTES;
 	public static int HUNTER_STORE_MAX_MINUTES;
 	public static boolean HUNTER_BUY_STORES;
+	public static boolean HUNTER_STORE_PRICES_FOLLOW_RATES;
+	public static boolean HUNTER_RECOMMENDATIONS;
 	public static boolean HUNTER_ENCHANT;
 	public static boolean HUNTER_SELL_OLD_GEAR;
 	public static boolean HUNTER_EXCHANGE;
@@ -283,6 +285,8 @@ public class PhantomHuntersConfig
 		HUNTER_STORE_MIN_MINUTES = config.getInt("HunterStoreMinMinutes", 20);
 		HUNTER_STORE_MAX_MINUTES = Math.max(HUNTER_STORE_MIN_MINUTES, config.getInt("HunterStoreMaxMinutes", 40));
 		HUNTER_BUY_STORES = config.getBoolean("HunterBuyStores", true);
+		HUNTER_STORE_PRICES_FOLLOW_RATES = config.getBoolean("HunterStorePricesFollowRates", true);
+		HUNTER_RECOMMENDATIONS = config.getBoolean("HunterRecommendations", true);
 		HUNTER_ENCHANT = config.getBoolean("HunterEnchant", true);
 		HUNTER_SELL_OLD_GEAR = config.getBoolean("HunterSellOldGear", true);
 		HUNTER_EXCHANGE = config.getBoolean("HunterExchange", true);

@@ -1,0 +1,113 @@
+diff --git a/java/org/l2jmobius/gameserver/taskmanagers/CreatureFollowTaskManager.java b/java/org/l2jmobius/gameserver/taskmanagers/CreatureFollowTaskManager.java
+index 09102e262f94..420917efd2d6 100644
+--- a/java/org/l2jmobius/gameserver/taskmanagers/CreatureFollowTaskManager.java
++++ b/java/org/l2jmobius/gameserver/taskmanagers/CreatureFollowTaskManager.java
+@@ -23,6 +23,8 @@
+ import java.util.Map;
+ import java.util.Map.Entry;
+ import java.util.concurrent.ConcurrentHashMap;
++import java.util.concurrent.atomic.AtomicInteger;
++import java.util.logging.Logger;
+ 
+ import org.l2jmobius.commons.threads.ThreadPool;
+ import org.l2jmobius.commons.util.Rnd;
+@@ -36,6 +38,11 @@
+  */
+ public class CreatureFollowTaskManager
+ {
++	private static final Logger LOGGER = Logger.getLogger(CreatureFollowTaskManager.class.getName());
++	private static final int MAX_REPORTS = 5;
++	private static final int REPORT_FRAMES = 30;
++	private static final AtomicInteger REPORTS = new AtomicInteger();
++	
+ 	protected static final Map<Creature, Integer> NORMAL_FOLLOW_CREATURES = new ConcurrentHashMap<>();
+ 	protected static final Map<Creature, Integer> ATTACK_FOLLOW_CREATURES = new ConcurrentHashMap<>();
+ 	protected static boolean _workingNormal = false;
+@@ -59,15 +66,14 @@
+ 			
+ 			_workingNormal = true;
+ 			
+-			if (!NORMAL_FOLLOW_CREATURES.isEmpty())
+-			{
+-				for (Entry<Creature, Integer> entry : NORMAL_FOLLOW_CREATURES.entrySet())
+-				{
+-					follow(entry.getKey(), entry.getValue());
+-				}
+-			}
+-			
+-			_workingNormal = false;
++			try
++			{
++				followAll(NORMAL_FOLLOW_CREATURES);
++			}
++			finally
++			{
++				_workingNormal = false;
++			}
+ 		}
+ 	}
+ 	
+@@ -83,16 +89,53 @@
+ 			
+ 			_workingAttack = true;
+ 			
+-			if (!ATTACK_FOLLOW_CREATURES.isEmpty())
+-			{
+-				for (Entry<Creature, Integer> entry : ATTACK_FOLLOW_CREATURES.entrySet())
+-				{
+-					follow(entry.getKey(), entry.getValue());
+-				}
+-			}
+-			
+-			_workingAttack = false;
+-		}
++			try
++			{
++				followAll(ATTACK_FOLLOW_CREATURES);
++			}
++			finally
++			{
++				_workingAttack = false;
++			}
++		}
++	}
++	
++	/**
++	 * L2Hub: follow ловит только Exception. Error вылетает мимо сброса флага _working, и задача до перезапуска сервера выходит первой же строкой:
++	 * к дальней цели каст больше не идёт, потому что ход к ней начинает только эта задача, а след ошибки уходит в stderr. Ошибка одного персонажа
++	 * снимает со слежения только его (AI вернёт его на следующей мысли), и причина попадает в журнал.
++	 */
++	private void followAll(Map<Creature, Integer> creatures)
++	{
++		for (Entry<Creature, Integer> entry : creatures.entrySet())
++		{
++			try
++			{
++				follow(entry.getKey(), entry.getValue());
++			}
++			catch (Throwable t)
++			{
++				remove(entry.getKey());
++				report(entry.getKey(), t);
++			}
++		}
++	}
++	
++	private static void report(Creature creature, Throwable t)
++	{
++		if (REPORTS.getAndIncrement() >= MAX_REPORTS)
++		{
++			return;
++		}
++		
++		final StringBuilder frames = new StringBuilder();
++		final StackTraceElement[] stack = t.getStackTrace();
++		for (int i = 0; i < Math.min(stack.length, REPORT_FRAMES); i++)
++		{
++			frames.append("\n\tat ").append(stack[i]);
++		}
++		
++		LOGGER.warning(CreatureFollowTaskManager.class.getSimpleName() + ": " + t + " on " + creature + ", stack depth " + stack.length + frames);
+ 	}
+ 	
+ 	protected void follow(Creature creature, int range)

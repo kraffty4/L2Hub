@@ -45,7 +45,7 @@ public class PhantomOrders
 	/** Длиннее этого (слов без имён напарников) — уже разговор, его разбирают мозги. */
 	private static final int MAX_WORDS = 5;
 
-	private static final Set<String> NEGATIONS = Set.of("не", "ни", "нет", "ne", "net", "not", "dont", "don", "no");
+	static final Set<String> NEGATIONS = Set.of("не", "ни", "нет", "ne", "net", "not", "dont", "don", "no");
 
 	/** Фразы где угодно в сообщении: целые слова через пробел; «*» в конце — любое окончание. */
 	private static final Map<Order, Pattern> ANYWHERE = new EnumMap<>(Order.class);
@@ -62,14 +62,14 @@ public class PhantomOrders
 		ANYWHERE.put(Order.SIT, phrases("сядь", "сиди", "садись", "присядь", "отдохни", "отдыхай", "передохни", "sit", "sit down", "rest", "syad", "sadis", "sidi", "otdohni", "otdyhay"));
 		ANYWHERE.put(Order.STAND, phrases("встань", "вставай", "встать", "подъем", "поднимайся", "stand", "stand up", "vstan", "vstavai", "vstavay"));
 		ANYWHERE.put(Order.LEAVE, phrases("отпускаю", "свободен", "свободна", "свободны", "иди домой", "можешь идти", "можешь уходить", "уходи", "dismiss", "otpuskayu", "svoboden", "svobodna"));
-		ANYWHERE.put(Order.HUNT, phrases("кач тут", "кач здесь", "качаемся тут", "качаемся здесь", "качайся тут", "качайтесь тут", "фарм тут", "фарм здесь", "фармим тут", "фармим здесь", "фарми тут",
+		ANYWHERE.put(Order.HUNT, phrases("кач тут", "кач здесь", "качаемся тут", "качаемся здесь", "качемся тут", "качемся здесь", "качайся тут", "качайтесь тут", "фарм тут", "фарм здесь", "фармим тут", "фармим здесь", "фарми тут",
 			"бей всех", "бейте всех", "мочи всех", "мочите всех", "убивай всех", "зачищай*", "зачисти*", "чисти тут", "качай меня", "покачай меня", "покачай", "кач меня", "качай", "качайте", "сижу качай",
 			"kach tut", "kach zdes", "farm tut", "farm here", "farm zdes", "hunt here", "kill all", "kill everything", "bei vseh", "mochi vseh", "kachai menya", "pokachai"));
 		ANYWHERE.put(Order.LEAD, phrases("веди", "веди меня", "веди на кач", "паровоз*", "я за тобой", "иду за тобой", "пойду за тобой", "показывай дорогу",
 			"vedi", "vedi menya", "parovoz*", "lead", "lead me", "lead the way"));
 		WHOLE.put(Order.FOLLOW, Set.of("го", "пошли", "пойдем", "погнали", "идем", "go", "poshli", "pognali", "idem"));
 		WHOLE.put(Order.LEAVE, Set.of("пока", "бб", "bb", "bye", "bye bye", "poka", "ну пока", "всем пока", "пока пока", "отбой", "otboy"));
-		WHOLE.put(Order.HUNT, Set.of("кач", "фарм", "качаемся", "фармим", "kach", "farm", "kachaemsya", "farmim"));
+		WHOLE.put(Order.HUNT, Set.of("кач", "фарм", "качаемся", "качемся", "фармим", "kach", "farm", "kachaemsya", "kachemsya", "farmim"));
 	}
 
 	/** Чтобы мозги не распустили напарника по ошибке: тег LEAVE выполняется, только если в сообщении есть прощание. */
@@ -211,7 +211,7 @@ public class PhantomOrders
 	/**
 	 * Нижний регистр, «ё» → «е», всё, кроме букв и цифр, — пробел, пробелы схлопнуты.
 	 */
-	private static String normalize(String text)
+	static String normalize(String text)
 	{
 		final StringBuilder sb = new StringBuilder(text.length());
 		boolean space = true;
@@ -234,7 +234,7 @@ public class PhantomOrders
 	/**
 	 * Без имён и прозвищ напарников: «Митяй, бафни» → «бафни».
 	 */
-	private static String withoutNames(String clean)
+	static String withoutNames(String clean)
 	{
 		final List<String> words = new ArrayList<>();
 		for (String word : clean.split(" "))

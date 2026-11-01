@@ -14,17 +14,29 @@
 Europe (коды -eu), а не English: для них base="Europe". У новых клиентов (Essence 542) данные языка лежат
 в подпапке system\\<код>: тогда русские тексты кладутся в system_ru\\ru.
 
+Ловушка локали. L2.exe у High Five, Epilogue и Gracia Final при Language=8 работает только на локалях RU_LOCALES, на
+остальных падает на заставке (docs/RU_CHAT.md, «Капкан»). needs_ru_locale узнаёт такую систему, latin_localization
+даёт её localization.ini с Language=1: так клиент работает на любой локали, но чат набирается только латиницей.
+
+Вставка в чат. Ctrl+V клиент не принимает, его заменяет chat_paste.ps1 рядом с этим модулем (docs/RU_CHAT.md, «Вставка в чат»):
+один скрипт и для лаунчера (start_chat_paste), и для пакета друзей. У клиентов 4game вставка не проверена, скрипт там не запускается.
+
 Lineage2Ver111: 28 байт заголовка, тело XOR 0xAC, хвост 20 байт, в нём по смещению 12 — CRC32 заголовка и тела.
 У клиентов 4game хвоста нет: заголовок и тело. Из консоли — tools/l2ini_plain.py и tools/client_system_ru.py."""
 
+import ctypes
+import os
 import re
 import shutil
+import subprocess
 import zlib
 from pathlib import Path
 
+from . import paths
 from .l2ini import decode
 
 INI = "L2Hub.ini"
+CHAT_PASTE = "ChatPaste.ps1"  # имя скрипта вставки в пакете друзей, в корне клиента рядом с Play.bat
 EDITS = {
     "ServerAddr": None,  # подставляется адрес
     "ExternalLogin": "false",
@@ -37,6 +49,8 @@ EDITS = {
 OPTIONAL = {"FrostModule"}  # у штатной системы High Five (NCSoft) Frost нет — и строки нет
 HEADER = "Lineage2Ver111".encode("utf-16-le")
 FOOTER = 20
+RU_LOCALES = (0x419, 0x412)  # русская и корейская: на них L2.exe с проверкой локали пускает Language=8
+REFUSAL = "cannot run in this locale".encode("utf-16-le")  # текст отказа, по нему в L2.exe узнаётся проверка
 
 
 def plain_ini(raw: bytes, addr: str) -> bytes:
@@ -55,6 +69,25 @@ def plain_ini(raw: bytes, addr: str) -> bytes:
 def is_4game(p: dict) -> bool:
     """Клиент запускается с открытым ini (-INI=.\\L2Hub.ini) — Classic, Essence."""
     return any(str(a).upper().startswith("-INI=") for a in (p.get("client") or {}).get("args", []))
+
+
+def chat_paste_on(p: dict) -> bool:
+    """Ctrl+V в чате через chat_paste.ps1: у клиентов 4game не проверено, там скрипт мог бы перехватить чужую вставку."""
+    return not is_4game(p)
+
+
+def chat_paste_script() -> Path:
+    return paths.PACKAGE / "chat_paste.ps1"
+
+
+def start_chat_paste(client: Path) -> None:
+    """Запустить вставку для клиента в этой папке; скрипт закончится вместе с клиентом. Без вставки клиент работает: ошибка не важна."""
+    powershell = Path(os.environ.get("SystemRoot", r"C:\Windows")) / "System32" / "WindowsPowerShell" / "v1.0" / "powershell.exe"
+    try:
+        subprocess.Popen([str(powershell), "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", str(chat_paste_script()), "-ClientDir", str(client)],
+                         creationflags=subprocess.CREATE_NO_WINDOW, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except OSError:
+        pass
 
 
 def ensure_ini(system: Path, addr: str = "127.0.0.1", force: bool = False) -> Path:
@@ -104,13 +137,42 @@ def base_code(text: str, base: str) -> str:
     return m.group(1)
 
 
-def russian_localization(text: str, real_texts: bool, base: str = "English") -> str:
-    """Language=8; раздел [Russia] — значения из [base], код текстов — ru (настоящие тексты) или код base."""
+def set_language(text: str, number: int) -> str:
+    """Строка Language= в разделе [LanguageSet] — на номер языка: 8 — Russia, 1 — English."""
     s, e = section(text, "LanguageSet")
-    body, n = re.subn(r"^Language=\d+", "Language=8", text[s:e], flags=re.M)
+    body, n = re.subn(r"^Language=\d+", f"Language={number}", text[s:e], flags=re.M)
     if n != 1:
         raise ValueError("в [LanguageSet] нет строки Language=")
-    text = text[:s] + body + text[e:]
+    return text[:s] + body + text[e:]
+
+
+def needs_ru_locale(system: Path) -> bool:
+    """L2.exe этой системы работает только на локалях RU_LOCALES: в её localization.ini Language=8, а в exe есть проверка."""
+    loc, exe = system / "localization.ini", system / "L2.exe"
+    if not (loc.is_file() and exe.is_file()):
+        return False
+    try:
+        text = ver111_decode(loc.read_bytes())[0].decode("latin-1")
+        s, e = section(text, "LanguageSet")
+    except ValueError:
+        return False
+    return re.search(r"^Language=8\b", text[s:e], flags=re.M) is not None and REFUSAL in exe.read_bytes()
+
+
+def latin_localization(system: Path) -> bytes:
+    """localization.ini системы с Language=1 (English): с ним L2.exe работает на любой локали, чат — только латиницей."""
+    plain, footer = ver111_decode((system / "localization.ini").read_bytes())
+    return ver111_encode(set_language(plain.decode("latin-1"), 1).encode("latin-1"), footer)
+
+
+def system_lcid() -> int:
+    """Системная локаль Windows, её и смотрит L2.exe. Свой WinDLL: общий ctypes.windll с чужими argtypes ломает окно."""
+    return ctypes.WinDLL("kernel32").GetSystemDefaultLCID()
+
+
+def russian_localization(text: str, real_texts: bool, base: str = "English") -> str:
+    """Language=8; раздел [Russia] — значения из [base], код текстов — ru (настоящие тексты) или код base."""
+    text = set_language(text, 8)
 
     s, e = section(text, base)
     values = dict(re.findall(rf"^{base}_(\w+)=(.*?)\r?$", text[s:e], flags=re.M))

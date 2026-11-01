@@ -1,8 +1,11 @@
 package org.l2jmobius.gameserver.managers.phantom;
 
+import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 
+import org.l2jmobius.gameserver.config.custom.PhantomPartyConfig;
 import org.l2jmobius.gameserver.entity.actor.Player;
 import org.l2jmobius.gameserver.managers.phantom.PhantomOrders.Order;
 import static org.l2jmobius.gameserver.managers.phantom.PhantomText.tr;
@@ -14,6 +17,8 @@ import static org.l2jmobius.gameserver.managers.phantom.PhantomText.tr;
 public final class PhantomUi
 {
 	private static final String BUTTON = "<button value=\"%s\" action=\"%s %s %s\" width=85 height=21 back=\"" + PhantomCompat.BUTTON_BACK + "\" fore=\"" + PhantomCompat.BUTTON_FORE + "\">";
+	/** Блок с приказами — только у стольких своих, остальные напарники одной строкой: окно Interlude режется на 8192 знаках. */
+	private static final int FULL_BLOCKS = 2;
 
 	/** Кнопки приказов: действие → приказ и как он звучал бы словами (для мозгов). */
 	private static final Map<String, Order> ORDERS = Map.of("assist", Order.ASSIST, "follow", Order.FOLLOW, "stay", Order.STAY, "sit", Order.SIT, "stand", Order.STAND, "buff", Order.BUFF, "heal", Order.HEAL, "res", Order.RES);
@@ -43,10 +48,11 @@ public final class PhantomUi
 	 */
 	public static String handle(Player player, String action, String key)
 	{
-		final PhantomTemplate template = key == null ? null : find(key);
+		final boolean summon = "summon".equalsIgnoreCase(action);
+		final PhantomTemplate template = key == null ? null : find(player, key, summon);
 		if (template == null)
 		{
-			return tr("Нет такого напарника. Список — .buddy");
+			return summon && (key != null) && (find(player, key, false) != null) ? tr("Свободных напарников такой роли нет: все заняты. Кто с кем — в .buddy") : tr("Нет такого напарника. Список — .buddy");
 		}
 
 		final PhantomCompanionManager companions = PhantomCompanionManager.getInstance();
@@ -92,76 +98,138 @@ public final class PhantomUi
 	{
 		final PhantomCompanionManager companions = PhantomCompanionManager.getInstance();
 		final StringBuilder sb = new StringBuilder(6144);
+		final List<PhantomTemplate> mine = new ArrayList<>();
+		final List<PhantomTemplate> free = new ArrayList<>();
+		final List<PhantomTemplate> busy = new ArrayList<>();
 		for (PhantomTemplate template : PhantomData.getInstance().getCompanions())
 		{
-			final String name = template.getName();
-			final Player phantom = PhantomManager.getInstance().getPhantom(template);
-			final boolean partied = companions.isPartiedWith(player, template);
-			final boolean mine = (phantom != null) && companions.isOwner(player, template);
-			sb.append("<table width=280><tr><td width=280><font color=\"LEVEL\">").append(name).append("</font> — ").append(roleName(template.getRole()));
-			if (phantom != null)
+			if ((PhantomManager.getInstance().getPhantom(template) != null) && companions.isOwner(player, template))
 			{
-				sb.append(", ").append(phantom.getLevel()).append(" ").append(className(phantom));
+				mine.add(template);
 			}
-			sb.append("</td></tr><tr><td width=280><font color=\"B09878\">").append(companions.describe(player, template)).append("</font></td></tr></table>");
-
-			sb.append("<table width=280><tr>");
-			cell(sb, bypass, tr("Позвать"), "summon", name);
-			cell(sb, bypass, tr("Отпустить"), "dismiss", name);
-			if (mine && !partied)
+			else if (companions.busyWith(player, template) != null)
 			{
-				cell(sb, bypass, tr("В пати"), "invite", name);
+				busy.add(template);
 			}
 			else
 			{
-				sb.append("<td></td>");
+				free.add(template);
 			}
-			sb.append("</tr>");
-
-			if (partied)
-			{
-				// Хилер и баффер не дерутся: вместо «Бей мою цель» — их работа по кнопке.
-				sb.append("<tr>");
-				switch (template.getRole())
-				{
-					case HEALER:
-					{
-						cell(sb, bypass, tr("За мной"), "follow", name);
-						cell(sb, bypass, tr("Стой"), "stay", name);
-						cell(sb, bypass, tr("Хильни"), "heal", name);
-						sb.append("</tr><tr>");
-						cell(sb, bypass, tr("Рес"), "res", name);
-						cell(sb, bypass, tr("Сядь"), "sit", name);
-						cell(sb, bypass, tr("Встань"), "stand", name);
-						break;
-					}
-					case BUFFER:
-					{
-						cell(sb, bypass, tr("За мной"), "follow", name);
-						cell(sb, bypass, tr("Стой"), "stay", name);
-						cell(sb, bypass, tr("Бафни"), "buff", name);
-						sb.append("</tr><tr>");
-						cell(sb, bypass, tr("Рес"), "res", name);
-						cell(sb, bypass, tr("Сядь"), "sit", name);
-						cell(sb, bypass, tr("Встань"), "stand", name);
-						break;
-					}
-					default:
-					{
-						cell(sb, bypass, tr("Бей мою цель"), "assist", name);
-						cell(sb, bypass, tr("За мной"), "follow", name);
-						cell(sb, bypass, tr("Стой"), "stay", name);
-						break;
-					}
-				}
-				sb.append("</tr>");
-			}
-			sb.append("</table><br>");
 		}
+
+		final int limit = PhantomPartyConfig.PHANTOM_COMPANIONS_PER_PLAYER;
+		if (limit > 0)
+		{
+			sb.append("<table width=280><tr><td width=280>").append(tr("Напарников с тобой: ")).append(mine.size()).append(tr(" из ")).append(limit).append("</td></tr></table><br>");
+		}
+		for (int i = 0; i < mine.size(); i++)
+		{
+			if (i < FULL_BLOCKS)
+			{
+				full(sb, player, mine.get(i), bypass);
+			}
+			else
+			{
+				row(sb, player, mine.get(i), bypass, tr("Отпустить"), "dismiss");
+			}
+		}
+		for (PhantomTemplate template : free)
+		{
+			row(sb, player, template, bypass, tr("Позвать"), "summon");
+		}
+		for (PhantomTemplate template : busy)
+		{
+			row(sb, player, template, bypass, null, null);
+		}
+		sb.append("<br>");
 		sb.append(tr("<table width=280><tr><td width=280><font color=\"808080\">«Позвать» — напарник прибежит, подтянется до твоего уровня и сразу вступит в пати. Идёт следом, отставший телепортируется к тебе. Хилер лечит и поднимает, баффер держит бафы, оба садятся на MP. Опыт и лут — тебе.</font></td></tr>"));
 		sb.append(tr("<tr><td width=280><font color=\"808080\">Кнопки — то же, что словами в чате пати или шёпотом: «за мной», «стой», «бафни», «хил», «рес», «сядь», «встань», «пока». По имени — только одному: «Митяй, бафни». Просто поговорить с ними тоже можно.</font></td></tr></table><br>"));
 		commands(sb);
 		return sb.toString();
+	}
+
+	/**
+	 * Свой напарник: состояние и все кнопки.
+	 */
+	private static void full(StringBuilder sb, Player player, PhantomTemplate template, String bypass)
+	{
+		final PhantomCompanionManager companions = PhantomCompanionManager.getInstance();
+		final String name = template.getName();
+		final Player phantom = PhantomManager.getInstance().getPhantom(template);
+		final boolean partied = companions.isPartiedWith(player, template);
+		sb.append("<table width=280><tr><td width=280><font color=\"LEVEL\">").append(name).append("</font> — ").append(roleName(template.getRole()));
+		if (phantom != null)
+		{
+			sb.append(", ").append(phantom.getLevel()).append(" ").append(className(phantom));
+		}
+		sb.append("</td></tr><tr><td width=280><font color=\"B09878\">").append(companions.describe(player, template)).append("</font></td></tr></table>");
+
+		sb.append("<table width=280><tr>");
+		cell(sb, bypass, tr("Позвать"), "summon", name);
+		cell(sb, bypass, tr("Отпустить"), "dismiss", name);
+		if (!partied)
+		{
+			cell(sb, bypass, tr("В пати"), "invite", name);
+		}
+		else
+		{
+			sb.append("<td></td>");
+		}
+		sb.append("</tr>");
+
+		if (partied)
+		{
+			// Хилер и баффер не дерутся: вместо «Бей мою цель» — их работа по кнопке.
+			sb.append("<tr>");
+			switch (template.getRole())
+			{
+				case HEALER:
+				{
+					cell(sb, bypass, tr("За мной"), "follow", name);
+					cell(sb, bypass, tr("Стой"), "stay", name);
+					cell(sb, bypass, tr("Хильни"), "heal", name);
+					sb.append("</tr><tr>");
+					cell(sb, bypass, tr("Рес"), "res", name);
+					cell(sb, bypass, tr("Сядь"), "sit", name);
+					cell(sb, bypass, tr("Встань"), "stand", name);
+					break;
+				}
+				case BUFFER:
+				{
+					cell(sb, bypass, tr("За мной"), "follow", name);
+					cell(sb, bypass, tr("Стой"), "stay", name);
+					cell(sb, bypass, tr("Бафни"), "buff", name);
+					sb.append("</tr><tr>");
+					cell(sb, bypass, tr("Рес"), "res", name);
+					cell(sb, bypass, tr("Сядь"), "sit", name);
+					cell(sb, bypass, tr("Встань"), "stand", name);
+					break;
+				}
+				default:
+				{
+					cell(sb, bypass, tr("Бей мою цель"), "assist", name);
+					cell(sb, bypass, tr("За мной"), "follow", name);
+					cell(sb, bypass, tr("Стой"), "stay", name);
+					break;
+				}
+			}
+			sb.append("</tr>");
+		}
+		sb.append("</table><br>");
+	}
+
+	/**
+	 * Напарник одной строкой: имя, роль, состояние и не больше одной кнопки.
+	 */
+	private static void row(StringBuilder sb, Player player, PhantomTemplate template, String bypass, String label, String action)
+	{
+		sb.append("<table width=280><tr><td width=195><font color=\"LEVEL\">").append(template.getName()).append("</font> — ").append(roleName(template.getRole()));
+		sb.append("<br1><font color=\"B09878\">").append(PhantomCompanionManager.getInstance().describe(player, template)).append("</font></td>");
+		if (label != null)
+		{
+			cell(sb, bypass, label, action, template.getName());
+		}
+		sb.append("</tr></table>");
 	}
 
 	/**
@@ -187,9 +255,13 @@ public final class PhantomUi
 	}
 
 	/**
-	 * Имя напарника или его роль (healer, buffer).
+	 * Имя напарника или его роль (healer, buffer). По роли — сперва свой той же роли, а когда зовут — сперва свободный, потому что своего уже позвали.
+	 * @param player кто спрашивает
+	 * @param key имя или роль
+	 * @param free зовут: занятый другими по роли не подходит
+	 * @return напарник или {@code null}
 	 */
-	private static PhantomTemplate find(String key)
+	private static PhantomTemplate find(Player player, String key, boolean free)
 	{
 		final PhantomTemplate byName = PhantomData.getInstance().getTemplate(key);
 		if (byName != null)
@@ -197,14 +269,32 @@ public final class PhantomUi
 			return byName;
 		}
 
+		final PhantomCompanionManager companions = PhantomCompanionManager.getInstance();
+		PhantomTemplate mine = null;
+		PhantomTemplate idle = null;
+		PhantomTemplate any = null;
 		for (PhantomTemplate template : PhantomData.getInstance().getCompanions())
 		{
-			if (template.getRole().name().equalsIgnoreCase(key))
+			if (!template.getRole().name().equalsIgnoreCase(key))
 			{
-				return template;
+				continue;
+			}
+
+			any = any == null ? template : any;
+			if (companions.isOwner(player, template))
+			{
+				mine = mine == null ? template : mine;
+			}
+			else if ((idle == null) && (companions.busyWith(player, template) == null))
+			{
+				idle = template;
 			}
 		}
-		return null;
+		if (free)
+		{
+			return idle != null ? idle : mine;
+		}
+		return mine != null ? mine : any;
 	}
 
 	private static void cell(StringBuilder sb, String bypass, String label, String action, String name)

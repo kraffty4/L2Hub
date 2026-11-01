@@ -16,7 +16,7 @@ from pathlib import Path
 
 import psutil
 
-from . import catalog, l2solo, paths
+from . import catalog, clientsys, l2solo, paths
 
 JARS = {"login": "LoginServer.jar", "game": "GameServer.jar"}
 STOP_TIMEOUT = {"game": 120, "login": 30}
@@ -405,6 +405,11 @@ def start_client(p: dict) -> int:
     exe = catalog.client_exe(p)
     if not exe.exists():
         raise RuntimeError(f"Нет клиента: {exe}")
+    # С Language=8 на такой локали L2.exe падает с Runtime Error на заставке (docs/RU_CHAT.md, «Капкан»): лучше сказать сразу.
+    if clientsys.system_lcid() not in clientsys.RU_LOCALES and clientsys.needs_ru_locale(exe.parent):
+        raise RuntimeError("Клиент с русским вводом работает только на Windows с русским языком системы, здесь он упадёт. "
+                           "Выбери штатную систему: «Клиент и сеть» → «Указать другую папку клиента», папка system (чат — только латиницей). "
+                           "Или смени язык системы на русский: Win+R, intl.cpl, «Дополнительно», «Изменить язык системы», перезагрузка.")
     # L2.exe требует администратора в манифесте (requireAdministrator, наследство GameGuard):
     # из обычного процесса CreateProcess падает с WinError 740. RunAsInvoker запускает клиент
     # с правами лаунчера — без UAC, и лаунчер может проверить и закрыть его по PID.
@@ -418,6 +423,8 @@ def start_client(p: dict) -> int:
     pids = read_pids(p["id"])
     pids["client"] = proc.pid
     _write_pids(p["id"], pids)
+    if clientsys.chat_paste_on(p):
+        clientsys.start_chat_paste(exe.parent.parent)
     return proc.pid
 
 

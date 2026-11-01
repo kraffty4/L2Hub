@@ -1,0 +1,291 @@
+diff --git a/dist/game/data/html/CommunityBoard/Custom/navigation.html b/dist/game/data/html/CommunityBoard/Custom/navigation.html
+index d1fd3062ef033a70e66e5aa9ed31890d4a3fe880..01ebc4ecb1b79ab7fedb6cf147e9e96ad9a37b60 100644
+--- a/dist/game/data/html/CommunityBoard/Custom/navigation.html
++++ b/dist/game/data/html/CommunityBoard/Custom/navigation.html
+@@ -36,6 +36,9 @@
+ 	<td><button value="Clan recruiting" action="bypass _bbshubclan" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Fight1None_Down" fore="L2UI_CT1.OlympiadWnd_DF_Fight1None"></td>
+ </tr>
+ <tr>
++	<td><button value="Events" action="bypass _bbshubevents" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Fight1None_Down" fore="L2UI_CT1.OlympiadWnd_DF_Fight1None"></td>
++</tr>
++<tr>
+ 	<td><button value="Drop search" action="bypass _bbstop;dropsearch/main.html" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Reward_Down" fore="L2UI_CT1.OlympiadWnd_DF_Reward"></td>
+ </tr>
+ </table>
+\ No newline at end of file
+diff --git a/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/navigation.html b/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/navigation.html
+index 75ef1be2f4dab7dec0a307837cb516d03f2aed6f..3a5db0fa6288658a953d9ccd5646d73abb5fa2c2 100644
+--- a/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/navigation.html
++++ b/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/navigation.html
+@@ -36,6 +36,9 @@
+ 	<td><button value="Набор в клан" action="bypass _bbshubclan" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Fight1None_Down" fore="L2UI_CT1.OlympiadWnd_DF_Fight1None"></td>
+ </tr>
+ <tr>
++	<td><button value="Ивенты" action="bypass _bbshubevents" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Fight1None_Down" fore="L2UI_CT1.OlympiadWnd_DF_Fight1None"></td>
++</tr>
++<tr>
+ 	<td><button value="Поиск дропа" action="bypass _bbstop;dropsearch/main.html" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Reward_Down" fore="L2UI_CT1.OlympiadWnd_DF_Reward"></td>
+ </tr>
+ </table>
+\ No newline at end of file
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+index dc8ee3d85c21e7efaeaf531e88b70e48e2bd7e48..8ee5a062b90e2dd4d1867387f208209d462b6bcd 100644
+--- a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+@@ -20,6 +20,7 @@
+ import org.l2jmobius.gameserver.handler.CommunityBoardHandler;
+ import org.l2jmobius.gameserver.handler.IParseBoardHandler;
+ import org.l2jmobius.gameserver.managers.phantom.PhantomClanBoard;
++import org.l2jmobius.gameserver.managers.phantom.PhantomEventBoard;
+ import org.l2jmobius.gameserver.managers.phantom.PhantomBufferSets;
+ import org.l2jmobius.gameserver.managers.phantom.PhantomHunterUi;
+ import org.l2jmobius.gameserver.managers.phantom.PhantomLootSell;
+@@ -36,6 +37,7 @@
+  * <li>_bbshubbuddy [действие имя] — окно напарников ({@link PhantomUi})</li>
+  * <li>_bbshubhunters [near|all|store] [страница] | go &lt;имя&gt; … — кто из охотников где и телепорт на их спот или к лавке ({@link PhantomHunterUi})</li>
+  * <li>_bbshubwars [all|hunters|players] [страница] … — кланы и объявление войны, _bbshubclan … — набор в клан ({@link PhantomClanBoard})</li>
++ * <li>_bbshubevents [join|cancel &lt;ивент&gt;] — запись на TvT, Deathmatch и CtF ({@link PhantomEventBoard})</li>
+  * </ul>
+  */
+ public class L2HubBoard implements IParseBoardHandler
+@@ -104,6 +106,7 @@
+ 	private static final String HUNTERS = "_bbshubhunters";
+ 	private static final String CLAN_WARS = "_bbshubwars";
+ 	private static final String CLAN_RECRUIT = "_bbshubclan";
++	private static final String EVENTS = "_bbshubevents";
+ 	private static final String[] COMMANDS =
+ 	{
+ 		BUFF,
+@@ -111,7 +114,8 @@
+ 		BUDDY,
+ 		HUNTERS,
+ 		CLAN_WARS,
+-		CLAN_RECRUIT
++		CLAN_RECRUIT,
++		EVENTS
+ 	};
+ 
+ 	private static final Pattern NPC_CHAT = Pattern.compile("bypass (?:-h )?npc_%objectId%_Chat (\\d+)");
+@@ -154,6 +158,10 @@
+ 		else if (args[0].equalsIgnoreCase(CLAN_RECRUIT))
+ 		{
+ 			html = page(player, PhantomClanBoard.recruitTitle(), canUse(player) ? PhantomClanBoard.getInstance().recruit(player, args) : PhantomClanBoard.busy());
++		}
++		else if (args[0].equalsIgnoreCase(EVENTS))
++		{
++			html = page(player, PhantomEventBoard.title(), canOpen(player) ? PhantomEventBoard.getInstance().page(player, args) : PhantomClanBoard.busy());
+ 		}
+ 		else
+ 		{
+@@ -406,6 +414,25 @@
+ 		return true;
+ 	}
+ 
++	/**
++	 * Как {@link #canUse}, но без боя: на арену переносит сам ивент, а запись коротка, поэтому записаться можно и на каче (docs/PHANTOMS.md, 4.96). Что нельзя мёртвому и на ивенте, решает {@link PhantomEventBoard}.
++	 */
++	private static boolean canOpen(Player player)
++	{
++		if (CommunityBoardConfig.COMMUNITYBOARD_KARMA_DISABLED && (player.getReputation() < 0))
++		{
++			player.sendMessage(tr("С кармой доской пользоваться нельзя."));
++			return false;
++		}
++
++		if (CommunityBoardConfig.COMMUNITYBOARD_PEACE_ONLY && !player.isInsideZone(ZoneId.PEACE))
++		{
++			player.sendMessage(tr("Доской можно пользоваться только в мирной зоне."));
++			return false;
++		}
++		return true;
++	}
++
+ 	private static String categoryName(String type)
+ 	{
+ 		switch (type.toLowerCase())
+diff --git a/dist/game/data/scripts/custom/L2HubWorldInfo/L2HubWorldInfo.java b/dist/game/data/scripts/custom/L2HubWorldInfo/L2HubWorldInfo.java
+index 452298fd45d1ca72f6b96b6b24ad60e009a2504a..d40b2c09d5d825155b57a019854f890cc124ed4e 100644
+--- a/dist/game/data/scripts/custom/L2HubWorldInfo/L2HubWorldInfo.java
++++ b/dist/game/data/scripts/custom/L2HubWorldInfo/L2HubWorldInfo.java
+@@ -107,6 +107,7 @@
+ 		java.util.Map.entry("<font color=\"6E8B3D\">Идёт</font> по ", "<font color=\"6E8B3D\">On</font> until "),
+ 		java.util.Map.entry("С ", "From "),
+ 		java.util.Map.entry("<font color=\"LEVEL\">Ивенты по расписанию</font><br1>", "<font color=\"LEVEL\">Scheduled events</font><br1>"),
++		java.util.Map.entry("<font color=\"808080\">Записаться можно и издалека: Alt+B, кнопка «Ивенты».</font><br1>", "<font color=\"808080\">You can also sign up from anywhere: Alt+B, the Events button.</font><br1>"),
+ 		java.util.Map.entry("<font color=\"808080\">Регистрация 10 минут у менеджера в Гиране (у Deathmatch — 1 минута), охотники записываются сами.</font><br1>", "<font color=\"808080\">Registration: 10 minutes at the manager in Giran (Deathmatch: 1 minute); hunters sign up on their own.</font><br1>"),
+ 		java.util.Map.entry("<font color=\"808080\">PvP-ивенты выключены (PvpEvents в L2HubEvents.ini).</font><br1>", "<font color=\"808080\">PvP events are disabled (PvpEvents in L2HubEvents.ini).</font><br1>"),
+ 		java.util.Map.entry(": нашествие эльпи на ", ": elpy invasion for "),
+@@ -540,6 +541,7 @@
+ 				}
+ 			}
+ 			sb.append(tr("<font color=\"808080\">Регистрация 10 минут у менеджера в Гиране (у Deathmatch — 1 минута), охотники записываются сами.</font><br1>"));
++			sb.append(tr("<font color=\"808080\">Записаться можно и издалека: Alt+B, кнопка «Ивенты».</font><br1>"));
+ 		}
+ 		else
+ 		{
+diff --git a/dist/game/data/scripts/custom/events/TeamVsTeam/TvT.java b/dist/game/data/scripts/custom/events/TeamVsTeam/TvT.java
+index e0068d71568de7dcee80a8d66007a08cd46df0c8..0c7f2adad2a6d193f8dbe3fcb416a1ab5a096d8a 100644
+--- a/dist/game/data/scripts/custom/events/TeamVsTeam/TvT.java
++++ b/dist/game/data/scripts/custom/events/TeamVsTeam/TvT.java
+@@ -159,6 +159,7 @@
+ 	private static volatile int RED_SCORE;
+ 	private static Instance PVP_WORLD = null;
+ 	private static Npc MANAGER_NPC_INSTANCE = null;
++	private static volatile long L2HUB_CLOSES = 0; // L2Hub: до какого времени запись
+ 	private static boolean TEAM_FORFEIT = false;
+ 	
+ 	private TvT()
+@@ -229,6 +230,11 @@
+ 	@Override
+ 	public String onEvent(String event, Npc npc, Player player)
+ 	{ // Event not participating, no starting or started return null.
++		if ("L2HubStatus".equals(event)) // L2Hub: что показывает доска Alt+B (PhantomEventBoard): состояние, записано, мест, порог и предел уровня, записан ли этот игрок, до какого времени запись
++		{
++			return _state.name() + " " + PLAYER_LIST.size() + " " + MAXIMUM_PARTICIPANT_COUNT + " " + MINIMUM_PARTICIPANT_LEVEL + " " + MAXIMUM_PARTICIPANT_LEVEL + " " + ((player != null) && PLAYER_LIST.contains(player) && player.isRegisteredOnEvent()) + " " + L2HUB_CLOSES;
++		}
++		
+ 		if (!IS_PARTICIPATING() && !IS_STARTING() && !IS_STARTED())
+ 		{
+ 			return null;
+@@ -1097,6 +1103,7 @@
+ 		
+ 		// Spawn event manager.
+ 		MANAGER_NPC_INSTANCE = addSpawn(MANAGER, MANAGER_SPAWN_LOC, false, REGISTRATION_TIME * 60000);
++		L2HUB_CLOSES = System.currentTimeMillis() + (REGISTRATION_TIME * 60000L); // L2Hub
+ 		startQuestTimer("TeleportToArena", REGISTRATION_TIME * 60000, null, null);
+ 		
+ 		// Send message to players.
+diff --git a/dist/game/data/scripts/custom/events/Deathmatch/Deathmatch.java b/dist/game/data/scripts/custom/events/Deathmatch/Deathmatch.java
+index fed5884c852de11bba3b20afa11014132230deff..2ce9e4b8cff1753e7a58b693261d575cb2f7a4df 100644
+--- a/dist/game/data/scripts/custom/events/Deathmatch/Deathmatch.java
++++ b/dist/game/data/scripts/custom/events/Deathmatch/Deathmatch.java
+@@ -127,7 +127,9 @@
+ 	private static final Set<Player> PLAYER_LIST = ConcurrentHashMap.newKeySet();
+ 	private static Instance PVP_WORLD = null;
+ 	private static Npc MANAGER_NPC_INSTANCE = null;
++	private static volatile long L2HUB_CLOSES = 0; // L2Hub: до какого времени запись
+ 	private static boolean EVENT_ACTIVE = false;
++	private static volatile boolean L2HUB_REGISTRATION = false; // L2Hub: идёт запись; с доски Alt+B в Participate можно попасть и в бою, а менеджера там нет
+ 	
+ 	private Deathmatch()
+ 	{
+@@ -195,6 +197,11 @@
+ 	@Override
+ 	public String onEvent(String event, Npc npc, Player player)
+ 	{
++		if ("L2HubStatus".equals(event)) // L2Hub: что показывает доска Alt+B (PhantomEventBoard): состояние, записано, мест, порог и предел уровня, записан ли этот игрок, до какого времени запись
++		{
++			return (L2HUB_REGISTRATION ? "PARTICIPATING" : EVENT_ACTIVE ? "STARTED" : "INACTIVE") + " " + PLAYER_LIST.size() + " " + MAXIMUM_PARTICIPANT_COUNT + " " + MINIMUM_PARTICIPANT_LEVEL + " " + MAXIMUM_PARTICIPANT_LEVEL + " " + ((player != null) && PLAYER_LIST.contains(player) && player.isRegisteredOnEvent()) + " " + L2HUB_CLOSES;
++		}
++		
+ 		if (!EVENT_ACTIVE)
+ 		{
+ 			return null;
+@@ -205,24 +212,27 @@
+ 		{
+ 			case "Participate":
+ 			{
+-				if (canRegister(player))
++				synchronized (PLAYER_LIST) // L2Hub: место и запись разом, только при открытой регистрации
+ 				{
+-					if ((DualboxCheckConfig.DUALBOX_CHECK_MAX_L2EVENT_PARTICIPANTS_PER_IP == 0) || AntiFeedManager.getInstance().tryAddPlayer(AntiFeedManager.L2EVENT_ID, player, DualboxCheckConfig.DUALBOX_CHECK_MAX_L2EVENT_PARTICIPANTS_PER_IP))
++					if (L2HUB_REGISTRATION && canRegister(player))
+ 					{
+-						PLAYER_LIST.add(player);
+-						PLAYER_SCORES.put(player, 0);
+-						player.setRegisteredOnEvent(true);
+-						addLogoutListener(player);
+-						htmltext = "registration-success.html";
++						if ((DualboxCheckConfig.DUALBOX_CHECK_MAX_L2EVENT_PARTICIPANTS_PER_IP == 0) || AntiFeedManager.getInstance().tryAddPlayer(AntiFeedManager.L2EVENT_ID, player, DualboxCheckConfig.DUALBOX_CHECK_MAX_L2EVENT_PARTICIPANTS_PER_IP))
++						{
++							PLAYER_LIST.add(player);
++							PLAYER_SCORES.put(player, 0);
++							player.setRegisteredOnEvent(true);
++							addLogoutListener(player);
++							htmltext = "registration-success.html";
++						}
++						else
++						{
++							htmltext = "registration-ip.html";
++						}
+ 					}
+ 					else
+ 					{
+-						htmltext = "registration-ip.html";
++						htmltext = "registration-failed.html";
+ 					}
+-				}
+-				else
+-				{
+-					htmltext = "registration-failed.html";
+ 				}
+ 				break;
+ 			}
+@@ -278,6 +288,11 @@
+ 			}
+ 			case "TeleportToArena":
+ 			{
++				synchronized (PLAYER_LIST) // L2Hub: запись на замке не проскочит мимо арены
++				{
++					L2HUB_REGISTRATION = false;
++				}
++				
+ 				// Remove offline players.
+ 				for (Player participant : PLAYER_LIST)
+ 				{
+@@ -808,6 +823,7 @@
+ 		}
+ 		
+ 		EVENT_ACTIVE = true;
++		L2HUB_REGISTRATION = true;
+ 		
+ 		// Cancel timers. (In case event started immediately after another event was canceled.).
+ 		for (List<QuestTimer> timers : getQuestTimers().values())
+@@ -831,6 +847,7 @@
+ 		
+ 		// Spawn event manager.
+ 		MANAGER_NPC_INSTANCE = addSpawn(MANAGER, MANAGER_SPAWN_LOC, false, REGISTRATION_TIME * 60000);
++		L2HUB_CLOSES = System.currentTimeMillis() + (REGISTRATION_TIME * 60000L); // L2Hub
+ 		MANAGER_NPC_INSTANCE.setTitle("Deathmatch Event");
+ 		MANAGER_NPC_INSTANCE.broadcastStatusUpdate();
+ 		startQuestTimer("TeleportToArena", REGISTRATION_TIME * 60000, null, null);
+@@ -863,6 +880,7 @@
+ 		}
+ 		
+ 		EVENT_ACTIVE = false;
++		L2HUB_REGISTRATION = false;
+ 		
+ 		// Despawn event manager.
+ 		MANAGER_NPC_INSTANCE.deleteMe();
+diff --git a/dist/game/data/scripts/custom/events/CaptureTheFlag/CtF.java b/dist/game/data/scripts/custom/events/CaptureTheFlag/CtF.java
+index 4c6e2b9cb08314bb5d09949205d38191984c7ed9..2357a3d95a5bdb1c871d9517d49b8131313e8feb 100644
+--- a/dist/game/data/scripts/custom/events/CaptureTheFlag/CtF.java
++++ b/dist/game/data/scripts/custom/events/CaptureTheFlag/CtF.java
+@@ -199,6 +199,7 @@
+ 	private static volatile int RED_SCORE;
+ 	private static Instance PVP_WORLD = null;
+ 	private static Npc MANAGER_NPC_INSTANCE = null;
++	private static volatile long L2HUB_CLOSES = 0; // L2Hub: до какого времени запись
+ 	private static boolean TEAM_FORFEIT = false;
+ 	private final Lock BLUE_LOCK = new ReentrantLock();
+ 	private final Lock RED_LOCK = new ReentrantLock();
+@@ -271,6 +272,11 @@
+ 	@Override
+ 	public String onEvent(String event, Npc npc, Player player)
+ 	{
++		if ("L2HubStatus".equals(event)) // L2Hub: что показывает доска Alt+B (PhantomEventBoard): состояние, записано, мест, порог и предел уровня, записан ли этот игрок, до какого времени запись
++		{
++			return _state.name() + " " + PLAYER_LIST.size() + " " + MAXIMUM_PARTICIPANT_COUNT + " " + MINIMUM_PARTICIPANT_LEVEL + " " + MAXIMUM_PARTICIPANT_LEVEL + " " + ((player != null) && PLAYER_LIST.contains(player) && player.isRegisteredOnEvent()) + " " + L2HUB_CLOSES;
++		}
++		
+ 		// Event not participating, no starting or started return null.
+ 		if (!IS_PARTICIPATING() && !IS_STARTING() && !IS_STARTED())
+ 		{
+@@ -1460,6 +1466,7 @@
+ 		
+ 		// Spawn event manager.
+ 		MANAGER_NPC_INSTANCE = addSpawn(MANAGER, MANAGER_SPAWN_LOC, false, REGISTRATION_TIME * 60000);
++		L2HUB_CLOSES = System.currentTimeMillis() + (REGISTRATION_TIME * 60000L); // L2Hub
+ 		startQuestTimer("TeleportToArena", REGISTRATION_TIME * 60000, null, null);
+ 		
+ 		// Send message to players.

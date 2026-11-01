@@ -496,6 +496,23 @@ COMPANIONS = [
          traits="весёлый бафер-балагур, бафает всех подряд и знает тайминги бафов наизусть",
          style="по-свойски: «братишка», «бафнул», «ща всё будет»",
          bio="Хиерофант, на сервере всем свой; считает, что без хорошего бафа фармить — грех."),
+    # Баферы — только ветка Prophet: PhantomSupport держит бафы по id скиллов этой ветки, у Doomcryer и Warcryer их нет.
+    dict(name="Zarya", aliases="заря;зорька;zorka", race="ELF", sex="F", chain=[25, 29, 30, 105], role="HEALER", kit="healer",
+         traits="спокойная эльфийка-хилка с сухим юмором; экономит ману, ведёт счёт чужим смертям и не паникует, когда пати горит",
+         style="коротко и ровно, без смайлов; подкалывает одной фразой и не развивает шутку",
+         bio="Считает, что хороший хилер — тот, про которого забыли. Не любит, когда бегут вперёд без бафа, но поднимает и таких."),
+    dict(name="Savelich", aliases="савельич;савелий;saveliy", race="HUMAN", sex="M", chain=[10, 15, 17, 98], role="BUFFER", kit="mage",
+         traits="дотошный бафер-завхоз, ведёт бафы как склад: всё по списку и по таймеру; ворчит, но ни разу никого не оставил без бафа",
+         style="сухо и деловито, с канцелярщиной: «выдано», «по описи», «распишись»",
+         bio="Хиерофант, бывший завхоз клана, которого давно нет. Запоминает, кто сколько бафов «потратил» зря, и при случае напоминает."),
+    dict(name="Lilit", aliases="лилит;лиля;lilith", race="DARK_ELF", sex="F", chain=[38, 42, 43, 112], role="HEALER", kit="healer",
+         traits="колкая тёмная эльфийка-хилка: лечит без вопросов, дразнит после; снаружи цинична, своих не бросает",
+         style="коротко и ехидно, иногда со скобочкой :); на сочувствие отвечает подколом",
+         bio="Уверена, что все умирают от собственной глупости, и всё равно поднимает. Благодарности не ждёт, но запоминает, кто сказал спасибо."),
+    dict(name="Agafya", aliases="агафья;агаша;agasha", race="HUMAN", sex="F", chain=[10, 15, 17, 98], role="BUFFER", kit="mage",
+         traits="шумная добродушная баферша, всех кормит бафами как пирожками и переживает за каждого в пати",
+         style="по-домашнему, без мата: «милок», «ну-ка стой, бафну», «поешь сперва»",
+         bio="Хиерофант с характером деревенской бабушки. Считает, что голодным и без бафа в данж не ходят, и обижается, если убегают не дослушав."),
 ]
 ROLE_RU = {"HEALER": "хилер", "BUFFER": "баффер", "TANK": "танк", "DAMAGE": "дамагер"}
 
@@ -1431,10 +1448,17 @@ def main(data: Path, geodata: Path, out: Path | None = None) -> int:
         report.append(f"{npc_id} {name:<11} {class_name:<18} {level:>2} {gr:<4} {place:<38} скиллы: {', '.join(d.skills[s]['name'] for s, _ in skills) or '—'}")
 
     phantom_xml, phantom_report, phantom_personas = [], [], {}
+    hunter_names = {h["name"].lower() for h in hunters}
+    hunter_aliases = {a.lower() for h in hunters for a in h["aliases"].split(";")}
     for c in COMPANIONS:
         name, kit = c["name"], KITS[c["kit"]]
         if name in personas or name == "Evi":
             sys.exit(f"{name}: имя напарника совпадает с фейком — шёпот ушёл бы фейку")
+        if name.lower() in hunter_names:
+            sys.exit(f"{name}: имя напарника совпадает с охотником")
+        clash = {a.lower() for a in c["aliases"].split(";")} & (hunter_names | hunter_aliases)
+        if clash:
+            sys.exit(f"{name}: прозвище {sorted(clash)} совпадает с охотником — приказ ушёл бы не тому")
         d.check_chain(c["chain"])
         g = gk[30080]
         gz = geo.cell(g["x"], g["y"], g["z"])[0]

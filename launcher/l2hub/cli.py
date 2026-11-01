@@ -15,6 +15,9 @@
   .venv\\Scripts\\python -m l2hub.cli deploy-configs interlude [--prev <zip>] — конфиги собранного архива в сервер
                                                                   (так делает scripts\\server_build.ps1; build — сам)
   .venv\\Scripts\\python -m l2hub.cli dbinit                      — однократно: данные MariaDB и пароль root
+  .venv\\Scripts\\python -m l2hub.cli wipe interlude              — вайп мира Mobius: без --confirm только предпросмотр (docs/WIPE.md)
+  .venv\\Scripts\\python -m l2hub.cli wipe interlude --confirm interlude
+  .venv\\Scripts\\python -m l2hub.cli wipe interlude --undo [время] [--confirm interlude] — откат вайпа
 """
 
 import argparse
@@ -23,7 +26,7 @@ import sys
 import time
 from pathlib import Path
 
-from . import builder, catalog
+from . import builder, catalog, wipe
 from .api import Api
 
 
@@ -45,11 +48,13 @@ def wait_job(api: Api, chronicle_id: str) -> int:
 def main() -> int:
     ap = argparse.ArgumentParser(prog="l2hub.cli")
     ap.add_argument("command", choices=["catalog", "state", "check", "start", "stop", "restart", "log", "backups", "backup", "restore", "pack",
-                                           "fetch", "build", "setup", "dbinit", "deploy-configs"])
+                                           "fetch", "build", "setup", "dbinit", "deploy-configs", "wipe"])
     ap.add_argument("chronicle", nargs="?")
     ap.add_argument("name", nargs="?", help="файл бэкапа для restore")
     ap.add_argument("--no-client", action="store_true")
     ap.add_argument("--prev", help="deploy-configs: копия архива прошлой сборки, снятая до Ant")
+    ap.add_argument("--confirm", help="wipe: повтор имени хроники, без него только предпросмотр")
+    ap.add_argument("--undo", nargs="?", const=wipe.LAST, help="wipe: откат; можно указать время вайпа, иначе — последний")
     args = ap.parse_args()
     api = Api()
     if args.command == "catalog":
@@ -70,6 +75,8 @@ def main() -> int:
     if args.command == "deploy-configs":
         builder.deploy_built(catalog.profile(args.chronicle), Path(args.prev) if args.prev else None)
         return 0
+    if args.command == "wipe":
+        return wipe.command(catalog.profile(args.chronicle), args.confirm, args.undo)
     if args.command in ("build", "setup"):
         if api.running() == args.chronicle:
             print("Сначала останови сервер этой хроники: сборка меняет его jar и данные.")

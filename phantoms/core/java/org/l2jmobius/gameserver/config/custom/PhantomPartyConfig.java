@@ -17,6 +17,9 @@ public class PhantomPartyConfig
 	public static int PHANTOM_ASSIST_RANGE;
 	public static int PHANTOM_DEFEND_RANGE;
 	public static int PHANTOM_OWNER_LOGOUT_GRACE;
+	public static int PHANTOM_COMPANIONS_PER_PLAYER;
+	public static boolean PHANTOM_COMPANION_AUTO_BUFF;
+	public static boolean PHANTOM_SUPPORT_SMITE_UNDEAD;
 	public static boolean PHANTOM_BRAIN;
 	public static int PHANTOM_EVENT_COOLDOWN;
 	public static int PHANTOM_EVENTS_PER_MINUTE;
@@ -34,6 +37,9 @@ public class PhantomPartyConfig
 		PHANTOM_ASSIST_RANGE = config.getInt("PhantomAssistRange", 1500);
 		PHANTOM_DEFEND_RANGE = config.getInt("PhantomDefendRange", 900);
 		PHANTOM_OWNER_LOGOUT_GRACE = config.getInt("PhantomOwnerLogoutGrace", 60);
+		PHANTOM_COMPANIONS_PER_PLAYER = config.getInt("PhantomCompanionsPerPlayer", 2);
+		PHANTOM_COMPANION_AUTO_BUFF = config.getBoolean("PhantomCompanionAutoBuff", true);
+		PHANTOM_SUPPORT_SMITE_UNDEAD = config.getBoolean("PhantomSupportSmiteUndead", true);
 		PHANTOM_BRAIN = config.getBoolean("PhantomBrain", true);
 		PHANTOM_EVENT_COOLDOWN = config.getInt("PhantomEventCooldown", 60);
 		PHANTOM_EVENTS_PER_MINUTE = config.getInt("PhantomEventsPerMinute", 6);

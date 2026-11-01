@@ -1,0 +1,15 @@
+diff --git a/dist/game/data/multisell/custom/50039928.xml b/dist/game/data/multisell/custom/50039928.xml
+index a777c3ddf7cf8ad3fa1ea3085e4c8203f3d8a729..1fb59912ba1780a65c6723720887dfaa180a37fa 100644
+--- a/dist/game/data/multisell/custom/50039928.xml
++++ b/dist/game/data/multisell/custom/50039928.xml
+@@ -16,6 +16,10 @@
+ 		<production id="1539" count="1" />
+ 	</item>
+ 	<item>
++		<ingredient id="57" count="2000" />
++		<production id="728" count="1" />
++	</item>
++	<item>
+ 		<ingredient id="57" count="2400" />
+ 		<production id="735" count="1" />
+ 	</item>

@@ -8,12 +8,17 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Logger;
 
 import org.l2jmobius.gameserver.ai.Intention;
+import org.l2jmobius.gameserver.config.custom.PhantomPartyConfig;
+import org.l2jmobius.gameserver.data.SchemeBufferTable;
+import org.l2jmobius.gameserver.data.xml.SkillData;
 import org.l2jmobius.gameserver.entity.World;
 import org.l2jmobius.gameserver.entity.WorldObject;
 import org.l2jmobius.gameserver.entity.actor.Creature;
 import org.l2jmobius.gameserver.entity.actor.Player;
+import org.l2jmobius.gameserver.entity.actor.holders.npc.BuffSkillHolder;
 import org.l2jmobius.gameserver.entity.actor.instance.Monster;
 import org.l2jmobius.gameserver.mechanics.skill.AbnormalType;
 import org.l2jmobius.gameserver.mechanics.skill.BuffInfo;
@@ -22,13 +27,23 @@ import org.l2jmobius.gameserver.network.enums.ChatType;
 import org.l2jmobius.gameserver.network.serverpackets.CreatureSay;
 
 /**
- * L2Hub: саппорты в пати (этап 3). Хилер лечит и поднимает, баффер держит бафы на всей пати; оба отдыхают по MP и не дерутся.<br>
+ * L2Hub: саппорты в пати (этап 3). Хилер лечит и поднимает, баффер держит бафы на всей пати; оба отдыхают по MP и не дерутся, кроме нежити ({@link #smiteUndead}).<br>
  * Каждый тик напарника (1 с) выбирается одно действие: отдых, хил или рес, баф. Скиллы — по id из таблиц ниже; берутся только выученные на текущем уровне, поэтому одна таблица годится для всей ветки (Cleric → Bishop → Cardinal,
  * Cleric → Prophet → Hierophant).<br>
  * Приказы словами (этап 4, {@link PhantomChat}): «хил» и «рес» выполняются раньше всего, «бафни» перекидывает свои бафы заново, «сядь» и «встань» — поверх отдыха по MP.
  */
 final class PhantomSupport
 {
+	private static final Logger LOGGER = Logger.getLogger(PhantomSupport.class.getName());
+
+	/** Удары по нежити, сильный первым: Might of Heaven, Disrupt Undead. */
+	private static final int[] UNDEAD_STRIKES =
+	{
+		1028,
+		1031
+	};
+	/** Ниже этого MP по нежити не бьёт: мана нужна на хил и бафы. */
+	private static final int SMITE_MIN_MP = 50;
 	/** Сильные одиночные хилы, по убыванию: Major Heal, Greater Heal, Heal. */
 	private static final int[] STRONG_HEALS =
 	{
@@ -142,6 +157,7 @@ final class PhantomSupport
 		final Set<Long> refreshed = ConcurrentHashMap.newKeySet(); // цель+скилл, перекинутые по приказу «бафни»
 		volatile boolean sitOrdered;
 		volatile long noRestUntil;
+		int smiteTarget;
 	}
 
 	private static final Map<Integer, State> STATES = new ConcurrentHashMap<>();
@@ -173,6 +189,95 @@ final class PhantomSupport
 			_townBuffer = on;
 		}
 		return on;
+	}
+
+	/**
+	 * Самопроверка BUDDIES: подменить ответ {@link #townBuffer()}.
+	 * @param on что отвечать; {@code null} — снова как в файле
+	 */
+	static void setTownBuffer(Boolean on)
+	{
+		_townBuffer = on;
+	}
+
+	/**
+	 * @param phantom напарник
+	 * @return набор городского баффера для него (docs/PHANTOMS.md, раздел 4.94): воину или магу. Пассивки и мгновенные {@code applyEffects} не вешает (Might и Shield на Essence), их тут нет: иначе их не хватало бы вечно.
+	 */
+	static List<Skill> selfBuffSet(Player phantom)
+	{
+		final String group = phantom.isMageClass() ? "MAGE_GROUP" : "FIGHTER_GROUP";
+		final SchemeBufferTable table = SchemeBufferTable.getInstance();
+		final List<Skill> set = new ArrayList<>();
+		for (int skillId : table.getSkillsIdsByType(group))
+		{
+			final BuffSkillHolder holder = table.getAvailableBuff(group, skillId);
+			final Skill skill = holder == null ? null : SkillData.getInstance().getSkill(skillId, holder.getLevel());
+			if ((skill != null) && skill.isContinuous())
+			{
+				set.add(skill);
+			}
+		}
+		return set;
+	}
+
+	/**
+	 * Напарник держит набор на себе: только то, чего нет, бесплатно и без каста, как охотник. Несколько скиллов одного типа в наборе (Essence) встают первым: тип уже есть, остальных не хватать не будет.
+	 * @param phantom напарник
+	 * @param apply {@code false} — только посчитать, ничего не накладывая
+	 * @return сколько скиллов набора наложено, а при {@code apply == false} — сколько не хватает
+	 */
+	static int selfBuff(Player phantom, boolean apply)
+	{
+		int count = 0;
+		for (Skill skill : selfBuffSet(phantom))
+		{
+			if (hasBuff(phantom, skill))
+			{
+				continue;
+			}
+
+			if (apply)
+			{
+				skill.applyEffects(phantom, phantom);
+			}
+			count++;
+		}
+		return count;
+	}
+
+	/**
+	 * Самопроверка BUDDIES.
+	 * @param buffer баффер-напарник
+	 * @param member цель
+	 * @return сколько бафов из его таблицы висит на цели от него самого
+	 */
+	static int buffsFrom(Player buffer, Player member)
+	{
+		int count = 0;
+		for (int skillId : member.isMageClass() ? MAGE_BUFFS : FIGHTER_BUFFS)
+		{
+			final Skill skill = buffer.getKnownSkill(skillId);
+			final BuffInfo info = skill == null ? null : PhantomCompat.buffByAbnormal(member, skill.getAbnormalType());
+			if ((info != null) && (info.getEffector() == buffer))
+			{
+				count++;
+			}
+		}
+		return count;
+	}
+
+	/**
+	 * Баф этого типа висит, откуда бы он ни был, или его слот закрыт. Скилл без типа — по его id.
+	 */
+	private static boolean hasBuff(Player phantom, Skill skill)
+	{
+		final AbnormalType type = skill.getAbnormalType();
+		if (type == AbnormalType.NONE)
+		{
+			return phantom.isAffectedBySkill(skill.getId());
+		}
+		return (PhantomCompat.buffByAbnormal(phantom, type) != null) || slotBlocked(phantom, type);
 	}
 
 	/**
@@ -233,6 +338,84 @@ final class PhantomSupport
 			return heal(state, phantom, members, now);
 		}
 		return buff(state, phantom, members, now);
+	}
+
+	// ---------- Нежить ----------
+
+	/**
+	 * @return саппорт умеет бить нежить, и это не выключено
+	 */
+	static boolean smitesUndead(Player phantom)
+	{
+		return PhantomPartyConfig.PHANTOM_SUPPORT_SMITE_UNDEAD && (known(phantom, UNDEAD_STRIKES) != null);
+	}
+
+	/**
+	 * Хилить и бафать некого, а пати дерётся с нежитью: саппорт бьёт её сам (docs/PHANTOMS.md, раздел 4.99). Хил и бафы идут раньше, их разбирает {@link #act}.
+	 * Цель — только нежить, которая уже дерётся с пати: сам он мобов не поднимает. Скилл не достаёт с места — подходит, если не приказано стоять.
+	 * @param phantom фантом в пати
+	 * @param walk можно подойти к цели
+	 * @param now текущее время
+	 * @return занят: следовать за владельцем в этот тик не надо
+	 */
+	static boolean smiteUndead(Player phantom, boolean walk, long now)
+	{
+		if (!PhantomPartyConfig.PHANTOM_SUPPORT_SMITE_UNDEAD || !phantom.isInParty() || (mpPercent(phantom) < SMITE_MIN_MP))
+		{
+			return false;
+		}
+
+		final Skill skill = firstUsable(phantom, UNDEAD_STRIKES, null);
+		if (skill == null)
+		{
+			return false;
+		}
+
+		Monster target = null;
+		double nearest = Double.MAX_VALUE;
+		for (Monster monster : World.getVisibleObjectsInRange(phantom, Monster.class, SUPPORT_RANGE))
+		{
+			final WorldObject victim = monster.getTarget();
+			if (!monster.isAlikeDead() && monster.isUndead() && monster.isInCombat() && (victim instanceof Player) && phantom.getParty().containsPlayer((Player) victim))
+			{
+				final double distance = phantom.calculateDistance2D(monster);
+				if (distance < nearest)
+				{
+					nearest = distance;
+					target = monster;
+				}
+			}
+		}
+		if (target == null)
+		{
+			return false;
+		}
+
+		if (!PhantomCompanionManager.inReach(phantom, target, phantom.getMagicalAttackRange(skill)))
+		{
+			if (!walk)
+			{
+				return false;
+			}
+			if (!phantom.isMoving())
+			{
+				phantom.setRunning();
+				phantom.getAI().setIntentionMoveTo(target);
+			}
+			return true;
+		}
+
+		final State state = state(phantom);
+		if (!cast(state, phantom, skill, target, now))
+		{
+			return false;
+		}
+		if (state.smiteTarget != target.getObjectId())
+		{
+			state.smiteTarget = target.getObjectId();
+			LOGGER.info(PhantomSupport.class.getSimpleName() + ": " + phantom.getName() + " smites " + target.getName() + " with " + skill.getName() + " at " + (int) nearest + ", MP " + (int) mpPercent(phantom) + "%.");
+		}
+		return true;
 	}
 
 	// ---------- Приказы словами (этап 4) ----------
@@ -653,7 +836,11 @@ final class PhantomSupport
 		{
 			return true;
 		}
+		return slotBlocked(member, type);
+	}
 
+	private static boolean slotBlocked(Player member, AbnormalType type)
+	{
 		if (BLOCKED_BY_IMPROVED_COMBAT.contains(type) && (PhantomCompat.buffByAbnormal(member, AbnormalType.IMPROVE_PA_PD_UP) != null))
 		{
 			return true;

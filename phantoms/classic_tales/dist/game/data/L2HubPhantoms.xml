@@ -19,6 +19,42 @@
 		<gear grade="A" minLevel="61" rhand="5607" head="90475" chest="2408" gloves="5773" feet="5785" shots="91930" /> <!-- Branch of the Mother Tree, Helm of Nightmare, Robe of Nightmare, Gauntlets of Nightmare, Boots of Nightmare -->
 		<gear grade="S" minLevel="76" rhand="6366" head="6386" chest="6383" gloves="6384" feet="6385" shots="91930" /> <!-- Imperial Staff, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
 	</phantom>
+	<!-- Zarya: хилер, Elven Mystic, Elven Oracle, Elven Elder, Eva's Saint -->
+	<phantom name="Zarya" role="HEALER" female="true" face="2" hairStyle="0" hairColor="0" classes="25,29,30,105" aliases="заря;зорька;zorka" x="83691" y="147868" z="-3400">
+		<gear grade="NONE" minLevel="1" rhand="29284" shots="91930" /> <!-- Priest Mace -->
+		<gear grade="D" minLevel="20" rhand="49377" head="7850" chest="7857" gloves="7858" feet="7859" shots="91930" /> <!-- Mace of Miracle, Moon Helmet, Moon Cape, Moon Silk Gloves, Moon Sandals -->
+		<gear grade="C" minLevel="40" rhand="196" chest="442" legs="473" gloves="2463" shots="91930" /> <!-- Stick of Eternity, Divine Tunic, Divine Stockings, Divine Gloves -->
+		<gear grade="B" minLevel="52" rhand="8142" head="90457" chest="2406" gloves="5716" feet="5732" shots="91930" /> <!-- Spell Breaker, Avadon Circlet, Avadon Robe, Avadon Gloves, Avadon Boots -->
+		<gear grade="A" minLevel="61" rhand="8148" head="90478" chest="2409" gloves="5776" feet="5788" shots="91930" /> <!-- Spiritual Eye, Majestic Circlet, Majestic Robe, Majestic Gauntlets, Majestic Boots -->
+		<gear grade="S" minLevel="76" rhand="6579" head="6386" chest="6383" gloves="6384" feet="6385" shots="91930" /> <!-- Arcana Mace, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
+	</phantom>
+	<!-- Savelich: баффер, Human Mystic, Cleric, Prophet, Hierophant -->
+	<phantom name="Savelich" role="BUFFER" female="false" face="1" hairStyle="1" hairColor="1" classes="10,15,17,98" aliases="савельич;савелий;saveliy" x="83262" y="148536" z="-3400">
+		<gear grade="NONE" minLevel="1" rhand="29299" shots="91930" /> <!-- Ghost Staff -->
+		<gear grade="D" minLevel="20" rhand="49395" chest="436" legs="469" gloves="2447" shots="91930" /> <!-- Mystic Staff, Tunic of Knowledge, Stockings of Knowledge, Gloves of Knowledge -->
+		<gear grade="C" minLevel="40" rhand="4872" chest="439" legs="471" gloves="2454" shots="91930" /> <!-- Heavy Doom Axe, Karmian Tunic, Karmian Stockings, Karmian Gloves -->
+		<gear grade="B" minLevel="52" rhand="4898" head="90460" chest="2397" legs="2402" gloves="5712" feet="5728" shots="91930" /> <!-- Spirit's Staff, Zubei's Helmet, Tunic of Zubei, Stockings of Zubei, Zubei's Gauntlets, Zubei's Boots -->
+		<gear grade="A" minLevel="61" rhand="8818" head="90469" chest="2400" legs="2405" gloves="5770" feet="5782" shots="91930" /> <!-- Daimon Crystal, Tallum Helmet, Tallum Tunic, Tallum Stockings, Tallum Gloves, Tallum Boots -->
+		<gear grade="S" minLevel="76" rhand="6366" head="6386" chest="6383" gloves="6384" feet="6385" shots="91930" /> <!-- Imperial Staff, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
+	</phantom>
+	<!-- Lilit: хилер, Dark Mystic, Shillien Oracle, Shillien Elder, Shillien Saint -->
+	<phantom name="Lilit" role="HEALER" female="true" face="1" hairStyle="6" hairColor="2" classes="38,42,43,112" aliases="лилит;лиля;lilith" x="83666" y="148194" z="-3400">
+		<gear grade="NONE" minLevel="1" rhand="47945" shots="91930" /> <!-- Magic Fan - Yellow -->
+		<gear grade="D" minLevel="20" rhand="49387" head="7850" chest="7857" gloves="7858" feet="7859" shots="91930" /> <!-- Priest Mace, Moon Helmet, Moon Cape, Moon Silk Gloves, Moon Sandals -->
+		<gear grade="C" minLevel="40" rhand="202" chest="442" legs="473" gloves="2463" shots="91930" /> <!-- Mace of Underworld, Divine Tunic, Divine Stockings, Divine Gloves -->
+		<gear grade="B" minLevel="52" rhand="7893" head="90457" chest="2406" gloves="5716" feet="5732" shots="91930" /> <!-- Kaim Vanul's Bones, Avadon Circlet, Avadon Robe, Avadon Gloves, Avadon Boots -->
+		<gear grade="A" minLevel="61" rhand="8815" head="90478" chest="2409" gloves="5776" feet="5788" shots="91930" /> <!-- Cabrio's Hand, Majestic Circlet, Majestic Robe, Majestic Gauntlets, Majestic Boots -->
+		<gear grade="S" minLevel="76" rhand="6579" head="6386" chest="6383" gloves="6384" feet="6385" shots="91930" /> <!-- Arcana Mace, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
+	</phantom>
+	<!-- Agafya: баффер, Human Mystic, Cleric, Prophet, Hierophant -->
+	<phantom name="Agafya" role="BUFFER" female="true" face="2" hairStyle="2" hairColor="0" classes="10,15,17,98" aliases="агафья;агаша;agasha" x="83714" y="148131" z="-3400">
+		<gear grade="NONE" minLevel="1" rhand="754" shots="91930" /> <!-- Red Sunset Staff -->
+		<gear grade="D" minLevel="20" rhand="93033" chest="436" legs="469" gloves="2447" shots="91930" /> <!-- Two-Handed Blunt Weapon of Aden, Tunic of Knowledge, Stockings of Knowledge, Gloves of Knowledge -->
+		<gear grade="C" minLevel="40" rhand="90420" chest="439" legs="471" gloves="2454" shots="91930" /> <!-- Warrior's Shining Staff, Karmian Tunic, Karmian Stockings, Karmian Gloves -->
+		<gear grade="B" minLevel="52" rhand="211" head="90466" chest="2399" legs="2404" gloves="5724" feet="5740" shots="91930" /> <!-- Staff of Nobility, Doom Helmet, Tunic of Doom, Stockings of Doom, Doom Gloves, Doom Boots -->
+		<gear grade="A" minLevel="61" rhand="5605" head="90475" chest="2408" gloves="5773" feet="5785" shots="91930" /> <!-- Branch of the Mother Tree, Helm of Nightmare, Robe of Nightmare, Gauntlets of Nightmare, Boots of Nightmare -->
+		<gear grade="S" minLevel="76" rhand="6366" head="6386" chest="6383" gloves="6384" feet="6385" shots="91930" /> <!-- Imperial Staff, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
+	</phantom>
 	<!-- Kuzya: охотник, Dwarf Fighter, Artisan, Warsmith, Maestro -->
 	<phantom name="Kuzya" kind="hunter" role="DAMAGE" female="false" face="0" hairStyle="0" hairColor="3" classes="53,56,57,118" aliases="кузя;кузьма" social="1.5" temper="0.5" risk="1" x="115274" y="-177779" z="-880">
 		<gear grade="NONE" minLevel="1" rhand="2370" chest="1146" legs="1147" shots="91927" /> <!-- Guild Member's Club, Squire's Shirt, Squire's Pants -->

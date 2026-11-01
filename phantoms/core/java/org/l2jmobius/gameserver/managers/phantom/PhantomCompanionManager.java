@@ -1,5 +1,7 @@
 package org.l2jmobius.gameserver.managers.phantom;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
@@ -8,6 +10,7 @@ import java.util.logging.Logger;
 
 import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.gameserver.ai.Intention;
+import org.l2jmobius.gameserver.config.PlayerConfig;
 import org.l2jmobius.gameserver.config.custom.PhantomPartyConfig;
 import org.l2jmobius.gameserver.config.custom.PhantomsConfig;
 import org.l2jmobius.gameserver.entity.Location;
@@ -25,6 +28,7 @@ import org.l2jmobius.gameserver.managers.phantom.HuntSpotData.HuntSpot;
 import org.l2jmobius.gameserver.managers.phantom.PhantomChat.Event;
 import org.l2jmobius.gameserver.managers.phantom.PhantomOrders.Order;
 import org.l2jmobius.gameserver.mechanics.skill.Skill;
+import org.l2jmobius.gameserver.mechanics.skill.enums.SkillFinishType;
 import org.l2jmobius.gameserver.network.SystemMessageId;
 import org.l2jmobius.gameserver.network.enums.ChatType;
 import org.l2jmobius.gameserver.network.serverpackets.CreatureSay;
@@ -43,6 +47,13 @@ public class PhantomCompanionManager
 	private static final Logger LOGGER = Logger.getLogger(PhantomCompanionManager.class.getName());
 
 	private static final long TICK_INTERVAL = 1000;
+	/** Автобафф проверяет набор не чаще этого. Танцы живут 120 секунд: дырка в них не длиннее интервала. */
+	private static final long AUTO_BUFF_CHECK = 15000;
+	/** Самопроверка: столько ждать, чтобы тик заведомо прошёл; столько дать бафферу на владельца. */
+	private static final long AUTO_BUFF_SETTLE = 2500;
+	private static final long AUTO_BUFF_OWNER_WAIT = 20000;
+	/** Боец дальше своей дальности на этот запас считается не дошедшим до цели: цель могла шагнуть, а обход ей не нужен. */
+	private static final int REACH_SLACK = 50;
 	/** Напарник держится сзади-сбоку от владельца на этом расстоянии. */
 	private static final int SLOT_DISTANCE = 90;
 	/** Ближе этого к своему месту — стоит. */
@@ -57,6 +68,8 @@ public class PhantomCompanionManager
 	private static final int CHASE_LEASH = 1800;
 	/** Отпустили словами («пока») — уходит через столько миллисекунд, успев попрощаться. */
 	private static final long LEAVE_DELAY = 8000;
+	/** Дальше этого окно NPC в Interlude обрезается (AbstractHtmlPacket), а клиент может упасть: самопроверка следит за окном .buddy. */
+	private static final int WINDOW_LIMIT = 8192;
 	/** У владельца в бою меньше этого HP (%) — хилер говорит «держись». */
 	private static final int OWNER_LOW_HP = 30;
 	/** Охотник в пати подбирает, что лежит ближе этого (адену, брошенную игроком, и вещи на земле). */
@@ -124,6 +137,8 @@ public class PhantomCompanionManager
 		int relevelTo;
 		/** Охотник, пришедший по крику (или принявший инвайт на споте): уровень свой, отпустили — назад на кач, а не из мира. */
 		boolean hunter;
+		/** Автобафф: следующая проверка набора; 0 — в ближайший тик (призыв, рес, новый уровень). */
+		long nextAutoBuff;
 
 		Companion(String name)
 		{
@@ -169,6 +184,12 @@ public class PhantomCompanionManager
 			return template.getName() + tr(" сейчас в пати с ") + other.getName() + ".";
 		}
 
+		final String overLimit = overLimit(owner, template);
+		if (overLimit != null)
+		{
+			return overLimit;
+		}
+
 		final Companion companion = existing != null ? existing : new Companion(template.getName());
 		companion.ownerId = owner.getObjectId();
 		companion.mode = Mode.ASSIST;
@@ -177,6 +198,7 @@ public class PhantomCompanionManager
 		companion.lastDestination = null;
 		companion.stuckTicks = 0;
 		companion.ownerLevel = 0;
+		companion.nextAutoBuff = 0;
 		_companions.put(key(template.getName()), companion);
 
 		final Player phantom = PhantomManager.getInstance().spawn(template, slot(owner, slotIndex(companion)), owner.getLevel());
@@ -207,6 +229,42 @@ public class PhantomCompanionManager
 		}
 		LOGGER.info(getClass().getSimpleName() + ": " + owner.getName() + " summoned " + template.getName() + ".");
 		return null;
+	}
+
+	/**
+	 * Лимит напарников в одни руки ({@link PhantomPartyConfig#PHANTOM_COMPANIONS_PER_PLAYER}): их на весь мир шесть. Охотники в пати по крику не считаются, позвать заново своего можно всегда.
+	 * @param owner кто зовёт
+	 * @param template кого зовёт
+	 * @return текст отказа или {@code null}
+	 */
+	private String overLimit(Player owner, PhantomTemplate template)
+	{
+		final int limit = PhantomPartyConfig.PHANTOM_COMPANIONS_PER_PLAYER;
+		if (limit <= 0)
+		{
+			return null;
+		}
+
+		final List<String> names = ownedBy(owner);
+		names.remove(template.getName());
+		return names.size() < limit ? null : tr("Больше напарников нельзя: с тобой уже ") + String.join(", ", names) + tr(" (лимит ") + limit + tr("). Отпусти одного и зови другого.");
+	}
+
+	/**
+	 * @param owner игрок
+	 * @return имена напарников из .buddy, которых он позвал; охотники в пати по крику сюда не входят
+	 */
+	private List<String> ownedBy(Player owner)
+	{
+		final List<String> names = new ArrayList<>();
+		for (PhantomTemplate template : PhantomData.getInstance().getCompanions())
+		{
+			if (isOwner(owner, template))
+			{
+				names.add(template.getName());
+			}
+		}
+		return names;
 	}
 
 	/**
@@ -435,6 +493,13 @@ public class PhantomCompanionManager
 			return;
 		}
 
+		final String overLimit = hunter ? null : overLimit(requestor, template);
+		if (overLimit != null)
+		{
+			requestor.sendMessage(overLimit);
+			return;
+		}
+
 		if (requestor.isInOlympiadMode())
 		{
 			PhantomCompat.sendOlympiadNoInvite(requestor);
@@ -517,6 +582,7 @@ public class PhantomCompanionManager
 		companion.lastDestination = null;
 		companion.ownerLevel = 0;
 		companion.hunter = hunter;
+		companion.nextAutoBuff = 0;
 		_companions.put(key(template.getName()), companion);
 		if (hunter)
 		{
@@ -538,7 +604,7 @@ public class PhantomCompanionManager
 		final Player phantom = PhantomManager.getInstance().getPhantom(template);
 		if (phantom == null)
 		{
-			return tr("не в мире");
+			return tr("свободен");
 		}
 
 		if (phantom.isDead())
@@ -561,7 +627,19 @@ public class PhantomCompanionManager
 			}
 			return tr("рядом, ждёт пати: «В пати» или /invite ") + template.getName();
 		}
-		return tr("в мире, свободен");
+		return tr("свободен");
+	}
+
+	/**
+	 * @param viewer кто смотрит
+	 * @param template напарник
+	 * @return другой живой игрок, с которым ходит напарник, или {@code null}
+	 */
+	public Player busyWith(Player viewer, PhantomTemplate template)
+	{
+		final Companion companion = _companions.get(key(template.getName()));
+		final Player owner = companion == null ? null : World.getPlayer(companion.ownerId);
+		return (owner != null) && (owner != viewer) && owner.isOnline() ? owner : null;
 	}
 
 	/**
@@ -621,6 +699,7 @@ public class PhantomCompanionManager
 
 		final boolean support = PhantomSupport.isSupport(template);
 		final String job = template.getRole() == PhantomTemplate.Role.HEALER ? "лечишь" : "бафаешь";
+		final String noFight = PhantomSupport.smitesUndead(phantom) ? "сделано: идёшь следом и " + job + ", из мобов бьёшь только нежить, которая дерётся с пати" : "нельзя: ты саппорт и в драку не лезешь — идёшь следом и " + job;
 		switch (order)
 		{
 			case FOLLOW:
@@ -639,13 +718,13 @@ public class PhantomCompanionManager
 			{
 				PhantomSupport.clearSit(phantom);
 				setMode(owner, template, Mode.ASSIST);
-				return support ? "нельзя: ты саппорт и в драку не лезешь — идёшь следом и " + job : "сделано: бьёшь его цель";
+				return support ? noFight : "сделано: бьёшь его цель";
 			}
 			case HUNT:
 			{
 				PhantomSupport.clearSit(phantom);
 				setMode(owner, template, support ? Mode.ASSIST : Mode.HUNT);
-				return support ? "нельзя: ты саппорт и в драку не лезешь — идёшь следом и " + job : "сделано: качаешься рядом с ним — сам бьёшь и добиваешь всех мобов вокруг, держишься недалеко";
+				return support ? noFight : "сделано: качаешься рядом с ним — сам бьёшь и добиваешь всех мобов вокруг, держишься недалеко";
 			}
 			case LEAD:
 			{
@@ -780,6 +859,23 @@ public class PhantomCompanionManager
 		}
 	}
 
+	/**
+	 * Автобафф (docs/PHANTOMS.md, раздел 4.94): напарник, особенно хилер без баффера рядом, сам держит на себе набор городского баффера. Охотник в пати по крику бафается по-своему, а нет баффера в мире — нет и бесплатных бафов.
+	 */
+	private static void autoBuff(Companion companion, Player phantom, long now)
+	{
+		if (companion.hunter || (now < companion.nextAutoBuff))
+		{
+			return;
+		}
+
+		companion.nextAutoBuff = now + AUTO_BUFF_CHECK;
+		if (PhantomPartyConfig.PHANTOM_COMPANION_AUTO_BUFF && PhantomSupport.townBuffer())
+		{
+			PhantomSupport.selfBuff(phantom, true);
+		}
+	}
+
 	private void think(Companion companion, long now)
 	{
 		final PhantomTemplate template = PhantomData.getInstance().getTemplate(companion.name);
@@ -823,6 +919,7 @@ public class PhantomCompanionManager
 		// Мёртвому фантому рес предлагают окном «воскресить?», ответить некому — соглашаемся за него.
 		if (phantom.isDead())
 		{
+			companion.nextAutoBuff = 0;
 			if (phantom.isReviveRequested())
 			{
 				phantom.reviveAnswer(1);
@@ -834,6 +931,8 @@ public class PhantomCompanionManager
 		{
 			return;
 		}
+
+		autoBuff(companion, phantom, now);
 
 		// Не в пати с владельцем (выгнал, распустил пати или ещё не пригласил) — ждёт на месте.
 		final Party party = phantom.getParty();
@@ -868,6 +967,8 @@ public class PhantomCompanionManager
 				companion.relevelTo = 0;
 				if (PhantomManager.getInstance().relevel(template, level))
 				{
+					// Скиллы выучены заново, вместе со старыми могли слететь их бафы.
+					companion.nextAutoBuff = 0;
 					LOGGER.info(getClass().getSimpleName() + ": " + companion.name + " leveled up to " + phantom.getLevel() + " after " + owner.getName() + ".");
 				}
 				return;
@@ -889,13 +990,13 @@ public class PhantomCompanionManager
 
 		if (PhantomSupport.isSupport(template))
 		{
-			// Саппорты не дерутся (этап 3): лечат, бафают, отдыхают по MP, в остальное время идут следом.
+			// Саппорты не дерутся (этап 3): лечат, бафают, отдыхают по MP, бьют только нежить, в остальное время идут следом.
 			if (phantom.getAI().getIntention() == Intention.ATTACK)
 			{
 				calmDown(phantom);
 			}
 
-			if (PhantomSupport.act(phantom, owner, template.getRole(), now))
+			if (PhantomSupport.act(phantom, owner, template.getRole(), now) || PhantomSupport.smiteUndead(phantom, companion.mode != Mode.STAY, now))
 			{
 				return;
 			}
@@ -1155,12 +1256,30 @@ public class PhantomCompanionManager
 				phantom.getAI().setIntentionActive();
 			}
 			// Цель за геодатой: скиллы не берутся (Cannot see target), а сам к цели он не пойдёт. Vedma простояла так две минуты боя с РБ, пока босс не пришёл к ней сам.
-			if (!phantom.isMoving() && !GeoEngine.getInstance().canSeeTarget(phantom, target))
+			// То же, если цель дальше всех его скиллов.
+			if (!phantom.isMoving() && (!GeoEngine.getInstance().canSeeTarget(phantom, target) || beyondSkills(phantom, target)))
 			{
 				phantom.setRunning();
 				phantom.getAI().setIntentionMoveTo(target);
 			}
 			return;
+		}
+
+		// Намерение ATTACK ведёт к цели по прямой, без поиска пути: упёрся в препятствие и стоит, повтор намерения не поможет. Обходим обычным ходом.
+		// Bastion простоял так весь бой с Lilim Knight Commander на дистанции 779.
+		if (target.isMonster() && !inReach(phantom, target, phantom.getPhysicalAttackRange() + REACH_SLACK))
+		{
+			final Intention intention = phantom.getAI().getIntention();
+			if (phantom.isMoving() && (intention == Intention.MOVE_TO))
+			{
+				return;
+			}
+			if (!phantom.isMoving() && (intention == Intention.ATTACK) && !phantom.isAttackingNow())
+			{
+				phantom.setRunning();
+				phantom.getAI().setIntentionMoveTo(target);
+				return;
+			}
 		}
 
 		// Повтор намерения раз в тик оживляет застрявшую атаку (так же делает AutoPlay Mobius).
@@ -1328,8 +1447,9 @@ public class PhantomCompanionManager
 	}
 
 	/**
-	 * Атакующий скилл охотника из его AutoUse (сильные первыми), если он готов сейчас: хватает MP, не на откате, условия выполнены.
-	 * До дистанции каста AI игрока подводит сам. У напарников из .buddy таких скиллов нет — они бьют оружием, как раньше.
+	 * Атакующий скилл охотника из его AutoUse (сильные первыми), если он готов сейчас: хватает MP, не на откате, условия выполнены, цель в дальности.
+	 * Дальнюю цель каст не берёт: AI игрока подвёл бы к ней только задачей следования, и при её смерти охотник стоял бы с намерением CAST весь бой (раздел 4.98).
+	 * К цели подводит {@link #attack}. У напарников из .buddy таких скиллов нет — они бьют оружием, как раньше.
 	 * @return начал каст
 	 */
 	private static boolean castSkill(Player phantom, Creature enemy)
@@ -1337,7 +1457,7 @@ public class PhantomCompanionManager
 		for (Integer skillId : phantom.getAutoUseSettings().getAutoSkills())
 		{
 			final Skill skill = phantom.getKnownSkill(skillId);
-			if ((skill == null) || phantom.isSkillDisabled(skill) || (phantom.getCurrentMp() < (skill.getMpInitialConsume() + skill.getMpConsume())) || !skill.checkCondition(phantom, enemy, false))
+			if ((skill == null) || phantom.isSkillDisabled(skill) || (phantom.getCurrentMp() < (skill.getMpInitialConsume() + skill.getMpConsume())) || !inCastRange(phantom, skill, enemy) || !skill.checkCondition(phantom, enemy, false))
 			{
 				continue;
 			}
@@ -1349,6 +1469,44 @@ public class PhantomCompanionManager
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * @return цель в пределах range с поправкой на радиусы обоих, как считает CreatureAI.maybeMoveToPawn
+	 */
+	static boolean inReach(Player phantom, Creature target, int range)
+	{
+		return phantom.isInsideRadius2D(target, range + phantom.getTemplate().getCollisionRadius() + target.getTemplate().getCollisionRadius());
+	}
+
+	/**
+	 * @return скилл достаёт цель с места; отрицательная дальность у скиллов вокруг себя, им подходить незачем (как и в CreatureAI.maybeMoveToPawn)
+	 */
+	private static boolean inCastRange(Player phantom, Skill skill, Creature target)
+	{
+		final int range = phantom.getMagicalAttackRange(skill);
+		return (range < 0) || inReach(phantom, target, range);
+	}
+
+	/**
+	 * @return у охотника есть скиллы автобоя, и ни один из них не достаёт цель с места
+	 */
+	private static boolean beyondSkills(Player phantom, Creature target)
+	{
+		boolean any = false;
+		for (Integer skillId : phantom.getAutoUseSettings().getAutoSkills())
+		{
+			final Skill skill = phantom.getKnownSkill(skillId);
+			if (skill != null)
+			{
+				if (inCastRange(phantom, skill, target))
+				{
+					return false;
+				}
+				any = true;
+			}
+		}
+		return any;
 	}
 
 	/**
@@ -1536,6 +1694,275 @@ public class PhantomCompanionManager
 	private static String key(String name)
 	{
 		return name.toLowerCase();
+	}
+
+	// ---------- Самопроверка ----------
+
+	/**
+	 * Самопроверка {@code HuntersSelfTest = BUDDIES} (docs/PHANTOMS.md, раздел 4.93, только на копии базы): живых играют трое охотников. Роль берёт свободного, лимит отказывает и не мешает позвать своего заново,
+	 * занятого в чужой пати не позвать и не отпустить, на свободных кончается понятным отказом, окно не длиннее {@value #WINDOW_LIMIT} знаков. Автобафф (раздел 4.94) — {@link #autoBuffTest}. Напарники уходят из мира, лимит и автобафф возвращаются.
+	 * @param online охотники в мире
+	 */
+	void selfTest(List<Player> online)
+	{
+		ThreadPool.execute(() -> runSelfTest(online));
+	}
+
+	private void runSelfTest(List<Player> online)
+	{
+		final String tag = "SelfTest BUDDIES: ";
+		final int wasLimit = PhantomPartyConfig.PHANTOM_COMPANIONS_PER_PLAYER;
+		final boolean wasAutoBuff = PhantomPartyConfig.PHANTOM_COMPANION_AUTO_BUFF;
+		final List<PhantomTemplate> all = PhantomData.getInstance().getCompanions();
+		final long healers = all.stream().filter(template -> template.getRole() == PhantomTemplate.Role.HEALER).count();
+		final long buffers = all.stream().filter(template -> template.getRole() == PhantomTemplate.Role.BUFFER).count();
+		final List<Player> free = new ArrayList<>();
+		for (Player player : online)
+		{
+			final PhantomTemplate template = PhantomData.getInstance().getTemplate(player.getName());
+			if ((template != null) && !template.isReaper() && !player.isDead() && !player.isInParty() && (player.getInstanceId() == 0) && !player.isInOlympiadMode())
+			{
+				free.add(player);
+			}
+		}
+		if ((healers != 3) || (buffers != 3) || (free.size() < 3))
+		{
+			LOGGER.info(tag + "needs three healers, three buffers and three free hunters, has " + healers + ", " + buffers + ", " + free.size() + ".");
+			return;
+		}
+
+		final Player first = free.get(0);
+		final Player second = free.get(1);
+		final Player third = free.get(2);
+		final List<String> failed = new ArrayList<>();
+		try
+		{
+			PhantomPartyConfig.PHANTOM_COMPANIONS_PER_PLAYER = 2;
+
+			// Роль берёт свободного: второй хилер — другой.
+			final String healerA = PhantomUi.handle(first, "summon", "healer");
+			final String healerB = PhantomUi.handle(first, "summon", "healer");
+			final List<String> firstOwns = ownedBy(first);
+			if ((healerA != null) || (healerB != null) || (firstOwns.size() != 2))
+			{
+				failed.add("два хилера одному: " + healerA + ", " + healerB + ", с ним " + firstOwns);
+			}
+
+			// Лимит: третьего нельзя, своего позвать заново можно.
+			final String refused = PhantomUi.handle(first, "summon", "buffer");
+			if ((refused == null) || !refused.startsWith(tr("Больше напарников нельзя: с тобой уже ")) || (ownedBy(first).size() != 2))
+			{
+				failed.add("лимит: " + refused + ", с ним " + ownedBy(first));
+			}
+			final String mineName = firstOwns.get(0);
+			final String again = PhantomUi.handle(first, "summon", mineName);
+			if ((again != null) || (ownedBy(first).size() != 2))
+			{
+				failed.add("своего заново: " + again + ", с ним " + ownedBy(first));
+			}
+
+			// Третий хилер — другому, четвёртому игроку хилеров уже нет.
+			final String last = PhantomUi.handle(second, "summon", "healer");
+			final List<String> secondOwns = ownedBy(second);
+			if ((last != null) || (secondOwns.size() != 1) || firstOwns.contains(secondOwns.get(0)))
+			{
+				failed.add("третий хилер: " + last + ", у второго " + secondOwns + ", у первого " + firstOwns);
+			}
+			final String none = PhantomUi.handle(third, "summon", "healer");
+			if (!tr("Свободных напарников такой роли нет: все заняты. Кто с кем — в .buddy").equals(none) || !ownedBy(third).isEmpty())
+			{
+				failed.add("хилеры кончились: " + none + ", у третьего " + ownedBy(third));
+			}
+
+			// Занятого по имени не позвать и не отпустить.
+			final PhantomTemplate taken = PhantomData.getInstance().getTemplate(mineName);
+			final String stolen = PhantomUi.handle(third, "summon", mineName);
+			final String released = PhantomUi.handle(third, "dismiss", mineName);
+			if ((stolen == null) || (released == null) || !isOwner(first, taken))
+			{
+				failed.add("занятый " + mineName + ": зовут — " + stolen + ", отпускают — " + released);
+			}
+
+			// Свободный баффер — третьему, и окно показывает, кто с кем.
+			final String buffer = PhantomUi.handle(third, "summon", "buffer");
+			final String window = PhantomUi.render(third, "bypass voice .buddy");
+			if ((buffer != null) || (ownedBy(third).size() != 1) || !window.contains(tr("ходит с ") + first.getName()) || !window.contains(tr("свободен")) || !window.contains(tr("Напарников с тобой: ") + 1 + tr(" из ") + 2))
+			{
+				failed.add("баффер и окно третьего: " + buffer + ", с ним " + ownedBy(third) + ", окно " + window.length());
+			}
+
+			// Без лимита — сколько угодно, окно не длиннее предела: блок с приказами только у двух своих.
+			PhantomPartyConfig.PHANTOM_COMPANIONS_PER_PLAYER = 0;
+			final String more = PhantomUi.handle(first, "summon", "buffer");
+			final String most = PhantomUi.handle(first, "summon", "buffer");
+			if ((more != null) || (most != null) || (ownedBy(first).size() != 4))
+			{
+				failed.add("без лимита: " + more + ", " + most + ", с ним " + ownedBy(first));
+			}
+			for (Player player : new Player[] { first, second, third })
+			{
+				final int length = PhantomUi.render(player, "bypass voice .buddy").length();
+				LOGGER.info(tag + player.getName() + " has " + ownedBy(player) + ", window " + length + " chars.");
+				if (length > WINDOW_LIMIT)
+				{
+					failed.add("окно " + player.getName() + ": " + length + " знаков");
+				}
+			}
+
+			// Отпустить по роли — своего, чужой той же роли остаётся.
+			final String dismissed = PhantomUi.handle(first, "dismiss", "healer");
+			if ((dismissed != null) || (ownedBy(first).size() != 3) || (ownedBy(second).size() != 1))
+			{
+				failed.add("отпустить по роли: " + dismissed + ", у первого " + ownedBy(first) + ", у второго " + ownedBy(second));
+			}
+
+			// Автобафф: у первого остались хилер и два баффера. Выключен в настройках — проверять нечего.
+			if (PhantomPartyConfig.PHANTOM_COMPANION_AUTO_BUFF && PhantomSupport.townBuffer())
+			{
+				autoBuffTest(first, PhantomTemplate.Role.HEALER, failed);
+				final Player partyBuffer = autoBuffTest(first, PhantomTemplate.Role.BUFFER, failed);
+
+				// Баффер сам, без «бафни», бафает владельца после вступления в пати. Только в журнал: сколько успеет, зависит от уровня и маны.
+				first.stopAllEffects();
+				onInvited(first, partyBuffer, PartyDistributionType.FINDERS_KEEPERS);
+				Thread.sleep(AUTO_BUFF_OWNER_WAIT);
+				LOGGER.info(tag + partyBuffer.getName() + ", level " + partyBuffer.getLevel() + ", in party " + partyBuffer.isInParty() + ", put " + PhantomSupport.buffsFrom(partyBuffer, first) + " buffs on " + first.getName() + " by itself.");
+			}
+			else
+			{
+				LOGGER.info(tag + "auto buff is off, not checked.");
+			}
+		}
+		catch (Exception e)
+		{
+			failed.add("исключение: " + e);
+			LOGGER.log(Level.WARNING, tag + "failed.", e);
+		}
+		finally
+		{
+			for (PhantomTemplate template : all)
+			{
+				final Companion companion = _companions.get(key(template.getName()));
+				final Player owner = companion == null ? null : World.getPlayer(companion.ownerId);
+				if (owner != null)
+				{
+					dismiss(owner, template, true);
+				}
+			}
+			PhantomPartyConfig.PHANTOM_COMPANIONS_PER_PLAYER = wasLimit;
+			PhantomPartyConfig.PHANTOM_COMPANION_AUTO_BUFF = wasAutoBuff;
+			PhantomSupport.setTownBuffer(null);
+		}
+
+		final long left = all.stream().filter(template -> PhantomManager.getInstance().getPhantom(template) != null).count();
+		if (left != 0)
+		{
+			failed.add("остались в мире: " + left);
+		}
+		LOGGER.info(tag + (failed.isEmpty() ? "passed." : "FAILED: " + failed));
+	}
+
+	/**
+	 * Автобафф одного напарника этой роли: набор встал сам при призыве и не перебрал слотов, висящее заново не накладывается; снятое не возвращается до конца интервала, без ключа и без баффера в мире, а потом возвращается; после смерти и реса набор встаёт снова.
+	 * @param owner владелец
+	 * @param role роль
+	 * @param failed сюда — что не сошлось
+	 * @return проверенный напарник
+	 * @throws InterruptedException сервер останавливается
+	 */
+	private Player autoBuffTest(Player owner, PhantomTemplate.Role role, List<String> failed) throws InterruptedException
+	{
+		PhantomTemplate template = null;
+		for (String name : ownedBy(owner))
+		{
+			final PhantomTemplate candidate = PhantomData.getInstance().getTemplate(name);
+			if ((template == null) && (candidate.getRole() == role))
+			{
+				template = candidate;
+			}
+		}
+
+		final Player phantom = PhantomManager.getInstance().getPhantom(template);
+		final Companion companion = _companions.get(key(template.getName()));
+		final String who = template.getName() + ": ";
+		if (!autoBuffed(phantom))
+		{
+			failed.add(who + "набор не встал при призыве, не хватает " + PhantomSupport.selfBuff(phantom, false));
+			return phantom;
+		}
+
+		LOGGER.info("SelfTest BUDDIES: " + template.getName() + " holds " + phantom.getBuffCount() + " of " + phantom.getStat().getMaxBuffCount() + " buffs and " + phantom.getDanceCount() + " of " + PlayerConfig.DANCES_MAX_AMOUNT + " dances.");
+		if ((phantom.getBuffCount() > phantom.getStat().getMaxBuffCount()) || (phantom.getDanceCount() > PlayerConfig.DANCES_MAX_AMOUNT))
+		{
+			failed.add(who + "перебор слотов: " + phantom.getBuffCount() + " и " + phantom.getDanceCount());
+		}
+		if (PhantomSupport.selfBuff(phantom, true) != 0)
+		{
+			failed.add(who + "висящее накладывается заново");
+		}
+
+		// Снятое не возвращается до конца интервала.
+		companion.nextAutoBuff = System.currentTimeMillis() + AUTO_BUFF_CHECK;
+		phantom.stopSkillEffects(SkillFinishType.REMOVED, PhantomSupport.selfBuffSet(phantom).get(0).getId());
+		Thread.sleep(AUTO_BUFF_SETTLE);
+		if (PhantomSupport.selfBuff(phantom, false) == 0)
+		{
+			failed.add(who + "снятое вернулось раньше интервала");
+		}
+
+		PhantomPartyConfig.PHANTOM_COMPANION_AUTO_BUFF = false;
+		companion.nextAutoBuff = 0;
+		Thread.sleep(AUTO_BUFF_SETTLE);
+		if (PhantomSupport.selfBuff(phantom, false) == 0)
+		{
+			failed.add(who + "наложено без ключа");
+		}
+		PhantomPartyConfig.PHANTOM_COMPANION_AUTO_BUFF = true;
+
+		PhantomSupport.setTownBuffer(false);
+		companion.nextAutoBuff = 0;
+		Thread.sleep(AUTO_BUFF_SETTLE);
+		if (PhantomSupport.selfBuff(phantom, false) == 0)
+		{
+			failed.add(who + "наложено без баффера в мире");
+		}
+		PhantomSupport.setTownBuffer(null);
+
+		companion.nextAutoBuff = 0;
+		if (!autoBuffed(phantom))
+		{
+			failed.add(who + "снятое не вернулось, не хватает " + PhantomSupport.selfBuff(phantom, false));
+		}
+
+		// Смерть снимает бафы, а тик, пока лежит, сбрасывает интервал.
+		phantom.doDie(null);
+		Thread.sleep(AUTO_BUFF_SETTLE);
+		if (PhantomSupport.selfBuff(phantom, false) == 0)
+		{
+			failed.add(who + "смерть не сняла бафы, проверять рес не на чем");
+		}
+		phantom.doRevive();
+		if (!autoBuffed(phantom))
+		{
+			failed.add(who + "после реса набор не встал, не хватает " + PhantomSupport.selfBuff(phantom, false));
+		}
+		return phantom;
+	}
+
+	/**
+	 * Ждёт, пока тик наложит набор: пока охотник, который играет владельца, в телепорте, тика нет.
+	 */
+	private static boolean autoBuffed(Player phantom) throws InterruptedException
+	{
+		for (int attempt = 0; attempt < 12; attempt++)
+		{
+			if (PhantomSupport.selfBuff(phantom, false) == 0)
+			{
+				return true;
+			}
+			Thread.sleep(500);
+		}
+		return false;
 	}
 
 	public static PhantomCompanionManager getInstance()

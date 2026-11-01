@@ -1,0 +1,39 @@
+diff --git a/dist/game/data/stats/skills/custom/mana_potion.xml b/dist/game/data/stats/skills/custom/mana_potion.xml
+index aea2c3b55cf1..58b2f4abd55e 100644
+--- a/dist/game/data/stats/skills/custom/mana_potion.xml
++++ b/dist/game/data/stats/skills/custom/mana_potion.xml
+@@ -12,7 +12,7 @@
+ 		<affectScope>SINGLE</affectScope>
+ 		<effects>
+ 			<effect name="Mp">
+-				<amount>100</amount> <!-- Retail value is 60 -->
++				<amount>1000</amount> <!-- Retail value is 60 -->
+ 				<mode>DIFF</mode>
+ 			</effect>
+ 		</effects>
+diff --git a/dist/game/data/stats/items/custom/mana_potion.xml b/dist/game/data/stats/items/custom/mana_potion.xml
+index 31d23a6d7cc1..8b5554fa06ed 100644
+--- a/dist/game/data/stats/items/custom/mana_potion.xml
++++ b/dist/game/data/stats/items/custom/mana_potion.xml
+@@ -9,7 +9,7 @@
+ 		<set name="immediate_effect" val="true" />
+ 		<set name="material" val="LIQUID" />
+ 		<set name="weight" val="5" />
+-		<set name="price" val="2000" />
++		<set name="price" val="20000" />
+ 		<set name="is_stackable" val="true" />
+ 		<set name="is_oly_restricted" val="true" />
+ 		<set name="handler" val="ItemSkills" />
+diff --git a/dist/game/data/multisell/custom/50039928.xml b/dist/game/data/multisell/custom/50039928.xml
+index 281662b2276e..f60c76af2749 100644
+--- a/dist/game/data/multisell/custom/50039928.xml
++++ b/dist/game/data/multisell/custom/50039928.xml
+@@ -16,7 +16,7 @@
+ 		<production id="1539" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="2000" />
++		<ingredient id="57" count="20000" />
+ 		<production id="728" count="1" />
+ 	</item>
+ 	<item>

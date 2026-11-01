@@ -981,6 +981,21 @@ public class PhantomChat
 
 	private void talk(Player speaker, Player phantom, PhantomTemplate template, String channel, String text, List<Order> orders, String note, boolean owner)
 	{
+		// Реки (раздел 4.95): понятную просьбу решает сервер, мозги только отвечают в характере.
+		if (orders.isEmpty() && (note == null) && !"overheard".equals(channel) && PhantomRecs.getInstance().asks(speaker, phantom, template, text))
+		{
+			final PhantomRecs.Result result = PhantomRecs.getInstance().ask(phantom, speaker);
+			talk(speaker, phantom, template, channel, text, orders, result.note, owner, result.fallback);
+			return;
+		}
+		talk(speaker, phantom, template, channel, text, orders, note, owner, null);
+	}
+
+	/**
+	 * @param line что сказать без мозгов или если они промолчали; {@code null} — обычная заготовка
+	 */
+	private void talk(Player speaker, Player phantom, PhantomTemplate template, String channel, String text, List<Order> orders, String note, boolean owner, String line)
+	{
 		if (!"overheard".equals(channel))
 		{
 			_lastReply.put(pair(phantom, speaker), System.currentTimeMillis());
@@ -994,7 +1009,7 @@ public class PhantomChat
 		}
 		if (!brainEnabled())
 		{
-			fallback(speaker, phantom, channel, orders);
+			fallback(speaker, phantom, channel, orders, line);
 			return;
 		}
 
@@ -1002,11 +1017,15 @@ public class PhantomChat
 		{
 			// Тег приказа из ответа мозгов: только от владельца, только если правила приказ не нашли, LEAVE — только при прощании.
 			final Matcher matcher = TAG.matcher(reply);
-			final Order tagged = matcher.find() ? PhantomOrders.fromTag(matcher.group(1)) : null;
+			final String tag = matcher.find() ? matcher.group(1) : "";
+			final Order tagged = PhantomOrders.fromTag(tag);
 			if (owner && orders.isEmpty() && (tagged != null) && ((tagged != Order.LEAVE) || PhantomOrders.confirmsLeave(text)))
 			{
 				execute(speaker, template, List.of(tagged));
 			}
+
+			// Реки (раздел 4.95): тег на длинную фразу, сервер проверяет те же правила. Не дали — вместо обещания мозгов отказ.
+			final String refused = "REC".equals(tag) ? PhantomRecs.getInstance().onTag(phantom, speaker, template, text) : null;
 
 			// «Разум 2.0», шаг 6: сторговались — новая цена в лавке [[TRADE]] этому игроку (сервер зажимает её в 50–300 % цены магазина).
 			final long price = priceTag(reply);
@@ -1014,13 +1033,17 @@ public class PhantomChat
 			{
 				PhantomNear.getInstance().price(phantom, speaker, price);
 			}
-			final String line = TAG.matcher(PRICE.matcher(reply).replaceAll(" ")).replaceAll("").replaceAll("\\s+", " ").strip();
-			if (!line.isEmpty())
+			final String answer = refused != null ? refused : TAG.matcher(PRICE.matcher(reply).replaceAll(" ")).replaceAll("").replaceAll("\\s+", " ").strip();
+			if (!answer.isEmpty())
 			{
 				_lastReply.put(pair(phantom, speaker), System.currentTimeMillis());
+				say(phantom, speaker, channel, answer);
+			}
+			else if (line != null)
+			{
 				say(phantom, speaker, channel, line);
 			}
-		}, () -> fallback(speaker, phantom, channel, orders), PhantomFocus.getInstance().of(phantom) != null ? FOCUS_TIMEOUT : 0);
+		}, () -> fallback(speaker, phantom, channel, orders, line), PhantomFocus.getInstance().of(phantom) != null ? FOCUS_TIMEOUT : 0);
 	}
 
 	/**
@@ -1032,9 +1055,13 @@ public class PhantomChat
 		return matcher.find() ? Long.parseLong(matcher.group(1)) : -1;
 	}
 
-	private static void fallback(Player speaker, Player phantom, String channel, List<Order> orders)
+	private static void fallback(Player speaker, Player phantom, String channel, List<Order> orders, String line)
 	{
-		if (!orders.isEmpty())
+		if (line != null)
+		{
+			say(phantom, speaker, channel, line);
+		}
+		else if (!orders.isEmpty())
 		{
 			say(phantom, speaker, channel, ORDER_FALLBACK.get(orders.get(0)));
 		}
@@ -1148,6 +1175,11 @@ public class PhantomChat
 		sb.append("},\"phantom\":{");
 		// Шаг 6: охотник сидит лавкой [[TRADE]] для собеседника — вещь и цена, мозги торгуются и возвращают [[PRICE N]].
 		PhantomNear.getInstance().tradeJson(sb, phantom, player, System.currentTimeMillis());
+		// Реки (раздел 4.95): игрок заговорил о них в разговоре — можно ли кинуть, чтобы мозги не обещали зря.
+		if ((note == null) && !"event".equals(channel) && !"overheard".equals(channel))
+		{
+			PhantomRecs.getInstance().json(sb, phantom, player, template, message);
+		}
 		FakePlayerBrain.field(sb, "role", template.getRole().name()).append(',');
 		sb.append("\"hunter\":").append(template.isHunter()).append(',');
 		final PhantomMood mood = template.isHunter() ? PhantomHunterManager.getInstance().mood(phantom) : null;

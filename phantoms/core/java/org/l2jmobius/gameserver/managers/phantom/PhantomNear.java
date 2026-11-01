@@ -175,7 +175,7 @@ final class PhantomNear
 			itemObjectId = item.getObjectId();
 			itemName = item.getName();
 			count = item.getCount();
-			refPrice = item.getTemplate().getReferencePrice();
+			refPrice = saleReference(item);
 			this.price = price;
 			this.until = until;
 			this.adenaBefore = adenaBefore;
@@ -1006,7 +1006,7 @@ final class PhantomNear
 			items.append(i > 0 ? "," : "").append('{');
 			FakePlayerBrain.field(items, "name", item.getName()).append(',');
 			items.append("\"count\":").append(item.getCount()).append(',');
-			items.append("\"price\":").append(item.getTemplate().getReferencePrice()).append('}');
+			items.append("\"price\":").append(saleReference(item)).append('}');
 		}
 		items.append(']');
 
@@ -1109,7 +1109,8 @@ final class PhantomNear
 			return hunter.isCastingNow() ? "кастует" : blocker != null ? "рядом " + blocker.getName() + " — лавку не поставить" : "тут нельзя открыть лавку";
 		}
 
-		final long price = asked > 0 ? clamp(asked, item.getTemplate().getReferencePrice()) : item.getTemplate().getReferencePrice();
+		final long reference = saleReference(item);
+		final long price = asked > 0 ? clamp(asked, reference) : reference;
 		final TradeTask task = new TradeTask(choice, other.getObjectId(), item, price, now + (Math.max(1, PhantomHuntersConfig.HUNTER_TRADE_MINUTES) * 60000L), hunter.getAdena());
 		if (!openStore(hunter, task, other))
 		{
@@ -1312,6 +1313,12 @@ final class PhantomNear
 		final String suffix = matcher.group(2) == null ? "" : matcher.group(2);
 		final double factor = suffix.isEmpty() ? 1 : (suffix.equals("к") || suffix.equals("k")) ? 1000 : 1000000;
 		return Math.round(number * factor);
+	}
+
+	/** Точка отсчёта охотника в лавке для живого: цена магазина с наценкой за рейты (раздел 4.92), от неё и торг, и границы {@link #clamp}. */
+	private static long saleReference(Item item)
+	{
+		return Math.round(item.getTemplate().getReferencePrice() * PhantomMarket.rateFactor());
 	}
 
 	private static long clamp(long asked, long reference)

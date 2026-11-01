@@ -191,7 +191,7 @@ public final class PhantomTwinks
 
 		final PhantomTemplate owner = PhantomData.getInstance().getTemplate(ownerName);
 		final double character = owner == null ? 1 : PhantomHunterManager.priceFactor(owner);
-		final double factor = Math.max(DISCOUNT_FLOOR, character * Math.pow(DISCOUNT_STEP, step));
+		final double factor = Math.max(DISCOUNT_FLOOR, character * Math.pow(DISCOUNT_STEP, step)) * PhantomMarket.rateFactor();
 		final TradeList list = twink.getSellList();
 		list.clear();
 		list.setPackaged(false);

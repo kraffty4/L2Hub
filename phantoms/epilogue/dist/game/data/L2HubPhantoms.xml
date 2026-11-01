@@ -23,6 +23,50 @@
 		<gear grade="S80" minLevel="80" rhand="11279" head="9438" chest="9432" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Dynasty Staff - Holy Spirit - Acumen, Dynasty Circlet, Dynasty Tunic, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
 		<gear grade="S84" minLevel="84" rhand="14147" head="13139" chest="13434" legs="13444" gloves="13445" feet="13446" shots="3952" /> <!-- Vesper Singer - Magic Hold, Vesper Circlet, Vesper Tunic, Vesper Stockings, Vesper Gloves, Vesper Shoes -->
 	</phantom>
+	<!-- Zarya: хилер, Elven Mystic, Elven Oracle, Elven Elder, Eva's Saint -->
+	<phantom name="Zarya" role="HEALER" female="true" face="2" hairStyle="0" hairColor="0" classes="25,29,30,105" aliases="заря;зорька;zorka" x="83691" y="147868" z="-3400">
+		<gear grade="NONE" minLevel="1" rhand="14630" shots="3947" /> <!-- Santa Claus' Hand of Cabrio -->
+		<gear grade="D" minLevel="20" rhand="7890" chest="437" legs="470" gloves="2450" shots="3948" /> <!-- Priest Mace, Mithril Tunic, Mithril Stockings, Mithril Gloves -->
+		<gear grade="C" minLevel="40" rhand="7714" chest="442" legs="473" gloves="2463" shots="3949" /> <!-- Mace of Underworld - Magic Silence, Divine Tunic, Divine Stockings, Divine Gloves -->
+		<gear grade="B" minLevel="52" rhand="8142" head="2417" chest="2399" legs="2404" gloves="5724" feet="5740" shots="3950" /> <!-- Spell Breaker - Mental Shield, Doom Helmet, Tunic of Doom, Stockings of Doom, Doom Gloves - Robe, Doom Boots - Robe -->
+		<gear grade="A" minLevel="61" rhand="8817" head="2419" chest="2409" gloves="5776" feet="5788" shots="3951" /> <!-- Cabrio's Hand - Magic Silence, Majestic Circlet, Majestic Robe, Majestic Gauntlets - Robe, Majestic Boots - Robe -->
+		<gear grade="S" minLevel="76" rhand="6610" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- Arcana Mace - Mana Up, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
+		<gear grade="S80" minLevel="80" rhand="9877" head="9438" chest="10236" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Dynasty Mace - Acumen, Dynasty Circlet, Dynasty Silver Satin Tunic - Healer, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
+		<gear grade="S84" minLevel="84" rhand="14144" head="13142" chest="13437" legs="13454" gloves="13455" feet="13456" shots="3952" /> <!-- Vesper Caster - Mana Up, Vesper Noble Circlet, Vesper Noble Tunic, Vesper Noble Stockings, Vesper Noble Gloves, Vesper Noble Shoes -->
+	</phantom>
+	<!-- Savelich: баффер, Human Mystic, Cleric, Prophet, Hierophant -->
+	<phantom name="Savelich" role="BUFFER" female="false" face="1" hairStyle="1" hairColor="1" classes="10,15,17,98" aliases="савельич;савелий;saveliy" x="83262" y="148536" z="-3400">
+		<gear grade="NONE" minLevel="1" rhand="7816" shots="3947" /> <!-- Apprentice Adventurer's Staff -->
+		<gear grade="D" minLevel="20" rhand="90" chest="436" legs="469" gloves="2447" shots="3948" /> <!-- Goat Head Staff, Tunic of Knowledge, Stockings of Knowledge, Gloves of Knowledge -->
+		<gear grade="C" minLevel="40" rhand="4874" chest="439" legs="471" gloves="2454" shots="3949" /> <!-- Cursed Staff - Magic Poison, Karmian Tunic, Karmian Stockings, Karmian Gloves -->
+		<gear grade="B" minLevel="52" rhand="4900" head="503" chest="2397" legs="2402" gloves="5712" feet="5728" shots="3950" /> <!-- Staff of Evil Spirits - Magic Focus, Zubei's Helmet, Tunic of Zubei, Stockings of Zubei, Zubei's Gauntlets - Robe, Zubei's Boots - Robe -->
+		<gear grade="A" minLevel="61" rhand="11104" head="547" chest="2400" legs="2405" gloves="5770" feet="5782" shots="3951" /> <!-- Branch of the Mother Tree - Nature, Tallum Helm, Tallum Tunic, Tallum Stockings, Tallum Gloves - Robe, Tallum Boots - Robe -->
+		<gear grade="S" minLevel="76" rhand="6587" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- Imperial Staff - Empower, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
+		<gear grade="S80" minLevel="80" rhand="10527" head="9438" chest="10237" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Dynasty Staff - Mana Up, Dynasty Circlet, Dynasty Silver Satin Tunic - Enchanter, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
+		<gear grade="S84" minLevel="84" rhand="14145" head="13139" chest="13434" legs="13444" gloves="13445" feet="13446" shots="3952" /> <!-- Vesper Singer - Empower, Vesper Circlet, Vesper Tunic, Vesper Stockings, Vesper Gloves, Vesper Shoes -->
+	</phantom>
+	<!-- Lilit: хилер, Dark Mystic, Shillien Oracle, Shillien Elder, Shillien Saint -->
+	<phantom name="Lilit" role="HEALER" female="true" face="1" hairStyle="6" hairColor="2" classes="38,42,43,112" aliases="лилит;лиля;lilith" x="83666" y="148194" z="-3400">
+		<gear grade="NONE" minLevel="1" rhand="7" shots="3947" /> <!-- Apprentice's Rod -->
+		<gear grade="D" minLevel="20" rhand="182" chest="437" legs="470" gloves="2450" shots="3948" /> <!-- Doom Hammer, Mithril Tunic, Mithril Stockings, Mithril Gloves -->
+		<gear grade="C" minLevel="40" rhand="7713" chest="442" legs="473" gloves="2463" shots="3949" /> <!-- Mace of Underworld - Mana Up, Divine Tunic, Divine Stockings, Divine Gloves -->
+		<gear grade="B" minLevel="52" rhand="10899" head="2417" chest="2399" legs="2404" gloves="5724" feet="5740" shots="3950" /> <!-- Spell Breaker - Hail - Acumen, Doom Helmet, Tunic of Doom, Stockings of Doom, Doom Gloves - Robe, Doom Boots - Robe -->
+		<gear grade="A" minLevel="61" rhand="8815" head="2419" chest="2409" gloves="5776" feet="5788" shots="3951" /> <!-- Cabrio's Hand - Conversion, Majestic Circlet, Majestic Robe, Majestic Gauntlets - Robe, Majestic Boots - Robe -->
+		<gear grade="S" minLevel="76" rhand="6608" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- Arcana Mace - Acumen, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
+		<gear grade="S80" minLevel="80" rhand="11257" head="9438" chest="10236" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Dynasty Mace - Earth - Mana Up, Dynasty Circlet, Dynasty Silver Satin Tunic - Healer, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
+		<gear grade="S84" minLevel="84" rhand="14142" head="13142" chest="13437" legs="13454" gloves="13455" feet="13456" shots="3952" /> <!-- Vesper Caster - Acumen, Vesper Noble Circlet, Vesper Noble Tunic, Vesper Noble Stockings, Vesper Noble Gloves, Vesper Noble Shoes -->
+	</phantom>
+	<!-- Agafya: баффер, Human Mystic, Cleric, Prophet, Hierophant -->
+	<phantom name="Agafya" role="BUFFER" female="true" face="2" hairStyle="2" hairColor="0" classes="10,15,17,98" aliases="агафья;агаша;agasha" x="83714" y="148131" z="-3400">
+		<gear grade="NONE" minLevel="1" rhand="2373" shots="3947" /> <!-- Eldritch Staff -->
+		<gear grade="D" minLevel="20" rhand="186" chest="436" legs="469" gloves="2447" shots="3948" /> <!-- Staff of Magic, Tunic of Knowledge, Stockings of Knowledge, Gloves of Knowledge -->
+		<gear grade="C" minLevel="40" rhand="4896" chest="439" legs="471" gloves="2454" shots="3949" /> <!-- Demon's Staff - Magic Chaos, Karmian Tunic, Karmian Stockings, Karmian Gloves -->
+		<gear grade="B" minLevel="52" rhand="207" head="2416" chest="2398" legs="2403" gloves="5720" feet="5736" shots="3950" /> <!-- Staff of Phantom, Blue Wolf Helmet, Blue Wolf Tunic, Blue Wolf Stockings, Blue Wolf Gloves - Robe, Blue Wolf Boots - Robe -->
+		<gear grade="A" minLevel="61" rhand="8820" head="2418" chest="2408" gloves="5773" feet="5785" shots="3951" /> <!-- Daimon Crystal - Mental Shield, Helm of Nightmare, Robe of Nightmare, Gauntlets of Nightmare - Robe, Boots of Nightmare - Robe -->
+		<gear grade="S" minLevel="76" rhand="11231" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- Imperial Staff - Nature - Empower, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
+		<gear grade="S80" minLevel="80" rhand="11277" head="9438" chest="10237" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Dynasty Staff - Holy Spirit - Mana Up, Dynasty Circlet, Dynasty Silver Satin Tunic - Enchanter, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
+		<gear grade="S84" minLevel="84" rhand="14145" head="13139" chest="13434" legs="13444" gloves="13445" feet="13446" shots="3952" /> <!-- Vesper Singer - Empower, Vesper Circlet, Vesper Tunic, Vesper Stockings, Vesper Gloves, Vesper Shoes -->
+	</phantom>
 	<!-- Kuzya: охотник, Dwarf Fighter, Artisan, Warsmith, Maestro -->
 	<phantom name="Kuzya" kind="hunter" role="DAMAGE" female="false" face="0" hairStyle="0" hairColor="3" classes="53,56,57,118" aliases="кузя;кузьма" social="1.5" temper="0.5" risk="1" x="115502" y="-177693" z="-904">
 		<gear grade="NONE" minLevel="1" rhand="2370" chest="1146" legs="1147" shots="1835" /> <!-- Guild Member's Club, Squire's Shirt, Squire's Pants -->
