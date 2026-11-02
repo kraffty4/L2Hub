@@ -16,6 +16,7 @@ public class PhantomHuntersConfig
 
 	// Constants
 	public static String HUNTERS_MODE;
+	public static int HUNTERS_MAX;
 	public static boolean DAILY_RHYTHM;
 	public static int DAILY_RHYTHM_STRENGTH;
 	public static int DAILY_RHYTHM_SHIFT;
@@ -100,6 +101,7 @@ public class PhantomHuntersConfig
 	public static int HUNTER_PVP_EVENT_CHANCE;
 	public static boolean HUNTER_SEASONAL_EVENTS;
 	public static boolean HUNTER_SUPER_CHAMPIONS;
+	public static boolean HUNTER_SUPER_BOOST;
 	public static boolean HUNTER_OLYMPIAD;
 	public static int HUNTER_OLYMPIAD_LEVEL;
 	public static int HUNTER_OLYMPIAD_MAX;
@@ -143,6 +145,11 @@ public class PhantomHuntersConfig
 	public static int HUNTER_CLAN_SIZE_MIN;
 	public static int HUNTER_CLAN_SIZE_MAX;
 	public static int HUNTER_CLAN_SHARE;
+	public static boolean HUNTER_CLAN_SUB_UNITS;
+	public static boolean HUNTER_CLAN_STOCK;
+	public static boolean HUNTER_CLAN_HALL;
+	public static int HUNTER_CLAN_HALL_SHARE;
+	public static int HUNTER_TICK_LOG_MINUTES;
 	public static boolean HUNTER_CLAN_INVITE_PLAYERS;
 	public static boolean HUNTER_CLAN_TITLES;
 	public static boolean HUNTER_CLAN_ALLIANCES;
@@ -201,6 +208,10 @@ public class PhantomHuntersConfig
 	public static int HUNTER_FAR_WHISPER_COOLDOWN;
 	/** Когда кулдаун прошёл: шанс письма за минуту, %. */
 	public static int HUNTER_FAR_WHISPER_CHANCE;
+	/** С проклятым оружием сам нападает на живых игроков и охотников рядом, раздел 4.114. */
+	public static boolean HUNTER_CURSED_ATTACKS;
+	/** Правки боя из вклада пользователя, раздел 4.119. */
+	public static boolean HUNTER_COMBAT_FIXES;
 	/** Жесты охотников (раздел 4.80). */
 	public static boolean HUNTER_GESTURES;
 	/** Стоит в городе без дела: раз в столько секунд, × 0,5–1,5, бросок на жест. */
@@ -215,6 +226,7 @@ public class PhantomHuntersConfig
 	public static int HUNTER_PARTY_MAX;
 	public static int HUNTER_PARTY_CHANCE;
 	public static int HUNTER_PARTY_CHANCE_FRIEND;
+	public static int HUNTER_PARTY_CHANCE_HEALER;
 	public static int[] HUNTER_PARTY_MINUTES;
 	public static boolean HUNTER_BRAWLS;
 	public static int HUNTER_BRAWL_GRUDGE;
@@ -228,6 +240,7 @@ public class PhantomHuntersConfig
 	{
 		final ConfigReader config = new ConfigReader(PHANTOM_HUNTERS_CONFIG_FILE);
 		HUNTERS_MODE = config.getString("HuntersMode", "ALWAYS").strip().toUpperCase();
+		HUNTERS_MAX = Math.max(0, config.getInt("HuntersMax", 0));
 		DAILY_RHYTHM = config.getBoolean("DailyRhythm", false);
 		DAILY_RHYTHM_STRENGTH = Math.max(0, Math.min(100, config.getInt("DailyRhythmStrength", 70)));
 		DAILY_RHYTHM_SHIFT = Math.max(-12, Math.min(12, config.getInt("DailyRhythmShift", 0)));
@@ -316,6 +329,7 @@ public class PhantomHuntersConfig
 		HUNTER_PVP_EVENT_CHANCE = Math.max(0, Math.min(100, config.getInt("HunterPvpEventChance", 30)));
 		HUNTER_SEASONAL_EVENTS = config.getBoolean("HunterSeasonalEvents", true);
 		HUNTER_SUPER_CHAMPIONS = config.getBoolean("HunterSuperChampions", true);
+		HUNTER_SUPER_BOOST = config.getBoolean("HunterSuperChampionBoost", false);
 		HUNTER_OLYMPIAD = config.getBoolean("HunterOlympiad", true);
 		HUNTER_OLYMPIAD_LEVEL = Math.max(1, config.getInt("HunterOlympiadLevel", 76));
 		HUNTER_OLYMPIAD_MAX = Math.max(0, config.getInt("HunterOlympiadMax", 10));
@@ -360,6 +374,11 @@ public class PhantomHuntersConfig
 		final int[] clanSize = levels(config.getString("HunterClanSize", "5,25"));
 		HUNTER_CLAN_SIZE_MIN = Math.max(2, clanSize.length > 0 ? clanSize[0] : 5);
 		HUNTER_CLAN_SIZE_MAX = Math.max(HUNTER_CLAN_SIZE_MIN, clanSize.length > 1 ? clanSize[1] : 25);
+		HUNTER_CLAN_SUB_UNITS = config.getBoolean("HunterClanSubUnits", false);
+		HUNTER_CLAN_STOCK = config.getBoolean("HunterClanStock", false);
+		HUNTER_CLAN_HALL = config.getBoolean("HunterClanHall", false);
+		HUNTER_CLAN_HALL_SHARE = Math.max(0, Math.min(100, config.getInt("HunterClanHallShare", 20)));
+		HUNTER_TICK_LOG_MINUTES = Math.max(0, config.getInt("HunterTickLogMinutes", 0));
 		HUNTER_CLAN_SHARE = Math.max(0, Math.min(100, config.getInt("HunterClanShare", 30)));
 		HUNTER_CLAN_INVITE_PLAYERS = config.getBoolean("HunterClanInvitePlayers", true);
 		HUNTER_CLAN_TITLES = config.getBoolean("HunterClanTitles", true);
@@ -414,6 +433,8 @@ public class PhantomHuntersConfig
 		HUNTER_FAR_WHISPER = config.getBoolean("HunterFarWhisper", false);
 		HUNTER_FAR_WHISPER_COOLDOWN = Math.max(60, config.getInt("HunterFarWhisperCooldown", 3600));
 		HUNTER_FAR_WHISPER_CHANCE = Math.max(0, Math.min(100, config.getInt("HunterFarWhisperChance", 5)));
+		HUNTER_CURSED_ATTACKS = config.getBoolean("HunterCursedAttacks", true);
+		HUNTER_COMBAT_FIXES = config.getBoolean("HunterCombatFixes", false);
 		HUNTER_GESTURES = config.getBoolean("HunterGestures", false);
 		HUNTER_GESTURE_IDLE_COOLDOWN = Math.max(10, config.getInt("HunterGestureIdleCooldown", 300));
 		HUNTER_GESTURE_IDLE_CHANCE = Math.max(0, Math.min(100, config.getInt("HunterGestureIdleChance", 30)));
@@ -425,6 +446,7 @@ public class PhantomHuntersConfig
 		HUNTER_PARTY_MAX = Math.max(2, Math.min(9, config.getInt("HunterPartyMax", 3)));
 		HUNTER_PARTY_CHANCE = Math.max(0, Math.min(100, config.getInt("HunterPartyChance", 25)));
 		HUNTER_PARTY_CHANCE_FRIEND = Math.max(0, Math.min(100, config.getInt("HunterPartyChanceFriend", 80)));
+		HUNTER_PARTY_CHANCE_HEALER = Math.max(0, Math.min(100, config.getInt("HunterPartyChanceHealer", 0)));
 		HUNTER_PARTY_MINUTES = levels(config.getString("HunterPartyMinutes", "20,60"));
 		HUNTER_BRAWLS = config.getBoolean("HunterBrawls", true);
 		HUNTER_BRAWL_GRUDGE = Math.max(1, config.getInt("HunterBrawlGrudge", 5));

@@ -44,6 +44,16 @@ public final class PhantomPath
 	}
 
 	/**
+	 * Есть ли на клетке пол для этой высоты. {@link GeoEngine#getHeight} сам не скажет: в многослойной клетке, где ближайший слой выше больше чем на 1000, а ниже нет ни одного, он отвечает самой запрошенной высотой, и телепорт туда ставит за карту (подвал Крумы, 2026-11-01).
+	 * Слои кратны 8, поэтому на нечётной высоте такой ответ виден сразу. Где геодаты нет вовсе, проверять нечего.
+	 */
+	public static boolean hasFloor(GeoEngine geo, int x, int y, int z)
+	{
+		final int probe = z | 1;
+		return !geo.hasGeo(x, y) || (geo.getHeight(x, y, probe) != probe);
+	}
+
+	/**
 	 * Как {@link #find(int, int, int, int, int, int, int, int)}, со сводкой цены: раз в {@link #STATS_INTERVAL} — сколько маршрутов, сколько без пути, среднее и худшее время.
 	 */
 	public static List<Location> find(int sx, int sy, int sz, int tx, int ty, int tz, int reach, int instanceId)

@@ -1,0 +1,16 @@
+L2Hub: войну можно остановить, пока дерутся охотники клана. Запрет на перемирие в бою смотрел на всех членов клана, а охотники дерутся всегда (docs/PHANTOMS.md).
+
+diff --git a/java/org/l2jmobius/gameserver/network/clientpackets/RequestStopPledgeWar.java b/java/org/l2jmobius/gameserver/network/clientpackets/RequestStopPledgeWar.java
+index b372831957ae3569e98bd4a78434709200c49495..02b1bb0d7e266ff68d72b2ef28aa43843bf09494 100644
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/RequestStopPledgeWar.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/RequestStopPledgeWar.java
+@@ -97,7 +97,8 @@ public class RequestStopPledgeWar extends ClientPacket
+ 		
+ 		for (ClanMember member : playerClan.getMembers())
+ 		{
+-			if ((member == null) || (member.getPlayer() == null))
++			// L2Hub: в бою считаются только живые игроки с клиентом. В клане с охотниками кто-то из них дерётся всегда, и войну было не остановить.
++			if ((member == null) || (member.getPlayer() == null) || (member.getPlayer().getClient() == null) || member.getPlayer().getClient().isDetached())
+ 			{
+ 				continue;
+ 			}

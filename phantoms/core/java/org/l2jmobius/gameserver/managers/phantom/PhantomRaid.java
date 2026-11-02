@@ -710,7 +710,7 @@ public final class PhantomRaid
 			final int x = bossX + (int) (Math.cos(angle) * RALLY_DISTANCE);
 			final int y = bossY + (int) (Math.sin(angle) * RALLY_DISTANCE);
 			final int z = geo.getHeight(x, y, bossZ);
-			if ((Math.abs(z - bossZ) < 400) && PhantomCompat.canMoveToTarget(geo, x, y, z, bossX, bossY, bossZ, 0))
+			if (PhantomPath.hasFloor(geo, x, y, bossZ) && (Math.abs(z - bossZ) < 400) && PhantomCompat.canMoveToTarget(geo, x, y, z, bossX, bossY, bossZ, 0))
 			{
 				return new Location(x, y, z);
 			}
@@ -1012,14 +1012,14 @@ public final class PhantomRaid
 					}
 					raid.stage = Stage.FIGHT;
 					raid.stageUntil = now + (raid.thanatos ? HUNT_TIME : FIGHT_TIME);
-					// Множители — для РБ (их HP и защита не по силам пати своего уровня); суперчемпион — обычный моб x20 HP, бьют как есть;
+					// Множители — для РБ (их HP и защита не по силам пати своего уровня); суперчемпион — обычный моб x20 HP, бьют как есть, а толстому (High Five, x100) — те же множители по HunterSuperChampionBoost;
 					// эпика ослабляет малый мир для всех (PhantomEpics), охотников бережёт только броня; Танатос — без множителей.
-					if (!raid.superChampion && !raid.epic && !raid.thanatos && ((PhantomHuntersConfig.HUNTER_RAID_DAMAGE > 1) || PhantomHuntersConfig.HUNTER_RAID_RIVALS))
+					if ((!raid.superChampion || PhantomHuntersConfig.HUNTER_SUPER_BOOST) && !raid.epic && !raid.thanatos && ((PhantomHuntersConfig.HUNTER_RAID_DAMAGE > 1) || PhantomHuntersConfig.HUNTER_RAID_RIVALS))
 					{
 						raid.damage = new ConsumerEventListener(raid.boss, EventType.ON_CREATURE_DAMAGE_RECEIVED, (OnCreatureDamageReceived event) -> onBossDamaged(raid, event), this);
 						raid.boss.addListener(raid.damage);
 					}
-					if (!raid.superChampion && !raid.thanatos && (armorOf(raid) > 1))
+					if ((!raid.superChampion || PhantomHuntersConfig.HUNTER_SUPER_BOOST) && !raid.thanatos && (armorOf(raid) > 1))
 					{
 						armor(raid, player);
 						for (int id : raid.members)
@@ -1203,7 +1203,7 @@ public final class PhantomRaid
 			final Player member = World.getPlayer(id);
 			if ((member != null) && !member.isDead())
 			{
-				member.teleToLocation(near(rally), true);
+				member.teleToLocation(near(rally), false);
 			}
 		}
 		for (int id : raid.players)
@@ -1229,15 +1229,30 @@ public final class PhantomRaid
 			final Player member = World.getPlayer(id);
 			if ((member != null) && (id != raid.dutyId) && !member.isDead() && !member.isTeleporting() && (member.calculateDistance2D(leader) > REGROUP_RANGE))
 			{
-				member.teleToLocation(near(leader.getLocation()), true);
+				member.teleToLocation(near(leader.getLocation()), false);
 			}
 		}
 	}
 
+	/**
+	 * Точка рядом, куда можно дойти по геодате: на краю пола в 120 от точки сбора слоя может не быть, и телепорт ставил на другой этаж или в пустоту (Крума, 2026-11-01). Такой стороны нет ни одной — сама точка.
+	 */
 	private static Location near(Location at)
 	{
-		final double angle = Rnd.nextDouble() * 2 * Math.PI;
-		return new Location(at.getX() + (int) (Math.cos(angle) * 120), at.getY() + (int) (Math.sin(angle) * 120), at.getZ());
+		final GeoEngine geo = GeoEngine.getInstance();
+		final double start = Rnd.nextDouble() * 2 * Math.PI;
+		for (int i = 0; i < 8; i++)
+		{
+			final double angle = start + ((i * Math.PI) / 4);
+			final int x = at.getX() + (int) (Math.cos(angle) * 120);
+			final int y = at.getY() + (int) (Math.sin(angle) * 120);
+			final int z = geo.getHeight(x, y, at.getZ());
+			if (PhantomPath.hasFloor(geo, x, y, at.getZ()) && (Math.abs(z - at.getZ()) < 100) && PhantomCompat.canMoveToTarget(geo, at.getX(), at.getY(), at.getZ(), x, y, z, 0))
+			{
+				return new Location(x, y, z);
+			}
+		}
+		return at;
 	}
 
 	/**
@@ -1800,7 +1815,7 @@ public final class PhantomRaid
 		{
 			return tr("Не хватает адены на телепорт: ") + fee + ".";
 		}
-		player.teleToLocation(near(raid.rally), true);
+		player.teleToLocation(near(raid.rally), false);
 		LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " teleports to the raid on " + raid.bossName + ".");
 		return null;
 	}

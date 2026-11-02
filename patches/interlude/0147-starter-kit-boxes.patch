@@ -1,0 +1,473 @@
+diff --git a/dist/game/data/scripts/custom/L2HubBoardTest/L2HubBoardTest.java b/dist/game/data/scripts/custom/L2HubBoardTest/L2HubBoardTest.java
+index 1b83af3adc34807656494efe5474a0807288077a..12dba94991d4a631fe01bb477d6f232b38ef47e5 100644
+--- a/dist/game/data/scripts/custom/L2HubBoardTest/L2HubBoardTest.java
++++ b/dist/game/data/scripts/custom/L2HubBoardTest/L2HubBoardTest.java
+@@ -26,11 +26,16 @@ import org.l2jmobius.gameserver.entity.Location;
+ import org.l2jmobius.gameserver.entity.World;
+ import org.l2jmobius.gameserver.entity.actor.Creature;
+ import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.entity.item.EtcItem;
+ import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
+ import org.l2jmobius.gameserver.entity.item.instance.Item;
+ import org.l2jmobius.gameserver.entity.itemcontainer.Inventory;
+ import org.l2jmobius.gameserver.entity.itemcontainer.PlayerInventory;
+ import org.l2jmobius.gameserver.handler.CommunityBoardHandler;
++import org.l2jmobius.gameserver.handler.IItemHandler;
++import org.l2jmobius.gameserver.handler.ItemHandler;
++import org.l2jmobius.gameserver.mechanics.events.Containers;
++import org.l2jmobius.gameserver.mechanics.events.EventType;
+ import org.l2jmobius.gameserver.managers.phantom.HuntSpotData;
+ import org.l2jmobius.gameserver.managers.phantom.PhantomHunterManager;
+ import org.l2jmobius.gameserver.managers.phantom.PhantomManager;
+@@ -91,6 +96,7 @@ public class L2HubBoardTest
+ 			spots(pick(spare, p -> p.getLevel() >= 20));
+ 			clan(pick(spare, p -> (p.getClan() == null) && (p.getLevel() >= 10)), spare);
+ 			kits(spare);
++			boxes(spare);
+ 			LOGGER.info(TAG + "done: " + _ok + " ok, " + _wrong + " wrong.");
+ 		}
+ 		catch (Throwable e)
+@@ -415,6 +421,86 @@ public class L2HubBoardTest
+ 		kit("weakest", weakest, "heavy");
+ 	}
+ 
++	/**
++	 * Коробка набора в инвентаре: кому и на каком уровне, двойной клик, повторов нет.
++	 */
++	private static void boxes(List<Player> spare) throws Exception
++	{
++		check("boxes: level windows", (L2HubKits.boxGrade(1) == 0) && (L2HubKits.boxGrade(19) == 0) && (L2HubKits.boxGrade(20) == 1) && (L2HubKits.boxGrade(39) == 1) && (L2HubKits.boxGrade(40) == 2) && (L2HubKits.boxGrade(51) == 2) && (L2HubKits.boxGrade(52) == -1));
++		for (EventType type : new EventType[]
++		{
++			EventType.ON_PLAYER_LOGIN,
++			EventType.ON_PLAYER_LEVEL_CHANGED
++		})
++		{
++			check("boxes: listens to " + type, Containers.Global().getListeners(type).stream().anyMatch(l -> l.getOwner().getClass().getSimpleName().equals("L2HubKitBoxes")));
++		}
++		boolean handled = true;
++		for (int id : new int[]
++		{
++			8966,
++			8967,
++			8968,
++			9130,
++			9131,
++			9132
++		})
++		{
++			final IItemHandler handler = ItemHandler.getInstance().getHandler((EtcItem) ItemData.getInstance().getTemplate(id));
++			handled &= (handler != null) && handler.getClass().getSimpleName().equals("L2HubKitBox");
++		}
++		check("boxes: all six open with our handler", handled);
++
++		final Player player = pick(spare, p -> (L2HubKits.boxGrade(p.getLevel()) >= 0) && !L2HubKits.taken(p, L2HubKits.boxGrade(p.getLevel())));
++		if (player == null)
++		{
++			LOGGER.info(TAG + "boxes: no hunter of a box level.");
++			return;
++		}
++		park(player);
++		final List<long[]> moved = unload(player);
++		try
++		{
++			boxChecks(player);
++		}
++		finally
++		{
++			reload(player, moved);
++		}
++	}
++
++	private static void boxChecks(Player player)
++	{
++		final int grade = L2HubKits.boxGrade(player.getLevel());
++		final int id = L2HubKits.boxId(player, grade);
++		final String armor = L2HubKits.armor(player);
++		final String who = "boxes (" + player.getPlayerClass() + ", " + player.getLevel() + ", " + L2HubKits.kind(player) + ", " + armor + "): ";
++		final IItemHandler handler = ItemHandler.getInstance().getHandler((EtcItem) ItemData.getInstance().getTemplate(id));
++		final PlayerInventory bag = player.getInventory();
++
++		L2HubKits.giveBox(player);
++		check(who + "a hunter gets no box", bag.getInventoryItemCount(id, -1) == 0);
++		check(who + "box put", L2HubKits.offerBox(player) && (bag.getInventoryItemCount(id, -1) == 1));
++		check(who + "box only once", !L2HubKits.offerBox(player) && (bag.getInventoryItemCount(id, -1) == 1));
++
++		final List<int[]> goods = L2HubKits.goods(player, grade, armor);
++		final Map<Integer, Long> expected = new HashMap<>(counts(player, goods));
++		for (int[] good : goods)
++		{
++			expected.merge(good[0], (long) good[1], Long::sum);
++		}
++		final boolean opened = handler.onItemUse(player, bag.getItemByItemId(id), false);
++		check(who + "double click gives the kit, " + goods.size() + " kinds, and takes the box", opened && counts(player, goods).equals(expected) && L2HubKits.taken(player, grade) && (bag.getInventoryItemCount(id, -1) == 0));
++
++		player.addItem(ItemProcessType.REWARD, id, 1, player, false);
++		final boolean again = handler.onItemUse(player, bag.getItemByItemId(id), false);
++		check(who + "kit already taken: the box goes, no goods", again && counts(player, goods).equals(expected) && (bag.getInventoryItemCount(id, -1) == 0));
++		for (int[] good : goods)
++		{
++			player.destroyItemByItemId(ItemProcessType.DESTROY, good[0], good[1], player, false);
++		}
++	}
++
+ 	/**
+ 	 * Охотник приходит со своей сумкой, на копии мира она бывает забита. Наборы проверяются на разгруженном, вещи возвращаются.
+ 	 */
+diff --git a/dist/game/data/scripts/custom/L2HubKitBoxes/L2HubKitBoxes.java b/dist/game/data/scripts/custom/L2HubKitBoxes/L2HubKitBoxes.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..a6c28beccb7f352ce0fac308c7779f88f1d04d38
+--- /dev/null
++++ b/dist/game/data/scripts/custom/L2HubKitBoxes/L2HubKitBoxes.java
+@@ -0,0 +1,24 @@
++package custom.L2HubKitBoxes;
++
++import org.l2jmobius.gameserver.mechanics.events.Containers;
++import org.l2jmobius.gameserver.mechanics.events.EventType;
++import org.l2jmobius.gameserver.mechanics.events.holders.actor.player.OnPlayerLevelChanged;
++import org.l2jmobius.gameserver.mechanics.events.holders.actor.player.OnPlayerLogin;
++import org.l2jmobius.gameserver.mechanics.events.listeners.ConsumerEventListener;
++
++import handlers.bypass.communityboard.L2HubKits;
++
++/**
++ * L2Hub: коробки стартовых наборов живым игрокам: на входе в игру и при новом уровне ({@link L2HubKits#giveBox}).
++ * @author L2Hub
++ */
++public class L2HubKitBoxes
++{
++	private static final L2HubKitBoxes OWNER = new L2HubKitBoxes();
++
++	public static void main(String[] args)
++	{
++		Containers.Global().addListener(new ConsumerEventListener(Containers.Global(), EventType.ON_PLAYER_LOGIN, (OnPlayerLogin event) -> L2HubKits.giveBox(event.getPlayer()), OWNER));
++		Containers.Global().addListener(new ConsumerEventListener(Containers.Global(), EventType.ON_PLAYER_LEVEL_CHANGED, (OnPlayerLevelChanged event) -> L2HubKits.giveBox(event.getPlayer()), OWNER));
++	}
++}
+diff --git a/dist/game/data/scripts/handlers/MasterHandler.java b/dist/game/data/scripts/handlers/MasterHandler.java
+index d7e7b22dc23307e6535fd109af103763b75f7267..172148d990d6e1773d9f434bb17798334bf90095 100644
+--- a/dist/game/data/scripts/handlers/MasterHandler.java
++++ b/dist/game/data/scripts/handlers/MasterHandler.java
+@@ -226,6 +226,7 @@ import handlers.items.CharmOfCourage;
+ import handlers.items.Elixir;
+ import handlers.items.EnchantScrolls;
+ import handlers.items.ExtractableItems;
++import handlers.items.L2HubKitBox;
+ import handlers.items.FishShots;
+ import handlers.items.Harvester;
+ import handlers.items.ItemSkills;
+@@ -478,6 +479,7 @@ public class MasterHandler
+ 			Elixir.class,
+ 			EnchantScrolls.class,
+ 			ExtractableItems.class,
++			L2HubKitBox.class, // L2Hub: коробка стартового набора
+ 			FishShots.class,
+ 			Harvester.class,
+ 			ItemSkills.class,
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+index d19b4d1d423d79ce0e66a2d026212e29065e0b89..933f4583f921ee7110068326db522b27833f4880 100644
+--- a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+@@ -125,6 +125,7 @@ public class L2HubBoard implements IParseBoardHandler
+ 		java.util.Map.entry("Суперчемпионы, сезонные события и расписание ивентов.", "Super champions, seasonal events and the event schedule."),
+ 		java.util.Map.entry("Стартовые наборы", "Starter kits"),
+ 		java.util.Map.entry("<br><font color=\"808080\">Наборы выключены в настройках сервера (L2HubTown.ini, TownStarterKits).</font>", "<br><font color=\"808080\">Starter kits are turned off in the server settings (L2HubTown.ini, TownStarterKits).</font>"),
++		java.util.Map.entry("В инвентаре Item Set Box, твой стартовый набор: открой двойным кликом.", "An Item Set Box with your starter kit is in your inventory: double-click to open."),
+ 		java.util.Map.entry("Набор выдан, он в инвентаре.", "Kit given, it is in your inventory."),
+ 		java.util.Map.entry("Бесплатно, один раз на персонажа на каждый грейд. Внутри оружие по классу, броня на выбор, бижутерия и 1000 сосок.", "Free, once per character for each grade. Inside: a weapon for your class, armor of your choice, jewelry and 1000 shots."),
+ 		java.util.Map.entry("Без грейда", "No grade"),
+@@ -300,7 +301,7 @@ public class L2HubBoard implements IParseBoardHandler
+ 	 * @param key TownBuffer или TownGmShop
+ 	 * @return включено (нет файла или ключа — включено)
+ 	 */
+-	private static boolean townOn(String key)
++	static boolean townOn(String key)
+ 	{
+ 		final java.io.File file = new java.io.File("./config/Custom/L2HubTown.ini");
+ 		if (!file.isFile())
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubKits.java b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubKits.java
+index 247cfb98d831a987cf62866497fa945ab6925098..eab3f48e894f42f842988dcc5b4c28ba93d27cc6 100644
+--- a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubKits.java
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubKits.java
+@@ -9,6 +9,8 @@ import org.l2jmobius.gameserver.data.xml.ItemData;
+ import org.l2jmobius.gameserver.entity.actor.Player;
+ import org.l2jmobius.gameserver.entity.item.ItemTemplate;
+ import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
++import org.l2jmobius.gameserver.entity.item.instance.Item;
++import org.l2jmobius.gameserver.managers.phantom.PhantomManager;
+ import org.l2jmobius.gameserver.mechanics.variables.PlayerVariables;
+ 
+ /**
+@@ -16,7 +18,8 @@ import org.l2jmobius.gameserver.mechanics.variables.PlayerVariables;
+  * <ul>
+  * <li>Бесплатно, один раз на персонажа на каждый грейд: NG с любого уровня, D с 20-го, C с 40-го (переменная персонажа L2HubKit_&lt;грейд&gt;).</li>
+  * <li>Тип брони выбирает игрок, оружие и 1000 сосок — по классу; лук и арбалет получают ещё 1000 снарядов.</li>
+- * <li>Охотники наборы не берут: сюда ведёт только кнопка доски.</li>
++ * <li>Новичку набор лежит в инвентаре коробкой: родная коробка клиента Item Set Box, двойной клик — и набор его ({@link #openBox}), броня по классу ({@link #armor}). Набор тот же и один на грейд с доской.</li>
++ * <li>Охотники наборы не берут: у них нет ни кнопки доски, ни коробки ({@link #giveBox}).</li>
+  * </ul>
+  */
+ public final class L2HubKits
+@@ -42,6 +45,26 @@ public final class L2HubKits
+ 		20,
+ 		40
+ 	};
++	// До этого уровня коробку ещё кладём: выше набор уже не нужен, он остаётся на доске.
++	private static final int[] BOX_UNTIL =
++	{
++		20,
++		40,
++		52
++	};
++	// Коробки клиента: No Grade, D-Grade, C-Grade Item Set Box.
++	private static final int[] BOXES_WARRIOR =
++	{
++		8966,
++		8967,
++		8968
++	};
++	private static final int[] BOXES_MAGE =
++	{
++		9130,
++		9131,
++		9132
++	};
+ 	private static final int SHOTS_COUNT = 1000;
+ 	private static final int[] SHOTS =
+ 	{
+@@ -191,6 +214,99 @@ public final class L2HubKits
+ 		return null;
+ 	}
+ 
++	/**
++	 * Живому игроку — коробка набора, до которого он дорос: на входе в игру и при новом уровне.
++	 * @param player кто вошёл или вырос
++	 */
++	public static void giveBox(Player player)
++	{
++		if (!PhantomManager.getInstance().isPhantom(player) && L2HubBoard.townOn(KEY) && offerBox(player))
++		{
++			player.sendMessage(L2HubBoard.tr("В инвентаре Item Set Box, твой стартовый набор: открой двойным кликом."));
++		}
++	}
++
++	/**
++	 * Положить коробку, если по уровню положена: набор ещё не взят, коробка этого грейда ещё не выдавалась (переменная персонажа L2HubKitBox_&lt;грейд&gt;). Выброшенная не возвращается, набор остаётся на доске.
++	 * @param player кому
++	 * @return положена
++	 */
++	public static boolean offerBox(Player player)
++	{
++		final int grade = boxGrade(player.getLevel());
++		if ((grade < 0) || taken(player, grade) || player.getVariables().getBoolean(boxVariable(grade), false))
++		{
++			return false;
++		}
++		final PlayerVariables variables = player.getVariables();
++		variables.set(boxVariable(grade), true);
++		variables.storeMe();
++		player.addItem(ItemProcessType.REWARD, boxId(player, grade), 1, player, true);
++		return true;
++	}
++
++	/**
++	 * Двойной клик по коробке: набор как на доске, броня по классу. Не влез — коробка остаётся, уже взятый на доске — коробка просто исчезает.
++	 * @param player кто открыл
++	 * @param box коробка
++	 * @return коробка открыта
++	 */
++	public static boolean openBox(Player player, Item box)
++	{
++		final int grade = gradeOfBox(box.getId());
++		if (grade < 0)
++		{
++			return false;
++		}
++		if (!taken(player, grade))
++		{
++			final String error = take(player, grade, armor(player));
++			player.sendMessage(error != null ? error : L2HubBoard.tr("Набор выдан, он в инвентаре."));
++			if (error != null)
++			{
++				return false;
++			}
++		}
++		else
++		{
++			player.sendMessage(L2HubBoard.tr("Этот набор ты уже получил."));
++		}
++		return player.destroyItem(ItemProcessType.FEE, box.getObjectId(), 1, player, true);
++	}
++
++	/**
++	 * Коробка какого грейда положена на этом уровне.
++	 * @param level уровень персонажа
++	 * @return номер в {@link #GRADES} или -1
++	 */
++	public static int boxGrade(int level)
++	{
++		for (int grade = 0; grade < GRADES.length; grade++)
++		{
++			if ((level >= MIN_LEVEL[grade]) && (level < BOX_UNTIL[grade]))
++			{
++				return grade;
++			}
++		}
++		return -1;
++	}
++
++	public static int boxId(Player player, int grade)
++	{
++		return (player.isMageClass() ? BOXES_MAGE : BOXES_WARRIOR)[grade];
++	}
++
++	/**
++	 * Броня коробки: магам роба, кинжалам, лукам, кулакам и камаэлям лёгкая, остальным тяжёлая.
++	 * @param player кому
++	 * @return heavy, light или robe
++	 */
++	public static String armor(Player player)
++	{
++		final String kind = kind(player);
++		return kind.equals("MAGIC") ? "robe" : kamael(kind) || kind.equals("DAGGER") || kind.equals("BOW") || kind.equals("FIST") ? "light" : "heavy";
++	}
++
+ 	/**
+ 	 * Что лежит в наборе: пары «вещь, количество».
+ 	 * @param player кому
+@@ -284,6 +400,23 @@ public final class L2HubKits
+ 		return "L2HubKit_" + GRADES[grade];
+ 	}
+ 
++	private static String boxVariable(int grade)
++	{
++		return "L2HubKitBox_" + GRADES[grade];
++	}
++
++	private static int gradeOfBox(int id)
++	{
++		for (int grade = 0; grade < GRADES.length; grade++)
++		{
++			if ((BOXES_WARRIOR[grade] == id) || (BOXES_MAGE[grade] == id))
++			{
++				return grade;
++			}
++		}
++		return -1;
++	}
++
+ 	private static String name(int id)
+ 	{
+ 		return ItemData.getInstance().getTemplate(id).getName();
+diff --git a/dist/game/data/scripts/handlers/items/L2HubKitBox.java b/dist/game/data/scripts/handlers/items/L2HubKitBox.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..43a4276fca166e0c31dfd2c12acd8f859f7ee5ac
+--- /dev/null
++++ b/dist/game/data/scripts/handlers/items/L2HubKitBox.java
+@@ -0,0 +1,26 @@
++package handlers.items;
++
++import org.l2jmobius.gameserver.entity.actor.Playable;
++import org.l2jmobius.gameserver.entity.item.instance.Item;
++import org.l2jmobius.gameserver.handler.IItemHandler;
++import org.l2jmobius.gameserver.network.SystemMessageId;
++
++import handlers.bypass.communityboard.L2HubKits;
++
++/**
++ * L2Hub: двойной клик по коробке стартового набора ({@link L2HubKits#openBox}).
++ * @author L2Hub
++ */
++public class L2HubKitBox implements IItemHandler
++{
++	@Override
++	public boolean onItemUse(Playable playable, Item item, boolean forceUse)
++	{
++		if (!playable.isPlayer())
++		{
++			playable.sendPacket(SystemMessageId.YOUR_PET_CANNOT_CARRY_THIS_ITEM);
++			return false;
++		}
++		return L2HubKits.openBox(playable.asPlayer(), item);
++	}
++}
+diff --git a/dist/game/data/stats/items/08900-08999.xml b/dist/game/data/stats/items/08900-08999.xml
+index 0975c25393d6c914ddf018ffbb09a4111df22a97..e159c603d70722653076d74a7afe72dc801ab5d9 100644
+--- a/dist/game/data/stats/items/08900-08999.xml
++++ b/dist/game/data/stats/items/08900-08999.xml
+@@ -929,10 +929,7 @@
+ 		<set name="is_dropable" val="false" />
+ 		<set name="is_sellable" val="false" />
+ 		<set name="is_stackable" val="true" />
+-		<set name="handler" val="ItemSkills" />
+-		<skills>
+-			<skill id="2308" level="25" /> <!-- Event Item -->
+-		</skills>
++		<set name="handler" val="L2HubKitBox" />
+ 	</item>
+ 	<item id="8967" type="EtcItem" name="D Grade Item Set Box (Warrior Use)">
+ 		<!-- If you double-click on it, you can obtain a Fighter-Use D-Grade Item. (This item can be used when the weight gauge is below 80% and 10 or more empty slots are available in your inventory.) -->
+@@ -945,10 +942,7 @@
+ 		<set name="is_dropable" val="false" />
+ 		<set name="is_sellable" val="false" />
+ 		<set name="is_stackable" val="true" />
+-		<set name="handler" val="ItemSkills" />
+-		<skills>
+-			<skill id="2308" level="26" /> <!-- Event Item -->
+-		</skills>
++		<set name="handler" val="L2HubKitBox" />
+ 	</item>
+ 	<item id="8968" type="EtcItem" name="C Grade Item Set Box (Warrior Use)">
+ 		<!-- If you double-click on it, you can obtain a Fighter-Use C-Grade Item. (This item can be used when the weight gauge is below 80% and 10 or more empty slots are available in your inventory.) -->
+@@ -961,10 +955,7 @@
+ 		<set name="is_dropable" val="false" />
+ 		<set name="is_sellable" val="false" />
+ 		<set name="is_stackable" val="true" />
+-		<set name="handler" val="ItemSkills" />
+-		<skills>
+-			<skill id="2308" level="27" /> <!-- Event Item -->
+-		</skills>
++		<set name="handler" val="L2HubKitBox" />
+ 	</item>
+ 	<item id="8969" type="EtcItem" name="B Grade Item Set Box (Warrior Use)">
+ 		<!-- If you double-click on it, you can obtain a Fighter-Use B-Grade Item. (This item can be used when the weight gauge is below 80% and 10 or more empty slots are available in your inventory.) -->
+diff --git a/dist/game/data/stats/items/09100-09199.xml b/dist/game/data/stats/items/09100-09199.xml
+index d3ce14b8753a43a7b80df765864c441548ba20f6..5a6c1d1bdb6e79a7e636f311802e313d9314be64 100644
+--- a/dist/game/data/stats/items/09100-09199.xml
++++ b/dist/game/data/stats/items/09100-09199.xml
+@@ -513,10 +513,7 @@
+ 		<set name="is_dropable" val="false" />
+ 		<set name="is_sellable" val="false" />
+ 		<set name="is_stackable" val="true" />
+-		<set name="handler" val="ItemSkills" />
+-		<skills>
+-			<skill id="2308" level="31" /> <!-- Event Item -->
+-		</skills>
++		<set name="handler" val="L2HubKitBox" />
+ 	</item>
+ 	<item id="9131" type="EtcItem" name="D Grade Item Set Box (Magic Use)">
+ 		<!-- If you double-click on it, you can obtain a Magic-Use D-Grade Item. (This item can be used when the weight gauge is below 80% and 10 or more empty slots are available in your inventory.) -->
+@@ -529,10 +526,7 @@
+ 		<set name="is_dropable" val="false" />
+ 		<set name="is_sellable" val="false" />
+ 		<set name="is_stackable" val="true" />
+-		<set name="handler" val="ItemSkills" />
+-		<skills>
+-			<skill id="2308" level="32" /> <!-- Event Item -->
+-		</skills>
++		<set name="handler" val="L2HubKitBox" />
+ 	</item>
+ 	<item id="9132" type="EtcItem" name="C Grade Item Set Box (Magic Use)">
+ 		<!-- If you double-click on it, you can obtain a Magic-Use C-Grade Item. (This item can be used when the weight gauge is below 80% and 10 or more empty slots are available in your inventory.) -->
+@@ -545,10 +539,7 @@
+ 		<set name="is_dropable" val="false" />
+ 		<set name="is_sellable" val="false" />
+ 		<set name="is_stackable" val="true" />
+-		<set name="handler" val="ItemSkills" />
+-		<skills>
+-			<skill id="2308" level="33" /> <!-- Event Item -->
+-		</skills>
++		<set name="handler" val="L2HubKitBox" />
+ 	</item>
+ 	<item id="9133" type="EtcItem" name="B Grade Item Set Box (Magic Use)">
+ 		<!-- If you double-click on it, you can obtain a Magic-Use B-Grade Item. (This item can be used when the weight gauge is below 80% and 10 or more empty slots are available in your inventory.) -->

@@ -58,7 +58,7 @@ index ff0bdbc2cc2c8422505998bedc0d942f74c111e6..520ad00a5a08828ac9e2aa60bf6d7965
 +# L2Hub: общая цифра и из кого она: живых, охотников, фантомов (PhantomOnline).
 +EnableOnlineCommand = True
 diff --git a/dist/game/data/scripts/handlers/MasterHandler.java b/dist/game/data/scripts/handlers/MasterHandler.java
-index d7e7b22dc23307e6535fd109af103763b75f7267..61fb52457112f834c1faa3d5f21c8b4f4cd9dc88 100644
+index 172148d990d6e1773d9f434bb17798334bf90095..a2fe0806335e2592f31b0551bd25c57b8a2efde9 100644
 --- a/dist/game/data/scripts/handlers/MasterHandler.java
 +++ b/dist/game/data/scripts/handlers/MasterHandler.java
 @@ -164,6 +164,8 @@ import handlers.chat.commands.admin.AdminPForge;
@@ -82,7 +82,7 @@ index d7e7b22dc23307e6535fd109af103763b75f7267..61fb52457112f834c1faa3d5f21c8b4f
  import handlers.chat.commands.voiced.Lang;
  import handlers.chat.commands.voiced.Offline;
  import handlers.chat.commands.voiced.OfflinePlay;
-@@ -378,6 +382,8 @@ public class MasterHandler
+@@ -379,6 +383,8 @@ public class MasterHandler
  			AdminPcCafePoints.class,
  			AdminPetition.class,
  			AdminPForge.class,
@@ -91,7 +91,7 @@ index d7e7b22dc23307e6535fd109af103763b75f7267..61fb52457112f834c1faa3d5f21c8b4f
  			AdminPledge.class,
  			AdminPremium.class,
  			AdminPunishment.class,
-@@ -521,6 +527,8 @@ public class MasterHandler
+@@ -523,6 +529,8 @@ public class MasterHandler
  			// CastleHandler.class,
  			// ClanHandler.class,
  			ExperienceGain.class,
@@ -309,10 +309,10 @@ index 18877c4cca77f25e760c8df6947631f3a6107749..0e35613d94227f424cd26077084a3c03
  </list>
 \ No newline at end of file
 diff --git a/dist/game/data/stats/players/initialShortcuts.xml b/dist/game/data/stats/players/initialShortcuts.xml
-index 43f3b9f8f5eda743e6590f91bd784377c1e5ba17..df70584b6cfd7f76b608d0bfe6aecec8735fbbeb 100644
+index 43f3b9f8f5eda743e6590f91bd784377c1e5ba17..d919a32009912cc55c3bef781d7c96cb67b22814 100644
 --- a/dist/game/data/stats/players/initialShortcuts.xml
 +++ b/dist/game/data/stats/players/initialShortcuts.xml
-@@ -4,7 +4,13 @@
+@@ -4,13 +4,47 @@
  	<shortcuts>
  		<page pageId="0">
  			<slot slotId="0" shortcutType="ACTION" shortcutId="2" /> <!-- Attack -->
@@ -324,9 +324,46 @@ index 43f3b9f8f5eda743e6590f91bd784377c1e5ba17..df70584b6cfd7f76b608d0bfe6aecec8
 +			<slot slotId="7" shortcutType="MACRO" shortcutId="10103" /> <!-- L2Hub: Поручения (.daily) -->
 +			<slot slotId="8" shortcutType="MACRO" shortcutId="10104" /> <!-- L2Hub: Рейд (.raid) -->
  			<slot slotId="10" shortcutType="ACTION" shortcutId="0" /> <!-- Sit/Stand -->
- 			<slot slotId="11" shortcutType="ITEM" shortcutId="5588" /> <!-- Tutorial Guide -->
+-			<slot slotId="11" shortcutType="ITEM" shortcutId="5588" /> <!-- Tutorial Guide -->
++			<slot slotId="11" shortcutType="MACRO" shortcutId="10106" /> <!-- L2Hub: Автобой (.play) -->
  		</page>
-@@ -50,5 +56,29 @@
+-		<!-- Custom example. -->
++		<!-- L2Hub: остальные команды игрока. Команды, выключенной в настройках, у персонажа нет: её слот пуст. -->
+ 		<page pageId="1">
+-			<slot slotId="0" shortcutType="MACRO" shortcutId="10000" /> <!-- Macro Test -->
++			<slot slotId="0" shortcutType="MACRO" shortcutId="10107" /> <!-- L2Hub: Автобой пуск (.play start) -->
++			<slot slotId="1" shortcutType="MACRO" shortcutId="10108" /> <!-- L2Hub: Автобой стоп (.play stop) -->
++			<slot slotId="2" shortcutType="MACRO" shortcutId="10109" /> <!-- L2Hub: .playskills -->
++			<slot slotId="3" shortcutType="MACRO" shortcutId="10110" /> <!-- L2Hub: .playitems -->
++			<slot slotId="4" shortcutType="MACRO" shortcutId="10111" /> <!-- L2Hub: .playpotion -->
++			<slot slotId="5" shortcutType="MACRO" shortcutId="10112" /> <!-- L2Hub: .playmana -->
++			<slot slotId="6" shortcutType="MACRO" shortcutId="10113" /> <!-- L2Hub: .apon -->
++			<slot slotId="7" shortcutType="MACRO" shortcutId="10114" /> <!-- L2Hub: .apoff -->
++			<slot slotId="8" shortcutType="MACRO" shortcutId="10115" /> <!-- L2Hub: .clans -->
++			<slot slotId="9" shortcutType="MACRO" shortcutId="10116" /> <!-- L2Hub: .expoff -->
++			<slot slotId="10" shortcutType="MACRO" shortcutId="10117" /> <!-- L2Hub: .expon -->
++			<slot slotId="11" shortcutType="ITEM" shortcutId="5588" /> <!-- Tutorial Guide -->
++		</page>
++		<page pageId="2">
++			<slot slotId="0" shortcutType="MACRO" shortcutId="10118" /> <!-- L2Hub: .online -->
++			<slot slotId="1" shortcutType="MACRO" shortcutId="10119" /> <!-- L2Hub: .offline -->
++			<slot slotId="2" shortcutType="MACRO" shortcutId="10121" /> <!-- L2Hub: .lang -->
++			<slot slotId="4" shortcutType="MACRO" shortcutId="10120" /> <!-- L2Hub: .offlineplay -->
++			<slot slotId="5" shortcutType="MACRO" shortcutId="10123" /> <!-- L2Hub: .sellbuff -->
++			<slot slotId="6" shortcutType="MACRO" shortcutId="10124" /> <!-- L2Hub: .bank -->
++			<slot slotId="7" shortcutType="MACRO" shortcutId="10125" /> <!-- L2Hub: .deposit -->
++			<slot slotId="8" shortcutType="MACRO" shortcutId="10126" /> <!-- L2Hub: .withdraw -->
++			<slot slotId="9" shortcutType="MACRO" shortcutId="10127" /> <!-- L2Hub: .premium -->
++			<slot slotId="10" shortcutType="MACRO" shortcutId="10128" /> <!-- L2Hub: .engage -->
++			<slot slotId="11" shortcutType="MACRO" shortcutId="10129" /> <!-- L2Hub: .divorce -->
++		</page>
++		<page pageId="3">
++			<slot slotId="0" shortcutType="MACRO" shortcutId="10130" /> <!-- L2Hub: .gotolove -->
++			<slot slotId="1" shortcutType="MACRO" shortcutId="10131" /> <!-- L2Hub: .changepassword -->
+ 		</page>
+ 	</shortcuts>
+ 	<!-- Human Mystic -->
+@@ -50,5 +84,129 @@
  			<command type="TEXT">!Hellooooo world!</command> <!-- To define a text, just include the string as if it was typed in-game. -->
  			<command type="SHORTCUT" page="0" slot="11" /> <!-- To define a shortcut (to an equipped item in example), include page and slot number. -->
  		</macro>
@@ -353,6 +390,106 @@ index 43f3b9f8f5eda743e6590f91bd784377c1e5ba17..df70584b6cfd7f76b608d0bfe6aecec8
 +		<!-- L2Hub: мир сейчас — суперчемпионы, сезонные события, ивенты (.world). -->
 +		<macro macroId="10105" icon="6" name="Мир" description="Чемпионы, события, ивенты (.world)" acronym="WRLD">
 +			<command type="TEXT">.world</command>
++		</macro>
++		<!-- L2Hub: автобой: окно с настройками и кнопкой пуска; первый пуск сам включает атаку или заклинания. -->
++		<macro macroId="10106" icon="0" name="Автобой" description="Окно автобоя (.play)" acronym="AUTO">
++			<command type="TEXT">.play</command>
++		</macro>
++		<!-- L2Hub: автобой: пуск одним нажатием. -->
++		<macro macroId="10107" icon="0" name="Автобой пуск" description="Запустить автобой (.play start)" acronym="GO">
++			<command type="TEXT">.play start</command>
++		</macro>
++		<!-- L2Hub: автобой: стоп одним нажатием. -->
++		<macro macroId="10108" icon="0" name="Автобой стоп" description="Остановить автобой (.play stop)" acronym="STOP">
++			<command type="TEXT">.play stop</command>
++		</macro>
++		<!-- L2Hub: какие скиллы использует автобой. -->
++		<macro macroId="10109" icon="1" name="Скиллы боя" description="Скиллы автобоя (.playskills)" acronym="SKIL">
++			<command type="TEXT">.playskills</command>
++		</macro>
++		<!-- L2Hub: какие предметы использует автобой. -->
++		<macro macroId="10110" icon="1" name="Вещи боя" description="Предметы автобоя (.playitems)" acronym="ITEM">
++			<command type="TEXT">.playitems</command>
++		</macro>
++		<!-- L2Hub: какую банку HP пьёт автобой. -->
++		<macro macroId="10111" icon="2" name="Банка HP" description="Банка HP автобоя (.playpotion)" acronym="HP">
++			<command type="TEXT">.playpotion</command>
++		</macro>
++		<!-- L2Hub: какую банку MP пьёт автобой. -->
++		<macro macroId="10112" icon="2" name="Банка MP" description="Банка MP автобоя (.playmana)" acronym="MP">
++			<command type="TEXT">.playmana</command>
++		</macro>
++		<!-- L2Hub: автопоты: включить. -->
++		<macro macroId="10113" icon="3" name="Автопоты вкл" description="Включить автопоты (.apon)" acronym="APON">
++			<command type="TEXT">.apon</command>
++		</macro>
++		<!-- L2Hub: автопоты: выключить. -->
++		<macro macroId="10114" icon="3" name="Автопоты выкл" description="Выключить автопоты (.apoff)" acronym="APOF">
++			<command type="TEXT">.apoff</command>
++		</macro>
++		<!-- L2Hub: кланы охотников: уровень, состав, кто набирает. -->
++		<macro macroId="10115" icon="4" name="Кланы" description="Кланы охотников (.clans)" acronym="CLAN">
++			<command type="TEXT">.clans</command>
++		</macro>
++		<!-- L2Hub: не получать опыт. -->
++		<macro macroId="10116" icon="5" name="Опыт выкл" description="Не получать опыт (.expoff)" acronym="EXOF">
++			<command type="TEXT">.expoff</command>
++		</macro>
++		<!-- L2Hub: снова получать опыт. -->
++		<macro macroId="10117" icon="5" name="Опыт вкл" description="Снова получать опыт (.expon)" acronym="EXON">
++			<command type="TEXT">.expon</command>
++		</macro>
++		<!-- L2Hub: сколько людей и охотников в игре. -->
++		<macro macroId="10118" icon="6" name="Онлайн" description="Кто сейчас в игре (.online)" acronym="ONLN">
++			<command type="TEXT">.online</command>
++		</macro>
++		<!-- L2Hub: выйти из игры, оставив лавку. -->
++		<macro macroId="10119" icon="6" name="Лавка офлайн" description="Лавка в офлайне (.offline)" acronym="OFFL">
++			<command type="TEXT">.offline</command>
++		</macro>
++		<!-- L2Hub: выйти из игры, оставив автобой. -->
++		<macro macroId="10120" icon="6" name="Игра офлайн" description="Игра офлайн (.offlineplay)" acronym="OFPL">
++			<command type="TEXT">.offlineplay</command>
++		</macro>
++		<!-- L2Hub: язык окон сервера. -->
++		<macro macroId="10121" icon="1" name="Язык" description="Язык сервера (.lang)" acronym="LANG">
++			<command type="TEXT">.lang</command>
++		</macro>
++		<!-- L2Hub: окно продажи своих бафов. -->
++		<macro macroId="10123" icon="3" name="Продажа бафов" description="Продавать свои бафы (.sellbuff)" acronym="BUFF">
++			<command type="TEXT">.sellbuff</command>
++		</macro>
++		<!-- L2Hub: банк: справка. -->
++		<macro macroId="10124" icon="4" name="Банк" description="Справка банка (.bank)" acronym="BANK">
++			<command type="TEXT">.bank</command>
++		</macro>
++		<!-- L2Hub: банк: адену в слитки. -->
++		<macro macroId="10125" icon="4" name="Адену в слитки" description="Адену в слитки (.deposit)" acronym="DEPO">
++			<command type="TEXT">.deposit</command>
++		</macro>
++		<!-- L2Hub: банк: слитки в адену. -->
++		<macro macroId="10126" icon="4" name="Слитки в адену" description="Слитки в адену (.withdraw)" acronym="WITH">
++			<command type="TEXT">.withdraw</command>
++		</macro>
++		<!-- L2Hub: премиум-статус. -->
++		<macro macroId="10127" icon="5" name="Премиум" description="Премиум-статус (.premium)" acronym="PREM">
++			<command type="TEXT">.premium</command>
++		</macro>
++		<!-- L2Hub: свадьбы: предложить брак цели. -->
++		<macro macroId="10128" icon="3" name="Помолвка" description="Предложить брак (.engage)" acronym="ENGA">
++			<command type="TEXT">.engage</command>
++		</macro>
++		<!-- L2Hub: свадьбы: развод. -->
++		<macro macroId="10129" icon="3" name="Развод" description="Развестись (.divorce)" acronym="DIVO">
++			<command type="TEXT">.divorce</command>
++		</macro>
++		<!-- L2Hub: свадьбы: телепорт к супругу. -->
++		<macro macroId="10130" icon="3" name="К супругу" description="Телепорт к супругу (.gotolove)" acronym="LOVE">
++			<command type="TEXT">.gotolove</command>
++		</macro>
++		<!-- L2Hub: сменить пароль учётной записи. -->
++		<macro macroId="10131" icon="6" name="Пароль" description="Сменить пароль (.changepassword)" acronym="PASS">
++			<command type="TEXT">.changepassword</command>
 +		</macro>
  	</macros>
  </list>
@@ -468,7 +605,7 @@ index d1e7e7f373b634ca50df993aa6b4730ea1f5bb61..429a11cfc0cb36e02b8d40e77851e485
  						stm3.setInt(1, pc.getObjectId()); // Char Id
  						stm3.setLong(2, pc.getOfflineStartTime());
 diff --git a/java/org/l2jmobius/gameserver/entity/actor/Attackable.java b/java/org/l2jmobius/gameserver/entity/actor/Attackable.java
-index ae23436a1d49074f8c0b6620d7ac8ce741e0dd3a..a7c7759a9ce5437d68d4729cb0c4e51e681ef4e9 100644
+index f46fa2e052ad73fc3ef28335b3583613897c5ff0..af465292f7cdbcca335d3612a1a358bdf226d74c 100644
 --- a/java/org/l2jmobius/gameserver/entity/actor/Attackable.java
 +++ b/java/org/l2jmobius/gameserver/entity/actor/Attackable.java
 @@ -66,6 +66,7 @@ import org.l2jmobius.gameserver.managers.CursedWeaponsManager;
@@ -476,22 +613,22 @@ index ae23436a1d49074f8c0b6620d7ac8ce741e0dd3a..a7c7759a9ce5437d68d4729cb0c4e51e
  import org.l2jmobius.gameserver.managers.PcCafePointsManager;
  import org.l2jmobius.gameserver.managers.WalkingManager;
 +import org.l2jmobius.gameserver.managers.phantom.PhantomHunterManager;
+ import org.l2jmobius.gameserver.mechanics.effects.EffectType;
  import org.l2jmobius.gameserver.mechanics.events.EventDispatcher;
  import org.l2jmobius.gameserver.mechanics.events.EventType;
- import org.l2jmobius.gameserver.mechanics.events.holders.actor.npc.attackable.OnAttackableAggroRangeEnter;
-@@ -1180,7 +1181,9 @@ public class Attackable extends Npc
+@@ -1192,7 +1193,9 @@ public class Attackable extends Npc
  				final ItemTemplate item = ItemData.getInstance().getTemplate(drop.getId());
  				
  				// Check if the autoLoot mode is active.
--				if (PlayerConfig.AUTO_LOOT_ITEM_IDS.contains(item.getId()) || isFlying() || (!item.hasExImmediateEffect() && ((!_isRaid && PlayerConfig.AUTO_LOOT) || (_isRaid && PlayerConfig.AUTO_LOOT_RAIDS))) || (item.hasExImmediateEffect() && PlayerConfig.AUTO_LOOT_HERBS))
+-				if (PlayerConfig.AUTO_LOOT_ITEM_IDS.contains(item.getId()) || isFlying() || (!item.hasExImmediateEffect() && ((!_isRaid && PlayerConfig.AUTO_LOOT) || (_isRaid && PlayerConfig.AUTO_LOOT_RAIDS))) || (item.hasExImmediateEffect() && PlayerConfig.AUTO_LOOT_HERBS && !PlayerConfig.AUTO_LOOT_HERB_EXCLUDED_IDS.contains(item.getId())))
 +				// L2Hub: охотнику-фантому дроп — сразу в сумку (в пати — по правилу лута пати), как с AutoLoot: подбор AutoPlay в Interlude — вплотную (20),
 +				// драка и поводок его перебивают, и лут оставался на земле. Конфиг живых не трогаем: на H5 и Epilogue AutoLoot = True у всех, здесь — False.
-+				if (PlayerConfig.AUTO_LOOT_ITEM_IDS.contains(item.getId()) || isFlying() || (!item.hasExImmediateEffect() && ((!_isRaid && PlayerConfig.AUTO_LOOT) || (_isRaid && PlayerConfig.AUTO_LOOT_RAIDS))) || (item.hasExImmediateEffect() && PlayerConfig.AUTO_LOOT_HERBS) || PhantomHunterManager.getInstance().isHunter(player))
++				if (PlayerConfig.AUTO_LOOT_ITEM_IDS.contains(item.getId()) || isFlying() || (!item.hasExImmediateEffect() && ((!_isRaid && PlayerConfig.AUTO_LOOT) || (_isRaid && PlayerConfig.AUTO_LOOT_RAIDS))) || (item.hasExImmediateEffect() && PlayerConfig.AUTO_LOOT_HERBS && !PlayerConfig.AUTO_LOOT_HERB_EXCLUDED_IDS.contains(item.getId())) || PhantomHunterManager.getInstance().isHunter(player))
  				{
  					player.doAutoLoot(this, drop); // Give the item(s) to the Player that has killed the Attackable.
  				}
 diff --git a/java/org/l2jmobius/gameserver/entity/actor/Creature.java b/java/org/l2jmobius/gameserver/entity/actor/Creature.java
-index 92d56a545a7cb9cd6c5d9b85b64ef1f2810d59a5..eac77c6d6ee1de82b9e5cb8646f1d4cd9aa72255 100644
+index a909c34dbcba85904a6e12558330a3fa0d90c5ac..8066eb9489bc543b641021463761c4574217818b 100644
 --- a/java/org/l2jmobius/gameserver/entity/actor/Creature.java
 +++ b/java/org/l2jmobius/gameserver/entity/actor/Creature.java
 @@ -836,11 +836,12 @@ public abstract class Creature extends WorldObject
@@ -967,7 +1104,7 @@ index 39a000409f110d77ffa485736337ec76cf0f5ace..8bf58c85ec4bb2a6d991e4973011bc85
  	}
  }
 diff --git a/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTaskManager.java b/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTaskManager.java
-index bc93a97c8dc94f04a00f5149c4e5e18460525590..851f46530a26590a86975266ab9cf5b64414b458 100644
+index 1979a8774b439be74bd9834d2fa1d7fc92772316..1f7e6e880a3de45cc91c58f8831972aa07ba9739 100644
 --- a/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTaskManager.java
 +++ b/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTaskManager.java
 @@ -40,6 +40,7 @@ import org.l2jmobius.gameserver.entity.item.Weapon;
@@ -978,7 +1115,7 @@ index bc93a97c8dc94f04a00f5149c4e5e18460525590..851f46530a26590a86975266ab9cf5b6
  import org.l2jmobius.gameserver.mechanics.skill.Skill;
  import org.l2jmobius.gameserver.util.LocationUtil;
  
-@@ -77,7 +78,8 @@ public class AutoPlayTaskManager
+@@ -94,7 +95,8 @@ public class AutoPlayTaskManager
  			
  			PLAY: for (Player player : _players)
  			{
@@ -988,7 +1125,7 @@ index bc93a97c8dc94f04a00f5149c4e5e18460525590..851f46530a26590a86975266ab9cf5b6
  				{
  					stopAutoPlay(player);
  					continue PLAY;
-@@ -240,7 +242,9 @@ public class AutoPlayTaskManager
+@@ -266,7 +268,9 @@ public class AutoPlayTaskManager
  							return true;
  						}
  						// Close item: must be unprotected or owned by player.
@@ -998,7 +1135,7 @@ index bc93a97c8dc94f04a00f5149c4e5e18460525590..851f46530a26590a86975266ab9cf5b6
 +						return !item.isProtected() || (item.getOwnerId() == player.getObjectId()) || (PhantomManager.getInstance().isPhantom(player) && item.getDropProtection().tryPickUp(player));
  					});
  					
- 					if (droppedItem != null)
+ 					// L2Hub: дроп подождёт, сначала отбиться. Иначе бежал бы за ним и каждый подбор сбрасывал бы намерение, пока его бьют.
 diff --git a/java/org/l2jmobius/gameserver/taskmanagers/DecayTaskManager.java b/java/org/l2jmobius/gameserver/taskmanagers/DecayTaskManager.java
 index c9d88a87ba7c7fa860d92d15364c6ace9722db77..52921e1ae6ccd74e840d1b9c20ca0f8e68fe61ce 100644
 --- a/java/org/l2jmobius/gameserver/taskmanagers/DecayTaskManager.java

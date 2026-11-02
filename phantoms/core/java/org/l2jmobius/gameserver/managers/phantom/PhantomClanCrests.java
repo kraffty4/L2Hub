@@ -27,13 +27,15 @@ import org.l2jmobius.gameserver.entity.clan.enums.CrestType;
 /**
  * L2Hub: у каждого клана охотников своя эмблема (docs/PHANTOMS.md, раздел 4.61; по вкладу пользователя). Набор — {@code data/ClanCrests/*.dds}, его пишет
  * {@code tools/clan_crests.py} по хронике; нет набора — ничего не происходит. Эмблему игрока и уже выданную не трогает, новая не повторяет занятую ни у кого на сервере.
- * Кончились свободные — остальные кланы ждут, выданные остаются.
+ * Кончились свободные — остальные кланы ждут, выданные остаются. Исключение — снятый набор: суммы в {@code data/ClanCrests/retired.txt}, такую эмблему могла выдать только прежняя версия
+ * генератора, клан охотников получает вместо неё новую.
  */
 public final class PhantomClanCrests
 {
 	private static final Logger LOGGER = Logger.getLogger(PhantomClanCrests.class.getName());
 
 	private static final Path POOL = Path.of("data/ClanCrests");
+	private static final Path RETIRED = POOL.resolve("retired.txt");
 	private static final long CHECK_GAP = 60000;
 	private static final int MAGIC = 0x20534444;
 	private static final int DXT1 = 0x31545844;
@@ -43,12 +45,13 @@ public final class PhantomClanCrests
 	}
 
 	private final List<Asset> _pool = load();
+	private final Set<String> _retired = loadRetired();
 	private long _nextCheck;
 	private boolean _exhausted;
 
 	private PhantomClanCrests()
 	{
-		LOGGER.info(getClass().getSimpleName() + ": loaded " + _pool.size() + " unique crests.");
+		LOGGER.info(getClass().getSimpleName() + ": loaded " + _pool.size() + " unique crests, " + _retired.size() + " retired.");
 	}
 
 	synchronized void control(long now)
@@ -79,7 +82,15 @@ public final class PhantomClanCrests
 				final Crest crest = CrestTable.getInstance().getCrest(clan.getCrestId());
 				if (crest != null)
 				{
-					used.add(hash(crest.getData()));
+					final String hash = hash(crest.getData());
+					if (_retired.contains(hash) && PhantomHunterClans.isHunterClan(clan))
+					{
+						pending.add(clan);
+					}
+					else
+					{
+						used.add(hash);
+					}
 				}
 			}
 			else if ((clan.getLevel() >= PhantomHuntersConfig.HUNTER_CLAN_CREST_LEVEL) && PhantomHunterClans.isHunterClan(clan))
@@ -121,7 +132,7 @@ public final class PhantomClanCrests
 		for (int i = 0; i < _pool.size(); i++)
 		{
 			final Asset asset = _pool.get((start + i) % _pool.size());
-			if (!used.contains(asset.hash()))
+			if (!used.contains(asset.hash()) && !_retired.contains(asset.hash()))
 			{
 				return asset;
 			}
@@ -159,6 +170,29 @@ public final class PhantomClanCrests
 			LOGGER.log(Level.WARNING, "PhantomClanCrests: could not load the crests.", e);
 		}
 		return List.copyOf(result);
+	}
+
+	private static Set<String> loadRetired()
+	{
+		final Set<String> result = new HashSet<>();
+		if (Files.isRegularFile(RETIRED))
+		{
+			try
+			{
+				for (String line : Files.readAllLines(RETIRED))
+				{
+					if (!line.isBlank())
+					{
+						result.add(line.strip());
+					}
+				}
+			}
+			catch (IOException e)
+			{
+				LOGGER.log(Level.WARNING, "PhantomClanCrests: could not load the retired crests.", e);
+			}
+		}
+		return result;
 	}
 
 	/**
@@ -239,6 +273,16 @@ public final class PhantomClanCrests
 			final int kept = second.getCrestId();
 			final int again = give();
 			LOGGER.info(tag + "second pass: given " + again + ", crest kept " + (kept == second.getCrestId()) + ".");
+			final int before = first.getCrestId();
+			final String oldHash = hash(CrestTable.getInstance().getCrest(before).getData());
+			final boolean added = _retired.add(oldHash);
+			final int replaced = give();
+			final String newHash = hash(CrestTable.getInstance().getCrest(first.getCrestId()).getData());
+			if (added)
+			{
+				_retired.remove(oldHash);
+			}
+			LOGGER.info(tag + "retired " + _retired.size() + " on file; retiring one: replaced " + replaced + ", crest changed " + ((before != first.getCrestId()) && !oldHash.equals(newHash)) + ", other crest kept " + (kept == second.getCrestId()) + ", old row gone " + (CrestTable.getInstance().getCrest(before) == null) + ".");
 		}
 		catch (Exception e)
 		{

@@ -1,0 +1,19 @@
+{
+  "note": "Значения ключей конфигов, которые у этой хроники свои, — поверх конфигов сборки (builder.deploy_configs, chronicle_configs): в сервер ложится конфиг сборки с этими значениями, правки пользователя в сервере остаются. Догон до High Five, задача автора 2026-11-01 («Эпилог и интерлюд нужно догнать с Н5 по нашим модам», docs/INTERLUDE.md): значения те же, механика на Interlude есть. PvpEvents — решение автора 2026-10-31 (docs/PLAN.md, «Решения»): TvT, Deathmatch и CtF по расписанию, старт только при живом игроке. HunterSiegeGarrison: доля стражников замка у охотников, 5 % как на High Five (docs/PHANTOMS.md, осады). HunterClanSubUnits, HunterClanStock, HunterClanHall: подгруппы, склад клана и кланхолл охотников (docs/PHANTOMS.md, 4.106–4.108); холлы, аукцион и подгруппы в Interlude есть, логика холла — phantoms/interlude/java, PhantomClanHall. HunterStrategyPerHour и HunterMaxStores — вторая сотня охотников (docs/PHANTOMS.md, 4.109): бюджет стратега в минуту прежний, расход мозгов не растёт. HunterSuperChampionBoost: суперчемпион x100 HP и x5 атака (патч 0161), охотникам рейда на него множители РБ. HunterPartyChanceHealer: хилер нарасхват (docs/PHANTOMS.md, 4.117). HunterCombatFixes: правки боя из вклада пользователя (docs/PHANTOMS.md, 4.119, решение автора 2026-11-01 «Да, сперва баги»).",
+  "configs": {
+    "game/config/Custom/L2HubEvents.ini": {
+      "PvpEvents": "True"
+    },
+    "game/config/Custom/PhantomHunters.ini": {
+      "HunterSiegeGarrison": "5",
+      "HunterClanSubUnits": "True",
+      "HunterClanStock": "True",
+      "HunterClanHall": "True",
+      "HunterStrategyPerHour": "3",
+      "HunterMaxStores": "8",
+      "HunterSuperChampionBoost": "True",
+      "HunterPartyChanceHealer": "90",
+      "HunterCombatFixes": "True"
+    }
+  }
+}

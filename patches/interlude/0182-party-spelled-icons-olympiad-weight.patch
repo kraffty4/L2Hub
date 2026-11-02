@@ -1,0 +1,72 @@
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/Player.java b/java/org/l2jmobius/gameserver/entity/actor/Player.java
+index cdfae04e96df7cdb9ce8f52d63d2c9a308fd086f..2a35f9f286503c588696b45edf4b085c392c7f10 100644
+--- a/java/org/l2jmobius/gameserver/entity/actor/Player.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/Player.java
+@@ -2069,7 +2069,8 @@ public class Player extends Playable
+ 		final int maxLoad = getMaxLoad();
+ 		if (maxLoad > 0)
+ 		{
+-			final long weightproc = ((getCurrentLoad() - getBonusWeightPenalty()) * 1000) / getMaxLoad();
++			// L2Hub: в long до умножения. На весе от 2,1 млн int переполнялся, и перегруз пропадал.
++			final long weightproc = (((long) (getCurrentLoad() - getBonusWeightPenalty())) * 1000) / getMaxLoad();
+ 			int newWeightPenalty;
+ 			if ((weightproc < 500) || _dietMode)
+ 			{
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/holders/creature/EffectList.java b/java/org/l2jmobius/gameserver/entity/actor/holders/creature/EffectList.java
+index 686d17203bf5d65e165f9ebedf3820145ae7263b..a4fa79c4eb8c2f92dcc49e9889a02d9c03b699ae 100644
+--- a/java/org/l2jmobius/gameserver/entity/actor/holders/creature/EffectList.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/holders/creature/EffectList.java
+@@ -1447,7 +1447,8 @@ public class EffectList
+ 		
+ 		updateEffectFlags();
+ 		
+-		if (_updateEffectIconTask == null)
++		// L2Hub: исключение в задаче не сбрасывало поле, и значки баффов больше не обновлялись.
++		if ((_updateEffectIconTask == null) || _updateEffectIconTask.isDone())
+ 		{
+ 			_updateEffectIconTask = ThreadPool.schedule(() ->
+ 			{
+diff --git a/java/org/l2jmobius/gameserver/mechanics/olympiad/Olympiad.java b/java/org/l2jmobius/gameserver/mechanics/olympiad/Olympiad.java
+index 380472cc1355bae97f1ccd89bda87d3a7e16472f..37e9b20ffd50c6ec65c0eccbd31f9d9880fb1440 100644
+--- a/java/org/l2jmobius/gameserver/mechanics/olympiad/Olympiad.java
++++ b/java/org/l2jmobius/gameserver/mechanics/olympiad/Olympiad.java
+@@ -1012,7 +1012,8 @@ public class Olympiad extends ListenersContainer
+ 	private long getMillisToCompBegin()
+ 	{
+ 		final long currentTime = System.currentTimeMillis();
+-		if ((_compStart.getTimeInMillis() < currentTime) && (_compEnd > currentTime))
++		// L2Hub: <=, при равенстве до миллисекунды день соревнований пропускался целиком.
++		if ((_compStart.getTimeInMillis() <= currentTime) && (_compEnd > currentTime))
+ 		{
+ 			return 10;
+ 		}
+diff --git a/java/org/l2jmobius/gameserver/network/serverpackets/PartySpelled.java b/java/org/l2jmobius/gameserver/network/serverpackets/PartySpelled.java
+index 3d8688be8af8614c7bcdf183be4fe9742b4e83f1..af511b676a4a564dad90772563fbc0a3ecfb7956 100644
+--- a/java/org/l2jmobius/gameserver/network/serverpackets/PartySpelled.java
++++ b/java/org/l2jmobius/gameserver/network/serverpackets/PartySpelled.java
+@@ -50,15 +50,21 @@ public class PartySpelled extends ServerPacket
+ 		ServerPackets.PARTY_SPELLED.writeId(this, buffer);
+ 		buffer.writeInt(_creature.isServitor() ? 2 : _creature.isPet() ? 1 : 0);
+ 		buffer.writeInt(_creature.getObjectId());
+-		buffer.writeInt(_effects.size());
++		// L2Hub: счётчик по тем же записям, что уйдут в цикл. Бафф мог кончиться между addSkill и записью, и клиент разбирал пакет со сдвигом.
++		final List<BuffInfo> active = new ArrayList<>(_effects.size());
+ 		for (BuffInfo info : _effects)
+ 		{
+ 			if ((info != null) && info.isInUse())
+ 			{
+-				buffer.writeInt(info.getSkill().getDisplayId());
+-				buffer.writeShort(info.getSkill().getDisplayLevel());
+-				buffer.writeInt(info.getTime());
++				active.add(info);
+ 			}
+ 		}
++		buffer.writeInt(active.size());
++		for (BuffInfo info : active)
++		{
++			buffer.writeInt(info.getSkill().getDisplayId());
++			buffer.writeShort(info.getSkill().getDisplayLevel());
++			buffer.writeInt(Math.max(0, info.getTime()));
++		}
+ 	}
+ }

@@ -19,7 +19,7 @@ from pathlib import Path
 
 import psutil
 
-from . import __version__, appsettings, backups, brain, builder, catalog, clients, clientsys, configs, feedback, forum, friendpack, geodata, health, i18n, l2ini, l2solo, modes, network, paths, report, runtimes, servers, society, updates, worldtiles
+from . import __version__, appsettings, backups, brain, builder, catalog, clients, clientsys, configs, feedback, forum, friendpack, geodata, health, i18n, l2ini, l2solo, modes, network, paths, report, runtimes, servers, society, updates, wipe, worldtiles
 
 CHAR_NAME_RE = re.compile(r"^[A-Za-z0-9_\-А-Яа-яЁё]{1,35}$")  # кириллица — для имён на La2offline
 ACCESS_LEVELS = {0: "Игрок", 70: "Admin", 100: "Master"}  # Mobius; у другой сборки — "accessLevels" в профиле
@@ -78,6 +78,9 @@ def _strategy_info(p: dict, game, hunters: int) -> dict | None:
     v = _ini_values(custom / HUNTERS_INI)
     if "HunterStrategy" not in v:
         return None
+    # Спрос считают только те, кто в мире: предел HuntersMax (docs/PHANTOMS.md, раздел 4.120).
+    if (limit := v.get("HuntersMax", "")).isdigit() and int(limit) > 0:
+        hunters = min(hunters, int(limit))
     brain_on = (bool(servers.brain_port(p))
                 and _ini_values(custom / "FakePlayers.ini").get("FakePlayerBrain", "True").lower() == "true"
                 and _ini_values(custom / "PhantomParty.ini").get("PhantomBrain", "True").lower() == "true")
@@ -1318,6 +1321,50 @@ class Api:
             return {"ok": False, "error": f"Нет такого бэкапа: {name}"}
         return self._start_job(chronicle_id, "restore", [("Бэкаплю текущую базу и откатываю…", lambda: backups.restore(p, name))])
 
+    # ---------- Вайп мира Mobius (wipe.py, docs/WIPE.md) ----------
+
+    def wipe_state(self, chronicle_id: str) -> dict:
+        """Вайп в «Бэкапах»: только у наших серверов Mobius. Прошлые вайпы — для отката."""
+        p = catalog.profile(chronicle_id)
+        try:
+            wipe.check(p)
+            return {"ok": True, "allowed": True, "blocker": wipe.blocker(p), "wipes": [{"stamp": m["stamp"], "backup": m["backup"], "state": m["state"]} for m in wipe.list_wipes(p)]}
+        except Exception:  # noqa: BLE001
+            return {"ok": True, "allowed": False}
+
+    def wipe_preview(self, chronicle_id: str) -> dict:
+        """Холостой прогон: мир не меняется, чистая база заливается рядом, поэтому ошибка в SQL видна до вайпа."""
+        try:
+            return {"ok": True, **wipe.preview(catalog.profile(chronicle_id))}
+        except Exception as e:  # noqa: BLE001
+            return {"ok": False, "error": str(e)}
+
+    def wipe_world(self, chronicle_id: str, confirm: str) -> dict:
+        """Вайп: confirm должен повторить id хроники — защита от случайного вызова."""
+        p = catalog.profile(chronicle_id)
+        try:
+            wipe.check(p)
+            if confirm != chronicle_id:
+                raise ValueError("вайп не подтверждён")
+            if reason := wipe.blocker(p):
+                raise ValueError(reason)
+        except Exception as e:  # noqa: BLE001
+            return {"ok": False, "error": str(e)}
+        return self._start_job(chronicle_id, "wipeworld", [("Вайп: бэкап, его проверка и подмена мира…", lambda: wipe.wipe(p, confirm, out=lambda _line: None))])
+
+    def wipe_undo(self, chronicle_id: str, stamp: str, confirm: str) -> dict:
+        """Откат вайпа: confirm повторяет id хроники. Новый мир уходит в бэкап «перед откатом»."""
+        p = catalog.profile(chronicle_id)
+        try:
+            wipe.check(p)
+            if confirm != chronicle_id:
+                raise ValueError("откат не подтверждён")
+            if reason := wipe.blocker(p):
+                raise ValueError(reason)
+        except Exception as e:  # noqa: BLE001
+            return {"ok": False, "error": str(e)}
+        return self._start_job(chronicle_id, "wipeundo", [("Откат вайпа: бэкап нового мира и возврат старого…", lambda: wipe.undo(p, stamp, confirm, out=lambda _line: None))])
+
     # ---------- Друзья: сеть Radmin VPN ----------
 
     def network_state(self, chronicle_id: str) -> dict:
@@ -1609,6 +1656,13 @@ class Api:
         except (ValueError, KeyError, FileNotFoundError) as e:
             return {"ok": False, "error": str(e)}
         return {"ok": True, **r, "restart": self.running() == chronicle_id}
+
+    def set_hunters_max(self, chronicle_id: str, value) -> dict:
+        """Сколько охотников в мире (modes.py, docs/PHANTOMS.md, раздел 4.120): сервер перечитает PhantomHunters.ini на ходу."""
+        try:
+            return {"ok": True, **modes.set_hunters_max(catalog.profile(chronicle_id), value)}
+        except (ValueError, KeyError, FileNotFoundError) as e:
+            return {"ok": False, "error": str(e)}
 
     def apply_server_mode(self, chronicle_id: str, mode_id: str) -> dict:
         try:

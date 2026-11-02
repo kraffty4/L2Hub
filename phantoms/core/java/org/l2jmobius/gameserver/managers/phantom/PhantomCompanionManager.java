@@ -11,13 +11,16 @@ import java.util.logging.Logger;
 import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.gameserver.ai.Intention;
 import org.l2jmobius.gameserver.config.PlayerConfig;
+import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
 import org.l2jmobius.gameserver.config.custom.PhantomPartyConfig;
 import org.l2jmobius.gameserver.config.custom.PhantomsConfig;
 import org.l2jmobius.gameserver.entity.Location;
 import org.l2jmobius.gameserver.entity.World;
 import org.l2jmobius.gameserver.entity.WorldObject;
 import org.l2jmobius.gameserver.entity.actor.Creature;
+import org.l2jmobius.gameserver.entity.actor.Playable;
 import org.l2jmobius.gameserver.entity.actor.Player;
+import org.l2jmobius.gameserver.entity.actor.Summon;
 import org.l2jmobius.gameserver.entity.actor.instance.Monster;
 import org.l2jmobius.gameserver.entity.groups.Party;
 import org.l2jmobius.gameserver.entity.groups.PartyDistributionType;
@@ -33,6 +36,7 @@ import org.l2jmobius.gameserver.network.SystemMessageId;
 import org.l2jmobius.gameserver.network.enums.ChatType;
 import org.l2jmobius.gameserver.network.serverpackets.CreatureSay;
 import org.l2jmobius.gameserver.taskmanagers.AutoPlayTaskManager;
+import org.l2jmobius.gameserver.taskmanagers.AutoUseTaskManager;
 import static org.l2jmobius.gameserver.managers.phantom.PhantomText.tr;
 
 /**
@@ -82,6 +86,10 @@ public class PhantomCompanionManager
 	/** Дальше этого от владельца — бросить цель и догнать; владелец бежит — короче. */
 	private static final int HUNT_LEASH = 1450;
 	private static final int HUNT_RUN_LEASH = 700;
+	/** Сказали качать, а вокруг столько времени ни одного свободного моба и владелец стоит, мс: дальше ведёт на спот сам, как по «веди». */
+	private static final long HUNT_EMPTY_WAIT = 15000;
+	/** Как часто в пати проверяет банки, мс. */
+	private static final long SUPPLY_INTERVAL = 30000;
 	/** Мобы сильнее владельца больше чем на столько уровней — не трогать самим (на них — только по его цели). */
 	private static final int HUNT_LEVEL_UP = 6;
 	// «Паровозик»: владелец идёт следом с задержкой Follow — пороги с запасом (патч 0030; было: ждать с 900, цель до 1400, телепорт с 2000).
@@ -139,6 +147,10 @@ public class PhantomCompanionManager
 		boolean hunter;
 		/** Автобафф: следующая проверка набора; 0 — в ближайший тик (призыв, рес, новый уровень). */
 		long nextAutoBuff;
+		/** Банки в пати: следующая проверка; 0 — в ближайший тик. */
+		long nextSupply;
+		/** С какого времени в HUNT вокруг пусто, а владелец стоит; 0 — есть кого бить. */
+		long huntEmptySince;
 
 		Companion(String name)
 		{
@@ -199,6 +211,8 @@ public class PhantomCompanionManager
 		companion.stuckTicks = 0;
 		companion.ownerLevel = 0;
 		companion.nextAutoBuff = 0;
+		companion.nextSupply = 0;
+		companion.huntEmptySince = 0;
 		_companions.put(key(template.getName()), companion);
 
 		final Player phantom = PhantomManager.getInstance().spawn(template, slot(owner, slotIndex(companion)), owner.getLevel());
@@ -440,6 +454,7 @@ public class PhantomCompanionManager
 
 		final Mode previous = companion.mode;
 		companion.mode = mode;
+		companion.huntEmptySince = 0;
 		companion.leadWaiting = false;
 		companion.lastDestination = null;
 		final Player phantom = PhantomManager.getInstance().getPhantom(template);
@@ -583,6 +598,8 @@ public class PhantomCompanionManager
 		companion.ownerLevel = 0;
 		companion.hunter = hunter;
 		companion.nextAutoBuff = 0;
+		companion.nextSupply = 0;
+		companion.huntEmptySince = 0;
 		_companions.put(key(template.getName()), companion);
 		if (hunter)
 		{
@@ -952,6 +969,14 @@ public class PhantomCompanionManager
 			return;
 		}
 
+		// В пати садиться некогда: банки, как у живого, и AutoUse, который их пьёт (напарнику по призыву его больше никто не включает). Только там, где есть слот маны.
+		if (PhantomCompat.hasAutoMana() && (now >= companion.nextSupply))
+		{
+			companion.nextSupply = now + SUPPLY_INTERVAL;
+			PhantomHunterOutfit.partySupplies(phantom, !companion.hunter);
+			AutoUseTaskManager.getInstance().startAutoUseTask(phantom);
+		}
+
 		// Владелец в инстансе — ждём снаружи: на этапе 2 фантомы в инстансы не ходят.
 		if (owner.getInstanceId() != phantom.getInstanceId())
 		{
@@ -1018,6 +1043,7 @@ public class PhantomCompanionManager
 			final Creature enemy = chooseEnemy(companion, phantom, owner);
 			if (enemy != null)
 			{
+				companion.huntEmptySince = 0;
 				attack(phantom, enemy);
 				return;
 			}
@@ -1025,6 +1051,14 @@ public class PhantomCompanionManager
 			if (phantom.getAI().getIntention() == Intention.ATTACK)
 			{
 				calmDown(phantom);
+			}
+
+			// «Покачай меня», а бить некого: стоял бы рядом, пока кто-нибудь не реснётся. Ведёт на спот сам.
+			if (huntEmpty(companion, owner, now))
+			{
+				setMode(owner, template, Mode.LEAD);
+				PhantomChat.getInstance().event(phantom, owner, Event.HUNT_EMPTY, "вокруг не осталось свободных мобов — ты говоришь ему, что тут пусто, и ведёшь его за собой на другой спот", "тут пусто, пошли за мной");
+				return;
 			}
 		}
 
@@ -1042,6 +1076,24 @@ public class PhantomCompanionManager
 		{
 			follow(companion, phantom, owner, slotIndex);
 		}
+	}
+
+	/**
+	 * @return режим HUNT, вокруг пусто и владелец стоит уже {@value #HUNT_EMPTY_WAIT} мс
+	 */
+	private static boolean huntEmpty(Companion companion, Player owner, long now)
+	{
+		if ((companion.mode != Mode.HUNT) || owner.isMoving())
+		{
+			companion.huntEmptySince = 0;
+			return false;
+		}
+
+		if (companion.huntEmptySince == 0)
+		{
+			companion.huntEmptySince = now;
+		}
+		return (now - companion.huntEmptySince) >= HUNT_EMPTY_WAIT;
 	}
 
 	/**
@@ -1115,6 +1167,16 @@ public class PhantomCompanionManager
 			return raidTarget;
 		}
 
+		// PvP (раздел 4.119): цель владельца и те, кто бьёт пати. Раньше напарник видел только монстров и стоял, пока владельца убивали.
+		if (PhantomHuntersConfig.HUNTER_COMBAT_FIXES)
+		{
+			final Creature foe = pvpEnemy((companion.mode == Mode.ASSIST) || (companion.mode == Mode.HUNT), companion.mode != Mode.STAY, phantom, owner);
+			if (foe != null)
+			{
+				return foe;
+			}
+		}
+
 		final boolean hunt = companion.mode == Mode.HUNT;
 		final int leash = hunt ? (owner.isMoving() ? HUNT_RUN_LEASH : HUNT_LEASH) : CHASE_LEASH;
 		if (hunt && (phantom.calculateDistance2D(owner) > leash))
@@ -1180,6 +1242,65 @@ public class PhantomCompanionManager
 	}
 
 	/**
+	 * Противник в PvP: цель владельца, пока он в бою, или ближайший, кто бьёт самого напарника, а кроме режима «стой» — владельца и его пати. Драк сам не начинает: война или флаг рядом — не повод.
+	 * @param assist бить цель владельца
+	 * @param protect защищать владельца и пати, а не только себя
+	 * @return цель или {@code null}
+	 */
+	private static Creature pvpEnemy(boolean assist, boolean protect, Player phantom, Player owner)
+	{
+		if (assist && !owner.isDead() && owner.isInCombat() && (owner.getTarget() instanceof Creature))
+		{
+			final Creature target = (Creature) owner.getTarget();
+			if ((owner.calculateDistance2D(target) <= PhantomPartyConfig.PHANTOM_ASSIST_RANGE) && isPvpEnemy(phantom, owner, target))
+			{
+				return target;
+			}
+		}
+
+		Creature nearest = null;
+		double nearestDistance = Double.MAX_VALUE;
+		for (Playable other : World.getVisibleObjectsInRange(phantom, Playable.class, PhantomPartyConfig.PHANTOM_DEFEND_RANGE))
+		{
+			final WorldObject victim = other.getTarget();
+			final boolean onUs = (victim == phantom) || (protect && ((victim == owner) || ((victim instanceof Player) && owner.isInParty() && owner.getParty().containsPlayer((Player) victim))));
+			if (!onUs || (!other.isAttackingNow() && !other.isCastingNow() && (other.getAI().getIntention() != Intention.ATTACK)) || (owner.calculateDistance2D(other) > CHASE_LEASH) || !isPvpEnemy(phantom, owner, other))
+			{
+				continue;
+			}
+
+			final double distance = phantom.calculateDistance2D(other);
+			if (distance < nearestDistance)
+			{
+				nearest = other;
+				nearestDistance = distance;
+			}
+		}
+		return nearest;
+	}
+
+	/**
+	 * @return игрока или его слугу можно бить, не становясь ПК: чужой, вне мирной зоны, на него законно нападать и напарнику, и владельцу. Белого не тронет, даже если он в цели у владельца.
+	 */
+	private static boolean isPvpEnemy(Player phantom, Player owner, Creature target)
+	{
+		final Player enemy = target instanceof Player ? (Player) target : target instanceof Summon ? ((Summon) target).getOwner() : null;
+		if ((enemy == null) || (enemy == owner) || (enemy == phantom) || target.isAlikeDead() || target.isInvul() || enemy.isInOlympiadMode() || enemy.isInDuel() || enemy.isOnEvent() || enemy.isSpawnProtected())
+		{
+			return false;
+		}
+		if ((owner.isInParty() && owner.getParty().containsPlayer(enemy)) || (phantom.isInParty() && phantom.getParty().containsPlayer(enemy)) || ((owner.getClanId() != 0) && (owner.getClanId() == enemy.getClanId())) || ((owner.getAllyId() != 0) && (owner.getAllyId() == enemy.getAllyId())))
+		{
+			return false;
+		}
+		if ((target.getInstanceId() != phantom.getInstanceId()) || phantom.isInsideZone(ZoneId.PEACE) || owner.isInsideZone(ZoneId.PEACE) || target.isInsideZone(ZoneId.PEACE))
+		{
+			return false;
+		}
+		return target.isAutoAttackable(phantom) && target.isAutoAttackable(owner) && GeoEngine.getInstance().canSeeTarget(phantom, target);
+	}
+
+	/**
 	 * @return моб дерётся с кем-то не из нашей пати — чужой, не трогать
 	 */
 	private static boolean takenByOthers(Monster monster, Player phantom)
@@ -1226,11 +1347,12 @@ public class PhantomCompanionManager
 			return;
 		}
 
-		// Маг, которого бьют вплотную (удар сбивает каст, AltGameCancelByHit), или без маны отмахивается оружием от того, кто бьёт, пока не отобьётся (патч 0028).
+		// Маг и вплотную кастует, цель — тот, кто его бьёт. Оружием отмахивается только без маны (до 2026-11-01, патч 0028, — и под ударами: в пати это выглядело как «бьёт рукой вместо скиллов»).
 		Creature target = enemy;
 		final boolean caster = PhantomHunterOutfit.isCaster(phantom);
-		final Monster attacker = caster ? PhantomHunterOutfit.meleeAttacker(phantom) : null;
-		final boolean melee = caster && ((attacker != null) || PhantomHunterOutfit.outOfMana(phantom));
+		// Против игрока от моба не отвлекается: иначе маг бросал цель в PvP ради любого, кто его ткнул.
+		final Monster attacker = caster && !(PhantomHuntersConfig.HUNTER_COMBAT_FIXES && enemy.isPlayable()) ? PhantomHunterOutfit.meleeAttacker(phantom) : null;
+		final boolean melee = caster && PhantomHunterOutfit.outOfMana(phantom);
 		if (attacker != null)
 		{
 			target = attacker;
@@ -1293,7 +1415,7 @@ public class PhantomCompanionManager
 	/**
 	 * «Паровозик»: охотник ведёт кач сам, своими целями (патч 0031: родной AutoPlay в пати брал только мобов, до которых путь по прямой, —
 	 * на холмах и в толчее охотников не находил никого и стоял). Бьёт и добивает свободных мобов в {@link #LEAD_RADIUS} вокруг себя, защищается, подбирает;
-	 * мобов рядом нет — ведёт к ближайшему споту по силам и бьёт всех по дороге. Бой — тот же {@link #attack}: скиллы, маг отмахивается под ударами.
+	 * мобов рядом нет — ведёт к ближайшему споту по силам и бьёт всех по дороге. Бой — тот же {@link #attack}: скиллы, маг без маны отмахивается оружием.
 	 * Владелец догоняет с задержкой Follow — пороги с запасом и с гистерезисом (патч 0030), иначе охотник метался бы туда-сюда:
 	 * отстал дальше {@link #LEAD_WAIT} — ждёт (новых мобов не берёт, того, кто бьёт его, добивает) до {@link #LEAD_RESUME};
 	 * дальше {@link #LEAD_RETURN} — идёт к нему; дальше {@link #LEAD_TELEPORT} — телепорт к нему (в {@link #think}).
@@ -1639,7 +1761,7 @@ public class PhantomCompanionManager
 		final int x = owner.getX() + (int) (Math.cos(angle) * SLOT_DISTANCE);
 		final int y = owner.getY() + (int) (Math.sin(angle) * SLOT_DISTANCE);
 		final int z = GeoEngine.getInstance().getHeight(x, y, owner.getZ());
-		if (PhantomCompat.canMoveToTarget(GeoEngine.getInstance(), owner.getX(), owner.getY(), owner.getZ(), x, y, z, owner.getInstanceId()))
+		if (PhantomPath.hasFloor(GeoEngine.getInstance(), x, y, owner.getZ()) && PhantomCompat.canMoveToTarget(GeoEngine.getInstance(), owner.getX(), owner.getY(), owner.getZ(), x, y, z, owner.getInstanceId()))
 		{
 			return new Location(x, y, z, owner.getHeading());
 		}
@@ -1891,8 +2013,10 @@ public class PhantomCompanionManager
 			return phantom;
 		}
 
-		LOGGER.info("SelfTest BUDDIES: " + template.getName() + " holds " + phantom.getBuffCount() + " of " + phantom.getStat().getMaxBuffCount() + " buffs and " + phantom.getDanceCount() + " of " + PlayerConfig.DANCES_MAX_AMOUNT + " dances.");
-		if ((phantom.getBuffCount() > phantom.getStat().getMaxBuffCount()) || (phantom.getDanceCount() > PlayerConfig.DANCES_MAX_AMOUNT))
+		LOGGER.info("SelfTest BUDDIES: " + template.getName() + " holds " + phantom.getBuffCount() + " of " + phantom.getStat().getMaxBuffCount() + " buffs and " + phantom.getDanceCount() + " of " + PlayerConfig.DANCES_MAX_AMOUNT + " dances, set of " + PhantomSupport.selfBuffSet(phantom).size() + ".");
+
+		// Без последнего бафа и без последнего танца слот под него должен быть: иначе он кого-то вытеснил.
+		if (!PhantomCompat.buffSlotFree(phantom, false, phantom.getBuffCount() - 1, phantom.getDanceCount()) || !PhantomCompat.buffSlotFree(phantom, true, phantom.getBuffCount(), phantom.getDanceCount() - 1))
 		{
 			failed.add(who + "перебор слотов: " + phantom.getBuffCount() + " и " + phantom.getDanceCount());
 		}

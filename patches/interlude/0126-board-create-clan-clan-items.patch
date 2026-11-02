@@ -1,0 +1,175 @@
+diff --git a/dist/game/data/html/CommunityBoard/Custom/navigation.html b/dist/game/data/html/CommunityBoard/Custom/navigation.html
+index 86762c18153bde527e2495c5f14fc44a294bed48..4d7c9b8dcc40978166599d2f5dd70d2c8d2e9d20 100644
+--- a/dist/game/data/html/CommunityBoard/Custom/navigation.html
++++ b/dist/game/data/html/CommunityBoard/Custom/navigation.html
+@@ -9,7 +9,7 @@
+ <button value="Raid" action="bypass voice .raid" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
+ <button value="World" action="bypass voice .world" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
+ <button value="Clan wars" action="bypass _bbshubwars" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
+-<button value="Clan recruiting" action="bypass _bbshubclan" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
++<button value="Clan: create, recruit" action="bypass _bbshubclan" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
+ <button value="Events" action="bypass _bbshubevents" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
+ <button value="Drop search" action="bypass _bbstop;dropsearch/main.html" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
+ </td><td height=440></td></tr></table>
+\ No newline at end of file
+diff --git a/dist/game/data/html/merchant/50010.htm b/dist/game/data/html/merchant/50010.htm
+index 7f4bdd509098f659dbf94cbf5f11c4cfd890f98d..3b76cb6ffad41fbd9dba9f5845948f96b150afb6 100644
+--- a/dist/game/data/html/merchant/50010.htm
++++ b/dist/game/data/html/merchant/50010.htm
+@@ -39,6 +39,7 @@
+ <tr>
+ <td align=center></td>
+ <td align=center><button action="bypass -h npc_%objectId%_Chat 12" value="Event Items" width="95" height="21" back="bigbutton_over" fore="bigbutton"></td>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50040008" value="Clan Items" width="95" height="21" back="bigbutton_over" fore="bigbutton"></td>
+ </tr>
+ </table>
+ <br>
+diff --git a/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/navigation.html b/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/navigation.html
+index 1f134742a0de973d0eb8f271e1b2bb31808d984b..0d212f69c8acdc4417201b3f5db983166547bc93 100644
+--- a/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/navigation.html
++++ b/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/navigation.html
+@@ -9,7 +9,7 @@
+ <button value="Рейд" action="bypass voice .raid" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
+ <button value="Мир" action="bypass voice .world" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
+ <button value="Войны кланов" action="bypass _bbshubwars" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
+-<button value="Набор в клан" action="bypass _bbshubclan" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
++<button value="Клан: создать, набрать" action="bypass _bbshubclan" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
+ <button value="Ивенты" action="bypass _bbshubevents" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
+ <button value="Поиск дропа" action="bypass _bbstop;dropsearch/main.html" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
+ </td><td height=440></td></tr></table>
+\ No newline at end of file
+diff --git a/dist/game/data/multisell/custom/50040008.xml b/dist/game/data/multisell/custom/50040008.xml
+new file mode 100644
+index 0000000000000000000000000000000000000000..598015e492a447c3a64d46f3f62bc278018f6617
+--- /dev/null
++++ b/dist/game/data/multisell/custom/50040008.xml
+@@ -0,0 +1,22 @@
++<?xml version="1.0" encoding="utf-8"?>
++<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../xsd/multisell.xsd">
++	<!-- L2Hub: предметы прокачки клана (Clan.levelUpClan), кнопка Clan Items в GM-шопе. Квесты на них работают по-прежнему. -->
++	<npcs>
++		<npc>50010</npc>
++	</npcs>
++	<item>
++		<!-- Blood Mark: 3-й уровень -->
++		<ingredient id="57" count="10000000" />
++		<production id="1419" count="1" />
++	</item>
++	<item>
++		<!-- Alliance Manifesto: 4-й уровень -->
++		<ingredient id="57" count="20000000" />
++		<production id="3874" count="1" />
++	</item>
++	<item>
++		<!-- Seal of Aspiration: 5-й уровень -->
++		<ingredient id="57" count="40000000" />
++		<production id="3870" count="1" />
++	</item>
++</list>
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+index 775adffd024f27c8cb816279a083747fd77b3cc5..c47f0b498192659ffd144ee26a607b07c24e62a2 100644
+--- a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+@@ -6,9 +6,11 @@ import java.util.regex.Pattern;
+ 
+ import org.l2jmobius.commons.threads.ThreadPool;
+ import org.l2jmobius.gameserver.cache.HtmCache;
++import org.l2jmobius.gameserver.config.ServerConfig;
+ import org.l2jmobius.gameserver.config.custom.CommunityBoardConfig;
+ import org.l2jmobius.gameserver.config.custom.PhantomsConfig;
+ import org.l2jmobius.gameserver.data.SchemeBufferTable;
++import org.l2jmobius.gameserver.data.sql.ClanTable;
+ import org.l2jmobius.gameserver.data.xml.MultisellData;
+ import org.l2jmobius.gameserver.data.xml.SkillData;
+ import org.l2jmobius.gameserver.entity.actor.Creature;
+@@ -25,6 +27,7 @@ import org.l2jmobius.gameserver.managers.phantom.PhantomHunterUi;
+ import org.l2jmobius.gameserver.managers.phantom.PhantomLootSell;
+ import org.l2jmobius.gameserver.managers.phantom.PhantomUi;
+ import org.l2jmobius.gameserver.mechanics.skill.Skill;
++import org.l2jmobius.gameserver.network.SystemMessageId;
+ import org.l2jmobius.gameserver.network.serverpackets.SellList;
+ 
+ /**
+@@ -34,7 +37,7 @@ import org.l2jmobius.gameserver.network.serverpackets.SellList;
+  * <li>_bbshubshop [страница] — GM-шоп из страниц NPC GM-шопа (html/merchant/&lt;CommunityShopNpc&gt;*.htm) с переписанными кнопками; мультиселлы — MultisellData.separateAndSendFromBoard</li>
+  * <li>_bbshubbuddy [действие имя] — окно напарников ({@link PhantomUi})</li>
+  * <li>_bbshubhunters [near|all|store] [страница] | go &lt;имя&gt; … — кто из охотников где и телепорт на их спот или к лавке ({@link PhantomHunterUi})</li>
+- * <li>_bbshubwars [all|hunters|players] [страница] … — кланы и объявление войны, _bbshubclan … — набор в клан ({@link PhantomClanBoard})</li>
++ * <li>_bbshubwars [all|hunters|players] [страница] … — кланы и объявление войны, _bbshubclan … — создание клана ({@link #clan}) и набор в клан ({@link PhantomClanBoard})</li>
+  * <li>_bbshubevents [join|cancel &lt;ивент&gt;] — запись на TvT, Deathmatch и CtF ({@link PhantomEventBoard})</li>
+  * </ul>
+  */
+@@ -84,7 +87,9 @@ public class L2HubBoard implements IParseBoardHandler
+ 		java.util.Map.entry("Напарники", "Companions"),
+ 		java.util.Map.entry("Напарники выключены (EnablePhantoms в Phantoms.ini).", "Companions are turned off (EnablePhantoms in Phantoms.ini)."),
+ 		java.util.Map.entry("Охотники", "Hunters"),
+-		java.util.Map.entry("Фантомы выключены (EnablePhantoms в Phantoms.ini).", "Phantoms are turned off (EnablePhantoms in Phantoms.ini)."));
++		java.util.Map.entry("Фантомы выключены (EnablePhantoms в Phantoms.ini).", "Phantoms are turned off (EnablePhantoms in Phantoms.ini)."),
++		java.util.Map.entry("Создать клан", "Create a clan"),
++		java.util.Map.entry("С 10-го уровня. Имя: от 2 до 16 букв и цифр, без пробелов.", "From level 10. Name: 2 to 16 letters and digits, no spaces."));
+ 	
+ 	private static boolean l2hubEnglish()
+ 	{
+@@ -176,7 +181,7 @@ public class L2HubBoard implements IParseBoardHandler
+ 		}
+ 		else if (args[0].equalsIgnoreCase(CLAN_RECRUIT))
+ 		{
+-			html = page(player, PhantomClanBoard.recruitTitle(), canUse(player) ? PhantomClanBoard.getInstance().recruit(player, args) : PhantomClanBoard.busy());
++			html = page(player, PhantomClanBoard.recruitTitle(), clan(player, args));
+ 		}
+ 		else if (args[0].equalsIgnoreCase(EVENTS))
+ 		{
+@@ -641,6 +646,53 @@ public class L2HubBoard implements IParseBoardHandler
+ 		return page(player, tr("Охотники"), PhantomHunterUi.board(player, args.length > i ? args[i] : null, args.length > (i + 1) ? parseInt(args[i + 1]) : 0, "bypass " + HUNTERS));
+ 	}
+ 
++	// ---------- Клан ----------
++
++	/**
++	 * _bbshubclan [create &lt;имя&gt;] | действия набора ({@link PhantomClanBoard}). Бесклановому сверху форма создания клана: те же проверки, что у гранд-мастера (VillageMaster, create_clan), всё остальное решает {@link ClanTable#createClan}.
++	 * @param player кто открыл
++	 * @param args команда доски
++	 * @return содержимое страницы
++	 */
++	public static String clan(Player player, String[] args)
++	{
++		if (!canUse(player))
++		{
++			return PhantomClanBoard.busy();
++		}
++
++		String[] rest = args;
++		if ((args.length > 1) && args[1].equalsIgnoreCase("create"))
++		{
++			if (args.length < 3)
++			{
++				player.sendPacket(SystemMessageId.PLEASE_CREATE_YOUR_CLAN_NAME);
++			}
++			else if ((args.length > 3) || !ServerConfig.CLAN_NAME_TEMPLATE_PATTERN.matcher(args[2]).matches())
++			{
++				player.sendPacket(SystemMessageId.CLAN_NAME_IS_INVALID);
++			}
++			else
++			{
++				ClanTable.getInstance().createClan(player, args[2]);
++			}
++			rest = new String[]
++			{
++				args[0]
++			};
++		}
++
++		final String content = PhantomClanBoard.getInstance().recruit(player, rest);
++		return player.getClan() != null ? content : clanForm() + content;
++	}
++
++	private static String clanForm()
++	{
++		return "<table width=520><tr><td align=center><font color=\"LEVEL\">" + tr("Создать клан") + "</font><br1><font color=\"808080\">" + tr("С 10-го уровня. Имя: от 2 до 16 букв и цифр, без пробелов.") + "</font></td></tr>" //
++			+ "<tr><td align=center><edit var=\"clan_name\" width=180 height=20></td></tr>" //
++			+ "<tr><td align=center>" + button(tr("Создать клан"), CLAN_RECRUIT + " create $clan_name", 145) + "</td></tr></table><br>";
++	}
++
+ 	// ---------- Общее ----------
+ 
+ 	/**

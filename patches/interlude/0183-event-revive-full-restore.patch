@@ -1,0 +1,67 @@
+diff --git a/dist/game/data/scripts/custom/events/CaptureTheFlag/CtF.java b/dist/game/data/scripts/custom/events/CaptureTheFlag/CtF.java
+index 9313d219b0e480215fdd5222db4d2b394ebb634b..fc85fd7f885d3aaf126bc7b6d7169d36edba54ab 100644
+--- a/dist/game/data/scripts/custom/events/CaptureTheFlag/CtF.java
++++ b/dist/game/data/scripts/custom/events/CaptureTheFlag/CtF.java
+@@ -743,7 +743,9 @@ public class CtF extends Event
+ 				{
+ 					if (BLUE_TEAM.contains(player))
+ 					{
+-						player.setIsPendingRevive(true);
++						// L2Hub: сразу и с полными HP, MP и CP. Отложенный подъём при телепорте оставлял их по RespawnRestore, и в драку шли полупустыми.
++						player.doRevive();
++						player.fullRestore();
+ 						player.teleToLocation(BLUE_SPAWN_LOC.getRandomPoint(), PVP_WORLD.getInstanceId(), 50);
+ 						
+ 						// Make player invulnerable for 30 seconds.
+@@ -754,7 +756,9 @@ public class CtF extends Event
+ 					}
+ 					else if (RED_TEAM.contains(player))
+ 					{
+-						player.setIsPendingRevive(true);
++						// L2Hub: сразу и с полными HP, MP и CP. Отложенный подъём при телепорте оставлял их по RespawnRestore, и в драку шли полупустыми.
++						player.doRevive();
++						player.fullRestore();
+ 						player.teleToLocation(RED_SPAWN_LOC.getRandomPoint(), PVP_WORLD.getInstanceId(), 50);
+ 						
+ 						// Make player invulnerable for 30 seconds.
+diff --git a/dist/game/data/scripts/custom/events/Deathmatch/Deathmatch.java b/dist/game/data/scripts/custom/events/Deathmatch/Deathmatch.java
+index 365763f96eb41b4fe404897cc8b8dfa1b6f46ac5..c9f90ca36de693f6d6576ae9cb783413050d577e 100644
+--- a/dist/game/data/scripts/custom/events/Deathmatch/Deathmatch.java
++++ b/dist/game/data/scripts/custom/events/Deathmatch/Deathmatch.java
+@@ -523,7 +523,9 @@ public class Deathmatch extends Event
+ 			{
+ 				if (player.isDead() && player.isOnEvent())
+ 				{
+-					player.setIsPendingRevive(true);
++					// L2Hub: сразу и с полными HP, MP и CP. Отложенный подъём при телепорте оставлял их по RespawnRestore, и в драку шли полупустыми.
++					player.doRevive();
++					player.fullRestore();
+ 					RANDOM: switch (getRandom(1, 3))
+ 					{
+ 						case 1:
+diff --git a/dist/game/data/scripts/custom/events/TeamVsTeam/TvT.java b/dist/game/data/scripts/custom/events/TeamVsTeam/TvT.java
+index 040a5700be4bf908bb76a01990fb0352d24d99b5..ccfc805e5143a590255513fbac5ce3ffc3aeb757 100644
+--- a/dist/game/data/scripts/custom/events/TeamVsTeam/TvT.java
++++ b/dist/game/data/scripts/custom/events/TeamVsTeam/TvT.java
+@@ -673,7 +673,9 @@ public class TvT extends Event
+ 				{
+ 					if (BLUE_TEAM.contains(player))
+ 					{
+-						player.setIsPendingRevive(true);
++						// L2Hub: сразу и с полными HP, MP и CP. Отложенный подъём при телепорте оставлял их по RespawnRestore, и в драку шли полупустыми.
++						player.doRevive();
++						player.fullRestore();
+ 						player.teleToLocation(BLUE_SPAWN_LOC, PVP_WORLD.getInstanceId(), 50);
+ 						
+ 						// Make player invulnerable for 30 seconds.
+@@ -684,7 +686,9 @@ public class TvT extends Event
+ 					}
+ 					else if (RED_TEAM.contains(player))
+ 					{
+-						player.setIsPendingRevive(true);
++						// L2Hub: сразу и с полными HP, MP и CP. Отложенный подъём при телепорте оставлял их по RespawnRestore, и в драку шли полупустыми.
++						player.doRevive();
++						player.fullRestore();
+ 						player.teleToLocation(RED_SPAWN_LOC, PVP_WORLD.getInstanceId(), 50);
+ 						
+ 						// Make player invulnerable for 30 seconds.

@@ -565,10 +565,10 @@
   function socClans(r) {
     if (!r.clans.length) return '<div class="w-blank">Кланов пока нет.</div>';
     const list = r.clans.slice().sort((a, b) => b.level - a.level || (b.rep || 0) - (a.rep || 0) || b.members - a.members);
-    const rows = list.map((c) => `<tr class="w-soc-static"><td><span class="nm">${esc(c.name)}</span>${c.ally ? ` <span class="w-muted">· ${esc(c.ally)}</span>` : ''}</td><td class="w-n">${c.level}</td><td class="w-n">${c.rep ?? '—'}</td><td class="w-n">${c.online}/${c.members}</td><td>${esc(c.leader) || '<span class="w-muted">—</span>'}</td><td>${esc(c.castle) || '<span class="w-muted">—</span>'}</td><td title="${esc(c.wars.join(', '))}">${esc(c.wars.join(', ')) || '<span class="w-muted">—</span>'}</td></tr>`).join('');
+    const rows = list.map((c) => `<tr class="w-soc-static"><td><span class="nm">${esc(c.name)}</span>${c.ally ? ` <span class="w-muted">· ${esc(c.ally)}</span>` : ''}</td><td class="w-n">${c.level}</td><td class="w-n">${c.rep ?? '—'}</td><td class="w-n">${c.online}/${c.members}</td><td>${esc(c.leader) || '<span class="w-muted">—</span>'}</td><td title="${esc([c.castle, c.hall].filter(Boolean).join(' · '))}">${[c.castle, c.hall].filter(Boolean).map(esc).join(' · ') || '<span class="w-muted">—</span>'}</td><td title="${esc(c.wars.join(', '))}">${esc(c.wars.join(', ')) || '<span class="w-muted">—</span>'}</td></tr>`).join('');
     const wars = r.wars.map((w) => `<div class="w-soc-tie"><span class="nm">${esc(w.a)}</span> ⚒ <span class="nm">${esc(w.b)}</span>${w.killsA != null ? ` <span class="w-muted">· убийств ${w.killsA}:${w.killsB}</span>` : ''}</div>`).join('');
     return `<div class="w-tbl" data-keep="soc" style="max-height:60vh"><table><colgroup><col style="width:26%"><col style="width:6%"><col style="width:9%"><col style="width:10%"><col style="width:17%"><col style="width:12%"><col style="width:20%"></colgroup>
-      <thead><tr><th>Клан</th><th class="w-n">Ур.</th><th class="w-n">Реп.</th><th class="w-n" title="В сети из всех">Состав</th><th>Глава</th><th>Замок</th><th>Воюет с</th></tr></thead><tbody>${rows}</tbody></table>
+      <thead><tr><th>Клан</th><th class="w-n">Ур.</th><th class="w-n">Реп.</th><th class="w-n" title="В сети из всех">Состав</th><th>Глава</th><th>Замок, холл</th><th>Воюет с</th></tr></thead><tbody>${rows}</tbody></table>
       ${wars ? `<div class="mode-group">Идут войны</div>${wars}` : ''}</div>`;
   }
   function socCastles(r) {
@@ -1332,6 +1332,8 @@
     HunterAbsenceDaysMax: ['activity', 'Перерывы в игре: дней до', 'int', [1, 28], ''],
     HunterAbsenceRageChance: ['activity', 'Уход сгоряча после поломки, %', 'int', [0, 100], 'Сломал заточку от +6 и бросил игру на 2–6 дней.'],
     HunterMomentGapMinutes: ['activity', 'Случайности: случай одного вида на мир не чаще, мин', 'int', [1, null], 'Подарки, разборки за дроп, кидалы.'],
+    HunterGestureIdleCooldown: ['activity', 'Жесты: от скуки в городе не чаще, с', 'int', [10, null], 'Каждый раз × 0,5–1,5.'],
+    HunterGestureIdleChance: ['activity', 'Жесты: шанс от скуки, %', 'int', [0, 100], '× общительность охотника.'],
     HunterFavorChance: ['players', 'Просьбы встреченных: шанс, %', 'int', [0, 100], '× общительность охотника. Только мозгами.'],
     HunterFarWhisperCooldown: ['players', 'Знакомый пишет издалека: одному игроку не чаще, с', 'int', [60, null], ''],
     HunterFarWhisperChance: ['players', 'Знакомый пишет издалека: шанс за минуту, %', 'int', [0, 100], 'Когда прошло время выше. Только мозгами.'],

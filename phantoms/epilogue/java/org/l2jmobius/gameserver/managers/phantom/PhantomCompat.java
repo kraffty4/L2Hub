@@ -28,6 +28,7 @@ import org.l2jmobius.gameserver.entity.actor.Npc;
 import org.l2jmobius.gameserver.entity.actor.Player;
 import org.l2jmobius.gameserver.entity.actor.Summon;
 import org.l2jmobius.gameserver.entity.actor.enums.creature.Race;
+import org.l2jmobius.gameserver.entity.actor.holders.player.CursedWeapon;
 import org.l2jmobius.gameserver.entity.actor.instance.Merchant;
 import org.l2jmobius.gameserver.entity.clan.Clan;
 import org.l2jmobius.gameserver.entity.groups.Party;
@@ -45,6 +46,7 @@ import org.l2jmobius.gameserver.entity.spawns.Spawn;
 import org.l2jmobius.gameserver.entity.zone.ZoneId;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
 import org.l2jmobius.gameserver.managers.CastleManager;
+import org.l2jmobius.gameserver.managers.CursedWeaponsManager;
 import org.l2jmobius.gameserver.managers.FortManager;
 import org.l2jmobius.gameserver.managers.RaidBossSpawnManager;
 import org.l2jmobius.gameserver.mechanics.buylist.BuyListHolder;
@@ -968,5 +970,67 @@ public final class PhantomCompat
 		msg.addString(phantom.getName());
 		friend.sendPacket(msg);
 		friend.sendPacket(new FriendStatusPacket(phantom.getObjectId()));
+	}
+
+	/**
+	 * Встанет ли ещё один баф, никого не вытеснив (docs/PHANTOMS.md, раздел 4.94). Лимиты раздельные: обычные бафы своим счётом, песни и танцы своим.
+	 * @param player на кого
+	 * @param dance песня или танец
+	 * @param buffs сколько обычных бафов считать висящими
+	 * @param dances сколько песен и танцев считать висящими
+	 * @return {@code true}, если слот есть
+	 */
+	static boolean buffSlotFree(Player player, boolean dance, int buffs, int dances)
+	{
+		return dance ? dances < PlayerConfig.DANCES_MAX_AMOUNT : buffs < player.getStat().getMaxBuffCount();
+	}
+
+	/**
+	 * @return есть ли второй слот автобанки, под ману (патч 0121)
+	 */
+	public static boolean hasAutoMana()
+	{
+		return true;
+	}
+
+	/**
+	 * Слот маны в AutoUse.
+	 * @param player кто пьёт
+	 * @param itemId банка, 0 — пусто
+	 * @param percent порог MP, %
+	 */
+	public static void setAutoMana(Player player, int itemId, int percent)
+	{
+		player.getAutoUseSettings().setAutoManaItem(itemId);
+		player.getAutoPlaySettings().setAutoManaPercent(percent);
+	}
+
+	/**
+	 * @return проклятое оружие, лежащее на земле
+	 */
+	public static List<WorldObject> cursedOnGround()
+	{
+		final List<WorldObject> items = new ArrayList<>();
+		for (CursedWeapon weapon : CursedWeaponsManager.getInstance().getCursedWeapons())
+		{
+			if (weapon.isDropped() && !weapon.isActivated() && (weapon.getItem() != null) && weapon.getItem().isSpawned())
+			{
+				items.add(weapon.getItem());
+			}
+		}
+		return items;
+	}
+
+	/**
+	 * Вход фантома идёт мимо EnterWorld: облик проклятого оружия после рестарта сервера вернуть самим, остальное сделал {@code CursedWeaponsManager.checkPlayer} при загрузке.
+	 * @param player кто держит оружие
+	 */
+	public static void restoreCursedForm(Player player)
+	{
+		final CursedWeapon weapon = player.isTransformed() ? null : CursedWeaponsManager.getInstance().getCursedWeapon(player.getCursedWeaponEquippedId());
+		if (weapon != null)
+		{
+			weapon.doTransform();
+		}
 	}
 }

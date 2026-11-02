@@ -1,0 +1,118 @@
+L2Hub: регион гаснет, не держа свой монитор на телепорте мобов.
+WorldRegion.setActive(false) телепортировал далеко ушедших мобов домой под монитором региона, а телепорт кладёт моба в другой регион и берёт его монитор. Два соседних региона, гаснущие разом, ловили друг друга насмерть: нитки висели навсегда, тик охотников и входы в мир вставали вместе с ними. Вскрылось на массовом выходе охотников (HuntersMax, docs/PHANTOMS.md, раздел 4.120).
+
+diff --git a/java/org/l2jmobius/gameserver/entity/WorldRegion.java b/java/org/l2jmobius/gameserver/entity/WorldRegion.java
+index b6a4b8f1e6d1eeea80569debf2434444a713b41f..e31bd8df9b9af87afac8dd07884d1fe793a774cd 100644
+--- a/java/org/l2jmobius/gameserver/entity/WorldRegion.java
++++ b/java/org/l2jmobius/gameserver/entity/WorldRegion.java
+@@ -20,7 +20,9 @@
+  */
+ package org.l2jmobius.gameserver.entity;
+ 
++import java.util.ArrayList;
+ import java.util.Collection;
++import java.util.List;
+ import java.util.Set;
+ import java.util.concurrent.ConcurrentHashMap;
+ import java.util.concurrent.ScheduledFuture;
+@@ -60,11 +62,15 @@ public class WorldRegion
+ 		_regionZ = regionZ;
+ 	}
+ 	
+-	private void switchAI(boolean isOn)
++	/**
++	 * L2Hub: мобов, ушедших далеко от спавна, не телепортирует, а возвращает списком: их ведёт домой {@link #setActive}, уже не держа монитор региона.
++	 */
++	private List<Attackable> switchAI(boolean isOn)
+ 	{
++		final List<Attackable> strayed = new ArrayList<>();
+ 		if (_visibleObjects.isEmpty())
+ 		{
+-			return;
++			return strayed;
+ 		}
+ 		
+ 		if (!isOn)
+@@ -91,7 +97,7 @@ public class WorldRegion
+ 					final Spawn spawn = mob.getSpawn();
+ 					if ((spawn != null) && (mob.calculateDistance2D(spawn) > NpcConfig.MAX_DRIFT_RANGE))
+ 					{
+-						mob.teleToLocation(spawn);
++						strayed.add(mob);
+ 					}
+ 					
+ 					// Stop the AI tasks.
+@@ -128,6 +134,8 @@ public class WorldRegion
+ 				}
+ 			}
+ 		}
++		
++		return strayed;
+ 	}
+ 	
+ 	public boolean isActive()
+@@ -180,32 +188,47 @@ public class WorldRegion
+ 	 * This function turns this region's AI ON or OFF.
+ 	 * @param value
+ 	 */
+-	public synchronized void setActive(boolean value)
++	public void setActive(boolean value)
+ 	{
+-		if (_active == value)
+-		{
+-			return;
+-		}
+-		
+-		_active = value;
+-		
+-		if (value)
++		final List<Attackable> strayed;
++		synchronized (this)
+ 		{
+-			for (int i = 0; i < _surroundingRegions.length; i++)
++			if (_active == value)
++			{
++				return;
++			}
++			
++			_active = value;
++			
++			if (value)
+ 			{
+-				_surroundingRegions[i].incrementActiveNeighbors();
++				for (int i = 0; i < _surroundingRegions.length; i++)
++				{
++					_surroundingRegions[i].incrementActiveNeighbors();
++				}
++			}
++			else
++			{
++				for (int i = 0; i < _surroundingRegions.length; i++)
++				{
++					_surroundingRegions[i].decrementActiveNeighbors();
++				}
+ 			}
++			
++			// Turn the AI on or off to match the region's activation.
++			strayed = switchAI(value);
+ 		}
+-		else
++		
++		// L2Hub: телепорт кладёт моба в другой регион и берёт его монитор. Под своим монитором два соседних региона, гаснущие разом, ловили друг друга насмерть (массовый выход охотников, DEADLOCK REPORT).
++		for (Attackable mob : strayed)
+ 		{
+-			for (int i = 0; i < _surroundingRegions.length; i++)
++			mob.teleToLocation(mob.getSpawn());
++			if (mob.hasAI())
+ 			{
+-				_surroundingRegions[i].decrementActiveNeighbors();
++				mob.getAI().setIntentionIdle();
++				mob.getAI().stopAITask();
+ 			}
+ 		}
+-		
+-		// Turn the AI on or off to match the region's activation.
+-		switchAI(value);
+ 	}
+ 	
+ 	/**

@@ -1,0 +1,55 @@
+L2Hub: роль по классу для кнопки «авто» у баффера доски берётся из модуля (PhantomBufferSets.classRole): те же наборы теперь у охотников, списки классов в одном месте.
+
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+index 21d550902b50ae913898cb6fa93c15f57660dd09..8c2abcac93ae7ccd30a4c0a91326f6d1133f521d 100644
+--- a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+@@ -186,10 +186,6 @@ public class L2HubBoard implements IParseBoardHandler
+ 		{ "mage", "Маг" },
+ 		{ "healer", "Хил, саппорт" }
+ 	};
+-	private static final java.util.Set<String> TANK_CLASSES = java.util.Set.of("KNIGHT", "PALADIN", "DARK_AVENGER", "ELVEN_KNIGHT", "TEMPLE_KNIGHT", "PALUS_KNIGHT", "SHILLIEN_KNIGHT", "PHOENIX_KNIGHT", "HELL_KNIGHT", "EVA_TEMPLAR", "SHILLIEN_TEMPLAR");
+-	private static final java.util.Set<String> DAGGER_CLASSES = java.util.Set.of("ROGUE", "TREASURE_HUNTER", "ADVENTURER", "ELVEN_SCOUT", "PLAINS_WALKER", "WIND_RIDER", "ASSASSIN", "ABYSS_WALKER", "GHOST_HUNTER");
+-	private static final java.util.Set<String> ARCHER_CLASSES = java.util.Set.of("HAWKEYE", "SAGITTARIUS", "SILVER_RANGER", "MOONLIGHT_SENTINEL", "PHANTOM_RANGER", "GHOST_SENTINEL", "ARBALESTER", "TRICKSTER");
+-	private static final java.util.Set<String> HEALER_CLASSES = java.util.Set.of("CLERIC", "BISHOP", "CARDINAL", "PROPHET", "HIEROPHANT", "ORACLE", "ELDER", "EVA_SAINT", "SHILLIEN_ORACLE", "SHILLIEN_ELDER", "SHILLIEN_SAINT", "ORC_SHAMAN", "OVERLORD", "DOMINATOR", "WARCRYER", "DOOMCRYER");
+ 	private static final String SHOP = "_bbshubshop";
+ 	private static final String BUDDY = "_bbshubbuddy";
+ 	private static final String HUNTERS = "_bbshubhunters";
+@@ -479,7 +475,7 @@ public class L2HubBoard implements IParseBoardHandler
+ 	 */
+ 	private static String roleGroup(Player player, String role)
+ 	{
+-		final String wanted = role.equalsIgnoreCase("auto") ? classRole(player) : role.toUpperCase();
++		final String wanted = role.equalsIgnoreCase("auto") ? PhantomBufferSets.classRole(player) : role.toUpperCase();
+ 		for (String[] known : ROLES)
+ 		{
+ 			if (known[0].equalsIgnoreCase(wanted))
+@@ -490,28 +486,6 @@ public class L2HubBoard implements IParseBoardHandler
+ 		return "ROLE_FIGHTER_GROUP";
+ 	}
+ 
+-	private static String classRole(Player player)
+-	{
+-		final String name = player.getPlayerClass().name();
+-		if (TANK_CLASSES.contains(name))
+-		{
+-			return "TANK";
+-		}
+-		if (DAGGER_CLASSES.contains(name))
+-		{
+-			return "DAGGER";
+-		}
+-		if (ARCHER_CLASSES.contains(name))
+-		{
+-			return "ARCHER";
+-		}
+-		if (HEALER_CLASSES.contains(name))
+-		{
+-			return "HEALER";
+-		}
+-		return player.isMageClass() ? "MAGE" : "FIGHTER";
+-	}
+-
+ 	private static String bufferContent(Player player, SchemeBufferTable table, List<String> types, String category)
+ 	{
+ 		final StringBuilder sb = new StringBuilder(12288);

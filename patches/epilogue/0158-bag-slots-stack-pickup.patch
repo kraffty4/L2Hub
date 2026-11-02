@@ -1,0 +1,39 @@
+L2Hub: сумка 200 слотов (гномам 250), материалы разных видов занимают по слоту и быстро её забивали. Автобой на почти полной сумке поднимает то, что ляжет в уже занятую стопку, раньше на 90 % он не поднимал ничего.
+
+diff --git a/dist/game/config/Player.ini b/dist/game/config/Player.ini
+index 781017f2439960effa3ac94c9fcdeeef2478558e..d2c2e91e0a8b2a31e8d97f69ec4be1d7d6dcaa27 100644
+--- a/dist/game/config/Player.ini
++++ b/dist/game/config/Player.ini
+@@ -364,8 +364,9 @@ MaxPvtStoreBuySlotsOther = 4
+ 
+ # This will control the inventory space limit (NOT WEIGHT LIMIT).
+ # Default: 80, 100, 250
+-MaximumSlotsForNoDwarf = 80
+-MaximumSlotsForDwarf = 100
++# L2Hub: 200 и 250 вместо 80 и 100, разные материалы для крафта забивали сумку.
++MaximumSlotsForNoDwarf = 200
++MaximumSlotsForDwarf = 250
+ MaximumSlotsForGMPlayer = 250
+ 
+ # This will control a character's warehouse capacity.
+diff --git a/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTaskManager.java b/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTaskManager.java
+index a649146ccb100ad1f8a46f40d53b12c77b0907db..6d26b44f801511d3ea2bdb1de6fef1b3ba0d11c5 100644
+--- a/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTaskManager.java
++++ b/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTaskManager.java
+@@ -242,12 +242,14 @@ public class AutoPlayTaskManager
+ 				IDLE_COUNT.remove(player);
+ 				
+ 				// Pickup.
+-				if (player.getAutoPlaySettings().doPickup() && player.isInventoryUnder90(false))
++				if (player.getAutoPlaySettings().doPickup())
+ 				{
++					// L2Hub: сумка почти полна — брать только то, что ляжет в уже занятую стопку.
++					final boolean roomy = player.isInventoryUnder90(false);
+ 					// First item we can act on: either reachable far (move to it) or reachable close + pickup-eligible.
+ 					final Item droppedItem = World.getFirstVisibleObjectInRange(player, Item.class, 200, item ->
+ 					{
+-						if (!item.isSpawned() || AutoPlayConfig.IGNORED_AUTO_PICK_ITEMS.contains(item.getId()) || !GeoEngine.getInstance().canMoveToTarget(player.getX(), player.getY(), player.getZ(), item.getX(), item.getY(), item.getZ(), player.getInstanceId()))
++						if (!item.isSpawned() || (!roomy && (!item.isStackable() || (player.getInventory().getItemByItemId(item.getId()) == null))) || AutoPlayConfig.IGNORED_AUTO_PICK_ITEMS.contains(item.getId()) || !GeoEngine.getInstance().canMoveToTarget(player.getX(), player.getY(), player.getZ(), item.getX(), item.getY(), item.getZ(), player.getInstanceId()))
+ 						{
+ 							return false;
+ 						}

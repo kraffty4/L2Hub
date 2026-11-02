@@ -14,6 +14,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -47,9 +48,54 @@ public final class PhantomBufferSets
 	private static final int NAME_LIMIT = 14;
 	private static final String SAVE = "INSERT INTO buffer_schemes (object_id,scheme_name,skills) VALUES (?,?,?) ON DUPLICATE KEY UPDATE skills=VALUES(skills)";
 	private static final String DELETE = "DELETE FROM buffer_schemes WHERE object_id=? AND scheme_name=?";
+	/** Роли баффера по классам (кнопка «авто» на доске Alt+B и бафы охотников); кого нет в списках — воин или маг. */
+	private static final Set<String> TANK_CLASSES = Set.of("KNIGHT", "PALADIN", "DARK_AVENGER", "ELVEN_KNIGHT", "TEMPLE_KNIGHT", "PALUS_KNIGHT", "SHILLIEN_KNIGHT", "PHOENIX_KNIGHT", "HELL_KNIGHT", "EVA_TEMPLAR", "SHILLIEN_TEMPLAR");
+	private static final Set<String> DAGGER_CLASSES = Set.of("ROGUE", "TREASURE_HUNTER", "ADVENTURER", "ELVEN_SCOUT", "PLAINS_WALKER", "WIND_RIDER", "ASSASSIN", "ABYSS_WALKER", "GHOST_HUNTER");
+	private static final Set<String> ARCHER_CLASSES = Set.of("HAWKEYE", "SAGITTARIUS", "SILVER_RANGER", "MOONLIGHT_SENTINEL", "PHANTOM_RANGER", "GHOST_SENTINEL", "ARBALESTER", "TRICKSTER");
+	private static final Set<String> HEALER_CLASSES = Set.of("CLERIC", "BISHOP", "CARDINAL", "PROPHET", "HIEROPHANT", "ORACLE", "ELDER", "EVA_SAINT", "SHILLIEN_ORACLE", "SHILLIEN_ELDER", "SHILLIEN_SAINT", "ORC_SHAMAN", "OVERLORD", "DOMINATOR", "WARCRYER", "DOOMCRYER");
 
 	private PhantomBufferSets()
 	{
+	}
+
+	/**
+	 * @param player персонаж
+	 * @return его роль у баффера по классу: TANK, DAGGER, ARCHER, HEALER, MAGE или FIGHTER
+	 */
+	public static String classRole(Player player)
+	{
+		final String name = player.getPlayerClass().name();
+		if (TANK_CLASSES.contains(name))
+		{
+			return "TANK";
+		}
+		if (DAGGER_CLASSES.contains(name))
+		{
+			return "DAGGER";
+		}
+		if (ARCHER_CLASSES.contains(name))
+		{
+			return "ARCHER";
+		}
+		if (HEALER_CLASSES.contains(name))
+		{
+			return "HEALER";
+		}
+		return player.isMageClass() ? "MAGE" : "FIGHTER";
+	}
+
+	/**
+	 * @param player персонаж
+	 * @return полный набор его роли ({@code ROLE_*_GROUP} в SchemeBufferSkills.xml), тот же, что у игрока на доске; в хронике без таких наборов — {@code FIGHTER_GROUP} или {@code MAGE_GROUP}
+	 */
+	static String classGroup(Player player)
+	{
+		final String group = "ROLE_" + classRole(player) + "_GROUP";
+		if (!SchemeBufferTable.getInstance().getSkillsIdsByType(group).isEmpty())
+		{
+			return group;
+		}
+		return player.isMageClass() ? "MAGE_GROUP" : "FIGHTER_GROUP";
 	}
 
 	/**
@@ -385,6 +431,10 @@ public final class PhantomBufferSets
 		int column = 0;
 		for (String type : table.getSkillTypes())
 		{
+			if (type.endsWith("_GROUP"))
+			{
+				continue; // готовые наборы, а не вкладки: их бафы и так лежат по категориям
+			}
 			if ((column > 0) && ((column % 6) == 0))
 			{
 				html.append("</tr><tr>");

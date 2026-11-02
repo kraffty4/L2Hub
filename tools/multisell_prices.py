@@ -12,6 +12,9 @@ patches/<id>/ (AGENTS.md, «Исходники Mobius в servers/ не в git»)
   дешевле скупки     платишь только адену, а NPC за всё полученное даёт больше;
   обмен с прибылью   платишь адену и вещи, и даже по полной цене вещей выходит дешевле скупки полученного;
   скупка дороже цены получаешь адену за вещи больше их полной цены: купил у NPC, сдал сюда.
+
+Предмет без цены в шаблоне (медаль, жетон) стоит столько, сколько за него просят в адене в этих же списках;
+нигде за адену не продаётся — денег из такого обмена не выйдет.
 """
 import json
 import math
@@ -32,7 +35,7 @@ def tree_of(cid: str) -> Path:
 def items_of(data: Path) -> dict[int, tuple[str, int]]:
     out = {}
     for f in sorted((data / "stats" / "items").glob("*.xml")):
-        for item in ET.parse(f).getroot().iter("item"):
+        for item in ET.parse(f).getroot().findall("item"):  # iter() цепляет вложенные <item> из capsuled_items: они затирают настоящие вещи
             price = 0
             for s in item.findall("set"):
                 if s.get("name") == "price":
@@ -49,6 +52,20 @@ def round_up(value: int) -> int:
     return math.ceil(value / step) * step
 
 
+def shop_prices(folder: Path) -> dict[int, int]:
+    """Самая низкая цена в адене за штуку по спискам, где платят одной аденой."""
+    shop: dict[int, int] = {}
+    for f in sorted(folder.glob("*.xml")):
+        for entry in ET.fromstring(f.read_bytes()).findall("item"):
+            ingredients = entry.findall("ingredient")
+            productions = entry.findall("production")
+            if (len(ingredients) == 1) and (int(ingredients[0].get("id")) == ADENA) and (len(productions) == 1):
+                item = int(productions[0].get("id"))
+                price = int(ingredients[0].get("count", 1)) // max(int(productions[0].get("count", 1)), 1)
+                shop[item] = min(shop.get(item, price), price)
+    return shop
+
+
 def main() -> int:
     args = sys.argv[1:]
     if not args or args[0].startswith("-") or len(args) > 2 or (len(args) == 2 and args[1] != "--fix"):
@@ -57,6 +74,7 @@ def main() -> int:
     data = tree_of(cid)
     items = items_of(data)
     folder = data / "multisell" / "custom"
+    shop = shop_prices(folder)
     cheap, trade, buyback, entries = [], [], [], 0
     for f in sorted(folder.glob("*.xml")):
         raw = f.read_bytes()
@@ -69,7 +87,7 @@ def main() -> int:
             if unknown:
                 continue
             pay = sum(c for i, c in ingredients if i == ADENA)
-            full = sum(items.get(i, ("", 0))[1] * c for i, c in ingredients if i != ADENA)
+            full = sum((items.get(i, ("", 0))[1] or shop.get(i, math.inf)) * c for i, c in ingredients if i != ADENA)
             has_goods = any(i != ADENA for i, _ in ingredients)
             got = sum(c for i, c in productions if i == ADENA)
             sale = sum((items.get(i, ("", 0))[1] // 2) * c for i, c in productions if i != ADENA)

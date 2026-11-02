@@ -11,6 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 import org.l2jmobius.gameserver.ai.Intention;
+import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
 import org.l2jmobius.gameserver.config.custom.PhantomPartyConfig;
 import org.l2jmobius.gameserver.data.SchemeBufferTable;
 import org.l2jmobius.gameserver.data.xml.SkillData;
@@ -202,11 +203,11 @@ final class PhantomSupport
 
 	/**
 	 * @param phantom напарник
-	 * @return набор городского баффера для него (docs/PHANTOMS.md, раздел 4.94): воину или магу. Пассивки и мгновенные {@code applyEffects} не вешает (Might и Shield на Essence), их тут нет: иначе их не хватало бы вечно.
+	 * @return набор городского баффера для него (docs/PHANTOMS.md, раздел 4.94): полный набор его роли. Пассивки и мгновенные {@code applyEffects} не вешает (Might и Shield на Essence), их тут нет: иначе их не хватало бы вечно.
 	 */
 	static List<Skill> selfBuffSet(Player phantom)
 	{
-		final String group = phantom.isMageClass() ? "MAGE_GROUP" : "FIGHTER_GROUP";
+		final String group = PhantomBufferSets.classGroup(phantom);
 		final SchemeBufferTable table = SchemeBufferTable.getInstance();
 		final List<Skill> set = new ArrayList<>();
 		for (int skillId : table.getSkillsIdsByType(group))
@@ -222,17 +223,20 @@ final class PhantomSupport
 	}
 
 	/**
-	 * Напарник держит набор на себе: только то, чего нет, бесплатно и без каста, как охотник. Несколько скиллов одного типа в наборе (Essence) встают первым: тип уже есть, остальных не хватать не будет.
+	 * Напарник держит набор на себе: только то, чего нет, бесплатно и без каста, как охотник. Несколько скиллов одного типа в наборе (Essence) встают первым: тип уже есть, остальных не хватать не будет.<br>
+	 * Что не влезает в слоты, не накладывается и не считается: сервер вытеснил бы самый старый баф, а следующая проверка вернула бы его, вытеснив другой.
 	 * @param phantom напарник
 	 * @param apply {@code false} — только посчитать, ничего не накладывая
-	 * @return сколько скиллов набора наложено, а при {@code apply == false} — сколько не хватает
+	 * @return сколько скиллов набора наложено, а при {@code apply == false} — сколько не хватает из того, что влезет
 	 */
 	static int selfBuff(Player phantom, boolean apply)
 	{
 		int count = 0;
+		int buffs = phantom.getBuffCount();
+		int dances = phantom.getDanceCount();
 		for (Skill skill : selfBuffSet(phantom))
 		{
-			if (hasBuff(phantom, skill))
+			if (hasBuff(phantom, skill) || !PhantomCompat.buffSlotFree(phantom, skill.isDance(), buffs, dances))
 			{
 				continue;
 			}
@@ -240,6 +244,15 @@ final class PhantomSupport
 			if (apply)
 			{
 				skill.applyEffects(phantom, phantom);
+			}
+
+			if (skill.isDance())
+			{
+				dances++;
+			}
+			else
+			{
+				buffs++;
 			}
 			count++;
 		}
@@ -338,6 +351,24 @@ final class PhantomSupport
 			return heal(state, phantom, members, now);
 		}
 		return buff(state, phantom, members, now);
+	}
+
+	/**
+	 * Хилер на стадионе ({@link PhantomOlympiad}): лечит себя. Приказов пати и отдыха здесь нет: {@link #act} сажал его посреди матча (раздел 4.119).
+	 * @param phantom хилер
+	 * @param now текущее время
+	 * @return занят кастом, бить соперника в этот тик не надо
+	 */
+	static boolean olympiadAct(Player phantom, long now)
+	{
+		// Кастует или идёт на каст: ветка ожидания из act, до приказов и отдыха она не доходит.
+		if (phantom.isCastingNow() || (phantom.getAI().getIntention() == Intention.CAST))
+		{
+			return act(phantom, phantom, PhantomTemplate.Role.HEALER, now);
+		}
+		final State state = STATES.computeIfAbsent(phantom.getObjectId(), id -> new State());
+		state.castSince = 0;
+		return heal(state, phantom, List.of(phantom), now);
 	}
 
 	// ---------- Нежить ----------
@@ -661,22 +692,22 @@ final class PhantomSupport
 				continue;
 			}
 			final double hp = hpPercent(vip);
-			if ((hp < 50) && cast(state, phantom, firstUsable(phantom, FAST_HEALS, null), vip, now))
+			if ((hp < 50) && castFirst(state, phantom, FAST_HEALS, null, vip, now))
 			{
 				return true;
 			}
-			if ((hp < 85) && cast(state, phantom, firstUsable(phantom, STRONG_HEALS, PhantomCompat.buffByAbnormal(vip, AbnormalType.LIFE_FORCE_OTHERS) != null ? GREATER_HEAL : null), vip, now))
+			if ((hp < 85) && castFirst(state, phantom, STRONG_HEALS, PhantomCompat.buffByAbnormal(vip, AbnormalType.LIFE_FORCE_OTHERS) != null ? GREATER_HEAL : null, vip, now))
 			{
 				return true;
 			}
 		}
 
-		if ((worst != null) && (worstHp < 35) && cast(state, phantom, firstUsable(phantom, FAST_HEALS, null), worst, now))
+		if ((worst != null) && (worstHp < 35) && castFirst(state, phantom, FAST_HEALS, null, worst, now))
 		{
 			return true;
 		}
 
-		if ((below70 >= 2) && cast(state, phantom, firstUsable(phantom, GROUP_HEALS, null), phantom, now))
+		if ((below70 >= 2) && castFirst(state, phantom, GROUP_HEALS, null, phantom, now))
 		{
 			return true;
 		}
@@ -695,7 +726,7 @@ final class PhantomSupport
 		if ((worst != null) && (worstHp < 75))
 		{
 			final Integer skip = PhantomCompat.buffByAbnormal(worst, AbnormalType.LIFE_FORCE_OTHERS) != null ? GREATER_HEAL : null;
-			if (cast(state, phantom, firstUsable(phantom, STRONG_HEALS, skip), worst, now))
+			if (castFirst(state, phantom, STRONG_HEALS, skip, worst, now))
 			{
 				return true;
 			}
@@ -911,6 +942,26 @@ final class PhantomSupport
 		{
 			state.castSince = now;
 			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Хил по порядку: скилл сорвался на условиях — следующий, а не пустой тик посреди боя (раздел 4.119). Без {@code HunterCombatFixes} — только первый годный.
+	 * @return начал каст
+	 */
+	private static boolean castFirst(State state, Player phantom, int[] skillIds, Integer skip, Creature target, long now)
+	{
+		if (!PhantomHuntersConfig.HUNTER_COMBAT_FIXES)
+		{
+			return cast(state, phantom, firstUsable(phantom, skillIds, skip), target, now);
+		}
+		for (int skillId : skillIds)
+		{
+			if (((skip == null) || (skip != skillId)) && cast(state, phantom, usable(phantom, skillId), target, now))
+			{
+				return true;
+			}
 		}
 		return false;
 	}

@@ -1,0 +1,531 @@
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/instance/SchemeBuffer.java b/java/org/l2jmobius/gameserver/entity/actor/instance/SchemeBuffer.java
+index eb263c851885..f996254e063c 100644
+--- a/java/org/l2jmobius/gameserver/entity/actor/instance/SchemeBuffer.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/instance/SchemeBuffer.java
+@@ -766,6 +766,11 @@
+ 		int count = 0;
+ 		for (String type : SchemeBufferTable.getInstance().getSkillTypes())
+ 		{
++			if (type.endsWith("_GROUP"))
++			{
++				continue; // L2Hub: готовые наборы, а не вкладки
++			}
++			
+ 			if (count == 0)
+ 			{
+ 				htmlBuilder.append("<tr>");
+diff --git a/dist/game/data/SchemeBufferSkills.xml b/dist/game/data/SchemeBufferSkills.xml
+index d99de36a2fb1..84bb4a2896ec 100644
+--- a/dist/game/data/SchemeBufferSkills.xml
++++ b/dist/game/data/SchemeBufferSkills.xml
+@@ -60,6 +60,7 @@
+ 		<buff id="349" level="1" price="0" desc="Decreases re-use time." /> <!-- Song of Renewal -->
+ 		<buff id="363" level="1" price="0" desc="Increases MP regeneration rate." /> <!-- Song of Meditation -->
+ 		<buff id="364" level="1" price="0" desc="Decreases re-use time of physical skills." /> <!-- Song of Champion -->
++		<buff id="914" level="1" price="0" desc="Removes debuffs, resists them, improves healing." /> <!-- Song of Purification -->
+ 	</category>
+ 	<category type="Chants">
+ 		<buff id="1002" level="3" price="0" desc="Increases Casting Spd." /> <!-- Flame Chant -->
+@@ -86,6 +87,18 @@
+ 		<buff id="4703" level="13" price="0" desc="Decreases re-use time of magic skills" /> <!-- Gift of Seraphim -->
+ 		<buff id="4700" level="13" price="0" desc="Increases P. Atk. and Accuracy" /> <!-- Gift of Queen -->
+ 		<buff id="4699" level="13" price="0" desc="Increases critical chance and power" /> <!-- Blessing of Queen -->
++		<buff id="1323" level="1" price="0" desc="Keeps buffs after death." /> <!-- Noblesse Blessing -->
++		<buff id="1499" level="1" price="0" desc="Replaces Might and Shield." /> <!-- Improved Combat -->
++		<buff id="1500" level="1" price="0" desc="Replaces Empower and Magic Barrier." /> <!-- Improved Magic -->
++		<buff id="1501" level="1" price="0" desc="Replaces Bless the Body and Bless the Soul." /> <!-- Improved Condition -->
++		<buff id="1502" level="1" price="0" desc="Replaces Focus and Death Whisper." /> <!-- Improved Critical Attack -->
++		<buff id="1503" level="1" price="0" desc="Replaces Bless Shield and Advanced Block." /> <!-- Improved Shield Defense -->
++		<buff id="1504" level="1" price="0" desc="Replaces Wind Walk and Agility." /> <!-- Improved Movement -->
++		<buff id="1518" level="1" price="0" desc="Replaces Focus and Death Whisper." /> <!-- Chant of Critical Attack -->
++		<buff id="1519" level="1" price="0" desc="Replaces Vampiric Rage and Haste." /> <!-- Chant of Blood Awakening -->
++		<buff id="1535" level="1" price="0" desc="Replaces Wind Walk and Agility." /> <!-- Chant of Movement -->
++		<buff id="1457" level="1" price="0" desc="Increases M. Atk., raises MP consumption." /> <!-- Empowering Echo -->
++		<buff id="1460" level="1" price="0" desc="Increases MP recovered by others." /> <!-- Mana Gain -->
+ 	</category>
+ 	<category type="Resist">
+ 		<buff id="1259" level="4" price="0" desc="Increases resistance to stun attack." /> <!-- Resist Shock -->
+@@ -178,4 +191,306 @@
+ 		<buff id="349" level="1" price="0" desc="Decreases re-use time." /> <!-- Song of Renewal -->
+ 		<buff id="310" level="1" price="0" desc="Restores HP by inflicted damage." /> <!-- Dance of the Vampire -->
+ 	</category>
++	<category type="ROLE_FIGHTER_GROUP">
++		<buff id="1035" level="4" price="0" desc="Increases resistance to mental attacks." /> <!-- Mental Shield -->
++		<buff id="1259" level="4" price="0" desc="Increases resistance to stun attack." /> <!-- Resist Shock -->
++		<buff id="1204" level="2" price="0" desc="Increases Speed." /> <!-- Wind Walk -->
++		<buff id="1036" level="2" price="0" desc="Increases M. Def." /> <!-- Magic Barrier -->
++		<buff id="1040" level="3" price="0" desc="Increases P. Def." /> <!-- Shield -->
++		<buff id="1045" level="6" price="0" desc="Increases maximum HP." /> <!-- Blessed Body -->
++		<buff id="1048" level="6" price="0" desc="Increases maximum MP." /> <!-- Blessed Soul -->
++		<buff id="1044" level="3" price="0" desc="Temporarily increases HP recovery." /> <!-- Regeneration -->
++		<buff id="1352" level="1" price="0" desc="Increases resistance to atures." /> <!-- Elemental Protection -->
++		<buff id="1353" level="1" price="0" desc="Increases resistance to dark attack." /> <!-- Divine Protection -->
++		<buff id="1362" level="1" price="0" desc="Increases resistance to Cancel attack." /> <!-- Chant of Spirit -->
++		<buff id="1461" level="1" price="0" desc="Decreases the critical damage received." /> <!-- Chant of Protection -->
++		<buff id="1284" level="3" price="0" desc="Reflects damage received." /> <!-- Chant of Revenge -->
++		<buff id="1323" level="1" price="0" desc="Keeps buffs after death." /> <!-- Noblesse Blessing -->
++		<buff id="1032" level="3" price="0" desc="increases resistance to bleeding" /> <!-- Invigor -->
++		<buff id="1033" level="3" price="0" desc="Increases resistance to poison" /> <!-- Resist Poison -->
++		<buff id="1062" level="2" price="0" desc="Reduces def. and increase atk. power." /> <!-- Berserker Spirit -->
++		<buff id="1068" level="3" price="0" desc="Increases P. Atk." /> <!-- Might -->
++		<buff id="1077" level="3" price="0" desc="Increases critical attack rate." /> <!-- Focus -->
++		<buff id="1086" level="2" price="0" desc="Increases Atk. Spd." /> <!-- Haste -->
++		<buff id="1242" level="3" price="0" desc="Increases critical attack." /> <!-- Death Whisper -->
++		<buff id="1309" level="3" price="0" desc="Increases Accuracy." /> <!-- Chant of Eagle -->
++		<buff id="1252" level="3" price="0" desc="Increases Evasion." /> <!-- Chant of Evasion -->
++		<buff id="1310" level="4" price="0" desc="Restores HP using inflicted damage." /> <!-- Chant of Vampiric -->
++		<buff id="1363" level="1" price="0" desc="Increases combat abilities." /> <!-- Chant of Victory -->
++		<buff id="1390" level="3" price="0" desc="Increases P. Atk." /> <!-- War Chant -->
++		<buff id="4699" level="13" price="0" desc="Increases critical chance and power" /> <!-- Blessing of Queen -->
++		<buff id="264" level="1" price="0" desc="Increases P. Def." /> <!-- Song of Earth -->
++		<buff id="267" level="1" price="0" desc="Increases M. Def." /> <!-- Song of Warding -->
++		<buff id="268" level="1" price="0" desc="Increases movement." /> <!-- Song of Wind -->
++		<buff id="304" level="1" price="0" desc="Increases maximum HP." /> <!-- Song of Vitality -->
++		<buff id="349" level="1" price="0" desc="Decreases re-use time." /> <!-- Song of Renewal -->
++		<buff id="265" level="1" price="0" desc="Increases HP regeneration." /> <!-- Song of Life -->
++		<buff id="529" level="1" price="0" desc="Increases resistance to fire, water, wind and earth attacks" /> <!-- Song of Elemental -->
++		<buff id="306" level="1" price="0" desc="Increases resistance to fire." /> <!-- Song of Flame Guard -->
++		<buff id="308" level="1" price="0" desc="Increases resistance to wind." /> <!-- Song of Storm Guard -->
++		<buff id="270" level="1" price="0" desc="Increases resistance to dark magic." /> <!-- Song of Invocation -->
++		<buff id="914" level="1" price="0" desc="Removes debuffs, resists them, improves healing." /> <!-- Song of Purification -->
++		<buff id="269" level="1" price="0" desc="Increases critical rate." /> <!-- Song of Hunter -->
++		<buff id="364" level="1" price="0" desc="Decreases re-use time of physical skills." /> <!-- Song of Champion -->
++		<buff id="305" level="1" price="0" desc="Reflects damage received." /> <!-- Song of Vengeance -->
++		<buff id="530" level="1" price="0" desc="Increases the resistance to divinity/darkness attacks" /> <!-- Dance of Alignment -->
++		<buff id="307" level="1" price="0" desc="Increases water resistance." /> <!-- Dance of Aqua Guard -->
++		<buff id="309" level="1" price="0" desc="Increases earth resistance." /> <!-- Dance of Earth Guard -->
++		<buff id="311" level="1" price="0" desc="Increases resistance to terrain damage." /> <!-- Dance of Protection -->
++		<buff id="272" level="1" price="0" desc="Increases Accuracy." /> <!-- Dance of Inspiration -->
++		<buff id="271" level="1" price="0" desc="Increases P. Atk." /> <!-- Dance of the Warrior -->
++		<buff id="275" level="1" price="0" desc="Increases attack speed." /> <!-- Dance of Fury -->
++		<buff id="274" level="1" price="0" desc="Increases critical damage." /> <!-- Dance of Fire -->
++		<buff id="310" level="1" price="0" desc="Restores HP by inflicted damage." /> <!-- Dance of the Vampire -->
++		<buff id="915" level="1" price="0" desc="Decreases P. Def./M. Def./evasion and increases P. Atk./M. Atk./Atk. Spd./Casting Spd./moving speed." /> <!-- Dance of Berserker -->
++	</category>
++	<category type="ROLE_DAGGER_GROUP">
++		<buff id="1035" level="4" price="0" desc="Increases resistance to mental attacks." /> <!-- Mental Shield -->
++		<buff id="1259" level="4" price="0" desc="Increases resistance to stun attack." /> <!-- Resist Shock -->
++		<buff id="1204" level="2" price="0" desc="Increases Speed." /> <!-- Wind Walk -->
++		<buff id="1036" level="2" price="0" desc="Increases M. Def." /> <!-- Magic Barrier -->
++		<buff id="1040" level="3" price="0" desc="Increases P. Def." /> <!-- Shield -->
++		<buff id="1045" level="6" price="0" desc="Increases maximum HP." /> <!-- Blessed Body -->
++		<buff id="1048" level="6" price="0" desc="Increases maximum MP." /> <!-- Blessed Soul -->
++		<buff id="1044" level="3" price="0" desc="Temporarily increases HP recovery." /> <!-- Regeneration -->
++		<buff id="1352" level="1" price="0" desc="Increases resistance to atures." /> <!-- Elemental Protection -->
++		<buff id="1353" level="1" price="0" desc="Increases resistance to dark attack." /> <!-- Divine Protection -->
++		<buff id="1362" level="1" price="0" desc="Increases resistance to Cancel attack." /> <!-- Chant of Spirit -->
++		<buff id="1461" level="1" price="0" desc="Decreases the critical damage received." /> <!-- Chant of Protection -->
++		<buff id="1284" level="3" price="0" desc="Reflects damage received." /> <!-- Chant of Revenge -->
++		<buff id="1323" level="1" price="0" desc="Keeps buffs after death." /> <!-- Noblesse Blessing -->
++		<buff id="1032" level="3" price="0" desc="increases resistance to bleeding" /> <!-- Invigor -->
++		<buff id="1033" level="3" price="0" desc="Increases resistance to poison" /> <!-- Resist Poison -->
++		<buff id="1062" level="2" price="0" desc="Reduces def. and increase atk. power." /> <!-- Berserker Spirit -->
++		<buff id="1068" level="3" price="0" desc="Increases P. Atk." /> <!-- Might -->
++		<buff id="1077" level="3" price="0" desc="Increases critical attack rate." /> <!-- Focus -->
++		<buff id="1086" level="2" price="0" desc="Increases Atk. Spd." /> <!-- Haste -->
++		<buff id="1242" level="3" price="0" desc="Increases critical attack." /> <!-- Death Whisper -->
++		<buff id="1309" level="3" price="0" desc="Increases Accuracy." /> <!-- Chant of Eagle -->
++		<buff id="1252" level="3" price="0" desc="Increases Evasion." /> <!-- Chant of Evasion -->
++		<buff id="1310" level="4" price="0" desc="Restores HP using inflicted damage." /> <!-- Chant of Vampiric -->
++		<buff id="1363" level="1" price="0" desc="Increases combat abilities." /> <!-- Chant of Victory -->
++		<buff id="1390" level="3" price="0" desc="Increases P. Atk." /> <!-- War Chant -->
++		<buff id="4700" level="13" price="0" desc="Increases P. Atk. and Accuracy" /> <!-- Gift of Queen -->
++		<buff id="264" level="1" price="0" desc="Increases P. Def." /> <!-- Song of Earth -->
++		<buff id="267" level="1" price="0" desc="Increases M. Def." /> <!-- Song of Warding -->
++		<buff id="268" level="1" price="0" desc="Increases movement." /> <!-- Song of Wind -->
++		<buff id="304" level="1" price="0" desc="Increases maximum HP." /> <!-- Song of Vitality -->
++		<buff id="349" level="1" price="0" desc="Decreases re-use time." /> <!-- Song of Renewal -->
++		<buff id="265" level="1" price="0" desc="Increases HP regeneration." /> <!-- Song of Life -->
++		<buff id="529" level="1" price="0" desc="Increases resistance to fire, water, wind and earth attacks" /> <!-- Song of Elemental -->
++		<buff id="306" level="1" price="0" desc="Increases resistance to fire." /> <!-- Song of Flame Guard -->
++		<buff id="308" level="1" price="0" desc="Increases resistance to wind." /> <!-- Song of Storm Guard -->
++		<buff id="270" level="1" price="0" desc="Increases resistance to dark magic." /> <!-- Song of Invocation -->
++		<buff id="914" level="1" price="0" desc="Removes debuffs, resists them, improves healing." /> <!-- Song of Purification -->
++		<buff id="269" level="1" price="0" desc="Increases critical rate." /> <!-- Song of Hunter -->
++		<buff id="364" level="1" price="0" desc="Decreases re-use time of physical skills." /> <!-- Song of Champion -->
++		<buff id="305" level="1" price="0" desc="Reflects damage received." /> <!-- Song of Vengeance -->
++		<buff id="530" level="1" price="0" desc="Increases the resistance to divinity/darkness attacks" /> <!-- Dance of Alignment -->
++		<buff id="307" level="1" price="0" desc="Increases water resistance." /> <!-- Dance of Aqua Guard -->
++		<buff id="309" level="1" price="0" desc="Increases earth resistance." /> <!-- Dance of Earth Guard -->
++		<buff id="311" level="1" price="0" desc="Increases resistance to terrain damage." /> <!-- Dance of Protection -->
++		<buff id="272" level="1" price="0" desc="Increases Accuracy." /> <!-- Dance of Inspiration -->
++		<buff id="271" level="1" price="0" desc="Increases P. Atk." /> <!-- Dance of the Warrior -->
++		<buff id="275" level="1" price="0" desc="Increases attack speed." /> <!-- Dance of Fury -->
++		<buff id="274" level="1" price="0" desc="Increases critical damage." /> <!-- Dance of Fire -->
++		<buff id="310" level="1" price="0" desc="Restores HP by inflicted damage." /> <!-- Dance of the Vampire -->
++		<buff id="915" level="1" price="0" desc="Decreases P. Def./M. Def./evasion and increases P. Atk./M. Atk./Atk. Spd./Casting Spd./moving speed." /> <!-- Dance of Berserker -->
++	</category>
++	<category type="ROLE_ARCHER_GROUP">
++		<buff id="1035" level="4" price="0" desc="Increases resistance to mental attacks." /> <!-- Mental Shield -->
++		<buff id="1259" level="4" price="0" desc="Increases resistance to stun attack." /> <!-- Resist Shock -->
++		<buff id="1204" level="2" price="0" desc="Increases Speed." /> <!-- Wind Walk -->
++		<buff id="1036" level="2" price="0" desc="Increases M. Def." /> <!-- Magic Barrier -->
++		<buff id="1040" level="3" price="0" desc="Increases P. Def." /> <!-- Shield -->
++		<buff id="1045" level="6" price="0" desc="Increases maximum HP." /> <!-- Blessed Body -->
++		<buff id="1048" level="6" price="0" desc="Increases maximum MP." /> <!-- Blessed Soul -->
++		<buff id="1044" level="3" price="0" desc="Temporarily increases HP recovery." /> <!-- Regeneration -->
++		<buff id="1352" level="1" price="0" desc="Increases resistance to atures." /> <!-- Elemental Protection -->
++		<buff id="1353" level="1" price="0" desc="Increases resistance to dark attack." /> <!-- Divine Protection -->
++		<buff id="1362" level="1" price="0" desc="Increases resistance to Cancel attack." /> <!-- Chant of Spirit -->
++		<buff id="1461" level="1" price="0" desc="Decreases the critical damage received." /> <!-- Chant of Protection -->
++		<buff id="1284" level="3" price="0" desc="Reflects damage received." /> <!-- Chant of Revenge -->
++		<buff id="1323" level="1" price="0" desc="Keeps buffs after death." /> <!-- Noblesse Blessing -->
++		<buff id="1032" level="3" price="0" desc="increases resistance to bleeding" /> <!-- Invigor -->
++		<buff id="1033" level="3" price="0" desc="Increases resistance to poison" /> <!-- Resist Poison -->
++		<buff id="1062" level="2" price="0" desc="Reduces def. and increase atk. power." /> <!-- Berserker Spirit -->
++		<buff id="1068" level="3" price="0" desc="Increases P. Atk." /> <!-- Might -->
++		<buff id="1077" level="3" price="0" desc="Increases critical attack rate." /> <!-- Focus -->
++		<buff id="1086" level="2" price="0" desc="Increases Atk. Spd." /> <!-- Haste -->
++		<buff id="1242" level="3" price="0" desc="Increases critical attack." /> <!-- Death Whisper -->
++		<buff id="1309" level="3" price="0" desc="Increases Accuracy." /> <!-- Chant of Eagle -->
++		<buff id="1252" level="3" price="0" desc="Increases Evasion." /> <!-- Chant of Evasion -->
++		<buff id="1310" level="4" price="0" desc="Restores HP using inflicted damage." /> <!-- Chant of Vampiric -->
++		<buff id="1363" level="1" price="0" desc="Increases combat abilities." /> <!-- Chant of Victory -->
++		<buff id="1390" level="3" price="0" desc="Increases P. Atk." /> <!-- War Chant -->
++		<buff id="4699" level="13" price="0" desc="Increases critical chance and power" /> <!-- Blessing of Queen -->
++		<buff id="264" level="1" price="0" desc="Increases P. Def." /> <!-- Song of Earth -->
++		<buff id="267" level="1" price="0" desc="Increases M. Def." /> <!-- Song of Warding -->
++		<buff id="268" level="1" price="0" desc="Increases movement." /> <!-- Song of Wind -->
++		<buff id="304" level="1" price="0" desc="Increases maximum HP." /> <!-- Song of Vitality -->
++		<buff id="349" level="1" price="0" desc="Decreases re-use time." /> <!-- Song of Renewal -->
++		<buff id="265" level="1" price="0" desc="Increases HP regeneration." /> <!-- Song of Life -->
++		<buff id="529" level="1" price="0" desc="Increases resistance to fire, water, wind and earth attacks" /> <!-- Song of Elemental -->
++		<buff id="306" level="1" price="0" desc="Increases resistance to fire." /> <!-- Song of Flame Guard -->
++		<buff id="308" level="1" price="0" desc="Increases resistance to wind." /> <!-- Song of Storm Guard -->
++		<buff id="270" level="1" price="0" desc="Increases resistance to dark magic." /> <!-- Song of Invocation -->
++		<buff id="914" level="1" price="0" desc="Removes debuffs, resists them, improves healing." /> <!-- Song of Purification -->
++		<buff id="269" level="1" price="0" desc="Increases critical rate." /> <!-- Song of Hunter -->
++		<buff id="364" level="1" price="0" desc="Decreases re-use time of physical skills." /> <!-- Song of Champion -->
++		<buff id="530" level="1" price="0" desc="Increases the resistance to divinity/darkness attacks" /> <!-- Dance of Alignment -->
++		<buff id="307" level="1" price="0" desc="Increases water resistance." /> <!-- Dance of Aqua Guard -->
++		<buff id="309" level="1" price="0" desc="Increases earth resistance." /> <!-- Dance of Earth Guard -->
++		<buff id="311" level="1" price="0" desc="Increases resistance to terrain damage." /> <!-- Dance of Protection -->
++		<buff id="272" level="1" price="0" desc="Increases Accuracy." /> <!-- Dance of Inspiration -->
++		<buff id="271" level="1" price="0" desc="Increases P. Atk." /> <!-- Dance of the Warrior -->
++		<buff id="275" level="1" price="0" desc="Increases attack speed." /> <!-- Dance of Fury -->
++		<buff id="274" level="1" price="0" desc="Increases critical damage." /> <!-- Dance of Fire -->
++		<buff id="915" level="1" price="0" desc="Decreases P. Def./M. Def./evasion and increases P. Atk./M. Atk./Atk. Spd./Casting Spd./moving speed." /> <!-- Dance of Berserker -->
++	</category>
++	<category type="ROLE_TANK_GROUP">
++		<buff id="1035" level="4" price="0" desc="Increases resistance to mental attacks." /> <!-- Mental Shield -->
++		<buff id="1259" level="4" price="0" desc="Increases resistance to stun attack." /> <!-- Resist Shock -->
++		<buff id="1204" level="2" price="0" desc="Increases Speed." /> <!-- Wind Walk -->
++		<buff id="1036" level="2" price="0" desc="Increases M. Def." /> <!-- Magic Barrier -->
++		<buff id="1040" level="3" price="0" desc="Increases P. Def." /> <!-- Shield -->
++		<buff id="1045" level="6" price="0" desc="Increases maximum HP." /> <!-- Blessed Body -->
++		<buff id="1048" level="6" price="0" desc="Increases maximum MP." /> <!-- Blessed Soul -->
++		<buff id="1044" level="3" price="0" desc="Temporarily increases HP recovery." /> <!-- Regeneration -->
++		<buff id="1352" level="1" price="0" desc="Increases resistance to atures." /> <!-- Elemental Protection -->
++		<buff id="1353" level="1" price="0" desc="Increases resistance to dark attack." /> <!-- Divine Protection -->
++		<buff id="1362" level="1" price="0" desc="Increases resistance to Cancel attack." /> <!-- Chant of Spirit -->
++		<buff id="1461" level="1" price="0" desc="Decreases the critical damage received." /> <!-- Chant of Protection -->
++		<buff id="1284" level="3" price="0" desc="Reflects damage received." /> <!-- Chant of Revenge -->
++		<buff id="1323" level="1" price="0" desc="Keeps buffs after death." /> <!-- Noblesse Blessing -->
++		<buff id="1032" level="3" price="0" desc="increases resistance to bleeding" /> <!-- Invigor -->
++		<buff id="1033" level="3" price="0" desc="Increases resistance to poison" /> <!-- Resist Poison -->
++		<buff id="1068" level="3" price="0" desc="Increases P. Atk." /> <!-- Might -->
++		<buff id="1077" level="3" price="0" desc="Increases critical attack rate." /> <!-- Focus -->
++		<buff id="1086" level="2" price="0" desc="Increases Atk. Spd." /> <!-- Haste -->
++		<buff id="1242" level="3" price="0" desc="Increases critical attack." /> <!-- Death Whisper -->
++		<buff id="1309" level="3" price="0" desc="Increases Accuracy." /> <!-- Chant of Eagle -->
++		<buff id="1252" level="3" price="0" desc="Increases Evasion." /> <!-- Chant of Evasion -->
++		<buff id="1268" level="4" price="0" desc="Restores HP using inflicted damage." /> <!-- Vampiric Rage -->
++		<buff id="1363" level="1" price="0" desc="Increases combat abilities." /> <!-- Chant of Victory -->
++		<buff id="1389" level="3" price="0" desc="Increases P. Def." /> <!-- Greater Shield -->
++		<buff id="4699" level="13" price="0" desc="Increases critical chance and power" /> <!-- Blessing of Queen -->
++		<buff id="1243" level="6" price="0" desc="Increases shield defense rate." /> <!-- Bless Shield -->
++		<buff id="1304" level="3" price="0" desc="Increases shield defense power." /> <!-- Advanced Block -->
++		<buff id="264" level="1" price="0" desc="Increases P. Def." /> <!-- Song of Earth -->
++		<buff id="267" level="1" price="0" desc="Increases M. Def." /> <!-- Song of Warding -->
++		<buff id="268" level="1" price="0" desc="Increases movement." /> <!-- Song of Wind -->
++		<buff id="304" level="1" price="0" desc="Increases maximum HP." /> <!-- Song of Vitality -->
++		<buff id="349" level="1" price="0" desc="Decreases re-use time." /> <!-- Song of Renewal -->
++		<buff id="265" level="1" price="0" desc="Increases HP regeneration." /> <!-- Song of Life -->
++		<buff id="529" level="1" price="0" desc="Increases resistance to fire, water, wind and earth attacks" /> <!-- Song of Elemental -->
++		<buff id="306" level="1" price="0" desc="Increases resistance to fire." /> <!-- Song of Flame Guard -->
++		<buff id="308" level="1" price="0" desc="Increases resistance to wind." /> <!-- Song of Storm Guard -->
++		<buff id="270" level="1" price="0" desc="Increases resistance to dark magic." /> <!-- Song of Invocation -->
++		<buff id="914" level="1" price="0" desc="Removes debuffs, resists them, improves healing." /> <!-- Song of Purification -->
++		<buff id="364" level="1" price="0" desc="Decreases re-use time of physical skills." /> <!-- Song of Champion -->
++		<buff id="305" level="1" price="0" desc="Reflects damage received." /> <!-- Song of Vengeance -->
++		<buff id="530" level="1" price="0" desc="Increases the resistance to divinity/darkness attacks" /> <!-- Dance of Alignment -->
++		<buff id="307" level="1" price="0" desc="Increases water resistance." /> <!-- Dance of Aqua Guard -->
++		<buff id="309" level="1" price="0" desc="Increases earth resistance." /> <!-- Dance of Earth Guard -->
++		<buff id="311" level="1" price="0" desc="Increases resistance to terrain damage." /> <!-- Dance of Protection -->
++		<buff id="272" level="1" price="0" desc="Increases Accuracy." /> <!-- Dance of Inspiration -->
++		<buff id="271" level="1" price="0" desc="Increases P. Atk." /> <!-- Dance of the Warrior -->
++		<buff id="275" level="1" price="0" desc="Increases attack speed." /> <!-- Dance of Fury -->
++		<buff id="274" level="1" price="0" desc="Increases critical damage." /> <!-- Dance of Fire -->
++		<buff id="310" level="1" price="0" desc="Restores HP by inflicted damage." /> <!-- Dance of the Vampire -->
++	</category>
++	<category type="ROLE_MAGE_GROUP">
++		<buff id="1035" level="4" price="0" desc="Increases resistance to mental attacks." /> <!-- Mental Shield -->
++		<buff id="1259" level="4" price="0" desc="Increases resistance to stun attack." /> <!-- Resist Shock -->
++		<buff id="1204" level="2" price="0" desc="Increases Speed." /> <!-- Wind Walk -->
++		<buff id="1036" level="2" price="0" desc="Increases M. Def." /> <!-- Magic Barrier -->
++		<buff id="1040" level="3" price="0" desc="Increases P. Def." /> <!-- Shield -->
++		<buff id="1045" level="6" price="0" desc="Increases maximum HP." /> <!-- Blessed Body -->
++		<buff id="1048" level="6" price="0" desc="Increases maximum MP." /> <!-- Blessed Soul -->
++		<buff id="1044" level="3" price="0" desc="Temporarily increases HP recovery." /> <!-- Regeneration -->
++		<buff id="1352" level="1" price="0" desc="Increases resistance to atures." /> <!-- Elemental Protection -->
++		<buff id="1353" level="1" price="0" desc="Increases resistance to dark attack." /> <!-- Divine Protection -->
++		<buff id="1362" level="1" price="0" desc="Increases resistance to Cancel attack." /> <!-- Chant of Spirit -->
++		<buff id="1461" level="1" price="0" desc="Decreases the critical damage received." /> <!-- Chant of Protection -->
++		<buff id="1284" level="3" price="0" desc="Reflects damage received." /> <!-- Chant of Revenge -->
++		<buff id="1323" level="1" price="0" desc="Keeps buffs after death." /> <!-- Noblesse Blessing -->
++		<buff id="1032" level="3" price="0" desc="increases resistance to bleeding" /> <!-- Invigor -->
++		<buff id="1033" level="3" price="0" desc="Increases resistance to poison" /> <!-- Resist Poison -->
++		<buff id="1062" level="2" price="0" desc="Reduces def. and increase atk. power." /> <!-- Berserker Spirit -->
++		<buff id="1078" level="6" price="0" desc="Increases magic concentration." /> <!-- Concentration -->
++		<buff id="1085" level="3" price="0" desc="Increases Casting Spd." /> <!-- Acumen -->
++		<buff id="1059" level="3" price="0" desc="Increases M. Atk." /> <!-- Empower -->
++		<buff id="1303" level="2" price="0" desc="Increases crit. rate of magic attacks." /> <!-- Wild Magic -->
++		<buff id="1397" level="3" price="0" desc="Decreases MP consumption rate." /> <!-- Clarity -->
++		<buff id="1457" level="1" price="0" desc="Increases M. Atk., raises MP consumption." /> <!-- Empowering Echo -->
++		<buff id="1413" level="1" price="0" desc="Increases mage abilities." /> <!-- Magnus' Chant -->
++		<buff id="1391" level="3" price="0" desc="Increases P. Def." /> <!-- Earth Chant -->
++		<buff id="4703" level="13" price="0" desc="Decreases re-use time of magic skills" /> <!-- Gift of Seraphim -->
++		<buff id="264" level="1" price="0" desc="Increases P. Def." /> <!-- Song of Earth -->
++		<buff id="267" level="1" price="0" desc="Increases M. Def." /> <!-- Song of Warding -->
++		<buff id="268" level="1" price="0" desc="Increases movement." /> <!-- Song of Wind -->
++		<buff id="304" level="1" price="0" desc="Increases maximum HP." /> <!-- Song of Vitality -->
++		<buff id="349" level="1" price="0" desc="Decreases re-use time." /> <!-- Song of Renewal -->
++		<buff id="265" level="1" price="0" desc="Increases HP regeneration." /> <!-- Song of Life -->
++		<buff id="529" level="1" price="0" desc="Increases resistance to fire, water, wind and earth attacks" /> <!-- Song of Elemental -->
++		<buff id="306" level="1" price="0" desc="Increases resistance to fire." /> <!-- Song of Flame Guard -->
++		<buff id="308" level="1" price="0" desc="Increases resistance to wind." /> <!-- Song of Storm Guard -->
++		<buff id="270" level="1" price="0" desc="Increases resistance to dark magic." /> <!-- Song of Invocation -->
++		<buff id="914" level="1" price="0" desc="Removes debuffs, resists them, improves healing." /> <!-- Song of Purification -->
++		<buff id="363" level="1" price="0" desc="Increases MP regeneration rate." /> <!-- Song of Meditation -->
++		<buff id="530" level="1" price="0" desc="Increases the resistance to divinity/darkness attacks" /> <!-- Dance of Alignment -->
++		<buff id="307" level="1" price="0" desc="Increases water resistance." /> <!-- Dance of Aqua Guard -->
++		<buff id="309" level="1" price="0" desc="Increases earth resistance." /> <!-- Dance of Earth Guard -->
++		<buff id="311" level="1" price="0" desc="Increases resistance to terrain damage." /> <!-- Dance of Protection -->
++		<buff id="273" level="1" price="0" desc="Increases M. Atk." /> <!-- Dance of the Mystic -->
++		<buff id="276" level="1" price="0" desc="Increases Casting Spd." /> <!-- Dance of Concentration -->
++		<buff id="365" level="1" price="0" desc="Increases rate of magic crit. damage." /> <!-- Siren's Dance -->
++	</category>
++	<category type="ROLE_HEALER_GROUP">
++		<buff id="1035" level="4" price="0" desc="Increases resistance to mental attacks." /> <!-- Mental Shield -->
++		<buff id="1259" level="4" price="0" desc="Increases resistance to stun attack." /> <!-- Resist Shock -->
++		<buff id="1204" level="2" price="0" desc="Increases Speed." /> <!-- Wind Walk -->
++		<buff id="1036" level="2" price="0" desc="Increases M. Def." /> <!-- Magic Barrier -->
++		<buff id="1040" level="3" price="0" desc="Increases P. Def." /> <!-- Shield -->
++		<buff id="1045" level="6" price="0" desc="Increases maximum HP." /> <!-- Blessed Body -->
++		<buff id="1048" level="6" price="0" desc="Increases maximum MP." /> <!-- Blessed Soul -->
++		<buff id="1044" level="3" price="0" desc="Temporarily increases HP recovery." /> <!-- Regeneration -->
++		<buff id="1352" level="1" price="0" desc="Increases resistance to atures." /> <!-- Elemental Protection -->
++		<buff id="1353" level="1" price="0" desc="Increases resistance to dark attack." /> <!-- Divine Protection -->
++		<buff id="1362" level="1" price="0" desc="Increases resistance to Cancel attack." /> <!-- Chant of Spirit -->
++		<buff id="1461" level="1" price="0" desc="Decreases the critical damage received." /> <!-- Chant of Protection -->
++		<buff id="1284" level="3" price="0" desc="Reflects damage received." /> <!-- Chant of Revenge -->
++		<buff id="1323" level="1" price="0" desc="Keeps buffs after death." /> <!-- Noblesse Blessing -->
++		<buff id="1032" level="3" price="0" desc="increases resistance to bleeding" /> <!-- Invigor -->
++		<buff id="1033" level="3" price="0" desc="Increases resistance to poison" /> <!-- Resist Poison -->
++		<buff id="1078" level="6" price="0" desc="Increases magic concentration." /> <!-- Concentration -->
++		<buff id="1085" level="3" price="0" desc="Increases Casting Spd." /> <!-- Acumen -->
++		<buff id="1059" level="3" price="0" desc="Increases M. Atk." /> <!-- Empower -->
++		<buff id="1303" level="2" price="0" desc="Increases crit. rate of magic attacks." /> <!-- Wild Magic -->
++		<buff id="1397" level="3" price="0" desc="Decreases MP consumption rate." /> <!-- Clarity -->
++		<buff id="1460" level="1" price="0" desc="Increases MP recovered by others." /> <!-- Mana Gain -->
++		<buff id="1355" level="1" price="0" desc="Increases all mage abilities." /> <!-- Prophecy of Water -->
++		<buff id="1391" level="3" price="0" desc="Increases P. Def." /> <!-- Earth Chant -->
++		<buff id="4703" level="13" price="0" desc="Decreases re-use time of magic skills" /> <!-- Gift of Seraphim -->
++		<buff id="264" level="1" price="0" desc="Increases P. Def." /> <!-- Song of Earth -->
++		<buff id="267" level="1" price="0" desc="Increases M. Def." /> <!-- Song of Warding -->
++		<buff id="268" level="1" price="0" desc="Increases movement." /> <!-- Song of Wind -->
++		<buff id="304" level="1" price="0" desc="Increases maximum HP." /> <!-- Song of Vitality -->
++		<buff id="349" level="1" price="0" desc="Decreases re-use time." /> <!-- Song of Renewal -->
++		<buff id="265" level="1" price="0" desc="Increases HP regeneration." /> <!-- Song of Life -->
++		<buff id="529" level="1" price="0" desc="Increases resistance to fire, water, wind and earth attacks" /> <!-- Song of Elemental -->
++		<buff id="306" level="1" price="0" desc="Increases resistance to fire." /> <!-- Song of Flame Guard -->
++		<buff id="308" level="1" price="0" desc="Increases resistance to wind." /> <!-- Song of Storm Guard -->
++		<buff id="270" level="1" price="0" desc="Increases resistance to dark magic." /> <!-- Song of Invocation -->
++		<buff id="914" level="1" price="0" desc="Removes debuffs, resists them, improves healing." /> <!-- Song of Purification -->
++		<buff id="363" level="1" price="0" desc="Increases MP regeneration rate." /> <!-- Song of Meditation -->
++		<buff id="530" level="1" price="0" desc="Increases the resistance to divinity/darkness attacks" /> <!-- Dance of Alignment -->
++		<buff id="307" level="1" price="0" desc="Increases water resistance." /> <!-- Dance of Aqua Guard -->
++		<buff id="309" level="1" price="0" desc="Increases earth resistance." /> <!-- Dance of Earth Guard -->
++		<buff id="311" level="1" price="0" desc="Increases resistance to terrain damage." /> <!-- Dance of Protection -->
++		<buff id="273" level="1" price="0" desc="Increases M. Atk." /> <!-- Dance of the Mystic -->
++		<buff id="276" level="1" price="0" desc="Increases Casting Spd." /> <!-- Dance of Concentration -->
++		<buff id="365" level="1" price="0" desc="Increases rate of magic crit. damage." /> <!-- Siren's Dance -->
++	</category>
+ </list>
+\ No newline at end of file
+diff --git a/dist/game/config/Player.ini b/dist/game/config/Player.ini
+index dbcccafdb6cb..34b01d1595ee 100644
+--- a/dist/game/config/Player.ini
++++ b/dist/game/config/Player.ini
+@@ -78,7 +78,7 @@
+ 1261,3660;1364,3660;1259,3660;1073,3660;1257,3660;1304,3660;1460,3660;\
+ 1353,3660;1354,3660;1003,3660;1005,3660;\
+ 1352,3660;1442,3660;1392,3660;\
+-1355,3660;1356,3660;1357,3660;1363,3660;1461,3660;1413,3660;1414,3660
++1355,3660;1356,3660;1357,3660;1363,3660;1461,3660;1413,3660;1414,3660;1323,3660;4699,3660;4703,3660;1499,3660;1500,3660;1501,3660;1502,3660;1503,3660;1504,3660;1518,3660;1519,3660;1535,3660;1457,3660;914,3660;915,3660;1549,3660
+ 
+ # When this is enabled it will read the "SkillReuseList" option.
+ EnableModifySkillReuse = False
+@@ -105,9 +105,9 @@
+ # Maximum number of buffs and songs/dances.
+ # Remember that Divine Inspiration will give players 4 additional buff slots on top of the number specified in "maxbuffamount".
+ # Default: 20, 12, 12
+-MaxBuffAmount = 24
++MaxBuffAmount = 60
+ MaxTriggeredBuffAmount = 12
+-MaxDanceAmount = 12
++MaxDanceAmount = 30
+ 
+ # Allow players to cancel dances/songs via Alt+click on buff icon 
+ # Default: False 
+diff --git a/dist/game/config/Custom/SchemeBuffer.ini b/dist/game/config/Custom/SchemeBuffer.ini
+index 1007dacd9ab1..7aaefe2429a0 100644
+--- a/dist/game/config/Custom/SchemeBuffer.ini
++++ b/dist/game/config/Custom/SchemeBuffer.ini
+@@ -4,7 +4,7 @@
+ # Also check data\SchemeBufferSkills.xml
+ 
+ # Maximum number of available schemes per player.
+-BufferMaxSchemesPerChar = 4
++BufferMaxSchemesPerChar = 10
+ 
+ # Payment for buffer, can be changed to custom server coin.
+ BufferItemId = 57
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+index ce098e6be25a..8adad91c449e 100644
+--- a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+@@ -47,6 +47,14 @@
+ 	private static final boolean L2HUB_ENGLISH = l2hubEnglish();
+ 	private static final java.util.Map<String, String> L2HUB_EN = java.util.Map.ofEntries(
+ 		java.util.Map.entry("Баффер", "Buffer"),
++		java.util.Map.entry("Фуллбаф мне", "Full buff for me"),
++		java.util.Map.entry("Фуллбаф по классу", "Full buff by class"),
++		java.util.Map.entry("Воин", "Fighter"),
++		java.util.Map.entry("Кинжал", "Dagger"),
++		java.util.Map.entry("Лучник", "Archer"),
++		java.util.Map.entry("Танк", "Tank"),
++		java.util.Map.entry("Маг", "Mage"),
++		java.util.Map.entry("Хил, саппорт", "Healer, support"),
+ 		java.util.Map.entry("<br><font color=\"808080\">Баффер выключен в настройках сервера (L2HubTown.ini, TownBuffer).</font>", "<br><font color=\"808080\">The buffer is turned off in the server settings (L2HubTown.ini, TownBuffer).</font>"),
+ 		java.util.Map.entry("GM-шоп", "GM Shop"),
+ 		java.util.Map.entry("<br><font color=\"808080\">GM-шоп выключен в настройках сервера (L2HubTown.ini, TownGmShop).</font>", "<br><font color=\"808080\">The GM Shop is turned off in the server settings (L2HubTown.ini, TownGmShop).</font>"),
+@@ -101,6 +109,19 @@
+ 	
+ 	private static final String NAVIGATION_PATH = "data/html/CommunityBoard/Custom/navigation.html";
+ 	private static final String BUFF = "_bbshubbuff";
++	private static final String[][] ROLES =
++	{
++		{ "fighter", "Воин" },
++		{ "dagger", "Кинжал" },
++		{ "archer", "Лучник" },
++		{ "tank", "Танк" },
++		{ "mage", "Маг" },
++		{ "healer", "Хил, саппорт" }
++	};
++	private static final java.util.Set<String> TANK_CLASSES = java.util.Set.of("KNIGHT", "PALADIN", "DARK_AVENGER", "ELVEN_KNIGHT", "TEMPLE_KNIGHT", "PALUS_KNIGHT", "SHILLIEN_KNIGHT", "PHOENIX_KNIGHT", "HELL_KNIGHT", "EVA_TEMPLAR", "SHILLIEN_TEMPLAR");
++	private static final java.util.Set<String> DAGGER_CLASSES = java.util.Set.of("ROGUE", "TREASURE_HUNTER", "ADVENTURER", "ELVEN_SCOUT", "PLAINS_WALKER", "WIND_RIDER", "ASSASSIN", "ABYSS_WALKER", "GHOST_HUNTER");
++	private static final java.util.Set<String> ARCHER_CLASSES = java.util.Set.of("HAWKEYE", "SAGITTARIUS", "SILVER_RANGER", "MOONLIGHT_SENTINEL", "PHANTOM_RANGER", "GHOST_SENTINEL", "ARBALESTER", "TRICKSTER");
++	private static final java.util.Set<String> HEALER_CLASSES = java.util.Set.of("CLERIC", "BISHOP", "CARDINAL", "PROPHET", "HIEROPHANT", "ORACLE", "ELDER", "EVA_SAINT", "SHILLIEN_ORACLE", "SHILLIEN_ELDER", "SHILLIEN_SAINT", "ORC_SHAMAN", "OVERLORD", "DOMINATOR", "WARCRYER", "DOOMCRYER");
+ 	private static final String SHOP = "_bbshubshop";
+ 	private static final String BUDDY = "_bbshubbuddy";
+ 	private static final String HUNTERS = "_bbshubhunters";
+@@ -202,7 +223,7 @@
+ 	// ---------- Баффер ----------
+ 
+ 	/**
+-	 * _bbshubbuff [категория] | set fighter|mage [pet] | one &lt;id&gt; &lt;категория&gt; [pet] | heal &lt;категория&gt; | cancel &lt;категория&gt; | schemes, scheme_* — свои наборы ({@link PhantomBufferSets})
++	 * _bbshubbuff [категория] | set auto|fighter|dagger|archer|tank|mage|healer [pet] | one &lt;id&gt; &lt;категория&gt; [pet] | heal &lt;категория&gt; | cancel &lt;категория&gt; | schemes, scheme_* — свои наборы ({@link PhantomBufferSets})
+ 	 */
+ 	private static String buffer(Player player, String[] args)
+ 	{
+@@ -221,7 +242,7 @@
+ 				if (canUse(player))
+ 				{
+ 					final boolean pet = (args.length > 3) && args[3].equalsIgnoreCase("pet");
+-					final String group = (args.length > 2) && args[2].equalsIgnoreCase("mage") ? "MAGE_GROUP" : "FIGHTER_GROUP";
++					final String group = roleGroup(player, args.length > 2 ? args[2] : "auto");
+ 					final Creature target = pet ? player.getSummon() : player;
+ 					if (target == null)
+ 					{
+@@ -303,20 +324,62 @@
+ 		return page(player, tr("Баффер"), bufferContent(player, table, types, category));
+ 	}
+ 
++	/**
++	 * @return набор баффера из SchemeBufferSkills.xml: роль с кнопки, а auto — по классу персонажа
++	 */
++	private static String roleGroup(Player player, String role)
++	{
++		final String wanted = role.equalsIgnoreCase("auto") ? classRole(player) : role.toUpperCase();
++		for (String[] known : ROLES)
++		{
++			if (known[0].equalsIgnoreCase(wanted))
++			{
++				return "ROLE_" + wanted + "_GROUP";
++			}
++		}
++		return "ROLE_FIGHTER_GROUP";
++	}
++
++	private static String classRole(Player player)
++	{
++		final String name = player.getPlayerClass().name();
++		if (TANK_CLASSES.contains(name))
++		{
++			return "TANK";
++		}
++		if (DAGGER_CLASSES.contains(name))
++		{
++			return "DAGGER";
++		}
++		if (ARCHER_CLASSES.contains(name))
++		{
++			return "ARCHER";
++		}
++		if (HEALER_CLASSES.contains(name))
++		{
++			return "HEALER";
++		}
++		return player.isMageClass() ? "MAGE" : "FIGHTER";
++	}
++
+ 	private static String bufferContent(Player player, SchemeBufferTable table, List<String> types, String category)
+ 	{
+ 		final StringBuilder sb = new StringBuilder(12288);
+-		sb.append(button(PhantomBufferSets.title(), BUFF + " schemes", 150)).append("<br>");
+ 		sb.append("<table width=520><tr>");
+-		sb.append("<td align=center>").append(button(tr("Воину — всё"), BUFF + " set fighter", 120)).append("</td>");
+-		sb.append("<td align=center>").append(button(tr("Магу — всё"), BUFF + " set mage", 120)).append("</td>");
+-		sb.append("<td align=center>").append(button(tr("Хил"), BUFF + " heal " + category, 120)).append("</td>");
+-		sb.append("<td align=center>").append(button(tr("Снять бафы"), BUFF + " cancel " + category, 120)).append("</td>");
++		sb.append("<td align=center>").append(button(tr("Фуллбаф мне"), BUFF + " set auto", 150)).append("</td>");
++		sb.append("<td align=center>").append(button(PhantomBufferSets.title(), BUFF + " schemes", 130)).append("</td>");
++		sb.append("<td align=center>").append(button(tr("Хил"), BUFF + " heal " + category, 110)).append("</td>");
++		sb.append("<td align=center>").append(button(tr("Снять бафы"), BUFF + " cancel " + category, 110)).append("</td>");
++		sb.append("</tr></table><br><font color=\"B09878\">").append(tr("Фуллбаф по классу")).append("</font><br1><table width=520><tr>");
++		for (String[] role : ROLES)
++		{
++			sb.append("<td align=center>").append(button(tr(role[1]), BUFF + " set " + role[0], 84)).append("</td>");
++		}
+ 		sb.append("</tr>");
+ 		if (player.hasSummon())
+ 		{
+-			sb.append("<tr><td align=center>").append(button(tr("Питомцу: воин"), BUFF + " set fighter pet", 120)).append("</td>");
+-			sb.append("<td align=center>").append(button(tr("Питомцу: маг"), BUFF + " set mage pet", 120)).append("</td><td></td><td></td></tr>");
++			sb.append("<tr><td align=center colspan=3>").append(button(tr("Питомцу: воин"), BUFF + " set fighter pet", 120)).append("</td>");
++			sb.append("<td align=center colspan=3>").append(button(tr("Питомцу: маг"), BUFF + " set mage pet", 120)).append("</td></tr>");
+ 		}
+ 		sb.append("</table><br>");
+ 
+@@ -324,6 +387,10 @@
+ 		int column = 0;
+ 		for (String type : types)
+ 		{
++			if (type.endsWith("_GROUP"))
++			{
++				continue; // наборы — кнопками выше, это не вкладки
++			}
+ 			if ((column > 0) && ((column % 6) == 0))
+ 			{
+ 				sb.append("</tr><tr>");

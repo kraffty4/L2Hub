@@ -1,0 +1,550 @@
+L2Hub: самопроверка вежливой охоты автобоя, HuntersSelfTest = RESPECT, только на копии базы (docs/PHANTOMS.md).
+
+diff --git a/dist/game/data/scripts/custom/L2HubRespectTest/L2HubRespectTest.java b/dist/game/data/scripts/custom/L2HubRespectTest/L2HubRespectTest.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..cc99f292a41cdc3ad6143178683f821728a0ec0c
+--- /dev/null
++++ b/dist/game/data/scripts/custom/L2HubRespectTest/L2HubRespectTest.java
+@@ -0,0 +1,542 @@
++package custom.L2HubRespectTest;
++
++import java.lang.reflect.Field;
++import java.util.ArrayList;
++import java.util.Collections;
++import java.util.List;
++import java.util.Map;
++import java.util.function.Predicate;
++import java.util.logging.Level;
++import java.util.logging.Logger;
++
++import org.l2jmobius.commons.threads.ThreadPool;
++import org.l2jmobius.gameserver.ai.Intention;
++import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
++import org.l2jmobius.gameserver.data.xml.NpcData;
++import org.l2jmobius.gameserver.entity.Location;
++import org.l2jmobius.gameserver.entity.World;
++import org.l2jmobius.gameserver.entity.WorldObject;
++import org.l2jmobius.gameserver.entity.actor.Creature;
++import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.entity.actor.enums.npc.AISkillScope;
++import org.l2jmobius.gameserver.entity.actor.enums.npc.AIType;
++import org.l2jmobius.gameserver.entity.actor.instance.Monster;
++import org.l2jmobius.gameserver.entity.actor.templates.NpcTemplate;
++import org.l2jmobius.gameserver.entity.groups.Party;
++import org.l2jmobius.gameserver.entity.groups.PartyDistributionType;
++import org.l2jmobius.gameserver.entity.item.Weapon;
++import org.l2jmobius.gameserver.entity.zone.ZoneId;
++import org.l2jmobius.gameserver.geoengine.GeoEngine;
++import org.l2jmobius.gameserver.managers.phantom.HuntSpotData;
++import org.l2jmobius.gameserver.managers.phantom.HuntSpotData.HuntSpot;
++import org.l2jmobius.gameserver.managers.phantom.PhantomHunterManager;
++import org.l2jmobius.gameserver.managers.phantom.PhantomManager;
++import org.l2jmobius.gameserver.mechanics.script.Quest;
++import org.l2jmobius.gameserver.taskmanagers.AutoPlayTaskManager;
++
++/**
++ * L2Hub: самопроверка вежливой охоты автобоя на Epilogue, только на копии базы: {@code HuntersSelfTest = RESPECT} в PhantomHunters.ini.<br>
++ * Охотник играет игрока на настоящем AutoPlayTaskManager, мобы ставятся на расчищенном месте: свой моб, чужой моб, моб партии, самобаф в простое. Потом замер по всей толпе охотников. Итог — строки в логе.
++ * @author L2Hub
++ */
++public class L2HubRespectTest
++{
++	private static final Logger LOGGER = Logger.getLogger(L2HubRespectTest.class.getName());
++	private static final String TAG = "L2HubRespectTest: SelfTest RESPECT: ";
++	private static final int BUFFER_MOB = 20495; // Turek Orc Warlord: Ultimate Buff в простое, на нём баг и нашли.
++	private static final int AUTO_ATTACK_ACTION = 2;
++	private static final int SOAK_SAMPLES = 30;
++	private static final long SOAK_STEP = 10000;
++	private static final Object SELF = new Object();
++	private static final long STARTED = System.currentTimeMillis();
++	private static int _ok;
++	private static int _wrong;
++	private static int _plainMob;
++	private static Player _hero;
++	private static Player _other;
++	private static Location _arena;
++
++	public static void main(String[] args)
++	{
++		if ("RESPECT".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST))
++		{
++			ThreadPool.schedule(L2HubRespectTest::start, 60000);
++		}
++	}
++
++	private static void start()
++	{
++		final Player strongest = strongest(free());
++		if (((free().size() < 60) || (strongest == null) || (strongest.getLevel() < 20)) && ((System.currentTimeMillis() - STARTED) < (12 * 60000L)))
++		{
++			ThreadPool.schedule(L2HubRespectTest::start, 15000);
++			return;
++		}
++		try
++		{
++			final List<Player> spare = free();
++			LOGGER.info(TAG + "free hunters " + spare.size() + ".");
++			_hero = strongest(spare);
++			spare.remove(_hero);
++			_other = pick(spare, p -> (p.getLevel() >= 10) && !p.hasSummon());
++			_plainMob = plainMob();
++			if ((_hero == null) || (_other == null) || (_plainMob == 0))
++			{
++				check("cast: hero " + _hero + ", other " + _other + ", plain mob " + _plainMob, false);
++				LOGGER.info(TAG + "done: " + _ok + " ok, " + _wrong + " wrong.");
++				return;
++			}
++			LOGGER.info(TAG + "hero " + _hero.getName() + " (" + _hero.getPlayerClass() + ", " + _hero.getLevel() + "), other " + _other.getName() + " (" + _other.getLevel() + "), plain mob " + _plainMob + " " + NpcData.getInstance().getTemplate(_plainMob).getName() + ".");
++			park(_hero);
++			park(_other);
++			arena();
++
++			// Свободный моб или бьёт нашего: автобой бьёт.
++			scene("free mob, target empty", null, null, true, true);
++			scene("idle mob, target itself", null, SELF, true, true);
++			scene("hits hero, target itself", _hero, SELF, true, true);
++			scene("hits hero, target empty", _hero, null, true, true);
++			scene("hits hero, old target on another", _hero, _other, true, true);
++			// Занят другим: не трогает, как бы ни лежало поле цели.
++			scene("hits another, target on him", _other, _other, true, false);
++			scene("hits another, target itself", _other, SELF, true, false);
++			scene("hits another, target empty", _other, null, true, false);
++			// Галочка снята: как и раньше, бьёт всё.
++			scene("hits another, respectful off", _other, _other, false, true);
++			// Партия бьёт одного моба.
++			_hero.setParty(new Party(_hero, PartyDistributionType.FINDERS_KEEPERS));
++			_other.joinParty(_hero.getParty());
++			check("party: hero and other together", _hero.isInParty() && _hero.getParty().containsPlayer(_other));
++			scene("hits party member, target empty", _other, null, true, true);
++			scene("hits party member, target itself", _other, SELF, true, true);
++			_other.leaveParty();
++			_hero.leaveParty();
++
++			natural();
++			LOGGER.info(TAG + "others near the arena at the end: " + near(_arena, 2500) + ".");
++			soak();
++			LOGGER.info(TAG + "done: " + _ok + " ok, " + _wrong + " wrong.");
++		}
++		catch (Throwable e)
++		{
++			LOGGER.log(Level.WARNING, TAG + "failed: " + e, e);
++		}
++	}
++
++	private static void check(String what, boolean good)
++	{
++		if (good)
++		{
++			_ok++;
++			LOGGER.info(TAG + "ok " + what);
++		}
++		else
++		{
++			_wrong++;
++			LOGGER.warning(TAG + "WRONG " + what);
++		}
++	}
++
++	private static List<Player> free()
++	{
++		final List<Player> out = new ArrayList<>();
++		for (Player p : World.getPlayers())
++		{
++			if (PhantomManager.getInstance().isPhantom(p) && !p.isDead() && !p.isRegisteredOnEvent() && !p.isOnEvent() && !p.isInOlympiadMode() && !p.isInStoreMode() && !p.isInParty())
++			{
++				out.add(p);
++			}
++		}
++		Collections.shuffle(out);
++		return out;
++	}
++
++	private static Player pick(List<Player> spare, Predicate<Player> test)
++	{
++		for (Player p : spare)
++		{
++			if (test.test(p))
++			{
++				spare.remove(p);
++				return p;
++			}
++		}
++		return null;
++	}
++
++	/**
++	 * Бьёт рукой или мечом: стрелы и касты сюда не лезут, урон по мобу виден сразу.
++	 */
++	private static boolean canPunch(Player p)
++	{
++		final Weapon weapon = p.getActiveWeaponItem();
++		return !p.isMageClass() && !p.hasSummon() && ((weapon == null) || !weapon.getItemType().isRanged());
++	}
++
++	/**
++	 * Самый сильный из тех, кто годится в герои: баф Turek Orc Warlord слабого убьёт раньше, чем его подлечат.
++	 */
++	private static Player strongest(List<Player> spare)
++	{
++		Player best = null;
++		for (Player p : spare)
++		{
++			if (canPunch(p) && ((best == null) || (p.getLevel() > best.getLevel())))
++			{
++				best = p;
++			}
++		}
++		return best;
++	}
++
++	/**
++	 * Моб без умений и без агрессии: сам поле цели не тронет и к чужому не полезет.
++	 */
++	private static int plainMob()
++	{
++		for (int id = 20000; id < 21000; id++)
++		{
++			final NpcTemplate template = NpcData.getInstance().getTemplate(id);
++			if ((template != null) && template.isType("Monster") && (template.getLevel() >= 15) && (template.getLevel() <= 30) && !template.isAggressive() && (template.getAIType() == AIType.FIGHTER) && noSkills(template))
++			{
++				return id;
++			}
++		}
++		return 0;
++	}
++
++	private static boolean noSkills(NpcTemplate template)
++	{
++		for (AISkillScope scope : AISkillScope.values())
++		{
++			if (!template.getAISkills(scope).isEmpty())
++			{
++				return false;
++			}
++		}
++		return true;
++	}
++
++	/**
++	 * Снять с охотников, иначе уйдёт качаться.
++	 */
++	private static void park(Player player) throws Exception
++	{
++		final Field hunters = PhantomHunterManager.class.getDeclaredField("_hunters");
++		hunters.setAccessible(true);
++		((Map<?, ?>) hunters.get(PhantomHunterManager.getInstance())).remove(player.getName().toLowerCase());
++		AutoPlayTaskManager.getInstance().stopAutoPlay(player);
++		player.stopMove(null);
++		player.abortAttack();
++		player.abortCast();
++		player.setTarget(null);
++		player.setPvpFlag(0);
++		player.setKarma(0);
++		if (player.isSitting())
++		{
++			player.standUp();
++			Thread.sleep(3000);
++		}
++	}
++
++	/**
++	 * Спот, где сейчас никого нет и нет стенок вокруг, вне мира городов. Его мобы убираются без возрождения: копия базы.
++	 */
++	private static void arena() throws Exception
++	{
++		final List<HuntSpot> spots = new ArrayList<>(HuntSpotData.getInstance().getSpots());
++		Collections.shuffle(spots);
++		for (HuntSpot spot : spots)
++		{
++			final Location entry = spot.entry;
++			if ((near(entry, 4000) > 0) || !open(entry))
++			{
++				continue;
++			}
++			_hero.teleToLocation(entry);
++			Thread.sleep(3500);
++			if (_hero.isInsideZone(ZoneId.PEACE))
++			{
++				continue;
++			}
++			_arena = entry;
++			int gone = 0;
++			for (Monster monster : World.getVisibleObjectsInRange(_hero, Monster.class, 2500))
++			{
++				if (monster.getSpawn() != null)
++				{
++					monster.getSpawn().stopRespawn();
++				}
++				monster.deleteMe();
++				gone++;
++			}
++			LOGGER.info(TAG + "arena: " + spot.name + " " + entry.getX() + " " + entry.getY() + " " + entry.getZ() + ", mobs removed " + gone + ".");
++			return;
++		}
++		throw new IllegalStateException("no empty open spot");
++	}
++
++	private static boolean open(Location at)
++	{
++		final GeoEngine geo = GeoEngine.getInstance();
++		for (int[] step : new int[][]
++		{
++			{ 300, 0 },
++			{ 0, 300 },
++			{ 150, 150 }
++		})
++		{
++			if (!geo.canMoveToTarget(at.getX(), at.getY(), at.getZ(), at.getX() + step[0], at.getY() + step[1], at.getZ(), 0))
++			{
++				return false;
++			}
++		}
++		return true;
++	}
++
++	/**
++	 * Сколько чужих живых игроков около точки: герои не считаются.
++	 */
++	private static int near(Location at, int range)
++	{
++		int count = 0;
++		for (Player p : World.getPlayers())
++		{
++			if ((p != _hero) && (p != _other) && (p.calculateDistance2D(at) < range))
++			{
++				count++;
++			}
++		}
++		return count;
++	}
++
++	private static void stand(Player player, int dx, int dy)
++	{
++		final int x = _arena.getX() + dx;
++		final int y = _arena.getY() + dy;
++		player.teleToLocation(new Location(x, y, GeoEngine.getInstance().getHeight(x, y, _arena.getZ())));
++	}
++
++	private static Monster spawn(int id, int dx, int dy)
++	{
++		final int x = _arena.getX() + dx;
++		final int y = _arena.getY() + dy;
++		return Quest.addSpawn(id, x, y, GeoEngine.getInstance().getHeight(x, y, _arena.getZ()), 0).asMonster();
++	}
++
++	private static void play(boolean respectful)
++	{
++		_hero.getAutoPlaySettings().setNextTargetMode(1);
++		_hero.getAutoPlaySettings().setShortRange(false);
++		_hero.getAutoPlaySettings().setRespectfulHunting(respectful);
++		_hero.getAutoPlaySettings().setPickup(false);
++		_hero.getAutoUseSettings().getAutoActions().add(AUTO_ATTACK_ACTION);
++		AutoPlayTaskManager.getInstance().startAutoPlay(_hero);
++	}
++
++	private static void rest(Monster mob) throws Exception
++	{
++		AutoPlayTaskManager.getInstance().stopAutoPlay(_hero);
++		_hero.abortAttack();
++		_hero.abortCast();
++		_hero.setTarget(null);
++		_hero.getAI().setIntentionIdle();
++		_other.setTarget(null);
++		mob.deleteMe();
++		Thread.sleep(500);
++	}
++
++	/**
++	 * Следить за мобом: он в цели героя и после этого теряет здоровье, или, для чужого моба, герой уже собрался его бить. Одного здоровья мало: оно падает и без автобоя, когда моб сам бьёт героя.
++	 * @return {@code true}, если бил
++	 */
++	private static boolean hit(Monster mob, long millis, boolean intentCounts) throws Exception
++	{
++		final long end = System.currentTimeMillis() + millis;
++		double peak = mob.getCurrentHp();
++		boolean aimed = false;
++		while (System.currentTimeMillis() < end)
++		{
++			Thread.sleep(300);
++			_hero.setCurrentHp(_hero.getMaxHp());
++			_other.setCurrentHp(_other.getMaxHp());
++			aimed |= _hero.getTarget() == mob;
++			final double hp = mob.getCurrentHp();
++			if (aimed && (mob.isDead() || (hp < (peak - 1))))
++			{
++				return true;
++			}
++			peak = aimed ? Math.max(peak, hp) : hp;
++			if (intentCounts && (aimed || ((_hero.getAI().getIntention() == Intention.ATTACK) && (_hero.getAI().getAttackTarget() == mob))))
++			{
++				return true;
++			}
++		}
++		return false;
++	}
++
++	private static String state(Monster mob)
++	{
++		final WorldObject target = mob.getTarget();
++		final Creature attack = mob.getAI().getAttackTarget();
++		return "intention " + mob.getAI().getIntention() + ", fights " + (attack == null ? "-" : attack == _hero ? "hero" : attack == _other ? "other" : attack.getName()) + ", target " + (target == null ? "-" : target == mob ? "itself" : target == _hero ? "hero" : target == _other ? "other" : target.getName());
++	}
++
++	/**
++	 * Один случай: поставить моба, настроить кого он бьёт и что лежит в поле цели, включить автобой и посмотреть.
++	 * @param what имя случая
++	 * @param victim кого моб бьёт, null — никого
++	 * @param field что в поле цели: {@link #SELF}, игрок или null
++	 * @param respectful галочка вежливой охоты
++	 * @param want должен ли герой бить
++	 */
++	private static void scene(String what, Player victim, Object field, boolean respectful, boolean want) throws Exception
++	{
++		stand(_hero, 0, 0);
++		stand(_other, 0, 240);
++		Thread.sleep(3500);
++		final Monster mob = spawn(_plainMob, 120, 0);
++		if (victim != null)
++		{
++			mob.addDamageHate(victim, 0, 1000);
++			mob.getAI().setIntentionAttack(victim);
++			Thread.sleep(1500);
++		}
++		mob.setTarget(field == SELF ? mob : (WorldObject) field);
++		final String before = state(mob);
++		final boolean sees = GeoEngine.getInstance().canSeeTarget(_hero, mob);
++		play(respectful);
++		final boolean hit = hit(mob, want ? 20000 : 12000, !want);
++		check(what + ": hero " + (hit ? "attacked" : "left it alone") + " [" + before + ", in sight " + sees + "]", hit == want);
++		rest(mob);
++	}
++
++	/**
++	 * Как было у автора: моб сам бафнулся в простое настоящим ИИ, потом к нему подошёл автобой.
++	 */
++	private static void natural() throws Exception
++	{
++		stand(_hero, 1300, 0);
++		stand(_other, 1300, 240);
++		final Monster mob = spawn(BUFFER_MOB, 0, 0);
++		final List<org.l2jmobius.gameserver.mechanics.skill.Skill> buffs = mob.getTemplate().getAISkills(AISkillScope.BUFF);
++		if (buffs.isEmpty())
++		{
++			check("natural: mob " + BUFFER_MOB + " has a buff", false);
++			mob.deleteMe();
++			return;
++		}
++		final int buff = buffs.get(0).getId();
++		final long end = System.currentTimeMillis() + 240000;
++		while (!mob.isAffectedBySkill(buff) && (System.currentTimeMillis() < end))
++		{
++			Thread.sleep(500);
++		}
++		final long waited = (240000 - (end - System.currentTimeMillis())) / 1000;
++		final boolean buffed = mob.isAffectedBySkill(buff);
++		check("natural: the mob buffed itself in idle after " + waited + " s", buffed);
++		if (!buffed)
++		{
++			mob.deleteMe();
++			return;
++		}
++		Thread.sleep(3000);
++		check("natural: the buff stays and the mob's target is not itself [" + state(mob) + "]", mob.isAffectedBySkill(buff) && (mob.getTarget() != mob));
++		stand(_hero, mob.getX() - _arena.getX() - 120, mob.getY() - _arena.getY());
++		Thread.sleep(3500);
++		play(true);
++		final boolean hit = hit(mob, 20000, false);
++		check("natural: hero attacked the self-buffed mob [" + state(mob) + "]", hit);
++		rest(mob);
++	}
++
++	private static Creature fightsWith(Monster mob)
++	{
++		if (!mob.hasAI() || (mob.getAI().getIntention() != Intention.ATTACK))
++		{
++			return null;
++		}
++		final Creature victim = mob.getAI().getAttackTarget();
++		return (victim != null) && !victim.isAlikeDead() ? victim : null;
++	}
++
++	private static boolean mine(Player hunter, Creature victim)
++	{
++		final Player owner = victim.asPlayer();
++		return (owner == hunter) || ((hunter.getParty() != null) && hunter.getParty().containsPlayer(owner));
++	}
++
++	/**
++	 * Замер по всей толпе: сколько раз охотник бьёт моба, занятого чужим, и сколько раз стоит, пока его бьют. Ничего не меняет. Сравнивается между сборками.
++	 */
++	private static void soak() throws Exception
++	{
++		long hunters = 0;
++		long fights = 0;
++		long steals = 0;
++		long beaten = 0;
++		long stands = 0;
++		long idle = 0;
++		long idleSelf = 0;
++		long idleStale = 0;
++		for (int i = 0; i < SOAK_SAMPLES; i++)
++		{
++			Thread.sleep(SOAK_STEP);
++			final java.util.Set<Integer> seen = new java.util.HashSet<>();
++			for (Player hunter : World.getPlayers())
++			{
++				if (!PhantomManager.getInstance().isPhantom(hunter) || !hunter.isAutoPlaying() || hunter.isDead() || !hunter.getAutoPlaySettings().isRespectfulHunting())
++				{
++					continue;
++				}
++				hunters++;
++				final Intention intention = hunter.getAI().getIntention();
++				final Creature target = hunter.getAI().getAttackTarget();
++				if ((intention == Intention.ATTACK) && (target != null) && target.isMonster())
++				{
++					fights++;
++					final Creature victim = fightsWith(target.asMonster());
++					if ((victim != null) && victim.isPlayable() && !mine(hunter, victim))
++					{
++						steals++;
++					}
++				}
++				boolean underAttack = false;
++				for (Monster mob : World.getVisibleObjectsInRange(hunter, Monster.class, 400))
++				{
++					if (mob.isAlikeDead())
++					{
++						continue;
++					}
++					final Creature victim = fightsWith(mob);
++					underAttack |= (victim != null) && victim.isPlayable() && (victim.asPlayer() == hunter) && (hunter.calculateDistance2D(mob) < 200);
++					if ((victim == null) && seen.add(mob.getObjectId()))
++					{
++						idle++;
++						final WorldObject field = mob.getTarget();
++						if (field == mob)
++						{
++							idleSelf++;
++						}
++						else if (field != null)
++						{
++							idleStale++;
++						}
++					}
++				}
++				if (underAttack)
++				{
++					beaten++;
++					if ((intention != Intention.ATTACK) && (intention != Intention.CAST) && !hunter.isAttackingNow() && !hunter.isCastingNow() && !hunter.isMoving() && !hunter.isSitting())
++					{
++						stands++;
++					}
++				}
++			}
++			if ((i % 10) == 9)
++			{
++				LOGGER.info(TAG + "soak after " + (i + 1) + " samples: hunters " + hunters + ", fights " + fights + ", on a mob busy with a stranger " + steals + ", beaten " + beaten + ", standing while beaten " + stands + "; idle mobs in sight " + idle + ", target itself " + idleSelf + ", stale target " + idleStale + ".");
++			}
++		}
++	}
++}

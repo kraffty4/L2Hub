@@ -105,7 +105,7 @@ final class PhantomHunterOutfit
 		9637
 	};
 	/** Порядок покупки шмота: сначала оружие. */
-	private static final int[] SLOTS =
+	static final int[] SLOTS =
 	{
 		Inventory.PAPERDOLL_RHAND,
 		Inventory.PAPERDOLL_CHEST,
@@ -132,6 +132,18 @@ final class PhantomHunterOutfit
 		91912
 	};
 	private static final int POTION_HP_PERCENT = 40;
+	/** Мана-банки по уровню: 726 (до 40), 728 (до 60), 10153 (дальше). Пьёт только в пати ({@link #partySupplies}): на споте одиночка садится отдыхать, так и задумано. */
+	private static final int[] MANA_POTIONS =
+	{
+		726,
+		728,
+		10153
+	};
+	private static final int POTION_MP_PERCENT = 30;
+	private static final int MANA_STOCK_CASTER = 20;
+	private static final int MANA_STOCK_OTHER = 5;
+	/** Докупает банки в пати, когда осталось меньше. */
+	private static final int PARTY_POTION_LOW = 3;
 	/** Левые слоты — первыми: так их заполняет Inventory.equipItem, иначе вторая серьга и второе кольцо не покупались бы. */
 	private static final int[] JEWEL_SLOTS =
 	{
@@ -369,6 +381,37 @@ final class PhantomHunterOutfit
 		topUp(player, shotId(player), PhantomHuntersConfig.HUNTER_SHOT_COUNT);
 	}
 
+	/**
+	 * В пати садиться отдыхать некогда: хилка и мана-банка своего уровня, как у живого. Охотник докупает, когда почти кончились, на четверть свободной адены (отложенное на профу не трогает),
+	 * напарнику по призыву платить нечем — банки ему даются. Зовётся только там, где есть слот маны ({@link PhantomCompat#hasAutoMana}).
+	 * @param player охотник или напарник в пати
+	 * @param free {@code true} — напарник по призыву
+	 */
+	static void partySupplies(Player player, boolean free)
+	{
+		restock(player, potionId(player), PhantomHuntersConfig.HUNTER_POTION_COUNT, free);
+		restock(player, manaId(player), player.isMageClass() ? MANA_STOCK_CASTER : MANA_STOCK_OTHER, free);
+		syncPotion(player);
+		syncMana(player);
+	}
+
+	private static void restock(Player player, int itemId, int stock, boolean free)
+	{
+		if (count(player, itemId) >= PARTY_POTION_LOW)
+		{
+			return;
+		}
+
+		if (free)
+		{
+			topUp(player, itemId, stock);
+		}
+		else
+		{
+			buy(player, itemId, stock, Math.max(0, player.getAdena() - professionReserve(player)) / 4);
+		}
+	}
+
 	private static void topUp(Player player, int itemId, int count)
 	{
 		final long have = count(player, itemId);
@@ -401,12 +444,22 @@ final class PhantomHunterOutfit
 	}
 
 	/**
+	 * Сумка охотника как при стандартных 80 слотах и 100 у гномов, даже если живым дали больше ({@code MaximumSlotsForNoDwarf}): поводы идти в город и в лавку от этого не меняются.
+	 * @param player охотник
+	 * @return лимит слотов для его решений
+	 */
+	static int bagLimit(Player player)
+	{
+		return Math.min(player.getInventoryLimit(), "DWARF".equals(player.getRace().name()) ? 100 : 80);
+	}
+
+	/**
 	 * Сумка почти полна: занято {@value #BAG_FULL} лимита слотов (надетое тоже в счёте, вес — нет: у охотников {@code dietMode}). Один порог и для города, и для лавки
 	 * от нужды: до 2026-10-29 у лавки было 75 %, и охотник с сумкой на 70–75 % шёл в город, а в лавку не садился (раздел 4.56).
 	 */
 	static boolean bagFull(Player player)
 	{
-		return player.getInventory().getSize() >= (player.getInventoryLimit() * BAG_FULL);
+		return player.getInventory().getSize() >= (bagLimit(player) * BAG_FULL);
 	}
 
 	/**
@@ -442,6 +495,7 @@ final class PhantomHunterOutfit
 			done.add("надел дроп: " + equipped);
 		}
 
+		PhantomClanStock.settle(player, template, done);
 		final long sold = sellJunk(player, unsold);
 		if (sold > 0)
 		{
@@ -463,6 +517,7 @@ final class PhantomHunterOutfit
 		}
 		final long reserve = behind ? 0 : professionDue(player);
 
+		PhantomClanStock.borrow(player, template, done);
 		done.addAll(buyGear(player, template, reserve, behind));
 
 		// Заточка — на то, что осталось; сломал — новая вещь на что хватит, совсем без оружия — стартовое, как у нового персонажа.
@@ -516,6 +571,10 @@ final class PhantomHunterOutfit
 				done.add("купил на призыв " + ItemData.getInstance().getTemplate(need.getKey()).getName() + ": " + crystals);
 			}
 		}
+
+		// Снятое за этот заход — на склад клана; что осталось сверх своих целей — в казну на холл.
+		PhantomClanStock.settle(player, template, done);
+		PhantomClanHallLogic.INSTANCE.town(player, template, done);
 
 		// Семь печатей (раздел 4.42): в неделю соревнования — вступить у жреца или сдать найденные камни.
 		PhantomSevenSigns.getInstance().townVisit(player, template, done);
@@ -1210,7 +1269,7 @@ final class PhantomHunterOutfit
 	 * Надеть купленное: бижу — в пустой слот её вида или вместо самой слабой (грейд, потом цена), остальное — в свой слот; снятое — {@link #retire}.
 	 * @return снятая вещь или {@code null}
 	 */
-	private static Item wear(Player player, Item item)
+	static Item wear(Player player, Item item)
 	{
 		final BodyPart part = item.getTemplate().getBodyPart();
 		Item old = null;
@@ -1432,6 +1491,46 @@ final class PhantomHunterOutfit
 	}
 
 	/**
+	 * @return мана-банка по уровню: до 40 — 726, до 60 — 728, дальше — 10153, а в хронике без неё (Interlude) — 728
+	 */
+	private static int manaId(Player player)
+	{
+		if (player.getLevel() < 40)
+		{
+			return MANA_POTIONS[0];
+		}
+		return (player.getLevel() < 60) || (ItemData.getInstance().getTemplate(MANA_POTIONS[2]) == null) ? MANA_POTIONS[1] : MANA_POTIONS[2];
+	}
+
+	/**
+	 * Слот маны: своя банка, а нет её — любая из оставшихся; пьёт на {@value #POTION_MP_PERCENT} % MP.
+	 */
+	private static void syncMana(Player player)
+	{
+		int potion = 0;
+		for (int i = MANA_POTIONS.length - 1; i >= 0; i--)
+		{
+			if (count(player, MANA_POTIONS[i]) > 0)
+			{
+				potion = MANA_POTIONS[i];
+				if (potion == manaId(player))
+				{
+					break;
+				}
+			}
+		}
+		PhantomCompat.setAutoMana(player, potion, POTION_MP_PERCENT);
+	}
+
+	/**
+	 * Вышел из пати: слот маны пуст, дальше садится отдыхать, как все. Банки остаются до следующей пати, в хлам не идут ({@link #junk}).
+	 */
+	static void clearMana(Player player)
+	{
+		PhantomCompat.setAutoMana(player, 0, POTION_MP_PERCENT);
+	}
+
+	/**
 	 * Бижутерия (шея, две серьги, два кольца) — после полного сета брони: самая дешёвая обычная своего грейда, по цене магазина. Не хватает — копит.
 	 * @param grade грейд шмота, который он сейчас носит по набору
 	 * @param reserve запас на расходники и телепорт
@@ -1572,7 +1671,7 @@ final class PhantomHunterOutfit
 	/**
 	 * Грейд надетого для сравнения с покупкой: пусто, не шмот или вещь только для NPC ({@link #npcOnly}) — -1, хуже любой: заменит первой же покупкой.
 	 */
-	private static int wornGrade(Item current)
+	static int wornGrade(Item current)
 	{
 		return (current == null) || current.isEtcItem() || npcOnly(current.getTemplate()) ? -1 : current.getTemplate().getCrystalType().getLevel();
 	}
@@ -1738,7 +1837,7 @@ final class PhantomHunterOutfit
 	 */
 	private static void retire(Player player, Item old)
 	{
-		if ((old == null) || old.isEquipped() || old.isEtcItem())
+		if ((old == null) || old.isEquipped() || old.isEtcItem() || PhantomClanStock.isLoan(player, old))
 		{
 			return;
 		}
@@ -1783,7 +1882,7 @@ final class PhantomHunterOutfit
 	/**
 	 * @return место надетой в слоте вещи или {@code null}
 	 */
-	private static BodyPart wornBodyPart(Player player, int slot)
+	static BodyPart wornBodyPart(Player player, int slot)
 	{
 		final Item item = slot < 0 ? null : player.getInventory().getPaperdollItem(slot);
 		return item == null ? null : item.getTemplate().getBodyPart();
@@ -2097,7 +2196,7 @@ final class PhantomHunterOutfit
 		}
 		final List<Item> goods = storeGoods(player);
 		long total = 0;
-		for (int i = goods.size() - 1; (i >= player.getPrivateSellStoreLimit()) && (player.getInventory().getSize() >= (player.getInventoryLimit() * BAG_ROOMY)); i--)
+		for (int i = goods.size() - 1; (i >= player.getPrivateSellStoreLimit()) && (player.getInventory().getSize() >= (bagLimit(player) * BAG_ROOMY)); i--)
 		{
 			total += sell(player, goods.get(i));
 			unsold.remove(goods.get(i).getObjectId());
@@ -2129,11 +2228,18 @@ final class PhantomHunterOutfit
 	static boolean junk(Player player, Item item)
 	{
 		final int id = item.getId();
-		if (item.isEquipped() || (id == 57) || item.isQuestItem() || !item.isSellable() || (item.getTemplate().getReferencePrice() <= 0))
+		if (item.isEquipped() || (id == 57) || item.isQuestItem() || !item.isSellable() || (item.getTemplate().getReferencePrice() <= 0) || PhantomClanStock.isLoan(player, item))
 		{
 			return false;
 		}
 		for (int potion : HEALING_POTIONS)
+		{
+			if (id == potion)
+			{
+				return false;
+			}
+		}
+		for (int potion : MANA_POTIONS)
 		{
 			if (id == potion)
 			{
@@ -2165,6 +2271,10 @@ final class PhantomHunterOutfit
 	 */
 	private static long sell(Player player, Item item)
 	{
+		if (PhantomClanStock.isLoan(player, item))
+		{
+			return 0;
+		}
 		final long price = (item.getTemplate().getReferencePrice() / 2L) * item.getCount();
 		if (item.isEquipped())
 		{
@@ -2181,7 +2291,7 @@ final class PhantomHunterOutfit
 		return price;
 	}
 
-	private static int itemFor(PhantomTemplate.Gear gear, int slot)
+	static int itemFor(PhantomTemplate.Gear gear, int slot)
 	{
 		switch (slot)
 		{
@@ -2250,6 +2360,15 @@ final class PhantomHunterOutfit
 	}
 
 	/**
+	 * Самопроверка CLANSTOCK: продать NPC в обход проверок вызывающего.
+	 * @return выручка
+	 */
+	static long testSell(Player player, Item item)
+	{
+		return sell(player, item);
+	}
+
+	/**
 	 * @return род оружия из набора для самопроверки GEARBEHIND: {@code magic}, {@code ranged} или {@code melee}
 	 */
 	static String testKind(PhantomTemplate template)
@@ -2299,9 +2418,9 @@ final class PhantomHunterOutfit
 		{
 			use.getAutoActions().add(AUTO_ATTACK_ACTION);
 		}
-		for (int i = 0; i < Math.min(caster ? 3 : 2, attacks.size()); i++)
+		for (Skill skill : autoAttacks(attacks, caster ? 3 : 2))
 		{
-			use.getAutoSkills().add(attacks.get(i).getId());
+			use.getAutoSkills().add(skill.getId());
 		}
 
 		final AutoPlaySettingsHolder play = player.getAutoPlaySettings();
@@ -2312,13 +2431,46 @@ final class PhantomHunterOutfit
 		play.setPickup(true);
 	}
 
+	/** Откат длиннее этого — не основной скилл автобоя ({@link #autoAttacks}). */
+	private static final int LONG_REUSE = 60000;
+
+	/**
+	 * Какие атакующие скиллы отдать автобою, по порядку. У магов с 76-го три самых сильных скилла откатываются по 5 минут (Elemental Assault, Aura Symphony, Inferno): они занимали все слоты, Prominence с откатом в секунду не попадал, и маг почти не бил. С {@code HunterCombatFixes} (раздел 4.119) в слоты идут скиллы с коротким откатом, а самый сильный из длинных — последним, сверх слотов; если коротких не хватило, длинные добирают.
+	 * @param attacks атакующие скиллы по убыванию силы
+	 * @param slots сколько основных
+	 * @return список для AutoUse
+	 */
+	private static List<Skill> autoAttacks(List<Skill> attacks, int slots)
+	{
+		if (!PhantomHuntersConfig.HUNTER_COMBAT_FIXES)
+		{
+			return new ArrayList<>(attacks.subList(0, Math.min(slots, attacks.size())));
+		}
+
+		final List<Skill> picked = new ArrayList<>();
+		final List<Skill> longReuse = new ArrayList<>();
+		for (Skill skill : attacks)
+		{
+			if (skill.getReuseDelay() > LONG_REUSE)
+			{
+				longReuse.add(skill);
+			}
+			else if (picked.size() < slots)
+			{
+				picked.add(skill);
+			}
+		}
+		picked.addAll(longReuse.subList(0, Math.min(Math.max(1, slots - picked.size()), longReuse.size())));
+		return picked;
+	}
+
 	/**
 	 * @param player охотник
 	 * @return кастер: маг с атакующими скиллами в AutoUse — бьёт ими, а не оружием ({@link #setupCombat}). По классу, а не по автоатаке: её включает {@link #syncMelee}.
 	 */
 	static boolean isCaster(Player player)
 	{
-		return player.isMageClass() && !player.getAutoUseSettings().getAutoSkills().isEmpty();
+		return player.isMageClass() && !player.getAutoUseSettings().getAutoSkills().isEmpty() && !player.isCursedWeaponEquipped();
 	}
 
 	/**
@@ -2376,11 +2528,47 @@ final class PhantomHunterOutfit
 	}
 
 	/**
+	 * Руки пусты: проклятое оружие истекло или выпало, а своё лежит в сумке. Берёт самое сильное по грейду.
+	 * @param player охотник
+	 */
+	static void rearm(Player player)
+	{
+		if ((player.getActiveWeaponItem() != null) || player.isCursedWeaponEquipped())
+		{
+			return;
+		}
+
+		Item best = null;
+		for (Item item : player.getInventory().getItems())
+		{
+			if (item.isWeapon() && !item.isEquipped() && ((best == null) || (item.getTemplate().getCrystalType().getLevel() > best.getTemplate().getCrystalType().getLevel())))
+			{
+				best = item;
+			}
+		}
+		if (best != null)
+		{
+			player.getInventory().equipItem(best);
+			syncShots(player);
+		}
+	}
+
+	/**
 	 * На споте (патч 0028): маг, которого бьют вплотную, или без маны — с автоатакой, AutoPlay бьёт оружием; отбился — снова кастер.
 	 * @param player охотник
 	 */
 	static void syncMelee(Player player)
 	{
+		// С проклятым оружием скиллы класса закрыты, бьёт только им, и маг тоже.
+		if (player.isCursedWeaponEquipped())
+		{
+			if (!player.getAutoUseSettings().getAutoActions().contains(AUTO_ATTACK_ACTION))
+			{
+				player.getAutoUseSettings().getAutoActions().add(AUTO_ATTACK_ACTION);
+			}
+			return;
+		}
+
 		if (!isCaster(player))
 		{
 			return;

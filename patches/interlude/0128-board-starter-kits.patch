@@ -1,0 +1,412 @@
+diff --git a/dist/game/config/Custom/L2HubTown.ini b/dist/game/config/Custom/L2HubTown.ini
+index 79cca9efc762773c2618677d8a3939f9000c957e..a1d7a2a5cf598a3a5b0c54c5453744c9ac753b55 100644
+--- a/dist/game/config/Custom/L2HubTown.ini
++++ b/dist/game/config/Custom/L2HubTown.ini
+@@ -11,6 +11,10 @@ TownBuffer = True
+ # GM-шоп: расходники и снаряжение за адену.
+ # Default: True
+ TownGmShop = True
++
++# Стартовые наборы на доске Alt+B (кнопка на первой странице GM-шопа): бесплатно, один раз на персонажа на каждый грейд.
++# Default: True
++TownStarterKits = True
+ # L2Hub (малый мир): мастер дворянства (NoblessMaster Mobius, NPC 1003000) у гейткиперов — по другую сторону баффера
+ # от GM-шопа; дворянство с 76-го уровня за 10 000 000 адены (config/Custom/NoblessMaster.ini). Решение автора 2026-10-26.
+ # Default: True
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+index fb2c923f653e14177364a7cbb43f29236ab4758b..67e54462921dba79862fbf6b27ff6f4fd379fd3c 100644
+--- a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+@@ -45,6 +45,7 @@ import org.l2jmobius.gameserver.network.serverpackets.ShowBoard;
+  * <li>_bbshubhunters [near|all|store] [страница] | go &lt;имя&gt; … — кто из охотников где и телепорт на их спот или к лавке ({@link PhantomHunterUi})</li>
+  * <li>_bbshubwars [all|hunters|players] [страница] … — кланы и объявление войны, _bbshubclan … — создание клана ({@link #clan}) и набор в клан ({@link PhantomClanBoard})</li>
+  * <li>_bbshubspots [от [страница]] | go &lt;номер&gt; &lt;от&gt; &lt;страница&gt; — телепорт к спотам по уровню мобов ({@link #spots})</li>
++ * <li>_bbshubkits [take &lt;грейд&gt; &lt;броня&gt;] — стартовые наборы ({@link L2HubKits})</li>
+  * <li>_bbshubevents [join|cancel &lt;ивент&gt;] — запись на TvT, Deathmatch и CtF ({@link PhantomEventBoard})</li>
+  * </ul>
+  */
+@@ -111,7 +112,27 @@ public class L2HubBoard implements IParseBoardHandler
+ 		java.util.Map.entry("Цена телепорта: ", "Teleport price: "),
+ 		java.util.Map.entry("Телепорт доски выключен в настройках сервера (CommunityBoard.ini, CommunityEnableTeleports).", "Board teleport is turned off in the server settings (CommunityBoard.ini, CommunityEnableTeleports)."),
+ 		java.util.Map.entry("Отсюда телепорт не работает.", "Teleport does not work from here."),
+-		java.util.Map.entry("Не хватает денег на телепорт.", "Not enough money for the teleport."));
++		java.util.Map.entry("Не хватает денег на телепорт.", "Not enough money for the teleport."),
++		java.util.Map.entry("Стартовые наборы", "Starter kits"),
++		java.util.Map.entry("<br><font color=\"808080\">Наборы выключены в настройках сервера (L2HubTown.ini, TownStarterKits).</font>", "<br><font color=\"808080\">Starter kits are turned off in the server settings (L2HubTown.ini, TownStarterKits).</font>"),
++		java.util.Map.entry("Набор выдан, он в инвентаре.", "Kit given, it is in your inventory."),
++		java.util.Map.entry("Бесплатно, один раз на персонажа на каждый грейд. Внутри оружие по классу, броня на выбор, бижутерия и 1000 сосок.", "Free, once per character for each grade. Inside: a weapon for your class, armor of your choice, jewelry and 1000 shots."),
++		java.util.Map.entry("Без грейда", "No grade"),
++		java.util.Map.entry("D-грейд", "D grade"),
++		java.util.Map.entry("C-грейд", "C grade"),
++		java.util.Map.entry("с любого уровня", "from any level"),
++		java.util.Map.entry("с ", "from level "),
++		java.util.Map.entry("-го уровня", ""),
++		java.util.Map.entry("Уже получен", "Already taken"),
++		java.util.Map.entry("Рано", "Too early"),
++		java.util.Map.entry("Тяжёлая", "Heavy"),
++		java.util.Map.entry("Лёгкая", "Light"),
++		java.util.Map.entry("Роба", "Robe"),
++		java.util.Map.entry("Такого набора нет.", "No such kit."),
++		java.util.Map.entry("Этот набор — с ", "This kit is from level "),
++		java.util.Map.entry("-го уровня.", "."),
++		java.util.Map.entry("Этот набор ты уже получил.", "You already took this kit."),
++		java.util.Map.entry("Не хватает места или слишком тяжело: разгрузись и возьми снова.", "Not enough room or too heavy: free up and take it again."));
+ 	
+ 	private static boolean l2hubEnglish()
+ 	{
+@@ -127,7 +148,7 @@ public class L2HubBoard implements IParseBoardHandler
+ 		return "en".equalsIgnoreCase(config.getProperty("L2HubLanguage", "ru").trim());
+ 	}
+ 	
+-	private static String tr(String text)
++	static String tr(String text)
+ 	{
+ 		return L2HUB_ENGLISH ? L2HUB_EN.getOrDefault(text, text) : text;
+ 	}
+@@ -188,7 +209,8 @@ public class L2HubBoard implements IParseBoardHandler
+ 		CLAN_WARS,
+ 		CLAN_RECRUIT,
+ 		EVENTS,
+-		SPOTS
++		SPOTS,
++		L2HubKits.COMMAND
+ 	};
+ 
+ 	private static final Pattern NPC_CHAT = Pattern.compile("bypass (?:-h )?npc_%objectId%_Chat (\\d+)");
+@@ -236,6 +258,10 @@ public class L2HubBoard implements IParseBoardHandler
+ 		{
+ 			html = spots(player, args);
+ 		}
++		else if (args[0].equalsIgnoreCase(L2HubKits.COMMAND))
++		{
++			html = page(player, tr("Стартовые наборы"), townOn(L2HubKits.KEY) ? L2HubKits.content(player, args) : tr("<br><font color=\"808080\">Наборы выключены в настройках сервера (L2HubTown.ini, TownStarterKits).</font>"));
++		}
+ 		else if (args[0].equalsIgnoreCase(EVENTS))
+ 		{
+ 			html = page(player, PhantomEventBoard.title(), canOpen(player) ? PhantomEventBoard.getInstance().page(player, args) : PhantomClanBoard.busy());
+@@ -507,7 +533,7 @@ public class L2HubBoard implements IParseBoardHandler
+ 	/**
+ 	 * Как у доски Mobius: в бою, на олимпиаде, в осаде, с PvP-флагом, мёртвым или с кармой — нельзя.
+ 	 */
+-	private static boolean canUse(Player player)
++	static boolean canUse(Player player)
+ 	{
+ 		if (CommunityBoardConfig.COMMUNITYBOARD_KARMA_DISABLED && (player.getKarma() > 0))
+ 		{
+@@ -644,6 +670,10 @@ public class L2HubBoard implements IParseBoardHandler
+ 			content = button(tr("В начало GM-шопа"), SHOP, 150) + "<br>" + content;
+ 		}
+ 		content = button(PhantomLootSell.label(), SHOP + " sell", 170) + "<br>" + content;
++		if ((pageId == 0) && townOn(L2HubKits.KEY))
++		{
++			content = button(tr("Стартовые наборы"), L2HubKits.COMMAND, 170) + "<br>" + content;
++		}
+ 		return page(player, tr("GM-шоп"), content);
+ 	}
+ 
+@@ -930,7 +960,7 @@ public class L2HubBoard implements IParseBoardHandler
+ 			+ "</center></td></tr></table></body></html>";
+ 	}
+ 
+-	private static String button(String label, String action, int width)
++	static String button(String label, String action, int width)
+ 	{
+ 		// Шире 90 — BigButton3: Btn1_normal в клиенте Interlude не растягивается.
+ 		return "<button value=\"" + label + "\" action=\"bypass " + action + "\" width=" + width + " height=25 back=\"" + (width > 90 ? "L2UI_ch3.BigButton3_over" : "L2UI_ch3.Btn1_normalOn") + "\" fore=\"" + (width > 90 ? "L2UI_ch3.BigButton3" : "L2UI_ch3.Btn1_normal") + "\">";
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubKits.java b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubKits.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..247cfb98d831a987cf62866497fa945ab6925098
+--- /dev/null
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubKits.java
+@@ -0,0 +1,291 @@
++package handlers.bypass.communityboard;
++
++import java.util.ArrayList;
++import java.util.List;
++import java.util.Locale;
++import java.util.Map;
++
++import org.l2jmobius.gameserver.data.xml.ItemData;
++import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.entity.item.ItemTemplate;
++import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
++import org.l2jmobius.gameserver.mechanics.variables.PlayerVariables;
++
++/**
++ * L2Hub: стартовые наборы на доске Alt+B (кнопка на первой странице GM-шопа, выключатель TownStarterKits в config/Custom/L2HubTown.ini).
++ * <ul>
++ * <li>Бесплатно, один раз на персонажа на каждый грейд: NG с любого уровня, D с 20-го, C с 40-го (переменная персонажа L2HubKit_&lt;грейд&gt;).</li>
++ * <li>Тип брони выбирает игрок, оружие и 1000 сосок — по классу; лук и арбалет получают ещё 1000 снарядов.</li>
++ * <li>Охотники наборы не берут: сюда ведёт только кнопка доски.</li>
++ * </ul>
++ */
++public final class L2HubKits
++{
++	public static final String COMMAND = "_bbshubkits";
++	public static final String KEY = "TownStarterKits";
++	public static final String[] GRADES =
++	{
++		"ng",
++		"d",
++		"c"
++	};
++
++	private static final String[] GRADE_TITLES =
++	{
++		"Без грейда",
++		"D-грейд",
++		"C-грейд"
++	};
++	private static final int[] MIN_LEVEL =
++	{
++		1,
++		20,
++		40
++	};
++	private static final int SHOTS_COUNT = 1000;
++	private static final int[] SHOTS =
++	{
++		1835,
++		1463,
++		1464
++	};
++	private static final int[] MAGE_SHOTS =
++	{
++		3947,
++		3948,
++		3949
++	};
++	private static final int[] ARROWS =
++	{
++		17,
++		1341,
++		1342
++	};
++	private static final int[] SHIELDS =
++	{
++		625,
++		2493,
++		2497
++	};
++	private static final int[][] JEWELS =
++	{
++		{ 909, 846, 846, 878, 878 },
++		{ 914, 851, 851, 882, 882 },
++		{ 919, 857, 857, 888, 888 }
++	};
++	private static final int[][] HEAVY =
++	{
++		{ 26, 34, 1148, 51, 39 },
++		{ 352, 2378, 2411, 2449, 2425 },
++		{ 356, 2414, 2462, 2438 }
++	};
++	private static final int[][] LIGHT =
++	{
++		{ 27, 33, 1148, 51, 39 },
++		{ 395, 417, 2424, 2448, 2411 },
++		{ 401, 2437, 2461, 2414 }
++	};
++	private static final int[][] ROBE =
++	{
++		{ 431, 1148, 51, 39 },
++		{ 437, 470, 2450, 2411, 2424 },
++		{ 442, 473, 2463, 603, 2414 }
++	};
++	private static final Map<String, int[]> WEAPONS = Map.ofEntries( //
++		Map.entry("SWORD", new int[] { 68, 2499, 135 }), //
++		Map.entry("BIGSWORD", new int[] { 5284, 70, 5286 }), //
++		Map.entry("DUAL", new int[] { 5284, 2529, 2572 }), //
++		Map.entry("BLUNT", new int[] { 87, 159, 2503 }), //
++		Map.entry("POLE", new int[] { 16, 297, 299 }), //
++		Map.entry("DAGGER", new int[] { 219, 225, 228 }), //
++		Map.entry("BOW", new int[] { 273, 280, 286 }), //
++		Map.entry("FIST", new int[] { 257, 262, 266 }), //
++		Map.entry("MAGIC", new int[] { 177, 188, 206 }));
++
++	private L2HubKits()
++	{
++	}
++
++	/**
++	 * _bbshubkits [take &lt;ng|d|c&gt; &lt;heavy|light|robe&gt;]
++	 * @param player кто открыл
++	 * @param args команда доски
++	 * @return содержимое страницы
++	 */
++	public static String content(Player player, String[] args)
++	{
++		if ((args.length > 3) && args[1].equalsIgnoreCase("take") && L2HubBoard.canUse(player))
++		{
++			final String error = take(player, grade(args[2]), args[3].toLowerCase(Locale.ROOT));
++			player.sendMessage(error != null ? error : L2HubBoard.tr("Набор выдан, он в инвентаре."));
++		}
++
++		final String kind = kind(player);
++		final StringBuilder sb = new StringBuilder(4096);
++		sb.append("<table width=520><tr><td width=520><font color=\"B09878\">").append(L2HubBoard.tr("Бесплатно, один раз на персонажа на каждый грейд. Внутри оружие по классу, броня на выбор, бижутерия и 1000 сосок.")).append("</font></td></tr></table><br>");
++		sb.append("<img src=\"L2UI.SquareGray\" width=520 height=1>");
++		for (int grade = 0; grade < GRADES.length; grade++)
++		{
++			sb.append("<table width=520><tr><td width=110><font color=\"LEVEL\">").append(L2HubBoard.tr(GRADE_TITLES[grade])).append("</font><br1><font color=\"808080\">").append(grade == 0 ? L2HubBoard.tr("с любого уровня") : L2HubBoard.tr("с ") + MIN_LEVEL[grade] + L2HubBoard.tr("-го уровня")).append("</font></td>");
++			sb.append("<td width=190>").append(name(WEAPONS.get(kind)[grade])).append("<br1><font color=\"808080\">").append(name(shots(player, grade))).append(" x").append(SHOTS_COUNT).append("</font></td>");
++			if (taken(player, grade))
++			{
++				sb.append("<td width=220 align=center><font color=\"808080\">").append(L2HubBoard.tr("Уже получен")).append("</font></td>");
++			}
++			else if (player.getLevel() < MIN_LEVEL[grade])
++			{
++				sb.append("<td width=220 align=center><font color=\"808080\">").append(L2HubBoard.tr("Рано")).append("</font></td>");
++			}
++			else
++			{
++				sb.append("<td width=73>").append(kamael(kind) ? "" : L2HubBoard.button(L2HubBoard.tr("Тяжёлая"), COMMAND + " take " + GRADES[grade] + " heavy", 70)).append("</td>");
++				sb.append("<td width=73>").append(L2HubBoard.button(L2HubBoard.tr("Лёгкая"), COMMAND + " take " + GRADES[grade] + " light", 70)).append("</td>");
++				sb.append("<td width=74>").append(kamael(kind) ? "" : L2HubBoard.button(L2HubBoard.tr("Роба"), COMMAND + " take " + GRADES[grade] + " robe", 70)).append("</td>");
++			}
++			sb.append("</tr></table><img src=\"L2UI.SquareGray\" width=520 height=1>");
++		}
++		return sb.toString();
++	}
++
++	/**
++	 * Выдать набор.
++	 * @param player кому
++	 * @param grade номер в {@link #GRADES}
++	 * @param armor heavy, light или robe
++	 * @return текст отказа или null, если выдан
++	 */
++	public static String take(Player player, int grade, String armor)
++	{
++		final List<int[]> goods = goods(player, grade, armor);
++		if (goods == null)
++		{
++			return L2HubBoard.tr("Такого набора нет.");
++		}
++		if (player.getLevel() < MIN_LEVEL[grade])
++		{
++			return L2HubBoard.tr("Этот набор — с ") + MIN_LEVEL[grade] + L2HubBoard.tr("-го уровня.");
++		}
++		if (taken(player, grade))
++		{
++			return L2HubBoard.tr("Этот набор ты уже получил.");
++		}
++
++		long weight = 0;
++		for (int[] good : goods)
++		{
++			final ItemTemplate template = ItemData.getInstance().getTemplate(good[0]);
++			weight += (long) template.getWeight() * good[1];
++		}
++		if (!player.getInventory().validateCapacity(goods.size()) || !player.getInventory().validateWeight(weight))
++		{
++			return L2HubBoard.tr("Не хватает места или слишком тяжело: разгрузись и возьми снова.");
++		}
++
++		final PlayerVariables variables = player.getVariables();
++		variables.set(variable(grade), true);
++		variables.storeMe();
++		for (int[] good : goods)
++		{
++			player.addItem(ItemProcessType.REWARD, good[0], good[1], player, true);
++		}
++		return null;
++	}
++
++	/**
++	 * Что лежит в наборе: пары «вещь, количество».
++	 * @param player кому
++	 * @param grade номер в {@link #GRADES}
++	 * @param armor heavy, light или robe
++	 * @return список или null, если такого набора нет (камаэлям только лёгкая броня)
++	 */
++	public static List<int[]> goods(Player player, int grade, String armor)
++	{
++		if ((grade < 0) || (grade >= GRADES.length))
++		{
++			return null;
++		}
++		final String kind = kind(player);
++		final int[][] table = armor.equals("light") ? LIGHT : kamael(kind) ? null : armor.equals("heavy") ? HEAVY : armor.equals("robe") ? ROBE : null;
++		if (table == null)
++		{
++			return null;
++		}
++
++		final List<int[]> out = new ArrayList<>();
++		out.add(new int[] { WEAPONS.get(kind)[grade], 1 });
++		if (kind.equals("SWORD") || kind.equals("BLUNT"))
++		{
++			out.add(new int[] { SHIELDS[grade], 1 });
++		}
++		for (int id : table[grade])
++		{
++			out.add(new int[] { id, 1 });
++		}
++		for (int id : JEWELS[grade])
++		{
++			out.add(new int[] { id, 1 });
++		}
++		out.add(new int[] { shots(player, grade), SHOTS_COUNT });
++		if (kind.equals("BOW"))
++		{
++			out.add(new int[] { ARROWS[grade], SHOTS_COUNT });
++		}
++		return out;
++	}
++
++	public static boolean taken(Player player, int grade)
++	{
++		return player.getVariables().getBoolean(variable(grade), false);
++	}
++
++	public static String kind(Player player)
++	{
++		if (player.isMageClass())
++		{
++			return "MAGIC";
++		}
++		return switch (player.getPlayerClass().getId())
++		{
++			case 2, 88, 21, 100, 34, 107 -> "DUAL";
++			case 3, 89 -> "POLE";
++			case 1, 44, 45, 46, 113 -> "BIGSWORD";
++			case 47, 48, 114 -> "FIST";
++			case 53, 54, 55, 117, 56, 57, 118 -> "BLUNT";
++			case 7, 8, 93, 22, 23, 101, 35, 36, 108 -> "DAGGER";
++			case 9, 92, 24, 102, 37, 109 -> "BOW";
++			default -> "SWORD";
++		};
++	}
++
++	private static boolean kamael(String kind)
++	{
++		return kind.equals("ANCIENT") || kind.equals("RAPIER") || kind.equals("CROSSBOW");
++	}
++
++	private static int shots(Player player, int grade)
++	{
++		return player.isMageClass() ? MAGE_SHOTS[grade] : SHOTS[grade];
++	}
++
++	private static int grade(String name)
++	{
++		for (int i = 0; i < GRADES.length; i++)
++		{
++			if (GRADES[i].equalsIgnoreCase(name))
++			{
++				return i;
++			}
++		}
++		return -1;
++	}
++
++	private static String variable(int grade)
++	{
++		return "L2HubKit_" + GRADES[grade];
++	}
++
++	private static String name(int id)
++	{
++		return ItemData.getInstance().getTemplate(id).getName();
++	}
++}

@@ -1,0 +1,16 @@
+diff --git a/dist/game/data/scripts/quests/Q00255_Tutorial/Q00255_Tutorial.java b/dist/game/data/scripts/quests/Q00255_Tutorial/Q00255_Tutorial.java
+index a15b902283f9ae662cd147b470ff9278c1f98f51..ee6f9aff43073779232faa05422d8a4f3c5b46f8 100644
+--- a/dist/game/data/scripts/quests/Q00255_Tutorial/Q00255_Tutorial.java
++++ b/dist/game/data/scripts/quests/Q00255_Tutorial/Q00255_Tutorial.java
+@@ -3564,6 +3564,11 @@ public class Q00255_Tutorial extends Quest
+ 	public void onKill(Npc npc, Player killer, boolean isSummon)
+ 	{
+ 		final QuestState qs = getQuestState(killer, false);
++		if (qs == null)
++		{
++			return; // L2Hub: убил тот, кто туториал не проходит (охотник)
++		}
++		
+ 		if (npc.getId() == TUTORIAL_GREMLIN)
+ 		{
+ 			if ((qs.getMemoStateEx(1) == 1) || (qs.getMemoStateEx(1) == 0))

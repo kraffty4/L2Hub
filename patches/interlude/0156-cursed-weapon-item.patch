@@ -1,0 +1,16 @@
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/holders/player/CursedWeapon.java b/java/org/l2jmobius/gameserver/entity/actor/holders/player/CursedWeapon.java
+index 351ff1612649f187f3ca8d060bd362fbb7992390..804cd6af229219326e2e1eba0c675ddfdcd84e99 100644
+--- a/java/org/l2jmobius/gameserver/entity/actor/holders/player/CursedWeapon.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/holders/player/CursedWeapon.java
+@@ -530,6 +530,11 @@ public class CursedWeapon
+ 		_player = player;
+ 	}
+ 	
++	public Item getItem()
++	{
++		return _item;
++	}
++	
+ 	public void setItem(Item item)
+ 	{
+ 		_item = item;

@@ -1,0 +1,81 @@
+diff --git a/dist/game/config/NPC.ini b/dist/game/config/NPC.ini
+index deb452b9d503fce6c74ae61e72777f4099a98e85..442e873d580608444e9d7b691474bd021c68c660 100644
+--- a/dist/game/config/NPC.ini
++++ b/dist/game/config/NPC.ini
+@@ -80,6 +80,13 @@ CorpseConsumeSkillAllowedTimeBeforeDecay = 2000
+ # L2jMobius: 450
+ MaxAggroRange = 450
+ 
++# L2Hub: провокация снимает моба с первого раза. Скиллы с эффектом GetAgro (Aggression, Aura of Hate, Tribunal, Judgment, Shield Strike и другие)
++# поднимают хейт кастующего до самого большого на мобе, сверху идут очки скилла. Перебить его можно, только набив эти очки сверху:
++# на мобе 50-го уровня Aggression 24-го уровня - 4786 урона (хейт за урон = урон x 100 / (уровень моба + 7)).
++# False - как в оригинале: только очки скилла, и моб возвращается к тому, у кого хейта больше.
++# Default: False
++TauntTakesTopHate = True
++
+ # Maximum distance monsters can randomly move from spawn.
+ # Default: 300
+ MaxDriftRange = 300
+diff --git a/java/org/l2jmobius/gameserver/config/NpcConfig.java b/java/org/l2jmobius/gameserver/config/NpcConfig.java
+index 0467ece4ba73da424253ebde78939a82d44cc1c0..de0c179bcdbad692d0dd7186dd99609ce49528ca 100644
+--- a/java/org/l2jmobius/gameserver/config/NpcConfig.java
++++ b/java/org/l2jmobius/gameserver/config/NpcConfig.java
+@@ -54,6 +54,7 @@ public class NpcConfig
+ 	public static int SPOILED_CORPSE_EXTEND_TIME;
+ 	public static int CORPSE_CONSUME_SKILL_ALLOWED_TIME_BEFORE_DECAY;
+ 	public static int MAX_AGGRO_RANGE;
++	public static boolean TAUNT_TAKES_TOP_HATE;
+ 	public static int MAX_DRIFT_RANGE;
+ 	public static boolean AGGRO_DISTANCE_CHECK_ENABLED;
+ 	public static int AGGRO_DISTANCE_CHECK_RANGE;
+@@ -100,6 +101,7 @@ public class NpcConfig
+ 		SPOILED_CORPSE_EXTEND_TIME = config.getInt("SpoiledCorpseExtendTime", 10);
+ 		CORPSE_CONSUME_SKILL_ALLOWED_TIME_BEFORE_DECAY = config.getInt("CorpseConsumeSkillAllowedTimeBeforeDecay", 2000);
+ 		MAX_AGGRO_RANGE = config.getInt("MaxAggroRange", 450);
++		TAUNT_TAKES_TOP_HATE = config.getBoolean("TauntTakesTopHate", false);
+ 		MAX_DRIFT_RANGE = config.getInt("MaxDriftRange", 300);
+ 		AGGRO_DISTANCE_CHECK_ENABLED = config.getBoolean("AggroDistanceCheckEnabled", true);
+ 		AGGRO_DISTANCE_CHECK_RANGE = config.getInt("AggroDistanceCheckRange", 1500);
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/Attackable.java b/java/org/l2jmobius/gameserver/entity/actor/Attackable.java
+index b1241921bb7116643df3add8e8582fd94452b751..f46fa2e052ad73fc3ef28335b3583613897c5ff0 100644
+--- a/java/org/l2jmobius/gameserver/entity/actor/Attackable.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/Attackable.java
+@@ -66,6 +66,7 @@ import org.l2jmobius.gameserver.managers.CursedWeaponsManager;
+ import org.l2jmobius.gameserver.managers.EventDropManager;
+ import org.l2jmobius.gameserver.managers.PcCafePointsManager;
+ import org.l2jmobius.gameserver.managers.WalkingManager;
++import org.l2jmobius.gameserver.mechanics.effects.EffectType;
+ import org.l2jmobius.gameserver.mechanics.events.EventDispatcher;
+ import org.l2jmobius.gameserver.mechanics.events.EventType;
+ import org.l2jmobius.gameserver.mechanics.events.holders.actor.npc.attackable.OnAttackableAggroRangeEnter;
+@@ -810,6 +811,17 @@ public class Attackable extends Npc
+ 		return 1 + (ratio / 100.0);
+ 	}
+ 	
++	/**
++	 * L2Hub: хейт за скилл с отрицательными очками. Провокация (эффект GetAgro: Aggression, Aura of Hate и другие) по TauntTakesTopHate поднимает хейт кастующего до самого большого на мобе, сверху идут очки скилла: иначе её перекрывают несколько ударов дамагера, и моб возвращается к нему (docs/PHANTOMS.md, раздел 4.115).
++	 * @param attacker кто кастует
++	 * @param skill скилл
++	 */
++	public void addSkillHate(Creature attacker, Skill skill)
++	{
++		final long gap = NpcConfig.TAUNT_TAKES_TOP_HATE && skill.hasEffectType(EffectType.AGGRESSION) ? getHating(getMostHated()) - getHating(attacker) : 0;
++		addDamageHate(attacker, 0, Math.max(gap, 0) - skill.getEffectPoint());
++	}
++	
+ 	/**
+ 	 * Adds damage and hate to the attacker aggression list for this character.
+ 	 * @param attacker The Creature that gave damages to this Attackable
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/Creature.java b/java/org/l2jmobius/gameserver/entity/actor/Creature.java
+index 92d56a545a7cb9cd6c5d9b85b64ef1f2810d59a5..a909c34dbcba85904a6e12558330a3fa0d90c5ac 100644
+--- a/java/org/l2jmobius/gameserver/entity/actor/Creature.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/Creature.java
+@@ -5785,7 +5785,7 @@ public abstract class Creature extends WorldObject
+ 					}
+ 					else if (skill.getEffectPoint() < 0)
+ 					{
+-						target.asAttackable().addDamageHate(this, 0, -skill.getEffectPoint());
++						target.asAttackable().addSkillHate(this, skill);
+ 					}
+ 				}
+ 			}

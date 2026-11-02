@@ -1,6 +1,9 @@
-"""Эмблемы кланов охотников (docs/PHANTOMS.md, раздел 4.61): геральдика из простых полей и фигур, картинки свои, ничего чужого.
+"""Эмблемы кланов охотников (docs/PHANTOMS.md, раздел 4.61): картинки свои, ничего чужого.
 
-Генератор детерминирован: номер эмблемы → хеш → поле, фигура и цвета, тот же вывод байт в байт на любой машине. Формат — как шлёт клиент: DDS DXT1,
+Два стиля. Живой (рисунки — clan_crests_art.py: теги, значки, сигилы, шары, огонь) у хроник из LIVING: выглядит как эмблемы настоящих кланов, а не как каталог флагов.
+Геральдика из простых полей и фигур у остальных. Живой стиль рядом кладёт retired.txt — суммы прежней геральдики этой хроники: такие эмблемы сервер меняет кланам охотников на новые.
+
+Генератор детерминирован: номер эмблемы → хеш → рисунок и цвета, тот же вывод байт в байт на любой машине. Формат — как шлёт клиент: DDS DXT1,
 заголовок 128 байт. Клиент показывает клановую эмблему 16×12 в текстуре 16×16 с пустым нижним рядом блоков, Essence — 24×12 в текстуре 32×16 с пустыми ещё и правыми столбцами. Размер — по хронике (CRESTS).
 
   python -X utf8 tools/clan_crests.py <id>                     записать phantoms/<id>/dist/game/data/ClanCrests/crest_NNN.dds
@@ -13,8 +16,12 @@ import sys
 import zlib
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import clan_crests_art as art  # noqa: E402
+
 ROOT = Path(__file__).resolve().parents[1]
 COUNT = 256
+RETIRED = "retired.txt"
 # хроника: (ширина текстуры, высота текстуры, видимая ширина, видимая высота). Новая хроника — запись здесь: что принимает её клиент, смотреть в RequestSetPledgeCrest.
 CRESTS = {
     "ct26_highfive": (16, 16, 16, 12),
@@ -23,6 +30,9 @@ CRESTS = {
     "classic_tales": (16, 16, 16, 12),  # предел пакета 256 байт
     "ess_crow": (32, 16, 24, 12),  # предел пакета 384 байта, Mobius пишет про BMP 24×12
 }
+
+# Живые эмблемы — High Five, Epilogue и Interlude: у остальных хроник файлы не меняются до решения автора.
+LIVING = {"ct26_highfive", "epilogue", "interlude"}
 
 TINCTURES = [
     (222, 178, 60),  # золото
@@ -143,15 +153,50 @@ def encode_block(pixels: list[tuple]) -> bytes:
     return struct.pack("<HHI", c0, c1, bits)
 
 
+def weighted(p: tuple, q: tuple) -> int:
+    return 2 * (p[0] - q[0]) ** 2 + 4 * (p[1] - q[1]) ** 2 + (p[2] - q[2]) ** 2
+
+
+def encode_fit(pixels: list[tuple]) -> bytes:
+    """Блок DXT1 под плавные переходы: перебор пар концов среди красок блока и углов его куба, меньше всего ошибки по четырём цветам. c0 > c1 — режим четырёх цветов."""
+    counts: dict[tuple, int] = {}
+    for pixel in pixels:
+        counts[pixel] = counts.get(pixel, 0) + 1
+    low = tuple(min(color[i] for color in counts) for i in range(3))
+    high = tuple(max(color[i] for color in counts) for i in range(3))
+    ends = sorted({rgb565(color) for color in counts} | {rgb565(low), rgb565(high)})
+    if len(ends) == 1:
+        return struct.pack("<HHI", ends[0], ends[0], 0)
+    best, pair = None, None
+    for n, c1 in enumerate(ends):
+        for c0 in ends[n + 1 :]:
+            palette = block_palette(c0, c1)
+            error = 0
+            for color, times in counts.items():
+                error += times * min(weighted(color, entry) for entry in palette)
+                if best is not None and error >= best:
+                    break
+            if best is None or error < best:
+                best, pair = error, (c0, c1)
+    palette = block_palette(*pair)
+    bits = 0
+    for i, pixel in enumerate(pixels):
+        bits |= min(range(4), key=lambda k: weighted(palette[k], pixel)) << (2 * i)
+    return struct.pack("<HHI", *pair, bits)
+
+
 def dds(chosen: tuple, width: int, height: int, visible_width: int, visible: int) -> bytes:
-    rows = picture(chosen, visible_width, visible)
+    return pack(picture(chosen, visible_width, visible), encode_block, width, height, visible_width, visible)
+
+
+def pack(rows: list[list[tuple]], encoder, width: int, height: int, visible_width: int, visible: int) -> bytes:
     body = bytearray()
     for by in range(0, height, 4):
         for bx in range(0, width, 4):
             if by >= visible or bx >= visible_width:
                 body += bytes(8)  # невидимый блок: чёрный, как у клиента
             else:
-                body += encode_block([rows[by + j][bx + i] for j in range(4) for i in range(4)])
+                body += encoder([rows[by + j][bx + i] for j in range(4) for i in range(4)])
     header = bytearray(128)
     struct.pack_into("<4sIIIII", header, 0, b"DDS ", 124, 0x81007, height, width, len(body))
     struct.pack_into("<II4sI", header, 76, 32, 4, b"DXT1", 24)
@@ -196,7 +241,32 @@ def sheet(path: Path, crests: list[bytes], width: int, height: int, visible_widt
     png(path, rows)
 
 
+def living(cid: str) -> list[bytes]:
+    width, height, visible_width, visible = CRESTS[cid]
+    crests, seen = [], set()
+    for job in art.plan(COUNT):
+        salt = 0
+        while True:
+            rows = art.render(job, salt, visible_width, visible)
+            salt += 1
+            data = pack(rows, encode_fit, width, height, visible_width, visible)
+            if art.vivid(rows) and data not in seen:
+                seen.add(data)
+                crests.append(data)
+                break
+    return crests
+
+
+def retired(cid: str) -> bytes:
+    """Суммы прежней геральдики: кланы охотников с такой эмблемой получат новую, чужие файлы сюда не попадают."""
+    return "".join(hashlib.sha256(data).hexdigest() + "\n" for data in heraldry(cid)).encode("ascii")
+
+
 def build(cid: str) -> list[bytes]:
+    return living(cid) if cid in LIVING else heraldry(cid)
+
+
+def heraldry(cid: str) -> list[bytes]:
     width, height, visible_width, visible = CRESTS[cid]
     crests, seen = [], set()
     salt = 0
@@ -224,10 +294,14 @@ def main() -> None:
     if "--check" in args:
         bad = [n for n, data in enumerate(crests) if not (out / f"crest_{n:03}.dds").is_file() or (out / f"crest_{n:03}.dds").read_bytes() != data]
         extra = len(list(out.glob("*.dds"))) - len(crests) if out.is_dir() else 0
+        if cid in LIVING and (not (out / RETIRED).is_file() or (out / RETIRED).read_bytes() != retired(cid)):
+            sys.exit(f"{cid}: {RETIRED} не совпал")
         sys.exit(f"{cid}: не совпали {len(bad)}, лишних файлов {extra}" if bad or extra else print(f"{cid}: {len(crests)} эмблем совпали байт в байт"))
     out.mkdir(parents=True, exist_ok=True)
     for n, data in enumerate(crests):
         (out / f"crest_{n:03}.dds").write_bytes(data)
+    if cid in LIVING:
+        (out / RETIRED).write_bytes(retired(cid))
     print(f"{cid}: {len(crests)} эмблем по {len(crests[0])} байт в {out.relative_to(ROOT)}")
     if "--preview" in args:
         sheet(Path(args[args.index("--preview") + 1]), crests, *CRESTS[cid])

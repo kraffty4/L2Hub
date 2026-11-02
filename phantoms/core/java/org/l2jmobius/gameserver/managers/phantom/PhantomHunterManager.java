@@ -291,6 +291,10 @@ public class PhantomHunterManager
 	private static final long MIND_TEST_WAIT = 120000;
 	/** Возраст мира (раздел 4.90): охотники входят по одному раз в 2 с, ждём всех. */
 	private static final long WORLD_AGE_TEST_WAIT = 420000;
+	/** Лишний сверх {@code HuntersMax} столько ждёт конца боя и пати охотников, дальше выходит и так (раздел 4.120). */
+	private static final long SPARE_LEAVE_GRACE = 180000;
+	/** Самопроверке HUNTERSMAX нужны все: входят по одному за тик. */
+	private static final long HUNTERS_MAX_TEST_WAIT = 1800000;
 	private static final long STRATEGY_LOG_INTERVAL = 60000;
 	/** Настроение (патч 0026): после нападения живого игрока или смерти охотник столько настороже. */
 	private static final long GUARDED_TIME = 600000;
@@ -325,6 +329,18 @@ public class PhantomHunterManager
 		PhantomCompat.addHomeRegions(HOME_REGIONS);
 	}
 
+	/** За проклятым оружием бегут столько ближайших охотников с кача, не дальше этого. */
+	private static final int CURSED_SEEKERS = 3;
+	private static final int CURSED_RANGE = 8000;
+	/** Не добежал за столько, мс: следующая попытка — через {@link #CURSED_RETRY}. */
+	private static final long CURSED_TIMEOUT = 180000;
+	private static final long CURSED_RETRY = 600000;
+	private static final int CURSED_PICKUP = 70;
+	/** С оружием в руках столько без дела, мс: идёт на ближайший спот. */
+	private static final long CURSED_IDLE = 20000;
+	/** С оружием нападает на ближайшего в этом радиусе ({@link #cursedPrey}). */
+	private static final int CURSED_PREY_RANGE = 1000;
+
 	private enum Phase
 	{
 		/** На споте: бой AutoPlay, отдых, поводок. */
@@ -336,7 +352,9 @@ public class PhantomHunterManager
 		/** Позвали криком: бежит к позвавшему и ждёт инвайта. */
 		RECRUIT,
 		/** В пати: ведёт {@link PhantomCompanionManager}, как напарника. */
-		PARTY
+		PARTY,
+		/** Проклятое оружие: бежит за ним или держит в руках. Отдельная фаза: все дела охотника (город, лавка, пати, рейд, ивенты) — только из HUNT. */
+		CURSED
 	}
 
 	private static class Hunter
@@ -346,6 +364,16 @@ public class PhantomHunterManager
 		int level = -1;
 		long deadSince;
 		boolean needBuff;
+		/** За чем бежит (фаза CURSED) и докуда. */
+		WorldObject cursedItem;
+		long cursedUntil;
+		/** Снова бежать за проклятым оружием — не раньше. */
+		long cursedRetry;
+		/** Держит его в руках: пропадёт — взять своё оружие. */
+		boolean cursedHeld;
+		long cursedIdleSince;
+		/** Место в таблице L2HubPhantoms.xml: предел {@code HuntersMax} оставляет первых. */
+		final int order;
 		/** По настоящим суткам сейчас в сети; выключены — всегда. */
 		volatile boolean scheduled = true;
 		long lastStore;
@@ -465,10 +493,21 @@ public class PhantomHunterManager
 		final Map<Integer, Long> together = new ConcurrentHashMap<>();
 		final Map<Integer, Integer> togetherAwards = new ConcurrentHashMap<>();
 		long togetherTick;
+		/** С какого момента он сверх {@code HuntersMax}: 0 — в пределах. */
+		volatile long spareSince;
 
-		Hunter(PhantomTemplate template)
+		Hunter(PhantomTemplate template, int order)
 		{
 			this.template = template;
+			this.order = order;
+		}
+
+		/**
+		 * @return сверх предела {@code HuntersMax} (раздел 4.120): в мир не входит, персонаж, клан и связи ждут в базе
+		 */
+		boolean spare()
+		{
+			return (PhantomHuntersConfig.HUNTERS_MAX > 0) && (order >= PhantomHuntersConfig.HUNTERS_MAX);
 		}
 	}
 
@@ -497,7 +536,14 @@ public class PhantomHunterManager
 	private volatile long _lastStrategyLog;
 	private volatile long _lastStrategyFailLog;
 	private long _lastControl;
+	private long _tickLogAt;
+	private long _tickCount;
+	private long _tickTotal;
+	private long _tickMax;
+	private long _tickOver;
 	private long _configModified;
+	/** Какой {@code HuntersMax} уже сказан в логе. */
+	private int _maxLogged;
 	private long _lastRealPlayer;
 	private ScheduledFuture<?> _task;
 
@@ -512,9 +558,10 @@ public class PhantomHunterManager
 	{
 		final File file = new File(PhantomHuntersConfig.PHANTOM_HUNTERS_CONFIG_FILE);
 		_configModified = file.lastModified();
+		int order = 0;
 		for (PhantomTemplate template : PhantomData.getInstance().getHunters())
 		{
-			_hunters.put(template.getName().toLowerCase(), new Hunter(template));
+			_hunters.put(template.getName().toLowerCase(), new Hunter(template, order++));
 		}
 
 		if (_hunters.isEmpty())
@@ -656,6 +703,7 @@ public class PhantomHunterManager
 	private void tick()
 	{
 		final long now = System.currentTimeMillis();
+		final long started = System.nanoTime();
 		if ((now - _lastControl) >= CONTROL_INTERVAL)
 		{
 			_lastControl = now;
@@ -686,12 +734,20 @@ public class PhantomHunterManager
 					continue;
 				}
 
-				if (!_wanted || (!hunter.scheduled && mayLeave(hunter, player)))
+				if (!_wanted || (!hunter.scheduled && (mayLeave(hunter, player) || spareMayLeave(hunter, player, now))))
 				{
 					if (_wanted)
 					{
-						LOGGER.info(getClass().getSimpleName() + ": " + hunter.template.getName() + " (" + player.getLevel() + ") logs off by the daily rhythm.");
-						PhantomAbsence.onLeave(player, now);
+						if (hunter.spare())
+						{
+							LOGGER.info(getClass().getSimpleName() + ": " + hunter.template.getName() + " (" + player.getLevel() + ") logs off: beyond HuntersMax " + PhantomHuntersConfig.HUNTERS_MAX + (player.isInParty() ? ", leaves the party" : "") + (player.isInCombat() ? ", drops the fight" : "") + ".");
+							PhantomHunterParty.getInstance().leaderLeaves(player, now);
+						}
+						else
+						{
+							LOGGER.info(getClass().getSimpleName() + ": " + hunter.template.getName() + " (" + player.getLevel() + ") logs off by the daily rhythm.");
+							PhantomAbsence.onLeave(player, now);
+						}
 					}
 					if (hunter.phase == Phase.PARTY)
 					{
@@ -713,6 +769,39 @@ public class PhantomHunterManager
 				LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": " + hunter.template.getName() + " tick failed.", e);
 			}
 		}
+		noteTick(System.nanoTime() - started, now);
+	}
+
+	/**
+	 * Замер для нагрузочных прогонов (раздел 4.109, {@code HunterTickLogMinutes}): средний и худший тик за период, сколько тиков не уложились в свой период.
+	 */
+	private void noteTick(long nanos, long now)
+	{
+		if (PhantomHuntersConfig.HUNTER_TICK_LOG_MINUTES <= 0)
+		{
+			return;
+		}
+
+		_tickCount++;
+		_tickTotal += nanos;
+		_tickMax = Math.max(_tickMax, nanos);
+		if (nanos > (TICK * 1000000))
+		{
+			_tickOver++;
+		}
+		if (_tickLogAt == 0)
+		{
+			_tickLogAt = now;
+		}
+		else if ((now - _tickLogAt) >= (PhantomHuntersConfig.HUNTER_TICK_LOG_MINUTES * 60000L))
+		{
+			LOGGER.info(getClass().getSimpleName() + ": Tick: " + _tickCount + " ticks, avg " + (_tickTotal / _tickCount / 1000000) + " ms, max " + (_tickMax / 1000000) + " ms, over period " + _tickOver + ", hunters in world " + inWorld().size() + ".");
+			_tickLogAt = now;
+			_tickCount = 0;
+			_tickTotal = 0;
+			_tickMax = 0;
+			_tickOver = 0;
+		}
 	}
 
 	/**
@@ -721,8 +810,43 @@ public class PhantomHunterManager
 	 */
 	private boolean mayLeave(Hunter hunter, Player player)
 	{
+		return (hunter.phase != Phase.PARTY) && !player.isDead() && !player.isInCombat() && (hunter.enemyId == 0) && !engaged(player) && !PhantomOlympiad.getInstance().isBusy(player);
+	}
+
+	/**
+	 * Охотник сверх {@code HuntersMax} (раздел 4.120): по настоящим суткам он может часами ждать паузы в бою или конца чужой пати охотников. Подождал {@link #SPARE_LEAVE_GRACE} — выходит и из боя с мобом, и из такой пати.
+	 * Живого не бросает: ни его пати, ни драку с ним; начатое дело тоже ({@link #engaged}) и матч олимпиады. Очередь на олимпиаду не держит: один в ней простоял бы до конца периода, а запись снимет сам выход.
+	 * @return можно выйти из игры сейчас
+	 */
+	private boolean spareMayLeave(Hunter hunter, Player player, long now)
+	{
+		if (!hunter.spare() || (hunter.spareSince == 0) || ((now - hunter.spareSince) < SPARE_LEAVE_GRACE) || player.isDead() || engaged(player) || player.isInOlympiadMode())
+		{
+			return false;
+		}
+
+		final PhantomManager phantoms = PhantomManager.getInstance();
+		if (player.isInParty())
+		{
+			for (Player member : player.getParty().getMembers())
+			{
+				if (!phantoms.isPhantom(member))
+				{
+					return false;
+				}
+			}
+		}
+		final Player enemy = hunter.enemyId == 0 ? null : World.getPlayer(hunter.enemyId);
+		return ((enemy == null) || phantoms.isPhantom(enemy)) && !(player.isInCombat() && (player.getTarget() instanceof Player target) && !phantoms.isPhantom(target));
+	}
+
+	/**
+	 * @return начатое дело, которого не бросают: разговор и пати с живым (фокус), рейд, ивент, дуэль, обмен, тайна
+	 */
+	private static boolean engaged(Player player)
+	{
 		final String focus = PhantomFocus.getInstance().of(player);
-		return (hunter.phase != Phase.PARTY) && !player.isDead() && !player.isInCombat() && (hunter.enemyId == 0) && !"talk".equals(focus) && !"party".equals(focus) && (PhantomRaid.getInstance().raidOf(player) == null) && !PhantomEvents.getInstance().isBusy(player) && !PhantomOlympiad.getInstance().isBusy(player) && !PhantomDuel.getInstance().isBusy(player) && !PhantomTrade.getInstance().holds(player) && !PhantomManager.getInstance().isSecret(player);
+		return "talk".equals(focus) || "party".equals(focus) || (PhantomRaid.getInstance().raidOf(player) != null) || PhantomEvents.getInstance().isBusy(player) || PhantomDuel.getInstance().isBusy(player) || PhantomTrade.getInstance().holds(player) || PhantomManager.getInstance().isSecret(player);
 	}
 
 	/**
@@ -809,7 +933,7 @@ public class PhantomHunterManager
 					onSpots.add(player);
 				}
 			}
-			PhantomEvents.getInstance().control(onSpots, now);
+			PhantomEvents.getInstance().control(PhantomHuntersConfig.HUNTER_COMBAT_FIXES ? hunting : onSpots, now);
 			// Олимпиада (раздел 4.39): дворянство с 76-го, запись в часы соревнований.
 			PhantomOlympiad.getInstance().control(onSpots, now);
 			// Дуэли (раздел 4.40): охотник вызывает соседа по споту.
@@ -818,6 +942,7 @@ public class PhantomHunterManager
 			PhantomSevenSigns.getInstance().control(now);
 			// ПК (раздел 4.44): ПК вокруг — приоритетная цель; кровь за кровь.
 			PhantomPk.getInstance().control(onSpots, now);
+			seekCursed(onSpots, now);
 			// Танатос (раздел 4.45): часть охотников-фантомов — охотники в мире, и он тоже.
 			PhantomThanatos.getInstance().control(now);
 			// Живые кланы (раздел 4.50): основание, набор, уровни, скиллы, роспуск.
@@ -862,8 +987,23 @@ public class PhantomHunterManager
 		PhantomTwinks.getInstance().control(_wanted, now);
 		final boolean rhythm = PhantomDayCycle.enabled();
 		final boolean absences = PhantomAbsence.enabled();
+		if (PhantomHuntersConfig.HUNTERS_MAX != _maxLogged)
+		{
+			_maxLogged = PhantomHuntersConfig.HUNTERS_MAX;
+			LOGGER.info(getClass().getSimpleName() + ": HuntersMax " + _maxLogged + ": " + worldSize() + " of " + _hunters.size() + " hunters in the table stay in the world.");
+		}
 		for (Hunter hunter : _hunters.values())
 		{
+			if (hunter.spare())
+			{
+				hunter.scheduled = false;
+				if (hunter.spareSince == 0)
+				{
+					hunter.spareSince = now;
+				}
+				continue;
+			}
+			hunter.spareSince = 0;
 			final String name = hunter.template.getName();
 			hunter.scheduled = !rhythm || PhantomDayCycle.wantsOnline(name, now);
 			if (absences && PhantomAbsence.away(name, now))
@@ -872,6 +1012,25 @@ public class PhantomHunterManager
 				PhantomAbsence.notice(name, hunter.template.isFemale(), now);
 			}
 		}
+	}
+
+	/**
+	 * @return сколько охотников из таблицы живёт в мире при нынешнем {@code HuntersMax}
+	 */
+	int worldSize()
+	{
+		return PhantomHuntersConfig.HUNTERS_MAX > 0 ? Math.min(PhantomHuntersConfig.HUNTERS_MAX, _hunters.size()) : _hunters.size();
+	}
+
+	/**
+	 * Раздел 4.120: глава сверх предела не бросил клан, его просто нет в этом мире.
+	 * @param name имя персонажа
+	 * @return охотник сверх предела {@code HuntersMax}
+	 */
+	boolean isSpare(String name)
+	{
+		final Hunter hunter = name == null ? null : _hunters.get(name.toLowerCase());
+		return (hunter != null) && hunter.spare();
 	}
 
 	/**
@@ -1207,6 +1366,24 @@ public class PhantomHunterManager
 			return;
 		}
 
+		// Проклятое оружие: в руках (подобрал или было при нём до рестарта сервера) — своя фаза; пропало (истекло, выпало при смерти) — назад к своему оружию.
+		if (player.isCursedWeaponEquipped() && (hunter.phase != Phase.CURSED))
+		{
+			hunter.phase = Phase.CURSED;
+			hunter.cursedItem = null;
+		}
+		else if (hunter.cursedHeld && !player.isCursedWeaponEquipped())
+		{
+			hunter.cursedHeld = false;
+			PhantomHunterOutfit.rearm(player);
+			LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " lost the cursed weapon.");
+			if (hunter.phase == Phase.CURSED)
+			{
+				backToHunt(hunter, player);
+				return;
+			}
+		}
+
 		if (player.getLevel() != hunter.level)
 		{
 			leveled(hunter, player);
@@ -1277,6 +1454,11 @@ public class PhantomHunterManager
 
 		switch (hunter.phase)
 		{
+			case CURSED:
+			{
+				cursed(hunter, player, now);
+				return;
+			}
 			case PARTY:
 			{
 				// Распустили, выгнали, лидер ушёл — назад на кач.
@@ -1340,6 +1522,8 @@ public class PhantomHunterManager
 		{
 			hunter.needBuff = false;
 			buff(player);
+			// Проклятое оружие истекло, пока он был вне игры: руки пусты.
+			PhantomHunterOutfit.rearm(player);
 		}
 
 		// ПвП: пока обидчик рядом — драка с ним, без отдыха и поводка.
@@ -1379,9 +1563,9 @@ public class PhantomHunterManager
 		}
 
 		// Пати охотников по отношениям (патч 0036): собрать или позвать ещё одного; лидер тоже копит «качались вместе». Пара самопроверки NEAR — без пати.
-		if (!inNearTest(hunter))
+		if (!inNearTest(hunter) && PhantomHunterParty.getInstance().tick(player, hunter.template, now))
 		{
-			PhantomHunterParty.getInstance().tick(player, hunter.template, now);
+			return;
 		}
 		if (PhantomHunterParty.getInstance().isLeader(player))
 		{
@@ -1565,7 +1749,11 @@ public class PhantomHunterManager
 	{
 		final boolean up = (hunter.level > 0) && (player.getLevel() > hunter.level);
 		hunter.level = player.getLevel();
-		PhantomHunterOutfit.update(player, hunter.template);
+		// С проклятым оружием шмот не перебирает: снял бы его из рук.
+		if (!player.isCursedWeaponEquipped())
+		{
+			PhantomHunterOutfit.update(player, hunter.template);
+		}
 		player.storeMe();
 		if (up)
 		{
@@ -2003,11 +2191,11 @@ public class PhantomHunterManager
 	}
 
 	/**
-	 * Бафы как у городского баффера схем: набор воину или магу (FIGHTER_GROUP, MAGE_GROUP из SchemeBufferSkills.xml).
+	 * Бафы как у городского баффера: полный набор его роли, тот же, что у игрока на доске ({@link PhantomBufferSets#classGroup}).
 	 */
 	private static void buff(Player player)
 	{
-		final String group = player.isMageClass() ? "MAGE_GROUP" : "FIGHTER_GROUP";
+		final String group = PhantomBufferSets.classGroup(player);
 		final SchemeBufferTable table = SchemeBufferTable.getInstance();
 		for (int skillId : table.getSkillsIdsByType(group))
 		{
@@ -2077,7 +2265,7 @@ public class PhantomHunterManager
 	 */
 	private static boolean bagNeedsTown(Hunter hunter, Player player)
 	{
-		final int limit = player.getInventoryLimit();
+		final int limit = PhantomHunterOutfit.bagLimit(player);
 		final int growth = Math.max(1, Math.min((int) (limit * TOWN_BAG_GROWTH), (limit - hunter.bagAfterTown) / 2));
 		return PhantomHunterOutfit.bagFull(player) && (player.getInventory().getSize() >= (hunter.bagAfterTown + growth));
 	}
@@ -2372,6 +2560,7 @@ public class PhantomHunterManager
 		hunter.walkBackUntil = 0;
 		hunter.walkFails = 0;
 		closeStore(hunter, player);
+		PhantomHunterOutfit.clearMana(player);
 		if ((hunter.spot != null) && !outgrown(hunter.spot, player.getLevel(), shy(hunter, now), null))
 		{
 			stop(player);
@@ -2411,6 +2600,7 @@ public class PhantomHunterManager
 		hunter.walkFails = 0;
 		hunter.gatekeeperSpot = null;
 		closeStore(hunter, player);
+		PhantomHunterOutfit.clearMana(player);
 		final HuntSpot spot = nearestSpot(player, null);
 		if (spot == null)
 		{
@@ -3672,9 +3862,10 @@ public class PhantomHunterManager
 		final boolean stories = "STORIES".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
 		final boolean absence = "ABSENCE".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
 		final boolean worldAge = "WORLDAGE".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
-		if (mind || nearTest || seasonal || exchange || regulars || dispute || rivals || stories || absence || worldAge)
+		final boolean huntersMax = "HUNTERSMAX".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
+		if (mind || nearTest || seasonal || exchange || regulars || dispute || rivals || stories || absence || worldAge || huntersMax)
 		{
-			final String test = mind ? "MIND" : nearTest ? "NEAR" : seasonal ? "SEASONAL" : regulars ? "REGULARS" : dispute ? "SPOTDISPUTE" : rivals ? "RAIDRIVAL" : stories ? "STORIES" : absence ? "ABSENCE" : worldAge ? "WORLDAGE" : "EXCHANGE";
+			final String test = mind ? "MIND" : nearTest ? "NEAR" : seasonal ? "SEASONAL" : regulars ? "REGULARS" : dispute ? "SPOTDISPUTE" : rivals ? "RAIDRIVAL" : stories ? "STORIES" : absence ? "ABSENCE" : worldAge ? "WORLDAGE" : huntersMax ? "HUNTERSMAX" : "EXCHANGE";
 			final boolean ready = mind ? (mindTestHunter() != null) : nearTest ? (nearTestPair() != null) : !inWorld().isEmpty();
 			if (!ready)
 			{
@@ -3685,13 +3876,13 @@ public class PhantomHunterManager
 			if (_mindWaitSince == 0)
 			{
 				_mindWaitSince = now;
-				LOGGER.info(getClass().getSimpleName() + ": SelfTest " + test + ": waits for all hunters to enter (" + inWorld + " of " + _hunters.size() + "), at most " + (MIND_TEST_WAIT / 1000) + " s.");
+				LOGGER.info(getClass().getSimpleName() + ": SelfTest " + test + ": waits for all hunters to enter (" + inWorld + " of " + worldSize() + "), at most " + (MIND_TEST_WAIT / 1000) + " s.");
 			}
-			if ((inWorld < _hunters.size()) && ((now - _mindWaitSince) < (worldAge ? WORLD_AGE_TEST_WAIT : MIND_TEST_WAIT)))
+			if ((inWorld < worldSize()) && ((now - _mindWaitSince) < (huntersMax ? HUNTERS_MAX_TEST_WAIT : worldAge ? WORLD_AGE_TEST_WAIT : MIND_TEST_WAIT)))
 			{
 				return;
 			}
-			LOGGER.info(getClass().getSimpleName() + ": SelfTest " + test + ": picks hunters after " + ((now - _mindWaitSince) / 1000) + " s, " + inWorld + " of " + _hunters.size() + " hunters in the world.");
+			LOGGER.info(getClass().getSimpleName() + ": SelfTest " + test + ": picks hunters after " + ((now - _mindWaitSince) / 1000) + " s, " + inWorld + " of " + worldSize() + " hunters in the world.");
 			_mindWaitSince = 0;
 		}
 		// Случайностям людей и петиции (разделы 4.76 и 4.77) нужны охотники в мире: входят по одному, случайностям — побольше.
@@ -3720,6 +3911,14 @@ public class PhantomHunterManager
 		final boolean clanBoard = "CLANBOARD".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
 		final boolean boardShop = "BOARDSHOP".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
 		final boolean clanCrest = "CLANCREST".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
+		// Подгруппам, складу и холлу нужны кланы с людьми в мире: ждём большинство охотников.
+		final boolean subUnits = "SUBUNITS".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
+		final boolean clanStock = "CLANSTOCK".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
+		final boolean clanHall = "CLANHALL".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
+		if ((subUnits || clanStock || clanHall) && (inWorld().size() < Math.min(80, worldSize())))
+		{
+			return;
+		}
 		if (("SIEGE".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST) || "FAVORS".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST) || "GESTURES".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST) || "ONLINE".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST)) && (inWorld().stream().filter(p -> p.getClan() == null).count() < 12))
 		{
 			return;
@@ -3734,6 +3933,25 @@ public class PhantomHunterManager
 		if ("STRATEGY".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST))
 		{
 			strategySelfTest();
+			return;
+		}
+		if (subUnits || clanStock || clanHall)
+		{
+			synchronized (PhantomHunterClans.getInstance())
+			{
+				if (subUnits)
+				{
+					PhantomSubUnits.selfTest(inWorld());
+				}
+				else if (clanStock)
+				{
+					PhantomClanStock.selfTest(inWorld());
+				}
+				else
+				{
+					PhantomClanHallLogic.INSTANCE.selfTest(inWorld());
+				}
+			}
 			return;
 		}
 		if ("SIEGE".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST))
@@ -3824,6 +4042,11 @@ public class PhantomHunterManager
 		if (stories)
 		{
 			PhantomStories.selfTest(inWorld());
+			return;
+		}
+		if (huntersMax)
+		{
+			PhantomHuntersMaxTest.start(this::entered);
 			return;
 		}
 		if (absence)
@@ -5232,6 +5455,23 @@ public class PhantomHunterManager
 	/**
 	 * @return охотники в мире, живые
 	 */
+	/**
+	 * @return все вошедшие в мир, и лежащие мёртвыми ({@link #inWorld} их отбрасывает)
+	 */
+	private List<Player> entered()
+	{
+		final List<Player> result = new ArrayList<>();
+		for (Hunter hunter : _hunters.values())
+		{
+			final Player player = PhantomManager.getInstance().getPhantom(hunter.template);
+			if (player != null)
+			{
+				result.add(player);
+			}
+		}
+		return result;
+	}
+
 	private List<Player> inWorld()
 	{
 		final List<Player> result = new ArrayList<>();
@@ -5887,8 +6127,20 @@ public class PhantomHunterManager
 			return;
 		}
 
+		// Проклятый бьёт, кого начал: иначе от каждого нового обидчика разворачивался бы посреди замаха.
+		if (player.isCursedWeaponEquipped() && (hunter.enemyId != 0) && (hunter.enemyId != enemy.getObjectId()))
+		{
+			return;
+		}
+
+		// Задел тот, с кем Mobius драться не даст: не повод вставать столбом.
+		if (player.isCursedWeaponEquipped() && PhantomPk.barredByCursed(player, enemy))
+		{
+			return;
+		}
+
 		// ПК или Танатос напал (раздел 4.44): слабый или трус не отвечает, а убегает — тогда убийство даст ПК карму.
-		if (((PhantomCompat.karma(enemy) > 0) || reaper) && (hunter.enemyId != enemy.getObjectId()) && PhantomPk.getInstance().fleeFromAttacker(player, enemy))
+		if (!player.isCursedWeaponEquipped() && ((PhantomCompat.karma(enemy) > 0) || reaper) && (hunter.enemyId != enemy.getObjectId()) && PhantomPk.getInstance().fleeFromAttacker(player, enemy))
 		{
 			return;
 		}
@@ -6147,6 +6399,210 @@ public class PhantomHunterManager
 	}
 
 	/**
+	 * Проклятое оружие на земле (разнеслось на весь мир сообщением о регионе): бегут {@value #CURSED_SEEKERS} ближайших охотника с кача, как бежали живые. Обычный подбор его не берёт (IgnoredAutoPickItems), только этот забег.
+	 */
+	private void seekCursed(List<Player> onSpots, long now)
+	{
+		for (WorldObject weapon : PhantomCompat.cursedOnGround())
+		{
+			int running = 0;
+			for (Hunter hunter : _hunters.values())
+			{
+				if (hunter.cursedItem == weapon)
+				{
+					running++;
+				}
+			}
+
+			final List<Player> near = new ArrayList<>();
+			for (Player player : onSpots)
+			{
+				if ((player.getInstanceId() == weapon.getInstanceId()) && (player.calculateDistance2D(weapon) <= CURSED_RANGE))
+				{
+					near.add(player);
+				}
+			}
+			near.sort((first, second) -> Double.compare(first.calculateDistance2D(weapon), second.calculateDistance2D(weapon)));
+			for (Player player : near)
+			{
+				final Hunter hunter = _hunters.get(player.getName().toLowerCase());
+				if (running >= CURSED_SEEKERS)
+				{
+					break;
+				}
+				if ((hunter != null) && (now >= hunter.cursedRetry))
+				{
+					hunter.phase = Phase.CURSED;
+					hunter.cursedItem = weapon;
+					hunter.cursedUntil = now + CURSED_TIMEOUT;
+					stop(player);
+					running++;
+					LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " (" + player.getLevel() + ") runs for the cursed weapon, " + (int) player.calculateDistance2D(weapon) + " away.");
+				}
+			}
+		}
+	}
+
+	/**
+	 * Фаза {@link Phase#CURSED}: оружия ещё нет — бежит за ним; успели раньше или не добежал — назад на кач. Подобрал — {@link #holdCursed}.
+	 */
+	private void cursed(Hunter hunter, Player player, long now)
+	{
+		hunter.lastActive = now;
+		if (player.isCursedWeaponEquipped())
+		{
+			holdCursed(hunter, player, now);
+			return;
+		}
+
+		final WorldObject weapon = hunter.cursedItem;
+		if ((weapon == null) || !weapon.isSpawned() || (now >= hunter.cursedUntil))
+		{
+			hunter.cursedItem = null;
+			hunter.cursedRetry = now + CURSED_RETRY;
+			backToHuntNearby(hunter, player);
+			return;
+		}
+
+		if (player.calculateDistance2D(weapon) <= CURSED_PICKUP)
+		{
+			// Защита дропа первые секунды держит его за убившим моба: тогда не выйдет, следующий тик попробует снова.
+			player.doPickupItem(weapon);
+			if (player.isCursedWeaponEquipped())
+			{
+				hunter.cursedItem = null;
+				hunter.cursedHeld = true;
+				LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " (" + player.getLevel() + ") picked up the cursed weapon.");
+				PhantomNews.post("pk", player.getName() + " подобрал проклятое оружие", player.getName(), player);
+			}
+			return;
+		}
+
+		if (!player.isMoving())
+		{
+			final Location at = new Location(weapon.getX(), weapon.getY(), weapon.getZ());
+			player.setRunning();
+			if (!runRoute(player, at))
+			{
+				runTo(player, at);
+			}
+		}
+	}
+
+	/**
+	 * Проклятое оружие в руках: кач рядом, отдых, сдача тому, кто напал. Города, лавки, пати, рейда и ивентов нет: дела охотника идут только из {@link Phase#HUNT}.
+	 * Отвечает тому, кто бьёт, и сам нападает на соседей ({@link #cursedPrey}, решение автора 2026-11-01); для других охотников он ПК, они бьют его или бегут ({@link PhantomPk}).
+	 */
+	private void holdCursed(Hunter hunter, Player player, long now)
+	{
+		if (!hunter.cursedHeld)
+		{
+			// Было при нём до рестарта сервера: вход фантома идёт мимо EnterWorld, облик вернуть самим.
+			hunter.cursedHeld = true;
+			PhantomCompat.restoreCursedForm(player);
+		}
+
+		if ((hunter.enemyId != 0) && fight(hunter, player, now))
+		{
+			return;
+		}
+
+		// С оружием все вокруг — добыча: сила оружия растёт от убийств.
+		if (PhantomHuntersConfig.HUNTER_CURSED_ATTACKS && (player.getCurrentHp() > (player.getMaxHp() / 2)))
+		{
+			final Player prey = cursedPrey(player);
+			if (prey != null)
+			{
+				hunter.enemyId = prey.getObjectId();
+				hunter.enemySeen = now;
+				hunter.brawlAggressor = false;
+				hunter.revenge = false;
+				hunter.cursedIdleSince = 0;
+				LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " (" + player.getLevel() + ") with the cursed weapon attacks " + prey.getName() + " (" + prey.getLevel() + ").");
+				if (PhantomBanter.audience(player))
+				{
+					PhantomChat.getInstance().hunterEvent(player, prey, "CURSED", "у тебя в руках проклятое оружие, и ты нападаешь на " + describe(prey), "с дороги", 600000);
+				}
+				fight(hunter, player, now);
+				return;
+			}
+		}
+
+		if (rest(player, hunter.template))
+		{
+			return;
+		}
+
+		if (!player.isAutoPlaying())
+		{
+			AutoPlayTaskManager.getInstance().startAutoPlay(player);
+			AutoUseTaskManager.getInstance().startAutoUseTask(player);
+		}
+		PhantomHunterOutfit.syncMelee(player);
+
+		if (player.isInCombat() || player.isAttackingNow() || player.isCastingNow() || player.isMoving())
+		{
+			hunter.cursedIdleSince = 0;
+			return;
+		}
+
+		if (hunter.cursedIdleSince == 0)
+		{
+			hunter.cursedIdleSince = now;
+			return;
+		}
+
+		if ((now - hunter.cursedIdleSince) >= CURSED_IDLE)
+		{
+			hunter.cursedIdleSince = 0;
+			final HuntSpot spot = nearestSpot(player, null);
+			if ((spot != null) && (player.calculateDistance2D(spot.entry) > spot.radius))
+			{
+				player.setRunning();
+				if (!runRoute(player, spot.entry))
+				{
+					runTo(player, spot.entry);
+				}
+			}
+		}
+	}
+
+	/**
+	 * На кого нападает с проклятым оружием: ближайший живой игрок или охотник, до которого можно дойти. Не трогает своих по клану и пати, напарников, Танатоса, лавки, ГМ, мирные зоны, ивенты, олимпиаду, дуэли и тех, кому 20 и меньше.
+	 * @param player держатель оружия
+	 * @return цель или {@code null}
+	 */
+	private static Player cursedPrey(Player player)
+	{
+		if (player.isInsideZone(ZoneId.PEACE))
+		{
+			return null;
+		}
+
+		Player nearest = null;
+		double nearestDistance = Double.MAX_VALUE;
+		for (Player other : World.getVisibleObjectsInRange(player, Player.class, CURSED_PREY_RANGE))
+		{
+			if (other.isDead() || other.isInvisible() || other.isGM() || other.isInsideZone(ZoneId.PEACE) || other.isInsideZone(ZoneId.NO_PVP) || other.isInStoreMode() || other.isInOlympiadMode() || other.isInDuel() || other.isOnEvent() || other.isSpawnProtected() || PhantomThanatos.is(other) || PhantomPk.barredByCursed(player, other))
+			{
+				continue;
+			}
+			if ((PhantomManager.getInstance().isPhantom(other) && !PhantomRelations.isHunter(other)) || ((player.getClanId() != 0) && (other.getClanId() == player.getClanId())) || (player.isInParty() && player.getParty().containsPlayer(other)))
+			{
+				continue;
+			}
+
+			final double distance = player.calculateDistance2D(other);
+			if ((distance < nearestDistance) && PhantomCompat.canMoveToTarget(GeoEngine.getInstance(), player.getX(), player.getY(), player.getZ(), other.getX(), other.getY(), other.getZ(), player.getInstanceId()))
+			{
+				nearest = other;
+				nearestDistance = distance;
+			}
+		}
+		return nearest;
+	}
+
+	/**
 	 * Драка с обидчиком: AutoPlay переключается на персонажей, цель — он; AutoUse бьёт скиллами. Обидчик ушёл, умер или стал неатакуемым — конец драки.
 	 * @return {@code true}, если драка продолжается
 	 */
@@ -6161,11 +6617,14 @@ public class PhantomHunterManager
 		final boolean gone = (enemy == null) || !enemy.isOnline() || (player.calculateDistance2D(enemy) > 2500) || ((now - hunter.enemySeen) > 60000) || (hunter.revenge && ((now - hunter.brawlSince) > PhantomPk.CHASE));
 		final boolean hunterEnemy = (enemy != null) && PhantomRelations.isHunter(enemy);
 
+		// Проклятый бьёт и белых. Кто бьёт ПК, флага не получает (Player.updatePvPStatus), isAutoAttackable для него false, и без этого драка кончалась на первом же тике: держатель стоял и умирал.
+		final boolean cursedFight = player.isCursedWeaponEquipped() && (enemy != null) && !player.isInsideZone(ZoneId.PEACE) && !enemy.isInsideZone(ZoneId.PEACE) && !enemy.isInsideZone(ZoneId.NO_PVP);
+
 		// Махач (патч 0037): страх ПК. Зачинщик бьёт только того, кто ответил и флагнулся; не ответил за GRACE или почти мёртв без флага — отойти, белого не добивать.
 		// Враг по войне кланов (раздел 4.50) — не белый: Mobius даёт бить его без флага и кармы.
 		final boolean grace = hunter.brawlAggressor && ((now - hunter.brawlSince) < PhantomBrawl.GRACE);
 		final boolean war = !gone && PhantomClanWars.getInstance().atWar(player, enemy);
-		if (!gone && !war && hunter.brawlAggressor && !hunter.revenge && !enemy.isDead() && (enemy.getPvpFlag() == 0) && (!grace || (enemy.getCurrentHp() < (enemy.getMaxHp() * 0.4))))
+		if (!gone && !war && !cursedFight && hunter.brawlAggressor && !hunter.revenge && !enemy.isDead() && (enemy.getPvpFlag() == 0) && (!grace || (enemy.getCurrentHp() < (enemy.getMaxHp() * 0.4))))
 		{
 			player.abortAttack();
 			player.getAI().setIntentionActive();
@@ -6178,7 +6637,7 @@ public class PhantomHunterManager
 			return false;
 		}
 
-		if (gone || enemy.isDead() || (!enemy.isAutoAttackable(player) && !grace && !hunter.revenge))
+		if (gone || enemy.isDead() || (!enemy.isAutoAttackable(player) && !grace && !hunter.revenge && !cursedFight))
 		{
 			if ((enemy != null) && enemy.isDead() && !gone && hunter.revenge)
 			{
@@ -6193,7 +6652,7 @@ public class PhantomHunterManager
 					PhantomClanWars.getInstance().onKill(enemy, player);
 				}
 				PhantomGestures.getInstance().onVictory(player);
-				PhantomChat.getInstance().hunterEvent(player, enemy, "WON", hunter.brawlAggressor ? "ты завалил " + enemy.getName() + " в махаче" : "ты завалил " + enemy.getName() + ", который на тебя напал", "изи)", 180000);
+				PhantomChat.getInstance().hunterEvent(player, enemy, "WON", player.isCursedWeaponEquipped() ? "ты завалил " + enemy.getName() + " проклятым оружием" : hunter.brawlAggressor ? "ты завалил " + enemy.getName() + " в махаче" : "ты завалил " + enemy.getName() + ", который на тебя напал", "изи)", 180000);
 			}
 			endFight(hunter, player);
 			return false;
@@ -6202,6 +6661,21 @@ public class PhantomHunterManager
 		if (player.isSitting())
 		{
 			player.standUp();
+			return true;
+		}
+
+		// Цель держит он сам, как ctrl+клик: автобой ушёл бы на мобов.
+		if (cursedFight)
+		{
+			if (player.isAutoPlaying())
+			{
+				AutoPlayTaskManager.getInstance().stopAutoPlay(player);
+			}
+			if ((player.getTarget() != enemy) || (player.getAI().getIntention() != Intention.ATTACK))
+			{
+				player.setTarget(enemy);
+				player.getAI().setIntentionAttack(enemy);
+			}
 			return true;
 		}
 

@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -20,15 +21,19 @@ import org.l2jmobius.gameserver.data.sql.CharInfoTable;
 import org.l2jmobius.gameserver.data.xml.ItemData;
 import org.l2jmobius.gameserver.entity.Location;
 import org.l2jmobius.gameserver.entity.World;
+import org.l2jmobius.gameserver.entity.actor.Creature;
+import org.l2jmobius.gameserver.entity.actor.Npc;
 import org.l2jmobius.gameserver.entity.actor.Player;
 import org.l2jmobius.gameserver.entity.actor.enums.player.PrivateStoreType;
 import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
 import org.l2jmobius.gameserver.entity.item.instance.Item;
 import org.l2jmobius.gameserver.entity.itemcontainer.Inventory;
+import org.l2jmobius.gameserver.entity.zone.ZoneId;
 import org.l2jmobius.gameserver.managers.GlobalVariablesManager;
 import org.l2jmobius.gameserver.network.holders.TradeItem;
 import org.l2jmobius.gameserver.network.holders.TradeList;
 import org.l2jmobius.gameserver.network.serverpackets.PrivateStoreMsgSell;
+import org.l2jmobius.gameserver.util.LocationUtil;
 
 /**
  * L2Hub: гномы-твинки на продаже (docs/PHANTOMS.md, раздел 4.91, ключ {@code HunterTwinks}; решение автора 2026-10-31). Как на старых серверах: охотнику не к спеху, и его ценный дроп продаёт
@@ -70,6 +75,8 @@ public final class PhantomTwinks
 	private static final int SALT_NAME = 8201;
 	private static final int SALT_LOOK = 8202;
 	private static final int POINT_TRIES = 12;
+	/** Столько раз подряд твинк меняет место, если здесь лавку не открыть: как {@code STORE_TRIES} у охотника. Новая партия или ступень скидки — новая серия. */
+	private static final int STORE_TRIES = 6;
 	private static final String HAS_STOCK = "SELECT COUNT(*) FROM items i JOIN characters c ON c.charId = i.owner_id WHERE c.char_name = ? AND i.loc = 'INVENTORY'";
 	/** Самопроверка: столько мс на ход {@link #control}, он раз в 10 с. */
 	private static final long TEST_TICK = 12000;
@@ -83,6 +90,12 @@ public final class PhantomTwinks
 	private final Map<String, Long> _since = new ConcurrentHashMap<>();
 	/** Твинк в нижнем регистре → на какой ступени скидки стоят цены. */
 	private final Map<String, Long> _step = new ConcurrentHashMap<>();
+	/** Твинк в нижнем регистре → сколько раз подряд менял место ради лавки. */
+	private final Map<String, Integer> _storeTries = new ConcurrentHashMap<>();
+	/** Твинки в нижнем регистре, что были в мире на прошлом ходу. */
+	private final Set<String> _present = ConcurrentHashMap.newKeySet();
+	/** Самопроверка: твинк → сколько адены он донёс хозяину. */
+	private final Map<String, Long> _brought = new ConcurrentHashMap<>();
 	private boolean _loaded;
 	private boolean _restored;
 
@@ -93,7 +106,8 @@ public final class PhantomTwinks
 	// ---------- Ход ----------
 
 	/**
-	 * Раз в 10 с из {@link PhantomHunterManager}: выручку хозяину, распроданный уходит, свежие вещи и скидка — в лавку. Режим снят — все уходят, вещи остаются в базе.
+	 * Раз в 10 с из {@link PhantomHunterManager}: выручку хозяину, распроданный уходит, свежие вещи и скидка — в лавку. Режим снят — все уходят, вещи остаются в базе.<br>
+	 * Закрытая лавка выводит из мира игрока без клиента ({@code OfflineDisconnectFinished} в {@code Player.setPrivateStoreType}), и распроданный исчезал, не отдав выручку: кто пропал, а в базе у него что-то лежит, возвращается и отдаёт.
 	 * @param wanted охотники сейчас нужны в мире
 	 * @param now время, мс
 	 */
@@ -106,6 +120,7 @@ public final class PhantomTwinks
 			{
 				leave(twink, "the mode is off");
 			}
+			_present.clear();
 			return;
 		}
 
@@ -123,10 +138,16 @@ public final class PhantomTwinks
 		}
 		for (Map.Entry<String, String> entry : _twinks.entrySet())
 		{
-			final Player twink = PhantomManager.getInstance().getPhantom(template(entry.getValue()));
+			final String name = entry.getValue();
+			final Player twink = PhantomManager.getInstance().getPhantom(template(name));
 			if (twink != null)
 			{
+				_present.add(name.toLowerCase());
 				tick(entry.getKey(), twink, now);
+			}
+			else if (_present.remove(name.toLowerCase()) && hasStock(name))
+			{
+				spawn(name);
 			}
 		}
 	}
@@ -148,20 +169,26 @@ public final class PhantomTwinks
 		final String key = twink.getName().toLowerCase();
 		final long step = (now - _since.computeIfAbsent(key, k -> now)) / DISCOUNT_EVERY;
 		final int listed = Math.min(goods.size(), twink.getPrivateSellStoreLimit());
-		if ((twink.getPrivateStoreType() != PrivateStoreType.SELL) || (twink.getSellList().getItemCount() < listed) || (step != _step.getOrDefault(key, 0L)))
+		final boolean nextStep = step != _step.getOrDefault(key, 0L);
+		if ((twink.getPrivateStoreType() != PrivateStoreType.SELL) || (twink.getSellList().getItemCount() < listed) || nextStep)
 		{
+			if (nextStep)
+			{
+				_storeTries.remove(key);
+			}
 			_step.put(key, step);
 			open(twink, ownerName, goods, step);
 		}
 	}
 
-	private static void settle(String ownerName, Player twink)
+	private void settle(String ownerName, Player twink)
 	{
 		final long adena = twink.getAdena();
 		final Player owner = World.getPlayer(ownerName);
 		if ((adena > 0) && PhantomManager.getInstance().isPhantom(owner) && PhantomCompat.reduceAdena(twink, ItemProcessType.TRANSFER, adena, null, false))
 		{
 			PhantomCompat.addAdena(owner, ItemProcessType.TRANSFER, adena, null, false);
+			_brought.merge(twink.getName(), adena, Long::sum);
 			LOGGER.info(PhantomTwinks.class.getSimpleName() + ": " + twink.getName() + " brings " + adena + " adena to " + owner.getName() + ".");
 		}
 	}
@@ -180,12 +207,16 @@ public final class PhantomTwinks
 	}
 
 	/**
-	 * Настоящая личная лавка, как у охотника ({@code PhantomHunterManager.openStore}): цена магазина × характер хозяина; спешки нет, не продаётся — дешевеет.
+	 * Настоящая личная лавка, как у охотника ({@code PhantomHunterManager.openStore}): цена магазина × характер хозяина; спешки нет, не продаётся — дешевеет. Здесь нельзя — на новое место; уже сидит с лавкой — торгует прежней: закрыть её значит выйти из мира.
 	 */
-	private static void open(Player twink, String ownerName, List<Item> goods, long step)
+	private void open(Player twink, String ownerName, List<Item> goods, long step)
 	{
 		if (!twink.canOpenPrivateStore())
 		{
+			if (twink.getPrivateStoreType() != PrivateStoreType.SELL)
+			{
+				moveForStore(twink);
+			}
 			return;
 		}
 
@@ -215,7 +246,45 @@ public final class PhantomTwinks
 		twink.setPrivateStoreType(PrivateStoreType.SELL);
 		twink.broadcastUserInfo();
 		twink.broadcastPacket(new PrivateStoreMsgSell(twink));
+		_storeTries.remove(twink.getName().toLowerCase());
 		LOGGER.info(PhantomTwinks.class.getSimpleName() + ": " + twink.getName() + " opens a store: price x" + String.format(Locale.ROOT, "%.2f", factor) + ": " + String.join(", ", names) + ".");
+	}
+
+	/**
+	 * Здесь лавку не открыть, а {@link PhantomHunterManager#storePoint} не знает ни зон, ни NPC: новая точка и новая попытка на следующем ходу {@link #control}, как у охотника в {@code goToStore}. Попытки кончились — одна строка в журнал, и твинк ждёт новую партию, ступень скидки или свободное место.
+	 */
+	private void moveForStore(Player twink)
+	{
+		final int tries = _storeTries.merge(twink.getName().toLowerCase(), 1, Integer::sum);
+		if (tries > STORE_TRIES)
+		{
+			if (tries == (STORE_TRIES + 1))
+			{
+				LOGGER.warning(getClass().getSimpleName() + ": " + twink.getName() + " gave up on a store after " + STORE_TRIES + " moves, stays at " + twink.getX() + ", " + twink.getY() + ": " + whyNoStore(twink) + ".");
+			}
+			return;
+		}
+
+		final String from = twink.getX() + ", " + twink.getY() + ": " + whyNoStore(twink);
+		if (twink.isSitting())
+		{
+			twink.standUp();
+		}
+		twink.teleToLocation(point(), false);
+		LOGGER.info(getClass().getSimpleName() + ": " + twink.getName() + " cannot open a store at " + from + "; moves to " + twink.getX() + ", " + twink.getY() + ", try " + tries + " of " + STORE_TRIES + ".");
+	}
+
+	/**
+	 * @return почему здесь не открыть лавку, для журнала: те же условия, что в {@code Player.canOpenPrivateStore}
+	 */
+	private static String whyNoStore(Player twink)
+	{
+		if (twink.isInsideZone(ZoneId.NO_STORE))
+		{
+			return "no-store zone";
+		}
+		final Creature near = World.getFirstVisibleObject(twink, Creature.class, creature -> (creature.getMinShopDistance() > 0) && LocationUtil.checkIfInRange(creature.getMinShopDistance(), twink, creature, true));
+		return near != null ? (near.isPlayer() ? "seated player " : "NPC ") + near.getName() + " at " + Math.round(twink.calculateDistance2D(near)) : "dead, mounted or casting";
 	}
 
 	private void leave(String name, String why)
@@ -227,10 +296,12 @@ public final class PhantomTwinks
 			return;
 		}
 
+		// Без setPrivateStoreType(NONE): он сам вывел бы твинка из мира мимо despawnHunter, и запись о фантоме осталась бы.
 		twink.getSellList().clear();
-		twink.setPrivateStoreType(PrivateStoreType.NONE);
+		_present.remove(name.toLowerCase());
 		_since.remove(name.toLowerCase());
 		_step.remove(name.toLowerCase());
+		_storeTries.remove(name.toLowerCase());
 		PhantomManager.getInstance().despawnHunter(template);
 		LOGGER.info(getClass().getSimpleName() + ": " + name + " leaves the square: " + why + ".");
 	}
@@ -289,6 +360,7 @@ public final class PhantomTwinks
 		final String key = twink.getName().toLowerCase();
 		_since.put(key, System.currentTimeMillis());
 		_step.put(key, 0L);
+		_storeTries.remove(key);
 		open(twink, owner.getName(), goods(twink), 0);
 		LOGGER.info(getClass().getSimpleName() + ": " + owner.getName() + " gives " + twink.getName() + " to sell: " + String.join(", ", moved) + ".");
 		return moved.size();
@@ -469,7 +541,7 @@ public final class PhantomTwinks
 
 	/**
 	 * Самопроверка TWINKS ({@code HuntersSelfTest}, только на копии базы): ключ снят — вещи у хозяина; в нужде не отдаёт; передача настоящая, лавка на площади; лимит твинков; шёпот и обмен без ответа;
-	 * настоящие покупки, выручка хозяину, распроданный уходит и остаётся в базе; вход как после рестарта садится с товаром; снятие ключа уводит. Ключи возвращаются.
+	 * настоящие покупки, вся выручка хозяину, распроданный уходит и остаётся в базе; вторая партия и вход как после рестарта садятся с товаром, откуда бы ни начали; у NPC лавку не открыть: предел попыток — ни шага, новая серия — другое место и лавка; снятие ключа уводит. Ключи возвращаются.
 	 * @param online охотники в мире
 	 */
 	void selfTest(List<Player> online)
@@ -482,6 +554,7 @@ public final class PhantomTwinks
 		final String tag = "SelfTest TWINKS: ";
 		final boolean wasOn = PhantomHuntersConfig.HUNTER_TWINKS;
 		final int wasCount = PhantomHuntersConfig.HUNTER_TWINK_COUNT;
+		final List<String> failed = new ArrayList<>();
 		try
 		{
 			final List<Player> free = new ArrayList<>();
@@ -557,10 +630,14 @@ public final class PhantomTwinks
 			PhantomChat.getInstance().onWhisper(buyer, twink, "почем");
 			PhantomTrade.getInstance().onRequest(buyer, twink);
 			LOGGER.info(tag + "whisper and trade request: no answer expected, template " + PhantomData.getInstance().getTemplate(name));
-			Thread.sleep(TEST_TICK);
+			if (!storeOpened(name))
+			{
+				failed.add("первая партия без лавки: " + storeLine(World.getPlayer(name)));
+			}
 
 			// Покупки, как у живого, до последней вещи.
 			final long ownerAdena = owner.getAdena();
+			_brought.remove(name);
 			long paid = 0;
 			int bought = 0;
 			while (twink.isOnline() && (twink.getPrivateStoreType() == PrivateStoreType.SELL) && (twink.getSellList().getItemCount() > 0) && (bought < TEST_MAX_BUYS))
@@ -579,14 +656,29 @@ public final class PhantomTwinks
 				paid += trade.getPrice();
 				bought++;
 			}
-			Thread.sleep(TEST_TICK * 2);
-			LOGGER.info(tag + "after " + bought + " buys for " + paid + ": owner got " + (owner.getAdena() - ownerAdena) + ", twink in the world " + (World.getPlayer(name) != null) + ", character in the base " + CharInfoTable.getInstance().doesCharNameExist(name) + ", has stock " + hasStock(name));
+			// Закрытая лавка вывела его из мира с выручкой: вернуться, отдать, уйти — по ходу на шаг.
+			for (int attempt = 0; (attempt < 8) && ((_brought.getOrDefault(name, 0L) < paid) || (World.getPlayer(name) != null)); attempt++)
+			{
+				Thread.sleep(TEST_TICK);
+			}
+			final long brought = _brought.getOrDefault(name, 0L);
+			LOGGER.info(tag + "after " + bought + " buys for " + paid + ": brought " + brought + ", owner +" + (owner.getAdena() - ownerAdena) + ", twink in the world " + (World.getPlayer(name) != null) + ", character in the base " + CharInfoTable.getInstance().doesCharNameExist(name) + ", has stock " + hasStock(name));
+			// Больше проданного может быть: у открытой лавки покупают и другие охотники.
+			if ((paid == 0) || (brought < paid))
+			{
+				failed.add("выручка: продано на " + paid + ", дошло " + brought);
+			}
 
-			// Вторая партия — тот же твинк; выход и вход как после рестарта.
+			// Вторая партия — тот же твинк; выход и вход как после рестарта. Точка случайная: где нельзя, он обязан перейти.
 			giveGoods(owner, template);
 			handOff(owner, template);
+			final boolean secondOpen = storeOpened(name);
 			final Player second = World.getPlayer(name);
-			LOGGER.info(tag + "second batch: twinks " + _twinks.size() + ", in the world " + (second != null) + ", store " + (second == null ? "-" : second.getSellList().getItemCount()));
+			LOGGER.info(tag + "second batch: twinks " + _twinks.size() + ", in the world " + (second != null) + ", " + storeLine(second));
+			if (!secondOpen)
+			{
+				failed.add("вторая партия без лавки: " + storeLine(second));
+			}
 			PhantomManager.getInstance().despawnHunter(template(name));
 			synchronized (this)
 			{
@@ -594,14 +686,23 @@ public final class PhantomTwinks
 			}
 			LOGGER.info(tag + "out of the world, has stock " + hasStock(name));
 			Thread.sleep(TEST_TICK);
+			final boolean thirdOpen = storeOpened(name);
 			final Player third = World.getPlayer(name);
-			LOGGER.info(tag + "as after a restart: in the world " + (third != null) + ", store " + (third == null ? "-" : third.getPrivateStoreType() + " " + third.getSellList().getItemCount()) + ", goods " + (third == null ? "-" : goods(third).size()));
+			LOGGER.info(tag + "as after a restart: in the world " + (third != null) + ", " + storeLine(third) + ", goods " + (third == null ? "-" : goods(third).size()));
+			if (!thirdOpen)
+			{
+				failed.add("вход как после рестарта без лавки: " + storeLine(third));
+			}
+			else
+			{
+				noStoreTest(owner, name, third, failed);
+			}
 
 			// Ключ снят: уходит, товар в базе.
 			PhantomHuntersConfig.HUNTER_TWINKS = false;
 			Thread.sleep(TEST_TICK);
 			LOGGER.info(tag + "key off again: in the world " + (World.getPlayer(name) != null) + ", has stock " + hasStock(name));
-			LOGGER.info(tag + "done.");
+			LOGGER.info(tag + (failed.isEmpty() ? "done." : "failed: " + failed));
 		}
 		catch (InterruptedException e)
 		{
@@ -616,6 +717,76 @@ public final class PhantomTwinks
 			PhantomHuntersConfig.HUNTER_TWINKS = wasOn;
 			PhantomHuntersConfig.HUNTER_TWINK_COUNT = wasCount;
 		}
+	}
+
+	/**
+	 * Твинк входит вплотную к NPC, где лавку не открыть. Попытки исчерпаны — не двигается и остаётся без лавки, строка в журнале; новая серия — другое место и лавка.
+	 */
+	private void noStoreTest(Player owner, String name, Player seated, List<String> failed) throws InterruptedException
+	{
+		final String tag = "SelfTest TWINKS: ";
+		final Npc npc = World.getFirstVisibleObject(seated, Npc.class, nearby -> nearby.getMinShopDistance() > 0);
+		if (npc == null)
+		{
+			failed.add("рядом с лавкой нет NPC, запретное место проверить не на чем");
+			return;
+		}
+
+		final Location forbidden = new Location(npc.getX() + 30, npc.getY(), npc.getZ());
+		final String key = name.toLowerCase();
+		final Player twink;
+		synchronized (this)
+		{
+			// Под замком: иначе ход control успел бы вернуть его на площадь раньше.
+			PhantomManager.getInstance().despawnHunter(template(name));
+			twink = PhantomManager.getInstance().spawnTwink(template(name), forbidden);
+			if (twink == null)
+			{
+				failed.add("запретное место: твинк не вошёл");
+				return;
+			}
+			_storeTries.put(key, STORE_TRIES);
+			open(twink, owner.getName(), goods(twink), 0);
+		}
+		Thread.sleep(TEST_TICK);
+		final long moved = Math.round(twink.calculateDistance2D(forbidden));
+		LOGGER.info(tag + "at " + npc.getName() + ": can open " + twink.canOpenPrivateStore() + ", tries out, moved " + moved + ", " + storeLine(twink));
+		if (twink.canOpenPrivateStore() || (moved > 1) || (twink.getPrivateStoreType() == PrivateStoreType.SELL))
+		{
+			failed.add("предел попыток у NPC: можно " + twink.canOpenPrivateStore() + ", сдвиг " + moved + ", " + storeLine(twink));
+		}
+
+		_storeTries.remove(key);
+		final boolean opened = storeOpened(name);
+		final Player again = World.getPlayer(name);
+		final long away = again == null ? 0 : Math.round(again.calculateDistance2D(forbidden));
+		LOGGER.info(tag + "a new series: " + storeLine(again) + ", " + away + " from the forbidden place");
+		if (!opened || (away < 50) || _storeTries.containsKey(key))
+		{
+			failed.add("новая серия у NPC: лавка " + opened + ", ушёл на " + away + ", счётчик " + _storeTries.get(key));
+		}
+	}
+
+	/**
+	 * Ждёт лавку: где нельзя, твинк за ход {@link #control} меняет место и пробует снова.
+	 */
+	private static boolean storeOpened(String name) throws InterruptedException
+	{
+		for (int attempt = 0; attempt <= (STORE_TRIES + 1); attempt++)
+		{
+			final Player twink = World.getPlayer(name);
+			if ((twink != null) && (twink.getPrivateStoreType() == PrivateStoreType.SELL) && (twink.getSellList().getItemCount() > 0))
+			{
+				return true;
+			}
+			Thread.sleep(TEST_TICK);
+		}
+		return false;
+	}
+
+	private static String storeLine(Player twink)
+	{
+		return twink == null ? "not in the world" : "store " + twink.getPrivateStoreType() + " " + twink.getSellList().getItemCount() + " at " + twink.getX() + ", " + twink.getY();
 	}
 
 	/**

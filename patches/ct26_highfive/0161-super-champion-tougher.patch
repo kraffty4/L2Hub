@@ -1,0 +1,41 @@
+L2Hub: суперчемпион на High Five толще и злее: HP x100, атака x5, опыт x60, адена x30. В соло больше не берётся.
+
+diff --git a/dist/game/config/Custom/ChampionMonsters.ini b/dist/game/config/Custom/ChampionMonsters.ini
+index 49fdf6b..0ae629d 100644
+--- a/dist/game/config/Custom/ChampionMonsters.ini
++++ b/dist/game/config/Custom/ChampionMonsters.ini
+@@ -134,14 +134,15 @@ SuperChampionFrequency = 0.1
+ # Титул суперчемпиона.
+ SuperChampionTitle = Legendary Champion
+ 
+-# Множитель HP суперчемпиона.
+-SuperChampionHp = 20
++# Множитель HP суперчемпиона. 100 — сырое HP рейд-босса того же уровня (у них x90–110 к обычному мобу на 25–60 уровнях), защита остаётся от моба.
++# Реген идёт в настоящем HP, а урон делится на этот множитель: при x100 реген в пять раз ощутимее, чем при x20.
++SuperChampionHp = 100
+ 
+ # Множитель регенерации HP суперчемпиона.
+ SuperChampionHpRegen = 2.0
+ 
+ # Множитель опыта и SP суперчемпиона.
+-SuperChampionRewardsExpSp = 20.0
++SuperChampionRewardsExpSp = 60.0
+ 
+ # Множитель шанса обычного дропа суперчемпиона.
+ SuperChampionRewardsChance = 10.0
+@@ -153,11 +154,11 @@ SuperChampionRewardsAmount = 2.0
+ SuperChampionAdenasRewardsChance = 1.0
+ 
+ # Множитель количества адены и печатей суперчемпиона.
+-SuperChampionAdenasRewardsAmount = 10.0
++SuperChampionAdenasRewardsAmount = 30.0
+ 
+-# Множитель P. Atk и M. Atk суперчемпиона. Не x10: так моб убивает игрока своего уровня с пары ударов;
+-# x3 — как удар рейд-босса того же уровня.
+-SuperChampionAtk = 3.0
++# Множитель P. Atk и M. Atk суперчемпиона. x5 — в полтора-четыре раза выше P. Atk рейд-босса того же уровня (у РБ сверх того скиллы и миньоны).
++# Не x10: так моб убивает игрока своего уровня с пары ударов.
++SuperChampionAtk = 5.0
+ 
+ # Множитель скорости атаки и каста суперчемпиона.
+ SuperChampionSpdAtk = 1.5

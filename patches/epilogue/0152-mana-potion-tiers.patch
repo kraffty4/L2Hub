@@ -1,0 +1,194 @@
+L2Hub: три мана-банки по просьбе игроков: Mana Drug (726) сразу 100 MP, Mana Potion (728) сразу 400 MP, Battle Mana Recovery Potion (10153) 1000 MP за 5 секунд вне осады. Цены по 20 адены за MP. Банка на 5 секунд, как и хилка, не занимает слот бафа.
+
+diff --git a/dist/game/data/multisell/90001000.xml b/dist/game/data/multisell/90001000.xml
+index a7ef8966cf51274afa55238e977525059555b140..75710f1bf33a30608b63452f2801001695080e2a 100644
+--- a/dist/game/data/multisell/90001000.xml
++++ b/dist/game/data/multisell/90001000.xml
+@@ -103,7 +103,7 @@
+ 	</item>
+ 	<item>
+ 		<!-- Adena -->
+-		<ingredient count="9200" id="57" />
++		<ingredient count="20000" id="57" />
+ 		<!-- Battle Mana Recovery Potion -->
+ 		<production count="1" id="10153" />
+ 	</item>
+diff --git a/dist/game/data/multisell/custom/50039928.xml b/dist/game/data/multisell/custom/50039928.xml
+index 750a5a6a40e61540e48372fd295edd715dce6995..d84d316859ba18eebac4c1331359ff2f27cfe513 100644
+--- a/dist/game/data/multisell/custom/50039928.xml
++++ b/dist/game/data/multisell/custom/50039928.xml
+@@ -16,11 +16,11 @@
+ 		<production id="1539" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="80" />
++		<ingredient id="57" count="2000" />
+ 		<production id="726" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="20000" />
++		<ingredient id="57" count="8000" />
+ 		<production id="728" count="1" />
+ 	</item>
+ 	<item>
+@@ -120,7 +120,7 @@
+ 		<production id="10152" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="20000" />
+ 		<production id="10153" count="1" />
+ 	</item>
+ 	<item>
+diff --git a/dist/game/data/multisell/custom/50039989.xml b/dist/game/data/multisell/custom/50039989.xml
+index b90c7ba5bb5b1edf6e9fe6cbd8dc0dfdb5af9a90..3b1aca07b93fdc7a0e1d651c7e74cff66af7a072 100644
+--- a/dist/game/data/multisell/custom/50039989.xml
++++ b/dist/game/data/multisell/custom/50039989.xml
+@@ -52,7 +52,7 @@
+ 		<production id="10152" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="20000" />
+ 		<production id="10153" count="1" />
+ 	</item>
+ 	<item>
+diff --git a/dist/game/data/stats/items/00700-00799.xml b/dist/game/data/stats/items/00700-00799.xml
+index 207e6871e9e4365a4933ce30db667420ddc3afbd..94731cff0448c44820e5320f8f3d55bcd495bd83 100644
+--- a/dist/game/data/stats/items/00700-00799.xml
++++ b/dist/game/data/stats/items/00700-00799.xml
+@@ -371,7 +371,7 @@
+ 		<set name="immediate_effect" val="true" />
+ 		<set name="material" val="LIQUID" />
+ 		<set name="weight" val="5" />
+-		<set name="price" val="80" />
++		<set name="price" val="2000" />
+ 		<set name="is_stackable" val="true" />
+ 		<set name="is_oly_restricted" val="true" />
+ 		<set name="handler" val="ItemSkills" />
+@@ -406,7 +406,7 @@
+ 		<set name="immediate_effect" val="true" />
+ 		<set name="material" val="LIQUID" />
+ 		<set name="weight" val="5" />
+-		<set name="price" val="20000" />
++		<set name="price" val="8000" />
+ 		<set name="is_stackable" val="true" />
+ 		<set name="is_oly_restricted" val="true" />
+ 		<set name="handler" val="ItemSkills" />
+diff --git a/dist/game/data/stats/items/10100-10199.xml b/dist/game/data/stats/items/10100-10199.xml
+index 6d6ae8b5b192afaf5595a1c90442bfe43617372b..ae61823a987677aea171135695bdfaef3de68fcd 100644
+--- a/dist/game/data/stats/items/10100-10199.xml
++++ b/dist/game/data/stats/items/10100-10199.xml
+@@ -854,23 +854,22 @@
+ 		</skills>
+ 	</item>
+ 	<item id="10153" type="EtcItem" name="Battle Mana Recovery Potion">
+-		<!-- Recovers MP when in use. Characters below Level 52 are not affected. Usable only during a Siege or Fortress war. -->
++		<!-- L2Hub: 1000 MP за 5 секунд, как банка хила; без осады и порога уровня. Подсказка в клиенте осталась прежней. -->
+ 		<set name="icon" val="icon.etc_super_mp_potion_i00" />
+ 		<set name="default_action" val="SKILL_REDUCE" />
+-		<set name="etcitem_type" val="ELIXIR" />
++		<set name="etcitem_type" val="POTION" />
+ 		<set name="immediate_effect" val="true" />
+ 		<set name="material" val="LIQUID" />
+ 		<set name="weight" val="5" />
+-		<set name="shared_reuse_group" val="8" />
+-		<set name="reuse_delay" val="180000" />
++		<set name="price" val="20000" />
+ 		<set name="is_stackable" val="true" />
+ 		<set name="is_oly_restricted" val="true" />
+ 		<set name="handler" val="ItemSkills" />
+ 		<conditions msgId="113" addName="1">
+-			<player SiegeZone="126" />
++			<player flyMounted="false" />
+ 		</conditions>
+ 		<skills>
+-			<skill id="2401" level="1" /> <!-- Lesser Battlefield Mana Potion -->
++			<skill id="10003" level="1" />
+ 		</skills>
+ 	</item>
+ 	<item id="10154" type="EtcItem" name="Battle CP Recovery Potion">
+diff --git a/dist/game/data/stats/skills/custom/10000-10099.xml b/dist/game/data/stats/skills/custom/10000-10099.xml
+index a3bc6b1594c1eb41af00278d8f3b344f01c982bf..4c5c9b3fca48a43670a5ec760b4fd39cd68245b3 100644
+--- a/dist/game/data/stats/skills/custom/10000-10099.xml
++++ b/dist/game/data/stats/skills/custom/10000-10099.xml
+@@ -3,16 +3,15 @@
+ 	<skill id="10000" levels="1" name="Mana Drug">
+ 		<operateType>A1</operateType>
+ 		<targetType>SELF</targetType>
+-		<abnormalTime>15</abnormalTime>
+ 		<displayId>2288</displayId>
+ 		<isMagic>2</isMagic> <!-- Static Skill -->
+ 		<itemConsumeCount>1</itemConsumeCount>
+ 		<itemConsumeId>726</itemConsumeId>
+ 		<magicLevel>1</magicLevel>
+-		<reuseDelay>10000</reuseDelay>
++		<reuseDelay>500</reuseDelay>
+ 		<effects>
+-			<effect name="ManaHealOverTime" ticks="3">
+-				<power>1.5</power>
++			<effect name="ManaHeal">
++				<power>100</power>
+ 			</effect>
+ 		</effects>
+ 	</skill>
+@@ -27,7 +26,7 @@
+ 		<reuseDelay>500</reuseDelay>
+ 		<effects>
+ 			<effect name="ManaHeal">
+-				<power>1000</power>
++				<power>400</power>
+ 			</effect>
+ 		</effects>
+ 	</skill>
+@@ -37,4 +36,23 @@
+ 		<targetType>AURA</targetType>
+ 		<isMagic>1</isMagic> <!-- Magic Skill -->
+ 	</skill>
++	<skill id="10003" levels="1" name="Battle Mana Recovery Potion">
++		<!-- L2Hub: 1000 MP за 5 секунд: тик раз в 0.666 с, за тик power * 0.666, всего 7 тиков. -->
++		<operateType>A2</operateType>
++		<targetType>SELF</targetType>
++		<abnormalLevel>1</abnormalLevel>
++		<abnormalTime>5</abnormalTime>
++		<abnormalType>MP_RECOVER</abnormalType>
++		<displayId>2288</displayId>
++		<isMagic>2</isMagic> <!-- Static Skill -->
++		<itemConsumeCount>1</itemConsumeCount>
++		<itemConsumeId>10153</itemConsumeId>
++		<magicLevel>1</magicLevel>
++		<reuseDelay>5000</reuseDelay>
++		<effects>
++			<effect name="ManaHealOverTime" ticks="1">
++				<power>215</power>
++			</effect>
++		</effects>
++	</skill>
+ </list>
+\ No newline at end of file
+diff --git a/java/org/l2jmobius/gameserver/mechanics/skill/AbnormalType.java b/java/org/l2jmobius/gameserver/mechanics/skill/AbnormalType.java
+index f28a71f73df57bda9a437554bb4fed6d404d7d25..1659ea4a6cdd220b48f037179fcb96a6b69967a2 100644
+--- a/java/org/l2jmobius/gameserver/mechanics/skill/AbnormalType.java
++++ b/java/org/l2jmobius/gameserver/mechanics/skill/AbnormalType.java
+@@ -205,6 +205,7 @@ public enum AbnormalType
+ 	MIRAGE_TRAP,
+ 	MP_COST_DOWN,
+ 	MP_COST_UP,
++	MP_RECOVER,
+ 	MP_REGEN_UP,
+ 	MULTI_BUFF,
+ 	MULTI_BUFF_A,
+diff --git a/java/org/l2jmobius/gameserver/mechanics/skill/Skill.java b/java/org/l2jmobius/gameserver/mechanics/skill/Skill.java
+index a028fd94a40109ad1269bc9a58ffcbe38465c985..1425cbbf2a54d1ba50bfcc41dc92191b252e67a8 100644
+--- a/java/org/l2jmobius/gameserver/mechanics/skill/Skill.java
++++ b/java/org/l2jmobius/gameserver/mechanics/skill/Skill.java
+@@ -883,7 +883,8 @@ public class Skill
+ 	 */
+ 	public boolean isHealingPotionSkill()
+ 	{
+-		return _abnormalType == AbnormalType.HP_RECOVER;
++		// L2Hub: банка маны на 5 секунд (10153) живёт как хилка: не вытесняет бафы с полной панели.
++		return (_abnormalType == AbnormalType.HP_RECOVER) || (_abnormalType == AbnormalType.MP_RECOVER);
+ 	}
+ 	
+ 	public int getChargeConsumeCount()

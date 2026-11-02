@@ -1,0 +1,18 @@
+L2Hub: CursedWeapon.getItem: охотникам нужен предмет на земле, чтобы бежать за проклятым оружием.
+
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/holders/player/CursedWeapon.java b/java/org/l2jmobius/gameserver/entity/actor/holders/player/CursedWeapon.java
+index 13b5425e0d006a3146ffc36ec0410c5f2ea57420..dd5832fb1c49c6aac8767f40b6d7d701ade099d9 100644
+--- a/java/org/l2jmobius/gameserver/entity/actor/holders/player/CursedWeapon.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/holders/player/CursedWeapon.java
+@@ -563,6 +563,11 @@ public class CursedWeapon
+ 		_player = player;
+ 	}
+ 	
++	public Item getItem()
++	{
++		return _item;
++	}
++	
+ 	public void setItem(Item item)
+ 	{
+ 		_item = item;

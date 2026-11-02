@@ -1,0 +1,73 @@
+diff --git a/dist/game/data/multisell/custom/50039928.xml b/dist/game/data/multisell/custom/50039928.xml
+index a3b8f95ea36f9152cb37b7c8620d113066f6cd0c..1579ef60b6ab30f32caf7b4732dc36913c17cc10 100644
+--- a/dist/game/data/multisell/custom/50039928.xml
++++ b/dist/game/data/multisell/custom/50039928.xml
+@@ -16,11 +16,11 @@
+ 		<production id="1539" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="80" />
++		<ingredient id="57" count="2000" />
+ 		<production id="726" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="20000" />
++		<ingredient id="57" count="8000" />
+ 		<production id="728" count="1" />
+ 	</item>
+ 	<item>
+diff --git a/dist/game/data/stats/items/00700-00799.xml b/dist/game/data/stats/items/00700-00799.xml
+index 153202c0c5fdf21a6078eb7148a194e81f22f8dc..fe4fb6d6580a78cb0e9735bb6451ccb15007b0c4 100644
+--- a/dist/game/data/stats/items/00700-00799.xml
++++ b/dist/game/data/stats/items/00700-00799.xml
+@@ -368,7 +368,7 @@
+ 		<set name="immediate_effect" val="true" />
+ 		<set name="material" val="LIQUID" />
+ 		<set name="weight" val="5" />
+-		<set name="price" val="80" />
++		<set name="price" val="2000" />
+ 		<set name="is_stackable" val="true" />
+ 		<set name="is_oly_restricted" val="true" />
+ 		<set name="handler" val="ItemSkills" />
+@@ -397,7 +397,7 @@
+ 		<set name="immediate_effect" val="true" />
+ 		<set name="material" val="LIQUID" />
+ 		<set name="weight" val="5" />
+-		<set name="price" val="20000" />
++		<set name="price" val="8000" />
+ 		<set name="is_stackable" val="true" />
+ 		<set name="is_oly_restricted" val="true" />
+ 		<set name="handler" val="ItemSkills" />
+diff --git a/dist/game/data/stats/skills/custom/10000-10099.xml b/dist/game/data/stats/skills/custom/10000-10099.xml
+index 6b13406ea3d1240aeacd3de59c02069afed35a90..a996709252c8432abf201af8bb82d4841830ce2e 100644
+--- a/dist/game/data/stats/skills/custom/10000-10099.xml
++++ b/dist/game/data/stats/skills/custom/10000-10099.xml
+@@ -3,16 +3,15 @@
+ 	<skill id="10000" levels="1" name="Mana Drug">
+ 		<operateType>A1</operateType>
+ 		<targetType>SELF</targetType>
+-		<abnormalTime>15</abnormalTime>
+ 		<displayId>2288</displayId>
+ 		<isMagic>2</isMagic> <!-- Static Skill -->
+ 		<itemConsumeCount>1</itemConsumeCount>
+ 		<itemConsumeId>726</itemConsumeId>
+ 		<magicLevel>1</magicLevel>
+-		<reuseDelay>10000</reuseDelay>
++		<reuseDelay>500</reuseDelay>
+ 		<effects>
+-			<effect name="ManaHealOverTime" ticks="3">
+-				<power>1.5</power>
++			<effect name="ManaHeal">
++				<power>100</power>
+ 			</effect>
+ 		</effects>
+ 	</skill>
+@@ -27,7 +26,7 @@
+ 		<reuseDelay>500</reuseDelay>
+ 		<effects>
+ 			<effect name="ManaHeal">
+-				<power>1000</power>
++				<power>400</power>
+ 			</effect>
+ 		</effects>
+ 	</skill>

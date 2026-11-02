@@ -1,0 +1,2708 @@
+Самопроверка пачки правок от 2026-11-01: HuntersSelfTest = L2HUBPACK, только на копии базы.
+
+diff --git b/dist/game/data/scripts/custom/L2HubPackTest/L2HubPackTest.java b/dist/game/data/scripts/custom/L2HubPackTest/L2HubPackTest.java
+new file mode 100644
+index 0000000..07a608b
+--- /dev/null
++++ b/dist/game/data/scripts/custom/L2HubPackTest/L2HubPackTest.java
+@@ -0,0 +1,2700 @@
++package custom.L2HubPackTest;
++
++import java.lang.reflect.Constructor;
++import java.lang.reflect.Field;
++import java.lang.reflect.Method;
++import java.util.ArrayList;
++import java.util.Collections;
++import java.util.HashSet;
++import java.util.List;
++import java.util.Map;
++import java.util.Set;
++import java.util.concurrent.atomic.AtomicBoolean;
++import java.util.function.BooleanSupplier;
++import java.util.function.Predicate;
++import java.util.logging.Level;
++import java.util.logging.Logger;
++
++import org.l2jmobius.commons.threads.ThreadPool;
++import org.l2jmobius.gameserver.ai.Intention;
++import org.l2jmobius.gameserver.config.NpcConfig;
++import org.l2jmobius.gameserver.config.PlayerConfig;
++import org.l2jmobius.gameserver.config.RatesConfig;
++import org.l2jmobius.gameserver.config.custom.ChampionMonstersConfig;
++import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
++import org.l2jmobius.gameserver.config.custom.RandomSpawnsConfig;
++import org.l2jmobius.gameserver.data.SchemeBufferTable;
++import org.l2jmobius.gameserver.data.xml.ItemData;
++import org.l2jmobius.gameserver.data.xml.NpcData;
++import org.l2jmobius.gameserver.data.xml.SkillData;
++import org.l2jmobius.gameserver.data.xml.SpawnData;
++import org.l2jmobius.gameserver.entity.Location;
++import org.l2jmobius.gameserver.entity.World;
++import org.l2jmobius.gameserver.entity.WorldObject;
++import org.l2jmobius.gameserver.entity.actor.Creature;
++import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.entity.actor.Summon;
++import org.l2jmobius.gameserver.entity.actor.enums.npc.DropType;
++import org.l2jmobius.gameserver.entity.actor.holders.player.CursedWeapon;
++import org.l2jmobius.gameserver.entity.actor.instance.Monster;
++import org.l2jmobius.gameserver.entity.actor.templates.NpcTemplate;
++import org.l2jmobius.gameserver.entity.item.ItemTemplate;
++import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
++import org.l2jmobius.gameserver.entity.item.holders.ItemHolder;
++import org.l2jmobius.gameserver.entity.item.instance.Item;
++import org.l2jmobius.gameserver.entity.item.type.EtcItemType;
++import org.l2jmobius.gameserver.entity.zone.ZoneId;
++import org.l2jmobius.gameserver.geoengine.GeoEngine;
++import org.l2jmobius.gameserver.geoengine.pathfinding.GeoLocation;
++import org.l2jmobius.gameserver.geoengine.pathfinding.PathFinding;
++import org.l2jmobius.gameserver.handler.CommunityBoardHandler;
++import org.l2jmobius.gameserver.managers.CursedWeaponsManager;
++import org.l2jmobius.gameserver.managers.ItemManager;
++import org.l2jmobius.gameserver.managers.ScriptManager;
++import org.l2jmobius.gameserver.managers.phantom.PhantomBufferSets;
++import org.l2jmobius.gameserver.managers.phantom.PhantomCompanionManager;
++import org.l2jmobius.gameserver.managers.phantom.PhantomCompat;
++import org.l2jmobius.gameserver.managers.phantom.PhantomData;
++import org.l2jmobius.gameserver.managers.phantom.PhantomHunterManager;
++import org.l2jmobius.gameserver.managers.phantom.PhantomHunterParty;
++import org.l2jmobius.gameserver.managers.phantom.PhantomManager;
++import org.l2jmobius.gameserver.managers.phantom.PhantomOrders;
++import org.l2jmobius.gameserver.managers.phantom.PhantomPath;
++import org.l2jmobius.gameserver.managers.phantom.PhantomPk;
++import org.l2jmobius.gameserver.managers.phantom.PhantomRaid;
++import org.l2jmobius.gameserver.managers.phantom.PhantomTemplate;
++import org.l2jmobius.gameserver.mechanics.multisell.Entry;
++import org.l2jmobius.gameserver.mechanics.multisell.Ingredient;
++import org.l2jmobius.gameserver.mechanics.multisell.PreparedListContainer;
++import org.l2jmobius.gameserver.mechanics.script.Event;
++import org.l2jmobius.gameserver.mechanics.script.Quest;
++import org.l2jmobius.gameserver.mechanics.skill.BuffInfo;
++import org.l2jmobius.gameserver.mechanics.skill.Skill;
++import org.l2jmobius.gameserver.mechanics.stats.Stat;
++import org.l2jmobius.gameserver.taskmanagers.AutoPlayTaskManager;
++import org.l2jmobius.gameserver.taskmanagers.AutoUseTaskManager;
++
++import custom.L2HubPvpEvents.L2HubPvpEvents;
++
++/**
++ * L2Hub: самопроверка пачки правок High Five от 2026-11-01, только на копии базы: {@code HuntersSelfTest = L2HUBPACK} в PhantomHunters.ini.<br>
++ * Приказ «паравозиком», наборы бафов по ролям, три мана-банки, банки в пати у охотника и напарника, запасной приказ на пустом месте, каст мага в упор, обход препятствий автобоем, автобой после стана, множитель спавна, сумка и подбор в занятую стопку, подбор по уровню и награды PvP-ивентов, медали за ивенты и их обмен, провокация настоящим кастом, суперчемпион один на один, охота за проклятым оружием, правки боя из вклада пользователя (HunterCombatFixes). Итог — строки в логе.
++ * @author L2Hub
++ */
++public class L2HubPackTest
++{
++	private static final Logger LOGGER = Logger.getLogger(L2HubPackTest.class.getName());
++	private static final String TAG = "L2HubPackTest: SelfTest L2HUBPACK: ";
++	private static final Location GIRAN = new Location(83400, 147943, -3404);
++	private static final long STARTED = System.currentTimeMillis();
++	private static final int[] MANA =
++	{
++		726,
++		728,
++		10153
++	};
++	private static int _ok;
++	private static int _wrong;
++
++	private interface Section
++	{
++		void run() throws Exception;
++	}
++
++	public static void main(String[] args)
++	{
++		if ("L2HUBPACK".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST))
++		{
++			ThreadPool.schedule(L2HubPackTest::start, 60000);
++		}
++	}
++
++	private static void start()
++	{
++		if ((free().size() < 100) && ((System.currentTimeMillis() - STARTED) < (7 * 60000L)))
++		{
++			ThreadPool.schedule(L2HubPackTest::start, 15000);
++			return;
++		}
++		final List<Player> spare = free();
++		LOGGER.info(TAG + "free hunters " + spare.size() + ".");
++		section("orders", L2HubPackTest::orders);
++		section("spawn", L2HubPackTest::spawn);
++		section("items", L2HubPackTest::items);
++		section("roles", () -> roles(spare));
++		section("potions", () -> potions(spare));
++		section("party", () -> party(spare));
++		section("healer", () -> healer(spare));
++		section("rally", L2HubPackTest::rally);
++		section("companion", () -> companion(spare));
++		section("detour", () -> detour(spare));
++		section("stun", () -> stun(spare));
++		section("sonic", () -> sonic(spare));
++		section("taunt", () -> taunt(spare));
++		section("drops", () -> drops(spare));
++		section("bag", () -> bag(spare));
++		section("events", () -> events(spare));
++		section("medals", () -> medals(spare));
++		section("super", () -> superChampion(spare));
++		section("cursed", L2HubPackTest::cursed);
++		section("nukes", () -> nukes(spare));
++		section("olympiad", () -> olympiad(spare));
++		section("pvpassist", () -> pvpAssist(spare));
++		section("recruit", () -> recruit(spare));
++		LOGGER.info(TAG + "done: " + _ok + " ok, " + _wrong + " wrong.");
++	}
++
++	private static void section(String name, Section body)
++	{
++		final String only = System.getenv("L2HUBPACK_ONLY");
++		if ((only != null) && !List.of(only.split(",")).contains(name))
++		{
++			return;
++		}
++		try
++		{
++			body.run();
++		}
++		catch (Throwable e)
++		{
++			_wrong++;
++			LOGGER.log(Level.WARNING, TAG + "WRONG " + name + " failed: " + e, e);
++		}
++	}
++
++	private static void check(String what, boolean good)
++	{
++		if (good)
++		{
++			_ok++;
++			LOGGER.info(TAG + "ok " + what);
++		}
++		else
++		{
++			_wrong++;
++			LOGGER.warning(TAG + "WRONG " + what);
++		}
++	}
++
++	private static void note(String what)
++	{
++		LOGGER.info(TAG + "note " + what);
++	}
++
++	private static List<Player> free()
++	{
++		final List<Player> out = new ArrayList<>();
++		for (Player p : World.getPlayers())
++		{
++			if (PhantomManager.getInstance().isPhantom(p) && !p.isDead() && !p.isRegisteredOnEvent() && !p.isOnEvent() && !p.isInOlympiadMode() && !p.isInStoreMode() && !p.isInParty())
++			{
++				final PhantomTemplate template = PhantomData.getInstance().getTemplate(p.getName());
++				if ((template != null) && template.isHunter() && !template.isReaper())
++				{
++					out.add(p);
++				}
++			}
++		}
++		Collections.shuffle(out);
++		return out;
++	}
++
++	private static Player pick(List<Player> spare, Predicate<Player> test)
++	{
++		for (Player p : spare)
++		{
++			if (test.test(p))
++			{
++				spare.remove(p);
++				return p;
++			}
++		}
++		return null;
++	}
++
++	private static boolean waitFor(int seconds, BooleanSupplier done) throws InterruptedException
++	{
++		for (int i = 0; i < (seconds * 2); i++)
++		{
++			if (done.getAsBoolean())
++			{
++				return true;
++			}
++			Thread.sleep(500);
++		}
++		return done.getAsBoolean();
++	}
++
++	private static Map<?, ?> hunters() throws Exception
++	{
++		final Field field = PhantomHunterManager.class.getDeclaredField("_hunters");
++		field.setAccessible(true);
++		return (Map<?, ?>) field.get(PhantomHunterManager.getInstance());
++	}
++
++	private static Object hunterField(Object hunter, String name) throws Exception
++	{
++		final Field field = hunter.getClass().getDeclaredField(name);
++		field.setAccessible(true);
++		return field.get(hunter);
++	}
++
++	/** Фаза охотника, null — не охотник сейчас. */
++	private static String phase(Player player)
++	{
++		try
++		{
++			final Object hunter = hunters().get(player.getName().toLowerCase());
++			return hunter == null ? null : String.valueOf(hunterField(hunter, "phase"));
++		}
++		catch (Exception e)
++		{
++			return "error " + e;
++		}
++	}
++
++	/**
++	 * Снять с охотников (иначе уйдёт качаться) и поставить на месте.
++	 */
++	private static void park(Player player, Location at) throws Exception
++	{
++		hunters().remove(player.getName().toLowerCase());
++		AutoPlayTaskManager.getInstance().stopAutoPlay(player);
++		player.stopMove(null);
++		player.abortAttack();
++		player.abortCast();
++		player.setTarget(null);
++		player.setPvpFlag(0);
++		player.setKarma(0);
++		player.setInvul(true);
++		if (player.isSitting())
++		{
++			player.standUp();
++			Thread.sleep(3000);
++		}
++		player.teleToLocation(at);
++		Thread.sleep(1500);
++	}
++
++	private static int mana(Player player)
++	{
++		int total = 0;
++		for (int id : MANA)
++		{
++			total += (int) player.getInventory().getInventoryItemCount(id, -1);
++		}
++		return total;
++	}
++
++	private static boolean drink(Player player, int itemId)
++	{
++		final Item item = player.getInventory().getItemByItemId(itemId);
++		return (item != null) && org.l2jmobius.gameserver.handler.ItemHandler.getInstance().getHandler(item.getEtcItem()).onItemUse(player, item, false);
++	}
++
++	// ---------- Разделы ----------
++
++	private static void orders()
++	{
++		final List<PhantomOrders.Order> paravoz = PhantomOrders.parse("покачай мення я паравозиком");
++		check("orders: «покачай ... паравозиком» is LEAD, got " + paravoz, paravoz.contains(PhantomOrders.Order.LEAD) && !paravoz.contains(PhantomOrders.Order.HUNT));
++		final List<PhantomOrders.Order> old = PhantomOrders.parse("паровозиком");
++		check("orders: «паровозиком» still LEAD, got " + old, old.contains(PhantomOrders.Order.LEAD));
++		final List<PhantomOrders.Order> here = PhantomOrders.parse("кач тут");
++		check("orders: «кач тут» still HUNT, got " + here, here.contains(PhantomOrders.Order.HUNT) && !here.contains(PhantomOrders.Order.LEAD));
++	}
++
++	private static void spawn() throws Exception
++	{
++		check("spawn: multiplier " + RandomSpawnsConfig.MONSTER_SPAWN_MULTIPLIER, RandomSpawnsConfig.MONSTER_SPAWN_MULTIPLIER == 1.5);
++		final Method multiplied = SpawnData.class.getDeclaredMethod("multipliedCount", int.class, int.class);
++		multiplied.setAccessible(true);
++		int monster = 0;
++		int raid = 0;
++		int folk = 0;
++		int quest = 0;
++		for (NpcTemplate template : NpcData.getInstance().getTemplates(t -> true))
++		{
++			if (template.isType("Monster") && !template.isQuestMonster() && (monster == 0) && ((RandomSpawnsConfig.MOBS_LIST_NOT_RANDOM == null) || !RandomSpawnsConfig.MOBS_LIST_NOT_RANDOM.contains(template.getId())))
++			{
++				monster = template.getId();
++			}
++			if (template.isType("RaidBoss") && (raid == 0))
++			{
++				raid = template.getId();
++			}
++			if (template.isType("Folk") && (folk == 0))
++			{
++				folk = template.getId();
++			}
++			if (template.isType("Monster") && template.isQuestMonster() && (quest == 0))
++			{
++				quest = template.getId();
++			}
++		}
++		int sum = 0;
++		for (int i = 0; i < 100; i++)
++		{
++			sum += (int) multiplied.invoke(SpawnData.getInstance(), monster, 1);
++		}
++		check("spawn: monster " + monster + ", 100 single spawns become " + sum, (sum >= 149) && (sum <= 151));
++		final int triple = (int) multiplied.invoke(SpawnData.getInstance(), monster, 3);
++		check("spawn: count 3 becomes " + triple, (triple == 4) || (triple == 5));
++		check("spawn: raid stays", (int) multiplied.invoke(SpawnData.getInstance(), raid, 1) == 1);
++		check("spawn: folk stays", (int) multiplied.invoke(SpawnData.getInstance(), folk, 1) == 1);
++		if (quest != 0)
++		{
++			check("spawn: quest monster stays", (int) multiplied.invoke(SpawnData.getInstance(), quest, 1) == 1);
++		}
++		check("spawn: not-random list stays", (int) multiplied.invoke(SpawnData.getInstance(), 22138, 1) == 1);
++	}
++
++	private static void items()
++	{
++		final int[][] prices =
++		{
++			{
++				726,
++				2000
++			},
++			{
++				728,
++				8000
++			},
++			{
++				10153,
++				20000
++			}
++		};
++		for (int[] row : prices)
++		{
++			final org.l2jmobius.gameserver.entity.item.ItemTemplate item = ItemData.getInstance().getTemplate(row[0]);
++			check("items: " + row[0] + " is a potion for " + item.getReferencePrice(), (item.getItemType() == EtcItemType.POTION) && (item.getReferencePrice() == row[1]));
++		}
++		check("items: skill 10003 is a healing potion", SkillData.getInstance().getSkill(10003, 1).isHealingPotionSkill());
++	}
++
++	private static void roles(List<Player> spare) throws Exception
++	{
++		final Method group = PhantomBufferSets.class.getDeclaredMethod("classGroup", Player.class);
++		group.setAccessible(true);
++		final Set<String> seen = new HashSet<>();
++		for (Player player : spare)
++		{
++			final String name = (String) group.invoke(null, player);
++			if (seen.add(name))
++			{
++				final int size = SchemeBufferTable.getInstance().getSkillsIdsByType(name).size();
++				check("roles: " + player.getName() + " " + player.getPlayerClass() + " gets " + name + " of " + size, name.startsWith("ROLE_") && name.equals("ROLE_" + PhantomBufferSets.classRole(player) + "_GROUP") && (size > 32));
++			}
++		}
++		check("roles: all six seen, " + seen, seen.size() == 6);
++
++		final Player player = pick(spare, p -> p.getLevel() >= 20);
++		park(player, GIRAN);
++		player.stopAllEffects();
++		final Method buff = PhantomHunterManager.class.getDeclaredMethod("buff", Player.class);
++		buff.setAccessible(true);
++		buff.invoke(null, player);
++		final int effects = player.getEffectList().getBuffCount() + player.getEffectList().getDanceCount();
++		check("roles: hunter wears " + effects + " buffs and dances after buff, was 32 at most", effects > 32);
++	}
++
++	private static void potions(List<Player> spare) throws Exception
++	{
++		final Player player = pick(spare, Player::isMageClass);
++		if (player == null)
++		{
++			check("potions: no mage to play", false);
++			return;
++		}
++		park(player, GIRAN);
++		if (player.getLevel() < 80)
++		{
++			player.getStat().addLevel((byte) (80 - player.getLevel()));
++		}
++		note("potions: " + player.getName() + " level " + player.getLevel() + " max MP " + (int) player.getMaxMp());
++		for (int id : MANA)
++		{
++			player.addItem(ItemProcessType.REWARD, id, 5, player, false);
++		}
++
++		// Мгновенная мана к неуязвимому не идёт (ManaHeal), а park делает его неуязвимым.
++		player.setInvul(false);
++		measure(player, 726, 100);
++		measure(player, 728, 400);
++
++		// Банка на 1000 за 5 секунд: идёт тиками и слот бафа не занимает.
++		final int full = player.getStat().getMaxBuffCount();
++		final Method buff = PhantomHunterManager.class.getDeclaredMethod("buff", Player.class);
++		buff.setAccessible(true);
++		buff.invoke(null, player);
++		for (String more : SchemeBufferTable.getInstance().getSkillTypes())
++		{
++			if (player.getEffectList().getBuffCount() >= full)
++			{
++				break;
++			}
++			for (int skillId : SchemeBufferTable.getInstance().getSkillsIdsByType(more))
++			{
++				final Skill skill = SkillData.getInstance().getSkill(skillId, 1);
++				if ((skill != null) && !skill.isDance() && (player.getEffectList().getBuffCount() < full))
++				{
++					skill.applyEffects(player, player);
++				}
++			}
++		}
++		final Set<Integer> before = new HashSet<>();
++		for (BuffInfo info : player.getEffectList().getBuffs())
++		{
++			before.add(info.getSkill().getId());
++		}
++		final int bar = player.getEffectList().getBuffCount();
++		note("potions: buff bar " + bar + " of " + full);
++
++		final int count = (int) player.getInventory().getInventoryItemCount(10153, -1);
++		player.setCurrentMp(0);
++		final boolean used = drink(player, 10153);
++		Thread.sleep(1200);
++		final int early = (int) player.getCurrentMp();
++		final BuffInfo running = player.getEffectList().getShortBuff();
++		final Set<Integer> after = new HashSet<>();
++		for (BuffInfo info : player.getEffectList().getBuffs())
++		{
++			after.add(info.getSkill().getId());
++		}
++		Thread.sleep(5300);
++		final int late = (int) player.getCurrentMp();
++		final int wanted = Math.min((int) player.getMaxMp(), 1002);
++		check("potions: 10153 used, one spent", used && ((int) player.getInventory().getInventoryItemCount(10153, -1) == (count - 1)));
++		check("potions: 10153 not at once, " + early + " MP after 1.2 s", (early > 0) && (early < 400));
++		// Сверху своё восстановление: у мага с бафами до 30 MP в секунду.
++		check("potions: 10153 gives " + late + " MP over 6.5 s, wanted about " + wanted, (late >= (wanted - 90)) && (late <= (wanted + 250)));
++		check("potions: 10153 in the short bar, " + (running == null ? null : running.getSkill().getId()), (running != null) && (running.getSkill().getId() == 10003));
++		check("potions: 10153 pushes out no buff, " + bar + " before, " + after.size() + " after", after.containsAll(before));
++		player.setInvul(false);
++	}
++
++	private static void measure(Player player, int itemId, int gain) throws Exception
++	{
++		final int count = (int) player.getInventory().getInventoryItemCount(itemId, -1);
++		player.setCurrentMp(0);
++		final boolean used = drink(player, itemId);
++		Thread.sleep(1500);
++		final int got = (int) player.getCurrentMp();
++		check("potions: " + itemId + " gives " + got + " MP, wanted " + gain, used && (got >= gain) && (got <= (gain + 40)));
++		check("potions: " + itemId + " spent once", (int) player.getInventory().getInventoryItemCount(itemId, -1) == (count - 1));
++	}
++
++	/** Охотник на каче вдали от чужих рук: туда зовём в пати. */
++	private static Player hunting(List<Player> spare, Predicate<Player> test) throws Exception
++	{
++		final Map<?, ?> map = hunters();
++		for (Player player : spare)
++		{
++			final Object hunter = map.get(player.getName().toLowerCase());
++			if ((hunter != null) && test.test(player) && "HUNT".equals(String.valueOf(hunterField(hunter, "phase"))) && (hunterField(hunter, "spot") != null) && ((int) hunterField(hunter, "enemyId") == 0) && !player.isInsideZone(ZoneId.PEACE))
++			{
++				spare.remove(player);
++				return player;
++			}
++		}
++		return null;
++	}
++
++	private static Object companionMode(PhantomTemplate template) throws Exception
++	{
++		final Field field = PhantomCompanionManager.class.getDeclaredField("_companions");
++		field.setAccessible(true);
++		final Object companion = ((Map<?, ?>) field.get(PhantomCompanionManager.getInstance())).get(template.getName().toLowerCase());
++		if (companion == null)
++		{
++			return null;
++		}
++		final Field mode = companion.getClass().getDeclaredField("mode");
++		mode.setAccessible(true);
++		return mode.get(companion);
++	}
++
++	private static void party(List<Player> spare) throws Exception
++	{
++		Player member = null;
++		Player leader = null;
++		for (int i = 0; (i < 40) && (member == null); i++)
++		{
++			member = hunting(spare, p -> p.isMageClass() && (p.getLevel() >= 20));
++			if (member == null)
++			{
++				Thread.sleep(3000);
++			}
++		}
++		if (member == null)
++		{
++			check("party: no mage hunting", false);
++			return;
++		}
++		final int level = member.getLevel();
++		leader = pick(spare, p -> Math.abs(p.getLevel() - level) <= 2);
++		if (leader == null)
++		{
++			check("party: no leader near level " + level, false);
++			return;
++		}
++		final Player mage = member;
++		final PhantomTemplate template = PhantomData.getInstance().getTemplate(mage.getName());
++		mage.addAdena(ItemProcessType.REWARD, 50000000, mage, false);
++		park(leader, new Location(mage.getX(), mage.getY(), mage.getZ()));
++		final PhantomCompanionManager manager = PhantomCompanionManager.getInstance();
++		for (int i = 0; (i < 30) && !mage.isInParty(); i++)
++		{
++			manager.onInvited(leader, mage, null);
++			Thread.sleep(2000);
++		}
++		check("party: " + mage.getName() + " " + mage.getPlayerClass() + " (" + level + ") joined", mage.isInParty());
++		if (!mage.isInParty())
++		{
++			return;
++		}
++
++		mage.setInvul(true);
++		final boolean supplied = waitFor(40, () -> (mage.getAutoUseSettings().getAutoManaItem() > 0) && (mana(mage) > 0));
++		check("party: mana slot " + mage.getAutoUseSettings().getAutoManaItem() + ", " + mana(mage) + " potions", supplied);
++		check("party: HP slot " + mage.getAutoUseSettings().getAutoPotionItem(), mage.getAutoUseSettings().getAutoPotionItem() > 0);
++
++		final int stock = mana(mage);
++		mage.setCurrentMp(mage.getMaxMp() * 0.1);
++		final boolean drank = waitFor(25, () -> mana(mage) < stock);
++		check("party: drinks at 10 % MP, potions " + stock + " → " + mana(mage) + ", at the spot, peace " + mage.isInsideZone(ZoneId.PEACE), drank);
++
++		// Маг под ударами кастует, а не машет рукой (при мане).
++		manager.setMode(leader, template, PhantomCompanionManager.Mode.HUNT);
++		final Monster mob = World.getNearestVisibleObjectInRange(mage, Monster.class, 1200, near -> !near.isDead() && !near.isRaid());
++		if (mob != null)
++		{
++			mob.teleToLocation(new Location(mage.getX() + 30, mage.getY(), mage.getZ()));
++			mob.addDamageHate(mage, 1, 999);
++			mob.getAI().setIntentionAttack(mage);
++		}
++		int swings = 0;
++		int casts = 0;
++		for (int i = 0; i < 150; i++)
++		{
++			mage.setCurrentMp(mage.getMaxMp());
++			swings += mage.isAttackingNow() ? 1 : 0;
++			casts += mage.isCastingNow() ? 1 : 0;
++			Thread.sleep(200);
++		}
++		note("party: mob " + (mob == null ? "none" : mob.getName()) + ", in 30 s swings " + swings + ", casts " + casts);
++		check("party: mage does not swing with MP, swings " + swings + ", casts " + casts, swings == 0);
++		check("party: mage casts, " + casts, casts > 0);
++
++		// Нет мобов и хозяин стоит — приказ сам становится «веди», а не стоять.
++		leader.teleToLocation(GIRAN);
++		mage.teleToLocation(GIRAN);
++		Thread.sleep(3000);
++		manager.setMode(leader, template, PhantomCompanionManager.Mode.HUNT);
++		final boolean led = waitFor(45, () ->
++		{
++			try
++			{
++				return companionMode(template) == PhantomCompanionManager.Mode.LEAD;
++			}
++			catch (Exception e)
++			{
++				return false;
++			}
++		});
++		check("party: empty spot turns HUNT into " + companionMode(template), led);
++
++		// Распустили — охотник снова качается один, слот маны чист.
++		manager.release(template, true);
++		final boolean clear = waitFor(90, () -> !mage.isInParty() && (mage.getAutoUseSettings().getAutoManaItem() == 0));
++		check("party: after the party mana slot " + mage.getAutoUseSettings().getAutoManaItem() + ", phase " + phase(mage), clear);
++		mage.setInvul(false);
++		leader.setInvul(false);
++		spare.add(leader);
++	}
++
++	private static boolean healerRole(Player player)
++	{
++		final PhantomTemplate template = PhantomData.getInstance().getTemplate(player.getName());
++		return (template != null) && (template.getRole() == PhantomTemplate.Role.HEALER);
++	}
++
++	/** Память пати охотников: кость, отдых и поиск, чтобы шаги не мешали друг другу. */
++	private static Map<?, ?> partyMemory(String name) throws Exception
++	{
++		final Field field = PhantomHunterParty.class.getDeclaredField(name);
++		field.setAccessible(true);
++		return (Map<?, ?>) field.get(PhantomHunterParty.getInstance());
++	}
++
++	private static void partyForget() throws Exception
++	{
++		for (String name : List.of("_nextLook", "_restUntil", "_pairNext", "_nextSeek"))
++		{
++			partyMemory(name).clear();
++		}
++	}
++
++	private static void healer(List<Player> spare) throws Exception
++	{
++		final int configured = PhantomHuntersConfig.HUNTER_PARTY_CHANCE_HEALER;
++		check("healer: chance on High Five " + configured, configured == 90);
++		Player found = null;
++		for (int i = 0; (i < 40) && (found == null); i++)
++		{
++			found = hunting(spare, p -> healerRole(p) && (spare.stream().filter(o -> !healerRole(o) && (Math.abs(o.getLevel() - p.getLevel()) <= 5)).count() >= 3));
++			if (found == null)
++			{
++				Thread.sleep(3000);
++			}
++		}
++		if (found == null)
++		{
++			note("healer: no healer on a spot with three free hunters of his level");
++			return;
++		}
++
++		final Player healer = found;
++		final PhantomTemplate template = PhantomData.getInstance().getTemplate(healer.getName());
++		final PhantomHunterParty parties = PhantomHunterParty.getInstance();
++		PhantomHuntersConfig.HUNTER_PARTY_CHANCE_HEALER = 100;
++		try
++		{
++			// Издалека: приходит сам, ведёт второй, хилер лечит.
++			partyForget();
++			final Method seek = PhantomHunterParty.class.getDeclaredMethod("seek", Player.class, long.class);
++			seek.setAccessible(true);
++			final boolean joined = (boolean) seek.invoke(parties, healer, System.currentTimeMillis());
++			check("healer: " + healer.getName() + " " + healer.getPlayerClass() + " (" + healer.getLevel() + ") joins from afar", joined && healer.isInParty());
++			if (!healer.isInParty())
++			{
++				return;
++			}
++			final Player far = healer.getParty().getLeader();
++			check("healer: " + far.getName() + " (" + far.getLevel() + ") leads, not the healer", (far != healer) && parties.isLeader(far) && !parties.isLeader(healer));
++			check("healer: phase " + phase(healer) + ", mode " + companionMode(template), "PARTY".equals(phase(healer)) && (companionMode(template) == PhantomCompanionManager.Mode.ASSIST));
++			final boolean came = waitFor(30, () -> healer.calculateDistance2D(far) <= 1500);
++			check("healer: came to the leader, distance " + (int) healer.calculateDistance2D(far), came);
++
++			// Отдых после пати: у хилера короче.
++			final long at = System.currentTimeMillis();
++			parties.check(far, false, at);
++			final long healerRest = (long) partyMemory("_restUntil").get(healer.getObjectId()) - at;
++			final long leaderRest = (long) partyMemory("_restUntil").get(far.getObjectId()) - at;
++			check("healer: rest after the party, healer " + healerRest + ", leader " + leaderRest, (healerRest == 300000) && (leaderRest == 1200000));
++
++			// Рядом: тик сам ведёт его к соседу, а не собирает свою пати.
++			final boolean back = waitFor(90, () -> !healer.isInParty() && "HUNT".equals(phase(healer)));
++			check("healer: back to hunting, phase " + phase(healer), back);
++			final Player near = hunting(spare, p -> !healerRole(p) && (Math.abs(p.getLevel() - healer.getLevel()) <= 5));
++			if (!back || (near == null))
++			{
++				note("healer: no free hunter for the neighbour step");
++				return;
++			}
++			healer.teleToLocation(new Location(near.getX() + 50, near.getY(), near.getZ()));
++			Thread.sleep(1500);
++			partyForget();
++			final boolean ticked = parties.tick(healer, template, System.currentTimeMillis());
++			final Player neighbour = healer.isInParty() ? healer.getParty().getLeader() : null;
++			check("healer: goes to the neighbour, tick " + ticked + ", leader " + (neighbour == null ? "none" : neighbour.getName()), ticked && (neighbour != null) && (neighbour != healer));
++			if (neighbour != null)
++			{
++				parties.check(neighbour, false, System.currentTimeMillis());
++			}
++
++			// Лидер пати без хилера с местом берёт его третьим.
++			final boolean again = waitFor(90, () -> !healer.isInParty() && "HUNT".equals(phase(healer)));
++			final Player lead = hunting(spare, p -> !healerRole(p) && (Math.abs(p.getLevel() - healer.getLevel()) <= 5));
++			final Player second = lead == null ? null : hunting(spare, p -> !healerRole(p) && (Math.abs(p.getLevel() - lead.getLevel()) <= 5));
++			if (!again || (second == null))
++			{
++				note("healer: no free pair for the third step");
++				return;
++			}
++			partyForget();
++			final String refused = parties.ask(lead, second, true, System.currentTimeMillis());
++			check("healer: a party without a healer, " + lead.getName() + " and " + second.getName() + ", refused " + refused, (refused == null) && parties.isLeader(lead));
++			healer.teleToLocation(new Location(lead.getX() + 50, lead.getY(), lead.getZ()));
++			Thread.sleep(1500);
++			partyForget();
++			parties.tick(healer, template, System.currentTimeMillis());
++			check("healer: joins that party as the third, members " + (lead.isInParty() ? lead.getParty().getMemberCount() : 0), lead.isInParty() && (healer.getParty() == lead.getParty()));
++			parties.check(lead, false, System.currentTimeMillis());
++		}
++		finally
++		{
++			PhantomHuntersConfig.HUNTER_PARTY_CHANCE_HEALER = configured;
++		}
++	}
++
++	/**
++	 * Точка сбора и посадка рядом в подвале Крумы. Край пола: у x = 15372 слой -12080 есть, у x = 15472 только -3752 и -9040, и getHeight отвечает самой -12080, как будто там пол.
++	 */
++	private static void rally() throws Exception
++	{
++		final Method near = PhantomRaid.class.getDeclaredMethod("near", Location.class);
++		near.setAccessible(true);
++		final Method point = PhantomRaid.class.getDeclaredMethod("rally", int.class, int.class, int.class);
++		point.setAccessible(true);
++		final org.l2jmobius.gameserver.geoengine.GeoEngine geo = org.l2jmobius.gameserver.geoengine.GeoEngine.getInstance();
++		final Location edge = new Location(15372, 118983, -12080);
++		if (!geo.hasGeo(15472, 118983))
++		{
++			note("rally: no geodata for Cruma here");
++			return;
++		}
++		note("rally: east of the edge, asked -12080 got " + geo.getHeight(15472, 118983, -12080) + ", asked -12079 got " + geo.getHeight(15472, 118983, -12079));
++		check("rally: floor on the edge", PhantomPath.hasFloor(geo, 15372, 118983, -12080));
++		check("rally: no floor east of the edge", !PhantomPath.hasFloor(geo, 15472, 118983, -12080));
++		check("rally: no floor where the old raid point stood", !PhantomPath.hasFloor(geo, 13317, 118296, -12083));
++		int wrong = 0;
++		for (int i = 0; i < 400; i++)
++		{
++			final Location at = (Location) near.invoke(null, edge);
++			if (!PhantomPath.hasFloor(geo, at.getX(), at.getY(), at.getZ()) || (Math.abs(geo.getHeight(at.getX(), at.getY(), at.getZ()) - edge.getZ()) >= 100))
++			{
++				wrong++;
++			}
++		}
++		check("rally: 400 landings at the edge of the floor, off the floor " + wrong, wrong == 0);
++
++		// Спавны Catherok, на которого был рейд: точка сбора только на полу.
++		final int[][] bosses =
++		{
++			{
++				14918,
++				119123,
++				-12085
++			},
++			{
++				15018,
++				118589,
++				-12085
++			},
++			{
++				14509,
++				117445,
++				-12088
++			},
++			{
++				11811,
++				119618,
++				-12088
++			},
++			{
++				12788,
++				118961,
++				-12082
++			}
++		};
++		int off = 0;
++		int found = 0;
++		for (int[] boss : bosses)
++		{
++			int none = 0;
++			for (int i = 0; i < 100; i++)
++			{
++				final Location at = (Location) point.invoke(null, boss[0], boss[1], boss[2]);
++				if (at == null)
++				{
++					none++;
++				}
++				else if (!PhantomPath.hasFloor(geo, at.getX(), at.getY(), boss[2]))
++				{
++					off++;
++				}
++			}
++			found += 100 - none;
++			note("rally: boss at " + boss[0] + "," + boss[1] + ", no point in " + none + " of 100");
++		}
++		check("rally: raid points around the boss, found " + found + " of 500, off the floor " + off, (off == 0) && (found > 0));
++	}
++
++	private static void companion(List<Player> spare) throws Exception
++	{
++		final Player owner = pick(spare, p -> p.getLevel() >= 40);
++		if (owner == null)
++		{
++			check("companion: no owner", false);
++			return;
++		}
++		// Вне города: в мирной зоне автобанка не пьёт.
++		final Player scout = hunting(new ArrayList<>(spare), p -> true);
++		park(owner, scout != null ? new Location(scout.getX(), scout.getY(), scout.getZ()) : owner.getLocation());
++		final PhantomCompanionManager manager = PhantomCompanionManager.getInstance();
++		PhantomTemplate template = null;
++		for (PhantomTemplate candidate : PhantomData.getInstance().getCompanions())
++		{
++			if ((candidate.getRole() == PhantomTemplate.Role.HEALER) && !manager.isCompanion(candidate))
++			{
++				template = candidate;
++				break;
++			}
++		}
++		if (template == null)
++		{
++			check("companion: no free healer", false);
++			return;
++		}
++		final String refused = manager.summon(owner, template);
++		final Player phantom = PhantomManager.getInstance().getPhantom(template);
++		check("companion: " + template.getName() + " summoned, " + refused, (refused == null) && (phantom != null));
++		if (phantom == null)
++		{
++			return;
++		}
++		final Player healer = phantom;
++		healer.setInvul(true);
++		final boolean supplied = waitFor(40, () -> (healer.getAutoUseSettings().getAutoManaItem() > 0) && (mana(healer) > 0) && (healer.getAutoUseSettings().getAutoPotionItem() > 0));
++		check("companion: slots " + healer.getAutoUseSettings().getAutoPotionItem() + " and " + healer.getAutoUseSettings().getAutoManaItem() + ", potions " + mana(healer), supplied);
++		final int stock = mana(healer);
++		healer.setCurrentMp(healer.getMaxMp() * 0.1);
++		final boolean drank = waitFor(25, () -> mana(healer) < stock);
++		check("companion: drinks at 10 % MP, potions " + stock + " → " + mana(healer) + ", peace " + healer.isInsideZone(ZoneId.PEACE), drank);
++		healer.setInvul(false);
++		owner.setInvul(false);
++		manager.release(template, true);
++	}
++
++	private static void detour(List<Player> spare) throws Exception
++	{
++		final Player player = pick(spare, p -> p.getLevel() >= 20);
++		final List<Monster> mobs = new ArrayList<>();
++		for (WorldObject object : World.getVisibleObjects())
++		{
++			if ((object instanceof Monster) && !((Monster) object).isDead() && !((Monster) object).isRaid() && (object.getInstanceId() == 0))
++			{
++				mobs.add((Monster) object);
++			}
++		}
++		Collections.shuffle(mobs);
++		final GeoEngine geo = GeoEngine.getInstance();
++		Location place = null;
++		Monster target = null;
++		SEARCH: for (Monster mob : mobs.subList(0, Math.min(mobs.size(), 4000)))
++		{
++			final List<Monster> around = World.getVisibleObjectsInRange(mob, Monster.class, 1400);
++			for (int radius : new int[]
++			{
++				250,
++				400
++			})
++			{
++				for (int i = 0; i < 16; i++)
++				{
++					final int x = mob.getX() + (int) (Math.cos(i * Math.PI / 8) * radius);
++					final int y = mob.getY() + (int) (Math.sin(i * Math.PI / 8) * radius);
++					final int z = geo.getHeight(x, y, mob.getZ());
++					if ((Math.abs(z - mob.getZ()) > 150) || geo.canSeeTarget(x, y, z, 0, mob.getX(), mob.getY(), mob.getZ(), 0))
++					{
++						continue;
++					}
++					boolean hidden = true;
++					for (Monster near : around)
++					{
++						if (geo.canSeeTarget(x, y, z, 0, near.getX(), near.getY(), near.getZ(), 0))
++						{
++							hidden = false;
++							break;
++						}
++					}
++					if (!hidden)
++					{
++						continue;
++					}
++					final List<GeoLocation> path = PathFinding.getInstance().findPath(x, y, z, mob.getX(), mob.getY(), mob.getZ(), 0, true);
++					if ((path != null) && (path.size() >= 2) && (path.size() < 12))
++					{
++						place = new Location(x, y, z);
++						target = mob;
++						break SEARCH;
++					}
++				}
++			}
++		}
++		if ((place == null) || (player == null))
++		{
++			check("detour: no place with a hidden monster found among " + mobs.size(), false);
++			return;
++		}
++		park(player, place);
++		note("detour: " + player.getName() + " at " + place + ", monster " + target.getName() + " at " + (int) player.calculateDistance2D(target));
++
++		final Class<?> task = Class.forName("org.l2jmobius.gameserver.taskmanagers.AutoPlayTaskManager$AutoPlay");
++		final Constructor<?> make = task.getDeclaredConstructor(AutoPlayTaskManager.class, Set.class);
++		make.setAccessible(true);
++		final Object autoPlay = make.newInstance(AutoPlayTaskManager.getInstance(), new HashSet<Player>());
++		final Method walk = task.getDeclaredMethod("walkAround", Player.class, int.class);
++		walk.setAccessible(true);
++
++		boolean moved = false;
++		boolean sees = false;
++		for (int i = 0; (i < 30) && !sees; i++)
++		{
++			walk.invoke(autoPlay, player, 1);
++			moved |= player.isMoving();
++			Thread.sleep(700);
++			for (Monster near : World.getVisibleObjectsInRange(player, Monster.class, 900))
++			{
++				if (!near.isDead() && geo.canSeeTarget(player, near))
++				{
++					sees = true;
++					break;
++				}
++			}
++		}
++		check("detour: starts walking around the obstacle", moved);
++		check("detour: a monster in sight after the walk, at " + place + " moved " + (int) player.calculateDistance2D(place), sees);
++		AutoPlayTaskManager.getInstance().stopAutoPlay(player);
++		player.setInvul(false);
++	}
++
++	/** Оглушить настоящим эффектом стана: шанс эффекта может не пройти, потому в цикле. */
++	private static boolean stunned(Player player) throws Exception
++	{
++		final Skill skill = SkillData.getInstance().getSkill(100, 1);
++		final Monster mob = World.getNearestVisibleObjectInRange(player, Monster.class, 1500, near -> !near.isDead());
++		player.setInvul(false);
++		for (int i = 0; (i < 100) && !player.isStunned(); i++)
++		{
++			player.setCurrentHp(player.getMaxHp());
++			skill.applyEffects(mob != null ? mob : player, player);
++			Thread.sleep(100);
++		}
++		player.setCurrentHp(player.getMaxHp());
++		player.setInvul(true);
++		return player.isStunned();
++	}
++
++	/** Воин на споте играет как живой: автобой и автоатака, своих автоскиллов нет. */
++	private static void stun(List<Player> spare) throws Exception
++	{
++		Player found = null;
++		for (int i = 0; (i < 40) && (found == null); i++)
++		{
++			found = hunting(spare, p -> !p.isMageClass() && (p.getLevel() >= 20));
++			if (found == null)
++			{
++				Thread.sleep(3000);
++			}
++		}
++		if (found == null)
++		{
++			check("stun: no fighter hunting", false);
++			return;
++		}
++		final Player fighter = found;
++		park(fighter, new Location(fighter.getX(), fighter.getY(), fighter.getZ()));
++		fighter.getAutoUseSettings().getAutoSkills().clear();
++		fighter.getAutoUseSettings().getAutoBuffs().clear();
++		fighter.getAutoUseSettings().getAutoActions().add(2);
++		fighter.getAutoPlaySettings().setNextTargetMode(1);
++		fighter.getAutoPlaySettings().setShortRange(false);
++		fighter.getAutoPlaySettings().setRespectfulHunting(false);
++		fighter.getAutoPlaySettings().setPickup(false);
++		AutoPlayTaskManager.getInstance().startAutoPlay(fighter);
++		AutoUseTaskManager.getInstance().startAutoUseTask(fighter);
++		check("stun: " + fighter.getName() + " " + fighter.getPlayerClass() + " hits on autoplay", waitFor(40, fighter::isAttackingNow));
++
++		// Обычный стан: автобой сам возвращается к мобу.
++		check("stun: stunned", stunned(fighter));
++		check("stun: stun is over", waitFor(20, () -> !fighter.isStunned()));
++		check("stun: autoplay stays on", fighter.isAutoPlaying());
++		check("stun: hits again after a plain stun", waitFor(40, fighter::isAttackingNow));
++
++		// Причина: прерванный каст оставляет очередь, а автобой ждал её вечно.
++		final Skill queued = SkillData.getInstance().getSkill(100, 1);
++		AutoPlayTaskManager.getInstance().stopAutoPlay(fighter);
++		fighter.setCastingNow(true);
++		fighter.setQueuedSkill(queued, false, false);
++		fighter.abortCast();
++		check("stun: a broken cast leaves the queue", !fighter.isCastingNow() && (fighter.getQueuedSkill() != null));
++		AutoPlayTaskManager.getInstance().startAutoPlay(fighter);
++		check("stun: autoplay drops the stale queue", waitFor(5, () -> fighter.getQueuedSkill() == null));
++		check("stun: hits again after a stale queue", waitFor(40, fighter::isAttackingNow));
++
++		// Стан во время каста с очередью: всё вместе.
++		AutoPlayTaskManager.getInstance().stopAutoPlay(fighter);
++		fighter.setCastingNow(true);
++		fighter.setQueuedSkill(queued, false, false);
++		check("stun: stunned in a cast", stunned(fighter));
++		check("stun: the stun broke the cast and left the queue", !fighter.isCastingNow() && (fighter.getQueuedSkill() != null));
++		AutoPlayTaskManager.getInstance().startAutoPlay(fighter);
++		check("stun: stun over again", waitFor(20, () -> !fighter.isStunned()));
++		check("stun: hits again after a stun in a cast", waitFor(40, fighter::isAttackingNow) && (fighter.getQueuedSkill() == null));
++
++		AutoPlayTaskManager.getInstance().stopAutoPlay(fighter);
++		AutoUseTaskManager.getInstance().stopAutoUseTask(fighter);
++		fighter.setInvul(false);
++	}
++
++	/** Заряд в драке: Sonic Focus из списка бафов идёт и посреди ударов, заряды тратит атака из списка. И стрелки очередности настоящей командой. */
++	private static void sonic(List<Player> spare) throws Exception
++	{
++		final Skill focus = SkillData.getInstance().getSkill(8, 3);
++		final Skill blaster = SkillData.getInstance().getSkill(6, 1);
++		final Player fighter = pick(spare, p -> !p.isMageClass());
++		final Monster mob = wildMob(47, 57);
++		if ((fighter == null) || (mob == null))
++		{
++			check("sonic: nobody for the test, fighter " + fighter + ", mob " + mob, false);
++			return;
++		}
++		if (fighter.getLevel() < 52)
++		{
++			fighter.getStat().addLevel((byte) (52 - fighter.getLevel()));
++		}
++		park(fighter, new Location(mob.getX(), mob.getY(), mob.getZ()));
++		fighter.setInvul(false);
++		fighter.setTeleportProtection(false);
++		fighter.setSpawnProtection(false);
++		fighter.getInventory().equipItem(fighter.addItem(ItemProcessType.REWARD, 1, 1, fighter, false));
++		fighter.decreaseCharges(fighter.getCharges());
++		fighter.addSkill(focus, false);
++		fighter.addSkill(blaster, false);
++		check("sonic: " + fighter.getName() + " " + fighter.getPlayerClass() + " can focus with a sword", focus.checkCondition(fighter, fighter, false));
++		fighter.getAutoUseSettings().getAutoActions().clear();
++		fighter.getAutoUseSettings().getAutoActions().add(2);
++		fighter.getAutoUseSettings().getAutoSkills().clear();
++		fighter.getAutoUseSettings().getAutoBuffs().clear();
++		fighter.getAutoUseSettings().getAutoSkills().add(blaster.getId());
++		fighter.getAutoUseSettings().getAutoBuffs().add(focus.getId());
++		fighter.getAutoUseSettings().resetSkillOrder();
++		fighter.getAutoPlaySettings().setNextTargetMode(1);
++		fighter.getAutoPlaySettings().setShortRange(false);
++		fighter.getAutoPlaySettings().setRespectfulHunting(false);
++		fighter.getAutoPlaySettings().setPickup(false);
++
++		// Драка не кончается: моб и боец всё время с полным HP, смотрим только заряд и удары.
++		final AtomicBoolean fighting = new AtomicBoolean(true);
++		final Thread healer = new Thread(() ->
++		{
++			while (fighting.get())
++			{
++				fighter.setCurrentHp(fighter.getMaxHp());
++				fighter.setCurrentMp(fighter.getMaxMp());
++				mob.setCurrentHp(mob.getMaxHp());
++				try
++				{
++					Thread.sleep(200);
++				}
++				catch (InterruptedException e)
++				{
++					return;
++				}
++			}
++		});
++		healer.setDaemon(true);
++		healer.start();
++		try
++		{
++			fighter.setTarget(mob);
++			AutoPlayTaskManager.getInstance().startAutoPlay(fighter);
++			AutoUseTaskManager.getInstance().startAutoUseTask(fighter);
++			check("sonic: hits on autoplay", waitFor(40, fighter::isAttackingNow));
++			int top = 0;
++			int spent = 0;
++			int swinging = 0;
++			int casting = 0;
++			int last = fighter.getCharges();
++			for (int i = 0; i < 400; i++)
++			{
++				final int charges = fighter.getCharges();
++				top = Math.max(top, charges);
++				spent += charges < last ? 1 : 0;
++				last = charges;
++				swinging += fighter.isAttackingNow() ? 1 : 0;
++				casting += fighter.isCastingNow() ? 1 : 0;
++				Thread.sleep(100);
++			}
++			note("sonic: in 40 s charges up to " + top + ", spent " + spent + " times, swinging in " + swinging + " of 400 samples, casting in " + casting);
++			check("sonic: charges up in the fight, top " + top, top >= 3);
++			check("sonic: the attack from the list spends them, " + spent, spent > 0);
++			check("sonic: keeps swinging between the casts, " + swinging, swinging > 20);
++		}
++		finally
++		{
++			fighting.set(false);
++			AutoPlayTaskManager.getInstance().stopAutoPlay(fighter);
++			AutoUseTaskManager.getInstance().stopAutoUseTask(fighter);
++		}
++
++		// Очередность: та же команда, что у кнопок на странице.
++		final org.l2jmobius.gameserver.handler.IVoicedCommandHandler page = org.l2jmobius.gameserver.handler.VoicedCommandHandler.getInstance().getHandler("playskills");
++		final List<Integer> queue = fighter.getAutoUseSettings().getAutoSkills();
++		queue.clear();
++		fighter.addSkill(SkillData.getInstance().getSkill(7, 1), false);
++		fighter.addSkill(SkillData.getInstance().getSkill(9, 1), false);
++		for (String step : new String[]
++		{
++			"1 6",
++			"1 7",
++			"1 9"
++		})
++		{
++			page.onCommand("playskills", fighter, step);
++		}
++		check("order: in the order of adding, " + queue, queue.equals(List.of(6, 7, 9)));
++		page.onCommand("playskills", fighter, "1 9 up");
++		check("order: up, " + queue, queue.equals(List.of(6, 9, 7)));
++		page.onCommand("playskills", fighter, "1 6 up");
++		check("order: the first stays, " + queue, queue.equals(List.of(6, 9, 7)));
++		page.onCommand("playskills", fighter, "1 7 down");
++		check("order: the last stays, " + queue, queue.equals(List.of(6, 9, 7)));
++		page.onCommand("playskills", fighter, "1 6 down");
++		check("order: down, " + queue, queue.equals(List.of(9, 6, 7)));
++		page.onCommand("playskills", fighter, "1 6");
++		check("order: taken off keeps the rest, " + queue, queue.equals(List.of(9, 7)));
++		page.onCommand("playskills", fighter, "1 8");
++		final boolean offList = !fighter.getAutoUseSettings().getAutoBuffs().contains(8);
++		page.onCommand("playskills", fighter, "1 8");
++		check("order: Sonic Focus goes on and off the buff list, not the queue", offList && fighter.getAutoUseSettings().getAutoBuffs().contains(8) && !queue.contains(8));
++		queue.clear();
++		fighter.getAutoUseSettings().getAutoBuffs().clear();
++		fighter.setInvul(true);
++	}
++
++	/** Настоящий каст провокации: держим хозяина в живых и ждём конца каста. */
++	private static boolean provoke(Player tank, Player victim, Skill skill, WorldObject target) throws InterruptedException
++	{
++		tank.setCurrentHp(tank.getMaxHp());
++		victim.setCurrentHp(victim.getMaxHp());
++		tank.setCurrentMp(tank.getMaxMp());
++		tank.setTarget(target);
++		if (!PhantomCompat.useMagic(tank, skill, false, false))
++		{
++			return false;
++		}
++		Thread.sleep(300);
++		return waitFor(5, () -> !tank.isCastingNow());
++	}
++
++	/**
++	 * Провокация на числах Паладина 50-го уровня: моба бьёт другой охотник с большим хейтом, танк кастует настоящим скиллом. С выключенным ключом — как в оригинале, замер причины: моб уходит обратно. С включённым — снимается и остаётся.
++	 */
++	private static void taunt(List<Player> spare) throws Exception
++	{
++		check("taunt: the key is on", NpcConfig.TAUNT_TAKES_TOP_HATE);
++		final Skill aggression = SkillData.getInstance().getSkill(28, 24);
++		final Skill aura = SkillData.getInstance().getSkill(18, 12);
++		final long aggressionPoints = -aggression.getEffectPoint();
++		final long auraPoints = -aura.getEffectPoint();
++		check("taunt: Aggression 24 gives 8396, Aura of Hate 12 gives 5597, now " + aggressionPoints + ", " + auraPoints, (aggressionPoints == 8396) && (auraPoints == 5597));
++		check("taunt: both are taunts by their effect", aggression.hasEffectType(org.l2jmobius.gameserver.mechanics.effects.EffectType.AGGRESSION) && aura.hasEffectType(org.l2jmobius.gameserver.mechanics.effects.EffectType.AGGRESSION));
++		final Player tank = pick(spare, p -> !p.isMageClass() && !p.isInParty() && !p.isDead());
++		final Player victim = pick(spare, p -> !p.isInParty() && !p.isDead());
++		final Monster mob = wildMob(47, 57);
++		if ((tank == null) || (victim == null) || (mob == null))
++		{
++			check("taunt: nobody for the test, tank " + tank + ", other " + victim + ", mob " + mob, false);
++			return;
++		}
++		for (Player player : new Player[]
++		{
++			tank,
++			victim
++		})
++		{
++			if (player.getLevel() < 52)
++			{
++				player.getStat().addLevel((byte) (52 - player.getLevel()));
++			}
++		}
++		note("taunt: " + tank.getName() + " " + tank.getPlayerClass() + " L" + tank.getLevel() + ", other " + victim.getName() + " L" + victim.getLevel() + ", " + mob.getName() + " L" + mob.getLevel());
++		final Location at = new Location(mob.getX(), mob.getY(), mob.getZ());
++		park(tank, at);
++		park(victim, at);
++		for (Player player : new Player[]
++		{
++			tank,
++			victim
++		})
++		{
++			// Хейт к неуязвимому и защищённому после телепорта стирается, настоящая драка так не выглядит.
++			player.setInvul(false);
++			player.setTeleportProtection(false);
++			player.setSpawnProtection(false);
++		}
++		tank.addSkill(aggression, false);
++		tank.addSkill(aura, false);
++		// Раскачанные для теста охотники голые, а неуязвимость стёрла бы хейт: держим им HP снаружи.
++		final AtomicBoolean fighting = new AtomicBoolean(true);
++		final Thread healer = new Thread(() ->
++		{
++			while (fighting.get())
++			{
++				tank.setCurrentHp(tank.getMaxHp());
++				victim.setCurrentHp(victim.getMaxHp());
++				try
++				{
++					Thread.sleep(200);
++				}
++				catch (InterruptedException e)
++				{
++					return;
++				}
++			}
++		});
++		healer.setDaemon(true);
++		healer.start();
++		try
++		{
++			tauntFight(tank, victim, mob, aggression, aura, aggressionPoints, auraPoints);
++		}
++		finally
++		{
++			fighting.set(false);
++		}
++	}
++
++	/** Обычный моб этих уровней в открытом мире: живой, не рейд, не чемпион, не миньон. */
++	private static Monster wildMob(int low, int high)
++	{
++		final List<Monster> mobs = new ArrayList<>();
++		for (WorldObject object : World.getVisibleObjects())
++		{
++			if ((object instanceof Monster) && (object.getInstanceId() == 0))
++			{
++				final Monster near = (Monster) object;
++				if (!near.isDead() && !near.isRaid() && !near.isChampion() && !near.isMinion() && !near.isMovementDisabled() && !near.isInsideZone(ZoneId.PEACE) && (near.getLevel() >= low) && (near.getLevel() <= high))
++				{
++					mobs.add(near);
++				}
++			}
++		}
++		Collections.shuffle(mobs);
++		return mobs.isEmpty() ? null : mobs.get(0);
++	}
++
++	private static void tauntFight(Player tank, Player victim, Monster mob, Skill aggression, Skill aura, long aggressionPoints, long auraPoints) throws Exception
++	{
++		final long top = 50000;
++		mob.clearAggroList();
++		mob.setCurrentHp(mob.getMaxHp());
++		mob.addDamageHate(victim, 1, top);
++		mob.getAI().setIntentionAttack(victim);
++		check("taunt: the mob goes for the other hunter", waitFor(5, () -> mob.getAI().getAttackTarget() == victim));
++		try
++		{
++			// Как в оригинале.
++			NpcConfig.TAUNT_TAKES_TOP_HATE = false;
++			final boolean offCast = provoke(tank, victim, aggression, mob);
++			final long offHate = mob.getHating(tank);
++			check("taunt off: as in the original the cast only adds its points, cast " + offCast + ", hate " + offHate, offCast && (offHate >= aggressionPoints) && (offHate <= (aggressionPoints + 400)));
++			check("taunt off: the mob goes back to the one with more hate", waitFor(5, () -> mob.getAI().getAttackTarget() == victim));
++		}
++		finally
++		{
++			NpcConfig.TAUNT_TAKES_TOP_HATE = true;
++		}
++
++		// С ключом: снимается с первого раза и остаётся.
++		Thread.sleep(7000);
++		final boolean onCast = provoke(tank, victim, aggression, mob);
++		final long onHate = mob.getHating(tank);
++		check("taunt on: the cast takes the top and adds its points, cast " + onCast + ", hate " + onHate + " against " + mob.getHating(victim), onCast && (onHate >= ((mob.getHating(victim) + aggressionPoints) - 500)));
++		check("taunt on: the mob goes for the tank", waitFor(5, () -> mob.getAI().getAttackTarget() == tank));
++		Thread.sleep(3000);
++		check("taunt on: and stays on him", mob.getAI().getAttackTarget() == tank);
++
++		// На вершине каст добавляет только свои очки.
++		Thread.sleep(4000);
++		final long before = mob.getHating(tank);
++		final boolean again = provoke(tank, victim, aggression, mob);
++		final long gain = mob.getHating(tank) - before;
++		check("taunt on: on the top the cast adds only its points, cast " + again + ", gain " + gain, again && (gain >= aggressionPoints) && (gain <= (aggressionPoints + 400)));
++
++		// Аура: кто-то снова набил больше, моб рядом.
++		mob.addDamageHate(victim, 1, 200000);
++		check("taunt on: another hunter took the mob back", waitFor(5, () -> mob.getAI().getAttackTarget() == victim));
++		final boolean auraCast = provoke(tank, victim, aura, tank);
++		final long auraHate = mob.getHating(tank);
++		note("taunt: distance to the mob " + (int) tank.calculateDistance2D(mob) + ", Aura of Hate reaches 200");
++		check("taunt on: Aura of Hate takes the top too, cast " + auraCast + ", hate " + auraHate + " against " + mob.getHating(victim), auraCast && (auraHate >= ((mob.getHating(victim) + auraPoints) - 500)));
++		check("taunt on: the mob goes for the tank after the aura", waitFor(5, () -> mob.getAI().getAttackTarget() == tank));
++
++		mob.clearAggroList();
++		mob.getAI().setIntentionActive();
++		tank.setInvul(true);
++		victim.setInvul(true);
++	}
++
++	/** Дроп настоящим кодом шаблона: по 20000 убийств на моба при разных шансе, количестве и лимите. Убийца снят с охотников, их x2 у него нет. Только замер, в мир ничего не падает. */
++	private static void drops(List<Player> spare) throws Exception
++	{
++		final float chance = RatesConfig.RATE_DEATH_DROP_CHANCE_MULTIPLIER;
++		final float amount = RatesConfig.RATE_DEATH_DROP_AMOUNT_MULTIPLIER;
++		final int limit = RatesConfig.DROP_MAX_OCCURRENCES_NORMAL;
++		int measured = 0;
++		try
++		{
++			for (int[] band : new int[][]
++			{
++				{
++					25,
++					39
++				},
++				{
++					40,
++					59
++				},
++				{
++					60,
++					85
++				}
++			})
++			{
++				for (int i = 0; i < 20; i++)
++				{
++					final Player killer = hunting(spare, p -> (p.getLevel() >= band[0]) && (p.getLevel() <= band[1]));
++					if (killer == null)
++					{
++						Thread.sleep(3000);
++						continue;
++					}
++					final Monster mob = World.getNearestVisibleObjectInRange(killer, Monster.class, 1500, near -> !near.isDead() && !near.isRaid() && !near.isChampion() && !near.isMinion() && (Math.abs(near.getLevel() - killer.getLevel()) <= 3));
++					if (mob == null)
++					{
++						continue;
++					}
++					park(killer, new Location(killer.getX(), killer.getY(), killer.getZ()));
++					dropRun(mob, killer, 1, 10, 2);
++					dropRun(mob, killer, 1, 10, 100);
++					dropRun(mob, killer, 5, 2, 2);
++					dropRun(mob, killer, 10, 1, 2);
++					measured++;
++					break;
++				}
++			}
++		}
++		finally
++		{
++			RatesConfig.RATE_DEATH_DROP_CHANCE_MULTIPLIER = chance;
++			RatesConfig.RATE_DEATH_DROP_AMOUNT_MULTIPLIER = amount;
++			RatesConfig.DROP_MAX_OCCURRENCES_NORMAL = limit;
++		}
++		check("drops: measured mobs " + measured, measured > 0);
++	}
++
++	private static void dropRun(Monster mob, Player killer, float chance, float amount, int limit)
++	{
++		RatesConfig.RATE_DEATH_DROP_CHANCE_MULTIPLIER = chance;
++		RatesConfig.RATE_DEATH_DROP_AMOUNT_MULTIPLIER = amount;
++		RatesConfig.DROP_MAX_OCCURRENCES_NORMAL = limit;
++		final int kills = 20000;
++		int any = 0;
++		int stuff = 0;
++		int gear = 0;
++		int herbs = 0;
++		long pieces = 0;
++		for (int i = 0; i < kills; i++)
++		{
++			final List<ItemHolder> list = mob.getTemplate().calculateDrops(DropType.DROP, mob, killer);
++			boolean got = false;
++			if (list != null)
++			{
++				for (ItemHolder drop : list)
++				{
++					if (drop.getId() == 57)
++					{
++						continue;
++					}
++					final ItemTemplate item = ItemData.getInstance().getTemplate(drop.getId());
++					if (item.hasExImmediateEffect())
++					{
++						herbs++;
++						continue;
++					}
++					got = true;
++					pieces += drop.getCount();
++					if (item.isEquipable())
++					{
++						gear++;
++					}
++					else
++					{
++						stuff++;
++					}
++				}
++			}
++			any += got ? 1 : 0;
++		}
++		note("drops: " + mob.getName() + " L" + mob.getLevel() + ", killer L" + killer.getLevel() + ", chance x" + chance + ", amount x" + amount + ", limit " + limit + ": an item in " + ((any * 1000L) / kills) / 10.0 + "% of kills, materials per 100 kills " + ((stuff * 1000L) / kills) / 10.0 + ", gear per 1000 kills " + ((gear * 10000L) / kills) / 10.0 + ", pieces per 100 kills " + ((pieces * 100L) / kills) + ", herbs per 100 kills " + ((herbs * 100L) / kills));
++	}
++
++	/** Суперчемпион High Five: значения, и настоящий воин своего уровня с охотничьими автоскиллами против него один на один. */
++	private static void superChampion(List<Player> spare) throws Exception
++	{
++		// В тестовой папке чемпионы выключены, а множители работают только при включённых.
++		final boolean enabled = ChampionMonstersConfig.CHAMPION_ENABLE;
++		ChampionMonstersConfig.CHAMPION_ENABLE = true;
++		try
++		{
++			superBands(spare);
++		}
++		finally
++		{
++			ChampionMonstersConfig.CHAMPION_ENABLE = enabled;
++		}
++	}
++
++	private static void superBands(List<Player> spare) throws Exception
++	{
++		final ChampionMonstersConfig.Tier tier = ChampionMonstersConfig.CHAMPION_SUPER;
++		check("super: HP x100, attack x5, exp x60, adena x30, now " + tier.hp() + ", " + tier.atk() + ", " + tier.rewardsExpSp() + ", " + tier.adenasRewardsAmount(), (tier.hp() == 100) && (tier.atk() == 5) && (tier.rewardsExpSp() == 60) && (tier.adenasRewardsAmount() == 30));
++		check("super: a hunters' raid gets the raid boost", PhantomHuntersConfig.HUNTER_SUPER_BOOST);
++		int fights = 0;
++		for (int[] band : new int[][]
++		{
++			{
++				25,
++				39
++			},
++			{
++				40,
++				59
++			},
++			{
++				60,
++				85
++			}
++		})
++		{
++			fights += superFight(spare, tier, band[0], band[1]) ? 1 : 0;
++		}
++		check("super: fights " + fights, fights > 0);
++	}
++
++	private static boolean superFight(List<Player> spare, ChampionMonstersConfig.Tier tier, int low, int high) throws Exception
++	{
++		for (int i = 0; i < 20; i++)
++		{
++			final Player solo = hunting(spare, p -> !p.isMageClass() && (p.getLevel() >= low) && (p.getLevel() <= high));
++			if (solo == null)
++			{
++				Thread.sleep(3000);
++				continue;
++			}
++			final Monster mob = World.getNearestVisibleObjectInRange(solo, Monster.class, 1500, near -> !near.isDead() && !near.isRaid() && !near.isChampion() && !near.isMinion() && (Math.abs(near.getLevel() - solo.getLevel()) <= 3));
++			if (mob == null)
++			{
++				continue;
++			}
++			park(solo, new Location(mob.getX(), mob.getY(), mob.getZ()));
++			final double plainAtk = mob.getPAtk(solo);
++			mob.setChampion(tier);
++			mob.setCurrentHp(mob.getMaxHp());
++			final double superAtk = mob.getPAtk(solo);
++			check("super: P. Atk x5, " + (int) plainAtk + " -> " + (int) superAtk, Math.abs(superAtk - (plainAtk * tier.atk())) <= (plainAtk * 0.05));
++			final double whole = mob.getCurrentHp();
++			mob.reduceCurrentHp(1000, solo, null);
++			check("super: 1000 damage takes 10 HP, took " + (int) (whole - mob.getCurrentHp()), (whole - mob.getCurrentHp()) <= 10.5);
++			mob.setCurrentHp(mob.getMaxHp());
++			solo.setCurrentHp(solo.getMaxHp());
++			solo.setInvul(false);
++			solo.setTarget(mob);
++			solo.getAutoUseSettings().getAutoActions().add(2);
++			solo.getAutoPlaySettings().setNextTargetMode(1);
++			solo.getAutoPlaySettings().setShortRange(false);
++			solo.getAutoPlaySettings().setRespectfulHunting(false);
++			solo.getAutoPlaySettings().setPickup(false);
++			AutoPlayTaskManager.getInstance().startAutoPlay(solo);
++			AutoUseTaskManager.getInstance().startAutoUseTask(solo);
++			final long began = System.currentTimeMillis();
++			waitFor(90, () -> solo.isDead() || mob.isDead() || !mob.isSpawned());
++			note("super: " + solo.getName() + " " + solo.getPlayerClass() + " L" + solo.getLevel() + " alone against " + mob.getName() + " L" + mob.getLevel() + ": " + ((System.currentTimeMillis() - began) / 1000) + " s, hunter " + (solo.isDead() ? "dead" : ((int) ((solo.getCurrentHp() * 100) / solo.getMaxHp())) + "% HP") + ", mob " + (mob.isDead() ? "dead" : ((int) ((mob.getCurrentHp() * 100) / mob.getMaxHp())) + "% HP"));
++			check("super: " + solo.getPlayerClass() + " L" + solo.getLevel() + " alone does not take it", !mob.isDead());
++			AutoPlayTaskManager.getInstance().stopAutoPlay(solo);
++			AutoUseTaskManager.getInstance().stopAutoUseTask(solo);
++			if (!mob.isDead())
++			{
++				mob.setChampion(null);
++				mob.setCurrentHp(mob.getMaxHp());
++			}
++			return true;
++		}
++		note("super: no warrior near a mob of his level at " + low + "-" + high);
++		return false;
++	}
++
++	/** Обмен медалей: кнопка на доске открывает список, в нём платят только медалями, руна опыта работает и кончается. Сам обмен идёт пакетом клиента, тот же, что в GM-шопе. */
++	private static void medals(List<Player> spare) throws Exception
++	{
++		final Player player = pick(spare, p -> p.getLevel() >= 20);
++		if (player == null)
++		{
++			check("medals: no hunter", false);
++			return;
++		}
++		park(player, GIRAN);
++		waitFor(30, () -> !player.isInCombat());
++		CommunityBoardHandler.getInstance().handleParseCommand("_bbshubevents medals", player);
++		final PreparedListContainer list = player.getMultiSell();
++		check("medals: the board button opens the list, " + (list == null ? "nothing" : String.valueOf(list.getListId())), (list != null) && (list.getListId() == 90003000) && list.isFromBoard());
++		if (list != null)
++		{
++			int goods = 0;
++			int strange = 0;
++			for (Entry entry : list.getEntries())
++			{
++				goods += entry.getProducts().size();
++				final Ingredient price = entry.getIngredients().size() == 1 ? entry.getIngredients().get(0) : null;
++				if ((price == null) || (price.getItemId() != L2HubPvpEvents.MEDAL_ITEM) || (price.getItemCount() < 1))
++				{
++					strange++;
++				}
++				for (Ingredient product : entry.getProducts())
++				{
++					if (ItemData.getInstance().getTemplate(product.getItemId()) == null)
++					{
++						strange++;
++					}
++				}
++			}
++			check("medals: goods " + goods + ", wrong " + strange, (goods == 41) && (strange == 0));
++		}
++		player.setMultiSell(null);
++		final Item rune = player.addItem(ItemProcessType.REWARD, 20336, 1, player, false);
++		final double bonus = player.getStat().calcStat(Stat.BONUS_EXP, 0, null, null);
++		check("medals: the rune gives +50% exp, " + bonus, bonus == 50);
++		final long minutes = rune.getRemainingTime() / 60000;
++		check("medals: the rune lasts 5 hours, minutes left " + minutes, rune.isTimeLimitedItem() && (minutes >= 295) && (minutes <= 300));
++		player.destroyItem(ItemProcessType.FEE, rune, player, false);
++		final double gone = player.getStat().calcStat(Stat.BONUS_EXP, 0, null, null);
++		check("medals: no rune, no bonus, " + gone, gone == 0);
++		player.setInvul(false);
++	}
++
++	private static long count(Player player, int itemId)
++	{
++		return player.getInventory().getInventoryItemCount(itemId, -1);
++	}
++
++	private static void bag(List<Player> spare) throws Exception
++	{
++		check("bag: 200 slots and 250 for dwarves, got " + PlayerConfig.INVENTORY_MAXIMUM_NO_DWARF + " and " + PlayerConfig.INVENTORY_MAXIMUM_DWARF, (PlayerConfig.INVENTORY_MAXIMUM_NO_DWARF == 200) && (PlayerConfig.INVENTORY_MAXIMUM_DWARF == 250));
++		final Player player = pick(spare, p -> !"DWARF".equals(p.getRace().name()));
++		final Method limit = Class.forName("org.l2jmobius.gameserver.managers.phantom.PhantomHunterOutfit").getDeclaredMethod("bagLimit", Player.class);
++		limit.setAccessible(true);
++		check("bag: hunter decides by 80 slots of " + player.getInventoryLimit(), ((int) limit.invoke(null, player) == 80) && (player.getInventoryLimit() >= 200));
++		park(player, GIRAN);
++
++		// Лак уже в сумке, другого материала в ней нет.
++		final int stacked = 1865;
++		int unseen = 0;
++		for (int id : new int[]
++		{
++			1864,
++			1870,
++			1871,
++			1872,
++			1879
++		})
++		{
++			if (count(player, id) == 0)
++			{
++				unseen = id;
++			}
++		}
++		final int other = unseen;
++		player.addItem(ItemProcessType.REWARD, stacked, 1, player, false);
++		final long had = count(player, stacked);
++		final Item toStack = ItemManager.createItem(ItemProcessType.REWARD, stacked, 5, player, null);
++		toStack.dropMe(player, player.getX() - 30, player.getY(), player.getZ());
++		final Item newKind = ItemManager.createItem(ItemProcessType.REWARD, other, 5, player, null);
++		newKind.dropMe(player, player.getX() + 30, player.getY(), player.getZ());
++		Thread.sleep(1000);
++
++		final int normal = PlayerConfig.INVENTORY_MAXIMUM_NO_DWARF;
++		try
++		{
++			while ((PlayerConfig.INVENTORY_MAXIMUM_NO_DWARF > 1) && player.isInventoryUnder90(false))
++			{
++				PlayerConfig.INVENTORY_MAXIMUM_NO_DWARF--;
++			}
++			note("bag: limit " + player.getInventoryLimit() + " for the test, in the bag " + player.getInventory().getSize());
++			player.getAutoPlaySettings().setPickup(true);
++			AutoPlayTaskManager.getInstance().startAutoPlay(player);
++			final boolean took = waitFor(30, () -> count(player, stacked) >= (had + 5));
++			check("bag: nearly full bag takes what stacks, " + had + " → " + count(player, stacked), took);
++			Thread.sleep(3000);
++			check("bag: nearly full bag leaves a new kind on the ground", (count(player, other) == 0) && newKind.isSpawned());
++		}
++		finally
++		{
++			AutoPlayTaskManager.getInstance().stopAutoPlay(player);
++			PlayerConfig.INVENTORY_MAXIMUM_NO_DWARF = normal;
++		}
++
++		player.teleToLocation(new Location(newKind.getX(), newKind.getY(), newKind.getZ()));
++		Thread.sleep(1500);
++		AutoPlayTaskManager.getInstance().startAutoPlay(player);
++		check("bag: roomy bag takes the new kind", waitFor(30, () -> count(player, other) == 5));
++		AutoPlayTaskManager.getInstance().stopAutoPlay(player);
++		player.getAutoPlaySettings().setPickup(false);
++		if (newKind.isSpawned())
++		{
++			newKind.decayMe();
++		}
++		player.setInvul(false);
++	}
++
++	/** Охотник для ивента: стоит в Гиране, снят с охоты, нужного уровня, записаться ему ничто не мешает. */
++	private static Player fighter(List<Player> spare, int level) throws Exception
++	{
++		while (true)
++		{
++			final Player player = pick(spare, p -> (p.getWeightPenalty() == 0) && !p.isInParty() && !p.isDead() && !p.isRegisteredOnEvent() && !p.isOnEvent() && !p.isTransformed() && !p.isCursedWeaponEquipped());
++			if (player == null)
++			{
++				throw new IllegalStateException("no hunter left for the event");
++			}
++			park(player, GIRAN);
++			player.setInvul(false);
++			player.getStat().addLevel((byte) (level - player.getLevel()));
++			if ((player.getLevel() == level) && (player.getWeightPenalty() == 0))
++			{
++				return player;
++			}
++		}
++	}
++
++	private static boolean join(Quest script, Player player)
++	{
++		script.onEvent("Participate", null, player);
++		return player.isRegisteredOnEvent();
++	}
++
++	private static String[] status(Quest script)
++	{
++		return script.onEvent("L2HubStatus", null, null).split(" ");
++	}
++
++	private static String band(Quest script)
++	{
++		final String[] status = status(script);
++		return status[3] + " " + status[4];
++	}
++
++	private static Object scriptField(Quest script, String name) throws Exception
++	{
++		final Field field = script.getClass().getDeclaredField(name);
++		field.setAccessible(true);
++		return field.get(null);
++	}
++
++	private static List<Player> team(Quest script, String name) throws Exception
++	{
++		final List<Player> out = new ArrayList<>();
++		for (Object player : (Set<?>) scriptField(script, name))
++		{
++			out.add((Player) player);
++		}
++		return out;
++	}
++
++	private static void events(List<Player> spare) throws Exception
++	{
++		final int hunterLimit = PhantomHuntersConfig.HUNTER_PVP_EVENT_MAX;
++		PhantomHuntersConfig.HUNTER_PVP_EVENT_MAX = 0; // Сами охотники не записываются: только те, кого записал тест.
++		try
++		{
++			sums();
++			matching(spare);
++			rewards("TvT", spare);
++			rewards("Deathmatch", spare);
++			rewards("CtF", spare);
++		}
++		finally
++		{
++			PhantomHuntersConfig.HUNTER_PVP_EVENT_MAX = hunterLimit;
++			L2HubPvpEvents.TEST_LIVE.clear();
++		}
++	}
++
++	private static void sums() throws Exception
++	{
++		final Field gap = L2HubPvpEvents.class.getDeclaredField("LEVEL_GAP");
++		gap.setAccessible(true);
++		check("events: PvpLevelGap " + gap.getInt(null), gap.getInt(null) == 3);
++		final long adena = L2HubPvpEvents.rewardAdena(33, 20, false);
++		final long exp = L2HubPvpEvents.rewardExp(33, 20, false);
++		note("events: level 33 gets " + adena + " adena and " + exp + " exp, winner twice that");
++		check("events: reward is on", (adena > 0) && (exp > 0));
++		check("events: medals 10 and 20 for 20 minutes, 2 and 3 for 3 minutes", (L2HubPvpEvents.rewardMedals(20, false) == 10) && (L2HubPvpEvents.rewardMedals(20, true) == 20) && (L2HubPvpEvents.rewardMedals(3, false) == 2) && (L2HubPvpEvents.rewardMedals(3, true) == 3));
++		check("events: winner gets twice", Math.abs(L2HubPvpEvents.rewardAdena(33, 20, true) - (2 * adena)) <= 1);
++		check("events: 3 minutes of fight pay 3/20", Math.abs(L2HubPvpEvents.rewardAdena(33, 3, false) - ((adena * 3) / 20)) <= 1);
++		check("events: higher level gets more", (L2HubPvpEvents.rewardAdena(49, 20, false) > adena) && (L2HubPvpEvents.rewardExp(49, 20, false) > exp));
++		final Object[][] grades =
++		{
++			{
++				19,
++				""
++			},
++			{
++				20,
++				"D"
++			},
++			{
++				39,
++				"D"
++			},
++			{
++				40,
++				"C"
++			},
++			{
++				52,
++				"B"
++			},
++			{
++				61,
++				"A"
++			},
++			{
++				76,
++				"S"
++			},
++			{
++				85,
++				"S"
++			}
++		};
++		for (Object[] row : grades)
++		{
++			final int level = (int) row[0];
++			final int weapon = L2HubPvpEvents.rewardScroll(level, true);
++			final int armor = L2HubPvpEvents.rewardScroll(level, false);
++			if (((String) row[1]).isEmpty())
++			{
++				check("events: no scroll at " + level, (weapon == 0) && (armor == 0));
++				continue;
++			}
++			final String weaponName = ItemData.getInstance().getTemplate(weapon).getName();
++			final String armorName = ItemData.getInstance().getTemplate(armor).getName();
++			check("events: at " + level + " " + weaponName + " and " + armorName, weaponName.equals("Scroll: Enchant Weapon (" + row[1] + "-Grade)") && armorName.equals("Scroll: Enchant Armor (" + row[1] + "-Grade)"));
++		}
++		final Set<Player> blue = Set.of();
++		final Set<Player> red = new HashSet<>();
++		check("events: a tie has no winners", L2HubPvpEvents.teamWinners(blue, red, false, 3, 3).isEmpty());
++		check("events: the higher score wins", (L2HubPvpEvents.teamWinners(blue, red, false, 3, 1) == blue) && (L2HubPvpEvents.teamWinners(blue, red, false, 1, 3) == red));
++	}
++
++	private static void matching(List<Player> spare) throws Exception
++	{
++		final Quest script = ScriptManager.getInstance().getScript("TvT");
++		check("matching: TvT idle before the test, " + status(script)[0], status(script)[0].equals("INACTIVE"));
++		final Player far = fighter(spare, 60);
++		final Player pal = fighter(spare, 62);
++		final Player live = fighter(spare, 50);
++		final Player low = fighter(spare, 47);
++		final Player high = fighter(spare, 53);
++		final Player under = fighter(spare, 46);
++		final Player liveFar = fighter(spare, 54);
++		final Player liveClose = fighter(spare, 52);
++		final List<Player> used = new ArrayList<>(List.of(far, pal, live, low, high, under, liveFar, liveClose));
++		final String open = band(script);
++		((Event) script).eventStart(null);
++		note("matching: without live players the board shows levels " + open);
++
++		// Пока живых нет, охотники сверяются друг с другом.
++		check("matching: first hunter joins", join(script, far));
++		check("matching: hunter within the gap of a hunter joins", join(script, pal));
++		check("matching: hunter 10 levels away is refused", !join(script, live));
++		check("matching: board without live players stays " + band(script), band(script).equals(open));
++
++		// Первый живой задаёт пределы, охотники не из них снимаются.
++		L2HubPvpEvents.TEST_LIVE.add(live);
++		check("matching: live player joins", join(script, live));
++		check("matching: hunters out of his band are removed", !far.isRegisteredOnEvent() && !pal.isRegisteredOnEvent());
++		check("matching: board shows " + band(script), band(script).equals("47 53"));
++		check("matching: removed hunter cannot come back", !join(script, far));
++		check("matching: hunter at the low edge joins", join(script, low));
++		check("matching: hunter at the high edge joins, 6 levels from the other", join(script, high));
++		check("matching: hunter one level under the band is refused", !join(script, under));
++
++		// Второй живой сверяется с первым и сужает пределы.
++		L2HubPvpEvents.TEST_LIVE.add(liveFar);
++		check("matching: live player 4 levels away is refused", !join(script, liveFar));
++		L2HubPvpEvents.TEST_LIVE.add(liveClose);
++		check("matching: live player 2 levels away joins", join(script, liveClose));
++		check("matching: board narrows to " + band(script), band(script).equals("49 53"));
++		check("matching: hunter out of the new band is removed", !low.isRegisteredOnEvent() && high.isRegisteredOnEvent());
++
++		((Event) script).eventStop();
++		check("matching: stopped, " + status(script)[0], status(script)[0].equals("INACTIVE"));
++		check("matching: nobody stays registered", used.stream().noneMatch(Player::isRegisteredOnEvent));
++		L2HubPvpEvents.TEST_LIVE.clear();
++		spare.addAll(used);
++	}
++
++	@SuppressWarnings("unchecked")
++	private static void rewards(String name, List<Player> spare) throws Exception
++	{
++		final Quest script = ScriptManager.getInstance().getScript(name);
++		check(name + ": idle before the test, " + status(script)[0], status(script)[0].equals("INACTIVE"));
++		((Event) script).eventStart(null);
++		final List<Player> all = new ArrayList<>();
++		final Player first = fighter(spare, 50);
++		all.add(first);
++		L2HubPvpEvents.TEST_LIVE.add(first);
++		check(name + ": live player joins", join(script, first));
++		final Player outsider = fighter(spare, 60);
++		check(name + ": hunter out of the band is refused", !join(script, outsider));
++		spare.add(outsider);
++		check(name + ": board shows " + band(script), band(script).equals("47 53"));
++		for (int i = 0; i < 9; i++)
++		{
++			final Player hunter = fighter(spare, 47 + (i % 7));
++			join(script, hunter);
++			all.add(hunter);
++		}
++		check(name + ": ten registered", all.stream().allMatch(Player::isRegisteredOnEvent));
++
++		script.onEvent("TeleportToArena", null, null);
++		final boolean arrived = waitFor(30, () -> all.stream().allMatch(Player::isOnEvent));
++		check(name + ": all on the arena", arrived);
++		spare.addAll(all);
++		if (!arrived)
++		{
++			((Event) script).eventStop();
++			L2HubPvpEvents.TEST_LIVE.clear();
++			return;
++		}
++		Thread.sleep(3000);
++		revived(name, script, all.get(all.size() - 1), all.get(0));
++
++		final Field fight = script.getClass().getDeclaredField("FIGHT_TIME");
++		fight.setAccessible(true);
++		final int minutes = fight.getInt(null);
++		final Map<Player, Integer> scores = (Map<Player, Integer>) scriptField(script, "PLAYER_SCORES");
++		final boolean teams = !"Deathmatch".equals(name);
++		final Player winner;
++		final Player loser;
++		final Player winnerHunter;
++		final Player loserHunter;
++		if (teams)
++		{
++			final List<Player> blue = team(script, "BLUE_TEAM");
++			final List<Player> red = team(script, "RED_TEAM");
++			winner = blue.get(0);
++			winnerHunter = blue.get(1);
++			loser = red.get(0);
++			loserHunter = red.get(1);
++			final Field blueScore = script.getClass().getDeclaredField("BLUE_SCORE");
++			final Field redScore = script.getClass().getDeclaredField("RED_SCORE");
++			blueScore.setAccessible(true);
++			redScore.setAccessible(true);
++			blueScore.setInt(null, 5);
++			redScore.setInt(null, 1);
++		}
++		else
++		{
++			final List<Player> others = new ArrayList<>(all);
++			others.remove(first);
++			winner = first;
++			winnerHunter = null;
++			loser = others.get(0);
++			loserHunter = others.get(1);
++		}
++		L2HubPvpEvents.TEST_LIVE.clear();
++		L2HubPvpEvents.TEST_LIVE.add(winner);
++		L2HubPvpEvents.TEST_LIVE.add(loser);
++		scores.put(winner, 5);
++		scores.put(loser, 1);
++
++		final Player[] cast =
++		{
++			winner,
++			loser,
++			winnerHunter,
++			loserHunter
++		};
++		final long[][] before = new long[cast.length][];
++		for (int i = 0; i < cast.length; i++)
++		{
++			if (cast[i] != null)
++			{
++				final int level = cast[i].getLevel();
++				before[i] = new long[]
++				{
++					level,
++					cast[i].getAdena(),
++					cast[i].getExp(),
++					count(cast[i], L2HubPvpEvents.rewardScroll(level, false)),
++					count(cast[i], L2HubPvpEvents.rewardScroll(level, true)),
++					count(cast[i], L2HubPvpEvents.MEDAL_ITEM)
++				};
++			}
++		}
++
++		script.onEvent("EndFight", null, null);
++
++		rewarded(name + ": live winner", winner, before[0], minutes, true, true);
++		rewarded(name + ": live loser", loser, before[1], minutes, false, true);
++		if (winnerHunter != null)
++		{
++			rewarded(name + ": hunter winner", winnerHunter, before[2], minutes, true, false);
++		}
++		rewarded(name + ": hunter loser", loserHunter, before[3], minutes, false, false);
++
++		check(name + ": everyone back from the arena", waitFor(20, () -> all.stream().noneMatch(Player::isOnEvent)));
++		check(name + ": over, " + status(script)[0], status(script)[0].equals("INACTIVE"));
++		L2HubPvpEvents.TEST_LIVE.clear();
++	}
++
++	private static void rewarded(String who, Player player, long[] before, int minutes, boolean won, boolean live)
++	{
++		final int level = (int) before[0];
++		final long adena = player.getAdena() - before[1];
++		final long exp = player.getExp() - before[2];
++		final long armor = count(player, L2HubPvpEvents.rewardScroll(level, false)) - before[3];
++		final long weapon = count(player, L2HubPvpEvents.rewardScroll(level, true)) - before[4];
++		final long wantAdena = L2HubPvpEvents.rewardAdena(level, minutes, won);
++		final long wantExp = live ? L2HubPvpEvents.rewardExp(level, minutes, won) : 0;
++		check(who + " (" + level + ") adena +" + adena + ", wanted " + wantAdena + (won ? " and the prize" : ""), won ? adena > wantAdena || (!live && (adena == wantAdena)) : adena == wantAdena);
++		check(who + " exp +" + exp + ", wanted " + wantExp, Math.abs(exp - wantExp) <= 1);
++		final int wantScrolls = live && won ? 1 : 0;
++		check(who + " scrolls: armor " + armor + ", weapon " + weapon + ", wanted " + wantScrolls + " each", (armor == wantScrolls) && (weapon == wantScrolls));
++		final long medals = count(player, L2HubPvpEvents.MEDAL_ITEM) - before[5];
++		final int wantMedals = live ? L2HubPvpEvents.rewardMedals(minutes, won) : 0;
++		check(who + " medals +" + medals + ", wanted " + wantMedals, medals == wantMedals);
++	}
++
++	/** Охотник с самым плотным окружением охотников на каче: от него всего ближе соседям бежать. */
++	private static Player crowded() throws Exception
++	{
++		final Map<?, ?> map = hunters();
++		final List<Player> hunting = new ArrayList<>();
++		for (Player player : free())
++		{
++			final Object hunter = map.get(player.getName().toLowerCase());
++			if ((hunter != null) && "HUNT".equals(String.valueOf(hunterField(hunter, "phase"))) && (hunterField(hunter, "spot") != null) && !player.isInsideZone(ZoneId.PEACE))
++			{
++				hunting.add(player);
++			}
++		}
++		Player best = null;
++		int bestCount = -1;
++		for (Player player : hunting)
++		{
++			int count = 0;
++			for (Player other : hunting)
++			{
++				if (player.calculateDistance2D(other) <= 4000)
++				{
++					count++;
++				}
++			}
++			if ((count > bestCount) && (World.getNearestVisibleObjectInRange(player, Monster.class, 2000, near -> !near.isDead() && !near.isRaid()) != null))
++			{
++				best = player;
++				bestCount = count;
++			}
++		}
++		note("cursed: hunters on spots " + hunting.size() + ", around the drop " + bestCount);
++		return best;
++	}
++
++	/** Выронить оружие у моба рядом с охотником, как при убийстве: шанс — разовый на 100 %. */
++	private static boolean dropNear(CursedWeapon weapon, Player killer)
++	{
++		final Monster mob = World.getNearestVisibleObjectInRange(killer, Monster.class, 2000, near -> !near.isDead() && !near.isRaid());
++		if (mob == null)
++		{
++			return false;
++		}
++		weapon.setDropRate(100000);
++		final boolean dropped = weapon.checkDrop(mob, killer);
++		weapon.setDropRate(1);
++		return dropped;
++	}
++
++	private static int seekers() throws Exception
++	{
++		int count = 0;
++		for (Object hunter : hunters().values())
++		{
++			if (hunterField(hunter, "cursedItem") != null)
++			{
++				count++;
++			}
++		}
++		return count;
++	}
++
++	/**
++	 * Проклятый в драке с игроками: бьющему его без флага даёт сдачи, с ключом HunterCursedAttacks нападает сам.
++	 */
++	private static void cursedFights(Player holder) throws Exception
++	{
++		final Object hunter = hunters().get(holder.getName().toLowerCase());
++		final Field enemyId = hunter.getClass().getDeclaredField("enemyId");
++		enemyId.setAccessible(true);
++		final Player striker = pick(free(), p -> (p != holder) && !p.isCursedWeaponEquipped() && (p.getActiveWeaponItem() != null) && !p.getActiveWeaponItem().isBow() && !p.getActiveWeaponItem().isCrossBow());
++		check("cursed: found a striker", striker != null);
++		if (striker == null)
++		{
++			return;
++		}
++
++		// С проклятым не дерутся те, кому 20 и меньше (PlayableAI), а охотники здесь мелкие.
++		if (striker.getLevel() <= 20)
++		{
++			striker.getStat().addLevel((byte) (30 - striker.getLevel()));
++		}
++		note("cursed: holder " + holder.getName() + " L" + holder.getLevel() + ", striker " + striker.getName() + " L" + striker.getLevel());
++
++		// Ключ выключен: соседа не трогает.
++		PhantomHuntersConfig.HUNTER_CURSED_ATTACKS = false;
++		enemyId.setInt(hunter, 0);
++		park(striker, holder.getLocation());
++		Thread.sleep(5000);
++		check("cursed: key off, leaves the neighbour alone", World.getPlayer(enemyId.getInt(hunter)) != striker);
++
++		// Бьют: отвечает, хотя у бьющего нет флага, и держит цель.
++		holder.setInvul(false);
++		striker.setTarget(holder);
++		striker.getAI().setIntentionAttack(holder);
++		// Сколько бьющий добирается до первого удара, зависит от него, а не от держателя: ответ считаем от удара. В PvP урон идёт сперва в CP.
++		Player enemy = null;
++		int hitAt = -1;
++		int answeredAt = -1;
++		int held = 0;
++		int swings = 0;
++		for (int i = 0; (i < 360) && ((answeredAt < 0) || (i < (answeredAt + 80))); i++)
++		{
++			holder.setCurrentHp(holder.getMaxHp());
++			holder.setCurrentCp(holder.getMaxCp());
++			if (striker.getAI().getIntention() != Intention.ATTACK)
++			{
++				striker.setTarget(holder);
++				striker.getAI().setIntentionAttack(holder);
++			}
++			final Player current = World.getPlayer(enemyId.getInt(hunter));
++			if ((current != null) && (hitAt < 0))
++			{
++				hitAt = i;
++			}
++			if ((current != null) && (holder.getTarget() == current))
++			{
++				enemy = current;
++				answeredAt = answeredAt < 0 ? i : answeredAt;
++				held++;
++				swings += holder.isAttackingNow() ? 1 : 0;
++			}
++			Thread.sleep(250);
++		}
++		holder.setInvul(true);
++		check("cursed: answers whoever hits, " + (enemy == null ? null : enemy.getName()) + ", flag " + (enemy == null ? 0 : enemy.getPvpFlag()) + ", first hit at " + (hitAt / 4) + " s, answered " + ((answeredAt - hitAt) / 4) + " s later, held " + held + " of 80, swinging " + swings, (enemy == striker) && (answeredAt >= 0) && ((answeredAt - hitAt) <= 40) && (held > 40) && (swings > 0));
++
++		// Ключ включён: нападает сам.
++		striker.abortAttack();
++		striker.getAI().setIntentionIdle();
++		enemyId.setInt(hunter, 0);
++		// Новичка не выбирает, и новичок на него не идёт: Mobius такую драку молча снимает, оба встали бы столбом.
++		final Player newbie = pick(free(), p -> (p != holder) && (p != striker) && (p.getLevel() <= 20) && !p.isCursedWeaponEquipped());
++		if (newbie == null)
++		{
++			note("cursed: no newbie around to check");
++		}
++		else
++		{
++			park(newbie, holder.getLocation());
++			final Method prey = PhantomHunterManager.class.getDeclaredMethod("cursedPrey", Player.class);
++			prey.setAccessible(true);
++			final Player chosen = (Player) prey.invoke(null, holder);
++			check("cursed: a newbie L" + newbie.getLevel() + " is no prey, chose " + (chosen == null ? null : chosen.getName() + " L" + chosen.getLevel()), (chosen == null) || (chosen.getLevel() > 20));
++			final Method brave = PhantomPk.class.getDeclaredMethod("strongAndBrave", Player.class, Player.class);
++			brave.setAccessible(true);
++			check("cursed: a newbie does not go for the holder", !((Boolean) brave.invoke(null, newbie, holder)));
++		}
++
++		PhantomHuntersConfig.HUNTER_CURSED_ATTACKS = true;
++		final boolean started = waitFor(20, () ->
++		{
++			try
++			{
++				return enemyId.getInt(hunter) != 0;
++			}
++			catch (IllegalAccessException e)
++			{
++				return false;
++			}
++		});
++		int attacking = 0;
++		for (int i = 0; i < 40; i++)
++		{
++			attacking += holder.isAttackingNow() ? 1 : 0;
++			Thread.sleep(250);
++		}
++		check("cursed: key on, attacks a neighbour, target " + (holder.getTarget() == null ? null : holder.getTarget().getName()) + ", swinging " + attacking, started && (holder.getTarget() instanceof Player) && (attacking > 0));
++		enemyId.setInt(hunter, 0);
++		striker.setInvul(false);
++	}
++
++	private static void cursed() throws Exception
++	{
++		CursedWeapon weapon = null;
++		CursedWeapon first = null;
++		for (CursedWeapon each : CursedWeaponsManager.getInstance().getCursedWeapons())
++		{
++			first = first == null ? each : first;
++			if ((weapon == null) && !each.isActive())
++			{
++				weapon = each;
++			}
++		}
++		if (weapon == null)
++		{
++			note("cursed: both active in the copy, ending " + first.getName());
++			first.endOfLife();
++			weapon = first;
++		}
++		final Field vanish = CursedWeapon.class.getDeclaredField("_disapearChance");
++		vanish.setAccessible(true);
++		check("cursed: never vanishes on death, chance " + vanish.getInt(weapon), vanish.getInt(weapon) == 0);
++		note("cursed: playing " + weapon.getName() + " " + weapon.getItemId());
++
++		final Player killer = crowded();
++		check("cursed: found a place", killer != null);
++		if (killer == null)
++		{
++			return;
++		}
++		check("cursed: dropped by a monster", dropNear(weapon, killer));
++		check("cursed: on the ground for the hunters, " + PhantomCompat.cursedOnGround().size(), PhantomCompat.cursedOnGround().size() == 1);
++
++		final CursedWeapon chased = weapon;
++		int mostSeekers = 0;
++		final long since = System.currentTimeMillis();
++		while (((System.currentTimeMillis() - since) < 200000) && !chased.isActivated())
++		{
++			mostSeekers = Math.max(mostSeekers, seekers());
++			Thread.sleep(500);
++		}
++		// Подобрали раньше первого замера — тоже годится: кто подобрал, проверено ниже.
++		check("cursed: seekers " + mostSeekers + " at most, limit 3", mostSeekers <= 3);
++		check("cursed: picked up in " + ((System.currentTimeMillis() - since) / 1000) + " s", chased.isActivated());
++		final Player holder = chased.getPlayer();
++		if ((holder == null) || !chased.isActivated())
++		{
++			chased.endOfLife();
++			return;
++		}
++		check("cursed: holder " + holder.getName() + " is a hunter", PhantomManager.getInstance().isPhantom(holder));
++		check("cursed: holder armed and transformed", holder.isCursedWeaponEquipped() && holder.isTransformed() && (holder.getActiveWeaponItem() != null) && (holder.getActiveWeaponItem().getId() == chased.getItemId()));
++		check("cursed: other seekers give up, " + seekers(), waitFor(20, () ->
++		{
++			try
++			{
++				return seekers() == 0;
++			}
++			catch (Exception e)
++			{
++				return false;
++			}
++		}));
++
++		// Держит: бьёт мобов, не стоит.
++		holder.setInvul(true);
++		final boolean inPhase = waitFor(15, () -> "CURSED".equals(phase(holder)));
++		check("cursed: holder phase " + phase(holder), inPhase);
++		int fought = 0;
++		int auto = 0;
++		int swings = 0;
++		for (int i = 0; i < 240; i++)
++		{
++			fought += holder.isInCombat() ? 1 : 0;
++			auto += holder.isAutoPlaying() ? 1 : 0;
++			swings += holder.isAttackingNow() ? 1 : 0;
++			Thread.sleep(250);
++		}
++		check("cursed: holder fights, in combat " + fought + " of 240, swinging " + swings + ", autoplay " + auto, (fought > 0) && (swings > 0) && (auto > 0));
++
++		cursedFights(holder);
++
++		// Рестарт сервера: облик возвращается с первого тика.
++		final Object hunter = hunters().get(holder.getName().toLowerCase());
++		final Field held = hunter.getClass().getDeclaredField("cursedHeld");
++		held.setAccessible(true);
++		holder.stopTransformation(true);
++		final boolean bare = !holder.isTransformed();
++		held.setBoolean(hunter, false);
++		check("cursed: form back after a restart, bare " + bare, bare && waitFor(20, holder::isTransformed));
++
++		// Время вышло: оружие ушло, охотник вооружён своим и снова качается.
++		chased.endOfLife();
++		check("cursed: gone at the end of life", !chased.isActive() && !holder.isCursedWeaponEquipped());
++		final boolean rearmed = waitFor(60, () -> (holder.getActiveWeaponItem() != null) && !"CURSED".equals(phase(holder)));
++		check("cursed: back to own weapon, phase " + phase(holder) + ", weapon " + (holder.getActiveWeaponItem() == null ? null : holder.getActiveWeaponItem().getName()), rearmed);
++		holder.setInvul(false);
++
++		// Смерть с оружием: выпало, следующий охотник подбирает.
++		final Player again = crowded();
++		if ((again != null) && dropNear(chased, again))
++		{
++			check("cursed: second pick up", waitFor(200, chased::isActivated));
++			final Player second = chased.getPlayer();
++			if (second != null)
++			{
++				second.setInvul(false);
++				final Monster killedBy = World.getNearestVisibleObjectInRange(second, Monster.class, 2000, near -> !near.isDead());
++				second.doDie(killedBy != null ? killedBy : second);
++				check("cursed: death drops it, holder bare", !second.isCursedWeaponEquipped());
++				check("cursed: on the ground after the death, " + PhantomCompat.cursedOnGround().size(), (PhantomCompat.cursedOnGround().size() == 1) || chased.isActivated());
++				if (chased.isDropped() && !chased.isActivated())
++				{
++					check("cursed: next hunter takes it, " + (chased.getPlayer() == null ? null : chased.getPlayer().getName()), waitFor(200, chased::isActivated) && (chased.getPlayer() != second));
++				}
++			}
++		}
++		if (chased.isActive())
++		{
++			chased.endOfLife();
++		}
++		chased.setDisapearChance(50);
++		check("cursed: nothing left on the ground", PhantomCompat.cursedOnGround().isEmpty());
++	}
++
++	// ---------- Правки боя из вклада пользователя (HunterCombatFixes) ----------
++
++	/** Скилл с откатом длиннее этого не считается основным, как LONG_REUSE в PhantomHunterOutfit. */
++	private static final int LONG_REUSE = 60000;
++
++	private static Method internal(String className, String name, Class<?>... args) throws Exception
++	{
++		final Method method = Class.forName("org.l2jmobius.gameserver.managers.phantom." + className).getDeclaredMethod(name, args);
++		method.setAccessible(true);
++		return method;
++	}
++
++	/**
++	 * Воскрешение на арене: скрипт поднимает убитого сразу и с полными HP, MP и CP (патч 0183).
++	 */
++	private static void revived(String name, Quest script, Player victim, Player killer) throws Exception
++	{
++		victim.setInvul(false);
++		victim.setCurrentMp(1);
++		victim.doDie(killer);
++		check(name + ": the victim is dead", victim.isDead());
++		script.onEvent("ResurrectPlayer", null, victim);
++		final boolean up = waitFor(15, () -> !victim.isDead());
++		final int hp = (int) ((victim.getCurrentHp() * 100) / victim.getMaxHp());
++		final int mp = (int) ((victim.getCurrentMp() * 100) / victim.getMaxMp());
++		final int cp = (int) ((victim.getCurrentCp() * 100) / victim.getMaxCp());
++		check(name + ": revived with HP " + hp + "%, MP " + mp + "%, CP " + cp + "%", up && (hp >= 90) && (mp >= 90) && (cp >= 90));
++	}
++
++	private static int longSkills(Player player)
++	{
++		int count = 0;
++		for (Integer id : player.getAutoUseSettings().getAutoSkills())
++		{
++			final Skill skill = player.getKnownSkill(id);
++			if ((skill != null) && (skill.getReuseDelay() > LONG_REUSE))
++			{
++				count++;
++			}
++		}
++		return count;
++	}
++
++	/**
++	 * Маг с нюками на 5 минут: без ключа они занимают все слоты (контроль), с ключом основное — с коротким откатом, длинный один и последним.
++	 */
++	private static void nukes(List<Player> spare) throws Exception
++	{
++		final Method setup = internal("PhantomHunterOutfit", "setupCombat", Player.class);
++		Player mage = pick(spare, p -> p.isMageClass() && (p.getKnownSkill(1288) != null) && (p.getKnownSkill(1292) != null || p.getKnownSkill(1293) != null || p.getKnownSkill(1294) != null));
++		final boolean natural = mage != null;
++		if (mage == null)
++		{
++			mage = pick(spare, p -> p.isMageClass() && (p.getLevel() >= 40));
++			check("nukes: found a mage", mage != null);
++			if (mage == null)
++			{
++				return;
++			}
++			for (int id : new int[]
++			{
++				1292,
++				1288,
++				1289
++			})
++			{
++				mage.addSkill(SkillData.getInstance().getSkill(id, SkillData.getInstance().getMaxLevel(id)), false);
++			}
++		}
++		note("nukes: " + mage.getName() + " (" + mage.getLevel() + " " + mage.getPlayerClass().name() + "), own long nukes " + natural);
++		final boolean was = PhantomHuntersConfig.HUNTER_COMBAT_FIXES;
++		try
++		{
++			PhantomHuntersConfig.HUNTER_COMBAT_FIXES = false;
++			setup.invoke(null, mage);
++			final int size = mage.getAutoUseSettings().getAutoSkills().size();
++			check("nukes: key off, long reuse fills the slots (control), " + longSkills(mage) + " of " + size + " " + mage.getAutoUseSettings().getAutoSkills(), (size == 3) && (longSkills(mage) >= 2));
++			PhantomHuntersConfig.HUNTER_COMBAT_FIXES = true;
++			setup.invoke(null, mage);
++			final List<Integer> ids = new ArrayList<>(mage.getAutoUseSettings().getAutoSkills());
++			final boolean lastLong = !ids.isEmpty() && (mage.getKnownSkill(ids.get(ids.size() - 1)).getReuseDelay() > LONG_REUSE);
++			check("nukes: key on, " + ids + " with " + longSkills(mage) + " long, the long ones last", lastLong && (longSkills(mage) < ids.size()) && ((ids.size() < 4) || (longSkills(mage) == 1)));
++		}
++		finally
++		{
++			PhantomHuntersConfig.HUNTER_COMBAT_FIXES = was;
++			setup.invoke(null, mage);
++		}
++
++		int mages = 0;
++		int stuck = 0;
++		for (Player player : free())
++		{
++			final int size = player.getAutoUseSettings().getAutoSkills().size();
++			if (player.isMageClass() && (size > 0))
++			{
++				mages++;
++				stuck += longSkills(player) >= size ? 1 : 0;
++			}
++		}
++		check("nukes: mages in the world " + mages + ", with long reuse only " + stuck, was ? stuck == 0 : true);
++	}
++
++	private static void olympiadMode(Player player, int side, boolean on)
++	{
++		player.setInOlympiadMode(on);
++		player.setOlympiadStart(on);
++		player.setOlympiadGameId(on ? 900 : -1);
++		player.setOlympiadSide(on ? side : -1);
++	}
++
++	/**
++	 * Снять бой: {@code isInCombat} держат цель ИИ и стойка, они сходят сами за 15 с.
++	 */
++	private static boolean calm(Player player) throws Exception
++	{
++		player.abortAttack();
++		player.abortCast();
++		player.getAI().setIntentionIdle();
++		return waitFor(30, () -> !player.isInCombat());
++	}
++
++	private static boolean knowsHeal(Player player)
++	{
++		try
++		{
++			return internal("PhantomSupport", "knownHeal", Player.class).invoke(null, player) != null;
++		}
++		catch (Exception e)
++		{
++			return false;
++		}
++	}
++
++	/**
++	 * Стадион: хилер с малой маной без ключа садится (контроль), с ключом встаёт, не садится и лечит себя; слуга бьёт соперника только с ключом.
++	 */
++	private static void olympiad(List<Player> spare) throws Exception
++	{
++		final Method drive = internal("PhantomOlympiad", "drive", Player.class, PhantomTemplate.class, long.class);
++		final Object games = internal("PhantomOlympiad", "getInstance").invoke(null);
++		final boolean was = PhantomHuntersConfig.HUNTER_COMBAT_FIXES;
++		final Player healer = pick(spare, p -> healerRole(p) && knowsHeal(p));
++		final Player rival = pick(spare, p -> !healerRole(p));
++		check("olympiad: found a healer and a rival", (healer != null) && (rival != null));
++		if ((healer == null) || (rival == null))
++		{
++			return;
++		}
++		final PhantomTemplate template = PhantomData.getInstance().getTemplate(healer.getName());
++		park(healer, GIRAN);
++		park(rival, GIRAN);
++		olympiadMode(healer, 1, true);
++		olympiadMode(rival, 2, true);
++		try
++		{
++			// Садится только вне боя: у стадиона нет ударов 15 с, или соперник убежал.
++			check("olympiad: the healer is out of combat before the control", calm(healer));
++			healer.setCurrentMp(healer.getMaxMp() / 10.0);
++			PhantomHuntersConfig.HUNTER_COMBAT_FIXES = false;
++			boolean sat = false;
++			for (int i = 0; i < 16; i++)
++			{
++				drive.invoke(games, healer, template, System.currentTimeMillis());
++				Thread.sleep(500);
++				sat |= healer.isSitting();
++			}
++			check("olympiad: key off, a healer low on MP sits mid-match (control)", sat);
++
++			PhantomHuntersConfig.HUNTER_COMBAT_FIXES = true;
++			boolean up = false;
++			for (int i = 0; (i < 30) && !up; i++)
++			{
++				drive.invoke(games, healer, template, System.currentTimeMillis());
++				Thread.sleep(500);
++				up = !healer.isSitting();
++			}
++			check("olympiad: key on, stands up", up);
++			Thread.sleep(3000);
++			check("olympiad: the healer is out of combat again", calm(healer));
++			sat = false;
++			for (int i = 0; i < 12; i++)
++			{
++				healer.setCurrentMp(healer.getMaxMp() / 10.0);
++				drive.invoke(games, healer, template, System.currentTimeMillis());
++				Thread.sleep(500);
++				sat |= healer.isSitting();
++			}
++			check("olympiad: key on, does not sit with low MP", !sat);
++
++			healer.setCurrentMp(healer.getMaxMp());
++			final double low = healer.getMaxHp() * 0.3;
++			healer.setCurrentHp(low);
++			boolean cast = false;
++			for (int i = 0; (i < 30) && !cast; i++)
++			{
++				drive.invoke(games, healer, template, System.currentTimeMillis());
++				Thread.sleep(500);
++				cast = healer.isCastingNow() || (healer.getCurrentHp() > (low * 1.1));
++			}
++			check("olympiad: heals himself at 30% HP, HP " + (int) healer.getCurrentHp() + " of " + healer.getMaxHp(), cast);
++		}
++		finally
++		{
++			PhantomHuntersConfig.HUNTER_COMBAT_FIXES = was;
++			olympiadMode(healer, 1, false);
++			olympiadMode(rival, 2, false);
++			healer.setCurrentHp(healer.getMaxHp());
++			healer.setInvul(false);
++			rival.setInvul(false);
++		}
++
++		final Player[] found = new Player[1];
++		waitFor(180, () ->
++		{
++			for (Player p : spare)
++			{
++				if (p.hasServitor() && !p.getSummon().isDead())
++				{
++					found[0] = p;
++					return true;
++				}
++			}
++			return false;
++		});
++		check("olympiad: found a summoner with a servitor", found[0] != null);
++		if (found[0] == null)
++		{
++			return;
++		}
++		final Player owner = found[0];
++		spare.remove(owner);
++		final Player foe = pick(spare, p -> !p.hasServitor());
++		final Monster mob = wildMob(1, 90);
++		check("olympiad: found a foe and a place", (foe != null) && (mob != null));
++		if ((foe == null) || (mob == null))
++		{
++			return;
++		}
++		final Location place = mob.getLocation();
++		final PhantomTemplate ownerTemplate = PhantomData.getInstance().getTemplate(owner.getName());
++		park(owner, place);
++		park(foe, place);
++		final Summon servitor = owner.getSummon();
++		olympiadMode(owner, 1, true);
++		olympiadMode(foe, 2, true);
++		try
++		{
++			PhantomHuntersConfig.HUNTER_COMBAT_FIXES = false;
++			boolean control = false;
++			for (int i = 0; i < 8; i++)
++			{
++				drive.invoke(games, owner, ownerTemplate, System.currentTimeMillis());
++				Thread.sleep(500);
++				control |= servitor.getTarget() == foe;
++			}
++			check("olympiad: key off, the servitor does not touch the foe (control)", !control);
++
++			PhantomHuntersConfig.HUNTER_COMBAT_FIXES = true;
++			boolean ordered = false;
++			boolean swings = false;
++			for (int i = 0; i < 40; i++)
++			{
++				drive.invoke(games, owner, ownerTemplate, System.currentTimeMillis());
++				ordered |= (servitor.getTarget() == foe) && (servitor.getAI().getIntention() == Intention.ATTACK);
++				Thread.sleep(500);
++				swings |= (servitor.getTarget() == foe) && servitor.isAttackingNow();
++			}
++			final Object brain = servitor.getAI().getIntention();
++			note("olympiad: " + servitor.getName() + " spawned " + servitor.isSpawned() + ", ordered " + ordered + ", target " + servitor.getTarget() + ", intention " + brain + ", attack target " + servitor.getAI().getAttackTarget() + ", distance " + (int) servitor.calculateDistance2D(foe) + ", moving " + servitor.isMoving() + ", attack disabled " + servitor.isAttackDisabled() + ", sees the foe " + GeoEngine.getInstance().canSeeTarget(servitor, foe) + ", has geo " + GeoEngine.getInstance().hasGeo(servitor.getX(), servitor.getY()) + ", path " + (PathFinding.getInstance().findPath(servitor.getX(), servitor.getY(), servitor.getZ(), foe.getX(), foe.getY(), foe.getZ(), servitor.getInstanceId(), false) != null));
++			if (!swings)
++			{
++				Thread.sleep(2000);
++				servitor.doAttack(foe);
++				note("olympiad: a direct doAttack swings " + servitor.isAttackingNow());
++			}
++			check("olympiad: key on, " + servitor.getName() + " goes for the foe, swinging " + swings, ordered && swings);
++		}
++		finally
++		{
++			PhantomHuntersConfig.HUNTER_COMBAT_FIXES = was;
++			olympiadMode(owner, 1, false);
++			olympiadMode(foe, 2, false);
++			servitor.setTarget(null);
++			servitor.getAI().setIntentionActive();
++			owner.setInvul(false);
++			foe.setInvul(false);
++		}
++	}
++
++	/**
++	 * Цель выбирается каждый тик: приказ доходит не мгновенно. Не дошло за 6 с — в лог, что было с обеими сторонами.
++	 */
++	private static boolean picks(Method choose, Player expected, boolean assist, boolean protect, Player helper, Player owner) throws Exception
++	{
++		final boolean found = waitFor(6, () ->
++		{
++			try
++			{
++				return choose.invoke(null, assist, protect, helper, owner) == expected;
++			}
++			catch (ReflectiveOperationException e)
++			{
++				return false;
++			}
++		});
++		if (!found)
++		{
++			note("pvp: enemy target " + expected.getTarget() + ", intention " + expected.getAI().getIntention() + ", attacking " + expected.isAttackingNow() + ", flag " + expected.getPvpFlag() + ", karma " + expected.getKarma() + ", invul " + expected.isInvul() + ", protected " + expected.isSpawnProtected() + ", attackable by helper " + expected.isAutoAttackable(helper) + " and owner " + expected.isAutoAttackable(owner) + ", seen " + GeoEngine.getInstance().canSeeTarget(helper, expected) + ", clans " + helper.getClanId() + " " + owner.getClanId() + " " + expected.getClanId() + "; owner target " + owner.getTarget() + ", intention " + owner.getAI().getIntention() + ", in combat " + owner.isInCombat() + ", distance " + (int) owner.calculateDistance2D(expected));
++		}
++		return found;
++	}
++
++	/**
++	 * Напарник в PvP: не трогает белого, защищает владельца и себя по режиму, бьёт цель владельца, если её законно бить.
++	 */
++	private static void pvpAssist(List<Player> spare) throws Exception
++	{
++		final Method choose = PhantomCompanionManager.class.getDeclaredMethod("pvpEnemy", boolean.class, boolean.class, Player.class, Player.class);
++		choose.setAccessible(true);
++		final Monster mob = wildMob(1, 40);
++		final Player helper = pick(spare, p -> !p.isCursedWeaponEquipped());
++		final Player owner = (helper == null) ? null : pick(spare, p -> !p.isCursedWeaponEquipped() && ((p.getClanId() == 0) || (p.getClanId() != helper.getClanId())));
++		final Player enemy = (owner == null) ? null : pick(spare, p -> !p.isCursedWeaponEquipped() && ((p.getClanId() == 0) || (p.getClanId() != owner.getClanId())) && ((p.getAllyId() == 0) || (p.getAllyId() != owner.getAllyId())));
++		check("pvp: found three hunters and a place", (mob != null) && (enemy != null));
++		if ((mob == null) || (enemy == null))
++		{
++			return;
++		}
++		final Location place = mob.getLocation();
++		park(helper, place);
++		park(owner, place);
++		park(enemy, place);
++		enemy.setInvul(false);
++		enemy.setCurrentHp(enemy.getMaxHp());
++		try
++		{
++			// Белый, начав бить, сам становится фиолетовым, поэтому белого проверяем до удара.
++			final Method legal = PhantomCompanionManager.class.getDeclaredMethod("isPvpEnemy", Player.class, Player.class, Creature.class);
++			legal.setAccessible(true);
++			check("pvp: a white player is no enemy", !((Boolean) legal.invoke(null, helper, owner, enemy)));
++			enemy.setTarget(owner);
++			check("pvp: a white player with the owner in target is left alone", choose.invoke(null, true, true, helper, owner) == null);
++
++			enemy.setPvpFlag(1);
++			enemy.setTarget(owner);
++			enemy.getAI().setIntentionAttack(owner);
++			check("pvp: a flagged player on the owner is hit", picks(choose, enemy, false, true, helper, owner));
++			enemy.setTarget(owner);
++			enemy.getAI().setIntentionAttack(owner);
++			check("pvp: in stay mode the owner is not defended", choose.invoke(null, false, false, helper, owner) == null);
++			enemy.setTarget(helper);
++			enemy.getAI().setIntentionAttack(helper);
++			check("pvp: in stay mode he defends himself", picks(choose, enemy, false, false, helper, owner));
++
++			enemy.abortAttack();
++			enemy.setTarget(null);
++			enemy.getAI().setIntentionIdle();
++			owner.setTarget(enemy);
++			owner.getAI().setIntentionAttack(enemy);
++			check("pvp: assists on the owner's flagged target", picks(choose, enemy, true, false, helper, owner));
++			check("pvp: no assist in stay mode", choose.invoke(null, false, false, helper, owner) == null);
++			enemy.setPvpFlag(0);
++			check("pvp: the owner's white target is not hit, no PK", choose.invoke(null, true, false, helper, owner) == null);
++		}
++		finally
++		{
++			enemy.setPvpFlag(0);
++			enemy.abortAttack();
++			enemy.setTarget(null);
++			enemy.getAI().setIntentionIdle();
++			owner.abortAttack();
++			owner.getAI().setIntentionIdle();
++			owner.setPvpFlag(0);
++			owner.setTarget(null);
++			helper.setInvul(false);
++			owner.setInvul(false);
++		}
++	}
++
++	/**
++	 * Добор на ивент: свободный записывается, охотник в лавке — нет (закрытая лавка вывела бы его из мира).
++	 */
++	private static void recruit(List<Player> spare) throws Exception
++	{
++		final Quest script = ScriptManager.getInstance().getScript("TvT");
++		check("recruit: TvT idle before the test, " + status(script)[0], status(script)[0].equals("INACTIVE"));
++		final Method control = internal("PhantomEvents", "control", List.class, long.class);
++		final Object events = internal("PhantomEvents", "getInstance").invoke(null);
++		final int max = PhantomHuntersConfig.HUNTER_PVP_EVENT_MAX;
++		final int chance = PhantomHuntersConfig.HUNTER_PVP_EVENT_CHANCE;
++		final boolean enabled = PhantomHuntersConfig.HUNTER_PVP_EVENTS;
++		Player store = null;
++		for (Player player : World.getPlayers())
++		{
++			if (PhantomManager.getInstance().isPhantom(player) && player.isInStoreMode() && !player.isRegisteredOnEvent())
++			{
++				store = player;
++				break;
++			}
++		}
++		PhantomHuntersConfig.HUNTER_PVP_EVENTS = true;
++		PhantomHuntersConfig.HUNTER_PVP_EVENT_MAX = 100;
++		PhantomHuntersConfig.HUNTER_PVP_EVENT_CHANCE = 100;
++		((Event) script).eventStart(null);
++		try
++		{
++			final Player hunter = fighter(spare, 50);
++			final List<Player> one = List.of(hunter);
++			for (int i = 0; (i < 60) && !hunter.isRegisteredOnEvent(); i++)
++			{
++				control.invoke(events, one, System.currentTimeMillis());
++				Thread.sleep(500);
++			}
++			check("recruit: a free hunter registers", hunter.isRegisteredOnEvent());
++			if (store == null)
++			{
++				note("recruit: no hunter in a store right now");
++			}
++			else
++			{
++				final List<Player> shop = List.of(store);
++				for (int i = 0; i < 10; i++)
++				{
++					control.invoke(events, shop, System.currentTimeMillis());
++				}
++				check("recruit: a hunter in a store does not", !store.isRegisteredOnEvent());
++			}
++		}
++		finally
++		{
++			((Event) script).eventStop();
++			PhantomHuntersConfig.HUNTER_PVP_EVENTS = enabled;
++			PhantomHuntersConfig.HUNTER_PVP_EVENT_MAX = max;
++			PhantomHuntersConfig.HUNTER_PVP_EVENT_CHANCE = chance;
++		}
++	}
++}

@@ -1,0 +1,567 @@
+L2Hub: доска Alt+B по разделам: в навигации девять кнопок, споты на странице телепорта, «Мир» и вкладки клана.
+
+diff --git a/dist/game/data/html/CommunityBoard/Custom/dropsearch/main.html b/dist/game/data/html/CommunityBoard/Custom/dropsearch/main.html
+index e14ab5b..791c298 100644
+--- a/dist/game/data/html/CommunityBoard/Custom/dropsearch/main.html
++++ b/dist/game/data/html/CommunityBoard/Custom/dropsearch/main.html
+@@ -7,7 +7,7 @@
+ 		</table>
+ 		<table width=20>
+ 			<tr>
+-				<td>
++				<td valign=top>
+ 					%navigation%
+ 				</td>
+ 				<td>
+diff --git a/dist/game/data/html/CommunityBoard/Custom/gatekeeper/main.html b/dist/game/data/html/CommunityBoard/Custom/gatekeeper/main.html
+index be999ec..afbda36 100644
+--- a/dist/game/data/html/CommunityBoard/Custom/gatekeeper/main.html
++++ b/dist/game/data/html/CommunityBoard/Custom/gatekeeper/main.html
+@@ -7,14 +7,14 @@
+ 		</table>
+ 		<table width=20>
+ 			<tr>
+-				<td>
++				<td valign=top>
+ 					%navigation%
+ 				</td>
+ 				<td>
+ 					<center>
+ 						<table border=0 cellpadding=0 cellspacing=0 width=555 height=455 background="L2UI_CT1.Windows_DF_TooltipBG">
+ 							<tr>
+-								<td height=25></td>
++								<td height=15></td>
+ 							</tr>
+ 							<tr>
+ 								<td height=25 align="center"><font name="hs12" color="CDB67F">Teleport</font></td>
+@@ -25,25 +25,7 @@
+ 								</td>
+ 							</tr>
+ 							<tr>
+-								<td height=30></td>
+-							</tr>
+-							<tr>
+-								<td align="center">
+-									From here you can fly to any town.
+-									<br1>
+-									Pick where to go.
+-								</td>
+-							</tr>
+-							<tr>
+-								<td height=25></td>
+-							</tr>
+-							<tr>
+-								<td>
+-									<center><img src="L2UI.SquareGray" width=500 height=1></center>
+-								</td>
+-							</tr>
+-							<tr>
+-								<td height=25></td>
++								<td height=12></td>
+ 							</tr>
+ 							<tr>
+ 								<td align="center">
+@@ -70,7 +52,7 @@
+ 									</table>
+ 									<table align=center border="0">
+ 										<tr>
+-											<td height=15></td>
++											<td height=6></td>
+ 										</tr>
+ 										<tr>
+ 											<td>
+@@ -78,7 +60,7 @@
+ 											</td>
+ 										</tr>
+ 										<tr>
+-											<td height=20></td>
++											<td height=6></td>
+ 										</tr>
+ 									</table>
+ 									<table align=center border="0" height=45>
+@@ -96,7 +78,25 @@
+ 								</td>
+ 							</tr>
+ 							<tr>
+-								<td height=60></td>
++								<td height=8></td>
++							</tr>
++							<tr>
++								<td><center><img src="L2UI.SquareGray" width=500 height=1></center></td>
++							</tr>
++							<tr>
++								<td height=10></td>
++							</tr>
++							<tr>
++								<td align="center"><font color="LEVEL">Hunting spots by mob level</font><br1><font color="808080">A list of places opens, teleport with the button in a row.</font></td>
++							</tr>
++							<tr>
++								<td height=6></td>
++							</tr>
++							<tr>
++								<td align="center">%spot_bands%</td>
++							</tr>
++							<tr>
++								<td height=10></td>
+ 							</tr>
+ 						</table>
+ 						<table border=0 cellpadding=0 cellspacing=0 width=555>
+diff --git a/dist/game/data/html/CommunityBoard/Custom/home.html b/dist/game/data/html/CommunityBoard/Custom/home.html
+index 3f59212..7386fe8 100644
+--- a/dist/game/data/html/CommunityBoard/Custom/home.html
++++ b/dist/game/data/html/CommunityBoard/Custom/home.html
+@@ -7,7 +7,7 @@
+ 		</table>
+ 		<table width=20>
+ 			<tr>
+-				<td>
++				<td valign=top>
+ 					%navigation%
+ 				</td>
+ 				<td>
+@@ -20,7 +20,7 @@
+ 							</tr>
+ 							<tr>
+ 								<td align="center" height=240>
+-									<font name="hs12" color="CDB67F">L2Hub — a server for friends</font><br><br><font color="B09878">On the left: a buffer with fighter and mage sets, a GM Shop, teleports to towns,<br1>companions (Vesna heals, Mityai buffs),<br1>hunters — who levels and trades where — and drop search.</font><br><br><font color="808080">You can tell companions in nearby general chat or in party chat: "follow", "buff", "heal", "res", "bye".</font>
++									<font name="hs12" color="CDB67F">L2Hub — a server for friends</font><br><br><font color="B09878">Buffer: sets by role and your own.<br1>GM Shop: gear, starter kits, Clan Items, loot sale.<br1>Teleport: towns and hunting spots by mob level.<br1>Companions: Vesna heals, Mityai buffs.<br1>World: hunters, daily tasks, hunters' raid, the world now.<br1>Clan: create, recruit, wars.<br1>Events: sign up for TvT, Deathmatch and CtF.<br1>Drop search: who drops what.</font><br><br><font color="808080">You can tell companions in nearby general chat or in party chat: "follow", "buff", "heal", "res", "bye".</font>
+ 								</td>
+ 							</tr>
+ 						</table>
+diff --git a/dist/game/data/html/CommunityBoard/Custom/navigation.html b/dist/game/data/html/CommunityBoard/Custom/navigation.html
+index d83f29a..5cbdb20 100644
+--- a/dist/game/data/html/CommunityBoard/Custom/navigation.html
++++ b/dist/game/data/html/CommunityBoard/Custom/navigation.html
+@@ -12,29 +12,16 @@
+ 	<td><button value="GM Shop" action="bypass _bbshubshop" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_BuyEquip_Down" fore="L2UI_CT1.OlympiadWnd_DF_BuyEquip"></td>
+ </tr>
+ <tr>
+-	<td><button value="Teleport" action="bypass _bbstop;gatekeeper/main.html" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_HeroConfirm_Down" fore="L2UI_CT1.OlympiadWnd_DF_HeroConfirm"></td>
+-</tr>
+-<tr>
+-	<td><button value="Hunting spots" action="bypass _bbshubspots" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_HeroConfirm_Down" fore="L2UI_CT1.OlympiadWnd_DF_HeroConfirm"></td>
++	<td><button value="Teleport" action="bypass _bbshubspots" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_HeroConfirm_Down" fore="L2UI_CT1.OlympiadWnd_DF_HeroConfirm"></td>
+ </tr>
+ <tr>
+ 	<td><button value="Companions" action="bypass _bbshubbuddy" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Reward_Down" fore="L2UI_CT1.OlympiadWnd_DF_Reward"></td>
+ </tr>
+ <tr>
+-	<td><button value="Hunters" action="bypass _bbshubhunters" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Fight1None_Down" fore="L2UI_CT1.OlympiadWnd_DF_Fight1None"></td>
+-</tr>
+-<tr>
+-	<td><button value="Daily tasks" action="bypass voice .daily" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Fight1None_Down" fore="L2UI_CT1.OlympiadWnd_DF_Fight1None"></td>
+-</tr>
+-<tr>
+-	<td><button value="Hunters' raid" action="bypass voice .raid" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Fight1None_Down" fore="L2UI_CT1.OlympiadWnd_DF_Fight1None"></td>
+-<button value="World" action="bypass voice .world" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
+-</tr>
+-<tr>
+-	<td><button value="Clan wars" action="bypass _bbshubwars" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Fight1None_Down" fore="L2UI_CT1.OlympiadWnd_DF_Fight1None"></td>
++	<td><button value="World" action="bypass _bbshubworld" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Fight1None_Down" fore="L2UI_CT1.OlympiadWnd_DF_Fight1None"></td>
+ </tr>
+ <tr>
+-	<td><button value="Clan: create, recruit" action="bypass _bbshubclan" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Fight1None_Down" fore="L2UI_CT1.OlympiadWnd_DF_Fight1None"></td>
++	<td><button value="Clan" action="bypass _bbshubclan" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Fight1None_Down" fore="L2UI_CT1.OlympiadWnd_DF_Fight1None"></td>
+ </tr>
+ <tr>
+ 	<td><button value="Events" action="bypass _bbshubevents" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Fight1None_Down" fore="L2UI_CT1.OlympiadWnd_DF_Fight1None"></td>
+diff --git a/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/dropsearch/main.html b/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/dropsearch/main.html
+index e3c1080..679058f 100644
+--- a/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/dropsearch/main.html
++++ b/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/dropsearch/main.html
+@@ -7,7 +7,7 @@
+ 		</table>
+ 		<table width=20>
+ 			<tr>
+-				<td>
++				<td valign=top>
+ 					%navigation%
+ 				</td>
+ 				<td>
+diff --git a/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/gatekeeper/main.html b/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/gatekeeper/main.html
+index 4d2fd23..6b56a69 100644
+--- a/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/gatekeeper/main.html
++++ b/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/gatekeeper/main.html
+@@ -7,14 +7,14 @@
+ 		</table>
+ 		<table width=20>
+ 			<tr>
+-				<td>
++				<td valign=top>
+ 					%navigation%
+ 				</td>
+ 				<td>
+ 					<center>
+ 						<table border=0 cellpadding=0 cellspacing=0 width=555 height=455 background="L2UI_CT1.Windows_DF_TooltipBG">
+ 							<tr>
+-								<td height=25></td>
++								<td height=15></td>
+ 							</tr>
+ 							<tr>
+ 								<td height=25 align="center"><font name="hs12" color="CDB67F">Телепорт</font></td>
+@@ -25,25 +25,7 @@
+ 								</td>
+ 							</tr>
+ 							<tr>
+-								<td height=30></td>
+-							</tr>
+-							<tr>
+-								<td align="center">
+-									Отсюда можно улететь в любой город.
+-									<br1>
+-									Выбери, куда.
+-								</td>
+-							</tr>
+-							<tr>
+-								<td height=25></td>
+-							</tr>
+-							<tr>
+-								<td>
+-									<center><img src="L2UI.SquareGray" width=500 height=1></center>
+-								</td>
+-							</tr>
+-							<tr>
+-								<td height=25></td>
++								<td height=12></td>
+ 							</tr>
+ 							<tr>
+ 								<td align="center">
+@@ -70,7 +52,7 @@
+ 									</table>
+ 									<table align=center border="0">
+ 										<tr>
+-											<td height=15></td>
++											<td height=6></td>
+ 										</tr>
+ 										<tr>
+ 											<td>
+@@ -78,7 +60,7 @@
+ 											</td>
+ 										</tr>
+ 										<tr>
+-											<td height=20></td>
++											<td height=6></td>
+ 										</tr>
+ 									</table>
+ 									<table align=center border="0" height=45>
+@@ -96,7 +78,25 @@
+ 								</td>
+ 							</tr>
+ 							<tr>
+-								<td height=60></td>
++								<td height=8></td>
++							</tr>
++							<tr>
++								<td><center><img src="L2UI.SquareGray" width=500 height=1></center></td>
++							</tr>
++							<tr>
++								<td height=10></td>
++							</tr>
++							<tr>
++								<td align="center"><font color="LEVEL">Споты по уровню мобов</font><br1><font color="808080">Откроется список мест, телепорт — кнопкой в строке.</font></td>
++							</tr>
++							<tr>
++								<td height=6></td>
++							</tr>
++							<tr>
++								<td align="center">%spot_bands%</td>
++							</tr>
++							<tr>
++								<td height=10></td>
+ 							</tr>
+ 						</table>
+ 						<table border=0 cellpadding=0 cellspacing=0 width=555>
+diff --git a/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/home.html b/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/home.html
+index 61839f0..8fe4864 100644
+--- a/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/home.html
++++ b/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/home.html
+@@ -7,7 +7,7 @@
+ 		</table>
+ 		<table width=20>
+ 			<tr>
+-				<td>
++				<td valign=top>
+ 					%navigation%
+ 				</td>
+ 				<td>
+@@ -20,7 +20,7 @@
+ 							</tr>
+ 							<tr>
+ 								<td align="center" height=240>
+-									<font name="hs12" color="CDB67F">L2Hub — сервер для своих</font><br><br><font color="B09878">Слева: баффер с наборами для воина и мага, GM-шоп, телепорт по городам,<br1>напарники (Весна лечит, Митяй бафает),<br1>охотники — кто где качается и торгует, и поиск дропа.</font><br><br><font color="808080">Напарникам можно писать в общий чат рядом или в чат пати: «за мной», «бафни», «хил», «рес», «пока».</font>
++									<font name="hs12" color="CDB67F">L2Hub — сервер для своих</font><br><br><font color="B09878">Баффер: наборы по ролям и свои.<br1>GM-шоп: снаряжение, стартовые наборы, Clan Items, продажа лута.<br1>Телепорт: города и споты по уровню мобов.<br1>Напарники: Весна лечит, Митяй бафает.<br1>Мир: охотники, поручения дня, рейд охотников, мир сейчас.<br1>Клан: создать, набрать, войны.<br1>Ивенты: запись на TvT, Deathmatch и CtF.<br1>Поиск дропа: с кого что падает.</font><br><br><font color="808080">Напарникам можно писать в общий чат рядом или в чат пати: «за мной», «бафни», «хил», «рес», «пока».</font>
+ 								</td>
+ 							</tr>
+ 						</table>
+diff --git a/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/navigation.html b/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/navigation.html
+index ae075f0..b881ae4 100644
+--- a/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/navigation.html
++++ b/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/navigation.html
+@@ -12,29 +12,16 @@
+ 	<td><button value="GM-шоп" action="bypass _bbshubshop" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_BuyEquip_Down" fore="L2UI_CT1.OlympiadWnd_DF_BuyEquip"></td>
+ </tr>
+ <tr>
+-	<td><button value="Телепорт" action="bypass _bbstop;gatekeeper/main.html" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_HeroConfirm_Down" fore="L2UI_CT1.OlympiadWnd_DF_HeroConfirm"></td>
+-</tr>
+-<tr>
+-	<td><button value="Споты" action="bypass _bbshubspots" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_HeroConfirm_Down" fore="L2UI_CT1.OlympiadWnd_DF_HeroConfirm"></td>
++	<td><button value="Телепорт" action="bypass _bbshubspots" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_HeroConfirm_Down" fore="L2UI_CT1.OlympiadWnd_DF_HeroConfirm"></td>
+ </tr>
+ <tr>
+ 	<td><button value="Напарники" action="bypass _bbshubbuddy" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Reward_Down" fore="L2UI_CT1.OlympiadWnd_DF_Reward"></td>
+ </tr>
+ <tr>
+-	<td><button value="Охотники" action="bypass _bbshubhunters" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Fight1None_Down" fore="L2UI_CT1.OlympiadWnd_DF_Fight1None"></td>
+-</tr>
+-<tr>
+-	<td><button value="Поручения дня" action="bypass voice .daily" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Fight1None_Down" fore="L2UI_CT1.OlympiadWnd_DF_Fight1None"></td>
+-</tr>
+-<tr>
+-	<td><button value="Рейд охотников" action="bypass voice .raid" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Fight1None_Down" fore="L2UI_CT1.OlympiadWnd_DF_Fight1None"></td>
+-<button value="Мир" action="bypass voice .world" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
+-</tr>
+-<tr>
+-	<td><button value="Войны кланов" action="bypass _bbshubwars" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Fight1None_Down" fore="L2UI_CT1.OlympiadWnd_DF_Fight1None"></td>
++	<td><button value="Мир" action="bypass _bbshubworld" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Fight1None_Down" fore="L2UI_CT1.OlympiadWnd_DF_Fight1None"></td>
+ </tr>
+ <tr>
+-	<td><button value="Клан: создать, набрать" action="bypass _bbshubclan" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Fight1None_Down" fore="L2UI_CT1.OlympiadWnd_DF_Fight1None"></td>
++	<td><button value="Клан" action="bypass _bbshubclan" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Fight1None_Down" fore="L2UI_CT1.OlympiadWnd_DF_Fight1None"></td>
+ </tr>
+ <tr>
+ 	<td><button value="Ивенты" action="bypass _bbshubevents" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Fight1None_Down" fore="L2UI_CT1.OlympiadWnd_DF_Fight1None"></td>
+diff --git a/dist/game/data/scripts/custom/L2HubBoardTest/L2HubBoardTest.java b/dist/game/data/scripts/custom/L2HubBoardTest/L2HubBoardTest.java
+index ebcde0d..1b83af3 100644
+--- a/dist/game/data/scripts/custom/L2HubBoardTest/L2HubBoardTest.java
++++ b/dist/game/data/scripts/custom/L2HubBoardTest/L2HubBoardTest.java
+@@ -17,6 +17,7 @@ import java.util.regex.Matcher;
+ import java.util.regex.Pattern;
+ 
+ import org.l2jmobius.commons.threads.ThreadPool;
++import org.l2jmobius.gameserver.cache.HtmCache;
+ import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
+ import org.l2jmobius.gameserver.data.sql.ClanTable;
+ import org.l2jmobius.gameserver.data.xml.ItemData;
+@@ -181,6 +182,8 @@ public class L2HubBoardTest
+ 		});
+ 		Files.writeString(Path.of("./log/L2HubBoardSpots.html"), bands);
+ 		check("spots: bands page " + bands.length() + " chars", (bands.length() < PAGE_LIMIT) && bands.contains("_bbshubspots 20") && bands.contains("80+"));
++		check("teleport: towns and bands on one page", bands.contains("_bbsteleport;Giran") && !bands.contains("%spot_bands%") && !bands.contains("%navigation%"));
++		sections(player);
+ 
+ 		int rows = 0;
+ 		int longest = 0;
+@@ -264,6 +267,21 @@ public class L2HubBoardTest
+ 		player.teleToLocation(GIRAN);
+ 	}
+ 
++	/**
++	 * Разделы доски: в навигации только они, остальное — на их страницах.
++	 */
++	private static void sections(Player player)
++	{
++		final String navigation = HtmCache.getInstance().getHtm(player, "data/html/CommunityBoard/Custom/navigation.html");
++		check("navigation: " + (navigation.split("<button").length - 1) + " buttons", ((navigation.split("<button").length - 1) == 9) && navigation.contains("bypass _bbshubspots\"") && navigation.contains("bypass _bbshubworld\"") && navigation.contains("bypass _bbshubclan\"") && !navigation.contains("_bbshubwars") && !navigation.contains("gatekeeper/main.html") && !navigation.contains("voice ."));
++		final String world = L2HubBoard.world(player);
++		check("world: hunters, daily, raid, world now", world.contains("bypass _bbshubhunters\"") && world.contains("bypass voice .daily\"") && world.contains("bypass voice .raid\"") && world.contains("bypass voice .world\"") && (world.length() < PAGE_LIMIT));
++		final String recruit = L2HubBoard.clanTabs("_bbshubclan");
++		final String wars = L2HubBoard.clanTabs("_bbshubwars");
++		check("clan tabs: the other tab is a button", recruit.contains("bypass _bbshubwars\"") && !recruit.contains("bypass _bbshubclan\"") && wars.contains("bypass _bbshubclan\"") && !wars.contains("bypass _bbshubwars\""));
++		check("handler of the world section", CommunityBoardHandler.getInstance().getHandler("_bbshubworld") != null);
++	}
++
+ 	private static void clan(Player player, List<Player> spare) throws Exception
+ 	{
+ 		if (player == null)
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+index 7f9cb15..dc2f92c 100644
+--- a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+@@ -44,9 +44,10 @@ import org.l2jmobius.gameserver.network.serverpackets.ShowBoard;
+  * <li>_bbshubbuff [категория] — баффер из SchemeBufferSkills.xml (как городской баффер схем): категории, по одному бафу, наборы воину и магу (FIGHTER_GROUP, MAGE_GROUP), себе или питомцу; хил и снять бафы</li>
+  * <li>_bbshubshop [страница] — GM-шоп из страниц NPC GM-шопа (html/merchant/&lt;CommunityShopNpc&gt;*.htm) с переписанными кнопками; мультиселлы — MultisellData.separateAndSendFromBoard</li>
+  * <li>_bbshubbuddy [действие имя] — окно напарников ({@link PhantomUi})</li>
++ * <li>_bbshubworld — раздел «Мир»: охотники, поручения дня, рейд охотников, мир сейчас ({@link #world})</li>
+  * <li>_bbshubhunters [near|all|store] [страница] | go &lt;имя&gt; … — кто из охотников где и телепорт на их спот или к лавке ({@link PhantomHunterUi})</li>
+- * <li>_bbshubwars [all|hunters|players] [страница] … — кланы и объявление войны, _bbshubclan … — создание клана ({@link #clan}) и набор в клан ({@link PhantomClanBoard})</li>
+- * <li>_bbshubspots [от [страница]] | go &lt;номер&gt; &lt;от&gt; &lt;страница&gt; — телепорт к спотам по уровню мобов ({@link #spots})</li>
++ * <li>раздел «Клан», вкладки {@link #clanTabs}: _bbshubclan … — создание клана ({@link #clan}) и набор в клан ({@link PhantomClanBoard}), _bbshubwars [all|hunters|players] [страница] … — кланы и объявление войны</li>
++ * <li>_bbshubspots [от [страница]] | go &lt;номер&gt; &lt;от&gt; &lt;страница&gt; — раздел «Телепорт»: города и полосы уровней, затем список спотов ({@link #spots})</li>
+  * <li>_bbshubkits [take &lt;грейд&gt; &lt;броня&gt;] — стартовые наборы ({@link L2HubKits})</li>
+  * <li>_bbshubevents [join|cancel &lt;ивент&gt;] — запись на TvT, Deathmatch и CtF ({@link PhantomEventBoard})</li>
+  * </ul>
+@@ -101,8 +102,7 @@ public class L2HubBoard implements IParseBoardHandler
+ 		java.util.Map.entry("Создать клан", "Create a clan"),
+ 		java.util.Map.entry("С 10-го уровня. Имя: от 2 до 16 букв и цифр, без пробелов.", "From level 10. Name: 2 to 16 letters and digits, no spaces."),
+ 		java.util.Map.entry("Споты", "Hunting spots"),
+-		java.util.Map.entry("Выбери уровень мобов: откроется список мест, телепорт — кнопкой в строке.", "Pick a mob level: a list of places opens, teleport with the button in a row."),
+-		java.util.Map.entry("К уровням", "Back to levels"),
++		java.util.Map.entry("К телепорту", "Back to Teleport"),
+ 		java.util.Map.entry("Мобы ", "Mobs "),
+ 		java.util.Map.entry("На этих уровнях мест нет.", "No places at these levels."),
+ 		java.util.Map.entry("Место", "Place"),
+@@ -115,6 +115,16 @@ public class L2HubBoard implements IParseBoardHandler
+ 		java.util.Map.entry("Телепорт доски выключен в настройках сервера (CommunityBoard.ini, CommunityEnableTeleports).", "Board teleport is turned off in the server settings (CommunityBoard.ini, CommunityEnableTeleports)."),
+ 		java.util.Map.entry("Отсюда телепорт не работает.", "Teleport does not work from here."),
+ 		java.util.Map.entry("Не хватает денег на телепорт.", "Not enough money for the teleport."),
++		java.util.Map.entry("Клан", "Clan"),
++		java.util.Map.entry("Создание и набор", "Create and recruit"),
++		java.util.Map.entry("Мир", "World"),
++		java.util.Map.entry("Кто где качается и торгует, телепорт к ним.", "Who levels and trades where, teleport to them."),
++		java.util.Map.entry("Поручения дня", "Daily tasks"),
++		java.util.Map.entry("Задания на сегодня, прогресс, награды и место дня.", "Today's tasks, progress, rewards and the place of the day."),
++		java.util.Map.entry("Рейд охотников", "Hunters' raid"),
++		java.util.Map.entry("Кто кого собирается бить, где сбор, сколько до боя.", "Who is going to fight whom, where they gather, how long until the fight."),
++		java.util.Map.entry("Мир сейчас", "The world now"),
++		java.util.Map.entry("Суперчемпионы, сезонные события и расписание ивентов.", "Super champions, seasonal events and the event schedule."),
+ 		java.util.Map.entry("Стартовые наборы", "Starter kits"),
+ 		java.util.Map.entry("<br><font color=\"808080\">Наборы выключены в настройках сервера (L2HubTown.ini, TownStarterKits).</font>", "<br><font color=\"808080\">Starter kits are turned off in the server settings (L2HubTown.ini, TownStarterKits).</font>"),
+ 		java.util.Map.entry("Набор выдан, он в инвентаре.", "Kit given, it is in your inventory."),
+@@ -156,6 +166,7 @@ public class L2HubBoard implements IParseBoardHandler
+ 	}
+ 	
+ 	private static final String NAVIGATION_PATH = "data/html/CommunityBoard/Custom/navigation.html";
++	private static final String TELEPORT_PATH = "data/html/CommunityBoard/Custom/gatekeeper/main.html";
+ 	private static final String BUFF = "_bbshubbuff";
+ 	private static final String[][] ROLES =
+ 	{
+@@ -177,6 +188,7 @@ public class L2HubBoard implements IParseBoardHandler
+ 	private static final String CLAN_RECRUIT = "_bbshubclan";
+ 	private static final String EVENTS = "_bbshubevents";
+ 	private static final String SPOTS = "_bbshubspots";
++	private static final String WORLD = "_bbshubworld";
+ 	private static final int SPOT_PAGE = 10;
+ 	private static final int[] SPOT_BANDS =
+ 	{
+@@ -212,6 +224,7 @@ public class L2HubBoard implements IParseBoardHandler
+ 		CLAN_RECRUIT,
+ 		EVENTS,
+ 		SPOTS,
++		WORLD,
+ 		L2HubKits.COMMAND
+ 	};
+ 
+@@ -250,16 +263,20 @@ public class L2HubBoard implements IParseBoardHandler
+ 		}
+ 		else if (args[0].equalsIgnoreCase(CLAN_WARS))
+ 		{
+-			html = page(player, PhantomClanBoard.warsTitle(), canUse(player) ? PhantomClanBoard.getInstance().wars(player, args) : PhantomClanBoard.busy());
++			html = page(player, tr("Клан"), clanTabs(CLAN_WARS) + (canUse(player) ? PhantomClanBoard.getInstance().wars(player, args) : PhantomClanBoard.busy()));
+ 		}
+ 		else if (args[0].equalsIgnoreCase(CLAN_RECRUIT))
+ 		{
+-			html = page(player, PhantomClanBoard.recruitTitle(), clan(player, args));
++			html = page(player, tr("Клан"), clanTabs(CLAN_RECRUIT) + clan(player, args));
+ 		}
+ 		else if (args[0].equalsIgnoreCase(SPOTS))
+ 		{
+ 			html = spots(player, args);
+ 		}
++		else if (args[0].equalsIgnoreCase(WORLD))
++		{
++			html = world(player);
++		}
+ 		else if (args[0].equalsIgnoreCase(L2HubKits.COMMAND))
+ 		{
+ 			html = page(player, tr("Стартовые наборы"), townOn(L2HubKits.KEY) ? L2HubKits.content(player, args) : tr("<br><font color=\"808080\">Наборы выключены в настройках сервера (L2HubTown.ini, TownStarterKits).</font>"));
+@@ -704,6 +721,28 @@ public class L2HubBoard implements IParseBoardHandler
+ 		return page(player, tr("Напарники"), PhantomUi.render(player, "bypass " + BUDDY));
+ 	}
+ 
++	// ---------- Мир ----------
++
++	/**
++	 * _bbshubworld — что творится в мире: охотники на доске, остальное открывается окном рядом с ней.
++	 * @param player кто открыл
++	 * @return страница
++	 */
++	public static String world(Player player)
++	{
++		final StringBuilder sb = new StringBuilder(1024).append("<table width=500>");
++		worldRow(sb, tr("Охотники"), HUNTERS, tr("Кто где качается и торгует, телепорт к ним."));
++		worldRow(sb, tr("Поручения дня"), "voice .daily", tr("Задания на сегодня, прогресс, награды и место дня."));
++		worldRow(sb, tr("Рейд охотников"), "voice .raid", tr("Кто кого собирается бить, где сбор, сколько до боя."));
++		worldRow(sb, tr("Мир сейчас"), "voice .world", tr("Суперчемпионы, сезонные события и расписание ивентов."));
++		return page(player, tr("Мир"), sb.append("</table>").toString());
++	}
++
++	private static void worldRow(StringBuilder sb, String label, String action, String note)
++	{
++		sb.append("<tr><td width=170 align=center>").append(button(label, action, 160)).append("</td><td width=330><font color=\"B09878\">").append(note).append("</font></td></tr><tr><td height=8></td></tr>");
++	}
++
+ 	// ---------- Охотники ----------
+ 
+ 	/**
+@@ -735,6 +774,21 @@ public class L2HubBoard implements IParseBoardHandler
+ 
+ 	// ---------- Клан ----------
+ 
++	/**
++	 * Вкладки раздела «Клан»: открытая — надписью, другая — кнопкой.
++	 * @param current {@link #CLAN_RECRUIT} или {@link #CLAN_WARS}
++	 * @return строка вкладок
++	 */
++	public static String clanTabs(String current)
++	{
++		return "<table width=420><tr><td width=210 align=center>" + clanTab(tr("Создание и набор"), CLAN_RECRUIT, current) + "</td><td width=210 align=center>" + clanTab(PhantomClanBoard.warsTitle(), CLAN_WARS, current) + "</td></tr></table><br>";
++	}
++
++	private static String clanTab(String label, String command, String current)
++	{
++		return command.equals(current) ? "<font color=\"LEVEL\">" + label + "</font>" : button(label, command, 170);
++	}
++
+ 	/**
+ 	 * _bbshubclan [create &lt;имя&gt;] | действия набора ({@link PhantomClanBoard}). Бесклановому сверху форма создания клана: те же проверки, что у гранд-мастера (VillageMaster, create_clan), всё остальное решает {@link ClanTable#createClan}.
+ 	 * @param player кто открыл
+@@ -783,7 +837,7 @@ public class L2HubBoard implements IParseBoardHandler
+ 	// ---------- Споты ----------
+ 
+ 	/**
+-	 * _bbshubspots [от [страница]] | go &lt;номер&gt; &lt;от&gt; &lt;страница&gt; — телепорт к спотам охотников (data/L2HubHuntSpots.xml) по уровню мобов.
++	 * _bbshubspots [от [страница]] | go &lt;номер&gt; &lt;от&gt; &lt;страница&gt; — без аргументов страница «Телепорт»: города и полосы уровней; дальше телепорт к спотам охотников (data/L2HubHuntSpots.xml) по уровню мобов.
+ 	 * @param player кто открыл
+ 	 * @param args команда доски
+ 	 * @return страница или null, если улетел: доска закрыта
+@@ -798,21 +852,27 @@ public class L2HubBoard implements IParseBoardHandler
+ 			}
+ 			return page(player, tr("Споты"), spotList(parseInt(args[3]), parseInt(args[4])));
+ 		}
+-		return page(player, tr("Споты"), args.length > 1 ? spotList(parseInt(args[1]), args.length > 2 ? parseInt(args[2]) : 0) : spotBands());
++		return args.length > 1 ? page(player, tr("Споты"), spotList(parseInt(args[1]), args.length > 2 ? parseInt(args[2]) : 0)) : teleportPage(player);
++	}
++
++	private static String teleportPage(Player player)
++	{
++		final String html = HtmCache.getInstance().getHtm(player, TELEPORT_PATH);
++		final String navigation = HtmCache.getInstance().getHtm(player, NAVIGATION_PATH);
++		return html == null ? page(player, tr("Телепорт"), spotBands()) : html.replace("%navigation%", navigation != null ? navigation : "").replace("%spot_bands%", spotBands());
+ 	}
+ 
+ 	private static String spotBands()
+ 	{
+ 		final StringBuilder sb = new StringBuilder(2048);
+-		sb.append("<font color=\"B09878\">").append(tr("Выбери уровень мобов: откроется список мест, телепорт — кнопкой в строке.")).append("</font><br><br>");
+-		sb.append("<table width=420><tr>");
++		sb.append("<table align=center border=\"0\"><tr>");
+ 		for (int i = 0; i < SPOT_BANDS.length; i++)
+ 		{
+ 			if ((i > 0) && ((i % 3) == 0))
+ 			{
+ 				sb.append("</tr><tr>");
+ 			}
+-			sb.append("<td align=center>").append(button(spotBand(SPOT_BANDS[i]) + " (" + spotsOf(SPOT_BANDS[i]).size() + ")", SPOTS + " " + SPOT_BANDS[i], 125)).append("</td>");
++			sb.append("<td align=center>").append(button(spotBand(SPOT_BANDS[i]) + " (" + spotsOf(SPOT_BANDS[i]).size() + ")", SPOTS + " " + SPOT_BANDS[i], 140)).append("</td>");
+ 		}
+ 		return sb.append("</tr></table>").toString();
+ 	}
+@@ -868,7 +928,7 @@ public class L2HubBoard implements IParseBoardHandler
+ 		final int pages = Math.max(1, (list.size() + SPOT_PAGE - 1) / SPOT_PAGE);
+ 		final int current = Math.max(0, Math.min(pageNo, pages - 1));
+ 		final StringBuilder sb = new StringBuilder(4096);
+-		sb.append(button(tr("К уровням"), SPOTS, 110)).append("<br><font color=\"LEVEL\">").append(tr("Мобы ")).append(spotBand(from)).append("</font><br>");
++		sb.append(button(tr("К телепорту"), SPOTS, 110)).append("<br><font color=\"LEVEL\">").append(tr("Мобы ")).append(spotBand(from)).append("</font><br>");
+ 		if (list.isEmpty())
+ 		{
+ 			return sb.append("<font color=\"808080\">").append(tr("На этих уровнях мест нет.")).append("</font>").toString();

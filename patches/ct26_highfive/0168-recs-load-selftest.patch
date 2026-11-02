@@ -1,0 +1,115 @@
+L2Hub: самопроверка рек после рестарта, HuntersSelfTest = RECLOAD, только на копии базы (docs/PHANTOMS.md).
+
+diff --git a/dist/game/data/scripts/custom/L2HubRecsLoadTest/L2HubRecsLoadTest.java b/dist/game/data/scripts/custom/L2HubRecsLoadTest/L2HubRecsLoadTest.java
+new file mode 100644
+index 0000000..8d4d7ba
+--- /dev/null
++++ b/dist/game/data/scripts/custom/L2HubRecsLoadTest/L2HubRecsLoadTest.java
+@@ -0,0 +1,107 @@
++package custom.L2HubRecsLoadTest;
++
++import java.lang.reflect.Field;
++import java.util.Map;
++import java.util.logging.Level;
++import java.util.logging.Logger;
++
++import org.l2jmobius.commons.threads.ThreadPool;
++import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
++import org.l2jmobius.gameserver.entity.World;
++import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.managers.phantom.PhantomCompat;
++import org.l2jmobius.gameserver.managers.phantom.PhantomData;
++import org.l2jmobius.gameserver.managers.phantom.PhantomHunterManager;
++import org.l2jmobius.gameserver.managers.phantom.PhantomManager;
++import org.l2jmobius.gameserver.managers.phantom.PhantomTemplate;
++import org.l2jmobius.gameserver.network.Disconnection;
++
++/**
++ * L2Hub: самопроверка рек после рестарта на High Five, только на копии базы: {@code HuntersSelfTest = RECLOAD} в PhantomHunters.ini.<br>
++ * Охотник с реками уходит из мира, загружается заново, как после рестарта, и проходит первое сохранение. Итог — строки в логе.
++ * @author L2Hub
++ */
++public class L2HubRecsLoadTest
++{
++	private static final Logger LOGGER = Logger.getLogger(L2HubRecsLoadTest.class.getName());
++	private static final String TAG = "L2HubRecsLoadTest: SelfTest RECLOAD: ";
++	private static final int RECS = 77;
++	private static final long STARTED = System.currentTimeMillis();
++	private static int _ok;
++	private static int _wrong;
++
++	public static void main(String[] args)
++	{
++		if ("RECLOAD".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST))
++		{
++			ThreadPool.schedule(L2HubRecsLoadTest::start, 60000);
++		}
++	}
++
++	private static void start()
++	{
++		Player hunter = null;
++		for (Player player : World.getPlayers())
++		{
++			if (PhantomManager.getInstance().isPhantom(player) && !player.isDead() && !player.isInStoreMode() && !player.isInParty() && !player.isOnEvent())
++			{
++				hunter = player;
++				break;
++			}
++		}
++		if (hunter == null)
++		{
++			if ((System.currentTimeMillis() - STARTED) < (12 * 60000L))
++			{
++				ThreadPool.schedule(L2HubRecsLoadTest::start, 15000);
++				return;
++			}
++			check("a free hunter", false);
++			LOGGER.info(TAG + "done: " + _ok + " ok, " + _wrong + " wrong.");
++			return;
++		}
++		try
++		{
++			run(hunter);
++		}
++		catch (Throwable e)
++		{
++			LOGGER.log(Level.WARNING, TAG + "failed: " + e, e);
++		}
++		LOGGER.info(TAG + "done: " + _ok + " ok, " + _wrong + " wrong.");
++	}
++
++	private static void run(Player hunter) throws Exception
++	{
++		final String name = hunter.getName();
++		final int id = hunter.getObjectId();
++		final PhantomTemplate template = PhantomData.getInstance().getTemplate(name);
++		// Снять с охотников, иначе менеджер вернёт его в мир сам.
++		final Field hunters = PhantomHunterManager.class.getDeclaredField("_hunters");
++		hunters.setAccessible(true);
++		((Map<?, ?>) hunters.get(PhantomHunterManager.getInstance())).remove(name.toLowerCase());
++		hunter.setRecomHave(RECS);
++		hunter.storeRecommendationValues();
++		check(name + ": out of the world", PhantomManager.getInstance().despawnHunter(template));
++		final Player again = Player.load(id);
++		check(name + ": recommendations after the load " + again.getRecomHave() + " of " + RECS, again.getRecomHave() == RECS);
++		again.autoSave();
++		final int stored = PhantomCompat.storedRecomHave(again);
++		check(name + ": recommendations in the base after the first save " + stored + " of " + RECS, stored == RECS);
++		Disconnection.of(again).storeAndDelete();
++	}
++
++	private static void check(String what, boolean good)
++	{
++		if (good)
++		{
++			_ok++;
++			LOGGER.info(TAG + "ok " + what);
++		}
++		else
++		{
++			_wrong++;
++			LOGGER.warning(TAG + "WRONG " + what);
++		}
++	}
++}

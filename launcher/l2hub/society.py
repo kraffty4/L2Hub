@@ -90,6 +90,7 @@ def _from_db(p: dict, classes: dict[int, str], kinds: dict[str, str], live: set[
         if clan_id not in ("0", "NULL", ""):
             members.setdefault(clan_id, []).append(row)
     clans, names = [], {}
+    halls = dict(_rows(p, "SELECT ownerId, name FROM clanhall WHERE ownerId > 0") or [])
     for clan_id, name, level, rep, castle, ally, leader in _rows(p, "SELECT clan_id, clan_name, clan_level, reputation_score, hasCastle, ally_name, leader_id FROM clan_data") or []:
         team = members.get(clan_id, [])
         if not team:  # клан из одних секретных или распавшийся: на странице ему нечего делать
@@ -99,7 +100,7 @@ def _from_db(p: dict, classes: dict[int, str], kinds: dict[str, str], live: set[
         names[clan_id] = name
         boss = by_id.get(leader)
         clans.append({"name": name, "level": _int(level), "rep": _int(rep), "members": len(team), "online": sum(m["online"] for m in team), "leader": boss["name"] if boss else "",
-                      "ally": "" if ally in ("NULL", "") else ally, "castleId": _int(castle), "castle": "", "wars": []})
+                      "ally": "" if ally in ("NULL", "") else ally, "castleId": _int(castle), "castle": "", "hall": halls.get(clan_id, ""), "wars": []})
     wars = []
     for a, b, kills_a, kills_b, state in _rows(p, "SELECT clan1, clan2, clan1Kill, clan2Kill, state FROM clan_wars", "SELECT clan1, clan2, NULL, NULL, NULL FROM clan_wars") or []:
         if a in names and b in names and (state == "NULL" or state in WAR_ACTIVE):

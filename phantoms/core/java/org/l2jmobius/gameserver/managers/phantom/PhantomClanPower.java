@@ -782,7 +782,7 @@ final class PhantomClanPower
 		final List<Clan> clans = hunterClans();
 		for (Clan clan : clans)
 		{
-			if (leaderOnline(clan) == null)
+			if ((leaderOnline(clan) == null) && !spareHead(clan))
 			{
 				_absent.putIfAbsent(clan.getId(), now);
 			}
@@ -800,12 +800,48 @@ final class PhantomClanPower
 		Collections.shuffle(clans);
 		for (Clan clan : clans)
 		{
-			if (tryCoup(clan, now) || tryCollapse(clan))
+			if (dramaOf(clan, now))
 			{
 				variables.set(DRAMA_VARIABLE, now);
 				return;
 			}
 		}
+	}
+
+	/**
+	 * Глава сверх предела {@code HuntersMax} (раздел 4.120) клан не бросал: вернётся — клан на месте, без переворота и развала.
+	 */
+	private static boolean spareHead(Clan clan)
+	{
+		return PhantomHunterManager.getInstance().isSpare(clan.getLeaderName());
+	}
+
+	private boolean dramaOf(Clan clan, long now)
+	{
+		return !spareHead(clan) && (tryCoup(clan, now) || tryCollapse(clan));
+	}
+
+	/**
+	 * Самопроверка HUNTERSMAX: клан с главой сверх предела, глава пропал давно, 50 проходов драмы.
+	 * @param clan клан
+	 * @param later как будто сейчас
+	 * @return баллы смуты, которые без предела пошли бы в ход; -1 — нет претендента; -2 — драма случилась
+	 */
+	int dramaTest(Clan clan, long later)
+	{
+		_absent.put(clan.getId(), later - (2 * ABSENT_TIME));
+		final List<Player> online = onlineHunters(clan);
+		final Player pretender = pretender(clan, online, Integer.MAX_VALUE);
+		final int score = pretender == null ? -1 : unrest(clan, pretender, online, later).score();
+		for (int i = 0; i < 50; i++)
+		{
+			if (dramaOf(clan, later))
+			{
+				return -2;
+			}
+		}
+		_absent.remove(clan.getId());
+		return score;
 	}
 
 	private boolean tryCoup(Clan clan, long now)

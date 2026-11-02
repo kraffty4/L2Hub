@@ -1,0 +1,602 @@
+diff --git a/dist/game/data/scripts/custom/L2HubBoardTest/L2HubBoardTest.java b/dist/game/data/scripts/custom/L2HubBoardTest/L2HubBoardTest.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..ebcde0d04c18d9e0b6e10a61c9bc64e817d9f9b0
+--- /dev/null
++++ b/dist/game/data/scripts/custom/L2HubBoardTest/L2HubBoardTest.java
+@@ -0,0 +1,596 @@
++package custom.L2HubBoardTest;
++
++import java.lang.reflect.Field;
++import java.lang.reflect.Method;
++import java.nio.file.Files;
++import java.nio.file.Path;
++import java.util.ArrayList;
++import java.util.Collections;
++import java.util.Comparator;
++import java.util.HashMap;
++import java.util.List;
++import java.util.Map;
++import java.util.function.Predicate;
++import java.util.logging.Level;
++import java.util.logging.Logger;
++import java.util.regex.Matcher;
++import java.util.regex.Pattern;
++
++import org.l2jmobius.commons.threads.ThreadPool;
++import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
++import org.l2jmobius.gameserver.data.sql.ClanTable;
++import org.l2jmobius.gameserver.data.xml.ItemData;
++import org.l2jmobius.gameserver.data.xml.MultisellData;
++import org.l2jmobius.gameserver.entity.Location;
++import org.l2jmobius.gameserver.entity.World;
++import org.l2jmobius.gameserver.entity.actor.Creature;
++import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
++import org.l2jmobius.gameserver.entity.item.instance.Item;
++import org.l2jmobius.gameserver.entity.itemcontainer.Inventory;
++import org.l2jmobius.gameserver.entity.itemcontainer.PlayerInventory;
++import org.l2jmobius.gameserver.handler.CommunityBoardHandler;
++import org.l2jmobius.gameserver.managers.phantom.HuntSpotData;
++import org.l2jmobius.gameserver.managers.phantom.PhantomHunterManager;
++import org.l2jmobius.gameserver.managers.phantom.PhantomManager;
++import org.l2jmobius.gameserver.entity.clan.Clan;
++import org.l2jmobius.gameserver.taskmanagers.AutoPlayTaskManager;
++
++import handlers.bypass.communityboard.L2HubBoard;
++import handlers.bypass.communityboard.L2HubKits;
++
++/**
++ * L2Hub: самопроверка доски Alt+B на High Five, только на копии базы: {@code HuntersSelfTest = L2HUBBOARD} в PhantomHunters.ini.<br>
++ * Охотник играет игрока: страницы и телепорт спотов, создание клана и прокачка его предметами Clan Items, стартовые наборы по классам. Страницы — в log/, итог — строки в логе.
++ * @author L2Hub
++ */
++public class L2HubBoardTest
++{
++	private static final Logger LOGGER = Logger.getLogger(L2HubBoardTest.class.getName());
++	private static final String TAG = "L2HubBoardTest: SelfTest L2HUBBOARD: ";
++	private static final Location GIRAN = new Location(83400, 147943, -3404);
++	private static final int PAGE_LIMIT = 16250;
++	private static final int CLAN_LIST = 50040008;
++	private static final int[] BANDS =
++	{
++		1,
++		10,
++		20,
++		30,
++		40,
++		50,
++		60,
++		70,
++		80
++	};
++	private static final Pattern GO = Pattern.compile("_bbshubspots go (\\d+) ");
++	private static final long STARTED = System.currentTimeMillis();
++	private static int _ok;
++	private static int _wrong;
++
++	public static void main(String[] args)
++	{
++		if ("L2HUBBOARD".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST))
++		{
++			ThreadPool.schedule(L2HubBoardTest::start, 60000);
++		}
++	}
++
++	private static void start()
++	{
++		if ((free().size() < 100) && ((System.currentTimeMillis() - STARTED) < (7 * 60000L)))
++		{
++			ThreadPool.schedule(L2HubBoardTest::start, 15000);
++			return;
++		}
++		try
++		{
++			final List<Player> spare = free();
++			LOGGER.info(TAG + "free hunters " + spare.size() + ".");
++			spots(pick(spare, p -> p.getLevel() >= 20));
++			clan(pick(spare, p -> (p.getClan() == null) && (p.getLevel() >= 10)), spare);
++			kits(spare);
++			LOGGER.info(TAG + "done: " + _ok + " ok, " + _wrong + " wrong.");
++		}
++		catch (Throwable e)
++		{
++			LOGGER.log(Level.WARNING, TAG + "failed: " + e, e);
++		}
++	}
++
++	private static void check(String what, boolean good)
++	{
++		if (good)
++		{
++			_ok++;
++			LOGGER.info(TAG + "ok " + what);
++		}
++		else
++		{
++			_wrong++;
++			LOGGER.warning(TAG + "WRONG " + what);
++		}
++	}
++
++	private static List<Player> free()
++	{
++		final List<Player> out = new ArrayList<>();
++		for (Player p : World.getPlayers())
++		{
++			if (PhantomManager.getInstance().isPhantom(p) && !p.isDead() && !p.isRegisteredOnEvent() && !p.isOnEvent() && !p.isInOlympiadMode() && !p.isInStoreMode() && !p.isInParty())
++			{
++				out.add(p);
++			}
++		}
++		Collections.shuffle(out);
++		return out;
++	}
++
++	private static Player pick(List<Player> spare, Predicate<Player> test)
++	{
++		for (Player p : spare)
++		{
++			if (test.test(p))
++			{
++				spare.remove(p);
++				return p;
++			}
++		}
++		return null;
++	}
++
++	/**
++	 * Снять с охотников (иначе уйдёт качаться) и поставить в мирном Гиране.
++	 */
++	private static void park(Player player) throws Exception
++	{
++		final Field hunters = PhantomHunterManager.class.getDeclaredField("_hunters");
++		hunters.setAccessible(true);
++		((Map<?, ?>) hunters.get(PhantomHunterManager.getInstance())).remove(player.getName().toLowerCase());
++		AutoPlayTaskManager.getInstance().stopAutoPlay(player);
++		player.stopMove(null);
++		player.abortAttack();
++		player.abortCast();
++		player.setTarget(null);
++		player.setPvpFlag(0);
++		player.setKarma(0);
++		if (player.isSitting())
++		{
++			player.standUp(); // сидячему SitDownTask ставит паралич до вставания
++			Thread.sleep(3000);
++		}
++		player.teleToLocation(GIRAN);
++		for (int i = 0; (i < 40) && player.isInCombat(); i++)
++		{
++			Thread.sleep(500);
++		}
++		Thread.sleep(500);
++	}
++
++	private static void spots(Player player) throws Exception
++	{
++		if (player == null)
++		{
++			check("spots: no hunter to play", false);
++			return;
++		}
++		park(player);
++		final String bands = L2HubBoard.spots(player, new String[]
++		{
++			"_bbshubspots"
++		});
++		Files.writeString(Path.of("./log/L2HubBoardSpots.html"), bands);
++		check("spots: bands page " + bands.length() + " chars", (bands.length() < PAGE_LIMIT) && bands.contains("_bbshubspots 20") && bands.contains("80+"));
++
++		int rows = 0;
++		int longest = 0;
++		int maxRows = 0;
++		int pagesTotal = 0;
++		String sample = null;
++		final Map<String, Integer> names = new HashMap<>();
++		for (int band : BANDS)
++		{
++			for (int page = 0;; page++)
++			{
++				final String html = L2HubBoard.spots(player, new String[]
++				{
++					"_bbshubspots",
++					String.valueOf(band),
++					String.valueOf(page)
++				});
++				longest = Math.max(longest, html.length());
++				pagesTotal++;
++				final Matcher m = GO.matcher(html);
++				int onPage = 0;
++				while (m.find())
++				{
++					onPage++;
++					names.merge(m.group(1), 1, Integer::sum);
++				}
++				rows += onPage;
++				maxRows = Math.max(maxRows, onPage);
++				if ((band == 20) && (page == 0))
++				{
++					sample = html;
++				}
++				if (!html.contains("_bbshubspots " + band + " " + (page + 1)))
++				{
++					break;
++				}
++			}
++		}
++		Files.writeString(Path.of("./log/L2HubBoardSpotsList.html"), sample);
++		final int all = HuntSpotData.getInstance().getSpots().size();
++		check("spots: " + pagesTotal + " pages, " + rows + " rows of " + all + " spots, longest page " + longest + " chars, at most " + maxRows + " rows", (longest < PAGE_LIMIT) && (maxRows <= 10) && (rows > 0) && (rows <= all));
++		check("spots: every row once, across pages", names.values().stream().allMatch(c -> c == 1));
++
++		final Matcher first = GO.matcher(sample);
++		first.find();
++		final int index = Integer.parseInt(first.group(1));
++		final Location entry = HuntSpotData.getInstance().getSpots().get(index).entry;
++		final String[] go =
++		{
++			"_bbshubspots",
++			"go",
++			String.valueOf(index),
++			"20",
++			"0"
++		};
++
++		player.setKarma(100);
++		final String refused = L2HubBoard.spots(player, go);
++		check("spots: karma keeps you here", (refused != null) && (player.calculateDistance3D(GIRAN) < 500));
++		player.setKarma(0);
++
++		final String past = L2HubBoard.spots(player, new String[]
++		{
++			"_bbshubspots",
++			"go",
++			"999999",
++			"20",
++			"0"
++		});
++		check("spots: bad number keeps you here", (past != null) && (player.calculateDistance3D(GIRAN) < 500));
++
++		final long adena = player.getAdena();
++		final String flew = L2HubBoard.spots(player, go);
++		check("spots: teleport at " + player.getX() + "," + player.getY() + " to " + entry.getX() + "," + entry.getY(), (flew == null) && (player.calculateDistance2D(entry) < 300));
++		check("spots: fee as the board, adena " + adena + " -> " + player.getAdena(), player.getAdena() == adena);
++		final Field disabled = Creature.class.getDeclaredField("_allSkillsDisabled");
++		disabled.setAccessible(true);
++		check("spots: skills blocked for the flight", disabled.getBoolean(player));
++		Thread.sleep(3500);
++		check("spots: skills back after the flight, stunned " + player.isStunned() + ", sleeping " + player.isSleeping() + ", paralyzed " + player.isParalyzed() + ", sitting " + player.isSitting(), !disabled.getBoolean(player));
++		player.teleToLocation(GIRAN);
++	}
++
++	private static void clan(Player player, List<Player> spare) throws Exception
++	{
++		if (player == null)
++		{
++			check("clan: no clanless hunter to play", false);
++			return;
++		}
++		park(player);
++		final String form = L2HubBoard.clan(player, new String[]
++		{
++			"_bbshubclan"
++		});
++		Files.writeString(Path.of("./log/L2HubBoardClanForm.html"), form);
++		check("clan: form for the clanless", form.contains("create $clan_name"));
++
++		for (String[] bad : new String[][]
++		{
++			{ "_bbshubclan", "create" },
++			{ "_bbshubclan", "create", "two", "words" },
++			{ "_bbshubclan", "create", "bad!name" },
++			{ "_bbshubclan", "create", "x" },
++			{ "_bbshubclan", "create", "abcdefghijklmnopq" }
++		})
++		{
++			L2HubBoard.clan(player, bad);
++			check("clan: refused " + String.join(" ", bad), player.getClan() == null);
++		}
++
++		final Player young = pick(spare, p -> (p.getClan() == null) && (p.getLevel() < 10));
++		if (young != null)
++		{
++			park(young);
++			L2HubBoard.clan(young, new String[]
++			{
++				"_bbshubclan",
++				"create",
++				"L2HubBoardYoung"
++			});
++			check("clan: level " + young.getLevel() + " refused", young.getClan() == null);
++		}
++
++		final String name = "L2HubBoard" + (System.currentTimeMillis() % 100000);
++		final String page = L2HubBoard.clan(player, new String[]
++		{
++			"_bbshubclan",
++			"create",
++			name
++		});
++		final Clan clan = player.getClan();
++		check("clan: created " + name + ", leader", (clan != null) && clan.getName().equals(name) && player.isClanLeader());
++		check("clan: form is gone", !page.contains("create $clan_name"));
++		if (clan == null)
++		{
++			return;
++		}
++		L2HubBoard.clan(player, new String[]
++		{
++			"_bbshubclan",
++			"create",
++			name + "2"
++		});
++		check("clan: second clan refused", (player.getClan() == clan) && (ClanTable.getInstance().getClanByName(name + "2") == null));
++
++		final Field entries = MultisellData.class.getDeclaredField("_entries");
++		entries.setAccessible(true);
++		check("clan items: list " + CLAN_LIST + " is loaded", ((Map<?, ?>) entries.get(MultisellData.getInstance())).containsKey(CLAN_LIST));
++		player.setSp(100000000L);
++		clan.changeLevel(2);
++		for (int[] step : new int[][]
++		{
++			{ 3, 1419 },
++			{ 4, 3874 },
++			{ 5, 3870 }
++		})
++		{
++			final boolean empty = !clan.levelUpClan(player);
++			player.addItem(ItemProcessType.QUEST, step[1], 1, player, false);
++			final boolean up = clan.levelUpClan(player);
++			check("clan items: level " + step[0] + " needs " + ItemData.getInstance().getTemplate(step[1]).getName(), empty && up && (clan.getLevel() == step[0]) && (player.getInventory().getInventoryItemCount(step[1], -1) == 0));
++		}
++		ClanTable.getInstance().destroyClan(clan.getId());
++		check("clan: test clan dissolved", ClanTable.getInstance().getClanByName(name) == null);
++	}
++
++	private static void kits(List<Player> spare) throws Exception
++	{
++		check("handlers of the new commands", (CommunityBoardHandler.getInstance().getHandler("_bbshubspots") != null) && (CommunityBoardHandler.getInstance().getHandler(L2HubKits.COMMAND) != null));
++		final Player shopper = pick(spare, p -> p.getLevel() >= 20);
++		if (shopper != null)
++		{
++			park(shopper);
++			final Method shop = L2HubBoard.class.getDeclaredMethod("shop", Player.class, String[].class);
++			shop.setAccessible(true);
++			final String page = (String) shop.invoke(null, shopper, new String[]
++			{
++				"_bbshubshop"
++			});
++			Files.writeString(Path.of("./log/L2HubBoardShop.html"), page);
++			check("shop: first page " + page.length() + " chars has kits and clan items", page.contains("bypass " + L2HubKits.COMMAND + "\"") && page.contains("_bbshubshop ms " + CLAN_LIST + " 0"));
++		}
++
++		final Map<String, Predicate<Player>> roles = new java.util.LinkedHashMap<>();
++		roles.put("fighter", p -> L2HubKits.kind(p).equals("SWORD") || L2HubKits.kind(p).equals("BLUNT"));
++		roles.put("mage", p -> p.isMageClass() && (p.getLevel() >= 40));
++		roles.put("archer", p -> L2HubKits.kind(p).equals("BOW"));
++		roles.put("dagger", p -> L2HubKits.kind(p).equals("DAGGER") && (p.getLevel() >= 40));
++		roles.put("kamael", p -> L2HubKits.kind(p).equals("CROSSBOW") || L2HubKits.kind(p).equals("ANCIENT") || L2HubKits.kind(p).equals("RAPIER"));
++		roles.put("twohand", p -> L2HubKits.kind(p).equals("BIGSWORD") || L2HubKits.kind(p).equals("POLE") || L2HubKits.kind(p).equals("DUAL") || L2HubKits.kind(p).equals("FIST"));
++		roles.put("young", p -> p.getLevel() < 20);
++		for (Map.Entry<String, Predicate<Player>> role : roles.entrySet())
++		{
++			final Player player = pick(spare, role.getValue());
++			if (player == null)
++			{
++				LOGGER.info(TAG + "kits: no hunter for " + role.getKey() + ".");
++				continue;
++			}
++			park(player);
++			kit(role.getKey(), player, "light");
++		}
++
++		// Самый тяжёлый набор на самом слабом по весу.
++		final Player weakest = spare.stream().filter(p -> (p.getLevel() >= 40) && (L2HubKits.goods(p, 0, "heavy") != null)).min(Comparator.comparingInt(Player::getMaxLoad)).orElse(null);
++		if (weakest == null)
++		{
++			LOGGER.info(TAG + "kits: no hunter for weakest.");
++			return;
++		}
++		spare.remove(weakest);
++		park(weakest);
++		kit("weakest", weakest, "heavy");
++	}
++
++	/**
++	 * Охотник приходит со своей сумкой, на копии мира она бывает забита. Наборы проверяются на разгруженном, вещи возвращаются.
++	 */
++	private static void kit(String role, Player player, String armor) throws Exception
++	{
++		final String who = "kits " + role + " (" + player.getPlayerClass() + ", " + player.getLevel() + ", " + L2HubKits.kind(player) + "): ";
++		final PlayerInventory bag = player.getInventory();
++		final int slots = bag.getNonQuestSize();
++		final int load = bag.getTotalWeight();
++		final List<long[]> moved = unload(player);
++		LOGGER.info(TAG + who + "bag " + slots + " of " + player.getInventoryLimit() + " slots, weight " + load + " of " + player.getMaxLoad() + "; unloaded " + moved.size() + ": " + bag.getNonQuestSize() + " slots, weight " + bag.getTotalWeight() + "; ng " + armor + " kit needs " + L2HubKits.goods(player, 0, armor).size() + " slots, weight " + weight(L2HubKits.goods(player, 0, armor)) + ".");
++		try
++		{
++			kitChecks(who, role, player, armor);
++		}
++		finally
++		{
++			reload(player, moved);
++			check(who + "bag back: " + bag.getNonQuestSize() + " slots, weight " + bag.getTotalWeight(), (bag.getNonQuestSize() == slots) && (bag.getTotalWeight() == load));
++		}
++	}
++
++	/**
++	 * Вынести на склад всё, что не надето, кроме адены и квестового.
++	 * @param player охотник в роли игрока
++	 * @return что вынесено: objectId, itemId, количество, стакается ли
++	 */
++	private static List<long[]> unload(Player player)
++	{
++		final List<long[]> moved = new ArrayList<>();
++		for (Item item : new ArrayList<>(player.getInventory().getItems()))
++		{
++			if (item.isEquipped() || item.isQuestItem() || (item.getId() == Inventory.ADENA_ID))
++			{
++				continue;
++			}
++			moved.add(new long[]
++			{
++				item.getObjectId(),
++				item.getId(),
++				item.getCount(),
++				item.isStackable() ? 1 : 0
++			});
++			player.getInventory().transferItem(ItemProcessType.TRANSFER, item.getObjectId(), item.getCount(), player.getWarehouse(), player, null);
++		}
++		return moved;
++	}
++
++	private static void reload(Player player, List<long[]> moved)
++	{
++		for (long[] entry : moved)
++		{
++			// Стопка на складе могла слиться с прежней и сменить objectId: её ищем по itemId, штуки — по objectId.
++			final Item item = entry[3] != 0 ? player.getWarehouse().getItemByItemId((int) entry[1]) : player.getWarehouse().getItemByObjectId((int) entry[0]);
++			if (item != null)
++			{
++				player.getWarehouse().transferItem(ItemProcessType.TRANSFER, item.getObjectId(), entry[2], player.getInventory(), player, null);
++			}
++		}
++	}
++
++	private static long weight(List<int[]> goods)
++	{
++		long weight = 0;
++		for (int[] good : goods)
++		{
++			weight += (long) ItemData.getInstance().getTemplate(good[0]).getWeight() * good[1];
++		}
++		return weight;
++	}
++
++	private static void kitChecks(String who, String role, Player player, String armor) throws Exception
++	{
++		final String page = L2HubKits.content(player, new String[]
++		{
++			L2HubKits.COMMAND
++		});
++		Files.writeString(Path.of("./log/L2HubBoardKits_" + role + ".html"), page);
++		check(who + "page " + page.length() + " chars", page.length() < PAGE_LIMIT);
++		overload(who, player, armor);
++		for (int grade = 0; grade < L2HubKits.GRADES.length; grade++)
++		{
++			final List<int[]> goods = L2HubKits.goods(player, grade, armor);
++			for (int[] good : goods)
++			{
++				if (ItemData.getInstance().getTemplate(good[0]) == null)
++				{
++					check(who + "no item " + good[0], false);
++				}
++			}
++			final Map<Integer, Long> before = counts(player, goods);
++			final boolean low = player.getLevel() < new int[]
++			{
++				1,
++				20,
++				40
++			}[grade];
++			final String answer = L2HubKits.take(player, grade, armor);
++			if (low)
++			{
++				check(who + L2HubKits.GRADES[grade] + " refused for the level", (answer != null) && !L2HubKits.taken(player, grade) && counts(player, goods).equals(before));
++				continue;
++			}
++			final Map<Integer, Long> expected = new HashMap<>(before);
++			for (int[] good : goods)
++			{
++				expected.merge(good[0], (long) good[1], Long::sum);
++			}
++			check(who + L2HubKits.GRADES[grade] + " given, " + goods.size() + " kinds: " + answer, (answer == null) && counts(player, goods).equals(expected) && L2HubKits.taken(player, grade));
++			final String again = L2HubKits.take(player, grade, armor);
++			check(who + L2HubKits.GRADES[grade] + " only once", (again != null) && counts(player, goods).equals(expected));
++			// Убрать выданное, иначе следующий грейд упрётся в вес: отказ по весу проверяет overload.
++			for (int[] good : goods)
++			{
++				player.destroyItemByItemId(ItemProcessType.DESTROY, good[0], good[1], player, false);
++			}
++		}
++
++		final boolean kamael = L2HubKits.kind(player).equals("ANCIENT") || L2HubKits.kind(player).equals("RAPIER") || L2HubKits.kind(player).equals("CROSSBOW");
++		check(who + "heavy and robe " + (kamael ? "refused" : "exist"), kamael == (L2HubKits.goods(player, 0, "heavy") == null) && kamael == (L2HubKits.goods(player, 0, "robe") == null));
++		final int[] shots = player.isMageClass() ? new int[] { 3947, 3948, 3949 } : new int[] { 1835, 1463, 1464 };
++		boolean right = true;
++		for (int grade = 0; grade < shots.length; grade++)
++		{
++			right &= L2HubKits.goods(player, grade, armor).stream().anyMatch(good -> good[1] == 1000);
++			final int want = shots[grade];
++			right &= L2HubKits.goods(player, grade, armor).stream().anyMatch(good -> (good[0] == want) && (good[1] == 1000));
++		}
++		check(who + "shots by class", right);
++		final String kind = L2HubKits.kind(player);
++		final int[] ammo = kind.equals("BOW") ? new int[] { 17, 1341, 1342 } : kind.equals("CROSSBOW") ? new int[] { 17, 9633, 9634 } : null;
++		final int[] shields = { 625, 2493, 2497 };
++		boolean gear = true;
++		for (int grade = 0; grade < shields.length; grade++)
++		{
++			final List<int[]> goods = L2HubKits.goods(player, grade, armor);
++			final int wantAmmo = ammo != null ? ammo[grade] : 0;
++			final int wantShield = shields[grade];
++			gear &= goods.stream().filter(good -> good[1] == 1000).count() == (ammo != null ? 2 : 1);
++			gear &= (ammo == null) || goods.stream().anyMatch(good -> (good[0] == wantAmmo) && (good[1] == 1000));
++			gear &= goods.stream().anyMatch(good -> good[0] == wantShield) == (kind.equals("SWORD") || kind.equals("BLUNT"));
++		}
++		check(who + "ammo and shield by weapon", gear);
++		final String after = L2HubKits.content(player, new String[]
++		{
++			L2HubKits.COMMAND
++		});
++		Files.writeString(Path.of("./log/L2HubBoardKits_" + role + "_after.html"), after);
++		check(who + "buttons of taken kits gone", player.getLevel() >= 40 ? !after.contains(" take ") : !after.contains(" take ng "));
++	}
++
++	/**
++	 * Перегруженному набор не выдаётся, вещи не появляются, флаг «взял» не ставится: набор можно взять, разгрузившись.
++	 * @param who начало строки проверки
++	 * @param player охотник в роли игрока
++	 * @param armor тип брони
++	 */
++	private static void overload(String who, Player player, String armor)
++	{
++		final PlayerInventory bag = player.getInventory();
++		final List<int[]> goods = L2HubKits.goods(player, 0, armor);
++		final long weight = weight(goods);
++		int heaviest = goods.get(0)[0];
++		for (int[] good : goods)
++		{
++			if (ItemData.getInstance().getTemplate(good[0]).getWeight() > ItemData.getInstance().getTemplate(heaviest).getWeight())
++			{
++				heaviest = good[0];
++			}
++		}
++		final int slots = bag.getNonQuestSize();
++		final int load = bag.getTotalWeight();
++		// Пока оба условия верны, в сумке есть слот: сверх предела addItem бросил бы вещь на землю (AutoLootSlotLimit), и снять её было бы нечем.
++		int added = 0;
++		while (bag.validateWeight(weight) && bag.validateCapacity(goods.size()))
++		{
++			player.addItem(ItemProcessType.QUEST, heaviest, 1, player, false);
++			added++;
++		}
++		final String by = bag.validateWeight(weight) ? "slots" : "weight";
++		final Map<Integer, Long> before = counts(player, goods);
++		final String answer = L2HubKits.take(player, 0, armor);
++		check(who + "overloaded by " + by + " with " + added + " pieces: refused, nothing given, not marked: " + answer, (answer != null) && !L2HubKits.taken(player, 0) && counts(player, goods).equals(before));
++		player.destroyItemByItemId(ItemProcessType.DESTROY, heaviest, added, player, false);
++		check(who + "overload removed: " + bag.getNonQuestSize() + " slots, weight " + bag.getTotalWeight(), (bag.getNonQuestSize() == slots) && (bag.getTotalWeight() == load));
++	}
++
++	private static Map<Integer, Long> counts(Player player, List<int[]> goods)
++	{
++		final Map<Integer, Long> out = new HashMap<>();
++		for (int[] good : goods)
++		{
++			out.put(good[0], player.getInventory().getInventoryItemCount(good[0], -1));
++		}
++		return out;
++	}
++}

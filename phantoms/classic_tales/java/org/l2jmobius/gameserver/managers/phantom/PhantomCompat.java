@@ -938,4 +938,51 @@ public final class PhantomCompat
 		friend.sendPacket(msg);
 		friend.sendPacket(new FriendStatus(phantom, FriendStatus.MODE_ONLINE));
 	}
+
+	/**
+	 * Встанет ли ещё один баф, никого не вытеснив (docs/PHANTOMS.md, раздел 4.94). Лимиты раздельные: обычные бафы своим счётом, песни и танцы своим.
+	 * @param player на кого
+	 * @param dance песня или танец
+	 * @param buffs сколько обычных бафов считать висящими
+	 * @param dances сколько песен и танцев считать висящими
+	 * @return {@code true}, если слот есть
+	 */
+	static boolean buffSlotFree(Player player, boolean dance, int buffs, int dances)
+	{
+		return dance ? dances < PlayerConfig.DANCES_MAX_AMOUNT : buffs < player.getStat().getMaxBuffCount();
+	}
+
+	/**
+	 * @return есть ли второй слот автобанки, под ману: в этой хронике нет
+	 */
+	public static boolean hasAutoMana()
+	{
+		return false;
+	}
+
+	/**
+	 * Слота маны в этой хронике нет.
+	 * @param player кто пьёт
+	 * @param itemId банка, 0 — пусто
+	 * @param percent порог MP, %
+	 */
+	public static void setAutoMana(Player player, int itemId, int percent)
+	{
+	}
+
+	/**
+	 * @return проклятое оружие на земле: в этой хронике охотники за ним не бегают
+	 */
+	public static java.util.List<org.l2jmobius.gameserver.entity.WorldObject> cursedOnGround()
+	{
+		return java.util.List.of();
+	}
+
+	/**
+	 * В этой хронике охотники проклятое оружие не подбирают.
+	 * @param player кто держит оружие
+	 */
+	public static void restoreCursedForm(Player player)
+	{
+	}
 }

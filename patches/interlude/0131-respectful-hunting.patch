@@ -1,0 +1,78 @@
+diff --git a/java/org/l2jmobius/gameserver/ai/AttackableAI.java b/java/org/l2jmobius/gameserver/ai/AttackableAI.java
+index 0d09eb7d054c7527711f6a5942cae205b67efdc1..11646748771e207297867e3107b4da677ffd78c7 100644
+--- a/java/org/l2jmobius/gameserver/ai/AttackableAI.java
++++ b/java/org/l2jmobius/gameserver/ai/AttackableAI.java
+@@ -730,8 +730,11 @@ public class AttackableAI extends CreatureAI
+ 						}
+ 					}
+ 					
++					// L2Hub: вернуть цель, как в боевых ветках: иначе моб бьёт игрока, а в цели у него он сам (вежливая охота, docs/PHANTOMS.md).
++					final WorldObject oldTarget = npc.getTarget();
+ 					npc.setTarget(npc);
+ 					npc.doCast(sk);
++					npc.setTarget(oldTarget);
+ 					return;
+ 				}
+ 			}
+@@ -762,8 +765,11 @@ public class AttackableAI extends CreatureAI
+ 					}
+ 				}
+ 				
++				// L2Hub: вернуть цель, как в боевых ветках: иначе моб бьёт игрока, а в цели у него он сам (вежливая охота, docs/PHANTOMS.md).
++				final WorldObject oldTarget = npc.getTarget();
+ 				npc.setTarget(npc);
+ 				npc.doCast(sk);
++				npc.setTarget(oldTarget);
+ 				return;
+ 			}
+ 			
+diff --git a/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTaskManager.java b/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTaskManager.java
+index bc93a97c8dc94f04a00f5149c4e5e18460525590..7e0673b265e29c961611b45035c4d469982c6797 100644
+--- a/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTaskManager.java
++++ b/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTaskManager.java
+@@ -128,7 +128,7 @@ public class AutoPlayTaskManager
+ 						// Clear target.
+ 						player.setTarget(null);
+ 					}
+-					else if ((creature.getTarget() == player) || (creature.getTarget() == null))
++					else if ((creature.getTarget() == player) || (creature.getTarget() == null) || (!creature.isPlayable() && !isBusyWithOther(player, creature)))
+ 					{
+ 						// GeoEngine can see target check.
+ 						if (!GeoEngine.getInstance().canSeeTarget(player, creature))
+@@ -291,7 +291,7 @@ public class AutoPlayTaskManager
+ 						}
+ 						
+ 						// Check creature target.
+-						if (player.getAutoPlaySettings().isRespectfulHunting() && !nearby.isPlayable() && (nearby.getTarget() != null) && (nearby.getTarget() != player) && !(player.hasSummon() && (player.getSummon().getObjectId() == nearby.getTarget().getObjectId())))
++						if (player.getAutoPlaySettings().isRespectfulHunting() && !nearby.isPlayable() && isBusyWithOther(player, nearby))
+ 						{
+ 							return false;
+ 						}
+@@ -334,6 +334,27 @@ public class AutoPlayTaskManager
+ 			return !player.getAutoUseSettings().getAutoActions().contains(AUTO_ATTACK_ACTION);
+ 		}
+ 		
++		/**
++		 * L2Hub: занят ли моб другим игроком, для вежливой охоты. В драке цель моба держит только ИИ, getTarget() там пустой или старый, а после самобафа — он сам.
++		 * @param player кто ищет цель
++		 * @param creature моб
++		 * @return {@code true}, если моб бьёт чужого или в его цели чужой
++		 */
++		private boolean isBusyWithOther(Player player, Creature creature)
++		{
++			final Creature attackTarget = creature.hasAI() && (creature.getAI().getIntention() == Intention.ATTACK) ? creature.getAI().getAttackTarget() : null;
++			final WorldObject victim = (attackTarget != null) && attackTarget.isPlayable() && !attackTarget.isAlikeDead() ? attackTarget : creature.getTarget();
++			if ((victim == null) || (victim == creature))
++			{
++				return false;
++			}
++			
++			// Свои: я, мой питомец и партия, партия бьёт одного моба.
++			final Player owner = victim.isPlayable() ? victim.asPlayer() : null;
++			final Party party = player.getParty();
++			return (owner != player) && ((owner == null) || (party == null) || !party.containsPlayer(owner));
++		}
++		
+ 		private boolean isTargetModeValid(int mode, Player player, Creature creature)
+ 		{
+ 			if (!creature.isTargetable() || (creature.isNpc() && (creature.isInvul() || !creature.asNpc().isShowName())))

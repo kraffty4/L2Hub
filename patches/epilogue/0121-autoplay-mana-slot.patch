@@ -1,0 +1,376 @@
+diff --git a/dist/game/data/scripts/handlers/chat/commands/voiced/AutoPlay.java b/dist/game/data/scripts/handlers/chat/commands/voiced/AutoPlay.java
+index fb55e6810cdb66b0dd401f6dbadce66c1b1e1a5c..be5f204f6d7b21a47e5a5920db9574ff5e808246 100644
+--- a/dist/game/data/scripts/handlers/chat/commands/voiced/AutoPlay.java
++++ b/dist/game/data/scripts/handlers/chat/commands/voiced/AutoPlay.java
+@@ -45,7 +45,9 @@ import org.l2jmobius.gameserver.mechanics.events.holders.actor.player.OnPlayerLo
+ import org.l2jmobius.gameserver.mechanics.events.listeners.ConsumerEventListener;
+ import org.l2jmobius.gameserver.mechanics.options.OptionSkillHolder;
+ import org.l2jmobius.gameserver.mechanics.options.Options;
++import org.l2jmobius.gameserver.mechanics.effects.AbstractEffect;
+ import org.l2jmobius.gameserver.mechanics.skill.AbnormalType;
++import org.l2jmobius.gameserver.mechanics.skill.EffectScope;
+ import org.l2jmobius.gameserver.mechanics.skill.Skill;
+ import org.l2jmobius.gameserver.mechanics.skill.holders.SkillHolder;
+ import org.l2jmobius.gameserver.mechanics.variables.PlayerVariables;
+@@ -71,7 +73,8 @@ public class AutoPlay implements IVoicedCommandHandler
+ 		"play",
+ 		"playskills",
+ 		"playitems",
+-		"playpotion"
++		"playpotion",
++		"playmana"
+ 	};
+ 	
+ 	private static final Consumer<OnPlayerLogin> ON_PLAYER_LOGIN = event ->
+@@ -92,6 +95,7 @@ public class AutoPlay implements IVoicedCommandHandler
+ 		player.getVariables().getIntegerList(PlayerVariables.AUTO_USE_SKILLS).forEach(id -> player.getAutoUseSettings().getAutoSkills().add(id));
+ 		player.getVariables().getIntegerList(PlayerVariables.AUTO_USE_ITEMS).forEach(id -> player.getAutoUseSettings().getAutoSupplyItems().add(id));
+ 		player.getAutoUseSettings().setAutoPotionItem(player.getVariables().getInt(PlayerVariables.AUTO_USE_POTION, 0));
++		player.getAutoUseSettings().setAutoManaItem(player.getVariables().getInt(PlayerVariables.AUTO_USE_MANA, 0));
+ 		
+ 		final List<Integer> settings = player.getVariables().getIntegerList(PlayerVariables.AUTO_USE_SETTINGS);
+ 		if (settings.isEmpty())
+@@ -113,6 +117,10 @@ public class AutoPlay implements IVoicedCommandHandler
+ 		player.getAutoPlaySettings().setNextTargetMode(nextTargetMode);
+ 		player.getAutoPlaySettings().setShortRange(shortRange);
+ 		player.getAutoPlaySettings().setRespectfulHunting(respectfulHunting);
++		if (settings.size() > 7)
++		{
++			player.getAutoPlaySettings().setAutoManaPercent(settings.get(7));
++		}
+ 		
+ 		if (active)
+ 		{
+@@ -133,7 +141,7 @@ public class AutoPlay implements IVoicedCommandHandler
+ 		player.getVariables().setIntegerList(PlayerVariables.AUTO_USE_SKILLS, new ArrayList<>(player.getAutoUseSettings().getAutoSkills()));
+ 		player.getVariables().setIntegerList(PlayerVariables.AUTO_USE_ITEMS, new ArrayList<>(player.getAutoUseSettings().getAutoSupplyItems()));
+ 		
+-		final int potionId = player.getVariables().getInt(PlayerVariables.AUTO_USE_POTION, 0);
++		final int potionId = player.getAutoUseSettings().getAutoPotionItem();
+ 		if (potionId < 1)
+ 		{
+ 			player.getVariables().remove(PlayerVariables.AUTO_USE_POTION);
+@@ -143,7 +151,17 @@ public class AutoPlay implements IVoicedCommandHandler
+ 			player.getVariables().set(PlayerVariables.AUTO_USE_POTION, potionId);
+ 		}
+ 		
+-		final List<Integer> settings = new ArrayList<>(7);
++		final int manaId = player.getAutoUseSettings().getAutoManaItem();
++		if (manaId < 1)
++		{
++			player.getVariables().remove(PlayerVariables.AUTO_USE_MANA);
++		}
++		else
++		{
++			player.getVariables().set(PlayerVariables.AUTO_USE_MANA, manaId);
++		}
++		
++		final List<Integer> settings = new ArrayList<>(8);
+ 		settings.add(0, player.getAutoPlaySettings().getOptions());
+ 		settings.add(1, player.isAutoPlaying() ? 1 : 0);
+ 		settings.add(2, player.getAutoPlaySettings().doPickup() ? 1 : 0);
+@@ -151,6 +169,7 @@ public class AutoPlay implements IVoicedCommandHandler
+ 		settings.add(4, player.getAutoPlaySettings().isShortRange() ? 1 : 0);
+ 		settings.add(5, player.getAutoPlaySettings().getAutoPotionPercent());
+ 		settings.add(6, player.getAutoPlaySettings().isRespectfulHunting() ? 1 : 0);
++		settings.add(7, player.getAutoPlaySettings().getAutoManaPercent());
+ 		player.getVariables().setIntegerList(PlayerVariables.AUTO_USE_SETTINGS, settings);
+ 	};
+ 	
+@@ -240,6 +259,14 @@ public class AutoPlay implements IVoicedCommandHandler
+ 							}
+ 							break COMMAND;
+ 						}
++						case "manapercent":
++						{
++							if ((paramArray.length > 1) && StringUtil.isNumeric(paramArray[1]))
++							{
++								player.getAutoPlaySettings().setAutoManaPercent(Math.max(0, Math.min(100, Integer.parseInt(paramArray[1]))));
++							}
++							break COMMAND;
++						}
+ 						case "start":
+ 						{
+ 							AutoPlayTaskManager.getInstance().startAutoPlay(player);
+@@ -270,8 +297,9 @@ public class AutoPlay implements IVoicedCommandHandler
+ 				
+ 				content = content.replace("%skill_button%", AutoPlayConfig.ENABLE_AUTO_SKILL ? "<br><table width=295><tr><td height=31><center><button action=\"bypass voice .playskills\" value=\"Select Skills\" width=200 height=31 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"></center></td></tr></table>" : "");
+ 				content = content.replace("%item_button%", AutoPlayConfig.ENABLE_AUTO_ITEM ? "<br><table width=295><tr><td height=31><center><button action=\"bypass voice .playitems\" value=\"Select Supply Items\" width=200 height=31 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"></center></td></tr></table>" : "");
+-				content = content.replace("%potion_button%", AutoPlayConfig.ENABLE_AUTO_POTION ? "<br><table width=295><tr><td height=31><center><button action=\"bypass voice .playpotion\" value=\"Select Healing Potion\" width=200 height=31 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"></center></td></tr><tr><td height=31><center><table width=150><tr><td width=120><font color=\"CDB67F\">HP Percent (%percent%)</font></td><td><edit var=\"percentbox\" width=30 height=15></td><td><button value=\"Apply\" action=\"bypass voice .play percent $percentbox\" width=45 height=21 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"></td></tr></table></center></td></tr></table>" : "");
++				content = content.replace("%potion_button%", AutoPlayConfig.ENABLE_AUTO_POTION ? "<br><table width=295><tr><td width=147 height=31><center><button action=\"bypass voice .playpotion\" value=\"Healing Potion\" width=140 height=31 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"></center></td><td width=148><center><button action=\"bypass voice .playmana\" value=\"Mana Potion\" width=140 height=31 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"></center></td></tr><tr><td height=31><center><table width=140><tr><td width=55><font color=\"CDB67F\">HP (%percent%)</font></td><td><edit var=\"percentbox\" width=30 height=15></td><td><button value=\"Set\" action=\"bypass voice .play percent $percentbox\" width=40 height=21 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"></td></tr></table></center></td><td><center><table width=140><tr><td width=55><font color=\"CDB67F\">MP (%manapercent%)</font></td><td><edit var=\"manabox\" width=30 height=15></td><td><button value=\"Set\" action=\"bypass voice .play manapercent $manabox\" width=40 height=21 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"></td></tr></table></center></td></tr></table>" : "");
+ 				content = content.replace("%percent%", String.valueOf(player.getAutoPlaySettings().getAutoPotionPercent()));
++				content = content.replace("%manapercent%", String.valueOf(player.getAutoPlaySettings().getAutoManaPercent()));
+ 				
+ 				if (player.isAutoPlaying())
+ 				{
+@@ -693,6 +721,108 @@ public class AutoPlay implements IVoicedCommandHandler
+ 					sb.append("</tr></table><img src=\"L2UI.SquareGray\" width=295 height=1>");
+ 				}
+ 				
++				// Replace and send the html.
++				html.setHtml(content.replace("%items%", sb.toString()));
++				player.sendPacket(html);
++				break;
++			}
++			case "playmana":
++			{
++				final NpcHtmlMessage html = new NpcHtmlMessage();
++				final String content = HtmCache.getInstance().getHtm(player, "data/html/mods/AutoPlay/Potion.htm").replace("Select Healing Potion", "Select Mana Potion");
++				
++				// Generate the item list. Filter our some items.
++				List<ItemTemplate> items = new ArrayList<>();
++				MANA_SEARCH: for (Item item : player.getInventory().getItems())
++				{
++					final ItemTemplate template = item.getTemplate();
++					if (item.isEtcItem() && template.hasSkills() && !AutoPlayConfig.DISABLED_AUTO_ITEMS.contains(item.getId()))
++					{
++						for (SkillHolder holder : template.getSkills())
++						{
++							final Skill skill = holder.getSkill();
++							if ((skill != null) && restoresMana(skill) && !items.contains(template))
++							{
++								items.add(template);
++								continue MANA_SEARCH;
++							}
++						}
++					}
++				}
++				
++				// Manage item activation.
++				final String[] paramArray = params == null ? new String[0] : params.split(" ");
++				if (paramArray.length > 1)
++				{
++					final int itemId = Integer.parseInt(paramArray[1]);
++					if (AutoPlayConfig.ENABLE_AUTO_POTION && items.contains(ItemData.getInstance().getTemplate(itemId)))
++					{
++						if (player.getAutoUseSettings().getAutoManaItem() == itemId)
++						{
++							player.getAutoUseSettings().setAutoManaItem(0);
++						}
++						else
++						{
++							player.getAutoUseSettings().setAutoManaItem(itemId);
++						}
++					}
++				}
++				
++				// Calculate page number.
++				final int max = HtmlUtil.countPageNumber(items.size(), PAGE_LIMIT);
++				int page = params == null ? 1 : Integer.parseInt(paramArray[0]);
++				if (page > max)
++				{
++					page = max;
++				}
++				
++				// Cut items list up to page number.
++				final StringBuilder sb = new StringBuilder();
++				items = items.subList(Math.max(0, (page - 1) * PAGE_LIMIT), Math.min(page * PAGE_LIMIT, items.size()));
++				if (items.isEmpty())
++				{
++					sb.append("<center><br>No mana potions found.<br></center>");
++				}
++				else
++				{
++					// Generate item table.
++					int row = 0;
++					for (ItemTemplate template : items)
++					{
++						sb.append(((row % 2) == 0 ? "<table width=\"295\" bgcolor=\"000000\"><tr>" : "<table width=\"295\"><tr>"));
++						if (player.getAutoUseSettings().getAutoManaItem() == template.getId())
++						{
++							sb.append("<td height=40 width=40><img src=\"" + template.getIcon() + "\" width=32 height=32></td><td width=190>" + template.getName() + "</td><td><button value=\" \" action=\"bypass voice .playmana " + page + " " + template.getId() + "\" width=32 height=32 back=\"L2UI_CH3.mapbutton_zoomout2\" fore=\"L2UI_CH3.mapbutton_zoomout1\"></td>");
++						}
++						else
++						{
++							sb.append("<td height=40 width=40><img src=\"" + template.getIcon() + "\" width=32 height=32></td><td width=190><font color=\"B09878\">" + template.getName() + "</font></td><td><button value=\" \" action=\"bypass voice .playmana " + page + " " + template.getId() + "\" width=32 height=32 back=\"L2UI_CH3.mapbutton_zoomin2\" fore=\"L2UI_CH3.mapbutton_zoomin1\"></td>");
++						}
++						sb.append("</tr></table><img src=\"L2UI.SquareGray\" width=295 height=1>");
++					}
++					
++					// Generate page footer.
++					sb.append("<br><img src=\"L2UI.SquareGray\" width=295 height=1><table width=\"100%\" bgcolor=000000><tr>");
++					if (page > 1)
++					{
++						sb.append("<td align=left width=70><a action=\"bypass voice .playmana " + (page - 1) + "\"><font color=\"CDB67F\">Previous</font></a></td>");
++					}
++					else
++					{
++						sb.append("<td align=left width=70><font color=\"B09878\">Previous</font></td>");
++					}
++					sb.append("<td align=center width=100>Page " + page + " of " + max + "</td>");
++					if (page < max)
++					{
++						sb.append("<td align=right width=70><a action=\"bypass voice .playmana " + (page + 1) + "\"><font color=\"CDB67F\">Next</font></a></td>");
++					}
++					else
++					{
++						sb.append("<td align=right width=70><font color=\"B09878\">Next</font></td>");
++					}
++					sb.append("</tr></table><img src=\"L2UI.SquareGray\" width=295 height=1>");
++				}
++				
+ 				// Replace and send the html.
+ 				html.setHtml(content.replace("%items%", sb.toString()));
+ 				player.sendPacket(html);
+@@ -703,6 +833,28 @@ public class AutoPlay implements IVoicedCommandHandler
+ 		return true;
+ 	}
+ 	
++	/**
++	 * L2Hub: банка маны по эффекту скилла: у Mana Potion нет типа абнормала, как HP_RECOVER у лечебных.
++	 * @param skill скилл предмета
++	 * @return восстанавливает ли он ману
++	 */
++	private static boolean restoresMana(Skill skill)
++	{
++		final List<AbstractEffect> effects = skill.getEffects(EffectScope.GENERAL);
++		if (effects != null)
++		{
++			for (AbstractEffect effect : effects)
++			{
++				if (effect.getClass().getSimpleName().startsWith("ManaHeal"))
++				{
++					return true;
++				}
++			}
++		}
++		
++		return false;
++	}
++	
+ 	@Override
+ 	public String[] getCommandList()
+ 	{
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/holders/player/AutoPlaySettingsHolder.java b/java/org/l2jmobius/gameserver/entity/actor/holders/player/AutoPlaySettingsHolder.java
+index 8581a913e831678cd035ff8ebf0a54a6cd0472ab..519d2d0b9d47121110f91e08154338e5d811a310 100644
+--- a/java/org/l2jmobius/gameserver/entity/actor/holders/player/AutoPlaySettingsHolder.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/holders/player/AutoPlaySettingsHolder.java
+@@ -34,6 +34,7 @@ public class AutoPlaySettingsHolder
+ 	private final AtomicBoolean _shortRange = new AtomicBoolean();
+ 	private final AtomicBoolean _respectfulHunting = new AtomicBoolean(true);
+ 	private final AtomicInteger _autoPotionPercent = new AtomicInteger(50);
++	private final AtomicInteger _autoManaPercent = new AtomicInteger(50);
+ 	
+ 	public AutoPlaySettingsHolder()
+ 	{
+@@ -98,4 +99,14 @@ public class AutoPlaySettingsHolder
+ 	{
+ 		_autoPotionPercent.set(value);
+ 	}
++	
++	public int getAutoManaPercent()
++	{
++		return _autoManaPercent.get();
++	}
++	
++	public void setAutoManaPercent(int value)
++	{
++		_autoManaPercent.set(value);
++	}
+ }
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/holders/player/AutoUseSettingsHolder.java b/java/org/l2jmobius/gameserver/entity/actor/holders/player/AutoUseSettingsHolder.java
+index 3b8fbded7d1a51bb2072496a15366d7f4ec236f1..6b2938b89d0d6515e04fe6df259690cb03f579eb 100644
+--- a/java/org/l2jmobius/gameserver/entity/actor/holders/player/AutoUseSettingsHolder.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/holders/player/AutoUseSettingsHolder.java
+@@ -36,6 +36,7 @@ public class AutoUseSettingsHolder
+ 	private final Collection<Integer> _autoBuffs = ConcurrentHashMap.newKeySet();
+ 	private final List<Integer> _autoSkills = new CopyOnWriteArrayList<>();
+ 	private final AtomicInteger _autoPotionItem = new AtomicInteger();
++	private final AtomicInteger _autoManaItem = new AtomicInteger();
+ 	private int _skillIndex = 0;
+ 	
+ 	public AutoUseSettingsHolder()
+@@ -72,6 +73,16 @@ public class AutoUseSettingsHolder
+ 		_autoPotionItem.set(itemId);
+ 	}
+ 	
++	public int getAutoManaItem()
++	{
++		return _autoManaItem.get();
++	}
++	
++	public void setAutoManaItem(int itemId)
++	{
++		_autoManaItem.set(itemId);
++	}
++	
+ 	public boolean isAutoSkill(int skillId)
+ 	{
+ 		return _autoSkills.contains(skillId) || _autoBuffs.contains(skillId);
+@@ -109,6 +120,6 @@ public class AutoUseSettingsHolder
+ 	
+ 	public boolean isEmpty()
+ 	{
+-		return _autoSupplyItems.isEmpty() && (_autoPotionItem.get() == 0) && _autoSkills.isEmpty() && _autoBuffs.isEmpty() && _autoActions.isEmpty();
++		return _autoSupplyItems.isEmpty() && (_autoPotionItem.get() == 0) && (_autoManaItem.get() == 0) && _autoSkills.isEmpty() && _autoBuffs.isEmpty() && _autoActions.isEmpty();
+ 	}
+ }
+diff --git a/java/org/l2jmobius/gameserver/mechanics/variables/PlayerVariables.java b/java/org/l2jmobius/gameserver/mechanics/variables/PlayerVariables.java
+index 21184feb3ff4366a3372831513a5a14ca99cf4a5..23f98045b197aa8b5bc5fdaef28bf44799650876 100644
+--- a/java/org/l2jmobius/gameserver/mechanics/variables/PlayerVariables.java
++++ b/java/org/l2jmobius/gameserver/mechanics/variables/PlayerVariables.java
+@@ -60,6 +60,7 @@ public class PlayerVariables extends AbstractVariables
+ 	public static final String AUTO_USE_SKILLS = "AUTO_USE_SKILLS";
+ 	public static final String AUTO_USE_ITEMS = "AUTO_USE_ITEMS";
+ 	public static final String AUTO_USE_POTION = "AUTO_USE_POTION";
++	public static final String AUTO_USE_MANA = "AUTO_USE_MANA";
+ 	
+ 	// Private variables.
+ 	private final AtomicBoolean _scheduledSave = new AtomicBoolean(false);
+diff --git a/java/org/l2jmobius/gameserver/taskmanagers/AutoUseTaskManager.java b/java/org/l2jmobius/gameserver/taskmanagers/AutoUseTaskManager.java
+index 54f588dd63efd82cc2a7fa1891cf0be9a4d0fb4b..45c7816687f0d82918daab772b3c2601a2905503 100644
+--- a/java/org/l2jmobius/gameserver/taskmanagers/AutoUseTaskManager.java
++++ b/java/org/l2jmobius/gameserver/taskmanagers/AutoUseTaskManager.java
+@@ -173,6 +173,21 @@ public class AutoUseTaskManager
+ 					}
+ 				}
+ 				
++				// L2Hub: второй слот, мана со своим порогом. Кончились банки — слот остаётся: докупил, и снова пьёт.
++				if (AutoPlayConfig.ENABLE_AUTO_POTION && !isInPeaceZone && (player.getCurrentMpPercent() < player.getAutoPlaySettings().getAutoManaPercent()))
++				{
++					final int itemId = player.getAutoUseSettings().getAutoManaItem();
++					final Item item = itemId > 0 ? player.getInventory().getItemByItemId(itemId) : null;
++					if ((item != null) && manaReady(player, item))
++					{
++						final IItemHandler handler = ItemHandler.getInstance().getHandler(item.getEtcItem());
++						if (handler != null)
++						{
++							handler.onItemUse(player, item, false);
++						}
++					}
++				}
++				
+ 				if (AutoPlayConfig.ENABLE_AUTO_SKILL)
+ 				{
+ 					BUFFS: for (Integer skillId : player.getAutoUseSettings().getAutoBuffs())
+@@ -428,6 +443,30 @@ public class AutoUseTaskManager
+ 		}
+ 	}
+ 	
++	/**
++	 * L2Hub: банку не трогаем, пока скилл на откате или лечение ещё идёт, иначе каждый тик шло бы системное сообщение.
++	 * @param player кто пьёт
++	 * @param item банка
++	 * @return можно ли пить сейчас
++	 */
++	private static boolean manaReady(Player player, Item item)
++	{
++		final SkillHolder[] skills = item.getTemplate().getSkills();
++		if (skills != null)
++		{
++			for (SkillHolder holder : skills)
++			{
++				final Skill skill = holder.getSkill();
++				if (player.isAffectedBySkill(skill.getId()) || player.hasSkillReuse(skill.getReuseHashCode()) || !skill.checkCondition(player, player, false))
++				{
++					return false;
++				}
++			}
++		}
++		
++		return (item.getReuseDelay() <= 0) || (player.getItemRemainingReuseTime(item.getObjectId()) <= 0);
++	}
++	
+ 	public synchronized void startAutoUseTask(Player player)
+ 	{
+ 		for (Set<Player> pool : POOLS)

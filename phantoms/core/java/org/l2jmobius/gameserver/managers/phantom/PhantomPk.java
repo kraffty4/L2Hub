@@ -33,6 +33,8 @@ public final class PhantomPk
 	/** Охотник видит ПК в этом радиусе; бьёт, если не слабее его больше чем на столько уровней. */
 	private static final int SEE_RANGE = 1200;
 	private static final int FIGHT_LEVEL_GAP = 2;
+	/** Уровень, до которого включительно с проклятым оружием не дерутся ({@link #barredByCursed}). */
+	private static final int CURSED_BAR_LEVEL = 20;
 	/** Пара «охотник — ПК»: решение (бить или бежать) — не чаще. */
 	private static final long REACT_GAP = 60000;
 	/** Убегает на столько; кричит в торговый чат с таким шансом, %. */
@@ -111,7 +113,16 @@ public final class PhantomPk
 		final int level = PhantomThanatos.is(pk) ? PhantomRaid.HUNT_LEVEL : pk.getLevel() - FIGHT_LEVEL_GAP;
 		final boolean strong = (hunter.getLevel() >= level) && (hunter.getCurrentHp() > (hunter.getMaxHp() / 2));
 		final boolean brave = (temper >= BRAVE_TEMPER) || PhantomRelations.getInstance().isEnemy(hunter, pk);
-		return strong && brave;
+		return strong && brave && !barredByCursed(hunter, pk);
+	}
+
+	/**
+	 * С проклятым не дерутся те, кому 20 и меньше: {@code PlayableAI} молча снимает такой приказ, и боец стоял бы столбом.
+	 * @return этот бой Mobius не даст начать
+	 */
+	static boolean barredByCursed(Player attacker, Player target)
+	{
+		return (target.isCursedWeaponEquipped() && (attacker.getLevel() <= CURSED_BAR_LEVEL)) || (attacker.isCursedWeaponEquipped() && (target.getLevel() <= CURSED_BAR_LEVEL));
 	}
 
 	/**
@@ -127,7 +138,7 @@ public final class PhantomPk
 			}
 			for (Player other : World.getVisibleObjectsInRange(hunter, Player.class, REVENGE_RANGE))
 			{
-				if (PhantomManager.getInstance().isPhantom(other) || other.isDead() || other.isInvisible() || other.isGM() || other.isInsideZone(ZoneId.PEACE) || other.isInOlympiadMode() || other.isInDuel() || other.isOnEvent() || !PhantomRelations.getInstance().isEnemy(hunter, other) || (hunter.getLevel() < (other.getLevel() - REVENGE_LEVEL_GAP)))
+				if (PhantomManager.getInstance().isPhantom(other) || other.isDead() || other.isInvisible() || other.isGM() || other.isInsideZone(ZoneId.PEACE) || other.isInOlympiadMode() || other.isInDuel() || other.isOnEvent() || !PhantomRelations.getInstance().isEnemy(hunter, other) || (hunter.getLevel() < (other.getLevel() - REVENGE_LEVEL_GAP)) || barredByCursed(hunter, other))
 				{
 					continue;
 				}

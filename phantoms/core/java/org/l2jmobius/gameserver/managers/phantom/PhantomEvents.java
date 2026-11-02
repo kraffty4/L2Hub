@@ -111,7 +111,7 @@ public final class PhantomEvents
 
 	/**
 	 * Раз в 10 с из {@code PhantomHunterManager.control}: открыта регистрация — записать охотников.
-	 * @param hunting охотники на каче, не в пати, живы
+	 * @param hunting охотники на каче, не в пати, живы; с {@code HunterCombatFixes} — и свободные в городе (раздел 4.119)
 	 * @param now текущее время
 	 */
 	synchronized void control(List<Player> hunting, long now)
@@ -144,7 +144,7 @@ public final class PhantomEvents
 			{
 				break;
 			}
-			if (hunter.isRegisteredOnEvent() || hunter.isOnEvent() || (PhantomRaid.getInstance().raidOf(hunter) != null) || PhantomOlympiad.getInstance().isBusy(hunter))
+			if (hunter.isRegisteredOnEvent() || hunter.isOnEvent() || hunter.isInStoreMode() || (PhantomRaid.getInstance().raidOf(hunter) != null) || PhantomOlympiad.getInstance().isBusy(hunter))
 			{
 				continue;
 			}
@@ -163,7 +163,7 @@ public final class PhantomEvents
 				hunter.addListener(score.listener);
 				_participants.put(hunter.getObjectId(), score);
 				LOGGER.info(getClass().getSimpleName() + ": " + hunter.getName() + " (" + hunter.getLevel() + ") registers for " + name + " (" + registered + " hunters).");
-				if ((template != null) && (Rnd.get(100) < 30))
+				if ((template != null) && (Rnd.get(100) < 30) && (!PhantomHuntersConfig.HUNTER_COMBAT_FIXES || (registered <= 3)))
 				{
 					PhantomChat.getInstance().hunterShout(hunter, Rnd.nextBoolean() ? "записался на " + name + ", кто ещё?" : name + " — го, кто не трус)");
 				}

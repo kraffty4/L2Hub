@@ -1,0 +1,69 @@
+diff --git a/dist/game/config/Custom/AutoPlay.ini b/dist/game/config/Custom/AutoPlay.ini
+index 11f6945ba566fe39316af07310cae65babc009d9..9cfbd50276cabb1eb570b4d9e742542858caef2b 100644
+--- a/dist/game/config/Custom/AutoPlay.ini
++++ b/dist/game/config/Custom/AutoPlay.ini
+@@ -43,7 +43,7 @@ DisabledItemIds =
+ 
+ # Items ignored from auto play pickup.
+ # Cursed Weapons: 8190, 8689
+-IgnoredAutoPickItems = 8190, 8689
++IgnoredAutoPickItems = 8190, 8689,8156,8157,8606,8607,8608,8609,8610,8611,8612,8613,10655,10656,10657,14824,14825,14826,14827
+ 
+ # Message send to players on login.
+ # Leave empty to disable.
+diff --git a/dist/game/config/Player.ini b/dist/game/config/Player.ini
+index ac8eadfbbabf2cfabc2e32f9b2839a7da91478bb..19513075f1499d2bdc616973ce7cc0f28f953357 100644
+--- a/dist/game/config/Player.ini
++++ b/dist/game/config/Player.ini
+@@ -716,6 +716,11 @@ MaxAdena = 3000000000000000
+ # Default: False
+ AutoLootHerbs = False
+ 
++# L2Hub: хербы, которые AutoLootHerbs не подбирает, они падают на землю. Баф-хербы: instant-бафф прячет такой же
++# настоящий бафф, а в полном списке вытесняет самый старый. Хербы HP и MP сюда не входят.
++# Пусто — автолут всех хербов, как было.
++AutoLootHerbExcludedIds = 8156,8157,8606,8607,8608,8609,8610,8611,8612,8613,10655,10656,10657,14824,14825,14826,14827
++
+ # This option, when set to True, will enable automatically picking up items.
+ # If set False it will force the player to pickup dropped items from mobs.
+ # This excludes herbs mentioned above and items from Raid/GrandBosses with minions.
+diff --git a/java/org/l2jmobius/gameserver/config/PlayerConfig.java b/java/org/l2jmobius/gameserver/config/PlayerConfig.java
+index 0848e218385f104452eff3e6c1f99b71e1c72515..1e773e526572fa34957035f6cd9aa5470efbac58 100644
+--- a/java/org/l2jmobius/gameserver/config/PlayerConfig.java
++++ b/java/org/l2jmobius/gameserver/config/PlayerConfig.java
+@@ -64,6 +64,7 @@ public class PlayerConfig
+ 	public static boolean AUTO_LEARN_FS_SKILLS;
+ 	public static boolean SHOW_EFFECT_MESSAGES_ON_LOGIN;
+ 	public static boolean AUTO_LOOT_HERBS;
++	public static Set<Integer> AUTO_LOOT_HERB_EXCLUDED_IDS;
+ 	public static byte BUFFS_MAX_AMOUNT;
+ 	public static byte DANCES_MAX_AMOUNT;
+ 	public static boolean DANCE_CANCEL_BUFF;
+@@ -515,6 +516,14 @@ public class PlayerConfig
+ 				AUTO_LOOT_ITEM_IDS.add(itm);
+ 			}
+ 		}
++		AUTO_LOOT_HERB_EXCLUDED_IDS = new HashSet<>();
++		for (String item : config.getString("AutoLootHerbExcludedIds", "").split(","))
++		{
++			if (!item.isBlank())
++			{
++				AUTO_LOOT_HERB_EXCLUDED_IDS.add(Integer.parseInt(item.trim()));
++			}
++		}
+ 		ENABLE_KEYBOARD_MOVEMENT = config.getBoolean("KeyboardMovement", true);
+ 		UNSTUCK_INTERVAL = config.getInt("UnstuckInterval", 300);
+ 		TELEPORT_WATCHDOG_TIMEOUT = config.getInt("TeleportWatchdogTimeout", 0);
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/Attackable.java b/java/org/l2jmobius/gameserver/entity/actor/Attackable.java
+index 9dc1bfe951ef1e390ff5a53de0b5e9b7432a4a6e..45ea2786c870f9a98432ef26aa10b00c589645c3 100644
+--- a/java/org/l2jmobius/gameserver/entity/actor/Attackable.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/Attackable.java
+@@ -1181,7 +1181,7 @@ public class Attackable extends Npc
+ 				final ItemTemplate item = ItemData.getInstance().getTemplate(drop.getId());
+ 				
+ 				// Check if the autoLoot mode is active.
+-				if (PlayerConfig.AUTO_LOOT_ITEM_IDS.contains(item.getId()) || isFlying() || (!item.hasExImmediateEffect() && ((!_isRaid && PlayerConfig.AUTO_LOOT) || (_isRaid && PlayerConfig.AUTO_LOOT_RAIDS))) || (item.hasExImmediateEffect() && PlayerConfig.AUTO_LOOT_HERBS))
++				if (PlayerConfig.AUTO_LOOT_ITEM_IDS.contains(item.getId()) || isFlying() || (!item.hasExImmediateEffect() && ((!_isRaid && PlayerConfig.AUTO_LOOT) || (_isRaid && PlayerConfig.AUTO_LOOT_RAIDS))) || (item.hasExImmediateEffect() && PlayerConfig.AUTO_LOOT_HERBS && !PlayerConfig.AUTO_LOOT_HERB_EXCLUDED_IDS.contains(item.getId())))
+ 				{
+ 					player.doAutoLoot(this, drop); // Give the item(s) to the Player that has killed the Attackable.
+ 				}

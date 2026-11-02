@@ -320,6 +320,8 @@ async function poll() {
       else if (job.action === 'restart') toast('Гейм-сервер перезапущен.');
       else if (job.action === 'backup') toast(`${byId(job.chronicle)?.name}: бэкап базы готов.`);
       else if (job.action === 'restore') toast(`${byId(job.chronicle)?.name}: база откатана, прежняя сохранена бэкапом «перед откатом».`);
+      else if (job.action === 'wipeworld') toast(`${byId(job.chronicle)?.name}: мир начнётся с нуля. Старый — в бэкапе «перед вайпом», откат — в «Бэкапах».`);
+      else if (job.action === 'wipeundo') toast(`${byId(job.chronicle)?.name}: вайп откатан, новый мир — в бэкапе «перед откатом».`);
       else if (job.action === 'pack') toast(`${byId(job.chronicle)?.name}: клиент для друзей собран — «Друзья» → «Открыть папку».`);
       else if (job.action === 'build') toast(`${byId(job.chronicle)?.name}: сервер собран с модулем фантомов.`);
       else if (job.action === 'install') toast(`${byId(job.chronicle)?.name}: сервер установлен. Осталось указать папку клиента.`);
@@ -329,7 +331,7 @@ async function poll() {
       else if (job.action === 'client') toast(`${byId(job.chronicle)?.name}: язык клиента переключён — со следующего запуска клиента.`);
       if (job.action === 'client' && !job.error) api.profile(job.chronicle).then((pr) => { profiles[job.chronicle] = pr; if (job.chronicle === selected) { renderMain(); renderNet(); } });
       if (job.action === 'install' && !job.error) afterInstall(job.chronicle);
-      if (['backup', 'restore', 'start'].includes(job.action) && ctab === 'backups') renderBackups();
+      if (['backup', 'restore', 'start', 'wipeworld', 'wipeundo'].includes(job.action) && ctab === 'backups') renderBackups();
       if (job.action === 'pack' && section === 'friends') renderFriends();
       if (job.action === 'geodata' && job.chronicle === selected && ctab === 'over') renderOverviewCards();
     }
@@ -1066,6 +1068,58 @@ async function renderBackups() {
     box.appendChild(row);
   }
   if (r.items.length > BACKUPS_SHOWN) box.insertAdjacentHTML('beforeend', `<div class="note">И ещё ${r.items.length - BACKUPS_SHOWN} — в папке бэкапов.</div>`);
+  renderWipe();
+}
+
+// Вайп мира Mobius (wipe.py, docs/WIPE.md): сначала холостой прогон, в окне подтверждения — что уйдёт и что останется.
+async function renderWipe() {
+  const box = $('wipeBox');
+  const r = await api.wipe_state(selected);
+  box.innerHTML = '';
+  if (!r.allowed) return;
+  box.innerHTML = `<div class="note" style="margin-top:10px"><b>Вайп мира.</b> Персонажи, кланы, предметы и охотники начнутся с нуля. Учётки, настройки сервера и ключи мозгов останутся. Перед вайпом снимается бэкап, он проверяется заливкой рядом, а откатить вайп можно здесь же.${r.blocker ? `<br>${esc(r.blocker)}` : ''}</div>
+    <div class="row2" style="margin:10px 0 0"><button class="sbtn danger" id="wipeWorld" ${r.blocker ? 'disabled' : ''}>Вайпнуть мир…</button></div>`;
+  $('wipeWorld').onclick = askWipe;
+  for (const m of r.wipes) {
+    const row = document.createElement('div');
+    row.className = 'list-row';
+    row.innerHTML = `<span>Вайп ${esc(m.stamp)} <small>· старый мир — ${esc(m.backup)}</small></span>`;
+    const btn = document.createElement('button');
+    btn.className = 'sbtn';
+    btn.textContent = 'Откатить вайп';
+    btn.disabled = !!r.blocker;
+    btn.onclick = () => askWipeUndo(m);
+    row.appendChild(btn);
+    box.appendChild(row);
+  }
+}
+
+async function askWipe() {
+  const name = byId(selected)?.name || selected;
+  const b = $('wipeWorld');
+  b.disabled = true;
+  b.textContent = 'Считаю…';
+  const pre = await api.wipe_preview(selected);
+  b.disabled = false;
+  b.textContent = 'Вайпнуть мир…';
+  if (!pre.ok) return toast(pre.error, true);
+  if (pre.blocker) return toast(pre.blocker, true);
+  if (pre.leftover) return toast('Остался прерванный вайп: сначала откати его.', true);
+  const n = (t) => pre.before[t] || 0;
+  const names = pre.people.slice(0, 8).map((x) => `${esc(x[0])} (${esc(x[1])})`).join(', ');
+  const ok = await askModal({ title: `Вайпнуть мир ${esc(name)}?`, ok: 'Вайпнуть',
+    body: `<p>Людей: <b>${pre.people.length}</b>${names ? ` — ${names}${pre.people.length > 8 ? '…' : ''}` : ''}.<br>Охотников и прочих фантомов: <b>${n('characters') - pre.people.length}</b>. Кланов: <b>${n('clan_data')}</b>. Предметов: <b>${n('items')}</b>.</p>
+      <p class="w-muted" style="font-size:13px">Останутся учётки, настройки сервера, журналы, ключи мозгов и бэкапы. Старый мир уйдёт в бэкап «перед вайпом», файлы мира — в папку вайпа; откат — кнопкой в «Бэкапах».${pre.schema.length ? ` Столбцы базы станут как в установщике: ${pre.schema.length}.` : ''}</p>
+      <label style="display:block;margin:10px 0"><input type="checkbox" id="wipeSure"> Понимаю, что мир начнётся с нуля</label>` });
+  if (!ok) return;
+  if (!$('wipeSure').checked) return toast('Вайп отменён: галочка не поставлена.', true);
+  await call(api.wipe_world(selected, selected));
+}
+
+async function askWipeUndo(m) {
+  const ok = await askModal({ title: `Откатить вайп ${esc(m.stamp)}?`, ok: 'Откатить',
+    body: `<p>Мир вернётся к бэкапу ${esc(m.backup)}.</p><p class="w-muted" style="font-size:13px">Новый мир не пропадёт: база уйдёт в бэкап «перед откатом», файлы — в папку вайпа. Учётки вернутся такими, какими были перед вайпом.</p>` });
+  if (ok) await call(api.wipe_undo(selected, m.stamp, selected));
 }
 
 async function restoreBackup(b) {
@@ -1171,11 +1225,15 @@ async function renderModes() {
   const sw = groups.map((g) => `<div class="mode-group">${esc(g)}</div>` + avail.filter((s) => s.group === g).map((s) =>
     `<div class="opt"><div class="l">${esc(s.title)}<small>${esc(s.note)}</small></div><button class="switch" role="switch" aria-checked="${s.value}" data-sw="${s.id}"></button></div>`).join('')).join('');
   const missing = r.switches.filter((s) => !s.available).map((s) => s.title);
+  // Сколько охотников в мире (modes.hunters_max, docs/PHANTOMS.md, раздел 4.120): только у хроник из server_modes.json.
+  const hm = r.huntersMax;
+  const hmRow = hm ? `<div class="mode-group">${esc(hm.group)}</div><div class="opt"><div class="l">${esc(hm.title)}<small>${esc(hm.note)} Сейчас в таблице ${hm.top}: больше не поставить. Куча гейма на этой машине — ${hm.heapGb} ГБ.</small></div>
+      <input class="field" style="width:64px" id="huntersMax" value="${hm.count}" inputmode="numeric"></div>` : '';
   const cal = host.querySelector('.cal-card');  // календарь остаётся на месте, пока renderCalendar не поставит новый
   host.innerHTML = `<div class="card wide"><h3>Режим сервера<span class="src">${active ? esc(active.title) : 'свои настройки'}</span></h3>
       <div class="seg modes" id="modeSeg">${btns}</div>
       <div class="note" id="modeNote">${esc(active ? active.note : 'Рейты и моды — свои: правятся ниже и во «Все настройки».')}${r.restart ? ' Сервер работает — новое применится после перезапуска гейма.' : ''}</div></div>
-    <div class="card wide"><h3>Моды и ивенты</h3>${sw || '<div class="note">У этой сборки выключателей нет.</div>'}
+    <div class="card wide"><h3>Моды и ивенты</h3>${hmRow}${sw || '<div class="note">У этой сборки выключателей нет.</div>'}
       ${missing.length ? `<div class="note" style="margin-top:6px">В этой сборке пока нет: ${esc(missing.join(', '))}.</div>` : ''}</div>`;
   if (cal) host.appendChild(cal);
   // Ключ уже стоит выключателем выше (ChampionEnable и т. п.) — его строку из карточек ниже убираем, чтобы не было двух.
@@ -1197,6 +1255,13 @@ async function renderModes() {
     await loadSchema();
   }));
   renderCalendar(host, id);
+  const hmInput = $('huntersMax');
+  if (hmInput) hmInput.onchange = async () => {
+    const res = await api.set_hunters_max(id, hmInput.value);
+    if (!res.ok) { hmInput.value = hm.count; return toast(res.error, true); }
+    toast(`Охотников в мире: ${res.count} из ${res.top}${res.cut ? ' — больше в таблице нет' : ''}. Сервер применит сам, за 10 секунд.`);
+    await loadSchema();
+  };
   host.querySelectorAll('[data-sw]').forEach((b) => (b.onclick = async () => {
     const on = b.getAttribute('aria-checked') !== 'true';
     const res = await api.set_mod_switch(id, b.dataset.sw, on);

@@ -1,0 +1,119 @@
+diff --git a/dist/game/data/scripts/handlers/skill/effects/BlockAbnormalSlot.java b/dist/game/data/scripts/handlers/skill/effects/BlockAbnormalSlot.java
+index befc2625b130338818528c9157e0345a0637c592..56b3a79c7c07b05f237d1ebf9ad1a4a0acd88762 100644
+--- a/dist/game/data/scripts/handlers/skill/effects/BlockAbnormalSlot.java
++++ b/dist/game/data/scripts/handlers/skill/effects/BlockAbnormalSlot.java
+@@ -24,6 +24,7 @@ import org.l2jmobius.gameserver.entity.actor.Creature;
+ import org.l2jmobius.gameserver.mechanics.conditions.Condition;
+ import org.l2jmobius.gameserver.mechanics.effects.AbstractEffect;
+ import org.l2jmobius.gameserver.mechanics.skill.AbnormalType;
++import org.l2jmobius.gameserver.mechanics.skill.BuffInfo;
+ import org.l2jmobius.gameserver.mechanics.skill.Skill;
+ import org.l2jmobius.gameserver.util.StatSet;
+ 
+@@ -57,7 +58,25 @@ public class BlockAbnormalSlot extends AbstractEffect
+ 	@Override
+ 	public void onExit(Creature effector, Creature effected, Skill skill)
+ 	{
+-		effected.getEffectList().removeBlockedAbnormalTypes(_blockAbnormalSlots);
++		// Keep the slots that another active effect still blocks.
++		final Set<AbnormalType> slots = new HashSet<>(_blockAbnormalSlots);
++		for (BuffInfo info : effected.getEffectList().getEffects())
++		{
++			if (info.getSkill() == skill)
++			{
++				continue;
++			}
++			
++			for (AbstractEffect effect : info.getEffects())
++			{
++				if (effect instanceof BlockAbnormalSlot block)
++				{
++					slots.removeAll(block._blockAbnormalSlots);
++				}
++			}
++		}
++		
++		effected.getEffectList().removeBlockedAbnormalTypes(slots);
+ 	}
+ 	
+ 	@Override
+diff --git a/dist/game/data/scripts/quests/Q00247_PossessorOfAPreciousSoul4/Q00247_PossessorOfAPreciousSoul4.java b/dist/game/data/scripts/quests/Q00247_PossessorOfAPreciousSoul4/Q00247_PossessorOfAPreciousSoul4.java
+index e2e390996a849fa04c3481274b19db736f0bfffc..96e481c1d51a4c32700283e11b715eddb538fd01 100644
+--- a/dist/game/data/scripts/quests/Q00247_PossessorOfAPreciousSoul4/Q00247_PossessorOfAPreciousSoul4.java
++++ b/dist/game/data/scripts/quests/Q00247_PossessorOfAPreciousSoul4/Q00247_PossessorOfAPreciousSoul4.java
+@@ -65,17 +65,23 @@ public class Q00247_PossessorOfAPreciousSoul4 extends Quest
+ 			}
+ 			case "TELEPORT":
+ 			{
+-				st.setCond(2);
+-				player.teleToLocation(143209, 43968, -3038);
++				if (st.isStarted())
++				{
++					st.setCond(2);
++					player.teleToLocation(143209, 43968, -3038);
++				}
+ 				break;
+ 			}
+ 			case "31745-05.htm":
+ 			{
+-				player.setNoble(true);
+-				giveItems(player, NOBLESS_TIARA, 1);
+-				addExpAndSp(player, 93836, 0);
+-				player.broadcastPacket(new SocialAction(player.getObjectId(), 3));
+-				st.exitQuest(false, true);
++				if (st.isStarted() && st.isCond(2))
++				{
++					player.setNoble(true);
++					giveItems(player, NOBLESS_TIARA, 1);
++					addExpAndSp(player, 93836, 0);
++					player.broadcastPacket(new SocialAction(player.getObjectId(), 3));
++					st.exitQuest(false, true);
++				}
+ 				break;
+ 			}
+ 		}
+diff --git a/java/org/l2jmobius/gameserver/mechanics/skill/BuffInfo.java b/java/org/l2jmobius/gameserver/mechanics/skill/BuffInfo.java
+index 99984d234a03548911b813cca30fdbe8e8c4851c..72e27a9491c2d530c23d67985b9de91a0295b288 100644
+--- a/java/org/l2jmobius/gameserver/mechanics/skill/BuffInfo.java
++++ b/java/org/l2jmobius/gameserver/mechanics/skill/BuffInfo.java
+@@ -33,6 +33,7 @@ import org.l2jmobius.gameserver.entity.actor.holders.creature.EffectList;
+ import org.l2jmobius.gameserver.mechanics.effects.AbstractEffect;
+ import org.l2jmobius.gameserver.mechanics.effects.EffectTaskInfo;
+ import org.l2jmobius.gameserver.mechanics.effects.EffectTickTask;
++import org.l2jmobius.gameserver.mechanics.effects.EffectType;
+ import org.l2jmobius.gameserver.mechanics.skill.enums.SkillFinishType;
+ import org.l2jmobius.gameserver.mechanics.stats.Formulas;
+ import org.l2jmobius.gameserver.network.SystemMessageId;
+@@ -310,6 +311,19 @@ public class BuffInfo
+ 	 */
+ 	public void onTick(AbstractEffect effect)
+ 	{
++		// Damage over time on a creature removed from the world (deleteMe stopped its BuffFinishTask) would tick forever.
++		if (!_effected.isSpawned() && !_effected.isTeleporting() && isDamageOverTime(effect))
++		{
++			final EffectTaskInfo task = getEffectTask(effect);
++			if ((task != null) && (task.getScheduledFuture() != null))
++			{
++				task.getScheduledFuture().cancel(false);
++			}
++			
++			_effected.getEffectList().stopSkillEffects(SkillFinishType.REMOVED, _skill);
++			return;
++		}
++		
+ 		boolean continueForever = false;
+ 		
+ 		// If the effect is in use, allow it to affect the effected.
+@@ -335,6 +349,12 @@ public class BuffInfo
+ 		}
+ 	}
+ 	
++	private static boolean isDamageOverTime(AbstractEffect effect)
++	{
++		final EffectType type = effect.getEffectType();
++		return (type == EffectType.DMG_OVER_TIME) || (type == EffectType.DMG_OVER_TIME_PERCENT);
++	}
++	
+ 	public void finishEffects(boolean broadcast)
+ 	{
+ 		// Cancels the ticking task.

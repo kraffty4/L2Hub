@@ -1,0 +1,18 @@
+diff --git a/java/org/l2jmobius/gameserver/entity/residences/AuctionableHall.java b/java/org/l2jmobius/gameserver/entity/residences/AuctionableHall.java
+--- a/java/org/l2jmobius/gameserver/entity/residences/AuctionableHall.java
++++ b/java/org/l2jmobius/gameserver/entity/residences/AuctionableHall.java
+@@ -134,6 +134,14 @@
+ 		}
+ 	}
+ 	
++	/**
++	 * L2Hub: проверка аренды сейчас, та же, что по расписанию. Отложенная проверка долга у FeeTask не срабатывает: задержка считается от начала эпохи. Зовёт только клан охотников (PhantomClanHall, docs/PHANTOMS.md, раздел «Кланхолл»).
++	 */
++	public void feeNow()
++	{
++		new FeeTask().run();
++	}
++	
+ 	/** Fee Task */
+ 	protected class FeeTask implements Runnable
+ 	{

@@ -1,0 +1,442 @@
+L2Hub: PvP-ивенты. Подбор по уровню: живой игрок дерётся только с теми, кто в пределах PvpLevelGap от него, охотников не из этих пределов снимает с записи. Награда всем дошедшим до конца: адена и живым опыт как за PvpRewardMobs мобов своего уровня за 20 минут боя, победителям вдвое, живым победителям свиток на броню, лучшему по счёту, если он живой, свиток на оружие.
+
+diff --git a/dist/game/config/Custom/L2HubEvents.ini b/dist/game/config/Custom/L2HubEvents.ini
+index cb53a9ad01d2c861452f0862cd68c2bb3df34d2e..b2eff2490d0619ad362bd5442ea548d628ff99ce 100644
+--- a/dist/game/config/Custom/L2HubEvents.ini
++++ b/dist/game/config/Custom/L2HubEvents.ini
+@@ -58,6 +58,24 @@ PvpOnlyWithPlayers = True
+ # Default: 1
+ PvpMinLevel = 1
+ 
++# Подбор по уровню: живой игрок дерётся только с теми, кто не дальше стольких уровней от него. Первый живой на записи задаёт
++# пределы, охотники не из них снимаются. Охотников в этих пределах мало — ивент отменится, «мало участников». 0 — без подбора.
++# Default: 0
++PvpLevelGap = 3
++
++# Награда всем, кто дошёл до конца боя: адена и живым опыт как за столько мобов своего уровня при 20 минутах боя, при коротком бое
++# меньше. Сверх этого победитель получает то, что даёт сам ивент. 0 — как в Mobius, только победителю.
++# Default: 0
++PvpRewardMobs = 60
++
++# Во сколько раз больше у победителя.
++# Default: 2
++PvpRewardWinnerFactor = 2
++
++# Живому победителю свиток заточки брони по его уровню, лучшему по счёту, если он живой, свиток заточки оружия.
++# Default: False
++PvpRewardScrolls = True
++
+ # Размеры и бой TvT действуют, пока PvpEvents = True, иначе как в Mobius.
+ # Сколько участников нужно для старта.
+ # Default: 4
+diff --git a/dist/game/data/scripts/custom/L2HubPvpEvents/L2HubPvpEvents.java b/dist/game/data/scripts/custom/L2HubPvpEvents/L2HubPvpEvents.java
+index e0047e9b4bcbd4de7eaa5b562db84c03d22c922d..1d9df64bcd0422b1a1e333e5eb2733fac8c1d81f 100644
+--- a/dist/game/data/scripts/custom/L2HubPvpEvents/L2HubPvpEvents.java
++++ b/dist/game/data/scripts/custom/L2HubPvpEvents/L2HubPvpEvents.java
+@@ -21,19 +21,25 @@ import java.nio.charset.StandardCharsets;
+ import java.nio.file.Files;
+ import java.nio.file.Path;
+ import java.nio.file.Paths;
++import java.util.Collection;
++import java.util.Map;
+ import java.util.Properties;
+ import java.util.Set;
++import java.util.concurrent.ConcurrentHashMap;
+ import java.util.logging.Logger;
+ 
+ import org.l2jmobius.commons.threads.ThreadPool;
+ import org.l2jmobius.commons.time.SchedulingPattern;
+ import org.l2jmobius.commons.time.TimeUtil;
++import org.l2jmobius.gameserver.config.RatesConfig;
+ import org.l2jmobius.gameserver.entity.World;
+ import org.l2jmobius.gameserver.entity.WorldObject;
+ import org.l2jmobius.gameserver.entity.actor.Npc;
+ import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
+ import org.l2jmobius.gameserver.managers.ScriptManager;
+ import org.l2jmobius.gameserver.managers.phantom.PhantomManager;
++import org.l2jmobius.gameserver.managers.phantom.PhantomText;
+ import org.l2jmobius.gameserver.mechanics.script.Event;
+ import org.l2jmobius.gameserver.mechanics.script.Quest;
+ 
+@@ -62,6 +68,35 @@ public class L2HubPvpEvents
+ 		"CtF"
+ 	};
+ 	private static final Set<Integer> MANAGERS = Set.of(70010, 70011, 70012);
++	private static final int LEVEL_GAP = tvt("PvpLevelGap", 0, 0, 200);
++	private static final int REWARD_MOBS = tvt("PvpRewardMobs", 0, 0, 1000);
++	private static final int REWARD_WINNER_FACTOR = tvt("PvpRewardWinnerFactor", 2, 1, 10);
++	private static final boolean REWARD_SCROLLS = "true".equalsIgnoreCase(config().getProperty("PvpRewardScrolls", "False").trim());
++	private static final int REWARD_MINUTES = 20;
++	// @formatter:off
++	/** Средний моб Epilogue без рейтов, медианы датапака по десяткам уровней: уровень, опыт, SP, адена. */
++	private static final int[][] MOBS =
++	{
++		{25, 1145, 56, 260},
++		{35, 2329, 133, 489},
++		{45, 4785, 329, 991},
++		{55, 6413, 519, 1407},
++		{65, 10379, 965, 2190},
++		{75, 33954, 3691, 6082},
++		{85, 68723, 7046, 9480}
++	};
++	/** Свитки по уровню: с какого уровня, на оружие, на броню. */
++	private static final int[][] SCROLLS =
++	{
++		{76, 959, 960},
++		{61, 729, 730},
++		{52, 947, 948},
++		{40, 951, 952},
++		{20, 955, 956}
++	};
++	// @formatter:on
++	/** Самопроверка L2HUBPACK: охотники, которые изображают живых игроков. */
++	public static final Set<Player> TEST_LIVE = ConcurrentHashMap.newKeySet();
+ 
+ 	private final boolean _onlyWithPlayers;
+ 
+@@ -247,6 +282,221 @@ public class L2HubPvpEvents
+ 		return (reserved > 0) && phantoms.isPhantom(player) && (registered.stream().filter(phantoms::isPhantom).count() >= (max - reserved));
+ 	}
+ 
++	private static boolean live(Player player)
++	{
++		return !PhantomManager.getInstance().isPhantom(player) || TEST_LIVE.contains(player);
++	}
++
++	/**
++	 * Подбор по уровню (PvpLevelGap): живой игрок дерётся только с теми, кто не дальше PvpLevelGap от него. Живым важны другие живые: охотников не из своих пределов снимает {@link #admitted}.
++	 * Охотнику важны живые, а пока их нет — другие охотники, чтобы и без живых 20-й уровень не вышел против 80-го.
++	 * @param registered записанные
++	 * @param player кто записывается
++	 * @return записать нельзя, живому сказано почему
++	 */
++	public static boolean levelRefused(Set<Player> registered, Player player)
++	{
++		if (LEVEL_GAP <= 0)
++		{
++			return false;
++		}
++		final boolean phantomOnly = !live(player) && registered.stream().noneMatch(L2HubPvpEvents::live);
++		for (Player other : registered)
++		{
++			if ((phantomOnly || live(other)) && (Math.abs(other.getLevel() - player.getLevel()) > LEVEL_GAP))
++			{
++				if (!PhantomManager.getInstance().isPhantom(player))
++				{
++					player.sendMessage(PhantomText.tr("Сейчас на этот ивент набор для уровней ") + bandLow(registered, 1) + "–" + bandHigh(registered, 200) + PhantomText.tr(", у тебя ") + player.getLevel() + PhantomText.tr(". Жди следующего."));
++				}
++				return true;
++			}
++		}
++		return false;
++	}
++
++	/**
++	 * Живой записался: охотники не из его пределов снимаются с записи, на их места придут подходящие.
++	 * @param script ивент
++	 * @param registered записанные
++	 * @param player кто записался
++	 */
++	public static void admitted(Quest script, Set<Player> registered, Player player)
++	{
++		if ((LEVEL_GAP <= 0) || !live(player))
++		{
++			return;
++		}
++		for (Player other : registered)
++		{
++			if (!live(other) && (Math.abs(other.getLevel() - player.getLevel()) > LEVEL_GAP))
++			{
++				script.onEvent("CancelParticipation", null, other);
++			}
++		}
++	}
++
++	/**
++	 * @param registered записанные
++	 * @param floor порог уровня ивента
++	 * @return с какого уровня сейчас пустят живого, для доски Alt+B
++	 */
++	public static int bandLow(Set<Player> registered, int floor)
++	{
++		int low = floor;
++		for (Player other : registered)
++		{
++			if ((LEVEL_GAP > 0) && live(other))
++			{
++				low = Math.max(low, other.getLevel() - LEVEL_GAP);
++			}
++		}
++		return low;
++	}
++
++	/**
++	 * @param registered записанные
++	 * @param ceiling предел уровня ивента
++	 * @return до какого уровня сейчас пустят живого, для доски Alt+B
++	 */
++	public static int bandHigh(Set<Player> registered, int ceiling)
++	{
++		int high = ceiling;
++		for (Player other : registered)
++		{
++			if ((LEVEL_GAP > 0) && live(other))
++			{
++				high = Math.min(high, other.getLevel() + LEVEL_GAP);
++			}
++		}
++		return high;
++	}
++
++	/** Средний моб на уровне: столбец из {@link #MOBS} между соседними десятками. */
++	private static double mob(int level, int column)
++	{
++		if (level <= MOBS[0][0])
++		{
++			return MOBS[0][column];
++		}
++		for (int i = 1; i < MOBS.length; i++)
++		{
++			if (level <= MOBS[i][0])
++			{
++				final double part = (double) (level - MOBS[i - 1][0]) / (MOBS[i][0] - MOBS[i - 1][0]);
++				return MOBS[i - 1][column] + ((MOBS[i][column] - MOBS[i - 1][column]) * part);
++			}
++		}
++		return MOBS[MOBS.length - 1][column];
++	}
++
++	private static double rewardMobs(int minutes, boolean winner)
++	{
++		return ((double) REWARD_MOBS * minutes * (winner ? REWARD_WINNER_FACTOR : 1)) / REWARD_MINUTES;
++	}
++
++	/**
++	 * @param level уровень
++	 * @param minutes сколько минут идёт бой этого ивента
++	 * @param winner победитель
++	 * @return адена за ивент
++	 */
++	public static long rewardAdena(int level, int minutes, boolean winner)
++	{
++		final Float rate = RatesConfig.RATE_DROP_AMOUNT_BY_ID == null ? null : RatesConfig.RATE_DROP_AMOUNT_BY_ID.get(57);
++		return (long) (rewardMobs(minutes, winner) * mob(level, 3) * (rate != null ? rate : RatesConfig.RATE_DEATH_DROP_AMOUNT_MULTIPLIER));
++	}
++
++	/**
++	 * @param level уровень
++	 * @param minutes сколько минут идёт бой этого ивента
++	 * @param winner победитель
++	 * @return опыт за ивент живому игроку
++	 */
++	public static long rewardExp(int level, int minutes, boolean winner)
++	{
++		return (long) (rewardMobs(minutes, winner) * mob(level, 1) * RatesConfig.RATE_XP);
++	}
++
++	/**
++	 * Свиток по уровню.
++	 * @param level уровень
++	 * @param weapon на оружие, иначе на броню
++	 * @return предмет или 0, если ниже D
++	 */
++	public static int rewardScroll(int level, boolean weapon)
++	{
++		for (int[] row : SCROLLS)
++		{
++			if (level >= row[0])
++			{
++				return row[weapon ? 1 : 2];
++			}
++		}
++		return 0;
++	}
++
++	/**
++	 * @return кто победил в командном ивенте; ничья — никто
++	 */
++	public static Collection<Player> teamWinners(Set<Player> blue, Set<Player> red, boolean forfeit, int blueScore, int redScore)
++	{
++		if (forfeit)
++		{
++			return blue.isEmpty() && !red.isEmpty() ? red : blue;
++		}
++		return blueScore > redScore ? blue : redScore > blueScore ? red : Set.of();
++	}
++
++	/**
++	 * Конец ивента: награда всем, кто дошёл до конца боя, сверх того, что скрипт даёт победителю. Охотникам только адена: уровнем они идут своим ходом.
++	 * @param participants участники
++	 * @param winners победители
++	 * @param scores счёт
++	 * @param minutes сколько минут идёт бой этого ивента
++	 * @param instanceId инстанс арены
++	 */
++	public static void finish(Set<Player> participants, Collection<Player> winners, Map<Player, Integer> scores, int minutes, int instanceId)
++	{
++		if (REWARD_MOBS <= 0)
++		{
++			return;
++		}
++		final int top = scores.values().stream().mapToInt(Integer::intValue).max().orElse(0);
++		for (Player player : participants)
++		{
++			if ((player == null) || (player.getInstanceId() != instanceId))
++			{
++				continue;
++			}
++			final boolean winner = winners.contains(player);
++			final int level = player.getLevel();
++			final long adena = rewardAdena(level, minutes, winner);
++			player.addAdena(ItemProcessType.REWARD, adena, player, true);
++			if (!live(player))
++			{
++				continue;
++			}
++			final long exp = rewardExp(level, minutes, winner);
++			player.addExpAndSp(exp, rewardMobs(minutes, winner) * mob(level, 2) * RatesConfig.RATE_SP);
++			player.sendMessage(PhantomText.tr("Награда за ивент: ") + adena + PhantomText.tr(" адены и ") + exp + PhantomText.tr(" опыта."));
++			if (REWARD_SCROLLS)
++			{
++				final int armor = winner ? rewardScroll(level, false) : 0;
++				if (armor > 0)
++				{
++					player.addItem(ItemProcessType.REWARD, armor, 1, player, true);
++				}
++				final int weapon = (top > 0) && (scores.getOrDefault(player, 0) == top) ? rewardScroll(level, true) : 0;
++				if (weapon > 0)
++				{
++					player.addItem(ItemProcessType.REWARD, weapon, 1, player, true);
++				}
++			}
++			LOGGER.info("L2HubPvpEvents: " + player.getName() + " (" + level + ") gets " + adena + " adena and " + exp + " exp" + (winner ? ", winner" : "") + ".");
++		}
++	}
++
+ 	public static void main(String[] args)
+ 	{
+ 		final Properties config = config();
+diff --git a/dist/game/data/scripts/custom/events/CaptureTheFlag/CtF.java b/dist/game/data/scripts/custom/events/CaptureTheFlag/CtF.java
+index d98647001467a4a0c24d6ec63501d15ea53bbb5c..a60510eada9938e0f1b851737bbd1a827afd3478 100644
+--- a/dist/game/data/scripts/custom/events/CaptureTheFlag/CtF.java
++++ b/dist/game/data/scripts/custom/events/CaptureTheFlag/CtF.java
+@@ -271,7 +271,7 @@ public class CtF extends Event
+ 	{
+ 		if ("L2HubStatus".equals(event)) // L2Hub: что показывает доска Alt+B (PhantomEventBoard): состояние, записано, мест, порог и предел уровня, записан ли этот игрок, до какого времени запись
+ 		{
+-			return _state.name() + " " + PLAYER_LIST.size() + " " + MAXIMUM_PARTICIPANT_COUNT + " " + MINIMUM_PARTICIPANT_LEVEL + " " + MAXIMUM_PARTICIPANT_LEVEL + " " + ((player != null) && PLAYER_LIST.contains(player) && player.isRegisteredOnEvent()) + " " + L2HUB_CLOSES;
++			return _state.name() + " " + PLAYER_LIST.size() + " " + MAXIMUM_PARTICIPANT_COUNT + " " + custom.L2HubPvpEvents.L2HubPvpEvents.bandLow(PLAYER_LIST, MINIMUM_PARTICIPANT_LEVEL) + " " + custom.L2HubPvpEvents.L2HubPvpEvents.bandHigh(PLAYER_LIST, MAXIMUM_PARTICIPANT_LEVEL) + " " + ((player != null) && PLAYER_LIST.contains(player) && player.isRegisteredOnEvent()) + " " + L2HUB_CLOSES;
+ 		}
+ 		
+ 		// Event not participating, no starting or started return null.
+@@ -295,6 +295,7 @@ public class CtF extends Event
+ 							PLAYER_SCORES.put(player, 0);
+ 							player.setRegisteredOnEvent(true);
+ 							addLogoutListener(player);
++							custom.L2HubPvpEvents.L2HubPvpEvents.admitted(this, PLAYER_LIST, player); // L2Hub: охотники не из пределов живого снимаются
+ 							htmltext = "registration-success.html";
+ 						}
+ 						else
+@@ -684,6 +685,7 @@ public class CtF extends Event
+ 					}
+ 				}
+ 				
++				custom.L2HubPvpEvents.L2HubPvpEvents.finish(PLAYER_LIST, custom.L2HubPvpEvents.L2HubPvpEvents.teamWinners(BLUE_TEAM, RED_TEAM, TEAM_FORFEIT, BLUE_SCORE, RED_SCORE), PLAYER_SCORES, FIGHT_TIME, PVP_WORLD.getInstanceId()); // L2Hub: награда всем дошедшим до конца
+ 				startQuestTimer("ScoreBoard", 3500, null, null);
+ 				startQuestTimer("TeleportOut", 7000, null, null);
+ 				break;
+@@ -1063,6 +1065,11 @@ public class CtF extends Event
+ 			return false;
+ 		}
+ 		
++		if (custom.L2HubPvpEvents.L2HubPvpEvents.levelRefused(PLAYER_LIST, player)) // L2Hub: подбор по уровню, PvpLevelGap
++		{
++			return false;
++		}
++		
+ 		if (player.getLevel() > MAXIMUM_PARTICIPANT_LEVEL)
+ 		{
+ 			player.sendMessage("Your level is too high to participate.");
+diff --git a/dist/game/data/scripts/custom/events/Deathmatch/Deathmatch.java b/dist/game/data/scripts/custom/events/Deathmatch/Deathmatch.java
+index 24374055daf71902761228fee71e3a9e58c72a67..a12a25c04f0b83cf9b751ec05f0060d15ee5f2c3 100644
+--- a/dist/game/data/scripts/custom/events/Deathmatch/Deathmatch.java
++++ b/dist/game/data/scripts/custom/events/Deathmatch/Deathmatch.java
+@@ -198,7 +198,7 @@ public class Deathmatch extends Event
+ 	{
+ 		if ("L2HubStatus".equals(event)) // L2Hub: что показывает доска Alt+B (PhantomEventBoard): состояние, записано, мест, порог и предел уровня, записан ли этот игрок, до какого времени запись
+ 		{
+-			return (L2HUB_REGISTRATION ? "PARTICIPATING" : EVENT_ACTIVE ? "STARTED" : "INACTIVE") + " " + PLAYER_LIST.size() + " " + MAXIMUM_PARTICIPANT_COUNT + " " + MINIMUM_PARTICIPANT_LEVEL + " " + MAXIMUM_PARTICIPANT_LEVEL + " " + ((player != null) && PLAYER_LIST.contains(player) && player.isRegisteredOnEvent()) + " " + L2HUB_CLOSES;
++			return (L2HUB_REGISTRATION ? "PARTICIPATING" : EVENT_ACTIVE ? "STARTED" : "INACTIVE") + " " + PLAYER_LIST.size() + " " + MAXIMUM_PARTICIPANT_COUNT + " " + custom.L2HubPvpEvents.L2HubPvpEvents.bandLow(PLAYER_LIST, MINIMUM_PARTICIPANT_LEVEL) + " " + custom.L2HubPvpEvents.L2HubPvpEvents.bandHigh(PLAYER_LIST, MAXIMUM_PARTICIPANT_LEVEL) + " " + ((player != null) && PLAYER_LIST.contains(player) && player.isRegisteredOnEvent()) + " " + L2HUB_CLOSES;
+ 		}
+ 		
+ 		if (!EVENT_ACTIVE)
+@@ -221,6 +221,7 @@ public class Deathmatch extends Event
+ 							PLAYER_SCORES.put(player, 0);
+ 							player.setRegisteredOnEvent(true);
+ 							addLogoutListener(player);
++							custom.L2HubPvpEvents.L2HubPvpEvents.admitted(this, PLAYER_LIST, player); // L2Hub: охотники не из пределов живого снимаются
+ 							htmltext = "registration-success.html";
+ 						}
+ 						else
+@@ -465,6 +466,7 @@ public class Deathmatch extends Event
+ 				
+ 				Player winner = Collections.max(PLAYER_SCORES.entrySet(), Map.Entry.comparingByValue()).getKey();
+ 				winner.addItem(ItemProcessType.REWARD, REWARD, player, true);
++				custom.L2HubPvpEvents.L2HubPvpEvents.finish(PLAYER_LIST, Set.of(winner), PLAYER_SCORES, FIGHT_TIME, PVP_WORLD.getInstanceId()); // L2Hub: награда всем дошедшим до конца
+ 				
+ 				startQuestTimer("ScoreBoard", 3500, null, null);
+ 				startQuestTimer("TeleportOut", 7000, null, null);
+@@ -671,6 +673,11 @@ public class Deathmatch extends Event
+ 			return false;
+ 		}
+ 		
++		if (custom.L2HubPvpEvents.L2HubPvpEvents.levelRefused(PLAYER_LIST, player)) // L2Hub: подбор по уровню, PvpLevelGap
++		{
++			return false;
++		}
++		
+ 		if (player.getLevel() > MAXIMUM_PARTICIPANT_LEVEL)
+ 		{
+ 			player.sendMessage("Your level is too high to participate.");
+diff --git a/dist/game/data/scripts/custom/events/TeamVsTeam/TvT.java b/dist/game/data/scripts/custom/events/TeamVsTeam/TvT.java
+index 1a35e113810c18e79105d85a3bb59d2899612ba3..76cebaa13c05a985ed78bc5529f8463cebc5ba64 100644
+--- a/dist/game/data/scripts/custom/events/TeamVsTeam/TvT.java
++++ b/dist/game/data/scripts/custom/events/TeamVsTeam/TvT.java
+@@ -230,7 +230,7 @@ public class TvT extends Event
+ 	{ // Event not participating, no starting or started return null.
+ 		if ("L2HubStatus".equals(event)) // L2Hub: что показывает доска Alt+B (PhantomEventBoard): состояние, записано, мест, порог и предел уровня, записан ли этот игрок, до какого времени запись
+ 		{
+-			return _state.name() + " " + PLAYER_LIST.size() + " " + MAXIMUM_PARTICIPANT_COUNT + " " + MINIMUM_PARTICIPANT_LEVEL + " " + MAXIMUM_PARTICIPANT_LEVEL + " " + ((player != null) && PLAYER_LIST.contains(player) && player.isRegisteredOnEvent()) + " " + L2HUB_CLOSES;
++			return _state.name() + " " + PLAYER_LIST.size() + " " + MAXIMUM_PARTICIPANT_COUNT + " " + custom.L2HubPvpEvents.L2HubPvpEvents.bandLow(PLAYER_LIST, MINIMUM_PARTICIPANT_LEVEL) + " " + custom.L2HubPvpEvents.L2HubPvpEvents.bandHigh(PLAYER_LIST, MAXIMUM_PARTICIPANT_LEVEL) + " " + ((player != null) && PLAYER_LIST.contains(player) && player.isRegisteredOnEvent()) + " " + L2HUB_CLOSES;
+ 		}
+ 		
+ 		if (!IS_PARTICIPATING() && !IS_STARTING() && !IS_STARTED())
+@@ -253,6 +253,7 @@ public class TvT extends Event
+ 							PLAYER_SCORES.put(player, 0);
+ 							player.setRegisteredOnEvent(true);
+ 							addLogoutListener(player);
++							custom.L2HubPvpEvents.L2HubPvpEvents.admitted(this, PLAYER_LIST, player); // L2Hub: охотники не из пределов живого снимаются
+ 							htmltext = "registration-success.html";
+ 						}
+ 						else
+@@ -615,6 +616,7 @@ public class TvT extends Event
+ 					}
+ 				}
+ 				
++				custom.L2HubPvpEvents.L2HubPvpEvents.finish(PLAYER_LIST, custom.L2HubPvpEvents.L2HubPvpEvents.teamWinners(BLUE_TEAM, RED_TEAM, TEAM_FORFEIT, BLUE_SCORE, RED_SCORE), PLAYER_SCORES, FIGHT_TIME, PVP_WORLD.getInstanceId()); // L2Hub: награда всем дошедшим до конца
+ 				startQuestTimer("ScoreBoard", 3500, null, null);
+ 				startQuestTimer("TeleportOut", 7000, null, null);
+ 				break;
+@@ -869,6 +871,11 @@ public class TvT extends Event
+ 			return false;
+ 		}
+ 		
++		if (custom.L2HubPvpEvents.L2HubPvpEvents.levelRefused(PLAYER_LIST, player)) // L2Hub: подбор по уровню, PvpLevelGap
++		{
++			return false;
++		}
++		
+ 		if (player.getLevel() > MAXIMUM_PARTICIPANT_LEVEL)
+ 		{
+ 			player.sendMessage("Your level is too high to participate.");

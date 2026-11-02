@@ -1,0 +1,298 @@
+diff --git a/dist/game/config/Custom/L2HubEvents.ini b/dist/game/config/Custom/L2HubEvents.ini
+index 222d33d5649e363636d737d440fa4f4a1d11b23d..9c5b27a6a59028d01c7c617cdcac5cd7006a03d6 100644
+--- a/dist/game/config/Custom/L2HubEvents.ini
++++ b/dist/game/config/Custom/L2HubEvents.ini
+@@ -62,6 +62,15 @@ PvpRewardWinnerFactor = 2
+ # Default: False
+ PvpRewardScrolls = True
+ 
++# Живым медали за 20 минут боя, при коротком бое меньше (Deathmatch, 3 минуты: 2 и 3). Победителю в PvpRewardWinnerFactor раз больше.
++# Меняют их на доске Alt+B, на странице ивентов (multisell/custom/90003000.xml). Нужен PvpRewardMobs больше 0. 0 — без медалей.
++# Default: 0
++PvpRewardMedals = 10
++
++# Какой предмет: по умолчанию та же медаль, что падает с чемпионов. Заменишь — поправь и список обмена.
++# Default: 6393
++PvpRewardMedalItem = 6393
++
+ # Размеры и бой TvT действуют, пока PvpEvents = True, иначе как в Mobius.
+ # Сколько участников нужно для старта.
+ # Default: 4
+diff --git a/dist/game/data/multisell/custom/90003000.xml b/dist/game/data/multisell/custom/90003000.xml
+new file mode 100644
+index 0000000000000000000000000000000000000000..620d34056086158db6902a15df26f2e347df40d4
+--- /dev/null
++++ b/dist/game/data/multisell/custom/90003000.xml
+@@ -0,0 +1,126 @@
++<?xml version="1.0" encoding="utf-8"?>
++<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../xsd/multisell.xsd">
++	<npcs>
++		<npc>50010</npc>
++	</npcs>
++	<item>
++		<ingredient id="6393" count="7" /> <!-- Event - Glittering Medal -->
++		<production id="8753" count="1" /> <!-- Top-Grade Life Stone - Level 46 -->
++	</item>
++	<item>
++		<ingredient id="6393" count="8" /> <!-- Event - Glittering Medal -->
++		<production id="8754" count="1" /> <!-- Top-Grade Life Stone - Level 49 -->
++	</item>
++	<item>
++		<ingredient id="6393" count="10" /> <!-- Event - Glittering Medal -->
++		<production id="8755" count="1" /> <!-- Top-Grade Life Stone - Level 52 -->
++	</item>
++	<item>
++		<ingredient id="6393" count="12" /> <!-- Event - Glittering Medal -->
++		<production id="8756" count="1" /> <!-- Top-Grade Life Stone - Level 55 -->
++	</item>
++	<item>
++		<ingredient id="6393" count="13" /> <!-- Event - Glittering Medal -->
++		<production id="8757" count="1" /> <!-- Top-Grade Life Stone - Level 58 -->
++	</item>
++	<item>
++		<ingredient id="6393" count="16" /> <!-- Event - Glittering Medal -->
++		<production id="8758" count="1" /> <!-- Top-Grade Life Stone - Level 61 -->
++	</item>
++	<item>
++		<ingredient id="6393" count="20" /> <!-- Event - Glittering Medal -->
++		<production id="8759" count="1" /> <!-- Top-Grade Life Stone - Level 64 -->
++	</item>
++	<item>
++		<ingredient id="6393" count="24" /> <!-- Event - Glittering Medal -->
++		<production id="8760" count="1" /> <!-- Top-Grade Life Stone - Level 67 -->
++	</item>
++	<item>
++		<ingredient id="6393" count="29" /> <!-- Event - Glittering Medal -->
++		<production id="8761" count="1" /> <!-- Top-Grade Life Stone - Level 70 -->
++	</item>
++	<item>
++		<ingredient id="6393" count="30" /> <!-- Event - Glittering Medal -->
++		<production id="8762" count="1" /> <!-- Top-Grade Life Stone - Level 76 -->
++	</item>
++	<item>
++		<ingredient id="6393" count="1" /> <!-- Event - Glittering Medal -->
++		<production id="6576" count="1" /> <!-- Blessed Scroll: Enchant Armor (D-Grade) -->
++	</item>
++	<item>
++		<ingredient id="6393" count="6" /> <!-- Event - Glittering Medal -->
++		<production id="6575" count="1" /> <!-- Blessed Scroll: Enchant Weapon (D-Grade) -->
++	</item>
++	<item>
++		<ingredient id="6393" count="3" /> <!-- Event - Glittering Medal -->
++		<production id="6574" count="1" /> <!-- Blessed Scroll: Enchant Armor (C-Grade) -->
++	</item>
++	<item>
++		<ingredient id="6393" count="20" /> <!-- Event - Glittering Medal -->
++		<production id="6573" count="1" /> <!-- Blessed Scroll: Enchant Weapon (C-Grade) -->
++	</item>
++	<item>
++		<ingredient id="6393" count="5" /> <!-- Event - Glittering Medal -->
++		<production id="6572" count="1" /> <!-- Blessed Scroll: Enchant Armor (B-Grade) -->
++	</item>
++	<item>
++		<ingredient id="6393" count="45" /> <!-- Event - Glittering Medal -->
++		<production id="6571" count="1" /> <!-- Blessed Scroll: Enchant Weapon (B-Grade) -->
++	</item>
++	<item>
++		<ingredient id="6393" count="12" /> <!-- Event - Glittering Medal -->
++		<production id="6570" count="1" /> <!-- Blessed Scroll: Enchant Armor (A-Grade) -->
++	</item>
++	<item>
++		<ingredient id="6393" count="100" /> <!-- Event - Glittering Medal -->
++		<production id="6569" count="1" /> <!-- Blessed Scroll: Enchant Weapon (A-Grade) -->
++	</item>
++	<item>
++		<ingredient id="6393" count="30" /> <!-- Event - Glittering Medal -->
++		<production id="6578" count="1" /> <!-- Blessed Scroll: Enchant Armor (S-Grade) -->
++	</item>
++	<item>
++		<ingredient id="6393" count="200" /> <!-- Event - Glittering Medal -->
++		<production id="6577" count="1" /> <!-- Blessed Scroll: Enchant Weapon (S-Grade) -->
++	</item>
++	<item>
++		<ingredient id="6393" count="8" /> <!-- Event - Glittering Medal -->
++		<production id="958" count="1" /> <!-- Crystal Scroll: Enchant Armor (D-Grade) -->
++	</item>
++	<item>
++		<ingredient id="6393" count="40" /> <!-- Event - Glittering Medal -->
++		<production id="957" count="1" /> <!-- Crystal Scroll: Enchant Weapon (D-Grade) -->
++	</item>
++	<item>
++		<ingredient id="6393" count="15" /> <!-- Event - Glittering Medal -->
++		<production id="954" count="1" /> <!-- Crystal Scroll: Enchant Armor (C-Grade) -->
++	</item>
++	<item>
++		<ingredient id="6393" count="80" /> <!-- Event - Glittering Medal -->
++		<production id="953" count="1" /> <!-- Crystal Scroll: Enchant Weapon (C-Grade) -->
++	</item>
++	<item>
++		<ingredient id="6393" count="25" /> <!-- Event - Glittering Medal -->
++		<production id="950" count="1" /> <!-- Crystal Scroll: Enchant Armor (B-Grade) -->
++	</item>
++	<item>
++		<ingredient id="6393" count="140" /> <!-- Event - Glittering Medal -->
++		<production id="949" count="1" /> <!-- Crystal Scroll: Enchant Weapon (B-Grade) -->
++	</item>
++	<item>
++		<ingredient id="6393" count="40" /> <!-- Event - Glittering Medal -->
++		<production id="732" count="1" /> <!-- Crystal Scroll: Enchant Armor (A-Grade) -->
++	</item>
++	<item>
++		<ingredient id="6393" count="200" /> <!-- Event - Glittering Medal -->
++		<production id="731" count="1" /> <!-- Crystal Scroll: Enchant Weapon (A-Grade) -->
++	</item>
++	<item>
++		<ingredient id="6393" count="60" /> <!-- Event - Glittering Medal -->
++		<production id="962" count="1" /> <!-- Crystal Scroll: Enchant Armor (S-Grade) -->
++	</item>
++	<item>
++		<ingredient id="6393" count="300" /> <!-- Event - Glittering Medal -->
++		<production id="961" count="1" /> <!-- Crystal Scroll: Enchant Weapon (S-Grade) -->
++	</item>
++</list>
+diff --git a/dist/game/data/scripts/custom/L2HubPvpEvents/L2HubPvpEvents.java b/dist/game/data/scripts/custom/L2HubPvpEvents/L2HubPvpEvents.java
+index bbec0fc8176dccb18cc8fad5f44304bd0f432fb4..33b36a49f06c2d0490be018e8d96ac61aa32d5eb 100644
+--- a/dist/game/data/scripts/custom/L2HubPvpEvents/L2HubPvpEvents.java
++++ b/dist/game/data/scripts/custom/L2HubPvpEvents/L2HubPvpEvents.java
+@@ -72,6 +72,9 @@ public class L2HubPvpEvents
+ 	private static final int REWARD_MOBS = tvt("PvpRewardMobs", 0, 0, 1000);
+ 	private static final int REWARD_WINNER_FACTOR = tvt("PvpRewardWinnerFactor", 2, 1, 10);
+ 	private static final boolean REWARD_SCROLLS = "true".equalsIgnoreCase(config().getProperty("PvpRewardScrolls", "False").trim());
++	private static final int REWARD_MEDALS = tvt("PvpRewardMedals", 0, 0, 1000);
++	/** Медаль за ивент: её меняют на странице ивентов Alt+B. */
++	public static final int MEDAL_ITEM = tvt("PvpRewardMedalItem", 6393, 1, Integer.MAX_VALUE);
+ 	private static final int REWARD_MINUTES = 20;
+ 	// @formatter:off
+ 	/** Средний моб High Five без рейтов, медианы датапака по десяткам уровней: уровень, опыт, SP, адена. */
+@@ -436,6 +439,20 @@ public class L2HubPvpEvents
+ 		return 0;
+ 	}
+ 
++	/**
++	 * @param minutes сколько минут идёт бой этого ивента
++	 * @param winner победитель
++	 * @return медали живому игроку за ивент, 0 — медали выключены
++	 */
++	public static int rewardMedals(int minutes, boolean winner)
++	{
++		if (REWARD_MEDALS <= 0)
++		{
++			return 0;
++		}
++		return Math.max(1, (int) Math.round(((double) REWARD_MEDALS * minutes * (winner ? REWARD_WINNER_FACTOR : 1)) / REWARD_MINUTES));
++	}
++
+ 	/**
+ 	 * @return кто победил в командном ивенте; ничья — никто
+ 	 */
+@@ -493,7 +510,12 @@ public class L2HubPvpEvents
+ 					player.addItem(ItemProcessType.REWARD, weapon, 1, player, true);
+ 				}
+ 			}
+-			LOGGER.info("L2HubPvpEvents: " + player.getName() + " (" + level + ") gets " + adena + " adena and " + exp + " exp" + (winner ? ", winner" : "") + ".");
++			final int medals = rewardMedals(minutes, winner);
++			if (medals > 0)
++			{
++				player.addItem(ItemProcessType.REWARD, MEDAL_ITEM, medals, player, true);
++			}
++			LOGGER.info("L2HubPvpEvents: " + player.getName() + " (" + level + ") gets " + adena + " adena, " + exp + " exp and " + medals + " medals" + (winner ? ", winner" : "") + ".");
+ 		}
+ 	}
+ 
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+index 7cce380e0f4c5f230a07ede15843b4be9c9e7176..7dc1ee2292de1c3c2c20bd3ea0b99dea356527c1 100644
+--- a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+@@ -49,7 +49,7 @@ import org.l2jmobius.gameserver.network.serverpackets.ShowBoard;
+  * <li>раздел «Клан», вкладки {@link #clanTabs}: _bbshubclan … — создание клана ({@link #clan}) и набор в клан ({@link PhantomClanBoard}), _bbshubwars [all|hunters|players] [страница] … — кланы и объявление войны</li>
+  * <li>_bbshubspots [от [страница]] | go &lt;номер&gt; &lt;от&gt; &lt;страница&gt; — раздел «Телепорт»: города и полосы уровней, затем список спотов ({@link #spots})</li>
+  * <li>_bbshubkits [take &lt;грейд&gt; &lt;броня&gt;] — стартовые наборы ({@link L2HubKits})</li>
+- * <li>_bbshubevents [join|cancel &lt;ивент&gt;] — запись на TvT, Deathmatch и CtF ({@link PhantomEventBoard})</li>
++ * <li>_bbshubevents [join|cancel &lt;ивент&gt;|medals] — запись на TvT, Deathmatch и CtF ({@link PhantomEventBoard}), обмен медалей ({@link #medals})</li>
+  * <li>_bbshubplay — окно автобоя мимо чата ({@link #play})</li>
+  * </ul>
+  */
+@@ -129,6 +129,11 @@ public class L2HubBoard implements IParseBoardHandler
+ 		java.util.Map.entry("Пока ты записан на ивент или стоишь на арене, из игры не выйти.", "While you are signed up for an event or on its arena, you cannot leave the game."),
+ 		java.util.Map.entry("Ты записан на ивент: из игры не выйти, пока не отменишь запись.", "You are signed up for an event: you cannot leave the game until you cancel the sign-up."),
+ 		java.util.Map.entry("Ты на арене: из игры не выйти, пока не кончится бой.", "You are on the arena: you cannot leave the game until the fight ends."),
++		java.util.Map.entry("Медали у тебя: ", "Your medals: "),
++		java.util.Map.entry("За 20 минут боя: ", "For 20 minutes of a fight: "),
++		java.util.Map.entry(", победителю ", ", the winner gets "),
++		java.util.Map.entry(". Падают и с чемпионов.", ". Champions drop them too."),
++		java.util.Map.entry("Обмен медалей", "Medal exchange"),
+ 		java.util.Map.entry("Автобой", "Auto-play"),
+ 		java.util.Map.entry("<br><font color=\"808080\">Автобой выключен в настройках сервера (Custom/AutoPlay.ini, EnableAutoPlay).</font>", "<br><font color=\"808080\">Auto-play is turned off in the server settings (Custom/AutoPlay.ini, EnableAutoPlay).</font>"),
+ 		java.util.Map.entry("Стартовые наборы", "Starter kits"),
+@@ -190,6 +195,7 @@ public class L2HubBoard implements IParseBoardHandler
+ 	private static final String CLAN_WARS = "_bbshubwars";
+ 	private static final String CLAN_RECRUIT = "_bbshubclan";
+ 	private static final String EVENTS = "_bbshubevents";
++	private static final int MEDAL_SHOP = 90003000;
+ 	private static final String SPOTS = "_bbshubspots";
+ 	private static final String WORLD = "_bbshubworld";
+ 	private static final String PLAY = "_bbshubplay";
+@@ -292,7 +298,11 @@ public class L2HubBoard implements IParseBoardHandler
+ 		}
+ 		else if (args[0].equalsIgnoreCase(EVENTS))
+ 		{
+-			html = page(player, PhantomEventBoard.title(), canOpen(player) ? PhantomEventBoard.getInstance().page(player, args) + eventLogoutNote(player) : PhantomClanBoard.busy());
++			if ((args.length > 1) && args[1].equalsIgnoreCase("medals") && canUse(player))
++			{
++				MultisellData.getInstance().separateAndSendFromBoard(MEDAL_SHOP, player);
++			}
++			html = page(player, PhantomEventBoard.title(), canOpen(player) ? PhantomEventBoard.getInstance().page(player, args) + medals(player) + eventLogoutNote(player) : PhantomClanBoard.busy());
+ 		}
+ 		else
+ 		{
+@@ -306,6 +316,21 @@ public class L2HubBoard implements IParseBoardHandler
+ 		return false;
+ 	}
+ 
++	/**
++	 * Медали за ивенты (docs/PHANTOMS.md, 4.115): сколько есть, за что дают и кнопка обмена.
++	 * @param player кто смотрит страницу ивентов
++	 * @return строка для страницы; пусто, если медали выключены
++	 */
++	private static String medals(Player player)
++	{
++		final int plain = custom.L2HubPvpEvents.L2HubPvpEvents.rewardMedals(20, false);
++		if (plain <= 0)
++		{
++			return "";
++		}
++		return "<br><br>" + tr("Медали у тебя: ") + "<font color=\"LEVEL\">" + player.getInventory().getInventoryItemCount(custom.L2HubPvpEvents.L2HubPvpEvents.MEDAL_ITEM, -1) + "</font><br1>" + tr("За 20 минут боя: ") + plain + tr(", победителю ") + custom.L2HubPvpEvents.L2HubPvpEvents.rewardMedals(20, true) + tr(". Падают и с чемпионов.") + "<br1>" + button(tr("Обмен медалей"), EVENTS + " medals", 150);
++	}
++
+ 	/**
+ 	 * Запрет Mobius: записанного на ивент и стоящего на арене сервер не выпускает из игры ({@code Player.canLogout}, «A superior power doesn't allow you to leave»).
+ 	 * @param player кто смотрит страницу ивентов
+@@ -848,7 +873,7 @@ public class L2HubBoard implements IParseBoardHandler
+ 
+ 	private static String clanForm()
+ 	{
+-		return "<table width=520><tr><td align=center><font color=\"LEVEL\">" + tr("Создать клан") + "</font><br1><font color=\"808080\">" + tr("С 10-го уровня. Имя: от 2 до 16 букв и цифр, без пробелов.") + "</font></td></tr>" //
++		return "<table width=480><tr><td align=center><font color=\"LEVEL\">" + tr("Создать клан") + "</font><br1><font color=\"808080\">" + tr("С 10-го уровня. Имя: от 2 до 16 букв и цифр, без пробелов.") + "</font></td></tr>" //
+ 			+ "<tr><td align=center><edit var=\"clan_name\" width=180 height=20></td></tr>" //
+ 			+ "<tr><td align=center>" + button(tr("Создать клан"), CLAN_RECRUIT + " create $clan_name", 145) + "</td></tr></table><br>";
+ 	}
+@@ -953,15 +978,15 @@ public class L2HubBoard implements IParseBoardHandler
+ 			return sb.append("<font color=\"808080\">").append(tr("На этих уровнях мест нет.")).append("</font>").toString();
+ 		}
+ 
+-		sb.append("<table width=520><tr><td width=320><font color=\"LEVEL\">").append(tr("Место")).append("</font></td><td width=60><font color=\"LEVEL\">").append(tr("Ур.")).append("</font></td><td width=50><font color=\"LEVEL\">").append(tr("Мобов")).append("</font></td><td width=90></td></tr></table>");
+-		sb.append("<img src=\"L2UI.SquareGray\" width=520 height=1>");
++		sb.append("<table width=480><tr><td width=280><font color=\"LEVEL\">").append(tr("Место")).append("</font></td><td width=60><font color=\"LEVEL\">").append(tr("Ур.")).append("</font></td><td width=50><font color=\"LEVEL\">").append(tr("Мобов")).append("</font></td><td width=90></td></tr></table>");
++		sb.append("<img src=\"L2UI.SquareGray\" width=480 height=1>");
+ 		for (int index : list.subList(current * SPOT_PAGE, Math.min(list.size(), (current + 1) * SPOT_PAGE)))
+ 		{
+ 			final HuntSpotData.HuntSpot spot = all.get(index);
+-			sb.append("<table width=520><tr><td width=320>").append(spotName(spot.name)).append("</td><td width=60>").append(spot.min).append('-').append(spot.max).append("</td><td width=50>").append(spot.mobs).append("</td><td width=90>");
++			sb.append("<table width=480><tr><td width=280>").append(spotName(spot.name)).append("</td><td width=60>").append(spot.min).append('-').append(spot.max).append("</td><td width=50>").append(spot.mobs).append("</td><td width=90>");
+ 			sb.append(button(tr("Телепорт"), SPOTS + " go " + index + " " + from + " " + current, 80)).append("</td></tr></table>");
+ 		}
+-		sb.append("<img src=\"L2UI.SquareGray\" width=520 height=1><br>");
++		sb.append("<img src=\"L2UI.SquareGray\" width=480 height=1><br>");
+ 		if (pages > 1)
+ 		{
+ 			sb.append("<table width=300><tr><td width=100>").append(current > 0 ? button(tr("Назад"), SPOTS + " " + from + " " + (current - 1), 60) : "").append("</td>");

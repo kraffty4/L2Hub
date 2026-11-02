@@ -762,6 +762,27 @@ final class PhantomSummoner
 	}
 
 	/**
+	 * Олимпиада (раздел 4.119): тик на стадионе до правил кача не доходит, и слуга стоял рядом весь матч. Бьёт соперника; если уже бьёт или бежит к нему, не дёргает.
+	 * @param player хозяин
+	 * @param opponent соперник по матчу
+	 */
+	static void olympiadAssist(Player player, Player opponent)
+	{
+		final Summon servitor = PhantomCompat.servitor(player);
+		if ((servitor == null) || servitor.isDead() || servitor.isCastingNow())
+		{
+			return;
+		}
+		if ((servitor.getTarget() == opponent) && (servitor.getAI().getIntention() == Intention.ATTACK) && (servitor.isAttackingNow() || servitor.isMoving()))
+		{
+			return;
+		}
+		servitor.setTarget(opponent);
+		servitor.setRunning();
+		servitor.getAI().setIntentionAttack(opponent);
+	}
+
+	/**
 	 * Слуга бьёт цель хозяина, пока хозяин в бою; иначе — как у Mobius (идёт следом, защищает).
 	 */
 	private static void assist(Player player, Summon servitor, long now)

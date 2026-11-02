@@ -126,11 +126,35 @@ public final class PhantomOlympiad
 			return PhantomEvents.Drive.NONE;
 		}
 		// Отсчёт до боя, телепорт, каст, лежит — ждёт; матч и итог ведёт Mobius.
-		if (!player.isOlympiadStart() || player.isDead() || player.isTeleporting() || player.isCastingNow())
+		final boolean fixes = PhantomHuntersConfig.HUNTER_COMBAT_FIXES;
+		if (!player.isOlympiadStart() || player.isDead() || player.isTeleporting() || (!fixes && player.isCastingNow()))
 		{
 			return PhantomEvents.Drive.FIGHTS;
 		}
-		if ((template != null) && (template.getRole() == PhantomTemplate.Role.HEALER) && PhantomSupport.act(player, player, template.getRole(), now))
+		if (fixes)
+		{
+			// Сидящему и лежащему атака не дойдёт: сперва встать (раздел 4.119). Слуга бьёт соперника, даже пока хозяин кастует.
+			if (player.isFakeDeath())
+			{
+				player.stopFakeDeath(true);
+				return PhantomEvents.Drive.FIGHTS;
+			}
+			if (player.isSitting())
+			{
+				player.standUp();
+				return PhantomEvents.Drive.FIGHTS;
+			}
+			final Player rival = opponent(player);
+			if (rival != null)
+			{
+				PhantomSummoner.olympiadAssist(player, rival);
+			}
+			if (player.isCastingNow())
+			{
+				return PhantomEvents.Drive.FIGHTS;
+			}
+		}
+		if ((template != null) && (template.getRole() == PhantomTemplate.Role.HEALER) && (fixes ? PhantomSupport.olympiadAct(player, now) : PhantomSupport.act(player, player, template.getRole(), now)))
 		{
 			return PhantomEvents.Drive.FIGHTS;
 		}

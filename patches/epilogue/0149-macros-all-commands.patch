@@ -1,0 +1,391 @@
+L2Hub: все команды игрока макросами: автобой на F12, пуск и стоп, остальное на второй и следующих панелях; команда без обработчика не выдаётся, созданным раньше персонажам макросы приходят при входе.
+Первый пуск автобоя сам включает атаку или заклинания, иначе персонаж только выбирает цель и стоит. В наборе no-grade вместо Robe of Magic верх и низ отдельно: у этой робы в клиенте нет нижнего меша.
+
+diff --git a/dist/game/data/scripts/custom/L2HubBoardTest/L2HubBoardTest.java b/dist/game/data/scripts/custom/L2HubBoardTest/L2HubBoardTest.java
+index eebbd504ba0ade23adbc8f033444a8829013fe7d..eee69b4dc3c0e60d2bcb9259c4029144af5c797b 100644
+--- a/dist/game/data/scripts/custom/L2HubBoardTest/L2HubBoardTest.java
++++ b/dist/game/data/scripts/custom/L2HubBoardTest/L2HubBoardTest.java
+@@ -8,8 +8,10 @@ import java.util.ArrayList;
+ import java.util.Collections;
+ import java.util.Comparator;
+ import java.util.HashMap;
++import java.util.HashSet;
+ import java.util.List;
+ import java.util.Map;
++import java.util.Set;
+ import java.util.function.Predicate;
+ import java.util.logging.Level;
+ import java.util.logging.Logger;
+@@ -18,14 +20,21 @@ import java.util.regex.Pattern;
+ 
+ import org.l2jmobius.commons.threads.ThreadPool;
+ import org.l2jmobius.gameserver.cache.HtmCache;
++import org.l2jmobius.gameserver.config.custom.AutoPlayConfig;
+ import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
+ import org.l2jmobius.gameserver.data.sql.ClanTable;
++import org.l2jmobius.gameserver.data.xml.InitialShortcutData;
+ import org.l2jmobius.gameserver.data.xml.ItemData;
+ import org.l2jmobius.gameserver.data.xml.MultisellData;
+ import org.l2jmobius.gameserver.entity.Location;
+ import org.l2jmobius.gameserver.entity.World;
+ import org.l2jmobius.gameserver.entity.actor.Creature;
+ import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.entity.actor.enums.player.MacroType;
++import org.l2jmobius.gameserver.entity.actor.enums.player.ShortcutType;
++import org.l2jmobius.gameserver.entity.actor.holders.player.Macro;
++import org.l2jmobius.gameserver.entity.actor.holders.player.MacroCmd;
++import org.l2jmobius.gameserver.entity.actor.holders.player.Shortcut;
+ import org.l2jmobius.gameserver.entity.item.EtcItem;
+ import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
+ import org.l2jmobius.gameserver.entity.item.instance.Item;
+@@ -44,6 +53,7 @@ import org.l2jmobius.gameserver.taskmanagers.AutoPlayTaskManager;
+ 
+ import handlers.bypass.communityboard.L2HubBoard;
+ import handlers.bypass.communityboard.L2HubKits;
++import handlers.chat.commands.voiced.AutoPlay;
+ 
+ /**
+  * L2Hub: самопроверка доски Alt+B на Epilogue, только на копии базы: {@code HuntersSelfTest = L2HUBBOARD} в PhantomHunters.ini.<br>
+@@ -97,6 +107,8 @@ public class L2HubBoardTest
+ 			clan(pick(spare, p -> (p.getClan() == null) && (p.getLevel() >= 10)), spare);
+ 			kits(spare);
+ 			boxes(spare);
++			macros(spare);
++			firstStart(spare);
+ 			LOGGER.info(TAG + "done: " + _ok + " ok, " + _wrong + " wrong.");
+ 		}
+ 		catch (Throwable e)
+@@ -469,6 +481,113 @@ public class L2HubBoardTest
+ 		}
+ 	}
+ 
++	/**
++	 * Макросы всех команд: лимиты клиента, отбор по обработчикам, выдача созданному раньше персонажу, удалённое не возвращается.
++	 */
++	private static void macros(List<Player> spare)
++	{
++		final InitialShortcutData data = InitialShortcutData.getInstance();
++		final List<Macro> all = data.getGlobalMacros();
++		final Set<String> names = new HashSet<>();
++		boolean limits = true;
++		Macro play = null;
++		Macro expoff = null;
++		for (Macro macro : all)
++		{
++			limits &= names.add(macro.getName().toLowerCase()) && (macro.getAcronym().length() <= 4) && ((macro.getId() < 10106) || (macro.getDescr().length() <= 32));
++			play = macro.getId() == 10106 ? macro : play;
++			expoff = macro.getId() == 10116 ? macro : expoff;
++		}
++		check("macros: " + all.size() + " on the bars, names unique, acronyms and descriptions in client limits", limits && (all.size() >= 30));
++		check("macros: listens to login", Containers.Global().getListeners(EventType.ON_PLAYER_LOGIN).stream().anyMatch(l -> l.getOwner().getClass().getSimpleName().equals("L2HubMacros")));
++		final Macro ghost = new Macro(0, 1, "ghost", "ghost", "GHST", List.of(new MacroCmd(0, MacroType.TEXT, 0, 0, ".nosuchcommand start")));
++		final Macro stuck = new Macro(0, 1, "stuck", "stuck", "STCK", List.of(new MacroCmd(0, MacroType.TEXT, 0, 0, "/unstuck")));
++		check("macros: no handler is dropped, a client command and .expoff stay", !data.isAvailable(ghost) && data.isAvailable(stuck) && (expoff != null) && data.isAvailable(expoff));
++		check("macros: .play only where auto play is on", (play != null) && (data.isAvailable(play) == AutoPlayConfig.ENABLE_AUTO_PLAY));
++
++		final Player player = pick(spare, p -> true);
++		if (player == null)
++		{
++			LOGGER.info(TAG + "macros: no hunter.");
++			return;
++		}
++		try
++		{
++			for (Macro macro : all)
++			{
++				player.getMacros().deleteMacro(macro.getId());
++			}
++			player.deleteShortcut(9, 1);
++			player.getVariables().remove(InitialShortcutData.MACROS_GIVEN);
++			final int before = player.getMacros().getAllMacroses().size();
++			final long available = all.stream().filter(data::isAvailable).count();
++			data.giveMissingMacros(player);
++			check("macros: a character from before gets " + available + " of " + all.size(), player.getMacros().getAllMacroses().size() == (before + available));
++			final Shortcut shortcut = player.getShortcut(9, 1);
++			check("macros: shortcut on its slot", (shortcut != null) && (shortcut.getType() == ShortcutType.MACRO) && (shortcut.getId() == 10116));
++			player.getMacros().deleteMacro(10116);
++			data.giveMissingMacros(player);
++			check("macros: a deleted one does not come back", !player.getMacros().getAllMacroses().containsKey(10116) && (player.getShortcut(9, 1) == null));
++		}
++		finally
++		{
++			for (Macro macro : all)
++			{
++				player.getMacros().deleteMacro(macro.getId());
++			}
++			player.getVariables().remove(InitialShortcutData.MACROS_GIVEN);
++		}
++	}
++
++	/**
++	 * Первый пуск автобоя: боец с оружием, маг с заклинаниями, настройки игрока не трогаются. И роба набора в двух частях.
++	 */
++	private static void firstStart(List<Player> spare)
++	{
++		final Player fighter = pick(spare, p -> !p.isMageClass());
++		if (fighter != null)
++		{
++			startCheck("fighter", fighter, true);
++		}
++		final Player mage = pick(spare, p -> p.isMageClass() && p.getAllSkills().stream().anyMatch(s -> s.isMagic() && s.isDamage() && (s.getCastRange() > 0)));
++		if (mage != null)
++		{
++			startCheck("mage", mage, !AutoPlayConfig.ENABLE_AUTO_SKILL);
++			final List<int[]> robe = L2HubKits.goods(mage, 0, "robe");
++			check("kits: ng robe in two pieces", robe.stream().anyMatch(good -> good[0] == 1102) && robe.stream().anyMatch(good -> good[0] == 1105) && robe.stream().noneMatch(good -> good[0] == 431));
++		}
++	}
++
++	private static void startCheck(String role, Player player, boolean weapon)
++	{
++		final List<Integer> actions = new ArrayList<>(player.getAutoUseSettings().getAutoActions());
++		final List<Integer> skills = new ArrayList<>(player.getAutoUseSettings().getAutoSkills());
++		final boolean pickup = player.getAutoPlaySettings().doPickup();
++		try
++		{
++			player.getAutoUseSettings().getAutoActions().clear();
++			player.getAutoUseSettings().getAutoSkills().clear();
++			player.getAutoPlaySettings().setPickup(false);
++			AutoPlay.firstStart(player);
++			final boolean attacks = player.getAutoUseSettings().getAutoActions().contains(2);
++			final int count = player.getAutoUseSettings().getAutoSkills().size();
++			check("first start " + role + " (" + player.getPlayerClass() + "): attack " + attacks + ", skills " + count + ", loot", (attacks == weapon) && ((count == 0) == weapon) && player.getAutoPlaySettings().doPickup());
++			player.getAutoUseSettings().getAutoActions().clear();
++			player.getAutoUseSettings().getAutoActions().add(99);
++			player.getAutoUseSettings().getAutoSkills().clear();
++			AutoPlay.firstStart(player);
++			check("first start " + role + ": own settings stay", (player.getAutoUseSettings().getAutoActions().size() == 1) && player.getAutoUseSettings().getAutoSkills().isEmpty());
++		}
++		finally
++		{
++			player.getAutoUseSettings().getAutoActions().clear();
++			player.getAutoUseSettings().getAutoActions().addAll(actions);
++			player.getAutoUseSettings().getAutoSkills().clear();
++			player.getAutoUseSettings().getAutoSkills().addAll(skills);
++			player.getAutoPlaySettings().setPickup(pickup);
++		}
++	}
++
+ 	private static void boxChecks(Player player)
+ 	{
+ 		final int grade = L2HubKits.boxGrade(player.getLevel());
+diff --git a/dist/game/data/scripts/custom/L2HubMacros/L2HubMacros.java b/dist/game/data/scripts/custom/L2HubMacros/L2HubMacros.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..075d5086caba800ac0a271afe8412910cf4baf59
+--- /dev/null
++++ b/dist/game/data/scripts/custom/L2HubMacros/L2HubMacros.java
+@@ -0,0 +1,31 @@
++package custom.L2HubMacros;
++
++import org.l2jmobius.gameserver.data.xml.InitialShortcutData;
++import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.managers.phantom.PhantomManager;
++import org.l2jmobius.gameserver.mechanics.events.Containers;
++import org.l2jmobius.gameserver.mechanics.events.EventType;
++import org.l2jmobius.gameserver.mechanics.events.holders.actor.player.OnPlayerLogin;
++import org.l2jmobius.gameserver.mechanics.events.listeners.ConsumerEventListener;
++
++/**
++ * L2Hub: макросы команд живым игрокам при входе: тем, кто создан раньше, и после включения команды в настройках ({@link InitialShortcutData#giveMissingMacros}).
++ * @author L2Hub
++ */
++public class L2HubMacros
++{
++	private static final L2HubMacros OWNER = new L2HubMacros();
++
++	public static void main(String[] args)
++	{
++		Containers.Global().addListener(new ConsumerEventListener(Containers.Global(), EventType.ON_PLAYER_LOGIN, (OnPlayerLogin event) -> give(event.getPlayer()), OWNER));
++	}
++
++	private static void give(Player player)
++	{
++		if (!PhantomManager.getInstance().isPhantom(player))
++		{
++			InitialShortcutData.getInstance().giveMissingMacros(player);
++		}
++	}
++}
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubKits.java b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubKits.java
+index a834705717843cd082b960a98aabf1c3b21e01f5..29bceefcc3a6094544c97fb602c563ffdfb304a5 100644
+--- a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubKits.java
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubKits.java
+@@ -116,7 +116,8 @@ public final class L2HubKits
+ 	};
+ 	private static final int[][] ROBE =
+ 	{
+-		{ 431, 1148, 51, 39 },
++		// Цельные робы no-grade в клиенте без нижнего меша, ноги не рисуются: верх и низ отдельно (55 P.Def и 140 MP против 56 и 140).
++		{ 1102, 1105, 1148, 51, 39 },
+ 		{ 437, 470, 2450, 2411, 2424 },
+ 		{ 442, 473, 2463, 603, 2414 }
+ 	};
+diff --git a/dist/game/data/scripts/handlers/chat/commands/voiced/AutoPlay.java b/dist/game/data/scripts/handlers/chat/commands/voiced/AutoPlay.java
+index be5f204f6d7b21a47e5a5920db9574ff5e808246..d92c125a22be9a086e132158275e58eb810ef352 100644
+--- a/dist/game/data/scripts/handlers/chat/commands/voiced/AutoPlay.java
++++ b/dist/game/data/scripts/handlers/chat/commands/voiced/AutoPlay.java
+@@ -269,6 +269,7 @@ public class AutoPlay implements IVoicedCommandHandler
+ 						}
+ 						case "start":
+ 						{
++							firstStart(player);
+ 							AutoPlayTaskManager.getInstance().startAutoPlay(player);
+ 							AutoUseTaskManager.getInstance().startAutoUseTask(player);
+ 							break COMMAND;
+@@ -833,6 +834,37 @@ public class AutoPlay implements IVoicedCommandHandler
+ 		return true;
+ 	}
+ 	
++	/**
++	 * L2Hub: первый пуск без настроек. Без атаки и скиллов автобой считает персонажа магом без заклинаний: выбирает цель и стоит ({@code isMageCaster}).<br>
++	 * Маг бьёт заклинаниями, остальные и маг без заклинаний — оружием, лут подбирается. Выставленные игроком настройки не трогаются.
++	 * @param player кто запускает
++	 */
++	public static void firstStart(Player player)
++	{
++		if (!player.getAutoUseSettings().getAutoActions().isEmpty() || !player.getAutoUseSettings().getAutoSkills().isEmpty())
++		{
++			return;
++		}
++		
++		if (player.isMageClass() && AutoPlayConfig.ENABLE_AUTO_SKILL)
++		{
++			for (Skill skill : player.getAllSkills())
++			{
++				if (skill.isMagic() && skill.isDamage() && (skill.getCastRange() > 0) && !skill.isPassive() && !skill.isToggle() && !AutoPlayConfig.DISABLED_AUTO_SKILLS.contains(skill.getId()))
++				{
++					player.getAutoUseSettings().getAutoSkills().add(skill.getId());
++				}
++			}
++		}
++		
++		if (player.getAutoUseSettings().getAutoSkills().isEmpty())
++		{
++			player.getAutoUseSettings().getAutoActions().add(AUTO_ATTACK_ACTION);
++		}
++		
++		player.getAutoPlaySettings().setPickup(true);
++	}
++	
+ 	/**
+ 	 * L2Hub: банка маны по эффекту скилла: у Mana Potion нет типа абнормала, как HP_RECOVER у лечебных.
+ 	 * @param skill скилл предмета
+diff --git a/java/org/l2jmobius/gameserver/data/xml/InitialShortcutData.java b/java/org/l2jmobius/gameserver/data/xml/InitialShortcutData.java
+index 7561083ad987f8c18ac42d96e15ba5339561e7f2..1bb7ff94225163634cdcf5cfcef0515e4ddd01cc 100644
+--- a/java/org/l2jmobius/gameserver/data/xml/InitialShortcutData.java
++++ b/java/org/l2jmobius/gameserver/data/xml/InitialShortcutData.java
+@@ -41,6 +41,7 @@ import org.l2jmobius.gameserver.entity.actor.holders.player.Macro;
+ import org.l2jmobius.gameserver.entity.actor.holders.player.MacroCmd;
+ import org.l2jmobius.gameserver.entity.actor.holders.player.Shortcut;
+ import org.l2jmobius.gameserver.entity.item.instance.Item;
++import org.l2jmobius.gameserver.handler.VoicedCommandHandler;
+ import org.l2jmobius.gameserver.network.serverpackets.ShortcutRegister;
+ 
+ /**
+@@ -58,6 +59,10 @@ public class InitialShortcutData implements IXmlReader
+ {
+ 	private static final Logger LOGGER = Logger.getLogger(InitialShortcutData.class.getName());
+ 	
++	// L2Hub: какие макросы общего списка персонажу уже выдавали.
++	public static final String MACROS_GIVEN = "L2HubMacrosGiven";
++	private static final int MAX_MACROS = 48;
++	
+ 	// Shortcut Data Storage.
+ 	private final Map<PlayerClass, List<Shortcut>> _initialShortcutData = new EnumMap<>(PlayerClass.class);
+ 	private final List<Shortcut> _initialGlobalShortcutList = new ArrayList<>();
+@@ -252,7 +257,7 @@ public class InitialShortcutData implements IXmlReader
+ 				case MACRO:
+ 				{
+ 					final Macro macro = _macroPresets.get(shortcutId);
+-					if (macro == null)
++					if ((macro == null) || !isAvailable(macro))
+ 					{
+ 						continue;
+ 					}
+@@ -316,6 +321,86 @@ public class InitialShortcutData implements IXmlReader
+ 		}
+ 	}
+ 	
++	/**
++	 * L2Hub: макросы общего списка.
++	 * @return макросы, у которых есть ярлык на панелях
++	 */
++	public List<Macro> getGlobalMacros()
++	{
++		final List<Macro> macros = new ArrayList<>();
++		for (Shortcut shortcut : _initialGlobalShortcutList)
++		{
++			final Macro macro = shortcut.getType() == ShortcutType.MACRO ? _macroPresets.get(shortcut.getId()) : null;
++			if (macro != null)
++			{
++				macros.add(macro);
++			}
++		}
++		
++		return macros;
++	}
++	
++	/**
++	 * L2Hub: есть ли на сервере команды макроса. Команда без обработчика ушла бы текстом в общий чат, а автобой, банк и другие включаются в настройках.
++	 * @param macro макрос
++	 * @return {@code true}, если все его команды работают
++	 */
++	public boolean isAvailable(Macro macro)
++	{
++		for (MacroCmd command : macro.getCommands())
++		{
++			if ((command.getType() == MacroType.TEXT) && command.getCmd().startsWith(".") && (VoicedCommandHandler.getInstance().getHandler(command.getCmd().substring(1)) == null))
++			{
++				return false;
++			}
++		}
++		
++		return true;
++	}
++	
++	/**
++	 * L2Hub: выдать макросы общего списка, которых у персонажа ещё не было: он создан раньше или команда тогда была выключена.<br>
++	 * Ярлык ставится на обычное место, если оно свободно, иначе макрос остаётся только в списке Alt+R. Выданное помнит переменная: удалённое игроком не возвращается.
++	 * @param player персонаж
++	 */
++	public void giveMissingMacros(Player player)
++	{
++		final List<Integer> given = new ArrayList<>(player.getVariables().getIntegerList(MACROS_GIVEN));
++		final int before = given.size();
++		for (Shortcut shortcut : _initialGlobalShortcutList)
++		{
++			final Integer id = shortcut.getId();
++			final Macro macro = shortcut.getType() == ShortcutType.MACRO ? _macroPresets.get(id) : null;
++			if ((macro == null) || given.contains(id) || !isAvailable(macro))
++			{
++				continue;
++			}
++			
++			if (!player.getMacros().getAllMacroses().containsKey(id))
++			{
++				if (player.getMacros().getAllMacroses().size() >= MAX_MACROS)
++				{
++					break;
++				}
++				
++				player.registerMacro(macro);
++				if (player.getShortcut(shortcut.getSlot(), shortcut.getPage()) == null)
++				{
++					final Shortcut newShortcut = new Shortcut(shortcut.getSlot(), shortcut.getPage(), shortcut.getType(), id, shortcut.getLevel(), shortcut.getCharacterType());
++					player.sendPacket(new ShortcutRegister(newShortcut));
++					player.registerShortcut(newShortcut);
++				}
++			}
++			
++			given.add(id);
++		}
++		
++		if (given.size() != before)
++		{
++			player.getVariables().setIntegerList(MACROS_GIVEN, given);
++		}
++	}
++	
+ 	public static InitialShortcutData getInstance()
+ 	{
+ 		return SingletonHolder.INSTANCE;

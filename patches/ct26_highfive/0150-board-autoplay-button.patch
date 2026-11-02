@@ -1,0 +1,159 @@
+L2Hub: кнопка «Автобой» в навигации доски Alt+B: окно автобоя открывается мимо чата, поэтому антиспам клиента ей не мешает. Если автобой выключен в настройках, кнопка показывает страницу с объяснением.
+
+diff --git a/dist/game/data/html/CommunityBoard/Custom/home.html b/dist/game/data/html/CommunityBoard/Custom/home.html
+index 7386fe8..a1246df 100644
+--- a/dist/game/data/html/CommunityBoard/Custom/home.html
++++ b/dist/game/data/html/CommunityBoard/Custom/home.html
+@@ -20,7 +20,7 @@
+ 							</tr>
+ 							<tr>
+ 								<td align="center" height=240>
+-									<font name="hs12" color="CDB67F">L2Hub — a server for friends</font><br><br><font color="B09878">Buffer: sets by role and your own.<br1>GM Shop: gear, starter kits, Clan Items, loot sale.<br1>Teleport: towns and hunting spots by mob level.<br1>Companions: Vesna heals, Mityai buffs.<br1>World: hunters, daily tasks, hunters' raid, the world now.<br1>Clan: create, recruit, wars.<br1>Events: sign up for TvT, Deathmatch and CtF.<br1>Drop search: who drops what.</font><br><br><font color="808080">You can tell companions in nearby general chat or in party chat: "follow", "buff", "heal", "res", "bye".</font>
++									<font name="hs12" color="CDB67F">L2Hub — a server for friends</font><br><br><font color="B09878">Buffer: sets by role and your own.<br1>GM Shop: gear, starter kits, Clan Items, loot sale.<br1>Teleport: towns and hunting spots by mob level.<br1>Companions: Vesna heals, Mityai buffs.<br1>Auto-play: settings and start.<br1>World: hunters, daily tasks, hunters' raid, the world now.<br1>Clan: create, recruit, wars.<br1>Events: sign up for TvT, Deathmatch and CtF.<br1>Drop search: who drops what.</font><br><br><font color="808080">You can tell companions in nearby general chat or in party chat: "follow", "buff", "heal", "res", "bye".</font>
+ 								</td>
+ 							</tr>
+ 						</table>
+diff --git a/dist/game/data/html/CommunityBoard/Custom/navigation.html b/dist/game/data/html/CommunityBoard/Custom/navigation.html
+index 5cbdb20..7fa63be 100644
+--- a/dist/game/data/html/CommunityBoard/Custom/navigation.html
++++ b/dist/game/data/html/CommunityBoard/Custom/navigation.html
+@@ -17,6 +17,9 @@
+ <tr>
+ 	<td><button value="Companions" action="bypass _bbshubbuddy" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Reward_Down" fore="L2UI_CT1.OlympiadWnd_DF_Reward"></td>
+ </tr>
++<tr>
++	<td><button value="Auto-play" action="bypass _bbshubplay" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Fight1None_Down" fore="L2UI_CT1.OlympiadWnd_DF_Fight1None"></td>
++</tr>
+ <tr>
+ 	<td><button value="World" action="bypass _bbshubworld" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Fight1None_Down" fore="L2UI_CT1.OlympiadWnd_DF_Fight1None"></td>
+ </tr>
+diff --git a/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/home.html b/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/home.html
+index 8fe4864..a7982d6 100644
+--- a/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/home.html
++++ b/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/home.html
+@@ -20,7 +20,7 @@
+ 							</tr>
+ 							<tr>
+ 								<td align="center" height=240>
+-									<font name="hs12" color="CDB67F">L2Hub — сервер для своих</font><br><br><font color="B09878">Баффер: наборы по ролям и свои.<br1>GM-шоп: снаряжение, стартовые наборы, Clan Items, продажа лута.<br1>Телепорт: города и споты по уровню мобов.<br1>Напарники: Весна лечит, Митяй бафает.<br1>Мир: охотники, поручения дня, рейд охотников, мир сейчас.<br1>Клан: создать, набрать, войны.<br1>Ивенты: запись на TvT, Deathmatch и CtF.<br1>Поиск дропа: с кого что падает.</font><br><br><font color="808080">Напарникам можно писать в общий чат рядом или в чат пати: «за мной», «бафни», «хил», «рес», «пока».</font>
++									<font name="hs12" color="CDB67F">L2Hub — сервер для своих</font><br><br><font color="B09878">Баффер: наборы по ролям и свои.<br1>GM-шоп: снаряжение, стартовые наборы, Clan Items, продажа лута.<br1>Телепорт: города и споты по уровню мобов.<br1>Напарники: Весна лечит, Митяй бафает.<br1>Автобой: настройка и запуск.<br1>Мир: охотники, поручения дня, рейд охотников, мир сейчас.<br1>Клан: создать, набрать, войны.<br1>Ивенты: запись на TvT, Deathmatch и CtF.<br1>Поиск дропа: с кого что падает.</font><br><br><font color="808080">Напарникам можно писать в общий чат рядом или в чат пати: «за мной», «бафни», «хил», «рес», «пока».</font>
+ 								</td>
+ 							</tr>
+ 						</table>
+diff --git a/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/navigation.html b/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/navigation.html
+index b881ae4..d133f19 100644
+--- a/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/navigation.html
++++ b/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/navigation.html
+@@ -17,6 +17,9 @@
+ <tr>
+ 	<td><button value="Напарники" action="bypass _bbshubbuddy" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Reward_Down" fore="L2UI_CT1.OlympiadWnd_DF_Reward"></td>
+ </tr>
++<tr>
++	<td><button value="Автобой" action="bypass _bbshubplay" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Fight1None_Down" fore="L2UI_CT1.OlympiadWnd_DF_Fight1None"></td>
++</tr>
+ <tr>
+ 	<td><button value="Мир" action="bypass _bbshubworld" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Fight1None_Down" fore="L2UI_CT1.OlympiadWnd_DF_Fight1None"></td>
+ </tr>
+diff --git a/dist/game/data/scripts/custom/L2HubBoardTest/L2HubBoardTest.java b/dist/game/data/scripts/custom/L2HubBoardTest/L2HubBoardTest.java
+index 53db942..a120a95 100644
+--- a/dist/game/data/scripts/custom/L2HubBoardTest/L2HubBoardTest.java
++++ b/dist/game/data/scripts/custom/L2HubBoardTest/L2HubBoardTest.java
+@@ -291,13 +291,17 @@ public class L2HubBoardTest
+ 	private static void sections(Player player)
+ 	{
+ 		final String navigation = HtmCache.getInstance().getHtm(player, "data/html/CommunityBoard/Custom/navigation.html");
+-		check("navigation: " + (navigation.split("<button").length - 1) + " buttons", ((navigation.split("<button").length - 1) == 9) && navigation.contains("bypass _bbshubspots\"") && navigation.contains("bypass _bbshubworld\"") && navigation.contains("bypass _bbshubclan\"") && !navigation.contains("_bbshubwars") && !navigation.contains("gatekeeper/main.html") && !navigation.contains("voice ."));
++		check("navigation: " + (navigation.split("<button").length - 1) + " buttons", ((navigation.split("<button").length - 1) == 10) && navigation.contains("bypass _bbshubplay\"") && navigation.contains("bypass _bbshubspots\"") && navigation.contains("bypass _bbshubworld\"") && navigation.contains("bypass _bbshubclan\"") && !navigation.contains("_bbshubwars") && !navigation.contains("gatekeeper/main.html") && !navigation.contains("voice ."));
+ 		final String world = L2HubBoard.world(player);
+ 		check("world: hunters, daily, raid, world now", world.contains("bypass _bbshubhunters\"") && world.contains("bypass voice .daily\"") && world.contains("bypass voice .raid\"") && world.contains("bypass voice .world\"") && (world.length() < PAGE_LIMIT));
+ 		final String recruit = L2HubBoard.clanTabs("_bbshubclan");
+ 		final String wars = L2HubBoard.clanTabs("_bbshubwars");
+ 		check("clan tabs: the other tab is a button", recruit.contains("bypass _bbshubwars\"") && !recruit.contains("bypass _bbshubclan\"") && wars.contains("bypass _bbshubclan\"") && !wars.contains("bypass _bbshubwars\""));
+ 		check("handler of the world section", CommunityBoardHandler.getInstance().getHandler("_bbshubworld") != null);
++		final boolean autoPlayOn = org.l2jmobius.gameserver.handler.VoicedCommandHandler.getInstance().getHandler("play") != null;
++		final String play = L2HubBoard.play(player);
++		check("auto-play button: enabled " + autoPlayOn + ", window or explanation", autoPlayOn ? (play == null) : ((play != null) && play.contains("EnableAutoPlay") && (play.length() < PAGE_LIMIT)));
++		check("handler of the auto-play button", CommunityBoardHandler.getInstance().getHandler("_bbshubplay") != null);
+ 	}
+ 
+ 	private static void clan(Player player, List<Player> spare) throws Exception
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+index 7806461..8f70ac5 100644
+--- a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+@@ -24,6 +24,8 @@ import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
+ import org.l2jmobius.gameserver.entity.zone.ZoneId;
+ import org.l2jmobius.gameserver.handler.CommunityBoardHandler;
+ import org.l2jmobius.gameserver.handler.IParseBoardHandler;
++import org.l2jmobius.gameserver.handler.IVoicedCommandHandler;
++import org.l2jmobius.gameserver.handler.VoicedCommandHandler;
+ import org.l2jmobius.gameserver.managers.phantom.HuntSpotData;
+ import org.l2jmobius.gameserver.managers.phantom.PhantomClanBoard;
+ import org.l2jmobius.gameserver.managers.phantom.PhantomEventBoard;
+@@ -50,6 +52,7 @@ import org.l2jmobius.gameserver.network.serverpackets.ShowBoard;
+  * <li>_bbshubspots [от [страница]] | go &lt;номер&gt; &lt;от&gt; &lt;страница&gt; — раздел «Телепорт»: города и полосы уровней, затем список спотов ({@link #spots})</li>
+  * <li>_bbshubkits [take &lt;грейд&gt; &lt;броня&gt;] — стартовые наборы ({@link L2HubKits})</li>
+  * <li>_bbshubevents [join|cancel &lt;ивент&gt;] — запись на TvT, Deathmatch и CtF ({@link PhantomEventBoard})</li>
++ * <li>_bbshubplay — окно автобоя мимо чата ({@link #play})</li>
+  * </ul>
+  */
+ public class L2HubBoard implements IParseBoardHandler
+@@ -125,6 +128,8 @@ public class L2HubBoard implements IParseBoardHandler
+ 		java.util.Map.entry("Кто кого собирается бить, где сбор, сколько до боя.", "Who is going to fight whom, where they gather, how long until the fight."),
+ 		java.util.Map.entry("Мир сейчас", "The world now"),
+ 		java.util.Map.entry("Суперчемпионы, сезонные события и расписание ивентов.", "Super champions, seasonal events and the event schedule."),
++		java.util.Map.entry("Автобой", "Auto-play"),
++		java.util.Map.entry("<br><font color=\"808080\">Автобой выключен в настройках сервера (Custom/AutoPlay.ini, EnableAutoPlay).</font>", "<br><font color=\"808080\">Auto-play is turned off in the server settings (Custom/AutoPlay.ini, EnableAutoPlay).</font>"),
+ 		java.util.Map.entry("Стартовые наборы", "Starter kits"),
+ 		java.util.Map.entry("<br><font color=\"808080\">Наборы выключены в настройках сервера (L2HubTown.ini, TownStarterKits).</font>", "<br><font color=\"808080\">Starter kits are turned off in the server settings (L2HubTown.ini, TownStarterKits).</font>"),
+ 		java.util.Map.entry("В инвентаре Item Set Box, твой стартовый набор: открой двойным кликом.", "An Item Set Box with your starter kit is in your inventory: double-click to open."),
+@@ -190,6 +195,7 @@ public class L2HubBoard implements IParseBoardHandler
+ 	private static final String EVENTS = "_bbshubevents";
+ 	private static final String SPOTS = "_bbshubspots";
+ 	private static final String WORLD = "_bbshubworld";
++	private static final String PLAY = "_bbshubplay";
+ 	private static final int SPOT_PAGE = 10;
+ 	private static final int[] SPOT_BANDS =
+ 	{
+@@ -226,6 +232,7 @@ public class L2HubBoard implements IParseBoardHandler
+ 		EVENTS,
+ 		SPOTS,
+ 		WORLD,
++		PLAY,
+ 		L2HubKits.COMMAND
+ 	};
+ 
+@@ -278,6 +285,10 @@ public class L2HubBoard implements IParseBoardHandler
+ 		{
+ 			html = world(player);
+ 		}
++		else if (args[0].equalsIgnoreCase(PLAY))
++		{
++			html = play(player);
++		}
+ 		else if (args[0].equalsIgnoreCase(L2HubKits.COMMAND))
+ 		{
+ 			html = page(player, tr("Стартовые наборы"), townOn(L2HubKits.KEY) ? L2HubKits.content(player, args) : tr("<br><font color=\"808080\">Наборы выключены в настройках сервера (L2HubTown.ini, TownStarterKits).</font>"));
+@@ -298,6 +309,22 @@ public class L2HubBoard implements IParseBoardHandler
+ 		return false;
+ 	}
+ 
++	/**
++	 * Окно автобоя кнопкой доски. Команда {@code .play} идёт через чат, и антиспам клиента может её не пропустить; кнопка до чата не доходит.
++	 * @param player кто нажал
++	 * @return страница доски, если автобой выключен; иначе {@code null}: окно автобоя открывается поверх доски
++	 */
++	public static String play(Player player)
++	{
++		final IVoicedCommandHandler handler = VoicedCommandHandler.getInstance().getHandler("play");
++		if (handler == null)
++		{
++			return page(player, tr("Автобой"), tr("<br><font color=\"808080\">Автобой выключен в настройках сервера (Custom/AutoPlay.ini, EnableAutoPlay).</font>"));
++		}
++		handler.onCommand("play", player, null);
++		return null;
++	}
++
+ 	/**
+ 	 * Выключатели городских NPC (config/Custom/L2HubTown.ini, мод 0018): баффер и GM-шоп доски выключаются вместе с NPC у гейткиперов.
+ 	 * @param key TownBuffer или TownGmShop

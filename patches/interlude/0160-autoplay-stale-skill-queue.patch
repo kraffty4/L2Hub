@@ -1,0 +1,18 @@
+diff --git a/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTaskManager.java b/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTaskManager.java
+index 428df7fb358ee5556c0bba6a01cb5190f3ed7ba4..a201545e9b29bf209c4a6d19febdd9ade39bf5d8 100644
+--- a/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTaskManager.java
++++ b/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTaskManager.java
+@@ -100,6 +100,13 @@ public class AutoPlayTaskManager
+ 					continue PLAY;
+ 				}
+ 				
++				// L2Hub: очередь без идущего каста — остаток каста, прерванного станом, сном, параличом или уроном: abortCast её не чистит.
++				// Без автоскиллов почистить некому, и автобой стоял бы, пока игрок сам не нажмёт скилл.
++				if (!player.isCastingNow() && (player.getQueuedSkill() != null))
++				{
++					player.setQueuedSkill(null, false, false);
++				}
++				
+ 				if (player.isSitting() || player.isCastingNow() || (player.getQueuedSkill() != null))
+ 				{
+ 					continue PLAY;

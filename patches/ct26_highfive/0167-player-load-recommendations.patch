@@ -1,0 +1,16 @@
+L2Hub: реки загружаются вместе с игроком. Фантомы и офлайн-игроки после рестарта не идут через EnterWorld: у них в памяти был 0, и первое сохранение затирало rec_have в базе (docs/PHANTOMS.md).
+
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/Player.java b/java/org/l2jmobius/gameserver/entity/actor/Player.java
+index c6bca9f04492ac412d0bae0593ac969f3fce0f52..8af0163e5fcf968fb1c81f27a6e4a6dd57b41971 100644
+--- a/java/org/l2jmobius/gameserver/entity/actor/Player.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/Player.java
+@@ -7423,6 +7423,9 @@ public class Player extends Playable
+ 		
+ 		player.restoreFriendList();
+ 		
++		// L2Hub: реки — сразу при загрузке. EnterWorld читает их только через задачу Невита, а фантомы и офлайн-игроки после рестарта через него не идут: в памяти оставался 0, и первое же сохранение затирало базу.
++		player.loadRecommendations();
++		
+ 		player.setOnlineStatus(true, false);
+ 		
+ 		PlayerAutoSaveTaskManager.getInstance().add(player);

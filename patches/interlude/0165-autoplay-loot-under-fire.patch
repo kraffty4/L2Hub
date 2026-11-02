@@ -1,0 +1,51 @@
+diff --git a/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTaskManager.java b/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTaskManager.java
+index a201545e9b29bf209c4a6d19febdd9ade39bf5d8..1979a8774b439be74bd9834d2fa1d7fc92772316 100644
+--- a/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTaskManager.java
++++ b/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTaskManager.java
+@@ -256,7 +256,7 @@ public class AutoPlayTaskManager
+ 					// First item we can act on: either reachable far (move to it) or reachable close + pickup-eligible.
+ 					final Item droppedItem = World.getFirstVisibleObjectInRange(player, Item.class, 200, item ->
+ 					{
+-						if (!item.isSpawned() || (!roomy && (!item.isStackable() || (player.getInventory().getItemByItemId(item.getId()) == null))) || AutoPlayConfig.IGNORED_AUTO_PICK_ITEMS.contains(item.getId()) || !GeoEngine.getInstance().canMoveToTarget(player.getX(), player.getY(), player.getZ(), item.getX(), item.getY(), item.getZ(), player.getInstanceId()))
++						if (!item.isSpawned() || (!roomy && (!item.isStackable() || (player.getInventory().getItemByItemId(item.getId()) == null))) || AutoPlayConfig.IGNORED_AUTO_PICK_ITEMS.contains(item.getId()) || !canLoot(player, item) || !GeoEngine.getInstance().canMoveToTarget(player.getX(), player.getY(), player.getZ(), item.getX(), item.getY(), item.getZ(), player.getInstanceId()))
+ 						{
+ 							return false;
+ 						}
+@@ -269,7 +269,8 @@ public class AutoPlayTaskManager
+ 						return !item.isProtected() || (item.getOwnerId() == player.getObjectId());
+ 					});
+ 					
+-					if (droppedItem != null)
++					// L2Hub: дроп подождёт, сначала отбиться. Иначе бежал бы за ним и каждый подбор сбрасывал бы намерение, пока его бьют.
++					if ((droppedItem != null) && !isBeaten(player))
+ 					{
+ 						if (player.calculateDistance2D(droppedItem) > 20)
+ 						{
+@@ -429,6 +430,27 @@ public class AutoPlayTaskManager
+ 			return (owner != player) && ((owner == null) || (party == null) || !party.containsPlayer(owner));
+ 		}
+ 		
++		/**
++		 * L2Hub: поднимет ли игрок этот дроп сейчас. Чужой дроп с моба первые 15 с держат DropProtection и владелец предмета, {@code isProtected()} тут ни при чём: doPickupItem откажет.
++		 * @param player кто подбирает
++		 * @param item дроп
++		 * @return {@code false}, если дроп пока чужой
++		 */
++		private boolean canLoot(Player player, Item item)
++		{
++			return item.getDropProtection().tryPickUp(player) && ((item.getOwnerId() == 0) || (item.getOwnerId() == player.getObjectId()) || player.isInLooterParty(item.getOwnerId()));
++		}
++
++		/**
++		 * L2Hub: бьёт ли моб самого игрока. Цель драки держит ИИ моба, см. {@link #isBusyWithOther}.
++		 * @param player игрок
++		 * @return {@code true}, если рядом есть такой моб
++		 */
++		private boolean isBeaten(Player player)
++		{
++			return World.getFirstVisibleObjectInRange(player, Monster.class, AutoPlayConfig.AUTO_PLAY_SHORT_RANGE, mob -> !mob.isAlikeDead() && mob.hasAI() && (mob.getAI().getIntention() == Intention.ATTACK) && (mob.getAI().getAttackTarget() == player)) != null;
++		}
++
+ 		private boolean isTargetModeValid(int mode, Player player, Creature creature)
+ 		{
+ 			if (!creature.isTargetable() || (creature.isNpc() && (creature.isInvul() || !creature.asNpc().isShowName())))

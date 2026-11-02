@@ -1,0 +1,185 @@
+L2Hub: создание клана на доске Alt+B и список Clan Items в GM-шопе (docs/PHANTOMS.md).
+
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+index 8adad91c449eca3f60860546c2e44a4fff9c1b4b..797ebe053607ed1c9f057621afbbe0662246361a 100644
+--- a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+@@ -6,9 +6,11 @@
+ 
+ import org.l2jmobius.commons.threads.ThreadPool;
+ import org.l2jmobius.gameserver.cache.HtmCache;
++import org.l2jmobius.gameserver.config.ServerConfig;
+ import org.l2jmobius.gameserver.config.custom.CommunityBoardConfig;
+ import org.l2jmobius.gameserver.config.custom.PhantomsConfig;
+ import org.l2jmobius.gameserver.data.SchemeBufferTable;
++import org.l2jmobius.gameserver.data.sql.ClanTable;
+ import org.l2jmobius.gameserver.data.xml.MultisellData;
+ import org.l2jmobius.gameserver.data.xml.SkillData;
+ import org.l2jmobius.gameserver.entity.actor.Creature;
+@@ -26,6 +28,7 @@
+ import org.l2jmobius.gameserver.managers.phantom.PhantomUi;
+ import org.l2jmobius.gameserver.mechanics.buylist.BuyListHolder;
+ import org.l2jmobius.gameserver.mechanics.skill.Skill;
++import org.l2jmobius.gameserver.network.SystemMessageId;
+ import org.l2jmobius.gameserver.network.serverpackets.BuyList;
+ import org.l2jmobius.gameserver.network.serverpackets.ExBuySellList;
+ 
+@@ -36,7 +39,7 @@
+  * <li>_bbshubshop [страница] — GM-шоп из страниц NPC GM-шопа (html/merchant/&lt;CommunityShopNpc&gt;*.htm) с переписанными кнопками; мультиселлы — MultisellData.separateAndSendFromBoard</li>
+  * <li>_bbshubbuddy [действие имя] — окно напарников ({@link PhantomUi})</li>
+  * <li>_bbshubhunters [near|all|store] [страница] | go &lt;имя&gt; … — кто из охотников где и телепорт на их спот или к лавке ({@link PhantomHunterUi})</li>
+- * <li>_bbshubwars [all|hunters|players] [страница] … — кланы и объявление войны, _bbshubclan … — набор в клан ({@link PhantomClanBoard})</li>
++ * <li>_bbshubwars [all|hunters|players] [страница] … — кланы и объявление войны, _bbshubclan … — создание клана ({@link #clan}) и набор в клан ({@link PhantomClanBoard})</li>
+  * <li>_bbshubevents [join|cancel &lt;ивент&gt;] — запись на TvT, Deathmatch и CtF ({@link PhantomEventBoard})</li>
+  * </ul>
+  */
+@@ -86,7 +89,9 @@
+ 		java.util.Map.entry("Напарники", "Companions"),
+ 		java.util.Map.entry("Напарники выключены (EnablePhantoms в Phantoms.ini).", "Companions are turned off (EnablePhantoms in Phantoms.ini)."),
+ 		java.util.Map.entry("Охотники", "Hunters"),
+-		java.util.Map.entry("Фантомы выключены (EnablePhantoms в Phantoms.ini).", "Phantoms are turned off (EnablePhantoms in Phantoms.ini)."));
++		java.util.Map.entry("Фантомы выключены (EnablePhantoms в Phantoms.ini).", "Phantoms are turned off (EnablePhantoms in Phantoms.ini)."),
++		java.util.Map.entry("Создать клан", "Create a clan"),
++		java.util.Map.entry("С 10-го уровня. Имя: от 2 до 16 букв и цифр, без пробелов.", "From level 10. Name: 2 to 16 letters and digits, no spaces."));
+ 	
+ 	private static boolean l2hubEnglish()
+ 	{
+@@ -178,7 +183,7 @@
+ 		}
+ 		else if (args[0].equalsIgnoreCase(CLAN_RECRUIT))
+ 		{
+-			html = page(player, PhantomClanBoard.recruitTitle(), canUse(player) ? PhantomClanBoard.getInstance().recruit(player, args) : PhantomClanBoard.busy());
++			html = page(player, PhantomClanBoard.recruitTitle(), clan(player, args));
+ 		}
+ 		else if (args[0].equalsIgnoreCase(EVENTS))
+ 		{
+@@ -645,6 +650,53 @@
+ 		return page(player, tr("Охотники"), PhantomHunterUi.board(player, args.length > i ? args[i] : null, args.length > (i + 1) ? parseInt(args[i + 1]) : 0, "bypass " + HUNTERS));
+ 	}
+ 
++	// ---------- Клан ----------
++
++	/**
++	 * _bbshubclan [create &lt;имя&gt;] | действия набора ({@link PhantomClanBoard}). Бесклановому сверху форма создания клана: те же проверки, что у гранд-мастера (VillageMaster, create_clan), всё остальное решает {@link ClanTable#createClan}.
++	 * @param player кто открыл
++	 * @param args команда доски
++	 * @return содержимое страницы
++	 */
++	public static String clan(Player player, String[] args)
++	{
++		if (!canUse(player))
++		{
++			return PhantomClanBoard.busy();
++		}
++
++		String[] rest = args;
++		if ((args.length > 1) && args[1].equalsIgnoreCase("create"))
++		{
++			if (args.length < 3)
++			{
++				player.sendPacket(SystemMessageId.PLEASE_CREATE_YOUR_CLAN_NAME);
++			}
++			else if ((args.length > 3) || !ServerConfig.CLAN_NAME_TEMPLATE_PATTERN.matcher(args[2]).matches())
++			{
++				player.sendPacket(SystemMessageId.CLAN_NAME_IS_INVALID);
++			}
++			else
++			{
++				ClanTable.getInstance().createClan(player, args[2]);
++			}
++			rest = new String[]
++			{
++				args[0]
++			};
++		}
++
++		final String content = PhantomClanBoard.getInstance().recruit(player, rest);
++		return player.getClan() != null ? content : clanForm() + content;
++	}
++
++	private static String clanForm()
++	{
++		return "<table width=520><tr><td align=center><font color=\"LEVEL\">" + tr("Создать клан") + "</font><br1><font color=\"808080\">" + tr("С 10-го уровня. Имя: от 2 до 16 букв и цифр, без пробелов.") + "</font></td></tr>" //
++			+ "<tr><td align=center><edit var=\"clan_name\" width=180 height=20></td></tr>" //
++			+ "<tr><td align=center>" + button(tr("Создать клан"), CLAN_RECRUIT + " create $clan_name", 145) + "</td></tr></table><br>";
++	}
++
+ 	// ---------- Общее ----------
+ 
+ 	/**
+diff --git a/dist/game/data/html/CommunityBoard/Custom/navigation.html b/dist/game/data/html/CommunityBoard/Custom/navigation.html
+index 0336052a6553f8c7ad1525233ff4ca522d6436d0..d57c1767f381d9dc51b6ee25005e1a6ac1ed83a0 100644
+--- a/dist/game/data/html/CommunityBoard/Custom/navigation.html
++++ b/dist/game/data/html/CommunityBoard/Custom/navigation.html
+@@ -31,7 +31,7 @@
+ 	<td><button value="Clan wars" action="bypass _bbshubwars" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Fight1None_Down" fore="L2UI_CT1.OlympiadWnd_DF_Fight1None"></td>
+ </tr>
+ <tr>
+-	<td><button value="Clan recruiting" action="bypass _bbshubclan" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Fight1None_Down" fore="L2UI_CT1.OlympiadWnd_DF_Fight1None"></td>
++	<td><button value="Clan: create, recruit" action="bypass _bbshubclan" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Fight1None_Down" fore="L2UI_CT1.OlympiadWnd_DF_Fight1None"></td>
+ </tr>
+ <tr>
+ 	<td><button value="Events" action="bypass _bbshubevents" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Fight1None_Down" fore="L2UI_CT1.OlympiadWnd_DF_Fight1None"></td>
+diff --git a/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/navigation.html b/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/navigation.html
+index 83294b169169da037b9578f32f0c4dfa93de1d90..d1b1b442208ceeff78083657fcc6587c833eca58 100644
+--- a/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/navigation.html
++++ b/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/navigation.html
+@@ -31,7 +31,7 @@
+ 	<td><button value="Войны кланов" action="bypass _bbshubwars" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Fight1None_Down" fore="L2UI_CT1.OlympiadWnd_DF_Fight1None"></td>
+ </tr>
+ <tr>
+-	<td><button value="Набор в клан" action="bypass _bbshubclan" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Fight1None_Down" fore="L2UI_CT1.OlympiadWnd_DF_Fight1None"></td>
++	<td><button value="Клан: создать, набрать" action="bypass _bbshubclan" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Fight1None_Down" fore="L2UI_CT1.OlympiadWnd_DF_Fight1None"></td>
+ </tr>
+ <tr>
+ 	<td><button value="Ивенты" action="bypass _bbshubevents" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Fight1None_Down" fore="L2UI_CT1.OlympiadWnd_DF_Fight1None"></td>
+diff --git a/dist/game/data/html/merchant/50010.htm b/dist/game/data/html/merchant/50010.htm
+index 9132dc1b74864a96a3fa34c7ee2677e86ad71368..02e3b87a052be27145f1d3a09f85ce115fdee10d 100644
+--- a/dist/game/data/html/merchant/50010.htm
++++ b/dist/game/data/html/merchant/50010.htm
+@@ -53,6 +53,7 @@
+ <tr>
+ <td align=center></td>
+ <td align=center><button action="bypass -h npc_%objectId%_Chat 15" value="Event Items" width=85 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50040008" value="Clan Items" width=85 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+ </tr>
+ </table>
+ <br>
+diff --git a/dist/game/data/multisell/custom/50040008.xml b/dist/game/data/multisell/custom/50040008.xml
+new file mode 100644
+index 0000000000000000000000000000000000000000..13659257a96bbb68679f87ef1a8a909ed283a321
+--- /dev/null
++++ b/dist/game/data/multisell/custom/50040008.xml
+@@ -0,0 +1,32 @@
++<?xml version="1.0" encoding="utf-8"?>
++<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../xsd/multisell.xsd">
++	<!-- L2Hub: предметы прокачки клана (Clan.levelUpClan), кнопка Clan Items в GM-шопе. Квесты на них работают по-прежнему. -->
++	<npcs>
++		<npc>50010</npc>
++	</npcs>
++	<item>
++		<!-- Blood Mark: 3-й уровень -->
++		<ingredient id="57" count="10000000" />
++		<production id="1419" count="1" />
++	</item>
++	<item>
++		<!-- Alliance Manifesto: 4-й уровень -->
++		<ingredient id="57" count="20000000" />
++		<production id="3874" count="1" />
++	</item>
++	<item>
++		<!-- Seal of Aspiration: 5-й уровень -->
++		<ingredient id="57" count="40000000" />
++		<production id="3870" count="1" />
++	</item>
++	<item>
++		<!-- Blood Oath: 9-й уровень, нужно 150 -->
++		<ingredient id="57" count="500000" />
++		<production id="9910" count="1" />
++	</item>
++	<item>
++		<!-- Blood Alliance: 10-й уровень, нужно 5 -->
++		<ingredient id="57" count="30000000" />
++		<production id="9911" count="1" />
++	</item>
++</list>

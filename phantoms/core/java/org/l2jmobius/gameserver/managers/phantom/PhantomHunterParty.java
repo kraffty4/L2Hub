@@ -25,7 +25,8 @@ import org.l2jmobius.gameserver.managers.phantom.PhantomCompanionManager.Mode;
  * лидер качается дальше на своём споте родным AutoPlay, второй ходит с ним напарником — дамагер «кач тут» вокруг лидера, хилер и баффер «бей его цель» и лечат пати.
  * Пати до {@link PhantomHuntersConfig#HUNTER_PARTY_MAX} охотников; живёт {@link PhantomHuntersConfig#HUNTER_PARTY_MINUTES} минут, распускается раньше, если лидер ушёл с кача
  * (город, лавка, смерть, «лфм» живого игрока) или остался один. Отпущенные идут качаться ногами на ближайший спот, как после пати с живым.
- * «Качались вместе» засчитывается и между охотниками — так незнакомцы со временем становятся друзьями.
+ * «Качались вместе» засчитывается и между охотниками — так незнакомцы со временем становятся друзьями.<br>
+ * Хилер нарасхват ({@link PhantomHuntersConfig#HUNTER_PARTY_CHANCE_HEALER}, раздел 4.117): шанс выше, зовут его первым, пати он не ведёт, а один и без соседей сам вступает к свободному охотнику своего уровня, где бы тот ни качался.
  */
 public class PhantomHunterParty
 {
@@ -38,6 +39,12 @@ public class PhantomHunterParty
 	private static final long PAIR_GAP = 1200000;
 	/** После пати охотник столько не собирает новую и не идёт в чужую. */
 	private static final long REST_AFTER = 1200000;
+	/** Хилер ({@link PhantomHuntersConfig#HUNTER_PARTY_CHANCE_HEALER}) после пати отдыхает меньше: его ждут. */
+	private static final long HEALER_REST_AFTER = 300000;
+	/** Хилер ищет людей по всему миру не чаще. */
+	private static final long HEALER_SEEK_GAP = 300000;
+	/** Младше первой профессии через весь мир не идёт: из родной зоны рано. */
+	private static final int HEALER_SEEK_LEVEL = 20;
 
 	private static class Group
 	{
@@ -57,6 +64,8 @@ public class PhantomHunterParty
 	private final Map<Integer, Long> _restUntil = new ConcurrentHashMap<>();
 	/** Пара → не бросать до. */
 	private final Map<Long, Long> _pairNext = new ConcurrentHashMap<>();
+	/** Хилер → не искать людей по миру до. */
+	private final Map<Integer, Long> _nextSeek = new ConcurrentHashMap<>();
 
 	protected PhantomHunterParty()
 	{
@@ -95,32 +104,39 @@ public class PhantomHunterParty
 	 * @param hunter охотник
 	 * @param template его шаблон
 	 * @param now текущее время
+	 * @return {@code true}, если хилер ушёл напарником в чужую пати и правилам на этом тике делать нечего
 	 */
-	public void tick(Player hunter, PhantomTemplate template, long now)
+	public boolean tick(Player hunter, PhantomTemplate template, long now)
 	{
 		final int id = hunter.getObjectId();
 		if (!PhantomHuntersConfig.HUNTER_PARTIES || (now < _nextLook.getOrDefault(id, 0L)))
 		{
-			return;
+			return false;
 		}
 		_nextLook.put(id, now + LOOK_GAP + Rnd.get(10000));
 
 		final Group group = _groups.get(id);
 		if (hunter.isDead() || (now < _restUntil.getOrDefault(id, 0L)) || ((group == null) && hunter.isInParty()) || ((group != null) && ((group.members.size() + 1) >= PhantomHuntersConfig.HUNTER_PARTY_MAX)))
 		{
-			return;
+			return false;
 		}
 		if (PhantomHunterManager.getInstance().mood(hunter) == PhantomMood.TIRED)
 		{
-			return;
+			return false;
 		}
 
-		// Соклановцы — первыми (раздел 4.50).
+		final boolean priority = PhantomHuntersConfig.HUNTER_PARTY_CHANCE_HEALER > 0;
+		final boolean loneHealer = priority && (group == null) && isHealer(hunter);
+		final boolean wantsHealer = priority && !hasHealer(hunter);
+
+		// Хилер — первым, пока своего нет; дальше соклановцы (раздел 4.50).
 		final List<Player> around = new ArrayList<>(World.getVisibleObjectsInRange(hunter, Player.class, RANGE));
-		around.sort(Comparator.comparingInt(other -> PhantomHunterClans.clanmates(hunter, other) ? 0 : 1));
+		around.sort(Comparator.comparingInt(other -> (wantsHealer && isHealer(other) ? 0 : 2) + (PhantomHunterClans.clanmates(hunter, other) ? 0 : 1)));
 		for (Player other : around)
 		{
-			if (!PhantomRelations.isHunter(other) || other.isDead() || other.isInParty() || (Math.abs(other.getLevel() - hunter.getLevel()) > LEVEL_GAP) || (now < _restUntil.getOrDefault(other.getObjectId(), 0L)) || !PhantomHunterManager.getInstance().isHunting(other))
+			// Хилер один идёт и к лидеру пати с местом, где своего хилера нет.
+			final boolean takesLeader = loneHealer && other.isInParty() && hasRoom(other) && !hasHealer(other);
+			if (!PhantomRelations.isHunter(other) || other.isDead() || other.isCursedWeaponEquipped() || (other.isInParty() && !takesLeader) || (loneHealer && isHealer(other)) || (Math.abs(other.getLevel() - hunter.getLevel()) > LEVEL_GAP) || (now < _restUntil.getOrDefault(other.getObjectId(), 0L)) || !PhantomHunterManager.getInstance().isHunting(other))
 			{
 				continue;
 			}
@@ -140,14 +156,46 @@ public class PhantomHunterParty
 			_pairNext.put(pair, now + PAIR_GAP);
 
 			final boolean friend = relations.isFriend(hunter, other) || relations.isFriend(other, hunter) || PhantomHunterClans.clanmates(hunter, other);
-			final double chance = friend ? PhantomHuntersConfig.HUNTER_PARTY_CHANCE_FRIEND : Math.min(100, PhantomHuntersConfig.HUNTER_PARTY_CHANCE * template.getSocial());
+			final boolean deal = healerDeal(hunter, other);
+			final double usual = friend ? PhantomHuntersConfig.HUNTER_PARTY_CHANCE_FRIEND : Math.min(100, PhantomHuntersConfig.HUNTER_PARTY_CHANCE * template.getSocial());
+			final double chance = deal ? Math.max(usual, PhantomHuntersConfig.HUNTER_PARTY_CHANCE_HEALER) : usual;
 			final boolean yes = Rnd.get(100.0) < chance;
-			LOGGER.info(getClass().getSimpleName() + ": " + hunter.getName() + " -> " + other.getName() + " (" + (friend ? "друг" : "бросок") + ", шанс " + String.format(Locale.ROOT, "%.0f", chance) + "%) — " + (yes ? "зовёт в пати." : "нет."));
-			if (yes)
+			LOGGER.info(getClass().getSimpleName() + ": " + hunter.getName() + " -> " + other.getName() + " (" + (deal ? "хилер" : friend ? "друг" : "бросок") + ", шанс " + String.format(Locale.ROOT, "%.0f", chance) + "%) — " + (yes ? "зовёт в пати." : "нет."));
+			if (!yes)
 			{
-				invite(hunter, other, group, now);
+				return false;
 			}
-			return;
+
+			// Хилер пати не ведёт: идёт к тому, кого нашёл, напарником и лечит.
+			if (loneHealer)
+			{
+				invite(other, hunter, _groups.get(other.getObjectId()), now);
+				return hunter.isInParty();
+			}
+			invite(hunter, other, group, now);
+			return false;
+		}
+
+		// Рядом звать некого: споты раздаются так, чтобы не толпились, и хилер сидел бы один.
+		if (loneHealer && (hunter.getLevel() >= HEALER_SEEK_LEVEL) && (now >= _nextSeek.getOrDefault(id, 0L)))
+		{
+			_nextSeek.put(id, now + HEALER_SEEK_GAP);
+			return seek(hunter, now);
+		}
+		return false;
+	}
+
+	/**
+	 * Лидер выходит из мира сверх {@code HuntersMax} (раздел 4.120): пати распускается сразу, напарники не ждут ушедшего и идут дальше сами.
+	 * @param leader охотник
+	 * @param now текущее время
+	 */
+	void leaderLeaves(Player leader, long now)
+	{
+		final Group group = _groups.get(leader.getObjectId());
+		if (group != null)
+		{
+			disband(leader, group, "лидер вышел из мира", now);
 		}
 	}
 
@@ -206,10 +254,12 @@ public class PhantomHunterParty
 		_pairNext.put(pair, now + PAIR_GAP);
 
 		final boolean friend = relations.isFriend(asker, other) || relations.isFriend(other, asker) || PhantomHunterClans.clanmates(asker, other);
-		final double chance = friend ? PhantomHuntersConfig.HUNTER_PARTY_CHANCE_FRIEND : Math.min(100, PhantomHuntersConfig.HUNTER_PARTY_CHANCE * otherTemplate.getSocial());
+		final boolean deal = !force && healerDeal(asker, other);
+		final double usual = friend ? PhantomHuntersConfig.HUNTER_PARTY_CHANCE_FRIEND : Math.min(100, PhantomHuntersConfig.HUNTER_PARTY_CHANCE * otherTemplate.getSocial());
+		final double chance = deal ? Math.max(usual, PhantomHuntersConfig.HUNTER_PARTY_CHANCE_HEALER) : usual;
 		final boolean yes = force || (Rnd.get(100.0) < chance);
 		final Group theirs = _groups.get(other.getObjectId());
-		LOGGER.info(getClass().getSimpleName() + ": " + asker.getName() + " -> " + other.getName() + " по имени (" + (force ? "самопроверка" : friend ? "друг" : "бросок") + ", шанс " + String.format(Locale.ROOT, "%.0f", chance) + "%) — " + (yes ? (theirs != null ? "просится к нему." : "зовёт к себе.") : "отказ."));
+		LOGGER.info(getClass().getSimpleName() + ": " + asker.getName() + " -> " + other.getName() + " по имени (" + (force ? "самопроверка" : deal ? "хилер" : friend ? "друг" : "бросок") + ", шанс " + String.format(Locale.ROOT, "%.0f", chance) + "%) — " + (yes ? (theirs != null ? "просится к нему." : "зовёт к себе.") : "отказ."));
 		if (!yes)
 		{
 			return "отказал";
@@ -218,6 +268,10 @@ public class PhantomHunterParty
 		if (theirs != null)
 		{
 			invite(other, asker, theirs, now);
+		}
+		else if (deal && isHealer(asker) && !isLeader(asker))
+		{
+			invite(other, asker, null, now);
 		}
 		else
 		{
@@ -249,6 +303,107 @@ public class PhantomHunterParty
 			return "отказал: устал";
 		}
 		return null;
+	}
+
+	/**
+	 * Хилер один, и рядом звать некого: идёт к свободному охотнику своего уровня или к лидеру пати без хилера, где бы тот ни качался. Сначала клан, потом друзья, потом ближние.
+	 * Дальше {@code PHANTOM_CATCH_UP_RANGE} напарник телепортируется к лидеру сам.
+	 * @param healer хилер
+	 * @param now текущее время
+	 * @return вступил в пати
+	 */
+	private boolean seek(Player healer, long now)
+	{
+		final PhantomHunterManager manager = PhantomHunterManager.getInstance();
+		final PhantomRelations relations = PhantomRelations.getInstance();
+		final PhantomEvents events = PhantomEvents.getInstance();
+		final PhantomRaid raids = PhantomRaid.getInstance();
+		if (events.isBusy(healer) || (raids.raidOf(healer) != null))
+		{
+			return false;
+		}
+
+		Player best = null;
+		double bestScore = Double.MAX_VALUE;
+		for (Player other : World.getPlayers())
+		{
+			if ((other == healer) || !PhantomRelations.isHunter(other) || isHealer(other) || PhantomThanatos.is(other) || other.isCursedWeaponEquipped() || (Math.abs(other.getLevel() - healer.getLevel()) > LEVEL_GAP) || !manager.isHunting(other) || events.isBusy(other) || (raids.raidOf(other) != null) || (other.isInParty() && (!hasRoom(other) || hasHealer(other))) || PhantomCompat.atWar(healer.getClan(), other.getClan()) || (stateRefusal(healer, other, now) != null) || (now < _pairNext.getOrDefault(pair(healer, other), 0L)))
+			{
+				continue;
+			}
+
+			final int rank = PhantomHunterClans.clanmates(healer, other) ? 0 : relations.isFriend(healer, other) || relations.isFriend(other, healer) ? 1 : 2;
+			final double score = (rank * 10000000.0) + healer.calculateDistance2D(other);
+			if (score < bestScore)
+			{
+				best = other;
+				bestScore = score;
+			}
+		}
+		if (best == null)
+		{
+			return false;
+		}
+
+		_pairNext.put(pair(healer, best), now + PAIR_GAP);
+		final boolean yes = Rnd.get(100.0) < PhantomHuntersConfig.HUNTER_PARTY_CHANCE_HEALER;
+		LOGGER.info(getClass().getSimpleName() + ": " + healer.getName() + " -> " + best.getName() + " издалека (" + (int) healer.calculateDistance2D(best) + ", хилер, шанс " + PhantomHuntersConfig.HUNTER_PARTY_CHANCE_HEALER + "%) — " + (yes ? "идёт к нему в пати." : "нет."));
+		if (!yes)
+		{
+			return false;
+		}
+		invite(best, healer, _groups.get(best.getObjectId()), now);
+		return healer.isInParty();
+	}
+
+	/**
+	 * @param first один
+	 * @param second другой
+	 * @return один из них хилер, а в пати второго хилера нет: собираются с шансом {@link PhantomHuntersConfig#HUNTER_PARTY_CHANCE_HEALER}
+	 */
+	private boolean healerDeal(Player first, Player second)
+	{
+		if (PhantomHuntersConfig.HUNTER_PARTY_CHANCE_HEALER <= 0)
+		{
+			return false;
+		}
+		return isHealer(first) ? !hasHealer(second) : isHealer(second) && !hasHealer(first);
+	}
+
+	/**
+	 * @param leader охотник
+	 * @return хилер — он сам или кто-то из его пати охотников
+	 */
+	private boolean hasHealer(Player leader)
+	{
+		if (isHealer(leader))
+		{
+			return true;
+		}
+		final Group group = _groups.get(leader.getObjectId());
+		if (group != null)
+		{
+			for (int id : group.members)
+			{
+				final Player member = World.getPlayer(id);
+				if ((member != null) && isHealer(member))
+				{
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	private static boolean isHealer(Player player)
+	{
+		final PhantomTemplate template = PhantomData.getInstance().getTemplate(player.getName());
+		return (template != null) && (template.getRole() == PhantomTemplate.Role.HEALER);
+	}
+
+	private static long restAfter(Player player)
+	{
+		return (player != null) && (PhantomHuntersConfig.HUNTER_PARTY_CHANCE_HEALER > 0) && isHealer(player) ? HEALER_REST_AFTER : REST_AFTER;
 	}
 
 	private void invite(Player leader, Player member, Group existing, long now)
@@ -294,7 +449,7 @@ public class PhantomHunterParty
 	private void disband(Player leader, Group group, String reason, long now)
 	{
 		_groups.remove(leader.getObjectId());
-		_restUntil.put(leader.getObjectId(), now + REST_AFTER);
+		_restUntil.put(leader.getObjectId(), now + restAfter(leader));
 
 		// Расстались по-хорошему (время вышло) — лидер прощается вслух, если рядом есть кому слышать (патч 0037).
 		final Player first = group.members.isEmpty() ? null : World.getPlayer(group.members.iterator().next());
@@ -313,7 +468,7 @@ public class PhantomHunterParty
 				PhantomCompanionManager.getInstance().release(template, true);
 				names.add(member.getName());
 			}
-			_restUntil.put(id, now + REST_AFTER);
+			_restUntil.put(id, now + restAfter(member));
 		}
 		if (leader.isInParty())
 		{

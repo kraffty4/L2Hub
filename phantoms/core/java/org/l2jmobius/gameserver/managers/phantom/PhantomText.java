@@ -310,6 +310,8 @@ public final class PhantomText
 		EN.put("), глава ", "), leader ");
 		EN.put(", репутация ", ", reputation ");
 		EN.put(", набирает", ", recruiting");
+		EN.put(", кланхолл ", ", clan hall ");
+		EN.put(", торгуется за кланхолл", ", bidding for a clan hall");
 		EN.put(", воюет с ", ", at war with ");
 		EN.put("кланом игрока ", "player clan ");
 		EN.put(" — твой клан", " — your clan");
@@ -462,6 +464,12 @@ public final class PhantomText
 		EN.put("охотников", "hunters");
 		EN.put("фантомов", "phantoms");
 		EN.put("Вступить — шепни главе, например «возьмёшь в клан?».", "To join, whisper to a leader, for example \"can I join your clan?\".");
+		EN.put("Сейчас на этот ивент набор для уровней ", "This event is now open for levels ");
+		EN.put(", у тебя ", ", yours is ");
+		EN.put(". Жди следующего.", ". Wait for the next one.");
+		EN.put("Награда за ивент: ", "Event reward: ");
+		EN.put(" адены и ", " adena and ");
+		EN.put(" опыта.", " experience.");
 	}
 
 	private PhantomText()

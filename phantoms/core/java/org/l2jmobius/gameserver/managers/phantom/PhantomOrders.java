@@ -65,8 +65,8 @@ public class PhantomOrders
 		ANYWHERE.put(Order.HUNT, phrases("кач тут", "кач здесь", "качаемся тут", "качаемся здесь", "качемся тут", "качемся здесь", "качайся тут", "качайтесь тут", "фарм тут", "фарм здесь", "фармим тут", "фармим здесь", "фарми тут",
 			"бей всех", "бейте всех", "мочи всех", "мочите всех", "убивай всех", "зачищай*", "зачисти*", "чисти тут", "качай меня", "покачай меня", "покачай", "кач меня", "качай", "качайте", "сижу качай",
 			"kach tut", "kach zdes", "farm tut", "farm here", "farm zdes", "hunt here", "kill all", "kill everything", "bei vseh", "mochi vseh", "kachai menya", "pokachai"));
-		ANYWHERE.put(Order.LEAD, phrases("веди", "веди меня", "веди на кач", "паровоз*", "я за тобой", "иду за тобой", "пойду за тобой", "показывай дорогу",
-			"vedi", "vedi menya", "parovoz*", "lead", "lead me", "lead the way"));
+		ANYWHERE.put(Order.LEAD, phrases("веди", "веди меня", "веди на кач", "паровоз*", "паравоз*", "я за тобой", "иду за тобой", "пойду за тобой", "показывай дорогу",
+			"vedi", "vedi menya", "parovoz*", "paravoz*", "lead", "lead me", "lead the way"));
 		WHOLE.put(Order.FOLLOW, Set.of("го", "пошли", "пойдем", "погнали", "идем", "go", "poshli", "pognali", "idem"));
 		WHOLE.put(Order.LEAVE, Set.of("пока", "бб", "bb", "bye", "bye bye", "poka", "ну пока", "всем пока", "пока пока", "отбой", "otboy"));
 		WHOLE.put(Order.HUNT, Set.of("кач", "фарм", "качаемся", "качемся", "фармим", "kach", "farm", "kachaemsya", "kachemsya", "farmim"));

@@ -1,0 +1,544 @@
+Subject: [PATCH] L2Hub: мёртвые вкладки Alt+B и кнопки списка кланов
+
+Вкладки окна шлют то, что сервер отдаёт в пакете ShowBoard: _bbsmail и _bbsfriends. Обработчики ждали _maillist и _friendlist,
+нажатие уходило в «not handled». Почта теперь открывает штатное окно писем (как RequestReceivedPostList), при AllowMail = False
+прежняя страница. Друзья показывают список и чёрный список: %friend_list% и %block_list% никто не заполнял, кнопки без пробела
+после bypass и без обработчика заменены подсказкой про команды чата.
+
+Список кланов: кнопка «назад» без слова bypass, поиск через Write 5 («not implemented»), окно в 15 строк накладывалось на соседние
+страницы, ссылка на свой клан у бесклановых вела на клан 0, три ссылки в доме клана открывали ту же страницу. Поиск стал обычной
+кнопкой, страницы по 8 кланов, сверху сильные.
+
+Находки: tools/board_links.py. Проверено компиляцией и разбором кнопок; клиентом и на сервере не проверено.
+
+diff --git a/dist/game/data/html/CommunityBoard/friends_block_list.html b/dist/game/data/html/CommunityBoard/friends_block_list.html
+index be90a5b94322eb52a94fa71161199097c57abb25..3a0a2b8d4aee0b92f29bdc00e17e511934e8cfc5 100644
+--- a/dist/game/data/html/CommunityBoard/friends_block_list.html
++++ b/dist/game/data/html/CommunityBoard/friends_block_list.html
+@@ -7,7 +7,7 @@
+ 				<td width="10">
+ 				</td>
+ 				<td width="600" align="left">
+-					<a action="bypass_friendlist">&$904;</a>&nbsp;>&nbsp;Ignore list
++					<a action="bypass _friendlist">&$904;</a>&nbsp;>&nbsp;Ignore list
+ 				</td>
+ 			</tr>
+ 		</table>
+@@ -24,7 +24,7 @@
+ 					<td>
+ 					</td>
+ 					<td height="20">
+-						<a action="bypass_friendlist">[Friends list]</a>&nbsp;[Ignore list]
++						<a action="bypass _friendlist">[Friends list]</a>&nbsp;[Ignore list]
+ 					</td>
+ 				</tr>
+ 				<tr>
+@@ -47,33 +47,7 @@
+ 			<br>
+ 			<img src="L2UI.squaregray" width="755" height="2">
+ 			<br>
+-			<table width="755" height="45" border="0" cellspacing="0" cellpadding="0">
+-				<tr>
+-					<td align="center">
+-						<table border="0">
+-						<tr>
+-							<td fixwidth="90" align="right">
+-								Character name
+-							</td>
+-							<td fixwidth="130">
+-								<edit var="block" width=130 height="15" length="64" />
+-							</td>
+-							<td>
+-								<button value="Block" action="Write_friendblockadd_" back="l2ui_ct1.button.button_df_small_down" width="70" height="25" fore="l2ui_ct1.button.button_df_small">
+-							</td>
+-						</tr>
+-						</table>
+-					</td>
+-				</tr>
+-				<tr>
+-					<td width="755" align="right">
+-						<img src="L2UI.squaregray" width="755" height="1">
+-						<img src="L2UI.squareblank" width="755" height="4">
+-						<button value="Delete All" action="bypass_friendblockdeleteallconfirm_" back="l2ui_ct1.button.button_df_small_down" width="70" height="25" fore="l2ui_ct1.button.button_df_small">
+-					</td>
+-				</tr>
+-			</table>
+-			%delete_all_msg%
++			<font color="999999">To add: /block name. To remove: /unblock name.</font>
+ 		</center>
+ 	</body>
+ </html>
+\ No newline at end of file
+diff --git a/dist/game/data/html/CommunityBoard/friends_list.html b/dist/game/data/html/CommunityBoard/friends_list.html
+index a40350e7fbf4657da14e1b92aa1c3377b9bfa698..c5ff9cde8112a912b80c837376314f6616afa47b 100644
+--- a/dist/game/data/html/CommunityBoard/friends_list.html
++++ b/dist/game/data/html/CommunityBoard/friends_list.html
+@@ -7,7 +7,7 @@
+ 			<td width="10">
+ 			</td>
+ 			<td width="600" align="left">
+-				<a action="bypass_friendlist">&$904;</a>&nbsp;>&nbsp;Friends List
++				<a action="bypass _friendlist">&$904;</a>&nbsp;>&nbsp;Friends List
+ 			</td>
+ 		</tr>
+ 		</table>
+@@ -24,7 +24,7 @@
+ 					<td>
+ 					</td>
+ 					<td height="20">
+-						[Friends list]&nbsp;<a action="bypass_friendblocklist">[Ignore list]</a>
++						[Friends list]&nbsp;<a action="bypass _friendblocklist">[Ignore list]</a>
+ 					</td>
+ 				</tr>
+ 				<tr>
+@@ -48,43 +48,7 @@
+ 			<img src="L2UI.squaregray" width="755" height="2">
+ 			<br>
+ 			<br>
+-			<font color="999999">Selection list</font>
+-			<img src="L2UI.squaregray" width="755" height="1">
+-			<br>
+-			<table border="0" cellspacing="0" cellpadding="0" width="755">
+-				<tr>
+-					<td>
+-						 %selected_friend_list%
+-					</td>
+-				</tr>
+-			</table>
+-			<br>
+-			<img src="L2UI.squaregray" width="755" height="1">
+-			<table fixwidth="755" border="0" cellspacing="0" cellpadding="0">
+-				<tr>
+-					<td height="10">
+-					</td>
+-				</tr>
+-				<tr>
+-					<td width="5">
+-					</td>
+-					<td align="center" width="540">
+-					</td>
+-					<td align="center" width="70">
+-						<button value "Delete" action="bypass_frienddelete_" back="l2ui_ct1.button.button_df_small_down" width="70" height="25" fore="l2ui_ct1.button.button_df_small">
+-					</td>
+-					<td align="center" width="70">
+-						<button value "Delete All" action="bypass_frienddeleteallconfirm_" back="l2ui_ct1.button.button_df_small_down" width="70" height="25" fore="l2ui_ct1.button.button_df_small">
+-					</td>
+-					<td width="5">
+-					</td>
+-				</tr>
+-				<tr>
+-					<td height="10">
+-					</td>
+-				</tr>
+-			</table>
+-			%delete_all_msg%
++			<font color="999999">Green: in the game. To add: /friendinvite name. To remove: /frienddel name.</font>
+ 		</center>
+ 	</body>
+ </html>
+\ No newline at end of file
+diff --git a/dist/game/data/lang/ru/data/html/CommunityBoard/friends_block_list.html b/dist/game/data/lang/ru/data/html/CommunityBoard/friends_block_list.html
+new file mode 100644
+index 0000000000000000000000000000000000000000..22b150906181430a51501d858da34ce814b2705f
+--- /dev/null
++++ b/dist/game/data/lang/ru/data/html/CommunityBoard/friends_block_list.html
+@@ -0,0 +1,53 @@
++<html>
++	<body>
++		<br>
++		<br>
++		<table border="0" width="755">
++			<tr>
++				<td width="10">
++				</td>
++				<td width="600" align="left">
++					<a action="bypass _friendlist">&$904;</a>&nbsp;>&nbsp;Чёрный список
++				</td>
++			</tr>
++		</table>
++		<center>
++			<img src="L2UI.squareblank" width="1" height="10">
++			<table border="0" cellspacing="0" cellpadding="0" width="755" bgcolor="A7A19A">
++				<tr>
++					<td width="5">
++					</td>
++					<td height="10" width="750">
++					</td>
++				</tr>
++				<tr>
++					<td>
++					</td>
++					<td height="20">
++						<a action="bypass _friendlist">[Друзья]</a>&nbsp;[Чёрный список]
++					</td>
++				</tr>
++				<tr>
++					<td>
++					</td>
++					<td height="10">
++					</td>
++				</tr>
++			</table>
++			<br>
++			Ignore list <img src="L2UI.squaregray" width="755" height="1">
++			<br>
++			<table border="0" cellspacing="0" cellpadding="0" width="755">
++				<tr>
++					<td>
++						%block_list%
++					</td>
++				</tr>
++			</table>
++			<br>
++			<img src="L2UI.squaregray" width="755" height="2">
++			<br>
++			<font color="999999">Добавить: /block имя. Убрать: /unblock имя.</font>
++		</center>
++	</body>
++</html>
+diff --git a/dist/game/data/lang/ru/data/html/CommunityBoard/friends_list.html b/dist/game/data/lang/ru/data/html/CommunityBoard/friends_list.html
+new file mode 100644
+index 0000000000000000000000000000000000000000..0615c42a2c17711855c325fba48494d1ff7e6f73
+--- /dev/null
++++ b/dist/game/data/lang/ru/data/html/CommunityBoard/friends_list.html
+@@ -0,0 +1,54 @@
++<html>
++	<body>
++		<br>
++		<br>
++		<table border="0" width="755">
++		<tr>
++			<td width="10">
++			</td>
++			<td width="600" align="left">
++				<a action="bypass _friendlist">&$904;</a>&nbsp;>&nbsp;Друзья
++			</td>
++		</tr>
++		</table>
++		<center>
++			<img src="L2UI.squareblank" width="1" height="10">
++			<table border="0" cellspacing="0" cellpadding="0" width="755" bgcolor="A7A19A">
++				<tr>
++					<td width="5">
++					</td>
++					<td height="10" width="750">
++					</td>
++				</tr>
++				<tr>
++					<td>
++					</td>
++					<td height="20">
++						[Друзья]&nbsp;<a action="bypass _friendblocklist">[Чёрный список]</a>
++					</td>
++				</tr>
++				<tr>
++					<td>
++					</td>
++					<td height="10">
++					</td>
++				</tr>
++			</table>
++			<br>
++			Друзья <img src="L2UI.squaregray" width="755" height="1">
++			<br>
++			<table border="0" cellspacing="0" cellpadding="0" width="755">
++				<tr>
++					<td>
++						%friend_list%
++					</td>
++				</tr>
++			</table>
++			<br>
++			<img src="L2UI.squaregray" width="755" height="2">
++			<br>
++			<br>
++			<font color="999999">Зелёным — кто в игре. Добавить: /friendinvite имя. Убрать: /frienddel имя.</font>
++		</center>
++	</body>
++</html>
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/ClanBoard.java b/dist/game/data/scripts/handlers/bypass/communityboard/ClanBoard.java
+index 5e3a76087428668a24d230b4e790d0809453f409..f6afec1ffdafca7d7df92944d7aacc53c20b3135 100644
+--- a/dist/game/data/scripts/handlers/bypass/communityboard/ClanBoard.java
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/ClanBoard.java
+@@ -16,7 +16,11 @@
+  */
+ package handlers.bypass.communityboard;
+ 
++import java.util.ArrayList;
+ import java.util.Arrays;
++import java.util.Comparator;
++import java.util.List;
++import java.util.Locale;
+ import java.util.stream.Collectors;
+ 
+ import org.l2jmobius.gameserver.data.sql.ClanTable;
+@@ -33,6 +37,7 @@ import org.l2jmobius.gameserver.util.HtmlUtil;
+  */
+ public class ClanBoard implements IWriteBoardHandler
+ {
++	private static final int CLAN_PAGE = 8; // L2Hub
+ 	private static final String[] COMMANDS =
+ 	{
+ 		"_bbsclan",
+@@ -73,7 +78,9 @@ public class ClanBoard implements IWriteBoardHandler
+ 			{
+ 				try
+ 				{
+-					clanList(player, Integer.parseInt(command.split(";")[1]));
++					// L2Hub: _bbsclan_clanlist;страница[;Name|Ruler;что искать]
++					final String[] parts = command.split(";", 4);
++					clanList(player, Integer.parseInt(parts[1]), parts.length > 2 ? parts[2] : "", parts.length > 3 ? parts[3] : "");
+ 				}
+ 				catch (Exception e)
+ 				{
+@@ -186,26 +193,43 @@ public class ClanBoard implements IWriteBoardHandler
+ 	
+ 	private void clanList(Player player, int indexValue)
+ 	{
+-		int index = indexValue;
+-		if (index < 1)
++		clanList(player, indexValue, "", "");
++	}
++		
++	/**
++	 * L2Hub: по 8 кланов на страницу без повторов (окно в 15 строк накладывалось на соседние страницы, и кланы шли вперемешку), «назад» со словом bypass, поиск вместо Write 5 с ответом «not implemented».
++	 * @param player кто смотрит
++	 * @param indexValue страница с единицы
++	 * @param field Ruler — искать по главе, иначе по имени клана
++	 * @param search что искать: только буквы, цифры, «_» и «-», всё остальное отбрасывается
++	 */
++	private void clanList(Player player, int indexValue, String field, String search)
++	{
++		final String query = search.replaceAll("[^\\p{L}\\p{N}_-]", "");
++		final boolean byLeader = "Ruler".equalsIgnoreCase(field);
++		final List<Clan> clans = new ArrayList<>();
++		for (Clan cl : ClanTable.getInstance().getClans())
+ 		{
+-			index = 1;
++			if (query.isEmpty() || (byLeader ? cl.getLeaderName() : cl.getName()).toLowerCase(Locale.ROOT).contains(query.toLowerCase(Locale.ROOT)))
++			{
++				clans.add(cl);
++			}
+ 		}
++		clans.sort(Comparator.comparingInt(Clan::getLevel).reversed().thenComparing(Clan::getName));
++		final int nbp = Math.max(1, (clans.size() + CLAN_PAGE - 1) / CLAN_PAGE);
++		final int index = Math.max(1, Math.min(indexValue, nbp));
++		final String filter = query.isEmpty() ? "" : ";" + (byLeader ? "Ruler" : "Name") + ";" + query;
+ 		
+ 		// header
+ 		final StringBuilder html = new StringBuilder(2048);
+-		html.append("<html><body><br><br><center><br1><br1><table border=0 cellspacing=0 cellpadding=0><tr><td FIXWIDTH=15>&nbsp;</td><td width=610 height=30 align=left><a action=\"bypass _bbshome\">HOME</a> &nbsp;&gt;<a action=\"bypass _bbsclan_clanlist\"> CLAN COMMUNITY </a></td></tr></table><table border=0 cellspacing=0 cellpadding=0 width=610 bgcolor=434343><tr><td height=10></td></tr><tr><td fixWIDTH=5></td><td fixWIDTH=600><a action=\"bypass _bbsclan_clanhome;");
+-		html.append(player.getClan() != null ? player.getClan().getId() : 0);
+-		html.append("\">[GO TO MY CLAN]</a>&nbsp;&nbsp;</td><td fixWIDTH=5></td></tr><tr><td height=10></td></tr></table><br><table border=0 cellspacing=0 cellpadding=2 bgcolor=5A5A5A width=610><tr><td FIXWIDTH=5></td><td FIXWIDTH=200 align=center>CLAN NAME</td><td FIXWIDTH=200 align=center>CLAN LEADER</td><td FIXWIDTH=100 align=center>CLAN LEVEL</td><td FIXWIDTH=100 align=center>CLAN MEMBERS</td><td FIXWIDTH=5></td></tr></table><img src=\"L2UI.Squareblank\" width=\"1\" height=\"5\">");
+-		int i = 0;
+-		for (Clan cl : ClanTable.getInstance().getClans())
++		html.append("<html><body><br><br><center><br1><br1><table border=0 cellspacing=0 cellpadding=0><tr><td FIXWIDTH=15>&nbsp;</td><td width=610 height=30 align=left><a action=\"bypass _bbshome\">HOME</a> &nbsp;&gt;<a action=\"bypass _bbsclan_clanlist\"> CLAN COMMUNITY </a></td></tr></table><table border=0 cellspacing=0 cellpadding=0 width=610 bgcolor=434343><tr><td height=10></td></tr><tr><td fixWIDTH=5></td><td fixWIDTH=600>");
++		if (player.getClan() != null) // L2Hub: без клана ссылка вела на клан 0, то есть никуда
++		{
++			html.append("<a action=\"bypass _bbsclan_clanhome;").append(player.getClan().getId()).append("\">[GO TO MY CLAN]</a>");
++		}
++		html.append("&nbsp;&nbsp;</td><td fixWIDTH=5></td></tr><tr><td height=10></td></tr></table><br><table border=0 cellspacing=0 cellpadding=2 bgcolor=5A5A5A width=610><tr><td FIXWIDTH=5></td><td FIXWIDTH=200 align=center>CLAN NAME</td><td FIXWIDTH=200 align=center>CLAN LEADER</td><td FIXWIDTH=100 align=center>CLAN LEVEL</td><td FIXWIDTH=100 align=center>CLAN MEMBERS</td><td FIXWIDTH=5></td></tr></table><img src=\"L2UI.Squareblank\" width=\"1\" height=\"5\">");
++		for (Clan cl : clans.subList((index - 1) * CLAN_PAGE, Math.min(clans.size(), index * CLAN_PAGE)))
+ 		{
+-			if (i > ((index + 1) * 7))
+-			{
+-				break;
+-			}
+-			
+-			if (i++ >= ((index - 1) * 7))
+ 			{
+ 				html.append("<img src=\"L2UI.SquareBlank\" width=\"610\" height=\"3\"><table border=0 cellspacing=0 cellpadding=0 width=610><tr> <td FIXWIDTH=5></td><td FIXWIDTH=200 align=center><a action=\"bypass _bbsclan_clanhome;");
+ 				html.append(cl.getId());
+@@ -228,19 +252,13 @@ public class ClanBoard implements IWriteBoardHandler
+ 		}
+ 		else
+ 		{
+-			html.append("<td><button action=\"_bbsclan_clanlist;");
++			html.append("<td><button action=\"bypass _bbsclan_clanlist;");
+ 			html.append(index - 1);
++			html.append(filter);
+ 			html.append("\" back=\"l2ui_ch3.prev1_down\" fore=\"l2ui_ch3.prev1\" width=16 height=16 ></td>");
+ 		}
+ 		
+-		i = 0;
+-		int nbp = ClanTable.getInstance().getClanCount() / 8;
+-		if ((nbp * 8) != ClanTable.getInstance().getClanCount())
+-		{
+-			nbp++;
+-		}
+-		
+-		for (i = 1; i <= nbp; i++)
++		for (int i = 1; i <= nbp; i++)
+ 		{
+ 			if (i == index)
+ 			{
+@@ -252,6 +270,7 @@ public class ClanBoard implements IWriteBoardHandler
+ 			{
+ 				html.append("<td><a action=\"bypass _bbsclan_clanlist;");
+ 				html.append(i);
++				html.append(filter);
+ 				html.append("\"> ");
+ 				html.append(i);
+ 				html.append(" </a></td>");
+@@ -266,11 +285,12 @@ public class ClanBoard implements IWriteBoardHandler
+ 		{
+ 			html.append("<td><button action=\"bypass _bbsclan_clanlist;");
+ 			html.append(index + 1);
++			html.append(filter);
+ 			html.append("\" back=\"l2ui_ch3.next1_down\" fore=\"l2ui_ch3.next1\" width=16 height=16 ></td>");
+ 		}
+ 		html.append("</tr></table><table border=0 cellspacing=0 cellpadding=0><tr><td width=610><img src=\"sek.cbui141\" width=\"610\" height=\"1\"></td></tr></table><table border=0><tr><td><combobox width=65 var=keyword list=\"Name;Ruler\"></td><td><edit var = \"Search\" width=130 height=11 length=\"16\"></td>" +
+-		// TODO: search (Write in BBS)
+-			"<td><button value=\"&$420;\" action=\"Write 5 -1 0 Search keyword keyword\" back=\"l2ui_ch3.smallbutton2_down\" width=65 height=20 fore=\"l2ui_ch3.smallbutton2\"> </td> </tr></table><br><br></center></body></html>");
++		// L2Hub: поиск обычной кнопкой, $keyword и $Search подставляет клиент
++			"<td><button value=\"&$420;\" action=\"bypass _bbsclan_clanlist;1;$keyword;$Search\" back=\"l2ui_ch3.smallbutton2_down\" width=65 height=20 fore=\"l2ui_ch3.smallbutton2\"> </td> </tr></table><br><br></center></body></html>");
+ 		CommunityBoardHandler.separateAndSend(html.toString(), player);
+ 	}
+ 	
+@@ -291,7 +311,7 @@ public class ClanBoard implements IWriteBoardHandler
+ 			}
+ 			else
+ 			{
+-				final String html = Arrays.asList("<html><body><center><br><br><br1><br1><table border=0 cellspacing=0 cellpadding=0><tr><td FIXWIDTH=15>&nbsp;</td><td width=610 height=30 align=left><a action=\"bypass _bbshome\">HOME</a> &nbsp;&gt; <a action=\"bypass _bbsclan_clanlist\"> CLAN COMMUNITY </a> &nbsp;&gt; <a action=\"bypass _bbsclan_clanhome;", String.valueOf(clanId), "\"> &amp;$802; </a></td></tr></table><table border=0 cellspacing=0 cellpadding=0 width=610 bgcolor=434343><tr><td height=10></td></tr><tr><td fixWIDTH=5></td><td fixwidth=600><a action=\"bypass _bbsclan_clanhome;", String.valueOf(clanId), ";announce\">[CLAN ANNOUNCEMENT]</a> <a action=\"bypass _bbsclan_clanhome;", String.valueOf(clanId), ";cbb\">[CLAN BULLETIN BOARD]</a><a action=\"bypass _bbsclan_clanhome;", String.valueOf(clanId), ";cmail\">[CLAN MAIL]</a>&nbsp;&nbsp;<a action=\"bypass _bbsclan_clannotice_edit;", String.valueOf(clanId), ";cnotice\">[CLAN NOTICE]</a>&nbsp;&nbsp;</td><td fixWIDTH=5></td></tr><tr><td height=10></td></tr></table><table border=0 cellspacing=0 cellpadding=0 width=610><tr><td height=10></td></tr><tr><td fixWIDTH=5></td><td fixwidth=290 valign=top></td><td fixWIDTH=5></td><td fixWIDTH=5 align=center valign=top><img src=\"l2ui.squaregray\" width=2  height=128></td><td fixWIDTH=5></td><td fixwidth=295><table border=0 cellspacing=0 cellpadding=0 width=295><tr><td fixWIDTH=100 align=left>CLAN NAME</td><td fixWIDTH=195 align=left>", cl.getName(), "</td></tr><tr><td height=7></td></tr><tr><td fixWIDTH=100 align=left>CLAN LEVEL</td><td fixWIDTH=195 align=left height=16>", String.valueOf(cl.getLevel()), "</td></tr><tr><td height=7></td></tr><tr><td fixWIDTH=100 align=left>CLAN MEMBERS</td><td fixWIDTH=195 align=left height=16>", String.valueOf(cl.getMembersCount()), "</td></tr><tr><td height=7></td></tr><tr><td fixWIDTH=100 align=left>CLAN LEADER</td><td fixWIDTH=195 align=left height=16>", cl.getLeaderName(), "</td></tr><tr><td height=7></td></tr>" +
++				final String html = Arrays.asList("<html><body><center><br><br><br1><br1><table border=0 cellspacing=0 cellpadding=0><tr><td FIXWIDTH=15>&nbsp;</td><td width=610 height=30 align=left><a action=\"bypass _bbshome\">HOME</a> &nbsp;&gt; <a action=\"bypass _bbsclan_clanlist\"> CLAN COMMUNITY </a> &nbsp;&gt; <a action=\"bypass _bbsclan_clanhome;", String.valueOf(clanId), "\"> &amp;$802; </a></td></tr></table><table border=0 cellspacing=0 cellpadding=0 width=610 bgcolor=434343><tr><td height=10></td></tr><tr><td fixWIDTH=5></td><td fixwidth=600><a action=\"bypass _bbsclan_clannotice_edit;", String.valueOf(clanId), ";cnotice\">[CLAN NOTICE]</a>&nbsp;&nbsp;</td><td fixWIDTH=5></td></tr><tr><td height=10></td></tr></table><table border=0 cellspacing=0 cellpadding=0 width=610><tr><td height=10></td></tr><tr><td fixWIDTH=5></td><td fixwidth=290 valign=top></td><td fixWIDTH=5></td><td fixWIDTH=5 align=center valign=top><img src=\"l2ui.squaregray\" width=2  height=128></td><td fixWIDTH=5></td><td fixwidth=295><table border=0 cellspacing=0 cellpadding=0 width=295><tr><td fixWIDTH=100 align=left>CLAN NAME</td><td fixWIDTH=195 align=left>", cl.getName(), "</td></tr><tr><td height=7></td></tr><tr><td fixWIDTH=100 align=left>CLAN LEVEL</td><td fixWIDTH=195 align=left height=16>", String.valueOf(cl.getLevel()), "</td></tr><tr><td height=7></td></tr><tr><td fixWIDTH=100 align=left>CLAN MEMBERS</td><td fixWIDTH=195 align=left height=16>", String.valueOf(cl.getMembersCount()), "</td></tr><tr><td height=7></td></tr><tr><td fixWIDTH=100 align=left>CLAN LEADER</td><td fixWIDTH=195 align=left height=16>", cl.getLeaderName(), "</td></tr><tr><td height=7></td></tr>" +
+ 				
+ 				// ADMINISTRATOR ??
+ 				/*
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/FriendsBoard.java b/dist/game/data/scripts/handlers/bypass/communityboard/FriendsBoard.java
+index 6fa3047f363646e6ebbc6c03bf64099afb048508..621967d53cf145402566582ca2c0e24961f7ac96 100644
+--- a/dist/game/data/scripts/handlers/bypass/communityboard/FriendsBoard.java
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/FriendsBoard.java
+@@ -16,7 +16,14 @@
+  */
+ package handlers.bypass.communityboard;
+ 
++import java.util.ArrayList;
++import java.util.Collection;
++import java.util.Collections;
++import java.util.List;
++		
+ import org.l2jmobius.gameserver.cache.HtmCache;
++import org.l2jmobius.gameserver.data.sql.CharInfoTable;
++import org.l2jmobius.gameserver.entity.World;
+ import org.l2jmobius.gameserver.entity.actor.Player;
+ import org.l2jmobius.gameserver.handler.CommunityBoardHandler;
+ import org.l2jmobius.gameserver.handler.IParseBoardHandler;
+@@ -30,7 +37,8 @@ public class FriendsBoard implements IParseBoardHandler
+ 	private static final String[] COMMANDS =
+ 	{
+ 		"_friendlist",
+-		"_friendblocklist"
++		"_friendblocklist",
++		"_bbsfriends" // L2Hub: так вкладку «Друзья» зовёт клиент (пакет ShowBoard)
+ 	};
+ 	
+ 	@Override
+@@ -42,19 +50,52 @@ public class FriendsBoard implements IParseBoardHandler
+ 	@Override
+ 	public boolean onCommand(String command, Player player)
+ 	{
+-		if (command.equals("_friendlist"))
++		if (command.equals("_friendlist") || command.equals("_bbsfriends"))
+ 		{
+ 			CommunityBoardHandler.getInstance().addBypass(player, "Friends List", command);
+ 			final String html = HtmCache.getInstance().getHtm(player, "data/html/CommunityBoard/friends_list.html");
+-			CommunityBoardHandler.separateAndSend(html, player);
++			CommunityBoardHandler.separateAndSend(html.replace("%friend_list%", names(player.getFriendList())), player);
+ 		}
+ 		else if (command.equals("_friendblocklist"))
+ 		{
+ 			CommunityBoardHandler.getInstance().addBypass(player, "Ignore list", command);
+ 			final String html = HtmCache.getInstance().getHtm(player, "data/html/CommunityBoard/friends_block_list.html");
+-			CommunityBoardHandler.separateAndSend(html, player);
++			CommunityBoardHandler.separateAndSend(html.replace("%block_list%", names(player.getBlockList().getBlockList())), player);
+ 		}
+ 		
+ 		return true;
+ 	}
++	
++	/**
++	 * L2Hub: страницы приходили с незаполненными %friend_list% и %block_list%. Список только для чтения, добавляют и убирают командами чата.
++	 * @param ids персонажи
++	 * @return таблица в три колонки: сначала те, кто в игре, они зелёные
++	 */
++	private static String names(Collection<Integer> ids)
++	{
++		final List<String> online = new ArrayList<>();
++		final List<String> offline = new ArrayList<>();
++		for (int id : ids)
++		{
++			final String name = CharInfoTable.getInstance().getNameById(id);
++			if (name != null)
++			{
++				(World.getPlayer(id) != null ? online : offline).add(name);
++			}
++		}
++		Collections.sort(online);
++		Collections.sort(offline);
++
++		final StringBuilder sb = new StringBuilder(1024).append("<table width=750>");
++		int column = 0;
++		for (int part = 0; part < 2; part++)
++		{
++			for (String name : part == 0 ? online : offline)
++			{
++				sb.append((column % 3) == 0 ? "<tr>" : "").append("<td width=250><font color=\"").append(part == 0 ? "88DD88" : "808080").append("\">").append(name).append("</font></td>").append((column % 3) == 2 ? "</tr>" : "");
++				column++;
++			}
++		}
++		return sb.append((column % 3) == 0 ? "" : "</tr>").append("</table>").toString();
++	}
+ }
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/MailBoard.java b/dist/game/data/scripts/handlers/bypass/communityboard/MailBoard.java
+index be2ec5959359872da34768db95edbf01503772c7..7f09bc48f89139e837844eb1c689a8ad3e4a6ecb 100644
+--- a/dist/game/data/scripts/handlers/bypass/communityboard/MailBoard.java
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/MailBoard.java
+@@ -17,9 +17,11 @@
+ package handlers.bypass.communityboard;
+ 
+ import org.l2jmobius.gameserver.cache.HtmCache;
++import org.l2jmobius.gameserver.config.GeneralConfig;
+ import org.l2jmobius.gameserver.entity.actor.Player;
+ import org.l2jmobius.gameserver.handler.CommunityBoardHandler;
+ import org.l2jmobius.gameserver.handler.IWriteBoardHandler;
++import org.l2jmobius.gameserver.network.serverpackets.ExShowReceivedPostList;
+ 
+ /**
+  * Mail board.
+@@ -29,7 +31,8 @@ public class MailBoard implements IWriteBoardHandler
+ {
+ 	private static final String[] COMMANDS =
+ 	{
+-		"_maillist"
++		"_maillist",
++		"_bbsmail" // L2Hub: так вкладку «Почта» зовёт клиент (пакет ShowBoard)
+ 	};
+ 	
+ 	@Override
+@@ -41,6 +44,13 @@ public class MailBoard implements IWriteBoardHandler
+ 	@Override
+ 	public boolean onCommand(String command, Player player)
+ 	{
++		// L2Hub: вкладка шлёт _bbsmail, обработчик ждал только _maillist, и нажатие терялось. Письма живут в штатном окне почты: то же, что RequestReceivedPostList.
++		if (command.equals("_bbsmail") && GeneralConfig.ALLOW_MAIL)
++		{
++			player.sendPacket(new ExShowReceivedPostList(player.getObjectId()));
++			return true;
++		}
++		
+ 		CommunityBoardHandler.getInstance().addBypass(player, "Mail Command", command);
+ 		
+ 		final String html = HtmCache.getInstance().getHtm(player, "data/html/CommunityBoard/mail.html");
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/holders/player/BlockList.java b/java/org/l2jmobius/gameserver/entity/actor/holders/player/BlockList.java
+index 15146946e521711b2126fcd10836d11008398f04..8f54671ae04f80bb9cc979d22d3b85289847e5cd 100644
+--- a/java/org/l2jmobius/gameserver/entity/actor/holders/player/BlockList.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/holders/player/BlockList.java
+@@ -165,7 +165,7 @@ public class BlockList
+ 		_owner.setMessageRefusal(value);
+ 	}
+ 	
+-	private Set<Integer> getBlockList()
++	public Set<Integer> getBlockList() // L2Hub: public для вкладки «Друзья» на доске
+ 	{
+ 		return _blockList;
+ 	}

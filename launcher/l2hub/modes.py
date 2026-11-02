@@ -141,7 +141,7 @@ def state(p: dict) -> dict:
         same_set = all((cur := _read(p, f, k)) is None or cur.strip().lower() == str(v).lower()
                        for f, keys in _settings(p, m).items() for k, v in keys.items())
         modes.append({"id": m["id"], "title": m["title"], "note": m["note"], "active": same_rates and same_sw and same_set, "keepsRates": not m["rates"]})
-    return {"ok": True, "modes": modes, "switches": list(sw.values()), "rates": now,
+    return {"ok": True, "modes": modes, "switches": list(sw.values()), "rates": now, "huntersMax": hunters_max(p),
             "restart": servers.part_process(p, "game") is not None}
 
 
@@ -188,6 +188,41 @@ def set_switch(p: dict, switch_id: str, value: bool) -> dict:
         raise ValueError(f"В этой сборке нет выключателя «{switch_id}»")
     _save(p, _edits(p, s, keys, value))
     return {"id": switch_id, "value": bool(value)}
+
+
+def hunters_in_table(p: dict) -> int:
+    """Сколько охотников в таблице сервера (L2HubPhantoms.xml, пишет tools/fake_players.py); нет файла — 0."""
+    try:
+        return (catalog.server_dir(p) / "game" / "data" / "L2HubPhantoms.xml").read_text(encoding="utf-8", errors="replace").count('kind="hunter"')
+    except OSError:
+        return 0
+
+
+def hunters_max(p: dict) -> dict | None:
+    """Строка «Охотников в мире» (docs/PHANTOMS.md, раздел 4.120): count — сколько живёт в мире, 0 в ключе значит все из таблицы.
+    None — у хроники такой строки нет (server_modes.json, huntersMax.chronicles) или в сборке нет ключа."""
+    n = table().get("huntersMax")
+    if not n or (p.get("chronicle") or p["id"]) not in n["chronicles"]:
+        return None
+    raw, top = _read(p, n["file"], n["key"]), hunters_in_table(p)
+    if raw is None or not top:
+        return None
+    # Как читает сервер: не число или 0 — все из таблицы, больше таблицы — тоже все.
+    return {**n, "count": (min(int(raw), top) if raw.isdigit() else 0) or top, "top": top, "heapGb": servers.game_heap_gb()}
+
+
+def set_hunters_max(p: dict, value) -> dict:
+    """Записать, сколько охотников в мире. Вся таблица и больше — 0 в ключе: появятся новые в таблице, войдут и они.
+    PhantomHunters.ini сервер перечитывает на ходу, перезапуск не нужен."""
+    n = hunters_max(p)
+    if n is None:
+        raise ValueError("В этой сборке нет настройки числа охотников")
+    v = str(value).strip()
+    if not v.isdigit() or int(v) < 1:
+        raise ValueError(f"Охотников в мире: нужно целое число от 1 до {n['top']}")
+    count = min(int(v), n["top"])
+    _save(p, [{"part": "game", "file": n["file"], "key": n["key"], "value": str(0 if count == n["top"] else count)}])
+    return {"count": count, "top": n["top"], "cut": int(v) > n["top"]}
 
 
 def apply_mode(p: dict, mode_id: str) -> dict:

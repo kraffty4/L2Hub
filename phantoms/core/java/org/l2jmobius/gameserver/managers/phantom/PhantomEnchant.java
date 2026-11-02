@@ -202,17 +202,17 @@ final class PhantomEnchant
 	/**
 	 * @return что точить дальше: оружие, затем доспех, ниже цели; {@code null} — всё на цели
 	 */
-	private static Item next(Player player, int temper)
+	static Item next(Player player, int temper)
 	{
 		final Item weapon = player.getInventory().getPaperdollItem(Inventory.PAPERDOLL_RHAND);
-		if ((weapon != null) && (scrollId(weapon) != 0) && (weapon.getEnchantLevel() < target(temper, true)))
+		if ((weapon != null) && (scrollId(weapon) != 0) && (weapon.getEnchantLevel() < target(temper, true)) && !PhantomClanStock.isLoan(player, weapon))
 		{
 			return weapon;
 		}
 		for (int slot : ARMOR_SLOTS)
 		{
 			final Item armor = player.getInventory().getPaperdollItem(slot);
-			if ((armor != null) && (scrollId(armor) != 0) && (armor.getEnchantLevel() < target(temper, false)))
+			if ((armor != null) && (scrollId(armor) != 0) && (armor.getEnchantLevel() < target(temper, false)) && !PhantomClanStock.isLoan(player, armor))
 			{
 				return armor;
 			}

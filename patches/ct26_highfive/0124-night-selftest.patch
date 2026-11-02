@@ -1,0 +1,426 @@
+diff --git a/dist/game/data/scripts/custom/L2HubNightTest/L2HubNightTest.java b/dist/game/data/scripts/custom/L2HubNightTest/L2HubNightTest.java
+new file mode 100644
+index 000000000000..8f772fd17d5f
+--- /dev/null
++++ b/dist/game/data/scripts/custom/L2HubNightTest/L2HubNightTest.java
+@@ -0,0 +1,420 @@
++/*
++ * This file is part of the L2J Mobius project.
++ *
++ * This program is free software: you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation, either version 3 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
++ * General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program. If not, see <http://www.gnu.org/licenses/>.
++ */
++package custom.L2HubNightTest;
++
++import java.lang.reflect.Method;
++import java.nio.file.Files;
++import java.nio.file.Path;
++import java.util.ArrayList;
++import java.util.Comparator;
++import java.util.HashSet;
++import java.util.LinkedHashMap;
++import java.util.List;
++import java.util.Map;
++import java.util.Set;
++import java.util.logging.Level;
++import java.util.logging.Logger;
++
++import org.l2jmobius.commons.threads.ThreadPool;
++import org.l2jmobius.gameserver.config.PlayerConfig;
++import org.l2jmobius.gameserver.config.RatesConfig;
++import org.l2jmobius.gameserver.config.custom.AutoPlayConfig;
++import org.l2jmobius.gameserver.config.custom.CommunityBoardConfig;
++import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
++import org.l2jmobius.gameserver.config.custom.SchemeBufferConfig;
++import org.l2jmobius.gameserver.data.SchemeBufferTable;
++import org.l2jmobius.gameserver.data.xml.NpcData;
++import org.l2jmobius.gameserver.data.xml.SkillData;
++import org.l2jmobius.gameserver.entity.World;
++import org.l2jmobius.gameserver.entity.WorldObject;
++import org.l2jmobius.gameserver.entity.actor.Attackable;
++import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.entity.actor.holders.npc.DropGroupHolder;
++import org.l2jmobius.gameserver.entity.actor.holders.npc.DropHolder;
++import org.l2jmobius.gameserver.entity.actor.templates.NpcTemplate;
++import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
++import org.l2jmobius.gameserver.entity.item.instance.Item;
++import org.l2jmobius.gameserver.entity.zone.ZoneId;
++import org.l2jmobius.gameserver.handler.CommunityBoardHandler;
++import org.l2jmobius.gameserver.handler.IParseBoardHandler;
++import org.l2jmobius.gameserver.handler.IVoicedCommandHandler;
++import org.l2jmobius.gameserver.handler.ItemHandler;
++import org.l2jmobius.gameserver.handler.VoicedCommandHandler;
++import org.l2jmobius.gameserver.managers.phantom.PhantomBufferSets;
++import org.l2jmobius.gameserver.managers.phantom.PhantomHunterManager;
++import org.l2jmobius.gameserver.mechanics.script.Quest;
++import org.l2jmobius.gameserver.taskmanagers.AutoUseTaskManager;
++
++/**
++ * L2Hub: самопроверка бафов, хербов, автобанок и ключей High Five, только на копии базы: {@code HuntersSelfTest = NIGHTH5} в PhantomHunters.ini.<br>
++ * Охотник играет игрока: наборы баффера по ролям и по классу, бафы сверх старого потолка, страницы доски; баф-хербы на земле и автолут лечащих;
++ * слот маны в автобое; ключи с мобов, их грейд и шанс, сундук без ключа и с ключом. Итог — строки в логе.
++ * @author L2Hub
++ */
++public class L2HubNightTest
++{
++	private static final Logger LOGGER = Logger.getLogger(L2HubNightTest.class.getName());
++	private static final String TAG = "L2HubNightTest: SelfTest NIGHTH5: ";
++	private static final String[] ROLES =
++	{
++		"fighter",
++		"dagger",
++		"archer",
++		"tank",
++		"mage",
++		"healer"
++	};
++	private static final int MANA_POTION = 728;
++	private static final int FIRST_KEY = 5197;
++	private static int _attempts;
++	private static int _fails;
++
++	public static void main(String[] args)
++	{
++		if ("NIGHTH5".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST))
++		{
++			ThreadPool.schedule(L2HubNightTest::start, 30000);
++		}
++	}
++
++	private static void start()
++	{
++		final List<Player> hunters = new ArrayList<>();
++		for (Player player : World.getPlayers())
++		{
++			if (PhantomHunterManager.getInstance().isHunter(player) && !player.isDead())
++			{
++				hunters.add(player);
++			}
++		}
++		if (hunters.size() < 12)
++		{
++			if (_attempts++ < 40)
++			{
++				ThreadPool.schedule(L2HubNightTest::start, 30000);
++			}
++			else
++			{
++				LOGGER.warning(TAG + "needs a dozen hunters, found " + hunters.size() + ".");
++			}
++			return;
++		}
++		try
++		{
++			CommunityBoardConfig.COMMUNITYBOARD_KARMA_DISABLED = false;
++			CommunityBoardConfig.COMMUNITYBOARD_COMBAT_DISABLED = false;
++			CommunityBoardConfig.COMMUNITYBOARD_PEACE_ONLY = false;
++			buffer(hunters);
++			hunters.sort(Comparator.comparingInt(player -> Math.abs(player.getLevel() - 40)));
++			herbs(hunters.get(0));
++			keys(hunters.get(0));
++			mana(hunters.subList(1, Math.min(hunters.size(), 8)));
++			LOGGER.info(TAG + (_fails == 0 ? "passed" : "FAILED, checks " + _fails));
++		}
++		catch (Exception e)
++		{
++			LOGGER.log(Level.WARNING, TAG + "failed: " + e.getMessage(), e);
++		}
++	}
++
++	private static void check(String what, boolean ok)
++	{
++		if (!ok)
++		{
++			_fails++;
++		}
++		LOGGER.info(TAG + what + (ok ? ": ok" : ": FAIL"));
++	}
++
++	private static void cast(Player player, String role)
++	{
++		player.getEffectList().stopAllEffects();
++		CommunityBoardHandler.getInstance().handleParseCommand("_bbshubbuff set " + role, player);
++	}
++
++	private static void buffer(List<Player> hunters) throws Exception
++	{
++		final SchemeBufferTable table = SchemeBufferTable.getInstance();
++		final Player player = hunters.get(0);
++		check("slots " + player.getStat().getMaxBuffCount() + " and " + PlayerConfig.DANCES_MAX_AMOUNT + ", own sets " + SchemeBufferConfig.BUFFER_MAX_SCHEMES, (player.getStat().getMaxBuffCount() >= 60) && (PlayerConfig.DANCES_MAX_AMOUNT >= 30) && (SchemeBufferConfig.BUFFER_MAX_SCHEMES >= 10));
++		for (String role : ROLES)
++		{
++			final List<Integer> ids = table.getSkillsIdsByType("ROLE_" + role.toUpperCase() + "_GROUP");
++			cast(player, role);
++			final List<Integer> missing = ids.stream().filter(id -> !player.isAffectedBySkill(id)).toList();
++			check(role + ": set of " + ids.size() + ", buffs " + player.getEffectList().getBuffCount() + ", dances " + player.getEffectList().getDanceCount() + ", missing " + missing, !ids.isEmpty() && missing.isEmpty());
++		}
++
++		final Map<String, String> classes = new LinkedHashMap<>();
++		for (Player hunter : hunters)
++		{
++			final String name = hunter.getPlayerClass().name();
++			if (classes.containsKey(name))
++			{
++				continue;
++			}
++			cast(hunter, "auto");
++			String found = "none";
++			int size = 0;
++			for (String role : ROLES)
++			{
++				final List<Integer> ids = table.getSkillsIdsByType("ROLE_" + role.toUpperCase() + "_GROUP");
++				if ((ids.size() > size) && ids.stream().allMatch(hunter::isAffectedBySkill))
++				{
++					found = role;
++					size = ids.size();
++				}
++			}
++			classes.put(name, found);
++		}
++		check("auto role by class " + classes, !classes.containsValue("none"));
++
++		final IParseBoardHandler board = CommunityBoardHandler.getInstance().getHandler("_bbshubbuff");
++		final Method content = board.getClass().getDeclaredMethod("bufferContent", Player.class, SchemeBufferTable.class, List.class, String.class);
++		content.setAccessible(true);
++		final String page = (String) content.invoke(null, player, table, table.getSkillTypes(), table.getSkillTypes().get(0));
++		Files.writeString(Path.of("./log/L2HubNightBuffer.html"), page);
++		check("board page " + page.length() + " chars, tabs hide the sets", !page.contains("_GROUP") && page.contains("set auto") && page.contains("set healer"));
++
++		final String editor = PhantomBufferSets.handle(player, new String[]
++		{
++			"_bbshubbuff",
++			"scheme_create",
++			"NightTest"
++		}, true, null);
++		check("set editor " + editor.length() + " chars, tabs hide the sets", !editor.contains("_GROUP") && editor.contains("scheme_edit"));
++		PhantomBufferSets.handle(player, new String[]
++		{
++			"_bbshubbuff",
++			"scheme_delete",
++			"NightTest"
++		}, true, null);
++	}
++
++	private static Attackable spawn(Player player, NpcTemplate template)
++	{
++		return (Attackable) Quest.addSpawn(template.getId(), player.getX() + 20, player.getY(), player.getZ(), 0, false, 300000);
++	}
++
++	private static boolean hasBuffHerb(NpcTemplate template)
++	{
++		if (template.getDropGroups() == null)
++		{
++			return false;
++		}
++		for (DropGroupHolder group : template.getDropGroups())
++		{
++			for (DropHolder drop : group.getDropList())
++			{
++				if (PlayerConfig.AUTO_LOOT_HERB_EXCLUDED_IDS.contains(drop.getItemId()))
++				{
++					return true;
++				}
++			}
++		}
++		return false;
++	}
++
++	private static void herbs(Player player)
++	{
++		final boolean herbs = PlayerConfig.AUTO_LOOT_HERBS;
++		final boolean loot = PlayerConfig.AUTO_LOOT;
++		PlayerConfig.AUTO_LOOT_HERBS = true;
++		PlayerConfig.AUTO_LOOT = true;
++		final List<NpcTemplate> mobs = NpcData.getInstance().getTemplates(template -> template.isType("Monster") && (Math.abs(template.getLevel() - player.getLevel()) <= 3) && hasBuffHerb(template));
++		if (mobs.isEmpty())
++		{
++			check("no herb mob near level " + player.getLevel(), false);
++			return;
++		}
++		final Attackable mob = spawn(player, mobs.get(0));
++		final Set<Integer> before = ground(mob);
++		for (int i = 0; i < 400; i++)
++		{
++			mob.doItemDrop(mob.getTemplate(), player);
++		}
++		int kept = 0;
++		int eaten = 0;
++		for (Item item : World.getVisibleObjectsInRange(mob, Item.class, 700))
++		{
++			if (!before.contains(item.getObjectId()) && item.getTemplate().hasExImmediateEffect())
++			{
++				if (PlayerConfig.AUTO_LOOT_HERB_EXCLUDED_IDS.contains(item.getId()))
++				{
++					kept++;
++				}
++				else
++				{
++					eaten++;
++				}
++			}
++		}
++		PlayerConfig.AUTO_LOOT_HERBS = herbs;
++		PlayerConfig.AUTO_LOOT = loot;
++		mob.deleteMe();
++		check("herbs of " + mob.getName() + " (level " + mob.getLevel() + ") for level " + player.getLevel() + ": buff herbs on the ground " + kept + ", healing herbs on the ground " + eaten, (kept > 0) && (eaten == 0));
++		check("autoplay leaves buff herbs alone", AutoPlayConfig.IGNORED_AUTO_PICK_ITEMS.containsAll(PlayerConfig.AUTO_LOOT_HERB_EXCLUDED_IDS));
++	}
++
++	private static Set<Integer> ground(WorldObject center)
++	{
++		final Set<Integer> ids = new HashSet<>();
++		for (Item item : World.getVisibleObjectsInRange(center, Item.class, 700))
++		{
++			ids.add(item.getObjectId());
++		}
++		return ids;
++	}
++
++	private static long keyCount(Player player)
++	{
++		long count = 0;
++		for (int id = FIRST_KEY; id < (FIRST_KEY + 8); id++)
++		{
++			count += player.getInventory().getInventoryItemCount(id, -1);
++		}
++		return count;
++	}
++
++	private static long drops(Player player, Attackable mob, double chance, int times)
++	{
++		RatesConfig.CHEST_KEY_DROP_CHANCE = chance;
++		final long before = keyCount(player);
++		for (int i = 0; i < times; i++)
++		{
++			mob.doItemDrop(mob.getTemplate(), player);
++		}
++		return keyCount(player) - before;
++	}
++
++	private static void keys(Player player) throws Exception
++	{
++		final double chance = RatesConfig.CHEST_KEY_DROP_CHANCE;
++		final boolean loot = PlayerConfig.AUTO_LOOT;
++		PlayerConfig.AUTO_LOOT = true;
++		check("default key chance " + chance, chance > 0);
++		final List<NpcTemplate> mobs = NpcData.getInstance().getTemplates(template -> template.isType("Monster") && (Math.abs(template.getLevel() - player.getLevel()) <= 3));
++		final Attackable mob = spawn(player, mobs.get(0));
++		final int key = FIRST_KEY + Math.min(7, mob.getLevel() / 10);
++		final long had = player.getInventory().getInventoryItemCount(key, -1);
++		final long all = drops(player, mob, 100, 20);
++		check("level " + mob.getLevel() + " mob at 100 %: keys " + all + ", of the right grade " + (player.getInventory().getInventoryItemCount(key, -1) - had) + " (item " + key + ")", (all == 20) && ((player.getInventory().getInventoryItemCount(key, -1) - had) == 20));
++		final long rare = drops(player, mob, 1, 3000);
++		check("at 1 % of 3000 kills: keys " + rare, (rare >= 10) && (rare <= 60));
++		final long none = drops(player, mob, 0, 300);
++		check("at 0 %: keys " + none, none == 0);
++		mob.deleteMe();
++
++		final List<NpcTemplate> chests = NpcData.getInstance().getTemplates(template -> template.isType("Chest") && (template.getId() >= 18265) && (template.getId() <= 18286) && (Math.abs(template.getLevel() - player.getLevel()) <= 4));
++		if (chests.isEmpty())
++		{
++			check("no chest near level " + player.getLevel(), false);
++			return;
++		}
++		final Attackable chest = spawn(player, chests.get(0));
++		final long fromChest = drops(player, chest, 100, 100);
++		check("chest level " + chest.getLevel() + " at 100 %: keys " + fromChest, fromChest == 0);
++		RatesConfig.CHEST_KEY_DROP_CHANCE = chance;
++		PlayerConfig.AUTO_LOOT = loot;
++
++		final Item item = player.getInventory().getItemByItemId(key);
++		final long keysBefore = item.getCount();
++		final Set<Integer> groundBefore = ground(chest);
++		final int itemsBefore = player.getInventory().getSize();
++		String way = "with the key";
++		for (int attempt = 0; (attempt < 6) && !chest.isDead(); attempt++)
++		{
++			LOGGER.info(TAG + "key attempt " + attempt + ": " + state(player) + ", distance " + (int) player.calculateDistance3D(chest));
++			player.standUp();
++			player.abortCast();
++			player.abortAttack();
++			player.getAI().setIntentionIdle();
++			player.setTarget(chest);
++			ItemHandler.getInstance().getHandler(item.getEtcItem()).onItemUse(player, item, false);
++			Thread.sleep(1500);
++		}
++		if (!chest.isDead())
++		{
++			way = "cast did not finish, skill directly";
++			SkillData.getInstance().getSkill(2065, 5).activateSkill(player, List.of(chest));
++		}
++		final Set<Integer> groundAfter = ground(chest);
++		groundAfter.removeAll(groundBefore);
++		final long keysAfter = player.getInventory().getInventoryItemCount(key, -1);
++		check("chest opened " + way + ": dead " + chest.isDead() + ", keys " + keysBefore + " -> " + keysAfter + ", player item rows " + itemsBefore + " -> " + player.getInventory().getSize() + ", new on the ground " + groundAfter.size(), chest.isDead() && (keysAfter == (keysBefore - 1)) && (!groundAfter.isEmpty() || (player.getInventory().getSize() > itemsBefore)));
++		chest.deleteMe();
++	}
++
++	private static String state(Player player)
++	{
++		return player.getName() + " sitting " + player.isSitting() + ", casting " + player.isCastingNow() + ", attacking " + player.isAttackingNow() + ", combat " + player.isInCombat() + ", peace " + player.isInsideZone(ZoneId.PEACE) + ", teleporting " + player.isTeleporting();
++	}
++
++	private static void mana(List<Player> hunters) throws Exception
++	{
++		Player player = null;
++		long used = 0;
++		for (Player candidate : hunters)
++		{
++			if (candidate.isInsideZone(ZoneId.PEACE) || candidate.isDead())
++			{
++				continue;
++			}
++			player = candidate;
++			player.addItem(ItemProcessType.NONE, MANA_POTION, 6, player, false);
++			player.getAutoPlaySettings().setAutoManaPercent(50);
++			player.getAutoUseSettings().setAutoManaItem(MANA_POTION);
++			AutoUseTaskManager.getInstance().startAutoUseTask(player);
++			player.setCurrentMp(player.getMaxMp());
++			Thread.sleep(2500);
++			final long full = player.getInventory().getInventoryItemCount(MANA_POTION, -1);
++			check(player.getName() + " above the threshold: potions " + full + " of at least 6", full >= 6);
++			for (int i = 0; (i < 8) && (used == 0); i++)
++			{
++				player.standUp();
++				player.setCurrentMp(player.getMaxMp() * 0.1);
++				Thread.sleep(1000);
++				used = full - player.getInventory().getInventoryItemCount(MANA_POTION, -1);
++			}
++			LOGGER.info(TAG + "mana attempt: " + state(player) + ", used " + used + ", MP " + (int) player.getCurrentMp() + " of " + player.getMaxMp());
++			if (used > 0)
++			{
++				break;
++			}
++		}
++		check("slot drinks below the threshold, potions used " + used, (player != null) && (used > 0));
++		if (player == null)
++		{
++			return;
++		}
++
++		final Item potions = player.getInventory().getItemByItemId(MANA_POTION);
++		if (potions != null)
++		{
++			player.destroyItem(ItemProcessType.NONE, potions, player, false);
++		}
++		player.setCurrentMp(player.getMaxMp() * 0.1);
++		Thread.sleep(2500);
++		check("slot stays when potions run out: " + player.getAutoUseSettings().getAutoManaItem(), player.getAutoUseSettings().getAutoManaItem() == MANA_POTION);
++
++		final IVoicedCommandHandler play = VoicedCommandHandler.getInstance().getHandler("play");
++		play.onCommand("play", player, "manapercent 35");
++		check(".play manapercent: " + player.getAutoPlaySettings().getAutoManaPercent(), player.getAutoPlaySettings().getAutoManaPercent() == 35);
++		play.onCommand("playmana", player, null);
++		player.getAutoUseSettings().setAutoManaItem(0);
++	}
++}

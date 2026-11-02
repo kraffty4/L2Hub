@@ -1,0 +1,16 @@
+L2Hub: арбалет заряжается болтами. canUseRangeWeapon звал checkAndEquipArrows и для арбалета, и при пустой левой руке атака кончалась намерением IDLE (docs/PHANTOMS.md).
+
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/Creature.java b/java/org/l2jmobius/gameserver/entity/actor/Creature.java
+index 4aa6a3572817ddf516f8957271d4e3e649fe5ef9..611dff1ba704876c42bcc91d400d7e2e79bb8584 100644
+--- a/java/org/l2jmobius/gameserver/entity/actor/Creature.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/Creature.java
+@@ -954,7 +954,8 @@ public abstract class Creature extends WorldObject
+ 			}
+ 			
+ 			// Equip arrows needed in left hand and send a Server->Client packet ItemList to the Player then return True.
+-			if (!checkAndEquipArrows())
++			// L2Hub: у арбалета свои патроны. Mobius и для него искал стрелы: болты из сумки в левую руку не вставали, и арбалетчик, надевший новый арбалет раньше покупки болтов, стоял с мобом в цели, пока не переоденет оружие.
++			if (!(weaponItem.isCrossBow() ? checkAndEquipBolts() : checkAndEquipArrows()))
+ 			{
+ 				// Cancel the action because the Player have no arrow.
+ 				getAI().setIntentionIdle();

@@ -1,0 +1,257 @@
+L2Hub: самопроверка RESPECT: сцены дропа под ударами и разбивка замера «стоит, пока бьют» по причинам: слуга, маг, дроп рядом, остальное (docs/PHANTOMS.md).
+
+diff --git a/dist/game/data/scripts/custom/L2HubRespectTest/L2HubRespectTest.java b/dist/game/data/scripts/custom/L2HubRespectTest/L2HubRespectTest.java
+index cc99f292a41cdc3ad6143178683f821728a0ec0c..795b1b529bc2f9030d57b44e31dbe34c5f8cc65c 100644
+--- a/dist/game/data/scripts/custom/L2HubRespectTest/L2HubRespectTest.java
++++ b/dist/game/data/scripts/custom/L2HubRespectTest/L2HubRespectTest.java
+@@ -25,6 +25,10 @@ import org.l2jmobius.gameserver.entity.actor.templates.NpcTemplate;
+ import org.l2jmobius.gameserver.entity.groups.Party;
+ import org.l2jmobius.gameserver.entity.groups.PartyDistributionType;
+ import org.l2jmobius.gameserver.entity.item.Weapon;
++import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
++import org.l2jmobius.gameserver.entity.item.instance.Item;
++import org.l2jmobius.gameserver.entity.itemcontainer.Inventory;
++import org.l2jmobius.gameserver.entity.itemcontainer.PlayerInventory;
+ import org.l2jmobius.gameserver.entity.zone.ZoneId;
+ import org.l2jmobius.gameserver.geoengine.GeoEngine;
+ import org.l2jmobius.gameserver.managers.phantom.HuntSpotData;
+@@ -32,6 +36,7 @@ import org.l2jmobius.gameserver.managers.phantom.HuntSpotData.HuntSpot;
+ import org.l2jmobius.gameserver.managers.phantom.PhantomHunterManager;
+ import org.l2jmobius.gameserver.managers.phantom.PhantomManager;
+ import org.l2jmobius.gameserver.mechanics.script.Quest;
++import org.l2jmobius.gameserver.mechanics.skill.Skill;
+ import org.l2jmobius.gameserver.taskmanagers.AutoPlayTaskManager;
+ 
+ /**
+@@ -45,6 +50,9 @@ public class L2HubRespectTest
+ 	private static final String TAG = "L2HubRespectTest: SelfTest RESPECT: ";
+ 	private static final int BUFFER_MOB = 20495; // Turek Orc Warlord: Ultimate Buff в простое, на нём баг и нашли.
+ 	private static final int AUTO_ATTACK_ACTION = 2;
++	private static final int LOOT_ITEM = 1864; // Stem: обычный материал, в списке игнора автоподбора его нет.
++	private static final int CROSSBOW_ITEM = 9212; // Field Gun: D, первый купленный арбалет у варденов мира.
++	private static final int BOLT_ITEM = 9633; // Bone Bolt: D.
+ 	private static final int SOAK_SAMPLES = 30;
+ 	private static final long SOAK_STEP = 10000;
+ 	private static final Object SELF = new Object();
+@@ -112,6 +120,12 @@ public class L2HubRespectTest
+ 			_other.leaveParty();
+ 			_hero.leaveParty();
+ 
++			loot("foreign drop beside the hero, a mob hits him", true, true);
++			loot("own drop beside the hero, a mob hits him", false, true);
++			lootAlone("foreign drop beside the hero, nobody hits him", true);
++			lootAlone("own drop beside the hero, nobody hits him", false);
++			crossbow();
++
+ 			natural();
+ 			LOGGER.info(TAG + "others near the arena at the end: " + near(_arena, 2500) + ".");
+ 			soak();
+@@ -411,6 +425,111 @@ public class L2HubRespectTest
+ 		rest(mob);
+ 	}
+ 
++	/**
++	 * Положить дроп рядом с героем: свой или чужой, как с убитого моба, под защитой на 15 с.
++	 */
++	private static Item drop(Monster from, boolean foreign)
++	{
++		return from.dropItem(foreign ? _other : _hero, LOOT_ITEM, 1);
++	}
++
++	/**
++	 * Дроп рядом, моб бьёт героя: сначала моб, хоть дроп и свой. Автобой с подбором, как у охотников.
++	 */
++	private static void loot(String what, boolean foreign, boolean respectful) throws Exception
++	{
++		stand(_hero, 0, 0);
++		stand(_other, 0, 240);
++		Thread.sleep(3500);
++		final Monster mob = spawn(_plainMob, 120, 0);
++		mob.addDamageHate(_hero, 0, 1000);
++		mob.getAI().setIntentionAttack(_hero);
++		Thread.sleep(1500);
++		final Item item = drop(mob, foreign);
++		play(respectful);
++		_hero.getAutoPlaySettings().setPickup(true);
++		final boolean hit = hit(mob, 12000, false);
++		final boolean waits = item.isSpawned();
++		check(what + ": hero " + (hit ? "attacked the mob" : "did not attack the mob") + ", item " + (waits ? "still on the ground" : "taken first") + " [" + state(mob) + "]", hit && waits);
++		rest(mob);
++		sweep(item);
++	}
++
++	/**
++	 * Дроп рядом, никто не бьёт: свой поднимает, чужой не трогает, пока защита не кончилась, и не стоит на нём без дела: герой волен идти к мобу.
++	 */
++	private static void lootAlone(String what, boolean foreign) throws Exception
++	{
++		stand(_hero, 0, 0);
++		stand(_other, 0, 240);
++		Thread.sleep(3500);
++		final Monster source = spawn(_plainMob, 40, 0);
++		final Item item = drop(source, foreign);
++		source.deleteMe();
++		final Monster mob = spawn(_plainMob, 500, 0);
++		play(true);
++		_hero.getAutoPlaySettings().setPickup(true);
++		if (foreign)
++		{
++			final boolean hit = hit(mob, 12000, false);
++			check(what + ": hero went on hunting, item " + (item.isSpawned() ? "left alone" : "TAKEN") + " [" + state(mob) + "]", hit && item.isSpawned());
++		}
++		else
++		{
++			final long end = System.currentTimeMillis() + 8000;
++			while (item.isSpawned() && (System.currentTimeMillis() < end))
++			{
++				Thread.sleep(300);
++			}
++			check(what + ": hero took it", !item.isSpawned());
++		}
++		rest(mob);
++		sweep(item);
++	}
++
++	private static void sweep(Item item)
++	{
++		_hero.getAutoPlaySettings().setPickup(false);
++		if (item.isSpawned())
++		{
++			item.decayMe();
++		}
++	}
++
++	/**
++	 * Как поход арбалетчика в город: новый арбалет надет раньше, чем куплены болты, левая рука пуста, болты в сумке. Автобой обязан зарядить их и стрелять, а не стоять с мобом в цели.
++	 */
++	private static void crossbow() throws Exception
++	{
++		stand(_hero, 0, 0);
++		stand(_other, 0, 240);
++		Thread.sleep(3500);
++		final PlayerInventory bag = _hero.getInventory();
++		final Item oldWeapon = bag.getPaperdollItem(Inventory.PAPERDOLL_RHAND);
++		final Item oldLeft = bag.getPaperdollItem(Inventory.PAPERDOLL_LHAND);
++		final Item gun = bag.addItem(ItemProcessType.REWARD, CROSSBOW_ITEM, 1, _hero, null);
++		bag.equipItem(gun);
++		final Item bolts = bag.addItem(ItemProcessType.REWARD, BOLT_ITEM, 200, _hero, null);
++		final boolean empty = bag.getPaperdollItem(Inventory.PAPERDOLL_LHAND) == null;
++		final Monster mob = spawn(_plainMob, 300, 0);
++		play(true);
++		final boolean hit = hit(mob, 12000, false);
++		final Item left = bag.getPaperdollItem(Inventory.PAPERDOLL_LHAND);
++		check("crossbow, bolts only in the bag: left hand " + (empty ? "empty" : "NOT EMPTY") + " at first, then " + (left == null ? "empty" : left.getName()) + ", hero " + (hit ? "shoots" : "stands") + " [" + state(mob) + "]", empty && hit && (left != null) && (left.getId() == BOLT_ITEM));
++		rest(mob);
++		bag.unEquipItemInSlot(Inventory.PAPERDOLL_RHAND);
++		bag.destroyItem(ItemProcessType.NONE, gun, _hero, null);
++		bag.destroyItem(ItemProcessType.NONE, bolts, _hero, null);
++		if (oldWeapon != null)
++		{
++			bag.equipItem(oldWeapon);
++		}
++		if (oldLeft != null)
++		{
++			bag.equipItem(oldLeft);
++		}
++	}
++
+ 	/**
+ 	 * Как было у автора: моб сам бафнулся в простое настоящим ИИ, потом к нему подошёл автобой.
+ 	 */
+@@ -450,6 +569,25 @@ public class L2HubRespectTest
+ 		rest(mob);
+ 	}
+ 
++	/**
++	 * Почему автобой не кастует: те же условия, что AutoUseTaskManager.canUseMagic.
++	 */
++	private static String autoSkills(Player hunter)
++	{
++		final StringBuilder sb = new StringBuilder();
++		for (Integer id : hunter.getAutoUseSettings().getAutoSkills())
++		{
++			final Skill skill = hunter.getKnownSkill(id);
++			if (skill == null)
++			{
++				sb.append(id).append(" unknown; ");
++				continue;
++			}
++			sb.append(skill.getName()).append(": mp ").append(skill.getMpInitialConsume() + skill.getMpConsume()).append(", disabled ").append(hunter.isSkillDisabled(skill)).append(", condition ").append(skill.checkCondition(hunter, hunter.getTarget(), false)).append("; ");
++		}
++		return sb.toString();
++	}
++
+ 	private static Creature fightsWith(Monster mob)
+ 	{
+ 		if (!mob.hasAI() || (mob.getAI().getIntention() != Intention.ATTACK))
+@@ -476,6 +614,11 @@ public class L2HubRespectTest
+ 		long steals = 0;
+ 		long beaten = 0;
+ 		long stands = 0;
++		long servitorOnly = 0;
++		long standsServitor = 0;
++		long standsCaster = 0;
++		long standsLoot = 0;
++		long standsOther = 0;
+ 		long idle = 0;
+ 		long idleSelf = 0;
+ 		long idleStale = 0;
+@@ -502,6 +645,7 @@ public class L2HubRespectTest
+ 					}
+ 				}
+ 				boolean underAttack = false;
++				boolean bodyHit = false;
+ 				for (Monster mob : World.getVisibleObjectsInRange(hunter, Monster.class, 400))
+ 				{
+ 					if (mob.isAlikeDead())
+@@ -510,6 +654,7 @@ public class L2HubRespectTest
+ 					}
+ 					final Creature victim = fightsWith(mob);
+ 					underAttack |= (victim != null) && victim.isPlayable() && (victim.asPlayer() == hunter) && (hunter.calculateDistance2D(mob) < 200);
++					bodyHit |= (victim == hunter) && (hunter.calculateDistance2D(mob) < 200);
+ 					if ((victim == null) && seen.add(mob.getObjectId()))
+ 					{
+ 						idle++;
+@@ -527,15 +672,41 @@ public class L2HubRespectTest
+ 				if (underAttack)
+ 				{
+ 					beaten++;
++					if (!bodyHit)
++					{
++						servitorOnly++;
++					}
+ 					if ((intention != Intention.ATTACK) && (intention != Intention.CAST) && !hunter.isAttackingNow() && !hunter.isCastingNow() && !hunter.isMoving() && !hunter.isSitting())
+ 					{
+ 						stands++;
++						// Почему стоит: бьют только слугу, маг между кастами, рядом дроп (подбор идёт раньше поиска цели), остальное — и кто это, в лог.
++						if (!bodyHit)
++						{
++							standsServitor++;
++						}
++						else if (!hunter.getAutoUseSettings().getAutoActions().contains(AUTO_ATTACK_ACTION))
++						{
++							standsCaster++;
++							if ((standsCaster % 20) == 1)
++							{
++								LOGGER.info(TAG + "soak: " + hunter.getName() + " (" + hunter.getLevel() + " " + hunter.getPlayerClass() + ") casts nothing, mp " + (int) hunter.getCurrentMp() + " of " + hunter.getMaxMp() + ", target " + (hunter.getTarget() == null ? "-" : hunter.getTarget().getName()) + ", " + autoSkills(hunter) + ".");
++							}
++						}
++						else if (World.getFirstVisibleObjectInRange(hunter, Item.class, 200, Item::isSpawned) != null)
++						{
++							standsLoot++;
++						}
++						else
++						{
++							standsOther++;
++							LOGGER.info(TAG + "soak: " + hunter.getName() + " (" + hunter.getLevel() + " " + hunter.getPlayerClass() + ") stands, intention " + intention + ", target " + (hunter.getTarget() == null ? "-" : hunter.getTarget().getName()) + ", disabled " + hunter.isDisabled() + ", queued " + (hunter.getQueuedSkill() != null) + ".");
++						}
+ 					}
+ 				}
+ 			}
+ 			if ((i % 10) == 9)
+ 			{
+-				LOGGER.info(TAG + "soak after " + (i + 1) + " samples: hunters " + hunters + ", fights " + fights + ", on a mob busy with a stranger " + steals + ", beaten " + beaten + ", standing while beaten " + stands + "; idle mobs in sight " + idle + ", target itself " + idleSelf + ", stale target " + idleStale + ".");
++				LOGGER.info(TAG + "soak after " + (i + 1) + " samples: hunters " + hunters + ", fights " + fights + ", on a mob busy with a stranger " + steals + ", beaten " + beaten + ", standing while beaten " + stands + " (servitor only " + standsServitor + ", caster between casts " + standsCaster + ", loot near " + standsLoot + ", other " + standsOther + "), beaten through the servitor only " + servitorOnly + "; idle mobs in sight " + idle + ", target itself " + idleSelf + ", stale target " + idleStale + ".");
+ 			}
+ 		}
+ 	}

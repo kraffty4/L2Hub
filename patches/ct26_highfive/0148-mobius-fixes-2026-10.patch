@@ -1,0 +1,174 @@
+L2Hub: четыре правки из свежего Mobius, пин High Five прежний (5ddd6ff4). Если пин сдвинется на эти коммиты, патч снять.
+9ff0a497 чемберлен замка отказывает на отрицательное снятие из казны; 78a5dfb3 урон во времени не тикает на существе вне мира;
+7a78ff64 квест 247: телепорт от Caradine сразу, награда один раз; dae14d3b слот эффекта заблокирован, пока его держит другой эффект.
+
+diff --git a/dist/game/data/scripts/ai/others/CastleChamberlain/CastleChamberlain.java b/dist/game/data/scripts/ai/others/CastleChamberlain/CastleChamberlain.java
+index b104e99..7cbd0b4 100644
+--- a/dist/game/data/scripts/ai/others/CastleChamberlain/CastleChamberlain.java
++++ b/dist/game/data/scripts/ai/others/CastleChamberlain/CastleChamberlain.java
+@@ -918,7 +918,11 @@ public class CastleChamberlain extends Script
+ 				if (isOwner(player, npc) && player.hasAccess(ClanAccess.CASTLE_VAULT))
+ 				{
+ 					final long amount = (st.hasMoreTokens()) ? Long.parseLong(st.nextToken()) : 0;
+-					if (amount <= castle.getTreasury())
++					if (amount <= 0)
++					{
++						htmltext = "chamberlain-01.html";
++					}
++					else if (amount <= castle.getTreasury())
+ 					{
+ 						castle.addToTreasuryNoTax((-1) * amount);
+ 						giveAdena(player, amount, false);
+diff --git a/dist/game/data/scripts/handlers/skill/effects/BlockAbnormalSlot.java b/dist/game/data/scripts/handlers/skill/effects/BlockAbnormalSlot.java
+index befc262..56b3a79 100644
+--- a/dist/game/data/scripts/handlers/skill/effects/BlockAbnormalSlot.java
++++ b/dist/game/data/scripts/handlers/skill/effects/BlockAbnormalSlot.java
+@@ -24,6 +24,7 @@ import org.l2jmobius.gameserver.entity.actor.Creature;
+ import org.l2jmobius.gameserver.mechanics.conditions.Condition;
+ import org.l2jmobius.gameserver.mechanics.effects.AbstractEffect;
+ import org.l2jmobius.gameserver.mechanics.skill.AbnormalType;
++import org.l2jmobius.gameserver.mechanics.skill.BuffInfo;
+ import org.l2jmobius.gameserver.mechanics.skill.Skill;
+ import org.l2jmobius.gameserver.util.StatSet;
+ 
+@@ -57,7 +58,25 @@ public class BlockAbnormalSlot extends AbstractEffect
+ 	@Override
+ 	public void onExit(Creature effector, Creature effected, Skill skill)
+ 	{
+-		effected.getEffectList().removeBlockedAbnormalTypes(_blockAbnormalSlots);
++		// Keep the slots that another active effect still blocks.
++		final Set<AbnormalType> slots = new HashSet<>(_blockAbnormalSlots);
++		for (BuffInfo info : effected.getEffectList().getEffects())
++		{
++			if (info.getSkill() == skill)
++			{
++				continue;
++			}
++			
++			for (AbstractEffect effect : info.getEffects())
++			{
++				if (effect instanceof BlockAbnormalSlot block)
++				{
++					slots.removeAll(block._blockAbnormalSlots);
++				}
++			}
++		}
++		
++		effected.getEffectList().removeBlockedAbnormalTypes(slots);
+ 	}
+ 	
+ 	@Override
+diff --git a/dist/game/data/scripts/quests/Q00247_PossessorOfAPreciousSoul4/31740-3.html b/dist/game/data/scripts/quests/Q00247_PossessorOfAPreciousSoul4/31740-3.html
+index 05903e2..732c6d5 100644
+--- a/dist/game/data/scripts/quests/Q00247_PossessorOfAPreciousSoul4/31740-3.html
++++ b/dist/game/data/scripts/quests/Q00247_PossessorOfAPreciousSoul4/31740-3.html
+@@ -3,5 +3,5 @@ You must meet her alone. My only role is to open the way for you.<br>
+ Don't be frightened!<br>
+ She just wants to talk to you. What she'll say, I don't know, but you need to listen!<br>
+ Now, close your eyes and relax.<br>
+-<a action="bypass Script Q00247_PossessorOfAPreciousSoul4 31740-4.html">"I'm ready."</a>
++<a action="bypass -h Script Q00247_PossessorOfAPreciousSoul4 TELEPORT">"I'm ready."</a>
+ </body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/scripts/quests/Q00247_PossessorOfAPreciousSoul4/31740-4.html b/dist/game/data/scripts/quests/Q00247_PossessorOfAPreciousSoul4/31740-4.html
+index cc70b37..c9d4fce 100644
+--- a/dist/game/data/scripts/quests/Q00247_PossessorOfAPreciousSoul4/31740-4.html
++++ b/dist/game/data/scripts/quests/Q00247_PossessorOfAPreciousSoul4/31740-4.html
+@@ -1,4 +1,4 @@
+ <html><body>Caradine:<br>
+ My master wants to meet you. Are you ready? Close your eyes...<br>
+-<a action="bypass Script Q00247_PossessorOfAPreciousSoul4 31740-5.html">"I'm ready."</a>
++<a action="bypass -h Script Q00247_PossessorOfAPreciousSoul4 TELEPORT">"I'm ready."</a>
+ </body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/scripts/quests/Q00247_PossessorOfAPreciousSoul4/Q00247_PossessorOfAPreciousSoul4.java b/dist/game/data/scripts/quests/Q00247_PossessorOfAPreciousSoul4/Q00247_PossessorOfAPreciousSoul4.java
+index 95c726c..cb4c9f7 100644
+--- a/dist/game/data/scripts/quests/Q00247_PossessorOfAPreciousSoul4/Q00247_PossessorOfAPreciousSoul4.java
++++ b/dist/game/data/scripts/quests/Q00247_PossessorOfAPreciousSoul4/Q00247_PossessorOfAPreciousSoul4.java
+@@ -84,16 +84,17 @@ public class Q00247_PossessorOfAPreciousSoul4 extends Quest
+ 			}
+ 			case "TELEPORT":
+ 			{
+-				if (st.isCond(1))
++				if (st.isStarted())
+ 				{
+ 					st.setCond(2, true);
+ 					player.teleToLocation(CARADINE_LOC, 0);
++					return "31740-5.html";
+ 				}
+-				break;
++				return null;
+ 			}
+ 			case "31745-5.html":
+ 			{
+-				if (st.isCond(2))
++				if (st.isStarted() && st.isCond(2))
+ 				{
+ 					player.setNoble(true);
+ 					addExpAndSp(player, 93836, 0);
+@@ -138,10 +139,7 @@ public class Q00247_PossessorOfAPreciousSoul4 extends Quest
+ 					}
+ 					case State.STARTED:
+ 					{
+-						if (st.isCond(1))
+-						{
+-							htmltext = "31740-6.html";
+-						}
++						htmltext = st.isCond(1) ? "31740-4.html" : "31740-6.html";
+ 						break;
+ 					}
+ 					case State.COMPLETED:
+@@ -154,7 +152,7 @@ public class Q00247_PossessorOfAPreciousSoul4 extends Quest
+ 			}
+ 			case LADY_OF_LAKE:
+ 			{
+-				if (st.isCond(2))
++				if (st.isStarted() && st.isCond(2))
+ 				{
+ 					htmltext = "31745-1.html";
+ 				}
+diff --git a/java/org/l2jmobius/gameserver/mechanics/skill/BuffInfo.java b/java/org/l2jmobius/gameserver/mechanics/skill/BuffInfo.java
+index b558aef..3e3e359 100644
+--- a/java/org/l2jmobius/gameserver/mechanics/skill/BuffInfo.java
++++ b/java/org/l2jmobius/gameserver/mechanics/skill/BuffInfo.java
+@@ -33,6 +33,7 @@ import org.l2jmobius.gameserver.entity.actor.holders.creature.EffectList;
+ import org.l2jmobius.gameserver.mechanics.effects.AbstractEffect;
+ import org.l2jmobius.gameserver.mechanics.effects.EffectTaskInfo;
+ import org.l2jmobius.gameserver.mechanics.effects.EffectTickTask;
++import org.l2jmobius.gameserver.mechanics.effects.EffectType;
+ import org.l2jmobius.gameserver.mechanics.skill.enums.SkillFinishType;
+ import org.l2jmobius.gameserver.mechanics.stats.Formulas;
+ import org.l2jmobius.gameserver.network.SystemMessageId;
+@@ -310,6 +311,19 @@ public class BuffInfo
+ 	 */
+ 	public void onTick(AbstractEffect effect)
+ 	{
++		// Damage over time on a creature removed from the world (deleteMe stopped its BuffFinishTask) would tick forever.
++		if (!_effected.isSpawned() && !_effected.isTeleporting() && isDamageOverTime(effect))
++		{
++			final EffectTaskInfo task = getEffectTask(effect);
++			if ((task != null) && (task.getScheduledFuture() != null))
++			{
++				task.getScheduledFuture().cancel(false);
++			}
++			
++			_effected.getEffectList().stopSkillEffects(SkillFinishType.REMOVED, _skill);
++			return;
++		}
++		
+ 		boolean continueForever = false;
+ 		
+ 		// If the effect is in use, allow it to affect the effected.
+@@ -335,6 +349,12 @@ public class BuffInfo
+ 		}
+ 	}
+ 	
++	private static boolean isDamageOverTime(AbstractEffect effect)
++	{
++		final EffectType type = effect.getEffectType();
++		return (type == EffectType.DMG_OVER_TIME) || (type == EffectType.DMG_OVER_TIME_PERCENT);
++	}
++	
+ 	public void finishEffects(boolean broadcast)
+ 	{
+ 		// Cancels the ticking task.

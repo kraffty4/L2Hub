@@ -1,8 +1,19 @@
 {
-  "note": "Значения ключей конфигов, которые у этой хроники свои, — поверх конфигов сборки. Подставляет выкладка конфигов (builder.deploy_configs, chronicle_configs): в сервер ложится конфиг сборки с этими значениями, правки пользователя в сервере остаются. PvpEvents — решение автора 2026-10-31 («Включать по умолчанию», docs/PLAN.md, «Решения»): TvT, Deathmatch и CtF по расписанию, старт только при живом игроке (PvpOnlyWithPlayers).",
+  "note": "Значения ключей конфигов, которые у этой хроники свои, — поверх конфигов сборки. Подставляет выкладка конфигов (builder.deploy_configs, chronicle_configs): в сервер ложится конфиг сборки с этими значениями, правки пользователя в сервере остаются. PvpEvents — решение автора 2026-10-31 («Включать по умолчанию», docs/PLAN.md, «Решения»): TvT, Deathmatch и CtF по расписанию, старт только при живом игроке (PvpOnlyWithPlayers). HunterSiegeGarrison: стражники замков на High Five 70–80-го уровня, при 15 % десять охотников замок не взяли, при 5 % взяли (docs/PHANTOMS.md, осады). HunterClanSubUnits, HunterClanStock, HunterClanHall — решение автора 2026-10-31 («Первым делать все эти фишки на Н5», docs/PLAN.md, «Решения»): подгруппы, склад клана и кланхолл охотников сначала только на High Five. HunterStrategyPerHour и HunterMaxStores — вторая сотня охотников (docs/PHANTOMS.md, 4.109): спрос на решения стратега и места под лавки те же на охотника, что были при 109; бюджет стратега в минуту прежний, расход мозгов не растёт. HunterSuperChampionBoost: суперчемпион на High Five x100 HP и x5 атака (патч 0161, просьба автора 2026-11-01), охотникам рейда на него множители РБ. HunterPartyChanceHealer: хилер нарасхват (docs/PHANTOMS.md, 4.117, решение автора 2026-11-01), на остальных хрониках 0. HunterCombatFixes: правки боя из вклада пользователя (docs/PHANTOMS.md, 4.119, решение автора 2026-11-01 «Да, сперва баги»).",
   "configs": {
     "game/config/Custom/L2HubEvents.ini": {
       "PvpEvents": "True"
+    },
+    "game/config/Custom/PhantomHunters.ini": {
+      "HunterSiegeGarrison": "5",
+      "HunterClanSubUnits": "True",
+      "HunterClanStock": "True",
+      "HunterClanHall": "True",
+      "HunterStrategyPerHour": "3",
+      "HunterMaxStores": "8",
+      "HunterSuperChampionBoost": "True",
+      "HunterPartyChanceHealer": "90",
+      "HunterCombatFixes": "True"
     }
   }
 }

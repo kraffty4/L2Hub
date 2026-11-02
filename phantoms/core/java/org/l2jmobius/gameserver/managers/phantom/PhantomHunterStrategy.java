@@ -407,7 +407,7 @@ final class PhantomHunterStrategy
 		FakePlayerBrain.field(sb, "gear", PhantomHunterOutfit.gearReport(player, template)).append(',');
 		FakePlayerBrain.field(sb, "supplies", PhantomHunterOutfit.suppliesReport(player)).append(',');
 		FakePlayerBrain.field(sb, "drop", drop(player)).append(',');
-		sb.append("\"inventoryPct\":").append((player.getInventory().getSize() * 100) / Math.max(1, player.getInventoryLimit())).append(',');
+		sb.append("\"inventoryPct\":").append((player.getInventory().getSize() * 100) / Math.max(1, PhantomHunterOutfit.bagLimit(player))).append(',');
 		FakePlayerBrain.field(sb, "spot", facts.spot != null ? facts.spot.name : "").append(',');
 		sb.append("\"spotMin\":").append(facts.spot != null ? facts.spot.min : 0).append(',');
 		sb.append("\"spotMax\":").append(facts.spot != null ? facts.spot.max : 0).append(',');

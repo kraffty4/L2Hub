@@ -1,0 +1,107 @@
+L2Hub: автобой живого игрока не стоит, если все мобы рядом за деревом или камнем: поиск цели берёт только тех, до кого можно дойти по прямой. Теперь идёт к ближайшему ходом с поиском пути, а когда моб окажется на виду, цель берёт обычный поиск.
+
+diff --git a/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTaskManager.java b/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTaskManager.java
+index bedc8b36ff7c35cf3a3536490c4535f6a348e21b..a649146ccb100ad1f8a46f40d53b12c77b0907db 100644
+--- a/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTaskManager.java
++++ b/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTaskManager.java
+@@ -50,6 +50,13 @@ public class AutoPlayTaskManager
+ {
+ 	private static final Set<Set<Player>> POOLS = ConcurrentHashMap.newKeySet();
+ 	private static final Map<Player, Integer> IDLE_COUNT = new ConcurrentHashMap<>();
++	/** L2Hub: обход к мобу за препятствием ({@link AutoPlay#walkAround}). */
++	private static final Map<Player, Detour> DETOURS = new ConcurrentHashMap<>();
++	/** L2Hub: идёт к одному мобу дольше, мс, — значит, к нему не пройти: пауза {@link #DETOUR_PAUSE} мс. */
++	private static final long DETOUR_TIMEOUT = 20000;
++	private static final long DETOUR_PAUSE = 60000;
++	/** L2Hub: моба выше или ниже этого не обходит: он на другом ярусе, а не за деревом. */
++	private static final int DETOUR_MAX_DZ = 400;
+ 	private static final int POOL_SIZE = 200;
+ 	private static final int TASK_DELAY = 700;
+ 	private static final Integer AUTO_ATTACK_ACTION = 2;
+@@ -58,6 +65,16 @@ public class AutoPlayTaskManager
+ 	{
+ 	}
+ 	
++	/**
++	 * L2Hub: к какому мобу идёт в обход и к каким не пройти.
++	 */
++	private static class Detour
++	{
++		int targetId;
++		long since;
++		final Map<Integer, Long> unreachable = new ConcurrentHashMap<>();
++	}
++	
+ 	private class AutoPlay implements Runnable
+ 	{
+ 		private final Set<Player> _players;
+@@ -305,6 +322,12 @@ public class AutoPlayTaskManager
+ 						// Check if creature is reachable.
+ 						return (Math.abs(player.getZ() - nearby.getZ()) < 800) && GeoEngine.getInstance().canSeeTarget(player, nearby) && GeoEngine.getInstance().canMoveToTarget(player.getX(), player.getY(), player.getZ(), nearby.getX(), nearby.getY(), nearby.getZ(), player.getInstanceId());
+ 					});
++					
++					// L2Hub: на виду никого — идти к тому, кто за препятствием. Фантомов водит их менеджер.
++					if ((creature == null) && !PhantomManager.getInstance().isPhantom(player))
++					{
++						walkAround(player, targetMode);
++					}
+ 				}
+ 				
+ 				// New target was assigned.
+@@ -334,6 +357,48 @@ public class AutoPlayTaskManager
+ 			return !player.getAutoUseSettings().getAutoActions().contains(AUTO_ATTACK_ACTION);
+ 		}
+ 		
++		/**
++		 * L2Hub: целей на виду нет, а за деревом или камнем моб есть. Поиск цели отбрасывает всех, до кого нельзя дойти по прямой, и игрок стоит, пока рядом кто-нибудь не реснётся.
++		 * Идёт к ближайшему обычным ходом с поиском пути, как по клику; когда моб окажется на виду, его возьмёт обычный поиск.
++		 * @param player кто ищет цель
++		 * @param targetMode режим цели AutoPlay
++		 */
++		private void walkAround(Player player, int targetMode)
++		{
++			if (player.isMoving() || !player.hasAI() || player.isDisabled())
++			{
++				return;
++			}
++			
++			final Detour detour = DETOURS.computeIfAbsent(player, key -> new Detour());
++			final long now = System.currentTimeMillis();
++			final boolean respectful = player.getAutoPlaySettings().isRespectfulHunting();
++			final Monster blocked = World.getNearestVisibleObjectInRange(player, Monster.class, player.getAutoPlaySettings().isShortRange() ? AutoPlayConfig.AUTO_PLAY_SHORT_RANGE : AutoPlayConfig.AUTO_PLAY_LONG_RANGE, nearby -> !nearby.isAlikeDead() && (Math.abs(player.getZ() - nearby.getZ()) < DETOUR_MAX_DZ) && (detour.unreachable.getOrDefault(nearby.getObjectId(), 0L) <= now) && isTargetModeValid(targetMode, player, nearby) && !(respectful && isBusyWithOther(player, nearby)));
++			if (blocked == null)
++			{
++				return;
++			}
++			
++			if (blocked.getObjectId() != detour.targetId)
++			{
++				detour.targetId = blocked.getObjectId();
++				detour.since = now;
++			}
++			else if ((now - detour.since) > DETOUR_TIMEOUT)
++			{
++				detour.unreachable.put(blocked.getObjectId(), now + DETOUR_PAUSE);
++				detour.targetId = 0;
++				return;
++			}
++			
++			player.getAI().setIntentionMoveTo(blocked);
++			if (!player.isMoving())
++			{
++				detour.unreachable.put(blocked.getObjectId(), now + DETOUR_PAUSE);
++				detour.targetId = 0;
++			}
++		}
++		
+ 		/**
+ 		 * L2Hub: занят ли моб другим игроком, для вежливой охоты. В драке цель моба держит только ИИ, getTarget() там пустой или старый, а после самобафа — он сам.
+ 		 * @param player кто ищет цель
+@@ -428,6 +493,7 @@ public class AutoPlayTaskManager
+ 				}
+ 				
+ 				IDLE_COUNT.remove(player);
++				DETOURS.remove(player);
+ 				return;
+ 			}
+ 		}

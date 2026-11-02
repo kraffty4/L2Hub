@@ -1,0 +1,322 @@
+L2Hub: телепорт к спотам по уровню мобов на доске Alt+B (docs/PHANTOMS.md).
+
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+index 797ebe053607ed1c9f057621afbbe0662246361a..e5ded80a363497a5e26f073962d84b2b0cac7417 100644
+--- a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+@@ -1,6 +1,10 @@
+ package handlers.bypass.communityboard;
+ 
++import java.util.ArrayList;
++import java.util.Comparator;
++import java.util.HashMap;
+ import java.util.List;
++import java.util.Map;
+ import java.util.regex.Matcher;
+ import java.util.regex.Pattern;
+ 
+@@ -20,6 +24,7 @@
+ import org.l2jmobius.gameserver.entity.zone.ZoneId;
+ import org.l2jmobius.gameserver.handler.CommunityBoardHandler;
+ import org.l2jmobius.gameserver.handler.IParseBoardHandler;
++import org.l2jmobius.gameserver.managers.phantom.HuntSpotData;
+ import org.l2jmobius.gameserver.managers.phantom.PhantomClanBoard;
+ import org.l2jmobius.gameserver.managers.phantom.PhantomEventBoard;
+ import org.l2jmobius.gameserver.managers.phantom.PhantomBufferSets;
+@@ -31,6 +36,7 @@
+ import org.l2jmobius.gameserver.network.SystemMessageId;
+ import org.l2jmobius.gameserver.network.serverpackets.BuyList;
+ import org.l2jmobius.gameserver.network.serverpackets.ExBuySellList;
++import org.l2jmobius.gameserver.network.serverpackets.ShowBoard;
+ 
+ /**
+  * L2Hub: доска Alt+B — баффер, GM-шоп и напарники.
+@@ -40,6 +46,7 @@
+  * <li>_bbshubbuddy [действие имя] — окно напарников ({@link PhantomUi})</li>
+  * <li>_bbshubhunters [near|all|store] [страница] | go &lt;имя&gt; … — кто из охотников где и телепорт на их спот или к лавке ({@link PhantomHunterUi})</li>
+  * <li>_bbshubwars [all|hunters|players] [страница] … — кланы и объявление войны, _bbshubclan … — создание клана ({@link #clan}) и набор в клан ({@link PhantomClanBoard})</li>
++ * <li>_bbshubspots [от [страница]] | go &lt;номер&gt; &lt;от&gt; &lt;страница&gt; — телепорт к спотам по уровню мобов ({@link #spots})</li>
+  * <li>_bbshubevents [join|cancel &lt;ивент&gt;] — запись на TvT, Deathmatch и CtF ({@link PhantomEventBoard})</li>
+  * </ul>
+  */
+@@ -91,7 +98,22 @@
+ 		java.util.Map.entry("Охотники", "Hunters"),
+ 		java.util.Map.entry("Фантомы выключены (EnablePhantoms в Phantoms.ini).", "Phantoms are turned off (EnablePhantoms in Phantoms.ini)."),
+ 		java.util.Map.entry("Создать клан", "Create a clan"),
+-		java.util.Map.entry("С 10-го уровня. Имя: от 2 до 16 букв и цифр, без пробелов.", "From level 10. Name: 2 to 16 letters and digits, no spaces."));
++		java.util.Map.entry("С 10-го уровня. Имя: от 2 до 16 букв и цифр, без пробелов.", "From level 10. Name: 2 to 16 letters and digits, no spaces."),
++		java.util.Map.entry("Споты", "Hunting spots"),
++		java.util.Map.entry("Выбери уровень мобов: откроется список мест, телепорт — кнопкой в строке.", "Pick a mob level: a list of places opens, teleport with the button in a row."),
++		java.util.Map.entry("К уровням", "Back to levels"),
++		java.util.Map.entry("Мобы ", "Mobs "),
++		java.util.Map.entry("На этих уровнях мест нет.", "No places at these levels."),
++		java.util.Map.entry("Место", "Place"),
++		java.util.Map.entry("Ур.", "Lv."),
++		java.util.Map.entry("Мобов", "Mobs"),
++		java.util.Map.entry("Телепорт", "Teleport"),
++		java.util.Map.entry("Назад", "Back"),
++		java.util.Map.entry("Дальше", "Next"),
++		java.util.Map.entry("Цена телепорта: ", "Teleport price: "),
++		java.util.Map.entry("Телепорт доски выключен в настройках сервера (CommunityBoard.ini, CommunityEnableTeleports).", "Board teleport is turned off in the server settings (CommunityBoard.ini, CommunityEnableTeleports)."),
++		java.util.Map.entry("Отсюда телепорт не работает.", "Teleport does not work from here."),
++		java.util.Map.entry("Не хватает денег на телепорт.", "Not enough money for the teleport."));
+ 	
+ 	private static boolean l2hubEnglish()
+ 	{
+@@ -133,6 +155,32 @@
+ 	private static final String CLAN_WARS = "_bbshubwars";
+ 	private static final String CLAN_RECRUIT = "_bbshubclan";
+ 	private static final String EVENTS = "_bbshubevents";
++	private static final String SPOTS = "_bbshubspots";
++	private static final int SPOT_PAGE = 10;
++	private static final int[] SPOT_BANDS =
++	{
++		1,
++		10,
++		20,
++		30,
++		40,
++		50,
++		60,
++		70,
++		80
++	};
++	// В имени спота сторона света по-русски (COMPASS в tools/fake_players.py); длинные раньше коротких.
++	private static final String[][] COMPASS_EN =
++	{
++		{ "юго-восток", "south-east" },
++		{ "юго-запад", "south-west" },
++		{ "северо-запад", "north-west" },
++		{ "северо-восток", "north-east" },
++		{ "восток", "east" },
++		{ "запад", "west" },
++		{ "север", "north" },
++		{ "юг", "south" }
++	};
+ 	private static final String[] COMMANDS =
+ 	{
+ 		BUFF,
+@@ -141,7 +189,8 @@
+ 		HUNTERS,
+ 		CLAN_WARS,
+ 		CLAN_RECRUIT,
+-		EVENTS
++		EVENTS,
++		SPOTS
+ 	};
+ 
+ 	private static final Pattern NPC_CHAT = Pattern.compile("bypass (?:-h )?npc_%objectId%_Chat (\\d+)");
+@@ -184,6 +233,10 @@
+ 		else if (args[0].equalsIgnoreCase(CLAN_RECRUIT))
+ 		{
+ 			html = page(player, PhantomClanBoard.recruitTitle(), clan(player, args));
++		}
++		else if (args[0].equalsIgnoreCase(SPOTS))
++		{
++			html = spots(player, args);
+ 		}
+ 		else if (args[0].equalsIgnoreCase(EVENTS))
+ 		{
+@@ -697,6 +750,174 @@
+ 			+ "<tr><td align=center>" + button(tr("Создать клан"), CLAN_RECRUIT + " create $clan_name", 145) + "</td></tr></table><br>";
+ 	}
+ 
++	// ---------- Споты ----------
++
++	/**
++	 * _bbshubspots [от [страница]] | go &lt;номер&gt; &lt;от&gt; &lt;страница&gt; — телепорт к спотам охотников (data/L2HubHuntSpots.xml) по уровню мобов.
++	 * @param player кто открыл
++	 * @param args команда доски
++	 * @return страница или null, если улетел: доска закрыта
++	 */
++	public static String spots(Player player, String[] args)
++	{
++		if ((args.length > 4) && args[1].equalsIgnoreCase("go"))
++		{
++			if (spotTeleport(player, parseInt(args[2])))
++			{
++				return null;
++			}
++			return page(player, tr("Споты"), spotList(parseInt(args[3]), parseInt(args[4])));
++		}
++		return page(player, tr("Споты"), args.length > 1 ? spotList(parseInt(args[1]), args.length > 2 ? parseInt(args[2]) : 0) : spotBands());
++	}
++
++	private static String spotBands()
++	{
++		final StringBuilder sb = new StringBuilder(2048);
++		sb.append("<font color=\"B09878\">").append(tr("Выбери уровень мобов: откроется список мест, телепорт — кнопкой в строке.")).append("</font><br><br>");
++		sb.append("<table width=420><tr>");
++		for (int i = 0; i < SPOT_BANDS.length; i++)
++		{
++			if ((i > 0) && ((i % 3) == 0))
++			{
++				sb.append("</tr><tr>");
++			}
++			sb.append("<td align=center>").append(button(spotBand(SPOT_BANDS[i]) + " (" + spotsOf(SPOT_BANDS[i]).size() + ")", SPOTS + " " + SPOT_BANDS[i], 125)).append("</td>");
++		}
++		return sb.append("</tr></table>").toString();
++	}
++
++	private static String spotBand(int from)
++	{
++		final int to = spotBandEnd(from);
++		return to == Integer.MAX_VALUE ? from + "+" : from + "-" + to;
++	}
++
++	private static int spotBandEnd(int from)
++	{
++		for (int band : SPOT_BANDS)
++		{
++			if (band > from)
++			{
++				return band;
++			}
++		}
++		return Integer.MAX_VALUE;
++	}
++
++	/**
++	 * Споты полосы уровней, номера в {@link HuntSpotData#getSpots}: одно имя и один разброс уровней — одна строка, самая людная по мобам (в файле таких групп спавна сотни).
++	 */
++	private static List<Integer> spotsOf(int from)
++	{
++		final List<HuntSpotData.HuntSpot> all = HuntSpotData.getInstance().getSpots();
++		final int to = spotBandEnd(from);
++		final Map<String, Integer> best = new HashMap<>();
++		for (int i = 0; i < all.size(); i++)
++		{
++			final HuntSpotData.HuntSpot spot = all.get(i);
++			if ((spot.level >= from) && (spot.level < to))
++			{
++				final String key = spot.name + "|" + spot.min + "|" + spot.max;
++				final Integer old = best.get(key);
++				if ((old == null) || (spot.mobs > all.get(old).mobs))
++				{
++					best.put(key, i);
++				}
++			}
++		}
++		final List<Integer> list = new ArrayList<>(best.values());
++		list.sort(Comparator.<Integer> comparingInt(i -> all.get(i).level).thenComparing(i -> all.get(i).name).thenComparingInt(i -> i));
++		return list;
++	}
++
++	private static String spotList(int from, int pageNo)
++	{
++		final List<HuntSpotData.HuntSpot> all = HuntSpotData.getInstance().getSpots();
++		final List<Integer> list = spotsOf(from);
++		final int pages = Math.max(1, (list.size() + SPOT_PAGE - 1) / SPOT_PAGE);
++		final int current = Math.max(0, Math.min(pageNo, pages - 1));
++		final StringBuilder sb = new StringBuilder(4096);
++		sb.append(button(tr("К уровням"), SPOTS, 110)).append("<br><font color=\"LEVEL\">").append(tr("Мобы ")).append(spotBand(from)).append("</font><br>");
++		if (list.isEmpty())
++		{
++			return sb.append("<font color=\"808080\">").append(tr("На этих уровнях мест нет.")).append("</font>").toString();
++		}
++
++		sb.append("<table width=520><tr><td width=320><font color=\"LEVEL\">").append(tr("Место")).append("</font></td><td width=60><font color=\"LEVEL\">").append(tr("Ур.")).append("</font></td><td width=50><font color=\"LEVEL\">").append(tr("Мобов")).append("</font></td><td width=90></td></tr></table>");
++		sb.append("<img src=\"L2UI.SquareGray\" width=520 height=1>");
++		for (int index : list.subList(current * SPOT_PAGE, Math.min(list.size(), (current + 1) * SPOT_PAGE)))
++		{
++			final HuntSpotData.HuntSpot spot = all.get(index);
++			sb.append("<table width=520><tr><td width=320>").append(spotName(spot.name)).append("</td><td width=60>").append(spot.min).append('-').append(spot.max).append("</td><td width=50>").append(spot.mobs).append("</td><td width=90>");
++			sb.append(button(tr("Телепорт"), SPOTS + " go " + index + " " + from + " " + current, 80)).append("</td></tr></table>");
++		}
++		sb.append("<img src=\"L2UI.SquareGray\" width=520 height=1><br>");
++		if (pages > 1)
++		{
++			sb.append("<table width=300><tr><td width=100>").append(current > 0 ? button(tr("Назад"), SPOTS + " " + from + " " + (current - 1), 60) : "").append("</td>");
++			sb.append("<td width=100 align=center>").append(current + 1).append(" / ").append(pages).append("</td>");
++			sb.append("<td width=100 align=right>").append((current + 1) < pages ? button(tr("Дальше"), SPOTS + " " + from + " " + (current + 1), 60) : "").append("</td></tr></table><br>");
++		}
++		if (CommunityBoardConfig.COMMUNITYBOARD_TELEPORT_PRICE > 0)
++		{
++			sb.append("<font color=\"808080\">").append(tr("Цена телепорта: ")).append(CommunityBoardConfig.COMMUNITYBOARD_TELEPORT_PRICE).append("</font>");
++		}
++		return sb.toString();
++	}
++
++	private static String spotName(String name)
++	{
++		String result = name;
++		if (L2HUB_ENGLISH)
++		{
++			for (String[] side : COMPASS_EN)
++			{
++				result = result.replace(side[0], side[1]);
++			}
++		}
++		return result;
++	}
++
++	/**
++	 * Цена и запреты как у телепорта доски (_bbsteleport в HomeBoard, config/Custom/CommunityBoard.ini); как и окно охотников, из тюрьмы и инстанса не выпускает.
++	 */
++	private static boolean spotTeleport(Player player, int index)
++	{
++		final List<HuntSpotData.HuntSpot> all = HuntSpotData.getInstance().getSpots();
++		if ((index < 0) || (index >= all.size()) || !canUse(player))
++		{
++			return false;
++		}
++		if (!CommunityBoardConfig.COMMUNITYBOARD_ENABLE_TELEPORTS)
++		{
++			player.sendMessage(tr("Телепорт доски выключен в настройках сервера (CommunityBoard.ini, CommunityEnableTeleports)."));
++			return false;
++		}
++		if (player.isJailed() || (player.getInstanceId() != 0))
++		{
++			player.sendMessage(tr("Отсюда телепорт не работает."));
++			return false;
++		}
++		final int price = CommunityBoardConfig.COMMUNITYBOARD_TELEPORT_PRICE;
++		if (player.getInventory().getInventoryItemCount(CommunityBoardConfig.COMMUNITYBOARD_CURRENCY, -1) < price)
++		{
++			player.sendMessage(tr("Не хватает денег на телепорт."));
++			return false;
++		}
++
++		player.disableAllSkills();
++		player.sendPacket(new ShowBoard());
++		if (price > 0)
++		{
++			player.destroyItemByItemId(ItemProcessType.FEE, CommunityBoardConfig.COMMUNITYBOARD_CURRENCY, price, player, true);
++		}
++		player.setIn7sDungeon(false);
++		player.teleToLocation(all.get(index).entry, 0);
++		ThreadPool.schedule(player::enableAllSkills, 3000);
++		return true;
++	}
++
+ 	// ---------- Общее ----------
+ 
+ 	/**
+diff --git a/dist/game/data/html/CommunityBoard/Custom/navigation.html b/dist/game/data/html/CommunityBoard/Custom/navigation.html
+index d57c1767f381d9dc51b6ee25005e1a6ac1ed83a0..d83f29aa3798cab3e2ad8056cc1306be6b18eae1 100644
+--- a/dist/game/data/html/CommunityBoard/Custom/navigation.html
++++ b/dist/game/data/html/CommunityBoard/Custom/navigation.html
+@@ -13,6 +13,9 @@
+ </tr>
+ <tr>
+ 	<td><button value="Teleport" action="bypass _bbstop;gatekeeper/main.html" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_HeroConfirm_Down" fore="L2UI_CT1.OlympiadWnd_DF_HeroConfirm"></td>
++</tr>
++<tr>
++	<td><button value="Hunting spots" action="bypass _bbshubspots" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_HeroConfirm_Down" fore="L2UI_CT1.OlympiadWnd_DF_HeroConfirm"></td>
+ </tr>
+ <tr>
+ 	<td><button value="Companions" action="bypass _bbshubbuddy" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Reward_Down" fore="L2UI_CT1.OlympiadWnd_DF_Reward"></td>
+diff --git a/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/navigation.html b/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/navigation.html
+index d1b1b442208ceeff78083657fcc6587c833eca58..ae075f009ced06fe17792b75ee9903c2fed9895d 100644
+--- a/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/navigation.html
++++ b/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/navigation.html
+@@ -13,6 +13,9 @@
+ </tr>
+ <tr>
+ 	<td><button value="Телепорт" action="bypass _bbstop;gatekeeper/main.html" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_HeroConfirm_Down" fore="L2UI_CT1.OlympiadWnd_DF_HeroConfirm"></td>
++</tr>
++<tr>
++	<td><button value="Споты" action="bypass _bbshubspots" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_HeroConfirm_Down" fore="L2UI_CT1.OlympiadWnd_DF_HeroConfirm"></td>
+ </tr>
+ <tr>
+ 	<td><button value="Напарники" action="bypass _bbshubbuddy" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Reward_Down" fore="L2UI_CT1.OlympiadWnd_DF_Reward"></td>

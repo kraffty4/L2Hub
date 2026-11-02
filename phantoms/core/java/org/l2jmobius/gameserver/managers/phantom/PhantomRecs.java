@@ -413,16 +413,10 @@ public final class PhantomRecs
 			expect(failed, "просьба, реки", first.getRecomHave(), wasHave.get(first) + 1);
 			expect(failed, "просьба, реки в базе", PhantomCompat.storedRecomHave(first), wasHave.get(first) + 1);
 
-			// Вторая в те же сутки — отказ, и пара лежит в базе: рестарт её не забудет.
+			// Вторая в те же сутки — отказ.
 			PhantomFavors.bring(first, giver);
 			expect(failed, "вторая за сутки", ask(giver, first), Result.ALREADY);
 			expect(failed, "вторая за сутки, реки", first.getRecomHave(), wasHave.get(first) + 1);
-			Thread.sleep(2000);
-			final String stored = storedGiven(giver);
-			if (!stored.contains(first.getObjectId() + ":"))
-			{
-				failed.add("память о паре в базе: «" + stored + "»");
-			}
 
 			// Зуб.
 			for (int attempt = 0; (attempt < 5) && !PhantomRelations.getInstance().isEnemy(giver, enemy); attempt++)
@@ -475,6 +469,18 @@ public final class PhantomRecs
 			expect(failed, "тег не о реках", onTag(giver, stranger, template, "как дела"), null);
 			expect(failed, "не о реках, реки", stranger.getRecomHave(), wasHave.get(stranger));
 			expect(failed, "не о реках, подсказка", chat.toString(), "");
+
+			// Пара лежит в базе, рестарт её не забудет. Переменные игрока пишутся отложенно, раз в минуту: ждём с запасом и в самом конце, пока охотники уже не нужны рядом.
+			String stored = storedGiven(giver);
+			for (int attempt = 0; (attempt < 75) && !stored.contains(first.getObjectId() + ":"); attempt++)
+			{
+				Thread.sleep(1000);
+				stored = storedGiven(giver);
+			}
+			if (!stored.contains(first.getObjectId() + ":"))
+			{
+				failed.add("память о паре в базе: «" + stored + "»");
+			}
 		}
 		catch (Exception e)
 		{

@@ -1,0 +1,21 @@
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/FriendsBoard.java b/dist/game/data/scripts/handlers/bypass/communityboard/FriendsBoard.java
+index 9693aa3f411054a59f94a1c3294d6a851c3eb5e6..78352995a3cb92d10729ecabf9d5f56d379e244a 100644
+--- a/dist/game/data/scripts/handlers/bypass/communityboard/FriendsBoard.java
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/FriendsBoard.java
+@@ -52,13 +52,14 @@ public class FriendsBoard implements IParseBoardHandler
+ 		"_friendlist",
+ 		"_friendblocklist",
+ 		"_friend",
+-		"_block"
++		"_block",
++		"_bbsfriends" // L2Hub: так вкладку «Друзья» зовёт клиент (пакет ShowBoard)
+ 	};
+ 	
+ 	@Override
+ 	public boolean onCommand(String command, Player player)
+ 	{
+-		if (command.equals("_friendlist") || command.equals("_friendlist_0_"))
++		if (command.equals("_friendlist") || command.equals("_friendlist_0_") || command.equals("_bbsfriends"))
+ 		{
+ 			CommunityBoardHandler.getInstance().addBypass(player, "Friends List", command);
+ 			showFriendsList(player, false);

@@ -75,7 +75,9 @@ public class PhantomChat
 		/** Напарника подняли. */
 		REVIVED(false, 1),
 		/** Сел на MP. */
-		REST(false, 2);
+		REST(false, 2),
+		/** Сказали качать, а вокруг пусто: повёл на другой спот. */
+		HUNT_EMPTY(false, 1);
 
 		/** Общее для пати владельца: из напарников говорит один. */
 		final boolean partyWide;

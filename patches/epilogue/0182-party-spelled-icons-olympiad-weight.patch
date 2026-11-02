@@ -1,0 +1,74 @@
+L2Hub: мелкие правки Mobius из вклада пользователя: счётчик в PartySpelled по активным баффам, значки баффов не замирают после исключения, день Олимпиады при равенстве времени, переполнение веса (docs/PHANTOMS.md, раздел 4.119).
+
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/Player.java b/java/org/l2jmobius/gameserver/entity/actor/Player.java
+index 8edcc5d69e381f2d24bebfd9889fcbf5039f4bb3..5b48cbf1a2b325fa6e824d4bc32d75b8ed3c1dc2 100644
+--- a/java/org/l2jmobius/gameserver/entity/actor/Player.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/Player.java
+@@ -2221,7 +2221,8 @@ public class Player extends Playable
+ 		final int maxLoad = getMaxLoad();
+ 		if (maxLoad > 0)
+ 		{
+-			final long weightproc = ((getCurrentLoad() - getBonusWeightPenalty()) * 1000) / getMaxLoad();
++			// L2Hub: в long до умножения. На весе от 2,1 млн int переполнялся, и перегруз пропадал.
++			final long weightproc = (((long) (getCurrentLoad() - getBonusWeightPenalty())) * 1000) / getMaxLoad();
+ 			int newWeightPenalty;
+ 			if ((weightproc < 500) || _dietMode)
+ 			{
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/holders/creature/EffectList.java b/java/org/l2jmobius/gameserver/entity/actor/holders/creature/EffectList.java
+index 90b43a91d9f05a19f259e6a71573bcfe13252f38..5af402dfee97d9732457d6c5f330b6b27b3f60fb 100644
+--- a/java/org/l2jmobius/gameserver/entity/actor/holders/creature/EffectList.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/holders/creature/EffectList.java
+@@ -1436,7 +1436,8 @@ public class EffectList
+ 			return;
+ 		}
+ 		
+-		if (_updateEffectIconTask == null)
++		// L2Hub: исключение в задаче не сбрасывало поле, и значки баффов больше не обновлялись.
++		if ((_updateEffectIconTask == null) || _updateEffectIconTask.isDone())
+ 		{
+ 			_updateEffectIconTask = ThreadPool.schedule(() ->
+ 			{
+diff --git a/java/org/l2jmobius/gameserver/mechanics/olympiad/Olympiad.java b/java/org/l2jmobius/gameserver/mechanics/olympiad/Olympiad.java
+index 2e6ad1ddae262356b2ae842e60484b271b2d8dcf..d9cf666a978484b9c11eec350159f7e29cf930f6 100644
+--- a/java/org/l2jmobius/gameserver/mechanics/olympiad/Olympiad.java
++++ b/java/org/l2jmobius/gameserver/mechanics/olympiad/Olympiad.java
+@@ -1036,7 +1036,8 @@ public class Olympiad extends ListenersContainer
+ 	private long getMillisToCompBegin()
+ 	{
+ 		final long currentTime = System.currentTimeMillis();
+-		if ((_compStart.getTimeInMillis() < currentTime) && (_compEnd > currentTime))
++		// L2Hub: <=, при равенстве до миллисекунды день соревнований пропускался целиком.
++		if ((_compStart.getTimeInMillis() <= currentTime) && (_compEnd > currentTime))
+ 		{
+ 			return 10;
+ 		}
+diff --git a/java/org/l2jmobius/gameserver/network/serverpackets/PartySpelled.java b/java/org/l2jmobius/gameserver/network/serverpackets/PartySpelled.java
+index 3d8688be8af8614c7bcdf183be4fe9742b4e83f1..af511b676a4a564dad90772563fbc0a3ecfb7956 100644
+--- a/java/org/l2jmobius/gameserver/network/serverpackets/PartySpelled.java
++++ b/java/org/l2jmobius/gameserver/network/serverpackets/PartySpelled.java
+@@ -50,15 +50,21 @@ public class PartySpelled extends ServerPacket
+ 		ServerPackets.PARTY_SPELLED.writeId(this, buffer);
+ 		buffer.writeInt(_creature.isServitor() ? 2 : _creature.isPet() ? 1 : 0);
+ 		buffer.writeInt(_creature.getObjectId());
+-		buffer.writeInt(_effects.size());
++		// L2Hub: счётчик по тем же записям, что уйдут в цикл. Бафф мог кончиться между addSkill и записью, и клиент разбирал пакет со сдвигом.
++		final List<BuffInfo> active = new ArrayList<>(_effects.size());
+ 		for (BuffInfo info : _effects)
+ 		{
+ 			if ((info != null) && info.isInUse())
+ 			{
+-				buffer.writeInt(info.getSkill().getDisplayId());
+-				buffer.writeShort(info.getSkill().getDisplayLevel());
+-				buffer.writeInt(info.getTime());
++				active.add(info);
+ 			}
+ 		}
++		buffer.writeInt(active.size());
++		for (BuffInfo info : active)
++		{
++			buffer.writeInt(info.getSkill().getDisplayId());
++			buffer.writeShort(info.getSkill().getDisplayLevel());
++			buffer.writeInt(Math.max(0, info.getTime()));
++		}
+ 	}
+ }

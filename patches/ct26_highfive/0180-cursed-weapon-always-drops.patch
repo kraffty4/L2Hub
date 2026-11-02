@@ -1,0 +1,37 @@
+L2Hub: проклятое оружие при смерти держателя всегда падает. У Mobius оно исчезало в 51 % смертей: disapearChance 50 и сравнение <= (docs/PHANTOMS.md).
+
+diff --git a/dist/game/data/CursedWeapons.xml b/dist/game/data/CursedWeapons.xml
+index ae94bc2..089e327 100644
+--- a/dist/game/data/CursedWeapons.xml
++++ b/dist/game/data/CursedWeapons.xml
+@@ -1,14 +1,14 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="xsd/CursedWeapons.xsd">
+ 	<item id="8190" name="Demonic Sword Zariche" skillId="3603">
+-		<disapearChance val="50" /> <!-- in % -->
++		<disapearChance val="0" /> <!-- in %. L2Hub: 0, при смерти держателя оружие падает всегда; у Mobius 50 -->
+ 		<dropRate val="1" /> <!-- 100000 for 100% -->
+ 		<duration val="300" /> <!-- in minutes -->
+ 		<durationLost val="3" /> <!-- in minutes -->
+ 		<stageKills val="10" /> <!-- Integer -->
+ 	</item>
+ 	<item id="8689" name="Blood Sword Akamanah" skillId="3629">
+-		<disapearChance val="50" /> <!-- in % -->
++		<disapearChance val="0" /> <!-- in %. L2Hub: 0, при смерти держателя оружие падает всегда; у Mobius 50 -->
+ 		<dropRate val="1" /> <!-- 100000 for 100% -->
+ 		<duration val="300" /> <!-- in minutes -->
+ 		<durationLost val="3" /> <!-- in minutes -->
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/holders/player/CursedWeapon.java b/java/org/l2jmobius/gameserver/entity/actor/holders/player/CursedWeapon.java
+index dd5832f..d7f297f 100644
+--- a/java/org/l2jmobius/gameserver/entity/actor/holders/player/CursedWeapon.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/holders/player/CursedWeapon.java
+@@ -457,7 +457,8 @@ public class CursedWeapon
+ 	
+ 	public void dropIt(Creature killer)
+ 	{
+-		if (Rnd.get(100) <= _disapearChance)
++		// L2Hub: строго меньше. Mobius сравнивал <=, и при нуле оружие всё равно исчезало в одном случае из ста.
++		if (Rnd.get(100) < _disapearChance)
+ 		{
+ 			// Remove it
+ 			endOfLife();

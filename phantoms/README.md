@@ -40,7 +40,7 @@ phantoms/
 - живые рейд-боссы (`raidBosses`, 2026-10-21) — для рейдов охотников: у H5, Epilogue и Interlude их держит `RaidBossSpawnManager`, у Classic и Essence — `DatabaseSpawnManager` (`getNpcs()`, отбирать `isRaid()`);
 - под Classic и Essence (2026-10-21, ещё 21 метод; у CT в них дословно прежний код ядра): инстанс — объект (`canMoveToTarget`, `setInstanceId`), пати (`acceptPartyJoin`, `newParty`), `useMagic` с целью, карма — отрицательная репутация (`karma`), зоны города нет — мирная зона (`isInTown`), цель AI (`attackTarget`), цели и сила скиллов (`isAttackSkillTarget`, `isSelfTarget`, `skillPower`, `skillTargets`), заряды (`rechargeShots`), грейд и штраф (`expertiseLevel`, `refreshExpertisePenalty`), перегруз (`refreshOverloaded`), подземелья 7 печатей (`leave7sDungeon`), баф по абнормалу (`buffByAbnormal`), слушатель убийства (`addAttackableKillListener`; `PhantomRelations.onAttackableKill` теперь берёт убийцу и цель), автоподбор (`ignoredAutoPickItems`), «не та цель приглашения» (`sendWrongInviteTarget`). В новом коде ядра эти вызовы — только через `PhantomCompat`, иначе Classic и Essence не соберутся.
 
-Новое расхождение — новый метод во всех копиях `PhantomCompat`, а не ветвление в `core/`.
+Новое расхождение — новый метод во всех копиях `PhantomCompat`, а не ветвление в `core/`. Механика, которой на других хрониках нет совсем, — свой класс в `<id>/java` за интерфейсом в `core/`: `PhantomClanHall` на High Five, `PhantomClanHallLogic` (без класса — пустышка).
 
 `scripts/server_build.ps1 -Id <id>`:
 1. копирует `core/{java,dist}` и `<id>/{java,dist}` в исходники `servers/<id>/<сборка>/`;

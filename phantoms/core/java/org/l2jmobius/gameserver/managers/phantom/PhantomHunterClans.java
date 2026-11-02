@@ -187,6 +187,8 @@ public final class PhantomHunterClans
 	/** Клан самопроверки CLANLIFE: живёт по её сценарию. */
 	private volatile int _testClanId;
 	private boolean _commandRegistered;
+	/** Охотников в мире на последнем ходу: от них считаются размеры подгрупп. */
+	private volatile int _world;
 
 	private PhantomHunterClans()
 	{
@@ -271,10 +273,18 @@ public final class PhantomHunterClans
 		return min + (int) Math.round((max - min) * r);
 	}
 
-	private static boolean isHunter(Player player)
+	static boolean isHunter(Player player)
 	{
 		final PhantomTemplate template = PhantomData.getInstance().getTemplate(player.getName());
 		return (template != null) && template.isHunter() && !template.isReaper() && !PhantomManager.getInstance().isSecret(player);
+	}
+
+	/**
+	 * @return клан набрал, сколько хотел ({@code HunterClanSubUnits}: академия не считается, боевые подгруппы прибавляют к аппетиту)
+	 */
+	private boolean sated(Clan clan)
+	{
+		return PhantomSubUnits.sated(clan, appetite(clan), _world);
 	}
 
 	/**
@@ -294,6 +304,7 @@ public final class PhantomHunterClans
 	 */
 	synchronized void control(List<Player> hunters, long now)
 	{
+		_world = hunters.size();
 		if (!_commandRegistered)
 		{
 			_commandRegistered = true;
@@ -347,12 +358,14 @@ public final class PhantomHunterClans
 					continue;
 				}
 				levelUp(clan, leader);
+				PhantomSubUnits.control(clan, leader, hunters);
 				learnSkills(clan, leader);
 				recruit(clan, leader, hunters, now, false);
 				if (living)
 				{
 					recruitShout(clan, leader, now);
 				}
+				PhantomClanHallLogic.INSTANCE.life(clan, leader, now);
 			}
 			catch (Exception e)
 			{
@@ -529,7 +542,9 @@ public final class PhantomHunterClans
 	 */
 	Player recruit(Clan clan, Player leader, List<Player> hunters, long now, boolean force)
 	{
-		if (!force && (clan.getMembersCount() >= appetite(clan)))
+		// Набрал, но в академии есть место: дальше — только новички.
+		final boolean juniors = !force && sated(clan);
+		if (juniors && !PhantomSubUnits.academyRoom(clan))
 		{
 			return null;
 		}
@@ -548,7 +563,7 @@ public final class PhantomHunterClans
 		final List<Player> strangers = new ArrayList<>();
 		for (Player other : hunters)
 		{
-			if (!free(other, now) || isLoner(other) || own.contains(other))
+			if (!free(other, now) || isLoner(other) || own.contains(other) || (juniors && !PhantomSubUnits.academyMaterial(other)))
 			{
 				continue;
 			}
@@ -571,7 +586,7 @@ public final class PhantomHunterClans
 			{
 				friends.add(other);
 			}
-			else if ((Math.abs(other.getLevel() - leader.getLevel()) <= LEVEL_GAP) && (other.getInstanceId() == leader.getInstanceId()) && (leader.calculateDistance2D(other) <= RECRUIT_RANGE))
+			else if (((Math.abs(other.getLevel() - leader.getLevel()) <= LEVEL_GAP) || (PhantomSubUnits.academyRoom(clan) && PhantomSubUnits.academyMaterial(other))) && (other.getInstanceId() == leader.getInstanceId()) && (leader.calculateDistance2D(other) <= RECRUIT_RANGE))
 			{
 				strangers.add(other);
 			}
@@ -617,14 +632,19 @@ public final class PhantomHunterClans
 
 	boolean join(Clan clan, Player leader, Player hunter, boolean friend)
 	{
-		if (!clan.checkClanJoinCondition(leader, hunter, 0))
+		final int unit = PhantomSubUnits.unitFor(clan, hunter);
+		if (!clan.checkClanJoinCondition(leader, hunter, unit))
 		{
 			LOGGER.info(getClass().getSimpleName() + ": Mobius does not let " + hunter.getName() + " join clan " + clan.getName() + " (checkClanJoinCondition).");
 			return false;
 		}
-		PhantomCompat.joinClan(leader, hunter, 0);
+		PhantomCompat.joinClan(leader, hunter, unit);
+		if (unit == Clan.SUBUNIT_ACADEMY)
+		{
+			hunter.getVariables().set(PhantomSubUnits.ACADEMY_VARIABLE, clan.getId());
+		}
 		ThreadPool.execute(hunter::storeMe);
-		LOGGER.info(getClass().getSimpleName() + ": " + hunter.getName() + " joined clan " + clan.getName() + " (" + clan.getMembersCount() + " of " + appetite(clan) + ").");
+		LOGGER.info(getClass().getSimpleName() + ": " + hunter.getName() + " joined clan " + clan.getName() + " (" + clan.getMembersCount() + " of " + appetite(clan) + (unit != 0 ? ", unit " + unit : "") + ").");
 		// Клан-чат видят только живые: без них реплику не тратить.
 		if (PhantomClans.getInstance().livingOnline(clan))
 		{
@@ -636,7 +656,7 @@ public final class PhantomHunterClans
 
 	private void recruitShout(Clan clan, Player leader, long now)
 	{
-		if (clan.getMembersCount() >= appetite(clan))
+		if (sated(clan))
 		{
 			return;
 		}
@@ -726,7 +746,7 @@ public final class PhantomHunterClans
 			}
 			friend |= relations.isFriend(mate, player);
 		}
-		if (clan.getMembersCount() >= appetite(clan))
+		if (sated(clan))
 		{
 			return new Answer(false, "full", who + ", но клан уже набран, новых не берёте — откажи по-дружески", "сорян, мы набрались. может позже");
 		}
@@ -847,6 +867,7 @@ public final class PhantomHunterClans
 				reserve = cost;
 			}
 		}
+		reserve = Math.max(reserve, PhantomSubUnits.reserve(clan));
 		for (SkillLearn learn : available)
 		{
 			final int cost = (int) learn.getLevelUpSp();
@@ -906,11 +927,12 @@ public final class PhantomHunterClans
 	 * Клан из одного главы дольше {@value #LONELY_HOURS} ч распускается; с кем-то ещё — счёт сначала.
 	 * @return распущен
 	 */
-	private boolean dissolveLonely(Clan clan, long now)
+	boolean dissolveLonely(Clan clan, long now)
 	{
 		final GlobalVariablesManager variables = GlobalVariablesManager.getInstance();
 		final String key = LONELY_VARIABLE + clan.getId();
-		if (clan.getMembersCount() > 1)
+		// Глава сверх предела HuntersMax (раздел 4.120) не бросал клан: счёт сначала, когда вернётся.
+		if ((clan.getMembersCount() > 1) || PhantomHunterManager.getInstance().isSpare(clan.getLeaderName()))
 		{
 			if (variables.hasVariable(key))
 			{
@@ -1032,9 +1054,9 @@ public final class PhantomHunterClans
 				}
 			}
 			final ClanMember head = clan.getLeader();
-			final boolean recruiting = clan.getMembersCount() < appetite(clan);
+			final boolean recruiting = !sated(clan);
 			final String[] war = PhantomClanWars.getInstance().war(clan);
-			lines.add("«" + clan.getName() + "» — " + clan.getLevel() + tr(" ур., ") + clan.getMembersCount() + tr(" чел. (в игре ") + online + tr("), глава ") + clan.getLeaderName() + (head != null ? " (" + head.getLevel() + ")" : "") + tr(", репутация ") + clan.getReputationScore() + (recruiting ? tr(", набирает") : "") + PhantomClanPower.allyNote(clan) + (war != null ? tr(", воюет с ") + (war[2].isEmpty() ? "" : tr("кланом игрока ")) + "«" + war[0] + "» (" + war[1] + ")" : "") + ((viewer.getClan() == clan) ? tr(" — твой клан") : ""));
+			lines.add("«" + clan.getName() + "» — " + clan.getLevel() + tr(" ур., ") + clan.getMembersCount() + tr(" чел. (в игре ") + online + tr("), глава ") + clan.getLeaderName() + (head != null ? " (" + head.getLevel() + ")" : "") + tr(", репутация ") + clan.getReputationScore() + (recruiting ? tr(", набирает") : "") + PhantomClanHallLogic.INSTANCE.note(clan) + PhantomClanPower.allyNote(clan) + (war != null ? tr(", воюет с ") + (war[2].isEmpty() ? "" : tr("кланом игрока ")) + "«" + war[0] + "» (" + war[1] + ")" : "") + ((viewer.getClan() == clan) ? tr(" — твой клан") : ""));
 		}
 		if (clans.size() > max)
 		{
