@@ -5,10 +5,11 @@
 @font-face { font-family: "Philosopher"; src: url(assets/fonts/philosopher-700.woff2) format("woff2"); font-weight: 600 700; font-display: block; }
 @font-face { font-family: "Inter"; src: url(assets/fonts/inter-var.woff2) format("woff2"); font-weight: 100 900; font-display: block; }
 
-/* Тема окна — атрибут data-theme на <html> (app.js, applyTheme). Здесь тема по умолчанию, остальные — themes.css.
-   Имена исторические: --gold — акцент, --bronze — заметная рамка. Обложка (.banner) и в светлой теме остаётся тёмной:
-   арт под ней тёмный. Новая тема — блок в themes.css, строка в THEMES (appsettings.py) и карточка в index.html. */
-:root, [data-theme="gold"], [data-theme="parchment"] .banner {
+/* Тема окна — атрибут data-theme на <html> (app.js, applyTheme). Здесь тема по умолчанию, цветные — themes.css,
+   раритетные (свои углы, скосы, шрифты, выключатели) — retro.css. Имена исторические: --gold — акцент, --bronze — заметная рамка.
+   Обложка (.banner) и в светлой теме остаётся тёмной: арт под ней тёмный. Новая тема — блок в themes.css или retro.css,
+   строка в THEMES (appsettings.py) и карточка в index.html. */
+:root, [data-theme="gold"], :is([data-theme="parchment"], [data-theme="gray2000"], [data-theme="hill2001"]) .banner {
   --bg: #100d0a; --win: #16120e; --panel: #1d1813; --panel-2: #251e17; --panel-3: #2d241b;
   --sunk: #120e0a; --bar: #130f0b; --tile: #18130e; --hover: #1c1610; --sel: #2a2116;
   --line: #4a3b26; --line-2: #2a2117; --scroll: #3a2e1f; --bronze: #7a6038;
@@ -17,8 +18,10 @@
   --ok: #82c46c; --warn: #e3a63c; --bad: #d4705e; --off: #6f675a; --info: #8fa9cf;
   --c-epic: #b46be0; --c-raid: #d2483c; --c-super: #f4c542;
 }
-/* Производные тона считаются там же, где задана тема: у образцов тем и обложки они свои, а не от окна. */
-:root, [data-theme], [data-theme="parchment"] .banner {
+/* Производные тона считаются там же, где задана тема: у образцов тем и обложки они свои, а не от окна.
+   Вид сверх цветов — умолчания для цветных тем, раритетные задают своё в retro.css. */
+:root, [data-theme], :is([data-theme="parchment"], [data-theme="gray2000"], [data-theme="hill2001"]) .banner {
+  --rd: 1; --title-bg: var(--bar); --title-fg: var(--gold-hi); --bar-seg: none; --bev: none; --sunken: none;
   --gold-lo: color-mix(in srgb, var(--gold) 70%, var(--bg));
   --gold-bg: color-mix(in srgb, var(--gold) 26%, var(--panel));
   --warn-line: color-mix(in srgb, var(--warn) 40%, var(--panel));
@@ -89,7 +92,8 @@ button { cursor: pointer; }
 
 /* Основная область */
 .main { padding: 14px 18px 12px; display: flex; flex-direction: column; gap: 10px; min-width: 0; min-height: 0; overflow: hidden; }
-.banner { flex: none; height: 332px; transition: height .18s ease-out; border-radius: 8px; border: 1px solid var(--bronze); background: var(--tile) center 40%/cover; position: relative; overflow: hidden; }
+/* color — свой: в светлых темах обложка тёмная со своим --text, а унаследованный цвет пришёл бы тёмный от окна (меню ▾ было не прочесть). */
+.banner { flex: none; height: 332px; transition: height .18s ease-out; border-radius: 8px; border: 1px solid var(--bronze); background: var(--tile) center 40%/cover; position: relative; overflow: hidden; color: var(--text); }
 .banner .ph { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; background: repeating-linear-gradient(135deg, var(--tile) 0 14px, var(--panel) 14px 28px); }
 .banner .ph b { font-family: var(--serif); font-size: 40px; color: var(--bronze); letter-spacing: 2px; }
 .banner .ph span { font-size: 13px; color: var(--muted); }
@@ -167,7 +171,6 @@ button { cursor: pointer; }
 .view-foot { border-top: 1px solid var(--line); padding: 10px 18px; display: flex; gap: 10px; align-items: center; }
 .view-foot .info { flex: 1; font-size: 12.5px; color: var(--muted); }
 
-.basic { overflow: auto; overflow-anchor: none; padding: 16px 18px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-content: start; width: 100%; }
 .card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; }
 .card.wide { grid-column: 1 / -1; }
 .card h3 { margin: 0 0 10px; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 500; display: flex; align-items: center; gap: 8px; }
@@ -280,7 +283,6 @@ select { height: 30px; border-radius: 6px; border: 1px solid var(--line); backgr
 .modal { width: 460px; background: var(--panel); border: 1px solid var(--gold); border-radius: 10px; padding: 18px 20px; }
 .modal h2 { font-family: var(--serif); font-size: 20px; color: var(--gold-hi); margin: 0 0 8px; }
 .modal p { margin: 0 0 16px; color: var(--text-2); font-size: 14px; line-height: 1.5; }
-.modes-box { display: contents; }
 .client-row { border-top: 1px solid var(--line); padding: 8px 0; }
 .client-row .row2 { margin: 6px 0 0; }
 .client-path { font: 13px var(--mono); color: var(--text); word-break: break-all; }
@@ -514,18 +516,30 @@ select { height: 30px; border-radius: 6px; border: 1px solid var(--line); backgr
 .group .seg button { padding: 5px 11px; font-size: 12.5px; }
 /* Образец темы: на карточке стоит своя data-theme, поэтому переменные внутри — цвета этой темы, а не окна. */
 .themes { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
-.theme-card { display: flex; flex-direction: column; gap: 7px; padding: 8px 8px 9px; border-radius: 8px; border: 1px solid var(--line); background: var(--win); color: var(--text); text-align: left; }
+.themes-h { margin: 6px 0 0; font-size: 12.5px; color: var(--text-2); }
+.themes-h small { margin-left: 6px; color: var(--muted); font-size: 12px; }
+.theme-card { display: flex; flex-direction: column; gap: 7px; padding: 8px 8px 9px; border-radius: calc(8px * var(--rd)); border: 1px solid var(--line); background: var(--win); color: var(--text); text-align: left; font-family: var(--sans); }
 .theme-card:hover { border-color: var(--bronze); }
 .theme-card.on { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold); }
 .theme-card b { font-size: 12.5px; font-weight: 500; }
 .theme-card.on b { color: var(--gold-hi); }
 .theme-card.on b::after { content: " ✓"; }
-.th-mock { display: grid; grid-template-columns: 26px 1fr; height: 56px; border-radius: 5px; border: 1px solid var(--line); overflow: hidden; background: var(--panel); }
-.th-mock > i { background: var(--bar); border-right: 1px solid var(--line); }
-.th-mock > span { display: flex; flex-direction: column; gap: 5px; padding: 8px; min-width: 0; }
-.th-mock > span i { display: block; height: 4px; border-radius: 2px; background: var(--text-2); width: 80%; }
-.th-mock > span i:nth-child(2) { background: var(--muted); width: 55%; }
-.th-mock > span i:nth-child(3) { background: var(--gold); height: 10px; width: 46%; margin-top: auto; border-radius: 3px; }
+/* Окно в миниатюре: заголовок, сайдбар, строки текста, полоска нагрузки, кнопка и выключатель — тем же видом, что в окне. */
+.th-mock { display: grid; grid-template: 9px 1fr / 24px 1fr; height: 64px; border-radius: calc(5px * var(--rd)); border: 1px solid var(--line); overflow: hidden; background: var(--panel); }
+.th-mock i { display: block; }
+.th-t { grid-column: 1 / -1; background: var(--title-bg); border-bottom: 1px solid var(--line); }
+.th-s { background: var(--bar); border-right: 1px solid var(--line); }
+.th-c { display: flex; flex-direction: column; gap: 4px; padding: 6px 7px; min-width: 0; }
+.th-c > i:nth-child(1), .th-c > i:nth-child(2) { height: 4px; width: 78%; border-radius: calc(2px * var(--rd)); background: var(--text-2); }
+.th-c > i:nth-child(2) { width: 52%; background: var(--muted); }
+.th-bar { position: relative; height: 7px; width: 86%; border: 1px solid var(--line); border-radius: calc(2px * var(--rd)); background: var(--sunk); overflow: hidden; }
+.th-bar::before, .th-bar::after { content: ""; position: absolute; inset: 0; }
+.th-bar::before { right: 38%; background: var(--ok); }
+.th-bar::after { background: var(--bar-seg); }
+.th-r { display: flex; align-items: center; gap: 6px; margin-top: auto; }
+.th-btn { height: 10px; width: 46%; border-radius: calc(3px * var(--rd)); background: var(--gold); box-shadow: var(--bev); }
+.th-sw { position: relative; width: 17px; height: 9px; border: 1px solid var(--gold); border-radius: calc(9px * var(--rd)); background: var(--gold-bg); }
+.th-sw::after { content: ""; position: absolute; top: 1px; right: 1px; width: 5px; height: 5px; border-radius: calc(50% * var(--rd)); background: var(--gold-hi); }
 .progress7 { display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0 2px; }
 .progress7 span { font-size: 12px; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
 .progress7 span.ready { border-color: color-mix(in srgb, var(--ok) 50%, var(--panel)); color: var(--ok); }
@@ -545,14 +559,18 @@ select { height: 30px; border-radius: 6px; border: 1px solid var(--line); backgr
 .banner .cta { flex: none; margin-bottom: 2px; }
 .banner .era-label { z-index: 1; }
 .banner .ph { z-index: 0; }
-.main.compact .banner { height: 104px; }
-.main.compact .banner .chips { display: none; }
-.main.compact .title { font-size: 30px; }
-.main.compact .banner .who { bottom: 14px; }
-.main.compact .banner .subline { margin-top: 6px; }
-.main.compact .banner .cta { bottom: 22px; }
-.main.compact .btn.play, .main.compact .btn.more { height: 46px; }
-.main.compact .btn.play { min-width: 230px; font-size: 18px; }
+.main.compact { gap: 8px; padding: 10px 14px; }
+.main.compact .banner { height: 62px; background-position: center 42%; }
+.main.compact .banner:has(.menu.on) { overflow: visible; }
+.main.compact .banner .chips, .main.compact .banner .subline { display: none; }
+.main.compact .banner::after { border-radius: inherit; background: linear-gradient(to right, color-mix(in srgb, var(--bg) 88%, transparent) 0%, color-mix(in srgb, var(--bg) 45%, transparent) 45%, transparent 75%); }
+.main.compact .banner .hero-foot { left: 16px; right: 10px; top: 0; bottom: 0; align-items: center; }
+.main.compact .banner .who .title, .main.compact .banner .who .title.long { font-size: 26px; }
+.main.compact .banner .cta { margin: 0; }
+.main.compact .btn.play, .main.compact .btn.more, .main.compact .btn.panel { height: 42px; }
+.main.compact .btn.play { min-width: 170px; font-size: 17px; }
+.main.compact .menu { top: 46px; }
+.main.compact .menu.up { top: auto; bottom: 46px; }
 .split.ingame .btn.play, .split.ingame .btn.more { background: var(--panel-2); color: var(--gold-hi); border-color: var(--gold); }
 .split.ingame .btn svg { color: var(--gold-hi); }
 
@@ -574,6 +592,8 @@ select { height: 30px; border-radius: 6px; border: 1px solid var(--line); backgr
 .ocard { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 11px 13px; display: flex; flex-direction: column; gap: 5px; min-width: 0; text-align: left; }
 button.ocard:hover { border-color: var(--gold); }
 .ocard.want { grid-column: 1 / -1; }
+.ocard.fail { grid-column: 1 / -1; border-color: var(--bad); }
+.ocard.fail pre.logs { height: 220px; margin-top: 4px; }
 .want-row { display: flex; align-items: center; gap: 12px; margin-top: 4px; flex-wrap: wrap; }
 .fb-kind { margin: 0 0 10px; }
 .modal .fb-text { height: 130px; margin-bottom: 8px; }

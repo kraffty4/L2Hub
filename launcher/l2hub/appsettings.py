@@ -20,8 +20,9 @@ DEFAULTS = {
     "theme": "gold",          # тема окна, ключ THEMES — ui/themes.css
     "window": None,           # {"x", "y", "width", "height", "maximized"} — пишет окно при закрытии
 }
-# Темы окна и цвет окна до загрузки страницы (--win темы); сами палитры — ui/themes.css.
-THEMES = {"gold": "#16120e", "parchment": "#f1eadb", "elven": "#101611", "darkelf": "#15101b", "orc": "#18100e", "freya": "#0f141a", "graphite": "#141416"}
+# Темы окна и цвет окна до загрузки страницы (--win темы); сами палитры — ui/themes.css, раритетные — ui/retro.css.
+THEMES = {"gold": "#16120e", "parchment": "#f1eadb", "elven": "#101611", "darkelf": "#15101b", "orc": "#18100e", "freya": "#0f141a", "graphite": "#141416",
+          "player98": "#262a33", "gray2000": "#d4d0c8", "hill2001": "#ece9d8", "gloss2004": "#0c1420", "panels": "#000080"}
 CHOICES = {"closeRunning": {"ask", "tray", "stop", "leave"}, "closeIdle": {"exit", "tray"}, "language": {"auto", "ru", "en"}, "theme": set(THEMES)}
 FLAGS = {"notifyCrash", "rememberWindow", "showUnplanned", "checkUpdates"}
 

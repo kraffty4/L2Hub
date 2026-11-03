@@ -1,0 +1,97 @@
+/* Вкладка «Настройки сервера» (settings.js, docs/design/PULT.md): дерево страниц слева, поиск и страница по центру, нагрузка справа (monitor.css). */
+.view.inline.pult { display: grid; grid-template-columns: 176px minmax(0, 1fr) 232px; grid-template-rows: auto minmax(0, 1fr) auto; background: var(--panel); }
+.view.inline.pult.no-load { grid-template-columns: 176px minmax(0, 1fr); }
+.pult > .pnav { grid-column: 1; grid-row: 1 / -1; }
+.pult > .psearch { grid-column: 2; grid-row: 1; }
+.pult > .view-body { grid-column: 2; grid-row: 2; min-width: 0; }
+.pult > .view-foot { grid-column: 2; grid-row: 3; padding: 7px 12px; background: var(--panel-2); }
+.pult > .pload { grid-column: 3; grid-row: 1 / -1; }
+.pult.no-load > .pload { display: none; }
+.pult > .view-foot[hidden], .pult.own-search > .psearch { display: none; }
+.pult > .view-foot .info { color: var(--text-2); }
+.pult > .view-foot .sbtn { height: 28px; }
+
+.pnav { background: var(--bar); border-right: 1px solid var(--line); padding: 6px 6px 10px; overflow-y: auto; display: flex; flex-direction: column; gap: 1px; }
+#pnavTree { display: contents; }
+.pnav-h { font-size: 10.5px; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); padding: 9px 7px 3px; flex: none; }
+.pnav button { flex: none; display: flex; align-items: center; gap: 6px; width: 100%; padding: 5px 7px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: var(--text-2); font-size: 13px; text-align: left; }
+.pnav button[hidden] { display: none; }
+.pnav button > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pnav button:hover { background: var(--panel); color: var(--text); }
+.pnav button.on { background: var(--panel-2); border-color: var(--gold); color: var(--gold-hi); }
+.pnav .c, .pnav .tab .badge { margin-left: auto; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; flex: none; }
+
+.psearch { padding: 8px 12px; border-bottom: 1px solid var(--line-2); display: flex; }
+.psearch .search { flex: 1; min-width: 0; height: 30px; }
+.ppage { flex: 1; min-width: 0; min-height: 0; overflow: auto; overflow-anchor: none; padding: 10px 14px 14px; }
+.ppage-h { display: flex; align-items: center; gap: 8px; }
+.ppage-h h2 { margin: 0; font-family: var(--serif); font-size: 19px; color: var(--gold-hi); }
+.ppage-h .c { font-size: 12px; color: var(--muted); }
+.ppage-h .spacer { flex: 1; }
+.sbtn.mini { height: 24px; padding: 0 8px; font-size: 11.5px; }
+.pabout { margin: 3px 0 6px; font-size: 12.5px; color: var(--text-2); line-height: 1.4; }
+.psub { margin: 12px 0 2px; font-size: 11px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.psub-go { background: transparent; border: 0; padding: 0; color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit; }
+.psub-go:hover { color: var(--gold-hi); }
+.phint { margin: 6px 0 0; font-size: 11.5px; color: var(--muted); line-height: 1.45; }
+.pabsent { margin-top: 12px; }
+
+/* Строка настройки: одна строка заметки, щелчок раскрывает заметку и показывает ключ. */
+.prow { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; column-gap: 7px; padding: 4px 6px; margin: 0 -6px; border-bottom: 1px solid var(--line-2); }
+.prow:hover { background: var(--hover); }
+.prow-m { display: block; min-width: 0; width: 100%; padding: 0; border: 0; background: transparent; text-align: left; color: inherit; }
+button.prow-m { cursor: pointer; }
+.prow-t { display: block; font-size: 13.5px; color: var(--text); }
+.prow-n { display: block; font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.4; }
+.prow-k { display: none; font: 10.5px var(--mono); color: var(--bronze); margin-top: 2px; overflow-wrap: anywhere; }
+.prow-c { display: block; font: 10.5px var(--mono); color: var(--muted); overflow-wrap: anywhere; }
+.prow.open .prow-n, .phunters.open .prow-n { white-space: normal; }
+.prow.open .prow-k { display: block; }
+.prow-tags { display: inline-flex; gap: 3px; }
+.prow-tags i { font-style: normal; font-size: 10.5px; line-height: 15px; padding: 0 4px; border: 1px solid var(--line); border-radius: 3px; color: var(--text-2); white-space: nowrap; }
+.prow.key { grid-template-columns: minmax(0, 1fr) auto; }
+.prow.key.edited .prow-t { color: var(--gold-hi); }
+.prow-ctl { display: flex; justify-content: flex-end; min-width: 0; }
+.prow-ctl .field { width: 190px; height: 26px; }
+.prow-ctl .knum { width: 96px; height: 26px; border-radius: 6px; border: 1px solid var(--line); background: var(--sunk); padding: 0 8px; }
+.prow-text { display: block; margin: 4px 0 6px; }
+
+.phunters { margin: 4px 0 2px; padding: 8px 10px 9px; border: 1px solid var(--bronze); border-radius: 7px; background: var(--tile); }
+.phunters-h { display: flex; align-items: center; gap: 8px; }
+.phunters-h .field { width: 64px; height: 26px; }
+.phunters-h small { color: var(--muted); font-size: 12px; }
+.phunters input[type=range] { display: block; width: 100%; margin: 6px 0 4px; accent-color: var(--gold); }
+.phunters .note { margin-top: 6px; }
+.phunters .sbtn { margin-top: 6px; }
+
+.mcards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-top: 6px; }
+.mcard { display: flex; flex-direction: column; gap: 4px; padding: 8px; min-height: 84px; border: 1px solid var(--line); border-radius: 7px; background: var(--tile); color: var(--text-2); text-align: left; font-size: 11.5px; line-height: 1.35; }
+.mcard b { font-family: var(--serif); font-size: 14px; font-weight: 600; color: var(--text); }
+.mcard:hover { border-color: var(--bronze); }
+.mcard.on { border-color: var(--gold); background: var(--sel); }
+.mcard.on b { color: var(--gold-hi); }
+.ppage .rates { margin-top: 6px; }
+.ppage .rates.five { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.ppage .num input { height: 28px; }
+.pfold { display: flex; align-items: center; gap: 6px; width: 100%; margin-top: 10px; padding: 5px 0; background: transparent; border: 0; border-top: 1px solid var(--line-2); color: var(--text-2); font-size: 12.5px; text-align: left; }
+.pfold svg { width: 12px; height: 12px; transform: rotate(-90deg); transition: transform .12s; flex: none; }
+.pfold.open svg { transform: none; }
+.pfold-body { display: none; margin-top: 6px; }
+.pfold-body.open { display: block; }
+
+/* Узкое окно: на этой вкладке список хроник сворачивается до миниатюр, имя — в подсказке. */
+@media (max-width: 1239px) {
+  .sec-chron.in-set { grid-template-columns: 66px minmax(0, 1fr); }
+  .in-set .side-top, .in-set .side-bottom, .in-set .chron .t, .in-set .chron .sdot, .in-set .era { display: none; }
+  .in-set .chron-list { padding: 8px 6px; }
+  .in-set .chron { padding: 4px 3px; justify-content: center; }
+  .in-set .thumb { width: 44px; }
+}
+
+/* Панель не шире колонки: заметка в одну строку иначе распирает её по своей длине. */
+.pult .pane { min-width: 0; }
+/* Прежние панели в правой колонке: она уже, чем была вся вкладка. */
+.pult .all { grid-template-columns: 190px minmax(0, 1fr); }
+.pult .files { overflow-x: hidden; }
+.pult .kv { grid-template-columns: minmax(0, 1fr) 170px 28px; }
+.pult .netgrid { padding: 12px 14px; }

@@ -1,0 +1,67 @@
+/* Полоски нагрузки (monitor.js, docs/design/PULT.md, раздел 3): колонка на вкладке настроек и маленькие в нижней панели. */
+.pload { display: flex; flex-direction: column; gap: 2px; min-height: 0; overflow-y: auto; padding: 8px 10px 10px; border-left: 1px solid var(--line); background: var(--bar); font-size: 12px; }
+.pload-h { font-family: var(--serif); font-weight: 700; font-size: 14px; color: var(--gold-hi); margin-bottom: 2px; }
+.llegend { display: flex; flex-wrap: wrap; gap: 2px 8px; font-size: 10.5px; color: var(--muted); margin-bottom: 2px; }
+.llegend span { display: inline-flex; align-items: center; gap: 3px; }
+.llegend .k { display: inline-block; width: 8px; height: 8px; border-radius: 2px; }
+.llegend .k.o { background: var(--off); }
+.llegend .k.s { background: var(--ok); }
+.llegend .k.d { background: repeating-linear-gradient(45deg, var(--ok) 0 2px, transparent 2px 4px); }
+
+.lres { display: block; width: 100%; margin-top: 6px; padding: 0; border: 0; background: transparent; text-align: left; color: inherit; font: inherit; }
+.lres-h { display: flex; justify-content: space-between; gap: 6px; margin-bottom: 2px; }
+.lres-h b { font-weight: 600; color: var(--text); }
+.lres.open .lres-h b, .lres:hover .lres-h b { color: var(--gold-hi); }
+.lres-h > span { color: var(--text-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.lres-h em { font-style: normal; font-weight: 600; }
+.lres-h em.up { color: var(--warn); }
+.lres-h em.down { color: var(--ok); }
+.lsub { display: flex; justify-content: space-between; gap: 6px; margin-top: 3px; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.lsub[hidden], .lsub-b[hidden], .lparts[hidden], .pload .phint[hidden], .lwhatif[hidden] { display: none; }
+
+.lparts { margin: 3px 0 2px; padding: 3px 6px; border: 1px solid var(--line-2); border-radius: 4px; background: var(--tile); font-size: 11px; color: var(--text-2); }
+.lparts > div { display: flex; justify-content: space-between; gap: 6px; padding: 1px 0; }
+.lparts > div > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lparts > div > span:last-child { flex: none; font-variant-numeric: tabular-nums; }
+.lparts .draft { color: var(--muted); font-style: italic; }
+.lparts .other { color: var(--muted); }
+.lparts .far > span:first-child { padding-left: 8px; }
+.spark { display: block; width: 100%; height: 30px; margin: 2px 0 0; background: var(--sunk); border: 1px solid var(--line-2); }
+.spark polyline { fill: none; stroke-width: 1.2; vector-effect: non-scaling-stroke; }
+.spark .all { stroke: var(--off); }
+.spark .ours { stroke: var(--ok); }
+.lparts .spark-t { font-size: 10.5px; color: var(--muted); padding: 0 0 2px; }
+
+.lv { margin-top: 8px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 5px; font-size: 11.5px; line-height: 1.4; background: var(--tile); }
+.lvt.ok { color: var(--ok); }
+.lvt.warn { color: var(--warn-text); }
+.lvt.bad { color: var(--bad-text); }
+.lv .sbtn { display: block; margin-top: 5px; color: var(--text); }
+.pload .phint { margin-top: 5px; }
+.lwhatif { margin-top: auto; padding-top: 9px; }
+.lw-h { font-size: 10.5px; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
+.lw-r { display: flex; justify-content: space-between; align-items: center; gap: 6px; padding: 3px 0; color: var(--text-2); }
+.lw-r .switch { transform: scale(.84); transform-origin: right center; flex: none; }
+
+/* Полоска: слои лежат поверх друг друга, ширины ставит monitor.js. */
+.lb { --c: var(--ok); position: relative; height: 13px; background: var(--sunk); border: 1px solid var(--line); border-radius: 3px; overflow: hidden; }
+.lb::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: var(--bar-seg); }  /* огоньки и блоки раритетных тем (retro.css) */
+.lb.tight { --c: var(--warn); }
+.lb.over { --c: var(--bad); }
+.lb > i { position: absolute; top: 0; bottom: 0; left: 0; display: block; width: 0; transition: width .25s ease-out, left .25s ease-out, background-color .25s; }
+.lb .o { background: var(--off); }
+.lb .s { background: var(--c); }
+.lb .d { background: repeating-linear-gradient(45deg, var(--c) 0 3px, color-mix(in srgb, var(--c) 45%, var(--sunk)) 3px 6px); }
+.lb .g.up { background: repeating-linear-gradient(45deg, var(--text-2) 0 2px, transparent 2px 5px); }
+.lb .g.down { background: var(--sunk); box-shadow: inset 0 0 0 1px var(--ok); }
+.lb.thin { height: 6px; }
+.lb.mini { height: 7px; width: 42px; }
+
+.dbars { flex: none; display: inline-flex; gap: 9px; padding: 3px 6px; background: transparent; border: 1px solid transparent; border-radius: 5px; color: inherit; }
+.dbars:hover { border-color: var(--line); }
+.dbar { display: inline-flex; align-items: center; gap: 4px; }
+.dbar small { font-size: 10.5px; color: var(--muted); }
+
+.prow-tags i.cost { color: var(--text-2); font-variant-numeric: tabular-nums; }
+.prow-tags i.cost.free { color: var(--ok); }
+.prow-tags i.cost.draft { color: var(--muted); }

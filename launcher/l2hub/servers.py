@@ -203,6 +203,12 @@ def db_running(port: int = 3306) -> bool:
     return port_open(port)
 
 
+def our_db_running() -> bool:
+    """Порт 3306 слушает наша MariaDB (runtime\\mariadb), а не чужая MySQL с тем же портом."""
+    exe = paths.MARIA_BIN / "mariadbd.exe"
+    return any(process(pid, exe) for _, pid in listeners(3306))
+
+
 def db_engine(p: dict) -> str:
     return bundle(p)["db"]["engine"] if own_db(p) else "MariaDB"
 

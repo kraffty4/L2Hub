@@ -1,6 +1,6 @@
 """Режимы сервера («Хардкор», «PvP-крафт», «PvP») и выключатели модов (баффер, GM-шоп, чемпионы, ивенты) — задачи
 автора 2026-10-21 (docs/PLAN.md, «Настройки сервера в окне»). Таблица — server_modes.json; пишет configs.save_edits
-с бэкапом конфигов, как экран «Все настройки». Только Mobius: у сборок-комбайнов и L2Solo свои конфиги."""
+с бэкапом конфигов, как страница «Все ключи». Только Mobius: у сборок-комбайнов и L2Solo свои конфиги."""
 
 import json
 import re
@@ -19,7 +19,7 @@ def supported(p: dict) -> str | None:
     if l2solo.is_l2solo(p):
         return "У C4 (L2Solo) рейты — в пульте «Мой мир», свои выключатели — там же."
     if servers.config_family(p) != "mobius":
-        return "У своей сборки настройки — только в «Все настройки»: режимы знают ключи Mobius."
+        return "У своей сборки режимов и выключателей нет: они знают ключи Mobius. Рейты и правила — на этих страницах, всё остальное — в «Все ключи»."
     return None
 
 
@@ -129,9 +129,10 @@ def rates_now(p: dict) -> dict:
 
 
 def state(p: dict) -> dict:
-    """Режимы с отметкой активного (все его рейты и выключатели совпадают) и выключатели модов."""
+    """Режимы с отметкой активного (все его рейты и выключатели совпадают), выключатели модов и страницы вкладки настроек.
+    Страницы — и там, где режимов нет: у своей сборки они показывают рейты и правила по ключам."""
     if why := supported(p):
-        return {"ok": False, "error": why}
+        return {"ok": False, "error": why, "pages": table()["pages"], "switches": []}
     sw = {s["id"]: s for s in switches(p)}
     now = rates_now(p)
     modes = []
@@ -140,8 +141,8 @@ def state(p: dict) -> dict:
         same_sw = all(sw[k]["value"] == v for k, v in m["switches"].items() if sw.get(k, {}).get("available"))
         same_set = all((cur := _read(p, f, k)) is None or cur.strip().lower() == str(v).lower()
                        for f, keys in _settings(p, m).items() for k, v in keys.items())
-        modes.append({"id": m["id"], "title": m["title"], "note": m["note"], "active": same_rates and same_sw and same_set, "keepsRates": not m["rates"]})
-    return {"ok": True, "modes": modes, "switches": list(sw.values()), "rates": now, "huntersMax": hunters_max(p),
+        modes.append({"id": m["id"], "title": m["title"], "short": m["short"], "note": m["note"], "active": same_rates and same_sw and same_set, "keepsRates": not m["rates"], "switches": m["switches"]})
+    return {"ok": True, "pages": table()["pages"], "modes": modes, "switches": list(sw.values()), "rates": now, "huntersMax": hunters_max(p),
             "restart": servers.part_process(p, "game") is not None}
 
 
@@ -188,6 +189,21 @@ def set_switch(p: dict, switch_id: str, value: bool) -> dict:
         raise ValueError(f"В этой сборке нет выключателя «{switch_id}»")
     _save(p, _edits(p, s, keys, value))
     return {"id": switch_id, "value": bool(value)}
+
+
+def set_switches(p: dict, values: dict) -> dict:
+    """Несколько выключателей разом — «Включить все» и «Выключить все» на странице настроек: одна запись и один бэкап
+    конфигов, а не по бэкапу на выключатель. Чего в сборке нет — мимо, как в режимах."""
+    t = {x["id"]: x for x in table()["switches"]}
+    edits, changed = [], []
+    for sid, value in values.items():
+        s = t.get(sid)
+        if s and (keys := _present(p, s)):
+            edits.extend(_edits(p, s, keys, bool(value)))
+            changed.append(sid)
+    if edits:
+        _save(p, edits)
+    return {"changed": changed}
 
 
 def hunters_in_table(p: dict) -> int:
@@ -268,7 +284,7 @@ def apply_mode(p: dict, mode_id: str) -> dict:
 
 CAL_FILE = "L2HubEvents.ini"
 # Ключи расписаний рядом с окнами событий (не окна): PvP-ивенты (0019) и нашествие эльпи (Interlude, 0021). Выключатели
-# PvpEvents и Elpies — в «Моды и ивенты» (server_modes.json); в карточке календаря — остальные.
+# PvpEvents и Elpies — на странице «Ивенты» (server_modes.json); в карточке календаря — остальные.
 PVP_KEYS = {"PvpEvents": "bool", "PvpOnlyWithPlayers": "bool", "PvpMinLevel": "int", "TvTMinParticipants": "int", "TvTMaxParticipants": "int", "TvTReservedSlots": "int", "TvTFightMinutes": "int", "TvT": "cron", "Deathmatch": "cron", "CtF": "cron",
             "Elpies": "bool", "ElpiesSchedule": "cron", "ElpiesMinutes": "int", "ElpiesOnlyWithPlayers": "bool"}
 WINDOW = re.compile(r"^(?:(\d{2}) (\d{2})(?: \d{4})?-(\d{2}) (\d{2})(?: \d{4})?|Off)?$", re.IGNORECASE)

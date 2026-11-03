@@ -1,0 +1,272 @@
+/* Раритетные темы окна (docs/design/PULT.md, раздел 5): кроме цветов — углы, скосы, шрифты, вид кнопок, выключателей и полосок.
+   Всё нарисовано своё, шрифты системные (Tahoma, Trebuchet MS, Segoe UI, Consolas): ни логотипов, ни картинок чужих программ.
+   [data-theme="…"] — переменные. Атрибут стоит и на <html>, и на образце темы в настройках L2Hub, поэтому образец показывает свою тему.
+   html[data-theme="…"] — вид элементов окна. Только от <html>: образцы других тем внутри окна его не подхватывают.
+   Переменные сверх цветов (умолчания — в styles.css): --rd — множитель углов образца, --title-bg и --title-fg — полоса заголовка
+   окна и диалогов, --bar-seg — узор поверх полосок нагрузки (огоньки, блоки, блик), --bev и --sunken — выпуклый и вдавленный скос.
+   Новая тема — блок здесь, строка в THEMES (appsettings.py) и карточка в index.html. */
+
+/* Квадратные темы: углов нет нигде, кроме образцов тем — у тех свои. */
+html:is([data-theme="player98"], [data-theme="gray2000"], [data-theme="panels"]) .win *:not(.theme-card, .theme-card *) { border-radius: 0 !important; }
+
+/* Диалог — окно в окне: заголовок полосой, как у окна. */
+html:is([data-theme="player98"], [data-theme="gray2000"], [data-theme="hill2001"], [data-theme="gloss2004"], [data-theme="panels"]) {
+  .modal > h2:first-child { margin: -18px -20px 14px; padding: 6px 12px; background: var(--title-bg); color: var(--title-fg); font: 700 13px var(--sans); letter-spacing: 0; }
+  .drawer header { background: var(--title-bg); }
+  .drawer header h2 { color: var(--title-fg); font: 700 14px var(--sans); }
+  .drawer header .winbtn { color: var(--title-fg); }
+}
+
+/* ===== Плеер 98: серые скосы, зелёное табло, полоски из огоньков ===== */
+[data-theme="player98"] {
+  --bg: #1b1e26; --win: #262a33; --panel: #2c313b; --panel-2: #39404c; --panel-3: #454c5a; --sunk: #050806; --bar: #20242c; --tile: #252933; --hover: #333945; --sel: #14401d;
+  --line: #0c0e12; --line-2: #3b414d; --scroll: #5b6472; --bronze: #6d7787; --gold: #57e36b; --gold-hi: #9dfaab; --on-gold: #06140a;
+  --text: #d6dce4; --text-2: #aeb7c3; --muted: #8791a0; --ok: #57e36b; --warn: #e8d24a; --bad: #ef5b4b; --off: #5b6472; --info: #7fb4e8;
+  --serif: Consolas, monospace; --sans: Tahoma, "Segoe UI", sans-serif; --mono: Consolas, monospace;
+  --rd: 0; --title-bg: repeating-linear-gradient(180deg, #39414f 0 2px, #2a303a 2px 4px); --title-fg: #dfe5ec;
+  --bar-seg: repeating-linear-gradient(90deg, transparent 0 5px, #050806 5px 7px);
+  --bev: inset 1px 1px 0 #7f8a9b, inset -1px -1px 0 #0c0e12;
+  --sunken: inset 1px 1px 0 #0c0e12, inset -1px -1px 0 #5b6472;
+}
+html[data-theme="player98"] {
+  .titlebar { background: var(--title-bg); }
+  .titlebar :is(.name, .tag) { padding: 0 8px; background: #2a303a; }
+  .titlebar .name { color: var(--title-fg); font-size: 13px; letter-spacing: .3em; text-transform: uppercase; }
+  :is(.sbtn, .btn, .winbtn, .iconbtn, .linkbtn, .choice button, .ctab.on, .tab.on, .seg button.on, .mcard, .phunters, .dbars) { box-shadow: var(--bev); }
+  :is(.sbtn, .btn, .winbtn, .linkbtn, .choice button, .mcard):active { box-shadow: var(--sunken); }
+  :is(.btn.play, .btn.more, .sbtn.primary) { background: #39414f; border-color: #0c0e12; color: var(--gold-hi); }
+  :is(.btn.play, .btn.more):hover { background: #454c5a; }
+  :is(.btn.play, .btn.more) svg { color: var(--gold-hi); }
+  /* Табло: чёрное поле, зелёные буквы */
+  :is(.pnav, .pload, .search, .field, .num input, select, textarea) { background: #070a08; }
+  :is(.search, .field, .num input, select, textarea) { color: var(--gold-hi); box-shadow: var(--sunken); }
+  :is(.dock .log, .statusbar .log, .tile .det) { color: var(--gold); }
+  :is(.ppage-h h2, .pload-h) { color: var(--gold); text-transform: uppercase; letter-spacing: .08em; }
+  .pnav button { color: var(--gold); font-family: var(--mono); font-size: 12.5px; }
+  .pnav button.on { background: var(--sel); border-color: transparent; color: #d5ffdc; }
+  :is(.pnav .c, .pnav-h) { color: #3f9c4f; font-family: var(--mono); }
+  :is(.lres-h span, .lsub, .lw-r) { color: var(--gold); font-family: var(--mono); }
+  .lres-h b { color: #d5ffdc; font-family: var(--mono); }
+  /* Выключатель — огонёк */
+  .switch { width: 15px; height: 15px; background: #050806; border-color: #5b6472; box-shadow: inset 1px 1px 0 #000; }
+  .switch::after { top: 3px; left: 3px; width: 7px; height: 7px; border-radius: 0; background: #143018; transition: none; }
+  .switch[aria-checked=true] { background: #050806; border-color: #5b6472; }
+  .switch[aria-checked=true]::after { left: 3px; background: var(--gold); box-shadow: 0 0 4px var(--gold); }
+}
+
+/* ===== Серый 2000: серые панели, скосы, тёмно-синие блоки ===== */
+[data-theme="gray2000"] {
+  --bg: #808080; --win: #d4d0c8; --panel: #d4d0c8; --panel-2: #d4d0c8; --panel-3: #c4c0b8; --sunk: #fff; --bar: #d4d0c8; --tile: #d4d0c8; --hover: #dedad2; --sel: #c9d3ea;
+  --line: #808080; --line-2: #b8b4ac; --scroll: #a8a49c; --bronze: #808080; --gold: #0a246a; --gold-hi: #0a246a; --on-gold: #fff;
+  --text: #000; --text-2: #222; --muted: #55524b; --ok: #0a246a; --warn: #a06c00; --bad: #a80000; --off: #808080; --info: #0a246a;
+  --serif: Tahoma, sans-serif; --sans: Tahoma, sans-serif; --mono: "Courier New", monospace;
+  --rd: 0; --title-bg: linear-gradient(90deg, #0a246a, #a6caf0); --title-fg: #fff;
+  --bar-seg: repeating-linear-gradient(90deg, transparent 0 8px, #fff 8px 10px);
+  --bev: inset 1px 1px 0 #fff, inset -1px -1px 0 #404040, inset 2px 2px 0 #e8e4dc, inset -2px -2px 0 #808080;
+  --sunken: inset 1px 1px 0 #808080, inset -1px -1px 0 #fff, inset 2px 2px 0 #404040;
+}
+html[data-theme="gray2000"] {
+  .titlebar { background: var(--title-bg); border-bottom: 0; }
+  .titlebar .name { color: var(--title-fg); font-size: 13px; font-weight: 700; letter-spacing: 0; }
+  .titlebar .tag { color: #dfe8ff; border-color: transparent; }
+  .winbtn { width: 20px; height: 18px; margin-left: 2px; background: #d4d0c8; color: #000; box-shadow: var(--bev); }
+  :is(.winbtn, .winbtn.close):hover { background: #d4d0c8; color: #000; }
+  .winbtn svg { width: 9px; height: 9px; stroke-width: 2; }
+  .drawer header .winbtn { color: #000; }
+  /* Кнопки выпуклые, нажатая — вдавленная */
+  .seg { border: 0; gap: 2px; overflow: visible; }
+  :is(.sbtn, .btn, .linkbtn, .choice button, .seg button, .ctab.on, .tab.on, .mcard, .dbars, .iconbtn:hover, .iconbtn.on) { border-color: transparent; background: #d4d0c8; color: #000; box-shadow: var(--bev); }
+  :is(.sbtn, .btn, .linkbtn, .choice button, .seg button, .mcard):active, .seg button.on { box-shadow: var(--sunken); background: #e6e3dc; }
+  .btn:hover { background: #dedad2; }
+  .sbtn.primary { box-shadow: 0 0 0 1px #000, var(--bev); font-weight: 400; }
+  .sbtn.danger { color: var(--bad); }
+  .btn.more { border-left: 0; }
+  .btn.play { color: #000; font-weight: 700; }
+  :is(.btn, .choice button) svg { color: #000; }
+  /* Поля и полоски — вдавленные, белые */
+  :is(.search, .field, .num input, select, textarea, .lb) { border-color: transparent; background: #fff; box-shadow: var(--sunken); }
+  /* Панели — с проточенной рамкой, всплывающие — выпуклые */
+  :is(.card, .group, .cbox, .ocard, .tile, .note, .callout, .phunters) { border-color: #808080; box-shadow: 1px 1px 0 #fff, inset 1px 1px 0 #fff; }
+  :is(.modal, .menu, .toast) { border-color: transparent; box-shadow: var(--bev), 2px 2px 0 rgba(0, 0, 0, .35); }
+  /* Выбранное — тёмно-синее с белым */
+  :is(.chron.sel, .fileb.on, .pnav button.on, .mcard.on, .menu button:hover) { background: #0a246a; border-color: transparent; color: #fff; }
+  :is(.chron.sel, .fileb.on, .pnav button.on, .mcard.on, .menu button:hover) :is(.n, .m, .c, b, small) { color: #fff; }
+  .rail { box-shadow: inset -1px 0 0 #fff; }
+  .rail button.on { background: #c4c0b8; box-shadow: var(--sunken); color: #000; }
+  .rail button.on::before { display: none; }
+  .pnav { box-shadow: inset -1px 0 0 #fff; }
+  :is(.dock, .statusbar) { box-shadow: inset 0 1px 0 #fff; }
+  :is(.dock .log, .statusbar .log) { padding: 3px 7px; box-shadow: var(--sunken); }
+  .banner .title { color: #fff; }
+  /* Полосы прокрутки — в шашечку, ползунок выпуклый */
+  & *::-webkit-scrollbar { width: 16px; height: 16px; }
+  & *::-webkit-scrollbar-track { background: repeating-conic-gradient(#d4d0c8 0 25%, #fff 0 50%) 0 0 / 2px 2px; }
+  & *::-webkit-scrollbar-thumb { background: #d4d0c8; border: 0; border-radius: 0; box-shadow: var(--bev); }
+}
+
+/* ===== Холм 2001: синий заголовок, бежевое окно, зелёная кнопка, панель задач слева ===== */
+[data-theme="hill2001"] {
+  --bg: #ece9d8; --win: #ece9d8; --panel: #fbfaf3; --panel-2: #f3f1e4; --panel-3: #e7e4d3; --sunk: #fff; --bar: #ece9d8; --tile: #f6f4e8; --hover: #eef3fb; --sel: #cfe0f8;
+  --line: #aca899; --line-2: #e0ddcc; --scroll: #b8c7e6; --bronze: #7f9db9; --gold: #1658c9; --gold-hi: #0b3fa0; --on-gold: #fff;
+  --text: #15150c; --text-2: #3c3b2c; --muted: #6e6c58; --ok: #33b121; --warn: #d59a12; --bad: #d0391e; --off: #aca899; --info: #1658c9;
+  --serif: "Trebuchet MS", Tahoma, sans-serif; --sans: Tahoma, "Segoe UI", sans-serif; --mono: "Lucida Console", Consolas, monospace;
+  --rd: .5; --title-bg: linear-gradient(180deg, #0a5be6 0, #3f8cf3 6%, #1668e8 22%, #0b52d4 60%, #0a4bbf 90%, #0838a0 100%); --title-fg: #fff;
+  --bar-seg: repeating-linear-gradient(90deg, transparent 0 8px, #fff 8px 10px), linear-gradient(180deg, rgba(255, 255, 255, .45), transparent 55%);
+}
+html[data-theme="hill2001"] {
+  .win { border: 3px solid #0a4bd0; border-top-width: 0; }
+  .titlebar { background: var(--title-bg); border-bottom: 0; }
+  .titlebar .name { color: var(--title-fg); font-size: 15px; font-weight: 700; letter-spacing: 0; text-shadow: 1px 1px 1px #0a2a75; }
+  .titlebar .tag { color: #cfe0ff; border-color: transparent; }
+  .winbtn { width: 24px; height: 22px; margin-left: 2px; border: 1px solid #fff; border-radius: 3px; color: #fff; background: linear-gradient(135deg, #5c90f0, #1f55c8); }
+  .winbtn:hover { color: #fff; background: linear-gradient(135deg, #7aa8ff, #2c66e0); }
+  .winbtn.close { background: linear-gradient(135deg, #f0917a, #cc3a14); }
+  .winbtn.close:hover { background: linear-gradient(135deg, #ffab94, #e04a22); }
+  .winbtn svg { width: 11px; height: 11px; stroke-width: 2; }
+  .modal > h2:first-child { border-radius: 7px 7px 0 0; text-shadow: 1px 1px 1px #0a2a75; }
+  .btn.play { border-color: #1f6b18; border-radius: 4px 0 0 4px; background: linear-gradient(180deg, #5cc04b 0, #379d2b 45%, #2c8a22 100%); color: #fff; font-family: "Trebuchet MS", sans-serif; font-style: italic; text-shadow: 1px 1px 1px #145010; }
+  .btn.more { border-color: #1f6b18; border-radius: 0 4px 4px 0; background: linear-gradient(180deg, #5cc04b, #2c8a22); }
+  :is(.btn.play, .btn.more):hover { filter: brightness(1.08); }
+  :is(.btn.play, .btn.more) svg { color: #fff; }
+  /* Панель задач слева: синяя рейка, голубые сайдбар и дерево настроек */
+  .rail { background: linear-gradient(180deg, #7ba2e7, #6375d6); border-right: 0; }
+  .rail button { color: #eaf0ff; }
+  .rail button:hover { color: #fff; }
+  .rail button.on { color: #fff; font-weight: 700; }
+  .rail button.on::before { background: #ffb43c; }
+  :is(.sidebar, .pnav) { background: linear-gradient(180deg, #d6dff7, #b4c5ef); }
+  :is(.era, .pnav-h) { margin-top: 6px; padding: 5px 8px; border-radius: 4px 4px 0 0; background: linear-gradient(90deg, #fff, #c8d6f6); color: #215dc6; font-weight: 700; letter-spacing: 0; text-transform: none; }
+  .era:hover { color: #0b3fa0; }
+  .chron:hover { background: #eef3fb; border-color: transparent; }
+  .chron.sel { background: #fff; border-color: #7f9db9; }
+  .pnav button { color: #215dc6; }
+  .pnav button:hover { background: #fff; color: #0b3fa0; text-decoration: underline; }
+  .pnav button.on { background: #fff; border-color: transparent; color: #0b3fa0; font-weight: 700; }
+  :is(.group > h3, .card h3, .ocard h3) { color: #215dc6; font-weight: 700; }
+  :is(.ctab, .tab).on { border-top: 3px solid #e8912d; }
+  .sbtn { border: 1px solid #003c74; border-radius: 3px; background: linear-gradient(180deg, #fff, #ecebe0 85%, #d6d0c5); color: #000; }
+  .sbtn:hover { box-shadow: inset 0 0 0 2px #f9c95c; }
+  .sbtn.primary { box-shadow: inset 0 0 0 2px #cee7ff; font-weight: 400; }
+  .sbtn.danger { color: var(--bad); }
+  :is(.search, .field, .num input, select, textarea) { border-color: #7f9db9; border-radius: 0; background: #fff; }
+  .lb { height: 15px; border: 1px solid #7f8a9b; border-radius: 3px; background: #fff; }
+  .lb.thin { height: 8px; }
+  .lb.mini { height: 9px; }
+  .dock { background: linear-gradient(180deg, #3f8cf3, #245edb 10%, #245edb 88%, #1941a5); color: #fff; border-top: 0; }
+  :is(.dock .dmeta, .dock .dver, .dock .log, .dbar small, .drun.idle b) { color: #dfe8ff; }
+  .drun b { color: #fff; }
+  .banner .title { color: #fff; }
+}
+
+/* Галка вместо выключателя: Серый 2000 и Холм 2001 */
+html:is([data-theme="gray2000"], [data-theme="hill2001"]) {
+  .switch { width: 15px; height: 15px; border: 1px solid #808080; border-radius: 0; background: #fff; box-shadow: inset 1px 1px 0 #404040; }
+  .switch::after { top: 1px; left: 4px; width: 5px; height: 9px; background: transparent; border-radius: 0; border: solid transparent; border-width: 0 2px 2px 0; transform: rotate(40deg); transition: none; }
+  .switch[aria-checked=true] { background: #fff; border-color: #808080; }
+  .switch[aria-checked=true]::after { left: 4px; background: transparent; border-color: #000; }
+}
+html[data-theme="hill2001"] {
+  .switch, .switch[aria-checked=true] { border-color: #1c5180; box-shadow: none; }
+  .switch[aria-checked=true]::after { border-color: #21a121; }
+}
+
+/* ===== Глянец 2004: чёрно-синий глянец, круглые кнопки, плавные полоски ===== */
+[data-theme="gloss2004"] {
+  --bg: #060b14; --win: #0c1420; --panel: #111b2b; --panel-2: #182639; --panel-3: #203148; --sunk: #050a12; --bar: #0a111c; --tile: #0f1827; --hover: #16233a; --sel: #1b3a66;
+  --line: #2a405f; --line-2: #1a2a40; --scroll: #30496d; --bronze: #3d5e8a; --gold: #59c8ff; --gold-hi: #b5e6ff; --on-gold: #04121f;
+  --text: #dcebfb; --text-2: #a4bbd6; --muted: #7890ac; --ok: #59c8ff; --warn: #ffc44d; --bad: #ff6b5e; --off: #4a5f7a; --info: #9cc1ff;
+  --serif: "Segoe UI", sans-serif; --sans: "Segoe UI", sans-serif; --mono: Consolas, monospace;
+  --rd: 2; --title-bg: linear-gradient(180deg, #2c4a7c 0, #1a2f52 48%, #0d1a30 50%, #0a1424 100%); --title-fg: #cfe6ff;
+  --bar-seg: linear-gradient(180deg, rgba(255, 255, 255, .28) 0 45%, transparent 46%);
+}
+html[data-theme="gloss2004"] {
+  .titlebar { background: var(--title-bg); }
+  .titlebar .name { color: var(--title-fg); font-weight: 600; letter-spacing: .02em; }
+  :is(.dock, .pnav, .pload, .rail, .sidebar) { background: linear-gradient(180deg, #101d31, #070e19); }
+  .winbtn { width: 26px; height: 26px; margin-left: 4px; border: 1px solid #3d5e8a; border-radius: 50%; background: radial-gradient(circle at 50% 30%, #3b5f92, #12223a 70%); color: #cfe6ff; }
+  .winbtn:hover { background: radial-gradient(circle at 50% 30%, #5b86c2, #1a3152 70%); color: #fff; }
+  .winbtn.close:hover { background: radial-gradient(circle at 50% 30%, #f08a7c, #7a1d14 70%); }
+  .winbtn svg { width: 11px; height: 11px; }
+  :is(.btn.play, .btn.more) { border-color: #9ddfff; background: linear-gradient(180deg, #79d4ff 0, #2f9fe6 48%, #1275bf 50%, #2aa0e8 100%); color: #03101c; }
+  .btn { border-radius: 25px; }
+  .btn.play { border-radius: 25px 0 0 25px; }
+  .btn.more { border-radius: 0 25px 25px 0; }
+  :is(.btn.play, .btn.more):hover { filter: brightness(1.12); }
+  :is(.btn.play, .btn.more) svg { color: #03101c; }
+  .sbtn { border-color: #3d5e8a; border-radius: 17px; background: linear-gradient(180deg, #24395a, #142236 50%, #0e1a2b 51%, #1a2d49); }
+  .sbtn.primary { border-color: #9ddfff; background: linear-gradient(180deg, #79d4ff, #1275bf 50%, #2aa0e8); color: #03101c; }
+  .sbtn.danger { border-color: var(--bad); background: linear-gradient(180deg, #3a1a1a, #200c0c 50%, #160808 51%, #2a1010); }
+  :is(.pnav button.on, .chron.sel, .fileb.on) { background: linear-gradient(180deg, #2a4f85, #16335c); border-color: #5e93d4; color: #fff; }
+  :is(.pnav button.on, .fileb.on) { border-radius: 13px; }
+  :is(.ctab, .tab).on { background: linear-gradient(180deg, #24395a, #111b2b); }
+  :is(.card, .group, .ocard, .cbox) { background: linear-gradient(180deg, #152238, #0e1828); }
+  .search { border-radius: 16px; }
+  .lb { border-radius: 7px; }
+  .switch[aria-checked=true] { border-color: #9ddfff; background: linear-gradient(180deg, #79d4ff, #1275bf 50%, #2aa0e8); }
+  .switch[aria-checked=true]::after { background: #fff; }
+  :is(.ppage-h h2, .pload-h, .page-title) { color: #cfe6ff; font-weight: 300; }
+  .modal { border-color: #5e93d4; box-shadow: 0 10px 40px rgba(0, 0, 0, .6); }
+}
+
+/* ===== Синие панели: файловый менеджер досовских времён ===== */
+[data-theme="panels"] {
+  --bg: #000040; --win: #000080; --panel: #000080; --panel-2: #000080; --panel-3: #00007a; --sunk: #000050; --bar: #000080; --tile: #000080; --hover: #0000a8; --sel: #008080;
+  --line: #00d0d0; --line-2: #004c9c; --scroll: #00a8a8; --bronze: #00d0d0; --gold: #ffff55; --gold-hi: #ffff55; --on-gold: #000;
+  --text: #55ffff; --text-2: #a8ffff; --muted: #6cc8d8; --ok: #55ff55; --warn: #ffff55; --bad: #ff5555; --off: #808080; --info: #fff;
+  --serif: Consolas, monospace; --sans: Consolas, monospace; --mono: Consolas, monospace;
+  --rd: 0; --title-bg: #00a8a8; --title-fg: #000;
+  --bar-seg: repeating-linear-gradient(90deg, transparent 0 6px, #000050 6px 8px);
+}
+html[data-theme="panels"] {
+  .titlebar { background: var(--title-bg); border-bottom: 0; }
+  .titlebar :is(.name, .tag) { color: var(--title-fg); border: 0; font-weight: 700; letter-spacing: 0; }
+  .titlebar .crest { filter: grayscale(1) brightness(.2); }
+  .winbtn { color: #000; }
+  .winbtn:hover { background: #000080; color: #55ffff; }
+  .winbtn.close:hover { background: #a80000; color: #fff; }
+  .modal > h2:first-child { text-align: center; }
+  /* Двойная рамка */
+  :is(.pnav, .pload, .card, .group, .cbox, .ocard, .tile, .note, .callout, .modal, .menu, .drawer, .phunters) { border: 1px solid #00d0d0; box-shadow: inset 0 0 0 2px var(--panel), inset 0 0 0 3px #00d0d0; }
+  /* Выбранное — бирюзовая строка с чёрным */
+  :is(.pnav button.on, .chron.sel, .fileb.on, .prow:hover, .menu button:hover, .kv:hover, .ctab.on, .tab.on, .seg button.on, .rail button.on, .w-tbl tbody tr.sel) { background: #008080; border-color: transparent; color: #000; }
+  :is(.pnav button.on, .chron.sel, .fileb.on, .prow:hover, .menu button:hover, .kv:hover, .w-tbl tbody tr.sel) :where(span, small, b, .c, .k, .f, .d, .dv, td) { color: #000; }
+  .rail { border-right: 0; box-shadow: inset -1px 0 0 #00d0d0; }
+  .rail button.on::before { display: none; }
+  :is(.btn.play, .btn.more, .sbtn) { background: #00a8a8; border-color: #000; color: #000; }
+  :is(.btn, .sbtn) { box-shadow: 2px 2px 0 #000; }
+  :is(.btn, .sbtn):active { box-shadow: none; transform: translate(2px, 2px); }
+  .sbtn.danger { background: #a80000; color: #fff; }
+  :is(.btn.play, .btn.more) svg { color: #000; }
+  :is(.search, .field, .num input, select, textarea) { background: #000040; border-color: #00a8a8; color: #ffff55; }
+  :is(.prow-t, .ppage-h h2, .page-title, .group > h3, .card h3) { color: #fff; }
+  /* Нижняя строка — как строка клавиш */
+  :is(.dock, .statusbar) { background: #00a8a8; color: #000; border-top: 0; }
+  .dock :is(b, small, span, .dmeta, .dver, .log) { color: #000; }
+  .dock .sbtn { background: #000080; border-color: #000; color: #55ffff; }
+  .dock .lb { background: #000050; border-color: #000; }
+  /* Выключатель — [x] */
+  .switch { width: 28px; height: 15px; background: transparent; border: 0; box-shadow: none; }
+  .switch::after { content: "[ ]"; position: static; display: block; width: auto; height: auto; border-radius: 0; background: none; color: #55ffff; font: 13px/15px Consolas, monospace; transition: none; }
+  .switch[aria-checked=true] { background: transparent; }
+  .switch[aria-checked=true]::after { content: "[x]"; background: none; color: #ffff55; }
+  & *::-webkit-scrollbar-track { background: repeating-linear-gradient(45deg, #00a8a8 0 1px, #000080 1px 3px); }
+  & *::-webkit-scrollbar-thumb { background: #00a8a8; border: 0; border-radius: 0; }
+}
+
+/* Образцы раритетных тем: выключатель на карточке такой же, как в окне */
+.theme-card[data-theme="player98"] .th-sw { width: 9px; background: #050806; border-color: #5b6472; }
+.theme-card[data-theme="player98"] .th-sw::after { inset: 2px; width: auto; height: auto; background: var(--gold); }
+.theme-card:is([data-theme="gray2000"], [data-theme="hill2001"]) .th-sw { width: 9px; background: #fff; border-color: #808080; }
+.theme-card:is([data-theme="gray2000"], [data-theme="hill2001"]) .th-sw::after { top: 0; right: auto; left: 2px; width: 2px; height: 5px; background: none; border: solid #000; border-width: 0 1.5px 1.5px 0; transform: rotate(40deg); }
+.theme-card[data-theme="hill2001"] .th-sw { border-color: #1c5180; }
+.theme-card[data-theme="hill2001"] .th-sw::after { border-color: #21a121; }
+.theme-card[data-theme="panels"] .th-sw { width: auto; height: auto; border: 0; background: none; }
+.theme-card[data-theme="panels"] .th-sw::after { content: "[x]"; position: static; display: block; width: auto; height: auto; background: none; color: #ffff55; font: 9px/9px Consolas, monospace; }
+.theme-card[data-theme="gloss2004"] .th-sw { background: linear-gradient(180deg, #79d4ff, #1275bf 50%, #2aa0e8); border-color: #9ddfff; }
+.theme-card[data-theme="gloss2004"] .th-sw::after { background: #fff; }
+.theme-card[data-theme="gloss2004"] .th-btn { border-radius: 6px; background: linear-gradient(180deg, #79d4ff 0, #2f9fe6 48%, #1275bf 50%, #2aa0e8 100%); }
+.theme-card[data-theme="hill2001"] .th-btn { background: linear-gradient(180deg, #5cc04b, #2c8a22); }
+.theme-card[data-theme="hill2001"] .th-s { background: linear-gradient(180deg, #7ba2e7, #6375d6); }
+.theme-card[data-theme="panels"] .th-btn { background: #00a8a8; box-shadow: 1px 1px 0 #000; }
+.theme-card[data-theme="panels"] .th-mock { box-shadow: inset 0 0 0 2px var(--panel), inset 0 0 0 3px #00d0d0; }
+.theme-card[data-theme="player98"] .th-btn { background: #39414f; }

@@ -1418,7 +1418,7 @@
     const anyBad = Object.keys(E).some((k) => invalid(k, E[k]));
     const files = W.restart?.running ? W.restart.files : [];
     main.innerHTML = `<div class="w-cr"><div class="w-cr-groups">${groups}
-        <div class="note" style="margin-top:12px;font-size:12px">Стратег охотников — в «Разуме». Служебное (сброс, самопроверки, аккаунт фантомов) и остальные ключи — в «Настройки» → «Все настройки».</div></div>
+        <div class="note" style="margin-top:12px;font-size:12px">Стратег охотников — в «Разуме». Служебное (сброс, самопроверки, аккаунт фантомов) и остальные ключи — в «Настройки сервера» → «Все ключи».</div></div>
       <div class="w-cr-r">
         ${files.length ? `<div class="w-rst note w-note-warn">Сохранено, но ждёт перезапуска гейм-сервера: ${files.map((f) => `<span class="w-cmd">${esc(f)}</span>`).join(' ')}.<div class="row2"><button class="sbtn" id="worldRestart">Перезапустить гейм-сервер</button><span class="w-muted" style="font-size:12.5px">игроки и охотники вылетят примерно на полминуты</span></div></div>` : ''}
         <div class="w-cr-list" data-keep="cr">${list}</div>

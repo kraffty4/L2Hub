@@ -19,7 +19,7 @@ from pathlib import Path
 
 import psutil
 
-from . import __version__, appsettings, backups, brain, builder, catalog, clients, clientsys, configs, feedback, forum, friendpack, geodata, gmshop, health, i18n, l2ini, l2solo, machine, modes, network, paths, report, runtimes, servers, society, updates, wipe, worldtiles
+from . import __version__, appsettings, backups, brain, builder, catalog, clients, clientsys, configs, feedback, forum, friendpack, geodata, gmshop, health, i18n, l2ini, l2solo, machine, modes, monitor, network, paths, report, runtimes, servers, society, updates, wipe, worldtiles
 
 CHAR_NAME_RE = re.compile(r"^[A-Za-z0-9_\-А-Яа-яЁё]{1,35}$")  # кириллица — для имён на La2offline
 ACCESS_LEVELS = {0: "Игрок", 70: "Admin", 100: "Master"}  # Mobius; у другой сборки — "accessLevels" в профиле
@@ -181,10 +181,11 @@ def job_cancelled() -> bool:
 
 
 class Job:
-    def __init__(self, chronicle_id: str, action: str, steps: list):
+    def __init__(self, chronicle_id: str, action: str, steps: list, on_error=None):
         self.chronicle_id = chronicle_id
         self.action = action
         self.steps = steps          # [(текст этапа, функция)]
+        self.on_error = on_error    # (job, исключение) после упавшего шага: прибрать за собой — у установки так
         self.index = 0
         self.step = ""
         self.detail = ""            # job_note: подробность внутри шага
@@ -203,6 +204,12 @@ class Job:
             self.error = str(e) or e.__class__.__name__
             if not isinstance(e, geodata.Cancelled):
                 traceback.print_exc()
+            if self.on_error:
+                try:
+                    self.on_error(self, e)
+                except Exception as e2:  # noqa: BLE001 — главная ошибка — первая, эта к ней в довесок
+                    self.error += f" (и не прибралось за собой: {e2})"
+                    traceback.print_exc()
         finally:
             self.done = True
 
@@ -326,12 +333,29 @@ class Api:
                 return p["id"]
         return None
 
+    def db_alone(self) -> dict | None:
+        """База работает, а хроники нет: после «Только база» или упавшей установки. running() её не видит —
+        гасит её stop_db. chronicle — сборка со своей базой (La2offline), None — наша MariaDB, общая для всех."""
+        if self.running():
+            return None
+        if servers.our_db_running():
+            return {"chronicle": None, "engine": "MariaDB", "port": 3306}
+        for p in catalog.load_profiles().values():
+            if servers.own_db(p) and servers.db_running(p["ports"]["db"]):
+                return {"chronicle": p["id"], "engine": servers.db_engine(p), "port": p["ports"]["db"]}
+        return None
+
     def state(self, chronicle_id: str) -> dict:
         job = self._job.as_dict() if self._job else None
         p = catalog.load_profiles().get(chronicle_id)
-        return {"components": health.state(p) if p else None, "job": job, "running": self.running()}
+        running = self.running()
+        return {"components": health.state(p) if p else None, "job": job, "running": running,
+                "dbAlone": None if running else self.db_alone(),
+                "installFail": None if p else self.install_failure(chronicle_id)}
 
     def diagnostics(self, chronicle_id: str) -> list[dict]:
+        if chronicle_id not in catalog.load_profiles():
+            return self._install_checks(chronicle_id)
         return health.diagnostics(catalog.profile(chronicle_id))
 
     def selftest(self, chronicle_id: str) -> dict | None:
@@ -343,7 +367,7 @@ class Api:
 
     # ---------- Действия ----------
 
-    def _start_job(self, chronicle_id: str, action: str, steps: list) -> dict:
+    def _start_job(self, chronicle_id: str, action: str, steps: list, on_error=None) -> dict:
         with self._lock:
             if self._job and not self._job.done:
                 if self._job.action == "geodata":
@@ -352,7 +376,7 @@ class Api:
             other = self.running()
             if action.startswith("start") and other and other != chronicle_id:
                 return {"ok": False, "error": f"Сначала останови {other}: одновременно работает одна хроника."}
-            self._job = Job(chronicle_id, action, steps)
+            self._job = Job(chronicle_id, action, steps, on_error)
             threading.Thread(target=self._job.run, daemon=True).start()
             return {"ok": True}
 
@@ -397,6 +421,14 @@ class Api:
         if stop_db:
             steps.append(("Останавливаю базу…", lambda: servers.stop_db(p)))
         return self._start_job(chronicle_id, "stop", steps)
+
+    def stop_db(self, chronicle_id: str) -> dict:
+        """«Остановить базу», когда она работает без хроники (db_alone). chronicle_id — открытая страница: на ней этап."""
+        alone = self.db_alone()
+        if not alone:
+            return {"ok": False, "error": "Базу гасит «Остановить сервер»." if self.running() else "База и так выключена."}
+        p = catalog.profile(alone["chronicle"]) if alone["chronicle"] else None
+        return self._start_job(alone["chronicle"] or chronicle_id, "stopdb", [("Останавливаю базу…", lambda: servers.stop_db(p))])
 
     def restart_game(self, chronicle_id: str) -> dict:
         self._stop_requested_at = time.monotonic()
@@ -674,7 +706,7 @@ class Api:
             return self._install_own(chronicle_id, folder)
         if c and c["server"] == "l2solo":
             template = json.loads((paths.APP / "profiles" / f"{chronicle_id}.json").read_text(encoding="utf-8"))
-            return self._start_job(chronicle_id, "install", l2solo.install_steps(template))
+            return self._start_job(chronicle_id, "install", l2solo.install_steps(template), self._install_cleanup(chronicle_id))
         pin = self._install_pins[chronicle_id]
         template = paths.APP / "profiles" / f"{chronicle_id}.json"
         mods = chronicle_id in builder.pins()["chronicles"] and template.is_file()
@@ -705,10 +737,11 @@ class Api:
         def save_profile():
             paths.PROFILES.mkdir(parents=True, exist_ok=True)
             (paths.PROFILES / f"{chronicle_id}.json").write_text(json.dumps(prof, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
+            self._install_failure_file(chronicle_id).unlink(missing_ok=True)
             if not db_was_up:
                 servers.stop_db(base)
         steps.append(("Сохраняю профиль хроники…", save_profile))
-        return self._start_job(chronicle_id, "install", steps)
+        return self._start_job(chronicle_id, "install", steps, self._install_cleanup(chronicle_id, base, db_was_up))
 
     def _install_own(self, chronicle_id: str, folder: str | None, chronicle: str | None = None) -> dict:
         """«Подключить свою сборку»: копия, локальный режим и профиль по описанию вида из bundles.json.
@@ -728,13 +761,14 @@ class Api:
             paths.PROFILES.mkdir(parents=True, exist_ok=True)
             (paths.PROFILES / f"{chronicle_id}.json").write_text(json.dumps(prof, ensure_ascii=False, indent=2) + "\n",
                                                                  encoding="utf-8", newline="\n")
+            self._install_failure_file(chronicle_id).unlink(missing_ok=True)
         if kind.get("runtime") != "ours":
             # У сборки-комбайна своя база, но онлайн, персонажей и права GM лаунчер читает клиентом MariaDB из рантаймов.
             steps = [("Скачиваю MariaDB (её клиентом лаунчер читает базу сборки)…", lambda: runtimes.install("mariadb"))
                      for r in runtimes.status() if r["id"] == "mariadb" and not r["installed"]]
             steps += [("Копирую сервер сборки…", lambda: prof.update(builder.import_bundle(chronicle_id, folder))),
                       ("Сохраняю профиль хроники…", save_profile)]
-            return self._start_job(chronicle_id, "install", steps)
+            return self._start_job(chronicle_id, "install", steps, self._install_cleanup(chronicle_id))
 
         # Сборка на нашей Java и MariaDB: байткод должен быть не новее нашей JDK — иначе не запустится.
         need, ours = builder.jar_java(src / kind["jar"]) if kind.get("jar") else None, builder.runtime_java()
@@ -776,7 +810,92 @@ class Api:
             if not db_was_up:
                 servers.stop_db(base)
         steps.append(("Сохраняю профиль хроники…", finish))
-        return self._start_job(chronicle_id, "install", steps)
+        return self._start_job(chronicle_id, "install", steps, self._install_cleanup(chronicle_id, base, db_was_up))
+
+    # ---------- Упавшая установка ----------
+
+    def _install_failure_file(self, chronicle_id: str) -> Path:
+        return paths.DATA / "logs" / f"install_{chronicle_id}.json"
+
+    def _install_cleanup(self, chronicle_id: str, base: dict | None = None, db_was_up: bool = True):
+        """Job.on_error установки. Запоминает, на чём упала (data/logs/install_<id>.json, трасса — install_<id>.log):
+        «Обзор» неустановленной хроники держит ошибку до следующей попытки, а не трёхсекундную всплывашку. И гасит
+        базу, если её подняла сама установка, — иначе MariaDB висит без хроники, а окно её не видит."""
+        def on_error(job: Job, exc: Exception) -> None:
+            record = self._install_failure_file(chronicle_id)
+            if job.cancelled:
+                record.unlink(missing_ok=True)  # отменил сам — не ошибка
+            else:
+                record.parent.mkdir(parents=True, exist_ok=True)
+                trace = record.with_suffix(".log")
+                trace.write_text(f"{time.strftime('%Y-%m-%d %H:%M:%S')} · L2Hub {__version__} · {chronicle_id}\n"
+                                 f"Этап: {job.step}\nОшибка: {job.error}\n\n" + "".join(traceback.format_exception(exc)), encoding="utf-8")
+                # Лог, на который ссылается сама ошибка (сборка Ant — servers\<id>\build.log), полезнее трассы Python.
+                ref = re.search(r"[A-Za-z]:\\[^\s,;«»\"']+\.(?:log|err)\b", job.error or "")
+                log = ref.group(0) if ref and Path(ref.group(0)).is_file() else str(trace)
+                record.write_text(json.dumps({"at": time.strftime("%Y-%m-%d %H:%M"), "step": job.step, "error": job.error, "log": log},
+                                             ensure_ascii=False, indent=2), encoding="utf-8")
+            if not db_was_up and base is not None:
+                servers.stop_db(base)
+        return on_error
+
+    def install_failure(self, chronicle_id: str, lines: int = 0) -> dict | None:
+        """Последняя упавшая установка хроники: когда, на каком этапе, ошибка и лог; lines — приложить хвост лога."""
+        f = self._install_failure_file(chronicle_id)
+        try:
+            r = json.loads(f.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return None
+        if lines:
+            try:
+                raw = Path(r["log"]).read_bytes()[-200_000:]
+            except OSError:
+                raw = b""
+            text = raw.decode("utf-8", errors="replace")
+            if text.count("�") > 2:  # Ant пишет вывод javac в кодировке Windows
+                text = raw.decode("cp1251", errors="replace")
+            r["tail"] = text.splitlines()[-lines:]
+        return r
+
+    def install_log_open(self, chronicle_id: str) -> dict:
+        r = self.install_failure(chronicle_id)
+        if not r or not Path(r["log"]).is_file():
+            return {"ok": False, "error": "Лога упавшей установки нет."}
+        os.startfile(r["log"])  # noqa: S606 — наш лог в папке данных или сборки
+        return {"ok": True}
+
+    def _install_checks(self, chronicle_id: str) -> list[dict]:
+        """«Проверить всё» у неустановленной хроники: что мешает установке (у установленной — health.diagnostics)."""
+        rows: list[dict] = []
+
+        def add(status, title, detail="", hint=""):
+            rows.append({"status": status, "title": title, "detail": detail, "hint": hint})
+
+        c = next((x for x in catalog.load_catalog() if x["id"] == chronicle_id), {})
+        fail = self.install_failure(chronicle_id)
+        if fail:
+            add("bad", "Прошлая установка", f"{fail['at']}, этап «{fail['step']}»: {fail['error']}",
+                "" if fail["log"] in fail["error"] else f"лог — {fail['log']}")
+        bad = paths.check_home(paths.HOME)
+        add("bad" if bad else "ok", "Папка данных", bad or str(paths.HOME))
+        free = shutil.disk_usage(paths.HOME.anchor).free / 2**30
+        add("ok" if free >= 10 else "warn", "Место на диске", f"свободно {free:.1f} ГБ".replace(".", ","),
+            "" if free >= 10 else "серверу с базой и бэкапами нужно 3–6 ГБ, геодате — ещё до 2 ГБ")
+        for r in runtimes.status("l2solo" if c.get("server") == "l2solo" else "mobius"):
+            add("ok" if r["installed"] else "na", r["title"], "стоит" if r["installed"] else "скачается при установке")
+        if c.get("server") == "mobius":
+            alone = self.db_alone()
+            if not paths.DB_DIR.exists():
+                add("na", "База MariaDB", "создастся при установке")
+            elif alone:
+                add("warn", "База MariaDB", f"работает без сервера, порт {alone['port']}", "погасить — меню у кнопки ▾ → «Остановить базу»")
+            else:
+                add("ok", "База MariaDB", "работает" if servers.db_running() else "создана, сейчас выключена")
+            build = c.get("build")
+            if build:
+                src = paths.SERVERS / chronicle_id / build
+                add("ok" if src.is_dir() else "na", "Исходники Mobius", str(src) if src.is_dir() else "скачаются при установке")
+        return rows
 
     def l2solo_client_open(self, what: str) -> dict:
         """Страница их раздачи клиента C4 или client mod (ссылки из l2solo_pin.json) — в браузере. Мы не раздаём."""
@@ -1647,12 +1766,26 @@ class Api:
         return configs.build(catalog.server_dir(p), configs.pattern(p))
 
     def server_modes(self, chronicle_id: str) -> dict:
-        """Режимы сервера и выключатели модов (modes.py, server_modes.json) для «Основного» в настройках."""
+        """Режимы сервера, выключатели модов и страницы настроек (modes.py, server_modes.json) для вкладки настроек."""
         return modes.state(catalog.profile(chronicle_id))
 
     def set_mod_switch(self, chronicle_id: str, switch_id: str, value: bool) -> dict:
         try:
             r = modes.set_switch(catalog.profile(chronicle_id), switch_id, bool(value))
+        except (ValueError, KeyError, FileNotFoundError) as e:
+            return {"ok": False, "error": str(e)}
+        return {"ok": True, **r, "restart": self.running() == chronicle_id}
+
+    def machine_live(self, chronicle_id: str | None = None, top_every: int = 0) -> dict:
+        """Живая нагрузка компьютера для полосок (monitor.py). chronicle_id — чьи процессы считать нашими: запущенная хроника, иначе выбранная.
+        top_every — ещё и самые большие чужие процессы, раз во сколько секунд: обход всех процессов дорогой, окно просит его, только когда полоска развёрнута или памяти впритык."""
+        p = catalog.load_profiles().get(chronicle_id) if chronicle_id else None
+        return monitor.snapshot(monitor.ours_of(p) if p else {}, top_every)
+
+    def set_mod_switches(self, chronicle_id: str, values: dict) -> dict:
+        """«Включить все» и «Выключить все» на странице настроек: {id выключателя: вкл}, одной записью."""
+        try:
+            r = modes.set_switches(catalog.profile(chronicle_id), values)
         except (ValueError, KeyError, FileNotFoundError) as e:
             return {"ok": False, "error": str(e)}
         return {"ok": True, **r, "restart": self.running() == chronicle_id}
@@ -1690,7 +1823,7 @@ class Api:
         return {"ok": True, **r, "restart": self.running() == chronicle_id}
 
     def event_calendar(self, chronicle_id: str) -> dict:
-        """Календарь сезонных событий и расписание PvP-ивентов (L2HubEvents.ini) для карточки в «Основном»."""
+        """Календарь сезонных событий и расписание PvP-ивентов (L2HubEvents.ini) для страницы «Ивенты» в настройках."""
         return modes.calendar(catalog.profile(chronicle_id))
 
     def save_calendar(self, chronicle_id: str, values: dict) -> dict:

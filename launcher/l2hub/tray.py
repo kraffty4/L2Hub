@@ -140,13 +140,14 @@ class Tray:
 
     def _stop(self) -> None:
         running = self._api.running()
-        if running:
-            r = self._api.stop(running)
+        alone = None if running else self._api.db_alone()
+        if running or alone:
+            r = self._api.stop(running) if running else self._api.stop_db(alone["chronicle"] or "")
             if not r.get("ok"):
                 self.notify("Не остановить", r.get("error", ""), warn=True)
 
     def _quit(self) -> None:
-        if self._api.running():
+        if self._api.running() or self._api.db_alone():
             self._js("window.askClose && window.askClose()")  # окно спросит, что делать с сервером
         else:
             self._api.close()
@@ -163,6 +164,7 @@ class Tray:
 
     def _tick(self) -> None:
         running = self._api.running()
+        alone = None if running else self._api.db_alone()
         p = catalog.profile(running) if running else None
         game = health.state(p)["game"] if p else {"state": "off"}
         name = next((c["name"] for c in catalog.load_catalog() if c["id"] == running), running) if running else ""
@@ -172,7 +174,7 @@ class Tray:
             if up:
                 status += f" · {up // 3600} ч {up // 60 % 60} мин" if up >= 3600 else f" · {up // 60} мин"
         else:
-            status = "Ничего не запущено"
+            status = "Работает только база" if alone else "Ничего не запущено"
         status = t(status)
         client_on = bool(p and servers.part_process(p, "client"))
 
@@ -181,7 +183,7 @@ class Tray:
                 return
             self._items["status"].Text = status
             self._items["client"].Enabled = bool(running and game["state"] == "on" and not client_on)
-            self._items["stop"].Enabled = bool(running)
+            self._items["stop"].Enabled = bool(running or alone)
             self._icon.Text = ("L2Hub · " + status)[:63]  # у NotifyIcon предел 63 знака
         self._ui(_update)
         self._check_crash(running, game, p)

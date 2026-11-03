@@ -54,3 +54,5 @@ Python 3.12 and [uv](https://docs.astral.sh/uv/): `cd launcher`, `uv sync`, `uv 
 ## Licenses and thanks
 
 L2Hub is licensed under [GPL-3.0](LICENSE). Third-party components and their licenses are listed in [THIRD_PARTY.md](THIRD_PARTY.md). Thanks to [L2J Mobius](https://gitlab.com/MobiusDevelopment/L2J_Mobius), [L2Solo](https://github.com/pmbstyle/L2Solo), L2J Geodata, [l2mapconv](https://github.com/m49n/l2mapconv-public) and [l2-world-map](https://github.com/npetrovski/l2-world-map).
+
+If L2Hub is useful to you and you'd like to say thanks: [Buy Me a Coffee](https://buymeacoffee.com/kraffty). It's voluntary and only for the launcher itself: a donation gives nothing in the game.

@@ -102,6 +102,7 @@ function renderList() {
     for (const c of items) {
       const b = document.createElement('button');
       b.className = `chron st-${stOf(c)}` + (c.id === selected ? ' sel' : '');
+      b.title = listName(c); // в узком окне на вкладке настроек от строки остаётся миниатюра
       const thumb = c.cover ? `<span class="thumb" style="background-image:url(assets/cover_${c.cover}.jpg)"></span>` : `<span class="thumb">${esc(c.short)}</span>`;
       const runningHere = last.running === c.id;
       const metaText = c.installed ? (runningHere ? 'работает' : 'готова') : c.server === 'own' ? 'своя сборка' : c.server === 'mobius' ? 'есть сервер Mobius' : c.server === 'l2solo' ? 'есть сервер L2Solo' : 'сервера пока нет';
@@ -186,6 +187,13 @@ $('panelBtn').onclick = () => openPanel();
 function renderPlay() {
   const c = byId(selected);
   $('panelBtn').hidden = !(c?.installed && window.worldEntry?.(c.id));
+  // Хроники нет, а база работает — пункт меню гасит базу (Api.stop_db). Текст меняем только при смене: его переводит i18n.js.
+  const dbOnly = String(!last.running && !!last.dbAlone);
+  if ($('menuStopText').dataset.db !== dbOnly) {
+    $('menuStopText').dataset.db = dbOnly;
+    $('menuStopText').textContent = dbOnly === 'true' ? 'Остановить базу' : 'Остановить сервер';
+    $('menuStopHint').textContent = dbOnly === 'true' ? 'сервер не запущен' : 'мир сохранится';
+  }
   const split = $('split');
   split.className = 'split' + (busy() ? ' busy' : '');
   if (!c.installed) {
@@ -218,10 +226,12 @@ function renderHealth() {
   const job = last.job && last.job.chronicle === selected ? last.job : null;
   $('bar').style.width = job && !job.done ? Math.round(job.progress * 100) + '%' : '0';
   if (!c.installed || !last.components) {
-    // Идёт установка (мастер) — шаг задачи вместо «не установлена».
-    $('hDot').className = job && !job.done ? 'dot starting' : 'dot';
-    $('hSum').textContent = job && !job.done ? job.step : c.server === 'none' ? 'Сервера для этой хроники пока нет' : 'Хроника не установлена';
-    $('hSub').textContent = job && !job.done ? `· установка, сделано ${Math.round(job.progress * 100)} %` : '';
+    // Идёт установка (мастер) — шаг задачи вместо «не установлена»; упала — её ошибка до следующей попытки (Api.install_failure).
+    const going = job && !job.done;
+    const fail = !going && !c.installed ? last.installFail : null;
+    $('hDot').className = going ? 'dot starting' : fail ? 'dot bad' : 'dot';
+    $('hSum').textContent = going ? job.step : fail ? 'Установка не удалась' : c.server === 'none' ? 'Сервера для этой хроники пока нет' : 'Хроника не установлена';
+    $('hSub').textContent = going ? `· установка, сделано ${Math.round(job.progress * 100)} %` : fail ? `· ${fail.at.slice(11)}, подробности ниже` : '';
     $('tiles').innerHTML = ['База данных', 'Логин-сервер', 'Гейм-сервер', 'Клиент'].map((n) => tile(n, 'off', ['—'])).join('');
     renderDock();
     return;
@@ -238,6 +248,7 @@ function renderHealth() {
   else if (core.some((s) => s === 'bad')) { sum = 'Есть проблема — открой «Проверить всё»'; dot = 'bad'; }
   else if (core.some((s) => s === 'starting')) { sum = 'Запуск…'; dot = 'starting'; }
   else if (core.every((s) => s === 'off')) { sum = 'Сервер выключен'; dot = ''; }
+  else if (db.state === 'on' && core[1] === 'off' && core[2] === 'off') { sum = 'Работает только база'; dot = 'starting'; }
   else { sum = 'Работает частично'; dot = 'starting'; }
   $('hDot').className = 'dot ' + dot;
   $('hSum').textContent = sum;
@@ -246,6 +257,7 @@ function renderHealth() {
     gm.bots != null ? `ботов ${gm.bots}` : '', gm.rates ? `рейты ${gm.rates}` : '');
   if (gm.state === 'on' && cl.state !== 'on') sub.push('клиент не запущен');
   if (other && !(job && !job.done)) sub.push(`сейчас работает ${byId(last.running)?.name || last.running}`);
+  if (sum === 'Работает только база') sub.push('погасить — «Стоп» внизу');
   $('hSub').textContent = sub.filter(Boolean).length ? '· ' + sub.filter(Boolean).join(' · ') : '';
   $('tiles').innerHTML = [
     tile('База данных', db.state, [db.where || `${db.engine || 'MariaDB'} · 127.0.0.1:${db.port}`]), // where — у L2Solo: SQLite внутри сервера
@@ -265,12 +277,13 @@ let restartToldFor = null;
 function renderDock() {
   const job = last.job && !last.job.done ? last.job : null;
   const run = last.running;
+  const dbOnly = !run && !job && last.dbAlone; // «Только база» или упавшая установка: хроники нет, а база работает
   const comps = run ? window.compsOf(run) : null;
   const gm = comps?.game || {};
   const name = (id) => byId(id)?.name || id;
-  $('dockRun').classList.toggle('idle', !run && !job);
-  $('dockDot').className = 'dot ' + (job ? 'starting' : run ? (gm.state === 'on' ? 'on' : 'starting') : '');
-  $('dockName').textContent = job ? name(job.chronicle) : run ? name(run) : 'Ничего не запущено';
+  $('dockRun').classList.toggle('idle', !run && !job && !dbOnly);
+  $('dockDot').className = 'dot ' + (job || dbOnly ? 'starting' : run ? (gm.state === 'on' ? 'on' : 'starting') : '');
+  $('dockName').textContent = job ? name(job.chronicle) || 'L2Hub' : run ? name(run) : dbOnly ? 'Работает только база' : 'Ничего не запущено';
   const meta = [];
   if (!job && run) {
     meta.push(gm.state === 'on' ? 'работает' : gm.state === 'starting' ? 'гейм запускается' : 'без гейма');
@@ -284,8 +297,10 @@ function renderDock() {
     restartToldFor = gm.pid;
     toast(gm.heapState.text, true);
   }
+  if (dbOnly) meta.push(`${last.dbAlone.engine} · порт ${last.dbAlone.port}`);
   $('dockMeta').textContent = meta.length ? '· ' + meta.join(' · ') : '';
   if (job) $('footLog').textContent = job.step;
+  else if (dbOnly) $('footLog').textContent = 'База работает без сервера — «Стоп» на панели сеанса её погасит.';
   else if (run) {
     const pr = profiles[run];
     // Общая цифра слева, а тут честно, из кого она: решение автора 2026-10-31. Порты — после неё, их и обрежет, если узко.
@@ -295,7 +310,7 @@ function renderDock() {
   $('railPip').classList.toggle('on', !!run);
   $('dockClient').hidden = !run || !!job || comps?.client?.state === 'on';
   $('dockLog').hidden = !run;
-  $('dockStop').hidden = !run || !!job;
+  $('dockStop').hidden = !(run || dbOnly) || !!job;
 }
 $('dockClient').onclick = () => last.running && call(api.launch_client(last.running));
 $('dockLog').onclick = async () => {
@@ -303,7 +318,9 @@ $('dockLog').onclick = async () => {
   if (last.running && last.running !== selected) await select(last.running);
   showCtab('log');
 };
-$('dockStop').onclick = () => last.running && call(api.stop(last.running));
+// Остановить запущенное: хронику целиком, а если хроники нет, но работает база, — базу.
+const stopAny = () => (last.running ? call(api.stop(last.running)) : last.dbAlone ? call(api.stop_db(selected)) : toast('Сервер не запущен.'));
+$('dockStop').onclick = stopAny;
 
 async function poll() {
   try {
@@ -324,6 +341,7 @@ async function poll() {
       if (job.error) toast(job.cancelled ? job.error : `Не получилось: ${job.error}`, !job.cancelled);
       else if (job.action === 'start') toast(`${byId(job.chronicle)?.name}: запущено.`);
       else if (job.action === 'stop') toast(`${byId(job.chronicle)?.name}: остановлено, мир сохранён.`);
+      else if (job.action === 'stopdb') toast('База остановлена.');
       else if (job.action === 'restart') toast('Гейм-сервер перезапущен.');
       else if (job.action === 'backup') toast(`${byId(job.chronicle)?.name}: бэкап базы готов.`);
       else if (job.action === 'restore') toast(`${byId(job.chronicle)?.name}: база откатана, прежняя сохранена бэкапом «перед откатом».`);
@@ -338,6 +356,7 @@ async function poll() {
       else if (job.action === 'client') toast(`${byId(job.chronicle)?.name}: язык клиента переключён — со следующего запуска клиента.`);
       if (job.action === 'client' && !job.error) api.profile(job.chronicle).then((pr) => { profiles[job.chronicle] = pr; if (job.chronicle === selected) { renderMain(); renderNet(); } });
       if (job.action === 'install' && !job.error) afterInstall(job.chronicle);
+      if (job.action === 'install' && job.error && job.chronicle === selected && ctab === 'over') renderOverviewCards(); // ошибка — карточкой с логом
       if (['backup', 'restore', 'start', 'wipeworld', 'wipeundo'].includes(job.action) && ctab === 'backups') renderBackups();
       if (job.action === 'pack' && section === 'friends') renderFriends();
       if (job.action === 'geodata' && job.chronicle === selected && ctab === 'over') renderOverviewCards();
@@ -489,6 +508,7 @@ $('menu').querySelectorAll('button').forEach((b) => (b.onclick = async (e) => {
   const c = byId(selected);
   const a = b.dataset.act;
   if (a === 'own') return installFlow(c, true);  // у установленной — второй сервер рядом (вариант)
+  if (a === 'stop') return stopAny();  // и у неустановленной: после упавшей установки могла остаться база
   if (!c.installed) return toast('Сначала установи хронику.');
   if (a === 'server') {
     warnMachine(c.id);
@@ -497,7 +517,6 @@ $('menu').querySelectorAll('button').forEach((b) => (b.onclick = async (e) => {
   if (a === 'db') return call(api.play(c.id, false, true));
   if (a === 'client') return call(api.launch_client(c.id));
   if (a === 'restart') return call(api.restart_game(c.id));
-  if (a === 'stop') return last.running ? call(api.stop(last.running)) : toast('Сервер не запущен.');
   if (a === 'logs') return showCtab('log');
   if (a === 'kill') {
     const r = await api.kill(c.id);
@@ -522,8 +541,9 @@ function closeDrawer() {
   drawer = null;
   $('scrim').classList.remove('on');
 }
+// «Проверить всё» есть и у неустановленной хроники: что мешает установке (Api.diagnostics → _install_checks).
 document.querySelectorAll('[data-open]').forEach((b) => (b.onclick = () => {
-  if (!byId(selected).installed) return toast('Сначала установи хронику.');
+  if (!byId(selected).installed && b.dataset.open !== 'diag') return toast('Сначала установи хронику.');
   openDrawer(b.dataset.open);
 }));
 document.querySelectorAll('[data-close]').forEach((b) => (b.onclick = closeDrawer));
@@ -558,9 +578,10 @@ function showCtab(name) {
   document.querySelectorAll('.ctab').forEach((t) => t.classList.toggle('on', t.dataset.ctab === name));
   document.querySelectorAll('.cpane').forEach((x) => x.classList.toggle('on', x.id === 'cpane-' + name));
   $('main').classList.toggle('compact', name !== 'over');
+  $('sec-chron').classList.toggle('in-set', name === 'set');
   clearInterval(logTimer);
   if (name === 'over') renderOverviewCards();
-  if (name === 'set') { $('setTitle').textContent = 'Настройки · ' + c.name; loadSchema(); }
+  if (name === 'set') loadSchema();
   if (name === 'chars') renderChars();
   if (name === 'backups') renderBackups();
   if (name === 'log') { refreshLogs(); logTimer = setInterval(refreshLogs, 2000); }
@@ -580,10 +601,10 @@ async function renderOverviewCards() {
   const votes = () => (c.plan || !fbEnabled ? null : api.votes().catch(() => null));
   if (!c.installed) {
     cardsFor = null;
-    if (c.plan || !fbEnabled) { box.innerHTML = ''; return; }
-    const v = await votes();
+    const [fail, v] = await Promise.all([api.install_failure(id, 40).catch(() => null), c.plan || !fbEnabled ? null : votes()]);
     if (id !== selected || byId(id)?.installed) return;
-    box.innerHTML = wantCard(c, v);
+    box.innerHTML = failCard(fail) + wantCard(c, v);
+    bindFail(c);
     bindWant();
     return;
   }
@@ -682,6 +703,25 @@ function bindGeo(id) {
 // ---------- Голоса и отзывы (feedback.py, docs/FEEDBACK.md) ----------
 // Приёмник настроен (feedback.json) — есть карточка «Хочу эту хронику» и кнопка «Отзыв»; узнаём при старте, без сети.
 let fbEnabled = false;
+
+// Упавшая установка (Api.install_failure): ошибка, хвост лога и что делать — держится до следующей попытки.
+function failCard(f) {
+  if (!f) return '';
+  const tail = f.tail?.length ? `<pre class="logs">${esc(f.tail.join('\n'))}</pre>` : '';
+  return `<div class="ocard fail"><h3><span class="dot bad"></span>Установка не удалась · ${esc(f.at)}</h3>
+    <div class="big">Этап «${esc(f.step.replace(/…$/, ''))}»</div><div class="m bad-text">${esc(f.error)}</div>${tail}
+    <div class="m">Лог: ${esc(f.log)}</div>
+    <div class="row2"><button class="sbtn primary" data-fail="again">Установить ещё раз</button><button class="sbtn" data-fail="diag">Проверить всё</button><button class="sbtn" data-fail="log">Открыть лог</button></div></div>`;
+}
+function bindFail(c) {
+  $('ocards').querySelectorAll('.ocard.fail pre.logs').forEach((p) => (p.scrollTop = p.scrollHeight)); // причина — в конце лога
+  $('ocards').querySelectorAll('[data-fail]').forEach((b) => (b.onclick = async () => {
+    if (b.dataset.fail === 'again') return busy() ? toast('Подожди: сервер ещё меняет состояние.') : installFlow(c);
+    if (b.dataset.fail === 'diag') return openDrawer('diag');
+    const r = await api.install_log_open(c.id);
+    if (!r.ok) toast(r.error, true);
+  }));
+}
 
 // «Хочу эту хронику» у хроник вне плана: голос за то, чтобы её довели до ума — охотники, моды, наши настройки.
 // Голый сервер любой поставит и сам (автор, 2026-10-21). Голос — за хронику, у вариантов — за их основную.
@@ -813,7 +853,7 @@ function renderAppSettings() {
   document.querySelectorAll('[data-set]').forEach((b) => b.setAttribute('aria-checked', String(!!appSet[b.dataset.set])));
   document.querySelectorAll('[data-seg]').forEach((s) => s.querySelectorAll('button').forEach((b) => b.classList.toggle('on', appSet[s.dataset.seg] === b.dataset.v)));
 }
-// Тема окна (ui/themes.css): настройка — в data/launcher.json, копия в localStorage нужна для первого кадра (index.html).
+// Тема окна (ui/themes.css, раритетные — ui/retro.css): настройка — в data/launcher.json, копия в localStorage нужна для первого кадра (index.html).
 function applyTheme(id) { document.documentElement.dataset.theme = id; store('theme', id); }
 async function saveApp(patch) {
   const r = await api.save_app_settings(patch);
@@ -1189,6 +1229,7 @@ function updatePending() {
   const n = Object.keys(edits).length;
   const running = last.running === selected;
   $('pendingInfo').textContent = n ? `Несохранённых правок: ${n}.${running ? ' Сервер работает — применятся после перезапуска гейма.' : ' Применятся при следующем запуске.'}` : 'Изменений нет.';
+  $('viewFoot').hidden = !n;
 }
 
 function control(k, onChange) {
@@ -1205,98 +1246,6 @@ function control(k, onChange) {
   i.className = 'field'; i.value = v;
   i.oninput = () => { setVal(k, i.value); onChange && onChange(); };
   return i;
-}
-
-const BASIC = [
-  { title: 'Рейты', rates: [
-    ['RateXp', 'Опыт'], ['RateSp', 'SP'], ['RatePartyXp', 'Опыт в группе'], ['RatePartySp', 'SP в группе'],
-    ['@adena', 'Адена с мобов'], ['DeathDropAmountMultiplier', 'Дроп: количество'], ['DeathDropChanceMultiplier', 'Дроп: шанс'], ['SpoilDropAmountMultiplier', 'Спойл: количество'],
-    ['SpoilDropChanceMultiplier', 'Спойл: шанс'], ['RaidDropAmountMultiplier', 'Рейды: количество'], ['RaidDropChanceMultiplier', 'Рейды: шанс'], ['HerbDropAmountMultiplier', 'Хербы'],
-    ['RateQuestRewardXP', 'Квесты: опыт'], ['RateQuestRewardSP', 'Квесты: SP'], ['RateQuestRewardAdena', 'Квесты: адена'], ['RateDropManor', 'Манор'],
-    // Ключи L2J 2.0.6 (La2offline, rates.properties); у Mobius их нет — карточка показывает те, что нашлись.
-    ['RateDropAdena', 'Адена с мобов'], ['RateDropItems', 'Дроп'], ['RateDropSpoil', 'Спойл'], ['RateRaidDropItems', 'Рейды: дроп'],
-    ['RateDropQuest', 'Квесты: дроп'], ['RateQuestsReward', 'Квесты: награда'], ['RateCommonHerbs', 'Хербы'], ['PetXpRate', 'Опыт питомцев'] ] },
-  { title: 'Игра', opts: [
-    ['StartingAdena', 'Стартовая адена'], ['AutoLearnSkills', 'Автоизучение скиллов'], ['AltSubClassWithoutQuests', 'Саб-класс без квеста'], ['MaxSubclass', 'Максимум сабов'],
-    ['AutoLoot', 'Автоподбор дропа'], ['AutoLootHerbs', 'Автоподбор хербов'], ['EnableVitality', 'Виталити'], ['GlobalChat', 'Глобальный чат', ['ON', 'OFF', 'GM', 'GLOBAL']],
-    ['DeleteCharAfterDays', 'Удалять персонажа через, дней'], ['OlympiadEnabled', 'Олимпиада'] ] },
-  { title: 'Помощники для соло', opts: [
-    ['EnableFakePlayers', 'Боты-игроки'], ['TownFakesDensity', 'Фейков в городах, %'], ['EnableAutoPlay', 'Автобой .play'], ['EnableOfflinePlayCommand', 'Оффлайн-фарм .offlineplay'], ['OfflineTradeEnable', 'Оффлайн-торговля'],
-    ['ChampionEnable', 'Мобы-чемпионы'], ['RebirthAllow', 'Перерождения'], ['EnableFreeStrider', 'Бесплатный страйдер'], ['EnableFreeWyvern', 'Бесплатная виверна'], ['AllowWedding', 'Свадьбы'] ] },
-  { title: 'GM', opts: [
-    ['EverybodyHasAdminRights', 'Все игроки — админы'], ['GMStartupInvisible', 'GM входит невидимым'], ['GMStartupInvulnerable', 'GM входит бессмертным'],
-    ['GMStartupSilence', 'GM без личных сообщений'], ['GMStartupDietMode', 'GM без перевеса'], ['CustomStartingLocation', 'Новые персонажи — в Гиран'] ] },
-  { title: 'При входе в игру', wide: true, welcome: true },
-];
-
-// Режим сервера и выключатели модов (Api.server_modes, l2hub/modes.py, server_modes.json) — сверху «Основного».
-async function renderModes() {
-  const host = $('modesBox');
-  if (!host) return;
-  const id = selected;
-  const r = await api.server_modes(id).catch(() => null);
-  if (id !== selected || !$('modesBox')) return;
-  if (!r || !r.ok) { host.innerHTML = r?.error ? `<div class="card wide"><h3>Режим сервера</h3><div class="note">${esc(r.error)}</div></div>` : ''; return; }
-  const active = r.modes.find((m) => m.active);
-  const btns = r.modes.map((m) => `<button data-mode="${m.id}" class="${m.active ? 'on' : ''}" title="${esc(m.note)}">${esc(m.title)}</button>`).join('')
-    + `<button data-mode="custom" class="${active ? '' : 'on'}" title="Все настройки сборки — рейты и всё остальное по ключам">Настроить самому</button>`;
-  const avail = r.switches.filter((s) => s.available);
-  const groups = [...new Set(avail.map((s) => s.group))];
-  const sw = groups.map((g) => `<div class="mode-group">${esc(g)}</div>` + avail.filter((s) => s.group === g).map((s) =>
-    `<div class="opt"><div class="l">${esc(s.title)}<small>${esc(s.note)}</small></div><button class="switch" role="switch" aria-checked="${s.value}" data-sw="${s.id}"></button></div>`).join('')).join('');
-  const missing = r.switches.filter((s) => !s.available).map((s) => s.title);
-  // Сколько охотников в мире (modes.hunters_max, docs/PHANTOMS.md, раздел 4.120): только у хроник из server_modes.json.
-  const hm = r.huntersMax;
-  const hmM = hm?.machine;
-  const hmFit = hmM && !hmM.fits ? `<button class="sbtn" style="margin-top:6px" id="huntersFit">Поставить ${hmM.recommended}</button>` : '';
-  const hmRow = hm ? `<div class="mode-group">${esc(hm.group)}</div><div class="opt"><div class="l">${esc(hm.title)}<small>${esc(hm.note)} Сейчас в таблице ${hm.top}: больше не поставить. На этой машине ОЗУ ${String(hmM.ramGb).replace('.', ',')} ГБ, ${hmM.threads} потоков, куча гейма ${hm.heapGb} ГБ: рекомендуем до ${hmM.recommended}.</small>${hmM.warnings.map((w) => `<div class="note bad-text" style="margin-top:6px">${esc(w)}</div>`).join('')}${hmFit}</div>
-      <input class="field" style="width:64px" id="huntersMax" value="${hm.count}" inputmode="numeric"></div>` : '';
-  const cal = host.querySelector('.cal-card');  // календарь остаётся на месте, пока renderCalendar не поставит новый
-  host.innerHTML = `<div class="card wide"><h3>Режим сервера<span class="src">${active ? esc(active.title) : 'свои настройки'}</span></h3>
-      <div class="seg modes" id="modeSeg">${btns}</div>
-      <div class="note" id="modeNote">${esc(active ? active.note : 'Рейты и моды — свои: правятся ниже и во «Все настройки».')}${r.restart ? ' Сервер работает — новое применится после перезапуска гейма.' : ''}</div></div>
-    <div class="card wide"><h3>Моды и ивенты</h3>${hmRow}${sw || '<div class="note">У этой сборки выключателей нет.</div>'}
-      ${missing.length ? `<div class="note" style="margin-top:6px">В этой сборке пока нет: ${esc(missing.join(', '))}.</div>` : ''}</div>`;
-  if (cal) host.appendChild(cal);
-  // Ключ уже стоит выключателем выше (ChampionEnable и т. п.) — его строку из карточек ниже убираем, чтобы не было двух.
-  const swKeys = new Set(avail.flatMap((s) => s.keys));
-  $('basic').querySelectorAll('.opt small').forEach((sm) => {
-    if (!swKeys.has(sm.textContent) || sm.closest('#modesBox')) return;
-    const card = sm.closest('.card');
-    sm.closest('.opt').remove();
-    if (card && !card.querySelector('.opt')) card.remove();
-  });
-  host.querySelectorAll('[data-mode]').forEach((b) => (b.onclick = async () => {
-    const m = r.modes.find((x) => x.id === b.dataset.mode);
-    if (!m) return document.querySelector('.tab[data-tab="all"]').click();
-    if (Object.keys(edits).length) return toast('Сначала сохрани или отмени правки ниже.', true);
-    if (!(await askModal({ title: `Режим «${esc(m.title)}»`, ok: 'Включить', body: `<p>${esc(m.note)}.</p><p class="note">${m.keepsRates ? 'Выключатели перепишутся разом' : 'Рейты и выключатели перепишутся разом'}, прежние конфиги — в бэкап (data\\backups\\config). Вернуть свои — «Все настройки» или другой режим.</p>` }))) return;
-    const res = await api.apply_server_mode(id, m.id);
-    if (!res.ok) return toast(res.error, true);
-    toast(`Режим «${res.title}»: правок ${res.changed}${res.skipped.length ? `, в сборке нет: ${res.skipped.join(', ')}` : ''}${res.restart ? '. Перезапусти гейм-сервер, чтобы применить.' : '.'}`);
-    await loadSchema();
-  }));
-  renderCalendar(host, id);
-  const hmInput = $('huntersMax');
-  const hmFitBtn = $('huntersFit');
-  if (hmFitBtn) hmFitBtn.onclick = () => {
-    hmInput.value = hmM.recommended;
-    hmInput.onchange();
-  };
-  if (hmInput) hmInput.onchange = async () => {
-    const res = await api.set_hunters_max(id, hmInput.value);
-    if (!res.ok) { hmInput.value = hm.count; return toast(res.error, true); }
-    toast(`Охотников в мире: ${res.count} из ${res.top}${res.cut ? ' — больше в таблице нет' : ''}. Сервер применит сам, за 10 секунд.`);
-    await loadSchema();
-  };
-  host.querySelectorAll('[data-sw]').forEach((b) => (b.onclick = async () => {
-    const on = b.getAttribute('aria-checked') !== 'true';
-    const res = await api.set_mod_switch(id, b.dataset.sw, on);
-    if (!res.ok) return toast(res.error, true);
-    const s = avail.find((x) => x.id === b.dataset.sw);
-    toast(`${s.title}: ${on ? 'вкл' : 'выкл'}${res.restart ? ` — после перезапуска ${s.part === 'login' ? 'логина' : 'гейма'}` : ''}.`);
-    await loadSchema();
-  }));
 }
 
 // Календарь сезонных событий и расписание PvP-ивентов (Api.event_calendar, modes.calendar, L2HubEvents.ini):
@@ -1360,88 +1309,6 @@ async function renderCalendar(host, id) {
     toast(`Календарь: правок ${res.changed}${res.restart ? ' — после перезапуска гейма' : ''}. Прежний файл — в бэкапе конфигов.`);
     await loadSchema();
   };
-}
-
-function renderBasic() {
-  const box = $('basic');
-  // Прежние карточки режимов держат место, пока грузятся новые: пустая коробка на миг сдвигала всё вверх, и после
-  // выключателя вид уезжал вниз (автор, 2026-10-23).
-  box.replaceChildren($('modesBox') || Object.assign(document.createElement('div'), { className: 'modes-box', id: 'modesBox' }));
-  renderModes();
-  for (const g of BASIC) {
-    // Подпись — файлы, где ключи карточки нашлись в этой сборке (.ini у Mobius, .properties у La2offline); не нашлось ни одного — карточки нет.
-    const names = g.rates ? g.rates.map(([key]) => (key === '@adena' ? 'DropAmountMultiplierByItemId' : key))
-      : g.opts ? g.opts.map(([key]) => key) : ['ScreenWelcomeMessageEnable', 'ScreenWelcomeMessageText', 'ShowServerNews'];
-    const found = names.map((n) => findKey(n)).filter(Boolean);
-    if (!found.length) continue;
-    const src = [...new Set(found.map((k) => k.file))].join(' · ');
-    const card = document.createElement('div');
-    card.className = 'card' + (g.wide || g.rates ? ' wide' : '');
-    card.innerHTML = `<h3>${g.title}<span class="src">${esc(src)}</span></h3>`;
-    if (g.rates) {
-      const grid = document.createElement('div');
-      grid.className = 'rates';
-      for (const [key, label] of g.rates) {
-        const cell = document.createElement('div');
-        cell.className = 'num';
-        if (key === '@adena') {
-          const k = findKey('DropAmountMultiplierByItemId');
-          if (!k) continue;
-          const cur = (valOf(k).match(/(?:^|;)57,([\d.]+)/) || [])[1] || '1';
-          cell.innerHTML = `<label>${label}</label><input value="${esc(cur)}"><small>DropAmountMultiplierByItemId · 57</small>`;
-          const inp = cell.querySelector('input');
-          inp.classList.toggle('changed', k.id in edits);
-          inp.oninput = () => { setVal(k, valOf(k).replace(/(^|;)57,[\d.]+/, `$157,${inp.value}`)); inp.classList.toggle('changed', k.id in edits); };
-        } else {
-          const k = findKey(key);
-          if (!k) continue;
-          cell.innerHTML = `<label>${label}</label><input value="${esc(valOf(k))}"><small>${key}</small>`;
-          const inp = cell.querySelector('input');
-          inp.classList.toggle('changed', k.id in edits);
-          inp.oninput = () => { setVal(k, inp.value); inp.classList.toggle('changed', k.id in edits); };
-        }
-        grid.appendChild(cell);
-      }
-      card.appendChild(grid);
-    } else if (g.opts) {
-      for (const [key, label, choices] of g.opts) {
-        const k = findKey(key);
-        if (!k) continue;
-        const row = document.createElement('div');
-        row.className = 'opt';
-        row.innerHTML = `<span class="l">${label}<small>${key}</small></span>`;
-        if (choices) {
-          const s = document.createElement('select');
-          s.innerHTML = choices.map((c) => `<option${c === valOf(k) ? ' selected' : ''}>${c}</option>`).join('');
-          s.onchange = () => setVal(k, s.value);
-          row.appendChild(s);
-        } else if (k.type === 'bool') {
-          row.appendChild(control(k));
-        } else {
-          const i = document.createElement('input');
-          i.type = 'number'; i.value = valOf(k);
-          i.oninput = () => setVal(k, i.value);
-          row.appendChild(i);
-        }
-        card.appendChild(row);
-      }
-    } else if (g.welcome) {
-      const en = findKey('ScreenWelcomeMessageEnable'), tx = findKey('ScreenWelcomeMessageText'), news = findKey('ShowServerNews');
-      if (en && tx) {
-        const row = document.createElement('div'); row.className = 'opt';
-        row.innerHTML = '<span class="l">Сообщение на экране при входе<small>ScreenWelcomeMessageEnable · ScreenWelcomeMessageText</small></span>';
-        row.appendChild(control(en)); card.appendChild(row);
-        const t = document.createElement('textarea'); t.className = 'field'; t.value = valOf(tx);
-        t.oninput = () => setVal(tx, t.value); card.appendChild(t);
-      }
-      if (news) {
-        const row = document.createElement('div'); row.className = 'opt';
-        row.innerHTML = '<span class="l">Окно новостей при входе<small>ShowServerNews · data/html/servnews.htm</small></span>';
-        row.appendChild(control(news)); card.appendChild(row);
-      }
-    }
-    box.appendChild(card);
-  }
 }
 
 function renderFiles() {
@@ -1586,8 +1453,9 @@ document.querySelectorAll('.rz').forEach((el) => (el.onpointerdown = (e) => {
   api.start_resize(el.dataset.rz);
 }));
 // Крестик: что делать — из настроек L2Hub (closeRunning / closeIdle); «ask» — окно с выбором.
+// База без хроники («Только база», упавшая установка) — тоже «работает»: молча выйти значило бы бросить MariaDB.
 $('wClose').onclick = async () => {
-  const running = await api.running();
+  const running = (await api.running()) || (await api.db_alone());
   if (!running) return appSet.closeIdle === 'tray' ? closeAs('tray') : closeAs('exit');
   if (appSet.closeRunning === 'ask') return askClose();
   closeAs(appSet.closeRunning);
@@ -1595,10 +1463,11 @@ $('wClose').onclick = async () => {
 // Окно выбора — и из трея («Выйти»), где спрашиваем всегда, что бы ни стояло в настройках.
 async function askClose() {
   const running = await api.running();
-  if (!running) return closeAs('exit');
-  const gm = last.running === running && last.components ? last.components.game : null;
+  const alone = running ? null : await api.db_alone();
+  if (!running && !alone) return closeAs('exit');
+  const gm = running && last.running === running && last.components ? last.components.game : null;
   const up = gm && gm.uptime_s ? ` ${fmtUptime(gm.uptime_s)}` : '';
-  $('closeText').textContent = `${byId(running)?.name || running} работает${up}. Куда деть L2Hub?`;
+  $('closeText').textContent = alone ? `${alone.engine} работает без сервера. Куда деть L2Hub?` : `${byId(running)?.name || running} работает${up}. Куда деть L2Hub?`;
   $('cmRemember').checked = false;
   $('closeModal').classList.add('on');
 }
@@ -1611,9 +1480,10 @@ async function closeAs(kind) {
   }
   if (kind === 'stop') {
     const running = await api.running();
-    if (running) {
-      await api.stop(running);
-      while (true) { await new Promise((r) => setTimeout(r, 700)); const s = await api.state(running); last = s; renderHealth(); if (!s.job || s.job.done) break; }
+    const r = running ? await api.stop(running) : (await api.db_alone()) ? await api.stop_db(selected) : null;
+    if (r?.ok) {
+      const id = running || selected;
+      while (true) { await new Promise((r) => setTimeout(r, 700)); const s = await api.state(id); last = s; renderHealth(); if (!s.job || s.job.done) break; }
     }
   }
   api.close();
