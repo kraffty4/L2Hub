@@ -1,0 +1,996 @@
+Самопроверка комплектов из вклада пользователя от 2026-11-04 (Rift, Камалока, окно поиска пати, опыт и сленг): HuntersSelfTest = L2HUBKITS2, только на копии базы.
+
+diff --git b/dist/game/data/scripts/custom/L2HubKits2Test/L2HubKits2Test.java b/dist/game/data/scripts/custom/L2HubKits2Test/L2HubKits2Test.java
+new file mode 100644
+index 0000000..ea44a08
+--- /dev/null
++++ b/dist/game/data/scripts/custom/L2HubKits2Test/L2HubKits2Test.java
+@@ -0,0 +1,988 @@
++package custom.L2HubKits2Test;
++
++import java.lang.reflect.Field;
++import java.lang.reflect.Method;
++import java.util.ArrayList;
++import java.util.Comparator;
++import java.util.HashMap;
++import java.util.List;
++import java.util.Map;
++import java.util.Set;
++import java.util.function.BooleanSupplier;
++import java.util.logging.Level;
++import java.util.logging.Logger;
++
++import org.l2jmobius.commons.threads.ThreadPool;
++import org.l2jmobius.gameserver.config.GeneralConfig;
++import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
++import org.l2jmobius.gameserver.entity.Location;
++import org.l2jmobius.gameserver.entity.World;
++import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.entity.groups.Party;
++import org.l2jmobius.gameserver.entity.groups.PartyDistributionType;
++import org.l2jmobius.gameserver.entity.groups.matching.PartyMatchRoom;
++import org.l2jmobius.gameserver.entity.groups.matching.PartyMatchRoomList;
++import org.l2jmobius.gameserver.entity.groups.matching.PartyMatchWaitingList;
++import org.l2jmobius.gameserver.entity.zone.ZoneId;
++import org.l2jmobius.gameserver.managers.InstanceManager;
++import org.l2jmobius.gameserver.managers.phantom.PhantomCompat;
++import org.l2jmobius.gameserver.managers.phantom.PhantomHunterManager;
++import org.l2jmobius.gameserver.managers.phantom.PhantomManager;
++import org.l2jmobius.gameserver.managers.phantom.PhantomRussianSpeech;
++import org.l2jmobius.gameserver.taskmanagers.AutoPlayTaskManager;
++
++/**
++ * L2Hub: самопроверка комплектов из вклада пользователя от 2026-11-04 — Dimensional Rift ({@code HunterRift}), Камалока ({@code HunterKamaloka}),
++ * окно поиска пати ({@code HunterPartyMatching}), опыт ({@code HunterLearning}) и сленг ({@code HunterSlang}), только на копии базы: {@code HuntersSelfTest = L2HUBKITS2}.<br>
++ * Ключи в конфиге прогона выключены, тест включает их сам: без ключа ничего не происходит, с ключом поход доходит до конца и охотники возвращаются на кач.
++ * Итог — строки в логе.
++ * @author L2Hub
++ */
++public class L2HubKits2Test
++{
++	private static final Logger LOGGER = Logger.getLogger(L2HubKits2Test.class.getName());
++	private static final String TAG = "L2HubKits2Test: SelfTest L2HUBKITS2: ";
++	private static final String PKG = "org.l2jmobius.gameserver.managers.phantom.";
++	private static final long STARTED = System.currentTimeMillis();
++	private static final Location GIRAN = new Location(83400, 147943, -3404);
++	private static final int FRAGMENT = 7079;
++	private static int _ok;
++	private static int _wrong;
++
++	@FunctionalInterface
++	private interface Section
++	{
++		void run() throws Exception;
++	}
++
++	public static void main(String[] args)
++	{
++		if ("L2HUBKITS2".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST))
++		{
++			ThreadPool.schedule(L2HubKits2Test::start, 60000);
++		}
++	}
++
++	private static void start()
++	{
++		if ((pool().size() < 100) && ((System.currentTimeMillis() - STARTED) < (7 * 60000L)))
++		{
++			ThreadPool.schedule(L2HubKits2Test::start, 15000);
++			return;
++		}
++		ThreadPool.execute(() ->
++		{
++			LOGGER.info(TAG + "hunters " + pool().size() + ", keys at start: rift " + PhantomHuntersConfig.HUNTER_RIFT + ", kamaloka " + PhantomHuntersConfig.HUNTER_KAMALOKA + ", matching " + PhantomHuntersConfig.HUNTER_PARTY_MATCHING + ", learning " + PhantomHuntersConfig.HUNTER_LEARNING + ", slang " + PhantomHuntersConfig.HUNTER_SLANG + ".");
++			// Разделы можно выбрать переменной L2HUBKITS2_ONLY (через запятую).
++			final String only = System.getenv("L2HUBKITS2_ONLY");
++			final List<String> wanted = (only == null) || only.isBlank() ? List.of("speech", "matching", "rift", "kamaloka", "learning") : List.of(only.toLowerCase().split(" *, *"));
++			for (String name : wanted)
++			{
++				switch (name)
++				{
++					case "speech" -> section(name, L2HubKits2Test::speech);
++					case "matching" -> section(name, L2HubKits2Test::matching);
++					case "rift" -> section(name, L2HubKits2Test::rift);
++					case "kamaloka" -> section(name, L2HubKits2Test::kamaloka);
++					case "learning" -> section(name, L2HubKits2Test::learning);
++					default -> note("unknown section " + name);
++				}
++			}
++			LOGGER.info(TAG + "done: " + _ok + " ok, " + _wrong + " wrong.");
++		});
++	}
++
++	// ---------- Сленг и модель опыта без мира ----------
++
++	private static void speech() throws Exception
++	{
++		final List<?> model = (List<?>) internal("PhantomLearningModelTest", "check").invoke(null);
++		check("speech: PhantomLearningModelTest " + model, model.isEmpty());
++		final List<?> words = (List<?>) internal("PhantomRussianSpeechTest", "check").invoke(null);
++		check("speech: PhantomRussianSpeechTest " + words, words.isEmpty());
++
++		final String plain = "{\"fpc\":\"Vesna\",\"message\":\"привет, как дела\"}";
++		check("speech: no slang — request byte for byte", PhantomRussianSpeech.enrichRequest(plain).equals(plain));
++		final String slang = PhantomRussianSpeech.enrichRequest("{\"fpc\":\"Vesna\",\"message\":\"го в пт на рб, бсс есть\"}");
++		check("speech: slang goes first as a field: " + slang, slang.startsWith("{\"slang\":[") && slang.contains("\"said\":\"пт\"") && slang.contains("\"message\":\"го в пт на рб, бсс есть\""));
++		final String noFpc = "{\"message\":\"го в пт\"}";
++		check("speech: not a phantom request — unchanged", PhantomRussianSpeech.enrichRequest(noFpc).equals(noFpc));
++	}
++
++	// ---------- Окно поиска пати ----------
++
++	private static void matching() throws Exception
++	{
++		final Object pm = instance("PhantomPartyMatching");
++		final Method control = internal("PhantomPartyMatching", "control", List.class, long.class);
++		final boolean was = PhantomHuntersConfig.HUNTER_PARTY_MATCHING;
++		final List<Player> parked = new ArrayList<>();
++		Player partyLeader = null;
++		Player fakeLive = null;
++		Object fakeTemplate = null;
++		int liveRoom = -1;
++		try
++		{
++			// Без ключа: ни одного охотника в списке ожидающих.
++			PhantomHuntersConfig.HUNTER_PARTY_MATCHING = false;
++			tick(pm, control, pool());
++			check("matching: key off — no hunters waiting", waitingHunters().isEmpty());
++
++			// С ключом: до шести свободных охотников 10+ в списке.
++			PhantomHuntersConfig.HUNTER_PARTY_MATCHING = true;
++			tick(pm, control, pool());
++			final List<Player> waiting = waitingHunters();
++			note("matching: waiting " + names(waiting));
++			check("matching: 1..6 hunters waiting", !waiting.isEmpty() && (waiting.size() <= 6));
++			check("matching: waiting hunters are 10+ and not in a party", waiting.stream().allMatch(p -> (p.getLevel() >= 10) && !p.isInParty()));
++
++			// Пати из одних охотников: лидер держит комнату с уровнями лидер ± 3. Лидер остаётся на каче (комнату держит только он), второго — в Гиран.
++			final List<Player> pair = pick(2, p -> (p.getLevel() >= 20) && !waiting.contains(p) && PhantomHunterManager.getInstance().isHunting(p));
++			check("matching: two free hunters for a party", pair.size() == 2);
++			if (pair.size() < 2)
++			{
++				return;
++			}
++			parked.add(pair.get(1));
++			park(pair.get(1), GIRAN);
++			final Player leader = pair.get(0);
++			partyLeader = leader;
++			PhantomCompat.newParty(leader, PartyDistributionType.FINDERS_KEEPERS);
++			pair.get(1).joinParty(leader.getParty());
++			tick(pm, control, pool());
++			final PartyMatchRoom room = PartyMatchRoomList.getInstance().getPlayerRoom(leader);
++			check("matching: hunter party leader opened a room", room != null);
++			if (room != null)
++			{
++				note("matching: room '" + room.getTitle() + "' " + room.getMinLevel() + "-" + room.getMaxLevel() + ", leader " + leader.getLevel());
++				check("matching: room levels are leader +-3", (room.getMinLevel() == Math.max(1, leader.getLevel() - 3)) || (Math.abs(room.getMinLevel() - (leader.getLevel() - 3)) <= 1));
++			}
++			// Пати распалась — комната закрыта.
++			leader.leaveParty();
++			waitFor(5, () -> !leader.isInParty());
++			tick(pm, control, pool());
++			check("matching: party gone — room closed", (PartyMatchRoomList.getInstance().getPlayerRoom(leader) == null) && ((room == null) || (PartyMatchRoomList.getInstance().getRoom(room.getId()) == null)));
++
++			// Комната «живого»: охотник из пула, на время теста не фантом (клиента у него нет, пакеты уходят в никуда).
++			fakeLive = pick(1, p -> (p.getLevel() >= 30) && (p.getLevel() <= 70) && !waiting.contains(p) && !pair.contains(p)).stream().findFirst().orElse(null);
++			check("matching: a stand-in for a live player", fakeLive != null);
++			if (fakeLive == null)
++			{
++				return;
++			}
++			park(fakeLive, GIRAN);
++			fakeTemplate = phantoms().remove(fakeLive.getObjectId());
++			final int min = Math.max(1, fakeLive.getLevel() - 5);
++			final int max = fakeLive.getLevel() + 5;
++			liveRoom = PartyMatchRoomList.getInstance().getMaxId();
++			final PartyMatchRoom live = new PartyMatchRoom(liveRoom, "test room", 0, min, max, 12, fakeLive);
++			PartyMatchRoomList.getInstance().addPartyMatchRoom(liveRoom, live);
++			fakeLive.setPartyRoom(liveRoom);
++			tick(pm, control, pool());
++			// Задержка 20–90 с: обнулить и дать тик.
++			readyNow(pm, liveRoom);
++			tick(pm, control, pool());
++			final List<Player> joined = new ArrayList<>(live.getPartyMembers());
++			joined.remove(fakeLive);
++			note("matching: live room members " + names(joined));
++			check("matching: a hunter joined the live player's room", !joined.isEmpty());
++			check("matching: joined hunters fit the room levels", joined.stream().allMatch(p -> (p.getLevel() >= min) && (p.getLevel() <= max) && PhantomManager.getInstance().isPhantom(p)));
++			readyNow(pm, liveRoom);
++			tick(pm, control, pool());
++			final int afterTwo = live.getPartyMembers().size() - 1;
++			check("matching: not more than one join per tick and 2 at most (" + afterTwo + ")", (afterTwo <= 2) && (afterTwo >= joined.size()));
++			check("matching: joined hunters are within 5 levels of the owner", seated(pm).stream().allMatch(p -> Math.abs(p.getLevel() - live.getOwner().getLevel()) <= 5));
++
++			// Живой так и не позвал за 10 минут — охотники выходят из его комнаты.
++			final List<Player> first = seated(pm);
++			expireSeats(pm);
++			tick(pm, control, pool());
++			check("matching: not invited for 10 minutes — hunters left the live room (" + names(first) + ")", !first.isEmpty() && first.stream().noneMatch(p -> live.getPartyMembers().contains(p) || (p.getPartyRoom() != 0)));
++
++			// Ключ выключили — список, комнаты охотников и места в комнатах живых убраны.
++			readyNow(pm, liveRoom);
++			tick(pm, control, pool());
++			final List<Player> second = seated(pm);
++			PhantomHuntersConfig.HUNTER_PARTY_MATCHING = false;
++			tick(pm, control, pool());
++			check("matching: key off again — waiting list cleared", waitingHunters().isEmpty());
++			check("matching: key off — hunters left live rooms (" + names(second) + ")", seated(pm).isEmpty() && live.getPartyMembers().stream().noneMatch(p -> PhantomManager.getInstance().isPhantom(p)) && second.stream().allMatch(p -> p.getPartyRoom() == 0));
++		}
++		finally
++		{
++			PhantomHuntersConfig.HUNTER_PARTY_MATCHING = was;
++			if ((partyLeader != null) && partyLeader.isInParty())
++			{
++				partyLeader.leaveParty();
++			}
++			if (liveRoom >= 0)
++			{
++				final PartyMatchRoom live = PartyMatchRoomList.getInstance().getRoom(liveRoom);
++				if (live != null)
++				{
++					for (Player member : new ArrayList<>(live.getPartyMembers()))
++					{
++						member.setPartyRoom(0);
++					}
++				}
++				PartyMatchRoomList.getInstance().deleteRoom(liveRoom);
++			}
++			if ((fakeLive != null) && (fakeTemplate != null))
++			{
++				@SuppressWarnings("unchecked")
++				final Map<Integer, Object> map = (Map<Integer, Object>) phantoms();
++				map.put(fakeLive.getObjectId(), fakeTemplate);
++			}
++			for (Player player : parked)
++			{
++				if (player.isInParty())
++				{
++					player.leaveParty();
++				}
++				player.setInvul(false);
++			}
++		}
++	}
++
++	private static List<Player> waitingHunters()
++	{
++		final List<Player> out = new ArrayList<>();
++		for (Player player : PartyMatchWaitingList.getInstance().getPlayers())
++		{
++			if (PhantomManager.getInstance().isPhantom(player))
++			{
++				out.add(player);
++			}
++		}
++		return out;
++	}
++
++	private static void tick(Object target, Method control, List<Player> hunting) throws Exception
++	{
++		set(target, "_lastAt", 0L);
++		control.invoke(target, hunting, System.currentTimeMillis());
++	}
++
++	@SuppressWarnings("unchecked")
++	private static void readyNow(Object pm, int roomId) throws Exception
++	{
++		final Map<Integer, Long> ready = (Map<Integer, Long>) get(pm, "_liveRoomReadyAt");
++		if (ready.containsKey(roomId))
++		{
++			ready.put(roomId, 0L);
++		}
++	}
++
++	/** Охотники, сидящие в комнатах живых. */
++	private static List<Player> seated(Object pm)
++	{
++		final List<Player> out = new ArrayList<>();
++		for (Object id : ((Map<?, ?>) get(pm, "_liveSeats")).keySet())
++		{
++			final Player player = World.getPlayer((Integer) id);
++			if (player != null)
++			{
++				out.add(player);
++			}
++		}
++		return out;
++	}
++
++	/** Места в комнатах живых — как будто заняты 11 минут назад. */
++	@SuppressWarnings("unchecked")
++	private static void expireSeats(Object pm) throws Exception
++	{
++		final Map<Integer, Object> seats = (Map<Integer, Object>) get(pm, "_liveSeats");
++		final Class<?> seatClass = Class.forName(PKG + "PhantomPartyMatching$Seat");
++		final java.lang.reflect.Constructor<?> constructor = seatClass.getDeclaredConstructor(int.class, long.class);
++		constructor.setAccessible(true);
++		final Method roomId = seatClass.getDeclaredMethod("roomId");
++		roomId.setAccessible(true);
++		for (Map.Entry<Integer, Object> entry : seats.entrySet())
++		{
++			entry.setValue(constructor.newInstance(roomId.invoke(entry.getValue()), System.currentTimeMillis() - (11 * 60000L)));
++		}
++	}
++
++	/** Тик окна поиска пати с ключом: у лидера похода нет комнаты. Потом ключ — как был, список ожидающих убран. */
++	private static boolean noRoomFor(Player leader) throws Exception
++	{
++		final Object pm = instance("PhantomPartyMatching");
++		final Method control = internal("PhantomPartyMatching", "control", List.class, long.class);
++		final boolean was = PhantomHuntersConfig.HUNTER_PARTY_MATCHING;
++		try
++		{
++			PhantomHuntersConfig.HUNTER_PARTY_MATCHING = true;
++			tick(pm, control, pool());
++			return PartyMatchRoomList.getInstance().getPlayerRoom(leader) == null;
++		}
++		finally
++		{
++			PhantomHuntersConfig.HUNTER_PARTY_MATCHING = false;
++			tick(pm, control, pool());
++			PhantomHuntersConfig.HUNTER_PARTY_MATCHING = was;
++		}
++	}
++
++	// ---------- Dimensional Rift ----------
++
++	private static void rift() throws Exception
++	{
++		final Object rift = instance("PhantomRift");
++		final Method control = internal("PhantomRift", "control", List.class, long.class);
++		final Method riftType = internal("PhantomRift", "riftType", int.class);
++		final boolean was = PhantomHuntersConfig.HUNTER_RIFT;
++		final int jumps = GeneralConfig.RIFT_MAX_JUMPS;
++		final int jumpMin = GeneralConfig.RIFT_AUTO_JUMPS_TIME_MIN;
++		final int jumpMax = GeneralConfig.RIFT_AUTO_JUMPS_TIME_MAX;
++		final List<Player> parkedOut = new ArrayList<>();
++		try
++		{
++			// Ярус, где больше всего свободных охотников 20+ на каче.
++			final Map<Integer, List<Player>> tiers = new HashMap<>();
++			for (Player player : pool())
++			{
++				if ((player.getLevel() >= 20) && !player.isInsideZone(ZoneId.PEACE) && PhantomHunterManager.getInstance().isHunting(player))
++				{
++					tiers.computeIfAbsent((Integer) riftType.invoke(null, player.getLevel()), k -> new ArrayList<>()).add(player);
++				}
++			}
++			final List<Player> tier = tiers.values().stream().max(Comparator.comparingInt(List::size)).orElse(List.of());
++			tier.sort(Comparator.comparingInt(Player::getLevel).reversed());
++			// Самый высокий — «не на каче» (снят с охотников, как ушедший в город или лавку): лидером его брать нельзя.
++			final Player outsider = tier.size() >= 4 ? tier.remove(0) : null;
++			if (outsider != null)
++			{
++				parkedOut.add(outsider);
++			}
++			final int top = tier.isEmpty() ? 0 : tier.get(0).getLevel();
++			final List<Player> team = new ArrayList<>(tier.stream().filter(p -> (top - p.getLevel()) <= 5).limit(4).toList());
++			check("rift: a tier with 3+ free hunters within 5 levels (" + team.size() + ")", team.size() >= 3);
++			if (team.size() < 3)
++			{
++				return;
++			}
++			note("rift: team " + names(team) + ", outsider " + (outsider == null ? "none" : outsider.getName() + " " + outsider.getLevel()) + ", tier " + riftType.invoke(null, team.get(0).getLevel()) + ", SmallWorldRift " + GeneralConfig.SMALL_WORLD_RIFT);
++			if (outsider != null)
++			{
++				park(outsider, GIRAN);
++			}
++			final List<Player> offered = new ArrayList<>(team);
++			if (outsider != null)
++			{
++				offered.add(0, outsider);
++			}
++
++			synchronized (rift)
++			{
++				PhantomHuntersConfig.HUNTER_RIFT = false;
++				set(rift, "_nextAt", 0L);
++				control.invoke(rift, team, System.currentTimeMillis());
++				check("rift: key off — no run, nobody in a party", (get(rift, "_run") == null) && team.stream().noneMatch(Player::isInParty));
++			}
++
++			final Map<Integer, long[]> before = new HashMap<>();
++			for (Player player : team)
++			{
++				before.put(player.getObjectId(), new long[]
++				{
++					count(player, FRAGMENT),
++					player.getAdena()
++				});
++			}
++			// Rift короче: одна комната и прыжок через минуту — иначе поход идёт полчаса.
++			GeneralConfig.RIFT_MAX_JUMPS = 1;
++			GeneralConfig.RIFT_AUTO_JUMPS_TIME_MIN = 60;
++			GeneralConfig.RIFT_AUTO_JUMPS_TIME_MAX = 70;
++			final Object run;
++			synchronized (rift)
++			{
++				PhantomHuntersConfig.HUNTER_RIFT = true;
++				set(rift, "_run", null);
++				set(rift, "_nextAt", 0L);
++				control.invoke(rift, offered, System.currentTimeMillis());
++				run = get(rift, "_run");
++			}
++			check("rift: key on — a run gathers", run != null);
++			if (run == null)
++			{
++				return;
++			}
++			final Player leader = World.getPlayer((Integer) get(run, "leaderId"));
++			@SuppressWarnings("unchecked")
++			final Set<Integer> members = (Set<Integer>) get(run, "members");
++			check("rift: leader is the highest hunter on the hunt and leads a party of 3+", (leader != null) && leader.isInParty() && (leader.getParty().getMemberCount() >= 3) && (leader.getLevel() == top));
++			if ((leader == null) || !leader.isInParty())
++			{
++				return;
++			}
++			if (outsider != null)
++			{
++				check("rift: a hunter off the hunt (town, store) is not taken", (leader != outsider) && !outsider.isInParty() && !members.contains(outsider.getObjectId()));
++			}
++			check("rift: party members are within 5 levels of the leader", leader.getParty().getMembers().stream().allMatch(p -> (leader.getLevel() - p.getLevel()) <= 5));
++			check("rift: the run leader is busy for other modules (raidOf)", "Dimensional Rift".equals(raidOf(leader)));
++			check("rift: no Party Matching room for the run leader", noRoomFor(leader));
++			final Party party = leader.getParty();
++			check("rift: the whole party is in the waiting room", waitFor(15, () -> party.getMembers().stream().allMatch(PhantomCompat::inRiftWaitingRoom)));
++			final List<Player> stray = new ArrayList<>();
++			for (Player player : World.getPlayers())
++			{
++				if (PhantomManager.getInstance().isPhantom(player) && PhantomCompat.inRiftWaitingRoom(player) && !party.containsPlayer(player))
++				{
++					stray.add(player);
++				}
++			}
++			check("rift: nobody outside the party was sent to the waiting room (" + names(stray) + ")", stray.isEmpty());
++			check("rift: party entered the rift", waitFor(90, () -> party.isInDimensionalRift()));
++			final StringBuilder paid = new StringBuilder();
++			boolean allPaid = true;
++			for (Player player : team)
++			{
++				final long[] was0 = before.get(player.getObjectId());
++				if (!members.contains(player.getObjectId()) && (player != leader))
++				{
++					continue;
++				}
++				final long fragments = count(player, FRAGMENT) - was0[0];
++				final long adena = player.getAdena() - was0[1];
++				paid.append(' ').append(player.getName()).append(" fragments ").append(fragments).append(" adena ").append(adena);
++				allPaid &= GeneralConfig.SMALL_WORLD_RIFT || (fragments < 0) || (adena < 0);
++			}
++			note("rift: paid" + paid);
++			check("rift: everyone paid with fragments or adena (or SmallWorldRift)", allPaid);
++			check("rift: every member fights inside (autoplay or companion)", waitFor(60, () -> party.getMembers().stream().allMatch(p -> p.isAutoPlaying() || (p.getTarget() != null) || p.isInCombat())));
++			// Лидер лёг внутри — поход кончен (естественный конец по прыжкам проверен прогоном 2026-11-04).
++			leader.doDie(null);
++			check("rift: leader died inside — the run is over", waitFor(60, () -> get(rift, "_run") == null));
++			check("rift: everyone left the rift and the party", waitFor(120, () -> team.stream().noneMatch(p -> p.isInParty() || PhantomCompat.inRift(p))));
++			check("rift: everyone is a hunter again and leaves the waiting room", waitFor(180, () -> team.stream().allMatch(p -> isHunter(p) && !PhantomCompat.inRiftWaitingRoom(p))));
++			note("rift: where " + where(team) + ", leader dead " + leader.isDead());
++		}
++		finally
++		{
++			for (Player player : parkedOut)
++			{
++				player.setInvul(false);
++			}
++			PhantomHuntersConfig.HUNTER_RIFT = was;
++			GeneralConfig.RIFT_MAX_JUMPS = jumps;
++			GeneralConfig.RIFT_AUTO_JUMPS_TIME_MIN = jumpMin;
++			GeneralConfig.RIFT_AUTO_JUMPS_TIME_MAX = jumpMax;
++		}
++	}
++
++	// ---------- Камалока ----------
++
++	private static void kamaloka() throws Exception
++	{
++		final Object kama = instance("PhantomKamaloka");
++		final Method control = internal("PhantomKamaloka", "control", List.class, long.class);
++		final Method hallFor = internal("PhantomKamaloka", "hallFor", List.class);
++		final Method wentToday = internal("PhantomKamaloka", "wentToday", Player.class);
++		final Class<?> runClass = Class.forName(PKG + "PhantomKamaloka$Run");
++		final Method enter = internal("PhantomKamaloka", "enter", runClass, Player.class, long.class);
++		final Method teleport = internal("PhantomKamaloka", "teleport", Player.class);
++		final Method bossDown = internal("PhantomKamaloka", "bossDown", runClass, long.class);
++		final Method instanceTimes = internal("PhantomKamaloka", "instanceTimes", int.class);
++		final boolean was = PhantomHuntersConfig.HUNTER_KAMALOKA;
++		try
++		{
++			final List<Player> free = new ArrayList<>();
++			for (Player player : pool())
++			{
++				if (!player.isInsideZone(ZoneId.PEACE) && PhantomHunterManager.getInstance().isHunting(player) && !(Boolean) wentToday.invoke(null, player))
++				{
++					free.add(player);
++				}
++			}
++			final int hall = (Integer) hallFor.invoke(null, free);
++			check("kamaloka: a hall with 3+ free hunters (" + hall + ")", hall >= 0);
++			if (hall < 0)
++			{
++				return;
++			}
++
++			// Успех — только по новому откату инстанса (его ставит убийство босса): синтетический поход, откат ставим и убираем сами.
++			final Player probe = free.get(0);
++			final Object probeRun = newRun(runClass);
++			set(probeRun, "leaderId", probe.getObjectId());
++			final Map<?, ?> times = (Map<?, ?>) instanceTimes.invoke(null, probe.getObjectId());
++			check("kamaloka: instance lock API found", times != null);
++			if (times != null)
++			{
++				@SuppressWarnings("unchecked")
++				final Map<Integer, Object> before = (Map<Integer, Object>) get(probeRun, "before");
++				before.put(probe.getObjectId(), times);
++				final long now = System.currentTimeMillis();
++				check("kamaloka: no new instance lock — not a success", !(Boolean) bossDown.invoke(null, probeRun, now));
++				InstanceManager.getInstance().setInstanceTime(probe.getObjectId(), 999, now + 3600000L);
++				try
++				{
++					check("kamaloka: a new instance lock (boss down) — success", (Boolean) bossDown.invoke(null, probeRun, now));
++				}
++				finally
++				{
++					InstanceManager.getInstance().deleteInstanceTime(probe.getObjectId(), 999);
++				}
++			}
++
++			// Скрипт не пустил (лидер без пати) — день не сгорает.
++			final Player solo = free.get(free.size() - 1);
++			final Object soloRun = newRun(runClass);
++			set(soloRun, "leaderId", solo.getObjectId());
++			set(soloRun, "hall", hall);
++			final boolean soloEntered;
++			synchronized (kama)
++			{
++				soloEntered = (Boolean) enter.invoke(kama, soloRun, solo, System.currentTimeMillis());
++			}
++			check("kamaloka: refused entry does not burn the day", !soloEntered && (solo.getInstanceId() == 0) && !(Boolean) wentToday.invoke(null, solo));
++
++			// .kama go — только тому, кто в пати лидера: вступил и вышел — телепорта нет.
++			final Player host = free.get(0);
++			final Player guest = free.get(1);
++			final Object goRun = newRun(runClass);
++			set(goRun, "leaderId", host.getObjectId());
++			set(goRun, "hall", hall);
++			set(goRun, "gatherUntil", System.currentTimeMillis() + 60000L);
++			@SuppressWarnings("unchecked")
++			final Set<Integer> goPlayers = (Set<Integer>) get(goRun, "players");
++			goPlayers.add(guest.getObjectId());
++			final Location stood = guest.getLocation();
++			final String answer;
++			synchronized (kama)
++			{
++				set(kama, "_run", goRun);
++				try
++				{
++					answer = (String) teleport.invoke(kama, guest);
++				}
++				finally
++				{
++					set(kama, "_run", null);
++				}
++			}
++			check("kamaloka: .kama go needs the leader's party (" + answer + ")", (answer != null) && (guest.calculateDistance3D(stood) < 300) && !goPlayers.contains(guest.getObjectId()));
++
++			synchronized (kama)
++			{
++				PhantomHuntersConfig.HUNTER_KAMALOKA = false;
++				set(kama, "_nextAt", 0L);
++				control.invoke(kama, free, System.currentTimeMillis());
++				check("kamaloka: key off — no run", get(kama, "_run") == null);
++			}
++			final Object run;
++			synchronized (kama)
++			{
++				PhantomHuntersConfig.HUNTER_KAMALOKA = true;
++				set(kama, "_run", null);
++				set(kama, "_nextAt", 0L);
++				control.invoke(kama, free, System.currentTimeMillis());
++				run = get(kama, "_run");
++			}
++			check("kamaloka: key on — a run gathers", run != null);
++			if (run == null)
++			{
++				return;
++			}
++			final Player leader = World.getPlayer((Integer) get(run, "leaderId"));
++			@SuppressWarnings("unchecked")
++			final Set<Integer> ids = (Set<Integer>) get(run, "members");
++			final List<Player> team = new ArrayList<>();
++			team.add(leader);
++			for (int id : ids)
++			{
++				final Player member = World.getPlayer(id);
++				if (member != null)
++				{
++					team.add(member);
++				}
++			}
++			note("kamaloka: hall " + hall + ", team " + names(team));
++			check("kamaloka: party of 3+", (leader != null) && leader.isInParty() && (leader.getParty().getMemberCount() >= 3));
++			if ((leader == null) || !leader.isInParty())
++			{
++				return;
++			}
++			check("kamaloka: leader is the highest, the party within 5 levels of him", team.stream().allMatch(p -> (p.getLevel() <= leader.getLevel()) && ((leader.getLevel() - p.getLevel()) <= 5)));
++			check("kamaloka: the run leader is busy for other modules (raidOf)", "Kamaloka".equals(raidOf(leader)));
++			check("kamaloka: no Party Matching room for the run leader", noRoomFor(leader));
++			check("kamaloka: party gathered within 1000 of the leader", waitFor(20, () -> team.stream().allMatch(p -> p.calculateDistance3D(leader) < 1000)));
++			check("kamaloka: party entered the instance", waitFor(90, () -> team.stream().allMatch(p -> p.getInstanceId() != 0)));
++			check("kamaloka: everyone marked for today", team.stream().allMatch(p ->
++			{
++				try
++				{
++					return (Boolean) wentToday.invoke(null, p);
++				}
++				catch (Exception e)
++				{
++					return false;
++				}
++			}));
++			check("kamaloka: they fight inside", waitFor(90, () -> team.stream().anyMatch(p -> p.isInCombat() || p.isAutoPlaying())));
++			// Конец похода: инстанс закрыт (как по таймеру Камалоки).
++			final int instanceId = leader.getInstanceId();
++			if (instanceId != 0)
++			{
++				InstanceManager.getInstance().destroyInstance(instanceId);
++			}
++			check("kamaloka: run finished after the instance closed", waitFor(120, () -> get(kama, "_run") == null));
++			check("kamaloka: everyone out of the instance and the party", waitFor(120, () -> team.stream().allMatch(p -> (p.getInstanceId() == 0) && !p.isInParty())));
++			check("kamaloka: everyone is a hunter again", waitFor(120, () -> team.stream().allMatch(L2HubKits2Test::isHunter)));
++			// Второй раз за день те же не идут.
++			synchronized (kama)
++			{
++				set(kama, "_nextAt", 0L);
++				control.invoke(kama, team, System.currentTimeMillis());
++				check("kamaloka: same hunters do not go twice a day", get(kama, "_run") == null);
++			}
++		}
++		finally
++		{
++			PhantomHuntersConfig.HUNTER_KAMALOKA = was;
++		}
++	}
++
++	// ---------- Опыт ----------
++
++	private static void learning() throws Exception
++	{
++		final Object learning = instance("PhantomLearning");
++		final Class<?> choiceClass = Class.forName(PKG + "PhantomHunterStrategy$Choice");
++		final Method observe = internal("PhantomLearning", "observe", Player.class, choiceClass);
++		final Method onWhisper = internal("PhantomLearning", "onWhisper", Player.class, Player.class, String.class);
++		final Method ignored = internal("PhantomInitiative", "ignored", Player.class, int.class);
++		final Method store = internal("PhantomInitiative", "store", Player.class, int.class, long.class, boolean.class);
++		final boolean was = PhantomHuntersConfig.HUNTER_LEARNING;
++		final boolean wasQuestions = PhantomHuntersConfig.HUNTER_LEARNING_QUESTIONS;
++		final List<Player> two = pick(2, p -> p.getLevel() >= 20);
++		check("learning: two hunters for the checks", two.size() == 2);
++		if (two.size() < 2)
++		{
++			return;
++		}
++		final Player hunter = two.get(0);
++		final Player speaker = two.get(1);
++		Object speakerTemplate = null;
++		try
++		{
++			park(hunter, GIRAN);
++			park(speaker, GIRAN);
++			for (String variable : new String[]
++			{
++				"L2HubLearnActionsV1",
++				"L2HubLearnSpotsV1",
++				"L2HubLearnAdviceV1"
++			})
++			{
++				hunter.getVariables().remove(variable);
++			}
++			((Map<?, ?>) get(learning, "_memories")).remove(hunter.getObjectId());
++			((Map<?, ?>) get(learning, "_observed")).remove(hunter.getObjectId());
++			final String spot = "SelfTest Spot";
++			long at = System.currentTimeMillis() - 7200000L;
++
++			// Без ключа: память не меняется.
++			PhantomHuntersConfig.HUNTER_LEARNING = false;
++			observe.invoke(learning, hunter, choice(choiceClass, hunter, "HUNT", at++, 20 * 60000L, Map.of(spot, 20 * 60000L)));
++			check("learning: key off — no memory written", hunter.getVariables().getString("L2HubLearnActionsV1", "").isEmpty());
++
++			PhantomHuntersConfig.HUNTER_LEARNING = true;
++			final Object hunt = choice(choiceClass, hunter, "HUNT", at++, 20 * 60000L, Map.of(spot, 18 * 60000L, "", 2 * 60000L));
++			observe.invoke(learning, hunter, hunt);
++			check("learning: HUNT on the spot — action and spot remembered", (attempts(learning, hunter, "actions", "HUNT") == 1) && (attempts(learning, hunter, "spots", spot) == 1) && !hunter.getVariables().getString("L2HubLearnActionsV1", "").isEmpty());
++			observe.invoke(learning, hunter, hunt);
++			check("learning: the same decision counts once", attempts(learning, hunter, "actions", "HUNT") == 1);
++			observe.invoke(learning, hunter, choice(choiceClass, hunter, "TOWN", at++, 21 * 60000L, Map.of(spot, 60000L, "", 20 * 60000L)));
++			check("learning: TOWN mostly in town — action counted, spot not", (attempts(learning, hunter, "actions", "TOWN") == 1) && (attempts(learning, hunter, "spots", spot) == 1));
++			final Object test = choice(choiceClass, hunter, "HUNT", at++, 20 * 60000L, Map.of(spot, 20 * 60000L));
++			set(test, "test", true);
++			observe.invoke(learning, hunter, test);
++			check("learning: self-test decision is not remembered", attempts(learning, hunter, "actions", "HUNT") == 1);
++			observe.invoke(learning, hunter, choice(choiceClass, hunter, "HUNT", at++, 4 * 3600000L, Map.of(spot, 4 * 3600000L)));
++			check("learning: a 4-hour decision is not remembered", attempts(learning, hunter, "actions", "HUNT") == 1);
++			observe.invoke(learning, hunter, choice(choiceClass, hunter, "HUNT", at++, 3 * 60000L, Map.of(spot, 3 * 60000L)));
++			check("learning: a 3-minute decision is not remembered", attempts(learning, hunter, "actions", "HUNT") == 1);
++
++			// Ответ живого на вопрос о споте: «живой» — второй охотник, на время теста не фантом.
++			speakerTemplate = phantoms().remove(speaker.getObjectId());
++			PhantomHuntersConfig.HUNTER_LEARNING_QUESTIONS = true;
++			pending(learning, hunter, speaker, spot);
++			store.invoke(null, hunter, speaker.getObjectId(), System.currentTimeMillis() / 1000, true);
++			check("learning: (setup) the speaker is marked as ignoring", (Boolean) ignored.invoke(null, hunter, speaker.getObjectId()));
++			final boolean request = (Boolean) onWhisper.invoke(learning, speaker, hunter, "да, кинь реку");
++			check("learning: 'да, кинь реку' is not a rating and goes to the chat", !request && ((Map<?, ?>) get(learning, "_questions")).containsKey(pair(hunter, speaker)));
++			final boolean answered = (Boolean) onWhisper.invoke(learning, speaker, hunter, "норм");
++			final Object advice = ((Map<?, ?>) get(memory(learning, hunter), "advice")).get(spot);
++			check("learning: 'норм' is taken as advice +1", answered && (advice != null) && ((Double) get(advice, "rating") > 0));
++			check("learning: an answer clears the 'ignored' mark", !(Boolean) ignored.invoke(null, hunter, speaker.getObjectId()));
++			pending(learning, hunter, speaker, spot);
++			onWhisper.invoke(learning, speaker, hunter, "не советую, умер там");
++			final Object again = ((Map<?, ?>) get(memory(learning, hunter), "advice")).get(spot);
++			check("learning: the same player does not pile up trust (support 1)", (again != null) && ((Integer) get(again, "support") == 1));
++		}
++		finally
++		{
++			PhantomHuntersConfig.HUNTER_LEARNING = was;
++			PhantomHuntersConfig.HUNTER_LEARNING_QUESTIONS = wasQuestions;
++			if (speakerTemplate != null)
++			{
++				@SuppressWarnings("unchecked")
++				final Map<Integer, Object> map = (Map<Integer, Object>) phantoms();
++				map.put(speaker.getObjectId(), speakerTemplate);
++			}
++			hunter.setInvul(false);
++			speaker.setInvul(false);
++		}
++	}
++
++	private static Object choice(Class<?> choiceClass, Player player, String decision, long at, long tracked, Map<String, Long> where) throws Exception
++	{
++		final Class<?> decisionClass = Class.forName(PKG + "PhantomHunterStrategy$Decision");
++		Object value = null;
++		for (Object constant : decisionClass.getEnumConstants())
++		{
++			if (((Enum<?>) constant).name().equals(decision))
++			{
++				value = constant;
++			}
++		}
++		final java.lang.reflect.Constructor<?> constructor = choiceClass.getDeclaredConstructor(decisionClass, int.class, String.class, String.class, String.class, long.class);
++		constructor.setAccessible(true);
++		final Object choice = constructor.newInstance(value, 30, "", "", null, at);
++		final Method start = choiceClass.getDeclaredMethod("start", Player.class, long.class);
++		start.setAccessible(true);
++		start.invoke(choice, player, at);
++		set(choice, "tracked", tracked);
++		set(choice, "done", true);
++		set(choice, "ok", true);
++		@SuppressWarnings("unchecked")
++		final Map<String, Long> map = (Map<String, Long>) get(choice, "where");
++		map.putAll(where);
++		return choice;
++	}
++
++	private static Object memory(Object learning, Player player) throws Exception
++	{
++		final Method memory = learning.getClass().getDeclaredMethod("memory", Player.class);
++		memory.setAccessible(true);
++		return memory.invoke(learning, player);
++	}
++
++	private static int attempts(Object learning, Player player, String part, String key) throws Exception
++	{
++		final Object lesson = ((Map<?, ?>) get(memory(learning, player), part)).get(key);
++		return lesson == null ? 0 : (Integer) get(lesson, "attempts");
++	}
++
++	private static long pair(Player hunter, Player player)
++	{
++		return ((long) hunter.getObjectId() << 32) | (player.getObjectId() & 0xffffffffL);
++	}
++
++	@SuppressWarnings("unchecked")
++	private static void pending(Object learning, Player hunter, Player player, String spot) throws Exception
++	{
++		final Class<?> pendingClass = Class.forName(PKG + "PhantomLearning$Pending");
++		final java.lang.reflect.Constructor<?> constructor = pendingClass.getDeclaredConstructor(String.class, long.class);
++		constructor.setAccessible(true);
++		((Map<Long, Object>) get(learning, "_questions")).put(pair(hunter, player), constructor.newInstance(spot, System.currentTimeMillis() + 120000));
++	}
++
++	// ---------- Общее ----------
++
++	private static long count(Player player, int itemId)
++	{
++		return player.getInventory().getInventoryItemCount(itemId, -1);
++	}
++
++	/** Охотники в мире: фантомы без пати, лавки, ивента, инстанса и олимпиады. */
++	private static List<Player> pool()
++	{
++		final List<Player> out = new ArrayList<>();
++		for (Player player : World.getPlayers())
++		{
++			if (PhantomManager.getInstance().isPhantom(player) && isHunter(player) && !player.isDead() && !player.isTeleporting() && !player.isInParty() && !player.isInStoreMode() && !player.isRegisteredOnEvent() && !player.isInOlympiadMode() && (player.getInstanceId() == 0) && !player.isCursedWeaponEquipped())
++			{
++				out.add(player);
++			}
++		}
++		return out;
++	}
++
++	private static List<Player> pick(int count, java.util.function.Predicate<Player> test)
++	{
++		final List<Player> out = new ArrayList<>();
++		for (Player player : pool())
++		{
++			if (test.test(player))
++			{
++				out.add(player);
++			}
++		}
++		out.sort(Comparator.comparingInt(Player::getLevel).reversed());
++		return new ArrayList<>(out.subList(0, Math.min(count, out.size())));
++	}
++
++	private static String names(List<Player> players)
++	{
++		final StringBuilder sb = new StringBuilder();
++		for (Player player : players)
++		{
++			sb.append(sb.length() == 0 ? "" : ", ").append(player.getName()).append(' ').append(player.getLevel());
++		}
++		return sb.toString();
++	}
++
++	private static String where(List<Player> players)
++	{
++		final StringBuilder sb = new StringBuilder();
++		for (Player player : players)
++		{
++			sb.append(sb.length() == 0 ? "" : "; ").append(player.getName()).append(' ').append(player.getX()).append(',').append(player.getY()).append(" party ").append(player.isInParty()).append(" hunter ").append(isHunter(player));
++		}
++		return sb.toString();
++	}
++
++	private static boolean isHunter(Player player)
++	{
++		try
++		{
++			return hunters().containsKey(player.getName().toLowerCase());
++		}
++		catch (Exception e)
++		{
++			return false;
++		}
++	}
++
++	/** Снять с охотников (иначе уйдёт качаться) и поставить на месте. */
++	private static void park(Player player, Location at) throws Exception
++	{
++		hunters().remove(player.getName().toLowerCase());
++		AutoPlayTaskManager.getInstance().stopAutoPlay(player);
++		player.stopMove(null);
++		player.abortAttack();
++		player.abortCast();
++		player.setTarget(null);
++		player.setInvul(true);
++		if (player.isSitting())
++		{
++			player.standUp();
++			Thread.sleep(3000);
++		}
++		player.teleToLocation(at);
++		Thread.sleep(1500);
++	}
++
++	private static Object newRun(Class<?> runClass) throws Exception
++	{
++		final java.lang.reflect.Constructor<?> constructor = runClass.getDeclaredConstructor();
++		constructor.setAccessible(true);
++		return constructor.newInstance();
++	}
++
++	private static String raidOf(Player player) throws Exception
++	{
++		final Object raid = instance("PhantomRaid");
++		final Method method = raid.getClass().getDeclaredMethod("raidOf", Player.class);
++		method.setAccessible(true);
++		return (String) method.invoke(raid, player);
++	}
++
++	private static Map<?, ?> hunters() throws Exception
++	{
++		final Field field = PhantomHunterManager.class.getDeclaredField("_hunters");
++		field.setAccessible(true);
++		return (Map<?, ?>) field.get(PhantomHunterManager.getInstance());
++	}
++
++	private static Map<?, ?> phantoms() throws Exception
++	{
++		final Field field = PhantomManager.class.getDeclaredField("_phantoms");
++		field.setAccessible(true);
++		return (Map<?, ?>) field.get(PhantomManager.getInstance());
++	}
++
++	private static Object instance(String className) throws Exception
++	{
++		final Method method = Class.forName(PKG + className).getDeclaredMethod("getInstance");
++		method.setAccessible(true);
++		return method.invoke(null);
++	}
++
++	private static Method internal(String className, String name, Class<?>... args) throws Exception
++	{
++		final Method method = Class.forName(PKG + className).getDeclaredMethod(name, args);
++		method.setAccessible(true);
++		return method;
++	}
++
++	private static Object get(Object target, String name)
++	{
++		try
++		{
++			final Field field = target.getClass().getDeclaredField(name);
++			field.setAccessible(true);
++			return field.get(target);
++		}
++		catch (Exception e)
++		{
++			throw new IllegalStateException(name, e);
++		}
++	}
++
++	private static void set(Object target, String name, Object value) throws Exception
++	{
++		final Field field = target.getClass().getDeclaredField(name);
++		field.setAccessible(true);
++		field.set(target, value);
++	}
++
++	private static boolean waitFor(int seconds, BooleanSupplier done) throws InterruptedException
++	{
++		for (int i = 0; i < (seconds * 2); i++)
++		{
++			if (done.getAsBoolean())
++			{
++				return true;
++			}
++			Thread.sleep(500);
++		}
++		return done.getAsBoolean();
++	}
++
++	private static void section(String name, Section body)
++	{
++		try
++		{
++			body.run();
++		}
++		catch (Throwable e)
++		{
++			_wrong++;
++			LOGGER.log(Level.WARNING, TAG + "WRONG " + name + " failed: " + e, e);
++		}
++	}
++
++	private static void check(String what, boolean good)
++	{
++		if (good)
++		{
++			_ok++;
++			LOGGER.info(TAG + "ok " + what);
++		}
++		else
++		{
++			_wrong++;
++			LOGGER.warning(TAG + "WRONG " + what);
++		}
++	}
++
++	private static void note(String what)
++	{
++		LOGGER.info(TAG + "note " + what);
++	}
++}

@@ -1934,8 +1934,10 @@ public final class PhantomRaid
 	}
 
 	/**
+	 * Занятость лидера пати: рейд, караул у респа, поход в Rift ({@link #RIFT}) или Камалоку ({@link #KAMALOKA}).
+	 * Этим все модули узнают, что охотник ведёт пати: смерть ждёт пати, ивенты, клан и дуэли его не трогают.
 	 * @param player охотник
-	 * @return он лидер рейда — «босс (ур.)» для мозгов и окна охотников; иначе {@code null}
+	 * @return он лидер рейда — «босс (ур.)» для мозгов и окна охотников, лидер похода — {@link #RIFT} или {@link #KAMALOKA}; иначе {@code null}
 	 */
 	public String raidOf(Player player)
 	{
@@ -1945,8 +1947,21 @@ public final class PhantomRaid
 		{
 			return watch.bossName + " (" + watch.bossLevel + ")";
 		}
-		return raid != null ? raid.bossName + " (" + raid.bossLevel + ")" : null;
+		if (raid != null)
+		{
+			return raid.bossName + " (" + raid.bossLevel + ")";
+		}
+		if (PhantomRift.getInstance().leads(player))
+		{
+			return RIFT;
+		}
+		return PhantomKamaloka.getInstance().leads(player) ? KAMALOKA : null;
 	}
+
+	/** {@link #raidOf} лидера похода в Rift. */
+	static final String RIFT = "Dimensional Rift";
+	/** {@link #raidOf} лидера похода в Камалоку. */
+	static final String KAMALOKA = "Kamaloka";
 
 	// ---------- Караул у респа (раздел 4.81) ----------
 

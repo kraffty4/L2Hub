@@ -490,6 +490,36 @@ public final class PhantomText
 		EN.put("Телепортируюсь, позови чуть позже.", "Teleporting, call me in a moment.");
 		EN.put("Я сейчас дерусь с другим персонажем.", "I'm fighting someone right now.");
 		EN.put("Сейчас не могу.", "Can't right now.");
+		// Камалока (.kama)
+		EN.put("Ты далеко от лидера — пати ушла в Камалоку без тебя.", "You are too far from the leader: the party went to Kamaloka without you.");
+		EN.put("Охотники идут в Камалоку (", "Hunters are going to Kamaloka (");
+		EN.put(" ур.) — .kama join: вступить, .kama go: телепорт к ним", " lv.) — .kama join: join, .kama go: teleport to them");
+		EN.put("Сейчас охотники в Камалоку не собираются.", "Hunters are not gathering for Kamaloka now.");
+		EN.put("Этот зал Камалоки для уровней ", "This Kamaloka hall is for levels ");
+		EN.put(".", ".");
+		EN.put("Ты уже с ними.", "You are already with them.");
+		EN.put("Пати полная.", "The party is full.");
+		EN.put("Сначала .kama join.", "Use .kama join first.");
+		EN.put("Уже ушли внутрь.", "They are already inside.");
+		EN.put("Охотники собираются в Камалоку (", "Hunters are gathering for Kamaloka (");
+		EN.put(" ур.), лидер — ", " lv.), leader ");
+		EN.put(", в пати ", ", in the party: ");
+		EN.put("До входа ~", "Entering in ~");
+		EN.put(" с. .kama join — вступить, .kama go — телепорт к ним.", " s. .kama join: join, .kama go: teleport to them.");
+		EN.put("Телепорт к пати Камалоки — только из мирной зоны.", "Teleport to the Kamaloka party works only from a peace zone.");
+		// Dimensional Rift (.rift)
+		EN.put("Ты не в зале ожидания Rift — пати ушла без тебя.", "You are not in the Rift waiting room: the party went without you.");
+		EN.put("Охотники идут в Dimensional Rift (", "Hunters are going to the Dimensional Rift (");
+		EN.put(") — .rift join: вступить, .rift go: телепорт к ним", ") — .rift join: join, .rift go: teleport to them");
+		EN.put("Сейчас охотники в Rift не собираются.", "Hunters are not gathering for the Rift now.");
+		EN.put("Этот Rift для уровней ", "This Rift is for levels ");
+		EN.put("Нужно ", "You need ");
+		EN.put(" Dimensional Fragment, у тебя ", " Dimensional Fragments, you have ");
+		EN.put("Сначала .rift join.", "Use .rift join first.");
+		EN.put("Охотники собираются в Dimensional Rift (", "Hunters are gathering for the Dimensional Rift (");
+		EN.put("), лидер — ", "), leader ");
+		EN.put(" с. .rift join — вступить, .rift go — телепорт к ним.", " s. .rift join: join, .rift go: teleport to them.");
+		EN.put("Телепорт к Rift — только из мирной зоны.", "Teleport to the Rift works only from a peace zone.");
 	}
 
 	private PhantomText()

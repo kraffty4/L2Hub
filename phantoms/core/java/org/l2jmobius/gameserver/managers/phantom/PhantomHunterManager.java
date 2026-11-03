@@ -637,6 +637,10 @@ public class PhantomHunterManager
 			default:
 			{
 				final String raid = PhantomRaid.getInstance().raidOf(player);
+				if (PhantomRaid.RIFT.equals(raid) || PhantomRaid.KAMALOKA.equals(raid))
+				{
+					return "ведёшь пати в " + (PhantomRaid.RIFT.equals(raid) ? "Dimensional Rift" : "Камалоку") + ": собрал охотников, ждёте вход или уже бьётесь внутри" + wallet;
+				}
 				if (raid != null)
 				{
 					return "ведёшь рейд на РБ " + raid + ": собрал пати, ждёте у босса остальных или уже бьёте его" + wallet;
@@ -914,6 +918,10 @@ public class PhantomHunterManager
 		PhantomEpics.getInstance().control();
 		// Рейды охотников на РБ (раздел 4.32): лидер погиб — провал; пора — собрать новый из тех, кто на каче.
 		PhantomRaid.getInstance().check(now);
+		// Dimensional Rift (HunterRift): поход кончился — итог в чат, пати распустить.
+		PhantomRift.getInstance().check(now);
+		// Камалока (HunterKamaloka): поход кончился — хвастовство в чат, пати распустить.
+		PhantomKamaloka.getInstance().check(now);
 		if (_wanted)
 		{
 			final List<Player> hunting = new ArrayList<>();
@@ -929,6 +937,12 @@ public class PhantomHunterManager
 				}
 			}
 			PhantomRaid.getInstance().control(hunting, now);
+			// Окно поиска пати (HunterPartyMatching): охотники ждут пати в списке, держат комнаты, откликаются на комнаты живых.
+			PhantomPartyMatching.getInstance().control(hunting, now);
+			// Dimensional Rift (HunterRift): пати охотников одного яруса — из тех, кого рейд не взял.
+			PhantomRift.getInstance().control(hunting, now);
+			// Камалока (HunterKamaloka): раз в сутки на охотника — пати под один зал.
+			PhantomKamaloka.getInstance().control(hunting, now);
 			// PvP-ивенты (раздел 4.33): открыта регистрация — записываются охотники с кача.
 			final List<Player> onSpots = new ArrayList<>();
 			for (Player player : hunting)
@@ -1094,6 +1108,7 @@ public class PhantomHunterManager
 				PhantomRelations.getInstance().top(sb, player, 5);
 				// Клан и одиночка (раздел 4.50).
 				PhantomHunterClans.getInstance().status(sb, player);
+				PhantomLearning.getInstance().status(sb, player);
 				final Choice last = hunter.lastChoice;
 				if (last != null)
 				{
@@ -1293,6 +1308,8 @@ public class PhantomHunterManager
 		final Choice last = hunter.lastChoice;
 		if (last != null)
 		{
+			// Опыт (HunterLearning): решение оборвал выход из игры — учесть то, что успел, до пометки «неполный итог».
+			PhantomLearning.getInstance().observe(player, last);
 			last.away = true;
 		}
 		hunter.afkUntil = 0;
@@ -1438,6 +1455,11 @@ public class PhantomHunterManager
 			PhantomInitiative.getInstance().look(player, hunter.template, hunter.enemyId != 0, _realPlayers > 0, now);
 			// Пет (HunterPets): волк, хетчлинг, страйдер — купить, призвать, кормить; в городе на страйдере верхом.
 			PhantomPets.tick(player, hunter.phase == Phase.TOWN, now);
+			// Опыт (HunterLearning): спросить живого о споте — только на самом споте и не в драке.
+			if ((hunter.phase == Phase.HUNT) && (hunter.spot != null) && (hunter.enemyId == 0) && (hunter.walkBackUntil == 0) && (hunter.gatekeeperSpot == null))
+			{
+				PhantomLearning.getInstance().control(player, hunter.spot.name, _realPlayers > 0, now);
+			}
 			// Перепалки и приветствия с другими охотниками при живом зрителе (патч 0033).
 			PhantomBanter.getInstance().tick(player, hunter.template, now);
 			// Стоит в городе без дела: свой жест (раздел 4.80).
@@ -1456,6 +1478,32 @@ public class PhantomHunterManager
 			if (drive == PhantomRaid.Drive.DONE)
 			{
 				LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " is back from the raid.");
+				backToHunt(hunter, player);
+				return;
+			}
+			// Dimensional Rift (HunterRift): в походе правила кача не трогают; поход кончился — назад на свой спот.
+			final PhantomRift.Drive rift = PhantomRift.getInstance().drive(player, now);
+			if (rift == PhantomRift.Drive.LEADS)
+			{
+				hunter.lastActive = now;
+				return;
+			}
+			if (rift == PhantomRift.Drive.DONE)
+			{
+				LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " is back from the rift.");
+				backToHunt(hunter, player);
+				return;
+			}
+			// Камалока (HunterKamaloka): в походе правила кача не трогают; поход кончился — назад на свой спот.
+			final PhantomKamaloka.Drive kamaloka = PhantomKamaloka.getInstance().drive(player, now);
+			if (kamaloka == PhantomKamaloka.Drive.LEADS)
+			{
+				hunter.lastActive = now;
+				return;
+			}
+			if (kamaloka == PhantomKamaloka.Drive.DONE)
+			{
+				LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " is back from kamaloka.");
 				backToHunt(hunter, player);
 				return;
 			}
@@ -4218,6 +4266,11 @@ public class PhantomHunterManager
 			PhantomStories.selfTest(inWorld());
 			return;
 		}
+		if ("LEARNING".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST))
+		{
+			PhantomLearning.selfTest();
+			return;
+		}
 		if (huntersMax)
 		{
 			PhantomHuntersMaxTest.start(this::entered);
@@ -4876,6 +4929,12 @@ public class PhantomHunterManager
 			LOGGER.info(getClass().getSimpleName() + ": Strategy: " + player.getName() + (choice.goal.isEmpty() ? " drops his goal." : " sets his goal «" + choice.goal + "»."));
 		}
 		choice.start(player, choice.at);
+		choice.test = !facts.test.isEmpty();
+		// Опыт (HunterLearning): прошлое решение закончилось — учесть его итог целиком. Решение самопроверки обрывает прошлое — тогда не учитываем.
+		if (!choice.test)
+		{
+			PhantomLearning.getInstance().observe(player, hunter.lastChoice);
+		}
 		hunter.lastChoice = choice;
 		hunter.choice = choice;
 		LOGGER.info(getClass().getSimpleName() + ": Strategy: " + player.getName() + " (" + player.getLevel() + ", " + spotLabel(hunter.spot) + ") decides " + choice + ": «" + choice.thought + "»" + (facts.test.isEmpty() ? "." : " [SelfTest " + facts.test + "]."));

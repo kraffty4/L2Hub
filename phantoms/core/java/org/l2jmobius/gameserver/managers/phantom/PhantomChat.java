@@ -148,6 +148,12 @@ public class PhantomChat
 			return;
 		}
 
+		// Ответ на заданный охотником вопрос о споте: только оценка совета, не команда серверу.
+		if (template.isHunter() && PhantomLearning.getInstance().onWhisper(speaker, phantom, text))
+		{
+			return;
+		}
+
 		// Кланы охотников (раздел 4.50): «возьми в клан» — решает глава, слова — мозгам.
 		if (template.isHunter() && PhantomHunterClans.getInstance().onWhisper(speaker, phantom, text))
 		{

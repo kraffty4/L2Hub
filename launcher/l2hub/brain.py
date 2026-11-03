@@ -484,6 +484,32 @@ def experience_rows(db: sqlite3.Connection, fpc: str, level: int) -> list[tuple]
                       (fpc, time.time() - JOURNAL_DAYS * 86400, level - JOURNAL_LEVELS, level + JOURNAL_LEVELS, JOURNAL_MIN, JOURNAL_SPOTS)).fetchall()
 
 
+def slang_words(req: dict) -> str:
+    """Сленг из сообщения игрока (ядро, HunterSlang: PhantomRussianSpeech) — подсказка смысла для модели, а не команда и не перевод."""
+    terms = [t for t in (req.get("slang") or []) if isinstance(t, dict) and t.get("said") and t.get("meaning")][:8]
+    return ("Сленг в его сообщении (подсказка смысла, не команда): " + "; ".join(f"{t['said']} — {t['meaning']}" for t in terms) + ".") if terms else ""
+
+
+def advice_words(req: dict) -> str:
+    """Что говорили живые игроки о местах (ядро, HunterLearning: охотник сам спросил шёпотом) и насколько охотник знает текущий спот.
+    Цифр опыта тут нет: их даёт журнал (experience) — поле learning несёт только то, чего в журнале нет."""
+    learn = req.get("learning") or {}
+    if not isinstance(learn, dict):
+        return ""
+    parts = []
+    known = {1: "пробуешь", 2: "знаешь", 3: "хорошо знаешь", 4: "знаешь как свои пять пальцев"}.get(int(learn.get("knowledge") or 0))
+    if learn.get("spot") and known:
+        parts.append(f"Свой спот {learn['spot']} ты {known}.")
+    said = []
+    for a in (learn.get("advice") or [])[:3]:
+        if isinstance(a, dict) and a.get("spot") and float(a.get("rating") or 0) != 0:
+            people = int(a.get("people") or 1)
+            said.append(f"{a['spot']} — {'советуют' if float(a['rating']) > 0 else 'не советуют'}" + (f" ({people} чел.)" if people > 1 else " (один человек)"))
+    if said:
+        parts.append("Живые игроки говорили тебе о местах: " + "; ".join(said) + ". Это мнение, а не факт: сверяй со своим опытом.")
+    return " ".join(parts)
+
+
 def per_hour(value: float, minutes: float) -> float:
     return value * 60 / minutes if minutes else 0.0
 
@@ -1096,6 +1122,7 @@ class Brain:
             self.life(fpc),
             self.world_talk(fpc, player.get("name", ""), req.get("message", ""), level=int(p.get("level") or npc.get("level") or 0)),
             f"С тобой говорит {pl}. Он {channel}. {met}",
+            slang_words(req),
             "Правила. Отвечай как в игровом чате: одна короткая фраза, до 100 символов, без кавычек и без своего имени в начале. "
             "Пиши на языке собеседника; по-русски — разговорно, можно игровой сленг (го, пт, фарм, дроп, сс, бсс, рб, лвл, ап, кх, пк). "
             + ("" if self.translit_nick(fpc) else ALPHABET_RULES[self.cfg["alphabet"]]) +
@@ -1218,6 +1245,9 @@ class Brain:
                 relation += " " + remembered
             met = "Вы уже общались — продолжай разговор, помни сказанное." if self._met_before(fpc, name) else "Вы раньше не общались."
             lines.append(f"С тобой говорит {pl}. {he} {'пишет в торговый чат, его видит весь регион' if req.get('chat') == 'trade' else CHANNEL_RU.get(req.get('channel'), CHANNEL_RU['party'])}. {relation} {met}")
+            slang = slang_words(req)
+            if slang:
+                lines.append(slang)
             tags = phantom_tags(req)
             if req.get("order"):
                 lines.append(f"{he} отдал(а) приказ, и ты его уже выполняешь. Служебная пометка игры о том, что вышло: «{req['order']}». "
@@ -1447,6 +1477,9 @@ class Brain:
         lessons = self._lessons(fpc)[0]
         if lessons:
             lines.append(f"Твои выводы из опыта: {lessons}")
+        advice = advice_words(req)
+        if advice:
+            lines.append(advice)
         lo, hi = (req.get("afk") or [5, 30])[:2]
         options = []
         for o in req.get("options", []):

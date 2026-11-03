@@ -11,15 +11,18 @@ import java.util.logging.Logger;
 
 import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.gameserver.config.custom.FakePlayersConfig;
+import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
 import org.l2jmobius.gameserver.data.xml.MapRegionData;
 import org.l2jmobius.gameserver.entity.WorldObject;
 import org.l2jmobius.gameserver.entity.actor.Npc;
 import org.l2jmobius.gameserver.entity.actor.Player;
+import org.l2jmobius.gameserver.managers.phantom.PhantomRussianSpeech;
 import org.l2jmobius.gameserver.taskmanagers.GameTimeTaskManager;
 
 /**
  * L2Hub: мозги фейковых игроков. Реплику фейка пишет внешний сервис мозгов (launcher/l2hub/brain.py).<br>
  * Запрос уходит асинхронно и не держит игровые потоки; ответ показывается с задержкой «набора текста».<br>
+ * {@link PhantomRussianSpeech} (ключ {@code HunterSlang}) добавляет к исходному JSON значения игрового сленга из сообщения, не меняя его.<br>
  * Пустой ответ — фейк промолчал. Если сервис недоступен или ответил ошибкой, вызывается запасной вариант.
  */
 public class FakePlayerBrain
@@ -81,7 +84,8 @@ public class FakePlayerBrain
 		final HttpRequest request;
 		try
 		{
-			request = HttpRequest.newBuilder(URI.create(FakePlayersConfig.FAKE_PLAYER_BRAIN_URL + "/chat")).timeout(Duration.ofSeconds(timeoutSeconds)).header("Content-Type", "application/json; charset=utf-8").POST(HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8)).build();
+			final String body = PhantomHuntersConfig.HUNTER_SLANG ? PhantomRussianSpeech.enrichRequest(json) : json;
+			request = HttpRequest.newBuilder(URI.create(FakePlayersConfig.FAKE_PLAYER_BRAIN_URL + "/chat")).timeout(Duration.ofSeconds(timeoutSeconds)).header("Content-Type", "application/json; charset=utf-8").POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8)).build();
 		}
 		catch (Exception e)
 		{

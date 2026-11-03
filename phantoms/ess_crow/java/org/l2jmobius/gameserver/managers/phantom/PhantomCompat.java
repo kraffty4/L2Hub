@@ -1114,4 +1114,86 @@ public final class PhantomCompat
 	public static void restoreCursedForm(Player player)
 	{
 	}
+
+	/** Окно поиска пати (охотники, HunterPartyMatching): у Classic и Essence оно другое (MatchingRoomManager) — пока охотников в нём нет. */
+	public static boolean partyMatchingExists()
+	{
+		return false;
+	}
+
+	public static void partyMatchWait(Player player, boolean waiting)
+	{
+	}
+
+	public static int partyRoomOpen(Player owner, String title, int minLevel, int maxLevel, int maxMembers)
+	{
+		return 0;
+	}
+
+	public static void partyRoomClose(int roomId)
+	{
+	}
+
+	public static List<Integer> partyRooms()
+	{
+		return new ArrayList<>();
+	}
+
+	public static List<Player> partyRoomMembers(int roomId)
+	{
+		return new ArrayList<>();
+	}
+
+	public static Player partyRoomOwner(int roomId)
+	{
+		return null;
+	}
+
+	public static int[] partyRoomLevels(int roomId)
+	{
+		return new int[]
+		{
+			0,
+			0
+		};
+	}
+
+	public static boolean partyRoomJoin(Player player, int roomId)
+	{
+		return false;
+	}
+
+	public static void partyRoomLeave(Player player, int roomId)
+	{
+	}
+
+	/** Dimensional Rift (охотники, HunterRift): у Classic и Essence его нет — охотники туда не ходят. */
+	public static boolean riftExists()
+	{
+		return false;
+	}
+
+	public static int riftFragments(Player player, int type)
+	{
+		return 0;
+	}
+
+	public static void riftWaitingRoom(Player player)
+	{
+	}
+
+	public static boolean inRiftWaitingRoom(Player player)
+	{
+		return false;
+	}
+
+	public static boolean riftEnter(Player leader, int type)
+	{
+		return false;
+	}
+
+	public static boolean inRift(Player player)
+	{
+		return false;
+	}
 }

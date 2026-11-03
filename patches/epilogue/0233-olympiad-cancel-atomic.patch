@@ -1,0 +1,121 @@
+diff --git a/java/org/l2jmobius/gameserver/mechanics/olympiad/Olympiad.java b/java/org/l2jmobius/gameserver/mechanics/olympiad/Olympiad.java
+--- a/java/org/l2jmobius/gameserver/mechanics/olympiad/Olympiad.java
++++ b/java/org/l2jmobius/gameserver/mechanics/olympiad/Olympiad.java
+@@ -753,66 +753,58 @@
+ 	
+ 	public boolean unRegisterNoble(Player noble)
+ 	{
+-		SystemMessage sm;
+-		
+-		if (!_inCompPeriod)
+-		{
+-			sm = new SystemMessage(SystemMessageId.THE_GRAND_OLYMPIAD_GAMES_ARE_NOT_CURRENTLY_IN_PROGRESS);
++		final OlympiadManager manager = OlympiadManager.getInstance();
++		// Подбор соперников держит тот же монитор в OlympiadManager.run().
++		// Удаление из очереди и назначение матча не должны выполняться одновременно.
++		synchronized (manager)
++		{
++			SystemMessage sm;
++			if (!_inCompPeriod)
++			{
++				sm = new SystemMessage(SystemMessageId.THE_GRAND_OLYMPIAD_GAMES_ARE_NOT_CURRENTLY_IN_PROGRESS);
++				noble.sendPacket(sm);
++				return false;
++			}
++			if (!noble.isNoble())
++			{
++				sm = new SystemMessage(SystemMessageId.C1_DOES_NOT_MEET_THE_PARTICIPATION_REQUIREMENTS_ONLY_NOBLESSE_CAN_PARTICIPATE_IN_THE_OLYMPIAD);
++				sm.addString(noble.getName());
++				noble.sendPacket(sm);
++				return false;
++			}
++			// Игрок с назначенным соперником уже удалён из очереди ожидания.
++			final Map<Integer, OlympiadGame> games = manager.getOlympiadGames();
++			if (games != null)
++			{
++				for (OlympiadGame game : games.values())
++				{
++					if ((game != null) && ((game._playerOneID == noble.getObjectId()) || (game._playerTwoID == noble.getObjectId())))
++					{
++						noble.sendMessage("Can't deregister whilst you are already selected for a game");
++						return false;
++					}
++				}
++			}
++			boolean removed = (_nonClassBasedRegisters != null) && _nonClassBasedRegisters.remove(noble);
++			if (!removed && (_classBasedRegisters != null))
++			{
++				final List<Player> classed = _classBasedRegisters.get(noble.getPlayerClass().getId());
++				removed = (classed != null) && classed.remove(noble);
++			}
++			if (!removed)
++			{
++				sm = new SystemMessage(SystemMessageId.YOU_ARE_NOT_CURRENTLY_REGISTERED_ON_ANY_GRAND_OLYMPIAD_GAMES_WAITING_LIST);
++				noble.sendPacket(sm);
++				return false;
++			}
++			sm = new SystemMessage(SystemMessageId.YOU_HAVE_BEEN_REMOVED_FROM_THE_GRAND_OLYMPIAD_GAMES_WAITING_LIST);
+ 			noble.sendPacket(sm);
+-			return false;
+-		}
+-		
+-		if (!noble.isNoble())
+-		{
+-			sm = new SystemMessage(SystemMessageId.C1_DOES_NOT_MEET_THE_PARTICIPATION_REQUIREMENTS_ONLY_NOBLESSE_CAN_PARTICIPATE_IN_THE_OLYMPIAD);
+-			sm.addString(noble.getName());
+-			noble.sendPacket(sm);
+-			return false;
+-		}
+-		
+-		if (!isRegistered(noble))
+-		{
+-			sm = new SystemMessage(SystemMessageId.YOU_ARE_NOT_CURRENTLY_REGISTERED_ON_ANY_GRAND_OLYMPIAD_GAMES_WAITING_LIST);
+-			noble.sendPacket(sm);
+-			return false;
+-		}
+-		
+-		for (OlympiadGame game : OlympiadManager.getInstance().getOlympiadGames().values())
+-		{
+-			if (game == null)
+-			{
+-				continue;
+-			}
+-			
+-			if ((game._playerOneID == noble.getObjectId()) || (game._playerTwoID == noble.getObjectId()))
+-			{
+-				noble.sendMessage("Can't deregister whilst you are already selected for a game");
+-				return false;
+-			}
+-		}
+-		
+-		if (_nonClassBasedRegisters.contains(noble))
+-		{
+-			_nonClassBasedRegisters.remove(noble);
+-		}
+-		else
+-		{
+-			final List<Player> classed = _classBasedRegisters.get(noble.getPlayerClass().getId());
+-			classed.remove(noble);
+-			
+-			_classBasedRegisters.remove(noble.getPlayerClass().getId());
+-			_classBasedRegisters.put(noble.getPlayerClass().getId(), classed);
+-		}
+-		
+-		sm = new SystemMessage(SystemMessageId.YOU_HAVE_BEEN_REMOVED_FROM_THE_GRAND_OLYMPIAD_GAMES_WAITING_LIST);
+-		noble.sendPacket(sm);
+-		
+-		if (DualboxCheckConfig.DUALBOX_CHECK_MAX_OLYMPIAD_PARTICIPANTS_PER_IP > 0)
+-		{
+-			AntiFeedManager.getInstance().removePlayer(AntiFeedManager.OLYMPIAD_ID, noble);
+-		}
+-		
+-		return true;
++			if (DualboxCheckConfig.DUALBOX_CHECK_MAX_OLYMPIAD_PARTICIPANTS_PER_IP > 0)
++			{
++				AntiFeedManager.getInstance().removePlayer(AntiFeedManager.OLYMPIAD_ID, noble);
++			}
++			return true;
++		}
+ 	}
+ 	
+ 	public void removeDisconnectedCompetitor(Player player)

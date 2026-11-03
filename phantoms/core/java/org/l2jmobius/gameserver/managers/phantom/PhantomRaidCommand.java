@@ -55,7 +55,8 @@ public class PhantomRaidCommand implements IVoicedCommandHandler
 			return false;
 		}
 
-		if (CommunityBoardConfig.COMMUNITYBOARD_COMBAT_DISABLED && (player.isCastingNow() || player.isInCombat() || player.isInDuel() || player.isInOlympiadMode() || player.isInsideZone(ZoneId.SIEGE) || player.isInsideZone(ZoneId.PVP) || (player.getPvpFlag() > 0) || player.isAlikeDead() || player.isOnEvent() || player.isInStoreMode()))
+		// Бой, олимпиада, осада — всегда: иначе телепорт становится бесплатным побегом из драки (мирная зона — по настройке доски).
+		if ((player.isCastingNow() || player.isInCombat() || player.isInDuel() || player.isInOlympiadMode() || player.isInsideZone(ZoneId.SIEGE) || player.isInsideZone(ZoneId.PVP) || (player.getPvpFlag() > 0) || player.isAlikeDead() || player.isOnEvent() || player.isInStoreMode()))
 		{
 			player.sendMessage(tr("Сейчас нельзя: ты в бою, мёртв или на событии."));
 			return false;

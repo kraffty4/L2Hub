@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -130,8 +131,10 @@ final class PhantomHunterStrategy
 		long partyTime;
 		int deaths;
 		final AtomicInteger kills = new AtomicInteger();
-		/** Где был, мс: имя спота или пусто — город, дорога, не на споте. */
-		final Map<String, Long> where = new HashMap<>();
+		/** Решение самопроверки ({@code facts.test}): в опыт охотника ({@link PhantomLearning}) не идёт. */
+		volatile boolean test;
+		/** Где был, мс: имя спота или пусто — город, дорога, не на споте. Пишет тик, читает и поток ответа мозгов ({@link PhantomLearning#observe}). */
+		final Map<String, Long> where = new ConcurrentHashMap<>();
 
 		Choice(Decision decision, int minutes, String arg, String thought, String goal, long at)
 		{
@@ -345,6 +348,8 @@ final class PhantomHunterStrategy
 		FakePlayerBrain.field(sb, "fpc", player.getName()).append(',');
 		sb.append("\"npcId\":").append(player.getObjectId()).append(',');
 		FakePlayerBrain.field(sb, "test", facts.test).append(',');
+		// Опыт (HunterLearning): советы живых игроков о местах и знание текущего спота; ответ прежний — только разрешённые теги.
+		PhantomLearning.getInstance().json(sb, player, facts.spot != null ? facts.spot.name : "");
 		// Протокол v1: цель и итог прошлого решения — модель видит, что вышло, и почему сервер отказал.
 		if (!facts.goal.isEmpty())
 		{
@@ -442,7 +447,8 @@ final class PhantomHunterStrategy
 			{
 				FakePlayerBrain.field(sb, "arg", option.getKey().arg).append(',');
 			}
-			FakePlayerBrain.field(sb, "note", option.getValue());
+			final String experience = PhantomLearning.getInstance().note(player, option.getKey());
+			FakePlayerBrain.field(sb, "note", option.getValue() + (experience.isEmpty() ? "" : (option.getValue().isEmpty() ? "" : " | ") + experience));
 			if (choices != null)
 			{
 				sb.append(",\"choices\":").append(choices);

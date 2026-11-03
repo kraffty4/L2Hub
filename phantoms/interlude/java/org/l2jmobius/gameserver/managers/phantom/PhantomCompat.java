@@ -16,6 +16,7 @@ import java.util.logging.Logger;
 
 import org.l2jmobius.commons.database.DatabaseFactory;
 import org.l2jmobius.gameserver.config.FeatureConfig;
+import org.l2jmobius.gameserver.config.GeneralConfig;
 import org.l2jmobius.gameserver.config.PlayerConfig;
 import org.l2jmobius.gameserver.config.custom.AutoPlayConfig;
 import org.l2jmobius.gameserver.data.sql.ClanTable;
@@ -32,6 +33,9 @@ import org.l2jmobius.gameserver.entity.actor.instance.Merchant;
 import org.l2jmobius.gameserver.entity.clan.Clan;
 import org.l2jmobius.gameserver.entity.groups.Party;
 import org.l2jmobius.gameserver.entity.groups.PartyDistributionType;
+import org.l2jmobius.gameserver.entity.groups.matching.PartyMatchRoom;
+import org.l2jmobius.gameserver.entity.groups.matching.PartyMatchRoomList;
+import org.l2jmobius.gameserver.entity.groups.matching.PartyMatchWaitingList;
 import org.l2jmobius.gameserver.entity.item.enchant.EnchantResultType;
 import org.l2jmobius.gameserver.entity.item.enchant.EnchantScroll;
 import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
@@ -45,6 +49,7 @@ import org.l2jmobius.gameserver.entity.zone.ZoneId;
 import org.l2jmobius.gameserver.geoengine.GeoEngine;
 import org.l2jmobius.gameserver.managers.CastleManager;
 import org.l2jmobius.gameserver.managers.CursedWeaponsManager;
+import org.l2jmobius.gameserver.managers.DimensionalRiftManager;
 import org.l2jmobius.gameserver.managers.RaidBossSpawnManager;
 import org.l2jmobius.gameserver.mechanics.buylist.BuyListHolder;
 import org.l2jmobius.gameserver.mechanics.buylist.Product;
@@ -70,6 +75,7 @@ import org.l2jmobius.gameserver.network.holders.TradeItem;
 import org.l2jmobius.gameserver.network.holders.TradeList;
 import org.l2jmobius.gameserver.network.serverpackets.AskJoinParty;
 import org.l2jmobius.gameserver.network.serverpackets.AskJoinPledge;
+import org.l2jmobius.gameserver.network.serverpackets.ExManagePartyRoomMember;
 import org.l2jmobius.gameserver.network.serverpackets.FriendStatusPacket;
 import org.l2jmobius.gameserver.network.serverpackets.JoinParty;
 import org.l2jmobius.gameserver.network.serverpackets.L2Friend;
@@ -1028,5 +1034,222 @@ public final class PhantomCompat
 	 */
 	public static void restoreCursedForm(Player player)
 	{
+	}
+
+	/** Окно поиска пати (охотники, HunterPartyMatching): у CT — PartyMatchRoomList и PartyMatchWaitingList. */
+	public static boolean partyMatchingExists()
+	{
+		return true;
+	}
+
+	/** Поставить в список ожидающих пати ({@code true}) или убрать из него. */
+	public static void partyMatchWait(Player player, boolean waiting)
+	{
+		if (waiting)
+		{
+			PartyMatchWaitingList.getInstance().addPlayer(player);
+		}
+		else
+		{
+			PartyMatchWaitingList.getInstance().removePlayer(player);
+		}
+	}
+
+	/**
+	 * Открыть комнату, как {@code RequestPartyMatchList}: владелец и его пати — в комнате.
+	 * @return id комнаты
+	 */
+	public static int partyRoomOpen(Player owner, String title, int minLevel, int maxLevel, int maxMembers)
+	{
+		final PartyMatchRoomList rooms = PartyMatchRoomList.getInstance();
+		final PartyMatchRoom room;
+		final int id;
+		synchronized (rooms)
+		{
+			id = rooms.getMaxId();
+			room = new PartyMatchRoom(id, title, 0, minLevel, maxLevel, maxMembers, owner);
+			rooms.addPartyMatchRoom(id, room);
+		}
+		PartyMatchWaitingList.getInstance().removePlayer(owner);
+		if (owner.isInParty())
+		{
+			for (Player member : owner.getParty().getMembers())
+			{
+				if ((member != null) && (member != owner))
+				{
+					member.setPartyRoom(id);
+					room.addMember(member);
+				}
+			}
+		}
+		owner.setPartyRoom(id);
+		owner.broadcastUserInfo();
+		return id;
+	}
+
+	/** Закрыть комнату: всем в ней — штатное «комната распущена». */
+	public static void partyRoomClose(int roomId)
+	{
+		if (PartyMatchRoomList.getInstance().getRoom(roomId) != null)
+		{
+			PartyMatchRoomList.getInstance().deleteRoom(roomId);
+		}
+	}
+
+	/** Все id комнат. */
+	public static List<Integer> partyRooms()
+	{
+		final List<Integer> ids = new ArrayList<>();
+		for (PartyMatchRoom room : PartyMatchRoomList.getInstance().getRooms())
+		{
+			ids.add(room.getId());
+		}
+		return ids;
+	}
+
+	/** Кто в комнате (вместе с владельцем); комнаты нет — пусто. */
+	public static List<Player> partyRoomMembers(int roomId)
+	{
+		final PartyMatchRoom room = PartyMatchRoomList.getInstance().getRoom(roomId);
+		return room == null ? new ArrayList<>() : new ArrayList<>(room.getPartyMembers());
+	}
+
+	/** Владелец комнаты; комнаты нет — {@code null}. */
+	public static Player partyRoomOwner(int roomId)
+	{
+		final PartyMatchRoom room = PartyMatchRoomList.getInstance().getRoom(roomId);
+		return room == null ? null : room.getOwner();
+	}
+
+	/** Уровни комнаты: {@code [min, max]}; комнаты нет — {@code [0, 0]}. */
+	public static int[] partyRoomLevels(int roomId)
+	{
+		final PartyMatchRoom room = PartyMatchRoomList.getInstance().getRoom(roomId);
+		return room == null ? new int[]
+		{
+			0,
+			0
+		} : new int[]
+		{
+			room.getMinLevel(),
+			room.getMaxLevel()
+		};
+	}
+
+	/**
+	 * Войти в чужую комнату, как {@code RequestPartyMatchDetail}: уровень подходит и есть место.
+	 * @return вошёл
+	 */
+	public static boolean partyRoomJoin(Player player, int roomId)
+	{
+		final PartyMatchRoom room = PartyMatchRoomList.getInstance().getRoom(roomId);
+		if ((room == null) || (player.getLevel() < room.getMinLevel()) || (player.getLevel() > room.getMaxLevel()) || (room.getMembers() >= room.getMaxMembers()))
+		{
+			return false;
+		}
+		PartyMatchWaitingList.getInstance().removePlayer(player);
+		player.setPartyRoom(roomId);
+		for (Player member : room.getPartyMembers())
+		{
+			if (member == null)
+			{
+				continue;
+			}
+			member.sendPacket(new ExManagePartyRoomMember(player, room, 0));
+			final SystemMessage sm = new SystemMessage(SystemMessageId.S1_HAS_ENTERED_THE_PARTY_ROOM);
+			sm.addString(player.getName());
+			member.sendPacket(sm);
+		}
+		room.addMember(player);
+		player.broadcastUserInfo();
+		return true;
+	}
+
+	/** Выйти из чужой комнаты, как {@code RequestWithdrawPartyRoom}: остальным — штатное «покинул комнату». */
+	public static void partyRoomLeave(Player player, int roomId)
+	{
+		final PartyMatchRoom room = PartyMatchRoomList.getInstance().getRoom(roomId);
+		if ((room != null) && (room.getOwner() != player))
+		{
+			room.deleteMember(player);
+		}
+		player.setPartyRoom(0);
+		player.broadcastUserInfo();
+	}
+
+	/** Dimensional Rift (охотники, HunterRift): у CT он есть. */
+	public static boolean riftExists()
+	{
+		return true;
+	}
+
+	/**
+	 * Сколько Dimensional Fragment (7079) платит этот игрок за вход на ярус Rift.
+	 * @param type ярус 1 (Recruit) … 6 (Hero)
+	 * @return 0 — платить не надо: «малый мир» ({@code SmallWorldRift}) пускает фантомов без фрагментов
+	 */
+	public static int riftFragments(Player player, int type)
+	{
+		if (GeneralConfig.SMALL_WORLD_RIFT && PhantomManager.getInstance().isPhantom(player))
+		{
+			return 0;
+		}
+		return switch (type)
+		{
+			case 1 -> GeneralConfig.RIFT_ENTER_COST_RECRUIT;
+			case 2 -> GeneralConfig.RIFT_ENTER_COST_SOLDIER;
+			case 3 -> GeneralConfig.RIFT_ENTER_COST_OFFICER;
+			case 4 -> GeneralConfig.RIFT_ENTER_COST_CAPTAIN;
+			case 5 -> GeneralConfig.RIFT_ENTER_COST_COMMANDER;
+			case 6 -> GeneralConfig.RIFT_ENTER_COST_HERO;
+			default -> 0;
+		};
+	}
+
+	/** Телепорт в зал ожидания Rift. */
+	public static void riftWaitingRoom(Player player)
+	{
+		DimensionalRiftManager.getInstance().teleportToWaitingRoom(player);
+	}
+
+	/** Стоит ли игрок в зале ожидания Rift (там Mobius и проверяет перед входом). */
+	public static boolean inRiftWaitingRoom(Player player)
+	{
+		return DimensionalRiftManager.getInstance().checkIfInPeaceZone(player.getX(), player.getY(), player.getZ());
+	}
+
+	/**
+	 * Вход пати лидера в Rift. Все условия {@code DimensionalRiftManager.start} проверяются здесь: при отказе он показывает окно NPC,
+	 * а NPC у охотника нет ({@code npc = null} — NPE).
+	 * @return пати внутри Rift
+	 */
+	public static boolean riftEnter(Player leader, int type)
+	{
+		final Party party = leader.getParty();
+		if ((party == null) || (party.getLeaderObjectId() != leader.getObjectId()) || party.isInDimensionalRift() || (party.getMemberCount() < GeneralConfig.RIFT_MIN_PARTY_SIZE) || !DimensionalRiftManager.getInstance().isAllowedEnter((byte) type))
+		{
+			return false;
+		}
+		for (Player member : party.getMembers())
+		{
+			if (!inRiftWaitingRoom(member))
+			{
+				return false;
+			}
+			final int need = riftFragments(member, type);
+			final Item fragments = need == 0 ? null : member.getInventory().getItemByItemId(7079);
+			if ((need > 0) && ((fragments == null) || (fragments.getCount() < need)))
+			{
+				return false;
+			}
+		}
+		DimensionalRiftManager.getInstance().start(leader, (byte) type, null);
+		return party.isInDimensionalRift();
+	}
+
+	/** Пати игрока внутри Rift. */
+	public static boolean inRift(Player player)
+	{
+		return player.isInParty() && player.getParty().isInDimensionalRift();
 	}
 }
