@@ -221,7 +221,38 @@ public final class PhantomEvents
 	 */
 	public boolean isBusy(Player player)
 	{
-		return player.isRegisteredOnEvent() || player.isOnEvent() || PhantomSiege.getInstance().inBattle(player);
+		return PhantomClanInvite.getInstance().pending(player) || player.isRegisteredOnEvent() || player.isOnEvent() || PhantomSiege.getInstance().inBattle(player);
+	}
+
+	/**
+	 * Зовёт живой соклан ({@link PhantomClanInvite}): снять запись на ивент. С арены не снимает.
+	 * @param player охотник
+	 * @return больше не записан
+	 */
+	boolean cancelForClanInvite(Player player)
+	{
+		if (player.isOnEvent())
+		{
+			return false;
+		}
+		if (!player.isRegisteredOnEvent())
+		{
+			return true;
+		}
+		final Score score = _participants.get(player.getObjectId());
+		if (score == null)
+		{
+			return false;
+		}
+		PhantomEventBoard.call(score.event, "CancelParticipation", player);
+		if (player.isRegisteredOnEvent())
+		{
+			return false;
+		}
+		_participants.remove(player.getObjectId());
+		player.removeListener(score.listener);
+		_runners.values().remove(player.getObjectId());
+		return true;
 	}
 
 	/**

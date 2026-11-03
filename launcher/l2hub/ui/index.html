@@ -126,6 +126,7 @@
                     <button class="tab on" data-tab="basic">Основное</button>
                     <button class="tab" data-tab="all">Все настройки <span class="badge" id="allBadge"></span></button>
                     <button class="tab" data-tab="net">Клиент и сеть</button>
+                    <button class="tab" data-tab="gmshop" id="gmTab" hidden>Цены GM-шопа <span class="badge" id="gmBadge"></span></button>
                   </div>
                 </div>
                 <div class="view-body">
@@ -140,6 +141,18 @@
                     </div>
                   </div>
                   <div class="pane" id="pane-net"><div class="netgrid" id="net"></div></div>
+                  <div class="pane" id="pane-gmshop">
+                    <div class="all">
+                      <div class="files" id="gmTree"></div>
+                      <div class="keys">
+                        <div class="keys-bar"><input class="search" id="gmSearch" placeholder="Поиск по шопу: название или номер вещи"><label><button class="switch" role="switch" aria-checked="false" id="gmOnlyEdited"></button>Только правки</label><label><button class="switch" role="switch" aria-checked="false" id="gmOnlyWarn"></button>С предупреждением</label></div>
+                        <div class="gm-tools" id="gmTools"></div>
+                        <div class="note gm-preview" id="gmPreview" hidden></div>
+                        <div class="keys-list" id="gmRows"></div>
+                        <div class="gm-info" id="gmInfo"></div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 <div class="view-foot"><span class="info" id="pendingInfo">Изменений нет.</span><button class="sbtn" id="discardBtn">Отменить правки</button><button class="sbtn primary" id="saveBtn">Сохранить</button></div>
               </section>
@@ -278,6 +291,6 @@
     <span class="dver" id="footVer"></span>
   </div>
 </div>
-<script>document.write('<script src="app.js?v=' + UI_VERSION + '"><\/script><script src="l2solo.js?v=' + UI_VERSION + '"><\/script><script src="worldmap.js?v=' + UI_VERSION + '"><\/script><script src="world.js?v=' + UI_VERSION + '"><\/script>');</script>
+<script>document.write('<script src="app.js?v=' + UI_VERSION + '"><\/script><script src="l2solo.js?v=' + UI_VERSION + '"><\/script><script src="worldmap.js?v=' + UI_VERSION + '"><\/script><script src="world.js?v=' + UI_VERSION + '"><\/script><script src="gmshop.js?v=' + UI_VERSION + '"><\/script>');</script>
 </body>
 </html>

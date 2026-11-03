@@ -250,7 +250,7 @@ function renderHealth() {
   $('tiles').innerHTML = [
     tile('База данных', db.state, [db.where || `${db.engine || 'MariaDB'} · 127.0.0.1:${db.port}`]), // where — у L2Solo: SQLite внутри сервера
     tile('Логин-сервер', lg.state, [listenAt(lg), lg.pid ? `PID ${lg.pid} · ${fmtUptime(lg.uptime_s)}` : '']),
-    tile('Гейм-сервер', gm.state, [listenAt(gm) + (gm.geo_regions ? ` · мир ${gm.geo_regions} регионов` : ''), gm.pid ? `куча ${gm.heap || '—'} · ${fmtUptime(gm.uptime_s)}` : '']),
+    tile('Гейм-сервер', gm.state, [listenAt(gm) + (gm.geo_regions ? ` · мир ${gm.geo_regions} регионов` : ''), gm.pid ? `${gm.heapState ? `после сборки ${gm.heapState.afterGcMb} из ${gm.heapState.maxMb} МБ` : `куча ${gm.heap || '—'}`} · ${fmtUptime(gm.uptime_s)}` : '']),
     tile('Клиент', cl.state, [`протокол ${cl.protocol ?? '—'}`, cl.pid ? `PID ${cl.pid} · ${fmtUptime(cl.uptime_s)}` : '']),
     k.brain ? tile('Мозги фейков', k.brain.state === 'on' && !k.brain.key ? 'nokey' : k.brain.state, [
       k.brain.state === 'on' ? `${k.brain.model} · характеров ${k.brain.personas ?? 0}` : `127.0.0.1:${k.brain.port}`,
@@ -261,6 +261,7 @@ function renderHealth() {
 }
 
 // Панель сеанса: одна хроника на всех (порты общие), поэтому и состояние одно — видно из любого раздела.
+let restartToldFor = null;
 function renderDock() {
   const job = last.job && !last.job.done ? last.job : null;
   const run = last.running;
@@ -276,6 +277,12 @@ function renderDock() {
     if (gm.uptime_s) meta.push(fmtUptime(gm.uptime_s));
     if (gm.world) meta.push(`онлайн ${gm.world.total}`);
     else if (gm.online != null) meta.push(`в игре ${gm.online}`);
+    if (gm.heapState?.level === 'now') meta.push('пора перезапустить');
+  }
+  // Напоминание о перезапуске (machine.heap_state, docs/PHANTOMS.md, раздел 4.132): один раз за запуск сервера, дальше — панель сеанса и «Обзор».
+  if (!job && run && gm.heapState?.level === 'now' && restartToldFor !== gm.pid) {
+    restartToldFor = gm.pid;
+    toast(gm.heapState.text, true);
   }
   $('dockMeta').textContent = meta.length ? '· ' + meta.join(' · ') : '';
   if (job) $('footLog').textContent = job.step;
@@ -363,8 +370,13 @@ $('play').onclick = () => {
     if (last.components?.client?.state === 'on') return toast('Клиент уже запущен.');
     return call(api.launch_client(c.id));
   }
+  warnMachine(c.id);
   return call(api.play(c.id, true));
 };
+// Перед стартом: хватит ли машины и места (machine.py, docs/PHANTOMS.md, раздел 4.132). Только совет, запуск идёт своим чередом.
+function warnMachine(id) {
+  api.machine_check(id).then((r) => { if (r?.warnings?.length) toast(r.warnings.join(' '), true); }).catch(() => {});
+}
 // Мастер установки (Api.install_plan / install): сервер Mobius — рантаймы, исходники на коммите, сборка, база; own —
 // «Подключить свою сборку»: копия сборки-комбайна по описанию вида из bundles.json, для любой хроники.
 async function installFlow(c, wantOwn = false) {
@@ -478,7 +490,10 @@ $('menu').querySelectorAll('button').forEach((b) => (b.onclick = async (e) => {
   const a = b.dataset.act;
   if (a === 'own') return installFlow(c, true);  // у установленной — второй сервер рядом (вариант)
   if (!c.installed) return toast('Сначала установи хронику.');
-  if (a === 'server') return call(api.play(c.id, false));
+  if (a === 'server') {
+    warnMachine(c.id);
+    return call(api.play(c.id, false));
+  }
   if (a === 'db') return call(api.play(c.id, false, true));
   if (a === 'client') return call(api.launch_client(c.id));
   if (a === 'restart') return call(api.restart_game(c.id));
@@ -573,9 +588,9 @@ async function renderOverviewCards() {
     return;
   }
   if (cardsFor !== id) box.innerHTML = '';
-  const [h, net, bk, st, v, g] = await Promise.all([
+  const [h, net, bk, st, v, g, mc] = await Promise.all([
     api.hunters(id).catch(() => null), api.network_state(id).catch(() => null), api.backup_list(id).catch(() => null),
-    api.selftest(id).catch(() => null), votes(), api.geodata_status(id).catch(() => null)]);
+    api.selftest(id).catch(() => null), votes(), api.geodata_status(id).catch(() => null), api.machine_check(id).catch(() => null)]);
   if (id !== selected) return;
   cardsFor = id;
   const card = (key, title, dot, big, m) => `<button class="ocard" data-go="${key}"><h3><span class="dot ${dot}"></span>${title}</h3><div class="big">${big}</div><div class="m">${m}</div><span class="go">${{ world: 'Мой мир →', friends: 'Друзья →', backups: 'Бэкапы →', diag: 'Проверить всё →' }[key]}</span></button>`;
@@ -605,6 +620,10 @@ async function renderOverviewCards() {
       cards.push(card('diag', 'Моды L2Hub', st.bad.length ? 'bad' : 'on', `<b>${st.okCount}</b>из ${st.checks.length}`, bad + season));
     }
   }
+  // Хватит ли машины и память сервера (machine.py, docs/PHANTOMS.md, раздел 4.132): карточки появляются, только когда есть что сказать.
+  if (mc?.warnings?.length) cards.push(card('diag', 'Хватит ли машины', 'bad', mc.recommended ? `<b>${mc.recommended}</b>рекомендуем` : 'Мало места', esc(mc.warnings.join(' '))));
+  const hs = last.running === id ? last.components?.game?.heapState : null;
+  if (hs && hs.level !== 'ok') cards.push(card('diag', 'Память сервера', hs.level === 'now' ? 'bad' : 'starting', `<b>${hs.percent}</b>% после сборки`, esc(hs.text)));
   cards.push(geoCard(id, g));
   box.innerHTML = cards.join('');
   box.querySelectorAll('[data-go]').forEach((b) => (b.onclick = () => (b.dataset.go === 'backups' ? showCtab('backups')
@@ -1159,6 +1178,7 @@ async function loadSchema() {
   $('allBadge').textContent = Object.keys(KEYS).length;
   $('keySearch').placeholder = `Поиск по ${Object.keys(KEYS).length} настройкам: имя или описание`;
   renderBasic(); renderFiles(); renderKeys(); renderNet(); updatePending();
+  if (typeof gmShopRefresh === 'function') gmShopRefresh();
 }
 
 function setVal(k, v) {
@@ -1227,7 +1247,9 @@ async function renderModes() {
   const missing = r.switches.filter((s) => !s.available).map((s) => s.title);
   // Сколько охотников в мире (modes.hunters_max, docs/PHANTOMS.md, раздел 4.120): только у хроник из server_modes.json.
   const hm = r.huntersMax;
-  const hmRow = hm ? `<div class="mode-group">${esc(hm.group)}</div><div class="opt"><div class="l">${esc(hm.title)}<small>${esc(hm.note)} Сейчас в таблице ${hm.top}: больше не поставить. Куча гейма на этой машине — ${hm.heapGb} ГБ.</small></div>
+  const hmM = hm?.machine;
+  const hmFit = hmM && !hmM.fits ? `<button class="sbtn" style="margin-top:6px" id="huntersFit">Поставить ${hmM.recommended}</button>` : '';
+  const hmRow = hm ? `<div class="mode-group">${esc(hm.group)}</div><div class="opt"><div class="l">${esc(hm.title)}<small>${esc(hm.note)} Сейчас в таблице ${hm.top}: больше не поставить. На этой машине ОЗУ ${String(hmM.ramGb).replace('.', ',')} ГБ, ${hmM.threads} потоков, куча гейма ${hm.heapGb} ГБ: рекомендуем до ${hmM.recommended}.</small>${hmM.warnings.map((w) => `<div class="note bad-text" style="margin-top:6px">${esc(w)}</div>`).join('')}${hmFit}</div>
       <input class="field" style="width:64px" id="huntersMax" value="${hm.count}" inputmode="numeric"></div>` : '';
   const cal = host.querySelector('.cal-card');  // календарь остаётся на месте, пока renderCalendar не поставит новый
   host.innerHTML = `<div class="card wide"><h3>Режим сервера<span class="src">${active ? esc(active.title) : 'свои настройки'}</span></h3>
@@ -1256,6 +1278,11 @@ async function renderModes() {
   }));
   renderCalendar(host, id);
   const hmInput = $('huntersMax');
+  const hmFitBtn = $('huntersFit');
+  if (hmFitBtn) hmFitBtn.onclick = () => {
+    hmInput.value = hmM.recommended;
+    hmInput.onchange();
+  };
   if (hmInput) hmInput.onchange = async () => {
     const res = await api.set_hunters_max(id, hmInput.value);
     if (!res.ok) { hmInput.value = hm.count; return toast(res.error, true); }

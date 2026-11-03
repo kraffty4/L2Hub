@@ -36,7 +36,10 @@ import org.l2jmobius.gameserver.entity.item.enchant.EnchantResultType;
 import org.l2jmobius.gameserver.entity.item.enchant.EnchantScroll;
 import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
 import org.l2jmobius.gameserver.entity.item.holders.ItemHolder;
+import org.l2jmobius.gameserver.entity.item.holders.ItemSkillHolder;
+import org.l2jmobius.gameserver.entity.item.holders.PetItemHolder;
 import org.l2jmobius.gameserver.entity.item.instance.Item;
+import org.l2jmobius.gameserver.entity.item.recipe.ManufactureItem;
 import org.l2jmobius.gameserver.entity.item.type.WeaponType;
 import org.l2jmobius.gameserver.entity.itemcontainer.Inventory;
 import org.l2jmobius.gameserver.entity.spawns.Spawn;
@@ -185,6 +188,35 @@ public final class PhantomCompat
 		return player.getAnyServitor();
 	}
 
+	/** Пет: у Classic и Essence он отдельно от слуг — getPet(). */
+	public static Summon pet(Player player)
+	{
+		return player.getPet();
+	}
+
+	/**
+	 * Призвать пета из ошейника без клиента: обработчик предмета (SummonItems) зовёт флуд-защиту клиента,
+	 * у охотника её нет. Поэтому как он: держатель ошейника и каст скилла предмета, дальше пета создаёт эффект SummonPet.
+	 * @return каст начат
+	 */
+	public static boolean summonPet(Player player, Item collar)
+	{
+		final List<ItemSkillHolder> skills = collar.getTemplate().getAllSkills();
+		final Skill skill = (skills == null) || skills.isEmpty() ? null : skills.get(0).getSkill();
+		if (skill == null)
+		{
+			return false;
+		}
+		player.addScript(new PetItemHolder(collar));
+		return useMagic(player, skill, false, false);
+	}
+
+	/** Строка мастерской крафта: рецепт и плата за работу. */
+	public static void addManufactureItem(Player player, int recipeId, long fee)
+	{
+		player.getManufactureItems().put(recipeId, new ManufactureItem(recipeId, fee));
+	}
+
 	/** Олимпиада: записать дворянина на матч без класса (у H5, Classic и Essence — OlympiadManager с CompetitionType). */
 	public static boolean olympiadRegister(Player player)
 	{
@@ -194,6 +226,16 @@ public final class PhantomCompat
 	public static boolean olympiadRegistered(Player player)
 	{
 		return OlympiadManager.getInstance().isRegistered(player);
+	}
+
+	public static boolean olympiadUnregister(Player player)
+	{
+		return OlympiadManager.getInstance().unRegisterNoble(player);
+	}
+
+	public static boolean canBeDispeled(Skill skill)
+	{
+		return skill.canBeDispelled();
 	}
 
 	/** Родные зоны рас, которых нет в других хрониках. */

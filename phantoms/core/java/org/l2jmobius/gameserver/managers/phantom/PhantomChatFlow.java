@@ -383,7 +383,8 @@ public final class PhantomChatFlow
 			final boolean en = en();
 			final String[] pool = sell ? (en ? WTS_EN : WTS_RU) : (en ? WTB_EN : WTB_RU);
 			final String where = (hunter.calculateDistance2D(PhantomMarket.GIRAN_SQUARE) <= GIRAN_RANGE) && Rnd.nextBoolean() ? (en ? ", shop in Giran" : ", лавка в гиране") : "";
-			return new Line(sell ? Kind.WTS : Kind.WTB, hunter, String.format(pool[Rnd.get(pool.length)], String.join(", ", parts)) + where);
+			final String bank = PhantomChatBank.getInstance().store(hunter, sell, String.join(", ", parts));
+			return new Line(sell ? Kind.WTS : Kind.WTB, hunter, (bank != null ? bank : String.format(pool[Rnd.get(pool.length)], String.join(", ", parts))) + where);
 		}
 		return null;
 	}
@@ -412,7 +413,9 @@ public final class PhantomChatFlow
 			_said.put(order.itemId(), now);
 			final ItemTemplate item = ItemData.getInstance().getTemplate(order.itemId());
 			final String[] pool = en() ? WTB_EN : WTB_RU;
-			return new Line(Kind.WTB, hunter, String.format(pool[Rnd.get(pool.length)], item.getName() + " " + price(order.price())));
+			final String goods = item.getName() + " " + price(order.price());
+			final String bank = PhantomChatBank.getInstance().store(hunter, false, goods);
+			return new Line(Kind.WTB, hunter, bank != null ? bank : String.format(pool[Rnd.get(pool.length)], goods));
 		}
 		return null;
 	}
@@ -429,6 +432,11 @@ public final class PhantomChatFlow
 			final String role = PhantomHunterManager.getInstance().lfpShout(hunter, now);
 			if (role != null)
 			{
+				final String bank = PhantomChatBank.getInstance().lfp(hunter, role);
+				if (bank != null)
+				{
+					return new Line(Kind.LFP, hunter, bank);
+				}
 				final boolean en = en();
 				final String[] pool = en ? LFP_EN : LFP_RU;
 				return new Line(Kind.LFP, hunter, String.format(pool[Rnd.get(pool.length)], en ? ROLE_EN.getOrDefault(role, role) : role, hunter.getLevel()));

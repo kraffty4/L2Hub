@@ -75,7 +75,7 @@ final class PhantomEnchant
 			return done;
 		}
 		final int temper = temper(template.getName());
-		long budget = PhantomHunterOutfit.freeAdena(player) / BUDGET_DIVIDER;
+		long budget = PhantomHunterOutfit.spareAdena(player) / BUDGET_DIVIDER;
 		int tries = TRIES;
 		for (Item item = next(player, temper); (item != null) && (tries > 0); item = next(player, temper))
 		{

@@ -1,0 +1,24 @@
+L2Hub: фантом без клиента допущен к матчу Олимпиады. Проверка перед телепортом считала его неявкой: матч отменялся, очки снимались (docs/PHANTOMS.md, раздел 4.131).
+
+diff --git a/java/org/l2jmobius/gameserver/mechanics/olympiad/AbstractOlympiadGame.java b/java/org/l2jmobius/gameserver/mechanics/olympiad/AbstractOlympiadGame.java
+index b0bb8cc..7e3c87e 100644
+--- a/java/org/l2jmobius/gameserver/mechanics/olympiad/AbstractOlympiadGame.java
++++ b/java/org/l2jmobius/gameserver/mechanics/olympiad/AbstractOlympiadGame.java
+@@ -35,6 +35,7 @@
+ import org.l2jmobius.gameserver.managers.AntiFeedManager;
+ import org.l2jmobius.gameserver.managers.CastleManager;
+ import org.l2jmobius.gameserver.managers.FortManager;
++import org.l2jmobius.gameserver.managers.phantom.PhantomManager;
+ import org.l2jmobius.gameserver.mechanics.siege.Castle;
+ import org.l2jmobius.gameserver.mechanics.siege.Fort;
+ import org.l2jmobius.gameserver.mechanics.skill.Skill;
+@@ -118,7 +119,8 @@
+ 			return new SystemMessage(SystemMessageId.YOUR_OPPONENT_MADE_HASTE_WITH_THEIR_TAIL_BETWEEN_THEIR_LEGS_THE_MATCH_HAS_BEEN_CANCELLED);
+ 		}
+ 		
+-		if ((player.getClient() == null) || player.getClient().isDetached())
++		// L2Hub: у фантома клиента нет и не будет. Эта проверка считала его неявкой: матч отменялся, очки снимались (docs/PHANTOMS.md, раздел 4.131).
++		if (!PhantomManager.getInstance().isPhantom(player) && ((player.getClient() == null) || player.getClient().isDetached()))
+ 		{
+ 			return new SystemMessage(SystemMessageId.YOUR_OPPONENT_MADE_HASTE_WITH_THEIR_TAIL_BETWEEN_THEIR_LEGS_THE_MATCH_HAS_BEEN_CANCELLED);
+ 		}

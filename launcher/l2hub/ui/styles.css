@@ -756,3 +756,34 @@ body.maxed .win { border-color: transparent; }
 }
 /* Чипы сверху не залезают под подпись эпохи справа: переносятся на вторую строку. */
 .banner .chips { right: 200px; }
+
+/* Цены GM-шопа (gmshop.js): правки пишутся сразу, общий «Сохранить» вкладке не нужен. */
+#viewSettings.gm-on > .view-foot { display: none; }
+.fileb .gm-w, .gm-info .gm-w { font-size: 11px; color: var(--warn); }
+.gm-info .gm-w { font-size: inherit; }
+.fileb.gm-group { color: var(--text); }
+.gm-caret { width: 12px; flex: none; color: var(--muted); }
+.gm-tools { display: flex; gap: 10px; align-items: center; padding: 8px 14px; border-bottom: 1px solid var(--line); }
+.gm-tools[hidden] { display: none; }
+.gm-title { flex: 1; min-width: 0; font-family: var(--serif); color: var(--gold-hi); font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gm-mul { display: flex; gap: 6px; align-items: center; font-size: 13px; color: var(--text-2); white-space: nowrap; }
+.gm-mul .field { width: 70px; }
+.gm-preview { margin: 8px 14px 0; max-height: 40%; overflow: auto; flex: none; }
+.gm-chg { display: flex; justify-content: space-between; gap: 12px; font-family: var(--mono); font-size: 12px; padding: 2px 0; }
+.gm-more { font-size: 12px; color: var(--muted); }
+.gm-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.gm-table th { text-align: left; font-weight: 500; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 8px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--win); }
+.gm-table td { padding: 5px 8px; border-bottom: 1px solid var(--line-2); vertical-align: top; color: var(--text-2); }
+.gm-table tr.edited .gm-name { color: var(--gold-hi); }
+.gm-name { color: var(--text); }
+.gm-id, .gm-sec { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.gm-count { font-family: var(--mono); font-size: 12px; color: var(--bronze); }
+.gm-table .gm-num { text-align: right; white-space: nowrap; width: 150px; }
+.gm-num .field { width: 140px; height: 28px; text-align: right; }
+.gm-num .field.chg { border-color: var(--gold); color: var(--gold-hi); }
+.gm-table .gm-base { font-family: var(--mono); font-size: 12px; color: var(--muted); padding-top: 10px; }
+.gm-table .gm-num:has(.gm-swap) { white-space: normal; }
+.gm-swap { font-size: 12px; color: var(--muted); }
+.gm-undo { width: 26px; height: 26px; border-radius: 6px; border: 1px solid var(--line); background: transparent; color: var(--gold); display: grid; place-items: center; padding: 0; }
+.gm-undo svg { width: 14px; height: 14px; }
+.gm-info { border-top: 1px solid var(--line); padding: 8px 14px; font-size: 12.5px; color: var(--muted); line-height: 1.45; }

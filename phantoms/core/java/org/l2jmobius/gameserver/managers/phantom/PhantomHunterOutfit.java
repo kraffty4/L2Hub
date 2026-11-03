@@ -477,6 +477,43 @@ final class PhantomHunterOutfit
 		syncPotion(player);
 	}
 
+	/**
+	 * Стадион (раздел 4.131): Mobius выключил автососки и разрядил оружие, вернуть. Длинные откаты — первыми: {@code castSkill} идёт по списку сверху и берёт первый готовый, и сильный скилл в конце списка мог не дождаться очереди. Порядок кача вернёт {@link #afterOlympiad}.
+	 */
+	static void olympiadSetup(Player player)
+	{
+		syncShots(player);
+		final List<Integer> skills = player.getAutoUseSettings().getAutoSkills();
+		final List<Integer> order = new ArrayList<>();
+		for (Integer skillId : skills)
+		{
+			final Skill skill = player.getKnownSkill(skillId);
+			if ((skill != null) && (skill.getReuseDelay() > LONG_REUSE))
+			{
+				order.add(skillId);
+			}
+		}
+		for (Integer skillId : skills)
+		{
+			if (!order.contains(skillId))
+			{
+				order.add(skillId);
+			}
+		}
+		skills.clear();
+		skills.addAll(order);
+		player.getAutoUseSettings().resetSkillOrder();
+	}
+
+	/**
+	 * С матча на кач (раздел 4.131): прежний порядок скиллов и автососки своего грейда.
+	 */
+	static void afterOlympiad(Player player)
+	{
+		setupCombat(player);
+		syncShots(player);
+	}
+
 	// ---------- Город ----------
 
 	/**
@@ -570,6 +607,22 @@ final class PhantomHunterOutfit
 			{
 				done.add("купил на призыв " + ItemData.getInstance().getTemplate(need.getKey()).getName() + ": " + crystals);
 			}
+		}
+
+		// Вода на Cleanse и руда на благословение (раздел 4.124): на четверть свободной адены.
+		for (Map.Entry<Integer, Long> need : PhantomSupport.supplyNeeds(player).entrySet())
+		{
+			final long supplies = buy(player, need.getKey(), need.getValue().intValue(), free > 0 ? free / 4 : player.getAdena() / 10);
+			if (supplies > 0)
+			{
+				done.add("купил реагент " + ItemData.getInstance().getTemplate(need.getKey()).getName() + ": " + supplies);
+			}
+		}
+
+		final long clanLevel = PhantomHunterClans.levelSaving(player);
+		if (clanLevel > 0)
+		{
+			done.add("копит на уровень клана: " + PhantomHunterManager.money(player.getAdena()) + " из " + PhantomHunterManager.money(clanLevel));
 		}
 
 		// Снятое за этот заход — на склад клана; что осталось сверх своих целей — в казну на холл.
@@ -673,6 +726,11 @@ final class PhantomHunterOutfit
 		if (due > 0)
 		{
 			worn.append("; профа: дорос до следующей, но она стоит ").append(PhantomHunterManager.money(due)).append(gearBehind(player) ? " — оружие отстало от уровня, сначала шмот" : " — копишь, шмот пока не покупаешь");
+		}
+		final long clanLevel = PhantomHunterClans.levelSaving(player);
+		if (clanLevel > 0)
+		{
+			worn.append("; уровень клана стоит ").append(PhantomHunterManager.money(clanLevel)).append(" из твоего кармана — копишь: не точишь и не вносишь в казну, шмот покупаешь как обычно");
 		}
 		return worn.toString();
 	}
@@ -832,7 +890,7 @@ final class PhantomHunterOutfit
 		for (Map.Entry<Integer, Long> entry : goods.entrySet())
 		{
 			final ItemTemplate item = ItemData.getInstance().getTemplate(entry.getKey());
-			if ((item == null) || (item.getBodyPart() != wanted.getBodyPart()) || (item.getItemType() != wanted.getItemType()) || (item.getCrystalType() != wanted.getCrystalType()) || (item.isWeapon() && (item.isMagicWeapon() != wanted.isMagicWeapon())) || item.isHeroItem() || item.isPvpItem())
+			if ((item == null) || (item.getBodyPart() != wanted.getBodyPart()) || (item.getItemType() != wanted.getItemType()) || (item.getCrystalType() != wanted.getCrystalType()) || (item.isWeapon() && (item.isMagicWeapon() != wanted.isMagicWeapon())) || item.isHeroItem() || item.isPvpItem() || (item.getTime() > 0))
 			{
 				continue;
 			}
@@ -1982,6 +2040,16 @@ final class PhantomHunterOutfit
 	}
 
 	/**
+	 * Адена на то, что может подождать: заточка и взнос в казну. У главы, что копит на уровень клана ({@link PhantomHunterClans#levelSaving}), — за вычетом его цены; шмот, профа и рынок считают по {@link #freeAdena}.
+	 * @param player охотник
+	 * @return сколько можно потратить на необязательное
+	 */
+	static long spareAdena(Player player)
+	{
+		return freeAdena(player) - PhantomHunterClans.levelSaving(player);
+	}
+
+	/**
 	 * Сколько адены не хватает на ближайшую цель (патч 0035, лавка от нужды): на профу, до которой дорос, или на первую вещь, на которую копит ({@link #buyGear}).
 	 * @param player охотник
 	 * @param template его шаблон
@@ -2228,7 +2296,7 @@ final class PhantomHunterOutfit
 	static boolean junk(Player player, Item item)
 	{
 		final int id = item.getId();
-		if (item.isEquipped() || (id == 57) || item.isQuestItem() || !item.isSellable() || (item.getTemplate().getReferencePrice() <= 0) || PhantomClanStock.isLoan(player, item))
+		if (item.isEquipped() || (id == 57) || item.isQuestItem() || !item.isSellable() || (item.getTemplate().getReferencePrice() <= 0) || PhantomClanStock.isLoan(player, item) || PhantomPets.isPetItem(id))
 		{
 			return false;
 		}
@@ -2247,7 +2315,7 @@ final class PhantomHunterOutfit
 			}
 		}
 		// Печатные камни (6360–6362) — жрецу Семи печатей, а не в магазин (раздел 4.42). Кристаллы на свои призыв и кубики — тоже не хлам.
-		return (id != shotId(player)) && (id != ammoId(player)) && !PhantomSummoner.crystalNeeds(player).containsKey(id) && ((id < 6360) || (id > 6362));
+		return (id != shotId(player)) && (id != ammoId(player)) && !PhantomSummoner.crystalNeeds(player).containsKey(id) && !PhantomSupport.supplyNeeds(player).containsKey(id) && ((id < 6360) || (id > 6362));
 	}
 
 	/**

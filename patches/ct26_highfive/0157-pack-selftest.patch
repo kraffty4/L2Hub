@@ -5,7 +5,7 @@ new file mode 100644
 index 0000000..07a608b
 --- /dev/null
 +++ b/dist/game/data/scripts/custom/L2HubPackTest/L2HubPackTest.java
-@@ -0,0 +1,2700 @@
+@@ -0,0 +1,3039 @@
 +package custom.L2HubPackTest;
 +
 +import java.lang.reflect.Constructor;
@@ -149,6 +149,7 @@ index 0000000..07a608b
 +		section("olympiad", () -> olympiad(spare));
 +		section("pvpassist", () -> pvpAssist(spare));
 +		section("recruit", () -> recruit(spare));
++		section("castpace", () -> castPace(spare));
 +		LOGGER.info(TAG + "done: " + _ok + " ok, " + _wrong + " wrong.");
 +	}
 +
@@ -2645,6 +2646,344 @@ index 0000000..07a608b
 +			owner.setTarget(null);
 +			helper.setInvul(false);
 +			owner.setInvul(false);
++		}
++	}
++
++	/**
++	 * Самый сильный из годных: у низких скиллы и без ключа длиннее тика.
++	 */
++	private static Player strongest(List<Player> spare, Predicate<Player> test)
++	{
++		Player best = null;
++		for (Player p : spare)
++		{
++			if (test.test(p) && ((best == null) || (p.getLevel() > best.getLevel())))
++			{
++				best = p;
++			}
++		}
++		spare.remove(best);
++		return best;
++	}
++
++	/**
++	 * Самый быстрый каст из авто-скиллов, мс, без тех, что дольше в откате, чем в касте. Каст длиннее тика темпу ускорять нечего.
++	 */
++	private static int fastestCast(Player player)
++	{
++		int best = Integer.MAX_VALUE;
++		for (int id : player.getAutoUseSettings().getAutoSkills())
++		{
++			final Skill skill = player.getKnownSkill(id);
++			if (skill == null)
++			{
++				continue;
++			}
++			final int speed = Math.max(1, (int) (skill.isMagic() ? player.getMAtkSpd() : player.getPAtkSpd()));
++			final int cast = (skill.getHitTime() * 333) / speed;
++			final int reuse = skill.isMagic() ? ((skill.getReuseDelay() * 333) / speed) : skill.getReuseDelay();
++			if (reuse <= cast)
++			{
++				best = Math.min(best, cast);
++			}
++		}
++		return best;
++	}
++
++	/**
++	 * Как тик охотника: раз в 2 с приказ, если не кастует. Цель не умирает, маны хватает.
++	 * @return начатых кастов и приказов
++	 */
++	private static int[] paceRun(Player player, Monster mob, Runnable order, long millis) throws Exception
++	{
++		int casts = 0;
++		int ticks = 0;
++		boolean casting = player.isCastingNow();
++		long nextTick = 0;
++		final long end = System.currentTimeMillis() + millis;
++		while (System.currentTimeMillis() < end)
++		{
++			player.setCurrentMp(player.getMaxMp());
++			if (mob != null)
++			{
++				mob.setCurrentHp(mob.getMaxHp());
++			}
++			final long now = System.currentTimeMillis();
++			if ((now >= nextTick) && !player.isCastingNow())
++			{
++				nextTick = now + 2000;
++				ticks++;
++				order.run();
++			}
++			final boolean castingNow = player.isCastingNow();
++			if (castingNow && !casting)
++			{
++				casts++;
++			}
++			casting = castingNow;
++			if (!castingNow && (mob != null) && PhantomHuntersConfig.HUNTER_COMBAT_FIXES)
++			{
++				paceWhy(player, mob);
++			}
++			Thread.sleep(25);
++		}
++		return new int[]
++		{
++			casts,
++			ticks
++		};
++	}
++
++	/** Чем занят маг между кастами при ключе: замеры по 25 мс. */
++	private static final Map<String, Integer> PACE_WHY = new java.util.TreeMap<>();
++
++	/**
++	 * Почему быстрый проход не начал каст: нет темпа, идёт, намерение, цель, скиллы на откате или не достают.
++	 */
++	private static void paceWhy(Player player, Monster mob)
++	{
++		String why;
++		try
++		{
++			final Field field = Class.forName("org.l2jmobius.gameserver.managers.phantom.PhantomCompanionManager").getDeclaredField("PACES");
++			field.setAccessible(true);
++			final Object pace = ((Map<?, ?>) field.get(null)).get(player.getObjectId());
++			if (pace == null)
++			{
++				why = "no pace";
++			}
++			else
++			{
++				final Field target = pace.getClass().getDeclaredField("target");
++				target.setAccessible(true);
++				int ready = 0;
++				for (Integer skillId : player.getAutoUseSettings().getAutoSkills())
++				{
++					final Skill skill = player.getKnownSkill(skillId);
++					if ((skill != null) && !player.isSkillDisabled(skill) && player.isInsideRadius2D(mob, player.getMagicalAttackRange(skill) + player.getTemplate().getCollisionRadius() + mob.getTemplate().getCollisionRadius()))
++					{
++						ready++;
++					}
++				}
++				why = (target.get(pace) != player.getTarget() ? "target " + player.getTarget() : player.isMoving() ? "moving" : player.isAutoPlaying() ? "auto play" : "intention " + player.getAI().getIntention()) + ", skills ready " + ready;
++			}
++		}
++		catch (Exception e)
++		{
++			why = "probe failed " + e;
++		}
++		PACE_WHY.merge(why, 1, Integer::sum);
++	}
++
++	/**
++	 * Темп каста (раздел 4.130): на тике маг кастовал не чаще приказа; с ключом следующий каст идёт сразу после прошлого. Белого между тиками не бьёт, со сменой цели цепочка кончается. Хилер так же.
++	 */
++	private static void castPace(List<Player> spare) throws Exception
++	{
++		final Method fight = internal("PhantomCompanionManager", "fight", Player.class, Creature.class);
++		final Method keep = internal("PhantomCompanionManager", "keepPace", Player.class, Creature.class);
++		final Method caster = internal("PhantomHunterOutfit", "isCaster", Player.class);
++		final Method heal = internal("PhantomSupport", "olympiadAct", Player.class, long.class);
++		final boolean was = PhantomHuntersConfig.HUNTER_COMBAT_FIXES;
++		final Monster mob = wildMob(40, 85);
++		// Маг с самым быстрым кастом: у кого каст дольше тика, темпу ускорять нечего (саммонер 63 с кастом 1,3–2,1 с дал 10 на 10).
++		Player fast = null;
++		for (Player p : spare)
++		{
++			try
++			{
++				if (!healerRole(p) && !p.isCursedWeaponEquipped() && (boolean) caster.invoke(null, p) && (p.getAutoUseSettings().getAutoSkills().size() >= 2) && ((fast == null) || (fastestCast(p) < fastestCast(fast))))
++				{
++					fast = p;
++				}
++			}
++			catch (Exception e)
++			{
++				// не маг
++			}
++		}
++		spare.remove(fast);
++		final Player mage = fast;
++		final Player white = (mage == null) ? null : pick(spare, p -> !p.isCursedWeaponEquipped() && ((p.getClanId() == 0) || (p.getClanId() != mage.getClanId())) && ((p.getAllyId() == 0) || (p.getAllyId() != mage.getAllyId())) && !p.isAutoAttackable(mage));
++		final Player healer = fastestHealer(spare);
++		check("castpace: found a mob, a mage, a bystander and a healer", (mob != null) && (white != null) && (healer != null));
++		if ((mob == null) || (white == null) || (healer == null))
++		{
++			return;
++		}
++		final Runnable order = () ->
++		{
++			try
++			{
++				fight.invoke(null, mage, mob);
++			}
++			catch (Exception e)
++			{
++				throw new IllegalStateException(e);
++			}
++		};
++		final Location place = mob.getLocation();
++		park(mage, place);
++		park(white, place);
++		mob.setInvul(true);
++		// Авто-бафы идут и без приказа, считаем только удары.
++		final List<Integer> buffs = new ArrayList<>(mage.getAutoUseSettings().getAutoBuffs());
++		mage.getAutoUseSettings().getAutoBuffs().clear();
++		try
++		{
++			note("castpace: " + mage.getName() + " (" + mage.getLevel() + " " + mage.getPlayerClass().name() + "), casting speed " + mage.getMAtkSpd() + ", fastest cast " + fastestCast(mage) + " ms, skills " + mage.getAutoUseSettings().getAutoSkills());
++			PhantomHuntersConfig.HUNTER_COMBAT_FIXES = false;
++			final int[] off = paceRun(mage, mob, order, 20000);
++			check("castpace: key off, casts wait for the tick (control), " + off[0] + " casts on " + off[1] + " ticks", off[0] <= (off[1] + 2));
++			PhantomHuntersConfig.HUNTER_COMBAT_FIXES = true;
++			PACE_WHY.clear();
++			final int[] on = paceRun(mage, mob, order, 20000);
++			check("castpace: key on, the next cast does not wait, " + on[0] + " casts on " + on[1] + " ticks against " + off[0] + "; between casts: " + PACE_WHY, (on[0] > on[1]) && (on[0] > off[0]));
++
++			// Сменил цель: цепочка кончилась. Новых кастов нет ни сразу, ни когда истёк срок.
++			mage.setTarget(null);
++			check("castpace: the cast in progress ends", waitFor(10, () -> !mage.isCastingNow()));
++			mage.setCurrentMp(mage.getMaxMp());
++			final int[] dropped = paceRun(mage, null, () ->
++			{
++				// без приказов
++			}, 5000);
++			check("castpace: without a target no casts between ticks, " + dropped[0], dropped[0] == 0);
++
++			// Белого не бьёт: приказа не было, между тиками он неприкосновенен.
++			mage.setTarget(white);
++			keep.invoke(null, mage, white);
++			final int[] bystander = paceRun(mage, null, () ->
++			{
++				// без приказов
++			}, 5000);
++			check("castpace: a white bystander is left alone between ticks, " + bystander[0] + " casts, karma " + mage.getKarma() + ", flag " + mage.getPvpFlag(), (bystander[0] == 0) && (mage.getKarma() == 0) && (mage.getPvpFlag() == 0));
++		}
++		finally
++		{
++			PhantomHuntersConfig.HUNTER_COMBAT_FIXES = was;
++			mage.getAutoUseSettings().getAutoBuffs().addAll(buffs);
++			mob.setInvul(false);
++			mage.setTarget(null);
++			mage.getAI().setIntentionIdle();
++			mage.setPvpFlag(0);
++			mage.setKarma(0);
++			mage.setInvul(false);
++			white.setInvul(false);
++		}
++
++		// Хилер, который лечит на тике вообще: второй прогон взял такого, что не лечил ни с ключом, ни без (0 и 0).
++		Player chosen = healer;
++		for (int tries = 0; (chosen != null) && !healsOnTick(chosen, heal) && (tries < 3); tries++)
++		{
++			chosen = fastestHealer(spare);
++		}
++		check("castpace: found a healer who heals on the tick", (chosen != null) && chosen.isInOlympiadMode());
++		if ((chosen == null) || !chosen.isInOlympiadMode())
++		{
++			return;
++		}
++		final Player medic = chosen;
++		note("castpace: healer " + medic.getName() + " (" + medic.getLevel() + " " + medic.getPlayerClass().name() + "), casting speed " + medic.getMAtkSpd());
++		final double low = medic.getMaxHp() * 0.3;
++		final Runnable healOrder = () ->
++		{
++			try
++			{
++				medic.setCurrentHp(low);
++				heal.invoke(null, medic, System.currentTimeMillis());
++			}
++			catch (Exception e)
++			{
++				throw new IllegalStateException(e);
++			}
++		};
++		try
++		{
++			PhantomHuntersConfig.HUNTER_COMBAT_FIXES = false;
++			final int[] off = healRun(medic, low, healOrder);
++			PhantomHuntersConfig.HUNTER_COMBAT_FIXES = true;
++			final int[] on = healRun(medic, low, healOrder);
++			check("castpace: a healer heals without waiting for the tick, " + on[0] + " casts on " + on[1] + " ticks against " + off[0] + " on " + off[1], (off[0] <= (off[1] + 2)) && (on[0] > off[0]));
++		}
++		finally
++		{
++			PhantomHuntersConfig.HUNTER_COMBAT_FIXES = was;
++			olympiadMode(medic, 1, false);
++			medic.setCurrentHp(medic.getMaxHp());
++			medic.setInvul(false);
++		}
++	}
++
++	/**
++	 * Хилер с самым быстрым кастом: у медленного хил дольше тика, темпу ускорять нечего (Shillien Elder 50 со скоростью каста 363 дал 9 на 9).
++	 */
++	private static Player fastestHealer(List<Player> spare)
++	{
++		Player best = null;
++		for (Player p : spare)
++		{
++			if (healerRole(p) && knowsHeal(p) && !p.isDead() && ((best == null) || (p.getMAtkSpd() > best.getMAtkSpd())))
++			{
++				best = p;
++			}
++		}
++		spare.remove(best);
++		return best;
++	}
++
++	/**
++	 * Хилер на стадионе с HP 30 % встаёт в каст от одного приказа тика. Нет — пишет, почему, и снимает стадион.
++	 */
++	private static boolean healsOnTick(Player healer, Method heal) throws Exception
++	{
++		park(healer, GIRAN);
++		olympiadMode(healer, 1, true);
++		healer.setCurrentMp(healer.getMaxMp());
++		healer.setCurrentHp(healer.getMaxHp() * 0.3);
++		heal.invoke(null, healer, System.currentTimeMillis());
++		if (waitFor(3, healer::isCastingNow))
++		{
++			waitFor(10, () -> !healer.isCastingNow());
++			return true;
++		}
++		note("castpace: healer " + healer.getName() + " (" + healer.getLevel() + " " + healer.getPlayerClass().name() + ") does not heal on the tick: dead " + healer.isDead() + ", sitting " + healer.isSitting() + ", intention " + healer.getAI().getIntention() + ", HP " + (int) healer.getCurrentHp() + " of " + healer.getMaxHp() + ", MP " + (int) healer.getCurrentMp() + ", invul " + healer.isInvul() + ", in party " + healer.isInParty());
++		olympiadMode(healer, 1, false);
++		healer.setCurrentHp(healer.getMaxHp());
++		healer.setInvul(false);
++		return false;
++	}
++
++	/**
++	 * Как {@link #paceRun}, а HP всё время низкое, чтобы хил был нужен и между тиками.
++	 */
++	private static int[] healRun(Player healer, double low, Runnable order) throws Exception
++	{
++		final Thread keepLow = new Thread(() ->
++		{
++			try
++			{
++				while (!Thread.currentThread().isInterrupted())
++				{
++					healer.setCurrentHp(low);
++					Thread.sleep(25);
++				}
++			}
++			catch (InterruptedException e)
++			{
++				Thread.currentThread().interrupt();
++			}
++		});
++		keepLow.setDaemon(true);
++		keepLow.start();
++		try
++		{
++			return paceRun(healer, null, order, 20000);
++		}
++		finally
++		{
++			keepLow.interrupt();
++			keepLow.join();
 +		}
 +	}
 +

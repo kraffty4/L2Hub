@@ -1,0 +1,1249 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Банк реплик фейков, только с матом. Собирает tools/chat_bank_build.py из таблиц вклада пользователя, руками не править. -->
+<chatBank>
+	<line c="city" s="idle" ch="general" p="ironic" g="m">бля я зачем в город пришёл</line>
+	<line c="party_fight" s="retreat" ch="party" p="ironic">бля, отходим, не вывозим</line>
+	<line c="events" s="oly_result" ch="general" p="ironic">бля, вот это он на последних секундах вытащил</line>
+	<line c="support" s="support_intent" ch="party" p="business">бля, хил не прошёл</line>
+	<line c="journey" s="rest" ch="party" p="ironic">бля, моб рядом, аккуратно</line>
+	<line c="party_fight" s="retreat" ch="party" p="ironic">бля, отходим, не вытянем</line>
+	<line c="support" s="low_mana" ch="party" p="ironic">мп на нуле, шикарно блять</line>
+	<line c="city" s="shop_visit" ch="general" p="ironic" g="m">бля, опять не то купил</line>
+	<line c="party_fight" s="retreat" ch="party" p="ironic">кто столько притащил-то блять</line>
+	<line c="hunt" s="resource" ch="party" p="ironic">соски опять кончаются, жрут пиздец</line>
+	<line c="party_fight" s="retreat" ch="party" p="ironic" g="f">бля, ещё целая пачка пришла</line>
+	<line c="city" s="social" ch="general" p="social" g="m">бля, я ж ужин хотел поставить и забыл</line>
+	<line c="hunt" s="mob_danger" ch="party" p="ironic">бля, их слишком много, назад</line>
+	<line c="journey" s="death" ch="clan" p="calm">бля, меня в город выкинуло</line>
+	<line c="events" s="event_schedule" ch="general" p="ironic">бля, так в шесть или в семь?</line>
+	<line c="city" s="social" ch="general" p="ironic">я в гиране каждый раз теряюсь блять</line>
+	<line c="hunt" s="pull" ch="party" p="ironic">бля кто ещё мобов притащил?</line>
+	<line c="city" s="crowd" ch="general" p="social">на рынке сегодня пиздец народу</line>
+	<line c="hunt" s="loot" ch="party" p="ironic" g="f">опять херня какая-то выпала</line>
+	<line c="pvp" s="pvp_after" ch="general" p="ironic">бля, руки до сих пор трясутся после замеса</line>
+	<line c="city" s="idle" ch="general" p="calm" g="m">я пока ответа подожду, заебался туда-сюда бегать</line>
+	<line c="hunt" s="pull" ch="party" p="ironic" g="m">говорили один моб, их тут пятеро блять</line>
+	<line c="hunt" s="pull" ch="party" p="ironic">кто всю пачку зацепил блять?</line>
+	<line c="trade" s="shop_check" ch="general" p="ironic" g="m">обошёл все лавки и забыл, что искал блять</line>
+	<line c="journey" s="travel" ch="general" p="ironic" g="m">бля, опять не туда повернул</line>
+	<line c="hunt" s="exp" ch="party" p="ironic">экспа норм, а дроп чёт говно</line>
+	<line c="journey" s="travel" ch="general" p="ironic" g="m">бля, не туда свернул</line>
+	<line c="city" s="social" ch="general" p="ironic" g="m">заебался в городе стоять, го мобов побьём</line>
+	<line c="hunt" s="resource" ch="party" p="ironic">соски опять заканчиваются, быстро уходят блять</line>
+	<line c="city" s="social" ch="general" p="ironic" g="m">опять вместо энтера альт нажал, бля</line>
+	<line c="journey" s="travel" ch="general" p="ironic" g="m">блять, поворот пропустил</line>
+	<line c="hunt" s="target_choice" ch="party" p="ironic">он же один был, откуда ещё трое блять</line>
+	<line c="party_fight" s="retreat" ch="party" p="ironic">бля, назад все</line>
+	<line c="city" s="social" ch="general" p="ironic" g="m">зашёл в город и забыл нахуй зачем</line>
+	<line c="hunt" s="resource" ch="party" p="ironic">бля, мп кончилась</line>
+	<line c="journey" s="travel" ch="party" p="ironic">по карте близко, а бежать пиздец сколько</line>
+	<line c="city" s="crowd" ch="general" p="ironic">бля а вход где тут?</line>
+	<line c="hunt" s="target_choice" ch="party" p="ironic">одного потянул, за ним толпа прибежала блять</line>
+	<line c="city" s="social" ch="general" p="ironic" g="m">спросил у троих дорогу и ещё больше запутался блять</line>
+	<line c="city" s="departure" ch="general" p="social" g="m">го вместе, заебался в городе сидеть</line>
+	<line c="city" s="shop_visit" ch="general" p="ironic" g="m">зашёл за расходкой и забыл что покупать блять</line>
+	<line c="journey" s="death" ch="party" p="ironic">бля, опять в городе</line>
+	<line c="city" s="social" ch="general" p="business">бля, клавиша залипла</line>
+	<line c="events" s="oly_result" ch="general" p="business" g="m">бля, я концовку не видел, кто взял?</line>
+	<line c="hunt" s="pull" ch="party" p="ironic">еле живые зал зачистили блять</line>
+	<line c="hunt" s="resource" ch="party" p="ironic" g="m">бля, банок меньше осталось чем думал</line>
+	<line c="city" s="crowd" ch="general" p="ironic" g="m">обошёл рынок и не помню где та лавка стояла блять</line>
+	<line c="trade" s="shop_check" ch="general" p="ironic" g="m">лавки обошёл, а места в сумке нет блять</line>
+	<line c="journey" s="travel" ch="general" p="ironic" g="m">бля, короткой дорогой пошёл называется</line>
+	<line c="journey" s="death" ch="party" p="ironic">бля, опять в город выкинуло</line>
+	<line c="city" s="shop_visit" ch="general" p="ironic">бля нужная лавка прямо за первой была</line>
+	<line c="hunt" s="mob_danger" ch="party" p="social">бля, ещё одного зацепили</line>
+	<line c="trade" s="shop_check" ch="general" p="ironic" g="m">обошёл лавки и забыл где дешевле блять</line>
+	<line c="journey" s="travel" ch="general" p="ironic" g="m">блять, не туда пошёл. где я?</line>
+	<line c="city" s="social" ch="general" p="careful" g="m">бля, не то скопировал</line>
+	<line c="city" s="shop_visit" ch="general" p="ironic" g="m">глянул сколько адены осталось, грустно стало блять</line>
+	<line c="city" s="social" ch="general" p="ironic" g="m">только одно доделал, уже ещё два дела нашлось блять</line>
+	<line c="hunt" s="mob_danger" ch="party" p="ironic">бля, соседний респ зацепили</line>
+	<line c="city" s="shop_visit" ch="general" p="ironic" g="m">нашёл, но цена пиздец</line>
+	<line c="city" s="shop_visit" ch="general" p="ironic" g="m">только купил, а в соседней лавке дешевле блять</line>
+	<line c="city" s="social" ch="general" p="business" g="m">бля, вкладку не туда перетащил</line>
+	<line c="pvp" s="pvp_after" ch="general" p="ironic">нихуя себе, вот это развернул</line>
+	<line c="party_fight" s="retreat" ch="party" p="ironic">бля, опять не туда влетели</line>
+	<line c="city" s="shop_visit" ch="general" p="ironic" g="m">нашёл нужное, но цена пиздец</line>
+	<line c="trade" s="shop_check" ch="general" p="ironic" g="m">посмотрел цены, адены не хватает блять</line>
+	<line c="pvp" s="pvp_after" ch="general" p="ironic" g="m">бля, хорошо сыграл</line>
+	<line c="trade" s="shop_check" ch="general" p="ironic">нихуя цены сегодня</line>
+	<line c="city" s="social" ch="general" p="careful">бля, случайно не в тот чат написал</line>
+	<line c="city" s="shop_visit" ch="general" p="ironic" g="m">три круга сделал пока лавку нашёл блять</line>
+	<line c="journey" s="travel" ch="general" p="ironic">по карте близко, а бежать ещё пиздец сколько</line>
+	<line c="support" s="low_mana" ch="party" p="ironic">бля, мп кончилась</line>
+	<line c="journey" s="travel" ch="party" p="ironic" g="m">бля, снова не туда свернул</line>
+	<line c="party_fight" s="retreat" ch="party" p="ironic">всё, назад блять</line>
+	<line c="support" s="low_mana" ch="party" p="ironic">бля, маны нет</line>
+	<line c="city" s="social" ch="general" p="business" g="m">ещё минутку, я тут чай разлил блять</line>
+	<line c="hunt" s="mob_danger" ch="party" p="social">ещё одного зацепили блять</line>
+	<line c="support" s="low_mana" ch="party" p="ironic">бля, мана кончилась как раз</line>
+	<line c="hunt" s="mob_danger" ch="party" p="ironic">бля, пачка идёт</line>
+	<line c="city" s="social" ch="general" p="careful" g="m">бля, я не ту вкладку открыл</line>
+	<line c="hunt" s="resource" ch="party" p="ironic">ну блять, мана кончилась</line>
+	<line c="support" s="low_mana" ch="party" p="ironic">ой бля, мана кончилась</line>
+	<line c="hunt" s="mob_danger" ch="party" p="ironic">бля, ещё пачка идёт</line>
+	<line c="city" s="shop_visit" ch="general" p="ironic" g="m">всё, обошёл лавки и забыл где дешевле блять</line>
+	<line c="journey" s="travel" ch="general" p="ironic">на карте близко, а я всё бегу блять</line>
+	<line c="city" s="shop_visit" ch="general" p="ironic" g="m">бля нужное как всегда в последней лавке нашёл</line>
+	<line c="hunt" s="mob_danger" ch="party" p="ironic">блять, ещё мобы пришли</line>
+	<line c="hunt" s="mob_danger" ch="party" p="ironic">соседнюю пачку зацепили блять</line>
+	<line c="city" s="shop_visit" ch="general" p="ironic" g="m">пришёл за одной штукой, накупил ещё херни</line>
+	<line c="journey" s="travel" ch="party" p="ironic">на карте близко, а бежать ещё пиздец сколько</line>
+	<line c="city" s="shop_visit" ch="general" p="ironic" g="m">зашёл за одной штукой, три купил блять</line>
+	<line c="journey" s="travel" ch="general" p="ironic" g="m">бля, я опять не туда свернул</line>
+	<line c="city" s="social" ch="general" p="business" g="m">хотел за час всё сделать, уже вечер блять</line>
+	<line c="trade" s="shop_check" ch="general" p="ironic">цены сегодня пиздец</line>
+	<line c="city" s="smalltalk" ch="general" p="ironic" g="m">бля, забыл зачем в город пришёл</line>
+	<line c="journey" s="death" ch="party" p="ironic">бля, надо было раньше отойти</line>
+	<line c="city" s="errand" ch="general" p="ironic" g="m">бля я же квест не сдал, щас вернусь</line>
+	<line c="pvp" s="retreat" ch="general" p="ironic">бля, нас обошли сзади</line>
+	<line c="events" s="oly_result" ch="general" p="social" g="m">бля, я в конце кнопку не успел нажать</line>
+	<line c="hunt" s="resource" ch="party" p="social">бля, соски кончились</line>
+	<line c="pvp" s="pvp_after" ch="general" p="social" g="m">бля, не ту кнопку нажал</line>
+	<line c="city" s="social" ch="general" p="social">бля кто мне вчера эту песню скинул? теперь из головы не выходит</line>
+	<line c="city" s="social" ch="general" p="social" g="m">блять я чёт сам запутался пока писал</line>
+	<line c="city" s="social" ch="general" p="social">бля, мы уже сколько лет общаемся-то?</line>
+	<scene id="global-work-007">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social"/>
+		<line role="A">зря я кофе вечером выпил, теперь не уснуть</line>
+		<line role="B">я после шести уже не пью, потом до утра ворочаюсь</line>
+		<line role="A">мне теперь завтра с утра опять кофе нужен будет</line>
+		<line role="B">замкнутый круг блять)</line>
+	</scene>
+	<scene id="global-work-008">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social" g="m"/>
+		<line role="A">ты вчера продал в итоге?</line>
+		<line role="B">это кому?</line>
+		<line role="A">ой бля, в пм хотел</line>
+		<line role="B">бывает)</line>
+	</scene>
+	<scene id="global-work-012">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social"/>
+		<line role="A">ещё час и точно спать</line>
+		<line role="B">ты вчера то же самое говорил)</line>
+		<line role="A">я помню, спасибо блять</line>
+	</scene>
+	<scene id="global-work-024">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social"/>
+		<line role="A">блядь я же пельмени поставил</line>
+		<line role="B">давно?</line>
+		<line role="A">ещё до того как зашёл</line>
+		<line role="B">иди проверь скорее</line>
+		<line role="A">уже бегу</line>
+	</scene>
+	<scene id="global-work-038">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social"/>
+		<line role="A">в одном ухе звук пропал бля</line>
+		<line role="B">наушники?</line>
+		<line role="A">ага, шнур повернул — появился</line>
+		<line role="B">провод походу отходит</line>
+		<line role="A">заебись, только этого не хватало</line>
+	</scene>
+	<scene id="global-work-044">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social"/>
+		<line role="A">я опять у рынка торчу блять</line>
+		<line role="B">ты ж вышел уже</line>
+		<line role="A">соски забыл купить</line>
+		<line role="B">аа, тогда я пока постою</line>
+	</scene>
+	<scene id="global-work-046">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social" g="m"/>
+		<line role="A">всё, хватит с меня на сегодня</line>
+		<line role="B">давай, спасибо за дуэль</line>
+		<line role="A">я тебя вообще поймать не мог</line>
+		<line role="B">я сам охуел что успел уйти</line>
+	</scene>
+	<scene id="global-work-052">
+		<role id="A" p="social"/>
+		<role id="B" p="social"/>
+		<line role="A">кот блять на клаве улёгся</line>
+		<line role="B">сгони его)</line>
+		<line role="A">он только заснул, жалко</line>
+		<line role="B">ну играй одной рукой тогда</line>
+		<line role="A">так и делаю сейчас</line>
+	</scene>
+	<scene id="global-work-057">
+		<role id="A" p="social" g="f"/>
+		<role id="B" p="social"/>
+		<line role="A">бля опять к первой лавке вернулась</line>
+		<line role="B">там дешевле было?</line>
+		<line role="A">ага, надо было сразу брать</line>
+	</scene>
+	<scene id="global-work-061">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social"/>
+		<line role="A">вышел за ворота, там драка блять</line>
+		<line role="B">вары?</line>
+		<line role="A">хз, я сразу обратно убежал</line>
+		<line role="B">стой, я подойду посмотрю</line>
+	</scene>
+	<scene id="global-work-069">
+		<role id="A" p="social" g="f"/>
+		<role id="B" p="social" g="m"/>
+		<line role="A">это за штуку цена или за весь стак?</line>
+		<line role="B">за штуку</line>
+		<line role="A">а, бля, я не так поняла</line>
+		<line role="B">я тоже сначала не понял)</line>
+	</scene>
+	<scene id="global-work-075">
+		<role id="A" p="social" g="f"/>
+		<role id="B" p="social" g="m"/>
+		<line role="A">ты гнома своего всё ещё качаешь?</line>
+		<line role="B">ага, вчера до ночи сидел</line>
+		<line role="A">ты ж говорил удалишь его нафиг</line>
+		<line role="B">да это я бомбил просто, спот выбрал хуёвый</line>
+		<line role="A">я на том споте тоже огребла</line>
+		<line role="B">там за каждым углом по три моба блять</line>
+		<line role="A">пошли в другое место, я как раз освободилась</line>
+	</scene>
+	<scene id="global-work-078">
+		<role id="A" p="social" g="f"/>
+		<role id="B" p="social" g="m"/>
+		<line role="A">свою первую профу помнишь?</line>
+		<line role="B">бля, неделю с ней возился</line>
+		<line role="A">я тогда вообще не понимала куда бежать</line>
+		<line role="B">я с гайдом сидел, иначе бы до сих пор бегал</line>
+	</scene>
+	<scene id="global-work-085">
+		<role id="A" p="social" g="f"/>
+		<role id="B" p="social"/>
+		<line role="A">соседи опять сверлят блять</line>
+		<line role="B">до сих пор?</line>
+		<line role="A">ага, с утра почти без перерыва</line>
+		<line role="B">жесть, у меня вчера так было</line>
+		<line role="A">у меня ещё созвон через полчаса</line>
+		<line role="B">в наушниках попробуй, может не так слышно будет</line>
+		<line role="A">да вот ищу куда их засунула</line>
+	</scene>
+	<scene id="global-work-086">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social" g="f"/>
+		<role id="C" p="social" g="m"/>
+		<line role="A">за кого вы первый раз в л2 играли?</line>
+		<line role="B">за эльфийку, по внешке выбирала)</line>
+		<line role="C">за орка, потом бросил</line>
+		<line role="A">я гнома сделал и вообще нихера не понимал</line>
+		<line role="B">я тоже, гайды читать лень было</line>
+	</scene>
+	<scene id="global-work-091">
+		<role id="A" p="social"/>
+		<role id="B" p="social" g="m"/>
+		<line role="A">куда я свиток дел блять</line>
+		<line role="B">склад смотрел?</line>
+		<line role="A">а, всё, в сумке лежит</line>
+		<line role="B">ахах, классика</line>
+	</scene>
+	<scene id="global-work-096">
+		<role id="A" p="social"/>
+		<role id="B" p="social" g="m"/>
+		<line role="A">чуть рецепт не тот купил блять</line>
+		<line role="B">похожи названия?</line>
+		<line role="A">ага, и ценник почти такой же</line>
+		<line role="B">хорошо хоть заметил</line>
+	</scene>
+	<scene id="global-work-099">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social"/>
+		<line role="A">о, наконец выпал сука</line>
+		<line role="B">чё там?</line>
+		<line role="A">рецепт, весь вечер его выбивал</line>
+		<line role="B">грац, можно спать теперь</line>
+		<line role="A">ага, завтра ещё ресы собирать</line>
+	</scene>
+	<scene id="global-work-101">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social" g="m"/>
+		<line role="A">всё, минус пушка</line>
+		<line role="B">на сколько точил?</line>
+		<line role="A">на четыре бля</line>
+		<line role="B">эх, сочувствую</line>
+		<line role="A">сам виноват, руки чесались</line>
+	</scene>
+	<scene id="global-work-105">
+		<role id="A" p="social"/>
+		<role id="B" p="social" g="m"/>
+		<line role="A">сука, свиток не тот нажал</line>
+		<line role="B">куда улетел?</line>
+		<line role="A">в город блять</line>
+		<line role="B">ну закупайся раз уж там</line>
+	</scene>
+	<scene id="global-work-107">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social" g="m"/>
+		<line role="A">чё я дроп поднять не могу</line>
+		<line role="B">перевес или слоты забил?</line>
+		<line role="A">слоты бля, там мусора дофига</line>
+		<line role="B">выкинь ненужное пока</line>
+		<line role="A">нашёл стрелы какие-то, щас</line>
+	</scene>
+	<scene id="global-work-111">
+		<role id="A" p="social"/>
+		<role id="B" p="social"/>
+		<line role="A">вчера тут вообще никого не было</line>
+		<line role="B">выходной же сегодня, все вылезли</line>
+		<line role="A">бля, придётся другое место искать</line>
+		<line role="B">если хочешь, к нам можешь, место есть</line>
+	</scene>
+	<scene id="global-work-112">
+		<role id="A" p="social"/>
+		<role id="B" p="social"/>
+		<line role="A">приятного аппетита)</line>
+		<line role="B">это кому?</line>
+		<line role="A">ой бля, в пати хотел написать</line>
+		<line role="B">ахах, всё равно спасибо</line>
+	</scene>
+	<scene id="global-work-113">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social"/>
+		<line role="A">чё меня мобы так больно бьют</line>
+		<line role="B">бафы у тебя слетели</line>
+		<line role="A">а бля, не заметил</line>
+		<line role="B">подойди, обновлю</line>
+	</scene>
+	<scene id="global-work-114">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social"/>
+		<line role="A">я на часик зашёл вообще-то</line>
+		<line role="B">ты это три часа назад писал</line>
+		<line role="A">пиздец, а я думаю чё жрать хочу</line>
+		<line role="B">иди поешь, я подожду</line>
+	</scene>
+	<scene id="global-work-115">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social"/>
+		<line role="A">я в адене, вы где?</line>
+		<line role="B">мы в гиране вообще-то</line>
+		<line role="A">блять, не туда тпнулся</line>
+		<line role="B">возвращайся, мы у гк ждём</line>
+	</scene>
+	<scene id="global-work-116">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social" g="m"/>
+		<line role="A">весь день на работе думал приду покачаюсь</line>
+		<line role="B">а теперь?</line>
+		<line role="A">теперь сижу засыпаю блять</line>
+		<line role="B">я вчера так же, минут десять и вырубился</line>
+	</scene>
+	<scene id="global-work-118">
+		<role id="A" p="social" g="f"/>
+		<role id="B" p="social"/>
+		<line role="A">за час ни одного рецепта блять</line>
+		<line role="B">мы вчера тоже тут сидели долго</line>
+		<line role="A">выпало хоть потом?</line>
+		<line role="B">неа, спать ушли)</line>
+		<line role="A">заебись обнадёжила</line>
+	</scene>
+	<scene id="global-work-127">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social" g="m"/>
+		<line role="A">час не тех мобов бил блять</line>
+		<line role="B">по квесту?</line>
+		<line role="A">ага, названия похожие, я не вчитался</line>
+		<line role="B">ахах, я так два часа однажды потерял</line>
+	</scene>
+	<scene id="global-work-134">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social" g="m"/>
+		<line role="A">пришёл на склад и забыл зачем</line>
+		<line role="B">ты ж за кристаллами шёл</line>
+		<line role="A">а точно блять, спасибо</line>
+		<line role="B">я сам за ними бегу, поэтому запомнил</line>
+	</scene>
+	<scene id="global-work-139">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social" g="m"/>
+		<line role="A">я тебе вчера соски отдавал, помнишь?</line>
+		<line role="B">ага, я тебе обратно передал же</line>
+		<line role="A">бля точно, у меня в сумке лежат</line>
+		<line role="B">ты их уже потерял?</line>
+		<line role="A">ну почти, не ори)</line>
+	</scene>
+	<scene id="global-work-140">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social" g="m"/>
+		<line role="A">бля чай опять холодный</line>
+		<line role="B">давно налил?</line>
+		<line role="A">хз, перед тем как зашёл вроде</line>
+		<line role="B">я свой так же постоянно забываю</line>
+	</scene>
+	<scene id="global-work-141">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social"/>
+		<line role="A">вы без меня ушли уже?</line>
+		<line role="B">не, у гк ещё стоим</line>
+		<line role="A">фух, я думал всё проебал</line>
+		<line role="B">да мы тут ещё полчаса собираться будем</line>
+	</scene>
+	<scene id="global-work-142">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social" g="m"/>
+		<line role="A">купил не те соски, красавчик блять</line>
+		<line role="B">какие взял?</line>
+		<line role="A">магические вместо обычных</line>
+		<line role="B">выставь в лавку, может кто заберёт</line>
+		<line role="A">ага, сначала себе нормальные куплю</line>
+	</scene>
+	<scene id="global-work-146">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social"/>
+		<line role="A">всем ку, поздно сегодня зашёл</line>
+		<line role="B">здоров, мы только собрались</line>
+		<line role="A">о, успел значит</line>
+		<line role="B">если быстро закупишься)</line>
+		<line role="A">бля ну это уже сложнее</line>
+	</scene>
+	<scene id="global-work-148">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social" g="m"/>
+		<line role="A">сука чай на клаву пролил</line>
+		<line role="B">выключай её давай</line>
+		<line role="A">уже выдернул, сушу</line>
+		<line role="B">надеюсь не сладкий был</line>
+	</scene>
+	<scene id="global-work-150">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social"/>
+		<line role="A">нашёл скрин старый, тут столько знакомых ников</line>
+		<line role="B">покажи потом</line>
+		<line role="A">я там в нг сете стою довольный пиздец</line>
+		<line role="B">ахах, скинь в дискорд</line>
+	</scene>
+	<scene id="global-work-153">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social" g="m"/>
+		<line role="A">сегодня осада же?</line>
+		<line role="B">завтра вроде</line>
+		<line role="A">бля я думал уже суббота</line>
+		<line role="B">не торопи, я ещё работать не закончил</line>
+	</scene>
+	<scene id="global-work-155">
+		<role id="A" p="social"/>
+		<role id="B" p="social"/>
+		<line role="A">у тебя раньше другой ник был?</line>
+		<line role="B">ага, на прошлом сервере</line>
+		<line role="A">бля, я думаю откуда знакомый</line>
+		<line role="B">ахах, всё-таки вспомнил</line>
+	</scene>
+	<scene id="global-work-156">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social"/>
+		<line role="A">пароль минут двадцать вспоминал</line>
+		<line role="B">записать бы уже куда-нибудь)</line>
+		<line role="A">я записал, листок найти не могу</line>
+		<line role="B">гениально блять</line>
+	</scene>
+	<scene id="global-work-163">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social"/>
+		<line role="A">у меня микрофон весь вечер включён был?</line>
+		<line role="B">ага, слышали как ты коту что-то рассказывал</line>
+		<line role="A">блять почему не сказали</line>
+		<line role="B">мы ждали когда он тебе ответит</line>
+	</scene>
+	<scene id="global-work-165">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social"/>
+		<line role="A">мне через четыре часа вставать блять</line>
+		<line role="B">и ты до сих пор тут</line>
+		<line role="A">всё, выхожу уже</line>
+		<line role="B">ты десять минут назад то же самое писал</line>
+	</scene>
+	<scene id="global-work-166">
+		<role id="A" p="social"/>
+		<role id="B" p="social" g="m"/>
+		<line role="A">комар над ухом летает, щас афк</line>
+		<line role="B">поймать решил?</line>
+		<line role="A">ага, не вижу суку нигде</line>
+		<line role="B">свет включи, может найдёшь</line>
+	</scene>
+	<scene id="global-work-173">
+		<role id="A" p="social"/>
+		<role id="B" p="social" g="m"/>
+		<line role="A">это реально ты?</line>
+		<line role="B">а кто ещё с таким ником)</line>
+		<line role="A">бля, лет пять не виделись</line>
+		<line role="B">я вчера только зашёл, ещё всё вспоминаю</line>
+		<line role="A">пиши если что, покажу что поменялось</line>
+	</scene>
+	<scene id="global-work-176">
+		<role id="A" p="social"/>
+		<role id="B" p="social"/>
+		<line role="A">я у слада</line>
+		<line role="B">у чего?</line>
+		<line role="A">склада блять</line>
+		<line role="B">ахах, щас подойду</line>
+	</scene>
+	<scene id="global-work-178">
+		<role id="A" p="social" g="f"/>
+		<role id="B" p="social"/>
+		<line role="A">я прошлый раз вела, сегодня кто?</line>
+		<line role="B">я могу, только дорогу не помню</line>
+		<line role="A">заебись мы собрались</line>
+		<line role="B">ну ты-то помнишь? подсказывай тогда</line>
+	</scene>
+	<scene id="global-work-184">
+		<role id="A" p="social"/>
+		<role id="B" p="social"/>
+		<line role="A">бля свитки закончились</line>
+		<line role="B">у меня пара есть, подойди</line>
+		<line role="A">о спасибо, в городе верну</line>
+		<line role="B">да забей, там немного</line>
+	</scene>
+	<scene id="global-work-185">
+		<role id="A" p="social" g="f"/>
+		<role id="B" p="social" g="f"/>
+		<line role="A">я хотела мага качать, опять спойла открыла блять</line>
+		<line role="B">и долго бегала?</line>
+		<line role="A">минут десять, потом только вспомнила</line>
+		<line role="B">ну хоть спойла покачала)</line>
+	</scene>
+	<scene id="global-work-189">
+		<role id="A" p="social"/>
+		<role id="B" p="social" g="m"/>
+		<line role="A">ты куда убежал?</line>
+		<line role="B">я вообще-то за тобой шёл</line>
+		<line role="A">я у дерева стою</line>
+		<line role="B">тут деревьев блять дофига</line>
+		<line role="A">стой там, я обратно к повороту сбегаю</line>
+	</scene>
+	<scene id="global-work-196">
+		<role id="A" p="social"/>
+		<role id="B" p="social" g="m"/>
+		<line role="A">сижу чайник жду, он выключен блять</line>
+		<line role="B">ахах сколько ждал?</line>
+		<line role="A">минут пять наверное</line>
+		<line role="B">я тоже так делал, а потом злой стоял ждал заново</line>
+	</scene>
+	<scene id="global-work-200">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social" g="m"/>
+		<line role="A">у меня чат пропал куда-то</line>
+		<line role="B">свернул наверное, посмотри</line>
+		<line role="A">а, точно блять, нашёл</line>
+		<line role="B">я тоже так раз десять делал</line>
+	</scene>
+	<scene id="global-work-205">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social"/>
+		<line role="A">спот ещё свободен?</line>
+		<line role="B">не, две пачки уже стоят</line>
+		<line role="A">блять, только вышел из города</line>
+		<line role="B">посмотри рядом, может там пусто</line>
+	</scene>
+	<scene id="global-work-208">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social"/>
+		<line role="A">спс, завтра верну</line>
+		<line role="B">кому?</line>
+		<line role="A">ой бля не туда написал</line>
+		<line role="B">ахах, бывает</line>
+	</scene>
+	<scene id="global-work-215">
+		<role id="A" p="social"/>
+		<role id="B" p="social" g="m"/>
+		<line role="A">мы там все легли бля</line>
+		<line role="B">видел, я добежать не успел</line>
+		<line role="A">нас с двух сторон зажали</line>
+		<line role="B">вставайте в город, соберёмся ещё</line>
+	</scene>
+	<scene id="global-work-221">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social"/>
+		<line role="A">два часа домой ехал, заебался</line>
+		<line role="B">пробки?</line>
+		<line role="A">да автобус сломался, другой ждали</line>
+		<line role="B">пиздец, садись отдыхай</line>
+	</scene>
+	<scene id="global-work-222">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social"/>
+		<line role="A">суп пересолил пиздец</line>
+		<line role="B">сильно?</line>
+		<line role="A">ложку попробовал, аж перекосило</line>
+		<line role="B">может водой разбавить?</line>
+		<line role="A">уже налил, щас посмотрю</line>
+	</scene>
+	<scene id="global-work-223">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social"/>
+		<line role="A">бля я соски на склад кинул походу</line>
+		<line role="B">вместо того чтобы взять?</line>
+		<line role="A">ага, закупился называется</line>
+		<line role="B">подойди, дам немного, потом отдашь</line>
+	</scene>
+	<scene id="global-work-228">
+		<role id="A" p="social" g="f"/>
+		<role id="B" p="social" g="m"/>
+		<line role="A">дождь такой что за окном нихера не видно</line>
+		<line role="B">у нас тоже льёт, ещё и гром</line>
+		<line role="A">хорошо я домой уже дошла</line>
+		<line role="B">повезло, я сегодня вообще не выходил</line>
+	</scene>
+	<scene id="global-work-229">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social"/>
+		<line role="A">я готовить пойду, афк</line>
+		<line role="B">смотри опять про плиту не забудь</line>
+		<line role="A">один раз было блять</line>
+		<line role="B">ага, и на час пропал тогда)</line>
+	</scene>
+	<scene id="global-work-230">
+		<role id="A" p="social"/>
+		<role id="B" p="social" g="f"/>
+		<line role="A">книгу на хаст никто не видел в лавках?</line>
+		<line role="B">вчера где-то попадалась, но не помню где</line>
+		<line role="A">бля, обойду ещё раз тогда</line>
+		<line role="B">если найду раньше — напишу</line>
+	</scene>
+	<scene id="global-work-236">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social" g="m"/>
+		<line role="A">бля я опять не в то окно написал</line>
+		<line role="B">сколько у тебя их открыто?</line>
+		<line role="A">три и я постоянно путаю</line>
+		<line role="B">я себе названия поменял, стало легче</line>
+	</scene>
+	<scene id="global-work-238">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social" g="m"/>
+		<line role="A">бля у тебя же вчера др был</line>
+		<line role="B">ага, наконец вспомнил)</line>
+		<line role="A">с прошедшим тебя, сорян!</line>
+		<line role="B">спасибо, прощаю на этот раз</line>
+	</scene>
+	<scene id="global-work-246">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social" g="m"/>
+		<line role="A">да бля опять на английской раскладке пишу</line>
+		<line role="B">я видел, хотел спросить что за заклинание</line>
+		<line role="A">я хотел быстро удалить ахах</line>
+		<line role="B">не успел)</line>
+	</scene>
+	<scene id="global-work-253">
+		<role id="A" p="social"/>
+		<role id="B" p="social"/>
+		<line role="A">бля, кузнеца не могу найти</line>
+		<line role="B">ты в каком городе?</line>
+		<line role="A">гиран, у гк стою</line>
+		<line role="B">я рядом, подойди к складу, покажу</line>
+	</scene>
+	<scene id="global-work-259">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social" g="m"/>
+		<line role="A">бля я походу адену не тому кинул</line>
+		<line role="B">ты ник проверил вообще?</line>
+		<line role="A">а нет, это моему второму чару, фух</line>
+		<line role="B">сука, я уже тоже испугался</line>
+	</scene>
+	<scene id="global-work-260">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social" g="f"/>
+		<line role="A">сука свиток всё это время в сумке лежал</line>
+		<line role="B">какой?</line>
+		<line role="A">тот который я вчера искал, думал продал</line>
+		<line role="B">я тебе говорила проверь нормально)</line>
+	</scene>
+	<scene id="global-work-261">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social" g="m"/>
+		<line role="A">ты раньше под другим ником играл?</line>
+		<line role="B">ага, на прошлом сервере</line>
+		<line role="A">бля точно, теперь вспомнил</line>
+		<line role="B">я тебя по нику сразу узнал</line>
+	</scene>
+	<scene id="global-work-263">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social"/>
+		<line role="A">экран растянутый стал, хз почему</line>
+		<line role="B">разрешение проверь</line>
+		<line role="A">ага, слетело, ща поставлю обратно</line>
+		<line role="B">у меня после запуска тоже так бывало</line>
+		<line role="A">всё, спасибо, теперь норм</line>
+		<line role="B">а то я смотрю ты в стену бежишь</line>
+		<line role="A">я думал это лаги сука</line>
+	</scene>
+	<scene id="global-work-265">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social"/>
+		<line role="A">чё слушаете когда качаетесь? у меня плейлист заебал</line>
+		<line role="B">ты что обычно включаешь?</line>
+		<line role="A">рок всякий в основном</line>
+		<line role="B">ща скину что у меня играет</line>
+	</scene>
+	<scene id="global-work-266">
+		<role id="A" p="social"/>
+		<role id="B" p="social"/>
+		<line role="A">всё, клиент пусть качается, я спать</line>
+		<line role="B">долго ещё качать будет?</line>
+		<line role="A">пишет час, но скорость скачет</line>
+		<line role="B">ну пиздец, завтра зайдёшь тогда</line>
+	</scene>
+	<scene id="global-work-271">
+		<role id="A" p="social" g="f"/>
+		<role id="B" p="social"/>
+		<line role="A">мне завтра выходной дали, прикинь</line>
+		<line role="B">о, заебись</line>
+		<line role="A">я думала работать придётся</line>
+		<line role="B">тогда сегодня не убежишь сразу)</line>
+		<line role="A">вот прям планы строишь уже</line>
+		<line role="B">ну а вдруг ты завтра выспишься и к нам не зайдёшь</line>
+		<line role="A">не переживай, зайду вечером</line>
+	</scene>
+	<scene id="global-work-272">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social"/>
+		<line role="A">телефон потерял где-то дома</line>
+		<line role="B">позвони на него</line>
+		<line role="A">он на беззвучном блять</line>
+		<line role="B">ну всё, диван разбирай</line>
+	</scene>
+	<scene id="global-work-275">
+		<role id="A" p="social"/>
+		<role id="B" p="social" g="f"/>
+		<line role="A">блять опять скрин вместо карты</line>
+		<line role="B">у меня так пол папки скринами пола забито</line>
+		<line role="A">я их вообще когда-нибудь удалю нет</line>
+		<line role="B">я прошлый раз гиг освободила когда почистила</line>
+	</scene>
+	<scene id="global-work-277">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social"/>
+		<line role="A">сука банки забыл</line>
+		<line role="B">я ещё в городе, взять тебе?</line>
+		<line role="A">возьми немного, адену потом скину</line>
+		<line role="B">ща куплю, сколько тебе взять?</line>
+		<line role="A">спасибо, у меня тут совсем пусто</line>
+		<line role="B">каких именно надо?</line>
+		<line role="A">обычных штук сто хватит</line>
+		<line role="B">ок, сейчас бегу</line>
+	</scene>
+	<scene id="global-work-284">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social"/>
+		<line role="A">нашёл диск старый с музыкой</line>
+		<line role="B">у тебя есть куда его вставить?</line>
+		<line role="A">нет бля, вот сижу смотрю на него</line>
+		<line role="B">ахах, музейный экспонат</line>
+	</scene>
+	<scene id="global-work-288">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social" g="m"/>
+		<line role="A">как день прошёл?</line>
+		<line role="B">да заебался, только освободился</line>
+		<line role="A">работа?</line>
+		<line role="B">ага, с утра без остановки</line>
+	</scene>
+	<scene id="global-work-300">
+		<role id="A" p="social" g="f"/>
+		<role id="B" p="social"/>
+		<line role="A">почему тебя все разными именами зовут</line>
+		<line role="B">ник длинный, каждый по-своему сокращает</line>
+		<line role="A">а я думала это разные люди блять</line>
+		<line role="B">не, всё я)</line>
+	</scene>
+	<scene id="global-work-308">
+		<role id="A" p="social"/>
+		<role id="B" p="social"/>
+		<line role="A">склад где тут блять, хожу кругами</line>
+		<line role="B">ты в каком городе?</line>
+		<line role="A">гиран, у гк стою</line>
+		<line role="B">подойди ко мне, покажу</line>
+	</scene>
+	<scene id="global-work-314">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social"/>
+		<line role="A">всё, я у ворот</line>
+		<line role="B">ты не туда написал походу</line>
+		<line role="A">бля да, это в пати хотел</line>
+		<line role="B">ахах, бывает</line>
+	</scene>
+	<scene id="global-work-317">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social"/>
+		<line role="A">всё бля, пушку сломал</line>
+		<line role="B">запасная есть хоть?</line>
+		<line role="A">есть, но слабее намного</line>
+		<line role="B">эх, сочувствую</line>
+	</scene>
+	<scene id="streamer-extra-321">
+		<role id="A" p="ironic" g="f"/>
+		<role id="B" p="ironic"/>
+		<line role="A">полчаса этого нпс искала блять</line>
+		<line role="B">на изичах получается)</line>
+		<line role="A">ага, пока в чате не подсказали</line>
+		<line role="B">зато теперь дорогу знаешь</line>
+	</scene>
+	<scene id="streamer-extra-327">
+		<role id="A" p="ironic" g="m"/>
+		<role id="B" p="ironic" g="m"/>
+		<line role="A">я туда один больше не полезу</line>
+		<line role="B">на изичах же обещал)</line>
+		<line role="A">я не видел что их там столько блять</line>
+		<line role="B">ладно, стой, вместе зайдём</line>
+	</scene>
+	<scene id="streamer-extra-329">
+		<role id="A" p="ironic" g="m"/>
+		<role id="B" p="ironic"/>
+		<line role="A">десять минут не того моба бил</line>
+		<line role="B">ноль ошибок</line>
+		<line role="A">ага блять, теперь нужного искать</line>
+		<line role="B">я рядом, подойди покажу</line>
+	</scene>
+	<scene id="streamer-extra-332">
+		<role id="A" p="ironic" g="m"/>
+		<role id="B" p="ironic" g="m"/>
+		<line role="A">нихера ты его поймал</line>
+		<line role="B">сам не ожидал, стан случайно прошёл</line>
+		<line role="A">я думал он уже убежал</line>
+		<line role="B">я тоже, тупо на удачу нажал</line>
+	</scene>
+	<scene id="casual-v2-003">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social"/>
+		<line role="A">бля купил кристаллы не того грейда</line>
+		<line role="B">опять?</line>
+		<line role="A">не начинай, я ещё от прошлого раза не отошёл</line>
+		<line role="B">ставь в лавку, может заберут</line>
+		<line role="A">сначала нужные куплю, потом поставлю</line>
+	</scene>
+	<scene id="casual-v2-005">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="social"/>
+		<line role="A">я тебе в пм минут десять пишу</line>
+		<line role="B">ничего не приходило</line>
+		<line role="A">сука, я своему второму окну писал</line>
+		<line role="B">оно хоть ответило?</line>
+	</scene>
+	<scene id="global-casual-new-003">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="ironic"/>
+		<line role="A">бля я еле от мобов убежал</line>
+		<line role="B">хилимся, живём)</line>
+		<line role="A">сяду хп восстановлю, чуть не лёг</line>
+		<line role="B">сядь, я пока не буду тянуть</line>
+	</scene>
+	<scene id="global-casual-new-005">
+		<role id="A" p="social"/>
+		<role id="B" p="ironic"/>
+		<line role="A">думаю ещё раз пушку точнуть</line>
+		<line role="B">дядя не надо, одной сломанной тебе хватило</line>
+		<line role="A">ладно блять, уберу свитки пока</line>
+	</scene>
+	<scene id="global-casual-new-006">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="ironic"/>
+		<line role="A">кто знает почему у меня звук пропал?</line>
+		<line role="B">проверь не выключен ли в настройках</line>
+		<line role="A">сука, я колонку не включил</line>
+		<line role="B">ноль ошибок)</line>
+	</scene>
+	<scene id="city-life-revision-0001">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="talkative"/>
+		<line role="A">я сегодня весь день думал что пятница</line>
+		<line role="B">бля у меня так каждую среду</line>
+		<line role="A">я уже планы на выходные строил</line>
+		<line role="B">лучше б ты не напоминал какой сегодня день</line>
+	</scene>
+	<scene id="city-life-revision-0008">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="talkative"/>
+		<line role="A">я микрофон выключил и минут пять говорил сам с собой</line>
+		<line role="B">нам знакомо, мы в чат писали</line>
+		<line role="A">я чат свернул блять, поэтому не увидел</line>
+		<line role="B">потом расскажешь заново)</line>
+	</scene>
+	<scene id="city-life-revision-0010">
+		<role id="A" p="social"/>
+		<role id="B" p="talkative"/>
+		<line role="A">чё по погоде у вас?</line>
+		<line role="B">дождь второй день</line>
+		<line role="A">у нас солнце, но ветер холодный пиздец</line>
+		<line role="B">вот бы нам хоть ненадолго солнце</line>
+	</scene>
+	<scene id="city-life-revision-0012">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="talkative"/>
+		<line role="A">я у нпс стою, а он не реагирует</line>
+		<line role="B">ты на него точно нажимаешь?</line>
+		<line role="A">а, мимо кликал блять</line>
+		<line role="B">у меня с лавками так же бывает</line>
+	</scene>
+	<scene id="city-life-revision-0013">
+		<role id="A" p="social"/>
+		<role id="B" p="talkative"/>
+		<line role="A">вы обычно сами готовите или заказываете?</line>
+		<line role="B">я готовлю когда не лень</line>
+		<line role="A">то есть заказываешь</line>
+		<line role="B">сука да</line>
+	</scene>
+	<scene id="city-life-revision-0094">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="talkative"/>
+		<line role="A">поставил шмот на продажу и час смотрел почему никто не берёт</line>
+		<line role="B">цена высокая?</line>
+		<line role="A">я забыл саму лавку открыть</line>
+		<line role="B">бля бывает</line>
+		<line role="A">я ещё подумал чё людей нет сегодня</line>
+	</scene>
+	<scene id="city-life-revision-0132">
+		<role id="A" p="social"/>
+		<role id="B" p="talkative" g="m"/>
+		<line role="A">да сколько можно вспоминать этот мой фейл</line>
+		<line role="B">пока не сделаешь новый</line>
+		<line role="A">спасибо за поддержку</line>
+		<line role="B">бля, знал что ты это скажешь</line>
+	</scene>
+	<scene id="city-life-revision-0184">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="talkative" g="m"/>
+		<line role="A">сегодня на улице так ветрено что зонт бесполезен</line>
+		<line role="B">у нас дождь только начался</line>
+		<line role="A">я уже промок пока до остановки дошёл</line>
+		<line role="B">бля, я как раз собирался выходить</line>
+	</scene>
+	<scene id="city-life-revision-0203">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="talkative"/>
+		<line role="A">я чёт забыл как мы тогда вообще познакомились</line>
+		<line role="B">я тебе баф дал возле города, ты ещё ник перепутал</line>
+		<line role="A">а блять точно, я думал ты мой знакомый</line>
+		<line role="B">ну теперь знакомый</line>
+	</scene>
+	<scene id="city-life-revision-0216">
+		<role id="A" p="social"/>
+		<role id="B" p="talkative"/>
+		<line role="A">я в этой игре чат читаю чаще чем квесты</line>
+		<line role="B">по чату хотя бы понятно что происходит</line>
+		<line role="A">ну не всегда блять</line>
+		<line role="B">особенно когда мы все одновременно пишем</line>
+	</scene>
+	<scene id="city-life-revision-0261">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="talkative" g="m"/>
+		<line role="A">я раньше думал что у тебя ник на английском</line>
+		<line role="B">а он на русском просто раскладка другая</line>
+		<line role="A">блять точно</line>
+		<line role="B">я специально так сделал</line>
+	</scene>
+	<scene id="city-life-revision-0294">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="talkative" g="m"/>
+		<line role="A">я вчера не понял твою шутку и весь вечер думал что ты серьёзно</line>
+		<line role="B">блять, извини, я думал очевидно</line>
+		<line role="A">теперь-то понял, сегодня смешно</line>
+		<line role="B">ну и хорошо</line>
+	</scene>
+	<scene id="city-life-revision-0303">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="talkative"/>
+		<line role="A">я бы сейчас чай поставил, но чайник на кухне</line>
+		<line role="B">охуительная проблема</line>
+		<line role="A">я знаю, мне просто лень вставать</line>
+		<line role="B">тогда терпи</line>
+	</scene>
+	<scene id="city-life-revision-0353">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="talkative"/>
+		<line role="A">сегодня половину дня думал что четверг</line>
+		<line role="B">а какой сегодня?</line>
+		<line role="A">среда</line>
+		<line role="B">бля, у меня тоже</line>
+	</scene>
+	<scene id="city-life-revision-0374">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="talkative"/>
+		<line role="A">у меня сегодня кот весь день спал на стуле</line>
+		<line role="B">а ты где сидел?</line>
+		<line role="A">на кухонном, он жёсткий блять</line>
+		<line role="B">кот зато доволен</line>
+	</scene>
+	<scene id="city-life-revision-0379">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="talkative" g="f"/>
+		<role id="C" p="calm"/>
+		<line role="A">у меня старый скрин нашёлся, мы там втроём у склада стоим</line>
+		<line role="B">это когда мы полчаса друг друга искали?</line>
+		<line role="A">ага, ты ещё не в тот город прилетел</line>
+		<line role="C">это я не в тот прилетел вообще-то</line>
+		<line role="B">вот, наконец правда всплыла</line>
+		<line role="A">бля точно, я вас перепутал</line>
+	</scene>
+	<scene id="city-life-revision-0460">
+		<role id="A" p="social"/>
+		<role id="B" p="talkative" g="m"/>
+		<role id="C" p="calm"/>
+		<line role="A">вы заметили как быстро вечер проходит когда болтаешь?</line>
+		<line role="B">я вообще думал сейчас десять</line>
+		<line role="C">уже почти двенадцать</line>
+		<line role="B">блять, мне завтра рано</line>
+		<line role="A">всё, иди спать</line>
+	</scene>
+	<scene id="city-life-revision-0486">
+		<role id="A" p="social"/>
+		<role id="B" p="talkative"/>
+		<role id="C" p="calm"/>
+		<line role="A">слышно меня?</line>
+		<line role="B">в чате видно точно</line>
+		<line role="A">блять я опять не в голосе</line>
+		<line role="C">заходи, мы тут</line>
+		<line role="B">и микрофон включить не забудь</line>
+	</scene>
+	<scene id="city-life-revision-0440">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="talkative" g="m"/>
+		<role id="C" p="calm"/>
+		<line role="A">бля я только что человеку не то в личку ответил</line>
+		<line role="B">что написал?</line>
+		<line role="A">думал друг спрашивает пойду ли есть, написал «ща мать приготовит»</line>
+		<line role="C">и что он?</line>
+		<line role="A">молчит пока, может вообще не прочитал</line>
+	</scene>
+	<scene id="city-life-revision-0454">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="talkative"/>
+		<role id="C" p="calm" g="m"/>
+		<line role="A">я вчера в голос зашёл и забыл микрофон включить</line>
+		<line role="B">мы тебя звали минут пять</line>
+		<line role="C">я думал ты отошёл</line>
+		<line role="A">я вам отвечал всё это время блять</line>
+	</scene>
+	<scene id="city-life-revision-0509">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="talkative"/>
+		<role id="C" p="calm"/>
+		<line role="A">я случайно удалил нужное сообщение</line>
+		<line role="B">в каком чате?</line>
+		<line role="A">в личке, хотел ник скопировать</line>
+		<line role="C">там история остаётся если чат не закрывать</line>
+		<line role="A">уже закрыл блять</line>
+	</scene>
+	<scene id="city-life-revision-0537">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="talkative" g="m"/>
+		<role id="C" p="calm"/>
+		<line role="A">бля я только увидел сколько времени</line>
+		<line role="B">опять засиделся?</line>
+		<line role="A">думал полчаса прошло</line>
+		<line role="C">тут все так говорят</line>
+		<line role="A">ладно, ещё десять минут и всё</line>
+	</scene>
+	<scene id="city-life-revision-0336">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="talkative" g="m"/>
+		<line role="A">я вчера пять раз пересмотрел цену и всё равно ошибся</line>
+		<line role="B">купил не за столько?</line>
+		<line role="A">на ноль не туда посмотрел</line>
+		<line role="B">бля, у меня такое тоже было</line>
+	</scene>
+	<scene id="city-life-revision-0356">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="talkative"/>
+		<line role="A">погоди, я не видел чем кончилось</line>
+		<line role="B">он нашёл-таки ту лавку</line>
+		<line role="A">купил?</line>
+		<line role="B">не, там цена уже другая была</line>
+		<line role="A">ну ахуенно</line>
+	</scene>
+	<scene id="city-life-revision-0365">
+		<role id="A" p="social"/>
+		<role id="B" p="talkative"/>
+		<line role="A">у кого ещё второй монитор показывает чёрный экран после сна?</line>
+		<line role="B">у меня. я кабель передёргиваю</line>
+		<line role="A">каждый раз? заебаться можно</line>
+		<line role="B">ага, всё руки не доходят разобраться</line>
+	</scene>
+	<scene id="city-life-revision-0366">
+		<role id="A" p="social"/>
+		<role id="B" p="talkative" g="m"/>
+		<line role="A">у нас в подъезде кто-то курицу жарит, пахнет на весь этаж</line>
+		<line role="B">блять я есть захотел</line>
+		<line role="A">я тоже, а у меня одни пельмени</line>
+		<line role="B">ну хоть что-то. у меня пусто</line>
+	</scene>
+	<scene id="city-life-revision-0372">
+		<role id="A" p="social"/>
+		<role id="B" p="talkative" g="m"/>
+		<line role="A">ты мне про что сейчас написал?</line>
+		<line role="B">ой блять, не тебе</line>
+		<line role="A">а я сижу думаю с каких пор у тебя собака</line>
+		<line role="B">она у сестры, это ей хотел</line>
+	</scene>
+	<scene id="city-life-revision-0385">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="talkative"/>
+		<role id="C" p="calm" g="m"/>
+		<line role="A">кто знает почему у меня звук чата такой громкий?</line>
+		<line role="B">отдельно громкость уведомлений посмотри</line>
+		<line role="C">я из-за неё вчера аж дёрнулся</line>
+		<line role="A">нашёл. блять вот теперь норм</line>
+	</scene>
+	<scene id="city-life-revision-0411">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="talkative"/>
+		<role id="C" p="calm"/>
+		<line role="A">это же тот гном, с которым мы раньше бегали?</line>
+		<line role="B">ага, он снова зашёл</line>
+		<line role="A">нихера себе, я сначала не поверил</line>
+		<line role="C">он и меня сегодня уже нашёл</line>
+	</scene>
+	<scene id="city-life-revision-0413">
+		<role id="A" p="social"/>
+		<role id="B" p="talkative"/>
+		<role id="C" p="calm"/>
+		<line role="A">я завтра не смогу зайти, уезжаю</line>
+		<line role="B">ты же только вчера приехал</line>
+		<line role="A">ага блять, опять по делам</line>
+		<line role="C">ну ты хоть дома вещи оставь</line>
+	</scene>
+	<scene id="city-life-revision-0415">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="talkative"/>
+		<role id="C" p="calm"/>
+		<line role="A">я человеку полчаса писал как знакомому</line>
+		<line role="B">и?</line>
+		<line role="A">не тот оказался, ник на букву отличается</line>
+		<line role="C">он наверное охуел</line>
+		<line role="A">спросил кто я вообще такой</line>
+	</scene>
+	<scene id="city-life-revision-0426">
+		<role id="A" p="social"/>
+		<role id="B" p="talkative"/>
+		<role id="C" p="calm"/>
+		<line role="A">завтра до скольки работаешь?</line>
+		<line role="B">до пяти, если вовремя отпустят</line>
+		<line role="C">я до обеда только</line>
+		<line role="A">эх, а у меня выходной</line>
+		<line role="B">иди нахер)</line>
+	</scene>
+	<scene id="city-life-revision-0430">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="talkative"/>
+		<role id="C" p="calm" g="m"/>
+		<line role="A">блять, хотел спросить что-то и забыл</line>
+		<line role="B">ты про настройки вроде спрашивал</line>
+		<line role="C">да, звук у тебя пропадал</line>
+		<line role="A">точно! само прошло кстати</line>
+	</scene>
+	<scene id="city-life-revision-0522">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="talkative"/>
+		<role id="C" p="calm"/>
+		<line role="A">я нашёл скрин, только качество пиздец</line>
+		<line role="B">скинь всё равно</line>
+		<line role="C">там ники хоть видны?</line>
+		<line role="A">один точно твой. остальные размытые</line>
+		<line role="B">давай, попробуем разобрать</line>
+	</scene>
+	<scene id="city-life-revision-0557">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="talkative"/>
+		<role id="C" p="calm"/>
+		<line role="A">я сегодня хотел раньше лечь</line>
+		<line role="B">вчера ты то же самое говорил</line>
+		<line role="C">он ещё и будильник на шесть поставил</line>
+		<line role="A">да помню я блять, уже ухожу</line>
+	</scene>
+	<scene id="city-life-revision-0558">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="talkative"/>
+		<role id="C" p="calm"/>
+		<line role="A">ты мне вчера писал про сбор?</line>
+		<line role="B">ага, но ты уже вышел</line>
+		<line role="C">мы потом втроём пошли</line>
+		<line role="A">бля, я думал никто не идёт</line>
+		<line role="B">сегодня пораньше напишу</line>
+	</scene>
+	<scene id="city-life-revision-0559">
+		<role id="A" p="social"/>
+		<role id="B" p="talkative"/>
+		<role id="C" p="calm" g="f"/>
+		<line role="A">у меня глаза уже слипаются с этого телефона</line>
+		<line role="B">ты ещё в автобусе?</line>
+		<line role="A">да, стоим хер знает где</line>
+		<line role="C">там после моста пробка была</line>
+		<line role="A">понятно, ещё не скоро значит</line>
+	</scene>
+	<scene id="city-life-revision-0561">
+		<role id="A" p="social"/>
+		<role id="B" p="talkative" g="m"/>
+		<role id="C" p="calm"/>
+		<line role="A">а кто говорил что сегодня сбор будет?</line>
+		<line role="B">я видел в клановом чате</line>
+		<line role="C">там потом перенесли, ты не дочитал</line>
+		<line role="A">бля, точно, вижу теперь</line>
+	</scene>
+	<scene id="city-life-revision-0563">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="talkative" g="m"/>
+		<role id="C" p="calm"/>
+		<line role="A">ты ночью спать ушёл или вылетел?</line>
+		<line role="B">уснул блять, прям в кресле</line>
+		<line role="C">мы тебя звали, ты не отвечал</line>
+		<line role="A">я потом тебя из голоса выкинул, микрофон шумел</line>
+		<line role="B">спасибо, а то до утра бы висел</line>
+	</scene>
+	<scene id="city-life-revision-0590">
+		<role id="A" p="social"/>
+		<role id="B" p="talkative" g="m"/>
+		<role id="C" p="calm" g="m"/>
+		<line role="A">блять я уже минут десять без звука сижу</line>
+		<line role="B">у меня тоже так было когда вкладку свернул</line>
+		<line role="C">а я думал меня никто не слышит</line>
+		<line role="A">я настройки полез смотреть, а на колонках громкость в ноль</line>
+	</scene>
+	<scene id="city-life-revision-0591">
+		<role id="A" p="social"/>
+		<role id="B" p="talkative"/>
+		<role id="C" p="calm" g="m"/>
+		<line role="A">я щас из города выйду</line>
+		<line role="B">ты ж баф хотел обновить</line>
+		<line role="C">и банки не забыл?</line>
+		<line role="A">блять, ещё и банки. ладно, идите пока</line>
+	</scene>
+	<scene id="city-life-revision-0598">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="talkative" g="m"/>
+		<role id="C" p="calm"/>
+		<line role="A">я думал ты афк, а ты тут</line>
+		<line role="B">я в другом окне сидел, не видел что писали</line>
+		<line role="C">мы тебя на фарм звали</line>
+		<line role="B">бля, я пока прочитал, вы уже ушли</line>
+	</scene>
+	<scene id="city-additive-20261101-0002">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="talkative" g="m"/>
+		<role id="C" p="calm" g="m"/>
+		<line role="A">бля я только что соски на склад убрал вместо того чтоб достать</line>
+		<line role="B">я один раз так деньги убрал и пошёл покупать</line>
+		<line role="C">и сразу не заметил?</line>
+		<line role="B">в лавке заметил когда не хватило)</line>
+		<line role="A">во, я тоже уже к выходу добежал</line>
+	</scene>
+	<scene id="city-additive-20261101-0003">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="talkative" g="m"/>
+		<role id="C" p="calm"/>
+		<line role="A">кто там сказал что пятница?</line>
+		<line role="B">а что не пятница?</line>
+		<line role="C">четверг ещё</line>
+		<line role="B">блять я уже настроился</line>
+		<line role="A">я тоже пока календарь не открыл</line>
+	</scene>
+	<scene id="city-additive-20261101-0025">
+		<role id="A" p="social" g="m"/>
+		<role id="B" p="talkative"/>
+		<line role="A">бля у меня пакеты опять порвались</line>
+		<line role="B">всё донёс?</line>
+		<line role="A">мандарины по подъезду собирал</line>
+		<line role="B">хорошо хоть не яйца</line>
+	</scene>
+</chatBank>

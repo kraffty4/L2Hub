@@ -1,0 +1,28 @@
+{
+  "_note": "Сколько сервер берёт у машины (machine.py, docs/PHANTOMS.md, раздел 4.132). Кривые — точки [охотников, значение] из замеров на копии мира High Five 2026-11-03 (машина замеров — reference); source у каждой части: measured, group, estimated, draft, unmeasured. Выключатели: effect none — в замере не вышел из шума, unknown — не мерился; switchGroups — замерены группой, итог группы у каждого; кого нет ни там, ни там, тот не мерился. liveCurve — живые данные кучи после полной сборки (jcmd) в установившемся мире: 50–350 — через 6 минут после входа плюс прогрев, пропорционально числу (часовой прогон при 500: +0,35 ГиБ к той же отметке), 500 — плато часового прогона. tickCurve при 500 — средний тик 16 минут после разноса записей в базу. Выше 500 — по наклону прогона на 1000 клонов (раздел 4.120).",
+  "chronicles": {"ct26_highfive": "measured", "epilogue": "estimated", "interlude": "estimated"},
+  "reference": {"title": "Ryzen 5 9600X, 6 ядер, 32 ГБ", "loopSec": 0.0075},
+  "base": {"title": "Сервер без охотников: гейм вне кучи, логин, база, мозги", "source": "measured", "ram": 0.7, "disk": 2.2},
+  "heap": {"title": "Куча гейма", "source": "measured"},
+  "hunter": {
+    "title": "Охотники", "source": "measured",
+    "liveCurve": [[0, 3.09], [50, 3.32], [100, 3.54], [219, 3.84], [350, 4.13], [500, 4.5]], "liveSlope": 0.001,
+    "tickCurve": [[0, 39], [50, 71], [100, 89], [219, 132], [350, 231], [500, 308]],
+    "cpuCurve": [[0, 0.1], [100, 0.17], [219, 0.24], [500, 0.46]],
+    "logMbPerHour": 0.013, "dbMbPerHour": 0.00064
+  },
+  "extras": [
+    {"id": "client", "title": "Клиент игры на этой же машине", "source": "estimated", "cpu": 1.0, "ram": 3.0, "note": "Не измерено: клиент в прогонах не запускался."}
+  ],
+  "limits": {"heapComfort": 0.85, "tickPeriodMs": 2000, "tickComfort": 0.5, "coreFactor": {"2": 1.0, "6": 1.0}, "lowDiskGb": 10, "logCeilingGb": 2},
+  "switches": {
+    "fakes": {"source": "measured", "effect": "none", "note": "Прогон 8 минут при 500 охотниках без городских фейков против такого же с ними: куча после сборки −0,1 ГБ, тик −12 мс — в пределах разброса между одинаковыми прогонами (куча ±0,2 ГБ, тик ±15 мс)."},
+    "elpies": {"source": "unmeasured", "effect": "unknown", "note": "Не мерилось. 2026-10-25 нашествие на куче 4 ГБ кончилось нехваткой памяти, но в мире тогда были и охотники: вклад самого нашествия не отделён."}
+  },
+  "switchGroups": [
+    {"ids": ["fakestores", "fakemarket"], "source": "group", "effect": "none", "note": "Выключались вместе, прогон 8 минут при 500 охотниках: куча и тик в пределах разброса."},
+    {"ids": ["hunterenchant", "hunterfriends", "huntertrade", "chatflow", "welcome", "offlineworld", "claninvite", "clantitles", "clanally", "clantop", "clandrama", "clanwarreply", "clanrecruit", "clancrests",
+             "regulars", "raids", "raidrivals", "spotdisputes", "raidtakebusy", "sieges", "stories", "favors", "farwhisper", "gestures", "gifts", "lootfights", "scams", "petition", "hunterpvp"],
+     "source": "group", "effect": "none", "note": "29 выключателей жизни охотников выключались разом, прогон 8 минут при 500: куча и тик в пределах разброса. Часть из них срабатывает только рядом с живым игроком, а в прогонах живого не было."}
+  ]
+}

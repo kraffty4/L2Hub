@@ -46,7 +46,13 @@ public class PhantomBanter
 	public void tick(Player hunter, PhantomTemplate template, long now)
 	{
 		final int id = hunter.getObjectId();
-		if (!PhantomHuntersConfig.HUNTER_BANTER || !PhantomChat.brainEnabled() || (now < _nextLook.getOrDefault(id, 0L)))
+		if (!PhantomHuntersConfig.HUNTER_BANTER)
+		{
+			return;
+		}
+		// Банк реплик (раздел 4.122): разговоры и фон, когда мозгов нет.
+		PhantomChatBank.getInstance().tick(hunter, template, now);
+		if (!PhantomChat.brainEnabled() || (now < _nextLook.getOrDefault(id, 0L)))
 		{
 			return;
 		}

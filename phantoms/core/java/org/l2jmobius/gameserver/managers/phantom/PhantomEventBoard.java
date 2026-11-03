@@ -166,7 +166,7 @@ public final class PhantomEventBoard
 	/**
 	 * @return ответ скрипта на событие; {@code null} — ничего не ответил или упал
 	 */
-	private static String call(String name, String event, Player player)
+	static String call(String name, String event, Player player)
 	{
 		final Quest script = ScriptManager.getInstance().getScript(name);
 		if (script == null)

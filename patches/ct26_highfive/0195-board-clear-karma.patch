@@ -1,0 +1,260 @@
+diff --git a/dist/game/config/Custom/L2HubTown.ini b/dist/game/config/Custom/L2HubTown.ini
+index e88a636942afc01a97a4ed28a3a86ca18b190442..33a68609934b1c7a2be6d59dae238d080ef3c7f2 100644
+--- a/dist/game/config/Custom/L2HubTown.ini
++++ b/dist/game/config/Custom/L2HubTown.ini
+@@ -15,3 +15,7 @@ TownGmShop = True
+ # Стартовые наборы на доске Alt+B (кнопка на первой странице GM-шопа): бесплатно, один раз на персонажа на каждый грейд.
+ # Default: True
+ TownStarterKits = True
++
++# Снятие кармы на доске Alt+B: цена одного очка кармы в адене. С кармой доска закрыта, Alt+B открывает эту страницу. 0 — снятия нет. Счётчик PK не меняется.
++# Default: 1000
++TownKarmaPrice = 1000
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/HomeBoard.java b/dist/game/data/scripts/handlers/bypass/communityboard/HomeBoard.java
+index a24759f05363d136463027ff28b27044496661f5..a98ce1725de145f9ef1e77f850332f2ad2f80ab0 100644
+--- a/dist/game/data/scripts/handlers/bypass/communityboard/HomeBoard.java
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/HomeBoard.java
+@@ -126,7 +126,8 @@ public class HomeBoard implements IParseBoardHandler
+ 		
+ 		if (KARMA_CHECK.test(player))
+ 		{
+-			player.sendMessage("Players with Karma cannot use the Community Board.");
++			// L2Hub: вместо отказа — снятие кармы за адену, иначе доска закрыта совсем и про него не узнать.
++			CommunityBoardHandler.getInstance().handleParseCommand(L2HubKarma.COMMAND, player);
+ 			return false;
+ 		}
+ 		
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+index 96524d9b3e43f2c592d16709e17f604b055e95a6..f89669a350f734314444262bf50b1cb28f6b4270 100644
+--- a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+@@ -55,6 +55,7 @@ import org.l2jmobius.gameserver.network.serverpackets.ShowBoard;
+  * <li>_bbshubplay — окно автобоя мимо чата ({@link #play})</li>
+  * <li>_bbshubfind … — поиск вещи в GM-шопе и по лавкам ({@link L2HubFind})</li>
+  * <li>_bbshubraids … — кто из рейд-боссов жив ({@link L2HubRaids})</li>
++ * <li>_bbshubkarma [pay …] — снятие кармы за адену ({@link L2HubKarma})</li>
+  * </ul>
+  */
+ public class L2HubBoard implements IParseBoardHandler
+@@ -197,7 +198,21 @@ public class L2HubBoard implements IParseBoardHandler
+ 		java.util.Map.entry("жив", "alive"),
+ 		java.util.Map.entry("мёртв", "dead"),
+ 		java.util.Map.entry("не появился", "not up"),
+-		java.util.Map.entry("Место этого босса неизвестно.", "This boss's location is unknown."));
++		java.util.Map.entry("Место этого босса неизвестно.", "This boss's location is unknown."),
++		java.util.Map.entry("Снять карму", "Clear karma"),
++		java.util.Map.entry("За адену, счётчик PK не меняется.", "For adena, the PK count stays."),
++		java.util.Map.entry("Снятие кармы выключено в настройках сервера (L2HubTown.ini, TownKarmaPrice).", "Clearing karma is off in the server settings (L2HubTown.ini, TownKarmaPrice)."),
++		java.util.Map.entry("Кармы нет, доска открыта.", "No karma, the board is open."),
++		java.util.Map.entry("Твоя карма: ", "Your karma: "),
++		java.util.Map.entry("Очко кармы стоит ", "One karma point costs "),
++		java.util.Map.entry(" адены, вся карма — ", " adena, all of it "),
++		java.util.Map.entry(" адены.", " adena."),
++		java.util.Map.entry("У тебя: ", "You have: "),
++		java.util.Map.entry("Снять всю", "Clear all"),
++		java.util.Map.entry("Сколько очков:", "Points:"),
++		java.util.Map.entry("Снять", "Clear"),
++		java.util.Map.entry("С кармой остальная доска закрыта. Счётчик PK не меняется.", "With karma the rest of the board is closed. The PK count stays."),
++		java.util.Map.entry("С проклятым оружием карма не снимается.", "Karma cannot be cleared with a cursed weapon."));
+ 	
+ 	private static boolean l2hubEnglish()
+ 	{
+@@ -279,7 +294,8 @@ public class L2HubBoard implements IParseBoardHandler
+ 		PLAY,
+ 		L2HubKits.COMMAND,
+ 		L2HubFind.COMMAND,
+-		L2HubRaids.COMMAND
++		L2HubRaids.COMMAND,
++		L2HubKarma.COMMAND
+ 	};
+ 
+ 	private static final Pattern NPC_CHAT = Pattern.compile("bypass (?:-h )?npc_%objectId%_Chat (\\d+)");
+@@ -348,6 +364,10 @@ public class L2HubBoard implements IParseBoardHandler
+ 		{
+ 			html = page(player, tr("Рейд-боссы"), L2HubRaids.content(player, args));
+ 		}
++		else if (args[0].equalsIgnoreCase(L2HubKarma.COMMAND))
++		{
++			html = page(player, tr("Снять карму"), L2HubKarma.content(player, args));
++		}
+ 		else if (args[0].equalsIgnoreCase(EVENTS))
+ 		{
+ 			if ((args.length > 1) && args[1].equalsIgnoreCase("medals") && canUse(player))
+@@ -423,21 +443,43 @@ public class L2HubBoard implements IParseBoardHandler
+ 	 * @return включено (нет файла или ключа — включено)
+ 	 */
+ 	static boolean townOn(String key)
++	{
++		return !"false".equalsIgnoreCase(townValue(key, "True"));
++	}
++
++	/**
++	 * @param key числовой ключ config/Custom/L2HubTown.ini
++	 * @param fallback нет файла, ключа или в ключе не число
++	 * @return значение
++	 */
++	static int townInt(String key, int fallback)
++	{
++		try
++		{
++			return Integer.parseInt(townValue(key, String.valueOf(fallback)));
++		}
++		catch (NumberFormatException e)
++		{
++			return fallback;
++		}
++	}
++
++	private static String townValue(String key, String fallback)
+ 	{
+ 		final java.io.File file = new java.io.File("./config/Custom/L2HubTown.ini");
+ 		if (!file.isFile())
+ 		{
+-			return true;
++			return fallback;
+ 		}
+ 		try (java.io.Reader reader = java.nio.file.Files.newBufferedReader(file.toPath(), java.nio.charset.StandardCharsets.UTF_8))
+ 		{
+ 			final java.util.Properties properties = new java.util.Properties();
+ 			properties.load(reader);
+-			return !"false".equalsIgnoreCase(properties.getProperty(key, "True").trim());
++			return properties.getProperty(key, fallback).trim();
+ 		}
+ 		catch (Exception e)
+ 		{
+-			return true;
++			return fallback;
+ 		}
+ 	}
+ 
+@@ -657,7 +699,14 @@ public class L2HubBoard implements IParseBoardHandler
+ 			player.sendMessage(tr("С кармой доской пользоваться нельзя."));
+ 			return false;
+ 		}
++		return notBusy(player);
++	}
+ 
++	/**
++	 * {@link #canUse} без кармы: снять её можно и с кармой ({@link L2HubKarma}).
++	 */
++	static boolean notBusy(Player player)
++	{
+ 		if (CommunityBoardConfig.COMMUNITYBOARD_COMBAT_DISABLED && (player.isCastingNow() || player.isInCombat() || player.isInDuel() || player.isInOlympiadMode() || player.isInsideZone(ZoneId.SIEGE) || player.isInsideZone(ZoneId.PVP) || (player.getPvpFlag() > 0) || player.isAlikeDead() || player.isOnEvent() || player.isInStoreMode()))
+ 		{
+ 			player.sendMessage(tr("Сейчас нельзя: ты в бою, мёртв или на событии."));
+@@ -839,6 +888,10 @@ public class L2HubBoard implements IParseBoardHandler
+ 		worldRow(sb, tr("Мир сейчас"), "voice .world", tr("Суперчемпионы, сезонные события и расписание ивентов."));
+ 		worldRow(sb, tr("Рейд-боссы"), L2HubRaids.COMMAND, tr("Кто жив, кто мёртв, метка на карте."));
+ 		worldRow(sb, tr("Поиск вещи"), L2HubFind.COMMAND, tr("Что почём в GM-шопе и кто продаёт в лавках."));
++		if (player.getKarma() > 0)
++		{
++			worldRow(sb, tr("Снять карму"), L2HubKarma.COMMAND, tr("За адену, счётчик PK не меняется."));
++		}
+ 		return page(player, tr("Мир"), sb.append("</table>").toString());
+ 	}
+ 
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubKarma.java b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubKarma.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..bc7669ec8b4c20cb3007757bdf6699cb078bfd53
+--- /dev/null
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubKarma.java
+@@ -0,0 +1,99 @@
++package handlers.bypass.communityboard;
++
++import java.util.Locale;
++
++import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
++
++/**
++ * L2Hub: снятие кармы за адену на доске Alt+B. С кармой доска закрыта ({@code CommunityKarmaDisabled}), поэтому HomeBoard вместо отказа открывает эту страницу.
++ * <ul>
++ * <li>_bbshubkarma — сколько кармы и почём; цена очка — TownKarmaPrice в config/Custom/L2HubTown.ini, 0 выключает снятие.</li>
++ * <li>_bbshubkarma pay all|&lt;очки&gt; — снять всю или часть, те же запреты, что у доски, кроме самой кармы ({@link L2HubBoard#notBusy}).</li>
++ * </ul>
++ * Счётчик PK не меняется: мера за PK остаётся за квестом Repent Your Sins. С проклятым оружием карма не снимается, она вернётся с ним же.
++ */
++public final class L2HubKarma
++{
++	public static final String COMMAND = "_bbshubkarma";
++
++	private static final String KEY = "TownKarmaPrice";
++	private static final int DEFAULT_PRICE = 1000;
++
++	private L2HubKarma()
++	{
++	}
++
++	public static int price()
++	{
++		return L2HubBoard.townInt(KEY, DEFAULT_PRICE);
++	}
++
++	public static String content(Player player, String[] args)
++	{
++		final int price = price();
++		if (price <= 0)
++		{
++			return "<br><font color=\"808080\">" + L2HubBoard.tr("Снятие кармы выключено в настройках сервера (L2HubTown.ini, TownKarmaPrice).") + "</font>";
++		}
++		if ((args.length > 2) && args[1].equalsIgnoreCase("pay"))
++		{
++			pay(player, args[2], price);
++		}
++
++		final int karma = player.getKarma();
++		if (karma <= 0)
++		{
++			return "<br><font color=\"7CD37C\">" + L2HubBoard.tr("Кармы нет, доска открыта.") + "</font>";
++		}
++		final StringBuilder sb = new StringBuilder(1024);
++		sb.append("<br>").append(L2HubBoard.tr("Твоя карма: ")).append("<font color=\"LEVEL\">").append(karma).append("</font><br1>");
++		sb.append(L2HubBoard.tr("Очко кармы стоит ")).append(money(price)).append(L2HubBoard.tr(" адены, вся карма — ")).append(money((long) karma * price)).append(L2HubBoard.tr(" адены.")).append("<br1>");
++		sb.append(L2HubBoard.tr("У тебя: ")).append(money(player.getAdena())).append(L2HubBoard.tr(" адены.")).append("<br><br>");
++		sb.append(L2HubBoard.button(L2HubBoard.tr("Снять всю"), COMMAND + " pay all", 170)).append("<br>");
++		sb.append("<table width=340><tr><td width=120 align=right>").append(L2HubBoard.tr("Сколько очков:")).append("</td><td width=100><edit var=\"points\" width=90></td><td width=120>");
++		sb.append(L2HubBoard.button(L2HubBoard.tr("Снять"), COMMAND + " pay $points", 100)).append("</td></tr></table><br>");
++		sb.append("<font color=\"909090\">").append(L2HubBoard.tr("С кармой остальная доска закрыта. Счётчик PK не меняется.")).append("</font>");
++		return sb.toString();
++	}
++
++	private static void pay(Player player, String amount, int price)
++	{
++		if (!L2HubBoard.notBusy(player))
++		{
++			return;
++		}
++		if (player.isCursedWeaponEquipped())
++		{
++			player.sendMessage(L2HubBoard.tr("С проклятым оружием карма не снимается."));
++			return;
++		}
++		final int karma = player.getKarma();
++		final int points = amount.toLowerCase(Locale.ROOT).equals("all") ? karma : Math.min(number(amount), karma);
++		if (points <= 0)
++		{
++			return;
++		}
++		if (player.reduceAdena(ItemProcessType.FEE, (long) points * price, player, true))
++		{
++			player.setKarma(karma - points);
++		}
++	}
++
++	private static String money(long adena)
++	{
++		return String.format(Locale.ROOT, "%,d", adena).replace(',', ' ');
++	}
++
++	private static int number(String value)
++	{
++		try
++		{
++			return Integer.parseInt(value);
++		}
++		catch (NumberFormatException e)
++		{
++			return 0;
++		}
++	}
++}

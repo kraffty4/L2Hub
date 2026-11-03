@@ -20,7 +20,7 @@ from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
 
-from . import catalog, configs, paths, servers
+from . import catalog, configs, machine, paths, servers
 
 Out = Callable[[str], None]
 
@@ -828,6 +828,7 @@ def server_setup(p: dict, out: Out = print) -> None:
                     raise RuntimeError(f"Ошибка в {part}\\{sql.name}: {r.stderr.decode('utf-8', 'replace')[-500:]}")
                 count += 1
         out(f"База {db}: залито файлов — {count}")
+        machine.fresh_default(p, out)
 
     # Доступ к базе: 127.0.0.1 вместо localhost (MariaDB слушает только IPv4) и пароль из data/client.cnf.
     password = db_password()

@@ -1,5 +1,5 @@
 {
-  "note": "Значения ключей конфигов, которые у этой хроники свои, — поверх конфигов сборки. Подставляет выкладка конфигов (builder.deploy_configs, chronicle_configs): в сервер ложится конфиг сборки с этими значениями, правки пользователя в сервере остаются. PvpEvents — решение автора 2026-10-31 («Включать по умолчанию», docs/PLAN.md, «Решения»): TvT, Deathmatch и CtF по расписанию, старт только при живом игроке (PvpOnlyWithPlayers). HunterSiegeGarrison: стражники замков на High Five 70–80-го уровня, при 15 % десять охотников замок не взяли, при 5 % взяли (docs/PHANTOMS.md, осады). HunterClanSubUnits, HunterClanStock, HunterClanHall — решение автора 2026-10-31 («Первым делать все эти фишки на Н5», docs/PLAN.md, «Решения»): подгруппы, склад клана и кланхолл охотников сначала только на High Five. HunterStrategyPerHour и HunterMaxStores — вторая сотня охотников (docs/PHANTOMS.md, 4.109): спрос на решения стратега и места под лавки те же на охотника, что были при 109; бюджет стратега в минуту прежний, расход мозгов не растёт. HunterSuperChampionBoost: суперчемпион на High Five x100 HP и x5 атака (патч 0161, просьба автора 2026-11-01), охотникам рейда на него множители РБ. HunterPartyChanceHealer: хилер нарасхват (docs/PHANTOMS.md, 4.117, решение автора 2026-11-01), на остальных хрониках 0. HunterCombatFixes: правки боя из вклада пользователя (docs/PHANTOMS.md, 4.119, решение автора 2026-11-01 «Да, сперва баги»).",
+  "note": "Значения ключей конфигов, которые у этой хроники свои, — поверх конфигов сборки. Подставляет выкладка конфигов (builder.deploy_configs, chronicle_configs): в сервер ложится конфиг сборки с этими значениями, правки пользователя в сервере остаются. PvpEvents — решение автора 2026-10-31 («Включать по умолчанию», docs/PLAN.md, «Решения»): TvT, Deathmatch и CtF по расписанию, старт только при живом игроке (PvpOnlyWithPlayers). HunterSiegeGarrison: стражники замков на High Five 70–80-го уровня, при 15 % десять охотников замок не взяли, при 5 % взяли (docs/PHANTOMS.md, осады). HunterClanSubUnits, HunterClanStock, HunterClanHall — решение автора 2026-10-31 («Первым делать все эти фишки на Н5», docs/PLAN.md, «Решения»): подгруппы, склад клана и кланхолл охотников сначала только на High Five. HunterStrategyPerHour и HunterMaxStores — вторая сотня охотников (docs/PHANTOMS.md, 4.109): спрос на решения стратега и места под лавки те же на охотника, что были при 109; бюджет стратега в минуту прежний, расход мозгов не растёт. HunterSuperChampionBoost: суперчемпион на High Five x100 HP и x5 атака (патч 0161, просьба автора 2026-11-01), охотникам рейда на него множители РБ. HunterPartyChanceHealer: хилер нарасхват (docs/PHANTOMS.md, 4.117, решение автора 2026-11-01), на остальных хрониках 0. HunterCombatFixes: правки боя из вклада пользователя (docs/PHANTOMS.md, 4.119, решение автора 2026-11-01 «Да, сперва баги») HunterSpawnTickMs и HunterStrategyReserve: таблица до 500 охотников (docs/PHANTOMS.md, 4.132, автор 2026-11-02 «Поднимай»): вход не по 2 с на охотника, у тех, кто рядом с живым, свой кусок бюджета стратега; RestartHint — напоминание о перезапуске по занятой куче. HunterClanLevelSaving: глава копит на уровень клана (docs/PHANTOMS.md, 4.121, решение автора 2026-11-02 «Берём»), сначала только на High Five. HunterChatBank и HunterChatBankMat: банк реплик и его мат (docs/PHANTOMS.md, 4.122, автор 2026-11-02 «Банк - берём как запасной»), HunterClanInvitePriority и HunterSupportCures: приоритет соклана и снятие дебаффов (4.123, 4.124, «Охотник к сокланам берём»), HunterPartyNoblesse: ноблесс (4.124, «Ноблесс хорошо»); всё из вклада пользователя, сначала только на High Five. HunterSpoil: спойл и свип у гномов-спойлеров, вклад пользователя (сначала High Five). HunterPets: петы у части охотников, вклад пользователя (id ошейников и корма — High Five). HunterCraft: мастерские гномов-ремесленников, вклад пользователя (классы — номера High Five).",
   "configs": {
     "game/config/Custom/L2HubEvents.ini": {
       "PvpEvents": "True"
@@ -13,7 +13,19 @@
       "HunterMaxStores": "8",
       "HunterSuperChampionBoost": "True",
       "HunterPartyChanceHealer": "90",
-      "HunterCombatFixes": "True"
+      "HunterCombatFixes": "True",
+      "HunterClanLevelSaving": "True",
+      "HunterClanInvitePriority": "True",
+      "HunterPartyNoblesse": "True",
+      "HunterSupportCures": "True",
+      "HunterChatBank": "True",
+      "HunterChatBankMat": "True",
+      "HunterSpawnTickMs": "300",
+      "HunterStrategyReserve": "20",
+      "RestartHint": "True",
+      "HunterSpoil": "True",
+      "HunterPets": "True",
+      "HunterCraft": "True"
     }
   }
 }

@@ -91,6 +91,14 @@ public class PhantomQuiet
 		}
 	}
 
+	/**
+	 * Забыть всё сказанное (самопроверка).
+	 */
+	synchronized void clear()
+	{
+		_lines.clear();
+	}
+
 	private void prune(long now, long keep)
 	{
 		while (!_lines.isEmpty() && ((now - _lines.peekFirst().at) >= keep))

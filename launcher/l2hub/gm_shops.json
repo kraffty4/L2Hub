@@ -1,0 +1,15 @@
+{
+  "note": "GM-шопы для редактора цен (gmshop.py): хроника подключается записью здесь, без кода. npc — NPC шопа в <npcs> мультиселлов; folders — где лежат списки, первая папка важнее, пути от папки сервера и от dist исходников; pages — страницы NPC по языкам, en обязателен: по ним строятся разделы; items и skills — шаблоны вещей и умений, откуда скупка и состав пачек.",
+  "chronicles": {
+    "ct26_highfive": {
+      "npc": 50010,
+      "folders": ["game/data/multisell/custom", "game/data/multisell"],
+      "pages": {
+        "en": "game/data/html/merchant",
+        "ru": "game/data/lang/ru/data/html/merchant"
+      },
+      "items": "game/data/stats/items",
+      "skills": "game/data/stats/skills"
+    }
+  }
+}

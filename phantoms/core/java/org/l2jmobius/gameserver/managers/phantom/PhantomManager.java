@@ -88,6 +88,7 @@ public class PhantomManager
 
 		// Счётчик онлайна нужен и без фантомов: живые и городская толпа.
 		PhantomOnline.start();
+		PhantomRestartHint.start();
 
 		if (!PhantomsConfig.PHANTOMS_ENABLED)
 		{

@@ -569,7 +569,7 @@ final class PhantomClanHall implements PhantomClanHallLogic
 		{
 			final ItemContainer stock = clan.getWarehouse();
 			final long missing = goal(clan) - stock.getAdena();
-			final long amount = Math.min(missing, (PhantomHunterOutfit.freeAdena(player) * PhantomHuntersConfig.HUNTER_CLAN_HALL_SHARE) / 100);
+			final long amount = Math.min(missing, (PhantomHunterOutfit.spareAdena(player) * PhantomHuntersConfig.HUNTER_CLAN_HALL_SHARE) / 100);
 			final Item adena = player.getInventory().getAdenaInstance();
 			if ((amount < MIN_GIFT) || (adena == null) || ((stock.getItemByItemId(Inventory.ADENA_ID) == null) && !stock.validateCapacity(1)))
 			{

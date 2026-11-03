@@ -814,6 +814,11 @@ public final class PhantomHunterClans
 				return false;
 			}
 			final long adena = PhantomCompat.clanLevelAdena(level + 1);
+			// С копилкой платит только свободными: запас на профу, сосы и телепорт остаётся, а оружие, отставшее от уровня, идёт первым.
+			if ((adena > 0) && PhantomHuntersConfig.HUNTER_CLAN_LEVEL_SAVING && (PhantomHunterOutfit.gearBehind(leader) || (PhantomHunterOutfit.freeAdena(leader) < adena)))
+			{
+				return false;
+			}
 			if ((adena > 0) && ((leader.getAdena() < adena) || !PhantomCompat.reduceAdena(leader, ItemProcessType.FEE, adena, null, false)))
 			{
 				return false;
@@ -830,6 +835,30 @@ public final class PhantomHunterClans
 		clan.takeReputationScore(cost);
 		raise(clan, level + 1, cost + " reputation, members " + members);
 		return true;
+	}
+
+	/**
+	 * Копилка главы ({@code HunterClanLevelSaving}, docs/PHANTOMS.md, 4.121): следующий уровень клана стоит адену из его кармана, и на него уже хватает членов и среднего уровня.
+	 * Заточка и взносы в казну ждут ({@link PhantomHunterOutfit#spareAdena}), шмот и профа — нет.
+	 * @return сколько глава держит на уровень; 0 — копить не на что: не глава клана охотников, уровень не стоит адены или до него ещё далеко
+	 */
+	static long levelSaving(Player player)
+	{
+		if (!PhantomHuntersConfig.HUNTER_CLAN_LEVEL_SAVING || !player.isClanLeader())
+		{
+			return 0;
+		}
+		final Clan clan = player.getClan();
+		if (!isHunterClan(clan))
+		{
+			return 0;
+		}
+		final int level = clan.getLevel();
+		if ((level >= LEVEL_MEMBERS.length) || (level >= PhantomCompat.clanMaxLevel()) || (clan.getMembersCount() < LEVEL_MEMBERS[level]) || (averageLevel(clan) < LEVEL_AVERAGE[level]))
+		{
+			return 0;
+		}
+		return PhantomCompat.clanLevelAdena(level + 1);
 	}
 
 	private void raise(Clan clan, int level, String how)
@@ -1154,9 +1183,9 @@ public final class PhantomHunterClans
 
 			// 1-й уровень: трое, средний от 10-го, адена главы.
 			final long adena = PhantomCompat.clanLevelAdena(1);
-			if (founder.getAdena() < adena)
+			if (PhantomHunterOutfit.freeAdena(founder) < adena)
 			{
-				PhantomCompat.addAdena(founder, ItemProcessType.REWARD, adena - founder.getAdena(), null, false);
+				PhantomCompat.addAdena(founder, ItemProcessType.REWARD, adena - PhantomHunterOutfit.freeAdena(founder), null, false);
 			}
 			final long before = founder.getAdena();
 			LOGGER.info(tag + "level 0 -> 1: " + (levelUp(clan, founder) ? "raised" : "NOT raised") + ", level " + clan.getLevel() + ", leader paid " + (before - founder.getAdena()) + " (expected " + adena + ").");

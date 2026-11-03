@@ -3,13 +3,16 @@ package org.l2jmobius.gameserver.managers.phantom;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.gameserver.ai.Intention;
 import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
 import org.l2jmobius.gameserver.config.custom.PhantomPartyConfig;
@@ -21,6 +24,7 @@ import org.l2jmobius.gameserver.entity.actor.Creature;
 import org.l2jmobius.gameserver.entity.actor.Player;
 import org.l2jmobius.gameserver.entity.actor.holders.npc.BuffSkillHolder;
 import org.l2jmobius.gameserver.entity.actor.instance.Monster;
+import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
 import org.l2jmobius.gameserver.mechanics.skill.AbnormalType;
 import org.l2jmobius.gameserver.mechanics.skill.BuffInfo;
 import org.l2jmobius.gameserver.mechanics.skill.Skill;
@@ -36,6 +40,27 @@ import org.l2jmobius.gameserver.network.serverpackets.CreatureSay;
 final class PhantomSupport
 {
 	private static final Logger LOGGER = Logger.getLogger(PhantomSupport.class.getName());
+
+	/** Снятие дебаффов (раздел 4.124): Purify по таблице уровней, Cleanse за воду — всё остальное. */
+	private static final int PURIFY = 1018;
+	private static final int CLEANSE = 1409;
+	private static final int HOLY_WATER = 8874;
+	private static final long WATER_STOCK = 10;
+	private static final long ORE_STOCK = 30;
+	/** Выключает из боя: снимается раньше сильного хила. */
+	private static final String[] HARD_DEBUFFS =
+	{
+		"PARAL",
+		"STONE",
+		"STUN",
+		"SLEEP",
+		"MUTE",
+		"SILENCE",
+		"ROOT",
+		"FEAR"
+	};
+	/** Самопроверка: Poison 1-го уровня. */
+	private static final int POISON_SKILL = 129;
 
 	/** Удары по нежити, сильный первым: Might of Heaven, Disrupt Undead. */
 	private static final int[] UNDEAD_STRIKES =
@@ -313,6 +338,10 @@ final class PhantomSupport
 	static boolean act(Player phantom, Player owner, PhantomTemplate.Role role, long now)
 	{
 		final State state = STATES.computeIfAbsent(phantom.getObjectId(), id -> new State());
+		if (role == PhantomTemplate.Role.HEALER)
+		{
+			PhantomCompanionManager.keepHealPace(phantom);
+		}
 
 		// Кастует или идёт на дистанцию каста: ждём, но не вечно.
 		if (phantom.isCastingNow() || (phantom.getAI().getIntention() == Intention.CAST))
@@ -341,6 +370,12 @@ final class PhantomSupport
 		final List<Player> members = partyNearby(phantom);
 		final boolean danger = inDanger(phantom);
 		final boolean urgent = (role == PhantomTemplate.Role.HEALER) && someoneBelow(members, 50);
+		// Благословение на пати (раздел 4.124): плановое — пока никому ничего не грозит.
+		if (!danger && !urgent && PhantomPartyNoblesse.protectParty(phantom, false, now))
+		{
+			state.castSince = now;
+			return true;
+		}
 		if (rest(state, phantom, owner, danger, urgent, now))
 		{
 			return true;
@@ -368,7 +403,27 @@ final class PhantomSupport
 		}
 		final State state = STATES.computeIfAbsent(phantom.getObjectId(), id -> new State());
 		state.castSince = 0;
+		PhantomCompanionManager.keepHealPace(phantom);
 		return heal(state, phantom, List.of(phantom), now);
+	}
+
+	/**
+	 * Следующий хил сразу после прошлого, не дожидаясь тика (раздел 4.130). Приказы пати и отдых — только на тике.
+	 * @param phantom хилер, не кастует и не идёт
+	 * @param now текущее время
+	 */
+	static void paceHeal(Player phantom, long now)
+	{
+		final State state = STATES.get(phantom.getObjectId());
+		if (state == null)
+		{
+			return;
+		}
+		final List<Player> members = phantom.isInOlympiadMode() ? List.of(phantom) : partyNearby(phantom);
+		if (someoneBelow(members, PACE_HEAL_HP))
+		{
+			heal(state, phantom, members, now);
+		}
 	}
 
 	// ---------- Нежить ----------
@@ -707,6 +762,17 @@ final class PhantomSupport
 			return true;
 		}
 
+		// Раздел 4.124: поднятому и потерявшему — благословение сразу, тяжёлый дебафф — раньше сильного хила.
+		if (PhantomPartyNoblesse.protectParty(phantom, true, now))
+		{
+			state.castSince = now;
+			return true;
+		}
+		if (cure(state, phantom, members, true, now))
+		{
+			return true;
+		}
+
 		if ((below70 >= 2) && castFirst(state, phantom, GROUP_HEALS, null, phantom, now))
 		{
 			return true;
@@ -730,6 +796,11 @@ final class PhantomSupport
 			{
 				return true;
 			}
+		}
+
+		if (cure(state, phantom, members, false, now))
+		{
+			return true;
 		}
 
 		if (dead != null)
@@ -1111,6 +1182,9 @@ final class PhantomSupport
 		return false;
 	}
 
+	/** Между тиками хил только по делу: как нижний порог обычного хила в {@link #heal}. */
+	private static final int PACE_HEAL_HP = 75;
+
 	private static boolean someoneBelow(List<Player> members, int percent)
 	{
 		for (Player member : members)
@@ -1138,6 +1212,273 @@ final class PhantomSupport
 		if (phantom.isInParty())
 		{
 			phantom.getParty().broadcastCreatureSay(new CreatureSay(phantom, ChatType.PARTY, phantom.getName(), text), phantom);
+		}
+	}
+
+	// ---------- Снятие дебаффов (раздел 4.124; вклад пользователя, только 1018 и 1409) ----------
+
+	/**
+	 * Снять дебафф с кого-то из пати, ключ {@code HunterSupportCures}.
+	 * @param hard только то, что выключает из боя
+	 * @return начал каст
+	 */
+	private static boolean cure(State state, Player phantom, List<Player> members, boolean hard, long now)
+	{
+		if (!PhantomHuntersConfig.HUNTER_SUPPORT_CURES)
+		{
+			return false;
+		}
+		// Напарнику вода даром, как и шоты; охотник покупает сам ({@link #supplyNeeds}).
+		final PhantomTemplate template = PhantomData.getInstance().getTemplate(phantom.getName());
+		if ((template != null) && !template.isHunter() && (phantom.getKnownSkill(CLEANSE) != null) && (phantom.getInventory().getInventoryItemCount(HOLY_WATER, -1) < 1))
+		{
+			PhantomCompat.addItem(phantom, ItemProcessType.REWARD, HOLY_WATER, WATER_STOCK, null);
+		}
+		for (Player member : members)
+		{
+			if (!member.isDead() && cast(state, phantom, cureSkill(phantom, member, hard), member, now))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * @return чем снять: сначала Purify, если он это берёт, потом Cleanse при реагенте; {@code null} — нечем или нечего
+	 */
+	private static Skill cureSkill(Player phantom, Player target, boolean hard)
+	{
+		final Skill purify = usable(phantom, PURIFY);
+		final Skill cleanse = phantom.getInventory().getInventoryItemCount(HOLY_WATER, -1) > 0 ? usable(phantom, CLEANSE) : null;
+		if ((purify == null) && (cleanse == null))
+		{
+			return null;
+		}
+
+		boolean other = false;
+		for (BuffInfo info : target.getEffectList().getEffects())
+		{
+			final Skill bad = info.getSkill();
+			if (!bad.isDebuff() || !PhantomCompat.canBeDispeled(bad))
+			{
+				continue;
+			}
+			final String type = String.valueOf(bad.getAbnormalType());
+			if (hard && !isHard(type))
+			{
+				continue;
+			}
+			if ((purify != null) && purifyCures(purify.getLevel(), type, bad.getAbnormalLevel()))
+			{
+				return purify;
+			}
+			other = true;
+		}
+		return other ? cleanse : null;
+	}
+
+	private static boolean isHard(String type)
+	{
+		for (String word : HARD_DEBUFFS)
+		{
+			if (type.contains(word))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Таблица Purify, как в скилле: яд и кровотечение по уровню, паралич, камень со 2-го уровня.
+	 * @param level уровень Purify
+	 * @param type тип дебаффа
+	 * @param abnormalLevel его уровень
+	 * @return Purify его снимет
+	 */
+	static boolean purifyCures(int level, String type, int abnormalLevel)
+	{
+		switch (type)
+		{
+			case "POISON":
+			case "BLEEDING":
+			{
+				return abnormalLevel <= (level >= 3 ? 9 : level == 2 ? 7 : 3);
+			}
+			case "PARALYZE":
+			{
+				return abnormalLevel <= 1;
+			}
+			case "TURN_STONE":
+			{
+				return (level >= 2) && (abnormalLevel <= 2);
+			}
+			default:
+			{
+				return false;
+			}
+		}
+	}
+
+	/**
+	 * @return чем охотник запасается в городе ({@link PhantomHunterOutfit}): вода на Cleanse и руда на благословение, при своих ключах и если знает скилл
+	 */
+	static Map<Integer, Long> supplyNeeds(Player player)
+	{
+		final boolean cures = PhantomHuntersConfig.HUNTER_SUPPORT_CURES && (player.getKnownSkill(CLEANSE) != null);
+		final boolean noblesse = PhantomHuntersConfig.HUNTER_PARTY_NOBLESSE && player.isNoble() && (player.getKnownSkill(PhantomPartyNoblesse.BLESSING) != null);
+		if (!cures && !noblesse)
+		{
+			return Map.of();
+		}
+		final Map<Integer, Long> needs = new HashMap<>();
+		if (cures)
+		{
+			needs.put(HOLY_WATER, WATER_STOCK);
+		}
+		if (noblesse)
+		{
+			needs.put(PhantomPartyNoblesse.SPIRIT_ORE, ORE_STOCK);
+		}
+		return needs;
+	}
+
+	/**
+	 * {@code HuntersSelfTest = CURES}: таблица Purify, реагенты по ключу; хилер в пати с «живым»: ключ выключен — яд на месте, включён — снят. Идёт в своём потоке: ждёт тиков напарника.
+	 * @param world охотники в мире
+	 */
+	static void selfTest(List<Player> world)
+	{
+		ThreadPool.execute(() -> runSelfTest(world));
+	}
+
+	private static void runSelfTest(List<Player> world)
+	{
+		final String tag = "SelfTest CURES: ";
+		final List<String> failed = new ArrayList<>();
+		final boolean key = PhantomHuntersConfig.HUNTER_SUPPORT_CURES;
+		Player owner = null;
+		PhantomTemplate healerTemplate = null;
+		try
+		{
+			check(tag, failed, "1. таблица Purify", purifyCures(1, "POISON", 3) && !purifyCures(1, "POISON", 4) && purifyCures(2, "BLEEDING", 7) && !purifyCures(2, "BLEEDING", 8) && purifyCures(3, "POISON", 9) && !purifyCures(3, "POISON", 10) && purifyCures(1, "PARALYZE", 1) && !purifyCures(1, "TURN_STONE", 2) && purifyCures(2, "TURN_STONE", 2) && !purifyCures(3, "STUN", 1), "");
+
+			Player healer = null;
+			for (Player player : world)
+			{
+				final PhantomTemplate template = PhantomData.getInstance().getTemplate(player.getName());
+				if ((template == null) || (template.getRole() != PhantomTemplate.Role.HEALER) || (player.getKnownSkill(PURIFY) == null) || player.isInParty() || player.isDead() || !PhantomHunterManager.getInstance().isHunting(player))
+				{
+					continue;
+				}
+				for (Player other : world)
+				{
+					if ((other != player) && !other.isInParty() && !other.isDead() && PhantomHunterManager.getInstance().isHunting(other) && PhantomHunterManager.getInstance().acceptsInvite(template, other))
+					{
+						healer = player;
+						healerTemplate = template;
+						owner = other;
+						break;
+					}
+				}
+				if (healer != null)
+				{
+					break;
+				}
+			}
+			if (healer == null)
+			{
+				LOGGER.warning(tag + "needs a free healer with Purify and a hunter near his level.");
+				LOGGER.info(tag + "done, " + failed.size() + " failed, the party part is skipped.");
+				return;
+			}
+			LOGGER.info(tag + "healer " + healer.getName() + " (" + healer.getLevel() + "), Purify " + healer.getKnownSkill(PURIFY).getLevel() + ", owner " + owner.getName() + " (" + owner.getLevel() + ").");
+
+			PhantomHuntersConfig.HUNTER_SUPPORT_CURES = false;
+			check(tag, failed, "2. ключ выключен: реагент не нужен", !supplyNeeds(healer).containsKey(HOLY_WATER), "");
+			PhantomHuntersConfig.HUNTER_SUPPORT_CURES = true;
+			check(tag, failed, "3. ключ включён: вода нужна тому, кто знает Cleanse", supplyNeeds(healer).containsKey(HOLY_WATER) == (healer.getKnownSkill(CLEANSE) != null), "Cleanse " + (healer.getKnownSkill(CLEANSE) != null));
+			PhantomHuntersConfig.HUNTER_SUPPORT_CURES = false;
+
+			PhantomClans.getInstance().testPlayer(owner);
+			PhantomFavors.getInstance().freeze(owner);
+			PhantomCompanionManager.getInstance().onInvited(owner, healer, null);
+			Thread.sleep(3000);
+			if (!healer.isInParty() || (healer.getParty() != owner.getParty()))
+			{
+				check(tag, failed, "4. хилер вступил в пати", false, "в пати " + healer.isInParty());
+				LOGGER.info(tag + "done, " + failed.size() + " failed: " + failed);
+				return;
+			}
+			healer.setCurrentMp(healer.getMaxMp());
+			owner.setCurrentHp(owner.getMaxHp());
+
+			// Самый сильный яд, который берёт его Purify: слабый на высоком уровне почти всегда сопротивляется.
+			final int purifyLevel = healer.getKnownSkill(PURIFY).getLevel();
+			Skill poison = SkillData.getInstance().getSkill(POISON_SKILL, 1);
+			for (int level = 2; level <= 5; level++)
+			{
+				final Skill stronger = SkillData.getInstance().getSkill(POISON_SKILL, level);
+				if ((stronger != null) && purifyCures(purifyLevel, "POISON", stronger.getAbnormalLevel()))
+				{
+					poison = stronger;
+				}
+			}
+			// Шанс дебаффа случайный: кладём, пока не ляжет.
+			for (int i = 0; (i < 100) && (owner.getEffectList().getBuffInfoBySkillId(POISON_SKILL) == null); i++)
+			{
+				poison.applyEffects(owner, owner);
+			}
+			if (owner.getEffectList().getBuffInfoBySkillId(POISON_SKILL) == null)
+			{
+				check(tag, failed, "4. яд лёг", false, "уровень яда " + poison.getLevel());
+				LOGGER.info(tag + "done, " + failed.size() + " failed: " + failed);
+				return;
+			}
+			Thread.sleep(6000);
+			check(tag, failed, "4. ключ выключен: яд на месте", owner.getEffectList().getBuffInfoBySkillId(POISON_SKILL) != null, "яд " + poison.getLevel() + ", дебафф " + poison.isDebuff() + ", снимается " + PhantomCompat.canBeDispeled(poison) + ", уровень " + poison.getAbnormalLevel());
+
+			PhantomHuntersConfig.HUNTER_SUPPORT_CURES = true;
+			healer.setCurrentMp(healer.getMaxMp());
+			final long deadline = System.currentTimeMillis() + 15000;
+			while ((owner.getEffectList().getBuffInfoBySkillId(POISON_SKILL) != null) && (System.currentTimeMillis() < deadline))
+			{
+				Thread.sleep(250);
+			}
+			check(tag, failed, "5. ключ включён: хилер снял яд", owner.getEffectList().getBuffInfoBySkillId(POISON_SKILL) == null, "HP " + hpPercent(owner));
+			LOGGER.info(tag + "done, " + failed.size() + " failed" + (failed.isEmpty() ? "." : ": " + failed));
+		}
+		catch (Exception e)
+		{
+			LOGGER.log(Level.WARNING, tag + "failed", e);
+			LOGGER.info(tag + "done, stopped by an exception.");
+		}
+		finally
+		{
+			PhantomHuntersConfig.HUNTER_SUPPORT_CURES = key;
+			PhantomClans.getInstance().testPlayer(null);
+			if (healerTemplate != null)
+			{
+				PhantomCompanionManager.getInstance().release(healerTemplate, true);
+			}
+			if (owner != null)
+			{
+				PhantomFavors.getInstance().unfreeze(owner);
+				if (owner.isInParty())
+				{
+					owner.leaveParty();
+				}
+			}
+		}
+	}
+
+	private static void check(String tag, List<String> failed, String name, boolean ok, String detail)
+	{
+		LOGGER.info(tag + (ok ? "OK " : "FAIL ") + name + (detail.isEmpty() ? "" : " (" + detail + ")"));
+		if (!ok)
+		{
+			failed.add(name);
 		}
 	}
 }

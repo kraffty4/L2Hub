@@ -470,6 +470,26 @@ public final class PhantomText
 		EN.put("Награда за ивент: ", "Event reward: ");
 		EN.put(" адены и ", " adena and ");
 		EN.put(" опыта.", " experience.");
+		EN.put("Приглашение соклановца устарело.", "The clanmate's invitation has expired.");
+		EN.put("Уже отвечаю на приглашение соклановца.", "Already answering a clanmate's invitation.");
+		EN.put("Не вышло отменить запись на Олимпиаду.", "Couldn't cancel the Olympiad registration.");
+		EN.put("Не вышло отменить запись на ивент.", "Couldn't cancel the event registration.");
+		EN.put("Приглашающий вышел из игры.", "The inviter left the game.");
+		EN.put("Во время матча приглашение недоступно.", "Can't invite during a match.");
+		EN.put("Приглашать может только лидер пати.", "Only the party leader can invite.");
+		EN.put("В пати уже девять участников.", "The party already has nine members.");
+		EN.put("Я сейчас не в мире.", "I'm not in the world right now.");
+		EN.put("Меня убили, дай встать.", "I'm dead, let me get up first.");
+		EN.put("Я уже в твоей пати.", "I'm already in your party.");
+		EN.put("Я уже в группе другого игрока.", "I'm already with another player.");
+		EN.put("Я на ивенте, не брошу.", "I'm at an event, can't leave.");
+		EN.put("Я на Олимпиаде, матч не брошу.", "I'm in an Olympiad match, can't leave.");
+		EN.put("У меня дуэль, позови потом.", "I'm in a duel, call me later.");
+		EN.put("Я на осаде, не брошу.", "I'm in a siege, can't leave.");
+		EN.put("Я в рейде; нужно сначала закончить участие.", "I'm in a raid; I have to finish it first.");
+		EN.put("Телепортируюсь, позови чуть позже.", "Teleporting, call me in a moment.");
+		EN.put("Я сейчас дерусь с другим персонажем.", "I'm fighting someone right now.");
+		EN.put("Сейчас не могу.", "Can't right now.");
 	}
 
 	private PhantomText()

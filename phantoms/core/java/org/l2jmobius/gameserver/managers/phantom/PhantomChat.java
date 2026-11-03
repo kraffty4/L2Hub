@@ -249,6 +249,7 @@ public class PhantomChat
 		{
 			return;
 		}
+		PhantomChatBank.getInstance().humanSpoke(speaker);
 
 		final Map<PhantomTemplate, Player> mates = new LinkedHashMap<>();
 		final Map<PhantomTemplate, Player> strangers = new LinkedHashMap<>();
@@ -308,7 +309,7 @@ public class PhantomChat
 		// Без имени: изредка встревает кто-то свободный, если рядом нет других живых — в чужой разговор охотники не лезут.
 		final long now = System.currentTimeMillis();
 		final String speakerKey = "say:" + speaker.getObjectId();
-		if (othersHuman || (Rnd.get(100) >= PhantomPartyConfig.PHANTOM_OVERHEAR_CHANCE) || !brainEnabled() || !cooled(speakerKey, now))
+		if (othersHuman || (Rnd.get(100) >= PhantomPartyConfig.PHANTOM_OVERHEAR_CHANCE) || (!brainEnabled() && !PhantomChatBank.getInstance().needed()) || !cooled(speakerKey, now))
 		{
 			return;
 		}
@@ -455,10 +456,7 @@ public class PhantomChat
 		final PhantomTemplate template = PhantomData.getInstance().getTemplate(phantom.getName());
 		if ((template == null) || !brainEnabled() || !eventBudget(now))
 		{
-			if (fallback != null)
-			{
-				say(phantom, owner, "event", fallback);
-			}
+			sayEvent(phantom, owner, event, fallback);
 			return;
 		}
 
@@ -470,13 +468,19 @@ public class PhantomChat
 			{
 				say(phantom, owner, "event", text);
 			}
-		}, () ->
+		}, () -> sayEvent(phantom, owner, event, fallback));
+	}
+
+	/**
+	 * Мозгов нет, не ответили или кончился бюджет: строка банка реплик, нет её — заготовка.
+	 */
+	private static void sayEvent(Player phantom, Player owner, Event event, String fallback)
+	{
+		final String line = PhantomChatBank.getInstance().event(phantom, event, fallback);
+		if (line != null)
 		{
-			if (fallback != null)
-			{
-				say(phantom, owner, "event", fallback);
-			}
-		});
+			say(phantom, owner, "event", line);
+		}
 	}
 
 	/**
@@ -545,10 +549,7 @@ public class PhantomChat
 		final PhantomTemplate template = PhantomData.getInstance().getTemplate(hunter.getName());
 		if ((template == null) || !brainEnabled() || !eventBudget(now))
 		{
-			if (fallback != null)
-			{
-				out.accept(fallback);
-			}
+			sayHunterEvent(hunter, kind, fallback, out);
 			return;
 		}
 
@@ -559,13 +560,19 @@ public class PhantomChat
 			{
 				out.accept(text);
 			}
-		}, () ->
+		}, () -> sayHunterEvent(hunter, kind, fallback, out));
+	}
+
+	/**
+	 * Мозгов нет, не ответили или кончился бюджет: заготовка, изредка строка банка реплик.
+	 */
+	private static void sayHunterEvent(Player hunter, String kind, String fallback, Consumer<String> out)
+	{
+		final String line = PhantomChatBank.getInstance().hunterEvent(hunter, kind, fallback);
+		if (line != null)
 		{
-			if (fallback != null)
-			{
-				out.accept(fallback);
-			}
-		});
+			out.accept(line);
+		}
 	}
 
 	private static void sayHunter(Player hunter, Player other, String kind, String text, boolean whisper)
@@ -588,6 +595,7 @@ public class PhantomChat
 	 */
 	private static void sayNear(Player speaker, String text, String topic)
 	{
+		PhantomChatBank.getInstance().spoke(speaker, topic);
 		PhantomQuiet.getInstance().said(speaker, topic, System.currentTimeMillis());
 		final CreatureSay say = new CreatureSay(speaker, ChatType.GENERAL, speaker.getName(), text);
 		World.forEachVisibleObjectInRange(speaker, Player.class, 1250, player -> player.sendPacket(say));
@@ -1011,7 +1019,7 @@ public class PhantomChat
 		}
 		if (!brainEnabled())
 		{
-			fallback(speaker, phantom, channel, orders, line);
+			fallback(speaker, phantom, channel, orders, line, text);
 			return;
 		}
 
@@ -1045,7 +1053,7 @@ public class PhantomChat
 			{
 				say(phantom, speaker, channel, line);
 			}
-		}, () -> fallback(speaker, phantom, channel, orders, line), PhantomFocus.getInstance().of(phantom) != null ? FOCUS_TIMEOUT : 0);
+		}, () -> fallback(speaker, phantom, channel, orders, line, text), PhantomFocus.getInstance().of(phantom) != null ? FOCUS_TIMEOUT : 0);
 	}
 
 	/**
@@ -1057,7 +1065,7 @@ public class PhantomChat
 		return matcher.find() ? Long.parseLong(matcher.group(1)) : -1;
 	}
 
-	private static void fallback(Player speaker, Player phantom, String channel, List<Order> orders, String line)
+	private static void fallback(Player speaker, Player phantom, String channel, List<Order> orders, String line, String text)
 	{
 		if (line != null)
 		{
@@ -1067,9 +1075,18 @@ public class PhantomChat
 		{
 			say(phantom, speaker, channel, ORDER_FALLBACK.get(orders.get(0)));
 		}
-		else if ("whisper".equals(channel))
+		else
 		{
-			say(phantom, speaker, channel, CHAT_FALLBACK[Rnd.get(CHAT_FALLBACK.length)]);
+			// Банк реплик (раздел 4.122): темы нет — промолчать; шёпот без ответа не остаётся.
+			final String bank = PhantomChatBank.getInstance().reply(phantom, channel, text);
+			if (bank != null)
+			{
+				say(phantom, speaker, channel, bank);
+			}
+			else if ("whisper".equals(channel))
+			{
+				say(phantom, speaker, channel, CHAT_FALLBACK[Rnd.get(CHAT_FALLBACK.length)]);
+			}
 		}
 	}
 

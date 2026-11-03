@@ -62,6 +62,11 @@ final class PhantomTactics
 		{
 			return false;
 		}
+		// Спойлер (HunterSpoil): спойл цели и свип своего трупа — раньше прочей тактики.
+		if (PhantomSpoil.tick(player, now))
+		{
+			return true;
+		}
 		if (template.getRole() == PhantomTemplate.Role.TANK)
 		{
 			return taunt(player, now);

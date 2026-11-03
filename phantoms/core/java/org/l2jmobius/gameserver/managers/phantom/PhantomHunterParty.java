@@ -446,6 +446,25 @@ public class PhantomHunterParty
 		}
 	}
 
+	/**
+	 * Зовёт живой соклан ({@link PhantomClanInvite}): своя пати распускается, из чужой он выходит; отдых после пати — как обычно.
+	 * @param player охотник
+	 * @param now текущее время
+	 */
+	void yieldToClanInvite(Player player, long now)
+	{
+		final Group own = _groups.get(player.getObjectId());
+		if (own != null)
+		{
+			disband(player, own, "позвал соклан", now);
+		}
+		for (Group group : _groups.values())
+		{
+			group.members.remove(player.getObjectId());
+		}
+		_restUntil.put(player.getObjectId(), now + restAfter(player));
+	}
+
 	private void disband(Player leader, Group group, String reason, long now)
 	{
 		_groups.remove(leader.getObjectId());

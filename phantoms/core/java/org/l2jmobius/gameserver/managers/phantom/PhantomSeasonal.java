@@ -379,6 +379,11 @@ final class PhantomSeasonal
 	 */
 	private static String yogi(Player player, Npc npc, Quest script)
 	{
+		// Порог посоха — как раз цена 2-го уровня клана: глава, что копит на него, уносил бы сюда первые же 2,5 млн (раздел 4.121).
+		if (PhantomHunterClans.levelSaving(player) > 0)
+		{
+			return null;
+		}
 		final List<String> done = new ArrayList<>();
 		Item staff = player.getInventory().getItemByItemId(YOGI_STAFF);
 		if (staff == null)

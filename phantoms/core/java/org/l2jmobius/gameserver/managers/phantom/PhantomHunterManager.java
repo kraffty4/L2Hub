@@ -50,6 +50,7 @@ import org.l2jmobius.gameserver.entity.actor.enums.player.TeleportWhereType;
 import org.l2jmobius.gameserver.entity.actor.holders.npc.BuffSkillHolder;
 import org.l2jmobius.gameserver.entity.actor.instance.Monster;
 import org.l2jmobius.gameserver.entity.actor.instance.Teleporter;
+import org.l2jmobius.gameserver.entity.clan.Clan;
 import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
 import org.l2jmobius.gameserver.entity.item.instance.Item;
 import org.l2jmobius.gameserver.entity.itemcontainer.Inventory;
@@ -718,6 +719,8 @@ public class PhantomHunterManager
 		}
 
 		boolean spawnedOne = false;
+		long spawnNanos = 0;
+		final long spawnBudget = PhantomHuntersConfig.HUNTER_SPAWN_TICK_MS * 1000000L;
 		for (Hunter hunter : _hunters.values())
 		{
 			try
@@ -725,11 +728,13 @@ public class PhantomHunterManager
 				final Player player = PhantomManager.getInstance().getPhantom(hunter.template);
 				if (player == null)
 				{
-					// Входят по одному за тик, чтобы не грузить сервер разом.
-					if (_wanted && hunter.scheduled && !spawnedOne && (now >= hunter.retryAt))
+					// Входят по одному за тик, чтобы не грузить сервер разом; при HunterSpawnTickMs — сколько успеют за это время, один всегда войдёт.
+					if (_wanted && hunter.scheduled && (!spawnedOne || (spawnNanos < spawnBudget)) && (now >= hunter.retryAt))
 					{
 						spawnedOne = true;
+						final long spawnStarted = System.nanoTime();
 						spawn(hunter, now);
+						spawnNanos += System.nanoTime() - spawnStarted;
 					}
 					continue;
 				}
@@ -1275,7 +1280,8 @@ public class PhantomHunterManager
 		// ПвП: кто ударил и кто убил — события приходят от сервера (асинхронно).
 		player.addListener(new ConsumerEventListener(player, EventType.ON_CREATURE_DAMAGE_RECEIVED, (OnCreatureDamageReceived event) -> onDamaged(hunter, player, event.getAttacker()), this));
 		player.addListener(new ConsumerEventListener(player, EventType.ON_CREATURE_DEATH, (OnCreatureDeath event) -> onKilled(hunter, player, event.getAttacker()), this));
-		hunter.lastStore = now;
+		// Первая запись в базу — в случайный момент своих 5 минут: при быстром входе (HunterSpawnTickMs) иначе все пишутся в одном тике и он встаёт на секунды.
+		hunter.lastStore = now - Rnd.get(STORE_INTERVAL);
 		hunter.lastActive = now;
 		hunter.lastTown = now;
 		hunter.roams = 0;
@@ -1302,6 +1308,12 @@ public class PhantomHunterManager
 	{
 		played(hunter, player, now);
 		track(hunter, player, now);
+		// Зовёт живой соклан (раздел 4.123): ответ только здесь, чтобы старое дело в городе не доехало уже в пати.
+		if (PhantomClanInvite.getInstance().process(hunter.template, player, now))
+		{
+			hunter.lastActive = now;
+			return;
+		}
 		// PvP-ивент (раздел 4.33): на арене охотника ведёт бой ивента, убитого поднимает сам ивент — до обработки смерти; кончился — назад на кач.
 		final PhantomEvents.Drive event = PhantomEvents.getInstance().drive(player, hunter.template, now);
 		if (event == PhantomEvents.Drive.FIGHTS)
@@ -1310,9 +1322,16 @@ public class PhantomHunterManager
 			return;
 		}
 		// Олимпиада (раздел 4.39): на стадионе — бой матча, матч ведёт Mobius.
-		if (PhantomOlympiad.getInstance().drive(player, hunter.template, now) == PhantomEvents.Drive.FIGHTS)
+		final PhantomEvents.Drive olympiad = PhantomOlympiad.getInstance().drive(player, hunter.template, now);
+		if (olympiad == PhantomEvents.Drive.FIGHTS)
 		{
 			hunter.lastActive = now;
+			return;
+		}
+		// Матч кончился: на кач с бафами, как после ивента (раздел 4.131).
+		if ((olympiad == PhantomEvents.Drive.DONE) && !player.isDead())
+		{
+			backToHunt(hunter, player);
 			return;
 		}
 		// Дуэль (раздел 4.40): вызов принят — ждёт готовности и дерётся по правилам дуэли Mobius.
@@ -1417,6 +1436,8 @@ public class PhantomHunterManager
 		if ((hunter.phase == Phase.HUNT) || (hunter.phase == Phase.TOWN) || (hunter.phase == Phase.STORE))
 		{
 			PhantomInitiative.getInstance().look(player, hunter.template, hunter.enemyId != 0, _realPlayers > 0, now);
+			// Пет (HunterPets): волк, хетчлинг, страйдер — купить, призвать, кормить; в городе на страйдере верхом.
+			PhantomPets.tick(player, hunter.phase == Phase.TOWN, now);
 			// Перепалки и приветствия с другими охотниками при живом зрителе (патч 0033).
 			PhantomBanter.getInstance().tick(player, hunter.template, now);
 			// Стоит в городе без дела: свой жест (раздел 4.80).
@@ -2383,7 +2404,7 @@ public class PhantomHunterManager
 		hunter.questLevel = 0;
 		hunter.questReady = false;
 		hunter.questUntil = 0;
-		hunter.questSaved = now;
+		hunter.questSaved = now - Rnd.get(QUEST_SAVE_INTERVAL);
 		final String taken = player.getVariables().getString(QUEST_TAKEN_VARIABLE, "");
 		final int split = taken.indexOf(';');
 		if (split <= 0)
@@ -2649,12 +2670,14 @@ public class PhantomHunterManager
 		final int shy = shy(player);
 		final int level = player.getLevel() - shy;
 		final boolean leftHome = player.getLevel() >= HOME_LEVEL;
+		// «Рано» — по характеру, как в think: без него осторожный 1-го уровня брал спот, который think тут же отвергал, и перевыбирал его каждый тик.
+		final PhantomTemplate template = PhantomData.getInstance().getTemplate(player.getName());
 		final List<HuntSpot> free = new ArrayList<>();
 		HuntSpot any = null;
 		double anyDistance = Double.MAX_VALUE;
 		for (HuntSpot spot : HuntSpotData.getInstance().getSpots())
 		{
-			if (outgrown(spot, player.getLevel(), shy, null) || (spot.level > (level + (shy > 0 ? 0 : SPAWN_LEVEL_UP))) || (spot.level < (level - 9)) || (leftHome && HOME_REGIONS.containsValue(spot.region)))
+			if (outgrown(spot, player.getLevel(), shy, template) || (spot.level > (level + (shy > 0 ? 0 : SPAWN_LEVEL_UP))) || (spot.level < (level - 9)) || (leftHome && HOME_REGIONS.containsValue(spot.region)))
 			{
 				continue;
 			}
@@ -3199,14 +3222,16 @@ public class PhantomHunterManager
 		{
 			return false;
 		}
+		// Ремесленник (HunterCraft): мастерская — не от нужды и не от товара, а по откату лавки; дальше общий предел мест.
+		final boolean workshop = PhantomCraft.canOpenWorkshop(player) && ((now - hunter.lastStoreSession) >= STORE_COOLDOWN);
 		// Продавать нечего — может, скупка (раздел 4.29): копит на вещь и накопил на неё больше половины.
 		final boolean goods = !PhantomHunterOutfit.storeGoods(player).isEmpty();
-		if ((!hunter.wantStore && ((now - hunter.lastStoreSession) < STORE_COOLDOWN)) || (!goods && (PhantomMarket.buyOrder(player, hunter.template) == null)))
+		if (!workshop && ((!hunter.wantStore && ((now - hunter.lastStoreSession) < STORE_COOLDOWN)) || (!goods && (PhantomMarket.buyOrder(player, hunter.template) == null))))
 		{
 			return false;
 		}
 		// Лавка от нужды (патч 0035): садится, только когда не хватает адены на цель или сумка почти полна; стратег велел — садится и так.
-		if (goods && !hunter.wantStore && !PhantomMarket.needsStore(player, hunter.template))
+		if (!workshop && goods && !hunter.wantStore && !PhantomMarket.needsStore(player, hunter.template))
 		{
 			return false;
 		}
@@ -3301,6 +3326,17 @@ public class PhantomHunterManager
 			return;
 		}
 
+		// Мастерская (HunterCraft): товара в ней нет — держится до конца времени; закрыли — тип лавки сменился, и ниже свернётся как обычная.
+		if (player.getPrivateStoreType() == PrivateStoreType.MANUFACTURE)
+		{
+			if (now >= hunter.phaseUntil)
+			{
+				LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " closes the workshop; " + player.getAdena() + " adena.");
+				backToHunt(hunter, player);
+			}
+			return;
+		}
+
 		// Время вышло, всё раскупили (в скупку — продали) или кто-то закрыл — свернуться и обратно на кач.
 		final boolean buy = hunter.buyItemId > 0;
 		if ((now >= hunter.phaseUntil) || (player.getPrivateStoreType() != (buy ? PrivateStoreType.BUY : PrivateStoreType.SELL)) || ((buy ? player.getBuyList() : player.getSellList()).getItemCount() == 0))
@@ -3322,6 +3358,15 @@ public class PhantomHunterManager
 		}
 
 		final List<Item> goods = PhantomHunterOutfit.storeGoods(player);
+		// Ремесленник (HunterCraft): мастерская — крафт из материалов покупателя, плата за работу. Есть что продать — через раз обычная лавка, иначе товар копился бы.
+		if ((goods.isEmpty() || Rnd.nextBoolean()) && PhantomCraft.openWorkshop(player))
+		{
+			hunter.storeOpen = true;
+			hunter.storeTries = 0;
+			hunter.lastStoreSession = now;
+			hunter.phaseUntil = now + (Rnd.get(PhantomHuntersConfig.HUNTER_STORE_MIN_MINUTES, PhantomHuntersConfig.HUNTER_STORE_MAX_MINUTES) * 60000L);
+			return true;
+		}
 		if (goods.isEmpty())
 		{
 			if (openBuyStore(hunter, player, now))
@@ -3352,6 +3397,7 @@ public class PhantomHunterManager
 		}
 
 		list.setTitle(STORE_TITLES[Rnd.get(STORE_TITLES.length)]);
+		PhantomPets.leaveSaddle(player); // HunterPets: лавка не верхом на страйдере
 		player.sitDown();
 		player.setPrivateStoreType(PrivateStoreType.SELL);
 		player.broadcastUserInfo();
@@ -3385,6 +3431,7 @@ public class PhantomHunterManager
 
 		final String title = "Куплю " + order.name();
 		list.setTitle(title.length() > 29 ? title.substring(0, 29) : title);
+		PhantomPets.leaveSaddle(player); // HunterPets: лавка не верхом на страйдере
 		player.sitDown();
 		player.setPrivateStoreType(PrivateStoreType.BUY);
 		player.broadcastUserInfo();
@@ -3824,6 +3871,103 @@ public class PhantomHunterManager
 		hunter.shy = 0;
 	}
 
+	/**
+	 * Самопроверка {@code HuntersSelfTest = CLANSAVE} (раздел 4.121, только на копии базы): глава клана 1-го уровня копит на 2-й. Оружие отстало — уровень не платит, шмот покупает; заточка и взносы ждут; ровно при цене уровня свободными — платит ровно её.
+	 * Заодно патч 0200: закрытая лавка не выводит фантома из мира.
+	 */
+	private void clanSaveSelfTest()
+	{
+		final String tag = "SelfTest CLANSAVE: ";
+		final List<String> failed = new ArrayList<>();
+		final boolean key = PhantomHuntersConfig.HUNTER_CLAN_LEVEL_SAVING;
+		PhantomHuntersConfig.HUNTER_CLAN_LEVEL_SAVING = true;
+		try
+		{
+			Player leader = null;
+			for (Player player : inWorld())
+			{
+				if ((player.getLevel() >= 40) && (player.getClan() != null) && (player.getClan().getLevel() == 1) && (PhantomHunterClans.levelSaving(player) > 0) && !player.isInParty())
+				{
+					leader = player;
+					break;
+				}
+			}
+			if (leader == null)
+			{
+				LOGGER.warning(tag + "needs a leader of level 40+ in a clan of level 1 with members for the next level.");
+				return;
+			}
+			final Hunter hunter = _hunters.get(leader.getName().toLowerCase());
+			final PhantomTemplate template = hunter.template;
+			final Clan clan = leader.getClan();
+			final PhantomHunterClans clans = PhantomHunterClans.getInstance();
+			final long cost = PhantomHunterClans.levelSaving(leader);
+			LOGGER.info(tag + leader.getName() + " (" + leader.getLevel() + "), clan " + clan.getName() + " of " + clan.getMembersCount() + ", " + leader.getAdena() + " adena, treasury " + clan.getWarehouse().getAdena() + ".");
+			gearCheck(tag, failed, "1. копит на уровень", cost == PhantomCompat.clanLevelAdena(2), "копилка " + cost);
+
+			PhantomHuntersConfig.HUNTER_CLAN_LEVEL_SAVING = false;
+			gearCheck(tag, failed, "2. ключ выключен: копилки нет", (PhantomHunterClans.levelSaving(leader) == 0) && (PhantomHunterOutfit.spareAdena(leader) == PhantomHunterOutfit.freeAdena(leader)), "на необязательное " + PhantomHunterOutfit.spareAdena(leader));
+			PhantomHuntersConfig.HUNTER_CLAN_LEVEL_SAVING = true;
+
+			PhantomHunterOutfit.testStrip(leader, template, cost * 2);
+			gearCheck(tag, failed, "3. оружие отстало: уровень не платит", PhantomHunterOutfit.gearBehind(leader) && !clans.levelUp(clan, leader) && (clan.getLevel() == 1) && (leader.getAdena() == (cost * 2)), "адена " + leader.getAdena() + ", грейд " + PhantomHunterOutfit.testWeaponGrade(leader));
+
+			List<String> done = PhantomHunterOutfit.townChores(leader, template, hunter.unsold);
+			gearCheck(tag, failed, "4. шмот не ждёт копилку", (PhantomHunterOutfit.testWeaponGrade(leader) >= 1) && (clan.getLevel() == 1) && done.stream().anyMatch(line -> line.startsWith("копит на уровень клана")), done + ", адена " + leader.getAdena());
+
+			setAdena(leader, cost / 2);
+			final long enchantBefore = leader.getAdena();
+			final List<String> saved = PhantomEnchant.chore(leader, template);
+			gearCheck(tag, failed, "5. заточка за адену ждёт", leader.getAdena() == enchantBefore, saved + ", адена " + enchantBefore + " -> " + leader.getAdena());
+			PhantomHuntersConfig.HUNTER_CLAN_LEVEL_SAVING = false;
+			final List<String> spent = PhantomEnchant.chore(leader, template);
+			PhantomHuntersConfig.HUNTER_CLAN_LEVEL_SAVING = true;
+			LOGGER.info(tag + "   ключ выключен, те же деньги: " + spent + ", адена " + enchantBefore + " -> " + leader.getAdena() + ".");
+			setAdena(leader, cost / 2);
+
+			final long treasury = clan.getWarehouse().getAdena();
+			final List<String> gifts = new ArrayList<>();
+			PhantomClanHallLogic.INSTANCE.town(leader, template, gifts);
+			gearCheck(tag, failed, "6. взнос в казну ждёт", (clan.getWarehouse().getAdena() == treasury) && (PhantomHunterOutfit.spareAdena(leader) < 0), "казна " + treasury + " -> " + clan.getWarehouse().getAdena() + ", " + gifts + ", на вещь копит " + (PhantomHunterOutfit.want(leader, template) != null));
+
+			gearCheck(tag, failed, "7. половины цены мало", !clans.levelUp(clan, leader) && (clan.getLevel() == 1), "адена " + leader.getAdena());
+
+			setAdena(leader, ((cost - 1) - PhantomHunterOutfit.freeAdena(leader)) + leader.getAdena());
+			gearCheck(tag, failed, "8. свободных на монету меньше цены: ждёт", !PhantomHunterOutfit.gearBehind(leader) && (PhantomHunterOutfit.freeAdena(leader) == (cost - 1)) && !clans.levelUp(clan, leader) && (clan.getLevel() == 1), "адена " + leader.getAdena() + ", свободных " + PhantomHunterOutfit.freeAdena(leader));
+
+			setAdena(leader, leader.getAdena() + 1);
+			final long before = leader.getAdena();
+			gearCheck(tag, failed, "9. хватило: платит цену уровня", clans.levelUp(clan, leader) && (clan.getLevel() == 2) && ((before - leader.getAdena()) == cost), "уровень " + clan.getLevel() + ", заплатил " + (before - leader.getAdena()));
+			gearCheck(tag, failed, "10. оплатил: копилки нет", PhantomHunterClans.levelSaving(leader) == 0, "копилка " + PhantomHunterClans.levelSaving(leader));
+
+			leader.setPrivateStoreType(PrivateStoreType.SELL);
+			leader.setPrivateStoreType(PrivateStoreType.NONE);
+			gearCheck(tag, failed, "11. закрытая лавка не выводит из мира", (World.getPlayer(leader.getName()) == leader) && leader.isOnline() && PhantomManager.getInstance().isPhantom(leader), "в мире " + (World.getPlayer(leader.getName()) == leader) + ", клиента нет " + (leader.getClient() == null));
+		}
+		catch (Exception e)
+		{
+			LOGGER.log(Level.WARNING, tag + e.getMessage(), e);
+			failed.add(String.valueOf(e));
+		}
+		finally
+		{
+			PhantomHuntersConfig.HUNTER_CLAN_LEVEL_SAVING = key;
+		}
+		LOGGER.info(tag + "done, " + (failed.isEmpty() ? "passed." : "FAILED: " + failed));
+	}
+
+	private static void setAdena(Player player, long adena)
+	{
+		if (player.getAdena() > adena)
+		{
+			PhantomCompat.reduceAdena(player, ItemProcessType.FEE, player.getAdena() - adena, player, false);
+		}
+		else if (player.getAdena() < adena)
+		{
+			PhantomCompat.addAdena(player, ItemProcessType.REWARD, adena - player.getAdena(), null, false);
+		}
+	}
+
 	private static void gearCheck(String tag, List<String> failed, String step, boolean ok, String detail)
 	{
 		LOGGER.info(tag + step + (ok ? ": ok" : ": FAIL") + " (" + detail + ").");
@@ -3915,7 +4059,12 @@ public class PhantomHunterManager
 		final boolean subUnits = "SUBUNITS".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
 		final boolean clanStock = "CLANSTOCK".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
 		final boolean clanHall = "CLANHALL".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
-		if ((subUnits || clanStock || clanHall) && (inWorld().size() < Math.min(80, worldSize())))
+		final boolean clanSave = "CLANSAVE".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
+		final boolean chatBank = "CHATBANK".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
+		final boolean clanInvite = "CLANINVITE".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
+		final boolean noblesse = "NOBLESSE".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
+		final boolean cures = "CURES".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
+		if ((subUnits || clanStock || clanHall || clanSave || chatBank || clanInvite || noblesse || cures) && (inWorld().size() < Math.min(80, worldSize())))
 		{
 			return;
 		}
@@ -3952,6 +4101,26 @@ public class PhantomHunterManager
 					PhantomClanHallLogic.INSTANCE.selfTest(inWorld());
 				}
 			}
+			return;
+		}
+		if (chatBank)
+		{
+			PhantomChatBank.selfTest(inWorld());
+			return;
+		}
+		if (clanInvite)
+		{
+			PhantomClanInvite.selfTest(inWorld());
+			return;
+		}
+		if (noblesse)
+		{
+			PhantomPartyNoblesse.selfTest(inWorld());
+			return;
+		}
+		if (cures)
+		{
+			PhantomSupport.selfTest(inWorld());
 			return;
 		}
 		if ("SIEGE".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST))
@@ -3992,6 +4161,11 @@ public class PhantomHunterManager
 		if (gearBehind)
 		{
 			ThreadPool.execute(this::gearBehindSelfTest);
+			return;
+		}
+		if (clanSave)
+		{
+			ThreadPool.execute(this::clanSaveSelfTest);
 			return;
 		}
 		if (raidReach)
@@ -4334,6 +4508,109 @@ public class PhantomHunterManager
 	}
 
 	/**
+	 * Зовёт живой соклан ({@link PhantomClanInvite}): кач, город, лавка и пати охотников уступают, а это нет.
+	 * @param template охотник
+	 * @param owner кто зовёт
+	 * @return почему не пойдёт или {@code null}
+	 */
+	String clanInviteRefusal(PhantomTemplate template, Player owner)
+	{
+		final Hunter hunter = _hunters.get(template.getName().toLowerCase());
+		final Player player = PhantomManager.getInstance().getPhantom(template);
+		if ((hunter == null) || (player == null))
+		{
+			return PhantomText.tr("Я сейчас не в мире.");
+		}
+		if (player.isDead())
+		{
+			return PhantomText.tr("Меня убили, дай встать.");
+		}
+		if (player.isInParty())
+		{
+			if (player.getParty() == owner.getParty())
+			{
+				return PhantomText.tr("Я уже в твоей пати.");
+			}
+			for (Player member : player.getParty().getMembers())
+			{
+				if (!PhantomManager.getInstance().isPhantom(member))
+				{
+					return PhantomText.tr("Я уже в группе другого игрока.");
+				}
+			}
+		}
+		if (PhantomCompanionManager.getInstance().ownedByOther(template, owner))
+		{
+			return PhantomText.tr("Я уже в группе другого игрока.");
+		}
+		if (player.isOnEvent())
+		{
+			return PhantomText.tr("Я на ивенте, не брошу.");
+		}
+		if (player.isInOlympiadMode())
+		{
+			return PhantomText.tr("Я на Олимпиаде, матч не брошу.");
+		}
+		if (PhantomDuel.getInstance().isBusy(player))
+		{
+			return PhantomText.tr("У меня дуэль, позови потом.");
+		}
+		if (PhantomSiege.getInstance().inBattle(player))
+		{
+			return PhantomText.tr("Я на осаде, не брошу.");
+		}
+		if (PhantomRaid.getInstance().raidOf(player) != null)
+		{
+			return PhantomText.tr("Я в рейде; нужно сначала закончить участие.");
+		}
+		if (player.isTeleporting())
+		{
+			return PhantomText.tr("Телепортируюсь, позови чуть позже.");
+		}
+		if (hunter.enemyId != 0)
+		{
+			return PhantomText.tr("Я сейчас дерусь с другим персонажем.");
+		}
+		if ((hunter.phase == Phase.CURSED) || PhantomManager.getInstance().isSecret(player))
+		{
+			return PhantomText.tr("Сейчас не могу.");
+		}
+		return null;
+	}
+
+	/**
+	 * Перед пати соклана: старые дела забыты, лавка закрыта (из мира это не выводит, патч 0200), бой и шаг прерваны.
+	 * @param template охотник
+	 * @param player он в мире
+	 */
+	void prepareClanInvite(PhantomTemplate template, Player player)
+	{
+		final Hunter hunter = _hunters.get(template.getName().toLowerCase());
+		if (hunter == null)
+		{
+			return;
+		}
+
+		final Choice choice = hunter.choice;
+		if (choice != null)
+		{
+			hunter.choice = null;
+			choice.result(false, PhantomHunterStrategy.NOT_DONE);
+		}
+		hunter.shop = null;
+		hunter.shopUntil = 0;
+		hunter.eventNpcId = 0;
+		hunter.eventStandUntil = 0;
+		hunter.gatekeeperSpot = null;
+		hunter.walkBackUntil = 0;
+		hunter.afkUntil = 0;
+		closeStore(hunter, player);
+		player.abortAttack();
+		player.abortCast();
+		player.stopMove(null);
+	}
+
+	/**
 	 * Охотник вступил в пати: дальше его ведёт {@link PhantomCompanionManager}, AutoPlay выключен.
 	 * AutoUse работает (патч 0027): без AutoPlay он не бьёт скиллами, но пьёт банки; скиллы в бою кастует менеджер напарников.
 	 * @param template охотник
@@ -4547,7 +4824,8 @@ public class PhantomHunterManager
 			return;
 		}
 
-		if (!PhantomHunterStrategy.budget(now))
+		final long focusGap = PhantomFocus.getInstance().strategyGap(player);
+		if (!PhantomHunterStrategy.budget(now, focusGap > 0))
 		{
 			hunter.nextThink = now + Rnd.get(60000, 180000);
 			if ((now - _lastStrategyLog) >= STRATEGY_LOG_INTERVAL)
@@ -4558,7 +4836,6 @@ public class PhantomHunterManager
 			return;
 		}
 
-		final long focusGap = PhantomFocus.getInstance().strategyGap(player);
 		hunter.nextThink = now + (nearFree ? NEAR_TEST_THINK : focusGap > 0 ? focusGap : PhantomHunterStrategy.nextDelay());
 		hunter.thinkingSince = now;
 		final Facts facts = facts(hunter, player, now);
@@ -5386,7 +5663,7 @@ public class PhantomHunterManager
 	/**
 	 * @return кем он себя называет в крике «лфп»
 	 */
-	private static String roleWord(PhantomTemplate template, Player player)
+	static String roleWord(PhantomTemplate template, Player player)
 	{
 		switch (template.getRole())
 		{

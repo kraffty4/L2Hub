@@ -1,0 +1,303 @@
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+index 903cd2da13f9ca3587364ba53209b77f40eb8994..96524d9b3e43f2c592d16709e17f604b055e95a6 100644
+--- a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+@@ -54,6 +54,7 @@ import org.l2jmobius.gameserver.network.serverpackets.ShowBoard;
+  * <li>_bbshubevents [join|cancel &lt;ивент&gt;|medals] — запись на TvT, Deathmatch и CtF ({@link PhantomEventBoard}), обмен медалей ({@link #medals})</li>
+  * <li>_bbshubplay — окно автобоя мимо чата ({@link #play})</li>
+  * <li>_bbshubfind … — поиск вещи в GM-шопе и по лавкам ({@link L2HubFind})</li>
++ * <li>_bbshubraids … — кто из рейд-боссов жив ({@link L2HubRaids})</li>
+  * </ul>
+  */
+ public class L2HubBoard implements IParseBoardHandler
+@@ -183,7 +184,20 @@ public class L2HubBoard implements IParseBoardHandler
+ 		java.util.Map.entry("Ищем: ", "Searching: "),
+ 		java.util.Map.entry("Нужно хотя бы две буквы.", "At least two letters, please."),
+ 		java.util.Map.entry("Ничего не нашлось.", "Nothing found."),
+-		java.util.Map.entry("обмен", "exchange"));
++		java.util.Map.entry("обмен", "exchange"),
++		java.util.Map.entry("Рейд-боссы", "Raid bosses"),
++		java.util.Map.entry("Кто жив, кто мёртв, метка на карте.", "Who is alive, who is dead, a mark on the map."),
++		java.util.Map.entry("Живых: ", "Alive: "),
++		java.util.Map.entry(", мёртвых: ", ", dead: "),
++		java.util.Map.entry("Все", "All"),
++		java.util.Map.entry("Таких здесь нет.", "None here."),
++		java.util.Map.entry("Босс", "Boss"),
++		java.util.Map.entry("Статус", "Status"),
++		java.util.Map.entry("эпик", "epic"),
++		java.util.Map.entry("жив", "alive"),
++		java.util.Map.entry("мёртв", "dead"),
++		java.util.Map.entry("не появился", "not up"),
++		java.util.Map.entry("Место этого босса неизвестно.", "This boss's location is unknown."));
+ 	
+ 	private static boolean l2hubEnglish()
+ 	{
+@@ -264,7 +278,8 @@ public class L2HubBoard implements IParseBoardHandler
+ 		WORLD,
+ 		PLAY,
+ 		L2HubKits.COMMAND,
+-		L2HubFind.COMMAND
++		L2HubFind.COMMAND,
++		L2HubRaids.COMMAND
+ 	};
+ 
+ 	private static final Pattern NPC_CHAT = Pattern.compile("bypass (?:-h )?npc_%objectId%_Chat (\\d+)");
+@@ -329,6 +344,10 @@ public class L2HubBoard implements IParseBoardHandler
+ 			final String found = L2HubFind.content(player, args);
+ 			html = found != null ? page(player, tr("Поиск вещи"), found) : null; // улетел к лавке — доска закрыта
+ 		}
++		else if (args[0].equalsIgnoreCase(L2HubRaids.COMMAND))
++		{
++			html = page(player, tr("Рейд-боссы"), L2HubRaids.content(player, args));
++		}
+ 		else if (args[0].equalsIgnoreCase(EVENTS))
+ 		{
+ 			if ((args.length > 1) && args[1].equalsIgnoreCase("medals") && canUse(player))
+@@ -818,6 +837,7 @@ public class L2HubBoard implements IParseBoardHandler
+ 		worldRow(sb, tr("Поручения дня"), "voice .daily", tr("Задания на сегодня, прогресс, награды и место дня."));
+ 		worldRow(sb, tr("Рейд охотников"), "voice .raid", tr("Кто кого собирается бить, где сбор, сколько до боя."));
+ 		worldRow(sb, tr("Мир сейчас"), "voice .world", tr("Суперчемпионы, сезонные события и расписание ивентов."));
++		worldRow(sb, tr("Рейд-боссы"), L2HubRaids.COMMAND, tr("Кто жив, кто мёртв, метка на карте."));
+ 		worldRow(sb, tr("Поиск вещи"), L2HubFind.COMMAND, tr("Что почём в GM-шопе и кто продаёт в лавках."));
+ 		return page(player, tr("Мир"), sb.append("</table>").toString());
+ 	}
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubRaids.java b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubRaids.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..6c3e038b1acf747d00310c90c4977122acc966af
+--- /dev/null
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubRaids.java
+@@ -0,0 +1,214 @@
++package handlers.bypass.communityboard;
++
++import java.util.ArrayList;
++import java.util.Comparator;
++import java.util.List;
++
++import org.l2jmobius.gameserver.data.xml.NpcData;
++import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.entity.actor.enums.npc.RaidBossStatus;
++import org.l2jmobius.gameserver.entity.actor.templates.NpcTemplate;
++import org.l2jmobius.gameserver.entity.spawns.Spawn;
++import org.l2jmobius.gameserver.managers.GrandBossManager;
++import org.l2jmobius.gameserver.managers.RaidBossSpawnManager;
++import org.l2jmobius.gameserver.util.StatSet;
++
++/**
++ * L2Hub: статус рейд-боссов на доске Alt+B (раздел «Мир»).
++ * <ul>
++ * <li>_bbshubraids [от] [страница] — рейд-боссы и эпики по уровню: жив, мёртв или не появился (например, ночной босс днём). Время возрождения не показывается.</li>
++ * <li>_bbshubraids map &lt;id&gt; [от] [страница] — метка на карте.</li>
++ * </ul>
++ * Эпик мёртв, пока не вышел его {@code respawn_time}: значения {@code status} у каждого эпика свои.
++ */
++public final class L2HubRaids
++{
++	public static final String COMMAND = "_bbshubraids";
++
++	private static final int PER_PAGE = 14;
++	private static final int ALIVE = 1;
++	private static final int DEAD = 0;
++	private static final int WAITING = -1;
++	private static final int[] BANDS =
++	{
++		0,
++		20,
++		30,
++		40,
++		50,
++		60,
++		70,
++		80
++	};
++
++	private record Boss(int npcId, int level, int state, boolean epic)
++	{
++	}
++
++	private L2HubRaids()
++	{
++	}
++
++	public static String content(Player player, String[] args)
++	{
++		int at = 1;
++		if ((args.length > 2) && args[1].equalsIgnoreCase("map"))
++		{
++			mark(player, number(args, 2, 0));
++			at = 3;
++		}
++		final int from = number(args, at, 0);
++		final List<Boss> all = bosses();
++		final List<Boss> shown = new ArrayList<>();
++		int alive = 0;
++		int dead = 0;
++		for (Boss boss : all)
++		{
++			alive += boss.state == ALIVE ? 1 : 0;
++			dead += boss.state == DEAD ? 1 : 0;
++			if (inBand(boss.level, from))
++			{
++				shown.add(boss);
++			}
++		}
++
++		final StringBuilder sb = new StringBuilder(4096);
++		sb.append(L2HubBoard.tr("Живых: ")).append(alive).append(L2HubBoard.tr(", мёртвых: ")).append(dead).append("<br><table width=520><tr>");
++		for (int band : BANDS)
++		{
++			final String label = band == 0 ? L2HubBoard.tr("Все") : band == 80 ? "80+" : band + "-" + (band + 9);
++			sb.append("<td width=65 align=center>");
++			sb.append(band == from ? "<font color=\"LEVEL\">" + label + "</font>" : L2HubBoard.button(label, COMMAND + " " + band, 60));
++			sb.append("</td>");
++		}
++		sb.append("</tr></table><br>");
++		if (shown.isEmpty())
++		{
++			return sb.append("<font color=\"808080\">").append(L2HubBoard.tr("Таких здесь нет.")).append("</font>").toString();
++		}
++
++		final int pages = Math.max(1, (shown.size() + PER_PAGE - 1) / PER_PAGE);
++		final int page = Math.max(1, Math.min(number(args, at + 1, 1), pages));
++		sb.append("<table width=520><tr><td width=50 align=center><font color=\"B09878\">").append(L2HubBoard.tr("Ур.")).append("</font></td><td width=270><font color=\"B09878\">").append(L2HubBoard.tr("Босс")).append("</font></td><td width=110 align=center><font color=\"B09878\">").append(L2HubBoard.tr("Статус")).append("</font></td><td width=90></td></tr>");
++		for (Boss boss : shown.subList((page - 1) * PER_PAGE, Math.min(shown.size(), page * PER_PAGE)))
++		{
++			sb.append("<tr><td width=50 align=center>").append(boss.level).append("</td><td width=270>&@").append(boss.npcId).append(';');
++			if (boss.epic)
++			{
++				sb.append(" <font color=\"LEVEL\">").append(L2HubBoard.tr("эпик")).append("</font>");
++			}
++			sb.append("</td><td width=110 align=center>").append(state(boss.state)).append("</td><td width=90 align=center>");
++			sb.append(L2HubBoard.button(L2HubBoard.tr("На карте"), COMMAND + " map " + boss.npcId + " " + from + " " + page, 80)).append("</td></tr>");
++		}
++		sb.append("</table>");
++		if (pages > 1)
++		{
++			sb.append("<br><table width=300><tr><td width=100 align=center>");
++			if (page > 1)
++			{
++				sb.append(L2HubBoard.button("&lt;&lt;", COMMAND + " " + from + " " + (page - 1), 60));
++			}
++			sb.append("</td><td width=100 align=center>").append(page).append(" / ").append(pages).append("</td><td width=100 align=center>");
++			if (page < pages)
++			{
++				sb.append(L2HubBoard.button("&gt;&gt;", COMMAND + " " + from + " " + (page + 1), 60));
++			}
++			sb.append("</td></tr></table>");
++		}
++		return sb.toString();
++	}
++
++	/**
++	 * @return живых, мёртвых, не появившихся: для самопроверки
++	 */
++	public static int[] counts()
++	{
++		final int[] out = new int[3];
++		for (Boss boss : bosses())
++		{
++			out[boss.state == ALIVE ? 0 : boss.state == DEAD ? 1 : 2]++;
++		}
++		return out;
++	}
++
++	private static List<Boss> bosses()
++	{
++		final List<Boss> out = new ArrayList<>();
++		final RaidBossSpawnManager raids = RaidBossSpawnManager.getInstance();
++		for (int npcId : raids.getSpawns().keySet())
++		{
++			final NpcTemplate template = NpcData.getInstance().getTemplate(npcId);
++			if (template != null)
++			{
++				final RaidBossStatus status = raids.getRaidBossStatusId(npcId);
++				out.add(new Boss(npcId, template.getLevel(), status == RaidBossStatus.ALIVE ? ALIVE : status == RaidBossStatus.DEAD ? DEAD : WAITING, false));
++			}
++		}
++		final GrandBossManager epics = GrandBossManager.getInstance();
++		final long now = System.currentTimeMillis();
++		for (int npcId : epics.getBossIds())
++		{
++			final NpcTemplate template = NpcData.getInstance().getTemplate(npcId);
++			final StatSet info = epics.getStatSet(npcId);
++			if ((template != null) && (info != null))
++			{
++				out.add(new Boss(npcId, template.getLevel(), info.getLong("respawn_time", 0) > now ? DEAD : ALIVE, true));
++			}
++		}
++		out.sort(Comparator.comparingInt(Boss::level).thenComparingInt(Boss::npcId));
++		return out;
++	}
++
++	private static boolean inBand(int level, int from)
++	{
++		return (from == 0) || ((level >= from) && ((from == 80) || (level < (from + 10))));
++	}
++
++	private static String state(int state)
++	{
++		switch (state)
++		{
++			case ALIVE:
++			{
++				return "<font color=\"7CD37C\">" + L2HubBoard.tr("жив") + "</font>";
++			}
++			case DEAD:
++			{
++				return "<font color=\"D37C7C\">" + L2HubBoard.tr("мёртв") + "</font>";
++			}
++			default:
++			{
++				return "<font color=\"909090\">" + L2HubBoard.tr("не появился") + "</font>";
++			}
++		}
++	}
++
++	private static void mark(Player player, int npcId)
++	{
++		final Spawn spawn = RaidBossSpawnManager.getInstance().getSpawns().get(npcId);
++		if (spawn != null)
++		{
++			L2HubFind.mark(player, spawn.getX(), spawn.getY(), spawn.getZ());
++			return;
++		}
++		final StatSet info = GrandBossManager.getInstance().getStatSet(npcId);
++		if ((info != null) && ((info.getInt("loc_x", 0) != 0) || (info.getInt("loc_y", 0) != 0)))
++		{
++			L2HubFind.mark(player, info.getInt("loc_x", 0), info.getInt("loc_y", 0), info.getInt("loc_z", 0));
++			return;
++		}
++		player.sendMessage(L2HubBoard.tr("Место этого босса неизвестно."));
++	}
++
++	private static int number(String[] args, int at, int fallback)
++	{
++		try
++		{
++			return args.length > at ? Integer.parseInt(args[at]) : fallback;
++		}
++		catch (NumberFormatException e)
++		{
++			return fallback;
++		}
++	}
++}
+diff --git a/java/org/l2jmobius/gameserver/managers/GrandBossManager.java b/java/org/l2jmobius/gameserver/managers/GrandBossManager.java
+index 57f39a89c4e41b71fc9efd22ec08c76e676c322f..4079236d590e0168c405702d8e2c44d7298a87c8 100644
+--- a/java/org/l2jmobius/gameserver/managers/GrandBossManager.java
++++ b/java/org/l2jmobius/gameserver/managers/GrandBossManager.java
+@@ -227,6 +227,15 @@ public class GrandBossManager
+ 		}
+ 	}
+ 	
++	/**
++	 * L2Hub: статус боссов на доске ({@code L2HubRaids}).
++	 * @return id всех боссов из grandboss_data
++	 */
++	public java.util.Set<Integer> getBossIds()
++	{
++		return _bossStatus.keySet();
++	}
++
+ 	public GrandBoss getBoss(int bossId)
+ 	{
+ 		return BOSSES.get(bossId);

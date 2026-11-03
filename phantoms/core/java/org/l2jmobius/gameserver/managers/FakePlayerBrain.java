@@ -27,8 +27,11 @@ public class FakePlayerBrain
 	private static final Logger LOGGER = Logger.getLogger(FakePlayerBrain.class.getName());
 	private static final HttpClient CLIENT = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(2)).build();
 	private static final long FAILURE_LOG_INTERVAL = 60000;
+	/** Столько после отказа считается, что мозгов нет ({@link #isDown}), мс. */
+	private static final long DOWN_WINDOW = 300000;
 
 	private volatile long _lastFailureLog = 0;
+	private volatile long _lastFailure = 0;
 
 	protected FakePlayerBrain()
 	{
@@ -96,6 +99,7 @@ public class FakePlayerBrain
 				return;
 			}
 
+			_lastFailure = 0;
 			final String reply = response.body().strip();
 			if (reply.isEmpty())
 			{
@@ -111,9 +115,27 @@ public class FakePlayerBrain
 		});
 	}
 
+	/**
+	 * @return мозги только что не ответили: {@value #DOWN_WINDOW} мс после отказа, успешный ответ снимает
+	 */
+	public boolean isDown()
+	{
+		final long failure = _lastFailure;
+		return (failure != 0) && ((System.currentTimeMillis() - failure) < DOWN_WINDOW);
+	}
+
+	/**
+	 * Забыть отказ (самопроверка).
+	 */
+	public void clearDown()
+	{
+		_lastFailure = 0;
+	}
+
 	private void logFailure(String reason)
 	{
 		final long now = System.currentTimeMillis();
+		_lastFailure = now;
 		if ((now - _lastFailureLog) > FAILURE_LOG_INTERVAL)
 		{
 			_lastFailureLog = now;

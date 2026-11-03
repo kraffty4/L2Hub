@@ -9,7 +9,7 @@ from pathlib import Path
 
 import psutil
 
-from . import backups, catalog, clientsys, l2ini, l2solo, network, paths, servers
+from . import backups, catalog, clientsys, l2ini, l2solo, machine, modes, network, paths, servers
 
 _online_cache: dict[str, tuple[float, int | None]] = {}
 
@@ -159,6 +159,8 @@ def state(p: dict) -> dict:
             comps["game"]["online"] = _online(p)
         if world := _world_online(p):
             comps["game"]["world"] = world
+        if heap := machine.heap_state(p):
+            comps["game"]["heapState"] = heap
     if servers.brain_port(p):
         comps["brain"] = brain_state(p)
     return comps
@@ -347,6 +349,13 @@ def diagnostics(p: dict) -> list[dict]:
         add("warn", "Ошибки в логе гейма", f"{err.name}: {err.stat().st_size} байт", "Открой лог в Сервисе")
     else:
         add("ok", "Ошибки в логе гейма", f"{err.name} пустой")
+
+    if hm := modes.hunters_max(p):
+        m = hm["machine"]
+        add("warn" if m["warnings"] else "ok", "Хватит ли машины", f"охотников {hm['count']} из {hm['top']}, рекомендуем до {m['recommended']} · ОЗУ {m['ramGb']} ГБ, {m['threads']} потоков, куча {m['heapGb']} ГБ, на диске свободно {m['freeGb']} ГБ",
+            " ".join(m["warnings"]))
+    if st["game"]["state"] == "on" and (heap := machine.heap_state(p)):
+        add("warn" if heap["level"] != "ok" else "ok", "Память сервера", f"после сборки {heap['afterGcMb']} из {heap['maxMb']} МБ, работает {heap['uptimeH']} ч", heap["text"])
 
     # Самопроверка модов L2Hub (скрипт custom/L2HubSelfTest, Interlude): сервер пишет её через минуту после старта.
     st_report = selftest(p)

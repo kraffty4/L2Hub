@@ -242,6 +242,45 @@ public final class PhantomStores
 		player.sendPacket(window(player, npc, store));
 	}
 
+	/**
+	 * Товар лавки продажи для поиска на доске ({@code L2HubFind}).
+	 * @param npcId шаблон фейка
+	 * @param seller его имя
+	 * @param itemId вещь
+	 * @param count сколько осталось
+	 * @param price цена за штуку
+	 * @param enchant заточка
+	 */
+	public record Offer(int npcId, String seller, int itemId, long count, long price, int enchant)
+	{
+	}
+
+	/**
+	 * @return что сейчас лежит в лавках продажи: запас свежий, как в окне; скупка сюда не входит
+	 */
+	public static List<Offer> offers()
+	{
+		final long now = System.currentTimeMillis();
+		final List<Offer> offers = new ArrayList<>();
+		for (Map.Entry<Integer, Store> entry : STORES.entrySet())
+		{
+			final Store store = entry.getValue();
+			if (store.buying)
+			{
+				continue;
+			}
+			synchronized (store)
+			{
+				store.refresh(now);
+				for (Good good : store.goods)
+				{
+					offers.add(new Offer(entry.getKey(), store.name, good.itemId, good.count, good.price, good.enchant));
+				}
+			}
+		}
+		return offers;
+	}
+
 	private static ServerPacket window(Player player, Npc npc, Store store)
 	{
 		final TradeList list = list(store);

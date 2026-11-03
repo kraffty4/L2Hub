@@ -1,0 +1,25 @@
+L2Hub: закрытая лавка не выводит фантома из мира.
+OfflineDisconnectFinished отключает закрывшего лавку игрока без клиента: так задумано для офлайн-торговцев, но под условие попадали и фантомы. Охотник, свернувший лавку или распродавшийся, выходил и через 2 с входил снова, в журнале мира таких 134 (docs/PHANTOMS.md, раздел 4.121). Живого офлайн-торговца правка не меняет.
+
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/Player.java b/java/org/l2jmobius/gameserver/entity/actor/Player.java
+index 95d77a4..296e12f 100644
+--- a/java/org/l2jmobius/gameserver/entity/actor/Player.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/Player.java
+@@ -233,6 +233,7 @@ import org.l2jmobius.gameserver.managers.ScriptManager;
+ import org.l2jmobius.gameserver.managers.SiegeManager;
+ import org.l2jmobius.gameserver.managers.TerritoryWarManager;
+ import org.l2jmobius.gameserver.managers.ZoneManager;
++import org.l2jmobius.gameserver.managers.phantom.PhantomManager;
+ import org.l2jmobius.gameserver.mechanics.effects.EffectFlag;
+ import org.l2jmobius.gameserver.mechanics.effects.EffectType;
+ import org.l2jmobius.gameserver.mechanics.events.EventDispatcher;
+@@ -6333,7 +6334,8 @@ public class Player extends Playable
+ 	public void setPrivateStoreType(PrivateStoreType privateStoreType)
+ 	{
+ 		_privateStoreType = privateStoreType;
+-		if (OfflineTradeConfig.OFFLINE_DISCONNECT_FINISHED && (privateStoreType == PrivateStoreType.NONE) && ((_client == null) || _client.isDetached()))
++		// L2Hub: фантом без клиента — не офлайн-торговец: закрыв лавку, он остаётся в мире, а не выходит, чтобы через пару секунд войти снова.
++		if (OfflineTradeConfig.OFFLINE_DISCONNECT_FINISHED && (privateStoreType == PrivateStoreType.NONE) && ((_client == null) || _client.isDetached()) && !PhantomManager.getInstance().isPhantom(this))
+ 		{
+ 			OfflineTraderTable.getInstance().removeTrader(getObjectId());
+ 			Disconnection.of(this).storeAndDelete();

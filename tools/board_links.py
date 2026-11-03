@@ -49,6 +49,9 @@ SUBCOMMANDS = {
     "_bbshubworld": ("L2HubBoard",),
     "_bbshubplay": ("L2HubBoard",),
     "_bbshubkits": ("L2HubBoard", "L2HubKits"),
+    "_bbshubfind": ("L2HubBoard", "L2HubFind"),
+    "_bbshubraids": ("L2HubBoard", "L2HubRaids"),
+    "_bbshubkarma": ("L2HubBoard", "L2HubKarma"),
 }
 
 # Помощники, у которых действие кнопки приходит аргументом: файл, функция, номер аргумента, чем дополняется начало.
@@ -56,6 +59,9 @@ EMITTERS = (
     ("L2HubBoard", "button", 1, ""),
     ("L2HubBoard", "worldRow", 2, ""),
     ("L2HubKits", "L2HubBoard.button", 1, ""),
+    ("L2HubFind", "L2HubBoard.button", 1, ""),
+    ("L2HubRaids", "L2HubBoard.button", 1, ""),
+    ("L2HubKarma", "L2HubBoard.button", 1, ""),
     ("PhantomLootSell", "button", 1, ""),
     ("PhantomClanBoard", "button", 1, "!raw"),
     ("PhantomEventBoard", "button", 1, "!raw"),
@@ -183,6 +189,7 @@ class Tree:
             tokens = tokens_of(self.root / BOARD_DIR / f"{name}.java")
             const = constants_of(tokens)
             commands = {}
+            delegated = set()
             text = (self.root / BOARD_DIR / f"{name}.java").read_bytes().decode("utf-8", "replace")
             for block in command_arrays(text):
                 for item in block.split(","):
@@ -197,7 +204,8 @@ class Tree:
                     elif item.endswith(".COMMAND"):
                         other = constants_of(tokens_of(self.root / BOARD_DIR / f"{item.split('.')[0]}.java"))
                         commands[other["COMMAND"]] = []
-            boards[name] = {"commands": commands, "exact": set(), "prefix": set(), "first": set(), "text": text, "const": const}
+                        delegated.add(other["COMMAND"])
+            boards[name] = {"commands": commands, "delegated": delegated, "exact": set(), "prefix": set(), "first": set(), "text": text, "const": const}
             self.parse_dispatch(boards[name], tokens, const)
         return boards
 
@@ -323,7 +331,7 @@ class Tree:
         first = re.split(r"\s", command, maxsplit=1)[0]
         if command in board["exact"] or any(command.startswith(p) for p in board["prefix"]):
             return True
-        return any(first.lower() == f.lower() for f in board["first"]) or any(f.startswith("@") for f in board["first"] if first.startswith("_bbshubkits"))
+        return any(first.lower() == f.lower() for f in board["first"]) or ((first in board["delegated"]) and any(f.startswith("@") for f in board["first"]))
 
     def check_action(self, action: str, where: str, lang_page: Path | None = None):
         action = action.strip()
@@ -522,7 +530,7 @@ class Tree:
         """HtmlUtil.sendCBHtml: страница длиннее 3 × 16250 символов заменяется на «HTML was too long»."""
         limit = 16250 * 3
         navigation = (self.html / "CommunityBoard/Custom/navigation.html").read_bytes().decode("utf-8", "replace")
-        pages = list((self.html / "CommunityBoard").rglob("*.htm*")) + list((self.html / "merchant").glob(f"{self.shop_npc}*.htm"))
+        pages = list((self.html / "CommunityBoard").rglob("*.htm*")) + list((self.html / "merchant").glob(f"{self.shop_npc}*.htm")) + list((self.ru / "merchant").glob(f"{self.shop_npc}*.htm"))
         sized = sorted(((len(p.read_bytes().decode("utf-8", "replace")) + len(navigation), p) for p in pages), key=lambda x: -x[0])
         self.largest = (sized[0][0], self.rel(sized[0][1]), limit)
         for size, path in sized:
@@ -551,6 +559,9 @@ class Tree:
                     hit = ms.fullmatch(action)
                     if hit:
                         self.check_board(f"_bbshubshop ms {hit.group(1)} {page_id}", where, self.board_of("_bbshubshop"))
+                        continue
+                    if action.startswith("bypass voice "):  # голосовой команде не нужен NPC: и с доски, и из окна уходит как есть
+                        self.check_action(action, where)
                         continue
                     self.report("DEAD", where, action, "L2HubBoard.shop переписывает только npc_%objectId%_Chat и _multisell: на доске кнопка останется мёртвой")
 

@@ -51,6 +51,10 @@ public class PhantomCompanionManager
 	private static final Logger LOGGER = Logger.getLogger(PhantomCompanionManager.class.getName());
 
 	private static final long TICK_INTERVAL = 1000;
+	/** Быстрый проход между тиками: следующий каст мага и хилера, раздел 4.130. */
+	private static final long PACE_INTERVAL = 200;
+	/** Сколько бой держится без нового приказа и без каста: тик охотника — 2 с. */
+	private static final long PACE_HOLD = 2400;
 	/** Автобафф проверяет набор не чаще этого. Танцы живут 120 секунд: дырка в них не длиннее интервала. */
 	private static final long AUTO_BUFF_CHECK = 15000;
 	/** Самопроверка: столько ждать, чтобы тик заведомо прошёл; столько дать бафферу на владельца. */
@@ -158,8 +162,26 @@ public class PhantomCompanionManager
 		}
 	}
 
+	/** Кого бьёт маг между тиками; {@code target == null} — хилер, цели выбирает сам. */
+	private static class Pace
+	{
+		final Player phantom;
+		final Creature target;
+		volatile long until;
+
+		Pace(Player phantom, Creature target, long until)
+		{
+			this.phantom = phantom;
+			this.target = target;
+			this.until = until;
+		}
+	}
+
+	private static final Map<Integer, Pace> PACES = new ConcurrentHashMap<>();
+
 	private final Map<String, Companion> _companions = new ConcurrentHashMap<>();
 	private ScheduledFuture<?> _task;
+	private int _pass;
 
 	protected PhantomCompanionManager()
 	{
@@ -488,7 +510,12 @@ public class PhantomCompanionManager
 
 		// Охотник идёт, если звал криком именно этот игрок или если он свободен, уровень близкий и не обидчик; уровень остаётся свой.
 		final boolean hunter = template.isHunter();
-		if (hunter && !PhantomHunterManager.getInstance().acceptsInvite(template, requestor))
+		// Зовёт живой соклан (раздел 4.123): отказ сказан сразу, а переход — на тике самого охотника.
+		if (hunter && PhantomClanInvite.getInstance().defer(requestor, phantom, template, type))
+		{
+			return;
+		}
+		if (hunter && !PhantomClanInvite.getInstance().dispatching(template) && !PhantomHunterManager.getInstance().acceptsInvite(template, requestor))
 		{
 			whisper(phantom, requestor, "сорри, я соло качаюсь)");
 			return;
@@ -687,6 +714,18 @@ public class PhantomCompanionManager
 	}
 
 	/**
+	 * @param template охотник
+	 * @param requestor кто зовёт
+	 * @return охотник ходит с другим живым игроком в сети
+	 */
+	boolean ownedByOther(PhantomTemplate template, Player requestor)
+	{
+		final Companion companion = _companions.get(key(template.getName()));
+		final Player other = companion == null ? null : World.getPlayer(companion.ownerId);
+		return (other != null) && (other != requestor) && other.isOnline() && !PhantomManager.getInstance().isPhantom(other);
+	}
+
+	/**
 	 * Приказ словами (из {@link PhantomChat}). Хил, рес, баф и отдых здесь только отмечаются — выполняет их тик.
 	 * @param owner владелец
 	 * @param template напарник
@@ -856,13 +895,20 @@ public class PhantomCompanionManager
 	{
 		if ((_task == null) || _task.isDone())
 		{
-			_task = ThreadPool.scheduleAtFixedRate(this::tick, TICK_INTERVAL, TICK_INTERVAL);
+			_task = ThreadPool.scheduleAtFixedRate(this::tick, PACE_INTERVAL, PACE_INTERVAL);
 		}
 	}
 
 	private void tick()
 	{
 		final long now = System.currentTimeMillis();
+		paceCasts(now);
+		if (++_pass < (TICK_INTERVAL / PACE_INTERVAL))
+		{
+			return;
+		}
+		_pass = 0;
+
 		for (Companion companion : _companions.values())
 		{
 			try
@@ -874,6 +920,81 @@ public class PhantomCompanionManager
 				LOGGER.log(Level.WARNING, getClass().getSimpleName() + ": " + companion.name + " tick failed.", e);
 			}
 		}
+	}
+
+	/**
+	 * Следующий каст сразу после прошлого, а не на тике (раздел 4.130): тик напарника — 1 с, охотника — 2 с, и маг с быстрым кастом большую часть боя стоял.
+	 * Только то, что тик уже приказал: идёт, сидит, сменил цель — проход не вмешивается, белого игрока не бьёт.
+	 */
+	private static void paceCasts(long now)
+	{
+		for (Pace pace : PACES.values())
+		{
+			final Player phantom = pace.phantom;
+			try
+			{
+				final Creature target = pace.target;
+				if (!PhantomHuntersConfig.HUNTER_COMBAT_FIXES || (now >= pace.until) || phantom.isDead() || (World.getPlayer(phantom.getObjectId()) != phantom) || phantom.isAutoPlaying() || ((target != null) && (target.isDead() || (phantom.getTarget() != target))))
+				{
+					PACES.remove(phantom.getObjectId(), pace);
+					continue;
+				}
+
+				if (phantom.isCastingNow())
+				{
+					pace.until = now + PACE_HOLD;
+					continue;
+				}
+
+				if (phantom.isMoving() || phantom.isSitting() || phantom.isTeleporting() || (phantom.getAI().getIntention() == Intention.CAST))
+				{
+					continue;
+				}
+
+				if (target == null)
+				{
+					PhantomSupport.paceHeal(phantom, now);
+				}
+				else if (target.isAutoAttackable(phantom))
+				{
+					castSkill(phantom, target);
+				}
+			}
+			catch (Exception e)
+			{
+				PACES.remove(phantom.getObjectId(), pace);
+				LOGGER.log(Level.WARNING, "PhantomCompanionManager: " + phantom.getName() + " cast pace failed.", e);
+			}
+		}
+	}
+
+	/**
+	 * Приказ тика: держать темп каста по цели до {@link #PACE_HOLD} (AutoPlay кастует сам, через AutoUse).
+	 */
+	private static void keepPace(Player phantom, Creature target)
+	{
+		if (!PhantomHuntersConfig.HUNTER_COMBAT_FIXES || phantom.isAutoPlaying())
+		{
+			return;
+		}
+
+		final long until = System.currentTimeMillis() + PACE_HOLD;
+		final Pace pace = PACES.get(phantom.getObjectId());
+		if ((pace != null) && (pace.target == target))
+		{
+			pace.until = until;
+			return;
+		}
+		PACES.put(phantom.getObjectId(), new Pace(phantom, target, until));
+		getInstance().startTicking();
+	}
+
+	/**
+	 * Хилер: {@link PhantomSupport#paceHeal} между тиками.
+	 */
+	static void keepHealPace(Player phantom)
+	{
+		keepPace(phantom, null);
 	}
 
 	/**
@@ -1013,6 +1134,10 @@ public class PhantomCompanionManager
 			return;
 		}
 
+		// Ноблесс в пати живого дворянина и фон банка реплик (разделы 4.124, 4.122).
+		PhantomPartyNoblesse.synchronize(owner, phantom, template, now);
+		PhantomChatBank.getInstance().partyTick(phantom, template, now);
+
 		if (PhantomSupport.isSupport(template))
 		{
 			// Саппорты не дерутся (этап 3): лечат, бафают, отдыхают по MP, бьют только нежить, в остальное время идут следом.
@@ -1028,6 +1153,11 @@ public class PhantomCompanionManager
 		}
 		else
 		{
+			if (PhantomPartyNoblesse.maintain(phantom, now))
+			{
+				return;
+			}
+
 			// «Паровозик»: качается сам родным AutoPlay, владелец идёт следом.
 			if (companion.mode == Mode.LEAD)
 			{
@@ -1048,6 +1178,7 @@ public class PhantomCompanionManager
 				return;
 			}
 
+			PACES.remove(phantom.getObjectId());
 			if (phantom.getAI().getIntention() == Intention.ATTACK)
 			{
 				calmDown(phantom);
@@ -1361,6 +1492,11 @@ public class PhantomCompanionManager
 		if (phantom.getTarget() != target)
 		{
 			phantom.setTarget(target);
+		}
+
+		if (caster && !melee)
+		{
+			keepPace(phantom, target);
 		}
 
 		// Охотник бьёт своими скиллами, как на споте: AutoUse без AutoPlay атакующие скиллы не кастует, поэтому — отсюда.

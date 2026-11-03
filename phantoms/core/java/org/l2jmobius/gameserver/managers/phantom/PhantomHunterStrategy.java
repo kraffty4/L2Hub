@@ -237,10 +237,13 @@ final class PhantomHunterStrategy
 	}
 
 	/**
-	 * Бюджет запросов стратега в минуту на всех охотников.
+	 * Бюджет запросов стратега в минуту на всех охотников. Часть его ({@link PhantomHuntersConfig#HUNTER_STRATEGY_RESERVE}, проценты) только у тех, кто рядом с живым игроком:
+	 * при 500 охотниках спрос в разы выше бюджета, и без резерва такой охотник стоял бы в общей очереди.
+	 * @param now сейчас
+	 * @param focused охотник в фокусе ({@link PhantomFocus#strategyGap})
 	 * @return можно ли спросить сейчас (и запрос засчитан)
 	 */
-	static boolean budget(long now)
+	static boolean budget(long now, boolean focused)
 	{
 		synchronized (CALLS)
 		{
@@ -249,7 +252,8 @@ final class PhantomHunterStrategy
 				CALLS.pollFirst();
 			}
 
-			if (CALLS.size() >= PhantomHuntersConfig.HUNTER_STRATEGY_PER_MINUTE)
+			final int cap = PhantomHuntersConfig.HUNTER_STRATEGY_PER_MINUTE;
+			if (CALLS.size() >= (focused ? cap : cap - ((cap * PhantomHuntersConfig.HUNTER_STRATEGY_RESERVE) / 100)))
 			{
 				return false;
 			}

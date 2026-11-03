@@ -19,7 +19,7 @@ from pathlib import Path
 
 import psutil
 
-from . import __version__, appsettings, backups, brain, builder, catalog, clients, clientsys, configs, feedback, forum, friendpack, geodata, health, i18n, l2ini, l2solo, modes, network, paths, report, runtimes, servers, society, updates, wipe, worldtiles
+from . import __version__, appsettings, backups, brain, builder, catalog, clients, clientsys, configs, feedback, forum, friendpack, geodata, gmshop, health, i18n, l2ini, l2solo, machine, modes, network, paths, report, runtimes, servers, society, updates, wipe, worldtiles
 
 CHAR_NAME_RE = re.compile(r"^[A-Za-z0-9_\-А-Яа-яЁё]{1,35}$")  # кириллица — для имён на La2offline
 ACCESS_LEVELS = {0: "Игрок", 70: "Admin", 100: "Master"}  # Mobius; у другой сборки — "accessLevels" в профиле
@@ -1657,6 +1657,24 @@ class Api:
             return {"ok": False, "error": str(e)}
         return {"ok": True, **r, "restart": self.running() == chronicle_id}
 
+    def machine_check(self, chronicle_id: str) -> dict:
+        """Предупреждения об охотниках и месте перед стартом и в «Обзоре» (machine.py, docs/PHANTOMS.md, раздел 4.132): только советы, запуск не держат. Хроника без строки «Охотников в мире» — пусто."""
+        try:
+            hm = modes.hunters_max(catalog.profile(chronicle_id))
+        except (ValueError, KeyError, OSError):
+            hm = None
+        if not hm:
+            return {"ok": True, "warnings": []}
+        m = hm["machine"]
+        return {"ok": True, "warnings": m["warnings"], "count": hm["count"], "recommended": m["recommended"], "heapGb": m["heapGb"]}
+
+    def machine_budget(self, chronicle_id: str, hunters=None, switches=None) -> dict:
+        """Полоски ЦПУ, ОЗУ, диска и видеопамяти: что есть у машины и что берут база сервера, охотники и выключатели (machine.budget, docs/PHANTOMS.md, раздел 4.132). hunters и switches — «а что, если», ничего не пишут."""
+        try:
+            return machine.budget(catalog.profile(chronicle_id), hunters, switches)
+        except (ValueError, KeyError, OSError) as e:
+            return {"ok": False, "error": str(e)}
+
     def set_hunters_max(self, chronicle_id: str, value) -> dict:
         """Сколько охотников в мире (modes.py, docs/PHANTOMS.md, раздел 4.120): сервер перечитает PhantomHunters.ini на ходу."""
         try:
@@ -1681,6 +1699,32 @@ class Api:
         except (ValueError, KeyError, FileNotFoundError) as e:
             return {"ok": False, "error": str(e)}
         return {"ok": True, **r, "restart": self.running() == chronicle_id}
+
+    # ---------- Цены GM-шопа (gmshop.py) ----------
+
+    def _gm_shop(self, chronicle_id: str, action) -> dict:
+        try:
+            return {"ok": True, **action(catalog.profile(chronicle_id)), "restart": self.running() == chronicle_id}
+        except (ValueError, KeyError, RuntimeError, OSError) as e:
+            return {"ok": False, "error": str(e)}
+
+    def gm_shop(self, chronicle_id: str) -> dict:
+        """Разделы шопа со счётчиками; у хроники без записи в gm_shops.json — supported: False, вкладки нет."""
+        if not gmshop.spec(catalog.profile(chronicle_id)):
+            return {"ok": True, "supported": False}
+        return self._gm_shop(chronicle_id, lambda p: {"supported": True, **gmshop.state(p)})
+
+    def gm_shop_rows(self, chronicle_id: str, list_ids: list | None = None, query: str = "", only: str = "") -> dict:
+        return self._gm_shop(chronicle_id, lambda p: gmshop.rows(p, list_ids, query, only))
+
+    def gm_shop_set(self, chronicle_id: str, edits: list[dict]) -> dict:
+        return self._gm_shop(chronicle_id, lambda p: gmshop.set_prices(p, edits))
+
+    def gm_shop_multiply(self, chronicle_id: str, list_ids: list, factor, preview: bool = True) -> dict:
+        return self._gm_shop(chronicle_id, lambda p: gmshop.multiply(p, list_ids, factor, preview))
+
+    def gm_shop_reset(self, chronicle_id: str, list_ids: list | None = None) -> dict:
+        return self._gm_shop(chronicle_id, lambda p: gmshop.reset(p, list_ids))
 
     def save_settings(self, chronicle_id: str, edits: list[dict]) -> dict:
         p = catalog.profile(chronicle_id)

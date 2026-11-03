@@ -1,0 +1,283 @@
+diff --git a/dist/game/data/scripts/custom/L2HubBoardTest/L2HubBoardTest.java b/dist/game/data/scripts/custom/L2HubBoardTest/L2HubBoardTest.java
+index 6ff955404e1638e3e2beddba669645e9edcefbcf..f9db0bd1790c932cee699dcae31ed493ecffb7b1 100644
+--- a/dist/game/data/scripts/custom/L2HubBoardTest/L2HubBoardTest.java
++++ b/dist/game/data/scripts/custom/L2HubBoardTest/L2HubBoardTest.java
+@@ -22,6 +22,7 @@ import org.l2jmobius.commons.threads.ThreadPool;
+ import org.l2jmobius.gameserver.cache.HtmCache;
+ import org.l2jmobius.gameserver.config.custom.AutoPlayConfig;
+ import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
++import org.l2jmobius.gameserver.data.SpawnTable;
+ import org.l2jmobius.gameserver.data.sql.ClanTable;
+ import org.l2jmobius.gameserver.data.xml.InitialShortcutData;
+ import org.l2jmobius.gameserver.data.xml.ItemData;
+@@ -30,29 +31,38 @@ import org.l2jmobius.gameserver.entity.Location;
+ import org.l2jmobius.gameserver.entity.World;
+ import org.l2jmobius.gameserver.entity.actor.Creature;
+ import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.entity.actor.enums.npc.RaidBossStatus;
+ import org.l2jmobius.gameserver.entity.actor.enums.player.MacroType;
++import org.l2jmobius.gameserver.entity.actor.enums.player.PrivateStoreType;
+ import org.l2jmobius.gameserver.entity.actor.enums.player.ShortcutType;
+ import org.l2jmobius.gameserver.entity.actor.holders.player.Macro;
+ import org.l2jmobius.gameserver.entity.actor.holders.player.MacroCmd;
+ import org.l2jmobius.gameserver.entity.actor.holders.player.Shortcut;
++import org.l2jmobius.gameserver.entity.actor.instance.RaidBoss;
+ import org.l2jmobius.gameserver.entity.item.EtcItem;
+ import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
+ import org.l2jmobius.gameserver.entity.item.instance.Item;
+ import org.l2jmobius.gameserver.entity.itemcontainer.Inventory;
+ import org.l2jmobius.gameserver.entity.itemcontainer.PlayerInventory;
++import org.l2jmobius.gameserver.entity.spawns.Spawn;
+ import org.l2jmobius.gameserver.handler.CommunityBoardHandler;
+ import org.l2jmobius.gameserver.handler.IItemHandler;
+ import org.l2jmobius.gameserver.handler.ItemHandler;
+ import org.l2jmobius.gameserver.mechanics.events.Containers;
+ import org.l2jmobius.gameserver.mechanics.events.EventType;
++import org.l2jmobius.gameserver.managers.RaidBossSpawnManager;
+ import org.l2jmobius.gameserver.managers.phantom.HuntSpotData;
+ import org.l2jmobius.gameserver.managers.phantom.PhantomHunterManager;
+ import org.l2jmobius.gameserver.managers.phantom.PhantomManager;
++import org.l2jmobius.gameserver.managers.phantom.PhantomStores;
+ import org.l2jmobius.gameserver.entity.clan.Clan;
+ import org.l2jmobius.gameserver.taskmanagers.AutoPlayTaskManager;
+ 
+ import handlers.bypass.communityboard.L2HubBoard;
++import handlers.bypass.communityboard.L2HubFind;
++import handlers.bypass.communityboard.L2HubKarma;
+ import handlers.bypass.communityboard.L2HubKits;
++import handlers.bypass.communityboard.L2HubRaids;
+ import handlers.chat.commands.voiced.AutoPlay;
+ 
+ /**
+@@ -109,6 +119,7 @@ public class L2HubBoardTest
+ 			boxes(spare);
+ 			macros(spare);
+ 			firstStart(spare);
++			search(spare);
+ 			LOGGER.info(TAG + "done: " + _ok + " ok, " + _wrong + " wrong.");
+ 		}
+ 		catch (Throwable e)
+@@ -117,6 +128,223 @@ public class L2HubBoardTest
+ 		}
+ 	}
+ 
++	/**
++	 * Поиск вещи, статус рейд-боссов и снятие кармы: страницы, кнопки и деньги.
++	 */
++	private static void search(List<Player> spare) throws Exception
++	{
++		check("handlers of search, raids, karma", (CommunityBoardHandler.getInstance().getHandler(L2HubFind.COMMAND) != null) && (CommunityBoardHandler.getInstance().getHandler(L2HubRaids.COMMAND) != null) && (CommunityBoardHandler.getInstance().getHandler(L2HubKarma.COMMAND) != null));
++		final Player player = pick(spare, p -> p.getLevel() >= 20);
++		if (player == null)
++		{
++			check("search: no hunter to play", false);
++			return;
++		}
++		park(player);
++
++		// GM-шоп.
++		final String soulshots = find(player, "shop", "1", "soulshot");
++		Files.writeString(Path.of("./log/L2HubBoardFind.html"), soulshots);
++		check("find: soulshots in the shop, " + soulshots.length() + " chars", soulshots.contains(L2HubFind.COMMAND + " open 50039938 ") && (soulshots.length() < PAGE_LIMIT));
++		check("find: by number", find(player, "shop", "1", "1463").contains("&#1463;"));
++		check("find: hidden lists stay hidden", !find(player, "shop", "1", "Infinity", "Blade").contains(" open 50039980 ") && !find(player, "shop", "1", "Infinity", "Blade").contains("&#6611;"));
++		check("find: one letter asks for more", !find(player, "shop", "1", "a").contains(" open "));
++		final String dirty = find(player, "shop", "1", "<img", "src=\"x\">%y$z");
++		check("find: query is cleaned", !dirty.contains("<img src=\"x") && !dirty.contains("%y") && !dirty.contains("$z"));
++		final String paged = find(player, "shop", "2", "soulshot");
++		check("find: second page", paged.contains(L2HubFind.COMMAND + " shop 1 soulshot") && paged.contains(" 2 soulshot"));
++		L2HubFind.content(player, new String[]
++		{
++			L2HubFind.COMMAND,
++			"open",
++			"50039938",
++			"1",
++			"soulshot"
++		});
++		check("find: open sends the list", (player.getMultiSell() != null) && (player.getMultiSell().getListId() == 50039938));
++		check("find: where to buy", L2HubFind.whereToBuy(player, 1463).contains(L2HubFind.COMMAND + " open 50039938 ") && L2HubFind.whereToBuy(player, 1463).contains(L2HubFind.COMMAND + " store 1 "));
++
++		// Поиск дропа: вещи только из шопа не падают на пустом списке мобов.
++		final List<Integer> shopOnly = new ArrayList<>();
++		for (int itemId = 1; (itemId < 25000) && (shopOnly.size() < 60); itemId++)
++		{
++			if (L2HubFind.inShop(player, itemId))
++			{
++				shopOnly.add(itemId);
++			}
++		}
++		for (int itemId : shopOnly)
++		{
++			CommunityBoardHandler.getInstance().handleParseCommand("_bbs_search_drop " + itemId + " 1 x y", player);
++		}
++		CommunityBoardHandler.getInstance().handleParseCommand("_bbs_search_item soulshot", player);
++		check("drop search: shop items open without mobs, " + shopOnly.size(), shopOnly.size() == 60);
++
++		// Лавки: живой продавец и скрытый.
++		Player seller = null;
++		for (Player other : World.getPlayers())
++		{
++			if ((other != player) && (other.getPrivateStoreType() == PrivateStoreType.SELL) && !other.getSellList().getItems().isEmpty() && !PhantomManager.getInstance().isSecret(other))
++			{
++				seller = other;
++				break;
++			}
++		}
++		if (seller == null)
++		{
++			LOGGER.info(TAG + "find: no store of a player or hunter now.");
++		}
++		else
++		{
++			final String wanted = seller.getSellList().getItems().iterator().next().getItem().getName().replaceAll("[^A-Za-z0-9 ]", " ").replaceAll(" +", " ").strip();
++			final String store = find(player, "store", "1", wanted);
++			Files.writeString(Path.of("./log/L2HubBoardStores.html"), store);
++			check("find: store of " + seller.getName() + " by '" + wanted + "'", store.contains(seller.getName() + "</td>") || store.contains(" 1 " + wanted));
++			final Field quiet = PhantomManager.class.getDeclaredField("_quiet");
++			quiet.setAccessible(true);
++			@SuppressWarnings("unchecked")
++			final Set<String> hidden = (Set<String>) quiet.get(PhantomManager.getInstance());
++			final boolean added = hidden.add(seller.getName().toLowerCase());
++			final String without = find(player, "store", "1", wanted);
++			if (added)
++			{
++				hidden.remove(seller.getName().toLowerCase());
++			}
++			check("find: a hidden seller is not listed", !without.contains(seller.getName() + "</td>"));
++		}
++		final List<PhantomStores.Offer> offers = PhantomStores.offers();
++		LOGGER.info(TAG + "find: town store goods " + offers.size() + ".");
++		for (PhantomStores.Offer offer : offers)
++		{
++			final Spawn spawn = SpawnTable.getInstance().getAnySpawn(offer.npcId());
++			if ((spawn != null) && (spawn.getLastSpawn() != null))
++			{
++				final String name = ItemData.getInstance().getTemplate(offer.itemId()).getName().replaceAll("[^A-Za-z0-9 ]", " ").replaceAll(" +", " ").strip();
++				final String town = find(player, "store", "1", name);
++				check("find: town store of " + offer.seller() + " by '" + name + "'", town.contains(L2HubFind.COMMAND + " mark ") || town.contains(L2HubFind.COMMAND + " go "));
++				break;
++			}
++		}
++
++		// Рейд-боссы.
++		final int[] before = L2HubRaids.counts();
++		final String raids = L2HubRaids.content(player, new String[]
++		{
++			L2HubRaids.COMMAND
++		});
++		Files.writeString(Path.of("./log/L2HubBoardRaids.html"), raids);
++		check("raids: " + before[0] + " alive, " + before[1] + " dead, " + before[2] + " not up, page " + raids.length() + " chars", ((before[0] + before[1]) > 50) && (raids.length() < PAGE_LIMIT) && raids.contains(L2HubRaids.COMMAND + " map "));
++		for (int band : new int[]
++		{
++			20,
++			30,
++			40,
++			50,
++			60,
++			70,
++			80
++		})
++		{
++			final String page = L2HubRaids.content(player, new String[]
++			{
++				L2HubRaids.COMMAND,
++				String.valueOf(band)
++			});
++			if ((page.length() >= PAGE_LIMIT) || !page.contains(L2HubRaids.COMMAND + " map "))
++			{
++				check("raids: band " + band + ", " + page.length() + " chars", false);
++			}
++		}
++		check("raids: map of an unknown boss does not break the page", L2HubRaids.content(player, new String[]
++		{
++			L2HubRaids.COMMAND,
++			"map",
++			"1",
++			"0",
++			"1"
++		}).contains(L2HubRaids.COMMAND));
++		RaidBoss victim = null;
++		for (RaidBoss boss : RaidBossSpawnManager.getInstance().getBosses().values())
++		{
++			if (boss.getRaidStatus() == RaidBossStatus.ALIVE)
++			{
++				victim = boss;
++				break;
++			}
++		}
++		if (victim != null)
++		{
++			victim.doDie(null);
++			final int[] after = L2HubRaids.counts();
++			check("raids: killed " + victim.getName() + " shows dead", (RaidBossSpawnManager.getInstance().getRaidBossStatusId(victim.getId()) == RaidBossStatus.DEAD) && (after[1] > before[1]));
++		}
++
++		// Карма.
++		final long price = L2HubKarma.price();
++		player.addAdena(ItemProcessType.FEE, 1000000 * price, player, false);
++		player.setKarma(500);
++		final long adena = player.getAdena();
++		final String form = L2HubKarma.content(player, new String[]
++		{
++			L2HubKarma.COMMAND
++		});
++		check("karma: page offers the payment", form.contains(L2HubKarma.COMMAND + " pay all") && form.contains(L2HubKarma.COMMAND + " pay $points"));
++		L2HubKarma.content(player, new String[]
++		{
++			L2HubKarma.COMMAND,
++			"pay",
++			"100"
++		});
++		check("karma: part of it", (player.getKarma() == 400) && (player.getAdena() == (adena - (100 * price))));
++		L2HubKarma.content(player, new String[]
++		{
++			L2HubKarma.COMMAND,
++			"pay",
++			"junk"
++		});
++		check("karma: junk changes nothing", (player.getKarma() == 400) && (player.getAdena() == (adena - (100 * price))));
++		L2HubKarma.content(player, new String[]
++		{
++			L2HubKarma.COMMAND,
++			"pay",
++			"999999"
++		});
++		check("karma: never above what is there", (player.getKarma() == 0) && (player.getAdena() == (adena - (500 * price))));
++		player.setKarma(500);
++		player.setPvpFlag(1);
++		L2HubKarma.content(player, new String[]
++		{
++			L2HubKarma.COMMAND,
++			"pay",
++			"all"
++		});
++		check("karma: not while flagged", player.getKarma() == 500);
++		player.setPvpFlag(0);
++		player.reduceAdena(ItemProcessType.FEE, player.getAdena(), player, false);
++		L2HubKarma.content(player, new String[]
++		{
++			L2HubKarma.COMMAND,
++			"pay",
++			"all"
++		});
++		check("karma: not without adena", player.getKarma() == 500);
++		check("karma: world offers it", L2HubBoard.world(player).contains("bypass " + L2HubKarma.COMMAND + "\""));
++		final Method canUse = L2HubBoard.class.getDeclaredMethod("canUse", Player.class);
++		canUse.setAccessible(true);
++		check("karma: the board still refuses the rest", !((Boolean) canUse.invoke(null, player)));
++		CommunityBoardHandler.getInstance().handleParseCommand("_bbshome", player);
++		player.setKarma(0);
++		check("karma: world without karma has no such row", !L2HubBoard.world(player).contains("bypass " + L2HubKarma.COMMAND + "\""));
++	}
++
++	private static String find(Player player, String... words)
++	{
++		final String[] args = new String[words.length + 1];
++		args[0] = L2HubFind.COMMAND;
++		System.arraycopy(words, 0, args, 1, words.length);
++		return L2HubFind.content(player, args);
++	}
++
+ 	private static void check(String what, boolean good)
+ 	{
+ 		if (good)

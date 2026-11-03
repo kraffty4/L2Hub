@@ -1,0 +1,412 @@
+Самопроверка настоящего матча Олимпиады: HuntersSelfTest = L2HUBOLY, только на копии базы.
+
+diff --git b/dist/game/data/scripts/custom/L2HubOlympiadTest/L2HubOlympiadTest.java b/dist/game/data/scripts/custom/L2HubOlympiadTest/L2HubOlympiadTest.java
+new file mode 100644
+index 0000000..811156a
+--- /dev/null
++++ b/dist/game/data/scripts/custom/L2HubOlympiadTest/L2HubOlympiadTest.java
+@@ -0,0 +1,404 @@
++package custom.L2HubOlympiadTest;
++
++import java.lang.reflect.Field;
++import java.lang.reflect.Method;
++import java.util.ArrayList;
++import java.util.Collections;
++import java.util.List;
++import java.util.function.Predicate;
++import java.util.logging.Level;
++import java.util.logging.Logger;
++
++import org.l2jmobius.commons.threads.ThreadPool;
++import org.l2jmobius.gameserver.config.OlympiadConfig;
++import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
++import org.l2jmobius.gameserver.entity.World;
++import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.entity.item.type.WeaponType;
++import org.l2jmobius.gameserver.managers.phantom.PhantomCompat;
++import org.l2jmobius.gameserver.managers.phantom.PhantomData;
++import org.l2jmobius.gameserver.managers.phantom.PhantomManager;
++import org.l2jmobius.gameserver.managers.phantom.PhantomTemplate;
++import org.l2jmobius.gameserver.mechanics.olympiad.AbstractOlympiadGame;
++import org.l2jmobius.gameserver.mechanics.olympiad.Olympiad;
++import org.l2jmobius.gameserver.mechanics.olympiad.OlympiadGameManager;
++import org.l2jmobius.gameserver.mechanics.skill.Skill;
++import org.l2jmobius.gameserver.network.serverpackets.SystemMessage;
++
++/**
++ * L2Hub: самопроверка настоящего матча Олимпиады, только на копии базы: {@code HuntersSelfTest = L2HUBOLY} в PhantomHunters.ini (docs/PHANTOMS.md, раздел 4.131).<br>
++ * Охотники записываются тем же путём, что и у менеджера, дальше матч ведёт сам Mobius: подбор, отсчёт, телепорт, бой, итог, возврат. Сокращён только отсчёт до телепорта. Итог — строки в логе.
++ * @author L2Hub
++ */
++public class L2HubOlympiadTest
++{
++	private static final Logger LOGGER = Logger.getLogger(L2HubOlympiadTest.class.getName());
++	private static final String TAG = "L2HubOlympiadTest: SelfTest L2HUBOLY: ";
++	private static final long STARTED = System.currentTimeMillis();
++	/** Бой до 5 минут, отсчёты и возврат — ещё около 3. */
++	private static final long LIMIT = 11 * 60000L;
++	/** Сколько ждать после матча, прежде чем смотреть, вернулся ли охотник к делам. */
++	private static final long AFTER = 75000;
++	private static final List<Fighter> FIGHTERS = new ArrayList<>();
++	private static int _ok;
++	private static int _wrong;
++
++	private static class Fighter
++	{
++		final Player player;
++		final String kind;
++		final int done;
++		final int shotsBefore;
++		final int pointsBefore;
++		int game = -1;
++		int paired = -1;
++		String reason;
++		boolean arena;
++		boolean started;
++		boolean finished;
++		long finishedAt;
++		int buffs = -1;
++		int shots = -1;
++		boolean firstIsLongest = true;
++		boolean autoPlay;
++		int casting;
++		int attacking;
++		int running;
++		int samples;
++		double minHp = 1;
++
++		Fighter(Player player, String kind)
++		{
++			this.player = player;
++			this.kind = kind;
++			done = Olympiad.getInstance().getCompetitionDone(player.getObjectId());
++			shotsBefore = player.getAutoSoulShot().size();
++			pointsBefore = Olympiad.getInstance().getNoblePoints(player.getObjectId());
++		}
++	}
++
++	/** {@code AbstractOlympiadGame.checkDefaulted(Player)}: почему матч отменили бы сейчас. */
++	private static Method _defaulted;
++
++	public static void main(String[] args)
++	{
++		if ("L2HUBOLY".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST))
++		{
++			ThreadPool.schedule(L2HubOlympiadTest::start, 60000);
++		}
++	}
++
++	private static void start()
++	{
++		if ((candidates().size() < 12) && ((System.currentTimeMillis() - STARTED) < (6 * 60000L)))
++		{
++			ThreadPool.schedule(L2HubOlympiadTest::start, 15000);
++			return;
++		}
++		try
++		{
++			run();
++		}
++		catch (Throwable e)
++		{
++			_wrong++;
++			LOGGER.log(Level.WARNING, TAG + "WRONG failed: " + e, e);
++			finish();
++		}
++	}
++
++	private static void run() throws Exception
++	{
++		final List<Player> pool = candidates();
++		LOGGER.info(TAG + "candidates " + pool.size() + ".");
++		// Матчи собирает только проверка, отсчёт до телепорта короче, часы соревнований открыты.
++		PhantomHuntersConfig.HUNTER_OLYMPIAD = false;
++		OlympiadConfig.OLYMPIAD_WAIT_TIME = 30;
++		final Field period = Olympiad.class.getDeclaredField("_inCompPeriod");
++		period.setAccessible(true);
++		period.setBoolean(null, true);
++		check("the Olympiad is not in its validation period", !Olympiad.getInstance().isOlympiadEnd());
++
++		_defaulted = AbstractOlympiadGame.class.getDeclaredMethod("checkDefaulted", Player.class);
++		_defaulted.setAccessible(true);
++		final Player first = pick(pool, p -> true);
++		check("a phantom without a client is admitted (" + first.getName() + ", client " + first.getClient() + ")", (first.getClient() != null) || (_defaulted.invoke(null, first) == null));
++
++		enroll(pool, "mage", p -> p.isMageClass() && (role(p) != PhantomTemplate.Role.HEALER), 2);
++		enroll(pool, "fighter", p -> !p.isMageClass() && !isBow(p), 2);
++		enroll(pool, "archer", L2HubOlympiadTest::isBow, 1);
++		enroll(pool, "healer", p -> role(p) == PhantomTemplate.Role.HEALER, 1);
++		// Нечётного одного Mobius оставит в очереди без пары.
++		if ((FIGHTERS.size() % 2) != 0)
++		{
++			enroll(pool, "extra", p -> true, 1);
++		}
++		check("at least two fighters are registered (" + FIGHTERS.size() + ")", FIGHTERS.size() >= 2);
++		if (FIGHTERS.size() < 2)
++		{
++			finish();
++			return;
++		}
++
++		ThreadPool.scheduleAtFixedRate(OlympiadGameManager.getInstance(), 5000, 5000);
++		final long until = System.currentTimeMillis() + LIMIT;
++		ThreadPool.schedule(() -> watch(until), 500);
++	}
++
++	private static void enroll(List<Player> pool, String kind, Predicate<Player> test, int count)
++	{
++		int taken = 0;
++		for (Player player : new ArrayList<>(pool))
++		{
++			if (taken >= count)
++			{
++				return;
++			}
++			if (!test.test(player))
++			{
++				continue;
++			}
++			pool.remove(player);
++			player.setNoble(true);
++			final Fighter fighter = new Fighter(player, kind);
++			if (PhantomCompat.olympiadRegister(player))
++			{
++				FIGHTERS.add(fighter);
++				taken++;
++				note(kind + " " + player.getName() + " (" + player.getLevel() + ", " + player.getPlayerClass() + ", " + player.getActiveWeaponInstance().getName() + ") registered, auto shots " + fighter.shotsBefore + ", points " + fighter.pointsBefore + ", " + state(player) + ".");
++			}
++			else
++			{
++				note(kind + " " + player.getName() + " refused by the registration.");
++			}
++		}
++		if (taken < count)
++		{
++			note("only " + taken + " of " + count + " " + kind + ".");
++		}
++	}
++
++	private static void watch(long until)
++	{
++		try
++		{
++			final long now = System.currentTimeMillis();
++			boolean all = true;
++			for (Fighter fighter : FIGHTERS)
++			{
++				sample(fighter, now);
++				all &= fighter.finished && ((now - fighter.finishedAt) >= AFTER);
++			}
++			if (all || (now >= until))
++			{
++				report(all);
++				return;
++			}
++			ThreadPool.schedule(() -> watch(until), 500);
++		}
++		catch (Throwable e)
++		{
++			_wrong++;
++			LOGGER.log(Level.WARNING, TAG + "WRONG watch failed: " + e, e);
++			finish();
++		}
++	}
++
++	private static void sample(Fighter fighter, long now)
++	{
++		final Player player = fighter.player;
++		// До боя: когда дали пару и что сорвало бы матч (смерть, ивент, сумка, клиент).
++		if (!fighter.started)
++		{
++			final int game = player.getOlympiadGameId();
++			if ((game >= 0) && (fighter.paired < 0))
++			{
++				fighter.paired = game;
++				note(player.getName() + " paired in game " + game + ", " + state(player) + ".");
++			}
++			if (fighter.paired >= 0)
++			{
++				final String why = defaultReason(player);
++				if ((why != null) && !why.equals(fighter.reason))
++				{
++					note(player.getName() + " would be defaulted now: " + why + ", " + state(player) + ".");
++				}
++				fighter.reason = why;
++			}
++		}
++		if (player.isInOlympiadMode() && !player.isTeleporting())
++		{
++			fighter.arena = fighter.arena || (player.getInstanceId() > 0);
++			fighter.game = player.getOlympiadGameId();
++		}
++		if (player.isInOlympiadMode() && player.isOlympiadStart())
++		{
++			if (!fighter.started)
++			{
++				fighter.started = true;
++				fighter.buffs = player.getEffectList().getBuffCount();
++				fighter.shots = player.getAutoSoulShot().size();
++				fighter.firstIsLongest = firstIsLongest(player);
++				note(player.getName() + " starts game " + fighter.game + ": buffs " + fighter.buffs + ", auto shots " + fighter.shots + ", skills " + player.getAutoUseSettings().getAutoSkills() + ".");
++			}
++			fighter.samples++;
++			fighter.autoPlay |= player.isAutoPlaying();
++			fighter.casting += player.isCastingNow() ? 1 : 0;
++			fighter.attacking += player.isAttackingNow() ? 1 : 0;
++			fighter.running += player.isMoving() ? 1 : 0;
++			fighter.minHp = Math.min(fighter.minHp, player.getCurrentHp() / Math.max(1, player.getMaxHp()));
++		}
++		if (fighter.started && !fighter.finished && !player.isInOlympiadMode())
++		{
++			fighter.finished = true;
++			fighter.finishedAt = now;
++			note(player.getName() + " left the stadium.");
++		}
++	}
++
++	private static boolean firstIsLongest(Player player)
++	{
++		int longest = 0;
++		int first = -1;
++		for (Integer skillId : player.getAutoUseSettings().getAutoSkills())
++		{
++			final Skill skill = player.getKnownSkill(skillId);
++			if (skill == null)
++			{
++				continue;
++			}
++			if (first < 0)
++			{
++				first = skill.getReuseDelay();
++			}
++			longest = Math.max(longest, skill.getReuseDelay());
++		}
++		return (longest <= 60000) || (first == longest);
++	}
++
++	private static void report(boolean all)
++	{
++		check("every match ended and everyone came back in time", all);
++		for (Fighter fighter : FIGHTERS)
++		{
++			final Player player = fighter.player;
++			final int id = player.getObjectId();
++			final String name = fighter.kind + " " + player.getName();
++			if (!fighter.started)
++			{
++				note(name + " never started: paired in game " + fighter.paired + ", game id now " + player.getOlympiadGameId() + ", still registered " + PhantomCompat.olympiadRegistered(player) + ", points " + fighter.pointsBefore + " -> " + Olympiad.getInstance().getNoblePoints(id) + ", default reason now " + defaultReason(player) + ", " + state(player) + ".");
++			}
++			note(name + ": game " + fighter.game + ", won " + Olympiad.getInstance().getCompetitionWon(id) + ", lost " + Olympiad.getInstance().getCompetitionLost(id) + ", points " + Olympiad.getInstance().getNoblePoints(id) + ", casting " + fighter.casting + " and attacking " + fighter.attacking + " of " + fighter.samples + " samples, min HP " + (int) (fighter.minHp * 100) + "%.");
++			check(name + " reached the stadium", fighter.arena);
++			check(name + " fought in a started match", fighter.started);
++			if (!fighter.started)
++			{
++				continue;
++			}
++			check(name + " has the arena buffs (" + fighter.buffs + ")", fighter.buffs >= 3);
++			check(name + " has no farming AutoPlay in the match", !fighter.autoPlay);
++			check(name + " has its auto shots back (" + fighter.shotsBefore + " -> " + fighter.shots + ")", (fighter.shotsBefore == 0) || (fighter.shots > 0));
++			check(name + " keeps the longest skill first", fighter.firstIsLongest);
++			// Кинжал мог не добежать до мага: бег к сопернику — тоже ход.
++			check(name + " acted in the match (cast " + fighter.casting + ", hit " + fighter.attacking + ", ran " + fighter.running + ")", (fighter.casting + fighter.attacking + fighter.running) > 0);
++			check(name + " has the match counted", Olympiad.getInstance().getCompetitionDone(id) > fighter.done);
++			check(name + " is out of the stadium", !player.isInOlympiadMode() && (player.getInstanceId() == 0) && !player.isTeleporting() && !player.isDead());
++			check(name + " has its skills after the match", !player.getAutoUseSettings().getAutoSkills().isEmpty());
++			note(name + " after the match: auto play " + player.isAutoPlaying() + ", moving " + player.isMoving() + ", auto shots " + player.getAutoSoulShot().size() + ".");
++		}
++		for (Fighter a : FIGHTERS)
++		{
++			for (Fighter b : FIGHTERS)
++			{
++				if ((a.player.getObjectId() < b.player.getObjectId()) && a.started && b.started && (a.game == b.game))
++				{
++					check("game " + a.game + " dealt damage (" + a.player.getName() + " " + (int) (a.minHp * 100) + "%, " + b.player.getName() + " " + (int) (b.minHp * 100) + "%)", (a.minHp < 0.99) || (b.minHp < 0.99));
++				}
++			}
++		}
++		finish();
++	}
++
++	private static String state(Player player)
++	{
++		return "dead " + player.isDead() + ", online " + player.isOnline() + ", on event " + player.isRegisteredOnEvent() + ", inventory under 90% " + player.isInventoryUnder90(true) + ", teleporting " + player.isTeleporting() + ", olympiad mode " + player.isInOlympiadMode() + ", combat " + player.isInCombat() + ", at " + player.getX() + " " + player.getY() + " " + player.getZ();
++	}
++
++	private static String defaultReason(Player player)
++	{
++		try
++		{
++			final Object message = _defaulted.invoke(null, player);
++			return message == null ? null : String.valueOf(((SystemMessage) message).getSystemMessageId());
++		}
++		catch (Exception e)
++		{
++			return "check failed: " + e;
++		}
++	}
++
++	private static List<Player> candidates()
++	{
++		final List<Player> out = new ArrayList<>();
++		for (Player player : World.getPlayers())
++		{
++			if (PhantomManager.getInstance().isPhantom(player) && !player.isDead() && !player.isTeleporting() && !player.isRegisteredOnEvent() && !player.isOnEvent() && !player.isInOlympiadMode() && !player.isInStoreMode() && !player.isInParty() && !player.isSubClassActive() && !player.isCursedWeaponEquipped() && (player.getLevel() >= 76) && (player.getPlayerClass().level() >= 3) && (player.getActiveWeaponInstance() != null))
++			{
++				final PhantomTemplate template = PhantomData.getInstance().getTemplate(player.getName());
++				if ((template != null) && template.isHunter() && !template.isReaper())
++				{
++					out.add(player);
++				}
++			}
++		}
++		Collections.shuffle(out);
++		return out;
++	}
++
++	private static PhantomTemplate.Role role(Player player)
++	{
++		final PhantomTemplate template = PhantomData.getInstance().getTemplate(player.getName());
++		return template == null ? null : template.getRole();
++	}
++
++	private static boolean isBow(Player player)
++	{
++		return (player.getActiveWeaponItem() != null) && ((player.getActiveWeaponItem().getItemType() == WeaponType.BOW) || (player.getActiveWeaponItem().getItemType() == WeaponType.CROSSBOW));
++	}
++
++	private static Player pick(List<Player> pool, Predicate<Player> test)
++	{
++		for (Player player : pool)
++		{
++			if (test.test(player))
++			{
++				return player;
++			}
++		}
++		throw new IllegalStateException("no suitable hunter");
++	}
++
++	private static void check(String what, boolean good)
++	{
++		if (good)
++		{
++			_ok++;
++			LOGGER.info(TAG + "ok " + what);
++		}
++		else
++		{
++			_wrong++;
++			LOGGER.warning(TAG + "WRONG " + what);
++		}
++	}
++
++	private static void note(String what)
++	{
++		LOGGER.info(TAG + "note " + what);
++	}
++
++	private static void finish()
++	{
++		LOGGER.info(TAG + "done: " + _ok + " ok, " + _wrong + " wrong.");
++	}
++}

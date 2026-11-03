@@ -18,6 +18,11 @@
   .venv\\Scripts\\python -m l2hub.cli wipe interlude              — вайп мира Mobius: без --confirm только предпросмотр (docs/WIPE.md)
   .venv\\Scripts\\python -m l2hub.cli wipe interlude --confirm interlude
   .venv\\Scripts\\python -m l2hub.cli wipe interlude --undo [время] [--confirm interlude] — откат вайпа
+  .venv\\Scripts\\python -m l2hub.cli gmshop ct26_highfive        — разделы GM-шопа, правки и предупреждения (gmshop.py)
+  .venv\\Scripts\\python -m l2hub.cli gmshop ct26_highfive show <список> | find <текст> | warn
+  .venv\\Scripts\\python -m l2hub.cli gmshop ct26_highfive set <список> <ключ> <цена|-> — правка цены или её снятие
+  .venv\\Scripts\\python -m l2hub.cli gmshop ct26_highfive mul <список,список> <множитель> [--apply] — без --apply только предпросмотр
+  .venv\\Scripts\\python -m l2hub.cli gmshop ct26_highfive reset [<список,список>] | apply
 """
 
 import argparse
@@ -26,7 +31,7 @@ import sys
 import time
 from pathlib import Path
 
-from . import builder, catalog, wipe
+from . import builder, catalog, gmshop, wipe
 from .api import Api
 
 
@@ -45,12 +50,60 @@ def wait_job(api: Api, chronicle_id: str) -> int:
         time.sleep(0.5)
 
 
+def gmshop_command(p: dict, sub: str | None, words: list[str], do_apply: bool) -> int:
+    def lists(text: str) -> list[int]:
+        return [int(x) for x in text.split(",") if x]
+
+    def show(rows: dict) -> None:
+        for r in rows["rows"]:
+            price = r["price"] if r["editable"] else f"обмен: {r['pay']}"
+            print(f" {r['list']:>9} {r['key']:<16} {r['name'][:44]:<44} {price}" + (f" (сборка {r['base']})" if r["edited"] else "") + f"  [{r['section']}]")
+            for w in r["warnings"]:
+                print(f"     ! {w}")
+        print(f"строк {rows['total']}" + (f", показано {rows['limit']}" if rows["total"] > rows["limit"] else ""))
+
+    try:
+        if not sub:
+            s = gmshop.state(p)
+            for e in s["tree"]:
+                print(f" {e['list']:>9} {' / '.join([*e['path'], e['title']])[:60]:<60} строк {e['rows']:<4} правок {e['edited']:<4} предупреждений {e['warnings']}")
+            print(f"разделов {len(s['tree'])}, правок {s['edited']}, предупреждений {s['warnings']}")
+        elif sub == "show":
+            show(gmshop.rows(p, lists(words[0])))
+        elif sub == "find":
+            show(gmshop.rows(p, None, " ".join(words)))
+        elif sub == "warn":
+            show(gmshop.rows(p, only="warn"))
+        elif sub == "set":
+            print(gmshop.set_prices(p, [{"list": words[0], "key": words[1], "price": None if words[2] == "-" else words[2]}]))
+        elif sub == "mul":
+            r = gmshop.multiply(p, lists(words[0]), words[1], preview=not do_apply)
+            for c in r["changes"][:40]:
+                print(f" {c['list']:>9} {c['key']:<16} {c['name'][:44]:<44} {c['old']} -> {c['new']}")
+            for w in r["newWarnings"][:20]:
+                print(f"     ! {w['name']} [{w['section']}]: {w['text']}")
+            print(f"строк {r['total']}, новых предупреждений {r['newWarningsTotal']}, " + ("применено" if r["applied"] else "только предпросмотр"))
+        elif sub == "reset":
+            print(gmshop.reset(p, lists(words[0]) if words else None))
+        elif sub == "apply":
+            print(gmshop.apply(p))
+        else:
+            print(__doc__)
+            return 1
+    except (ValueError, IndexError) as e:
+        print(f"ОШИБКА: {e}")
+        return 1
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(prog="l2hub.cli")
     ap.add_argument("command", choices=["catalog", "state", "check", "start", "stop", "restart", "log", "backups", "backup", "restore", "pack",
-                                           "fetch", "build", "setup", "dbinit", "deploy-configs", "wipe"])
+                                           "fetch", "build", "setup", "dbinit", "deploy-configs", "wipe", "gmshop"])
     ap.add_argument("chronicle", nargs="?")
-    ap.add_argument("name", nargs="?", help="файл бэкапа для restore")
+    ap.add_argument("name", nargs="?", help="файл бэкапа для restore, подкоманда gmshop")
+    ap.add_argument("rest", nargs="*", help="слова подкоманды gmshop")
+    ap.add_argument("--apply", action="store_true", help="gmshop mul: применить, а не только показать")
     ap.add_argument("--no-client", action="store_true")
     ap.add_argument("--prev", help="deploy-configs: копия архива прошлой сборки, снятая до Ant")
     ap.add_argument("--confirm", help="wipe: повтор имени хроники, без него только предпросмотр")
@@ -77,6 +130,8 @@ def main() -> int:
         return 0
     if args.command == "wipe":
         return wipe.command(catalog.profile(args.chronicle), args.confirm, args.undo)
+    if args.command == "gmshop":
+        return gmshop_command(catalog.profile(args.chronicle), args.name, args.rest, args.apply)
     if args.command in ("build", "setup"):
         if api.running() == args.chronicle:
             print("Сначала останови сервер этой хроники: сборка меняет его jar и данные.")

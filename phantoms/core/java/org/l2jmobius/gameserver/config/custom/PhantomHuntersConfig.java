@@ -17,6 +17,10 @@ public class PhantomHuntersConfig
 	// Constants
 	public static String HUNTERS_MODE;
 	public static int HUNTERS_MAX;
+	public static boolean RESTART_HINT;
+	public static int RESTART_HINT_HEAP_PERCENT;
+	public static int RESTART_HINT_REPEAT_MINUTES;
+	public static int HUNTER_SPAWN_TICK_MS;
 	public static boolean DAILY_RHYTHM;
 	public static int DAILY_RHYTHM_STRENGTH;
 	public static int DAILY_RHYTHM_SHIFT;
@@ -76,6 +80,14 @@ public class PhantomHuntersConfig
 	public static boolean HUNTER_STORE_PRICES_FOLLOW_RATES;
 	public static boolean HUNTER_RECOMMENDATIONS;
 	public static boolean HUNTER_ENCHANT;
+	public static boolean HUNTER_SPOIL;
+	public static boolean HUNTER_PETS;
+	public static int HUNTER_PETS_SHARE;
+	public static boolean HUNTER_CRAFT;
+	public static int HUNTER_CRAFT_SHARE;
+	public static int HUNTER_CRAFT_FEE_PERCENT;
+	public static int HUNTER_CRAFT_RECIPES;
+	public static int HUNTER_CRAFT_MAX_WORKSHOPS;
 	public static boolean HUNTER_SELL_OLD_GEAR;
 	public static boolean HUNTER_EXCHANGE;
 	public static int HUNTER_EXCHANGE_ADENA_PER_LCOIN;
@@ -149,6 +161,12 @@ public class PhantomHuntersConfig
 	public static boolean HUNTER_CLAN_STOCK;
 	public static boolean HUNTER_CLAN_HALL;
 	public static int HUNTER_CLAN_HALL_SHARE;
+	public static boolean HUNTER_CLAN_LEVEL_SAVING;
+	public static boolean HUNTER_CLAN_INVITE_PRIORITY;
+	public static boolean HUNTER_PARTY_NOBLESSE;
+	public static boolean HUNTER_SUPPORT_CURES;
+	public static boolean HUNTER_CHAT_BANK;
+	public static boolean HUNTER_CHAT_BANK_MAT;
 	public static int HUNTER_TICK_LOG_MINUTES;
 	public static boolean HUNTER_CLAN_INVITE_PLAYERS;
 	public static boolean HUNTER_CLAN_TITLES;
@@ -179,6 +197,7 @@ public class PhantomHuntersConfig
 	public static int HUNTER_SHARE_MINUTES;
 	public static int HUNTER_TRADE_MINUTES;
 	public static int HUNTER_STRATEGY_PER_MINUTE;
+	public static int HUNTER_STRATEGY_RESERVE;
 	public static int HUNTER_STRATEGY_SAY_CHANCE;
 	public static boolean HUNTER_INITIATIVE;
 	public static int HUNTER_INITIATIVE_RANGE;
@@ -241,6 +260,10 @@ public class PhantomHuntersConfig
 		final ConfigReader config = new ConfigReader(PHANTOM_HUNTERS_CONFIG_FILE);
 		HUNTERS_MODE = config.getString("HuntersMode", "ALWAYS").strip().toUpperCase();
 		HUNTERS_MAX = Math.max(0, config.getInt("HuntersMax", 0));
+		RESTART_HINT = config.getBoolean("RestartHint", false);
+		RESTART_HINT_HEAP_PERCENT = Math.max(1, Math.min(100, config.getInt("RestartHintHeapPercent", 85)));
+		RESTART_HINT_REPEAT_MINUTES = Math.max(1, config.getInt("RestartHintRepeatMinutes", 60));
+		HUNTER_SPAWN_TICK_MS = Math.max(0, config.getInt("HunterSpawnTickMs", 0));
 		DAILY_RHYTHM = config.getBoolean("DailyRhythm", false);
 		DAILY_RHYTHM_STRENGTH = Math.max(0, Math.min(100, config.getInt("DailyRhythmStrength", 70)));
 		DAILY_RHYTHM_SHIFT = Math.max(-12, Math.min(12, config.getInt("DailyRhythmShift", 0)));
@@ -301,6 +324,14 @@ public class PhantomHuntersConfig
 		HUNTER_STORE_PRICES_FOLLOW_RATES = config.getBoolean("HunterStorePricesFollowRates", true);
 		HUNTER_RECOMMENDATIONS = config.getBoolean("HunterRecommendations", true);
 		HUNTER_ENCHANT = config.getBoolean("HunterEnchant", true);
+		HUNTER_SPOIL = config.getBoolean("HunterSpoil", false);
+		HUNTER_PETS = config.getBoolean("HunterPets", false);
+		HUNTER_PETS_SHARE = Math.max(0, Math.min(100, config.getInt("HunterPetsShare", 25)));
+		HUNTER_CRAFT = config.getBoolean("HunterCraft", false);
+		HUNTER_CRAFT_SHARE = Math.max(0, Math.min(100, config.getInt("HunterCraftShare", 70)));
+		HUNTER_CRAFT_FEE_PERCENT = Math.max(0, config.getInt("HunterCraftFeePercent", 5));
+		HUNTER_CRAFT_RECIPES = Math.max(1, config.getInt("HunterCraftRecipes", 10));
+		HUNTER_CRAFT_MAX_WORKSHOPS = Math.max(0, config.getInt("HunterCraftMaxWorkshops", 2));
 		HUNTER_SELL_OLD_GEAR = config.getBoolean("HunterSellOldGear", true);
 		HUNTER_EXCHANGE = config.getBoolean("HunterExchange", true);
 		HUNTER_EXCHANGE_ADENA_PER_LCOIN = Math.max(1, config.getInt("HunterExchangeAdenaPerLCoin", 50000));
@@ -378,6 +409,12 @@ public class PhantomHuntersConfig
 		HUNTER_CLAN_STOCK = config.getBoolean("HunterClanStock", false);
 		HUNTER_CLAN_HALL = config.getBoolean("HunterClanHall", false);
 		HUNTER_CLAN_HALL_SHARE = Math.max(0, Math.min(100, config.getInt("HunterClanHallShare", 20)));
+		HUNTER_CLAN_LEVEL_SAVING = config.getBoolean("HunterClanLevelSaving", false);
+		HUNTER_CLAN_INVITE_PRIORITY = config.getBoolean("HunterClanInvitePriority", false);
+		HUNTER_PARTY_NOBLESSE = config.getBoolean("HunterPartyNoblesse", false);
+		HUNTER_SUPPORT_CURES = config.getBoolean("HunterSupportCures", false);
+		HUNTER_CHAT_BANK = config.getBoolean("HunterChatBank", false);
+		HUNTER_CHAT_BANK_MAT = config.getBoolean("HunterChatBankMat", false);
 		HUNTER_TICK_LOG_MINUTES = Math.max(0, config.getInt("HunterTickLogMinutes", 0));
 		HUNTER_CLAN_SHARE = Math.max(0, Math.min(100, config.getInt("HunterClanShare", 30)));
 		HUNTER_CLAN_INVITE_PLAYERS = config.getBoolean("HunterClanInvitePlayers", true);
@@ -409,6 +446,7 @@ public class PhantomHuntersConfig
 		HUNTER_SHARE_MINUTES = Math.max(1, config.getInt("HunterShareMinutes", 30));
 		HUNTER_TRADE_MINUTES = Math.max(1, config.getInt("HunterTradeMinutes", 5));
 		HUNTER_STRATEGY_PER_MINUTE = config.getInt("HunterStrategyPerMinute", 6);
+		HUNTER_STRATEGY_RESERVE = Math.max(0, Math.min(100, config.getInt("HunterStrategyReserve", 0)));
 		HUNTER_STRATEGY_SAY_CHANCE = config.getInt("HunterStrategySayChance", 20);
 		HUNTER_INITIATIVE = config.getBoolean("HunterInitiative", true);
 		HUNTER_INITIATIVE_RANGE = Math.max(100, config.getInt("HunterInitiativeRange", 600));

@@ -16,7 +16,7 @@ from pathlib import Path
 
 import psutil
 
-from . import catalog, clientsys, l2solo, paths
+from . import catalog, clientsys, gmshop, l2solo, paths
 
 JARS = {"login": "LoginServer.jar", "game": "GameServer.jar"}
 STOP_TIMEOUT = {"game": 120, "login": 30}
@@ -347,6 +347,11 @@ def start_part(p: dict, part: str) -> int:
     if part_process(p, part):
         return read_pids(p["id"])[part]
     d = catalog.server_dir(p) / part
+    if part == "game":
+        try:
+            gmshop.apply(p)  # правки цен GM-шопа поверх сборки: мультиселлы читаются при старте гейма
+        except (OSError, ValueError, RuntimeError) as e:
+            print(f"GM-шоп: правки цен не применились: {e}")
     proc = _hidden_console(_part_command(p, part, d), d)
     pids = read_pids(p["id"])
     pids[part] = proc.pid

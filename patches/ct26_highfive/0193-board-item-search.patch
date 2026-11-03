@@ -1,0 +1,699 @@
+diff --git a/dist/game/data/html/CommunityBoard/Custom/dropsearch/main.html b/dist/game/data/html/CommunityBoard/Custom/dropsearch/main.html
+index 791c298841a66f9c529aabe8ec44d32cddcbc02b..3b939088c12fa3943b7329fd60c254e7a9a55396 100644
+--- a/dist/game/data/html/CommunityBoard/Custom/dropsearch/main.html
++++ b/dist/game/data/html/CommunityBoard/Custom/dropsearch/main.html
+@@ -29,7 +29,8 @@
+ 							</tr>
+ 							<tr><td align="left"> <font color="CDB67F">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1. Enter an item name or a part of it.<br1></font></td></tr>
+ 				            <tr><td align="left"> <font color="CDB67F">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2. Click the item icon to see what drops it.<br1></font></td></tr>
+-							<tr><td align="left"> <font color="CDB67F">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3. Pick a monster to see where it lives on the world map.</font></td></tr>							<tr>
++							<tr><td align="left"> <font color="CDB67F">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3. Pick a monster to see where it lives on the world map.<br1></font></td></tr>
++							<tr><td align="left"> <font color="CDB67F">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4. Above the monsters: where to buy it in the GM shop and a search through stores.</font></td></tr>							<tr>
+ 								<td height=10></td>
+ 							</tr>
+ 							<tr>
+diff --git a/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/dropsearch/main.html b/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/dropsearch/main.html
+index 679058f1f03f85736077aeeaad3aa99bb42e6b3d..686910dff7d3aa3cf4efab8647df32e0c5f3ce67 100644
+--- a/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/dropsearch/main.html
++++ b/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/dropsearch/main.html
+@@ -29,7 +29,8 @@
+ 							</tr>
+ 							<tr><td align="left"> <font color="CDB67F">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1. Введи название предмета или его часть (по-английски, как в игре).<br1></font></td></tr>
+ 				            <tr><td align="left"> <font color="CDB67F">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2. Нажми на иконку предмета — покажет, с кого падает.<br1></font></td></tr>
+-							<tr><td align="left"> <font color="CDB67F">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3. Выбери моба — его место покажут на карте мира.</font></td></tr>							<tr>
++							<tr><td align="left"> <font color="CDB67F">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3. Выбери моба — его место покажут на карте мира.<br1></font></td></tr>
++							<tr><td align="left"> <font color="CDB67F">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;4. Над мобами — где купить в GM-шопе и поиск по лавкам.</font></td></tr>							<tr>
+ 								<td height=10></td>
+ 							</tr>
+ 							<tr>
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/DropSearchBoard.java b/dist/game/data/scripts/handlers/bypass/communityboard/DropSearchBoard.java
+index d462464be71b3315a26a858371de18acad4f4394..a6ae157195a101003e0e15b44659cd6ca3deb12d 100644
+--- a/dist/game/data/scripts/handlers/bypass/communityboard/DropSearchBoard.java
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/DropSearchBoard.java
+@@ -169,7 +169,7 @@ public class DropSearchBoard implements IParseBoardHandler
+ 			case "_bbs_search_item":
+ 			{
+ 				final String itemName = buildItemName(params);
+-				final String result = buildItemSearchResult(itemName);
++				final String result = buildItemSearchResult(player, itemName);
+ 				html = html.replace("%searchResult%", result);
+ 				break;
+ 			}
+@@ -178,7 +178,7 @@ public class DropSearchBoard implements IParseBoardHandler
+ 				final DecimalFormat chanceFormat = new DecimalFormat("0.00##");
+ 				final int itemId = Integer.parseInt(params[1]);
+ 				int page = Integer.parseInt(params[2]);
+-				final List<CBDropHolder> list = DROP_INDEX_CACHE.get(itemId);
++				final List<CBDropHolder> list = DROP_INDEX_CACHE.getOrDefault(itemId, List.of()); // L2Hub: вещь может продаваться в GM-шопе и ни с кого не падать
+ 				int pages = list.size() / 14;
+ 				if (pages == 0)
+ 				{
+@@ -188,6 +188,10 @@ public class DropSearchBoard implements IParseBoardHandler
+ 				final int start = (page - 1) * 14;
+ 				final int end = Math.min(list.size() - 1, start + 14);
+ 				final StringBuilder builder = new StringBuilder();
++				if (page == 1)
++				{
++					builder.append(L2HubFind.whereToBuy(player, itemId)); // L2Hub: где купить
++				}
+ 				final PlayerStat stat = player.getStat();
+ 				final double dropAmountAdenaEffectBonus = stat.getBonusDropAdenaMultiplier();
+ 				final double dropAmountEffectBonus = stat.getBonusDropAmountMultiplier();
+@@ -357,10 +361,11 @@ public class DropSearchBoard implements IParseBoardHandler
+ 	}
+ 	
+ 	/**
++	 * @param player
+ 	 * @param itemName
+ 	 * @return
+ 	 */
+-	private String buildItemSearchResult(String itemName)
++	private String buildItemSearchResult(Player player, String itemName)
+ 	{
+ 		int limit = 0;
+ 		final Set<Integer> existInDropData = DROP_INDEX_CACHE.keySet();
+@@ -372,7 +377,7 @@ public class DropSearchBoard implements IParseBoardHandler
+ 				continue;
+ 			}
+ 			
+-			if (!existInDropData.contains(item.getId()))
++			if (!existInDropData.contains(item.getId()) && !L2HubFind.inShop(player, item.getId())) // L2Hub: и вещи, которые только продаются
+ 			{
+ 				continue;
+ 			}
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+index 5fe3cb3a64fa1cfe8ab8f679e8bc7eb8e61008ca..903cd2da13f9ca3587364ba53209b77f40eb8994 100644
+--- a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+@@ -53,6 +53,7 @@ import org.l2jmobius.gameserver.network.serverpackets.ShowBoard;
+  * <li>_bbshubkits [take &lt;грейд&gt; &lt;броня&gt;] — стартовые наборы ({@link L2HubKits})</li>
+  * <li>_bbshubevents [join|cancel &lt;ивент&gt;|medals] — запись на TvT, Deathmatch и CtF ({@link PhantomEventBoard}), обмен медалей ({@link #medals})</li>
+  * <li>_bbshubplay — окно автобоя мимо чата ({@link #play})</li>
++ * <li>_bbshubfind … — поиск вещи в GM-шопе и по лавкам ({@link L2HubFind})</li>
+  * </ul>
+  */
+ public class L2HubBoard implements IParseBoardHandler
+@@ -158,7 +159,31 @@ public class L2HubBoard implements IParseBoardHandler
+ 		java.util.Map.entry("Этот набор — с ", "This kit is from level "),
+ 		java.util.Map.entry("-го уровня.", "."),
+ 		java.util.Map.entry("Этот набор ты уже получил.", "You already took this kit."),
+-		java.util.Map.entry("Не хватает места или слишком тяжело: разгрузись и возьми снова.", "Not enough room or too heavy: free up and take it again."));
++		java.util.Map.entry("Не хватает места или слишком тяжело: разгрузись и возьми снова.", "Not enough room or too heavy: free up and take it again."),
++		java.util.Map.entry("Поиск вещи", "Item search"),
++		java.util.Map.entry("Что почём в GM-шопе и кто продаёт в лавках.", "GM shop prices and who sells what in private stores."),
++		java.util.Map.entry("GM-шоп выключен в настройках сервера (L2HubTown.ini, TownGmShop).", "The GM shop is off in the server settings (L2HubTown.ini, TownGmShop)."),
++		java.util.Map.entry("Вещь", "Item"),
++		java.util.Map.entry("Вещь:", "Item:"),
++		java.util.Map.entry("Цена", "Price"),
++		java.util.Map.entry("Цена за штуку", "Price each"),
++		java.util.Map.entry("Раздел", "Section"),
++		java.util.Map.entry("Открыть", "Open"),
++		java.util.Map.entry("GM-шоп: ", "GM shop: "),
++		java.util.Map.entry("Купить", "Buy"),
++		java.util.Map.entry("Поискать в лавках", "Look in stores"),
++		java.util.Map.entry("Продавец", "Seller"),
++		java.util.Map.entry("только всё сразу", "whole lot only"),
++		java.util.Map.entry("К лавке", "To store"),
++		java.util.Map.entry("На карте", "On map"),
++		java.util.Map.entry("Этой лавки уже нет.", "This store is gone."),
++		java.util.Map.entry("В GM-шопе", "In GM shop"),
++		java.util.Map.entry("В лавках", "In stores"),
++		java.util.Map.entry("Название или его часть по-английски, как в базе игры, либо номер вещи.", "Name or a part of it, in English as in the game data, or the item number."),
++		java.util.Map.entry("Ищем: ", "Searching: "),
++		java.util.Map.entry("Нужно хотя бы две буквы.", "At least two letters, please."),
++		java.util.Map.entry("Ничего не нашлось.", "Nothing found."),
++		java.util.Map.entry("обмен", "exchange"));
+ 	
+ 	private static boolean l2hubEnglish()
+ 	{
+@@ -238,7 +263,8 @@ public class L2HubBoard implements IParseBoardHandler
+ 		SPOTS,
+ 		WORLD,
+ 		PLAY,
+-		L2HubKits.COMMAND
++		L2HubKits.COMMAND,
++		L2HubFind.COMMAND
+ 	};
+ 
+ 	private static final Pattern NPC_CHAT = Pattern.compile("bypass (?:-h )?npc_%objectId%_Chat (\\d+)");
+@@ -298,6 +324,11 @@ public class L2HubBoard implements IParseBoardHandler
+ 		{
+ 			html = page(player, tr("Стартовые наборы"), townOn(L2HubKits.KEY) ? L2HubKits.content(player, args) : tr("<br><font color=\"808080\">Наборы выключены в настройках сервера (L2HubTown.ini, TownStarterKits).</font>"));
+ 		}
++		else if (args[0].equalsIgnoreCase(L2HubFind.COMMAND))
++		{
++			final String found = L2HubFind.content(player, args);
++			html = found != null ? page(player, tr("Поиск вещи"), found) : null; // улетел к лавке — доска закрыта
++		}
+ 		else if (args[0].equalsIgnoreCase(EVENTS))
+ 		{
+ 			if ((args.length > 1) && args[1].equalsIgnoreCase("medals") && canUse(player))
+@@ -743,6 +774,10 @@ public class L2HubBoard implements IParseBoardHandler
+ 		{
+ 			content = button(tr("Стартовые наборы"), L2HubKits.COMMAND, 170) + "<br>" + content;
+ 		}
++		if (pageId == 0)
++		{
++			content = button(tr("Поиск вещи"), L2HubFind.COMMAND, 170) + "<br>" + content;
++		}
+ 		return page(player, tr("GM-шоп"), content);
+ 	}
+ 
+@@ -783,6 +818,7 @@ public class L2HubBoard implements IParseBoardHandler
+ 		worldRow(sb, tr("Поручения дня"), "voice .daily", tr("Задания на сегодня, прогресс, награды и место дня."));
+ 		worldRow(sb, tr("Рейд охотников"), "voice .raid", tr("Кто кого собирается бить, где сбор, сколько до боя."));
+ 		worldRow(sb, tr("Мир сейчас"), "voice .world", tr("Суперчемпионы, сезонные события и расписание ивентов."));
++		worldRow(sb, tr("Поиск вещи"), L2HubFind.COMMAND, tr("Что почём в GM-шопе и кто продаёт в лавках."));
+ 		return page(player, tr("Мир"), sb.append("</table>").toString());
+ 	}
+ 
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubFind.java b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubFind.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..9f084ef30e0197a9ae897fbf9b201b284cf9274a
+--- /dev/null
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubFind.java
+@@ -0,0 +1,503 @@
++package handlers.bypass.communityboard;
++
++import java.io.File;
++import java.util.ArrayList;
++import java.util.Arrays;
++import java.util.Comparator;
++import java.util.HashSet;
++import java.util.LinkedHashMap;
++import java.util.LinkedHashSet;
++import java.util.List;
++import java.util.Locale;
++import java.util.Map;
++import java.util.Set;
++import java.util.concurrent.ConcurrentHashMap;
++import java.util.regex.Matcher;
++import java.util.regex.Pattern;
++
++import org.l2jmobius.commons.threads.ThreadPool;
++import org.l2jmobius.gameserver.cache.HtmCache;
++import org.l2jmobius.gameserver.config.ServerConfig;
++import org.l2jmobius.gameserver.config.custom.CommunityBoardConfig;
++import org.l2jmobius.gameserver.data.SpawnTable;
++import org.l2jmobius.gameserver.data.xml.ItemData;
++import org.l2jmobius.gameserver.data.xml.MultisellData;
++import org.l2jmobius.gameserver.entity.World;
++import org.l2jmobius.gameserver.entity.WorldObject;
++import org.l2jmobius.gameserver.entity.actor.Npc;
++import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.entity.actor.enums.player.PrivateStoreType;
++import org.l2jmobius.gameserver.entity.item.ItemTemplate;
++import org.l2jmobius.gameserver.entity.itemcontainer.Inventory;
++import org.l2jmobius.gameserver.entity.spawns.Spawn;
++import org.l2jmobius.gameserver.managers.phantom.PhantomHunterManager;
++import org.l2jmobius.gameserver.managers.phantom.PhantomHunterUi;
++import org.l2jmobius.gameserver.managers.phantom.PhantomManager;
++import org.l2jmobius.gameserver.managers.phantom.PhantomStores;
++import org.l2jmobius.gameserver.mechanics.multisell.Entry;
++import org.l2jmobius.gameserver.mechanics.multisell.Ingredient;
++import org.l2jmobius.gameserver.mechanics.multisell.ListContainer;
++import org.l2jmobius.gameserver.network.holders.TradeItem;
++import org.l2jmobius.gameserver.network.serverpackets.RadarControl;
++import org.l2jmobius.gameserver.network.serverpackets.ShowMiniMap;
++
++/**
++ * L2Hub: поиск вещи на доске Alt+B (раздел «Мир», первая страница GM-шопа).
++ * <ul>
++ * <li>_bbshubfind shop &lt;страница&gt; &lt;запрос&gt; — GM-шоп: только списки, у которых есть кнопка на страницах NPC шопа ({@code CommunityShopNpc}); названия разделов берутся с этих страниц на языке персонажа.</li>
++ * <li>_bbshubfind store &lt;страница&gt; &lt;запрос&gt; — кто что продаёт: лавки игроков и охотников, лавки городских фейков ({@link PhantomStores#offers}). Скупка не ищется.</li>
++ * <li>_bbshubfind open &lt;список&gt; &lt;страница&gt; &lt;запрос&gt; — открыть список GM-шопа; go &lt;имя&gt; … — телепорт к лавке охотника ({@link PhantomHunterUi#teleport}); mark &lt;объект&gt; … — метка на карте.</li>
++ * </ul>
++ * Запрос — часть английского названия из базы, как в поиске дропа, или номер вещи. {@link #whereToBuy} добавляет строки «где купить» в поиск дропа.
++ */
++public final class L2HubFind
++{
++	public static final String COMMAND = "_bbshubfind";
++
++	private static final int PER_PAGE = 10;
++	private static final int MIN_QUERY = 2;
++	private static final int MAX_QUERY = 40;
++	private static final String MERCHANT = "data/html/merchant";
++	private static final Pattern BUTTON = Pattern.compile("<button[^>]*>", Pattern.CASE_INSENSITIVE);
++	private static final Pattern LIST = Pattern.compile("npc_%objectId%_multisell (\\d+)");
++	private static final Pattern VALUE = Pattern.compile("value=\"([^\"]*)\"");
++	private static final Map<String, Index> INDEX = new ConcurrentHashMap<>();
++
++	/**
++	 * Строка GM-шопа.
++	 * @param adena цена, если платят одной аденой; иначе -1
++	 */
++	private record ShopOffer(int itemId, String name, long count, int listId, int pageId, String label, long adena)
++	{
++	}
++
++	/**
++	 * Товар в лавке.
++	 * @param objectId кто продаёт: игрок или NPC-фейк, для метки на карте
++	 * @param hunter продавец — охотник, к нему есть телепорт
++	 */
++	private record StoreOffer(int itemId, int enchant, long count, long price, String seller, int objectId, boolean hunter, boolean packaged)
++	{
++	}
++
++	private record Index(List<ShopOffer> offers, Set<Integer> items)
++	{
++	}
++
++	private L2HubFind()
++	{
++	}
++
++	/**
++	 * @param player кто нажал
++	 * @param args команда и её слова
++	 * @return содержимое страницы; {@code null}, если игрок улетел телепортом и доска закрыта
++	 */
++	public static String content(Player player, String[] args)
++	{
++		final String action = args.length > 1 ? args[1].toLowerCase(Locale.ROOT) : "";
++		switch (action)
++		{
++			case "shop":
++			{
++				return shop(player, number(args, 2), query(args, 3));
++			}
++			case "store":
++			{
++				return store(player, number(args, 2), query(args, 3));
++			}
++			case "open":
++			{
++				final int listId = number(args, 2);
++				if (L2HubBoard.canUse(player) && listed(player, listId))
++				{
++					MultisellData.getInstance().separateAndSendFromBoard(listId, player);
++				}
++				return shop(player, number(args, 3), query(args, 4));
++			}
++			case "go":
++			{
++				if ((args.length > 3) && L2HubBoard.canUse(player))
++				{
++					final String error = PhantomHunterUi.teleport(player, args[2]);
++					if (error == null)
++					{
++						return null;
++					}
++					player.sendMessage(error);
++				}
++				return store(player, number(args, 3), query(args, 4));
++			}
++			case "mark":
++			{
++				markSeller(player, number(args, 2));
++				return store(player, number(args, 3), query(args, 4));
++			}
++			default:
++			{
++				return form("");
++			}
++		}
++	}
++
++	// ---------- GM-шоп ----------
++
++	private static String shop(Player player, int page, String query)
++	{
++		final StringBuilder sb = new StringBuilder(4096).append(form(query));
++		if (!L2HubBoard.townOn("TownGmShop"))
++		{
++			return sb.append("<br><font color=\"808080\">").append(L2HubBoard.tr("GM-шоп выключен в настройках сервера (L2HubTown.ini, TownGmShop).")).append("</font>").toString();
++		}
++		if (query.length() < MIN_QUERY)
++		{
++			return sb.append(tooShort()).toString();
++		}
++		final List<ShopOffer> found = new ArrayList<>();
++		for (ShopOffer offer : index(player).offers)
++		{
++			if (matches(offer.itemId, offer.name, query))
++			{
++				found.add(offer);
++			}
++		}
++		if (found.isEmpty())
++		{
++			return sb.append(nothing()).toString();
++		}
++		found.sort(Comparator.comparing(ShopOffer::name).thenComparingLong(o -> o.adena < 0 ? Long.MAX_VALUE : o.adena));
++
++		final int pages = pages(found.size());
++		final int current = Math.max(1, Math.min(page, pages));
++		sb.append("<table width=520><tr><td width=36></td><td width=214><font color=\"B09878\">").append(L2HubBoard.tr("Вещь")).append("</font></td><td width=90 align=right><font color=\"B09878\">").append(L2HubBoard.tr("Цена")).append("</font></td><td width=100 align=center><font color=\"B09878\">").append(L2HubBoard.tr("Раздел")).append("</font></td><td width=80></td></tr>");
++		for (ShopOffer offer : found.subList((current - 1) * PER_PAGE, Math.min(found.size(), current * PER_PAGE)))
++		{
++			sb.append("<tr><td width=36>").append(icon(offer.itemId)).append("</td><td width=214>").append(name(offer.itemId, 0, offer.count)).append("</td><td width=90 align=right>").append(price(offer.adena)).append("</td><td width=100 align=center>").append(offer.label).append("</td><td width=80 align=center>");
++			sb.append(L2HubBoard.button(L2HubBoard.tr("Открыть"), COMMAND + " open " + offer.listId + " " + current + " " + query, 70)).append("</td></tr>");
++		}
++		sb.append("</table>");
++		pager(sb, "shop", current, pages, query);
++		return sb.toString();
++	}
++
++	/**
++	 * @return вещь есть в GM-шопе и шоп включён: поиск дропа показывает и вещи, которые ни с кого не падают
++	 */
++	public static boolean inShop(Player player, int itemId)
++	{
++		return L2HubBoard.townOn("TownGmShop") && index(player).items.contains(itemId);
++	}
++
++	/**
++	 * Строки для таблицы поиска дропа: те же пять колонок, что у мобов.
++	 * @param player кто смотрит
++	 * @param itemId вещь
++	 * @return строки «где купить» и ссылка на поиск по лавкам
++	 */
++	public static String whereToBuy(Player player, int itemId)
++	{
++		final ItemTemplate item = ItemData.getInstance().getTemplate(itemId);
++		if (item == null)
++		{
++			return "";
++		}
++		final String query = clean(item.getName());
++		final StringBuilder sb = new StringBuilder(512);
++		if (L2HubBoard.townOn("TownGmShop"))
++		{
++			final Set<Integer> shown = new HashSet<>();
++			for (ShopOffer offer : index(player).offers)
++			{
++				if ((offer.itemId == itemId) && shown.add(offer.listId))
++				{
++					sb.append("<tr><td width=30></td><td width=170><a action=\"bypass ").append(COMMAND).append(" open ").append(offer.listId).append(" 1 ").append(query).append("\">").append(L2HubBoard.tr("GM-шоп: ")).append(offer.label).append("</a></td><td width=80 align=CENTER>").append(price(offer.adena)).append("</td><td width=50></td><td width=50 align=CENTER>").append(L2HubBoard.tr("Купить")).append("</td></tr>");
++				}
++			}
++		}
++		sb.append("<tr><td width=30></td><td width=170><a action=\"bypass ").append(COMMAND).append(" store 1 ").append(query).append("\">").append(L2HubBoard.tr("Поискать в лавках")).append("</a></td><td width=80></td><td width=50></td><td width=50></td></tr>");
++		return sb.toString();
++	}
++
++	private static boolean listed(Player player, int listId)
++	{
++		for (ShopOffer offer : index(player).offers)
++		{
++			if (offer.listId == listId)
++			{
++				return true;
++			}
++		}
++		return false;
++	}
++
++	private static Index index(Player player)
++	{
++		return INDEX.computeIfAbsent(player.getHtmlPrefix(), prefix -> build(player));
++	}
++
++	/**
++	 * Что доступно через кнопки шопа: скрытые списки (600010 и другие, Infinity) в поиск не попадают. Страницы читаются на языке персонажа.
++	 */
++	private static Index build(Player player)
++	{
++		final String npc = String.valueOf(CommunityBoardConfig.COMMUNITY_SHOP_NPC);
++		final Pattern page = Pattern.compile(npc + "(?:-(\\d+))?\\.htm");
++		final String[] files = new File(ServerConfig.DATAPACK_ROOT, MERCHANT).list();
++		final Map<Integer, Object[]> sections = new LinkedHashMap<>();
++		if (files != null)
++		{
++			Arrays.sort(files);
++			for (String file : files)
++			{
++				final Matcher name = page.matcher(file);
++				if (!name.matches())
++				{
++					continue;
++				}
++				final String html = HtmCache.getInstance().getHtm(player, MERCHANT + "/" + file);
++				if (html == null)
++				{
++					continue;
++				}
++				final int pageId = name.group(1) == null ? 0 : Integer.parseInt(name.group(1));
++				final Matcher button = BUTTON.matcher(html);
++				while (button.find())
++				{
++					final Matcher list = LIST.matcher(button.group());
++					final Matcher value = VALUE.matcher(button.group());
++					if (list.find() && value.find())
++					{
++						sections.putIfAbsent(Integer.parseInt(list.group(1)), new Object[]
++						{
++							pageId,
++							value.group(1)
++						});
++					}
++				}
++			}
++		}
++
++		final Set<ShopOffer> offers = new LinkedHashSet<>();
++		final Set<Integer> items = new HashSet<>();
++		for (Map.Entry<Integer, Object[]> section : sections.entrySet())
++		{
++			final ListContainer list = MultisellData.getInstance().getList(section.getKey());
++			if ((list == null) || (!list.isNpcAllowed(-1) && !list.isNpcAllowed(CommunityBoardConfig.COMMUNITY_SHOP_NPC)))
++			{
++				continue;
++			}
++			for (Entry entry : list.getEntries())
++			{
++				final List<Ingredient> pay = entry.getIngredients();
++				final long adena = (pay.size() == 1) && (pay.get(0).getItemId() == Inventory.ADENA_ID) ? pay.get(0).getItemCount() : -1;
++				for (Ingredient product : entry.getProducts())
++				{
++					final ItemTemplate item = ItemData.getInstance().getTemplate(product.getItemId());
++					if (item != null)
++					{
++						offers.add(new ShopOffer(item.getId(), item.getName(), product.getItemCount(), section.getKey(), (int) section.getValue()[0], (String) section.getValue()[1], adena));
++						items.add(item.getId());
++					}
++				}
++			}
++		}
++		return new Index(new ArrayList<>(offers), items);
++	}
++
++	// ---------- Лавки ----------
++
++	private static String store(Player player, int page, String query)
++	{
++		final StringBuilder sb = new StringBuilder(4096).append(form(query));
++		if (query.length() < MIN_QUERY)
++		{
++			return sb.append(tooShort()).toString();
++		}
++		final List<StoreOffer> found = new ArrayList<>();
++		for (Player seller : World.getPlayers())
++		{
++			if ((seller == player) || !isSelling(seller) || seller.isInvisible() || PhantomManager.getInstance().isSecret(seller))
++			{
++				continue;
++			}
++			final boolean hunter = PhantomManager.getInstance().isPhantom(seller) && PhantomHunterManager.getInstance().isHunter(seller);
++			for (TradeItem item : seller.getSellList().getItems())
++			{
++				if (matches(item.getItem().getId(), item.getItem().getName(), query))
++				{
++					found.add(new StoreOffer(item.getItem().getId(), item.getEnchant(), item.getCount(), item.getPrice(), seller.getName(), seller.getObjectId(), hunter, seller.getSellList().isPackaged()));
++				}
++			}
++		}
++		for (PhantomStores.Offer offer : PhantomStores.offers())
++		{
++			final ItemTemplate item = ItemData.getInstance().getTemplate(offer.itemId());
++			final Spawn spawn = SpawnTable.getInstance().getAnySpawn(offer.npcId());
++			final Npc npc = spawn != null ? spawn.getLastSpawn() : null;
++			if ((item != null) && (npc != null) && matches(item.getId(), item.getName(), query))
++			{
++				found.add(new StoreOffer(item.getId(), offer.enchant(), offer.count(), offer.price(), offer.seller(), npc.getObjectId(), false, false));
++			}
++		}
++		if (found.isEmpty())
++		{
++			return sb.append(nothing()).toString();
++		}
++		found.sort(Comparator.comparingLong(StoreOffer::price));
++
++		final int pages = pages(found.size());
++		final int current = Math.max(1, Math.min(page, pages));
++		sb.append("<table width=520><tr><td width=36></td><td width=184><font color=\"B09878\">").append(L2HubBoard.tr("Вещь")).append("</font></td><td width=90 align=right><font color=\"B09878\">").append(L2HubBoard.tr("Цена за штуку")).append("</font></td><td width=120 align=center><font color=\"B09878\">").append(L2HubBoard.tr("Продавец")).append("</font></td><td width=90></td></tr>");
++		for (StoreOffer offer : found.subList((current - 1) * PER_PAGE, Math.min(found.size(), current * PER_PAGE)))
++		{
++			sb.append("<tr><td width=36>").append(icon(offer.itemId)).append("</td><td width=184>").append(name(offer.itemId, offer.enchant, offer.count)).append("</td><td width=90 align=right>").append(price(offer.price));
++			if (offer.packaged)
++			{
++				sb.append("<br1><font color=\"909090\">").append(L2HubBoard.tr("только всё сразу")).append("</font>");
++			}
++			sb.append("</td><td width=120 align=center>").append(offer.seller).append("</td><td width=90 align=center>");
++			sb.append(offer.hunter ? L2HubBoard.button(L2HubBoard.tr("К лавке"), COMMAND + " go " + offer.seller + " " + current + " " + query, 80) : L2HubBoard.button(L2HubBoard.tr("На карте"), COMMAND + " mark " + offer.objectId + " " + current + " " + query, 80)).append("</td></tr>");
++		}
++		sb.append("</table>");
++		pager(sb, "store", current, pages, query);
++		return sb.toString();
++	}
++
++	private static boolean isSelling(Player seller)
++	{
++		final PrivateStoreType type = seller.getPrivateStoreType();
++		return (type == PrivateStoreType.SELL) || (type == PrivateStoreType.PACKAGE_SELL);
++	}
++
++	private static void markSeller(Player player, int objectId)
++	{
++		final WorldObject object = World.findObject(objectId);
++		final boolean shown = (object instanceof Player seller) ? isSelling(seller) && !PhantomManager.getInstance().isSecret(seller) : (object instanceof Npc) && PhantomStores.isStore(objectId);
++		if (shown)
++		{
++			mark(player, object.getX(), object.getY(), object.getZ());
++		}
++		else
++		{
++			player.sendMessage(L2HubBoard.tr("Этой лавки уже нет."));
++		}
++	}
++
++	/**
++	 * Метка на карте мира, как у поиска дропа.
++	 */
++	static void mark(Player player, int x, int y, int z)
++	{
++		player.sendPacket(new ShowMiniMap(-1));
++		ThreadPool.schedule(() ->
++		{
++			player.getRadar().addMarker(x, y, z);
++			player.sendPacket(new RadarControl(0, 2, x, y, z));
++		}, 500);
++	}
++
++	// ---------- Общее ----------
++
++	private static String form(String query)
++	{
++		return "<table width=520><tr><td width=70 align=right>" + L2HubBoard.tr("Вещь:") + "</td><td width=210><edit var=\"q\" width=200></td><td width=120>" //
++			+ L2HubBoard.button(L2HubBoard.tr("В GM-шопе"), COMMAND + " shop 1 $q", 110) + "</td><td width=120>" //
++			+ L2HubBoard.button(L2HubBoard.tr("В лавках"), COMMAND + " store 1 $q", 110) + "</td></tr></table>" //
++			+ "<font color=\"909090\">" + L2HubBoard.tr("Название или его часть по-английски, как в базе игры, либо номер вещи.") + "</font><br>" //
++			+ (query.isEmpty() ? "" : "<font color=\"LEVEL\">" + L2HubBoard.tr("Ищем: ") + query + "</font><br>");
++	}
++
++	private static String tooShort()
++	{
++		return "<br><font color=\"808080\">" + L2HubBoard.tr("Нужно хотя бы две буквы.") + "</font>";
++	}
++
++	private static String nothing()
++	{
++		return "<br><font color=\"808080\">" + L2HubBoard.tr("Ничего не нашлось.") + "</font>";
++	}
++
++	private static void pager(StringBuilder sb, String tab, int page, int pages, String query)
++	{
++		if (pages <= 1)
++		{
++			return;
++		}
++		sb.append("<br><table width=300><tr><td width=100 align=center>");
++		if (page > 1)
++		{
++			sb.append(L2HubBoard.button("&lt;&lt;", COMMAND + " " + tab + " " + (page - 1) + " " + query, 60));
++		}
++		sb.append("</td><td width=100 align=center>").append(page).append(" / ").append(pages).append("</td><td width=100 align=center>");
++		if (page < pages)
++		{
++			sb.append(L2HubBoard.button("&gt;&gt;", COMMAND + " " + tab + " " + (page + 1) + " " + query, 60));
++		}
++		sb.append("</td></tr></table>");
++	}
++
++	private static int pages(int size)
++	{
++		return Math.max(1, (size + PER_PAGE - 1) / PER_PAGE);
++	}
++
++	private static String icon(int itemId)
++	{
++		final ItemTemplate item = ItemData.getInstance().getTemplate(itemId);
++		final String icon = (item != null) ? item.getIcon() : null;
++		return "<img src=\"" + (icon != null ? icon : "icon.etc_question_mark_i00") + "\" width=32 height=32>";
++	}
++
++	private static String name(int itemId, int enchant, long count)
++	{
++		return (enchant > 0 ? "+" + enchant + " " : "") + "&#" + itemId + ";" + (count > 1 ? " x" + count : "");
++	}
++
++	private static String price(long adena)
++	{
++		return adena < 0 ? L2HubBoard.tr("обмен") : String.format(Locale.ROOT, "%,d", adena).replace(',', ' ');
++	}
++
++	private static boolean matches(int itemId, String name, String query)
++	{
++		if (query.chars().allMatch(Character::isDigit))
++		{
++			return query.equals(String.valueOf(itemId));
++		}
++		final String lower = name.toLowerCase(Locale.ROOT);
++		for (String word : query.toLowerCase(Locale.ROOT).split(" "))
++		{
++			if (!lower.contains(word))
++			{
++				return false;
++			}
++		}
++		return true;
++	}
++
++	private static String query(String[] args, int from)
++	{
++		return args.length > from ? clean(String.join(" ", Arrays.copyOfRange(args, from, args.length))) : "";
++	}
++
++	/**
++	 * Запрос идёт обратно в кнопки и на страницу, поэтому без разметки и подстановок клиента.
++	 */
++	private static String clean(String text)
++	{
++		final String clean = text.replaceAll("[^\\p{L}\\p{N} '+\\-:.()]", "").replaceAll(" +", " ").strip();
++		return clean.length() > MAX_QUERY ? clean.substring(0, MAX_QUERY).strip() : clean;
++	}
++
++	private static int number(String[] args, int at)
++	{
++		try
++		{
++			return args.length > at ? Integer.parseInt(args[at]) : 1;
++		}
++		catch (NumberFormatException e)
++		{
++			return 1;
++		}
++	}
++}
+diff --git a/java/org/l2jmobius/gameserver/data/xml/MultisellData.java b/java/org/l2jmobius/gameserver/data/xml/MultisellData.java
+index 0d9b2de17fb15328c524b32e4f0c998e8b75194f..16fdc5ce982e888961f9282d08ea359d4afe211f 100644
+--- a/java/org/l2jmobius/gameserver/data/xml/MultisellData.java
++++ b/java/org/l2jmobius/gameserver/data/xml/MultisellData.java
+@@ -315,6 +315,16 @@ public class MultisellData implements IXmlReader
+ 		separateAndSend(listId, player, npc, inventoryOnly, 1, 1);
+ 	}
+ 
++	/**
++	 * L2Hub: поиск по GM-шопу на доске ({@code L2HubFind}).
++	 * @param listId мультиселл
++	 * @return список или {@code null}
++	 */
++	public ListContainer getList(int listId)
++	{
++		return _entries.get(listId);
++	}
++
+ 	/**
+ 	 * L2Hub: мультиселл GM-шопа с доски Alt+B. Открываются только списки без ограничений и списки, разрешённые NPC GM-шопа ({@code CommunityShopNpc} в CommunityBoard.ini): с доски — то же, что у NPC в городе. При покупке такой список NPC рядом не требует.
+ 	 * @param listId мультиселл

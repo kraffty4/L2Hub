@@ -1,0 +1,880 @@
+Subject: [PATCH] L2Hub: GM-шоп по-русски и кнопка языка
+
+Все 23 страницы GM-шопа, окно NPC 50010 и раздел Alt+B: data/lang/ru/data/html/merchant. Разметка, команды и ширина кнопок те же,
+что в английских, меняются только подписи. Страницу по языку персонажа выбирает HtmCache.getHtm: при языке ru берёт русскую, при en
+или выбранном языке без своей страницы остаётся английская. Персонаж без записанного языка получает L2HubLanguage из L2HubWorld.ini.
+На главной странице обоих языков кнопка «Language / Язык» (голосовая .lang): так меняется язык всех окон персонажа, не только шопа.
+Заголовки вкладок доски идут от L2HubLanguage, у персонажа с другим языком они останутся на языке мира.
+
+Кнопка «60 Min. Limited» врала: у всех 72 вещей списка 50039974 duration 180 и time 21600, то есть 3 часа в руках и не дольше 15 дней.
+Теперь «3 Hours Worn» и «3 часа в руках». Кнопка «4 Hour Limited» верная: time 240.
+
+Вклад пользователя. Подписи, которые могли не влезть в кнопку, сокращены; проверено сравнением разметки с английскими страницами
+и tools/board_links.py. В клиенте вид кнопок не проверен.
+
+diff --git a/dist/game/data/html/merchant/50010.htm b/dist/game/data/html/merchant/50010.htm
+index 02e3b87a052be27145f1d3a09f85ce115fdee10d..1c34acb5dc2f15837421b3c44b7121d1a362bca8 100644
+--- a/dist/game/data/html/merchant/50010.htm
++++ b/dist/game/data/html/merchant/50010.htm
+@@ -67,5 +67,10 @@
+ <table width=260>
+ <tr>
+ </tr></table>
++<table width=260>
++<tr>
++<td align=center><button action="bypass voice .lang" value="Language / Язык" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++</table>
+ </center>
+ </body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/html/merchant/50010-1.htm b/dist/game/data/html/merchant/50010-1.htm
+index 5f0e7a0cc914e67d3b1f698e91a8485e7eca3c66..616e306011563f350c8d2b2b18a4ba3aa4454dec 100644
+--- a/dist/game/data/html/merchant/50010-1.htm
++++ b/dist/game/data/html/merchant/50010-1.htm
+@@ -49,7 +49,7 @@
+ Expiration Period Weapons<br1>
+ <table width=260>
+ <tr>
+-<td align=center><button action="bypass -h npc_%objectId%_multisell 50039974" value="60 Min. Limited" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039974" value="3 Hours Worn" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+ <td align=center><button action="bypass -h npc_%objectId%_multisell 50039975" value="4 Hour Limited" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+ </tr>
+ </table>
+diff --git a/dist/game/data/scripts/custom/L2HubBoardTest/L2HubBoardTest.java b/dist/game/data/scripts/custom/L2HubBoardTest/L2HubBoardTest.java
+index 6017212bb4a0872d42dfd9b54db3cdc25452470c..6ff955404e1638e3e2beddba669645e9edcefbcf 100644
+--- a/dist/game/data/scripts/custom/L2HubBoardTest/L2HubBoardTest.java
++++ b/dist/game/data/scripts/custom/L2HubBoardTest/L2HubBoardTest.java
+@@ -418,6 +418,27 @@
+ 			});
+ 			Files.writeString(Path.of("./log/L2HubBoardShop.html"), page);
+ 			check("shop: first page " + page.length() + " chars has kits and clan items", page.contains("bypass " + L2HubKits.COMMAND + "\"") && page.contains("_bbshubshop ms " + CLAN_LIST + " 0"));
++
++			// Страницы GM-шопа идут за языком персонажа, не мира; главная и вложенная, кнопка языка на обеих версиях главной.
++			final String language = shopper.getLang();
++			shopper.setLang("en");
++			final String english = (String) shop.invoke(null, shopper, new String[]
++			{
++				"_bbshubshop"
++			});
++			shopper.setLang("ru");
++			final String russian = (String) shop.invoke(null, shopper, new String[]
++			{
++				"_bbshubshop"
++			});
++			final String russianWeapons = (String) shop.invoke(null, shopper, new String[]
++			{
++				"_bbshubshop",
++				"1"
++			});
++			shopper.setLang(language);
++			check("shop: pages follow the character's language", english.contains("value=\"Weapons\"") && russian.contains("value=\"Оружие\"") && russianWeapons.contains("value=\"Без грейда\""));
++			check("shop: language button on both main pages", english.contains("bypass voice .lang") && russian.contains("bypass voice .lang"));
+ 		}
+ 
+ 		final Map<String, Predicate<Player>> roles = new java.util.LinkedHashMap<>();
+diff --git a/dist/game/data/lang/ru/data/html/merchant/50010.htm b/dist/game/data/lang/ru/data/html/merchant/50010.htm
+new file mode 100644
+index 0000000..eadd27a
+--- /dev/null
++++ b/dist/game/data/lang/ru/data/html/merchant/50010.htm
+@@ -0,0 +1,76 @@
++<html><title>Магазин</title><body>
++<center>
++<table width=270>
++<tr>
++
++<td width=180><center>GM-шоп</center></td>
++
++</tr></table>
++</center>
++<br>
++<br>
++<center>
++<table width=260>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_Chat 1" value="Оружие" width=85 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_Chat 2" value="Броня" width=85 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039914" value="Браслеты" width=85 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_Chat 3" value="Бижутерия" width=85 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039913" value="Рубашки" width=85 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039915" value="Талисманы" width=85 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_Chat 4" value="Пояса" width=85 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039909" value="Плащи" width=85 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_Chat 5" value="Диадемы" width=85 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++</table>
++<br>
++<table width=260>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_Chat 6" value="Территории" width=85 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_Chat 7" value="Замки" width=85 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_Chat 8" value="Крепости" width=85 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++</table>
++<br>
++<table width=260>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_Chat 9" value="Расходники" width=85 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_Chat 10" value="Свитки" width=85 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_Chat 11" value="Крафт" width=85 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++</table>
++<br>
++<table width=260>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_Chat 12" value="Пэты" width=85 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_Chat 13" value="Рыбалка" width=85 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_Chat 14" value="Квесты" width=85 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++<tr>
++<td align=center></td>
++<td align=center><button action="bypass -h npc_%objectId%_Chat 15" value="Ивенты" width=85 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50040008" value="Для клана" width=85 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++</table>
++<br>
++<table width=260>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039902" value="Лайфстоуны" width=85 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039903" value="Атрибут" width=85 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_Chat 16" value="Книги" width=85 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++</table>
++<table width=260>
++<tr>
++</tr></table>
++<table width=260>
++<tr>
++<td align=center><button action="bypass voice .lang" value="Language / Язык" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++</table>
++</center>
++</body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/lang/ru/data/html/merchant/50010-1.htm b/dist/game/data/lang/ru/data/html/merchant/50010-1.htm
+new file mode 100644
+index 0000000..113472c
+--- /dev/null
++++ b/dist/game/data/lang/ru/data/html/merchant/50010-1.htm
+@@ -0,0 +1,57 @@
++<html><title>Магазин</title><body>
++<center>
++<table width=260>
++<tr>
++<td width=180><center>GM-шоп: Оружие</center></td>
++<td width=40><button value="Назад" action="bypass -h npc_%objectId%_Chat 0" width=40 height=15 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr></table>
++</center>
++<br><br>
++<center>
++<table width=260>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_Chat 17" value="Без грейда" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039980" value="Оружие Infinity" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_Chat 18" value="D грейд" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039925" value="Оружие монстров" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_Chat 19" value="C грейд" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50040007" value="Оружие РБ" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_Chat 20" value="B грейд" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center></td>
++</tr>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039997" value="A грейд" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039985" value="A грейд - PvP" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039998" value="S грейд" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039984" value="S грейд - PvP" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039923" value="S80 Dynasty" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039982" value="S80 Dynasty - PvP" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039924" value="S80 Icarus" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039983" value="S80 Icarus - PvP" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039907" value="S84 грейд" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039981" value="S84 грейд - PvP" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++</table><br>
++Временное оружие<br1>
++<table width=260>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039974" value="3 часа в руках" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039975" value="На 4 часа" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++</table>
++</center>
++</body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/lang/ru/data/html/merchant/50010-2.htm b/dist/game/data/lang/ru/data/html/merchant/50010-2.htm
+new file mode 100644
+index 0000000..af07a27
+--- /dev/null
++++ b/dist/game/data/lang/ru/data/html/merchant/50010-2.htm
+@@ -0,0 +1,48 @@
++<html><title>Магазин</title><body>
++<center>
++<table width=260>
++<tr>
++<td width=180><center>GM-шоп: Броня</center></td>
++<td width=40><button value="Назад" action="bypass -h npc_%objectId%_Chat 0" width=40 height=15 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr></table>
++</center>
++<br><br>
++<center>
++<table width=260>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039951" value="Сеты без грейда" width=120 height=20 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039952" value="Сеты D" width=120 height=20 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039953" value="Сеты C" width=120 height=20 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039954" value="Сеты B" width=120 height=20 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039955" value="Сеты A" width=120 height=20 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039956" value="Сеты S" width=120 height=20 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039957" value="Сеты S80" width=120 height=20 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039958" value="Сеты S84" width=120 height=20 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++</table>
++<br><br>
++<table width=260>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039959" value="Сеты Apella" width=120 height=20 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039926" value="Сигили" width=120 height=20 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++</table>
++<br><br>
++<table width=260>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50040000" value="B Masterwork" width=120 height=20 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50040001" value="A Masterwork" width=120 height=20 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50040002" value="S Masterwork" width=120 height=20 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50040003" value="S80 Masterwork" width=120 height=20 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++</table>
++</center>
++</body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/lang/ru/data/html/merchant/50010-3.htm b/dist/game/data/lang/ru/data/html/merchant/50010-3.htm
+new file mode 100644
+index 0000000..e9e9da6
+--- /dev/null
++++ b/dist/game/data/lang/ru/data/html/merchant/50010-3.htm
+@@ -0,0 +1,22 @@
++<html><title>Магазин</title><body>
++<center>
++<table width=260>
++<tr>
++<td width=180><center>GM-шоп: Бижутерия</center></td>
++<td width=40><button value="Назад" action="bypass -h npc_%objectId%_Chat 0" width=40 height=15 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr></table>
++</center>
++<br><br>
++<center>
++<button action="bypass -h npc_%objectId%_multisell 50039960" value="Без грейда" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039961" value="D грейд" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039962" value="C грейд" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039963" value="B грейд" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039964" value="A грейд" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039965" value="S грейд" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039966" value="S80 грейд" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039908" value="S84 грейд" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br>
++<button action="bypass -h npc_%objectId%_multisell 50039999" value="Masterwork" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br>
++<button action="bypass -h npc_%objectId%_multisell 50039917" value="Бижутерия боссов" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF">
++</center>
++</body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/lang/ru/data/html/merchant/50010-4.htm b/dist/game/data/lang/ru/data/html/merchant/50010-4.htm
+new file mode 100644
+index 0000000..70bdd78
+--- /dev/null
++++ b/dist/game/data/lang/ru/data/html/merchant/50010-4.htm
+@@ -0,0 +1,17 @@
++<html><title>Магазин</title><body>
++<center>
++<table width=260>
++<tr>
++<td width=180><center>GM-шоп: Пояса</center></td>
++<td width=40><button value="Назад" action="bypass -h npc_%objectId%_Chat 0" width=40 height=15 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr></table>
++</center>
++<br><br>
++<center>
++<button action="bypass -h npc_%objectId%_multisell 50039910" value="Пояса" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039911" value="Маг. значки" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039912" value="Маг. сумки" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039995" value="Маг. заколки" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039996" value="Маг. украшения" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++</center>
++</body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/lang/ru/data/html/merchant/50010-5.htm b/dist/game/data/lang/ru/data/html/merchant/50010-5.htm
+new file mode 100644
+index 0000000..b0de212
+--- /dev/null
++++ b/dist/game/data/lang/ru/data/html/merchant/50010-5.htm
+@@ -0,0 +1,16 @@
++<html><title>Магазин</title><body>
++<center>
++<table width=260>
++<tr>
++<td width=180><center>GM-шоп: Диадемы и аксессуары</center></td>
++<td width=40><button value="Назад" action="bypass -h npc_%objectId%_Chat 0" width=40 height=15 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr></table>
++</center>
++<br><br>
++<center>
++<button action="bypass -h npc_%objectId%_multisell 50039919" value="Диадемы замков" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039944" value="Прочие диадемы" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039920" value="Аксессуары для волос 1" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039986" value="Аксессуары для волос 2" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++</center>
++</body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/lang/ru/data/html/merchant/50010-6.htm b/dist/game/data/lang/ru/data/html/merchant/50010-6.htm
+new file mode 100644
+index 0000000..48c7eac
+--- /dev/null
++++ b/dist/game/data/lang/ru/data/html/merchant/50010-6.htm
+@@ -0,0 +1,19 @@
++<html><title>Магазин</title><body>
++<center>
++<table width=260>
++<tr>
++<td width=180><center>GM-шоп: Предметы территорий</center></td>
++<td width=40><button value="Назад" action="bypass -h npc_%objectId%_Chat 0" width=40 height=15 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr></table>
++</center>
++<br><br>
++<center>
++<button action="bypass -h npc_%objectId%_multisell 50039988" value="Предметы территорий" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039990" value="Оружие территорий" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039987" value="Бижутерия территорий" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039991" value="Варды территорий" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039992" value="Флаги территорий" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039970" value="Трансформации наёмника" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039971" value="Свиток маскировки" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++</center>
++</body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/lang/ru/data/html/merchant/50010-7.htm b/dist/game/data/lang/ru/data/html/merchant/50010-7.htm
+new file mode 100644
+index 0000000..50ddff1
+--- /dev/null
++++ b/dist/game/data/lang/ru/data/html/merchant/50010-7.htm
+@@ -0,0 +1,15 @@
++<html><title>Магазин</title><body>
++<center>
++<table width=260>
++<tr>
++<td width=180><center>GM-шоп: Предметы замков</center></td>
++<td width=40><button value="Назад" action="bypass -h npc_%objectId%_Chat 0" width=40 height=15 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr></table>
++</center>
++<br><br>
++<center>
++<button action="bypass -h npc_%objectId%_multisell 50039919" value="Диадемы замков" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039993" value="Семена" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039994" value="Стражи осады" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++</center>
++</body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/lang/ru/data/html/merchant/50010-8.htm b/dist/game/data/lang/ru/data/html/merchant/50010-8.htm
+new file mode 100644
+index 0000000..30541bc
+--- /dev/null
++++ b/dist/game/data/lang/ru/data/html/merchant/50010-8.htm
+@@ -0,0 +1,13 @@
++<html><title>Магазин</title><body>
++<center>
++<table width=260>
++<tr>
++<td width=180><center>GM-шоп: Предметы крепостей</center></td>
++<td width=40><button value="Назад" action="bypass -h npc_%objectId%_Chat 0" width=40 height=15 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr></table>
++</center>
++<br><br>
++<center>
++<button action="bypass -h npc_%objectId%_multisell 50039989" value="Разное" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++</center>
++</body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/lang/ru/data/html/merchant/50010-9.htm b/dist/game/data/lang/ru/data/html/merchant/50010-9.htm
+new file mode 100644
+index 0000000..c47de5b
+--- /dev/null
++++ b/dist/game/data/lang/ru/data/html/merchant/50010-9.htm
+@@ -0,0 +1,30 @@
++<html><title>Магазин</title><body>
++<center>
++<table width=260>
++<tr>
++<td width=180><center>GM-шоп: Расходники: банки и сосы</center></td>
++<td width=40><button value="Назад" action="bypass -h npc_%objectId%_Chat 0" width=40 height=15 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr></table>
++</center>
++<br><br>
++<center>
++<table width=260>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039978" value="Разное" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039979" value="Стрелы" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039938" value="Сосы" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039928" value="Банки" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039927" value="Кристаллы SA" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039929" value="Эликсиры" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039939" value="Кристаллы / камни" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039948" value="Краски" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++</table>
++</center>
++</body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/lang/ru/data/html/merchant/50010-10.htm b/dist/game/data/lang/ru/data/html/merchant/50010-10.htm
+new file mode 100644
+index 0000000..56d474a
+--- /dev/null
++++ b/dist/game/data/lang/ru/data/html/merchant/50010-10.htm
+@@ -0,0 +1,17 @@
++<html><title>Магазин</title><body>
++<center>
++<table width=260>
++<tr>
++<td width=180><center>GM-шоп: Свитки</center></td>
++<td width=40><button value="Назад" action="bypass -h npc_%objectId%_Chat 0" width=40 height=15 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr></table>
++</center>
++<br><br>
++<center>
++<button action="bypass -h npc_%objectId%_multisell 50039930" value="Разное" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039931" value="Свитки заточки" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039945" value="Баф-свитки (ивент)" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039970" value="Трансформации наёмника" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039971" value="Свиток маскировки" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++</center>
++</body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/lang/ru/data/html/merchant/50010-11.htm b/dist/game/data/lang/ru/data/html/merchant/50010-11.htm
+new file mode 100644
+index 0000000..c256f34
+--- /dev/null
++++ b/dist/game/data/lang/ru/data/html/merchant/50010-11.htm
+@@ -0,0 +1,61 @@
++<html><title>Магазин</title><body>
++<center>
++<table width=260>
++<tr>
++<td width=180><center>GM-шоп: Крафт и ресурсы</center></td>
++<td width=40><button value="Назад" action="bypass -h npc_%objectId%_Chat 0" width=40 height=15 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr></table>
++</center>
++<br><br>
++<center>
++<table width=260>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039946" value="Рецепты B" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039947" value="Куски B" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039942" value="Рецепты A" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039943" value="Куски A" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039941" value="Рецепты S" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039940" value="Куски S" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039933" value="Рецепты Dynasty" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039934" value="Куски Dynasty" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039935" value="Рецепты Icarus" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039936" value="Куски Icarus" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++</table><br>
++<table width=260>
++<tr>
++<td align=center>Для крафта:</td>
++</tr>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039937" value="Материалы" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039939" value="Кристаллы / камни" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++</table><br>
++<table width=260>
++<tr>
++<td align=center>Раздел Gracia:</td>
++</tr>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039968" value="Чертежи" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50039969" value="Материалы" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++</table><br>
++<table width=260>
++<tr>
++<td align=center>Старый раздел:</td>
++</tr>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_Chat 21" value="Рецепты" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_Chat 22" value="Материалы / камни" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++</table>
++</center>
++</body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/lang/ru/data/html/merchant/50010-12.htm b/dist/game/data/lang/ru/data/html/merchant/50010-12.htm
+new file mode 100644
+index 0000000..86c1acc
+--- /dev/null
++++ b/dist/game/data/lang/ru/data/html/merchant/50010-12.htm
+@@ -0,0 +1,14 @@
++<html><title>Магазин</title><body>
++<center>
++<table width=260>
++<tr>
++<td width=180><center>GM-шоп: Пэты</center></td>
++<td width=40><button value="Назад" action="bypass -h npc_%objectId%_Chat 0" width=40 height=15 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr></table>
++</center>
++<br><br>
++<center>
++<button action="bypass -h npc_%objectId%_multisell 50039918" value="Пэты" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039932" value="Шмот пэтов" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++</center>
++</body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/lang/ru/data/html/merchant/50010-13.htm b/dist/game/data/lang/ru/data/html/merchant/50010-13.htm
+new file mode 100644
+index 0000000..91d638b
+--- /dev/null
++++ b/dist/game/data/lang/ru/data/html/merchant/50010-13.htm
+@@ -0,0 +1,16 @@
++<html><title>Магазин</title><body>
++<center>
++<table width=260>
++<tr>
++<td width=180><center>GM-шоп: Рыбалка</center></td>
++<td width=40><button value="Назад" action="bypass -h npc_%objectId%_Chat 0" width=40 height=15 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr></table>
++</center>
++<br><br>
++<center>
++<button action="bypass -h npc_%objectId%_multisell 50039949" value="Удочки" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039950" value="Снасти" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039922" value="Зелья рыбака" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039967" value="Рыба" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++</center>
++</body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/lang/ru/data/html/merchant/50010-14.htm b/dist/game/data/lang/ru/data/html/merchant/50010-14.htm
+new file mode 100644
+index 0000000..31d448a
+--- /dev/null
++++ b/dist/game/data/lang/ru/data/html/merchant/50010-14.htm
+@@ -0,0 +1,29 @@
++<html><title>Магазин</title><body>
++<center>
++<table width=260>
++<tr>
++<td width=180><center>GM-шоп: Квестовые предметы</center></td>
++<td width=40><button value="Назад" action="bypass -h npc_%objectId%_Chat 0" width=40 height=15 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr></table>
++</center>
++<br><br>
++<center>
++<table width=260>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50330539" value="1/5" width=50 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50330530" value="2/5" width=50 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50330540" value="3/5" width=50 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50330541" value="4/5" width=50 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50330542" value="5/5" width=50 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++</table>
++</center>
++</body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/lang/ru/data/html/merchant/50010-15.htm b/dist/game/data/lang/ru/data/html/merchant/50010-15.htm
+new file mode 100644
+index 0000000..1d7b23c
+--- /dev/null
++++ b/dist/game/data/lang/ru/data/html/merchant/50010-15.htm
+@@ -0,0 +1,20 @@
++<html><title>Магазин</title><body>
++<center>
++<table width=260>
++<tr>
++<td width=180><center>GM-шоп: Ивентовые предметы</center></td>
++<td width=40><button value="Назад" action="bypass -h npc_%objectId%_Chat 0" width=40 height=15 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr></table>
++</center>
++<br><br>
++<center>
++<button action="bypass -h npc_%objectId%_multisell 50039977" value="Разные предметы" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039976" value="Палочка трансформации" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039975" value="Оружие на 4 часа" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF">
++<button action="bypass -h npc_%objectId%_multisell 50039972" value="Оружие Санты" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039973" value="Оружие-багеты" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50040004" value="Агатионы" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50040005" value="Браслеты маунтов" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF">
++<button action="bypass -h npc_%objectId%_multisell 50040006" value="Ивентовые маски" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF">
++</center>
++</body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/lang/ru/data/html/merchant/50010-16.htm b/dist/game/data/lang/ru/data/html/merchant/50010-16.htm
+new file mode 100644
+index 0000000..6e60ce2
+--- /dev/null
++++ b/dist/game/data/lang/ru/data/html/merchant/50010-16.htm
+@@ -0,0 +1,17 @@
++<html><title>Магазин</title><body>
++<center>
++<table width=260>
++<tr>
++<td width=180><center>GM-шоп: Особые книги</center></td>
++<td width=40><button value="Назад" action="bypass -h npc_%objectId%_Chat 0" width=40 height=15 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr></table>
++</center>
++<br><br>
++<center>
++<button action="bypass -h npc_%objectId%_multisell 50039901" value="Forgotten Scrolls" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039904" value="Кодексы" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039905" value="Divine Inspiration" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039906" value="Печати трансформаций" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039921" value="Книги полёта" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++</center>
++</body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/lang/ru/data/html/merchant/50010-17.htm b/dist/game/data/lang/ru/data/html/merchant/50010-17.htm
+new file mode 100644
+index 0000000..44529b4
+--- /dev/null
++++ b/dist/game/data/lang/ru/data/html/merchant/50010-17.htm
+@@ -0,0 +1,20 @@
++<html><title>Магазин</title><body>
++<center>
++<table width=260>
++<tr>
++<td width=180><center>GM-шоп: Оружие без грейда</center></td>
++<td width=40><button value="Назад" action="bypass -h npc_%objectId%_Chat 1" width=40 height=15 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr></table>
++</center>
++<br><br>
++<center>
++<button action="bypass -h npc_%objectId%_multisell 50039001" value="Одноручные мечи" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039002" value="Двуручные мечи" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039003" value="Кинжалы" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039004" value="Луки" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039005" value="Кастеты" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039006" value="Древковое оружие" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039007" value="Одноручные дубины" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039008" value="Двуручные дубины" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++</center>
++</body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/lang/ru/data/html/merchant/50010-18.htm b/dist/game/data/lang/ru/data/html/merchant/50010-18.htm
+new file mode 100644
+index 0000000..381a019
+--- /dev/null
++++ b/dist/game/data/lang/ru/data/html/merchant/50010-18.htm
+@@ -0,0 +1,21 @@
++<html><title>Магазин</title><body>
++<center>
++<table width=260>
++<tr>
++<td width=180><center>GM-шоп: Оружие D грейда</center></td>
++<td width=40><button value="Назад" action="bypass -h npc_%objectId%_Chat 1" width=40 height=15 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr></table>
++</center>
++<br><br>
++<center>
++<button action="bypass -h npc_%objectId%_multisell 50039009" value="Одноручные мечи" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039010" value="Двуручные мечи" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039011" value="Парные мечи" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039012" value="Кинжалы" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039013" value="Луки" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039014" value="Кастеты" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039015" value="Древковое оружие" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039016" value="Одноручные дубины" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039017" value="Двуручные дубины" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++</center>
++</body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/lang/ru/data/html/merchant/50010-19.htm b/dist/game/data/lang/ru/data/html/merchant/50010-19.htm
+new file mode 100644
+index 0000000..2e91d93
+--- /dev/null
++++ b/dist/game/data/lang/ru/data/html/merchant/50010-19.htm
+@@ -0,0 +1,21 @@
++<html><title>Магазин</title><body>
++<center>
++<table width=260>
++<tr>
++<td width=180><center>GM-шоп: Оружие C грейда</center></td>
++<td width=40><button value="Назад" action="bypass -h npc_%objectId%_Chat 1" width=40 height=15 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr></table>
++</center>
++<br><br>
++<center>
++<button action="bypass -h npc_%objectId%_multisell 50039018" value="Одноручные мечи" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039019" value="Двуручные мечи" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039020" value="Парные мечи" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039021" value="Кинжалы" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039022" value="Луки" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039023" value="Кастеты" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039024" value="Древковое оружие" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039025" value="Одноручные дубины" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039026" value="Двуручные дубины" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++</center>
++</body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/lang/ru/data/html/merchant/50010-20.htm b/dist/game/data/lang/ru/data/html/merchant/50010-20.htm
+new file mode 100644
+index 0000000..4822465
+--- /dev/null
++++ b/dist/game/data/lang/ru/data/html/merchant/50010-20.htm
+@@ -0,0 +1,21 @@
++<html><title>Магазин</title><body>
++<center>
++<table width=260>
++<tr>
++<td width=180><center>GM-шоп: Оружие B грейда</center></td>
++<td width=40><button value="Назад" action="bypass -h npc_%objectId%_Chat 1" width=40 height=15 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr></table>
++</center>
++<br><br>
++<center>
++<button action="bypass -h npc_%objectId%_multisell 50039027" value="Одноручные мечи" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039028" value="Двуручные мечи" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039029" value="Парные мечи" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039030" value="Кинжалы" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039031" value="Луки" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039032" value="Кастеты" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039033" value="Древковое оружие" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039034" value="Одноручные дубины" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++<button action="bypass -h npc_%objectId%_multisell 50039035" value="Двуручные дубины" width=150 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br1>
++</center>
++</body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/lang/ru/data/html/merchant/50010-21.htm b/dist/game/data/lang/ru/data/html/merchant/50010-21.htm
+new file mode 100644
+index 0000000..63085d7
+--- /dev/null
++++ b/dist/game/data/lang/ru/data/html/merchant/50010-21.htm
+@@ -0,0 +1,37 @@
++<html><title>Магазин</title><body>
++<center>
++<table width=260>
++<tr>
++<td width=180><center>GM-шоп: Рецепты</center></td>
++<td width=40><button value="Назад" action="bypass -h npc_%objectId%_Chat 0" width=40 height=15 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr></table>
++</center>
++<br><br>
++<center>
++<table width=260>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50060040" value="1/11" width=50 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50060046" value="7/11" width=50 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50060041" value="2/11" width=50 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50060047" value="8/11" width=50 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50060042" value="3/11" width=50 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50060048" value="9/11" width=50 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50060043" value="4/11" width=50 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50060049" value="10/11" width=50 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50060044" value="5/11" width=50 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50330410" value="11/11" width=50 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50060045" value="6/11" width=50 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++</table>
++</center>
++</body></html>
+\ No newline at end of file
+diff --git a/dist/game/data/lang/ru/data/html/merchant/50010-22.htm b/dist/game/data/lang/ru/data/html/merchant/50010-22.htm
+new file mode 100644
+index 0000000..38d313e
+--- /dev/null
++++ b/dist/game/data/lang/ru/data/html/merchant/50010-22.htm
+@@ -0,0 +1,37 @@
++<html><title>Магазин</title><body>
++<center>
++<table width=260>
++<tr>
++<td width=180><center>GM-шоп: Материалы</center></td>
++<td width=40><button value="Назад" action="bypass -h npc_%objectId%_Chat 0" width=40 height=15 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr></table>
++</center>
++<br><br>
++<center>
++<table width=260>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50060050" value="1/11" width=50 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50060056" value="7/11" width=50 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50060051" value="2/11" width=50 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50060057" value="8/11" width=50 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50060052" value="3/11" width=50 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50060058" value="9/11" width=50 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50060053" value="4/11" width=50 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50060059" value="10/11" width=50 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50060054" value="5/11" width=50 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50330510" value="11/11" width=50 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++<tr>
++<td align=center><button action="bypass -h npc_%objectId%_multisell 50060055" value="6/11" width=50 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++</tr>
++</table>
++</center>
++</body></html>
+\ No newline at end of file

@@ -31,11 +31,11 @@ UI = PKG / "ui"
 DICT = UI / "i18n" / "en.js"
 SEEN = UI / "i18n" / "seen.json"
 HEAD = "// Английский словарь окна L2Hub: ключ — русская строка, {0}, {1} — подстановки. Ключи — tools/i18n_extract.py.\nwindow.L2_EN = "
-JS = ["app.js", "world.js", "worldmap.js", "l2solo.js"]
+JS = ["app.js", "world.js", "worldmap.js", "l2solo.js", "gmshop.js"]
 # Ядро, чьи сообщения видны в окне. cli.py и пока wipe.py — консоль агентов, brain.py, worldtalk.py и knowledge.py — промпты моделей: не интерфейс.
 PY_SKIP = {"cli.py", "wipe.py", "brain.py", "worldtalk.py", "forum.py", "knowledge.py", "devserver.py", "__init__.py", "l2ini.py"}
 # l2solo_ru.json — перевод речи ботов L2Solo, а не окно.
-JSON_SKIP = {"mobius_pins.json", "runtimes.json", "l2solo_pin.json", "updates.json", "feedback.json", "l2solo_ru.json"}
+JSON_SKIP = {"mobius_pins.json", "runtimes.json", "l2solo_pin.json", "updates.json", "feedback.json", "l2solo_ru.json", "gm_shops.json"}
 CYR = re.compile(r"[А-Яа-яЁё]")
 PH = re.compile(r"\{\d+\}")
 TAG = re.compile(r"<(?:[^>\"'{]|\"[^\"]*\"|'[^']*'|\{\d+\})*>")

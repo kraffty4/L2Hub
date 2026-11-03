@@ -39,7 +39,9 @@ import org.l2jmobius.gameserver.entity.item.enchant.EnchantScroll;
 import org.l2jmobius.gameserver.entity.item.enchant.EnchantScroll;
 import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
 import org.l2jmobius.gameserver.entity.item.holders.ItemHolder;
+import org.l2jmobius.gameserver.entity.item.holders.PetItemHolder;
 import org.l2jmobius.gameserver.entity.item.instance.Item;
+import org.l2jmobius.gameserver.entity.item.recipe.ManufactureItem;
 import org.l2jmobius.gameserver.entity.item.type.WeaponType;
 import org.l2jmobius.gameserver.entity.itemcontainer.Inventory;
 import org.l2jmobius.gameserver.entity.spawns.Spawn;
@@ -65,6 +67,7 @@ import org.l2jmobius.gameserver.mechanics.siege.Fort;
 import org.l2jmobius.gameserver.mechanics.skill.AbnormalType;
 import org.l2jmobius.gameserver.mechanics.skill.BuffInfo;
 import org.l2jmobius.gameserver.mechanics.skill.Skill;
+import org.l2jmobius.gameserver.mechanics.skill.holders.SkillHolder;
 import org.l2jmobius.gameserver.mechanics.skill.holders.SkillLearn;
 import org.l2jmobius.gameserver.mechanics.skill.targets.TargetType;
 import org.l2jmobius.gameserver.network.SystemMessageId;
@@ -186,15 +189,56 @@ public final class PhantomCompat
 		return (summon != null) && summon.isServitor() ? summon : null;
 	}
 
+	/** Пет (не слуга): у CT призыв один — getSummon(), если это пет. */
+	public static Summon pet(Player player)
+	{
+		final Summon summon = player.getSummon();
+		return (summon != null) && summon.isPet() ? summon : null;
+	}
+
+	/**
+	 * Призвать пета из ошейника или флейты без клиента: обработчик предмета (SummonItems) зовёт флуд-защиту клиента,
+	 * у охотника её нет. Поэтому как он: держатель ошейника и каст скилла предмета, дальше пета создаёт эффект SummonPet.
+	 * @return каст начат
+	 */
+	public static boolean summonPet(Player player, Item collar)
+	{
+		final SkillHolder[] skills = collar.getEtcItem() == null ? null : collar.getEtcItem().getSkills();
+		final Skill skill = (skills == null) || (skills.length == 0) || (skills[0] == null) ? null : skills[0].getSkill();
+		if (skill == null)
+		{
+			return false;
+		}
+		player.addScript(new PetItemHolder(collar));
+		return useMagic(player, skill, false, false);
+	}
+
+	/** Строка мастерской крафта: рецепт и плата за работу. */
+	public static void addManufactureItem(Player player, int recipeId, long fee)
+	{
+		player.getManufactureItems().put(recipeId, new ManufactureItem(recipeId, fee));
+	}
+
 	/** Олимпиада: записать дворянина на матч без класса (у H5, Classic и Essence — OlympiadManager с CompetitionType). */
 	public static boolean olympiadRegister(Player player)
 	{
 		return OlympiadManager.getInstance().registerNoble(player, CompetitionType.NON_CLASSED);
 	}
 
+	/** Записан или уже в паре: от подбора до телепорта идёт отсчёт, и в этом окне участник не в очереди и не на стадионе (раздел 4.131). */
 	public static boolean olympiadRegistered(Player player)
 	{
-		return OlympiadManager.getInstance().isRegistered(player);
+		return OlympiadManager.getInstance().isRegisteredInComp(player);
+	}
+
+	public static boolean olympiadUnregister(Player player)
+	{
+		return OlympiadManager.getInstance().unRegisterNoble(player);
+	}
+
+	public static boolean canBeDispeled(Skill skill)
+	{
+		return skill.canBeDispeled();
 	}
 
 	/** Родные зоны рас, которых нет в других хрониках. */

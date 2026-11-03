@@ -5,7 +5,7 @@
 import json
 import re
 
-from . import catalog, configs, l2solo, paths, servers
+from . import catalog, configs, l2solo, machine, paths, servers
 
 ADENA = 57
 
@@ -208,7 +208,8 @@ def hunters_max(p: dict) -> dict | None:
     if raw is None or not top:
         return None
     # Как читает сервер: не число или 0 — все из таблицы, больше таблицы — тоже все.
-    return {**n, "count": (min(int(raw), top) if raw.isdigit() else 0) or top, "top": top, "heapGb": servers.game_heap_gb()}
+    count = (min(int(raw), top) if raw.isdigit() else 0) or top
+    return {**n, "count": count, "top": top, "heapGb": servers.game_heap_gb(), "machine": machine.assess(p, count, top)}
 
 
 def set_hunters_max(p: dict, value) -> dict:

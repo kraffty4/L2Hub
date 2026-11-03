@@ -1,0 +1,666 @@
+Самопроверка комплектов из вклада пользователя (спойл, петы, мастерская): HuntersSelfTest = L2HUBKITS, только на копии базы.
+
+diff --git b/dist/game/data/scripts/custom/L2HubKitsTest/L2HubKitsTest.java b/dist/game/data/scripts/custom/L2HubKitsTest/L2HubKitsTest.java
+new file mode 100644
+index 0000000..be0a484
+--- /dev/null
++++ b/dist/game/data/scripts/custom/L2HubKitsTest/L2HubKitsTest.java
+@@ -0,0 +1,658 @@
++package custom.L2HubKitsTest;
++
++import java.lang.reflect.Field;
++import java.lang.reflect.Method;
++import java.util.ArrayList;
++import java.util.Collections;
++import java.util.List;
++import java.util.Map;
++import java.util.function.BooleanSupplier;
++import java.util.function.Predicate;
++import java.util.logging.Level;
++import java.util.logging.Logger;
++
++import org.l2jmobius.commons.threads.ThreadPool;
++import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
++import org.l2jmobius.gameserver.data.xml.RecipeData;
++import org.l2jmobius.gameserver.entity.Location;
++import org.l2jmobius.gameserver.entity.World;
++import org.l2jmobius.gameserver.entity.WorldObject;
++import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.entity.actor.Summon;
++import org.l2jmobius.gameserver.entity.actor.enums.player.PrivateStoreType;
++import org.l2jmobius.gameserver.entity.actor.instance.Monster;
++import org.l2jmobius.gameserver.entity.actor.instance.Pet;
++import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
++import org.l2jmobius.gameserver.entity.item.instance.Item;
++import org.l2jmobius.gameserver.entity.item.recipe.ManufactureItem;
++import org.l2jmobius.gameserver.entity.item.recipe.RecipeList;
++import org.l2jmobius.gameserver.entity.itemcontainer.Inventory;
++import org.l2jmobius.gameserver.entity.zone.ZoneId;
++import org.l2jmobius.gameserver.managers.RecipeManager;
++import org.l2jmobius.gameserver.managers.phantom.PhantomHunterManager;
++import org.l2jmobius.gameserver.managers.phantom.PhantomManager;
++import org.l2jmobius.gameserver.taskmanagers.AutoPlayTaskManager;
++
++/**
++ * L2Hub: самопроверка комплектов из вклада пользователя — спойл ({@code HunterSpoil}), петы ({@code HunterPets}) и мастерская ({@code HunterCraft}), только на копии базы: {@code HuntersSelfTest = L2HUBKITS}.<br>
++ * Спойл: без ключа гном не спойлит; с ключом спойлит цель, свипает свой труп, материалы в сумке. Петы: без ключа ничего; с ключом ошейник, корм и призыв в городе, кормёжка,
++ * ошейник и корм не уходят в хлам, мёртвый пет не остаётся при хозяине, страйдер в городе верхом не перекупает оружие и не садится на труп. Мастерская: без ключа не открывается; с ключом — штатная мастерская Mobius,
++ * и заказ другого охотника без клиента проходит через {@link RecipeManager}: материалы и плата списаны, вещь у заказчика, плата у мастера. Итог — строки в логе.
++ * @author L2Hub
++ */
++public class L2HubKitsTest
++{
++	private static final Logger LOGGER = Logger.getLogger(L2HubKitsTest.class.getName());
++	private static final String TAG = "L2HubKitsTest: SelfTest L2HUBKITS: ";
++	private static final long STARTED = System.currentTimeMillis();
++	private static final Location GIRAN = new Location(83400, 147943, -3404);
++	private static final int SPOIL = 254;
++	private static final int SWEEPER = 42;
++	private static int _ok;
++	private static int _wrong;
++
++	private interface Section
++	{
++		void run() throws Exception;
++	}
++
++	public static void main(String[] args)
++	{
++		if ("L2HUBKITS".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST))
++		{
++			ThreadPool.schedule(L2HubKitsTest::start, 60000);
++		}
++	}
++
++	private static void start()
++	{
++		if ((pool().size() < 100) && ((System.currentTimeMillis() - STARTED) < (7 * 60000L)))
++		{
++			ThreadPool.schedule(L2HubKitsTest::start, 15000);
++			return;
++		}
++		ThreadPool.execute(() ->
++		{
++			LOGGER.info(TAG + "hunters " + pool().size() + ".");
++			// Разделы можно выбрать переменной L2HUBKITS_ONLY (через запятую).
++			final String only = System.getenv("L2HUBKITS_ONLY");
++			final List<String> wanted = (only == null) || only.isBlank() ? List.of("spoil", "pets", "craft") : List.of(only.toLowerCase().split(" *, *"));
++			if (wanted.contains("spoil"))
++			{
++				section("spoil", L2HubKitsTest::spoil);
++			}
++			if (wanted.contains("pets"))
++			{
++				section("pets", L2HubKitsTest::pets);
++			}
++			if (wanted.contains("craft"))
++			{
++				section("craft", L2HubKitsTest::craft);
++			}
++			LOGGER.info(TAG + "done: " + _ok + " ok, " + _wrong + " wrong.");
++		});
++	}
++
++	// ---------- Спойл ----------
++
++	private static void spoil() throws Exception
++	{
++		final Method tick = internal("PhantomSpoil", "tick", Player.class, long.class);
++		// Шанс Spoil на H5 считается от магического уровня скилла (CalculateMagicSuccessBySkillMagicLevel): берём охотника с самым высоким Spoil.
++		Player dwarf = null;
++		for (Player player : pool())
++		{
++			if ((player.getKnownSkill(SPOIL) != null) && (player.getKnownSkill(SWEEPER) != null) && ((dwarf == null) || ((player.getSkillLevel(SPOIL) * 1000) + player.getLevel()) > ((dwarf.getSkillLevel(SPOIL) * 1000) + dwarf.getLevel())))
++			{
++				dwarf = player;
++			}
++		}
++		check("spoil: found a hunter with Spoil and Sweeper", dwarf != null);
++		if (dwarf == null)
++		{
++			return;
++		}
++		final Player weak = best(p -> (p.getKnownSkill(SPOIL) != null) && ((p.getKnownSkill(SPOIL).getMagicLevel() + 10) < p.getLevel()));
++		note("spoil: " + dwarf.getName() + " (" + dwarf.getLevel() + " " + dwarf.getPlayerClass().name() + "), Spoil " + dwarf.getSkillLevel(SPOIL) + ", magic level " + dwarf.getKnownSkill(SPOIL).getMagicLevel());
++		final boolean was = PhantomHuntersConfig.HUNTER_SPOIL;
++		try
++		{
++			spoiler(tick, dwarf);
++			if (weak != null)
++			{
++				weakSpoiler(tick, weak);
++			}
++		}
++		finally
++		{
++			PhantomHuntersConfig.HUNTER_SPOIL = was;
++			dwarf.setTarget(null);
++			dwarf.setInvul(false);
++			if (weak != null)
++			{
++				weak.setTarget(null);
++				weak.setInvul(false);
++			}
++		}
++	}
++
++	/** Гном со Spoil намного ниже уровня мобов (ремесленники держат Spoil 1): впустую не кастует. */
++	private static void weakSpoiler(Method tick, Player weak) throws Exception
++	{
++		final Monster mob = spoilMob(weak.getLevel());
++		if (mob == null)
++		{
++			note("spoil: no mob near " + weak.getName() + "'s level, the weak spoiler is not checked");
++			return;
++		}
++		park(weak, mob.getLocation());
++		weak.setTarget(mob);
++		mob.setCurrentHp(mob.getMaxHp());
++		weak.setCurrentMp(weak.getMaxMp());
++		PhantomHuntersConfig.HUNTER_SPOIL = true;
++		final boolean cast = (boolean) tick.invoke(null, weak, System.currentTimeMillis());
++		waitFor(10, () -> !weak.isCastingNow());
++		check("spoil: " + weak.getName() + " (" + weak.getLevel() + " " + weak.getPlayerClass().name() + ", Spoil " + weak.getSkillLevel(SPOIL) + ", magic level " + weak.getKnownSkill(SPOIL).getMagicLevel() + ") does not waste Spoil on a level " + mob.getLevel() + " mob", !cast);
++	}
++
++	private static void spoiler(Method tick, Player dwarf) throws Exception
++	{
++		{
++			Monster mob = spoilMob(Math.min(dwarf.getLevel(), dwarf.getKnownSkill(SPOIL).getMagicLevel() + 3));
++			check("spoil: found a mob with a spoil list near the hunter's level", mob != null);
++			if (mob == null)
++			{
++				return;
++			}
++			park(dwarf, mob.getLocation());
++			dwarf.setTarget(mob);
++			mob.setCurrentHp(mob.getMaxHp());
++
++			PhantomHuntersConfig.HUNTER_SPOIL = false;
++			final boolean off = (boolean) tick.invoke(null, dwarf, System.currentTimeMillis());
++			check("spoil: key off, no cast", !off && !dwarf.isCastingNow());
++
++			// Спойл, потом смерть моба: предметы спойла выпадают по шансу, с пустого трупа свипать нечего — тогда следующий моб.
++			PhantomHuntersConfig.HUNTER_SPOIL = true;
++			int casts = 0;
++			int spoils = 0;
++			Monster spoiled = null;
++			for (int mobs = 0; (mobs < 6) && (spoiled == null); mobs++)
++			{
++				if (mobs > 0)
++				{
++					mob = spoilMob(Math.min(dwarf.getLevel(), dwarf.getKnownSkill(SPOIL).getMagicLevel() + 3));
++					if (mob == null)
++					{
++						break;
++					}
++					park(dwarf, mob.getLocation());
++					dwarf.setTarget(mob);
++				}
++				for (int tries = 0; (tries < 2) && !mob.isSpoiled(); tries++)
++				{
++					dwarf.setCurrentMp(dwarf.getMaxMp());
++					mob.setCurrentHp(mob.getMaxHp());
++					if ((boolean) tick.invoke(null, dwarf, System.currentTimeMillis()))
++					{
++						casts++;
++						waitFor(10, () -> !dwarf.isCastingNow());
++					}
++					Thread.sleep(600);
++				}
++				if (!mob.isSpoiled() || (mob.getSpoilerObjectId() != dwarf.getObjectId()))
++				{
++					continue;
++				}
++				spoils++;
++				final Monster dying = mob;
++				dying.reduceCurrentHp(dying.getCurrentHp() + 1, dwarf, null);
++				if (waitFor(5, dying::isDead) && dying.isSweepActive())
++				{
++					spoiled = dying;
++				}
++				else
++				{
++					note("spoil: " + dying.getName() + " (" + dying.getLevel() + ") died spoiled, but no spoil item rolled");
++				}
++			}
++			check("spoil: targets are spoiled by the hunter (" + spoils + " spoiled, " + casts + " casts)", spoils > 0);
++			check("spoil: a spoiled mob died with a sweep ready", spoiled != null);
++			if (spoiled == null)
++			{
++				return;
++			}
++
++			final Monster corpse = spoiled;
++			final Map<Integer, Long> bagBefore = bag(dwarf);
++			note("spoil: before the sweep — distance " + (int) dwarf.calculateDistance3D(corpse) + ", bag " + dwarf.getInventory().getSize() + "/" + dwarf.getInventoryLimit() + " slots, load " + dwarf.getCurrentLoad() + "/" + dwarf.getMaxLoad() + ", MP " + (int) dwarf.getCurrentMp());
++			// Sweeper бьёт с 20: охотник сначала подходит к трупу, на это даём время, тик — до трёх раз.
++			boolean swept = false;
++			for (int i = 0; (i < 3) && corpse.isSweepActive(); i++)
++			{
++				dwarf.setCurrentMp(dwarf.getMaxMp());
++				final boolean cast = (boolean) tick.invoke(null, dwarf, System.currentTimeMillis());
++				swept |= cast;
++				waitFor(12, () -> !corpse.isSweepActive());
++				note("spoil: sweep try " + (i + 1) + ": tick " + cast + ", distance " + (int) dwarf.calculateDistance3D(corpse) + ", casting " + dwarf.isCastingNow() + ", sweep left " + corpse.isSweepActive());
++			}
++			check("spoil: the hunter sweeps its own corpse", swept && !corpse.isSweepActive());
++			// Заряды за время ожидания тоже тратятся, поэтому смотрим не сумму, а что прибыло.
++			final Map<Integer, Long> bagAfter = bag(dwarf);
++			boolean gained = false;
++			for (Map.Entry<Integer, Long> entry : bagAfter.entrySet())
++			{
++				gained |= (entry.getKey() != 57) && (entry.getValue() > bagBefore.getOrDefault(entry.getKey(), 0L));
++			}
++			check("spoil: sweep materials in the bag (" + diff(bagBefore, bagAfter) + ")", gained);
++		}
++	}
++
++	private static Monster spoilMob(int level)
++	{
++		final List<Monster> mobs = new ArrayList<>();
++		for (WorldObject object : World.getVisibleObjects())
++		{
++			if ((object instanceof Monster) && (object.getInstanceId() == 0))
++			{
++				final Monster mob = (Monster) object;
++				if (!mob.isDead() && !mob.isRaid() && !mob.isChampion() && !mob.isMinion() && !mob.isSpoiled() && !mob.isInsideZone(ZoneId.PEACE) && (mob.getTemplate().getSpoilList() != null) && !mob.getTemplate().getSpoilList().isEmpty() && (Math.abs(mob.getLevel() - level) <= 3))
++				{
++					mobs.add(mob);
++				}
++			}
++		}
++		Collections.shuffle(mobs);
++		return mobs.isEmpty() ? null : mobs.get(0);
++	}
++
++	private static long items(Player player)
++	{
++		long total = 0;
++		for (Item item : player.getInventory().getItems())
++		{
++			if (item.getId() != 57)
++			{
++				total += item.getCount();
++			}
++		}
++		return total;
++	}
++
++	// ---------- Петы ----------
++
++	private static long _clock = System.currentTimeMillis() + 600000;
++
++	/** Время для тика петов: каждый вызов на 10 с позже прошлого, чтобы тик не упирался в свою паузу. */
++	private static long next()
++	{
++		_clock += 10001;
++		return _clock;
++	}
++
++	private static void pets() throws Exception
++	{
++		final Method wants = internal("PhantomPets", "wantsPet", Player.class);
++		final Predicate<Player> petOwner = p ->
++		{
++			try
++			{
++				return (boolean) wants.invoke(null, p) && (p.getSummon() == null) && !p.isMounted() && (p.getLevel() >= 15);
++			}
++			catch (Exception e)
++			{
++				return false;
++			}
++		};
++		final Player rider = best(p -> petOwner.test(p) && (p.getLevel() >= 55));
++		final Player walker = best(p -> petOwner.test(p) && (p.getLevel() < 55) && (p != rider));
++		check("pets: found pet owners, strider " + (rider == null ? "-" : rider.getName() + " " + rider.getLevel()) + ", pet " + (walker == null ? "-" : walker.getName() + " " + walker.getLevel()), (rider != null) || (walker != null));
++		final boolean was = PhantomHuntersConfig.HUNTER_PETS;
++		try
++		{
++			if (walker != null)
++			{
++				petOwner(walker, false);
++			}
++			if (rider != null)
++			{
++				petOwner(rider, true);
++			}
++		}
++		finally
++		{
++			PhantomHuntersConfig.HUNTER_PETS = was;
++			if (rider != null)
++			{
++				rider.setInvul(false);
++			}
++			if (walker != null)
++			{
++				walker.setInvul(false);
++			}
++		}
++	}
++
++	private static void petOwner(Player owner, boolean strider) throws Exception
++	{
++		final Method tick = internal("PhantomPets", "tick", Player.class, boolean.class, long.class);
++		final Method collarFor = internal("PhantomPets", "collarFor", Player.class);
++		final Method junk = internal("PhantomHunterOutfit", "junk", Player.class, Item.class);
++		final String who = "pets " + owner.getName() + " (" + owner.getLevel() + " " + owner.getPlayerClass().name() + "): ";
++		final int collarId = (int) collarFor.invoke(null, owner);
++		final int foodId = collarId == 2375 ? 2515 : strider ? 5168 : 4038;
++		park(owner, new Location(GIRAN.getX() - 80, GIRAN.getY() + (strider ? 60 : -60), GIRAN.getZ()));
++		owner.addAdena(ItemProcessType.NONE, 50000000, null, false);
++
++		PhantomHuntersConfig.HUNTER_PETS = false;
++		tick.invoke(null, owner, true, next());
++		check(who + "key off, no collar and no pet", (count(owner, collarId) == 0) && (owner.getSummon() == null));
++
++		// Ошейник, корм и призыв: каст призыва идёт несколько секунд, бой его срывает — до трёх попыток.
++		PhantomHuntersConfig.HUNTER_PETS = true;
++		for (int i = 0; (i < 3) && (owner.getSummon() == null); i++)
++		{
++			waitFor(20, () -> !owner.isInCombat());
++			tick.invoke(null, owner, true, next());
++			waitFor(15, () -> owner.getSummon() != null);
++		}
++		note(who + "collar " + collarId + " x" + count(owner, collarId) + ", food " + foodId + " x" + count(owner, foodId) + ", adena " + owner.getAdena());
++		check(who + "bought the collar and food in town", (count(owner, collarId) == 1) && (count(owner, foodId) >= 3));
++		final Summon summoned = owner.getSummon();
++		check(who + "the pet is summoned", (summoned instanceof Pet) && !summoned.isDead());
++		if (!(summoned instanceof Pet))
++		{
++			return;
++		}
++		final Pet pet = (Pet) summoned;
++
++		// Голодный пет: хозяин кормит из сумки.
++		final long food = count(owner, foodId);
++		pet.setCurrentFed(pet.getMaxFed() / 4);
++		tick.invoke(null, owner, false, next());
++		check(who + "a hungry pet is fed, " + food + " -> " + count(owner, foodId) + " food", (pet.getCurrentFed() >= (pet.getMaxFed() * 0.9)) && (count(owner, foodId) == (food - 1)));
++
++		// Продажа хлама в городе не должна забирать ошейник и корм.
++		final Item collar = owner.getInventory().getItemByItemId(collarId);
++		final Item meal = owner.getInventory().getItemByItemId(foodId);
++		check(who + "town junk sale keeps the collar", (collar != null) && !(boolean) junk.invoke(null, owner, collar));
++		check(who + "town junk sale keeps the pet food", (meal != null) && !(boolean) junk.invoke(null, owner, meal));
++
++		if (strider)
++		{
++			// Страйдер ходит рядом: в городе охотник не садится верхом, оружие в руках, городская закупка не берёт новое.
++			final Class<?> data = Class.forName("org.l2jmobius.gameserver.managers.phantom.PhantomData");
++			final Object template = data.getMethod("getTemplate", String.class).invoke(data.getMethod("getInstance").invoke(null), owner.getName());
++			final Method buyGear = internal("PhantomHunterOutfit", "buyGear", Player.class, Class.forName("org.l2jmobius.gameserver.managers.phantom.PhantomTemplate"), long.class, boolean.class);
++			note(who + "town shopping before: " + buyGear.invoke(null, owner, template, 0L, false));
++			final Item weapon = owner.getInventory().getPaperdollItem(Inventory.PAPERDOLL_RHAND);
++			tick.invoke(null, owner, true, next());
++			final Item hands = owner.getInventory().getPaperdollItem(Inventory.PAPERDOLL_RHAND);
++			check(who + "no riding in town, the weapon stays in hand (" + (weapon == null ? "none" : weapon.getName()) + " -> " + (hands == null ? "none" : hands.getName()) + ")", !owner.isMounted() && (weapon != null) && (hands != null) && (hands.getObjectId() == weapon.getObjectId()) && (owner.getSummon() != null));
++			final Object bought = buyGear.invoke(null, owner, template, 0L, false);
++			check(who + "town shopping after the pet tick buys nothing new (" + bought + ")", ((List<?>) bought).isEmpty());
++		}
++
++		// Мёртвый пет: хозяин поднимает и отзывает его, ошейник при нём, следующий тик зовёт снова.
++		final Summon alive = owner.getSummon();
++		if (alive == null)
++		{
++			note(who + "no pet before the death check");
++			return;
++		}
++		alive.reduceCurrentHp(alive.getCurrentHp() + 1, owner, null);
++		check(who + "the pet died", waitFor(5, alive::isDead));
++		tick.invoke(null, owner, false, next());
++		final Summon after = owner.getSummon();
++		check(who + "a dead pet does not stay with the owner (" + (after == null ? "none" : after.isDead() ? "dead corpse" : "alive") + "), collar x" + count(owner, collarId), ((after == null) || !after.isDead()) && (count(owner, collarId) == 1));
++		for (int i = 0; (i < 3) && (owner.getSummon() == null); i++)
++		{
++			waitFor(20, () -> !owner.isInCombat());
++			tick.invoke(null, owner, false, next());
++			waitFor(15, () -> owner.getSummon() != null);
++		}
++		check(who + "the pet comes back after the death", (owner.getSummon() != null) && !owner.getSummon().isDead());
++	}
++
++	// ---------- Мастерская ----------
++
++	private static void craft() throws Exception
++	{
++		final Method wants = internal("PhantomCraft", "wantsWorkshop", Player.class);
++		final Method open = internal("PhantomCraft", "openWorkshop", Player.class);
++		final boolean was = PhantomHuntersConfig.HUNTER_CRAFT;
++		PhantomHuntersConfig.HUNTER_CRAFT = true;
++		final Player crafter = best(p ->
++		{
++			try
++			{
++				return (boolean) wants.invoke(null, p);
++			}
++			catch (Exception e)
++			{
++				return false;
++			}
++		});
++		PhantomHuntersConfig.HUNTER_CRAFT = was;
++		check("craft: found a crafter who wants a workshop", crafter != null);
++		if (crafter == null)
++		{
++			return;
++		}
++		note("craft: " + crafter.getName() + " (" + crafter.getLevel() + " " + crafter.getPlayerClass().name() + "), Create Item " + crafter.getSkillLevel(172));
++		final Player buyer = best(p -> (p != crafter) && !p.isInStoreMode());
++		try
++		{
++			park(crafter, GIRAN);
++			park(buyer, new Location(GIRAN.getX() + 60, GIRAN.getY() + 30, GIRAN.getZ()));
++
++			PhantomHuntersConfig.HUNTER_CRAFT = false;
++			check("craft: key off, no workshop", !(boolean) open.invoke(null, crafter) && (crafter.getPrivateStoreType() == PrivateStoreType.NONE));
++
++			PhantomHuntersConfig.HUNTER_CRAFT = true;
++			final boolean opened = (boolean) open.invoke(null, crafter);
++			final Map<Integer, ManufactureItem> list = crafter.getManufactureItems();
++			check("craft: the workshop opens as a Mobius manufacture store, " + list.size() + " recipes", opened && (crafter.getPrivateStoreType() == PrivateStoreType.MANUFACTURE) && !list.isEmpty() && (list.size() <= PhantomHuntersConfig.HUNTER_CRAFT_RECIPES));
++			if (!opened || list.isEmpty())
++			{
++				return;
++			}
++			boolean fees = true;
++			boolean known = true;
++			RecipeList order = null;
++			for (ManufactureItem item : list.values())
++			{
++				fees &= item.getCost() >= 100;
++				known &= crafter.hasRecipeList(item.getRecipeId());
++				final RecipeList recipe = RecipeData.getInstance().getRecipeList(item.getRecipeId());
++				if ((recipe != null) && ((order == null) || (recipe.getSuccessRate() > order.getSuccessRate())))
++				{
++					order = recipe;
++				}
++			}
++			check("craft: every fee is at least 100 and every recipe is in the crafter's book", fees && known);
++			check("craft: found a recipe to order", order != null);
++			if (order == null)
++			{
++				return;
++			}
++
++			// Заказ без клиентов с обеих сторон: материалы и плата у заказчика, MP у мастера.
++			final long fee = list.get(order.getId()).getCost();
++			for (var need : order.getRecipes())
++			{
++				buyer.addItem(ItemProcessType.NONE, need.getItemId(), need.getQuantity(), null, false);
++			}
++			buyer.addAdena(ItemProcessType.NONE, fee + 1000, null, false);
++			crafter.setCurrentMp(crafter.getMaxMp());
++			final long buyerAdena = buyer.getAdena();
++			final long crafterAdena = crafter.getAdena();
++			final RecipeList made = order;
++			final long productBefore = count(buyer, order.getItemId()) + (order.getRareItemId() > 0 ? count(buyer, order.getRareItemId()) : 0);
++			final long materialsBefore = count(buyer, order.getRecipes()[0].getItemId());
++			final Map<Integer, Long> bagBefore = bag(buyer);
++			final double mpBefore = crafter.getCurrentMp();
++			RecipeManager.getInstance().requestManufactureItem(crafter, order.getId(), buyer);
++			waitFor(10, () -> (count(buyer, made.getItemId()) + (made.getRareItemId() > 0 ? count(buyer, made.getRareItemId()) : 0)) > productBefore);
++			final long productAfter = count(buyer, order.getItemId()) + (order.getRareItemId() > 0 ? count(buyer, order.getRareItemId()) : 0);
++			note("craft: buyer " + buyer.getName() + ", order " + order.getRecipeName() + " (product " + order.getItemId() + ", rare " + order.getRareItemId() + ", success " + order.getSuccessRate() + "%), fee " + fee + "; buyer adena " + buyerAdena + " -> " + buyer.getAdena() + ", crafter adena " + crafterAdena + " -> " + crafter.getAdena() + ", crafter MP " + (int) mpBefore + " -> " + (int) crafter.getCurrentMp() + ", product " + productBefore + " -> " + productAfter);
++			note("craft: buyer's bag changed " + diff(bagBefore, bag(buyer)) + ", crafter's bag has product " + count(crafter, order.getItemId()));
++			check("craft: the materials are used up", count(buyer, order.getRecipes()[0].getItemId()) < materialsBefore);
++			check("craft: the fee went from the buyer to the crafter", (buyer.getAdena() == (buyerAdena - fee)) && (crafter.getAdena() == (crafterAdena + fee)));
++			if (order.getSuccessRate() >= 100)
++			{
++				check("craft: the buyer got the item", productAfter > productBefore);
++			}
++			check("craft: the crafter still sits in the workshop, in the world", (crafter.getPrivateStoreType() == PrivateStoreType.MANUFACTURE) && (World.getPlayer(crafter.getObjectId()) == crafter));
++		}
++		finally
++		{
++			PhantomHuntersConfig.HUNTER_CRAFT = was;
++			crafter.setInvul(false);
++			if (buyer != null)
++			{
++				buyer.setInvul(false);
++			}
++		}
++	}
++
++	private static Map<Integer, Long> bag(Player player)
++	{
++		final Map<Integer, Long> out = new java.util.TreeMap<>();
++		for (Item item : player.getInventory().getItems())
++		{
++			out.merge(item.getId(), item.getCount(), Long::sum);
++		}
++		return out;
++	}
++
++	private static String diff(Map<Integer, Long> before, Map<Integer, Long> after)
++	{
++		final StringBuilder sb = new StringBuilder();
++		final java.util.Set<Integer> ids = new java.util.TreeSet<>(before.keySet());
++		ids.addAll(after.keySet());
++		for (int id : ids)
++		{
++			final long delta = after.getOrDefault(id, 0L) - before.getOrDefault(id, 0L);
++			if (delta != 0)
++			{
++				sb.append(' ').append(id).append(delta > 0 ? "+" : "").append(delta);
++			}
++		}
++		return sb.length() == 0 ? "nothing" : sb.toString().trim();
++	}
++
++	private static long count(Player player, int itemId)
++	{
++		final Item item = player.getInventory().getItemByItemId(itemId);
++		return item == null ? 0 : player.getInventory().getInventoryItemCount(itemId, -1);
++	}
++
++	// ---------- Общее ----------
++
++	/** Охотники в мире: фантомы без пати, лавки, ивента, инстанса и олимпиады. */
++	private static List<Player> pool()
++	{
++		final List<Player> out = new ArrayList<>();
++		for (Player player : World.getPlayers())
++		{
++			if (PhantomManager.getInstance().isPhantom(player) && !player.isDead() && !player.isTeleporting() && !player.isInParty() && !player.isInStoreMode() && !player.isRegisteredOnEvent() && !player.isInOlympiadMode() && (player.getInstanceId() == 0) && !player.isCursedWeaponEquipped())
++			{
++				out.add(player);
++			}
++		}
++		return out;
++	}
++
++	/** Самый высокий по уровню из годных. */
++	private static Player best(Predicate<Player> test)
++	{
++		Player best = null;
++		for (Player player : pool())
++		{
++			if (test.test(player) && ((best == null) || (player.getLevel() > best.getLevel())))
++			{
++				best = player;
++			}
++		}
++		return best;
++	}
++
++	/** Снять с охотников (иначе уйдёт качаться) и поставить на месте. */
++	private static void park(Player player, Location at) throws Exception
++	{
++		hunters().remove(player.getName().toLowerCase());
++		AutoPlayTaskManager.getInstance().stopAutoPlay(player);
++		player.stopMove(null);
++		player.abortAttack();
++		player.abortCast();
++		player.setTarget(null);
++		player.setInvul(true);
++		if (player.isSitting())
++		{
++			player.standUp();
++			Thread.sleep(3000);
++		}
++		player.teleToLocation(at);
++		Thread.sleep(1500);
++	}
++
++	private static Map<?, ?> hunters() throws Exception
++	{
++		final Field field = PhantomHunterManager.class.getDeclaredField("_hunters");
++		field.setAccessible(true);
++		return (Map<?, ?>) field.get(PhantomHunterManager.getInstance());
++	}
++
++	private static Method internal(String className, String name, Class<?>... args) throws Exception
++	{
++		final Method method = Class.forName("org.l2jmobius.gameserver.managers.phantom." + className).getDeclaredMethod(name, args);
++		method.setAccessible(true);
++		return method;
++	}
++
++	private static boolean waitFor(int seconds, BooleanSupplier done) throws InterruptedException
++	{
++		for (int i = 0; i < (seconds * 2); i++)
++		{
++			if (done.getAsBoolean())
++			{
++				return true;
++			}
++			Thread.sleep(500);
++		}
++		return done.getAsBoolean();
++	}
++
++	private static void section(String name, Section body)
++	{
++		try
++		{
++			body.run();
++		}
++		catch (Throwable e)
++		{
++			_wrong++;
++			LOGGER.log(Level.WARNING, TAG + "WRONG " + name + " failed: " + e, e);
++		}
++	}
++
++	private static void check(String what, boolean good)
++	{
++		if (good)
++		{
++			_ok++;
++			LOGGER.info(TAG + "ok " + what);
++		}
++		else
++		{
++			_wrong++;
++			LOGGER.warning(TAG + "WRONG " + what);
++		}
++	}
++
++	private static void note(String what)
++	{
++		LOGGER.info(TAG + "note " + what);
++	}
++}
