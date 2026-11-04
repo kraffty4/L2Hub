@@ -1392,7 +1392,8 @@ class Api:
             return {"ok": False, "error": str(e)}
         if self.running() == chronicle_id:
             return {"ok": False, "error": "Сначала останови сервер: L2Solo обновляется только выключенным."}
-        return self._start_job(chronicle_id, "update", l2solo.update_steps(p, lambda q: backups.make(q, "before-update")))
+        # не "update": так зовётся обновление самой программы, и окно по его концу закрывается под установщик
+        return self._start_job(chronicle_id, "l2solo_update", l2solo.update_steps(p, lambda q: backups.make(q, "before-update")))
 
     def l2solo_llm_test(self, chronicle_id: str) -> dict:
         try:

@@ -1409,7 +1409,7 @@
       else if (type === 'enum') ctl = `<select data-k="${k}" class="${cls}">${range.map((o) => `<option ${o === String(v).toUpperCase() ? 'selected' : ''}>${o}</option>`).join('')}</select>`;
       else ctl = `<input class="${cls}" data-k="${k}" value="${esc(v)}" ${type === 'int' ? 'inputmode="numeric"' : ''}>`;
       const rangeTxt = range && type !== 'enum' ? (range[1] != null ? `${range[0]}–${range[1]}` : `≥ ${range[0]}`) : type === 'list' ? 'список' : type === 'bool' ? 'да / нет' : '';
-      return `<div class="w-param ${k in E ? 'edited' : ''}"><div><div class="lb">${esc(label)}</div>${hint || f.description ? `<div class="ds">${esc(hint || f.description)}</div>` : ''}
+      return `<div class="w-param ${k in E ? 'edited' : ''}"><div><div class="w-plb">${esc(label)}</div>${hint || f.description ? `<div class="ds">${esc(hint || f.description)}</div>` : ''}
         <div class="meta"><code>${k}</code><span>${esc(f.file)}</span>${rangeTxt ? `<span>${rangeTxt}</span>` : ''}${f.file === 'PhantomHunters.ini' ? '<span class="live">● на ходу, за ~10 с</span>' : '<span class="rst">● после перезапуска гейм-сервера</span>'}${bad ? `<span style="color:var(--bad)">нужно: ${bad}</span>` : ''}</div></div>
         <div class="ctl">${ctl}</div></div>`;
     }).join('');

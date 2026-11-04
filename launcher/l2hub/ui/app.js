@@ -351,6 +351,7 @@ async function poll() {
       else if (job.action === 'build') toast(`${byId(job.chronicle)?.name}: сервер собран с модулем фантомов.`);
       else if (job.action === 'install') toast(`${byId(job.chronicle)?.name}: сервер установлен. Осталось указать папку клиента.`);
       else if (job.action === 'geodata') toast(`${byId(job.chronicle)?.name}: геодата готова — подхватится при следующем запуске сервера.`);
+      else if (job.action === 'l2solo_update') toast(`${byId(job.chronicle)?.name}: L2Solo обновлён. Новый код заработает со следующего запуска сервера, базу L2Solo перенесёт сам.`);
       else if (job.action === 'update') { toast('Установщик запущен — L2Hub закрывается, откроется уже новым.'); if (!DEV) setTimeout(() => api.close(), 1500); }
       else if (job.action === 'maps') { toast('Подложка карты готова.'); window.worldMapReload?.(); }
       else if (job.action === 'client') toast(`${byId(job.chronicle)?.name}: язык клиента переключён — со следующего запуска клиента.`);

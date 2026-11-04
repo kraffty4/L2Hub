@@ -1,0 +1,145 @@
+Отмена записи на Олимпиаду и подбор пар — под одним монитором OlympiadManager: перенос 0233 с Gracia Epilogue
+на High Five. Вынутый подбором, но ещё не поставленный на арену игрок больше не получает «не зарегистрирован»,
+а remove(index) подбора не падает, если очередь укоротилась одновременной отменой.
+
+diff --git a/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGameManager.java b/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGameManager.java
+--- a/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGameManager.java
++++ b/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGameManager.java
+@@ -99,72 +99,77 @@ public class OlympiadGameManager implements Runnable
+ 		
+ 		if (Olympiad.getInstance().inCompPeriod())
+ 		{
+-			OlympiadGameTask task;
+-			AbstractOlympiadGame newGame;
+-			List<List<Integer>> readyClassed = OlympiadManager.getInstance().hasEnoughRegisteredClassed();
+-			boolean readyNonClassed = OlympiadManager.getInstance().hasEnoughRegisteredNonClassed();
+-			boolean readyTeams = OlympiadManager.getInstance().hasEnoughRegisteredTeams();
+-			if ((readyClassed != null) || readyNonClassed || readyTeams)
++			// Подбор пар — под монитором менеджера, как и OlympiadManager.unRegisterNoble(): отмена записи
++			// видит игрока либо в очереди, либо уже в поставленном на арену матче, но не между ними.
++			synchronized (OlympiadManager.getInstance())
+ 			{
+-				// set up the games queue
+-				for (int i = 0; i < _tasks.length; i++)
++				OlympiadGameTask task;
++				AbstractOlympiadGame newGame;
++				List<List<Integer>> readyClassed = OlympiadManager.getInstance().hasEnoughRegisteredClassed();
++				boolean readyNonClassed = OlympiadManager.getInstance().hasEnoughRegisteredNonClassed();
++				boolean readyTeams = OlympiadManager.getInstance().hasEnoughRegisteredTeams();
++				if ((readyClassed != null) || readyNonClassed || readyTeams)
+ 				{
+-					task = _tasks[i];
+-					synchronized (task)
++					// set up the games queue
++					for (int i = 0; i < _tasks.length; i++)
+ 					{
+-						if (!task.isRunning())
++						task = _tasks[i];
++						synchronized (task)
+ 						{
+-							// Fair arena distribution
+-							// 0,2,4,6,8.. arenas checked for classed or teams first.
+-							if (((readyClassed != null) || readyTeams) && ((i % 2) == 0))
++							if (!task.isRunning())
+ 							{
+-								// 0,4,8.. arenas checked for teams first
+-								if (readyTeams && ((i % 4) == 0))
++								// Fair arena distribution
++								// 0,2,4,6,8.. arenas checked for classed or teams first.
++								if (((readyClassed != null) || readyTeams) && ((i % 2) == 0))
+ 								{
+-									newGame = OlympiadGameTeams.createGame(i, OlympiadManager.getInstance().getRegisteredTeamsBased());
+-									if (newGame != null)
++									// 0,4,8.. arenas checked for teams first
++									if (readyTeams && ((i % 4) == 0))
+ 									{
+-										task.attachGame(newGame);
+-										continue;
++										newGame = OlympiadGameTeams.createGame(i, OlympiadManager.getInstance().getRegisteredTeamsBased());
++										if (newGame != null)
++										{
++											task.attachGame(newGame);
++											continue;
++										}
++										
++										readyTeams = false;
+ 									}
+ 									
+-									readyTeams = false;
++									// if no ready teams found check for classed
++									if (readyClassed != null)
++									{
++										newGame = OlympiadGameClassed.createGame(i, readyClassed);
++										if (newGame != null)
++										{
++											task.attachGame(newGame);
++											continue;
++										}
++										
++										readyClassed = null;
++									}
+ 								}
+ 								
+-								// if no ready teams found check for classed
+-								if (readyClassed != null)
++								// 1,3,5,7,9.. arenas used for non-classed.
++								// Also other arenas will be used for non-classed if no classed or teams available.
++								if (readyNonClassed)
+ 								{
+-									newGame = OlympiadGameClassed.createGame(i, readyClassed);
++									newGame = OlympiadGameNonClassed.createGame(i, OlympiadManager.getInstance().getRegisteredNonClassBased());
+ 									if (newGame != null)
+ 									{
+ 										task.attachGame(newGame);
+ 										continue;
+ 									}
+ 									
+-									readyClassed = null;
+-								}
+-							}
+-							
+-							// 1,3,5,7,9.. arenas used for non-classed.
+-							// Also other arenas will be used for non-classed if no classed or teams available.
+-							if (readyNonClassed)
+-							{
+-								newGame = OlympiadGameNonClassed.createGame(i, OlympiadManager.getInstance().getRegisteredNonClassBased());
+-								if (newGame != null)
+-								{
+-									task.attachGame(newGame);
+-									continue;
++									readyNonClassed = false;
+ 								}
+-								
+-								readyNonClassed = false;
+ 							}
+ 						}
+-					}
+-					
+-					// Stop generating games if no more participants.
+-					if ((readyClassed == null) && !readyNonClassed && !readyTeams)
+-					{
+-						break;
++						
++						// Stop generating games if no more participants.
++						if ((readyClassed == null) && !readyNonClassed && !readyTeams)
++						{
++							break;
++						}
+ 					}
+ 				}
+ 			}
+diff --git a/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadManager.java b/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadManager.java
+--- a/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadManager.java
++++ b/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadManager.java
+@@ -363,7 +363,10 @@ public class OlympiadManager
+ 		return true;
+ 	}
+ 	
+-	public boolean unRegisterNoble(Player noble)
++	// Под монитором менеджера: подбор пар в OlympiadGameManager.run() держит его же, пока вынимает участников
++	// из очереди и ставит матч на арену. Иначе вынутый, но ещё не поставленный игрок получал «не зарегистрирован»
++	// и всё равно уходил на бой, а remove(index) подбора падал, если очередь укоротилась между size() и remove().
++	public synchronized boolean unRegisterNoble(Player noble)
+ 	{
+ 		if (!Olympiad._inCompPeriod)
+ 		{

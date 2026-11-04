@@ -1,0 +1,168 @@
+L2Hub: доска Alt+B и баффер у гейткиперов, по отчёту пользователя из игры.
+- «Автобой» на доске закрывает доску перед окном автобоя: клиент после кнопки доски ждёт от неё новой страницы и без неё переставал реагировать на кнопки (как телепорт доски, ShowBoard без страницы).
+- Листалка «Рейд-боссов» и поиска вещи подписана словами («Пред.», «След.»): сущности &lt;&lt; и &gt;&gt; клиент в подписи кнопки не расшифровывает и пишет как есть. У «Рейд-боссов» — кнопка «Назад» в раздел «Мир».
+- Баффер схем у гейткиперов (NPC 50008) при разговоре открывает баффер доски (_bbshubbuff): он по-русски, на тех же скиллах и со своими наборами; окно NPC было английским. Новый скрипт custom/L2HubTownBuffer, файлы Mobius не тронуты. Без доски — прежнее окно.
+- Самопроверка доски (L2HubBoardTest): у рейдов есть «Назад» и листалка без сущностей.
+
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+--- a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+@@ -117,6 +117,8 @@ public class L2HubBoard implements IParseBoardHandler
+ 		java.util.Map.entry("Телепорт", "Teleport"),
+ 		java.util.Map.entry("Назад", "Back"),
+ 		java.util.Map.entry("Дальше", "Next"),
++		java.util.Map.entry("Пред.", "Prev"),
++		java.util.Map.entry("След.", "Next"),
+ 		java.util.Map.entry("Цена телепорта: ", "Teleport price: "),
+ 		java.util.Map.entry("Телепорт доски выключен в настройках сервера (CommunityBoard.ini, CommunityEnableTeleports).", "Board teleport is turned off in the server settings (CommunityBoard.ini, CommunityEnableTeleports)."),
+ 		java.util.Map.entry("Отсюда телепорт не работает.", "Teleport does not work from here."),
+@@ -253,7 +255,7 @@ public class L2HubBoard implements IParseBoardHandler
+ 	private static final String EVENTS = "_bbshubevents";
+ 	private static final int MEDAL_SHOP = 90003000;
+ 	private static final String SPOTS = "_bbshubspots";
+-	private static final String WORLD = "_bbshubworld";
++	static final String WORLD = "_bbshubworld"; // и кнопка «Назад» страниц раздела (L2HubRaids)
+ 	private static final String PLAY = "_bbshubplay";
+ 	private static final int SPOT_PAGE = 10;
+ 	private static final int[] SPOT_BANDS =
+@@ -424,7 +426,9 @@ public class L2HubBoard implements IParseBoardHandler
+ 	/**
+ 	 * Окно автобоя кнопкой доски. Команда {@code .play} идёт через чат, и антиспам клиента может её не пропустить; кнопка до чата не доходит.
+ 	 * @param player кто нажал
+-	 * @return страница доски, если автобой выключен; иначе {@code null}: окно автобоя открывается поверх доски
++	 * Окно автобоя — обычное окно NPC, а клиент после кнопки доски ждёт от доски новой страницы и, не дождавшись, перестаёт
++	 * реагировать на её кнопки. Поэтому доска закрывается, как перед телепортом; Alt+B откроет её заново.
++	 * @return страница доски, если автобой выключен; иначе {@code null}: доска закрыта, открыто окно автобоя
+ 	 */
+ 	public static String play(Player player)
+ 	{
+@@ -433,6 +437,7 @@ public class L2HubBoard implements IParseBoardHandler
+ 		{
+ 			return page(player, tr("Автобой"), tr("<br><font color=\"808080\">Автобой выключен в настройках сервера (Custom/AutoPlay.ini, EnableAutoPlay).</font>"));
+ 		}
++		player.sendPacket(new ShowBoard());
+ 		handler.onCommand("play", player, null);
+ 		return null;
+ 	}
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubFind.java b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubFind.java
+--- a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubFind.java
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubFind.java
+@@ -423,15 +423,16 @@ public final class L2HubFind
+ 		{
+ 			return;
+ 		}
++		// Подписи — словами: &lt;&lt; в value кнопки клиент пишет как есть.
+ 		sb.append("<br><table width=300><tr><td width=100 align=center>");
+ 		if (page > 1)
+ 		{
+-			sb.append(L2HubBoard.button("&lt;&lt;", COMMAND + " " + tab + " " + (page - 1) + " " + query, 60));
++			sb.append(L2HubBoard.button(L2HubBoard.tr("Пред."), COMMAND + " " + tab + " " + (page - 1) + " " + query, 60));
+ 		}
+ 		sb.append("</td><td width=100 align=center>").append(page).append(" / ").append(pages).append("</td><td width=100 align=center>");
+ 		if (page < pages)
+ 		{
+-			sb.append(L2HubBoard.button("&gt;&gt;", COMMAND + " " + tab + " " + (page + 1) + " " + query, 60));
++			sb.append(L2HubBoard.button(L2HubBoard.tr("След."), COMMAND + " " + tab + " " + (page + 1) + " " + query, 60));
+ 		}
+ 		sb.append("</td></tr></table>");
+ 	}
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubRaids.java b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubRaids.java
+--- a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubRaids.java
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubRaids.java
+@@ -84,7 +84,7 @@ public final class L2HubRaids
+ 		sb.append("</tr></table><br>");
+ 		if (shown.isEmpty())
+ 		{
+-			return sb.append("<font color=\"808080\">").append(L2HubBoard.tr("Таких здесь нет.")).append("</font>").toString();
++			return sb.append("<font color=\"808080\">").append(L2HubBoard.tr("Таких здесь нет.")).append("</font><br><br>").append(L2HubBoard.button(L2HubBoard.tr("Назад"), L2HubBoard.WORLD, 80)).toString();
+ 		}
+ 
+ 		final int pages = Math.max(1, (shown.size() + PER_PAGE - 1) / PER_PAGE);
+@@ -101,20 +101,23 @@ public final class L2HubRaids
+ 			sb.append(L2HubBoard.button(L2HubBoard.tr("На карте"), COMMAND + " map " + boss.npcId + " " + from + " " + page, 80)).append("</td></tr>");
+ 		}
+ 		sb.append("</table>");
++		// Подписи кнопок — словами: сущности вроде &lt;&lt; клиент в value кнопки не расшифровывает и пишет как есть.
++		sb.append("<br><table width=520><tr><td width=120>").append(L2HubBoard.button(L2HubBoard.tr("Назад"), L2HubBoard.WORLD, 80)).append("</td>");
+ 		if (pages > 1)
+ 		{
+-			sb.append("<br><table width=300><tr><td width=100 align=center>");
++			sb.append("<td width=100 align=center>");
+ 			if (page > 1)
+ 			{
+-				sb.append(L2HubBoard.button("&lt;&lt;", COMMAND + " " + from + " " + (page - 1), 60));
++				sb.append(L2HubBoard.button(L2HubBoard.tr("Пред."), COMMAND + " " + from + " " + (page - 1), 60));
+ 			}
+ 			sb.append("</td><td width=100 align=center>").append(page).append(" / ").append(pages).append("</td><td width=100 align=center>");
+ 			if (page < pages)
+ 			{
+-				sb.append(L2HubBoard.button("&gt;&gt;", COMMAND + " " + from + " " + (page + 1), 60));
++				sb.append(L2HubBoard.button(L2HubBoard.tr("След."), COMMAND + " " + from + " " + (page + 1), 60));
+ 			}
+-			sb.append("</td></tr></table>");
++			sb.append("</td>");
+ 		}
++		sb.append("<td></td></tr></table>");
+ 		return sb.toString();
+ 	}
+ 
+diff --git a/dist/game/data/scripts/custom/L2HubBoardTest/L2HubBoardTest.java b/dist/game/data/scripts/custom/L2HubBoardTest/L2HubBoardTest.java
+--- a/dist/game/data/scripts/custom/L2HubBoardTest/L2HubBoardTest.java
++++ b/dist/game/data/scripts/custom/L2HubBoardTest/L2HubBoardTest.java
+@@ -234,6 +234,8 @@ public class L2HubBoardTest
+ 		});
+ 		Files.writeString(Path.of("./log/L2HubBoardRaids.html"), raids);
+ 		check("raids: " + before[0] + " alive, " + before[1] + " dead, " + before[2] + " not up, page " + raids.length() + " chars", ((before[0] + before[1]) > 50) && (raids.length() < PAGE_LIMIT) && raids.contains(L2HubRaids.COMMAND + " map "));
++		// Клиент не расшифровывает сущности в value кнопки: «&lt;&lt;» на кнопке так и было написано.
++		check("raids: back to the world, page buttons in words", raids.contains("bypass _bbshubworld\"") && raids.contains("bypass " + L2HubRaids.COMMAND + " 0 2\"") && !raids.contains("value=\"&"));
+ 		for (int band : new int[]
+ 		{
+ 			20,
+diff --git a/dist/game/data/scripts/custom/L2HubTownBuffer/L2HubTownBuffer.java b/dist/game/data/scripts/custom/L2HubTownBuffer/L2HubTownBuffer.java
+new file mode 100644
+--- /dev/null
++++ b/dist/game/data/scripts/custom/L2HubTownBuffer/L2HubTownBuffer.java
+@@ -0,0 +1,43 @@
++package custom.L2HubTownBuffer;
++
++import org.l2jmobius.gameserver.config.GeneralConfig;
++import org.l2jmobius.gameserver.entity.actor.Npc;
++import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.handler.CommunityBoardHandler;
++import org.l2jmobius.gameserver.mechanics.script.Script;
++
++/**
++ * L2Hub: баффер схем у гейткиперов (NPC 50008, мод 0003) при разговоре открывает баффер доски Alt+B ({@code _bbshubbuff}): он по-русски,
++ * на тех же скиллах SchemeBufferSkills.xml и со своими наборами, а окно самого NPC (data/html/mods/SchemeBuffer) английское.
++ * Без доски — прежнее окно. Отдельным скриптом, а не правкой SchemeBuffer в ядре: файлы Mobius при обновлении сборки остаются нетронутыми.
++ * @author L2Hub
++ */
++public class L2HubTownBuffer extends Script
++{
++	private static final int TOWN_BUFFER = 50008;
++	private static final String BOARD_BUFFER = "_bbshubbuff";
++
++	private L2HubTownBuffer()
++	{
++		addFirstTalkId(TOWN_BUFFER);
++	}
++
++	@Override
++	public String onFirstTalk(Npc npc, Player player)
++	{
++		if (GeneralConfig.ENABLE_COMMUNITY_BOARD && CommunityBoardHandler.getInstance().isCommunityBoardCommand(BOARD_BUFFER))
++		{
++			CommunityBoardHandler.getInstance().handleParseCommand(BOARD_BUFFER, player);
++		}
++		else
++		{
++			npc.showChatWindow(player);
++		}
++		return null;
++	}
++
++	public static void main(String[] args)
++	{
++		new L2HubTownBuffer();
++	}
++}

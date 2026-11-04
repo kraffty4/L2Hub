@@ -1,0 +1,66 @@
+Наблюдатель Олимпиады на точке стадиона стоит на полу, а не на 331 выше: геодата 17_10 сплющивает пол старых стадионов
+до -3000, а точки наблюдения — на -3331. Для них teleToLocation не правит высоту по геодате и не смещает точку.
+Перенос пункта O09 сопровождающего Эпилога (у него — java-агент ArenaHeight), сетка 22 точек — его.
+
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/Creature.java b/java/org/l2jmobius/gameserver/entity/actor/Creature.java
+--- a/java/org/l2jmobius/gameserver/entity/actor/Creature.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/Creature.java
+@@ -803,7 +803,8 @@ public abstract class Creature extends WorldObject
+ 		
+ 		int x = xValue;
+ 		int y = yValue;
+-		int z = _isFlying ? zValue : GeoEngine.getInstance().getHeight(x, y, zValue);
++		final boolean arenaObserver = isOlympiadArenaObserverSpot(xValue, yValue, zValue);
++		int z = (_isFlying || arenaObserver) ? zValue : GeoEngine.getInstance().getHeight(x, y, zValue);
+ 		int heading = headingValue;
+ 		
+ 		// Prepare creature for teleport.
+@@ -826,7 +827,7 @@ public abstract class Creature extends WorldObject
+ 		decayMe();
+ 		
+ 		// Adjust position a bit.
+-		if (PlayerConfig.OFFSET_ON_TELEPORT_ENABLED || (randomOffset > 0))
++		if (!arenaObserver && (PlayerConfig.OFFSET_ON_TELEPORT_ENABLED || (randomOffset > 0)))
+ 		{
+ 			x = xValue + Rnd.get(-randomOffset, randomOffset);
+ 			y = yValue + Rnd.get(-randomOffset, randomOffset);
+@@ -883,6 +884,39 @@ public abstract class Creature extends WorldObject
+ 		revalidateZone(true);
+ 	}
+ 	
++	/**
++	 * L2Hub: наблюдатель Олимпиады на точке старого стадиона. Геодата 17_10 сплющивает пол этих стадионов до -3000,
++	 * а точки наблюдения стоят на -3331: getHeight() поднимал наблюдателя на 331 над полом стадиона.
++	 * Таким точкам высоту по геодате не правим и смещения не даём. Сетка точек — от сопровождающего Эпилога.
++	 * @param x
++	 * @param y
++	 * @param z
++	 * @return {@code true}, если это игрок-наблюдатель Олимпиады на точке стадиона.
++	 */
++	private boolean isOlympiadArenaObserverSpot(int x, int y, int z)
++	{
++		if ((z != -3331) || !isPlayer() || !asPlayer().inObserverMode() || (asPlayer().getOlympiadGameId() < 0))
++		{
++			return false;
++		}
++
++		final int[] xs = { -88000, -83760, -79600, -75648 };
++		final int[] ys = { -252637, -249762, -246951, -244290, -241490, -238825 };
++		for (int row = 0; row < ys.length; row++)
++		{
++			for (int col = 0; col < xs.length; col++)
++			{
++				// В последнем ряду только два стадиона: всего их 22.
++				if (((row < (ys.length - 1)) || (col < 2)) && (x == (xs[col] + 1200)) && (y == ys[row]))
++				{
++					return true;
++				}
++			}
++		}
++
++		return false;
++	}
++
+ 	public void teleToLocation(int x, int y, int z, int heading, int instanceId, boolean randomOffset)
+ 	{
+ 		teleToLocation(x, y, z, heading, instanceId, (randomOffset) ? PlayerConfig.MAX_OFFSET_ON_TELEPORT : 0);

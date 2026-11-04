@@ -108,6 +108,7 @@ window.L2_EN = {
 "{0}: сервер собран с модулем фантомов.": "{0}: server built with the Phantom module.",
 "{0}: сервер установлен. Осталось указать папку клиента.": "{0}: server installed. Choose the client folder to finish.",
 "{0}: геодата готова — подхватится при следующем запуске сервера.": "{0}: geodata ready — it will be loaded the next time the server starts.",
+"{0}: L2Solo обновлён. Новый код заработает со следующего запуска сервера, базу L2Solo перенесёт сам.": "{0}: L2Solo updated. The new code takes effect on the next server start; L2Solo migrates its database itself.",
 "Установщик запущен — L2Hub закрывается, откроется уже новым.": "Installer started — L2Hub is closing and will reopen with the new version.",
 "Подложка карты готова.": "Map background ready.",
 "{0}: язык клиента переключён — со следующего запуска клиента.": "{0}: client language changed — takes effect the next time the client starts.",

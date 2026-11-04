@@ -304,9 +304,10 @@ select { height: 30px; border-radius: 6px; border: 1px solid var(--line); backgr
 .btn.w-open { border-color: var(--gold); background: linear-gradient(180deg, var(--sel), var(--panel)); color: var(--gold-hi); }
 .w-view { position: absolute; inset: 0; background: var(--win); display: none; grid-template-columns: 196px minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); z-index: 3; }
 .w-view.on { display: grid; }
-.w-head { grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; padding: 10px 14px 10px 18px; border-bottom: 1px solid var(--line); background: linear-gradient(180deg, var(--tile), var(--win)); min-width: 0; }
+.w-head { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 10px 14px 10px 18px; border-bottom: 1px solid var(--line); background: linear-gradient(180deg, var(--tile), var(--win)); min-width: 0; }
 .w-head h2 { font-family: var(--serif); font-size: 21px; color: var(--gold-hi); margin: 0; white-space: nowrap; }
-.w-chron { font-family: var(--serif); color: var(--text-2); font-size: 14px; white-space: nowrap; }
+/* не .w-chron: так зовётся строка «Летописи» (grid 44px …), и шапка наследовала её колонки */
+.w-headchron { font-family: var(--serif); color: var(--text-2); font-size: 14px; white-space: nowrap; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .w-pill { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); color: var(--text-2); white-space: nowrap; }
 .w-pill.warn { border-color: var(--warn); color: var(--warn); }
 .w-pill.bad { border-color: var(--bad); color: var(--bad); }
@@ -433,14 +434,15 @@ select { height: 30px; border-radius: 6px; border: 1px solid var(--line); backgr
 .w-cr-r { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
 .w-cr-list { overflow: auto; flex: 1; padding: 6px 16px 16px; }
 .w-param { display: grid; grid-template-columns: minmax(0, 1fr) 230px; gap: 14px; align-items: start; padding: 11px 4px; border-bottom: 1px solid var(--line-2); }
-.w-param .lb { font-size: 14px; color: var(--text); }
+/* не .lb: так зовётся полоска монитора (monitor.css, retro.css) — высота 13px с обрезкой рисовала её поверх заголовка */
+.w-param .w-plb { font-size: 14px; color: var(--text); }
 .w-param .ds { font-size: 12.5px; color: var(--text-2); margin-top: 3px; line-height: 1.5; }
 .w-param .meta { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 5px; font-size: 11.5px; }
 .w-param .meta span { color: var(--muted); }
 .w-param .meta .live { color: var(--ok); }
 .w-param .meta .rst { color: var(--warn); }
 .w-param .meta code { font-family: var(--mono); color: var(--bronze); }
-.w-param.edited .lb::after { content: " • не сохранено"; color: var(--warn); font-size: 11.5px; }
+.w-param.edited .w-plb::after { content: " • не сохранено"; color: var(--warn); font-size: 11.5px; }
 .w-param .ctl { display: flex; justify-content: flex-end; gap: 6px; align-items: center; }
 .w-param .ctl .field, .w-param .ctl select { width: 100%; }
 .w-cr-foot { border-top: 1px solid var(--line); padding: 10px 16px; display: flex; gap: 10px; align-items: center; background: var(--tile); }
