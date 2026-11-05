@@ -33,6 +33,10 @@ public class L2HubWorldConfig
 	public static boolean SMALL_WORLD_CLANS;
 	/** Сколько членов нужно клану на 6, 7, 8… уровень ({@code SmallWorldClanMembers}). */
 	public static int[] SMALL_WORLD_CLAN_MEMBERS;
+	/** Множитель скорости атаки игроков ({@code PlayerPAtkSpeedMultiplier}, 1 — как в Mobius): до потолка MaxPAtkSpeed. */
+	public static double PLAYER_PATK_SPEED_MULTIPLIER;
+	/** Множитель скорости каста игроков ({@code PlayerMAtkSpeedMultiplier}, 1 — как в Mobius): до потолка MaxMAtkSpeed. */
+	public static double PLAYER_MATK_SPEED_MULTIPLIER;
 
 	public static void load()
 	{
@@ -52,6 +56,8 @@ public class L2HubWorldConfig
 		LANGUAGE = "en".equalsIgnoreCase(config.getString("L2HubLanguage", "ru").strip()) ? "en" : "ru";
 		SMALL_WORLD_CLANS = config.getBoolean("SmallWorldClans", true);
 		SMALL_WORLD_CLAN_MEMBERS = numbers(config.getString("SmallWorldClanMembers", SMALL_WORLD_CLAN_MEMBERS_DEFAULT), SMALL_WORLD_CLAN_MEMBERS_DEFAULT);
+		PLAYER_PATK_SPEED_MULTIPLIER = Math.clamp(config.getDouble("PlayerPAtkSpeedMultiplier", 1), 0.5, 3);
+		PLAYER_MATK_SPEED_MULTIPLIER = Math.clamp(config.getDouble("PlayerMAtkSpeedMultiplier", 1), 0.5, 3);
 	}
 
 	/** Числа через запятую, каждое от 1; ошибка в строке — {@code fallback}. */

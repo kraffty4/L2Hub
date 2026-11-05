@@ -1,0 +1,15 @@
+L2Hub: склад клана — забирать может не только глава. `AltMembersCanWithdrawFromClanWH = True` (`Player.ini`): со склада клана забирает каждый, у кого в ранге есть право на склад (`ClanAccess.ACCESS_WAREHOUSE`); у главы оно есть всегда.
+Нужно вместе с `HunterClanRanks` модуля фантомов: глава-охотник раздаёт рангам права, но с `False` Mobius отдаёт склад клана только главе, и живой соклановец в клане охотников вещи назад не заберёт. Выключатель — тот же ключ, в окне «Настройки сервера» — «Склад клана не только главе».
+
+diff --git a/dist/game/config/Player.ini b/dist/game/config/Player.ini
+--- a/dist/game/config/Player.ini
++++ b/dist/game/config/Player.ini
+@@ -623,7 +623,7 @@ AltMaxNumOfClansInAlly = 3
+ 
+ # Allow clan members to withdraw from the clan warehouse.
+ # Default: False
+-AltMembersCanWithdrawFromClanWH = False
++AltMembersCanWithdrawFromClanWH = True
+ 
+ # Remove castle circlets after a clan loses their castle or a player leaves a clan.
+ # Default: True

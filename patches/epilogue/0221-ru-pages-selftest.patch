@@ -1,0 +1,329 @@
+Subject: [PATCH] L2Hub: самопроверка русских страниц
+
+HuntersSelfTest = L2HUBRU, только на копии базы (docs/RU_PAGES.md): языки ru, en и el по всем страницам data/lang/ru, подстановка английской на страницах без перевода, окна настоящих NPC, страницы квестов, команда .lang.
+У Эпилога при языке el ждём греческую страницу, где она есть: Mobius кладёт в архив греческие mods/Lang.
+
+diff --git a/dist/game/data/scripts/custom/L2HubRuPagesTest/L2HubRuPagesTest.java b/dist/game/data/scripts/custom/L2HubRuPagesTest/L2HubRuPagesTest.java
+new file mode 100644
+--- /dev/null
++++ b/dist/game/data/scripts/custom/L2HubRuPagesTest/L2HubRuPagesTest.java
+@@ -0,0 +1,319 @@
++package custom.L2HubRuPagesTest;
++
++import java.io.File;
++import java.nio.file.Files;
++import java.nio.file.Path;
++import java.util.ArrayList;
++import java.util.HashSet;
++import java.util.List;
++import java.util.Set;
++import java.util.logging.Level;
++import java.util.logging.Logger;
++import java.util.regex.Pattern;
++import java.util.stream.Stream;
++
++import org.l2jmobius.commons.threads.ThreadPool;
++import org.l2jmobius.gameserver.cache.HtmCache;
++import org.l2jmobius.gameserver.config.GeneralConfig;
++import org.l2jmobius.gameserver.config.ServerConfig;
++import org.l2jmobius.gameserver.config.custom.MultilingualSupportConfig;
++import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
++import org.l2jmobius.gameserver.data.SpawnTable;
++import org.l2jmobius.gameserver.entity.World;
++import org.l2jmobius.gameserver.entity.actor.Npc;
++import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.handler.IVoicedCommandHandler;
++import org.l2jmobius.gameserver.handler.VoicedCommandHandler;
++import org.l2jmobius.gameserver.managers.ScriptManager;
++import org.l2jmobius.gameserver.managers.phantom.PhantomManager;
++import org.l2jmobius.gameserver.entity.spawns.Spawn;
++import org.l2jmobius.gameserver.mechanics.script.Quest;
++import org.l2jmobius.gameserver.network.serverpackets.NpcHtmlMessage;
++
++/**
++ * L2Hub: самопроверка русских страниц, только на копии базы: {@code HuntersSelfTest = L2HUBRU} в PhantomHunters.ini.<br>
++ * Охотник играет игрока: языки ru, en и el, все страницы data/lang/ru, окна настоящих NPC, страницы квестов и подстановка английской там, где русской нет. Итог — строки в логе.
++ * @author L2Hub
++ */
++public class L2HubRuPagesTest
++{
++	private static final Logger LOGGER = Logger.getLogger(L2HubRuPagesTest.class.getName());
++	private static final String TAG = "L2HubRuPagesTest: SelfTest L2HUBRU: ";
++	private static final Pattern CYRILLIC = Pattern.compile("[А-Яа-яЁё]");
++	private static final String RU = "data/lang/ru/";
++	private static final String LANGUAGE_BUTTON = "Language / Язык"; // кнопка .lang на страницах наших модов, двуязычная и в английском файле
++	private static final int PAGE_LIMIT = 17200;
++	private static final long STARTED = System.currentTimeMillis();
++	private static int _ok;
++	private static int _wrong;
++
++	public static void main(String[] args)
++	{
++		if ("L2HUBRU".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST))
++		{
++			ThreadPool.schedule(L2HubRuPagesTest::start, 60000);
++		}
++	}
++
++	private static void start()
++	{
++		final Player player = hunter();
++		if ((player == null) && ((System.currentTimeMillis() - STARTED) < (7 * 60000L)))
++		{
++			ThreadPool.schedule(L2HubRuPagesTest::start, 15000);
++			return;
++		}
++		try
++		{
++			if (player == null)
++			{
++				check("no hunter to play", false);
++			}
++			else
++			{
++				final String lang = player.getLang();
++				LOGGER.info(TAG + "HtmCache = " + GeneralConfig.HTM_CACHE + ", hunter " + player.getName() + ", lang " + lang + ", allowed " + MultilingualSupportConfig.MULTILANG_ALLOWED + ".");
++				try
++				{
++					final List<String> russian = pages(new File(ServerConfig.DATAPACK_ROOT, RU + "data").toPath(), "data/");
++					final List<String> english = new ArrayList<>(pages(new File(ServerConfig.DATAPACK_ROOT, "data/html").toPath(), "data/html/"));
++					english.addAll(pages(new File(ServerConfig.DATAPACK_ROOT, "data/scripts").toPath(), "data/scripts/"));
++					LOGGER.info(TAG + "pages: " + russian.size() + " russian, " + english.size() + " english.");
++					russianPages(player, russian);
++					fallback(player, english, russian);
++					windows(player);
++					quests(player);
++					command(player);
++				}
++				finally
++				{
++					player.setLang(lang);
++				}
++			}
++			LOGGER.info(TAG + "done: " + _ok + " ok, " + _wrong + " wrong.");
++		}
++		catch (Throwable e)
++		{
++			LOGGER.log(Level.WARNING, TAG + "failed: " + e, e);
++		}
++	}
++
++	private static void check(String what, boolean good)
++	{
++		if (good)
++		{
++			_ok++;
++			LOGGER.info(TAG + "ok " + what);
++		}
++		else
++		{
++			_wrong++;
++			LOGGER.warning(TAG + "WRONG " + what);
++		}
++	}
++
++	private static Player hunter()
++	{
++		for (Player p : World.getPlayers())
++		{
++			if (PhantomManager.getInstance().isPhantom(p))
++			{
++				return p;
++			}
++		}
++		return null;
++	}
++
++	private static List<String> pages(Path root, String prefix) throws Exception
++	{
++		final List<String> out = new ArrayList<>();
++		try (Stream<Path> walk = Files.walk(root))
++		{
++			walk.filter(Files::isRegularFile).forEach(f ->
++			{
++				final String rel = root.relativize(f).toString().replace('\\', '/');
++				if (rel.endsWith(".htm") || rel.endsWith(".html"))
++				{
++					out.add(prefix + rel);
++				}
++			});
++		}
++		return out;
++	}
++
++	private static boolean russian(String html)
++	{
++		return (html != null) && CYRILLIC.matcher(html).find();
++	}
++
++	private static String page(Player player, String lang, String path)
++	{
++		if (!player.setLang(lang))
++		{
++			throw new IllegalStateException("language " + lang + " is not allowed");
++		}
++		return HtmCache.getInstance().getHtm(player, path);
++	}
++
++	/**
++	 * Каждая страница data/lang/ru: при ru — она сама, при en — английский близнец без единой русской буквы, при el — греческая, если есть, иначе английская.
++	 */
++	private static void russianPages(Player player, List<String> russian)
++	{
++		final HtmCache cache = HtmCache.getInstance();
++		int checked = 0;
++		int board = 0;
++		int bad = 0;
++		for (String path : russian)
++		{
++			if (path.startsWith("data/html/CommunityBoard/"))
++			{
++				board++; // доска Alt+B пишется по-русски и в английских файлах, это не наши страницы
++				continue;
++			}
++			checked++;
++			final String direct = cache.getHtm(null, RU + path);
++			final String ru = page(player, "ru", path);
++			final String en = page(player, "en", path);
++			final String el = page(player, "el", path);
++			final String plain = cache.getHtm(null, path);
++			final String greek = cache.getHtm(null, "data/lang/el/" + path); // у Эпилога Mobius даёт греческие mods/Lang: при el сервер честно отдаёт их
++			final String problem = (ru == null) || !ru.equals(direct) ? "ru is not the russian file" //
++				: !russian(ru) ? "ru has no cyrillic" //
++					: ru.length() >= PAGE_LIMIT ? "ru is over the packet limit" //
++						: (plain == null) ? "no english twin" //
++							: !plain.equals(en) ? "en is not the english file" //
++								: russian(en.replace(LANGUAGE_BUTTON, "")) ? "en has cyrillic" //
++									: !(greek != null ? greek : plain).equals(el) ? "el is not the english or greek file" : null;
++			if (problem != null)
++			{
++				bad++;
++				if (bad <= 20)
++				{
++					LOGGER.warning(TAG + path + ": " + problem);
++				}
++			}
++		}
++		check("russian pages: " + checked + " checked (board pages left out: " + board + "), bad " + bad, (checked > 200) && (bad == 0));
++	}
++
++	/**
++	 * Все страницы игры без русского близнеца: при ru подставляется английская, и в ней нет русских букв из соседней папки.
++	 */
++	private static void fallback(Player player, List<String> english, List<String> russian)
++	{
++		final HtmCache cache = HtmCache.getInstance();
++		final Set<String> translated = new HashSet<>(russian);
++		int checked = 0;
++		int bad = 0;
++		for (String path : english)
++		{
++			if (translated.contains(path))
++			{
++				continue;
++			}
++			checked++;
++			final String plain = cache.getHtm(null, path);
++			final String ru = page(player, "ru", path);
++			if ((plain == null) ? (ru != null) : !plain.equals(ru))
++			{
++				bad++;
++				if (bad <= 20)
++				{
++					LOGGER.warning(TAG + path + ": ru fallback is not the english file");
++				}
++			}
++		}
++		check("fallback: " + checked + " pages without russian, bad " + bad, (checked > 100) && (bad == 0)); // без русской остаются html/admin и страницы с нашим текстом
++		check("missing page stays missing", page(player, "ru", "data/html/default/l2hub-no-such-page.htm") == null);
++	}
++
++	private static Npc npc(int id)
++	{
++		final Spawn spawn = SpawnTable.getInstance().getAnySpawn(id);
++		return spawn == null ? null : spawn.getLastSpawn();
++	}
++
++	/**
++	 * Окно настоящего NPC тем же вызовом, что Npc.showChatWindow: путь берёт сам NPC.
++	 */
++	private static void window(Player player, int id, boolean translated)
++	{
++		final Npc npc = npc(id);
++		if (npc == null)
++		{
++			check("npc " + id + ": not spawned", false);
++			return;
++		}
++		final String path = npc.getHtmlPath(id, 0);
++		player.setLang("ru");
++		final NpcHtmlMessage ru = new NpcHtmlMessage(npc.getObjectId());
++		final boolean foundRu = ru.setFile(player, path);
++		player.setLang("en");
++		final NpcHtmlMessage en = new NpcHtmlMessage(npc.getObjectId());
++		final boolean foundEn = en.setFile(player, path);
++		check("npc " + id + " " + npc.getClass().getSimpleName() + " " + path + ": ru " + (translated ? "russian" : "english") + ", en english", foundRu && foundEn && (russian(ru.getHtml()) == translated) && !russian(en.getHtml()));
++		player.setLang("ru");
++		npc.showChatWindow(player); // пакет охотнику никуда не уходит, важно, что путь игры не падает
++	}
++
++	private static void windows(Player player)
++	{
++		window(player, 30001, true); // Лектор, торговец
++		window(player, 30006, true); // Рокси, телепортист
++		window(player, 30048, true); // Дарин, обычное окно из html/default
++		window(player, 30055, true); // кладовщик
++		window(player, 30008, true); // Роен, мастер воинов
++		window(player, 30754, true); // Гиран, не из пробной партии
++	}
++
++	private static void quest(Player player, int id, String file, boolean translated)
++	{
++		final Quest quest = ScriptManager.getInstance().getQuest(id);
++		if (quest == null)
++		{
++			check("quest " + id + ": not loaded", false);
++			return;
++		}
++		player.setLang("ru");
++		final String ru = quest.showHtmlFile(player, file);
++		player.setLang("en");
++		final String en = quest.showHtmlFile(player, file);
++		check("quest " + quest.getName() + " " + file + ": ru " + (translated ? "russian" : "english") + ", en english", (ru != null) && (en != null) && (russian(ru) == translated) && !russian(en));
++	}
++
++	private static void quests(Player player)
++	{
++		quest(player, 1, "30048-02.html", true);
++		quest(player, 1, "30048-06.htm", true);
++		quest(player, 101, "30008-02.htm", true);
++		quest(player, 257, "30039-02.htm", true);
++		quest(player, 255, "tutorial-human-fighter-001.html", true);
++		quest(player, 255, "tutorial-human-mage-001.html", true);
++		quest(player, 2, "30146-01.html", true); // квест не из пробной партии
++		player.setLang("ru");
++		final String ru = Quest.getNoQuestMsg(player);
++		final String done = Quest.getAlreadyCompletedMsg(player);
++		player.setLang("en");
++		check("common answers: ru russian, en english", russian(ru) && russian(done) && !russian(Quest.getNoQuestMsg(player)) && !russian(Quest.getAlreadyCompletedMsg(player)));
++	}
++
++	/**
++	 * Команда .lang, как у игрока.
++	 */
++	private static void command(Player player)
++	{
++		final IVoicedCommandHandler handler = VoicedCommandHandler.getInstance().getHandler("lang");
++		if (handler == null)
++		{
++			check(".lang: no handler", false);
++			return;
++		}
++		final String path = "data/html/noquest.htm";
++		handler.onCommand("lang", player, "ru");
++		final boolean ru = "ru".equals(player.getLang()) && RU.equals(player.getHtmlPrefix()) && russian(HtmCache.getInstance().getHtm(player, path));
++		handler.onCommand("lang", player, "en");
++		final boolean en = "en".equals(player.getLang()) && player.getHtmlPrefix().isEmpty() && !russian(HtmCache.getInstance().getHtm(player, path));
++		check(".lang ru and .lang en", ru && en);
++	}
++}

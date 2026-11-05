@@ -187,6 +187,8 @@
       const main = el('rateMain');
       main.innerHTML = `<h4 class="psub">Рейты</h4>`;
       main.append(rateGrid(p.rates, 'five'));
+      // Таблица опыта по уровням главнее RateXp и RateSp: без подписи поле «Опыт» врёт.
+      if (state?.rates?.dynamicExp) main.insertAdjacentHTML('beforeend', `<p class="phint">${esc('Опыт и SP — по уровням (DynamicExpRates.xml), поля выше для них не действуют: x15 → x1.')}</p>`);
     }
     if (p.fine.length) el('fold-fine').append(rateGrid(p.fine, ''));
     if (p.kind === 'events' && opened.has('cal')) renderCalendar(el('fold-cal'), selected);

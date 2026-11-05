@@ -1,0 +1,154 @@
+L2Hub: окно автобоя (`.play`) по-русски для русского клиента. Кнопки и листалку окна собирает `AutoPlay.java`, а не страница, поэтому русские страницы `lang/ru` их не переводили: «Select Skills», «Healing Potion», «Set», «Start», «Previous», «Page 1 of 3» оставались английскими. Теперь подпись берётся по `player.getLang()`: `ru` — «Выбрать умения», «Выбрать расходники», «Зелье HP», «Зелье MP», «ОК», «Старт», «Стоп», «Назад», «Далее», «Стр. 1 из 3»; остальные языки — как было.
+Откат: удалить патч и пересобрать сервер.
+
+diff --git a/dist/game/data/scripts/handlers/chat/commands/voiced/AutoPlay.java b/dist/game/data/scripts/handlers/chat/commands/voiced/AutoPlay.java
+--- a/dist/game/data/scripts/handlers/chat/commands/voiced/AutoPlay.java
++++ b/dist/game/data/scripts/handlers/chat/commands/voiced/AutoPlay.java
+@@ -297,19 +297,19 @@ public class AutoPlay implements IVoicedCommandHandler
+ 				content = content.replace("%mode2%", player.getAutoPlaySettings().getNextTargetMode() == 2 ? "L2UI_CH3.radiobutton2" : "L2UI_CH3.radiobutton1");
+ 				content = content.replace("%mode3%", player.getAutoPlaySettings().getNextTargetMode() == 3 ? "L2UI_CH3.radiobutton2" : "L2UI_CH3.radiobutton1");
+ 				
+-				content = content.replace("%skill_button%", AutoPlayConfig.ENABLE_AUTO_SKILL ? "<br><table width=295><tr><td height=31><center><button action=\"bypass voice .playskills\" value=\"Select Skills\" width=200 height=31 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"></center></td></tr></table>" : "");
+-				content = content.replace("%item_button%", AutoPlayConfig.ENABLE_AUTO_ITEM ? "<br><table width=295><tr><td height=31><center><button action=\"bypass voice .playitems\" value=\"Select Supply Items\" width=200 height=31 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"></center></td></tr></table>" : "");
+-				content = content.replace("%potion_button%", AutoPlayConfig.ENABLE_AUTO_POTION ? "<br><table width=295><tr><td width=147 height=31><center><button action=\"bypass voice .playpotion\" value=\"Healing Potion\" width=140 height=31 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"></center></td><td width=148><center><button action=\"bypass voice .playmana\" value=\"Mana Potion\" width=140 height=31 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"></center></td></tr><tr><td height=31><center><table width=140><tr><td width=55><font color=\"CDB67F\">HP (%percent%)</font></td><td><edit var=\"percentbox\" width=30 height=15></td><td><button value=\"Set\" action=\"bypass voice .play percent $percentbox\" width=40 height=21 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"></td></tr></table></center></td><td><center><table width=140><tr><td width=55><font color=\"CDB67F\">MP (%manapercent%)</font></td><td><edit var=\"manabox\" width=30 height=15></td><td><button value=\"Set\" action=\"bypass voice .play manapercent $manabox\" width=40 height=21 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"></td></tr></table></center></td></tr></table>" : "");
++				content = content.replace("%skill_button%", AutoPlayConfig.ENABLE_AUTO_SKILL ? "<br><table width=295><tr><td height=31><center><button action=\"bypass voice .playskills\" value=\"" + tr(player, "Select Skills", "Выбрать умения") + "\" width=200 height=31 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"></center></td></tr></table>" : "");
++				content = content.replace("%item_button%", AutoPlayConfig.ENABLE_AUTO_ITEM ? "<br><table width=295><tr><td height=31><center><button action=\"bypass voice .playitems\" value=\"" + tr(player, "Select Supply Items", "Выбрать расходники") + "\" width=200 height=31 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"></center></td></tr></table>" : "");
++				content = content.replace("%potion_button%", AutoPlayConfig.ENABLE_AUTO_POTION ? "<br><table width=295><tr><td width=147 height=31><center><button action=\"bypass voice .playpotion\" value=\"" + tr(player, "Healing Potion", "Зелье HP") + "\" width=140 height=31 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"></center></td><td width=148><center><button action=\"bypass voice .playmana\" value=\"" + tr(player, "Mana Potion", "Зелье MP") + "\" width=140 height=31 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"></center></td></tr><tr><td height=31><center><table width=140><tr><td width=55><font color=\"CDB67F\">HP (%percent%)</font></td><td><edit var=\"percentbox\" width=30 height=15></td><td><button value=\"" + tr(player, "Set", "ОК") + "\" action=\"bypass voice .play percent $percentbox\" width=40 height=21 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"></td></tr></table></center></td><td><center><table width=140><tr><td width=55><font color=\"CDB67F\">MP (%manapercent%)</font></td><td><edit var=\"manabox\" width=30 height=15></td><td><button value=\"" + tr(player, "Set", "ОК") + "\" action=\"bypass voice .play manapercent $manabox\" width=40 height=21 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"></td></tr></table></center></td></tr></table>" : "");
+ 				content = content.replace("%percent%", String.valueOf(player.getAutoPlaySettings().getAutoPotionPercent()));
+ 				content = content.replace("%manapercent%", String.valueOf(player.getAutoPlaySettings().getAutoManaPercent()));
+ 				
+ 				if (player.isAutoPlaying())
+ 				{
+-					content = content.replace("%status_button%", "<table width=295><tr><td height=31><center><table width=295><tr><td height=31><center><button action=\"bypass voice .play stop\" value=\"Stop\" width=200 height=31 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"></td></tr></table></center></td></tr></table>");
++					content = content.replace("%status_button%", "<table width=295><tr><td height=31><center><table width=295><tr><td height=31><center><button action=\"bypass voice .play stop\" value=\"" + tr(player, "Stop", "Стоп") + "\" width=200 height=31 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"></td></tr></table></center></td></tr></table>");
+ 				}
+ 				else
+ 				{
+-					content = content.replace("%status_button%", "<table width=295><tr><td height=31><center><table width=295><tr><td height=31><center><button action=\"bypass voice .play start\" value=\"Start\" width=200 height=31 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"></td></tr></table></center></td></tr></table>");
++					content = content.replace("%status_button%", "<table width=295><tr><td height=31><center><table width=295><tr><td height=31><center><button action=\"bypass voice .play start\" value=\"" + tr(player, "Start", "Старт") + "\" width=200 height=31 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"></td></tr></table></center></td></tr></table>");
+ 				}
+ 				
+ 				html.setHtml(content);
+@@ -523,20 +523,20 @@ public class AutoPlay implements IVoicedCommandHandler
+ 					sb.append("<br><img src=\"L2UI.SquareGray\" width=295 height=1><table width=\"100%\" bgcolor=000000><tr>");
+ 					if (page > 1)
+ 					{
+-						sb.append("<td align=left width=70><a action=\"bypass voice .playskills " + (page - 1) + "\"><font color=\"CDB67F\">Previous</font></a></td>");
++						sb.append("<td align=left width=70><a action=\"bypass voice .playskills " + (page - 1) + "\"><font color=\"CDB67F\">" + tr(player, "Previous", "Назад") + "</font></a></td>");
+ 					}
+ 					else
+ 					{
+-						sb.append("<td align=left width=70><font color=\"B09878\">Previous</font></td>");
++						sb.append("<td align=left width=70><font color=\"B09878\">" + tr(player, "Previous", "Назад") + "</font></td>");
+ 					}
+-					sb.append("<td align=center width=100>Page " + page + " of " + max + "</td>");
++					sb.append("<td align=center width=100>" + tr(player, "Page ", "Стр. ") + page + tr(player, " of ", " из ") + max + "</td>");
+ 					if (page < max)
+ 					{
+-						sb.append("<td align=right width=70><a action=\"bypass voice .playskills " + (page + 1) + "\"><font color=\"CDB67F\">Next</font></a></td>");
++						sb.append("<td align=right width=70><a action=\"bypass voice .playskills " + (page + 1) + "\"><font color=\"CDB67F\">" + tr(player, "Next", "Далее") + "</font></a></td>");
+ 					}
+ 					else
+ 					{
+-						sb.append("<td align=right width=70><font color=\"B09878\">Next</font></td>");
++						sb.append("<td align=right width=70><font color=\"B09878\">" + tr(player, "Next", "Далее") + "</font></td>");
+ 					}
+ 					sb.append("</tr></table><img src=\"L2UI.SquareGray\" width=295 height=1>");
+ 				}
+@@ -625,20 +625,20 @@ public class AutoPlay implements IVoicedCommandHandler
+ 					sb.append("<br><img src=\"L2UI.SquareGray\" width=295 height=1><table width=\"100%\" bgcolor=000000><tr>");
+ 					if (page > 1)
+ 					{
+-						sb.append("<td align=left width=70><a action=\"bypass voice .playitems " + (page - 1) + "\"><font color=\"CDB67F\">Previous</font></a></td>");
++						sb.append("<td align=left width=70><a action=\"bypass voice .playitems " + (page - 1) + "\"><font color=\"CDB67F\">" + tr(player, "Previous", "Назад") + "</font></a></td>");
+ 					}
+ 					else
+ 					{
+-						sb.append("<td align=left width=70><font color=\"B09878\">Previous</font></td>");
++						sb.append("<td align=left width=70><font color=\"B09878\">" + tr(player, "Previous", "Назад") + "</font></td>");
+ 					}
+-					sb.append("<td align=center width=100>Page " + page + " of " + max + "</td>");
++					sb.append("<td align=center width=100>" + tr(player, "Page ", "Стр. ") + page + tr(player, " of ", " из ") + max + "</td>");
+ 					if (page < max)
+ 					{
+-						sb.append("<td align=right width=70><a action=\"bypass voice .playitems " + (page + 1) + "\"><font color=\"CDB67F\">Next</font></a></td>");
++						sb.append("<td align=right width=70><a action=\"bypass voice .playitems " + (page + 1) + "\"><font color=\"CDB67F\">" + tr(player, "Next", "Далее") + "</font></a></td>");
+ 					}
+ 					else
+ 					{
+-						sb.append("<td align=right width=70><font color=\"B09878\">Next</font></td>");
++						sb.append("<td align=right width=70><font color=\"B09878\">" + tr(player, "Next", "Далее") + "</font></td>");
+ 					}
+ 					sb.append("</tr></table><img src=\"L2UI.SquareGray\" width=295 height=1>");
+ 				}
+@@ -727,20 +727,20 @@ public class AutoPlay implements IVoicedCommandHandler
+ 					sb.append("<br><img src=\"L2UI.SquareGray\" width=295 height=1><table width=\"100%\" bgcolor=000000><tr>");
+ 					if (page > 1)
+ 					{
+-						sb.append("<td align=left width=70><a action=\"bypass voice .playpotion " + (page - 1) + "\"><font color=\"CDB67F\">Previous</font></a></td>");
++						sb.append("<td align=left width=70><a action=\"bypass voice .playpotion " + (page - 1) + "\"><font color=\"CDB67F\">" + tr(player, "Previous", "Назад") + "</font></a></td>");
+ 					}
+ 					else
+ 					{
+-						sb.append("<td align=left width=70><font color=\"B09878\">Previous</font></td>");
++						sb.append("<td align=left width=70><font color=\"B09878\">" + tr(player, "Previous", "Назад") + "</font></td>");
+ 					}
+-					sb.append("<td align=center width=100>Page " + page + " of " + max + "</td>");
++					sb.append("<td align=center width=100>" + tr(player, "Page ", "Стр. ") + page + tr(player, " of ", " из ") + max + "</td>");
+ 					if (page < max)
+ 					{
+-						sb.append("<td align=right width=70><a action=\"bypass voice .playpotion " + (page + 1) + "\"><font color=\"CDB67F\">Next</font></a></td>");
++						sb.append("<td align=right width=70><a action=\"bypass voice .playpotion " + (page + 1) + "\"><font color=\"CDB67F\">" + tr(player, "Next", "Далее") + "</font></a></td>");
+ 					}
+ 					else
+ 					{
+-						sb.append("<td align=right width=70><font color=\"B09878\">Next</font></td>");
++						sb.append("<td align=right width=70><font color=\"B09878\">" + tr(player, "Next", "Далее") + "</font></td>");
+ 					}
+ 					sb.append("</tr></table><img src=\"L2UI.SquareGray\" width=295 height=1>");
+ 				}
+@@ -829,20 +829,20 @@ public class AutoPlay implements IVoicedCommandHandler
+ 					sb.append("<br><img src=\"L2UI.SquareGray\" width=295 height=1><table width=\"100%\" bgcolor=000000><tr>");
+ 					if (page > 1)
+ 					{
+-						sb.append("<td align=left width=70><a action=\"bypass voice .playmana " + (page - 1) + "\"><font color=\"CDB67F\">Previous</font></a></td>");
++						sb.append("<td align=left width=70><a action=\"bypass voice .playmana " + (page - 1) + "\"><font color=\"CDB67F\">" + tr(player, "Previous", "Назад") + "</font></a></td>");
+ 					}
+ 					else
+ 					{
+-						sb.append("<td align=left width=70><font color=\"B09878\">Previous</font></td>");
++						sb.append("<td align=left width=70><font color=\"B09878\">" + tr(player, "Previous", "Назад") + "</font></td>");
+ 					}
+-					sb.append("<td align=center width=100>Page " + page + " of " + max + "</td>");
++					sb.append("<td align=center width=100>" + tr(player, "Page ", "Стр. ") + page + tr(player, " of ", " из ") + max + "</td>");
+ 					if (page < max)
+ 					{
+-						sb.append("<td align=right width=70><a action=\"bypass voice .playmana " + (page + 1) + "\"><font color=\"CDB67F\">Next</font></a></td>");
++						sb.append("<td align=right width=70><a action=\"bypass voice .playmana " + (page + 1) + "\"><font color=\"CDB67F\">" + tr(player, "Next", "Далее") + "</font></a></td>");
+ 					}
+ 					else
+ 					{
+-						sb.append("<td align=right width=70><font color=\"B09878\">Next</font></td>");
++						sb.append("<td align=right width=70><font color=\"B09878\">" + tr(player, "Next", "Далее") + "</font></td>");
+ 					}
+ 					sb.append("</tr></table><img src=\"L2UI.SquareGray\" width=295 height=1>");
+ 				}
+@@ -893,6 +893,18 @@ public class AutoPlay implements IVoicedCommandHandler
+ 		}
+ 	}
+ 
++	/**
++	 * L2Hub: подпись кнопки по языку игрока: русскому клиенту — по-русски.
++	 * @param player чьё окно
++	 * @param en подпись по-английски
++	 * @param ru подпись по-русски
++	 * @return подпись
++	 */
++	private static String tr(Player player, String en, String ru)
++	{
++		return "ru".equals(player.getLang()) ? ru : en;
++	}
++	
+ 	private static String moveButton(int page, int skillId, String direction, String label)
+ 	{
+ 		return "<button value=\"" + label + "\" action=\"bypass voice .playskills " + page + " " + skillId + " " + direction + "\" width=22 height=22 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\">";

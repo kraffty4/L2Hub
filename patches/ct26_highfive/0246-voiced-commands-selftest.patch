@@ -1,0 +1,296 @@
+L2Hub: самопроверка команд через точку из любого канала чата (патч 0245): HuntersSelfTest = L2HUBCHAT, только на копии базы.
+Охотник шлёт пакет Say2 в каналы с записывающими заглушками: команда выполняется и в канал не уходит, остальное уходит в свой канал как раньше.
+
+diff --git a/dist/game/data/scripts/custom/L2HubChatTest/L2HubChatTest.java b/dist/game/data/scripts/custom/L2HubChatTest/L2HubChatTest.java
+new file mode 100644
+--- /dev/null
++++ b/dist/game/data/scripts/custom/L2HubChatTest/L2HubChatTest.java
+@@ -0,0 +1,288 @@
++package custom.L2HubChatTest;
++
++import java.lang.reflect.Field;
++import java.lang.reflect.Method;
++import java.util.ArrayList;
++import java.util.EnumMap;
++import java.util.HashSet;
++import java.util.List;
++import java.util.Map;
++import java.util.logging.Level;
++import java.util.logging.Logger;
++
++import org.l2jmobius.commons.threads.ThreadPool;
++import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
++import org.l2jmobius.gameserver.entity.World;
++import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.handler.ChatHandler;
++import org.l2jmobius.gameserver.handler.IChatHandler;
++import org.l2jmobius.gameserver.handler.IVoicedCommandHandler;
++import org.l2jmobius.gameserver.handler.VoicedCommandHandler;
++import org.l2jmobius.gameserver.managers.phantom.PhantomManager;
++import org.l2jmobius.gameserver.network.clientpackets.Say2;
++import org.l2jmobius.gameserver.network.enums.ChatType;
++
++/**
++ * L2Hub: самопроверка команд через точку из любого канала чата (патч {@code 0245}), только на копии базы: {@code HuntersSelfTest = L2HUBCHAT}.<br>
++ * Охотник «говорит» пакетом {@link Say2}: тестовая команда из чата пати, клана, альянса, торговли, крика, героев и шёпота выполняется (с параметрами, у шёпота без имени адресата)
++ * и в свой канал не уходит; из общего чата — как раньше. Неизвестная команда с точкой, приказ напарнику без точки и точка отдельным словом уходят в свой канал.
++ * Обработчики каналов на время проверки заменены записывающей заглушкой: в мир ничего не уходит, после проверки обработчики прежние. Итог — строки в логе.
++ * @author L2Hub
++ */
++public class L2HubChatTest
++{
++	private static final Logger LOGGER = Logger.getLogger(L2HubChatTest.class.getName());
++	private static final String TAG = "L2HubChatTest: SelfTest L2HUBCHAT: ";
++	private static final String COMMAND = "l2hubchattest";
++	private static final ChatType[] CHANNELS =
++	{
++		ChatType.SHOUT,
++		ChatType.WHISPER,
++		ChatType.PARTY,
++		ChatType.CLAN,
++		ChatType.TRADE,
++		ChatType.ALLIANCE,
++		ChatType.HERO_VOICE
++	};
++	private static final long STARTED = System.currentTimeMillis();
++	private static final List<String> _commands = new ArrayList<>();
++	private static final List<String> _channels = new ArrayList<>();
++	private static int _ok;
++	private static int _wrong;
++
++	public static void main(String[] args)
++	{
++		if ("L2HUBCHAT".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST))
++		{
++			ThreadPool.schedule(L2HubChatTest::start, 60000);
++		}
++	}
++
++	private static void start()
++	{
++		final Player speaker = speaker();
++		if ((speaker == null) && ((System.currentTimeMillis() - STARTED) < (7 * 60000L)))
++		{
++			ThreadPool.schedule(L2HubChatTest::start, 15000);
++			return;
++		}
++
++		ThreadPool.execute(() ->
++		{
++			if (speaker == null)
++			{
++				check("a hunter in the world to speak", false);
++			}
++			else
++			{
++				LOGGER.info(TAG + "speaker " + speaker.getName() + ".");
++				try
++				{
++					channels(speaker);
++					commands();
++				}
++				catch (Exception e)
++				{
++					_wrong++;
++					LOGGER.log(Level.WARNING, TAG + "WRONG: " + e, e);
++				}
++			}
++			LOGGER.info(TAG + "done: " + _ok + " ok, " + _wrong + " wrong.");
++		});
++	}
++
++	/** Пакеты Say2 в каналы с заглушками: что дошло до команды и что до канала. */
++	private static void channels(Player speaker) throws Exception
++	{
++		final ChatHandler chat = ChatHandler.getInstance();
++		final Map<ChatType, IChatHandler> before = new EnumMap<>(ChatType.class);
++		for (ChatType type : CHANNELS)
++		{
++			before.put(type, chat.getHandler(type));
++		}
++		check("general chat has its handler", chat.getHandler(ChatType.GENERAL) != null);
++
++		final Recorder recorder = new Recorder();
++		final Command command = new Command();
++		VoicedCommandHandler.getInstance().registerHandler(command);
++		chat.registerHandler(recorder);
++		try
++		{
++			for (ChatType type : CHANNELS)
++			{
++				expect(speaker, type, "." + COMMAND + " one two", type == ChatType.WHISPER ? "Nobody" : null, COMMAND + " one two", null);
++			}
++			expect(speaker, ChatType.WHISPER, "." + COMMAND, "Nobody", COMMAND + " null", null);
++			expect(speaker, ChatType.PARTY, "." + COMMAND, null, COMMAND + " null", null);
++			expect(speaker, ChatType.GENERAL, "." + COMMAND + " x", null, COMMAND + " x", null);
++			expect(speaker, ChatType.PARTY, ".l2hubnosuchcommand", null, null, "PARTY .l2hubnosuchcommand");
++			expect(speaker, ChatType.PARTY, "за мной", null, null, "PARTY за мной");
++			expect(speaker, ChatType.CLAN, ".", null, null, "CLAN .");
++			expect(speaker, ChatType.TRADE, ". " + COMMAND, null, null, "TRADE . " + COMMAND);
++		}
++		finally
++		{
++			chat.removeHandler(recorder);
++			for (IChatHandler handler : new HashSet<>(before.values()))
++			{
++				if (handler != null)
++				{
++					chat.registerHandler(handler);
++				}
++			}
++			VoicedCommandHandler.getInstance().removeHandler(command);
++		}
++
++		boolean restored = VoicedCommandHandler.getInstance().getHandler(COMMAND) == null;
++		for (ChatType type : CHANNELS)
++		{
++			restored &= chat.getHandler(type) == before.get(type);
++		}
++		check("channel handlers are back, test command is gone", restored);
++	}
++
++	/** Настоящие команды L2Hub: Say2 узнаёт их как команды (те, что включены настройками). */
++	private static void commands() throws Exception
++	{
++		final Method known = Say2.class.getDeclaredMethod("isVoicedCommand", String.class);
++		known.setAccessible(true);
++		for (String name : new String[]
++		{
++			"play",
++			"buddy",
++			"hunters",
++			"world"
++		})
++		{
++			if (VoicedCommandHandler.getInstance().getHandler(name) == null)
++			{
++				LOGGER.info(TAG + "." + name + " is not registered here (turned off in the settings).");
++				continue;
++			}
++			check("." + name + " is a command in any chat", (Boolean) known.invoke(null, "." + name));
++			check("." + name + " with words after it is a command in any chat", (Boolean) known.invoke(null, "." + name + " on"));
++		}
++		check("text without a dot is not a command", !((Boolean) known.invoke(null, "buddy")));
++	}
++
++	private static void expect(Player speaker, ChatType type, String text, String target, String command, String channel) throws Exception
++	{
++		synchronized (_commands)
++		{
++			_commands.clear();
++			_channels.clear();
++		}
++		new Probe(speaker, type, text, target).say();
++		final List<String> commands;
++		final List<String> channels;
++		synchronized (_commands)
++		{
++			commands = new ArrayList<>(_commands);
++			channels = new ArrayList<>(_channels);
++		}
++		final String label = type.name() + " \"" + text + "\"" + (target != null ? " to " + target : "");
++		check(label + (command != null ? ": runs as " + command : ": runs no command") + " " + commands, (command == null) ? commands.isEmpty() : commands.equals(List.of(command)));
++		check(label + (channel != null ? ": goes to " + type.name() : ": stays out of " + type.name()) + " " + channels, (channel == null) ? channels.isEmpty() : channels.equals(List.of(channel)));
++	}
++
++	/** Охотник, которому чат не запрещён ни баном, ни тюрьмой, ни проклятым оружием. */
++	private static Player speaker()
++	{
++		for (Player player : World.getPlayers())
++		{
++			if (PhantomManager.getInstance().isPhantom(player) && !player.isDead() && !player.isChatBanned() && !player.isJailed() && !player.isCursedWeaponEquipped() && !player.isGM())
++			{
++				return player;
++			}
++		}
++		return null;
++	}
++
++	private static void check(String what, boolean ok)
++	{
++		if (ok)
++		{
++			_ok++;
++			LOGGER.info(TAG + "ok: " + what);
++		}
++		else
++		{
++			_wrong++;
++			LOGGER.warning(TAG + "WRONG: " + what);
++		}
++	}
++
++	/** Say2 от охотника без клиента: игрок подставлен вместо клиента, поля — как после чтения пакета. */
++	private static class Probe extends Say2
++	{
++		private final Player _speaker;
++
++		Probe(Player speaker, ChatType type, String text, String target) throws Exception
++		{
++			_speaker = speaker;
++			set("_text", text);
++			set("_type", type.getClientId());
++			set("_target", target);
++		}
++
++		private void set(String name, Object value) throws Exception
++		{
++			final Field field = Say2.class.getDeclaredField(name);
++			field.setAccessible(true);
++			field.set(this, value);
++		}
++
++		@Override
++		protected Player getPlayer()
++		{
++			return _speaker;
++		}
++
++		void say()
++		{
++			runImpl();
++		}
++	}
++
++	/** Заглушка каналов: записывает, что дошло до обработчика, никуда не шлёт. */
++	private static class Recorder implements IChatHandler
++	{
++		@Override
++		public void onChat(ChatType type, Player player, String target, String text)
++		{
++			synchronized (_commands)
++			{
++				_channels.add(type.name() + " " + text);
++			}
++		}
++
++		@Override
++		public ChatType[] getChatTypeList()
++		{
++			return CHANNELS;
++		}
++	}
++
++	/** Тестовая команда: записывает имя и параметры. */
++	private static class Command implements IVoicedCommandHandler
++	{
++		@Override
++		public boolean onCommand(String command, Player player, String params)
++		{
++			synchronized (_commands)
++			{
++				_commands.add(command + " " + params);
++			}
++			return true;
++		}
++
++		@Override
++		public String[] getCommandList()
++		{
++			return new String[]
++			{
++				COMMAND
++			};
++		}
++	}
++}

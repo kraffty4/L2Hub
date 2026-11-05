@@ -1,0 +1,20 @@
+L2Hub: автобой не бьёт аурой в пустоту. Скилл вокруг себя без дальности каста (Blazing Circle, Aura Flash: `castRange` нет, `affectRange` 200) автобой кастовал сразу, как только есть цель, и при дальнем поиске (1400) цель стояла за 1000: маг стоял на месте и крутил массовый скилл впустую. Так било охотников-магов: генератор кладёт им Blazing Circle в три лучших атаки. Теперь такой скилл пропускается, пока цель дальше радиуса ауры плюс её размер; остальные скиллы очереди идут как раньше.
+Откат: удалить патч и пересобрать сервер.
+
+diff --git a/java/org/l2jmobius/gameserver/taskmanagers/AutoUseTaskManager.java b/java/org/l2jmobius/gameserver/taskmanagers/AutoUseTaskManager.java
+--- a/java/org/l2jmobius/gameserver/taskmanagers/AutoUseTaskManager.java
++++ b/java/org/l2jmobius/gameserver/taskmanagers/AutoUseTaskManager.java
+@@ -381,6 +381,13 @@ public class AutoUseTaskManager
+ 						
+ 						// Skill use check.
+ 						final Playable caster = pet != null ? pet : player;
++						
++						// L2Hub: аура вокруг себя (Blazing Circle, Aura Flash) без дальности каста: автобой кастовал её сразу, даже с целью за 1000, и бил в пустоту. Только когда цель в радиусе ауры.
++						if ((skill.getCastRange() <= 0) && (skill.getAffectRange() > 0) && target.isCreature() && (caster.calculateDistance2D(target) > (skill.getAffectRange() + target.asCreature().getTemplate().getCollisionRadius())))
++						{
++							continue SKILLS;
++						}
++						
+ 						if (!canUseMagic(caster, target, skill))
+ 						{
+ 							continue SKILLS;

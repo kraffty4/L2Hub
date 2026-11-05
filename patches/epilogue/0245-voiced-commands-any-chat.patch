@@ -1,0 +1,63 @@
+L2Hub: команды через точку (.play, .buddy, .hunters и другие) из любого канала чата (`Say2`). Макрос шлёт текст в открытую вкладку чата, а команды разбирает только общий чат (`ChatGeneral`):
+в чате пати, клана, торговли или крика команда не выполнялась и уходила людям текстом. Теперь текст, первое слово которого — известная команда `VoicedCommandHandler`,
+идёт как сказанный в общий чат: команда выполняется, в исходный канал ничего не уходит. Текст с точкой без такой команды и приказы напарникам без точки («за мной» в чате пати) — как раньше.
+
+diff --git a/java/org/l2jmobius/gameserver/network/clientpackets/Say2.java b/java/org/l2jmobius/gameserver/network/clientpackets/Say2.java
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/Say2.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/Say2.java
+@@ -20,6 +20,7 @@
+  */
+ package org.l2jmobius.gameserver.network.clientpackets;
+ 
++import java.util.StringTokenizer;
+ import java.util.logging.Logger;
+ 
+ import org.l2jmobius.gameserver.config.GeneralConfig;
+@@ -31,6 +32,7 @@ import org.l2jmobius.gameserver.entity.actor.Player;
+ import org.l2jmobius.gameserver.entity.item.instance.Item;
+ import org.l2jmobius.gameserver.handler.ChatHandler;
+ import org.l2jmobius.gameserver.handler.IChatHandler;
++import org.l2jmobius.gameserver.handler.VoicedCommandHandler;
+ import org.l2jmobius.gameserver.managers.PunishmentManager;
+ import org.l2jmobius.gameserver.mechanics.effects.EffectType;
+ import org.l2jmobius.gameserver.mechanics.events.EventDispatcher;
+@@ -128,6 +130,15 @@ public class Say2 extends ClientPacket
+ 			return;
+ 		}
+ 		
++		// L2Hub: команда через точку (.play, .buddy, .hunters и другие) работает из любого канала, как из общего чата. Макрос шлёт текст в открытую вкладку чата,
++		// а команды разбирает только общий чат (ChatGeneral). Известная команда в исходный канал не уходит; текст с точкой без такой команды
++		// и приказы напарникам без точки («за мной» в чате пати) идут как раньше.
++		if ((chatType != ChatType.GENERAL) && isVoicedCommand(_text))
++		{
++			chatType = ChatType.GENERAL;
++			_target = null; // у шёпота здесь имя адресата, а ChatGeneral отдал бы его однословной команде параметрами
++		}
++		
+ 		// Even though the client can handle more characters than it's current limit allows, an overflow (critical error) happens if you pass a huge (1000+) message.
+ 		// July 11, 2011 - Verified on High Five 4 official client as 105.
+ 		// Allow higher limit if player shift some item (text is longer then).
+@@ -239,6 +250,23 @@ public class Say2 extends ClientPacket
+ 		return false;
+ 	}
+ 	
++	/**
++	 * L2Hub: текст — известная команда через точку. Имя берётся так же, как в ChatGeneral: первое слово без точки.
++	 * @param text текст из чата
++	 * @return {@code true}, если у VoicedCommandHandler есть такая команда
++	 */
++	private static boolean isVoicedCommand(String text)
++	{
++		if (!text.startsWith("."))
++		{
++			return false;
++		}
++		
++		final StringTokenizer st = new StringTokenizer(text);
++		final String command = (st.countTokens() > 1) ? st.nextToken().substring(1) : text.substring(1);
++		return VoicedCommandHandler.getInstance().getHandler(command) != null;
++	}
++	
+ 	private void checkText()
+ 	{
+ 		String filteredText = _text;

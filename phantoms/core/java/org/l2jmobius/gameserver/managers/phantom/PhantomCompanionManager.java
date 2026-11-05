@@ -946,6 +946,12 @@ public class PhantomCompanionManager
 					continue;
 				}
 
+				// Моб бьёт вплотную — сперва отойти, а не следующий каст под ударами.
+				if (PhantomTactics.peel(phantom, now))
+				{
+					continue;
+				}
+
 				if (phantom.isMoving() || phantom.isSitting() || phantom.isTeleporting() || (phantom.getAI().getIntention() == Intention.CAST))
 				{
 					continue;
@@ -1146,6 +1152,12 @@ public class PhantomCompanionManager
 				calmDown(phantom);
 			}
 
+			// Моб бьёт саппорта вплотную — отойти от него и лечить с расстояния; отход не сбивать.
+			if (PhantomTactics.kiting(phantom, now) || PhantomTactics.peel(phantom, now))
+			{
+				return;
+			}
+
 			if (PhantomSupport.act(phantom, owner, template.getRole(), now) || PhantomSupport.smiteUndead(phantom, companion.mode != Mode.STAY, now))
 			{
 				return;
@@ -1154,6 +1166,12 @@ public class PhantomCompanionManager
 		else
 		{
 			if (PhantomPartyNoblesse.maintain(phantom, now))
+			{
+				return;
+			}
+
+			// Маг или лучник отбегает от моба: каст по цели сбил бы отход. Моб бьёт вплотную — отойти сейчас, а не ждать тика охотника.
+			if (PhantomTactics.kiting(phantom, now) || PhantomTactics.peel(phantom, now))
 			{
 				return;
 			}
@@ -1286,7 +1304,7 @@ public class PhantomCompanionManager
 	}
 
 	/**
-	 * Кого бить: цель владельца (режимы ASSIST и HUNT, владелец в бою), затем текущего противника, затем ближайшего моба, который бьёт нас;
+	 * Кого бить: моба, который бьёт самого напарника ({@link #selfAttacker}), затем цель владельца (режимы ASSIST и HUNT, владелец в бою), затем текущего противника, затем ближайшего моба, который бьёт нас;
 	 * в режиме HUNT — ещё и свободного моба вокруг владельца. Владелец убежал дальше поводка «кач тут» — никого: догнать.
 	 */
 	private static Creature chooseEnemy(Companion companion, Player phantom, Player owner)
@@ -1313,6 +1331,17 @@ public class PhantomCompanionManager
 		if (hunt && (phantom.calculateDistance2D(owner) > leash))
 		{
 			return null;
+		}
+
+		// Сначала свой обидчик (2026-11-04): моб бьёт самого напарника — сперва он, потом снова цель владельца. Раньше цель владельца шла первой,
+		// и Arhimag в пати автора бил её, пока сзади его бил другой моб; отбивался только маг и только от того, кто вплотную (attack, meleeAttacker).
+		if ((companion.mode == Mode.ASSIST) || hunt)
+		{
+			final Monster own = selfAttacker(phantom);
+			if (own != null)
+			{
+				return own;
+			}
 		}
 
 		if (((companion.mode == Mode.ASSIST) || hunt) && !owner.isDead())
@@ -1624,6 +1653,13 @@ public class PhantomCompanionManager
 	 */
 	private static Creature leadEnemy(Companion companion, Player phantom, Player owner)
 	{
+		// Свой обидчик — раньше своей цели, как и в chooseEnemy.
+		final Monster own = selfAttacker(phantom);
+		if (own != null)
+		{
+			return own;
+		}
+
 		final WorldObject current = phantom.getTarget();
 		if ((current instanceof Monster) && isEnemy(phantom, (Monster) current) && !takenByOthers((Monster) current, phantom) && (owner.calculateDistance2D(current) <= LEAD_TARGET_RANGE))
 		{
@@ -1653,6 +1689,48 @@ public class PhantomCompanionManager
 			}
 		}
 		return nearest;
+	}
+
+	/**
+	 * Моб, который бьёт самого напарника, в {@code PhantomDefendRange}. Кого бьёт моб — из его ИИ ({@link #hitsMe}): в драке {@code getTarget()} моба врёт.
+	 * Своя цель, если бьёт его, — первой: двое на одном не перекидывают его с моба на моба на каждом тике.
+	 * @return обидчик или {@code null}
+	 */
+	private static Monster selfAttacker(Player phantom)
+	{
+		final WorldObject current = phantom.getTarget();
+		if ((current instanceof Monster) && hitsMe((Monster) current, phantom))
+		{
+			return (Monster) current;
+		}
+
+		Monster nearest = null;
+		double nearestDistance = Double.MAX_VALUE;
+		for (Monster monster : World.getVisibleObjectsInRange(phantom, Monster.class, PhantomPartyConfig.PHANTOM_DEFEND_RANGE))
+		{
+			if (!hitsMe(monster, phantom))
+			{
+				continue;
+			}
+
+			final double distance = phantom.calculateDistance2D(monster);
+			if (distance < nearestDistance)
+			{
+				nearest = monster;
+				nearestDistance = distance;
+			}
+		}
+		return nearest;
+	}
+
+	/**
+	 * Только намерение ATTACK и цель атаки из ИИ: запасной {@code getTarget()} у {@link PhantomHunterOutfit#victimOf} после драки остаётся старым,
+	 * и моб, ушедший домой, считался бы обидчиком.
+	 * @return моб бьёт самого напарника, и его можно бить ({@link #isEnemy})
+	 */
+	private static boolean hitsMe(Monster monster, Player phantom)
+	{
+		return (monster.getAI().getIntention() == Intention.ATTACK) && (PhantomCompat.attackTarget(monster) == phantom) && isEnemy(phantom, monster);
 	}
 
 	/**
@@ -1738,12 +1816,19 @@ public class PhantomCompanionManager
 	}
 
 	/**
-	 * @return скилл достаёт цель с места; отрицательная дальность у скиллов вокруг себя, им подходить незачем (как и в CreatureAI.maybeMoveToPawn)
+	 * Отрицательная дальность у скиллов вокруг себя (Blazing Circle, Aura Flash): к цели ради них не подходят (как и в CreatureAI.maybeMoveToPawn), и бьют они, только
+	 * когда цель в радиусе удара — так Mobius собирает их цели (обработчик Aura, {@code getAffectRange}). До 2026-11-04 такой скилл считался достающим любую цель:
+	 * маг в пати с игроком крутил массуху в пустоту за 800 от моба, а к цели дальше остальных скиллов не шёл ({@link #beyondSkills} отвечал «достаёт»).
+	 * @return скилл достаёт цель с места
 	 */
 	private static boolean inCastRange(Player phantom, Skill skill, Creature target)
 	{
 		final int range = phantom.getMagicalAttackRange(skill);
-		return (range < 0) || inReach(phantom, target, range);
+		if (range < 0)
+		{
+			return phantom.isInsideRadius3D(target, skill.getAffectRange());
+		}
+		return inReach(phantom, target, range);
 	}
 
 	/**

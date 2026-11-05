@@ -13,7 +13,7 @@
 - **Chronicles in one click.** Interlude, Gracia Epilogue, High Five, Classic (Tales Untold), Essence (Samurai Crow) run on [L2J Mobius](https://gitlab.com/MobiusDevelopment/L2J_Mobius) with our mods; C4 runs on [L2Solo](https://github.com/pmbstyle/L2Solo) with its 1,700 bots. About thirty more Mobius chronicles install as is, without mods. You can also connect your own server build (L2J on Java, or a bundle with its own database).
 - **A living world for one.** Phantom hunters grow along with you: they level on spots, form parties, trade in Giran, raid bosses, join PvP events, the Olympiad and the Seven Signs, and challenge you to duels. Companions join your party (`.buddy`). You can actually talk to the bots: their “brains” run on an LLM if you plug in your own key (DeepSeek or any OpenAI-compatible API) or your own model (LM Studio, Ollama).
 - **Solo-friendly mods.** A buffer and a GM shop next to gatekeepers, champions and rare super champions, daily tasks (`.daily`), seasonal events all year round, “World now” (`.world`) and the Alt+B board. The Olympiad, the Seven Signs and the epic bosses are tuned for a small world: one player plus the hunters is enough. Every mod can be switched off.
-- **Server modes.** “Hardcore” (x1, like retail, no conveniences), “PvP-craft”, “PvP”, or “Customize” with every server config and its description.
+- **Server modes.** “Hardcore” (x1, like retail, no conveniences), “x10” (experience x15 → x1 by level, expensive top gear in the GM shop), “PvP-craft”, “PvP”, or “Customize” with every server config and its description.
 
   ![Server settings](docs/screenshots/server_settings_en.jpg)
 

@@ -1,0 +1,24 @@
+L2Hub: чемпионов на High Five реже — суперчемпион 0.04 % вместо 0.1, синий 3 % вместо 5, красный прежний 1 %. С пачки 2026-11-01 мобов в 1,5 раза (`0154`, `MonsterSpawnMultiplier`) и охотников вдвое: бросков на чемпиона стало больше, и суперчемпионов (HP x100, `0161`) выходило под сотню в час против 30–58 до неё. Решение автора 2026-11-04 («Да, срежь»). Откат — прежние значения в `ChampionMonsters.ini`.
+
+diff --git a/dist/game/config/Custom/ChampionMonsters.ini b/dist/game/config/Custom/ChampionMonsters.ini
+--- a/dist/game/config/Custom/ChampionMonsters.ini
++++ b/dist/game/config/Custom/ChampionMonsters.ini
+@@ -83,7 +83,7 @@ ChampionEnableInInstances = False
+ # ---------------------------------------------------------------------------
+ 
+ # Шанс синего чемпиона, % (0 — выключить). Допускаются дробные: 0.5.
+-ChampionBlueFrequency = 5
++ChampionBlueFrequency = 3
+ 
+ # Титул синего чемпиона.
+ ChampionBlueTitle = Champion
+@@ -129,7 +129,8 @@ ChampionBlueRewardItems =
+ SuperChampionEnable = True
+ 
+ # Шанс суперчемпиона, % (дробный: 0.1 — один моб из тысячи; бросается при каждом появлении моба).
+-SuperChampionFrequency = 0.1
++# На High Five 0.04: мобов в 1,5 раза (MonsterSpawnMultiplier) и охотников вдвое, при 0.1 суперчемпионов выходило под сотню в час.
++SuperChampionFrequency = 0.04
+ 
+ # Титул суперчемпиона.
+ SuperChampionTitle = Legendary Champion

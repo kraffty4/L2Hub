@@ -2,7 +2,7 @@
 // Правки лежат слоем в data/gmshop, переживают «Пересобрать» и сразу пишутся в файлы сервера; гейм читает их при старте.
 // Вкладка есть только у хроник с записью в gm_shops.json.
 
-const GM = { id: null, tree: [], root: null, pick: { kind: 'all' }, open: new Set(), query: '', only: '', preview: null, seq: 0, edited: 0, warnings: 0, restart: false, loaded: false };
+const GM = { id: null, tree: [], root: null, pick: { kind: 'all' }, open: new Set(), query: '', only: '', preview: null, seq: 0, edited: 0, warnings: 0, modeGrades: {}, restart: false, loaded: false };
 
 const gmMoney = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 
@@ -238,7 +238,8 @@ async function gmSetPrice(row, input) {
 function gmRenderInfo() {
   $('gmBadge').textContent = GM.edited || '';
   // Каждая фраза — свой текстовый узел: переводчик окна (i18n.js) ищет в словаре узел целиком.
-  $('gmInfo').innerHTML = [GM.edited ? `<span>Правок: ${GM.edited}.</span>` : '', GM.warnings ? `<span class="gm-w">Предупреждений: ${GM.warnings}.</span>` : '',
+  $('gmInfo').innerHTML = [Object.keys(GM.modeGrades).length ? '<span>Режим x10: A ×5, S и выше ×20 — поверх цен ниже</span>' : '',
+    GM.edited ? `<span>Правок: ${GM.edited}.</span>` : '', GM.warnings ? `<span class="gm-w">Предупреждений: ${GM.warnings}.</span>` : '',
     '<span>Правки лежат отдельно от сборки и переживают «Пересобрать», покупки охотников идут за ними.</span>',
     GM.restart ? '<b>Сервер работает: в игре цены сменятся после перезапуска гейма.</b>' : '<span>В игре цены сменятся при следующем запуске гейма.</span>'].join(' ');
 }
@@ -260,6 +261,7 @@ function gmTakeState(r) {
   GM.root = gmBuildTree(r.tree);
   GM.edited = r.edited;
   GM.warnings = r.warnings;
+  GM.modeGrades = r.modeGrades || {};
   GM.restart = r.restart;
 }
 

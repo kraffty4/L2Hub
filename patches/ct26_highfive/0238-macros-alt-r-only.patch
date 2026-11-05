@@ -1,0 +1,47 @@
+L2Hub: макросы команд персонажу, созданному раньше, — только в список Alt+R, ярлыков на панели не ставим (`InitialShortcutData.giveMissingMacros`). Раньше выдача раскладывала до 32 макросов по пустым слотам панелей, а по отчёту сопровождающего Эпилога затирала и занятые. Новый персонаж получает раскладку из `initialShortcuts.xml`, как раньше.
+Самопроверка доски: после выдачи панель персонажа та же, освобождённый слот остаётся пустым.
+
+diff --git a/java/org/l2jmobius/gameserver/data/xml/InitialShortcutData.java b/java/org/l2jmobius/gameserver/data/xml/InitialShortcutData.java
+--- a/java/org/l2jmobius/gameserver/data/xml/InitialShortcutData.java
++++ b/java/org/l2jmobius/gameserver/data/xml/InitialShortcutData.java
+@@ -360,7 +360,7 @@ public class InitialShortcutData implements IXmlReader
+ 	
+ 	/**
+ 	 * L2Hub: выдать макросы общего списка, которых у персонажа ещё не было: он создан раньше или команда тогда была выключена.<br>
+-	 * Ярлык ставится на обычное место, если оно свободно, иначе макрос остаётся только в списке Alt+R. Выданное помнит переменная: удалённое игроком не возвращается.
++	 * Только в список Alt+R: ярлыков на панели не ставит, у персонажа уже своя раскладка (места на панелях макросы получают только у нового персонажа). Выданное помнит переменная: удалённое игроком не возвращается.
+ 	 * @param player персонаж
+ 	 */
+ 	public void giveMissingMacros(Player player)
+@@ -384,12 +384,6 @@ public class InitialShortcutData implements IXmlReader
+ 				}
+ 				
+ 				player.registerMacro(macro);
+-				if (player.getShortcut(shortcut.getSlot(), shortcut.getPage()) == null)
+-				{
+-					final Shortcut newShortcut = new Shortcut(shortcut.getSlot(), shortcut.getPage(), shortcut.getType(), id, shortcut.getLevel(), shortcut.getCharacterType());
+-					player.sendPacket(new ShortcutRegister(newShortcut));
+-					player.registerShortcut(newShortcut);
+-				}
+ 			}
+ 			
+ 			given.add(id);
+diff --git a/dist/game/data/scripts/custom/L2HubBoardTest/L2HubBoardTest.java b/dist/game/data/scripts/custom/L2HubBoardTest/L2HubBoardTest.java
+--- a/dist/game/data/scripts/custom/L2HubBoardTest/L2HubBoardTest.java
++++ b/dist/game/data/scripts/custom/L2HubBoardTest/L2HubBoardTest.java
+@@ -788,13 +788,13 @@ public class L2HubBoardTest
+ 				player.getMacros().deleteMacro(macro.getId());
+ 			}
+ 			player.deleteShortcut(9, 1);
++			final int bars = player.getAllShortcuts().size();
+ 			player.getVariables().remove(InitialShortcutData.MACROS_GIVEN);
+ 			final int before = player.getMacros().getAllMacroses().size();
+ 			final long available = all.stream().filter(data::isAvailable).count();
+ 			data.giveMissingMacros(player);
+ 			check("macros: a character from before gets " + available + " of " + all.size(), player.getMacros().getAllMacroses().size() == (before + available));
+-			final Shortcut shortcut = player.getShortcut(9, 1);
+-			check("macros: shortcut on its slot", (shortcut != null) && (shortcut.getType() == ShortcutType.MACRO) && (shortcut.getId() == 10116));
++			check("macros: only to the Alt+R list, the bars stay as they were", (player.getShortcut(9, 1) == null) && (player.getAllShortcuts().size() == bars));
+ 			player.getMacros().deleteMacro(10116);
+ 			data.giveMissingMacros(player);
+ 			check("macros: a deleted one does not come back", !player.getMacros().getAllMacroses().containsKey(10116) && (player.getShortcut(9, 1) == null));

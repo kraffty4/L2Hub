@@ -177,6 +177,7 @@ public class PhantomHuntersConfig
 	public static int HUNTER_TICK_LOG_MINUTES;
 	public static boolean HUNTER_CLAN_INVITE_PLAYERS;
 	public static boolean HUNTER_CLAN_TITLES;
+	public static boolean HUNTER_CLAN_RANKS;
 	public static boolean HUNTER_CLAN_ALLIANCES;
 	public static boolean HUNTER_CLAN_TOP;
 	public static boolean HUNTER_CLAN_DRAMA;
@@ -441,6 +442,7 @@ public class PhantomHuntersConfig
 		HUNTER_CLAN_SHARE = Math.max(0, Math.min(100, config.getInt("HunterClanShare", 30)));
 		HUNTER_CLAN_INVITE_PLAYERS = config.getBoolean("HunterClanInvitePlayers", true);
 		HUNTER_CLAN_TITLES = config.getBoolean("HunterClanTitles", true);
+		HUNTER_CLAN_RANKS = config.getBoolean("HunterClanRanks", true);
 		HUNTER_CLAN_ALLIANCES = config.getBoolean("HunterClanAlliances", true);
 		HUNTER_CLAN_TOP = config.getBoolean("HunterClanTop", true);
 		HUNTER_CLAN_DRAMA = config.getBoolean("HunterClanDrama", true);

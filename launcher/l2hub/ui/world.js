@@ -302,6 +302,9 @@
   window.worldMapReload = async () => { W.map = null; W.mapView = null; await loadMap(); render(); };
   window.worldTick = () => {
     if (!W.open || !W.mods) return; // список миров ещё грузится — выбор мира подождёт
+    // Сборка модуля закончилась — перечитать список и перерисовать экран (один раз на одну сборку).
+    if (last.job && last.job.action === 'build' && !last.job.done) W.buildWasRunning = true;
+    else if (W.buildWasRunning) { W.buildWasRunning = false; loadMods().then(() => W.open && W.screen === 'module' && render()); }
     if (W.chron !== window.worldId()) { reset(window.worldId()); enter(W.screen); return; }
     const now = running();
     if (now !== W.lastRunning) {

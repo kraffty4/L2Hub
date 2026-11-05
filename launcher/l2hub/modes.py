@@ -1,11 +1,13 @@
-"""Режимы сервера («Хардкор», «PvP-крафт», «PvP») и выключатели модов (баффер, GM-шоп, чемпионы, ивенты) — задачи
+"""Режимы сервера («Хардкор», «x10», «PvP-крафт», «PvP», «Живой сервер») и выключатели модов — задачи
 автора 2026-10-21 (docs/PLAN.md, «Настройки сервера в окне»). Таблица — server_modes.json; пишет configs.save_edits
 с бэкапом конфигов, как страница «Все ключи». Только Mobius: у сборок-комбайнов и L2Solo свои конфиги."""
 
 import json
+import os
 import re
+from pathlib import Path
 
-from . import catalog, configs, l2solo, machine, paths, servers
+from . import catalog, configs, gmshop, l2solo, machine, paths, servers
 
 ADENA = 57
 
@@ -51,6 +53,66 @@ def _num(v: str | None) -> float | None:
         return float(v.rstrip(".")) if v else None
     except ValueError:
         return None
+
+
+DYNAMIC_EXP_FILE = "DynamicExpRates.xml"
+DYNAMIC_EXP_TAG = re.compile(r"<!--.*?-->|<dynamic\b[^>]*>", re.S)
+
+
+def _dynamic_exp_data(raw: bytes, bands: list | None, max_level: int | None = None) -> bytes:
+    """Рейты только в существующих строках dynamic; комментарии, BOM и переводы строк остаются на месте.
+
+    Выше max_level (MaximumPlayerLevel) — всегда 1 и 1: в файле Mobius есть уровень на один выше предела (H5 — 87 при 85),
+    а DynamicExpRateData пишет не единичные строки в массив длиной по пределу — запись туда роняет разбор всего файла,
+    и опыт по уровням молча не включается. Строки 1/1 Mobius пропускает."""
+    if max_level is None:  # предела нет в конфиге — как у всех хроник Mobius: последний уровень файла выше предела
+        levels = [int(x) for x in re.findall(r'<dynamic\b[^>]*\blevel\s*=\s*"(\d+)"', raw.decode("utf-8-sig"))]
+        max_level = max(levels) - 1 if levels else None
+
+    def replace(m: re.Match) -> str:
+        tag = m.group()
+        if tag.startswith("<!--"):
+            return tag
+        found = re.search(r'\blevel\s*=\s*"(\d+)"', tag)
+        if not found:
+            return tag
+        level = int(found.group(1))
+        exp, sp = 1, 1
+        for start, band_exp, band_sp in bands or []:
+            if start > level or (max_level is not None and level > max_level):
+                break
+            exp, sp = band_exp, band_sp
+        for key, value in (("exp", exp), ("sp", sp)):
+            pattern = re.compile(rf'(\s{key}\s*=\s*")[^"]*(")')
+            if not pattern.search(tag):
+                raise ValueError(f"В {DYNAMIC_EXP_FILE} у уровня {level} нет {key}")
+            tag = pattern.sub(lambda x: x.group(1) + str(value) + x.group(2), tag, count=1)
+        return tag
+
+    text = DYNAMIC_EXP_TAG.sub(replace, raw.decode("utf-8-sig"))
+    return (b"\xef\xbb\xbf" if raw.startswith(b"\xef\xbb\xbf") else b"") + text.encode("utf-8")
+
+
+def _save_dynamic_exp(path: Path, bands: list | None, max_level: int | None = None) -> bool:
+    raw = path.read_bytes()
+    new = _dynamic_exp_data(raw, bands, max_level)
+    if new == raw:
+        return False
+    tmp = path.with_name(path.name + ".tmp")
+    tmp.write_bytes(new)
+    os.replace(tmp, path)
+    return True
+
+
+def _dynamic_exp_now(raw: bytes) -> bool:
+    for m in DYNAMIC_EXP_TAG.finditer(raw.decode("utf-8-sig")):
+        tag = m.group()
+        if tag.startswith("<!--"):
+            continue
+        values = [re.search(rf'\s{key}\s*=\s*"([^"]*)"', tag) for key in ("exp", "sp")]
+        if all(values) and any(_num(x.group(1)) != 1 for x in values):
+            return True
+    return False
 
 
 def _settings(p: dict, mode: dict) -> dict[str, dict[str, str]]:
@@ -114,7 +176,7 @@ def switches(p: dict) -> list[dict]:
 
 
 def rates_now(p: dict) -> dict:
-    """Текущие рейты по группам (xp, sp, adena, drop, spoil): по первому ключу группы."""
+    """Текущие рейты по группам (xp, sp, adena, drop, spoil): по первому ключу группы; отдельно — опыт по уровням."""
     t = table()["rates"]
     out = {}
     for group, keys in t.items():
@@ -125,6 +187,12 @@ def rates_now(p: dict) -> dict:
             out[group] = _num(_adena_now(_read(p, t["file"], "DropAmountMultiplierByItemId")))
         else:
             out[group] = _num(_read(p, t["file"], first))
+    try:
+        path = configs._locate(catalog.server_dir(p), "game", DYNAMIC_EXP_FILE)
+    except (FileNotFoundError, ValueError):
+        out["dynamicExp"] = False
+    else:
+        out["dynamicExp"] = _dynamic_exp_now(path.read_bytes())
     return out
 
 
@@ -243,7 +311,7 @@ def set_hunters_max(p: dict, value) -> dict:
 
 
 def apply_mode(p: dict, mode_id: str) -> dict:
-    """Режим целиком: рейты групп и выключатели. Рейтов и прочих ключей, которых в сборке нет, — пропуск со списком."""
+    """Режим целиком: рейты, выключатели, опыт по уровням и множители GM-шопа. Отсутствующее в сборке — в skipped."""
     if why := supported(p):
         raise ValueError(why)
     t = table()
@@ -277,6 +345,16 @@ def apply_mode(p: dict, mode_id: str) -> dict:
             else:
                 edits.append({"part": "game", "file": file, "key": key, "value": str(value)})
     _save(p, edits)
+    # Опыт по уровням и цены GM-шопа — часть рейтов: «Живой сервер» рейты не трогает и сочетается с другими режимами.
+    if mode["rates"]:
+        try:
+            path = configs._locate(catalog.server_dir(p), "game", DYNAMIC_EXP_FILE)
+        except (FileNotFoundError, ValueError):
+            skipped.append(DYNAMIC_EXP_FILE)
+        else:
+            cap = _num(_read(p, "Player.ini", "MaximumPlayerLevel"))
+            _save_dynamic_exp(path, mode.get("dynamicExp"), int(cap) if cap else None)
+        gmshop.set_mode_grades(p, mode.get("gmshopGrades"))
     return {"mode": mode_id, "title": mode["title"], "changed": len(edits), "skipped": skipped}
 
 

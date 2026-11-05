@@ -26,6 +26,7 @@ import org.l2jmobius.gameserver.data.sql.ClanTable;
 import org.l2jmobius.gameserver.entity.World;
 import org.l2jmobius.gameserver.entity.actor.Player;
 import org.l2jmobius.gameserver.entity.clan.Clan;
+import org.l2jmobius.gameserver.entity.clan.ClanAccess;
 import org.l2jmobius.gameserver.entity.clan.ClanMember;
 import org.l2jmobius.gameserver.managers.GlobalVariablesManager;
 
@@ -34,6 +35,7 @@ import org.l2jmobius.gameserver.managers.GlobalVariablesManager;
  * <ul>
  * <li>глава сам зовёт живого ({@code HunterClanInvitePlayers}): шёпот и штатное окно «вступить в клан?»;</li>
  * <li>титулы по месту в клане ({@code HunterClanTitles}): меняются только пустые и свои;</li>
+ * <li>права по рангам в клане с живым ({@code HunterClanRanks}): ранг без единого права получает права по умолчанию;</li>
  * <li>альянсы кланов охотников ({@code HunterClanAlliances}): союз, вступление и разрыв по правилам Mobius;</li>
  * <li>топ всех кланов ({@code HunterClanTop}): {@code .clans top}, кнопка на доске «Охотники»;</li>
  * <li>переворот, раскол и громкий развал ({@code HunterClanDrama}, не чаще раза в {@code HunterClanDramaHours} часов на весь мир).</li>
@@ -73,6 +75,16 @@ final class PhantomClanPower
 	private static final int DEPUTIES = 2;
 	/** На столько уровней ниже среднего — рекрут. */
 	private static final int ROOKIE_GAP = 10;
+
+	/** Ранги Mobius: 1–4 — старшие (1 — и у бывшего главы), 5–8 — рядовые (новичок вступает в 5-й), 9 — академия. */
+	private static final int OFFICER_RANKS = 4;
+	private static final int ACADEMY_RANK = 9;
+	/** Права старших: приём, титулы, склад клана, двери и функции холла и замка. */
+	private static final int RANKS_OFFICER = ClanAccess.INVITE_MEMBER.getMask() | ClanAccess.ASSIGN_TITLE.getMask() | ClanAccess.ACCESS_WAREHOUSE.getMask() | ClanAccess.HALL_OPEN_DOOR.getMask() | ClanAccess.HALL_FUNCTIONS.getMask() | ClanAccess.CASTLE_OPEN_DOOR.getMask() | ClanAccess.CASTLE_FUNCTIONS.getMask();
+	/** Права рядовых: склад клана, двери и функции холла и замка. */
+	private static final int RANKS_MEMBER = ClanAccess.ACCESS_WAREHOUSE.getMask() | ClanAccess.HALL_OPEN_DOOR.getMask() | ClanAccess.HALL_FUNCTIONS.getMask() | ClanAccess.CASTLE_OPEN_DOOR.getMask() | ClanAccess.CASTLE_FUNCTIONS.getMask();
+	/** Права академии: только двери (Mobius академии разрешает ещё склад, но вещи клана новичкам не раздаём). */
+	private static final int RANKS_ACADEMY = ClanAccess.HALL_OPEN_DOOR.getMask() | ClanAccess.CASTLE_OPEN_DOOR.getMask();
 
 	/** С какого уровня клан основывает союз (требование Mobius) и входит в него. */
 	private static final int ALLY_FOUND_LEVEL = 5;
@@ -192,6 +204,7 @@ final class PhantomClanPower
 			{
 				_nextTitles = now + TITLE_GAP;
 				titles(hunters);
+				ranks();
 			}
 			if (now >= _nextInvite)
 			{
@@ -294,6 +307,46 @@ final class PhantomClanPower
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * Права по рангам ({@code HunterClanRanks}): глава-охотник их сам не выставляет, и живой соклановец оставался без склада клана и дверей холла
+	 * (бывший глава — тоже: Mobius оставляет ему ранг 1 и снимает все права). Ранг без единого права получает права по умолчанию
+	 * ({@link #RANKS_OFFICER}, {@link #RANKS_MEMBER}, {@link #RANKS_ACADEMY}); выставленные права не трогаем. Только кланы, где есть живой.
+	 */
+	private static void ranks()
+	{
+		if (!PhantomHuntersConfig.HUNTER_CLANS || !PhantomHuntersConfig.HUNTER_CLAN_RANKS)
+		{
+			return;
+		}
+		for (Clan clan : hunterClans())
+		{
+			if (!hasLiving(clan))
+			{
+				continue;
+			}
+			final List<Integer> given = new ArrayList<>();
+			for (int rank = 1; rank <= ACADEMY_RANK; rank++)
+			{
+				if (clan.getRankPrivs(rank).getMask() == 0)
+				{
+					clan.setRankPrivs(rank, rank <= OFFICER_RANKS ? RANKS_OFFICER : rank < ACADEMY_RANK ? RANKS_MEMBER : RANKS_ACADEMY);
+					given.add(rank);
+				}
+			}
+			if (given.isEmpty())
+			{
+				continue;
+			}
+			// Mobius раздаёт маску ранга всем его членам в игре, и главе с тем же рангом тоже: главе — снова все права.
+			final Player leader = leaderOnline(clan);
+			if (leader != null)
+			{
+				leader.getClanPrivileges().enableAll();
+			}
+			LOGGER.info(PhantomClanPower.class.getSimpleName() + ": clan " + clan.getName() + " (" + clan.getLeaderName() + ") gave default privileges to ranks " + given + ".");
+		}
 	}
 
 	// ---------- Приглашение живого ----------

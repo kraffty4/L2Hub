@@ -35557,7 +35557,7 @@ index 0000000000000000000000000000000000000000..3955728afc6e747aa298d6755502cda4
 \ No newline at end of file
 diff --git a/dist/game/data/lang/ru/data/html/mods/AutoPlay/Main.htm b/dist/game/data/lang/ru/data/html/mods/AutoPlay/Main.htm
 new file mode 100644
-index 0000000000000000000000000000000000000000..6347609091ee21f8b6b99facb57872e8a1004bfb
+index 0000000000000000000000000000000000000000..92ec7d915c6d5c787fb239eee11259afc310bc9f
 --- /dev/null
 +++ b/dist/game/data/lang/ru/data/html/mods/AutoPlay/Main.htm
 @@ -0,0 +1,61 @@
@@ -35572,15 +35572,15 @@ index 0000000000000000000000000000000000000000..6347609091ee21f8b6b99facb57872e8
 +						<font name="hs12" color="CDB67F">Настройки</font>
 +						<table width="150" celspacing="0">
 +							<tr>
-+								<td height=10>Автоматическая атака</td>
++								<td height=10>Автоатака</td>
 +								<td width=10 background="%attack%"><button action="bypass voice .play attack" value=" " width=10 height=10 back="" fore=""></td>
 +							</tr>
 +							<tr>
-+								<td height=10>Автоматический сбор добычи</td>
++								<td height=10>Автоподбор</td>
 +								<td width=10 background="%loot%"><button action="bypass voice .play loot" value=" " width=10 height=10 back="" fore=""></td>
 +							</tr>
 +							<tr>
-+								<td height=10>Не мешать другим охотникам</td>
++								<td height=10>Вежливая охота</td>
 +								<td width=10 background="%respect%"><button action="bypass voice .play respect" value=" " width=10 height=10 back="" fore=""></td>
 +							</tr>
 +							<tr>
@@ -35590,7 +35590,7 @@ index 0000000000000000000000000000000000000000..6347609091ee21f8b6b99facb57872e8
 +						</table>
 +					</td>
 +					<td>
-+						<font name="hs12" color="CDB67F">Выбор целей</font>
++						<font name="hs12" color="CDB67F">Цели</font>
 +						<table width="120">
 +							<tr>
 +								<td height=10>Любая цель</td>

@@ -1,8 +1,8 @@
 """Редактор цен GM-шопа: правки цен поверх сборки отдельным слоем (docs/GM_SHOP_PRICES.md, раздел «Редактор»).
 
 Списки сборки лежат в исходниках (servers/<id>/<сборка>/dist/...), их перезаписывает «Пересобрать». Правки — в data/gmshop/<id>.json, вне git:
-{"prices": {"<список>": {"<ключ строки>": цена}}, "applied": ["<список>", ...]}. apply() собирает файл сервера из списка сборки и правок, байт в байт
-по всему, кроме цены. Гейм читает мультиселлы при старте, поэтому apply() зовёт servers.start_part перед запуском гейма. Покупки охотников
+{"prices": {"<список>": {"<ключ строки>": цена}}, "modeGrades": {"<грейд>": множитель}, "applied": ["<список>", ...]}.
+apply() собирает файл сервера из списка сборки, ручных правок и множителей режима, байт в байт по всему, кроме цены. Гейм читает мультиселлы при старте, поэтому apply() зовёт servers.start_part перед запуском гейма. Покупки охотников
 (PhantomHunterOutfit.gmShopGoods) читают те же файлы и идут за правками сами.
 
 Ключ строки — «<id вещи>x<штук>», у повторов в списке ещё «#<номер>». Правится только строка, где платят одной аденой за одну вещь; остальное — просмотр.
@@ -27,6 +27,7 @@ MIN_FACTOR, MAX_FACTOR = 0.01, 1000
 PACK_SLACK = 1.01  # цены округлены до трёх значащих цифр: коробка за 128 000 при штуках на 127 600 — не повод для предупреждения
 SEARCH_LIMIT = 300
 HIDDEN = "Без кнопки в шопе"
+GEAR = ("Weapon", "Armor")  # type шаблона вещи, на которое действуют множители грейда режима (gmshopGrades)
 
 CATALOG = paths.PACKAGE / "gm_shops.json"
 COMMENT = re.compile(rb"<!--.*?-->", re.S)
@@ -71,7 +72,7 @@ def read_layer(cid: str) -> dict:
         layer = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         layer = {}
-    return {"prices": layer.get("prices", {}), "applied": layer.get("applied", [])}
+    return {"prices": layer.get("prices", {}), "applied": layer.get("applied", []), "modeGrades": layer.get("modeGrades", {})}
 
 
 def _write_layer(cid: str, layer: dict) -> None:
@@ -143,7 +144,7 @@ def merge(raw: bytes, rows: list[dict], prices: dict) -> tuple[bytes, list[str]]
 
 
 def templates(p: dict, s: dict) -> dict:
-    """id вещи → {name, price, contents}. contents — что выдаёт пачка: [(id, штук)], без лотерей с шансом."""
+    """id вещи → {name, price, grade, kind, contents}. contents — что выдаёт пачка: [(id, штук)], без лотерей с шансом."""
     server = catalog.server_dir(p)
     folder, skills = server / s["items"], server / s["skills"]
     files = sorted(folder.glob("*.xml"))
@@ -162,12 +163,14 @@ def templates(p: dict, s: dict) -> dict:
     items = {}
     for f in files:
         for item in ET.parse(f).getroot().findall("item"):
-            price, action = 0, ""
+            price, action, grade = 0, "", ""
             for one in item.findall("set"):
                 if one.get("name") == "price":
                     price = int(one.get("val"))
                 elif one.get("name") == "default_action":
                     action = one.get("val")
+                elif one.get("name") == "crystal_type":
+                    grade = one.get("val") or ""
             contents = []
             for got in item.findall("capsuled_items/item"):
                 if (got.get("chance") in ("100", "100.0")) and (got.get("min") == got.get("max")):
@@ -176,7 +179,7 @@ def templates(p: dict, s: dict) -> dict:
                 for skill in item.findall("skills/skill"):
                     if int(skill.get("id")) in restores:
                         contents.append(restores[int(skill.get("id"))])
-            items[int(item.get("id"))] = {"name": item.get("name") or "?", "price": price, "contents": contents}
+            items[int(item.get("id"))] = {"name": item.get("name") or "?", "price": price, "grade": grade, "kind": item.get("type") or "", "contents": contents}
     _templates[folder] = (stamp, items)
     return items
 
@@ -333,7 +336,7 @@ def state(p: dict, lang: str | None = None) -> dict:
         lid = entry["list"]
         rows = shop.lists[lid][0]
         tree.append({**entry, "rows": len(rows), "edited": len(shop.layer["prices"].get(str(lid), {})), "warnings": sum(1 for r in rows if (lid, r["key"]) in warnings)})
-    return {"tree": tree, "edited": sum(len(v) for v in shop.layer["prices"].values()), "warnings": len(warnings)}
+    return {"tree": tree, "edited": sum(len(v) for v in shop.layer["prices"].values()), "warnings": len(warnings), "modeGrades": shop.layer["modeGrades"]}
 
 
 def rows(p: dict, list_ids: list[int] | None = None, query: str = "", only: str = "") -> dict:
@@ -462,8 +465,20 @@ def reset(p: dict, list_ids: list[int] | None = None) -> dict:
 
 
 @_locked
+def set_mode_grades(p: dict, grades: dict | None) -> dict:
+    """Множители режима — отдельно от ручных цен; смена режима пересобирает затронутые списки."""
+    if not spec(p):
+        return {"written": 0, "missing": []}
+    cid = p["id"]
+    layer = read_layer(cid)
+    layer["modeGrades"] = dict(grades or {})
+    _write_layer(cid, layer)
+    return apply(p)
+
+
+@_locked
 def apply(p: dict, out=print) -> dict:
-    """Файлы сервера = списки сборки + правки. Трогает только списки с правками и те, где правки были: файл, который правили руками мимо слоя, остаётся."""
+    """Файлы сервера = списки сборки + ручные правки + множители режима; последние не становятся ручными правками."""
     s = spec(p)
     cid = p["id"]
     if not s or not layer_path(cid).is_file():
@@ -472,15 +487,29 @@ def apply(p: dict, out=print) -> dict:
     files = list_files(p, s)
     server = catalog.server_dir(p)
     src = _source(cid) / "dist"
+    grades = layer["modeGrades"]
+    shop = Shop(p) if grades else None
+    items = shop.items if shop else {}
+    wanted = {int(k) for k in layer["prices"] if layer["prices"][k]} | {int(k) for k in layer["applied"]}
+    if shop:
+        wanted.update(shop.titles)
     written, missing = 0, []
-    for lid in sorted({int(k) for k in layer["prices"] if layer["prices"][k]} | {int(k) for k in layer["applied"]}):
+    for lid in sorted(wanted):
         f = files.get(lid)
         if f is None:
             missing += [f"{lid}: {key}" for key in layer["prices"].get(str(lid), {})]
             continue
         raw = f.read_bytes()
         rows, _ = parse_list(raw)
-        merged, gone = merge(raw, rows, layer["prices"].get(str(lid), {}))
+        prices = dict(layer["prices"].get(str(lid), {}))
+        for row in rows:
+            # Множитель грейда — только снаряжению: сосы, стрелы и эликсиры того же грейда остаются по своей цене.
+            item = items.get(row["item"], {})
+            factor = grades.get(item.get("grade")) if item.get("kind") in GEAR else None
+            if row["span"] and factor:
+                base = int(prices.get(row["key"], row["price"]))
+                prices[row["key"]] = min(round_price(base * factor), MAX_PRICE)
+        merged, gone = merge(raw, rows, prices)
         missing += [f"{lid}: {key}" for key in gone]
         to = server / f.relative_to(src)
         if not to.is_file() or to.read_bytes() != merged:
@@ -489,6 +518,6 @@ def apply(p: dict, out=print) -> dict:
             written += 1
     if missing:
         out(i18n.t("GM-шоп: правки без строки в сборке, не применились: {0}").format(", ".join(missing[:10])))
-    layer["applied"] = sorted(int(k) for k in layer["prices"] if layer["prices"][k])
+    layer["applied"] = sorted(lid for lid in wanted if lid in files)
     _write_layer(cid, layer)
     return {"written": written, "missing": missing}

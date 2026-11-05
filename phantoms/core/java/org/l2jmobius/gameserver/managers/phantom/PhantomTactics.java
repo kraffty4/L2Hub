@@ -42,6 +42,8 @@ final class PhantomTactics
 	private static final int MELEE_RANGE = 150;
 	/** Отбегает не чаще раза в столько: между отходами — бьёт. */
 	private static final long KITE_GAP = 4000;
+	/** Отход длится до столько ({@link #kiting}): {@value #KITE_DISTANCE} при беге около 200 — две секунды. */
+	private static final long KITE_STEP = 2500;
 	/** Строка лога о тактике — не чаще раза в столько на охотника. */
 	private static final long NOTE_GAP = 60000;
 
@@ -141,6 +143,27 @@ final class PhantomTactics
 			return false;
 		}
 		return away(player, attacker, now);
+	}
+
+	/**
+	 * Отход в пати (2026-11-04; автор: маг должен убегать от мобов, когда его бьют). Тот же {@link #kite}, но с тика напарника и между кастами
+	 * ({@code PhantomCompanionManager}): {@link #tick} при касте тактику пропускает, а в пати маг кастует почти без пауз, и отход почти не срабатывал.
+	 * Лучник, маг и саппорт с атакующими скиллами ({@link PhantomHunterOutfit#isCaster}); от медленного моба, как и на споте, не бегает.
+	 * @return отбегает
+	 */
+	static boolean peel(Player player, long now)
+	{
+		return !player.isDead() && !player.isCastingNow() && !player.isSitting() && kite(player, now);
+	}
+
+	/**
+	 * Охотник сейчас отбегает ({@link #away}). Тик напарника в пати (раз в секунду) кастом по цели сбивал отход, и маг стоял под ударами (2026-11-04):
+	 * пока идёт отход, напарник его не трогает.
+	 * @return отбегает
+	 */
+	static boolean kiting(Player player, long now)
+	{
+		return player.isMoving() && ((now - LAST_KITE.getOrDefault(player.getObjectId(), 0L)) < KITE_STEP);
 	}
 
 	/**
