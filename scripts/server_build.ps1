@@ -163,3 +163,8 @@ else {
     Invoke-DeployConfigs   # всё уже как в архиве — только запись о выкладке
     "Сборка готова и распакована в $srv; дальше — server_setup.ps1 -Id $Id"
 }
+
+# Какие патчи и врезки стоят в этой сборке: окно сверяет их с patches\ (builder.record_patches, Api.phantoms_status).
+$patchManifest = [ordered]@{}
+foreach ($p in $patches) { $patchManifest[$p.Name] = (Get-FileHash $p.FullName -Algorithm SHA256).Hash }
+$patchManifest | ConvertTo-Json | Set-Content (Join-Path $base '.patches_manifest.json') -Encoding utf8

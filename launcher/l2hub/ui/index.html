@@ -87,6 +87,7 @@
                 <button class="btn play" id="play"></button>
                 <button class="btn more" id="more" aria-label="Другие варианты запуска"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg></button>
                 <div class="menu" id="menu">
+                  <button data-act="play" hidden><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 4.5v15l12.5-7.5z"/></svg>Играть с клиентом<small>сервер и клиент</small></button>
                   <button data-act="server"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="7" rx="1.5"/><rect x="3" y="13" width="18" height="7" rx="1.5"/></svg>Только сервер, без клиента</button>
                   <button data-act="db"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6"/></svg>Только база<small>для правок в БД</small></button>
                   <button data-act="client"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 4.5v15l12.5-7.5z"/></svg>Запустить клиент<small>сервер уже работает</small></button>
@@ -174,6 +175,7 @@
                 <div id="backups"></div>
                 <div class="note" style="margin-top:10px">Бэкап базы снимается сам перед каждым запуском (хранятся последние 10, старые уходят в Корзину) и перед сбросом охотников. У High Five это дамп MariaDB, его можно снять и на работающем сервере; у Gracia Final — копия папки базы, только пока сервер выключен. Откат — только у остановленной хроники, текущая база сначала сохраняется бэкапом «перед откатом». Конфиги бэкапятся сами при каждом сохранении настроек (<span style="font-family:var(--mono)">data\backups\config</span>).</div>
                 <div id="wipeBox"></div>
+                <div id="spaceBox"></div>
               </div>
             </div>
 

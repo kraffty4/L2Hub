@@ -85,7 +85,7 @@
 	<!-- Shadowmoth: охотник, Dark Fighter, Assassin, Abyss Walker, Ghost Hunter -->
 	<phantom name="Shadowmoth" kind="hunter" role="DAMAGE" female="false" face="0" hairStyle="2" hairColor="0" classes="31,35,36,108" aliases="шэдоу;шадоу;моль" social="0.2" temper="1" risk="1" x="9745" y="15868" z="-4568">
 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
-		<gear grade="D" minLevel="20" rhand="221" chest="395" legs="417" feet="2424" shots="1463" /> <!-- Assassin Knife, Manticore Skin Shirt, Manticore Skin Gaiters, Manticore Skin Boots -->
+		<gear grade="D" minLevel="20" rhand="220" chest="395" legs="417" feet="2424" shots="1463" /> <!-- Crafted Dagger, Manticore Skin Shirt, Manticore Skin Gaiters, Manticore Skin Boots -->
 		<gear grade="C" minLevel="40" rhand="226" chest="401" feet="2437" shots="1464" /> <!-- Cursed Dagger, Drake Leather Armor, Drake Leather Boots -->
 		<gear grade="B" minLevel="52" rhand="229" head="2417" chest="2392" gloves="5723" feet="5739" shots="1465" /> <!-- Kris, Doom Helmet, Leather Armor of Doom, Doom Gloves - Light Armor, Doom Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="235" head="2419" chest="2395" gloves="5775" feet="5787" shots="1466" /> <!-- Bloody Orchid, Majestic Circlet, Majestic Leather Armor, Majestic Gauntlets - Light Armor, Majestic Boots - Light Armor -->
@@ -148,7 +148,7 @@
 	<!-- Sanchez: охотник, Human Fighter, Rogue, Treasure Hunter, Adventurer -->
 	<phantom name="Sanchez" kind="hunter" role="DAMAGE" female="false" face="1" hairStyle="4" hairColor="0" classes="0,7,8,93" aliases="санчез;саня;санек;санёк" social="1" temper="1" risk="1" x="-84668" y="244434" z="-3728">
 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
-		<gear grade="D" minLevel="20" rhand="2507" chest="394" legs="416" feet="2422" shots="1463" /> <!-- Lizardspear, Reinforced Leather Shirt, Reinforced Leather Gaiters, Reinforced Leather Boots -->
+		<gear grade="D" minLevel="20" rhand="220" chest="394" legs="416" feet="2422" shots="1463" /> <!-- Crafted Dagger, Reinforced Leather Shirt, Reinforced Leather Gaiters, Reinforced Leather Boots -->
 		<gear grade="C" minLevel="40" rhand="230" chest="400" legs="420" feet="2436" shots="1464" /> <!-- Wolverine Needle, Theca Leather Armor, Theca Leather Gaiters, Theca Leather Boots -->
 		<gear grade="B" minLevel="52" rhand="229" head="2416" chest="2391" gloves="5719" feet="5735" shots="1465" /> <!-- Kris, Blue Wolf Helmet, Blue Wolf Leather Armor, Blue Wolf Gloves - Light Armor, Blue Wolf Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="235" head="2418" chest="2394" gloves="5772" feet="5784" shots="1466" /> <!-- Bloody Orchid, Helm of Nightmare, Leather Armor of Nightmare, Gauntlets of Nightmare - Light Armor, Boots of Nightmare - Light Armor -->
@@ -409,7 +409,7 @@
 	<!-- Shustryi: охотник, Human Fighter, Rogue, Treasure Hunter, Adventurer -->
 	<phantom name="Shustryi" kind="hunter" role="DAMAGE" female="false" face="2" hairStyle="2" hairColor="0" classes="0,7,8,93" aliases="шустрый;шустрик" social="1" temper="1" risk="1.5" x="-84009" y="245250" z="-3728">
 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
-		<gear grade="D" minLevel="20" rhand="220" chest="394" legs="416" feet="2422" shots="1463" /> <!-- Crafted Dagger, Reinforced Leather Shirt, Reinforced Leather Gaiters, Reinforced Leather Boots -->
+		<gear grade="D" minLevel="20" rhand="221" chest="394" legs="416" feet="2422" shots="1463" /> <!-- Assassin Knife, Reinforced Leather Shirt, Reinforced Leather Gaiters, Reinforced Leather Boots -->
 		<gear grade="C" minLevel="40" rhand="232" chest="400" legs="420" feet="2436" shots="1464" /> <!-- Dark Elven Dagger, Theca Leather Armor, Theca Leather Gaiters, Theca Leather Boots -->
 		<gear grade="B" minLevel="52" rhand="229" head="2416" chest="2391" gloves="5719" feet="5735" shots="1465" /> <!-- Kris, Blue Wolf Helmet, Blue Wolf Leather Armor, Blue Wolf Gloves - Light Armor, Blue Wolf Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="235" head="2418" chest="2394" gloves="5772" feet="5784" shots="1466" /> <!-- Bloody Orchid, Helm of Nightmare, Leather Armor of Nightmare, Gauntlets of Nightmare - Light Armor, Boots of Nightmare - Light Armor -->
@@ -418,7 +418,7 @@
 	<!-- Murka: охотник, Human Fighter, Rogue, Treasure Hunter, Adventurer -->
 	<phantom name="Murka" kind="hunter" role="DAMAGE" female="true" face="1" hairStyle="0" hairColor="3" classes="0,7,8,93" aliases="мурка;мурочка" social="1.5" temper="1" risk="1" x="-84342" y="244208" z="-3728">
 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
-		<gear grade="D" minLevel="20" rhand="2507" chest="394" legs="416" feet="2422" shots="1463" /> <!-- Lizardspear, Reinforced Leather Shirt, Reinforced Leather Gaiters, Reinforced Leather Boots -->
+		<gear grade="D" minLevel="20" rhand="220" chest="394" legs="416" feet="2422" shots="1463" /> <!-- Crafted Dagger, Reinforced Leather Shirt, Reinforced Leather Gaiters, Reinforced Leather Boots -->
 		<gear grade="C" minLevel="40" rhand="230" chest="397" legs="2387" feet="62" shots="1464" /> <!-- Wolverine Needle, Mithril Shirt, Reinforced Mithril Gaiters, Reinforced Mithril Boots -->
 		<gear grade="B" minLevel="52" rhand="229" head="503" chest="2384" legs="2388" gloves="5711" feet="5727" shots="1465" /> <!-- Kris, Zubei's Helmet, Zubei's Leather Shirt, Zubei's Leather Gaiters, Zubei's Gauntlets - Light Armor, Zubei's Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="235" head="512" chest="2385" legs="2389" gloves="5766" feet="5778" shots="1466" /> <!-- Bloody Orchid, Dark Crystal Helmet, Dark Crystal Leather Armor, Dark Crystal Leggings, Dark Crystal Gloves - Light Armor, Dark Crystal Boots - Light Armor -->
@@ -517,7 +517,7 @@
 	<!-- Veterok: охотник, Elven Fighter, Elven Scout, Plains Walker, Wind Rider -->
 	<phantom name="Veterok" kind="hunter" role="DAMAGE" female="false" face="2" hairStyle="1" hairColor="1" classes="18,22,23,101" aliases="ветерок" social="1" temper="1" risk="1" x="46589" y="51453" z="-2992">
 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
-		<gear grade="D" minLevel="20" rhand="2507" chest="395" legs="417" feet="2424" shots="1463" /> <!-- Lizardspear, Manticore Skin Shirt, Manticore Skin Gaiters, Manticore Skin Boots -->
+		<gear grade="D" minLevel="20" rhand="220" chest="395" legs="417" feet="2424" shots="1463" /> <!-- Crafted Dagger, Manticore Skin Shirt, Manticore Skin Gaiters, Manticore Skin Boots -->
 		<gear grade="C" minLevel="40" rhand="230" chest="401" feet="2437" shots="1464" /> <!-- Wolverine Needle, Drake Leather Armor, Drake Leather Boots -->
 		<gear grade="B" minLevel="52" rhand="229" head="2417" chest="2392" gloves="5723" feet="5739" shots="1465" /> <!-- Kris, Doom Helmet, Leather Armor of Doom, Doom Gloves - Light Armor, Doom Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="235" head="2419" chest="2395" gloves="5775" feet="5787" shots="1466" /> <!-- Bloody Orchid, Majestic Circlet, Majestic Leather Armor, Majestic Gauntlets - Light Armor, Majestic Boots - Light Armor -->
@@ -526,7 +526,7 @@
 	<!-- Kolibri: охотник, Elven Fighter, Elven Scout, Plains Walker, Wind Rider -->
 	<phantom name="Kolibri" kind="hunter" role="DAMAGE" female="true" face="2" hairStyle="0" hairColor="2" classes="18,22,23,101" aliases="колибри" social="1.5" temper="1" risk="1" x="47464" y="51530" z="-2992">
 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
-		<gear grade="D" minLevel="20" rhand="2507" chest="395" legs="417" feet="2424" shots="1463" /> <!-- Lizardspear, Manticore Skin Shirt, Manticore Skin Gaiters, Manticore Skin Boots -->
+		<gear grade="D" minLevel="20" rhand="220" chest="395" legs="417" feet="2424" shots="1463" /> <!-- Crafted Dagger, Manticore Skin Shirt, Manticore Skin Gaiters, Manticore Skin Boots -->
 		<gear grade="C" minLevel="40" rhand="230" chest="401" feet="2437" shots="1464" /> <!-- Wolverine Needle, Drake Leather Armor, Drake Leather Boots -->
 		<gear grade="B" minLevel="52" rhand="229" head="2417" chest="2392" gloves="5723" feet="5739" shots="1465" /> <!-- Kris, Doom Helmet, Leather Armor of Doom, Doom Gloves - Light Armor, Doom Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="235" head="2419" chest="2395" gloves="5775" feet="5787" shots="1466" /> <!-- Bloody Orchid, Majestic Circlet, Majestic Leather Armor, Majestic Gauntlets - Light Armor, Majestic Boots - Light Armor -->
@@ -535,7 +535,7 @@
 	<!-- Prizrak: охотник, Elven Fighter, Elven Scout, Plains Walker, Wind Rider -->
 	<phantom name="Prizrak" kind="hunter" role="DAMAGE" female="false" face="1" hairStyle="2" hairColor="0" classes="18,22,23,101" aliases="призрак;призя" social="0.5" temper="1" risk="1" x="47509" y="51686" z="-2992">
 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
-		<gear grade="D" minLevel="20" rhand="221" chest="395" legs="417" feet="2424" shots="1463" /> <!-- Assassin Knife, Manticore Skin Shirt, Manticore Skin Gaiters, Manticore Skin Boots -->
+		<gear grade="D" minLevel="20" rhand="220" chest="395" legs="417" feet="2424" shots="1463" /> <!-- Crafted Dagger, Manticore Skin Shirt, Manticore Skin Gaiters, Manticore Skin Boots -->
 		<gear grade="C" minLevel="40" rhand="226" chest="401" feet="2437" shots="1464" /> <!-- Cursed Dagger, Drake Leather Armor, Drake Leather Boots -->
 		<gear grade="B" minLevel="52" rhand="229" head="2417" chest="2392" gloves="5723" feet="5739" shots="1465" /> <!-- Kris, Doom Helmet, Leather Armor of Doom, Doom Gloves - Light Armor, Doom Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="235" head="2419" chest="2395" gloves="5775" feet="5787" shots="1466" /> <!-- Bloody Orchid, Majestic Circlet, Majestic Leather Armor, Majestic Gauntlets - Light Armor, Majestic Boots - Light Armor -->
@@ -652,7 +652,7 @@
 	<!-- Nindzya: охотник, Dark Fighter, Assassin, Abyss Walker, Ghost Hunter -->
 	<phantom name="Nindzya" kind="hunter" role="DAMAGE" female="false" face="1" hairStyle="1" hairColor="1" classes="31,35,36,108" aliases="ниндзя;нинзя" social="1" temper="1" risk="1" x="9773" y="15768" z="-4568">
 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
-		<gear grade="D" minLevel="20" rhand="221" chest="394" legs="416" feet="2422" shots="1463" /> <!-- Assassin Knife, Reinforced Leather Shirt, Reinforced Leather Gaiters, Reinforced Leather Boots -->
+		<gear grade="D" minLevel="20" rhand="220" chest="394" legs="416" feet="2422" shots="1463" /> <!-- Crafted Dagger, Reinforced Leather Shirt, Reinforced Leather Gaiters, Reinforced Leather Boots -->
 		<gear grade="C" minLevel="40" rhand="226" chest="400" legs="420" feet="2436" shots="1464" /> <!-- Cursed Dagger, Theca Leather Armor, Theca Leather Gaiters, Theca Leather Boots -->
 		<gear grade="B" minLevel="52" rhand="229" head="2416" chest="2391" gloves="5719" feet="5735" shots="1465" /> <!-- Kris, Blue Wolf Helmet, Blue Wolf Leather Armor, Blue Wolf Gloves - Light Armor, Blue Wolf Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="235" head="2418" chest="2394" gloves="5772" feet="5784" shots="1466" /> <!-- Bloody Orchid, Helm of Nightmare, Leather Armor of Nightmare, Gauntlets of Nightmare - Light Armor, Boots of Nightmare - Light Armor -->
@@ -661,7 +661,7 @@
 	<!-- Ehidna: охотник, Dark Fighter, Assassin, Abyss Walker, Ghost Hunter -->
 	<phantom name="Ehidna" kind="hunter" role="DAMAGE" female="true" face="2" hairStyle="6" hairColor="1" classes="31,35,36,108" aliases="ехидна;ехидка" social="1" temper="1.2" risk="1.5" x="9975" y="15947" z="-4568">
 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
-		<gear grade="D" minLevel="20" rhand="220" chest="395" legs="417" feet="2424" shots="1463" /> <!-- Crafted Dagger, Manticore Skin Shirt, Manticore Skin Gaiters, Manticore Skin Boots -->
+		<gear grade="D" minLevel="20" rhand="221" chest="395" legs="417" feet="2424" shots="1463" /> <!-- Assassin Knife, Manticore Skin Shirt, Manticore Skin Gaiters, Manticore Skin Boots -->
 		<gear grade="C" minLevel="40" rhand="227" chest="401" feet="2437" shots="1464" /> <!-- Stiletto, Drake Leather Armor, Drake Leather Boots -->
 		<gear grade="B" minLevel="52" rhand="229" head="2417" chest="2392" gloves="5723" feet="5739" shots="1465" /> <!-- Kris, Doom Helmet, Leather Armor of Doom, Doom Gloves - Light Armor, Doom Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="235" head="2419" chest="2395" gloves="5775" feet="5787" shots="1466" /> <!-- Bloody Orchid, Majestic Circlet, Majestic Leather Armor, Majestic Gauntlets - Light Armor, Majestic Boots - Light Armor -->
@@ -670,7 +670,7 @@
 	<!-- Ochkarik: охотник, Dark Fighter, Assassin, Abyss Walker, Ghost Hunter -->
 	<phantom name="Ochkarik" kind="hunter" role="DAMAGE" female="false" face="1" hairStyle="4" hairColor="3" classes="31,35,36,108" aliases="очкарик;очкар" social="0.5" temper="1" risk="0.5" x="9894" y="15956" z="-4568">
 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
-		<gear grade="D" minLevel="20" rhand="2507" chest="395" legs="417" feet="2424" shots="1463" /> <!-- Lizardspear, Manticore Skin Shirt, Manticore Skin Gaiters, Manticore Skin Boots -->
+		<gear grade="D" minLevel="20" rhand="221" chest="395" legs="417" feet="2424" shots="1463" /> <!-- Assassin Knife, Manticore Skin Shirt, Manticore Skin Gaiters, Manticore Skin Boots -->
 		<gear grade="C" minLevel="40" rhand="227" chest="401" feet="2437" shots="1464" /> <!-- Stiletto, Drake Leather Armor, Drake Leather Boots -->
 		<gear grade="B" minLevel="52" rhand="229" head="2417" chest="2392" gloves="5723" feet="5739" shots="1465" /> <!-- Kris, Doom Helmet, Leather Armor of Doom, Doom Gloves - Light Armor, Doom Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="235" head="2419" chest="2395" gloves="5775" feet="5787" shots="1466" /> <!-- Bloody Orchid, Majestic Circlet, Majestic Leather Armor, Majestic Gauntlets - Light Armor, Majestic Boots - Light Armor -->
@@ -1228,7 +1228,7 @@
 	<!-- Karmashek: охотник, Human Fighter, Rogue, Treasure Hunter, Adventurer -->
 	<phantom name="Karmashek" kind="hunter" role="DAMAGE" female="true" face="1" hairStyle="0" hairColor="2" classes="0,7,8,93" aliases="кармашек;кармашка" social="1.5" temper="1.2" risk="1" x="-84188" y="245106" z="-3728">
 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
-		<gear grade="D" minLevel="20" rhand="2507" chest="394" legs="416" feet="2422" shots="1463" /> <!-- Lizardspear, Reinforced Leather Shirt, Reinforced Leather Gaiters, Reinforced Leather Boots -->
+		<gear grade="D" minLevel="20" rhand="220" chest="394" legs="416" feet="2422" shots="1463" /> <!-- Crafted Dagger, Reinforced Leather Shirt, Reinforced Leather Gaiters, Reinforced Leather Boots -->
 		<gear grade="C" minLevel="40" rhand="226" chest="400" legs="420" feet="2436" shots="1464" /> <!-- Cursed Dagger, Theca Leather Armor, Theca Leather Gaiters, Theca Leather Boots -->
 		<gear grade="B" minLevel="52" rhand="229" head="2416" chest="2391" gloves="5719" feet="5735" shots="1465" /> <!-- Kris, Blue Wolf Helmet, Blue Wolf Leather Armor, Blue Wolf Gloves - Light Armor, Blue Wolf Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="235" head="2418" chest="2394" gloves="5772" feet="5784" shots="1466" /> <!-- Bloody Orchid, Helm of Nightmare, Leather Armor of Nightmare, Gauntlets of Nightmare - Light Armor, Boots of Nightmare - Light Armor -->
@@ -1255,7 +1255,7 @@
 	<!-- Prohodimets: охотник, Human Fighter, Rogue, Treasure Hunter, Adventurer -->
 	<phantom name="Prohodimets" kind="hunter" role="DAMAGE" female="false" face="0" hairStyle="1" hairColor="2" classes="0,7,8,93" aliases="проходимец" social="1" temper="1.2" risk="1.5" x="-83476" y="244813" z="-3728">
 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
-		<gear grade="D" minLevel="20" rhand="221" chest="394" legs="416" feet="2422" shots="1463" /> <!-- Assassin Knife, Reinforced Leather Shirt, Reinforced Leather Gaiters, Reinforced Leather Boots -->
+		<gear grade="D" minLevel="20" rhand="220" chest="394" legs="416" feet="2422" shots="1463" /> <!-- Crafted Dagger, Reinforced Leather Shirt, Reinforced Leather Gaiters, Reinforced Leather Boots -->
 		<gear grade="C" minLevel="40" rhand="226" chest="397" legs="2387" feet="62" shots="1464" /> <!-- Cursed Dagger, Mithril Shirt, Reinforced Mithril Gaiters, Reinforced Mithril Boots -->
 		<gear grade="B" minLevel="52" rhand="229" head="503" chest="2384" legs="2388" gloves="5711" feet="5727" shots="1465" /> <!-- Kris, Zubei's Helmet, Zubei's Leather Shirt, Zubei's Leather Gaiters, Zubei's Gauntlets - Light Armor, Zubei's Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="235" head="512" chest="2385" legs="2389" gloves="5766" feet="5778" shots="1466" /> <!-- Bloody Orchid, Dark Crystal Helmet, Dark Crystal Leather Armor, Dark Crystal Leggings, Dark Crystal Gloves - Light Armor, Dark Crystal Boots - Light Armor -->
@@ -1462,7 +1462,7 @@
 	<!-- Skvoznyak: охотник, Elven Fighter, Elven Scout, Plains Walker, Wind Rider -->
 	<phantom name="Skvoznyak" kind="hunter" role="DAMAGE" female="false" face="0" hairStyle="0" hairColor="3" classes="18,22,23,101" aliases="сквозняк;сквознячок" social="1" temper="1" risk="1" x="46697" y="51848" z="-2992">
 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
-		<gear grade="D" minLevel="20" rhand="2507" chest="395" legs="417" feet="2424" shots="1463" /> <!-- Lizardspear, Manticore Skin Shirt, Manticore Skin Gaiters, Manticore Skin Boots -->
+		<gear grade="D" minLevel="20" rhand="220" chest="395" legs="417" feet="2424" shots="1463" /> <!-- Crafted Dagger, Manticore Skin Shirt, Manticore Skin Gaiters, Manticore Skin Boots -->
 		<gear grade="C" minLevel="40" rhand="230" chest="401" feet="2437" shots="1464" /> <!-- Wolverine Needle, Drake Leather Armor, Drake Leather Boots -->
 		<gear grade="B" minLevel="52" rhand="229" head="2417" chest="2392" gloves="5723" feet="5739" shots="1465" /> <!-- Kris, Doom Helmet, Leather Armor of Doom, Doom Gloves - Light Armor, Doom Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="235" head="2419" chest="2395" gloves="5775" feet="5787" shots="1466" /> <!-- Bloody Orchid, Majestic Circlet, Majestic Leather Armor, Majestic Gauntlets - Light Armor, Majestic Boots - Light Armor -->
@@ -1471,7 +1471,7 @@
 	<!-- Shoroh: охотник, Elven Fighter, Elven Scout, Plains Walker, Wind Rider -->
 	<phantom name="Shoroh" kind="hunter" role="DAMAGE" female="true" face="1" hairStyle="0" hairColor="2" classes="18,22,23,101" aliases="шорох;шорошка" social="1" temper="1" risk="1" x="46674" y="51301" z="-2992">
 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
-		<gear grade="D" minLevel="20" rhand="221" chest="395" legs="417" feet="2424" shots="1463" /> <!-- Assassin Knife, Manticore Skin Shirt, Manticore Skin Gaiters, Manticore Skin Boots -->
+		<gear grade="D" minLevel="20" rhand="220" chest="395" legs="417" feet="2424" shots="1463" /> <!-- Crafted Dagger, Manticore Skin Shirt, Manticore Skin Gaiters, Manticore Skin Boots -->
 		<gear grade="C" minLevel="40" rhand="230" chest="398" legs="418" feet="2431" shots="1464" /> <!-- Wolverine Needle, Plated Leather, Plated Leather Gaiters, Plated Leather Boots -->
 		<gear grade="B" minLevel="52" rhand="229" head="2415" chest="2390" gloves="5715" feet="5731" shots="1465" /> <!-- Kris, Avadon Circlet, Avadon Leather Armor, Avadon Gloves - Light Armor, Avadon Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="235" head="547" chest="2393" gloves="5769" feet="5781" shots="1466" /> <!-- Bloody Orchid, Tallum Helm, Tallum Leather Armor, Tallum Gloves - Light Armor, Tallum Boots - Light Armor -->
@@ -1480,7 +1480,7 @@
 	<!-- Vihor: охотник, Elven Fighter, Elven Scout, Plains Walker, Wind Rider -->
 	<phantom name="Vihor" kind="hunter" role="DAMAGE" female="false" face="0" hairStyle="2" hairColor="2" classes="18,22,23,101" aliases="вихрь;вихор" social="1" temper="1" risk="1" x="46945" y="50896" z="-2992">
 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
-		<gear grade="D" minLevel="20" rhand="2507" chest="394" legs="416" feet="2422" shots="1463" /> <!-- Lizardspear, Reinforced Leather Shirt, Reinforced Leather Gaiters, Reinforced Leather Boots -->
+		<gear grade="D" minLevel="20" rhand="221" chest="394" legs="416" feet="2422" shots="1463" /> <!-- Assassin Knife, Reinforced Leather Shirt, Reinforced Leather Gaiters, Reinforced Leather Boots -->
 		<gear grade="C" minLevel="40" rhand="232" chest="397" legs="2387" feet="62" shots="1464" /> <!-- Dark Elven Dagger, Mithril Shirt, Reinforced Mithril Gaiters, Reinforced Mithril Boots -->
 		<gear grade="B" minLevel="52" rhand="229" head="503" chest="2384" legs="2388" gloves="5711" feet="5727" shots="1465" /> <!-- Kris, Zubei's Helmet, Zubei's Leather Shirt, Zubei's Leather Gaiters, Zubei's Gauntlets - Light Armor, Zubei's Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="235" head="512" chest="2385" legs="2389" gloves="5766" feet="5778" shots="1466" /> <!-- Bloody Orchid, Dark Crystal Helmet, Dark Crystal Leather Armor, Dark Crystal Leggings, Dark Crystal Gloves - Light Armor, Dark Crystal Boots - Light Armor -->
@@ -1678,7 +1678,7 @@
 	<!-- Tishina: охотник, Dark Fighter, Assassin, Abyss Walker, Ghost Hunter -->
 	<phantom name="Tishina" kind="hunter" role="DAMAGE" female="true" face="0" hairStyle="0" hairColor="1" classes="31,35,36,108" aliases="тишина" social="0.5" temper="1" risk="0.5" x="9945" y="16059" z="-4568">
 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
-		<gear grade="D" minLevel="20" rhand="2507" chest="395" legs="417" feet="2424" shots="1463" /> <!-- Lizardspear, Manticore Skin Shirt, Manticore Skin Gaiters, Manticore Skin Boots -->
+		<gear grade="D" minLevel="20" rhand="221" chest="395" legs="417" feet="2424" shots="1463" /> <!-- Assassin Knife, Manticore Skin Shirt, Manticore Skin Gaiters, Manticore Skin Boots -->
 		<gear grade="C" minLevel="40" rhand="232" chest="401" feet="2437" shots="1464" /> <!-- Dark Elven Dagger, Drake Leather Armor, Drake Leather Boots -->
 		<gear grade="B" minLevel="52" rhand="229" head="2417" chest="2392" gloves="5723" feet="5739" shots="1465" /> <!-- Kris, Doom Helmet, Leather Armor of Doom, Doom Gloves - Light Armor, Doom Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="235" head="2419" chest="2395" gloves="5775" feet="5787" shots="1466" /> <!-- Bloody Orchid, Majestic Circlet, Majestic Leather Armor, Majestic Gauntlets - Light Armor, Majestic Boots - Light Armor -->
@@ -1696,7 +1696,7 @@
 	<!-- Nozhik: охотник, Dark Fighter, Assassin, Abyss Walker, Ghost Hunter -->
 	<phantom name="Nozhik" kind="hunter" role="DAMAGE" female="false" face="2" hairStyle="1" hairColor="1" classes="31,35,36,108" aliases="ножик;ножичек" social="1" temper="1" risk="1" x="10282" y="15722" z="-4568">
 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
-		<gear grade="D" minLevel="20" rhand="2507" chest="394" legs="416" feet="2422" shots="1463" /> <!-- Lizardspear, Reinforced Leather Shirt, Reinforced Leather Gaiters, Reinforced Leather Boots -->
+		<gear grade="D" minLevel="20" rhand="221" chest="394" legs="416" feet="2422" shots="1463" /> <!-- Assassin Knife, Reinforced Leather Shirt, Reinforced Leather Gaiters, Reinforced Leather Boots -->
 		<gear grade="C" minLevel="40" rhand="227" chest="400" legs="420" feet="2436" shots="1464" /> <!-- Stiletto, Theca Leather Armor, Theca Leather Gaiters, Theca Leather Boots -->
 		<gear grade="B" minLevel="52" rhand="229" head="2416" chest="2391" gloves="5719" feet="5735" shots="1465" /> <!-- Kris, Blue Wolf Helmet, Blue Wolf Leather Armor, Blue Wolf Gloves - Light Armor, Blue Wolf Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="235" head="2418" chest="2394" gloves="5772" feet="5784" shots="1466" /> <!-- Bloody Orchid, Helm of Nightmare, Leather Armor of Nightmare, Gauntlets of Nightmare - Light Armor, Boots of Nightmare - Light Armor -->
@@ -1705,7 +1705,7 @@
 	<!-- Gadyuka: охотник, Dark Fighter, Assassin, Abyss Walker, Ghost Hunter -->
 	<phantom name="Gadyuka" kind="hunter" role="DAMAGE" female="true" face="1" hairStyle="0" hairColor="3" classes="31,35,36,108" aliases="гадюка;гадючка" social="1" temper="1.5" risk="1" x="9925" y="16168" z="-4568">
 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
-		<gear grade="D" minLevel="20" rhand="220" chest="395" legs="417" feet="2424" shots="1463" /> <!-- Crafted Dagger, Manticore Skin Shirt, Manticore Skin Gaiters, Manticore Skin Boots -->
+		<gear grade="D" minLevel="20" rhand="221" chest="395" legs="417" feet="2424" shots="1463" /> <!-- Assassin Knife, Manticore Skin Shirt, Manticore Skin Gaiters, Manticore Skin Boots -->
 		<gear grade="C" minLevel="40" rhand="232" chest="401" feet="2437" shots="1464" /> <!-- Dark Elven Dagger, Drake Leather Armor, Drake Leather Boots -->
 		<gear grade="B" minLevel="52" rhand="229" head="2417" chest="2392" gloves="5723" feet="5739" shots="1465" /> <!-- Kris, Doom Helmet, Leather Armor of Doom, Doom Gloves - Light Armor, Doom Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="235" head="2419" chest="2395" gloves="5775" feet="5787" shots="1466" /> <!-- Bloody Orchid, Majestic Circlet, Majestic Leather Armor, Majestic Gauntlets - Light Armor, Majestic Boots - Light Armor -->

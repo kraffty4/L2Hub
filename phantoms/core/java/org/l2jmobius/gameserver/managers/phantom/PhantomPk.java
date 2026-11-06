@@ -1,5 +1,6 @@
 package org.l2jmobius.gameserver.managers.phantom;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -47,6 +48,14 @@ public final class PhantomPk
 	private static final int REVENGE_LEVEL_GAP = 5;
 	private static final int REVENGE_HP = 70;
 	private static final long REVENGE_GAP = 1800000;
+	/**
+	 * Толпа (раздел 4.138): драка с ПК видна охотникам в {@value #HELP_RANGE} — дальние подбегают, но не бегут. Каждый смелый рядом сверх первого добавляет
+	 * {@value #CROWD_STEP} уровня к допустимой разнице {@value #FIGHT_LEVEL_GAP}, всего не больше {@value #CROWD_MAX_GAP}; с {@value #CROWD_BOLD} смелых бьют и не самые вспыльчивые.
+	 */
+	private static final int HELP_RANGE = 2000;
+	private static final int CROWD_STEP = 3;
+	private static final int CROWD_MAX_GAP = 10;
+	private static final int CROWD_BOLD = 3;
 
 	private final Map<Long, Long> _reacted = new ConcurrentHashMap<>();
 	private final Map<Long, Long> _revenged = new ConcurrentHashMap<>();
@@ -67,40 +76,98 @@ public final class PhantomPk
 	}
 
 	/**
-	 * Охотники вокруг ПК (карма у живого игрока или охотника; не Танатос): бить или бежать — по силе и характеру.
+	 * Охотники вокруг ПК (карма у живого игрока или охотника; не Танатос): бить или бежать — по силе, характеру и толпе (раздел 4.138).
+	 * Толпа — смелые и целые охотники в {@value #HELP_RANGE}, не слабее ПК больше чем на {@value #CROWD_MAX_GAP} уровней, вместе с теми, кто уже бьёт этого ПК.
 	 */
 	private void react(long now)
 	{
+		final PhantomHunterManager manager = PhantomHunterManager.getInstance();
 		for (Player pk : World.getPlayers())
 		{
 			if ((PhantomCompat.karma(pk) <= 0) || pk.isDead() || pk.isInsideZone(ZoneId.PEACE) || PhantomThanatos.is(pk))
 			{
 				continue;
 			}
-			for (Player hunter : World.getVisibleObjectsInRange(pk, Player.class, SEE_RANGE))
+			final List<Player> around = new ArrayList<>();
+			int crowd = 0;
+			for (Player hunter : World.getVisibleObjectsInRange(pk, Player.class, HELP_RANGE))
 			{
-				if ((hunter == pk) || hunter.isDead() || !PhantomRelations.isHunter(hunter) || !PhantomHunterManager.getInstance().isHunting(hunter))
+				if ((hunter == pk) || hunter.isDead() || !PhantomRelations.isHunter(hunter) || !manager.isHunting(hunter))
 				{
 					continue;
 				}
+				around.add(hunter);
+				if (manager.fights(hunter, pk) || (brave(hunter, pk) && fit(hunter, pk, CROWD_MAX_GAP)))
+				{
+					crowd++;
+				}
+			}
+			if (around.isEmpty())
+			{
+				continue;
+			}
+
+			final int gap = Math.min(CROWD_MAX_GAP, FIGHT_LEVEL_GAP + (CROWD_STEP * Math.max(0, crowd - 1)));
+			final List<Player> joined = new ArrayList<>();
+			final List<Player> fled = new ArrayList<>();
+			for (Player hunter : around)
+			{
 				final long key = ((long) hunter.getObjectId() << 32) | pk.getObjectId();
-				if (now < _reacted.getOrDefault(key, 0L))
+				// Уже бьёт этого ПК — пусть бьёт: раньше через минуту engagePk отказывал («уже дерётся»), и охотник бросал драку и убегал.
+				if (manager.fights(hunter, pk) || (now < _reacted.getOrDefault(key, 0L)))
 				{
 					continue;
 				}
-				_reacted.put(key, now + REACT_GAP);
-				if (strongAndBrave(hunter, pk) && PhantomHunterManager.getInstance().engagePk(hunter, pk))
+				final boolean near = hunter.calculateDistance2D(pk) <= SEE_RANGE;
+				if (fit(hunter, pk, gap) && (brave(hunter, pk) || (crowd >= CROWD_BOLD)) && manager.engagePk(hunter, pk))
 				{
-					LOGGER.info(getClass().getSimpleName() + ": " + hunter.getName() + " (" + hunter.getLevel() + ") attacks PK " + pk.getName() + " (" + pk.getLevel() + ").");
-					if (PhantomBanter.audience(hunter))
-					{
-						PhantomChat.getInstance().hunterSay(hunter, Rnd.nextBoolean() ? "бей ПК!" : "ПК, ну держись", "PK");
-					}
+					_reacted.put(key, now + REACT_GAP);
+					joined.add(hunter);
 					continue;
 				}
-				flee(hunter, pk, true);
+				if (near)
+				{
+					_reacted.put(key, now + REACT_GAP);
+					fled.add(hunter);
+					flee(hunter, pk, true);
+				}
+				// дальний не боец — ни бежит, ни ждёт: через 10 с толпа может вырасти
+			}
+			if (joined.isEmpty())
+			{
+				continue;
+			}
+
+			LOGGER.info(getClass().getSimpleName() + ": PK " + pk.getName() + " (" + pk.getLevel() + "): crowd " + crowd + ", gap " + gap + ", attack " + names(joined) + (fled.isEmpty() ? "" : ", run " + names(fled)) + ".");
+			final Player voice = joined.get(0);
+			if (PhantomBanter.audience(voice))
+			{
+				PhantomChat.getInstance().hunterSay(voice, crowd >= 2 ? (Rnd.nextBoolean() ? "все на ПК!" : "толпой его, толпой") : (Rnd.nextBoolean() ? "бей ПК!" : "ПК, ну держись"), "PK");
+			}
+			// Один против ПК — зовёт на помощь в торговый чат.
+			if ((crowd < 2) && (Rnd.get(100) < SHOUT_CHANCE))
+			{
+				PhantomChat.getInstance().hunterShout(voice, "ПК " + pk.getName() + " " + pk.getLevel() + " лвл тут, кто рядом — помогите");
 			}
 		}
+	}
+
+	/**
+	 * @return смелый: вспыльчивость от {@value #BRAVE_TEMPER} или ПК ему враг ({@link PhantomRelations})
+	 */
+	private static boolean brave(Player hunter, Player pk)
+	{
+		final PhantomTemplate template = PhantomData.getInstance().getTemplate(hunter.getName());
+		final float temper = template != null ? template.getTemper() : 1;
+		return (temper >= BRAVE_TEMPER) || PhantomRelations.getInstance().isEnemy(hunter, pk);
+	}
+
+	/**
+	 * @return не слабее ПК больше чем на {@code gap} уровней, цел больше чем наполовину, и Mobius даст начать бой ({@link #barredByCursed})
+	 */
+	private static boolean fit(Player hunter, Player pk, int gap)
+	{
+		return (hunter.getLevel() >= (pk.getLevel() - gap)) && (hunter.getCurrentHp() > (hunter.getMaxHp() / 2)) && !barredByCursed(hunter, pk);
 	}
 
 	/**
@@ -108,12 +175,40 @@ public final class PhantomPk
 	 */
 	private static boolean strongAndBrave(Player hunter, Player pk)
 	{
-		final PhantomTemplate template = PhantomData.getInstance().getTemplate(hunter.getName());
-		final float temper = template != null ? template.getTemper() : 1;
-		final int level = PhantomThanatos.is(pk) ? PhantomRaid.HUNT_LEVEL : pk.getLevel() - FIGHT_LEVEL_GAP;
-		final boolean strong = (hunter.getLevel() >= level) && (hunter.getCurrentHp() > (hunter.getMaxHp() / 2));
-		final boolean brave = (temper >= BRAVE_TEMPER) || PhantomRelations.getInstance().isEnemy(hunter, pk);
-		return strong && brave && !barredByCursed(hunter, pk);
+		if (PhantomThanatos.is(pk))
+		{
+			return (hunter.getLevel() >= PhantomRaid.HUNT_LEVEL) && (hunter.getCurrentHp() > (hunter.getMaxHp() / 2)) && brave(hunter, pk) && !barredByCursed(hunter, pk);
+		}
+		return brave(hunter, pk) && fit(hunter, pk, FIGHT_LEVEL_GAP);
+	}
+
+	/**
+	 * @return этого ПК (не Танатоса) уже бьёт кто-то из охотников в {@value #HELP_RANGE} от него
+	 */
+	private static boolean crowdOn(Player pk)
+	{
+		if (PhantomThanatos.is(pk))
+		{
+			return false;
+		}
+		for (Player other : World.getVisibleObjectsInRange(pk, Player.class, HELP_RANGE))
+		{
+			if (!other.isDead() && PhantomHunterManager.getInstance().fights(other, pk))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private static String names(List<Player> players)
+	{
+		final StringBuilder sb = new StringBuilder();
+		for (Player player : players)
+		{
+			sb.append(sb.length() > 0 ? ", " : "").append(player.getName()).append(" (").append(player.getLevel()).append(')');
+		}
+		return sb.toString();
 	}
 
 	/**
@@ -157,11 +252,12 @@ public final class PhantomPk
 
 	/**
 	 * На охотника напал ПК или Танатос ({@code PhantomHunterManager.onDamaged}): слабый или трус не отвечает, а убегает — тогда убийство даст ПК карму.
+	 * ПК уже бьют другие охотники рядом (толпа, раздел 4.138) — отвечает и тот, кто слабее до {@value #CROWD_MAX_GAP} уровней, и не самый вспыльчивый.
 	 * @return убегает (сдачи не давать)
 	 */
 	boolean fleeFromAttacker(Player hunter, Player pk)
 	{
-		if (strongAndBrave(hunter, pk))
+		if (strongAndBrave(hunter, pk) || (fit(hunter, pk, CROWD_MAX_GAP) && crowdOn(pk)))
 		{
 			return false;
 		}

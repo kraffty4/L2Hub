@@ -161,6 +161,19 @@ final class PhantomHunterOutfit
 	static final double BAG_FULL = 0.7;
 	/** Полную сумку город разгружает до этой доли ({@link #sellCheapGoods}). */
 	private static final double BAG_ROOMY = 0.6;
+	/** Стартовые наборы, как у игроков (раздел 4.104): переменные доски Alt+B на грейды NG, D и C — у охотника, как у игрока, один набор на грейд. */
+	private static final String[] KIT_VARIABLES =
+	{
+		"L2HubKit_ng",
+		"L2HubKit_d",
+		"L2HubKit_c"
+	};
+	/** Сосов в наборе и снарядов луку — как на доске. */
+	private static final int KIT_SHOTS = 1000;
+	/** Выключатель наборов TownStarterKits — тот же, что у доски. */
+	private static final File TOWN_CONFIG = new File("./config/Custom/L2HubTown.ini");
+	private static long _kitsReadAt;
+	private static boolean _kits;
 
 	private PhantomHunterOutfit()
 	{
@@ -1592,9 +1605,10 @@ final class PhantomHunterOutfit
 	 * Бижутерия (шея, две серьги, два кольца) — после полного сета брони: самая дешёвая обычная своего грейда, по цене магазина. Не хватает — копит.
 	 * @param grade грейд шмота, который он сейчас носит по набору
 	 * @param reserve запас на расходники и телепорт
+	 * @param gift из стартового набора ({@link #kitFor}): даром, без запаса
 	 * @return что купил
 	 */
-	private static List<String> buyJewels(Player player, int grade, long reserve)
+	private static List<String> buyJewels(Player player, int grade, long reserve, boolean gift)
 	{
 		final List<String> bought = new ArrayList<>();
 		for (int slot : JEWEL_SLOTS)
@@ -1607,12 +1621,12 @@ final class PhantomHunterOutfit
 				continue;
 			}
 
-			if (((player.getAdena() - reserve) < item.getReferencePrice()) || !player.reduceAdena(ItemProcessType.BUY, item.getReferencePrice(), player, false))
+			if (!gift && (((player.getAdena() - reserve) < item.getReferencePrice()) || !player.reduceAdena(ItemProcessType.BUY, item.getReferencePrice(), player, false)))
 			{
 				break;
 			}
 
-			final Item added = player.getInventory().addItem(ItemProcessType.BUY, itemId, 1, player, null);
+			final Item added = player.getInventory().addItem(gift ? ItemProcessType.REWARD : ItemProcessType.BUY, itemId, 1, player, null);
 			if (added == null)
 			{
 				break;
@@ -1716,15 +1730,28 @@ final class PhantomHunterOutfit
 	 */
 	/**
 	 * Вещь только для NPC: флаг {@code for_npc} (Dailaon Knife, Giant Cannon, Dusk) или монстровое оружие без него — иконка {@code weapon_monster}
-	 * (Silenos Blowgun, Dreadbane), имя «NPC only…» и «Monster Only…». У клиента нет на нём анимаций игрока — Т-поза. Тот же признак — в
-	 * {@code tools/fake_players.py} ({@code npc_only}).
+	 * (Silenos Blowgun, Dreadbane), имя «NPC only…» и «Monster Only…». У клиента нет на нём анимаций игрока — Т-поза. С 2026-11-06 ещё
+	 * модель монстра в иконке ({@code weapon_mon_…}, {@code shield_mon_…}: Gracian Soldier) и имена «Exclusive to Monsters…», «For Monster…»,
+	 * «For NPC…» — тот же признак в патче GM-шопа H5 {@code 0247}. В {@code tools/fake_players.py} ({@code npc_only}) остался узкий:
+	 * расширенный в таблицах снаряжения пяти хроник ничего не находит (проверено 2026-11-06), а правку генератора пришлось бы сверять
+	 * перегенерацией всех хроник.
 	 */
 	static boolean npcOnly(ItemTemplate item)
 	{
 		final String icon = item.getIcon();
 		final String name = item.getName();
-		return item.isForNpc() || ((icon != null) && icon.contains("weapon_monster")) || ((name != null) && (name.startsWith("NPC only") || name.startsWith("Monster Only")));
+		return item.isForNpc() || ((icon != null) && (icon.contains("weapon_monster") || MON_ICON.matcher(icon).find())) || ((name != null) && (name.startsWith("NPC only") || name.startsWith("Monster Only") || name.startsWith("Exclusive to Monsters") || name.startsWith("For Monster") || name.startsWith("For NPC") || NPC_WEAPON_NAMES.contains(name)));
 	}
+
+	/**
+	 * Оружие NPC без всех признаков выше. Lizardspear (2507) стоит как кинжал D, но цена и урон у него те же, что у Dailaon Knife:
+	 * генератор давал его всем кинжальщикам на D, и они бегали в Т-позе (жалоба пользователя 2026-11-06). Тот же список —
+	 * {@code NPC_WEAPON_NAMES} в {@code tools/fake_players.py}.
+	 */
+	private static final java.util.Set<String> NPC_WEAPON_NAMES = java.util.Set.of("Lizardspear");
+
+	/** Модель монстра в имени иконки: {@code icon.weapon_mon_gracia_soldier_sword_i00}, {@code icon.mon_dragon_centurion_spear_i00}. */
+	private static final java.util.regex.Pattern MON_ICON = java.util.regex.Pattern.compile("(^|[._])mon_");
 
 	/**
 	 * Грейд надетого для сравнения с покупкой: пусто, не шмот или вещь только для NPC ({@link #npcOnly}) — -1, хуже любой: заменит первой же покупкой.
@@ -1747,6 +1774,9 @@ final class PhantomHunterOutfit
 			}
 		}
 
+		// Стартовый набор, как у игрока (раздел 4.104): вещи лучшего грейда своего набора, если это NG, D или C, — даром, один раз на грейд; адена остаётся на профу и расходники.
+		final String kit = kitFor(player, grades);
+		boolean kitGiven = false;
 		boolean stopped = false;
 		for (int slot : SLOTS)
 		{
@@ -1773,28 +1803,30 @@ final class PhantomHunterOutfit
 					break; // надетое не хуже этого грейда, ниже искать нечего
 				}
 				saving = true;
+				final boolean gift = (kit != null) && (gear == grades.get(0));
 
 				// Запас на расходники того грейда, под который покупается (новое оружие меняет грейд сосов).
 				final int g = Math.min(7, grade(gear.rhand));
 				final long ammoReserve = (slot == Inventory.PAPERDOLL_RHAND ? isRanged(gear.rhand) : ammoId(player) > 0) ? price(ARROWS[g]) * AMMO_RESERVE : 0;
 				final long reserve = (price(shotId(player.isMageClass(), g)) * SHOT_RESERVE) + ammoReserve + (player.getLevel() > PlayerConfig.MAX_FREE_TELEPORT_LEVEL ? PhantomHuntersConfig.HUNTER_TELEPORT_FEE : 0) + professionReserve;
-				if ((player.getAdena() - reserve) < item.getReferencePrice())
+				if (!gift && ((player.getAdena() - reserve) < item.getReferencePrice()))
 				{
 					continue; // не хватает — посмотреть грейд ниже
 				}
 
-				if (!player.reduceAdena(ItemProcessType.BUY, item.getReferencePrice(), player, false))
+				if (!gift && !player.reduceAdena(ItemProcessType.BUY, item.getReferencePrice(), player, false))
 				{
 					break;
 				}
 
 				saving = false;
-				final Item added = player.getInventory().addItem(ItemProcessType.BUY, itemId, 1, player, null);
+				final Item added = player.getInventory().addItem(gift ? ItemProcessType.REWARD : ItemProcessType.BUY, itemId, 1, player, null);
 				if ((added != null) && added.isEquipable())
 				{
 					player.getInventory().equipItem(added);
 					retire(player, current);
 					bought.add(item.getName());
+					kitGiven |= gift;
 				}
 				break;
 			}
@@ -1822,12 +1854,27 @@ final class PhantomHunterOutfit
 			}
 		}
 
-		// Броня собрана — бижутерия своего грейда.
-		if (!stopped && !grades.isEmpty())
+		// Броня собрана — бижутерия своего грейда (из набора — и без полной брони, она в наборе тоже).
+		if ((!stopped || (kit != null)) && !grades.isEmpty())
 		{
 			final int g = Math.min(7, grade(grades.get(0).rhand));
 			final long reserve = (price(shotId(player.isMageClass(), g)) * SHOT_RESERVE) + (ammoId(player) > 0 ? price(ARROWS[g]) * AMMO_RESERVE : 0) + (player.getLevel() > PlayerConfig.MAX_FREE_TELEPORT_LEVEL ? PhantomHuntersConfig.HUNTER_TELEPORT_FEE : 0) + professionReserve;
-			bought.addAll(buyJewels(player, g, reserve));
+			final List<String> jewels = buyJewels(player, g, reserve, kit != null);
+			bought.addAll(jewels);
+			kitGiven |= (kit != null) && !jewels.isEmpty();
+		}
+
+		// Набор взят: отметка на грейд (та же, что у доски) и, как в наборе игрока, 1000 сосов, луку — ещё 1000 стрел.
+		if (kitGiven)
+		{
+			final int g = grade(grades.get(0).rhand);
+			player.getVariables().set(kit, true);
+			PhantomCompat.addItem(player, ItemProcessType.REWARD, shotId(player.isMageClass(), g), KIT_SHOTS, null);
+			if (ammoId(player) > 0)
+			{
+				PhantomCompat.addItem(player, ItemProcessType.REWARD, ammoId(player), KIT_SHOTS, null);
+			}
+			bought.add(0, "стартовый набор " + gradeName(g));
 		}
 
 		if (!bought.isEmpty())
@@ -1836,6 +1883,71 @@ final class PhantomHunterOutfit
 			player.broadcastUserInfo();
 		}
 		return bought;
+	}
+
+	// ---------- Стартовый набор (раздел 4.104) ----------
+
+	/**
+	 * Выключатель TownStarterKits в config/Custom/L2HubTown.ini — тот же, что у доски Alt+B. Нет файла или ключа — на хронике наборов нет (Classic, Essence), выключено.
+	 * Файл перечитывается не чаще раза в минуту: окно лаунчера меняет его на ходу.
+	 */
+	static synchronized boolean starterKits()
+	{
+		final long now = System.currentTimeMillis();
+		if ((now - _kitsReadAt) < 60000)
+		{
+			return _kits;
+		}
+		_kitsReadAt = now;
+		boolean on = false;
+		if (TOWN_CONFIG.isFile())
+		{
+			try (java.io.Reader reader = java.nio.file.Files.newBufferedReader(TOWN_CONFIG.toPath(), java.nio.charset.StandardCharsets.UTF_8))
+			{
+				final java.util.Properties properties = new java.util.Properties();
+				properties.load(reader);
+				final String value = properties.getProperty("TownStarterKits");
+				on = (value != null) && !"false".equalsIgnoreCase(value.trim());
+			}
+			catch (Exception e)
+			{
+				LOGGER.warning("L2Hub: " + TOWN_CONFIG + " не прочитан, стартовых наборов охотникам нет: " + e.getMessage());
+			}
+		}
+		_kits = on;
+		return on;
+	}
+
+	/**
+	 * Набор, который охотник может взять сейчас: лучший грейд его набора по уровню и экспертизе — NG, D или C, наборы включены, этот набор он ещё не брал.
+	 * @param grades грейды его набора, лучший — первым (как в {@link #buyGear})
+	 * @return переменная набора или {@code null} — набора нет
+	 */
+	private static String kitFor(Player player, List<PhantomTemplate.Gear> grades)
+	{
+		if (grades.isEmpty())
+		{
+			return null;
+		}
+		final int grade = grade(grades.get(0).rhand);
+		return (grade < KIT_VARIABLES.length) && !player.getVariables().getBoolean(KIT_VARIABLES[grade], false) && starterKits() ? KIT_VARIABLES[grade] : null;
+	}
+
+	/**
+	 * Повод идти в город ({@code PhantomHunterManager.needsTown}): дорос до 20-го или 40-го, набор нового грейда ждёт, а оружие ещё старого.
+	 */
+	static boolean kitWaiting(Player player, PhantomTemplate template)
+	{
+		final int expertise = PhantomCompat.expertiseLevel(player);
+		PhantomTemplate.Gear best = null;
+		for (PhantomTemplate.Gear gear : template.getAllGear())
+		{
+			if ((gear.minLevel <= player.getLevel()) && (grade(gear.rhand) <= expertise))
+			{
+				best = gear; // как в buyGear: последний подходящий — лучший
+			}
+		}
+		return (best != null) && (kitFor(player, List.of(best)) != null) && (wornGrade(player.getInventory().getPaperdollItem(Inventory.PAPERDOLL_RHAND)) < grade(best.rhand));
 	}
 
 	/**
@@ -2102,6 +2214,7 @@ final class PhantomHunterOutfit
 			}
 		}
 
+		final String kit = kitFor(player, grades); // вещи из стартового набора — даром, на них не копит
 		long adena = player.getAdena();
 		for (int slot : SLOTS)
 		{
@@ -2125,6 +2238,11 @@ final class PhantomHunterOutfit
 				final ItemTemplate item = ItemData.getInstance().getTemplate(itemId);
 				if ((item == null) || (item.getCrystalType().getLevel() <= currentGrade) || ((current != null) && (current.getId() == itemId)))
 				{
+					break;
+				}
+				if ((kit != null) && (gear == grades.get(0)))
+				{
+					bought = true;
 					break;
 				}
 
@@ -2417,6 +2535,11 @@ final class PhantomHunterOutfit
 			}
 		}
 		update(player, template);
+		// Самопроверки считают покупки за адену: стартовые наборы (раздел 4.104) этому охотнику уже выданы.
+		for (String kit : KIT_VARIABLES)
+		{
+			player.getVariables().set(kit, true);
+		}
 		if (player.getAdena() > adena)
 		{
 			PhantomCompat.reduceAdena(player, ItemProcessType.FEE, player.getAdena() - adena, player, false);

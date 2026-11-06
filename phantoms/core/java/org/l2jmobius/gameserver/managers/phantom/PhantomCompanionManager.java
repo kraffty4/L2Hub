@@ -90,6 +90,8 @@ public class PhantomCompanionManager
 	/** Дальше этого от владельца — бросить цель и догнать; владелец бежит — короче. */
 	private static final int HUNT_LEASH = 1450;
 	private static final int HUNT_RUN_LEASH = 700;
+	/** «Кач тут»: моб, которого уже бьёт кто-то из пати, считается дальше на столько — напарники расходятся по разным мобам. */
+	private static final int HUNT_SPREAD = 400;
 	/** Сказали качать, а вокруг столько времени ни одного свободного моба и владелец стоит, мс: дальше ведёт на спот сам, как по «веди». */
 	private static final long HUNT_EMPTY_WAIT = 15000;
 	/** Как часто в пати проверяет банки, мс. */
@@ -1306,6 +1308,7 @@ public class PhantomCompanionManager
 	/**
 	 * Кого бить: моба, который бьёт самого напарника ({@link #selfAttacker}), затем цель владельца (режимы ASSIST и HUNT, владелец в бою), затем текущего противника, затем ближайшего моба, который бьёт нас;
 	 * в режиме HUNT — ещё и свободного моба вокруг владельца. Владелец убежал дальше поводка «кач тут» — никого: догнать.
+	 * В HUNT цель владельца достаётся одному ({@link #ownerTargetIsMine}), остальные берут её, только когда свободных мобов нет (2026-11-06).
 	 */
 	private static Creature chooseEnemy(Companion companion, Player phantom, Player owner)
 	{
@@ -1344,18 +1347,25 @@ public class PhantomCompanionManager
 			}
 		}
 
+		// «Кач тут» (решение автора 2026-11-06, жалоба пользователя «по факту я их качаю, а не они меня»): цель владельца берёт один напарник,
+		// остальные бьют свободных мобов вокруг; свободных нет — тоже на неё (в конце). Раньше на неё бежали все, и вокруг стояли нетронутые мобы.
+		Monster ownerTarget = null;
 		if (((companion.mode == Mode.ASSIST) || hunt) && !owner.isDead())
 		{
 			final WorldObject target = owner.getTarget();
 			if ((target instanceof Monster) && isEnemy(phantom, (Monster) target) && (owner.calculateDistance2D(target) <= PhantomPartyConfig.PHANTOM_ASSIST_RANGE) && (owner.isInCombat() || (PhantomHunterOutfit.victimOf((Monster) target) == owner)))
 			{
-				return (Monster) target;
+				if (!hunt || ownerTargetIsMine(phantom, owner, (Monster) target))
+				{
+					return (Monster) target;
+				}
+				ownerTarget = (Monster) target;
 			}
 		}
 
-		// Своего противника держит; в «кач тут» — добивает, даже если моб бьёт не его.
+		// Своего противника держит; в «кач тут» — добивает, даже если моб бьёт не его. Цель владельца — только тот, кому она досталась.
 		final WorldObject current = phantom.getTarget();
-		if ((current instanceof Monster) && isEnemy(phantom, (Monster) current) && (hunt ? !takenByOthers((Monster) current, phantom) : attacksUs((Monster) current, companion, phantom, owner)) && (owner.calculateDistance2D(current) <= leash))
+		if ((current instanceof Monster) && (current != ownerTarget) && isEnemy(phantom, (Monster) current) && (hunt ? !takenByOthers((Monster) current, phantom) : attacksUs((Monster) current, companion, phantom, owner)) && (owner.calculateDistance2D(current) <= leash))
 		{
 			return (Monster) current;
 		}
@@ -1364,7 +1374,7 @@ public class PhantomCompanionManager
 		double nearestDistance = Double.MAX_VALUE;
 		for (Monster monster : World.getVisibleObjectsInRange(phantom, Monster.class, PhantomPartyConfig.PHANTOM_DEFEND_RANGE))
 		{
-			if (!isEnemy(phantom, monster) || !attacksUs(monster, companion, phantom, owner))
+			if ((monster == ownerTarget) || !isEnemy(phantom, monster) || !attacksUs(monster, companion, phantom, owner))
 			{
 				continue;
 			}
@@ -1386,19 +1396,75 @@ public class PhantomCompanionManager
 		final int radius = owner.isMoving() ? HUNT_RUN_RADIUS : HUNT_RADIUS;
 		for (Monster monster : World.getVisibleObjectsInRange(owner, Monster.class, radius))
 		{
-			if (!isEnemy(phantom, monster) || monster.isRaid() || (monster.getLevel() > (owner.getLevel() + HUNT_LEVEL_UP)) || takenByOthers(monster, phantom))
+			if ((monster == ownerTarget) || !isEnemy(phantom, monster) || monster.isRaid() || (monster.getLevel() > (owner.getLevel() + HUNT_LEVEL_UP)) || takenByOthers(monster, phantom))
 			{
 				continue;
 			}
 
-			final double distance = phantom.calculateDistance2D(monster);
+			// Моб, которого уже бьёт кто-то из пати, — как будто дальше: разойтись по разным, а не толпой на ближайшего.
+			final double distance = phantom.calculateDistance2D(monster) + (targetedByParty(monster, phantom) ? HUNT_SPREAD : 0);
 			if (distance < nearestDistance)
 			{
 				nearest = monster;
 				nearestDistance = distance;
 			}
 		}
-		return nearest;
+		return nearest != null ? nearest : ownerTarget;
+	}
+
+	/**
+	 * «Кач тут»: кому из напарников владельца в этом режиме достаётся его цель. Сначала тем, кто уже её бьёт (чтобы цель не прыгала
+	 * между ними каждый тик), из них — ближайшему; никто не бьёт — ближайшему к ней. Равные — по меньшему objectId.
+	 */
+	private static boolean ownerTargetIsMine(Player phantom, Player owner, Monster target)
+	{
+		if (!owner.isInParty())
+		{
+			return true;
+		}
+		Player best = null;
+		boolean bestHolds = false;
+		double bestDistance = Double.MAX_VALUE;
+		for (Player member : owner.getParty().getMembers())
+		{
+			if ((member == owner) || member.isDead())
+			{
+				continue;
+			}
+			final Companion other = getInstance()._companions.get(key(member.getName()));
+			if ((other == null) || (other.ownerId != owner.getObjectId()) || (other.mode != Mode.HUNT))
+			{
+				continue;
+			}
+			final boolean holds = member.getTarget() == target;
+			final double distance = member.calculateDistance2D(target);
+			if ((best == null) || (holds && !bestHolds) || ((holds == bestHolds) && ((distance < bestDistance) || ((distance == bestDistance) && (member.getObjectId() < best.getObjectId())))))
+			{
+				best = member;
+				bestHolds = holds;
+				bestDistance = distance;
+			}
+		}
+		return (best == null) || (best == phantom);
+	}
+
+	/**
+	 * @return моба уже держит целью кто-то ещё из пати
+	 */
+	private static boolean targetedByParty(Monster monster, Player phantom)
+	{
+		if (!phantom.isInParty())
+		{
+			return false;
+		}
+		for (Player member : phantom.getParty().getMembers())
+		{
+			if ((member != phantom) && (member.getTarget() == monster))
+			{
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

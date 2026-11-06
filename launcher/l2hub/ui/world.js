@@ -464,7 +464,8 @@
   }
 
   // ---------- Модуль фантомов: где стоит и свежий ли в сборке ----------
-  const MSTATE = { fresh: ['yes', '✓ совпадает с phantoms/'], stale: ['warnc', '! устарел'], notbuilt: ['warnc', 'не собран'], plan: ['no', '—'], no: ['no', 'нельзя'] };
+  // Свежесть — модуль phantoms/ и патчи patches/<id> с врезками против последней сборки (Api.phantoms_status).
+  const MSTATE = { fresh: ['yes', '✓ совпадает с phantoms/ и patches/'], stale: ['warnc', '! устарел'], notbuilt: ['warnc', 'не собран'], plan: ['no', '—'], no: ['no', 'нельзя'] };
   function moduleView(main) {
     if (W.modsErr) { main.innerHTML = errorView(W.modsErr); return; }
     if (!W.mods) { main.innerHTML = loadingView(); return; }
@@ -474,17 +475,18 @@
       const runningX = last.running === x.id;
       const act = x.world && x.installed
         ? `<button class="sbtn" data-build="${x.id}" ${busyNow || runningX ? 'disabled' : ''} title="${runningX ? 'Сначала останови сервер' : 'scripts\\server_build.ps1 -Id ' + x.id}">Пересобрать</button>` : '';
-      const built = x.world ? (x.state === 'notbuilt' ? 'ещё не собирали' : `${esc(x.builtAt || '')}${x.changed ? ` · изменено файлов: ${x.changed}` : ''}`) : '';
+      const built = x.world ? (x.state === 'notbuilt' ? 'ещё не собирали' : `${esc(x.builtAt || '')}${x.changed ? ` · изменено файлов: ${x.changed}` : ''}${x.patches ? ` · патчей не в сборке: ${x.patches}` : ''}`) : '';
+      const listed = [...(x.changedFiles || []), ...(x.patchFiles || [])];
       return `<tr class="${x.world ? '' : 'off'}"><td><span class="n">${esc(x.name)}</span><small>${esc(x.build || x.server)}</small></td>
         <td>${x.world ? `<span class="yes">✓ ${x.data}</span><small>файлов данных</small>` : '<span class="no">—</span>'}</td>
         <td>${x.world ? `<span class="yes">✓ ${x.glue}</span><small>файлов Mobius</small>` : '<span class="no">—</span>'}</td>
-        <td><span class="${cls}">${label}</span><small>${x.world ? built : esc(x.why)}</small>${x.changedFiles?.length ? `<small class="w-cmd">${x.changedFiles.map(esc).join('<br>')}</small>` : ''}</td>
+        <td><span class="${cls}">${label}</span><small>${x.world ? built : esc(x.why)}</small>${listed.length ? `<small class="w-cmd">${listed.map(esc).join('<br>')}</small>` : ''}</td>
         <td>${act}</td></tr>`;
     }).join('');
     main.innerHTML = `<div class="w-title"><h3 class="w-h">Модуль фантомов</h3><span class="w-pill">phantoms/core · файлов ${W.mods.coreFiles}</span></div>
       <div class="w-t2" style="font-size:13px;line-height:1.55;margin:4px 0 12px;max-width:820px">Один код охотников, напарников и мозгов на все хроники Mobius. Хроника получает модуль при сборке сервера:
         код — из <span class="w-cmd">core</span>, данные мира — свои (<span class="w-cmd">phantoms/&lt;id&gt;/dist</span>), врезки в Mobius — <span class="w-cmd">glue.patch</span>.
-        «Свежий» — файлы модуля совпадают с теми, что сборка положила в сервер (<span class="w-cmd">.module_manifest.json</span>).</div>
+        «Свежий» — файлы модуля и патчи хроники совпадают с теми, что были в последней сборке (<span class="w-cmd">.module_manifest.json</span>, <span class="w-cmd">.patches_manifest.json</span>).</div>
       <div class="card" style="padding:4px 8px"><table class="mt"><tr><th>Хроника</th><th>Данные мира</th><th>Врезки</th><th>В сборке сервера</th><th></th></tr>${rows}</table></div>
       <div class="note" style="margin-top:12px;max-width:820px">Пересборка — тот же <span class="w-cmd">scripts\\server_build.ps1</span>, что из консоли: копирует модуль в исходники, накладывает патчи и собирает Ant. Сервер этой хроники должен быть выключен. Ход — в панели внизу, вывод — <span class="w-cmd">data\\logs\\server_build_&lt;id&gt;.log</span>.</div>`;
     main.querySelectorAll('[data-build]').forEach((b) => (b.onclick = async () => {

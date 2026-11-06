@@ -75,6 +75,8 @@ ARMOR_SETS = {"D": "d_grade.xml", "C": "c_grade.xml", "B": "b_grade.xml", "A": "
               "S80": "s80_dynasty.xml", "S84": "s84_vesper.xml"}
 SKIP_WEAPON_WORDS = ("Shadow", "Event", "Limited", "Common", "Test", "Retail", "PvP", "Monster", "Sealed", "Infinity",
                      "Deluxe", "Lord", "Zariche", "Akamanah", "Sample", "Hero", "Olympiad", "Baguette", "Knight's", "Pantomime")
+# Оружие NPC без флага for_npc и иконки монстра: в клиенте без анимаций игрока, Т-поза (npc_only; в ядре — PhantomHunterOutfit.npcOnly).
+NPC_WEAPON_NAMES = frozenset({"Lizardspear"})
 DAMAGE_EFFECTS = ("PhysicalDamage", "MagicalDamage", "EnergyDamage", "SoulDamage", "FatalBlow", "Backstab", "DeathLink", "HpDrain",
                   "PhysicalAttack", "MagicalAttack", "SoulBlow")
 WEAPON_KINDS = {"BOW", "SWORD", "BLUNT", "DUAL", "DUALFIST", "CROSSBOW", "POLE", "DUALDAGGER", "DAGGER", "ANCIENTSWORD",
@@ -2068,9 +2070,11 @@ class Data:
     def npc_only(it: dict) -> bool:
         """Вещь только для NPC: флаг for_npc (Dailaon Knife, Giant Cannon, Dusk) или монстровое оружие без него — иконка weapon_monster
         (Silenos Blowgun, Dreadbane), имя «NPC only…» и «Monster Only…». У клиента нет на нём анимаций игрока — Т-поза. Тот же признак в ядре —
-        PhantomHunterOutfit.npcOnly."""
+        PhantomHunterOutfit.npcOnly. Без всех этих признаков — NPC_WEAPON_NAMES: Lizardspear (2507) стоит как кинжал D, но цена и урон
+        у него те же, что у Dailaon Knife; генератор давал его всем кинжальщикам на D, и они бегали в Т-позе (жалоба пользователя 2026-11-06)."""
         name = it.get("name") or ""
-        return it.get("for_npc") == "true" or "weapon_monster" in (it.get("icon") or "") or name.startswith(("NPC only", "Monster Only"))
+        return (it.get("for_npc") == "true" or "weapon_monster" in (it.get("icon") or "") or name.startswith(("NPC only", "Monster Only"))
+                or name in NPC_WEAPON_NAMES)
 
     def weapon(self, grade_: str, kit: dict, name: str, plain: bool = False, who: dict | None = None) -> int:
         """plain — только обычное оружие: без SA (« - » в имени) и наградного за 0 адены (охотники покупают его по цене предмета).

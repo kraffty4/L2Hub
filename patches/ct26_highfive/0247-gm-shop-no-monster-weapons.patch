@@ -1,0 +1,283 @@
+L2Hub: оружие монстров не продаётся в GM-шопе. У клиента на нём нет анимаций игрока, персонаж бегает в Т-позе.
+Из списков оружия убраны 32 строки: Lizardspear, Dailaon Knife, Doll Knife, Giant Cannon, Tomb Guard, «Monster Only (…)» и другие.
+Признак тот же, что у охотников (PhantomHunterOutfit.npcOnly): флаг for_npc, иконка weapon_monster или mon_, имя «Monster Only…»,
+«For NPC…» и Lizardspear — кинжал D без флага, но с ценой и уроном Dailaon Knife.
+Снаряжение питомцев (список 50039932) оставлено. Кнопка «Monster Weapons» (список 50039925 целиком из такого оружия)
+снята со страницы шопа на обоих языках, как Infinity в 0192; сам список не тронут. Купленное раньше у игроков остаётся.
+Откат: удалить патч и пересобрать сервер.
+
+diff --git a/dist/game/data/html/merchant/50010-1.htm b/dist/game/data/html/merchant/50010-1.htm
+index 29dcafc..f73aca2 100644
+--- a/dist/game/data/html/merchant/50010-1.htm
++++ b/dist/game/data/html/merchant/50010-1.htm
+@@ -15,7 +15,7 @@
+ </tr>
+ <tr>
+ <td align=center><button action="bypass -h npc_%objectId%_Chat 18" value="D Grade" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+-<td align=center><button action="bypass -h npc_%objectId%_multisell 50039925" value="Monster Weapons" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center></td>
+ </tr>
+ <tr>
+ <td align=center><button action="bypass -h npc_%objectId%_Chat 19" value="C Grade" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+diff --git a/dist/game/data/lang/ru/data/html/merchant/50010-1.htm b/dist/game/data/lang/ru/data/html/merchant/50010-1.htm
+index f32d163..61458b2 100644
+--- a/dist/game/data/lang/ru/data/html/merchant/50010-1.htm
++++ b/dist/game/data/lang/ru/data/html/merchant/50010-1.htm
+@@ -15,7 +15,7 @@
+ </tr>
+ <tr>
+ <td align=center><button action="bypass -h npc_%objectId%_Chat 18" value="D грейд" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+-<td align=center><button action="bypass -h npc_%objectId%_multisell 50039925" value="Оружие монстров" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
++<td align=center></td>
+ </tr>
+ <tr>
+ <td align=center><button action="bypass -h npc_%objectId%_Chat 19" value="C грейд" width=120 height=21 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+diff --git a/dist/game/data/multisell/custom/50039001.xml b/dist/game/data/multisell/custom/50039001.xml
+index 255597c..1d1bb43 100644
+--- a/dist/game/data/multisell/custom/50039001.xml
++++ b/dist/game/data/multisell/custom/50039001.xml
+@@ -103,10 +103,6 @@
+ 		<ingredient id="57" count="188000" />
+ 		<production id="6354" count="1" />
+ 	</item>
+-	<item>
+-		<ingredient id="57" count="136000" />
+-		<production id="6717" count="1" />
+-	</item>
+ 	<item>
+ 		<ingredient id="57" count="41600" />
+ 		<production id="7821" count="1" />
+diff --git a/dist/game/data/multisell/custom/50039004.xml b/dist/game/data/multisell/custom/50039004.xml
+index 4e9acd9..3c3c8c6 100644
+--- a/dist/game/data/multisell/custom/50039004.xml
++++ b/dist/game/data/multisell/custom/50039004.xml
+@@ -39,14 +39,6 @@
+ 		<ingredient id="57" count="41600" />
+ 		<production id="3028" count="1" />
+ 	</item>
+-	<item>
+-		<ingredient id="57" count="768" />
+-		<production id="6715" count="1" />
+-	</item>
+-	<item>
+-		<ingredient id="57" count="768" />
+-		<production id="6720" count="1" />
+-	</item>
+ 	<item>
+ 		<ingredient id="57" count="41600" />
+ 		<production id="7820" count="1" />
+diff --git a/dist/game/data/multisell/custom/50039008.xml b/dist/game/data/multisell/custom/50039008.xml
+index 6c08c10..dc3acc2 100644
+--- a/dist/game/data/multisell/custom/50039008.xml
++++ b/dist/game/data/multisell/custom/50039008.xml
+@@ -39,14 +39,6 @@
+ 		<ingredient id="57" count="188000" />
+ 		<production id="6355" count="1" />
+ 	</item>
+-	<item>
+-		<ingredient id="57" count="12500" />
+-		<production id="6716" count="1" />
+-	</item>
+-	<item>
+-		<ingredient id="57" count="136000" />
+-		<production id="6718" count="1" />
+-	</item>
+ 	<item>
+ 		<ingredient id="57" count="41600" />
+ 		<production id="7058" count="1" />
+diff --git a/dist/game/data/multisell/custom/50039010.xml b/dist/game/data/multisell/custom/50039010.xml
+index 9b9ef8a..ac1510f 100644
+--- a/dist/game/data/multisell/custom/50039010.xml
++++ b/dist/game/data/multisell/custom/50039010.xml
+@@ -15,24 +15,4 @@
+ 		<ingredient id="57" count="315000" />
+ 		<production id="5285" count="1" />
+ 	</item>
+-	<item>
+-		<ingredient id="57" count="967000" />
+-		<production id="5791" count="1" />
+-	</item>
+-	<item>
+-		<ingredient id="57" count="967000" />
+-		<production id="5792" count="1" />
+-	</item>
+-	<item>
+-		<ingredient id="57" count="967000" />
+-		<production id="5795" count="1" />
+-	</item>
+-	<item>
+-		<ingredient id="57" count="967000" />
+-		<production id="5796" count="1" />
+-	</item>
+-	<item>
+-		<ingredient id="57" count="1800000" />
+-		<production id="6723" count="1" />
+-	</item>
+ </list>
+\ No newline at end of file
+diff --git a/dist/game/data/multisell/custom/50039011.xml b/dist/game/data/multisell/custom/50039011.xml
+index 5166995..beb50a6 100644
+--- a/dist/game/data/multisell/custom/50039011.xml
++++ b/dist/game/data/multisell/custom/50039011.xml
+@@ -103,8 +103,4 @@
+ 		<ingredient id="57" count="1275700" />
+ 		<production id="2548" count="1" />
+ 	</item>
+-	<item>
+-		<ingredient id="57" count="409000" />
+-		<production id="5129" count="1" />
+-	</item>
+ </list>
+\ No newline at end of file
+diff --git a/dist/game/data/multisell/custom/50039012.xml b/dist/game/data/multisell/custom/50039012.xml
+index 9badd4a..2580c92 100644
+--- a/dist/game/data/multisell/custom/50039012.xml
++++ b/dist/game/data/multisell/custom/50039012.xml
+@@ -43,42 +43,10 @@
+ 		<ingredient id="57" count="743500" />
+ 		<production id="241" count="1" />
+ 	</item>
+-	<item>
+-		<ingredient id="57" count="409000" />
+-		<production id="1471" count="1" />
+-	</item>
+ 	<item>
+ 		<ingredient id="57" count="1074000" />
+ 		<production id="1660" count="1" />
+ 	</item>
+-	<item>
+-		<ingredient id="57" count="409000" />
+-		<production id="2507" count="1" />
+-	</item>
+-	<item>
+-		<ingredient id="57" count="409000" />
+-		<production id="4028" count="1" />
+-	</item>
+-	<item>
+-		<ingredient id="57" count="409000" />
+-		<production id="5127" count="1" />
+-	</item>
+-	<item>
+-		<ingredient id="57" count="409000" />
+-		<production id="5128" count="1" />
+-	</item>
+-	<item>
+-		<ingredient id="57" count="409000" />
+-		<production id="5130" count="1" />
+-	</item>
+-	<item>
+-		<ingredient id="57" count="409000" />
+-		<production id="5131" count="1" />
+-	</item>
+-	<item>
+-		<ingredient id="57" count="409000" />
+-		<production id="5132" count="1" />
+-	</item>
+ 	<item>
+ 		<ingredient id="57" count="495500" />
+ 		<production id="7830" count="1" />
+diff --git a/dist/game/data/multisell/custom/50039015.xml b/dist/game/data/multisell/custom/50039015.xml
+index 49e612c..35e2d3e 100644
+--- a/dist/game/data/multisell/custom/50039015.xml
++++ b/dist/game/data/multisell/custom/50039015.xml
+@@ -39,22 +39,6 @@
+ 		<ingredient id="57" count="409000" />
+ 		<production id="1376" count="1" />
+ 	</item>
+-	<item>
+-		<ingredient id="57" count="409000" />
+-		<production id="1472" count="1" />
+-	</item>
+-	<item>
+-		<ingredient id="57" count="409000" />
+-		<production id="3937" count="1" />
+-	</item>
+-	<item>
+-		<ingredient id="57" count="409000" />
+-		<production id="3938" count="1" />
+-	</item>
+-	<item>
+-		<ingredient id="57" count="409000" />
+-		<production id="3939" count="1" />
+-	</item>
+ 	<item>
+ 		<ingredient id="57" count="495500" />
+ 		<production id="7831" count="1" />
+diff --git a/dist/game/data/multisell/custom/50039018.xml b/dist/game/data/multisell/custom/50039018.xml
+index fe3063c..8f6a248 100644
+--- a/dist/game/data/multisell/custom/50039018.xml
++++ b/dist/game/data/multisell/custom/50039018.xml
+@@ -175,30 +175,6 @@
+ 		<ingredient id="57" count="4713500" />
+ 		<production id="4710" count="1" />
+ 	</item>
+-	<item>
+-		<ingredient id="57" count="6130000" />
+-		<production id="5793" count="1" />
+-	</item>
+-	<item>
+-		<ingredient id="57" count="6130000" />
+-		<production id="5794" count="1" />
+-	</item>
+-	<item>
+-		<ingredient id="57" count="6130000" />
+-		<production id="5797" count="1" />
+-	</item>
+-	<item>
+-		<ingredient id="57" count="6130000" />
+-		<production id="5798" count="1" />
+-	</item>
+-	<item>
+-		<ingredient id="57" count="6130000" />
+-		<production id="5800" count="1" />
+-	</item>
+-	<item>
+-		<ingredient id="57" count="6130000" />
+-		<production id="5801" count="1" />
+-	</item>
+ 	<item>
+ 		<ingredient id="57" count="3304300" />
+ 		<production id="6307" count="1" />
+diff --git a/dist/game/data/multisell/custom/50039026.xml b/dist/game/data/multisell/custom/50039026.xml
+index a0a1513..10ebfe0 100644
+--- a/dist/game/data/multisell/custom/50039026.xml
++++ b/dist/game/data/multisell/custom/50039026.xml
+@@ -39,10 +39,6 @@
+ 		<ingredient id="57" count="4713500" />
+ 		<production id="4896" count="1" />
+ 	</item>
+-	<item>
+-		<ingredient id="57" count="4780000" />
+-		<production id="6719" count="1" />
+-	</item>
+ 	<item>
+ 		<ingredient id="57" count="3304300" />
+ 		<production id="7716" count="1" />
+diff --git a/dist/game/data/multisell/custom/50039029.xml b/dist/game/data/multisell/custom/50039029.xml
+index b532ca8..6bd0c7c 100644
+--- a/dist/game/data/multisell/custom/50039029.xml
++++ b/dist/game/data/multisell/custom/50039029.xml
+@@ -207,8 +207,4 @@
+ 		<ingredient id="57" count="10091400" />
+ 		<production id="2626" count="1" />
+ 	</item>
+-	<item>
+-		<ingredient id="57" count="13100000" />
+-		<production id="6722" count="1" />
+-	</item>
+ </list>
+\ No newline at end of file
+diff --git a/dist/game/data/multisell/custom/50039034.xml b/dist/game/data/multisell/custom/50039034.xml
+index a737a18..dec8556 100644
+--- a/dist/game/data/multisell/custom/50039034.xml
++++ b/dist/game/data/multisell/custom/50039034.xml
+@@ -55,8 +55,4 @@
+ 		<ingredient id="57" count="10091400" />
+ 		<production id="4755" count="1" />
+ 	</item>
+-	<item>
+-		<ingredient id="57" count="13100000" />
+-		<production id="7834" count="1" />
+-	</item>
+ </list>
+\ No newline at end of file

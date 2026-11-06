@@ -19,7 +19,7 @@ from pathlib import Path
 
 import psutil
 
-from . import __version__, appsettings, backups, brain, builder, catalog, clients, clientsys, configs, feedback, forum, friendpack, geodata, gmshop, health, i18n, l2ini, l2solo, machine, modes, monitor, network, paths, report, runtimes, servers, society, updates, wipe, worldtiles
+from . import __version__, appsettings, backups, brain, builder, catalog, clients, clientsys, configs, feedback, forum, friendpack, geodata, gmshop, health, i18n, l2ini, l2solo, machine, modes, monitor, network, paths, report, runtimes, servers, society, space, updates, wipe, worldtiles
 
 CHAR_NAME_RE = re.compile(r"^[A-Za-z0-9_\-А-Яа-яЁё]{1,35}$")  # кириллица — для имён на La2offline
 ACCESS_LEVELS = {0: "Игрок", 70: "Admin", 100: "Master"}  # Mobius; у другой сборки — "accessLevels" в профиле
@@ -605,12 +605,35 @@ class Api:
                     built = json.loads(manifest.read_text(encoding="utf-8-sig"))
                     changed = [k for k, v in files.items() if built.get(k) != v]
                     removed = [k for k in built if k not in files]
+                    stale_patches = self._patches_after_build(c["id"])
+                    module_ok, patches_ok = not changed and not removed, not stale_patches
                     row.update(builtAt=time.strftime("%Y-%m-%d %H:%M", time.localtime(manifest.stat().st_mtime)),
                                changed=len(changed) + len(removed), changedFiles=(changed + removed)[:8],
-                               state="fresh" if not changed and not removed else "stale",
-                               why="совпадает с phantoms/" if not changed and not removed else "в phantoms/ правки после сборки")
+                               patches=len(stale_patches), patchFiles=stale_patches[:8],
+                               state="fresh" if module_ok and patches_ok else "stale",
+                               why="совпадает с phantoms/ и patches/" if module_ok and patches_ok
+                               else "в patches/ правки после сборки" if module_ok
+                               else "в phantoms/ правки после сборки" if patches_ok
+                               else "в phantoms/ и patches/ правки после сборки")
             items.append(row)
         return {"coreFiles": len(core), "items": items}
+
+    @staticmethod
+    def _patches_after_build(cid: str) -> list[str]:
+        """Патчи хроники и врезки (glue.patch), которых нет в последней удачной сборке: новые, изменённые и снятые.
+        Список сборки — servers/<id>/.patches_manifest.json (builder.record_patches). Сборка старше него — по времени:
+        патч новее архива Ant (без снятых и с ложной тревогой после git checkout — она только зовёт пересобрать).
+        Полная проверка стопкой (builder.applied_patches) на High Five идёт минуты, для окна это долго."""
+        current = builder.chronicle_patches(cid)
+        record = paths.SERVERS / cid / builder.PATCH_MANIFEST
+        if record.is_file():
+            done = json.loads(record.read_text(encoding="utf-8-sig"))
+            names = {f.name for f in current}
+            return [f.name for f in current if done.get(f.name) != hashlib.sha256(f.read_bytes()).hexdigest().upper()] + \
+                [f"− {n}" for n in done if n not in names]  # снят после сборки
+        archives = list((paths.SERVERS / cid / "build").glob("*.zip"))
+        since = max((a.stat().st_mtime for a in archives), default=0)
+        return [f.name for f in current if f.stat().st_mtime > since]
 
     def rebuild_module(self, chronicle_id: str) -> dict:
         """Пересобрать сервер с модулем фантомов — builder.server_build (то же, что scripts/server_build.ps1 из консоли,
@@ -1484,6 +1507,43 @@ class Api:
         except Exception as e:  # noqa: BLE001
             return {"ok": False, "error": str(e)}
         return self._start_job(chronicle_id, "wipeundo", [("Откат вайпа: бэкап нового мира и возврат старого…", lambda: wipe.undo(p, stamp, confirm, out=lambda _line: None))])
+
+    # ---------- Место на диске (space.py, docs/SPACE.md) ----------
+
+    def space_state(self, chronicle_id: str) -> dict:
+        """«Бэкапы» → «Место на диске»: что занимает хроника. Только у наших серверов Mobius; сервер считается несколько секунд."""
+        try:
+            return {"ok": True, "allowed": True, **space.state(catalog.profile(chronicle_id))}
+        except Exception as e:  # noqa: BLE001
+            return {"ok": True, "allowed": False, "why": str(e)}
+
+    def _space_job(self, chronicle_id: str, action: str, title: str, fn, confirm: str | None = None) -> dict:
+        p = catalog.profile(chronicle_id)
+        try:
+            space.check(p)
+            if confirm is not None and confirm != chronicle_id:
+                raise ValueError("не подтверждено")
+            if reason := space.blocker(p):
+                raise ValueError(reason)
+        except Exception as e:  # noqa: BLE001
+            return {"ok": False, "error": str(e)}
+        return self._start_job(chronicle_id, action, [(title, lambda: fn(p))])
+
+    def space_trash(self, chronicle_id: str, part: str, names: list[str] | None = None) -> dict:
+        """Часть хроники в Корзину: backups (все или names), configs, wipes, friends."""
+        if part not in space.TRASHABLE:
+            return {"ok": False, "error": f"Так убрать нельзя: {part}"}
+        return self._space_job(chronicle_id, "trash", "Убираю в Корзину…", lambda p: space.trash(p, part, names, out=lambda _line: None))
+
+    def space_reinstall_db(self, chronicle_id: str, confirm: str) -> dict:
+        """База с нуля из SQL установщика, учётки тоже; confirm повторяет id хроники. Сначала — бэкап «перед переустановкой базы»."""
+        return self._space_job(chronicle_id, "reinstalldb", "Бэкап базы, снос и чистая база из установщика…",
+                               lambda p: space.reinstall_db(p, confirm, out=lambda _line: None), confirm)
+
+    def space_remove(self, chronicle_id: str, confirm: str, with_db: bool = False, with_backups: bool = False) -> dict:
+        """Удалить хронику: сервер и профиль в Корзину; with_db — и базу (сначала бэкап), with_backups — и бэкапы. Потом — «Установить»."""
+        return self._space_job(chronicle_id, "remove", "Удаляю хронику: в Корзину…",
+                               lambda p: space.remove(p, confirm, bool(with_db), bool(with_backups), out=lambda _line: None), confirm)
 
     # ---------- Друзья: сеть Radmin VPN ----------
 

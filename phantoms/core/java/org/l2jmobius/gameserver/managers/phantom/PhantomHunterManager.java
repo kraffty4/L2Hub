@@ -2310,6 +2310,12 @@ public class PhantomHunterManager
 			return false;
 		}
 
+		// Стартовый набор нового грейда ждёт (раздел 4.104): дорос до 20-го или 40-го — в город за ним, не дожидаясь обычного захода.
+		if (PhantomHunterOutfit.kitWaiting(player, hunter.template))
+		{
+			return true;
+		}
+
 		// Призыватель без слуги и без кристаллов на призыв (раздел 4.55) — в город за ними, если хватит адены.
 		if (PhantomSummoner.needsCrystals(player))
 		{
@@ -6675,6 +6681,15 @@ public class PhantomHunterManager
 		hunter.brawlAggressor = false;
 		hunter.revenge = false;
 		return true;
+	}
+
+	/**
+	 * @return охотник уже дерётся с этим игроком: бьёт ПК ({@link #engagePk}), мстит или отвечает на нападение
+	 */
+	boolean fights(Player player, Player target)
+	{
+		final Hunter hunter = _hunters.get(player.getName().toLowerCase());
+		return (hunter != null) && (hunter.enemyId == target.getObjectId());
 	}
 
 	/**

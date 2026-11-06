@@ -25,7 +25,8 @@ from . import l2solo, paths, servers
 
 NAME_RE = re.compile(r"^(?P<db>\w+?)_(?P<stamp>\d{4}-\d\d-\d\d_\d\d-\d\d-\d\d)_(?P<label>[\w-]+)\.(?P<ext>sql|zip)$")
 LABELS = {"manual": "вручную", "start": "перед запуском", "before-restore": "перед откатом", "before-reset": "перед сбросом охотников",
-          "before-wipe": "перед вайпом", "before-update": "перед обновлением"}
+          "before-wipe": "перед вайпом", "before-update": "перед обновлением", "before-reinstall": "перед переустановкой базы",
+          "before-remove": "перед удалением хроники"}
 KEEP_AUTO = 10
 LOG = "backups.log"
 

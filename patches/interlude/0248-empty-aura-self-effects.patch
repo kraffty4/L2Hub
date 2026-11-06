@@ -1,0 +1,48 @@
+L2Hub: скилл-аура без цели рядом не теряет эффект на себя. Каст AURA, FRONT_AURA, BEHIND_AURA, AURA_CORPSE_MOB, AURA_FRIENDLY
+Mobius пускает и без внешних целей, а callSkill на пустом списке выходил раньше Skill.activateSkill — эффект на себя пропадал.
+На Interlude так: Vengeance без врага рядом не давал себе эффект.
+Теперь пустой список пропускается дальше только для таких аур с эффектом на себя (selfEffects); общие эффекты без цели не идут.
+Перенос патча 0510 сопровождающего Эпилога (PR #2 L2Hub-epilogue, fd9dc9dc) байт в байт, номера строк — по Interlude.
+Откат: удалить патч и пересобрать сервер.
+
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/Creature.java b/java/org/l2jmobius/gameserver/entity/actor/Creature.java
+index 8066eb9..ec2e839 100644
+--- a/java/org/l2jmobius/gameserver/entity/actor/Creature.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/Creature.java
+@@ -5989,10 +5989,35 @@ public abstract class Creature extends WorldObject
+ 				return;
+ 			}
+ 			
+-			if ((targets == null) || targets.isEmpty())
++			if (targets == null)
+ 			{
+ 				return;
+ 			}
++			if (targets.isEmpty())
++			{
++				// Native useMagic/launch допускают AURA без внешней цели.
++				// GENERAL не получает фиктивного caster-target; SELF выполняется один раз
++				// штатным Skill.activateSkill (Blink, Vengeance и другие SELF-эффекты).
++				if (!skill.hasEffects(EffectScope.SELF))
++				{
++					return;
++				}
++				switch (skill.getTargetType())
++				{
++					case AURA:
++					case FRONT_AURA:
++					case BEHIND_AURA:
++					case AURA_CORPSE_MOB:
++					case AURA_FRIENDLY:
++					{
++						break;
++					}
++					default:
++					{
++						return;
++					}
++				}
++			}
+ 			
+ 			// Block RaidBoss from receiving heals/buffs from players (and their pet/summon).
+ 			if (GrandBossConfig.DISABLE_RAIDBOSS_HEAL_FROM_PLAYERS || GrandBossConfig.DISABLE_RAIDBOSS_BUFF_FROM_PLAYERS)

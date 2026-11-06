@@ -355,6 +355,15 @@ def source_dir(cid: str) -> Path:
     raise RuntimeError(f"Нет исходников с build.xml в {base}")
 
 
+PATCH_MANIFEST = ".patches_manifest.json"
+
+
+def record_patches(base: Path, patches: list[Path]) -> None:
+    """После удачной сборки — какие патчи и врезки (glue.patch) в ней стоят, с SHA-256 как у Get-FileHash. По этому списку
+    «Мой мир» → модуль (Api.phantoms_status) видит патч, добавленный или изменённый после сборки. Пишет и server_build.ps1."""
+    (base / PATCH_MANIFEST).write_text(json.dumps({p.name: _sha(p) for p in patches}, indent=4), encoding="utf-8")
+
+
 def chronicle_patches(cid: str) -> list[Path]:
     """Порядок как в server_build.ps1: моды хроники из patches/<id> по имени, затем врезки модуля фантомов."""
     d = paths.PATCHES / cid
@@ -567,6 +576,7 @@ def server_build(p: dict, out: Out = print) -> None:
         with zipfile.ZipFile(archive) as z:
             z.extractall(srv)
         deploy_configs(cid, archive, srv, patches, out=out)  # всё уже как в архиве — только запись о выкладке
+        record_patches(base, patches)
         out(f"Сборка готова и распакована в {srv}; дальше — настройка (server_setup)")
         return
 
@@ -589,6 +599,7 @@ def server_build(p: dict, out: Out = print) -> None:
         shutil.copy2(frm, to)
         out(f"Данные обновлены: {rel}")
     deploy_configs(cid, archive, srv, patches, prev, out)
+    record_patches(base, patches)
 
 
 # ---------- База ----------
@@ -801,6 +812,23 @@ def generic_profile(cid: str, build: str, pin: dict) -> dict:
             "source": {"commit": pin["commit"], "date": pin["date"], "mods": False}}
 
 
+def fill_database(p: dict, srv: Path, db: str, out: Out = print) -> None:
+    """Новая база хроники: CREATE DATABASE и SQL установщика сборки (логин, потом гейм), умолчания нового мира под машину.
+    Базы db быть не должно: её создаёт установка (server_setup) и переустановка базы (space.reinstall_db)."""
+    r = _mysql("-e", f"CREATE DATABASE `{db}` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
+    if r.returncode:
+        raise RuntimeError(f"Не удалось создать базу {db}: {r.stderr.decode('utf-8', 'replace')}")
+    count = 0
+    for part in ("login", "game"):
+        for sql in sorted((srv / "db_installer" / "sql" / part).glob("*.sql"), key=lambda f: f.name):
+            r = _mysql(db, "-e", f"source {sql.as_posix()}")
+            if r.returncode:
+                raise RuntimeError(f"Ошибка в {part}\\{sql.name}: {r.stderr.decode('utf-8', 'replace')[-500:]}")
+            count += 1
+    out(f"База {db}: залито файлов — {count}")
+    machine.fresh_default(p, out)
+
+
 def server_setup(p: dict, out: Out = print) -> None:
     """База и SQL установщика (только если базы ещё нет), доступ к базе, локальный режим и запуск без GUI.
     Повторно — безопасно: существующая база не трогается, конфиги перезаписываются."""
@@ -817,18 +845,7 @@ def server_setup(p: dict, out: Out = print) -> None:
     if _mysql("-N", "-e", f"SHOW DATABASES LIKE '{db}'").stdout.strip():
         out(f"База {db} уже есть — заливку пропускаю")  # часть SQL установщика делает DROP TABLE
     else:
-        r = _mysql("-e", f"CREATE DATABASE `{db}` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
-        if r.returncode:
-            raise RuntimeError(f"Не удалось создать базу {db}: {r.stderr.decode('utf-8', 'replace')}")
-        count = 0
-        for part in ("login", "game"):
-            for sql in sorted((srv / "db_installer" / "sql" / part).glob("*.sql"), key=lambda f: f.name):
-                r = _mysql(db, "-e", f"source {sql.as_posix()}")
-                if r.returncode:
-                    raise RuntimeError(f"Ошибка в {part}\\{sql.name}: {r.stderr.decode('utf-8', 'replace')[-500:]}")
-                count += 1
-        out(f"База {db}: залито файлов — {count}")
-        machine.fresh_default(p, out)
+        fill_database(p, srv, db, out)
 
     # Доступ к базе: 127.0.0.1 вместо localhost (MariaDB слушает только IPv4) и пароль из data/client.cnf.
     password = db_password()

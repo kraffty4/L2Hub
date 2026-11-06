@@ -17,7 +17,7 @@
   "switches": [
     {"id": "buffer", "title": "Баффер у гейткиперов", "note": "бафы на максимуме и на 3 часа", "file": "L2HubTown.ini", "key": "TownBuffer"},
     {"id": "gmshop", "title": "GM-шоп у гейткиперов", "note": "расходники и снаряжение за адену", "file": "L2HubTown.ini", "key": "TownGmShop"},
-    {"id": "starterkits", "title": "Стартовые наборы", "note": "на доске Alt+B и коробкой в инвентаре новичка: NG, D и C, лучший эквип грейда и 1000 сосок, бесплатно и один раз на персонажа", "file": "L2HubTown.ini", "key": "TownStarterKits"},
+    {"id": "starterkits", "title": "Стартовые наборы", "note": "на доске Alt+B и коробкой в инвентаре новичка: NG, D и C, лучший эквип грейда и 1000 сосок, бесплатно и один раз на персонажа; охотникам — их шмот грейда даром в городе", "file": "L2HubTown.ini", "key": "TownStarterKits"},
     {"id": "durations", "title": "Долгие бафы", "note": "бафы из списка SkillDurationList (Player.ini) — у наших сборок на 3 часа", "file": "Player.ini", "key": "EnableModifySkillDuration"},
     {"id": "champions", "title": "Чемпионы", "note": "усиленные мобы с наградой: синие и красные", "file": "ChampionMonsters.ini", "key": "ChampionEnable"},
     {"id": "superchampion", "title": "Суперчемпионы", "note": "редкий легендарный чемпион: больше ростом, светится, белый круг под ногами; HP x20, дроп x10 — мини-РБ с объявлением в регионе", "file": "ChampionMonsters.ini", "key": "SuperChampionEnable"},

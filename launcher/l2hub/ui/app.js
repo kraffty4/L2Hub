@@ -41,6 +41,7 @@ const ICON = {
   play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l12.5-7.5z"/></svg>',
   stop: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="12" height="12" rx="1.5"/></svg>',
   get: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>',
+  server: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="7" rx="1.5"/><rect x="3" y="13" width="18" height="7" rx="1.5"/></svg>',
   find: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg>',
 };
 
@@ -60,6 +61,9 @@ const visibleChron = (c) => appSet.showUnplanned || c.plan || c.id === last.runn
 // Раздел L2Hub (Хроники, Мой мир, Друзья, L2Hub) и вкладка страницы хроники — переживают перезапуск окна.
 let section = load('section') || 'chron';
 let ctab = load('ctab') || 'over';
+// Что запускает главная кнопка: последний выбор в меню — «Только сервер» или «Играть с клиентом» (просьба
+// сопровождающего Эпилога 2026-11-05: не раскрывать меню каждый раз). Тоже переживает перезапуск окна.
+let playMode = load('playMode') === 'server' ? 'server' : 'play';
 let lastRun = null; // state() запущенной хроники, когда выбрана другая: панель сеанса и «Мой мир»
 let tick = 0;
 // «Мой мир» — раздел: чей мир смотреть, решает world.js (window.worldId), состояние берёт отсюда.
@@ -194,6 +198,8 @@ function renderPlay() {
     $('menuStopText').textContent = dbOnly === 'true' ? 'Остановить базу' : 'Остановить сервер';
     $('menuStopHint').textContent = dbOnly === 'true' ? 'сервер не запущен' : 'мир сохранится';
   }
+  $('menu').querySelector('[data-act="server"]').hidden = playMode === 'server';
+  $('menu').querySelector('[data-act="play"]').hidden = playMode !== 'server';
   const split = $('split');
   split.className = 'split' + (busy() ? ' busy' : '');
   if (!c.installed) {
@@ -204,6 +210,8 @@ function renderPlay() {
     $('play').innerHTML = ICON.play + 'В игре';
   } else if (last.running === c.id) {
     $('play').innerHTML = ICON.play + 'Запустить клиент';
+  } else if (playMode === 'server') {
+    $('play').innerHTML = ICON.server + 'Только сервер';
   } else {
     $('play').innerHTML = ICON.play + 'Играть';
   }
@@ -347,6 +355,9 @@ async function poll() {
       else if (job.action === 'restore') toast(`${byId(job.chronicle)?.name}: база откатана, прежняя сохранена бэкапом «перед откатом».`);
       else if (job.action === 'wipeworld') toast(`${byId(job.chronicle)?.name}: мир начнётся с нуля. Старый — в бэкапе «перед вайпом», откат — в «Бэкапах».`);
       else if (job.action === 'wipeundo') toast(`${byId(job.chronicle)?.name}: вайп откатан, новый мир — в бэкапе «перед откатом».`);
+      else if (job.action === 'trash') toast(`${byId(job.chronicle)?.name}: убрано в Корзину.`);
+      else if (job.action === 'reinstalldb') toast(`${byId(job.chronicle)?.name}: база поставлена заново. Прежняя — в бэкапе «перед переустановкой базы».`);
+      else if (job.action === 'remove') toast(`${byId(job.chronicle)?.name}: хроника удалена, всё в Корзине. Поставить заново — «Установить».`);
       else if (job.action === 'pack') toast(`${byId(job.chronicle)?.name}: клиент для друзей собран — «Друзья» → «Открыть папку».`);
       else if (job.action === 'build') toast(`${byId(job.chronicle)?.name}: сервер собран с модулем фантомов.`);
       else if (job.action === 'install') toast(`${byId(job.chronicle)?.name}: сервер установлен. Осталось указать папку клиента.`);
@@ -358,7 +369,8 @@ async function poll() {
       if (job.action === 'client' && !job.error) api.profile(job.chronicle).then((pr) => { profiles[job.chronicle] = pr; if (job.chronicle === selected) { renderMain(); renderNet(); } });
       if (job.action === 'install' && !job.error) afterInstall(job.chronicle);
       if (job.action === 'install' && job.error && job.chronicle === selected && ctab === 'over') renderOverviewCards(); // ошибка — карточкой с логом
-      if (['backup', 'restore', 'start', 'wipeworld', 'wipeundo'].includes(job.action) && ctab === 'backups') renderBackups();
+      if (['backup', 'restore', 'start', 'wipeworld', 'wipeundo', 'trash', 'reinstalldb'].includes(job.action) && ctab === 'backups') renderBackups();
+      if (job.action === 'remove' && !job.error) afterRemove(job.chronicle);
       if (job.action === 'pack' && section === 'friends') renderFriends();
       if (job.action === 'geodata' && job.chronicle === selected && ctab === 'over') renderOverviewCards();
     }
@@ -385,14 +397,22 @@ $('play').onclick = () => {
   if (!c.installed) {
     return installFlow(c);
   }
-  if (!profiles[c.id]?.client?.path) return pickClient(c.id);
   if (last.running === c.id) {
+    if (!profiles[c.id]?.client?.path) return pickClient(c.id);
     if (last.components?.client?.state === 'on') return toast('Клиент уже запущен.');
     return call(api.launch_client(c.id));
   }
+  return playMode === 'server' ? startServer(c) : startPlay(c);
+};
+function startPlay(c) {
+  if (!profiles[c.id]?.client?.path) return pickClient(c.id);
   warnMachine(c.id);
   return call(api.play(c.id, true));
-};
+}
+function startServer(c) {
+  warnMachine(c.id);
+  return call(api.play(c.id, false));
+}
 // Перед стартом: хватит ли машины и места (machine.py, docs/PHANTOMS.md, раздел 4.132). Только совет, запуск идёт своим чередом.
 function warnMachine(id) {
   api.machine_check(id).then((r) => { if (r?.warnings?.length) toast(r.warnings.join(' '), true); }).catch(() => {});
@@ -511,9 +531,13 @@ $('menu').querySelectorAll('button').forEach((b) => (b.onclick = async (e) => {
   if (a === 'own') return installFlow(c, true);  // у установленной — второй сервер рядом (вариант)
   if (a === 'stop') return stopAny();  // и у неустановленной: после упавшей установки могла остаться база
   if (!c.installed) return toast('Сначала установи хронику.');
-  if (a === 'server') {
-    warnMachine(c.id);
-    return call(api.play(c.id, false));
+  if (a === 'server' || a === 'play') {
+    playMode = a;
+    store('playMode', a);
+    renderPlay();
+    if (last.running === c.id) return toast(a === 'server' ? 'Запомнил: главная кнопка запускает только сервер.' : 'Запомнил: главная кнопка запускает сервер и клиент.');
+    if (busy()) return;
+    return a === 'server' ? startServer(c) : startPlay(c);
   }
   if (a === 'db') return call(api.play(c.id, false, true));
   if (a === 'client') return call(api.launch_client(c.id));
@@ -1125,10 +1149,94 @@ async function renderBackups() {
     btn.textContent = 'Откатить';
     btn.onclick = () => restoreBackup(b);
     row.appendChild(btn);
+    if (profiles[selected]?.type === 'mobius') row.appendChild(sbtn('В Корзину', () => trashBackup(b)));
     box.appendChild(row);
   }
   if (r.items.length > BACKUPS_SHOWN) box.insertAdjacentHTML('beforeend', `<div class="note">И ещё ${r.items.length - BACKUPS_SHOWN} — в папке бэкапов.</div>`);
   renderWipe();
+  renderSpace();
+}
+
+function sbtn(text, onclick, cls = 'sbtn') {
+  const b = document.createElement('button');
+  b.className = cls;
+  b.textContent = text;
+  b.onclick = onclick;
+  return b;
+}
+
+async function trashBackup(b) {
+  if (!confirm(`Бэкап от ${b.when} (${b.labelText}, ${mb(b.size)}) — в Корзину?\n\nОткатить базу к нему будет нельзя, пока не вернёшь его из Корзины Windows.`)) return;
+  await call(api.space_trash(selected, 'backups', [b.name]));
+}
+
+// Место на диске (space.py, docs/SPACE.md): что занимает хроника, что убрать в Корзину, переустановка базы и удаление хроники.
+// Насовсем ничего не удаляется: файлы — в Корзину Windows, база перед сносом — в бэкап.
+const sizeText = (n) => (n >= 2 ** 30 ? `${(n / 2 ** 30).toFixed(2).replace('.', ',')} ГБ` : mb(n));
+const SPACE_WARN = {
+  backups: 'Откатить базу к ним будет нельзя, пока не вернёшь их из Корзины.',
+  configs: 'Это копии файлов настроек перед каждой правкой из окна и пересборкой. Сами настройки не меняются.',
+  wipes: 'Это файлы старых миров после вайпов: откатить такой вайп будет нельзя.',
+  friends: 'Это клиент, собранный для друзей. Собрать заново — во «Друзьях».',
+};
+
+async function renderSpace() {
+  const box = $('spaceBox');
+  const id = selected;
+  box.innerHTML = '<div class="note" style="margin-top:14px"><b>Место на диске.</b> Считаю…</div>';
+  const r = await api.space_state(id);
+  if (id !== selected) return;
+  if (!r.allowed) { box.innerHTML = ''; return; }
+  const total = r.parts.reduce((s, x) => s + (x.size || 0), 0);
+  box.innerHTML = `<div class="note" style="margin-top:14px"><b>Место на диске:</b> ${sizeText(total)}. Убранное лежит в Корзине Windows, база перед сносом уходит в бэкап.${r.blocker ? `<br>${esc(r.blocker)}` : ''}</div>`;
+  for (const x of r.parts) {
+    const row = document.createElement('div');
+    row.className = 'list-row';
+    const size = x.id === 'database' ? (x.size == null ? 'база выключена' : sizeText(x.size)) : x.exists ? sizeText(x.size) : 'нет';
+    row.innerHTML = `<span>${esc(x.title)} <small>· ${size}${x.id === 'backups' && x.files ? ` · ${x.files} шт.` : ''}</small></span>`;
+    let btn = null;
+    if (x.id in SPACE_WARN && x.exists) btn = sbtn(x.id === 'backups' ? 'Все в Корзину' : 'В Корзину', () => askTrash(x));
+    else if (x.id === 'database') btn = sbtn('Переустановить базу…', askReinstallDb, 'sbtn danger');
+    else if (x.id === 'server') btn = sbtn('Удалить хронику…', () => askRemove(r), 'sbtn danger');
+    if (btn) { btn.disabled = !!r.blocker; row.appendChild(btn); }
+    box.appendChild(row);
+  }
+}
+
+async function askTrash(x) {
+  if (!confirm(`${x.title} (${sizeText(x.size)}) — в Корзину?\n\n${SPACE_WARN[x.id]} Вернуть можно из Корзины Windows.`)) return;
+  await call(api.space_trash(selected, x.id));
+}
+
+async function askReinstallDb() {
+  const name = byId(selected)?.name || selected;
+  const ok = await askModal({ title: `Переустановить базу ${esc(name)}?`, ok: 'Переустановить',
+    body: `<p>База поставится заново из установщика сборки, как при первой установке: персонажи, кланы, предметы, охотники и <b>учётки</b> начнутся с нуля.</p>
+      <p class="w-muted" style="font-size:13px">Сначала снимается бэкап «перед переустановкой базы»: вернуть всё можно кнопкой «Откатить» в «Бэкапах». Файлы мира вне базы (память мозгов, журналы модов) уйдут в Корзину. Настройки сервера и ключи мозгов останутся. Чтобы сохранить учётки, есть вайп мира выше.</p>
+      <label style="display:block;margin:10px 0"><input type="checkbox" id="reinstallSure"> Понимаю, что учётки тоже начнутся с нуля</label>` });
+  if (!ok) return;
+  if (!$('reinstallSure').checked) return toast('Переустановка отменена: галочка не поставлена.', true);
+  await call(api.space_reinstall_db(selected, selected));
+}
+
+async function askRemove(r) {
+  const name = byId(selected)?.name || selected;
+  const part = (id) => r.parts.find((x) => x.id === id) || {};
+  const ok = await askModal({ title: `Удалить хронику ${esc(name)}?`, ok: 'Удалить',
+    body: `<p>Сервер (${sizeText(part('server').size || 0)}: исходники, сборка, папка server) и профиль хроники уйдут в Корзину. Поставить заново — кнопкой «Установить»: исходники скачаются и соберутся снова, папку клиента нужно будет указать заново.</p>
+      <label style="display:block;margin:8px 0"><input type="checkbox" id="removeDb"> И базу мира (${part('database').size == null ? 'база выключена' : sizeText(part('database').size)}): перед сносом — бэкап «перед удалением хроники»</label>
+      <label style="display:block;margin:8px 0"><input type="checkbox" id="removeBackups"> И бэкапы базы (${sizeText(part('backups').size || 0)}) — в Корзину</label>
+      <p class="w-muted" style="font-size:13px">Без галочки «И базу» мир остаётся в MariaDB: после новой установки персонажи и охотники будут на месте. Копии настроек, старые миры и клиент для друзей не трогаются — их можно убрать здесь же по отдельности.</p>
+      <label style="display:block;margin:10px 0"><input type="checkbox" id="removeSure"> Понимаю, что хроника уйдёт из списка до новой установки</label>` });
+  if (!ok) return;
+  if (!$('removeSure').checked) return toast('Удаление отменено: галочка не поставлена.', true);
+  await call(api.space_remove(selected, selected, $('removeDb').checked, $('removeBackups').checked));
+}
+
+async function afterRemove(id) {
+  catalog = await api.catalog();
+  delete profiles[id];
+  if (selected === id) { renderList(); renderMain(); }
 }
 
 // Вайп мира Mobius (wipe.py, docs/WIPE.md): сначала холостой прогон, в окне подтверждения — что уйдёт и что останется.
