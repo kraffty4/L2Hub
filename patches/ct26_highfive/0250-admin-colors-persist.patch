@@ -1,0 +1,98 @@
+Цвет ника и титула, заданный GM (//setcolor, //settcolor), переживает перезаход и смену уровня доступа: пишется в
+переменные персонажа и возвращается в onPlayerEnter() и setAccessLevel(). Перенос пункта O08 сопровождающего Эпилога
+(у него — java-агент PermanentColors), ключи переменных те же. Цвета событий, PvP и офлайн-игры не затрагиваются.
+На High Five — перенос патча 0235 сопровождающего Эпилога, номера строк — по High Five. Откат: удалить патч и пересобрать сервер.
+
+diff --git a/dist/game/data/scripts/handlers/chat/commands/admin/AdminEditChar.java b/dist/game/data/scripts/handlers/chat/commands/admin/AdminEditChar.java
+index 8869a11..d8b2b30 100644
+--- a/dist/game/data/scripts/handlers/chat/commands/admin/AdminEditChar.java
++++ b/dist/game/data/scripts/handlers/chat/commands/admin/AdminEditChar.java
+@@ -571,7 +571,16 @@ public class AdminEditChar implements IAdminCommandHandler
+ 					return false;
+ 				}
+ 				
+-				player.getAppearance().setNameColor(Integer.decode("0x" + val));
++				final int color = Integer.decode("0x" + val);
++				if ((color < 0) || (color > 0xFFFFFF))
++				{
++					throw new NumberFormatException(val);
++				}
++
++				player.getAppearance().setNameColor(color);
++				// L2Hub: цвет от GM — навсегда, переживает перезаход (Player.restoreAdminColors).
++				player.getVariables().set(Player.ADMIN_NAME_COLOR_VAR, color);
++				player.getVariables().saveNow();
+ 				player.sendMessage("Your name color has been changed by a GM");
+ 				player.broadcastUserInfo();
+ 			}
+@@ -596,7 +605,16 @@ public class AdminEditChar implements IAdminCommandHandler
+ 					return false;
+ 				}
+ 				
+-				player.getAppearance().setTitleColor(Integer.decode("0x" + val));
++				final int color = Integer.decode("0x" + val);
++				if ((color < 0) || (color > 0xFFFFFF))
++				{
++					throw new NumberFormatException(val);
++				}
++
++				player.getAppearance().setTitleColor(color);
++				// L2Hub: цвет от GM — навсегда, переживает перезаход и смену уровня доступа (Player.restoreAdminColors).
++				player.getVariables().set(Player.ADMIN_TITLE_COLOR_VAR, color);
++				player.getVariables().saveNow();
+ 				player.sendMessage("Your title color has been changed by a GM");
+ 				player.broadcastUserInfo();
+ 			}
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/Player.java b/java/org/l2jmobius/gameserver/entity/actor/Player.java
+index 296e12f..417f4e9 100644
+--- a/java/org/l2jmobius/gameserver/entity/actor/Player.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/Player.java
+@@ -6940,6 +6940,10 @@ public class Player extends Playable
+ 		_accessLevel = AdminData.getInstance().getAccessLevel(level);
+ 		_appearance.setNameColor(_accessLevel.getNameColor());
+ 		_appearance.setTitleColor(_accessLevel.getTitleColor());
++		if (hasVariables())
++		{
++			restoreAdminColors(); // цвет от GM сильнее цвета уровня доступа; при загрузке персонажа — в onPlayerEnter()
++		}
+ 		broadcastUserInfo();
+ 		
+ 		CharInfoTable.getInstance().addName(this);
+@@ -6954,6 +6958,29 @@ public class Player extends Playable
+ 		}
+ 	}
+ 	
++	/**
++	 * L2Hub: цвет ника и титула, заданный GM (//setcolor, //settcolor), переживает перезаход и смену уровня доступа.
++	 * Ник Mobius в базе не хранит, а при загрузке оба цвета перебивает уровень доступа. Ключи переменных — как в
++	 * локальной сборке сопровождающего Эпилога: сохранённые там цвета подхватываются.
++	 */
++	public static final String ADMIN_NAME_COLOR_VAR = "L2Local.AdminNameColor";
++	public static final String ADMIN_TITLE_COLOR_VAR = "L2Local.AdminTitleColor";
++
++	public void restoreAdminColors()
++	{
++		final PlayerVariables vars = getVariables();
++		final int nameColor = vars.getInt(ADMIN_NAME_COLOR_VAR, -1);
++		final int titleColor = vars.getInt(ADMIN_TITLE_COLOR_VAR, -1);
++		if ((nameColor >= 0) && (nameColor <= 0xFFFFFF))
++		{
++			_appearance.setNameColor(nameColor);
++		}
++		if ((titleColor >= 0) && (titleColor <= 0xFFFFFF))
++		{
++			_appearance.setTitleColor(titleColor);
++		}
++	}
++
+ 	public void setAccountAccesslevel(int level)
+ 	{
+ 		LoginServerThread.getInstance().sendAccessLevel(getAccountName(), level);
+@@ -11067,6 +11094,7 @@ public class Player extends Playable
+ 	
+ 	public void onPlayerEnter()
+ 	{
++		restoreAdminColors();
+ 		startWarnUserTakeBreak();
+ 		
+ 		if (SevenSigns.getInstance().isSealValidationPeriod() || SevenSigns.getInstance().isCompResultsPeriod())

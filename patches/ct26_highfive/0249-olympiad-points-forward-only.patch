@@ -1,0 +1,18 @@
+L2Hub: очки Олимпиады из базы читаются через rs.next(), а не rs.first(): запрос открывает ResultSet только вперёд
+(forward-only), и first() на нём — ошибка драйвера, очки не читались. Перенос патча 0250 сопровождающего Эпилога
+(ветка epilogue закрытого L2Hub-epilogue) байт в байт, номера строк — по High Five.
+Откат: удалить патч и пересобрать сервер.
+
+diff --git a/java/org/l2jmobius/gameserver/mechanics/olympiad/Olympiad.java b/java/org/l2jmobius/gameserver/mechanics/olympiad/Olympiad.java
+index bcf2107..18c4893 100644
+--- a/java/org/l2jmobius/gameserver/mechanics/olympiad/Olympiad.java
++++ b/java/org/l2jmobius/gameserver/mechanics/olympiad/Olympiad.java
+@@ -1275,7 +1275,7 @@ public class Olympiad extends ListenersContainer
+ 			ps.setInt(1, objId);
+ 			try (ResultSet rs = ps.executeQuery())
+ 			{
+-				if (rs.first())
++				if (rs.next())
+ 				{
+ 					result = rs.getInt(1);
+ 				}

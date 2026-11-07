@@ -50,6 +50,7 @@ import org.l2jmobius.gameserver.entity.actor.enums.player.TeleportWhereType;
 import org.l2jmobius.gameserver.entity.actor.holders.npc.BuffSkillHolder;
 import org.l2jmobius.gameserver.entity.actor.instance.Monster;
 import org.l2jmobius.gameserver.entity.actor.instance.Teleporter;
+import org.l2jmobius.gameserver.entity.groups.PartyDistributionType;
 import org.l2jmobius.gameserver.entity.clan.Clan;
 import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
 import org.l2jmobius.gameserver.entity.item.instance.Item;
@@ -218,6 +219,9 @@ public class PhantomHunterManager
 	private static final long RECRUIT_WAIT = 180000;
 	private static final long LFM_COOLDOWN = 60000;
 	private static final int LFM_LEVEL_GAP = 5;
+	/** Пати на РБ по крику (раздел 4.140): сколько охотников зовёт и насколько они могут отличаться по уровню от позвавшего. */
+	private static final int RAID_LFM_SIZE = 6;
+	private static final int RAID_LFM_LEVEL_GAP = 7;
 
 	// Крик «ищу людей»: «лфм», «lfm», «нужен хил», «ищем танка», «го в пати» … и роль, если названа. Короткие слова (ее, дд, тк) — только целиком.
 	private static final String END = "(?![\\p{L}])";
@@ -227,6 +231,9 @@ public class PhantomHunterManager
 	private static final Pattern WANT_TANK = Pattern.compile(START + "(танк|tank|паладин|(тк|tk|pal|da|дав)" + END + ")", Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
 	private static final Pattern WANT_DAMAGE = Pattern.compile(START + "(дамаг|damage|нюкер|nuker|лучник|archer|даггер|дагер|dagger|(дд|dd|dps|маг|мага|магов|mage|лук)" + END + ")", Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
 	private static final Pattern WANT_PARTY = Pattern.compile(START + "(пати|party|pt|людей|народ|кто|кого)" + END, Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+	// Пати на РБ (раздел 4.140): «собираю пати на рб», «го на рб», «лфм на босса», «кто на рейд».
+	private static final Pattern RAID_WORD = Pattern.compile(START + "(рб|rb|рбшк\\p{L}*|рейд\\p{L}*|raid|босс\\p{L}*|boss)" + END, Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+	private static final Pattern RAID_GATHER = Pattern.compile(START + "(собира\\p{L}*|сбор|го|пати|party|pt|кто (на|в|со мной|с нами|ид[её]т|пойд[её]т))" + END, Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
 
 	// Мозги-стратег.
 	/** Крик «ищу пати» (роль, уровень). */
@@ -339,6 +346,10 @@ public class PhantomHunterManager
 	private static final int CURSED_PICKUP = 70;
 	/** С оружием в руках столько без дела, мс: идёт на ближайший спот. */
 	private static final long CURSED_IDLE = 20000;
+	/** Как часто охотник на каче и в пати смотрит, на месте ли бафы набора (раздел 4.139). */
+	private static final long BUFF_CHECK = 20000;
+	/** Перебаф от того, что бафы слетели, — не чаще этого (раздел 4.139); после смерти и реса — сразу. */
+	private static final long REBUFF_GAP = 300000;
 	/** С оружием нападает на ближайшего в этом радиусе ({@link #cursedPrey}). */
 	private static final int CURSED_PREY_RANGE = 1000;
 
@@ -365,6 +376,10 @@ public class PhantomHunterManager
 		int level = -1;
 		long deadSince;
 		boolean needBuff;
+		/** Бафы (раздел 4.139): когда смотреть снова и сколько бафов набора было на нём после последнего бафа. */
+		long buffCheckAt;
+		int buffPeak;
+		long rebuffAt;
 		/** За чем бежит (фаза CURSED) и докуда. */
 		WorldObject cursedItem;
 		long cursedUntil;
@@ -449,6 +464,8 @@ public class PhantomHunterManager
 		volatile int recruiterId;
 		volatile long recruitArriveAt;
 		boolean recruitArrived;
+		/** Позвали в пати на РБ (раздел 4.140): долетев, вступает сам, без инвайта. */
+		volatile boolean recruitRaid;
 		// Мозги-стратег.
 		long nextThink;
 		volatile long thinkingSince;
@@ -1466,6 +1483,12 @@ public class PhantomHunterManager
 			PhantomGestures.getInstance().tick(player, hunter.template, now);
 		}
 
+		// Бафы набора на месте — на каче, в рейде и в пати (раздел 4.139).
+		if ((hunter.phase == Phase.HUNT) || (hunter.phase == Phase.PARTY))
+		{
+			keepBuffs(hunter, player, now);
+		}
+
 		// Ведёт рейд на РБ (раздел 4.32): правила кача не трогают; рейд кончился — назад на свой спот.
 		if (hunter.phase == Phase.HUNT)
 		{
@@ -1585,14 +1608,6 @@ public class PhantomHunterManager
 			}
 			goToSpot(hunter, player, null);
 			return;
-		}
-
-		if (hunter.needBuff)
-		{
-			hunter.needBuff = false;
-			buff(player);
-			// Проклятое оружие истекло, пока он был вне игры: руки пусты.
-			PhantomHunterOutfit.rearm(player);
 		}
 
 		// ПвП: пока обидчик рядом — драка с ним, без отдыха и поводка.
@@ -1757,6 +1772,8 @@ public class PhantomHunterManager
 		{
 			player.reviveAnswer(1);
 			hunter.deadSince = 0;
+			// Реснули на месте: бафы слетели со смертью, перебафаться сразу, как игрок с доски (раздел 4.139).
+			hunter.needBuff = true;
 			PhantomRelations.getInstance().revived(player);
 			return;
 		}
@@ -2261,8 +2278,9 @@ public class PhantomHunterManager
 
 	/**
 	 * Бафы как у городского баффера: полный набор его роли, тот же, что у игрока на доске ({@link PhantomBufferSets#classGroup}).
+	 * @return сколько бафов набора на нём после этого ({@link #buffsOn})
 	 */
-	private static void buff(Player player)
+	private static int buff(Player player)
 	{
 		final String group = PhantomBufferSets.classGroup(player);
 		final SchemeBufferTable table = SchemeBufferTable.getInstance();
@@ -2275,6 +2293,67 @@ public class PhantomHunterManager
 				skill.applyEffects(player, player);
 			}
 		}
+		return buffsOn(player);
+	}
+
+	/**
+	 * @return сколько бафов его набора ({@link PhantomBufferSets#classGroup}) сейчас на нём; песни и танцы не в счёт: без «Долгих бафов» они живут 2 минуты
+	 */
+	private static int buffsOn(Player player)
+	{
+		final String group = PhantomBufferSets.classGroup(player);
+		final SchemeBufferTable table = SchemeBufferTable.getInstance();
+		int count = 0;
+		for (int skillId : table.getSkillsIdsByType(group))
+		{
+			final BuffSkillHolder holder = table.getAvailableBuff(group, skillId);
+			final Skill skill = holder == null ? null : SkillData.getInstance().getSkill(skillId, holder.getLevel());
+			if ((skill != null) && !skill.isDance() && player.isAffectedBySkill(skillId))
+			{
+				count++;
+			}
+		}
+		return count;
+	}
+
+	/**
+	 * Бафы держатся, как у игрока с доской Alt+B (раздел 4.139). Набор накладывается сразу при входе в мир, после города и после реса на месте; а раз в
+	 * {@link #BUFF_CHECK} вне боя охотник смотрит, сколько бафов набора на нём осталось, и, если слетела четверть (сняли отменой, истекли на споте или в
+	 * пати), перебафывается; если слетело меньше половины — не чаще {@link #REBUFF_GAP}. Четверть, а не любой баф: часть бафов набора перекрывает друг друга или не влезает в лимит, и
+	 * их нет никогда. Песни и танцы не считаются ({@link #buffsOn}): без «Долгих бафов» они слетают через 2 минуты, и охотник бафался бы каждые 2 минуты
+	 * (прогон 2026-11-06: 2062 перебафа за 17 минут на 368 охотников).
+	 */
+	private void keepBuffs(Hunter hunter, Player player, long now)
+	{
+		if (hunter.needBuff)
+		{
+			hunter.needBuff = false;
+			hunter.buffPeak = buff(player);
+			hunter.buffCheckAt = now + BUFF_CHECK;
+			hunter.rebuffAt = now + REBUFF_GAP;
+			// Проклятое оружие истекло, пока он был вне игры: руки пусты.
+			PhantomHunterOutfit.rearm(player);
+			return;
+		}
+		if ((now < hunter.buffCheckAt) || player.isInCombat() || player.isCastingNow())
+		{
+			return;
+		}
+		hunter.buffCheckAt = now + BUFF_CHECK;
+		final int present = buffsOn(player);
+		if ((present * 4) >= (hunter.buffPeak * 3))
+		{
+			hunter.buffPeak = Math.max(hunter.buffPeak, present);
+			return;
+		}
+		// Слетело меньше половины — не чаще REBUFF_GAP; больше (рес без запроса, отмена) — сразу.
+		if ((now < hunter.rebuffAt) && ((present * 2) >= hunter.buffPeak))
+		{
+			return;
+		}
+		hunter.rebuffAt = now + REBUFF_GAP;
+		hunter.buffPeak = buff(player);
+		LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " rebuffs" + (hunter.phase == Phase.PARTY ? " in a party" : "") + ": " + present + " buffs left, " + hunter.buffPeak + " now.");
 	}
 
 	// ---------- Город ----------
@@ -3574,7 +3653,15 @@ public class PhantomHunterManager
 	 */
 	static boolean isLfm(String text)
 	{
-		return (text != null) && LFM.matcher(text).find();
+		return (text != null) && (LFM.matcher(text).find() || raidCall(text));
+	}
+
+	/**
+	 * @return это сбор пати на РБ (раздел 4.140): слово про РБ и слово про сбор или поиск людей
+	 */
+	private static boolean raidCall(String text)
+	{
+		return RAID_WORD.matcher(text).find() && (LFM.matcher(text).find() || RAID_GATHER.matcher(text).find());
 	}
 
 	public boolean onLfm(Player shouter, ChatType type, String text)
@@ -3588,15 +3675,16 @@ public class PhantomHunterManager
 	 */
 	private List<Hunter> lfm(Player shouter, ChatType type, String text, boolean test)
 	{
-		if (!PhantomHuntersConfig.HUNTER_LFM || !_wanted || (shouter == null) || (text == null) || (!test && PhantomManager.getInstance().isPhantom(shouter)) || !LFM.matcher(text).find())
+		if (!PhantomHuntersConfig.HUNTER_LFM || !_wanted || (shouter == null) || (text == null) || (!test && PhantomManager.getInstance().isPhantom(shouter)) || !isLfm(text))
 		{
 			return List.of();
 		}
 
+		final boolean raid = raidCall(text);
 		final boolean healer = WANT_HEALER.matcher(text).find();
 		final boolean tank = WANT_TANK.matcher(text).find();
 		final boolean damage = WANT_DAMAGE.matcher(text).find();
-		if (!healer && !tank && !damage && !WANT_PARTY.matcher(text).find() && !text.toLowerCase().contains("лфм") && !text.toLowerCase().contains("lfm"))
+		if (!raid && !healer && !tank && !damage && !WANT_PARTY.matcher(text).find() && !text.toLowerCase().contains("лфм") && !text.toLowerCase().contains("lfm"))
 		{
 			return List.of(); // «нужен совет» — не про пати
 		}
@@ -3613,17 +3701,23 @@ public class PhantomHunterManager
 			return List.of();
 		}
 
+		final int gap = raid ? RAID_LFM_LEVEL_GAP : LFM_LEVEL_GAP;
 		final List<Hunter> candidates = new ArrayList<>();
 		for (Hunter hunter : _hunters.values())
 		{
 			final Player player = PhantomManager.getInstance().getPhantom(hunter.template);
-			if ((player == null) || (player == shouter) || (hunter.phase != Phase.HUNT) || player.isDead() || (hunter.enemyId != 0) || (Math.abs(player.getLevel() - shouter.getLevel()) > LFM_LEVEL_GAP) || PhantomRelations.getInstance().isEnemy(player, shouter))
+			if ((player == null) || (player == shouter) || (hunter.phase != Phase.HUNT) || player.isDead() || (hunter.enemyId != 0) || (Math.abs(player.getLevel() - shouter.getLevel()) > gap) || PhantomRelations.getInstance().isEnemy(player, shouter))
+			{
+				continue;
+			}
+			// Свой рейд охотников или запись на ивент не бросает.
+			if ((PhantomRaid.getInstance().raidOf(player) != null) || PhantomEvents.getInstance().isBusy(player))
 			{
 				continue;
 			}
 
 			final PhantomTemplate.Role role = hunter.template.getRole();
-			final boolean fits = (!healer && !tank && !damage) || (healer && (role == PhantomTemplate.Role.HEALER)) || (tank && (role == PhantomTemplate.Role.TANK)) || (damage && (role == PhantomTemplate.Role.DAMAGE));
+			final boolean fits = raid || (!healer && !tank && !damage) || (healer && (role == PhantomTemplate.Role.HEALER)) || (tank && (role == PhantomTemplate.Role.TANK)) || (damage && (role == PhantomTemplate.Role.DAMAGE));
 			if (!fits || ((type == ChatType.GENERAL) && (player.calculateDistance2D(shouter) > 1250)))
 			{
 				continue;
@@ -3638,22 +3732,77 @@ public class PhantomHunterManager
 
 		_lfmCooldowns.put(shouter.getObjectId(), now + LFM_COOLDOWN);
 		Collections.shuffle(candidates);
-		// Названы роли — по одному на каждую, не названы — двое любых.
-		final int wanted = (healer ? 1 : 0) + (tank ? 1 : 0) + (damage ? 1 : 0);
-		final List<Hunter> recruited = new ArrayList<>(candidates.subList(0, Math.min(candidates.size(), wanted > 0 ? wanted : 2)));
+		final List<Hunter> recruited;
+		if (raid)
+		{
+			// На РБ — полная пати: свободные места до RAID_LFM_SIZE, хилер и танк первыми, если есть.
+			final int slots = Math.min(RAID_LFM_SIZE, shouter.isInParty() ? 9 - shouter.getParty().getMemberCount() : 8);
+			recruited = raidTeam(candidates, slots);
+		}
+		else
+		{
+			// Названы роли — по одному на каждую, не названы — двое любых.
+			final int wanted = (healer ? 1 : 0) + (tank ? 1 : 0) + (damage ? 1 : 0);
+			recruited = new ArrayList<>(candidates.subList(0, Math.min(candidates.size(), wanted > 0 ? wanted : 2)));
+		}
 		for (Hunter hunter : recruited)
 		{
 			final Player player = PhantomManager.getInstance().getPhantom(hunter.template);
 			hunter.recruiterId = shouter.getObjectId();
 			hunter.recruitArrived = false;
+			hunter.recruitRaid = raid;
 			hunter.recruitArriveAt = now + Rnd.get(8000, 25000);
 			hunter.phaseUntil = now + RECRUIT_WAIT;
 			hunter.phase = Phase.RECRUIT;
 			final String who = player.getPlayerClass().name().replace('_', ' ').toLowerCase() + " " + player.getLevel();
-			PhantomChat.getInstance().hunterEvent(player, shouter, "LFM", shouter.getName() + " (" + shouter.getLevel() + " ур.) пишет в чат: «" + text + "». Ты свободен и подходишь — напиши ему в личку коротко, что идёшь к нему в пати (ты " + who + ")", "го, я " + who + ", кинь пати", 60000, true);
-			LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " answers the LFM of " + shouter.getName() + ".");
+			if (raid)
+			{
+				PhantomChat.getInstance().hunterEvent(player, shouter, "LFM", shouter.getName() + " (" + shouter.getLevel() + " ур.) собирает пати на РБ: «" + text + "». Ты свободен и подходишь — напиши ему в личку коротко, что летишь к нему на РБ (ты " + who + ")", "иду на рб, я " + who, 60000, true);
+			}
+			else
+			{
+				PhantomChat.getInstance().hunterEvent(player, shouter, "LFM", shouter.getName() + " (" + shouter.getLevel() + " ур.) пишет в чат: «" + text + "». Ты свободен и подходишь — напиши ему в личку коротко, что идёшь к нему в пати (ты " + who + ")", "го, я " + who + ", кинь пати", 60000, true);
+			}
+			LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " answers the " + (raid ? "raid party call" : "LFM") + " of " + shouter.getName() + ".");
 		}
 		return recruited;
+	}
+
+	/**
+	 * Пати на РБ (раздел 4.140): хилер, потом танк, если такие есть среди откликнувшихся, дальше — остальные.
+	 * @param candidates свободные охотники, уже перемешанные
+	 * @param slots сколько мест
+	 */
+	private static List<Hunter> raidTeam(List<Hunter> candidates, int slots)
+	{
+		final List<Hunter> team = new ArrayList<>();
+		for (PhantomTemplate.Role role : new PhantomTemplate.Role[]
+		{
+			PhantomTemplate.Role.HEALER,
+			PhantomTemplate.Role.TANK
+		})
+		{
+			for (Hunter hunter : candidates)
+			{
+				if ((team.size() < slots) && (hunter.template.getRole() == role))
+				{
+					team.add(hunter);
+					break;
+				}
+			}
+		}
+		for (Hunter hunter : candidates)
+		{
+			if (team.size() >= slots)
+			{
+				break;
+			}
+			if (!team.contains(hunter))
+			{
+				team.add(hunter);
+			}
+		}
+		return team;
 	}
 
 	/**
@@ -4530,6 +4679,18 @@ public class PhantomHunterManager
 				player.teleToLocation(near, false);
 			}
 			return;
+		}
+
+		// Пати на РБ (раздел 4.140): позвавший сам собирает пати — долетев, вступить, как по его инвайту. Не вышло — ждёт инвайта, как по обычному крику.
+		if (hunter.recruitRaid && !player.isTeleporting() && (player.calculateDistance2D(recruiter) < 1500) && (!recruiter.isInParty() || recruiter.getParty().isLeader(recruiter)))
+		{
+			hunter.recruitRaid = false;
+			PhantomCompanionManager.getInstance().onInvited(recruiter, player, PartyDistributionType.FINDERS_KEEPERS);
+			if (player.isInParty())
+			{
+				LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " joins the raid party of " + recruiter.getName() + ".");
+				return;
+			}
 		}
 
 		// Позвавший отошёл — подбежать, но остановиться в паре шагов от него, а не в нём.
