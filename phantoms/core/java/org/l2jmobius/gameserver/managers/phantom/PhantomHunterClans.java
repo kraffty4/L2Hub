@@ -457,7 +457,7 @@ public final class PhantomHunterClans
 		}
 		ThreadPool.execute(hunter::storeMe);
 		LOGGER.info(getClass().getSimpleName() + ": " + hunter.getName() + " (" + hunter.getLevel() + ") founded clan " + clanName + (clanName.equals(name) ? "" : " (name from syllables)") + ", appetite " + appetite(clan) + " — " + why + ".");
-		PhantomNews.post("clan", "Охотник " + hunter.getName() + " (" + hunter.getLevel() + ") основал" + (female(hunter) ? "а" : "") + " клан «" + clanName + "»", hunter.getName(), hunter);
+		PhantomNews.post("clan", hunter.getName() + " (пешка, " + hunter.getLevel() + ") основал" + (female(hunter) ? "а" : "") + " клан «" + clanName + "»", hunter.getName(), hunter);
 		if (PhantomHunterManager.getInstance().getRealPlayers() > 0)
 		{
 			_nextShout.put(clan.getId(), now + SHOUT_GAP + Rnd.get(SHOUT_SPREAD));
@@ -648,7 +648,7 @@ public final class PhantomHunterClans
 		// Клан-чат видят только живые: без них реплику не тратить.
 		if (PhantomClans.getInstance().livingOnline(clan))
 		{
-			final String what = "ты вступил в клан охотников «" + clan.getName() + "», его глава — " + leader.getName() + (friend ? ", твой знакомый" : "") + "; поздоровайся с кланом";
+			final String what = "ты вступил в клан пешек «" + clan.getName() + "», его глава — " + leader.getName() + (friend ? ", твой знакомый" : "") + "; поздоровайся с кланом";
 			PhantomChat.getInstance().clanEvent(hunter, leader, clan, "CLAN_JOIN", what, Rnd.nextBoolean() ? "всем привет)" : "привет, клан! рад к вам", SAY_GAP);
 		}
 		return true;
@@ -867,7 +867,7 @@ public final class PhantomHunterClans
 		// Mobius пишет репутацию в базу только при остановке сервера.
 		ThreadPool.execute(clan::updateClanInDB);
 		LOGGER.info(getClass().getSimpleName() + ": clan " + clan.getName() + " is level " + level + " now (" + how + ").");
-		PhantomNews.post("clan", "Клан охотников «" + clan.getName() + "» — " + level + "-й уровень", clan.getLeaderName(), clan.getLeader() == null ? null : clan.getLeader().getPlayer());
+		PhantomNews.post("clan", "Клан пешек «" + clan.getName() + "» — " + level + "-й уровень", clan.getLeaderName(), clan.getLeader() == null ? null : clan.getLeader().getPlayer());
 	}
 
 	/**
@@ -995,7 +995,7 @@ public final class PhantomHunterClans
 		LOGGER.info(getClass().getSimpleName() + ": clan " + name + " of " + leader + " dissolved (" + why + ").");
 		if (text != null)
 		{
-			PhantomNews.post("clan", "Клан охотников «" + name + "» распался: " + text, leader, at);
+			PhantomNews.post("clan", "Клан пешек «" + name + "» распался: " + text, leader, at);
 		}
 	}
 
@@ -1070,7 +1070,7 @@ public final class PhantomHunterClans
 			}
 		}
 		clans.sort(Comparator.comparingInt((Clan c) -> -c.getLevel()).thenComparingInt(c -> -c.getMembersCount()).thenComparing(Clan::getName));
-		lines.add(tr("Кланы охотников: ") + clans.size() + tr(", в них ") + members + tr(" чел.") + (PhantomHuntersConfig.HUNTER_CLANS ? "" : tr(" Живые кланы выключены (HunterClans в PhantomHunters.ini): новые не появятся, старые не растут.")));
+		lines.add(tr("Кланы пешек: ") + clans.size() + tr(", в них ") + members + tr(" чел.") + (PhantomHuntersConfig.HUNTER_CLANS ? "" : tr(" Живые кланы выключены (HunterClans в PhantomHunters.ini): новые не появятся, старые не растут.")));
 		final int max = 15;
 		for (Clan clan : clans.subList(0, Math.min(max, clans.size())))
 		{

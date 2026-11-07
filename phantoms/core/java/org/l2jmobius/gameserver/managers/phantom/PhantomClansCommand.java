@@ -30,10 +30,10 @@ public class PhantomClansCommand implements IVoicedCommandHandler
 		{
 			if (!player.isGM())
 			{
-				player.sendMessage(tr("Распустить кланы охотников может только GM."));
+				player.sendMessage(tr("Распустить кланы пешек может только GM."));
 				return true;
 			}
-			player.sendMessage(tr("Распущено кланов охотников: ") + PhantomHunterClans.getInstance().reset() + ".");
+			player.sendMessage(tr("Распущено кланов пешек: ") + PhantomHunterClans.getInstance().reset() + ".");
 			return true;
 		}
 		if (arg.equals("top") || arg.startsWith("top "))

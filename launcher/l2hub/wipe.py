@@ -285,7 +285,7 @@ def _render_preview(r: dict) -> list[str]:
     lines = [f"Вайп мира {r['id']}, база {r['database']}. Это предпросмотр: мир не менялся.", "",
              r["blocker"] or "Сервер выключен, вайпать можно.", "", "Уйдёт из мира (копия — в бэкапе before-wipe):",
              f"  людей: {len(people)}", *[f"    {x[0]}, уровень {x[1]}, учётка {x[2]}" + (f", GM {x[3]}" if int(x[3]) > 0 else "") for x in people],
-             f"  охотников, напарников и прочих фантомов: {total - len(people)}"]
+             f"  пешек, напарников и прочих фантомов: {total - len(people)}"]
     lines += [f"  {label}: {before[t]}" for t, label in SUMMARY if t in before]
     lines += [f"  всего: таблиц {len(world)}, строк {sum(world.values())}", "", "Останется как есть:",
               "  " + ", ".join(f"{t} {n}" for t, n in sorted(r["keep"].items())), "  настройки сервера в config, журналы сервера, ключи и настройки мозгов, бэкапы", "",

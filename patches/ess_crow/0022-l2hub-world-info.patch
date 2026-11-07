@@ -476,7 +476,7 @@ index 0000000000000000000000000000000000000000..2dd9ae64affefdd00be13d705e4080ec
 +					sb.append(when(next)).append(": ").append(pvp[1]).append("<br1>");
 +				}
 +			}
-+			sb.append("<font color=\"808080\">Регистрация 10 минут у менеджера в Гиране (у Deathmatch — 1 минута), охотники записываются сами.</font><br1>");
++			sb.append("<font color=\"808080\">Регистрация 10 минут у менеджера в Гиране (у Deathmatch — 1 минута), пешки записываются сами.</font><br1>");
 +		}
 +		else
 +		{
@@ -791,7 +791,7 @@ index 0000000000000000000000000000000000000000..2dd9ae64affefdd00be13d705e4080ec
 +	{
 +		sb.append("<font color=\"LEVEL\">Зачистка</font><br1>");
 +		sb.append("<font color=\"A0A0A0\">Награды недели топ-5 зоны — ").append(new SimpleDateFormat("dd.MM HH:mm").format(new Date(nextPurgeReward())));
-+		sb.append(", серым — охотники и напарники, x2 — горячий час.</font><br1>");
++		sb.append(", серым — пешки и напарники, x2 — горячий час.</font><br1>");
 +		boolean any = false;
 +		for (PurgeZone zone : purgeZones(player.getObjectId()))
 +		{

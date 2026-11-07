@@ -352,7 +352,7 @@ def diagnostics(p: dict) -> list[dict]:
 
     if hm := modes.hunters_max(p):
         m = hm["machine"]
-        add("warn" if m["warnings"] else "ok", "Хватит ли машины", f"охотников {hm['count']} из {hm['top']}, рекомендуем до {m['recommended']} · ОЗУ {m['ramGb']} ГБ, {m['threads']} потоков, куча {m['heapGb']} ГБ, на диске свободно {m['freeGb']} ГБ",
+        add("warn" if m["warnings"] else "ok", "Хватит ли машины", f"пешек {hm['count']} из {hm['top']}, рекомендуем до {m['recommended']} · ОЗУ {m['ramGb']} ГБ, {m['threads']} потоков, куча {m['heapGb']} ГБ, на диске свободно {m['freeGb']} ГБ",
             " ".join(m["warnings"]))
     if st["game"]["state"] == "on" and (heap := machine.heap_state(p)):
         add("warn" if heap["level"] != "ok" else "ok", "Память сервера", f"после сборки {heap['afterGcMb']} из {heap['maxMb']} МБ, работает {heap['uptimeH']} ч", heap["text"])

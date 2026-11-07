@@ -1,0 +1,169 @@
+<?xml version='1.0' encoding='utf-8'?>
+<dialogues format="1" revision="reviewed-clan-20261104">
+  <scene id="city-supplement-20261101-b72-0002" topic="general_chat">
+    <line id="rr20261106-b002-s001-t01" role="A">жду ответ, а сообщение у меня так и висит неотправленное</line>
+    <line id="rr20261106-b002-s001-t02" role="B">инет?</line>
+    <line id="rr20261106-b002-s001-t03" role="A">нет, я энтер не нажала</line>
+  </scene>
+  <scene id="city-supplement-20261101-b172-0004" topic="work">
+    <line id="rr20261106-b002-s002-t01" role="A">на работе перерыв формально есть, по факту всем что-то надо</line>
+    <line id="rr20261106-b002-s002-t02" role="B">ты там же сидишь?</line>
+    <line id="rr20261106-b002-s002-t03" role="A">да, стол тот же, только чай поставил</line>
+  </scene>
+  <scene id="global-work-288" topic="work">
+    <line id="rr20261106-b002-s003-t01" role="A">весь день на ногах, села и поняла что больше не встану</line>
+    <line id="rr20261106-b002-s003-t02" role="B">поесть-то хоть успела?</line>
+    <line id="rr20261106-b002-s003-t03" role="A">на работе перехватила что-то</line>
+    <line id="rr20261106-b002-s003-t04" role="A">я сейчас даже не помню что</line>
+  </scene>
+  <scene id="global-work-164" topic="trade">
+    <line id="rr20261106-b002-s004-t01" role="A">мышку новую купил, слишком лёгкая</line>
+    <line id="rr20261106-b002-s004-t02" role="B">я наоборот лёгкую искала</line>
+    <line id="rr20261106-b002-s004-t03" role="A">я её по столу гоняю, рука по старой привыкла</line>
+    <line id="rr20261106-b002-s004-t04" role="B">чувствительность поменьше сделай пока</line>
+  </scene>
+  <scene id="city-life-revision-0493" topic="general_chat">
+    <line id="rr20261106-b002-s005-t01" role="A">утром очки искала, без них ничего не вижу</line>
+    <line id="rr20261106-b002-s005-t02" role="B">телефоном подсвети</line>
+    <line id="rr20261106-b002-s005-t03" role="A">да мне не темно, мне мутно</line>
+    <line id="rr20261106-b002-s005-t04" role="C">я на ощупь обычно</line>
+    <line id="rr20261106-b002-s005-t05" role="A">я в итоге на кухне нашла, даже не помню зачем их туда унесла</line>
+  </scene>
+  <scene id="city-life-revision-0220" topic="general_chat">
+    <line id="rr20261106-b002-s006-t01" role="A">я завтра рано встаю, но если сейчас лягу всё равно не усну</line>
+    <line id="rr20261106-b002-s006-t02" role="B">у меня так перед утренней сменой</line>
+    <line id="rr20261106-b002-s006-t03" role="A">в свободный день меня в десять уже рубит</line>
+    <line id="rr20261106-b002-s006-t04" role="B">а как надо поспать, так до утра лежишь</line>
+  </scene>
+  <scene id="city-life-revision-0164" topic="game_memory">
+    <line id="rr20261106-b002-s007-t01" role="A">я раньше в клане больше болтала чем играла</line>
+    <line id="rr20261106-b002-s007-t02" role="B">я так и сейчас</line>
+    <line id="rr20261106-b002-s007-t03" role="A">я иногда вообще выходила и не помнила что за вечер сделала</line>
+    <line id="rr20261106-b002-s007-t04" role="B">ну если тебе нормально было</line>
+  </scene>
+  <scene id="global-work-187" topic="gameplay">
+    <line id="rr20261106-b002-s008-t01" role="A">я со спойлом иногда по полчаса вообще пустая бегала</line>
+    <line id="rr20261106-b002-s008-t02" role="B">ты собирала хоть?</line>
+    <line id="rr20261106-b002-s008-t03" role="A">да блин, я не первый день играю</line>
+    <line id="rr20261106-b002-s008-t04" role="B">я на всякий случай спросил</line>
+  </scene>
+  <scene id="city-supplement-20261101-b160-0004" topic="general_chat">
+    <line id="rr20261106-b002-s009-t01" role="A">я на часы посмотрела, лучше бы не смотрела</line>
+    <line id="rr20261106-b002-s009-t02" role="B">поздно?</line>
+    <line id="rr20261106-b002-s009-t03" role="A">да я уже должна была два часа назад спать</line>
+  </scene>
+  <scene id="city-supplement-20261101-b160-0008" topic="game_memory">
+    <line id="rr20261106-b002-s010-t01" role="A">я на стартах больше не хочу играть, там беготни больше чем игры</line>
+    <line id="rr20261106-b002-s010-t02" role="B">а я ради старта и захожу</line>
+    <line id="rr20261106-b002-s010-t03" role="A">вот я это вообще не понимаю, я лучше позже докачаюсь</line>
+  </scene>
+  <scene id="city-supplement-original-20261102-0006" topic="tech">
+    <line id="rr20261106-b002-s011-t01" role="A">инет вчера весь вечер отваливался, я уже роутер перетыкала</line>
+    <line id="rr20261106-b002-s011-t02" role="B">и как</line>
+    <line id="rr20261106-b002-s011-t03" role="A">да никак, в техподдержке сказали ждать</line>
+  </scene>
+  <scene id="city-life-revision-0314" topic="general_chat">
+    <line id="rr20261106-b002-s012-t01" role="A">я вкладки боюсь закрывать, вдруг там важное</line>
+    <line id="rr20261106-b002-s012-t02" role="B">сохрани в закладки</line>
+    <line id="rr20261106-b002-s012-t03" role="A">я туда потом не захожу</line>
+    <line id="rr20261106-b002-s012-t04" role="B">я тоже, у меня там ещё учёба лежит)</line>
+  </scene>
+  <scene id="global-work-054" topic="general_chat">
+    <line id="rr20261106-b002-s013-t01" role="A">я в городе минут по двадцать всё сравниваю</line>
+    <line id="rr20261106-b002-s013-t02" role="B">что там сравнивать</line>
+    <line id="rr20261106-b002-s013-t03" role="A">цены. я пока все лавки обойду первые уже не помню</line>
+    <line id="rr20261106-b002-s013-t04" role="B">я беру где вижу, лишь бы снова не бегать</line>
+  </scene>
+  <scene id="global-work-059" topic="trade">
+    <line id="rr20261106-b002-s014-t01" role="A">я по привычке соски сразу большими пачками покупаю</line>
+    <line id="rr20261106-b002-s014-t02" role="B">потом на складе ещё лежат</line>
+    <line id="rr20261106-b002-s014-t03" role="A">у меня там уже запас надолго, а я всё равно беру</line>
+  </scene>
+  <scene id="city-life-revision-0422" topic="general_chat">
+    <line id="rr20261106-b002-s015-t01" role="A">мне вчера сообщения вразнобой приходили</line>
+    <line id="rr20261106-b002-s015-t02" role="B">в игре?</line>
+    <line id="rr20261106-b002-s015-t03" role="A">нет, в телефоне</line>
+    <line id="rr20261106-b002-s015-t04" role="C">у меня тоже бывает, я потом читаю и вообще не понимаю кто кому отвечает</line>
+  </scene>
+  <scene id="city-life-revision-0071" topic="tech">
+    <line id="rr20261106-b002-s016-t01" role="A">после перерыва панель открыл и закрыл обратно</line>
+    <line id="rr20261106-b002-s016-t02" role="B">не помнишь ничего?</line>
+    <line id="rr20261106-b002-s016-t03" role="A">половина иконок знакомые, а что делают уже не помню</line>
+    <line id="rr20261106-b002-s016-t04" role="B">я когда с другого класса пересаживалась тоже заново читала</line>
+  </scene>
+  <scene id="global-work-069" topic="trade">
+    <line id="rr20261106-b002-s017-t01" role="A">увидела цену, уже покупать собралась, потом поняла что это за штуку</line>
+    <line id="rr20261106-b002-s017-t02" role="B">а ты за всё думала?</line>
+    <line id="rr20261106-b002-s017-t03" role="A">да, я ещё удивилась почему так дёшево</line>
+    <line id="rr20261106-b002-s017-t04" role="B">я теперь сначала количество проверяю</line>
+  </scene>
+  <scene id="global-casual-new-009" topic="food">
+    <line id="rr20261106-b002-s018-t01" role="A">я кастрюлю супа сварил, третий день уже не хочу его</line>
+    <line id="rr20261106-b002-s018-t02" role="B">заморозь</line>
+    <line id="rr20261106-b002-s018-t03" role="A">у меня там места нет</line>
+    <line id="rr20261106-b002-s018-t04" role="B">я в маленьких контейнерах ставлю, между остальным влезают</line>
+  </scene>
+  <scene id="city-linked-20261101-b18-0015" topic="general_chat">
+    <line id="rr20261106-b002-s019-t01" role="A">мне одной качаться надоело, а в пати я никого не знаю</line>
+    <line id="rr20261106-b002-s019-t02" role="B">а там все друг друга знать должны что ли</line>
+    <line id="rr20261106-b002-s019-t03" role="C">я обычно молча захожу</line>
+    <line id="rr20261106-b002-s019-t04" role="A">я тоже молча, но мне так ещё скучнее</line>
+  </scene>
+  <scene id="city-life-revision-0312" topic="media">
+    <line id="rr20261106-b002-s020-t01" role="A">музыку из старого видоса нашёл, а сам видос уже удалён</line>
+    <line id="rr20261106-b002-s020-t02" role="B">перезаливов нет?</line>
+    <line id="rr20261106-b002-s020-t03" role="A">я названия не помню, только этот кусок</line>
+    <line id="rr20261106-b002-s020-t04" role="B">а у меня наоборот видео есть, песню никто не знает</line>
+  </scene>
+  <scene id="city-life-revision-0042" topic="general_chat">
+    <line id="rr20261106-b002-s021-t01" role="A">надела носки, они разного цвета оказались</line>
+    <line id="rr20261106-b002-s021-t02" role="B">да кто на них смотрит</line>
+    <line id="rr20261106-b002-s021-t03" role="A">я смотрю</line>
+    <line id="rr20261106-b002-s021-t04" role="A">они ещё по толщине разные, вот это реально бесит</line>
+  </scene>
+  <scene id="city-supplement-original-20261102-0001" topic="game_memory">
+    <line id="rr20261106-b002-s022-t01" role="A">я на старый сервер из любопытства зашёл, а там всё чужое</line>
+    <line id="rr20261106-b002-s022-t02" role="B">когда последний раз был?</line>
+    <line id="rr20261106-b002-s022-t03" role="A">лет пять назад, я даже где стоял не помню</line>
+  </scene>
+  <scene id="city-life-revision-0490" topic="trade">
+    <line id="rr20261106-b002-s023-t01" role="A">я на рынке за одну цену купила, в соседней лавке дешевле</line>
+    <line id="rr20261106-b002-s023-t02" role="B">сильно?</line>
+    <line id="rr20261106-b002-s023-t03" role="A">да прилично, теперь лучше бы не видела</line>
+    <line id="rr20261106-b002-s023-t04" role="C">я после покупки вообще цены не смотрю</line>
+    <line id="rr20261106-b002-s023-t05" role="A">я не специально, лавка рядом стояла</line>
+  </scene>
+  <scene id="city-supplement-20261101-old197-0003" topic="tech">
+    <line id="rr20261106-b002-s024-t01" role="A">я после переустановки звук полчаса настраивал</line>
+    <line id="rr20261106-b002-s024-t02" role="B">чего там полчаса делать</line>
+    <line id="rr20261106-b002-s024-t03" role="A">то тихо то по ушам долбит, я с музыкой ещё сижу</line>
+  </scene>
+  <scene id="global-work-043" topic="gameplay">
+    <line id="rr20261106-b002-s025-t01" role="A">на х1 я уже не вывожу, слишком долго всё</line>
+    <line id="rr20261106-b002-s025-t02" role="B">мне как раз нравится когда долго</line>
+    <line id="rr20261106-b002-s025-t03" role="A">я с работы часа на два захожу</line>
+    <line id="rr20261106-b002-s025-t04" role="B">я тоже не каждый день, просто ни с кем не гонюсь</line>
+  </scene>
+  <scene id="city-supplement-20261101-b177-0028" topic="trade">
+    <line id="rr20261106-b002-s026-t01" role="A">рецепт нашёл, цена вообще не понравилась</line>
+    <line id="rr20261106-b002-s026-t02" role="B">в другой лавке посмотри</line>
+    <line id="rr20261106-b002-s026-t03" role="A">я тогда весь город обошёл, один только и был</line>
+  </scene>
+  <scene id="city-supplement-20261101-b189-0015" topic="sleep">
+    <line id="rr20261106-b002-s027-t01" role="A">будильник поставила не на то время, потом сама испугалась</line>
+    <line id="rr20261106-b002-s027-t02" role="B">раньше?</line>
+    <line id="rr20261106-b002-s027-t03" role="A">на час, я уже одеваться начала</line>
+  </scene>
+  <scene id="city-life-revision-0443" topic="tech">
+    <line id="rr20261106-b002-s028-t01" role="A">мышь проводную обратно поставил, с беспроводной задолбался</line>
+    <line id="rr20261106-b002-s028-t02" role="B">заряжать?</line>
+    <line id="rr20261106-b002-s028-t03" role="A">я про неё забываю пока не сядет</line>
+    <line id="rr20261106-b002-s028-t04" role="C">я заранее на ночь ставлю</line>
+    <line id="rr20261106-b002-s028-t05" role="A">я сначала тоже ставил, потом забил</line>
+  </scene>
+  <scene id="clan-social-quiet-01" topic="clan_chat">
+    <line id="rr20261106-b002-s029-t01" role="A">я чат читаю, отвечаю только через раз</line>
+    <line id="rr20261106-b002-s029-t02" role="B">занята?</line>
+    <line id="rr20261106-b002-s029-t03" role="A">ем, неудобно одной рукой печатать</line>
+  </scene>
+</dialogues>

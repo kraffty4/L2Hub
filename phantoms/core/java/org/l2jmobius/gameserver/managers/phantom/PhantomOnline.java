@@ -103,7 +103,7 @@ public final class PhantomOnline
 		return new String[]
 		{
 			PhantomText.tr("Онлайн") + ": " + counts.total(),
-			PhantomText.tr("Живых") + ": " + counts.live() + ", " + PhantomText.tr("охотников") + ": " + counts.hunters() + ", " + PhantomText.tr("фантомов") + ": " + counts.phantoms()
+			PhantomText.tr("Живых") + ": " + counts.live() + ", " + PhantomText.tr("пешек") + ": " + counts.hunters() + ", " + PhantomText.tr("фантомов") + ": " + counts.phantoms()
 		};
 	}
 

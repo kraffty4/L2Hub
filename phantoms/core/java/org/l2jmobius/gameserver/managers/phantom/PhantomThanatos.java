@@ -1935,7 +1935,7 @@ public final class PhantomThanatos
 	{
 		final boolean hunter = PhantomManager.getInstance().isPhantom(victim);
 		LOGGER.info(getClass().getSimpleName() + ": " + me.getName() + " killed " + victim.getName() + " (" + victim.getLevel() + (hunter ? "" : ", player") + "); casts " + CASTS + ".");
-		PhantomNews.post("thanatos", "Танатос забрал " + (hunter ? "охотника " : "игрока ") + victim.getName() + " (" + victim.getLevel() + ")", me.getName(), victim);
+		PhantomNews.post("thanatos", "Танатос забрал " + (hunter ? "пешку " : "игрока ") + victim.getName() + " (" + victim.getLevel() + ")", me.getName(), victim);
 		// Голос: живому — шёпотом; об охотнике — вслух, если рядом слышит живой (иначе мозги не звать).
 		if (!hunter || _selfTest)
 		{
@@ -1983,7 +1983,7 @@ public final class PhantomThanatos
 		// Вернётся другим (решение автора 2026-10-24: «после убийства танатоса меняется его класс и шмотки»).
 		final PhantomTemplate template = PhantomData.getInstance().getReaper();
 		final String body = template == null ? "?" : nextBody(template);
-		final String by = killer == null ? "" : ": его убил " + (PhantomManager.getInstance().isPhantom(killer) ? "охотник " : "игрок ") + killer.getName() + " (" + killer.getLevel() + ")";
+		final String by = killer == null ? "" : ": его убил " + (PhantomManager.getInstance().isPhantom(killer) ? "пешка " : "игрок ") + killer.getName() + " (" + killer.getLevel() + ")";
 		LOGGER.info(getClass().getSimpleName() + ": " + me.getName() + " died" + (killer != null ? " (" + killer.getName() + ")" : "") + "; back in 24 h as body " + body + "; casts " + CASTS + ".");
 		PhantomNews.post("thanatos", "Танатос пал" + by + ". Сутки его не будет", killer != null ? killer.getName() : me.getName(), me);
 		// Голос: последнее слово вслух; party — сколько было в охоте, без охоты — сколько били его в последние полминуты.

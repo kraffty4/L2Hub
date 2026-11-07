@@ -1,0 +1,101 @@
+L2Hub: баффер доски Alt+B с питомцем — переключатель цели «Себе | Питомцу» вместо второй сетки иконок.
+Раньше с питомцем добавлялись ряд «Питомцу: воин / маг» и вторая полная сетка иконок «Питомцу»: страница вырастала
+выше окна доски, клиент рисовал вертикальную полосу прокрутки, ширины переставало хватать, и кнопки справа обрезались.
+Теперь на месте ряда «Питомцу: …» — один ряд «Себе | Питомцу» (выбранная цель — в скобках, как выбранная категория),
+сетка иконок одна — для выбранной цели, «Воину — всё» и «Магу — всё» накладываются на неё же.
+Выбор держится при смене категории, хиле и снятии бафов: последнее слово pet в bypass (_bbshubbuff <категория> pet,
+set fighter|mage pet, one <id> <категория> pet, heal|cancel <категория> pet); прежние команды разбираются как раньше.
+Хил и «Снять бафы» работают как раньше. Без питомца страница прежняя байт в байт; с питомцем она выше страницы без него
+на один ряд кнопок, а самый широкий ряд (4 кнопки по 120) оставляет в поле 555 запас под полосу прокрутки.
+Новые строки «Себе», «Питомцу», « питомцу» — в таблице L2HUB_EN (английский — tools/l2hub_lang/en.json).
+Откат: удалить патч и пересобрать сервер.
+
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+index 38ae5a1..3aa3ddf 100644
+--- a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+@@ -64,6 +64,9 @@ public class L2HubBoard implements IParseBoardHandler
+ 		java.util.Map.entry("</font> — нажми на иконку, чтобы наложить баф", "</font> — click an icon to apply the buff"),
+ 		java.util.Map.entry(" (ниже — питомцу)", " (below — for your pet)"),
+ 		java.util.Map.entry("<br><font color=\"B09878\">Питомцу</font><br1>", "<br><font color=\"B09878\">For your pet</font><br1>"),
++		java.util.Map.entry("Себе", "Self"),
++		java.util.Map.entry("Питомцу", "Pet"),
++		java.util.Map.entry(" питомцу", " to your pet"),
+ 		java.util.Map.entry("С кармой доской пользоваться нельзя.", "You cannot use the board with karma."),
+ 		java.util.Map.entry("Сейчас нельзя: ты в бою, мёртв или на событии.", "Not now: you are in combat, dead or in an event."),
+ 		java.util.Map.entry("Доской можно пользоваться только в мирной зоне.", "The board works only in a peace zone."),
+@@ -202,7 +205,8 @@ public class L2HubBoard implements IParseBoardHandler
+ 	// ---------- Баффер ----------
+ 
+ 	/**
+-	 * _bbshubbuff [категория] | set fighter|mage [pet] | one &lt;id&gt; &lt;категория&gt; [pet] | heal &lt;категория&gt; | cancel &lt;категория&gt; | schemes, scheme_* — свои наборы ({@link PhantomBufferSets})
++	 * _bbshubbuff [категория] [pet] | set fighter|mage [pet] | one &lt;id&gt; &lt;категория&gt; [pet] | heal &lt;категория&gt; [pet] | cancel &lt;категория&gt; [pet] | schemes, scheme_* — свои наборы ({@link PhantomBufferSets})
++	 * Последнее слово pet — страница для питомца: ряд «Себе | Питомцу», одна сетка иконок и наборы — на питомца.
+ 	 */
+ 	private static String buffer(Player player, String[] args)
+ 	{
+@@ -210,6 +214,8 @@ public class L2HubBoard implements IParseBoardHandler
+ 		final List<String> types = table.getSkillTypes();
+ 		String category = types.isEmpty() ? "" : types.get(0);
+ 		final String action = args.length > 1 ? args[1].toLowerCase() : "";
++		// L2Hub: последнее слово pet — страница для питомца; держится при смене категории, хиле и снятии бафов
++		final boolean forPet = (args.length > 2) && args[args.length - 1].equalsIgnoreCase("pet");
+ 		if (action.equals("schemes") || action.startsWith("scheme_"))
+ 		{
+ 			return page(player, PhantomBufferSets.title(), PhantomBufferSets.handle(player, args, !action.equals("scheme_cast") || canUse(player), summon(player)));
+@@ -300,23 +306,26 @@ public class L2HubBoard implements IParseBoardHandler
+ 				break;
+ 			}
+ 		}
+-		return page(player, tr("Баффер"), bufferContent(player, table, types, category));
++		return page(player, tr("Баффер"), bufferContent(player, table, types, category, forPet && player.hasSummon()));
+ 	}
+ 
+-	private static String bufferContent(Player player, SchemeBufferTable table, List<String> types, String category)
++	private static String bufferContent(Player player, SchemeBufferTable table, List<String> types, String category, boolean pet)
+ 	{
++		// L2Hub: с питомцем — одна сетка иконок для выбранной цели и ряд «Себе | Питомцу» вместо второй сетки «Питомцу»: с ней
++		// страница вырастала выше окна доски, клиент давал полосу прокрутки и обрезал кнопки справа.
++		final String suffix = pet ? " pet" : "";
+ 		final StringBuilder sb = new StringBuilder(12288);
+ 		sb.append(button(PhantomBufferSets.title(), BUFF + " schemes", 150)).append("<br>");
+ 		sb.append("<table width=520><tr>");
+-		sb.append("<td align=center>").append(button(tr("Воину — всё"), BUFF + " set fighter", 120)).append("</td>");
+-		sb.append("<td align=center>").append(button(tr("Магу — всё"), BUFF + " set mage", 120)).append("</td>");
+-		sb.append("<td align=center>").append(button(tr("Хил"), BUFF + " heal " + category, 120)).append("</td>");
+-		sb.append("<td align=center>").append(button(tr("Снять бафы"), BUFF + " cancel " + category, 120)).append("</td>");
++		sb.append("<td align=center>").append(button(tr("Воину — всё"), BUFF + " set fighter" + suffix, 120)).append("</td>");
++		sb.append("<td align=center>").append(button(tr("Магу — всё"), BUFF + " set mage" + suffix, 120)).append("</td>");
++		sb.append("<td align=center>").append(button(tr("Хил"), BUFF + " heal " + category + suffix, 120)).append("</td>");
++		sb.append("<td align=center>").append(button(tr("Снять бафы"), BUFF + " cancel " + category + suffix, 120)).append("</td>");
+ 		sb.append("</tr>");
+ 		if (player.hasSummon())
+ 		{
+-			sb.append("<tr><td align=center>").append(button(tr("Питомцу: воин"), BUFF + " set fighter pet", 120)).append("</td>");
+-			sb.append("<td align=center>").append(button(tr("Питомцу: маг"), BUFF + " set mage pet", 120)).append("</td><td></td><td></td></tr>");
++			sb.append("<tr><td align=center>").append(button(pet ? tr("Себе") : "[" + tr("Себе") + "]", BUFF + " " + category, 120)).append("</td>");
++			sb.append("<td align=center>").append(button(pet ? "[" + tr("Питомцу") + "]" : tr("Питомцу"), BUFF + " " + category + " pet", 120)).append("</td><td></td><td></td></tr>");
+ 		}
+ 		sb.append("</table><br>");
+ 
+@@ -328,17 +337,13 @@ public class L2HubBoard implements IParseBoardHandler
+ 			{
+ 				sb.append("</tr><tr>");
+ 			}
+-			sb.append("<td align=center>").append(button(type.equalsIgnoreCase(category) ? "[" + categoryName(type) + "]" : categoryName(type), BUFF + " " + type, 80)).append("</td>");
++			sb.append("<td align=center>").append(button(type.equalsIgnoreCase(category) ? "[" + categoryName(type) + "]" : categoryName(type), BUFF + " " + type + suffix, 80)).append("</td>");
+ 			column++;
+ 		}
+ 		sb.append("</tr></table><br>");
+ 
+-		sb.append("<font color=\"LEVEL\">").append(categoryName(category)).append(tr("</font> — нажми на иконку, чтобы наложить баф")).append(player.hasSummon() ? tr(" (ниже — питомцу)") : "").append("<br1>");
+-		sb.append(iconGrid(table, category, ""));
+-		if (player.hasSummon())
+-		{
+-			sb.append(tr("<br><font color=\"B09878\">Питомцу</font><br1>")).append(iconGrid(table, category, " pet"));
+-		}
++		sb.append("<font color=\"LEVEL\">").append(categoryName(category)).append(tr("</font> — нажми на иконку, чтобы наложить баф")).append(pet ? tr(" питомцу") : "").append("<br1>");
++		sb.append(iconGrid(table, category, suffix));
+ 		return sb.toString();
+ 	}
+ 

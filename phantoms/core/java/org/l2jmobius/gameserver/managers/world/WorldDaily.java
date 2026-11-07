@@ -89,7 +89,7 @@ public final class WorldDaily
 		HUNT(tr("Охота")),
 		SPOT(tr("Место дня")),
 		CHAMPION(tr("Чемпион")),
-		HUNTER_PARTY(tr("Вместе с охотником"));
+		HUNTER_PARTY(tr("Вместе с пешкой"));
 
 		final String title;
 
@@ -615,7 +615,7 @@ public final class WorldDaily
 			}
 			case HUNTER_PARTY:
 			{
-				return tr("Качайся в пати с охотником: крикни «лфм» в общий чат рядом с ними или пригласи сам (.hunters — кто где).");
+				return tr("Качайся в пати с пешкой: крикни «лфм» в общий чат рядом с ними или пригласи сам (.hunters — кто где).");
 			}
 		}
 		return "";

@@ -1,0 +1,78 @@
+Играющий GM: зрение и клиентское окружение0504
+
+База API/state/gameplay: c57bfae (включаетaf80eca). Policy и state не дублируются.
+0504 добавляет PlayingGmVision.refresh(Player) для вызова после смены режима.
+Исходный Player.isGM/AccessLevel/админ-ACL сохраняется, UserInfo builder-level
+передаёт прежний GM-флаг. Настройки и личный persistent toggle принадлежат0503.
+
+Причина: WorldObject.isVisibleFor разрешал любые невидимые объекты получателю-GM.
+Теперь только это игровое разрешение учитывает PlayingGmPolicy. Обычные Action
+и AttackRequest уже вызывают isVisibleFor до действия над объектом: простой
+перебор objectId не должен давать обычное взаимодействие со скрытым объектом.
+NPC OnNpcCanBeSeen, Hide/Detection, Trap.canBeSeen и событие SHOW_ZAKEN прежние:
+не меняются невидимость, паралич, спавн или момент штатного раскрытия.
+
+Прямые Player.sendInfo/чужой Summon.sendInfo дополнительно проверяют получателя.
+Собственное окно питомца сохраняется. GM-представление NPC/слуг больше не
+включается для играющего получателя. Сохранён прежний receiver-fix из local44:
+в broadcastCharInfo право видеть невидимого принадлежит получателю, не персонажу.
+
+Пакеты CharInfo/NpcInfo/TrapInfo/SummonInfo/FakePlayerInfo хранят или возвращают
+настоящий источник. Decoy — именно decoy, не его хозяин. Фильтр ServerPacket
+стоит в writeData ДО общего broadcast-cache для каждого получателя. Блокированный
+пакет даёт только2байта заголовка: Native Client.write отбрасывает payloadSize<=0
+без шифрования и передачи. Общие commons/network не меняются.
+
+Когда играет получатель или отображаемый GM, сведения сериализуются заново,
+минуя снимок старого режима. Для остальных сохраняется Native broadcast-cache.
+Это не позволяет старой GM-декорации или GM_HERO_AURA вернуться из очереди.
+CharInfo/SummonInfo также маскируют сохранённый gmSeeInvis по текущему получателю.
+UserInfo и CharInfo сохраняют настоящего героя; только добавочная GM-аура
+и GM-префикс Invisible учитывают режим. Обычный классовый self-Hide visual-mask
+UserInfo не меняется, админский builder-level не маскируется.
+
+refresh использует Native соседние регионы/тот же инстанс. Скрытые модели удаляет
+только у данного клиента, разрешённые пересылает. Очищается его запись relations,
+устаревшая скрытая цель и опасная attack/cast/follow intention; права GM/невидимость
+самого персонажа нормализует0503. Чужие состояния/инстансы/лимиты не изменяются.
+
+Изолированная проверка, без запуска сервера
+---------------------------------------
+JDK27, обычные Native Epilogue205 libs, отдельные CLASSES/TESTS и рабочий каталог.
+После copy_module+штатного стека0503/0504/glue скомпилировать8изменённых Native
+Javaфайлов вместе с PlayingGmPolicy/PlayingGmVision против SERVER/libs/*.
+Проверенные пути видны в0504. Пример для готового дерева исходников:
+  javac -encoding UTF-8 -cp "SERVER/libs/*" -d CLASSES @vision-sources.txt
+Файл arguments содержит явные8Nativeпутей+2helper, output не игровой server/libs.
+  javac -encoding UTF-8 -cp "CLASSES;SERVER/libs/*" -d TESTS PlayingGmVisionCheck.java PlayingGmVisionIntegrationCheck.java
+
+Использовать существующий tests/ready-source/NoWorldAgent.java, jar с manifest:
+  Premain-Class: NoWorldAgent
+  Can-Retransform-Classes: true
+Runtime fixture сначала проверяет, что JDBC действительно заблокирован агентом.
+В собственном WORKDIR/config/Custom/PlayingGm.ini положить согласованные значения:
+  PlayingGmEnabled=True
+  PlayingGmDefaultMode=False
+  java -Xmx256m -Xverify:all --sun-misc-unsafe-memory-access=allow --enable-final-field-mutation=ALL-UNNAMED -javaagent:NoWorldAgent.jar -Dvision.fixed=true -Dvision.enabled=true -Dvision.default=false -cp "TESTS;CLASSES;SERVER/libs/*" org.l2jmobius.gameserver.managers.PlayingGmVisionCheck
+  java -cp TESTS PlayingGmVisionIntegrationCheck CLASSES SERVER/libs/GameServer.jar
+
+Также отдельными JVM: Enabled=False/Default=False; Enabled=True/Default=True.
+Соответствующие -Dvision.enabled/default должны совпадать с INI. Ожидается82checks
+на режим и24compiledintegrationchecks. Базовый контрпример: такие же реальные
+Policy/Vision helpers, но исходные Native205 классы, -Dvision.fixed=false —
+82проверки подтверждают старые GM-обход/переиспользованиекэша/ауру.
+
+Исполняются настоящие policy, WorldObject/Npc visibility, WritablePacket/cache,
+WriteBuffer и выражения героя/builder из скомпилированных UserInfo/CharInfo
+(выражения переносятся в тестовый метод bytecode-ом, не переписываются в модель).
+Персонажи/сеть/движение/получение списка мира и конечный sendInfo — fixture.
+Фальшивая PlayingGmPolicy не используется. Global Player.isGM сравнивается с
+Native по семантическим инструкциям. Реальная обработка входящего Action/Attack,
+полный Script event-dispatch и клиентский рендер здесь не запускались.
+
+Это исходный кандидат, не установленный/проверенный в игре режим. Полный пакет,
+переключение через GM-меню/login, реальное удаление/возвращение моделей в клиенте
+и совместимость остаточных local-agent трансформаций проверяет интегратор.
+В частности, local44 Player-hook fingerprint после source изменений нужно
+снять или перебазировать, сохранив уже перенесённый receiver-fix. Старые подписки
+и реальные статусы не менять только ради прохождения preflight.

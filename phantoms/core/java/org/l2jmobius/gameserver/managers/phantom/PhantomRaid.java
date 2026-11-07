@@ -733,7 +733,7 @@ public final class PhantomRaid
 		if (raid.thanatos)
 		{
 			shout(leader, Rnd.nextBoolean() ? "собираем охоту на Танатоса! он у " + raid.place + ", все 70+ — ко мне, .raid" : "Танатос у " + raid.place + " — идём его валить, кто 70+ — .raid, через минуту выходим");
-			PhantomNews.post("thanatos", "Охотники " + leader.getName() + " (" + (raid.members.size() + 1) + ") собирают охоту на Танатоса", leader.getName(), leader);
+			PhantomNews.post("thanatos", "Пешки " + leader.getName() + " (" + (raid.members.size() + 1) + ") собирают охоту на Танатоса", leader.getName(), leader);
 		}
 		else
 		{
@@ -757,7 +757,7 @@ public final class PhantomRaid
 		}
 		if (raid.epic)
 		{
-			PhantomNews.post("epic_raid", "Охотники " + leader.getName() + " (" + (raid.members.size() + 1) + ") собирают рейд на эпика " + raid.bossName + " (" + raid.bossLevel + " ур.) у " + raid.place + " и ждут живых", leader.getName(), leader);
+			PhantomNews.post("epic_raid", "Пешки " + leader.getName() + " (" + (raid.members.size() + 1) + ") собирают рейд на эпика " + raid.bossName + " (" + raid.bossLevel + " ур.) у " + raid.place + " и ждут живых", leader.getName(), leader);
 		}
 		callPlayers(raid, what);
 		return raid;
@@ -793,7 +793,7 @@ public final class PhantomRaid
 		{
 			if (!PhantomManager.getInstance().isPhantom(player) && (player.getLevel() >= (raid.bossLevel - PLAYER_LEVEL_GAP)) && (raid.thanatos || (player.getLevel() <= (raid.bossLevel + CURSE_GAP))) && !raid.players.contains(player.getObjectId()))
 			{
-				player.sendMessage(raid.thanatos ? tr("Охотники собирают охоту на Танатоса — .raid: вступить и телепорт к сбору.") : tr("Охотники собирают рейд на ") + what + raid.bossName + " (" + raid.bossLevel + tr(" ур.) — .raid: вступить и телепорт к сбору.") + (raid.epic ? tr(" Без живого игрока эпика они не бьют.") : ""));
+				player.sendMessage(raid.thanatos ? tr("Пешки собирают охоту на Танатоса — .raid: вступить и телепорт к сбору.") : tr("Пешки собирают рейд на ") + what + raid.bossName + " (" + raid.bossLevel + tr(" ур.) — .raid: вступить и телепорт к сбору.") + (raid.epic ? tr(" Без живого игрока эпика они не бьют.") : ""));
 			}
 		}
 	}
@@ -1601,7 +1601,7 @@ public final class PhantomRaid
 				PhantomEpics.getInstance().exhaust(raid.boss, PhantomHuntersConfig.HUNTER_EPIC_EXHAUST);
 				_nextEpic = System.currentTimeMillis() + EPIC_AFTER_FAIL;
 			}
-			PhantomNews.post("epic_raid", "Рейд охотников " + leader.getName() + " на эпика " + raid.bossName + " не удался: у босса " + bossHp(raid) + "% HP" + (fought && (PhantomHuntersConfig.HUNTER_EPIC_EXHAUST > 0) ? ", он измотан и " + PhantomHuntersConfig.HUNTER_EPIC_EXHAUST + " мин не восстановится" : ""), leader.getName(), leader);
+			PhantomNews.post("epic_raid", "Рейд пешек " + leader.getName() + " на эпика " + raid.bossName + " не удался: у босса " + bossHp(raid) + "% HP" + (fought && (PhantomHuntersConfig.HUNTER_EPIC_EXHAUST > 0) ? ", он измотан и " + PhantomHuntersConfig.HUNTER_EPIC_EXHAUST + " мин не восстановится" : ""), leader.getName(), leader);
 		}
 		else if (raid.thanatos)
 		{
@@ -1835,13 +1835,13 @@ public final class PhantomRaid
 	String html(Player player)
 	{
 		final Raid raid = _raid;
-		final StringBuilder sb = new StringBuilder(tr("<html><title>Рейд охотников</title><body><center><font color=\"LEVEL\">Рейд охотников</font></center><br>"));
+		final StringBuilder sb = new StringBuilder(tr("<html><title>Рейд пешек</title><body><center><font color=\"LEVEL\">Рейд пешек</font></center><br>"));
 		final Player leader = raid == null ? null : World.getPlayer(raid.leaderId);
 		if ((raid == null) || (leader == null) || (raid.result != null))
 		{
 			final long next = Math.max(0, (_nextRaid - System.currentTimeMillis()) / 60000);
-			sb.append(tr("Сейчас рейда нет. Охотники собираются на РБ своего уровня примерно раз в ")).append(intervalText()).append(PhantomHuntersConfig.HUNTER_RAIDS ? (_nextRaid > 0 ? tr(" — следующий не раньше чем через ") + next + tr(" мин.") : ".") : tr(" (рейды выключены: HunterRaids)."));
-			sb.append(tr("<br><br><font color=\"808080\">Когда соберутся — в торговом чате будет крик лидера, а тебе — сообщение. На эпиков охотники без живого игрока не ходят: зовут и ждут.</font></body></html>"));
+			sb.append(tr("Сейчас рейда нет. Пешки собираются на РБ своего уровня примерно раз в ")).append(intervalText()).append(PhantomHuntersConfig.HUNTER_RAIDS ? (_nextRaid > 0 ? tr(" — следующий не раньше чем через ") + next + tr(" мин.") : ".") : tr(" (рейды выключены: HunterRaids)."));
+			sb.append(tr("<br><br><font color=\"808080\">Когда соберутся — в торговом чате будет крик лидера, а тебе — сообщение. На эпиков пешки без живого игрока не ходят: зовут и ждут.</font></body></html>"));
 			return sb.toString();
 		}
 
@@ -2062,7 +2062,7 @@ public final class PhantomRaid
 				formParty(leader, new ArrayList<>(members.subList(0, Math.min(members.size(), PhantomHuntersConfig.HUNTER_RAID_MAX - 1))), rally, watch.members);
 				LOGGER.info(getClass().getSimpleName() + ": " + leader.getName() + " (" + leader.getLevel() + ") watches the respawn of " + watch.bossName + " (" + watch.bossLevel + ") at " + watch.place + " with " + watch.members.size() + " hunters, " + ((respawn.at() - now) / 1000) + " s left.");
 				shout(leader, String.format(WATCH_SHOUTS[Rnd.get(WATCH_SHOUTS.length)], watch.bossName, watch.bossLevel, watch.place));
-				PhantomNews.post("raid_killed", "Охотники " + leader.getName() + " (" + (watch.members.size() + 1) + ") караулят респ РБ " + watch.bossName + " (" + watch.bossLevel + " ур.) у " + watch.place, leader.getName(), leader);
+				PhantomNews.post("raid_killed", "Пешки " + leader.getName() + " (" + (watch.members.size() + 1) + ") караулят респ РБ " + watch.bossName + " (" + watch.bossLevel + " ур.) у " + watch.place, leader.getName(), leader);
 				return watch;
 			}
 		}
@@ -2212,7 +2212,7 @@ public final class PhantomRaid
 		}
 		_rival = rival;
 		LOGGER.info(getClass().getSimpleName() + ": " + plan.leader().getName() + " brings a second raid to " + first.bossName + (rival.desperate ? ", will not wait." : ", waits in the queue."));
-		PhantomNews.post("raid_killed", "Охотники " + plan.leader().getName() + " и " + nameOf(first.leaderId) + " не поделили РБ " + first.bossName + " (" + first.bossLevel + " ур.) у " + first.place, plan.leader().getName(), plan.leader());
+		PhantomNews.post("raid_killed", "Пешки " + plan.leader().getName() + " и " + nameOf(first.leaderId) + " не поделили РБ " + first.bossName + " (" + first.bossLevel + " ур.) у " + first.place, plan.leader().getName(), plan.leader());
 		shout(plan.leader(), String.format(RIVAL_CLAIM_SHOUTS[Rnd.get(RIVAL_CLAIM_SHOUTS.length)], first.bossName));
 		ThreadPool.schedule(() ->
 		{
@@ -2320,7 +2320,7 @@ public final class PhantomRaid
 		if (winner != null)
 		{
 			PhantomRelations.getInstance().record(leader, winner, PhantomRelations.Kind.CONTESTED);
-			PhantomNews.post("raid_killed", "Охотники " + winner.getName() + " отбили РБ " + raid.bossName + " (" + raid.bossLevel + " ур.) у охотников " + leader.getName(), winner.getName(), winner);
+			PhantomNews.post("raid_killed", "Пешки " + winner.getName() + " отбили РБ " + raid.bossName + " (" + raid.bossLevel + " ур.) у пешек " + leader.getName(), winner.getName(), winner);
 		}
 		dismiss(raid, leader, "lost the race for the boss: " + (int) raid.damageDone + " damage against " + (int) other.damageDone, String.format(RIVAL_LOST_SHOUTS[Rnd.get(RIVAL_LOST_SHOUTS.length)], raid.bossName));
 		return true;

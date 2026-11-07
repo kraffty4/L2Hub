@@ -120,8 +120,8 @@ public final class PhantomHunterUi
 
 		final List<HunterView> all = PhantomHunterManager.getInstance().views();
 		final StringBuilder sb = new StringBuilder(12288);
-		sb.append(tr("<html><title>Охотники</title><body><center>"));
-		sb.append(tr("<font color=\"LEVEL\">Охотников в мире: ")).append(all.size()).append("</font><br1>");
+		sb.append(tr("<html><title>Пешки</title><body><center>"));
+		sb.append(tr("<font color=\"LEVEL\">Пешек в мире: ")).append(all.size()).append("</font><br1>");
 		sb.append("<font color=\"808080\">").append(counts(all)).append(tr(" · живых игроков: ")).append(PhantomHunterManager.getInstance().getRealPlayers()).append("</font><br>");
 
 		// Вкладки — две строки по три, сортировка — третья.
@@ -166,7 +166,7 @@ public final class PhantomHunterUi
 			sb.append("<td width=90 align=center>").append(current + 1).append(" / ").append(pages).append("</td>");
 			sb.append("<td width=90 align=right>").append((current + 1) < pages ? gmButton(tr("Дальше"), state + " " + (current + 1), 60) : "").append("</td></tr></table>");
 		}
-		sb.append(tr("<br><font color=\"808080\">Цель после прыжка — охотник. Позвать к себе (//recall) не выйдет: поводок вернёт его на спот.</font>"));
+		sb.append(tr("<br><font color=\"808080\">Цель после прыжка — пешка. Позвать к себе (//recall) не выйдет: поводок вернёт её на спот.</font>"));
 		sb.append("</center></body></html>");
 		return sb.toString();
 	}
@@ -248,7 +248,7 @@ public final class PhantomHunterUi
 		final int fee = fee(player);
 
 		final StringBuilder sb = new StringBuilder(12288);
-		sb.append("<table width=" + W + "><tr><td width=" + W + tr("><font color=\"B09878\">Охотники — такие же игроки, только без клиента: качаются сами с 1-го уровня, сидят в лавках в Гиране и идут в пати, если рядом крикнуть «лфм». "));
+		sb.append("<table width=" + W + "><tr><td width=" + W + tr("><font color=\"B09878\">Пешки — такие же игроки, только без клиента: качаются сами с 1-го уровня, сидят в лавках в Гиране и идут в пати, если рядом крикнуть «лфм». "));
 		sb.append(tr("Кнопка — телепорт на их спот или к лавке: ")).append(fee > 0 ? tr("за ") + money(fee) + tr(" адены (с ") + (PlayerConfig.MAX_FREE_TELEPORT_LEVEL + 1) + tr("-го уровня, как у них).") : player.getLevel() <= PlayerConfig.MAX_FREE_TELEPORT_LEVEL ? tr("пока бесплатно (до ") + PlayerConfig.MAX_FREE_TELEPORT_LEVEL + tr("-го уровня включительно).") : tr("бесплатно.")).append("</font></td></tr></table><br>");
 
 		sb.append("<table width=" + W + "><tr>");
@@ -270,7 +270,7 @@ public final class PhantomHunterUi
 
 		if (list.isEmpty())
 		{
-			sb.append("<font color=\"808080\">").append(tab == Tab.STORE ? tr("Сейчас никто не торгует.") : tab == Tab.NEAR ? tr("На твоём уровне сейчас никого — загляни во вкладку «Все».") : tr("Охотников в мире нет.")).append("</font>");
+			sb.append("<font color=\"808080\">").append(tab == Tab.STORE ? tr("Сейчас никто не торгует.") : tab == Tab.NEAR ? tr("На твоём уровне сейчас никого — загляни во вкладку «Все».") : tr("Пешек в мире нет.")).append("</font>");
 			return sb.toString();
 		}
 
@@ -311,7 +311,7 @@ public final class PhantomHunterUi
 		final HunterView view = find(name);
 		if (view == null)
 		{
-			return tr("Такого охотника сейчас нет в игре.");
+			return tr("Такой пешки сейчас нет в игре.");
 		}
 
 		final Location target = destination(view);

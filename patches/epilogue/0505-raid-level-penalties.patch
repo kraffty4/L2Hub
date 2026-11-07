@@ -1,0 +1,181 @@
+--- a/java/org/l2jmobius/gameserver/entity/actor/Creature.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/Creature.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package org.l2jmobius.gameserver.entity.actor;
++
++import org.l2jmobius.gameserver.managers.RaidLevelAccess;
+ 
+ import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+@@ -5349,7 +5351,7 @@
+ 		sendDamageMessage(target, damage, false, crit, miss);
+ 		
+ 		// Check Raidboss attack Creature will be petrified if attacking a raid that's more than 8 levels lower
+-		if (target.isRaid() && target.giveRaidCurse() && !NpcConfig.RAID_DISABLE_CURSE && (getLevel() > (target.getLevel() + 8)))
++		if (target.isRaid() && target.giveRaidCurse() && !NpcConfig.RAID_DISABLE_CURSE && RaidLevelAccess.exceedsCurseLevel(target, getLevel(), 8))
+ 		{
+ 			final Skill skill = CommonSkill.RAID_CURSE2.getSkill();
+ 			if (skill != null)
+@@ -5382,7 +5384,7 @@
+ 			if (!isBow && !target.isInvul()) // Do not reflect if weapon is of type bow or target is invunlerable
+ 			{
+ 				// quick fix for no drop from raid if boss attack high-level char with damage reflection
+-				if (!target.isRaid() || (asPlayer() == null) || (asPlayer().getLevel() <= (target.getLevel() + 8)))
++				if (!target.isRaid() || (asPlayer() == null) || !RaidLevelAccess.exceedsCurseLevel(target, asPlayer().getLevel(), 8))
+ 				{
+ 					// Reduce HP of the target and calculate reflection damage to reduce HP of attacker if necessary.
+ 					final double reflectPercent = target.getStat().calcStat(Stat.REFLECT_DAMAGE_PERCENT, 0, null, null);
+@@ -6330,7 +6332,7 @@
+ 					targetsCastTarget = target.getAI().getCastTarget();
+ 				}
+ 				
+-				if (!NpcConfig.RAID_DISABLE_CURSE && ((target.isRaid() && target.giveRaidCurse() && (getLevel() > (target.getLevel() + 8))) || (!skill.hasNegativeEffect() && (targetsAttackTarget != null) && targetsAttackTarget.isRaid() && targetsAttackTarget.giveRaidCurse() && targetsAttackTarget.getAttackByList().contains(target) && (getLevel() > (targetsAttackTarget.getLevel() + 8))) || (!skill.hasNegativeEffect() && (targetsCastTarget != null) && targetsCastTarget.isRaid() && targetsCastTarget.giveRaidCurse() && targetsCastTarget.getAttackByList().contains(target) && (getLevel() > (targetsCastTarget.getLevel() + 8)))))
++				if (!NpcConfig.RAID_DISABLE_CURSE && ((target.isRaid() && target.giveRaidCurse() && RaidLevelAccess.exceedsCurseLevel(target, getLevel(), 8)) || (!skill.hasNegativeEffect() && (targetsAttackTarget != null) && targetsAttackTarget.isRaid() && targetsAttackTarget.giveRaidCurse() && targetsAttackTarget.getAttackByList().contains(target) && RaidLevelAccess.exceedsCurseLevel(targetsAttackTarget, getLevel(), 8)) || (!skill.hasNegativeEffect() && (targetsCastTarget != null) && targetsCastTarget.isRaid() && targetsCastTarget.giveRaidCurse() && targetsCastTarget.getAttackByList().contains(target) && RaidLevelAccess.exceedsCurseLevel(targetsCastTarget, getLevel(), 8))))
+ 				{
+ 					final CommonSkill curse = skill.isMagic() ? CommonSkill.RAID_CURSE : CommonSkill.RAID_CURSE2;
+ 					final Skill curseSkill = curse.getSkill();
+@@ -6530,7 +6532,7 @@
+ 						
+ 						// Players which are 9 levels above a Raid Boss and cast a skill nearby, are silenced with the Raid Curse skill.
+ 						// Static skills (recipe books, potions and other item skills) are not casting.
+-						if (!NpcConfig.RAID_DISABLE_CURSE && !skill.isStatic() && attackable.isRaid() && attackable.giveRaidCurse() && attackable.isInCombat() && ((player.getLevel() - attackable.getLevel()) > 8))
++						if (!NpcConfig.RAID_DISABLE_CURSE && !skill.isStatic() && attackable.isRaid() && attackable.giveRaidCurse() && attackable.isInCombat() && RaidLevelAccess.exceedsCurseLevel(attackable, player.getLevel(), 8))
+ 						{
+ 							player.abortAttack();
+ 							player.abortCast();
+--- a/java/org/l2jmobius/gameserver/entity/actor/templates/NpcTemplate.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/templates/NpcTemplate.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package org.l2jmobius.gameserver.entity.actor.templates;
++
++import org.l2jmobius.gameserver.managers.RaidLevelAccess;
+ 
+ import java.util.ArrayList;
+ import java.util.Collections;
+@@ -735,7 +737,7 @@
+ 	private List<ItemHolder> calculateGroupDrops(Creature victim, Creature killer)
+ 	{
+ 		// level difference calculations
+-		final int levelDifference = victim.getLevel() - killer.getLevel();
++		final int levelDifference = RaidLevelAccess.dropLevelDifference(victim, killer.getLevel());
+ 		final double levelGapChanceToDropAdena = MathUtil.scaleToRange(levelDifference, -RatesConfig.DROP_ADENA_MAX_LEVEL_DIFFERENCE, -RatesConfig.DROP_ADENA_MIN_LEVEL_DIFFERENCE, RatesConfig.DROP_ADENA_MIN_LEVEL_GAP_CHANCE, 100d);
+ 		final double levelGapChanceToDrop = MathUtil.scaleToRange(levelDifference, -RatesConfig.DROP_ITEM_MAX_LEVEL_DIFFERENCE, -RatesConfig.DROP_ITEM_MIN_LEVEL_DIFFERENCE, RatesConfig.DROP_ITEM_MIN_LEVEL_GAP_CHANCE, 100d);
+ 		
+@@ -930,7 +932,7 @@
+ 		final List<DropHolder> dropList = dropType == DropType.SPOIL ? _dropListSpoil : _dropListDeath;
+ 		
+ 		// level difference calculations
+-		final int levelDifference = victim.getLevel() - killer.getLevel();
++		final int levelDifference = RaidLevelAccess.dropLevelDifference(victim, killer.getLevel());
+ 		final double levelGapChanceToDropAdena = MathUtil.scaleToRange(levelDifference, -RatesConfig.DROP_ADENA_MAX_LEVEL_DIFFERENCE, -RatesConfig.DROP_ADENA_MIN_LEVEL_DIFFERENCE, RatesConfig.DROP_ADENA_MIN_LEVEL_GAP_CHANCE, 100d);
+ 		final double levelGapChanceToDrop = MathUtil.scaleToRange(levelDifference, -RatesConfig.DROP_ITEM_MAX_LEVEL_DIFFERENCE, -RatesConfig.DROP_ITEM_MIN_LEVEL_DIFFERENCE, RatesConfig.DROP_ITEM_MIN_LEVEL_GAP_CHANCE, 100d);
+ 		
+--- a/java/org/l2jmobius/gameserver/entity/actor/Attackable.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/Attackable.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package org.l2jmobius.gameserver.entity.actor;
++
++import org.l2jmobius.gameserver.managers.RaidLevelAccess;
+ 
+ import java.util.ArrayList;
+ import java.util.Collection;
+@@ -1466,11 +1468,11 @@
+ 	 */
+ 	private double[] calculateExpAndSp(int charLevel, long damage, long totalDamage)
+ 	{
+-		final int levelDiff = charLevel - getLevel();
++		final int levelDiff = RaidLevelAccess.experienceLevelDifference(this, charLevel);
+ 		double xp = 0;
+ 		double sp = 0;
+ 		
+-		if ((levelDiff < RatesConfig.MONSTER_EXP_MAX_LEVEL_DIFFERENCE) && (levelDiff > -RatesConfig.MONSTER_EXP_MAX_LEVEL_DIFFERENCE))
++		if (RaidLevelAccess.penaltiesDisabled(this) || ((levelDiff < RatesConfig.MONSTER_EXP_MAX_LEVEL_DIFFERENCE) && (levelDiff > -RatesConfig.MONSTER_EXP_MAX_LEVEL_DIFFERENCE)))
+ 		{
+ 			xp = Math.max(0, (getExpReward(charLevel) * damage) / totalDamage);
+ 			sp = Math.max(0, (getSpReward(charLevel) * damage) / totalDamage);
+--- a/java/org/l2jmobius/gameserver/entity/zone/ZoneType.java
++++ b/java/org/l2jmobius/gameserver/entity/zone/ZoneType.java
+@@ -15,6 +15,8 @@
+  * along with this program. If not, see <http://www.gnu.org/licenses/>.
+  */
+ package org.l2jmobius.gameserver.entity.zone;
++
++import org.l2jmobius.gameserver.managers.RaidLevelAccess;
+ 
+ import java.util.ArrayList;
+ import java.util.Collection;
+@@ -209,7 +211,7 @@
+ 		}
+ 		
+ 		// Check level
+-		if ((creature.getLevel() < _minLevel) || (creature.getLevel() > _maxLevel))
++		if ((creature.getLevel() < RaidLevelAccess.minimumZoneLevel(this, _minLevel)) || (creature.getLevel() > _maxLevel))
+ 		{
+ 			return false;
+ 		}
+--- a/dist/game/data/scripts/ai/bosses/QueenAnt/QueenAnt.java
++++ b/dist/game/data/scripts/ai/bosses/QueenAnt/QueenAnt.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package ai.bosses.QueenAnt;
++
++import org.l2jmobius.gameserver.managers.RaidLevelAccess;
+ 
+ import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+@@ -422,7 +424,7 @@
+ 			return;
+ 		}
+ 		
+-		if (!NpcConfig.RAID_DISABLE_CURSE && ((attackerCharacter.getLevel() - npc.getLevel()) > RAID_CURSE_LEVEL_DIFFERENCE))
++		if (!NpcConfig.RAID_DISABLE_CURSE && RaidLevelAccess.exceedsCurseLevel(npc, attackerCharacter.getLevel(), RAID_CURSE_LEVEL_DIFFERENCE))
+ 		{
+ 			Skill curse = null;
+ 			
+--- a/dist/game/data/scripts/quests/Q00511_AwlUnderFoot/Q00511_AwlUnderFoot.java
++++ b/dist/game/data/scripts/quests/Q00511_AwlUnderFoot/Q00511_AwlUnderFoot.java
+@@ -15,6 +15,8 @@
+  * along with this program. If not, see <http://www.gnu.org/licenses/>.
+  */
+ package quests.Q00511_AwlUnderFoot;
++
++import org.l2jmobius.gameserver.managers.RaidLevelAccess;
+ 
+ import java.util.HashMap;
+ import java.util.Map;
+@@ -365,7 +367,7 @@
+ 	public void onAttack(Npc npc, Player player, int damage, boolean isSummon)
+ 	{
+ 		final Playable attacker = (isSummon ? player.getSummon() : player);
+-		if ((attacker.getLevel() - npc.getLevel()) >= 9)
++		if (RaidLevelAccess.exceedsCurseLevel(npc, attacker.getLevel(), 8))
+ 		{
+ 			if ((attacker.getBuffCount() > 0) || (attacker.getDanceCount() > 0))
+ 			{
+--- a/dist/game/data/scripts/quests/Q00727_HopeWithinTheDarkness/Q00727_HopeWithinTheDarkness.java
++++ b/dist/game/data/scripts/quests/Q00727_HopeWithinTheDarkness/Q00727_HopeWithinTheDarkness.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package quests.Q00727_HopeWithinTheDarkness;
++
++import org.l2jmobius.gameserver.managers.RaidLevelAccess;
+ 
+ import java.util.Arrays;
+ import java.util.HashMap;
+@@ -409,7 +411,7 @@
+ 		if (player != null)
+ 		{
+ 			final Playable attacker = (isSummon ? player.getSummon() : player);
+-			if ((attacker.getLevel() - npc.getLevel()) >= 9)
++			if (RaidLevelAccess.exceedsCurseLevel(npc, attacker.getLevel(), 8))
+ 			{
+ 				if ((attacker.getBuffCount() > 0) || (attacker.getDanceCount() > 0))
+ 				{

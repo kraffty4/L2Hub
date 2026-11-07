@@ -2,6 +2,7 @@
 
 L2Hub живёт одной копией: повторный запуск не открывает второе окно, а показывает первое — в том числе из трея.
 Место и размер окна запоминаются в data/launcher.json (l2hub.appsettings).
+Служебный --hidden запускает тот же UI/API без показа, трея и сохранения геометрии; чужую копию не показывает.
 """
 
 import ctypes
@@ -30,10 +31,12 @@ def ui_version() -> int:
     return int(max(f.stat().st_mtime for f in paths.UI.glob("*.*")))
 
 
-def single_instance():
-    """Событие «покажись» для первой копии; None — L2Hub уже запущен, и его попросили показать окно."""
+def single_instance(hidden: bool = False):
+    """Событие первой копии; None — она уже есть. hidden не посылает ей команду показа."""
     k32.CreateMutexW(None, False, MUTEX)  # хэндл живёт до конца процесса — этого и надо
     if ctypes.get_last_error() == 183:  # ERROR_ALREADY_EXISTS
+        if hidden:
+            return None  # служебная проверка не показывает уже открытое пользовательское окно
         ev = k32.OpenEventW(0x0002, False, SHOW_EVENT)  # EVENT_MODIFY_STATE
         if ev:
             k32.SetEvent(ev)
@@ -64,17 +67,19 @@ def initial_geometry() -> dict:
 
 
 def main() -> None:
-    show_event = single_instance()
+    hidden = "--hidden" in sys.argv  # служебная проверка штатного UI без захвата фокуса
+    show_event = single_instance(hidden=hidden)
     if show_event is None:
         return
     # Свой AppUserModelID до создания окна: иначе панель задач склеивает окно с python.exe и берёт его иконку.
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("L2Hub.Launcher")
     api = Api()
-    geo = initial_geometry()
+    geo = {"width": 1320, "height": 860} if hidden else initial_geometry()
     window = webview.create_window(
         f"L2Hub {__version__}",
         url=f"{paths.UI / 'index.html'}?v={ui_version()}&lang={i18n.lang()}",
         js_api=api,
+        hidden=hidden,
         min_size=MIN_SIZE,
         frameless=True,
         easy_drag=False,
@@ -82,6 +87,16 @@ def main() -> None:
         **geo,
     )
     api._window = window
+
+    if hidden:
+        # Тот же UI/API, но без shown, трея, уведомлений и обработчиков сохранения геометрии.
+        # Не закрываем окно по таймеру: проверяющий завершает только свой процесс отдельно.
+        def after_hidden_start():
+            window.events.loaded.wait()
+
+        webview.start(after_hidden_start, debug=False, private_mode=True,
+                      storage_path=str(paths.DATA / "webview-hidden"), icon=str(paths.UI / "assets" / "icon.ico"))
+        return
 
     def remember(*_):
         # Только «обычное» состояние: развёрнутое и свёрнутое окно своё место не перезаписывает.

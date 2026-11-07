@@ -36,7 +36,7 @@ index 8adad91c449eca3f60860546c2e44a4fff9c1b4b..797ebe053607ed1c9f057621afbbe066
 @@ -86,7 +89,9 @@
  		java.util.Map.entry("Напарники", "Companions"),
  		java.util.Map.entry("Напарники выключены (EnablePhantoms в Phantoms.ini).", "Companions are turned off (EnablePhantoms in Phantoms.ini)."),
- 		java.util.Map.entry("Охотники", "Hunters"),
+ 		java.util.Map.entry("Пешки", "Pawns"),
 -		java.util.Map.entry("Фантомы выключены (EnablePhantoms в Phantoms.ini).", "Phantoms are turned off (EnablePhantoms in Phantoms.ini)."));
 +		java.util.Map.entry("Фантомы выключены (EnablePhantoms в Phantoms.ini).", "Phantoms are turned off (EnablePhantoms in Phantoms.ini)."),
 +		java.util.Map.entry("Создать клан", "Create a clan"),
@@ -54,7 +54,7 @@ index 8adad91c449eca3f60860546c2e44a4fff9c1b4b..797ebe053607ed1c9f057621afbbe066
  		else if (args[0].equalsIgnoreCase(EVENTS))
  		{
 @@ -645,6 +650,53 @@
- 		return page(player, tr("Охотники"), PhantomHunterUi.board(player, args.length > i ? args[i] : null, args.length > (i + 1) ? parseInt(args[i + 1]) : 0, "bypass " + HUNTERS));
+ 		return page(player, tr("Пешки"), PhantomHunterUi.board(player, args.length > i ? args[i] : null, args.length > (i + 1) ? parseInt(args[i + 1]) : 0, "bypass " + HUNTERS));
  	}
  
 +	// ---------- Клан ----------

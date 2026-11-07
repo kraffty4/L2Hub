@@ -40,7 +40,7 @@ index 797ebe053607ed1c9f057621afbbe0662246361a..e5ded80a363497a5e26f073962d84b2b
   * </ul>
   */
 @@ -91,7 +98,22 @@
- 		java.util.Map.entry("Охотники", "Hunters"),
+ 		java.util.Map.entry("Пешки", "Pawns"),
  		java.util.Map.entry("Фантомы выключены (EnablePhantoms в Phantoms.ini).", "Phantoms are turned off (EnablePhantoms in Phantoms.ini)."),
  		java.util.Map.entry("Создать клан", "Create a clan"),
 -		java.util.Map.entry("С 10-го уровня. Имя: от 2 до 16 букв и цифр, без пробелов.", "From level 10. Name: 2 to 16 letters and digits, no spaces."));

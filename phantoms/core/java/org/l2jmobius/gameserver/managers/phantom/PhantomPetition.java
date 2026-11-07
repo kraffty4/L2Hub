@@ -56,7 +56,7 @@ public final class PhantomPetition
 		new Hint("\\bзастр|\\bзастял|текстур|не могу (выйти|двигаться|сдвинуться|пройти)|\\bstuck|\\bunstuck", "Застрял: команда /unstuck вернёт в город.", "Stuck: the /unstuck command takes you back to town."),
 		new Hint("\\bрейд|\\bрб\\b|\\braid", "Рейды: команда .raid.", "Raids: the .raid command."),
 		new Hint("напарник|\\bbuddy|\\bcompanion", "Напарники: команда .buddy.", "Companions: the .buddy command."),
-		new Hint("охотник|\\bботы?\\b|\\bфейк|\\bhunter", "Охотники мира: команда .hunters.", "Hunters of this world: the .hunters command."),
+		new Hint("охотник|пешк(?!ом)|\\bботы?\\b|\\bфейк|\\bhunter|\\bpawn", "Пешки мира: команда .hunters.", "Pawns of this world: the .hunters command."),
 		new Hint("поручен|ежедневн|\\bзадани|\\bdaily", "Поручения дня: команда .daily.", "Daily tasks: the .daily command."),
 		new Hint("\\bклан|\\bвойн|\\bclan|\\bwar\\b|\\bбафф?|\\bbuff|\\bпрода", "Кланы, войны, бафы и продажа лута: доска Alt+B.", "Clans, wars, buffs and loot sale: the Alt+B board."),
 		new Hint("пропал|исчез|\\bпотерял|\\bбаг|\\bошибк|\\bвернит|\\bbug|\\blost|\\bmissing", "Пропажу или ошибку автоответ не исправит: это решает хозяин сервера, он прочитает журнал.", "An automatic reply cannot fix a loss or a bug: that is up to the server owner, who reads the log.")

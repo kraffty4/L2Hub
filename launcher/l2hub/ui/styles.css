@@ -602,6 +602,10 @@ button.ocard:hover { border-color: var(--gold); }
 .modal .fb-contact { margin-bottom: 10px; font-family: var(--sans); }
 .fb-check { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; color: var(--text-2); margin-bottom: 10px; }
 .fb-check input { margin-top: 2px; }
+.fb-shot { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+.fb-shot .m { font-size: 12px; color: var(--muted); }
+.fb-shot-img { display: block; max-width: 100%; max-height: 160px; border-radius: 6px; border: 1px solid var(--line, #333); margin-bottom: 10px; }
+.fb-shot-img[hidden] { display: none; }
 .cal-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(120px, 220px) 150px; gap: 12px; align-items: center; padding: 5px 0; border-bottom: 1px solid var(--line); }
 .cal-head { border-bottom: 0; padding-bottom: 0; }
 .cal-name { font-size: 13.5px; min-width: 0; }

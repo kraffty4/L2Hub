@@ -196,7 +196,7 @@
   function verdict(L) {
     const hunters = budget?.hunters;
     if (hunters && !ours('game') && hunters.count > hunters.recommended && hunters.recommended > 0) {
-      return `<div class="lvt bad">${T('Этому ПК рекомендуем до')} ${hunters.recommended} ${T('охотников, сейчас')} ${hunters.count}. ${T('Запустить можно, но мир будет тормозить.')}</div><button class="sbtn mini" id="lFit">${T('Поставить')} ${hunters.recommended}</button>`;
+      return `<div class="lvt bad">${T('Этому ПК рекомендуем до')} ${hunters.recommended} ${T('пешек, сейчас')} ${hunters.count}. ${T('Запустить можно, но мир будет тормозить.')}</div><button class="sbtn mini" id="lFit">${T('Поставить')} ${hunters.recommended}</button>`;
     }
     const lv = RES.map(([r]) => levelOf(r, L[r]));
     const name = live.top?.ram?.[0];

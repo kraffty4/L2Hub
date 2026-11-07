@@ -1745,10 +1745,12 @@ final class PhantomHunterOutfit
 
 	/**
 	 * Оружие NPC без всех признаков выше. Lizardspear (2507) стоит как кинжал D, но цена и урон у него те же, что у Dailaon Knife:
-	 * генератор давал его всем кинжальщикам на D, и они бегали в Т-позе (жалоба пользователя 2026-11-06). Тот же список —
-	 * {@code NPC_WEAPON_NAMES} в {@code tools/fake_players.py}.
+	 * генератор давал его всем кинжальщикам на D, и они бегали в Т-позе (жалоба пользователя 2026-11-06). Остальные — по хватке
+	 * из weapongrp клиентов High Five и Эпилога ({@code tools/weapon_grip_check.py}, 2026-11-07): у Draconic Peltast Weapon (кинжал D
+	 * в GM-шопе) хватка NPC, как у Lizardspear; Airship Cannon Briquet и Baguette's Two-handed Hammer — с хваткой не своего типа.
+	 * Тот же список — {@code NPC_WEAPON_NAMES} в {@code tools/fake_players.py}.
 	 */
-	private static final java.util.Set<String> NPC_WEAPON_NAMES = java.util.Set.of("Lizardspear");
+	private static final java.util.Set<String> NPC_WEAPON_NAMES = java.util.Set.of("Lizardspear", "Draconic Peltast Weapon", "Airship Cannon Briquet", "Baguette's Two-handed Hammer");
 
 	/** Модель монстра в имени иконки: {@code icon.weapon_mon_gracia_soldier_sword_i00}, {@code icon.mon_dragon_centurion_spear_i00}. */
 	private static final java.util.regex.Pattern MON_ICON = java.util.regex.Pattern.compile("(^|[._])mon_");
@@ -2355,13 +2357,18 @@ final class PhantomHunterOutfit
 	private static long sellJunk(Player player, Map<Integer, Integer> unsold)
 	{
 		long total = 0;
-		for (Item item : new ArrayList<>(player.getInventory().getItems()))
+		final boolean emergency = PhantomHunterLoot.pressured(player);
+		for (Item item : PhantomHunterLoot.saleOrder(player))
 		{
-			if (!junk(player, item) || (isStoreGood(player, item) && (unsold.getOrDefault(item.getObjectId(), 0) < 2)))
+			if (!junk(player, item) || PhantomHunterLoot.keep(item))
 			{
 				continue;
 			}
-
+			// В лавку — пока сумка не переполнена; в аварию продаётся и товар лавки, кроме апгрейдов себе.
+			if (isStoreGood(player, item) && (unsold.getOrDefault(item.getObjectId(), 0) < 2) && (!emergency || !PhantomHunterLoot.reliefNeeded(player) || isUpgrade(player, item)))
+			{
+				continue;
+			}
 			total += sell(player, item);
 			unsold.remove(item.getObjectId());
 		}

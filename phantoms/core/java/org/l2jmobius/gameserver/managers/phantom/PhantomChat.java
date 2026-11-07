@@ -514,6 +514,7 @@ public class PhantomChat
 	 */
 	public void hunterEvent(Player hunter, Player other, String kind, String what, String fallback, long cooldown, boolean whisper)
 	{
+		if ("ATTACKED".equals(kind) && CombatEventPolicy.sanctioned(hunter, other)) return;
 		// Обидчик мимо — непрошеная реплика: вокруг только что говорили — подождать.
 		event(hunter, other, kind, what, fallback, cooldown, !whisper && UNSOLICITED_EVENTS.contains(kind), text -> sayHunter(hunter, other, kind, text, whisper));
 	}
@@ -540,7 +541,7 @@ public class PhantomChat
 	private void event(Player hunter, Player other, String kind, String what, String fallback, long cooldown, boolean unsolicited, Consumer<String> out)
 	{
 		final long now = System.currentTimeMillis();
-		final String key = "h" + hunter.getObjectId() + ":" + other.getObjectId() + ":" + kind;
+		final String key = CombatEventPolicy.key(hunter.getObjectId(), other.getObjectId(), kind);
 		final Long until = _eventCooldowns.get(key);
 		if ((until != null) && (now < until))
 		{
@@ -550,7 +551,7 @@ public class PhantomChat
 		{
 			return;
 		}
-		_eventCooldowns.put(key, now + cooldown);
+		if (!CombatEventPolicy.reserve(_eventCooldowns, key, now, cooldown)) return;
 
 		final PhantomTemplate template = PhantomData.getInstance().getTemplate(hunter.getName());
 		if ((template == null) || !brainEnabled() || !eventBudget(now))
@@ -583,6 +584,8 @@ public class PhantomChat
 
 	private static void sayHunter(Player hunter, Player other, String kind, String text, boolean whisper)
 	{
+		// Отложенный ответ может прийти уже после входа пешки на арену.
+		if ("ATTACKED".equals(kind) && CombatEventPolicy.sanctioned(hunter, other)) return;
 		if (whisper)
 		{
 			if (other.isOnline())

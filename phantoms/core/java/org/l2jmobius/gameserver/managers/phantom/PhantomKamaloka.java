@@ -464,7 +464,7 @@ final class PhantomKamaloka
 	{
 		for (Player player : live)
 		{
-			player.sendMessage(tr("Охотники идут в Камалоку (") + HALL_LEVELS[run.hall] + tr(" ур.) — .kama join: вступить, .kama go: телепорт к ним"));
+			player.sendMessage(tr("Пешки идут в Камалоку (") + HALL_LEVELS[run.hall] + tr(" ур.) — .kama join: вступить, .kama go: телепорт к ним"));
 		}
 	}
 
@@ -511,7 +511,7 @@ final class PhantomKamaloka
 		final Player leader = run == null ? null : World.getPlayer(run.leaderId);
 		if ((run == null) || run.entered || (run.gatherUntil == 0) || (leader == null))
 		{
-			return tr("Сейчас охотники в Камалоку не собираются.");
+			return tr("Сейчас пешки в Камалоку не собираются.");
 		}
 		if (Math.abs(player.getLevel() - HALL_LEVELS[run.hall]) > 5)
 		{
@@ -531,7 +531,7 @@ final class PhantomKamaloka
 		}
 		if (!leader.isInParty())
 		{
-			return tr("Сейчас охотники в Камалоку не собираются.");
+			return tr("Сейчас пешки в Камалоку не собираются.");
 		}
 		player.joinParty(leader.getParty());
 		run.players.add(Integer.valueOf(player.getObjectId()));
@@ -559,7 +559,7 @@ final class PhantomKamaloka
 		final Player leader = World.getPlayer(run.leaderId);
 		if (leader == null)
 		{
-			return tr("Сейчас охотники в Камалоку не собираются.");
+			return tr("Сейчас пешки в Камалоку не собираются.");
 		}
 		// Вышел из пати — телепорт к лидеру больше не положен.
 		if (!player.isInParty() || !leader.isInParty() || (player.getParty() != leader.getParty()))
@@ -582,10 +582,10 @@ final class PhantomKamaloka
 		final Player leader = run == null ? null : World.getPlayer(run.leaderId);
 		if ((run == null) || run.entered || (run.gatherUntil == 0) || (leader == null))
 		{
-			player.sendMessage(tr("Сейчас охотники в Камалоку не собираются."));
+			player.sendMessage(tr("Сейчас пешки в Камалоку не собираются."));
 			return;
 		}
-		player.sendMessage(tr("Охотники собираются в Камалоку (") + HALL_LEVELS[run.hall] + tr(" ур.), лидер — ") + leader.getName() + tr(", в пати ") + (leader.isInParty() ? leader.getParty().getMemberCount() : 1) + tr("."));
+		player.sendMessage(tr("Пешки собираются в Камалоку (") + HALL_LEVELS[run.hall] + tr(" ур.), лидер — ") + leader.getName() + tr(", в пати ") + (leader.isInParty() ? leader.getParty().getMemberCount() : 1) + tr("."));
 		player.sendMessage(tr("До входа ~") + Math.max(0, (run.gatherUntil - System.currentTimeMillis()) / 1000) + tr(" с. .kama join — вступить, .kama go — телепорт к ним."));
 	}
 

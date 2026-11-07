@@ -1,0 +1,15 @@
+Epilogue: два штатных FoG-направления также в noblesse-телепорте за адену.
+Стоимость1000какпрочиеNOBLES_ADENA; координаты/токены/обычныйвходпрежние.
+
+diff --git a/dist/game/data/teleporters/town/31275.xml b/dist/game/data/teleporters/town/31275.xml
+--- a/dist/game/data/teleporters/town/31275.xml
++++ b/dist/game/data/teleporters/town/31275.xml
+@@ -48,6 +48,8 @@
+ 			<location name="Imperial Tomb" x="186699" y="-75915" z="-2826" feeCount="1000" />
+ 			<location name="Monastery of Silence" x="106414" y="-87799" z="-2949" feeCount="1000" />
+ 			<location name="Coliseum" x="146440" y="46723" z="-3400" feeCount="1000" />
++			<location name="Forge of the Gods, Top Level" x="173436" y="-112725" z="-3680" feeCount="1000" />
++			<location name="Forge of the Gods, Lower Level" x="180260" y="-111913" z="-5851" feeCount="1000" />
+ 		</teleport>
+ 	</npc>
+ </list>

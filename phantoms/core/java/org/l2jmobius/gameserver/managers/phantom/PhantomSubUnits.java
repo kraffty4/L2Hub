@@ -302,7 +302,7 @@ final class PhantomSubUnits
 		ThreadPool.execute(clan::updateClanInDB);
 		LOGGER.info(PhantomSubUnits.class.getSimpleName() + ": clan " + clan.getName() + " (level " + clan.getLevel() + ") opened unit " + type + " «" + name + "», captain " + captainId + ", reputation left " + clan.getReputationScore() + ".");
 		final String what = type == Clan.SUBUNIT_ACADEMY ? "академию" : type < Clan.SUBUNIT_KNIGHT1 ? "гвардию" : "рыцарский орден";
-		PhantomNews.post("clan", "Клан охотников «" + clan.getName() + "» открыл " + what + " «" + name + "»", clan.getLeaderName(), leader);
+		PhantomNews.post("clan", "Клан пешек «" + clan.getName() + "» открыл " + what + " «" + name + "»", clan.getLeaderName(), leader);
 	}
 
 	/**

@@ -114,6 +114,7 @@ public class PhantomManager
 		PhantomWelcome.getInstance().start();
 		PhantomSiege.getInstance().start();
 		PhantomFarWhisper.getInstance().start();
+		PhantomMentors.getInstance().start();
 		PhantomGestures.getInstance().start();
 	}
 

@@ -1,0 +1,344 @@
+Epilogue0504: обычное зрение играющего GM, policy/API изaf80eca.
+Скрытый объект не проходит visibility/action и не сериализуется даже из shared broadcast cache.
+GM ACL/состояния/баланс/Hide/Detection/SHOW_ZAKEN не меняются.
+
+diff --git a/java/org/l2jmobius/gameserver/entity/WorldObject.java b/java/org/l2jmobius/gameserver/entity/WorldObject.java
+--- a/java/org/l2jmobius/gameserver/entity/WorldObject.java
++++ b/java/org/l2jmobius/gameserver/entity/WorldObject.java
+@@ -20,6 +20,7 @@
+  */
+ package org.l2jmobius.gameserver.entity;
+ 
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ import java.util.Map;
+ import java.util.concurrent.ConcurrentHashMap;
+ 
+@@ -1003,7 +1004,7 @@
+ 	 */
+ 	public boolean isVisibleFor(Player player)
+ 	{
+-		return !_isInvisible || player.isGM();
++		return !_isInvisible || PlayingGmPolicy.hasGameplayBypass(player);
+ 	}
+ 	
+ 	/**
+diff --git a/java/org/l2jmobius/gameserver/network/serverpackets/ServerPacket.java b/java/org/l2jmobius/gameserver/network/serverpackets/ServerPacket.java
+--- a/java/org/l2jmobius/gameserver/network/serverpackets/ServerPacket.java
++++ b/java/org/l2jmobius/gameserver/network/serverpackets/ServerPacket.java
+@@ -20,6 +20,9 @@
+  */
+ package org.l2jmobius.gameserver.network.serverpackets;
+ 
++import org.l2jmobius.gameserver.managers.PlayingGmVision;
++import org.l2jmobius.gameserver.entity.WorldObject;
++import org.l2jmobius.commons.network.ConnectionConfig;
+ import org.l2jmobius.commons.network.buffer.WriteBuffer;
+ import org.l2jmobius.commons.network.packet.WritablePacket;
+ import org.l2jmobius.commons.util.TraceUtil;
+@@ -69,6 +72,42 @@
+ 		return PAPERDOLL_ORDER;
+ 	}
+ 	
++
++	/** Источник сведений об объекте; у остальных пакетов такого ограничения нет. */
++	protected WorldObject getVisibilityObject()
++	{
++		return null;
++	}
++
++	@Override
++	public WriteBuffer writeData(GameClient client) throws Exception
++	{
++		final WorldObject subject = getVisibilityObject();
++		final Player viewer = client == null ? null : client.getPlayer();
++		if ((client != null) && !PlayingGmVision.canReceive(viewer, subject))
++		{
++			// Проверка ДО shared-cache. Native Client отбрасывает буфер без payload.
++			final WriteBuffer empty = new WriteBuffer(client.getResourcePool(), getClass());
++			empty.position(ConnectionConfig.HEADER_SIZE);
++			empty.mark();
++			return empty;
++		}
++		if ((client != null) && PlayingGmVision.needsFreshInfo(viewer, subject))
++		{
++			// Декор текущего режима не берём из снимка, созданного до переключения.
++			final WriteBuffer fresh = new WriteBuffer(client.getResourcePool(), getClass());
++			fresh.position(ConnectionConfig.HEADER_SIZE);
++			if (write(client, fresh))
++			{
++				fresh.mark();
++				return fresh;
++			}
++			fresh.releaseResources();
++			throw new Exception("Playing GM info serialization failed for " + getClass().getSimpleName());
++		}
++		return super.writeData(client);
++	}
++
+ 	@Override
+ 	protected boolean write(GameClient client, WriteBuffer buffer)
+ 	{
+diff --git a/java/org/l2jmobius/gameserver/network/serverpackets/CharInfo.java b/java/org/l2jmobius/gameserver/network/serverpackets/CharInfo.java
+--- a/java/org/l2jmobius/gameserver/network/serverpackets/CharInfo.java
++++ b/java/org/l2jmobius/gameserver/network/serverpackets/CharInfo.java
+@@ -20,6 +20,8 @@
+  */
+ package org.l2jmobius.gameserver.network.serverpackets;
+ 
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
++import org.l2jmobius.gameserver.entity.WorldObject;
+ import java.util.Map;
+ 
+ import org.l2jmobius.commons.network.buffer.WriteBuffer;
+@@ -84,10 +86,12 @@
+ 	private final boolean _isDisguised;
+ 	private int _vehicleId = 0;
+ 	private final boolean _gmSeeInvis;
++	private WorldObject _visibilityObject;
+ 	
+ 	public CharInfo(Player player, boolean gmSeeInvis)
+ 	{
+ 		_player = player;
++		_visibilityObject = player;
+ 		_objId = player.getObjectId();
+ 		_clan = player.getClan();
+ 		if ((_player.getVehicle() != null) && (_player.getInVehiclePosition() != null))
+@@ -122,6 +126,7 @@
+ 	public CharInfo(Decoy decoy, boolean gmSeeInvis)
+ 	{
+ 		this(decoy.asPlayer(), gmSeeInvis); // init
++		_visibilityObject = decoy;
+ 		_objId = decoy.getObjectId();
+ 		_x = decoy.getX();
+ 		_y = decoy.getY();
+@@ -130,8 +135,15 @@
+ 	}
+ 	
+ 	@Override
++	protected WorldObject getVisibilityObject()
++	{
++		return _visibilityObject;
++	}
++
++	@Override
+ 	public void writeImpl(GameClient client, WriteBuffer buffer)
+ 	{
++		final boolean gmSeeInvis = PlayingGmPolicy.allowsPrivilege(client.getPlayer(), _gmSeeInvis);
+ 		ServerPackets.CHAR_INFO.writeId(this, buffer);
+ 		buffer.writeInt(_x);
+ 		buffer.writeInt(_y);
+@@ -177,7 +189,7 @@
+ 		buffer.writeInt(appearance.getHairStyle());
+ 		buffer.writeInt(appearance.getHairColor());
+ 		buffer.writeInt(appearance.getFace());
+-		buffer.writeString(_gmSeeInvis ? "Invisible" : appearance.getVisibleTitle());
++		buffer.writeString(gmSeeInvis ? "Invisible" : appearance.getVisibleTitle());
+ 		if (!_player.isCursedWeaponEquipped())
+ 		{
+ 			buffer.writeInt(_player.getClanId());
+@@ -200,7 +212,7 @@
+ 		buffer.writeByte(_player.isRunning()); // running = 1 walking = 0
+ 		buffer.writeByte(_player.isInCombat());
+ 		buffer.writeByte(!_player.isInOlympiadMode() && _player.isAlikeDead());
+-		buffer.writeByte(!_gmSeeInvis && _player.isInvisible()); // invisible = 1 visible =0
++		buffer.writeByte(!gmSeeInvis && _player.isInvisible()); // invisible = 1 visible =0
+ 		buffer.writeByte(_player.getMountType().ordinal()); // 1-on Strider, 2-on Wyvern, 3-on Great Wolf, 0-no mount
+ 		buffer.writeByte(_player.getPrivateStoreType().getId());
+ 		
+@@ -212,7 +224,7 @@
+ 		}
+ 		
+ 		buffer.writeByte(_player.isInPartyMatchRoom());
+-		buffer.writeInt(_gmSeeInvis ? (_player.getAbnormalVisualEffects() | AbnormalVisualEffect.STEALTH.getMask()) : _player.getAbnormalVisualEffects());
++		buffer.writeInt(gmSeeInvis ? (_player.getAbnormalVisualEffects() | AbnormalVisualEffect.STEALTH.getMask()) : _player.getAbnormalVisualEffects());
+ 		buffer.writeByte(_player.isInsideZone(ZoneId.WATER) ? 1 : _player.isFlyingMounted() ? 2 : 0);
+ 		buffer.writeShort(_player.getRecomHave()); // Blue value for name (0 = white, 255 = pure blue)
+ 		buffer.writeInt(_player.getMountNpcId() + 1000000);
+@@ -222,7 +234,7 @@
+ 		buffer.writeByte(_player.getTeam().getId());
+ 		buffer.writeInt(_player.getClanCrestLargeId());
+ 		buffer.writeByte(_player.isNoble()); // Symbol on char menu ctrl+I
+-		buffer.writeByte(_player.isHero() || (_player.isGM() && GeneralConfig.GM_HERO_AURA)); // Hero Aura
++		buffer.writeByte(_player.isHero() || (PlayingGmPolicy.hasGameplayBypass(_player) && GeneralConfig.GM_HERO_AURA)); // Hero Aura
+ 		
+ 		buffer.writeByte(_player.isFishing()); // 1: Fishing Mode (Cannot be undone by setting back to 0)
+ 		buffer.writeInt(_player.getFishX());
+diff --git a/java/org/l2jmobius/gameserver/network/serverpackets/UserInfo.java b/java/org/l2jmobius/gameserver/network/serverpackets/UserInfo.java
+--- a/java/org/l2jmobius/gameserver/network/serverpackets/UserInfo.java
++++ b/java/org/l2jmobius/gameserver/network/serverpackets/UserInfo.java
+@@ -20,6 +20,7 @@
+  */
+ package org.l2jmobius.gameserver.network.serverpackets;
+ 
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ import java.util.Map;
+ 
+ import org.l2jmobius.commons.network.buffer.WriteBuffer;
+@@ -169,7 +170,7 @@
+ 		buffer.writeInt(_player.isGM()); // builder level
+ 		
+ 		String title = _player.getTitle();
+-		if (_player.isGM() && _player.isInvisible())
++		if (PlayingGmPolicy.hasGameplayBypass(_player) && _player.isInvisible())
+ 		{
+ 			title = "[Invisible]";
+ 		}
+@@ -213,7 +214,7 @@
+ 		buffer.writeByte(_player.getTeam().getId());
+ 		buffer.writeInt(_player.getClanCrestLargeId());
+ 		buffer.writeByte(_player.isNoble()); // 1: symbol on char menu ctrl+I
+-		buffer.writeByte(_player.isHero() || (_player.isGM() && GeneralConfig.GM_HERO_AURA)); // 1: Hero Aura
++		buffer.writeByte(_player.isHero() || (PlayingGmPolicy.hasGameplayBypass(_player) && GeneralConfig.GM_HERO_AURA)); // 1: Hero Aura
+ 		
+ 		buffer.writeByte(_player.isFishing()); // Fishing Mode
+ 		buffer.writeInt(_player.getFishX()); // fishing x
+diff --git a/java/org/l2jmobius/gameserver/network/serverpackets/AbstractNpcInfo.java b/java/org/l2jmobius/gameserver/network/serverpackets/AbstractNpcInfo.java
+--- a/java/org/l2jmobius/gameserver/network/serverpackets/AbstractNpcInfo.java
++++ b/java/org/l2jmobius/gameserver/network/serverpackets/AbstractNpcInfo.java
+@@ -20,6 +20,8 @@
+  */
+ package org.l2jmobius.gameserver.network.serverpackets;
+ 
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
++import org.l2jmobius.gameserver.entity.WorldObject;
+ import org.l2jmobius.commons.network.buffer.WriteBuffer;
+ import org.l2jmobius.gameserver.config.NpcConfig;
+ import org.l2jmobius.gameserver.config.custom.ChampionMonstersConfig;
+@@ -101,7 +103,7 @@
+ 		
+ 		public NpcInfo(Npc cha, Creature attacker)
+ 		{
+-			super(cha, attacker.isGM());
++			super(cha, PlayingGmPolicy.hasGameplayBypass(attacker));
+ 			_npc = cha;
+ 			_displayId = cha.getTemplate().getDisplayId(); // On every subclass
+ 			_rhand = cha.getRightHandItem(); // On every subclass
+@@ -132,6 +134,12 @@
+ 			_displayEffect = cha.getDisplayEffect();
+ 		}
+ 		
++		@Override
++		protected WorldObject getVisibilityObject()
++		{
++			return _npc;
++		}
++
+ 		@Override
+ 		public void writeImpl(GameClient client, WriteBuffer buffer)
+ 		{
+@@ -285,7 +293,7 @@
+ 		
+ 		public TrapInfo(Trap cha, Creature attacker)
+ 		{
+-			super(cha, (attacker != null) && attacker.isGM());
++			super(cha, (attacker != null) && PlayingGmPolicy.hasGameplayBypass(attacker));
+ 			_trap = cha;
+ 			_displayId = cha.getTemplate().getDisplayId();
+ 			_isAttackable = cha.isAutoAttackable(attacker);
+@@ -301,6 +309,12 @@
+ 			_title = cha.getOwner() != null ? cha.getOwner().getName() : "";
+ 		}
+ 		
++		@Override
++		protected WorldObject getVisibilityObject()
++		{
++			return _trap;
++		}
++
+ 		@Override
+ 		public void writeImpl(GameClient client, WriteBuffer buffer)
+ 		{
+@@ -370,7 +384,7 @@
+ 		
+ 		public SummonInfo(Summon cha, Creature attacker, int value)
+ 		{
+-			super(cha, attacker.isGM());
++			super(cha, PlayingGmPolicy.hasGameplayBypass(attacker));
+ 			_summon = cha;
+ 			_value = value;
+ 			_form = cha.getFormId();
+@@ -387,6 +401,12 @@
+ 		}
+ 		
+ 		@Override
++		protected WorldObject getVisibilityObject()
++		{
++			return _summon;
++		}
++
++		@Override
+ 		public void writeImpl(GameClient client, WriteBuffer buffer)
+ 		{
+ 			ServerPackets.NPC_INFO.writeId(this, buffer);
+@@ -425,7 +445,7 @@
+ 			buffer.writeInt(1); // Title color 0=client default
+ 			buffer.writeInt(_summon.getPvpFlag());
+ 			buffer.writeInt(_summon.getKarma());
+-			buffer.writeInt(_gmSeeInvis && _summon.isInvisible() ? _summon.getAbnormalVisualEffects() | AbnormalVisualEffect.STEALTH.getMask() : _summon.getAbnormalVisualEffects());
++			buffer.writeInt(PlayingGmPolicy.allowsPrivilege(client.getPlayer(), _gmSeeInvis) && _summon.isInvisible() ? _summon.getAbnormalVisualEffects() | AbnormalVisualEffect.STEALTH.getMask() : _summon.getAbnormalVisualEffects());
+ 			buffer.writeInt(0); // clan id
+ 			buffer.writeInt(0); // crest id
+ 			buffer.writeInt(0); // C2
+diff --git a/java/org/l2jmobius/gameserver/network/serverpackets/FakePlayerInfo.java b/java/org/l2jmobius/gameserver/network/serverpackets/FakePlayerInfo.java
+--- a/java/org/l2jmobius/gameserver/network/serverpackets/FakePlayerInfo.java
++++ b/java/org/l2jmobius/gameserver/network/serverpackets/FakePlayerInfo.java
+@@ -20,6 +20,7 @@
+  */
+ package org.l2jmobius.gameserver.network.serverpackets;
+ 
++import org.l2jmobius.gameserver.entity.WorldObject;
+ import org.l2jmobius.commons.network.buffer.WriteBuffer;
+ import org.l2jmobius.gameserver.data.sql.ClanTable;
+ import org.l2jmobius.gameserver.entity.actor.Npc;
+@@ -77,6 +78,12 @@
+ 	}
+ 	
+ 	@Override
++	protected WorldObject getVisibilityObject()
++	{
++		return _npc;
++	}
++
++	@Override
+ 	public void writeImpl(GameClient client, WriteBuffer buffer)
+ 	{
+ 		ServerPackets.CHAR_INFO.writeId(this, buffer);
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/Player.java b/java/org/l2jmobius/gameserver/entity/actor/Player.java
+--- a/java/org/l2jmobius/gameserver/entity/actor/Player.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/Player.java
+@@ -4458,7 +4458,7 @@
+ 				{
+ 					if (isVisibleFor(player))
+ 					{
+-						if (isInvisible() && isGM())
++						if (isInvisible() && player.isGM())
+ 						{
+ 							player.sendPacket(new CharInfo(this, true));
+ 						}
+@@ -13870,6 +13870,11 @@
+ 	@Override
+ 	public void sendInfo(Player player)
+ 	{
++		if (!org.l2jmobius.gameserver.managers.PlayingGmVision.canReceive(player, this))
++		{
++			return;
++		}
++
+ 		if (isInBoat())
+ 		{
+ 			setXYZ(getBoat().getLocation());
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/Summon.java b/java/org/l2jmobius/gameserver/entity/actor/Summon.java
+--- a/java/org/l2jmobius/gameserver/entity/actor/Summon.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/Summon.java
+@@ -940,6 +940,11 @@
+ 	@Override
+ 	public void sendInfo(Player player)
+ 	{
++		if ((player != _owner) && !org.l2jmobius.gameserver.managers.PlayingGmVision.canReceive(player, this))
++		{
++			return;
++		}
++
+ 		// Check if the Player is the owner of the Pet.
+ 		if (player == _owner)
+ 		{

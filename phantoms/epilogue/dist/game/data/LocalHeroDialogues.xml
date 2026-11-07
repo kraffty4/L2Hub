@@ -1,0 +1,91 @@
+<?xml version='1.0' encoding='utf-8'?>
+<dialogues format="1" revision="hero-20261104">
+  <scene id="hero-social-001" topic="rates">
+    <line id="rr20261106-b003-s001-t01" role="A">на х1 у меня ни сил ни времени уже не хватает</line>
+    <line id="rr20261106-b003-s001-t02" role="B">так не надо за всеми гнаться</line>
+    <line id="rr20261106-b003-s001-t03" role="A">да я и не гонюсь, я просто хочу в шмоте побегать а не месяц на него копить</line>
+  </scene>
+  <scene id="hero-social-002" topic="olympiad">
+    <line id="rr20261106-b003-s002-t01" role="A">я после оли ещё минут десять думаю куда надо было нажать</line>
+    <line id="rr20261106-b003-s002-t02" role="B">я обычно уже во время боя понимаю что не туда нажал</line>
+  </scene>
+  <scene id="hero-social-003" topic="music">
+    <line id="rr20261106-b003-s003-t01" role="A">включил старый альбом, помню всё кроме названий</line>
+    <line id="rr20261106-b003-s003-t02" role="B">я названия вообще никогда не запоминаю</line>
+    <line id="rr20261106-b003-s003-t03" role="A">мне теперь одну песню найти, я только мотив знаю</line>
+  </scene>
+  <scene id="hero-social-004" topic="class">
+    <line id="rr20261106-b003-s004-t01" role="A">я столько времени на класс потратила что уже менять жалко</line>
+    <line id="rr20261106-b003-s004-t02" role="B">если не нравится то чего терпеть</line>
+    <line id="rr20261106-b003-s004-t03" role="A">мне нравится, просто другое тоже хочется</line>
+    <line id="rr20261106-b003-s004-t04" role="B">а, я думал тебе надоел</line>
+  </scene>
+  <scene id="hero-social-005" topic="controls">
+    <line id="rr20261106-b003-s005-t01" role="A">я с мышки на клаву переучиваюсь, пиздец непривычно</line>
+    <line id="rr20261106-b003-s005-t02" role="B">я так и не смогла, всё равно мышкой тыкаю</line>
+  </scene>
+  <scene id="hero-social-006" topic="home">
+    <line id="rr20261106-b003-s006-t01" role="A">квартиру убрала, теперь жалко на кухне готовить</line>
+    <line id="rr20261106-b003-s006-t02" role="B">я поэтому сначала готовлю, потом убираю</line>
+  </scene>
+  <scene id="hero-social-007" topic="first_class">
+    <line id="rr20261106-b003-s007-t01" role="A">первого чара мне до сих пор жалко удалять</line>
+    <line id="rr20261106-b003-s007-t02" role="B">ты на нём играешь вообще?</line>
+    <line id="rr20261106-b003-s007-t03" role="A">нет, он маленький совсем, я просто иногда захожу посмотреть</line>
+  </scene>
+  <scene id="hero-social-008" topic="work">
+    <line id="rr20261106-b003-s008-t01" role="A">с работы сегодня пришёл и ещё час на сообщения отвечал</line>
+    <line id="rr20261106-b003-s008-t02" role="B">да выключи ты</line>
+    <line id="rr20261106-b003-s008-t03" role="A">я бы выключил, мне завтра это же разгребать</line>
+    <line id="rr20261106-b003-s008-t04" role="B">у меня тоже из-за этого, не могу просто оставить</line>
+  </scene>
+  <scene id="hero-social-009" topic="interface">
+    <line id="rr20261106-b003-s009-t01" role="A">после переустановки панели заново расставляла, больше не хочу</line>
+    <line id="rr20261106-b003-s009-t02" role="B">я скрин делаю, а то на память вообще не повторить</line>
+  </scene>
+  <scene id="hero-social-010" topic="storage">
+    <line id="rr20261106-b003-s010-t01" role="A">я на склад всё скидывал, теперь не помню что вообще есть</line>
+    <line id="rr20261106-b003-s010-t02" role="A">покупаю второй раз потом нахожу первое</line>
+    <line id="rr20261106-b003-s010-t03" role="B">я записывала, потом перестала</line>
+    <line id="rr20261106-b003-s010-t04" role="A">мне бы хотя бы по чарам вспомнить где что</line>
+  </scene>
+  <scene id="hero-social-011" topic="keyboard">
+    <line id="rr20261106-b003-s011-t01" role="A">клаву поменяла и теперь по старой памяти мимо жму</line>
+    <line id="rr20261106-b003-s011-t02" role="B">я на ноут потом сажусь, вообще как первый раз</line>
+  </scene>
+  <scene id="hero-social-012" topic="media">
+    <line id="rr20261106-b003-s012-t01" role="A">хочу новый сериал начать, но они все по пять сезонов</line>
+    <line id="rr20261106-b003-s012-t02" role="B">так один сезон посмотри</line>
+    <line id="rr20261106-b003-s012-t03" role="A">я потом всё равно не брошу</line>
+    <line id="rr20261106-b003-s012-t04" role="B">я бросаю вообще без проблем, мне даже концовка уже неинтересна</line>
+  </scene>
+  <scene id="hero-social-013" topic="old_servers">
+    <line id="rr20261106-b003-s013-t01" role="A">старый аккаунт вспомнил, а почты от него уже нет</line>
+    <line id="rr20261106-b003-s013-t02" role="B">восстановить никак?</line>
+    <line id="rr20261106-b003-s013-t03" role="A">я даже не помню к какой привязан</line>
+    <line id="rr20261106-b003-s013-t04" role="A">там было три ящика, я их уже все перепутал</line>
+  </scene>
+  <scene id="hero-social-014" topic="client">
+    <line id="rr20261106-b003-s014-t01" role="A">я ради линейки на диске место освобождала</line>
+    <line id="rr20261106-b003-s014-t02" role="B">сколько там у тебя всего</line>
+    <line id="rr20261106-b003-s014-t03" role="A">да я игры ставлю, а потом не запускаю, лежат</line>
+  </scene>
+  <scene id="hero-social-015" topic="targets">
+    <line id="rr20261106-b003-s015-t01" role="A">я через толпу нормально таргет выбирать так и не научился</line>
+    <line id="rr20261106-b003-s015-t02" role="B">я иногда по имени беру, мышкой тоже мимо</line>
+  </scene>
+  <scene id="hero-social-016" topic="food">
+    <line id="rr20261106-b003-s016-t01" role="A">забыла поесть, а теперь уже даже готовить лень</line>
+    <line id="rr20261106-b003-s016-t02" role="B">я в такие дни просто хлеб с чем-нибудь ем</line>
+  </scene>
+  <scene id="hero-social-017" topic="window">
+    <line id="rr20261106-b003-s017-t01" role="A">в оконном играю, а потом злюсь что всё отвлекает</line>
+    <line id="rr20261106-b003-s017-t02" role="B">на весь экран поставь</line>
+    <line id="rr20261106-b003-s017-t03" role="A">я обратно переключаю, мне надо всё видеть</line>
+  </scene>
+  <scene id="hero-social-018" topic="sleep">
+    <line id="rr20261106-b003-s018-t01" role="A">вчера легла вовремя и всё равно разбитая</line>
+    <line id="rr20261106-b003-s018-t02" role="B">долго спала?</line>
+    <line id="rr20261106-b003-s018-t03" role="A">часов десять, я так даже в отпуске не сплю</line>
+  </scene>
+</dialogues>

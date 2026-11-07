@@ -20,7 +20,7 @@ index 0d212f69c8acdc4417201b3f5db983166547bc93..4ec9c8365e8c887b74097800252e4d64
  <button value="Телепорт" action="bypass _bbstop;gatekeeper/main.html" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
 +<button value="Споты" action="bypass _bbshubspots" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
  <button value="Напарники" action="bypass _bbshubbuddy" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
- <button value="Охотники" action="bypass _bbshubhunters" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
+ <button value="Пешки" action="bypass _bbshubhunters" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
  <button value="Поручения" action="bypass voice .daily" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
 diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
 index c47f0b498192659ffd144ee26a607b07c24e62a2..fb2c923f653e14177364a7cbb43f29236ab4758b 100644
@@ -62,7 +62,7 @@ index c47f0b498192659ffd144ee26a607b07c24e62a2..fb2c923f653e14177364a7cbb43f2923
   * </ul>
   */
 @@ -89,7 +96,22 @@ public class L2HubBoard implements IParseBoardHandler
- 		java.util.Map.entry("Охотники", "Hunters"),
+ 		java.util.Map.entry("Пешки", "Pawns"),
  		java.util.Map.entry("Фантомы выключены (EnablePhantoms в Phantoms.ini).", "Phantoms are turned off (EnablePhantoms in Phantoms.ini)."),
  		java.util.Map.entry("Создать клан", "Create a clan"),
 -		java.util.Map.entry("С 10-го уровня. Имя: от 2 до 16 букв и цифр, без пробелов.", "From level 10. Name: 2 to 16 letters and digits, no spaces."));

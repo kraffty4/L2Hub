@@ -55,7 +55,7 @@ index 903cd2da13f9ca3587364ba53209b77f40eb8994..96524d9b3e43f2c592d16709e17f604b
  			if ((args.length > 1) && args[1].equalsIgnoreCase("medals") && canUse(player))
 @@ -818,6 +837,7 @@ public class L2HubBoard implements IParseBoardHandler
  		worldRow(sb, tr("Поручения дня"), "voice .daily", tr("Задания на сегодня, прогресс, награды и место дня."));
- 		worldRow(sb, tr("Рейд охотников"), "voice .raid", tr("Кто кого собирается бить, где сбор, сколько до боя."));
+ 		worldRow(sb, tr("Рейд пешек"), "voice .raid", tr("Кто кого собирается бить, где сбор, сколько до боя."));
  		worldRow(sb, tr("Мир сейчас"), "voice .world", tr("Суперчемпионы, сезонные события и расписание ивентов."));
 +		worldRow(sb, tr("Рейд-боссы"), L2HubRaids.COMMAND, tr("Кто жив, кто мёртв, метка на карте."));
  		worldRow(sb, tr("Поиск вещи"), L2HubFind.COMMAND, tr("Что почём в GM-шопе и кто продаёт в лавках."));

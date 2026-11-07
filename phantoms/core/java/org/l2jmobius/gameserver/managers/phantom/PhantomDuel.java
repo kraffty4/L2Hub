@@ -592,7 +592,7 @@ public final class PhantomDuel
 	private static String who(Player player, boolean accusative)
 	{
 		final boolean hunter = PhantomManager.getInstance().isPhantom(player);
-		return (hunter ? (accusative ? "охотника " : "охотник ") : (accusative ? "игрока " : "игрок ")) + player.getName() + " (" + player.getLevel() + ")";
+		return (hunter ? "" : (accusative ? "игрока " : "игрок ")) + player.getName() + (hunter ? " (пешка, " : " (") + player.getLevel() + ")";
 	}
 
 	private static long pair(Player a, Player b)

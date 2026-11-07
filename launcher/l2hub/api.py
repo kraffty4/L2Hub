@@ -4,6 +4,8 @@
 state() и показывает этап, прогресс и состояние компонентов.
 """
 
+import base64
+import binascii
 import hashlib
 import ipaddress
 import json
@@ -1074,7 +1076,7 @@ class Api:
         ini = game / "config" / "Custom" / HUNTERS_INI
         data = game / "data" / "L2HubPhantoms.xml"
         if not ini.is_file() or not data.is_file():
-            return {"ok": False, "error": "В этой сборке нет охотников-фантомов."}
+            return {"ok": False, "error": "В этой сборке нет пешек-фантомов."}
         phantoms = list(ET.parse(data).getroot().iter("phantom"))
         names = [el.get("name") for el in phantoms if el.get("kind") == "hunter"]
         # Секретные (kind="reaper" — Танатос, решение автора 2026-10-23): в окне только строка-глюк последней в «Населении» (world.js,
@@ -1204,11 +1206,11 @@ class Api:
     def reset_hunters(self, chronicle_id: str, names: list[str]) -> dict:
         """Сброс прогресса: сервер удалит охотников из базы, и они начнут с 1 уровня. Запущен — в течение 10 с, нет — при старте."""
         if names != ["ALL"] and (not names or not all(CHAR_NAME_RE.match(n) for n in names)):
-            return {"ok": False, "error": "Неверные имена охотников."}
+            return {"ok": False, "error": "Неверные имена пешек."}
         p = catalog.profile(chronicle_id)
         ini = catalog.server_dir(p) / "game" / "config" / "Custom" / HUNTERS_INI
         if not ini.is_file():
-            return {"ok": False, "error": "В этой сборке нет охотников-фантомов."}
+            return {"ok": False, "error": "В этой сборке нет пешек-фантомов."}
         try:
             backups.make(p, "before-reset")  # сервер удалит охотников из базы — откат будет к этому бэкапу
         except Exception as e:  # noqa: BLE001
@@ -1257,7 +1259,7 @@ class Api:
             if not 0 <= clean["extended"]["dailyUsd"] <= 100:
                 raise ValueError("лимит в день — от 0 до 100 $")
             if not 1 <= clean["extended"]["focusMax"] <= 10:
-                raise ValueError("умных охотников рядом — от 1 до 10")
+                raise ValueError("умных пешек рядом — от 1 до 10")
             voice = settings.get("voice") or {}
             clean["voice"] = {k: bool(voice.get(k, on)) for k, on in brain.VOICE_DEFAULT.items()}
         except (KeyError, TypeError, ValueError) as e:
@@ -1794,9 +1796,16 @@ class Api:
         except RuntimeError as e:
             return {"ok": False, "error": str(e)}
 
-    def send_feedback(self, kind: str, text: str, contact: str = "", chronicle_id: str = "", attach: bool = False) -> dict:
+    def send_feedback(self, kind: str, text: str, contact: str = "", chronicle_id: str = "", attach: bool = False, shot: str = "") -> dict:
+        """shot — скриншот из окна в base64 (можно с префиксом data:image/…;base64,), пусто — без скрина."""
         try:
-            return {"ok": True, **feedback.send(kind, text, contact, chronicle_id, bool(attach), self.running())}
+            data = None
+            if shot:
+                try:
+                    data = base64.b64decode(shot.split(",", 1)[1] if shot.startswith("data:") else shot, validate=True)
+                except (ValueError, binascii.Error) as e:
+                    raise ValueError("Скриншот не прочитался — выбери файл ещё раз") from e
+            return {"ok": True, **feedback.send(kind, text, contact, chronicle_id, bool(attach), self.running(), data)}
         except (ValueError, RuntimeError, OSError) as e:
             return {"ok": False, "error": str(e)}
 

@@ -1,0 +1,84 @@
+diff --git a/dist/game/data/html/CommunityBoard/Custom/navigation.html b/dist/game/data/html/CommunityBoard/Custom/navigation.html
+--- a/dist/game/data/html/CommunityBoard/Custom/navigation.html
++++ b/dist/game/data/html/CommunityBoard/Custom/navigation.html
+@@ -32,4 +32,5 @@
+ <tr>
+ 	<td><button value="Drop search" action="bypass _bbstop;dropsearch/main.html" width=200 height=30 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+ </tr>
++<tr><td><button value="Skill levels" action="bypass _bbshubskilllevels" width=200 height=30 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td></tr>
+ </table>
+diff --git a/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/navigation.html b/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/navigation.html
+--- a/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/navigation.html
++++ b/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/navigation.html
+@@ -32,4 +32,5 @@
+ <tr>
+ 	<td><button value="Поиск дропа" action="bypass _bbstop;dropsearch/main.html" width=200 height=30 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+ </tr>
++<tr><td><button value="Уровни навыков" action="bypass _bbshubskilllevels" width=200 height=30 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td></tr>
+ </table>
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+--- a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+@@ -193,6 +193,7 @@
+ 	};
+ 	private static final String SHOP = "_bbshubshop";
+ 	private static final String BUDDY = "_bbshubbuddy";
++	private static final String SKILL_LEVELS = "_bbshubskilllevels";
+ 	private static final String HUNTERS = "_bbshubhunters";
+ 	private static final String CLAN_WARS = "_bbshubwars";
+ 	private static final String CLAN_RECRUIT = "_bbshubclan";
+@@ -231,6 +232,7 @@
+ 		BUFF,
+ 		SHOP,
+ 		BUDDY,
++		SKILL_LEVELS,
+ 		HUNTERS,
+ 		CLAN_WARS,
+ 		CLAN_RECRUIT,
+@@ -258,7 +260,11 @@
+ 	{
+ 		final String[] args = command.strip().split("\\s+");
+ 		final String html;
+-		if (args[0].equalsIgnoreCase(BUFF))
++		if (args[0].equalsIgnoreCase(SKILL_LEVELS))
++		{
++			html = page(player, org.l2jmobius.gameserver.managers.phantom.SkillLevelChoice.title(), org.l2jmobius.gameserver.managers.phantom.SkillLevelChoice.board(player, args));
++		}
++		else if (args[0].equalsIgnoreCase(BUFF))
+ 		{
+ 			html = townOn("TownBuffer") ? buffer(player, args) : page(player, tr("Баффер"), tr("<br><font color=\"808080\">Баффер выключен в настройках сервера (L2HubTown.ini, TownBuffer).</font>"));
+ 		}
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/Player.java b/java/org/l2jmobius/gameserver/entity/actor/Player.java
+--- a/java/org/l2jmobius/gameserver/entity/actor/Player.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/Player.java
+@@ -2931,7 +2931,7 @@
+ 			sendMessage("You have learned " + skillCounter + " new skills.");
+ 		}
+ 		
+-		return skillCounter;
++		{ int epilogueLearned = skillCounter; org.l2jmobius.gameserver.managers.phantom.SkillLevelChoice.afterAutoLearn(this); return epilogueLearned; }
+ 	}
+ 	
+ 	/**
+@@ -2955,7 +2955,9 @@
+ 				LOGGER.warning("Skipping null auto-get skill for " + this);
+ 			}
+ 		}
+-	}
++	
++        org.l2jmobius.gameserver.managers.phantom.SkillLevelChoice.afterAutoLearn(this);
++}
+ 	
+ 	/**
+ 	 * Set the Experience value of the Player.
+@@ -11285,7 +11287,9 @@
+ 				setCurrentCp(_originalCp);
+ 			}, 300);
+ 		}
+-	}
++	
++        org.l2jmobius.gameserver.managers.phantom.SkillLevelChoice.entered(this);
++}
+ 	
+ 	/**
+ 	 * Fully restores the player's HP, MP, and CP to their maximum values.

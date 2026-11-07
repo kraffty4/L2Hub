@@ -20,7 +20,7 @@ index 0b80002b8e11cbe4d6b165fb455fecd96d693570..c307ac47ab3cb6a6252494d193c835c1
 --- a/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/navigation.html
 +++ b/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/navigation.html
 @@ -27,6 +27,12 @@
- 	<td><button value="Рейд охотников" action="bypass voice .raid" width=200 height=30 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td></tr>
+ 	<td><button value="Рейд пешек" action="bypass voice .raid" width=200 height=30 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td></tr>
  <button value="Мир" action="bypass voice .world" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
  </tr>
 +<tr>

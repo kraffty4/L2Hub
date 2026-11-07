@@ -170,7 +170,7 @@ index f682f0b2fb50f3f6cda219d5b3a6bc9d55738765..45e5a85109d290e571ed33126d95c6be
 +	<td><button value="Companions" action="bypass _bbshubbuddy" width=200 height=30 back="L2UI_CT1.HtmlWnd_DF_Area_Down" fore="L2UI_CT1.HtmlWnd_DF_Area"></td>
  </tr>
  <tr>
--	<td><button value="Охотники" action="bypass _bbshubhunters" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Back_Down" fore="L2UI_CT1.OlympiadWnd_DF_Back"></td>
+-	<td><button value="Пешки" action="bypass _bbshubhunters" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Back_Down" fore="L2UI_CT1.OlympiadWnd_DF_Back"></td>
 +	<td><button value="Hunters" action="bypass _bbshubhunters" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Back_Down" fore="L2UI_CT1.OlympiadWnd_DF_Back"></td>
  </tr>
  <tr>
@@ -178,7 +178,7 @@ index f682f0b2fb50f3f6cda219d5b3a6bc9d55738765..45e5a85109d290e571ed33126d95c6be
 +	<td><button value="Daily tasks" action="bypass voice .daily" width=200 height=30 back="L2UI_CT1.HtmlWnd_DF_Campaign_Down" fore="L2UI_CT1.HtmlWnd_DF_Campaign"></td>
  </tr>
  <tr>
--	<td><button value="Рейд охотников" action="bypass voice .raid" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Back_Down" fore="L2UI_CT1.OlympiadWnd_DF_Back"></td>
+-	<td><button value="Рейд пешек" action="bypass voice .raid" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Back_Down" fore="L2UI_CT1.OlympiadWnd_DF_Back"></td>
 +	<td><button value="Hunters' raid" action="bypass voice .raid" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Back_Down" fore="L2UI_CT1.OlympiadWnd_DF_Back"></td>
  </tr>
  <tr>
@@ -492,13 +492,13 @@ index 0000000000000000000000000000000000000000..f682f0b2fb50f3f6cda219d5b3a6bc9d
 +	<td><button value="Напарники" action="bypass _bbshubbuddy" width=200 height=30 back="L2UI_CT1.HtmlWnd_DF_Area_Down" fore="L2UI_CT1.HtmlWnd_DF_Area"></td>
 +</tr>
 +<tr>
-+	<td><button value="Охотники" action="bypass _bbshubhunters" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Back_Down" fore="L2UI_CT1.OlympiadWnd_DF_Back"></td>
++	<td><button value="Пешки" action="bypass _bbshubhunters" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Back_Down" fore="L2UI_CT1.OlympiadWnd_DF_Back"></td>
 +</tr>
 +<tr>
 +	<td><button value="Поручения дня" action="bypass voice .daily" width=200 height=30 back="L2UI_CT1.HtmlWnd_DF_Campaign_Down" fore="L2UI_CT1.HtmlWnd_DF_Campaign"></td>
 +</tr>
 +<tr>
-+	<td><button value="Рейд охотников" action="bypass voice .raid" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Back_Down" fore="L2UI_CT1.OlympiadWnd_DF_Back"></td>
++	<td><button value="Рейд пешек" action="bypass voice .raid" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Back_Down" fore="L2UI_CT1.OlympiadWnd_DF_Back"></td>
 +</tr>
 +<tr>
 +	<td><button value="Мир сейчас" action="bypass voice .world" width=200 height=30 back="L2UI_CT1.HtmlWnd_DF_Area_Down" fore="L2UI_CT1.HtmlWnd_DF_Area"></td>
@@ -520,16 +520,16 @@ index 8c96b47b42c67860ca2b93c90b4640c67930913b..7ccc6181e7267bcf2f0e8fac08f665ac
 +	// по языку окна. Строки в коде — по-русски, tr() при en подменяет их английскими из L2HUB_EN; чего там нет — по-русски.
 +	private static final boolean L2HUB_ENGLISH = l2hubEnglish();
 +	private static final java.util.Map<String, String> L2HUB_EN = java.util.Map.ofEntries(
-+		java.util.Map.entry("охотники ", "hunters "),
++		java.util.Map.entry("пешки ", "pawns "),
 +		java.util.Map.entry("пати ", "party "),
-+		java.util.Map.entry("охотник ", "hunter "),
++		java.util.Map.entry("пешка ", "pawn "),
 +		java.util.Map.entry("игрок ", "player "),
 +		java.util.Map.entry("Эпик ", "Epic boss "),
 +		java.util.Map.entry(") повержен: ", ") defeated by "),
 +		java.util.Map.entry("Рейд-босс ", "Raid boss "),
 +		java.util.Map.entry(") убит: ", ") killed by "),
 +		java.util.Map.entry("Суперчемпион ", "Super champion "),
-+		java.util.Map.entry("Охотник ", "Hunter "),
++		java.util.Map.entry(" (пешка)", " (pawn)"),
 +		java.util.Map.entry("Игрок ", "Player "),
 +		java.util.Map.entry(" достиг ", " reached level "),
 +		java.util.Map.entry("-го уровня", ""),
@@ -572,11 +572,11 @@ index 8c96b47b42c67860ca2b93c90b4640c67930913b..7ccc6181e7267bcf2f0e8fac08f665ac
  		if ((party != null) && (party.getMemberCount() > 1))
  		{
  			final Player leader = party.getLeader();
--			return (hunter(leader) ? "охотники " : "пати ") + leader.getName() + " (" + party.getMemberCount() + ")";
-+			return (hunter(leader) ? tr("охотники ") : tr("пати ")) + leader.getName() + " (" + party.getMemberCount() + ")";
+-			return (hunter(leader) ? "пешки " : "пати ") + leader.getName() + " (" + party.getMemberCount() + ")";
++			return (hunter(leader) ? tr("пешки ") : tr("пати ")) + leader.getName() + " (" + party.getMemberCount() + ")";
  		}
--		return (hunter(player) ? "охотник " : "игрок ") + player.getName();
-+		return (hunter(player) ? tr("охотник ") : tr("игрок ")) + player.getName();
+-		return (hunter(player) ? "пешка " : "игрок ") + player.getName();
++		return (hunter(player) ? tr("пешка ") : tr("игрок ")) + player.getName();
  	}
  
  	private static String town(Npc npc)
@@ -605,9 +605,9 @@ index 8c96b47b42c67860ca2b93c90b4640c67930913b..7ccc6181e7267bcf2f0e8fac08f665ac
  		{
  			if ((event.getOldLevel() < level) && (event.getNewLevel() >= level))
  			{
--				final String name = (hunter(player) ? "Охотник " : "Игрок ") + player.getName();
+-				final String name = (hunter(player) ? player.getName() + " (пешка)" : "Игрок " + player.getName());
 -				add("level", name + " достиг " + level + "-го уровня", player.getName(), null, null, null);
-+				final String name = (hunter(player) ? tr("Охотник ") : tr("Игрок ")) + player.getName();
++				final String name = (hunter(player) ? player.getName() + tr(" (пешка)") : tr("Игрок ") + player.getName());
 +				add("level", name + tr(" достиг ") + level + tr("-го уровня"), player.getName(), null, null, null);
  			}
  		}
@@ -616,9 +616,9 @@ index 8c96b47b42c67860ca2b93c90b4640c67930913b..7ccc6181e7267bcf2f0e8fac08f665ac
  		{
  			return;
  		}
--		final String name = (hunter(player) ? "Охотник " : "Игрок ") + player.getName();
+-		final String name = (hunter(player) ? player.getName() + " (пешка)" : "Игрок " + player.getName());
 -		add("profession", name + " стал " + className(event.getTemplate().getPlayerClass().name()), player.getName(), null, null, null);
-+		final String name = (hunter(player) ? tr("Охотник ") : tr("Игрок ")) + player.getName();
++		final String name = (hunter(player) ? player.getName() + tr(" (пешка)") : tr("Игрок ") + player.getName());
 +		add("profession", name + tr(" стал ") + className(event.getTemplate().getPlayerClass().name()), player.getName(), null, null, null);
  	}
  
@@ -735,12 +735,12 @@ index 1a16b3f04386c30f76072b39cc133faa6f08a44e..b159d7e012ec4c367ff78b79c51922dc
 +		java.util.Map.entry("нет", "none"),
 +		java.util.Map.entry("есть", "present"),
 +		java.util.Map.entry("выключены (WorldDaily)", "disabled (WorldDaily)"),
-+		java.util.Map.entry(", рейды охотников ", ", hunter raids "),
++		java.util.Map.entry(", рейды пешек ", ", pawn raids "),
 +		java.util.Map.entry(", окно ", ", window "),
 +		java.util.Map.entry("по-русски", "in Russian"),
 +		java.util.Map.entry("не по-русски", "not in Russian"),
 +		java.util.Map.entry("фантомов в мире ", "phantoms in the world "),
-+		java.util.Map.entry(", из них охотников ", ", hunters among them "),
++		java.util.Map.entry(", из них пешек ", ", pawns among them "),
 +		java.util.Map.entry(", живых игроков ", ", live players "),
 +		java.util.Map.entry(" по ", " until "),
 +		java.util.Map.entry("загружено ", "loaded "),
@@ -968,8 +968,8 @@ index 1a16b3f04386c30f76072b39cc133faa6f08a44e..b159d7e012ec4c367ff78b79c51922dc
  		final boolean daily = VoicedCommandHandler.getInstance().getHandler("daily") != null;
  		final boolean raid = VoicedCommandHandler.getInstance().getHandler("raid") != null;
  		final boolean dailyOn = L2HubWorldConfig.WORLD_DAILY;
--		return new Check("", (daily || !dailyOn) && raid, ".daily " + (daily ? "есть" : dailyOn ? "нет" : "выключены (WorldDaily)") + ", .raid " + (raid ? "есть" : "нет") + ", рейды охотников " + onOff(PhantomHuntersConfig.HUNTER_RAIDS));
-+		return new Check("", (daily || !dailyOn) && raid, ".daily " + (daily ? tr("есть") : dailyOn ? tr("нет") : tr("выключены (WorldDaily)")) + ", .raid " + (raid ? tr("есть") : tr("нет")) + tr(", рейды охотников ") + onOff(PhantomHuntersConfig.HUNTER_RAIDS));
+-		return new Check("", (daily || !dailyOn) && raid, ".daily " + (daily ? "есть" : dailyOn ? "нет" : "выключены (WorldDaily)") + ", .raid " + (raid ? "есть" : "нет") + ", рейды пешек " + onOff(PhantomHuntersConfig.HUNTER_RAIDS));
++		return new Check("", (daily || !dailyOn) && raid, ".daily " + (daily ? tr("есть") : dailyOn ? tr("нет") : tr("выключены (WorldDaily)")) + ", .raid " + (raid ? tr("есть") : tr("нет")) + tr(", рейды пешек ") + onOff(PhantomHuntersConfig.HUNTER_RAIDS));
  	}
  
  	private static Check npcView() throws Exception
@@ -984,8 +984,8 @@ index 1a16b3f04386c30f76072b39cc133faa6f08a44e..b159d7e012ec4c367ff78b79c51922dc
  				live++;
  			}
  		}
--		return new Check("", true, "фантомов в мире " + phantoms + ", из них охотников " + hunters + ", живых игроков " + live);
-+		return new Check("", true, tr("фантомов в мире ") + phantoms + tr(", из них охотников ") + hunters + tr(", живых игроков ") + live);
+-		return new Check("", true, "фантомов в мире " + phantoms + ", из них пешек " + hunters + ", живых игроков " + live);
++		return new Check("", true, tr("фантомов в мире ") + phantoms + tr(", из них пешек ") + hunters + tr(", живых игроков ") + live);
  	}
  
  	private static Check seasonalEvents()
@@ -1252,14 +1252,14 @@ index 2dd9ae64affefdd00be13d705e4080ece4b21b11..452298fd45d1ca72f6b96b6b24ad60e0
 +		java.util.Map.entry("<font color=\"6E8B3D\">Идёт</font> по ", "<font color=\"6E8B3D\">On</font> until "),
 +		java.util.Map.entry("С ", "From "),
 +		java.util.Map.entry("<font color=\"LEVEL\">Ивенты по расписанию</font><br1>", "<font color=\"LEVEL\">Scheduled events</font><br1>"),
-+		java.util.Map.entry("<font color=\"808080\">Регистрация 10 минут у менеджера в Гиране (у Deathmatch — 1 минута), охотники записываются сами.</font><br1>", "<font color=\"808080\">Registration: 10 minutes at the manager in Giran (Deathmatch: 1 minute); hunters sign up on their own.</font><br1>"),
++		java.util.Map.entry("<font color=\"808080\">Регистрация 10 минут у менеджера в Гиране (у Deathmatch — 1 минута), пешки записываются сами.</font><br1>", "<font color=\"808080\">Registration: 10 minutes at the manager in Giran (Deathmatch: 1 minute); pawns sign up on their own.</font><br1>"),
 +		java.util.Map.entry("<font color=\"808080\">PvP-ивенты выключены (PvpEvents в L2HubEvents.ini).</font><br1>", "<font color=\"808080\">PvP events are disabled (PvpEvents in L2HubEvents.ini).</font><br1>"),
 +		java.util.Map.entry(": нашествие эльпи на ", ": elpy invasion for "),
 +		java.util.Map.entry(" мин, в городе рядом с тобой<br1>", " min, in a town near you<br1>"),
 +		java.util.Map.entry("<font color=\"808080\">Стартуют, только когда ты в игре.</font>", "<font color=\"808080\">They start only while you are in the game.</font>"),
 +		java.util.Map.entry("<font color=\"LEVEL\">Зачистка</font><br1>", "<font color=\"LEVEL\">Purge</font><br1>"),
 +		java.util.Map.entry("<font color=\"A0A0A0\">Награды недели топ-5 зоны — ", "<font color=\"A0A0A0\">Weekly rewards for the top 5 of each zone: "),
-+		java.util.Map.entry(", серым — охотники и напарники, x2 — горячий час.</font><br1>", "; hunters and companions in grey, x2 — hot hour.</font><br1>"),
++		java.util.Map.entry(", серым — пешки и напарники, x2 — горячий час.</font><br1>", "; pawns and companions in grey, x2 — hot hour.</font><br1>"),
 +		java.util.Map.entry("; ты — ", "; you: #"),
 +		java.util.Map.entry("-й, ", ", "),
 +		java.util.Map.entry("<font color=\"808080\">Очков пока ни у кого.</font><br1>", "<font color=\"808080\">No points yet.</font><br1>"));
@@ -1448,8 +1448,8 @@ index 2dd9ae64affefdd00be13d705e4080ece4b21b11..452298fd45d1ca72f6b96b6b24ad60e0
  					sb.append(when(next)).append(": ").append(pvp[1]).append("<br1>");
  				}
  			}
--			sb.append("<font color=\"808080\">Регистрация 10 минут у менеджера в Гиране (у Deathmatch — 1 минута), охотники записываются сами.</font><br1>");
-+			sb.append(tr("<font color=\"808080\">Регистрация 10 минут у менеджера в Гиране (у Deathmatch — 1 минута), охотники записываются сами.</font><br1>"));
+-			sb.append("<font color=\"808080\">Регистрация 10 минут у менеджера в Гиране (у Deathmatch — 1 минута), пешки записываются сами.</font><br1>");
++			sb.append(tr("<font color=\"808080\">Регистрация 10 минут у менеджера в Гиране (у Deathmatch — 1 минута), пешки записываются сами.</font><br1>"));
  		}
  		else
  		{
@@ -1476,10 +1476,10 @@ index 2dd9ae64affefdd00be13d705e4080ece4b21b11..452298fd45d1ca72f6b96b6b24ad60e0
  	{
 -		sb.append("<font color=\"LEVEL\">Зачистка</font><br1>");
 -		sb.append("<font color=\"A0A0A0\">Награды недели топ-5 зоны — ").append(new SimpleDateFormat("dd.MM HH:mm").format(new Date(nextPurgeReward())));
--		sb.append(", серым — охотники и напарники, x2 — горячий час.</font><br1>");
+-		sb.append(", серым — пешки и напарники, x2 — горячий час.</font><br1>");
 +		sb.append(tr("<font color=\"LEVEL\">Зачистка</font><br1>"));
 +		sb.append(tr("<font color=\"A0A0A0\">Награды недели топ-5 зоны — ")).append(new SimpleDateFormat("dd.MM HH:mm").format(new Date(nextPurgeReward())));
-+		sb.append(tr(", серым — охотники и напарники, x2 — горячий час.</font><br1>"));
++		sb.append(tr(", серым — пешки и напарники, x2 — горячий час.</font><br1>"));
  		boolean any = false;
  		for (PurgeZone zone : purgeZones(player.getObjectId()))
  		{
@@ -1625,7 +1625,7 @@ index 5339295504755c6332b92e2dc1e94263c7e296e5..6d7855c465f974bbfc842139a229d6ac
 +		java.util.Map.entry("В начало GM-шопа", "GM Shop start"),
 +		java.util.Map.entry("Напарники", "Companions"),
 +		java.util.Map.entry("Напарники выключены (EnablePhantoms в Phantoms.ini).", "Companions are turned off (EnablePhantoms in Phantoms.ini)."),
-+		java.util.Map.entry("Охотники", "Hunters"),
++		java.util.Map.entry("Пешки", "Pawns"),
 +		java.util.Map.entry("Фантомы выключены (EnablePhantoms в Phantoms.ini).", "Phantoms are turned off (EnablePhantoms in Phantoms.ini)."));
 +	
 +	private static boolean l2hubEnglish()
@@ -1858,8 +1858,8 @@ index 5339295504755c6332b92e2dc1e94263c7e296e5..6d7855c465f974bbfc842139a229d6ac
  	{
  		if (!PhantomsConfig.PHANTOMS_ENABLED)
  		{
--			return page(player, "Охотники", "Фантомы выключены (EnablePhantoms в Phantoms.ini).");
-+			return page(player, tr("Охотники"), tr("Фантомы выключены (EnablePhantoms в Phantoms.ini)."));
+-			return page(player, "Пешки", "Фантомы выключены (EnablePhantoms в Phantoms.ini).");
++			return page(player, tr("Пешки"), tr("Фантомы выключены (EnablePhantoms в Phantoms.ini)."));
  		}
  
  		int i = 1;
@@ -1867,8 +1867,8 @@ index 5339295504755c6332b92e2dc1e94263c7e296e5..6d7855c465f974bbfc842139a229d6ac
  			}
  			i = 3;
  		}
--		return page(player, "Охотники", PhantomHunterUi.board(player, args.length > i ? args[i] : null, args.length > (i + 1) ? parseInt(args[i + 1]) : 0, "bypass " + HUNTERS));
-+		return page(player, tr("Охотники"), PhantomHunterUi.board(player, args.length > i ? args[i] : null, args.length > (i + 1) ? parseInt(args[i + 1]) : 0, "bypass " + HUNTERS));
+-		return page(player, "Пешки", PhantomHunterUi.board(player, args.length > i ? args[i] : null, args.length > (i + 1) ? parseInt(args[i + 1]) : 0, "bypass " + HUNTERS));
++		return page(player, tr("Пешки"), PhantomHunterUi.board(player, args.length > i ? args[i] : null, args.length > (i + 1) ? parseInt(args[i + 1]) : 0, "bypass " + HUNTERS));
  	}
  
  	// ---------- Общее ----------

@@ -1,0 +1,919 @@
+L2Hub: выбор более низкого, уже изученного уровня классового навыка на доске Alt+B (раздел «Мир», «Уровни навыков»),
+отдельно у основной профессии и каждого саба. Выбор хранится в переменной персонажа, строки навыков в базе не меняются,
+уровень подменяется в памяти после автоизучения и при входе; откаты не сбрасываются, заточенные, геройские и временные
+навыки не трогаются. Ключ SkillLevelSelectionEnabled в config/Custom/SkillLevelSelection.ini, по умолчанию False:
+строки в «Мире» нет, пока выбор выключен и у персонажа нет сохранённого выбора.
+Перенос мода сопровождающего Эпилога (его патч 0246 и класс SkillLevelChoice): логика — класс ядра Mobius
+mechanics.skill.SkillLevelChoice, страница — скрипт L2HubSkillLevels, вместо кнопки в навигации — строка в «Мире».
+Откат: удалить патч и пересобрать сервер.
+
+diff --git a/b/dist/game/config/Custom/SkillLevelSelection.ini b/dist/game/config/Custom/SkillLevelSelection.ini
+new file mode 100644
+index 0000000..3fd14f4
+--- /dev/null
++++ b/dist/game/config/Custom/SkillLevelSelection.ini
+@@ -0,0 +1,5 @@
++# L2Hub: выбор более низкого, уже изученного уровня классовых навыков на доске Alt+B (раздел «Мир», «Уровни навыков»).
++# У основной профессии и каждого саба свой выбор. Строки навыков в базе не меняются, откаты не сбрасываются,
++# заточенные, геройские и временные навыки не трогаются. Выключенным сохранённый выбор можно только снять.
++# Читается при старте сервера.
++SkillLevelSelectionEnabled = False
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+index 3e5d7f3..56c4f66 100644
+--- a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+@@ -56,6 +56,7 @@ import org.l2jmobius.gameserver.network.serverpackets.ShowBoard;
+  * <li>_bbshubfind … — поиск вещи в GM-шопе и по лавкам ({@link L2HubFind})</li>
+  * <li>_bbshubraids … — кто из рейд-боссов жив ({@link L2HubRaids})</li>
+  * <li>_bbshubkarma [pay …] — снятие кармы за адену ({@link L2HubKarma})</li>
++ * <li>_bbshubskills … — выбор уровня изученных навыков ({@link L2HubSkillLevels})</li>
+  * </ul>
+  */
+ public class L2HubBoard implements IParseBoardHandler
+@@ -214,7 +215,34 @@ public class L2HubBoard implements IParseBoardHandler
+ 		java.util.Map.entry("Сколько очков:", "Points:"),
+ 		java.util.Map.entry("Снять", "Clear"),
+ 		java.util.Map.entry("С кармой остальная доска закрыта. Счётчик PK не меняется.", "With karma the rest of the board is closed. The PK count stays."),
+-		java.util.Map.entry("С проклятым оружием карма не снимается.", "Karma cannot be cleared with a cursed weapon."));
++		java.util.Map.entry("С проклятым оружием карма не снимается.", "Karma cannot be cleared with a cursed weapon."),
++		java.util.Map.entry("Уровни навыков", "Skill levels"),
++		java.util.Map.entry("Вернуть ранее изученный уровень навыка.", "Go back to an earlier learned skill level."),
++		java.util.Map.entry("Неверная команда.", "Invalid command."),
++		java.util.Map.entry("Неверный номер навыка или уровня.", "Invalid skill or level number."),
++		java.util.Map.entry("Можно вернуть ранее изученный уровень навыка. У основной профессии и каждого саба свой выбор.", "You can go back to an earlier learned skill level. The main class and each subclass keep their own choice."),
++		java.util.Map.entry("Выбор держится после входа и автоизучения. Откаты не сбрасываются, заточенные навыки не меняются.", "The choice survives relogin and auto-learn. Cooldowns are not reset, enchanted skills are not changed."),
++		java.util.Map.entry("Новый выбор выключен в настройках сервера (SkillLevelSelection.ini). Сохранённый можно снять.", "New choices are off in the server settings (SkillLevelSelection.ini). A saved one can be cleared."),
++		java.util.Map.entry("Нет классовых навыков, у которых можно выбрать уровень.", "No class skills with a level to choose."),
++		java.util.Map.entry("ур. ", "lv. "),
++		java.util.Map.entry("выбран", "chosen"),
++		java.util.Map.entry("Выбрать уровень", "Choose level"),
++		java.util.Map.entry("Такого изученного классового навыка нет.", "No such learned class skill."),
++		java.util.Map.entry("Снять выбор", "Clear choice"),
++		java.util.Map.entry("Сейчас уровень ", "Current level "),
++		java.util.Map.entry("Заточенный или временный навык здесь не меняется.", "An enchanted or temporary skill is not changed here."),
++		java.util.Map.entry("Уровень:", "Level:"),
++		java.util.Map.entry("Выбрать", "Choose"),
++		java.util.Map.entry("Выбран уровень ", "Chosen level "),
++		java.util.Map.entry(", изучен до ", ", learned up to "),
++		java.util.Map.entry("К списку навыков", "Back to skills"),
++		java.util.Map.entry("Готово.", "Done."),
++		java.util.Map.entry("Этот уровень уже выбран.", "This level is already chosen."),
++		java.util.Map.entry("Выбор уровня навыков выключен в настройках сервера.", "Skill level choice is off in the server settings."),
++		java.util.Map.entry("Менять уровень можно вне боя, каста, ивентов, дуэли, лавки, трансформации и Олимпиады.", "The level can be changed outside combat, casting, events, duels, private stores, transformation and the Olympiad."),
++		java.util.Map.entry("Этот уровень недоступен или ещё не изучен.", "This level is unavailable or not learned yet."),
++		java.util.Map.entry("Сначала дождись отката навыка: смена уровня откат не сбрасывает.", "Wait for the skill cooldown first: changing the level does not reset it."),
++		java.util.Map.entry("Не удалось сохранить выбор, попробуй позже.", "Could not save the choice, try again later."));
+ 	
+ 	private static boolean l2hubEnglish()
+ 	{
+@@ -297,7 +325,8 @@ public class L2HubBoard implements IParseBoardHandler
+ 		L2HubKits.COMMAND,
+ 		L2HubFind.COMMAND,
+ 		L2HubRaids.COMMAND,
+-		L2HubKarma.COMMAND
++		L2HubKarma.COMMAND,
++		L2HubSkillLevels.COMMAND
+ 	};
+ 
+ 	private static final Pattern NPC_CHAT = Pattern.compile("bypass (?:-h )?npc_%objectId%_Chat (\\d+)");
+@@ -370,6 +399,10 @@ public class L2HubBoard implements IParseBoardHandler
+ 		{
+ 			html = page(player, tr("Снять карму"), L2HubKarma.content(player, args));
+ 		}
++		else if (args[0].equalsIgnoreCase(L2HubSkillLevels.COMMAND))
++		{
++			html = page(player, tr("Уровни навыков"), L2HubSkillLevels.content(player, args));
++		}
+ 		else if (args[0].equalsIgnoreCase(EVENTS))
+ 		{
+ 			if ((args.length > 1) && args[1].equalsIgnoreCase("medals") && canUse(player))
+@@ -897,6 +930,10 @@ public class L2HubBoard implements IParseBoardHandler
+ 		{
+ 			worldRow(sb, tr("Снять карму"), L2HubKarma.COMMAND, tr("За адену, счётчик PK не меняется."));
+ 		}
++		if (L2HubSkillLevels.shown(player))
++		{
++			worldRow(sb, tr("Уровни навыков"), L2HubSkillLevels.COMMAND, tr("Вернуть ранее изученный уровень навыка."));
++		}
+ 		return page(player, tr("Мир"), sb.append("</table>").toString());
+ 	}
+ 
+diff --git a/b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubSkillLevels.java b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubSkillLevels.java
+new file mode 100644
+index 0000000..c64e829
+--- /dev/null
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubSkillLevels.java
+@@ -0,0 +1,181 @@
++package handlers.bypass.communityboard;
++
++import java.util.List;
++import java.util.Map;
++
++import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.mechanics.skill.SkillLevelChoice;
++import org.l2jmobius.gameserver.mechanics.skill.SkillLevelChoice.Choice;
++import org.l2jmobius.gameserver.mechanics.skill.SkillLevelChoice.Result;
++import org.l2jmobius.gameserver.mechanics.skill.SkillLevelChoice.View;
++
++/**
++ * L2Hub: уровни навыков на доске Alt+B ({@link SkillLevelChoice}), строка в разделе «Мир».
++ * <ul>
++ * <li>_bbshubskills [page &lt;n&gt;] — изученные классовые навыки выше первого уровня и навыки с выбором.</li>
++ * <li>_bbshubskills view &lt;навык&gt; — уровни навыка; set &lt;навык&gt; &lt;уровень&gt; — выбрать; auto &lt;навык&gt; — снять выбор.</li>
++ * </ul>
++ * Включается ключом SkillLevelSelectionEnabled в config/Custom/SkillLevelSelection.ini; выключенным сохранённый выбор можно только снять.
++ */
++public final class L2HubSkillLevels
++{
++	public static final String COMMAND = "_bbshubskills";
++
++	private static final int PAGE_SIZE = 8;
++
++	private L2HubSkillLevels()
++	{
++	}
++
++	/**
++	 * @param player кто открыл раздел «Мир»
++	 * @return показывать строку в «Мире»: выбор включён или у текущего класса есть сохранённый выбор
++	 */
++	public static boolean shown(Player player)
++	{
++		return SkillLevelChoice.enabled() || (player.hasVariables() && !SkillLevelChoice.choices(player).isEmpty());
++	}
++
++	public static String content(Player player, String[] args)
++	{
++		String note = "";
++		int page = 0;
++		Integer selected = null;
++		try
++		{
++			if ((args.length == 3) && args[1].equals("page"))
++			{
++				page = Math.max(0, Integer.parseInt(args[2]));
++			}
++			else if ((args.length == 3) && args[1].equals("view"))
++			{
++				selected = Integer.valueOf(args[2]);
++			}
++			else if ((args.length == 4) && args[1].equals("set"))
++			{
++				selected = Integer.valueOf(args[2]);
++				note = message(SkillLevelChoice.select(player, selected, Integer.parseInt(args[3])));
++			}
++			else if ((args.length == 3) && args[1].equals("auto"))
++			{
++				selected = Integer.valueOf(args[2]);
++				note = message(SkillLevelChoice.automatic(player, selected));
++			}
++			else if (args.length > 1)
++			{
++				note = L2HubBoard.tr("Неверная команда.");
++			}
++		}
++		catch (NumberFormatException e)
++		{
++			note = L2HubBoard.tr("Неверный номер навыка или уровня.");
++		}
++
++		final boolean active = SkillLevelChoice.enabled();
++		final StringBuilder sb = new StringBuilder(2048).append("<br>");
++		if (!note.isEmpty())
++		{
++			sb.append("<font color=\"LEVEL\">").append(note).append("</font><br><br>");
++		}
++		sb.append("<font color=\"B09878\">").append(L2HubBoard.tr("Можно вернуть ранее изученный уровень навыка. У основной профессии и каждого саба свой выбор.")).append("<br1>");
++		sb.append(L2HubBoard.tr("Выбор держится после входа и автоизучения. Откаты не сбрасываются, заточенные навыки не меняются.")).append("</font><br><br>");
++		if (!active)
++		{
++			sb.append("<font color=\"808080\">").append(L2HubBoard.tr("Новый выбор выключен в настройках сервера (SkillLevelSelection.ini). Сохранённый можно снять.")).append("</font><br><br>");
++		}
++
++		final Map<Integer, Choice> choices = SkillLevelChoice.choices(player);
++		if (selected != null)
++		{
++			return sb.append(skill(player, selected, choices.get(selected), active)).toString();
++		}
++
++		final List<View> rows = SkillLevelChoice.rows(player);
++		if (rows.isEmpty())
++		{
++			sb.append("<font color=\"808080\">").append(L2HubBoard.tr("Нет классовых навыков, у которых можно выбрать уровень.")).append("</font><br><br>");
++		}
++		final int lastPage = Math.max(0, (rows.size() - 1) / PAGE_SIZE);
++		page = Math.min(page, lastPage);
++		sb.append("<table width=500>");
++		for (View view : rows.subList(page * PAGE_SIZE, Math.min(rows.size(), (page + 1) * PAGE_SIZE)))
++		{
++			final Choice choice = choices.get(view.id());
++			sb.append("<tr><td width=330><font color=\"LEVEL\">").append(view.name()).append("</font> ").append(L2HubBoard.tr("ур. ")).append(view.known());
++			if (choice != null)
++			{
++				sb.append(" <font color=\"B09878\">(").append(L2HubBoard.tr("выбран")).append(")</font>");
++			}
++			sb.append("</td><td width=170 align=center>").append(L2HubBoard.button(L2HubBoard.tr("Выбрать уровень"), COMMAND + " view " + view.id(), 150)).append("</td></tr>");
++		}
++		sb.append("</table><br><table width=500><tr><td width=120>").append(L2HubBoard.button(L2HubBoard.tr("Назад"), L2HubBoard.WORLD, 80)).append("</td><td width=260 align=center>");
++		if (page > 0)
++		{
++			sb.append(L2HubBoard.button(L2HubBoard.tr("Пред."), COMMAND + " page " + (page - 1), 60));
++		}
++		sb.append("</td><td width=120 align=right>");
++		if (page < lastPage)
++		{
++			sb.append(L2HubBoard.button(L2HubBoard.tr("След."), COMMAND + " page " + (page + 1), 60));
++		}
++		return sb.append("</td></tr></table>").toString();
++	}
++
++	private static String skill(Player player, int id, Choice choice, boolean active)
++	{
++		final StringBuilder sb = new StringBuilder(1024);
++		final View view = SkillLevelChoice.view(player, id);
++		if (view == null)
++		{
++			sb.append("<font color=\"808080\">").append(L2HubBoard.tr("Такого изученного классового навыка нет.")).append("</font><br><br>");
++			if (choice != null)
++			{
++				sb.append(L2HubBoard.button(L2HubBoard.tr("Снять выбор"), COMMAND + " auto " + id, 160)).append("<br>");
++			}
++		}
++		else
++		{
++			sb.append("<font color=\"LEVEL\">").append(view.name()).append("</font><br1>").append(L2HubBoard.tr("Сейчас уровень ")).append(view.known()).append(".<br>");
++			if (!view.regular())
++			{
++				sb.append("<font color=\"808080\">").append(L2HubBoard.tr("Заточенный или временный навык здесь не меняется.")).append("</font><br>");
++			}
++			else if (active)
++			{
++				final List<Integer> levels = SkillLevelChoice.levels(player, view);
++				if (!levels.isEmpty())
++				{
++					final StringBuilder list = new StringBuilder();
++					for (int i = levels.size() - 1; i >= 0; i--)
++					{
++						list.append(list.isEmpty() ? "" : ";").append(levels.get(i));
++					}
++					sb.append("<br><table width=300><tr><td width=110 align=right>").append(L2HubBoard.tr("Уровень:")).append("</td><td width=90><combobox var=\"level\" list=\"").append(list).append("\" width=80></td><td width=100>");
++					sb.append(L2HubBoard.button(L2HubBoard.tr("Выбрать"), COMMAND + " set " + view.id() + " $level", 90)).append("</td></tr></table>");
++				}
++			}
++			if (choice != null)
++			{
++				sb.append("<br>").append(L2HubBoard.tr("Выбран уровень ")).append(choice.selected()).append(L2HubBoard.tr(", изучен до ")).append(choice.earned()).append(".<br1>");
++				sb.append(L2HubBoard.button(L2HubBoard.tr("Снять выбор"), COMMAND + " auto " + view.id(), 160)).append("<br>");
++			}
++		}
++		return sb.append("<br>").append(L2HubBoard.button(L2HubBoard.tr("К списку навыков"), COMMAND, 160)).toString();
++	}
++
++	private static String message(Result result)
++	{
++		return switch (result)
++		{
++			case CHANGED -> L2HubBoard.tr("Готово.");
++			case UNCHANGED -> L2HubBoard.tr("Этот уровень уже выбран.");
++			case DISABLED -> L2HubBoard.tr("Выбор уровня навыков выключен в настройках сервера.");
++			case BLOCKED -> L2HubBoard.tr("Менять уровень можно вне боя, каста, ивентов, дуэли, лавки, трансформации и Олимпиады.");
++			case NO_SKILL -> L2HubBoard.tr("Такого изученного классового навыка нет.");
++			case INVALID_LEVEL -> L2HubBoard.tr("Этот уровень недоступен или ещё не изучен.");
++			case UNSUPPORTED -> L2HubBoard.tr("Заточенный или временный навык здесь не меняется.");
++			case COOLDOWN -> L2HubBoard.tr("Сначала дождись отката навыка: смена уровня откат не сбрасывает.");
++			case SAVE_FAILED -> L2HubBoard.tr("Не удалось сохранить выбор, попробуй позже.");
++		};
++	}
++}
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/Player.java b/java/org/l2jmobius/gameserver/entity/actor/Player.java
+index 417f4e9..dca8663 100644
+--- a/java/org/l2jmobius/gameserver/entity/actor/Player.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/Player.java
+@@ -2842,6 +2842,9 @@ public class Player extends Playable
+ 			sendMessage("You have learned " + skillCounter + " new skills.");
+ 		}
+ 		
++		// L2Hub: выбранные на доске уровни навыков поверх изученных (патч 0258).
++		org.l2jmobius.gameserver.mechanics.skill.SkillLevelChoice.afterAutoLearn(this);
++		
+ 		return skillCounter;
+ 	}
+ 	
+@@ -2866,6 +2869,9 @@ public class Player extends Playable
+ 				LOGGER.warning("Skipping null auto-get skill for " + this);
+ 			}
+ 		}
++		
++		// L2Hub: выбранные на доске уровни навыков поверх изученных (патч 0258).
++		org.l2jmobius.gameserver.mechanics.skill.SkillLevelChoice.afterAutoLearn(this);
+ 	}
+ 	
+ 	/**
+@@ -11177,6 +11183,9 @@ public class Player extends Playable
+ 				setCurrentCp(_originalCp);
+ 			}, 300);
+ 		}
++		
++		// L2Hub: выбранные на доске уровни навыков после входа (патч 0258).
++		org.l2jmobius.gameserver.mechanics.skill.SkillLevelChoice.entered(this);
+ 	}
+ 	
+ 	/**
+diff --git a/b/java/org/l2jmobius/gameserver/mechanics/skill/SkillLevelChoice.java b/java/org/l2jmobius/gameserver/mechanics/skill/SkillLevelChoice.java
+new file mode 100644
+index 0000000..aa988f3
+--- /dev/null
++++ b/java/org/l2jmobius/gameserver/mechanics/skill/SkillLevelChoice.java
+@@ -0,0 +1,592 @@
++package org.l2jmobius.gameserver.mechanics.skill;
++
++import java.util.ArrayList;
++import java.util.Collections;
++import java.util.Comparator;
++import java.util.List;
++import java.util.Map;
++import java.util.NavigableSet;
++import java.util.TreeMap;
++import java.util.TreeSet;
++import java.util.concurrent.ConcurrentHashMap;
++import java.util.logging.Level;
++import java.util.logging.Logger;
++
++import org.l2jmobius.commons.util.ConfigReader;
++import org.l2jmobius.gameserver.data.xml.SkillData;
++import org.l2jmobius.gameserver.data.xml.SkillTreeData;
++import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.mechanics.skill.enums.SkillFinishType;
++import org.l2jmobius.gameserver.mechanics.skill.holders.SkillLearn;
++import org.l2jmobius.gameserver.mechanics.variables.PlayerVariables;
++import org.l2jmobius.gameserver.network.serverpackets.ShortcutInit;
++
++/**
++ * L2Hub: выбор более низкого, уже изученного уровня классового навыка (страница доски Alt+B — L2HubSkillLevels).
++ * Выбор хранится в переменной персонажа отдельно у основной профессии и каждого саба: «навык:выбранный:заработанный».
++ * Строки выученных навыков в базе не меняются (там остаётся высший изученный уровень), уровень подменяется в памяти
++ * после автоизучения ({@link #afterAutoLearn}) и при входе ({@link #entered}). Заточенные, геройские, GM-навыки,
++ * навыки предметов и трансформаций не трогаются; откаты не сбрасываются: пока любой уровень навыка в откате, смены нет.
++ * Включается ключом SkillLevelSelectionEnabled в config/Custom/SkillLevelSelection.ini (по умолчанию False);
++ * при выключенном сохранённый выбор можно только снять.
++ * Перенос мода сопровождающего Эпилога (его патч 0246 и класс SkillLevelChoice).
++ */
++public final class SkillLevelChoice
++{
++	private static final Logger LOGGER = Logger.getLogger(SkillLevelChoice.class.getName());
++	private static final String PREFIX = "L2Hub.SkillLevels.";
++	private static final boolean ENABLED = new ConfigReader("./config/Custom/SkillLevelSelection.ini").getBoolean("SkillLevelSelectionEnabled", false);
++	private static final Map<Integer, Object> LOCKS = new ConcurrentHashMap<>();
++
++	public enum Result
++	{
++		CHANGED,
++		UNCHANGED,
++		DISABLED,
++		BLOCKED,
++		NO_SKILL,
++		INVALID_LEVEL,
++		UNSUPPORTED,
++		COOLDOWN,
++		SAVE_FAILED
++	}
++
++	/**
++	 * @param selected выбранный уровень
++	 * @param earned высший изученный уровень на момент выбора
++	 */
++	public record Choice(int selected, int earned)
++	{
++	}
++
++	/**
++	 * @param id навык
++	 * @param name имя навыка
++	 * @param known уровень сейчас
++	 * @param ordinary все уровни навыка в дереве класса
++	 * @param available уровни, доступные по уровню персонажа
++	 */
++	public record View(int id, String name, int known, NavigableSet<Integer> ordinary, NavigableSet<Integer> available)
++	{
++		/**
++		 * @return уровень сейчас — обычный уровень дерева класса (не заточка и не временная версия)
++		 */
++		public boolean regular()
++		{
++			return ordinary.contains(known);
++		}
++	}
++
++	private SkillLevelChoice()
++	{
++	}
++
++	public static boolean enabled()
++	{
++		return ENABLED;
++	}
++
++	// ---------- Хранение ----------
++
++	private static Map<Integer, Choice> decode(String value)
++	{
++		final Map<Integer, Choice> result = new TreeMap<>();
++		if ((value == null) || (value.length() > 32768))
++		{
++			return result;
++		}
++		for (String token : value.split(";"))
++		{
++			if (result.size() >= 256)
++			{
++				break;
++			}
++			final String[] fields = token.split(":", -1);
++			if (fields.length != 3)
++			{
++				continue;
++			}
++			try
++			{
++				final int id = Integer.parseInt(fields[0]);
++				final int selected = Integer.parseInt(fields[1]);
++				final int earned = Integer.parseInt(fields[2]);
++				if ((id > 0) && (selected > 0) && (earned >= selected))
++				{
++					result.put(id, new Choice(selected, earned));
++				}
++			}
++			catch (NumberFormatException e)
++			{
++				// Битая запись пропускается.
++			}
++		}
++		return result;
++	}
++
++	private static String encode(Map<Integer, Choice> choices)
++	{
++		final StringBuilder sb = new StringBuilder();
++		for (Map.Entry<Integer, Choice> entry : new TreeMap<>(choices).entrySet())
++		{
++			if (!sb.isEmpty())
++			{
++				sb.append(';');
++			}
++			sb.append(entry.getKey()).append(':').append(entry.getValue().selected()).append(':').append(entry.getValue().earned());
++		}
++		return sb.toString();
++	}
++
++	private static Object lock(Player player)
++	{
++		return LOCKS.computeIfAbsent(player.getObjectId(), k -> new Object());
++	}
++
++	// ---------- Для страницы доски ----------
++
++	/**
++	 * @param player персонаж
++	 * @return сохранённый выбор текущего класса (основа или саб)
++	 */
++	public static Map<Integer, Choice> choices(Player player)
++	{
++		return decode(new Context(player).read());
++	}
++
++	/**
++	 * @param player персонаж
++	 * @param id навык
++	 * @return изученный классовый навык или null
++	 */
++	public static View view(Player player, int id)
++	{
++		return new Context(player).view(id);
++	}
++
++	/**
++	 * @param player персонаж
++	 * @return навыки, у которых можно выбрать уровень или уже есть выбор, по имени
++	 */
++	public static List<View> rows(Player player)
++	{
++		final Context context = new Context(player);
++		final Map<Integer, Choice> choices = decode(context.read());
++		final List<View> rows = new ArrayList<>();
++		for (Skill skill : player.getSkills().values())
++		{
++			final View view = context.view(skill.getId());
++			if ((view != null) && (choices.containsKey(view.id()) || (view.regular() && (view.known() > 1))))
++			{
++				rows.add(view);
++			}
++		}
++		rows.sort(Comparator.comparing(View::name, String.CASE_INSENSITIVE_ORDER).thenComparingInt(View::id));
++		return rows;
++	}
++
++	/**
++	 * @param player персонаж
++	 * @param view навык
++	 * @return уровни, которые можно выбрать: доступные по уровню персонажа и не выше изученного
++	 */
++	public static List<Integer> levels(Player player, View view)
++	{
++		final Choice choice = choices(player).get(view.id());
++		final int earned = Math.max(view.known(), choice == null ? 0 : choice.earned());
++		final List<Integer> levels = new ArrayList<>();
++		for (int level : view.available().headSet(earned, true))
++		{
++			final Skill candidate = SkillData.getInstance().getSkill(view.id(), level);
++			if ((candidate != null) && (candidate.getId() == view.id()) && (candidate.getLevel() == level))
++			{
++				levels.add(level);
++			}
++		}
++		return levels;
++	}
++
++	/**
++	 * Выбрать уровень навыка.
++	 * @param player персонаж
++	 * @param id навык
++	 * @param level уровень
++	 * @return итог
++	 */
++	public static Result select(Player player, int id, int level)
++	{
++		if (!ENABLED)
++		{
++			return Result.DISABLED;
++		}
++		synchronized (lock(player))
++		{
++			final Context context = new Context(player);
++			if (context.blocked())
++			{
++				return Result.BLOCKED;
++			}
++			final View view = context.view(id);
++			if (view == null)
++			{
++				return Result.NO_SKILL;
++			}
++			if (!view.regular())
++			{
++				return Result.UNSUPPORTED;
++			}
++			final String before = context.read();
++			final Map<Integer, Choice> choices = decode(before);
++			final Choice previous = choices.get(id);
++			final int earned = Math.min(view.ordinary().last(), Math.max(view.known(), previous == null ? 0 : previous.earned()));
++			if ((level <= 0) || (level > earned) || !view.available().contains(level))
++			{
++				return Result.INVALID_LEVEL;
++			}
++			if (context.cooling(id, earned))
++			{
++				return Result.COOLDOWN;
++			}
++			if ((previous != null) && (previous.selected() == level) && (view.known() == level))
++			{
++				return Result.UNCHANGED;
++			}
++			choices.put(id, new Choice(level, earned));
++			if (!commit(context, before, choices))
++			{
++				return Result.SAVE_FAILED;
++			}
++			try
++			{
++				if (view.known() != level)
++				{
++					context.useLevel(id, level);
++				}
++				context.refresh();
++				return Result.CHANGED;
++			}
++			catch (RuntimeException e)
++			{
++				try
++				{
++					context.save(before);
++					context.useLevel(id, view.known());
++				}
++				catch (RuntimeException rollback)
++				{
++					LOGGER.log(Level.WARNING, "SkillLevelChoice: rollback failed for " + player, rollback);
++				}
++				LOGGER.log(Level.WARNING, "SkillLevelChoice: could not apply level for " + player, e);
++				return Result.SAVE_FAILED;
++			}
++		}
++	}
++
++	/**
++	 * Снять выбор и вернуть высший изученный доступный уровень. Работает и при выключенном выборе.
++	 * @param player персонаж
++	 * @param id навык
++	 * @return итог
++	 */
++	public static Result automatic(Player player, int id)
++	{
++		synchronized (lock(player))
++		{
++			final Context context = new Context(player);
++			if (context.blocked())
++			{
++				return Result.BLOCKED;
++			}
++			final String before = context.read();
++			final Map<Integer, Choice> choices = decode(before);
++			final Choice previous = choices.get(id);
++			if (previous == null)
++			{
++				return Result.UNCHANGED;
++			}
++			final View view = context.view(id);
++			int target = 0;
++			if ((view != null) && view.regular())
++			{
++				final int earned = Math.max(view.known(), previous.earned());
++				final Integer allowed = view.available().floor(earned);
++				target = allowed == null ? view.known() : Math.max(view.known(), allowed);
++				if (context.cooling(id, earned))
++				{
++					return Result.COOLDOWN;
++				}
++			}
++			// Пропавшие, заточенные, предметные и навыки трансформации здесь не создаются и не заменяются.
++			choices.remove(id);
++			if (!commit(context, before, choices))
++			{
++				return Result.SAVE_FAILED;
++			}
++			try
++			{
++				if ((view != null) && (target > 0) && (target != view.known()))
++				{
++					context.useLevel(id, target);
++				}
++				context.refresh();
++				return Result.CHANGED;
++			}
++			catch (RuntimeException e)
++			{
++				try
++				{
++					context.save(before);
++					if ((view != null) && (target > 0))
++					{
++						context.useLevel(id, view.known());
++					}
++				}
++				catch (RuntimeException rollback)
++				{
++					LOGGER.log(Level.WARNING, "SkillLevelChoice: rollback failed for " + player, rollback);
++				}
++				LOGGER.log(Level.WARNING, "SkillLevelChoice: could not restore level for " + player, e);
++				return Result.SAVE_FAILED;
++			}
++		}
++	}
++
++	// ---------- Хуки Player ----------
++
++	/**
++	 * После штатного автоизучения: вернуть выбранные уровни. Внутри цикла изучения не вызывать.
++	 * @param player персонаж
++	 */
++	public static void afterAutoLearn(Player player)
++	{
++		if (!ENABLED || (player == null) || player.isTransformed() || !player.hasVariables())
++		{
++			return;
++		}
++		try
++		{
++			if (player.getVariables().getString(PREFIX + player.getClassIndex(), "").isBlank())
++			{
++				return;
++			}
++			synchronized (lock(player))
++			{
++				reapply(new Context(player));
++			}
++		}
++		catch (RuntimeException e)
++		{
++			LOGGER.log(Level.WARNING, "SkillLevelChoice: could not reapply levels for " + player, e);
++		}
++	}
++
++	/**
++	 * При входе живого игрока (с клиентом): вернуть выбранные уровни.
++	 * @param player персонаж
++	 */
++	public static void entered(Player player)
++	{
++		if (!ENABLED || (player == null) || player.isTransformed() || (player.getClient() == null))
++		{
++			return;
++		}
++		try
++		{
++			synchronized (lock(player))
++			{
++				final Context context = new Context(player);
++				if (reapply(context))
++				{
++					context.refresh();
++				}
++			}
++		}
++		catch (RuntimeException e)
++		{
++			LOGGER.log(Level.WARNING, "SkillLevelChoice: could not restore levels on login for " + player, e);
++		}
++	}
++
++	private static boolean reapply(Context context)
++	{
++		final String before = context.read();
++		final Map<Integer, Choice> choices = decode(before);
++		final Map<Integer, Integer> changes = new TreeMap<>();
++		for (Map.Entry<Integer, Choice> entry : choices.entrySet())
++		{
++			final int id = entry.getKey();
++			final Choice choice = entry.getValue();
++			final View view = context.view(id);
++			if ((view == null) || !view.regular())
++			{
++				continue;
++			}
++			final int earned = Math.min(view.ordinary().last(), Math.max(choice.earned(), view.known()));
++			final Integer target = view.available().floor(Math.min(choice.selected(), earned));
++			entry.setValue(new Choice(choice.selected(), earned));
++			if ((target != null) && (target != view.known()))
++			{
++				changes.put(id, target);
++			}
++		}
++		if (!encode(choices).equals(before) && !commit(context, before, choices))
++		{
++			return false;
++		}
++		boolean changed = false;
++		for (Map.Entry<Integer, Integer> entry : changes.entrySet())
++		{
++			try
++			{
++				context.useLevel(entry.getKey(), entry.getValue());
++				changed = true;
++			}
++			catch (RuntimeException e)
++			{
++				LOGGER.log(Level.WARNING, "SkillLevelChoice: could not reapply skill " + entry.getKey() + " for " + context.player, e);
++			}
++		}
++		return changed;
++	}
++
++	private static boolean commit(Context context, String before, Map<Integer, Choice> choices)
++	{
++		try
++		{
++			if (context.save(encode(choices)))
++			{
++				return true;
++			}
++		}
++		catch (RuntimeException e)
++		{
++			LOGGER.log(Level.WARNING, "SkillLevelChoice: could not save choice for " + context.player, e);
++		}
++		try
++		{
++			context.save(before);
++		}
++		catch (RuntimeException e)
++		{
++			LOGGER.log(Level.WARNING, "SkillLevelChoice: could not restore choice for " + context.player, e);
++		}
++		return false;
++	}
++
++	/**
++	 * Дерево класса персонажа на момент операции и доступ к его навыкам.
++	 */
++	private static final class Context
++	{
++		final Player player;
++		final int classIndex;
++		final int classId;
++		final String key;
++		final Map<Integer, NavigableSet<Integer>> ordinary = new TreeMap<>();
++		final Map<Integer, NavigableSet<Integer>> available = new TreeMap<>();
++
++		Context(Player player)
++		{
++			this.player = player;
++			classIndex = player.getClassIndex();
++			classId = player.getPlayerClass().getId();
++			key = PREFIX + classIndex;
++			for (SkillLearn learn : SkillTreeData.getInstance().getCompleteClassSkillTree(player.getPlayerClass()).values())
++			{
++				ordinary.computeIfAbsent(learn.getSkillId(), k -> new TreeSet<>()).add(learn.getSkillLevel());
++				if (learn.getGetLevel() <= player.getLevel())
++				{
++					available.computeIfAbsent(learn.getSkillId(), k -> new TreeSet<>()).add(learn.getSkillLevel());
++				}
++			}
++		}
++
++		String read()
++		{
++			return player.getVariables().getString(key, "");
++		}
++
++		boolean save(String value)
++		{
++			final PlayerVariables variables = player.getVariables();
++			if (value.isEmpty())
++			{
++				variables.remove(key);
++			}
++			else
++			{
++				variables.set(key, value);
++			}
++			return !variables.hasChanges() || variables.saveNow();
++		}
++
++		View view(int id)
++		{
++			final Skill skill = player.getKnownSkill(id);
++			if ((skill == null) || skill.isGMSkill() || skill.isHeroSkill() || !ordinary.containsKey(id))
++			{
++				return null;
++			}
++			return new View(id, skill.getName(), skill.getLevel(), ordinary.get(id), available.getOrDefault(id, Collections.emptyNavigableSet()));
++		}
++
++		boolean blocked()
++		{
++			return (player.getClassIndex() != classIndex) || (player.getPlayerClass().getId() != classId) || player.isChangingClass() || player.isDead() || player.isInCombat() || player.isCastingNow() || player.isInOlympiadMode() || player.isOnEvent() || player.isInDuel() || player.isInStoreMode() || player.isTeleporting() || player.isTransformed();
++		}
++
++		boolean cooling(int id, int highest)
++		{
++			for (int level : ordinary.getOrDefault(id, Collections.emptyNavigableSet()).headSet(highest, true))
++			{
++				final Skill skill = SkillData.getInstance().getSkill(id, level);
++				if ((skill != null) && player.isSkillDisabled(skill))
++				{
++					return true;
++				}
++			}
++			return false;
++		}
++
++		void useLevel(int id, int level)
++		{
++			if ((player.getClassIndex() != classIndex) || (player.getPlayerClass().getId() != classId) || player.isTransformed())
++			{
++				throw new IllegalStateException("Character class changed");
++			}
++			final Skill skill = SkillData.getInstance().getSkill(id, level);
++			final Skill previous = player.getKnownSkill(id);
++			if ((skill == null) || (skill.getId() != id) || (skill.getLevel() != level) || (previous == null))
++			{
++				throw new IllegalArgumentException("Missing learned skill level");
++			}
++			if (previous.isToggle() && player.isAffectedBySkill(id))
++			{
++				player.stopSkillEffects(SkillFinishType.REMOVED, id);
++			}
++			// В базу не пишется: там остаётся высший изученный уровень и его заточка.
++			player.addSkill(skill, false);
++			player.updateShortcuts(id, level);
++			// Пониженный пассив может срезать максимум; возврат уровня не лечит даром.
++			if (player.getCurrentHp() > player.getMaxHp())
++			{
++				player.setCurrentHp(player.getMaxHp());
++			}
++			if (player.getCurrentMp() > player.getMaxMp())
++			{
++				player.setCurrentMp(player.getMaxMp());
++			}
++			if (player.getCurrentCp() > player.getMaxCp())
++			{
++				player.setCurrentCp(player.getMaxCp());
++			}
++		}
++
++		void refresh()
++		{
++			player.sendSkillList();
++			player.sendPacket(new ShortcutInit(player));
++			player.broadcastUserInfo();
++		}
++	}
++}

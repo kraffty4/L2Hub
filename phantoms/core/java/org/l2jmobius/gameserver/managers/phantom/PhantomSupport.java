@@ -18,6 +18,7 @@ import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
 import org.l2jmobius.gameserver.config.custom.PhantomPartyConfig;
 import org.l2jmobius.gameserver.data.SchemeBufferTable;
 import org.l2jmobius.gameserver.data.xml.SkillData;
+import org.l2jmobius.gameserver.entity.Location;
 import org.l2jmobius.gameserver.entity.World;
 import org.l2jmobius.gameserver.entity.WorldObject;
 import org.l2jmobius.gameserver.entity.actor.Creature;
@@ -28,6 +29,7 @@ import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
 import org.l2jmobius.gameserver.mechanics.skill.AbnormalType;
 import org.l2jmobius.gameserver.mechanics.skill.BuffInfo;
 import org.l2jmobius.gameserver.mechanics.skill.Skill;
+import org.l2jmobius.gameserver.mechanics.skill.enums.SkillFinishType;
 import org.l2jmobius.gameserver.network.enums.ChatType;
 import org.l2jmobius.gameserver.network.serverpackets.CreatureSay;
 
@@ -239,7 +241,7 @@ final class PhantomSupport
 		{
 			final BuffSkillHolder holder = table.getAvailableBuff(group, skillId);
 			final Skill skill = holder == null ? null : SkillData.getInstance().getSkill(skillId, holder.getLevel());
-			if ((skill != null) && skill.isContinuous())
+			if ((skill != null) && skill.isContinuous() && PhantomPersonalNoblesse.allows(phantom, skillId))
 			{
 				set.add(skill);
 			}
@@ -1234,14 +1236,55 @@ final class PhantomSupport
 		{
 			PhantomCompat.addItem(phantom, ItemProcessType.REWARD, HOLY_WATER, WATER_STOCK, null);
 		}
-		for (Player member : members)
+		// Переделка сопровождающего Эпилога (2026-11-07): у кого тяжелее — первым; кто в досягаемости — первым, к дальнему идёт, только если ближним снимать нечего.
+		final List<Player> ordered = new ArrayList<>(members);
+		ordered.sort((a, b) -> Integer.compare(curePriority(b), curePriority(a)));
+		Player approach = null;
+		Skill approachSkill = null;
+		for (Player member : ordered)
 		{
-			if (!member.isDead() && cast(state, phantom, cureSkill(phantom, member, hard), member, now))
+			final Skill skill = member.isDead() ? null : cureSkill(phantom, member, hard);
+			if (skill == null)
+			{
+				continue;
+			}
+			final int range = phantom.getMagicalAttackRange(skill);
+			if ((member != phantom) && (range >= 0)
+				&& (!PhantomCompanionManager.inReach(phantom, member, range)
+					|| !org.l2jmobius.gameserver.geoengine.GeoEngine.getInstance().canSeeTarget(phantom, member)))
+			{
+				if (approach == null)
+				{
+					approach = member;
+					approachSkill = skill;
+				}
+				continue;
+			}
+			if (cast(state, phantom, skill, member, now))
 			{
 				return true;
 			}
 		}
-		return false;
+		return (approach != null) && cast(state, phantom, approachSkill, approach, now);
+	}
+
+	/**
+	 * Очередь снятия дебаффов: 2 — есть тяжёлый (выключает из боя), 1 — есть другой снимаемый, 0 — снимать нечего.
+	 * @param player член пати
+	 * @return вес в очереди, больше — раньше
+	 */
+	static int curePriority(Player player)
+	{
+		int result = 0;
+		for (BuffInfo info : player.getEffectList().getEffects())
+		{
+			final Skill bad = info.getSkill();
+			if (bad.isDebuff() && PhantomCompat.canBeDispeled(bad))
+			{
+				result = Math.max(result, isHard(String.valueOf(bad.getAbnormalType())) ? 2 : 1);
+			}
+		}
+		return result;
 	}
 
 	/**
@@ -1360,6 +1403,8 @@ final class PhantomSupport
 		final boolean key = PhantomHuntersConfig.HUNTER_SUPPORT_CURES;
 		Player owner = null;
 		PhantomTemplate healerTemplate = null;
+		Player member = null;
+		PhantomTemplate memberTemplate = null;
 		try
 		{
 			check(tag, failed, "1. таблица Purify", purifyCures(1, "POISON", 3) && !purifyCures(1, "POISON", 4) && purifyCures(2, "BLEEDING", 7) && !purifyCures(2, "BLEEDING", 8) && purifyCures(3, "POISON", 9) && !purifyCures(3, "POISON", 10) && purifyCures(1, "PARALYZE", 1) && !purifyCures(1, "TURN_STONE", 2) && purifyCures(2, "TURN_STONE", 2) && !purifyCures(3, "STUN", 1), "");
@@ -1447,6 +1492,50 @@ final class PhantomSupport
 				Thread.sleep(250);
 			}
 			check(tag, failed, "5. ключ включён: хилер снял яд", owner.getEffectList().getBuffInfoBySkillId(POISON_SKILL) == null, "HP " + hpPercent(owner));
+
+			// Шаг 6 (мост, ep-cardinal-cleanse-skips-party-phantoms): тот же яд на охотнике в той же пати — снимает и его, а не только живого.
+			for (Player player : world)
+			{
+				final PhantomTemplate template = PhantomData.getInstance().getTemplate(player.getName());
+				if ((player != healer) && (player != owner) && (template != null) && !player.isInParty() && !player.isDead() && PhantomHunterManager.getInstance().isHunting(player) && PhantomHunterManager.getInstance().acceptsInvite(template, owner))
+				{
+					member = player;
+					memberTemplate = template;
+					break;
+				}
+			}
+			if (member == null)
+			{
+				LOGGER.warning(tag + "6. no third hunter near the owner's level, the party member step is skipped.");
+			}
+			else
+			{
+				PhantomFavors.getInstance().freeze(member);
+				member.teleToLocation(new Location(owner.getX() + 60, owner.getY(), owner.getZ()), false);
+				PhantomCompanionManager.getInstance().onInvited(owner, member, null);
+				Thread.sleep(3000);
+				if (!member.isInParty() || (member.getParty() != owner.getParty()))
+				{
+					check(tag, failed, "6. охотник вступил в пати", false, member.getName() + " в пати " + member.isInParty());
+				}
+				else
+				{
+					member.setCurrentHp(member.getMaxHp());
+					healer.setCurrentMp(healer.getMaxMp());
+					for (int i = 0; (i < 100) && (member.getEffectList().getBuffInfoBySkillId(POISON_SKILL) == null); i++)
+					{
+						poison.applyEffects(member, member);
+					}
+					final boolean poisoned = member.getEffectList().getBuffInfoBySkillId(POISON_SKILL) != null;
+					final long memberDeadline = System.currentTimeMillis() + 15000;
+					while (poisoned && (member.getEffectList().getBuffInfoBySkillId(POISON_SKILL) != null) && (System.currentTimeMillis() < memberDeadline))
+					{
+						Thread.sleep(250);
+					}
+					check(tag, failed, "6. хилер снял яд с охотника в пати", poisoned && (member.getEffectList().getBuffInfoBySkillId(POISON_SKILL) == null), member.getName() + " (" + member.getLevel() + "), яд лёг " + poisoned + ", до хилера " + Math.round(healer.calculateDistance2D(member)));
+						orderSteps(tag, failed, healer, owner, member, poison, purifyLevel);
+				}
+			}
 			LOGGER.info(tag + "done, " + failed.size() + " failed" + (failed.isEmpty() ? "." : ": " + failed));
 		}
 		catch (Exception e)
@@ -1462,6 +1551,11 @@ final class PhantomSupport
 			{
 				PhantomCompanionManager.getInstance().release(healerTemplate, true);
 			}
+			if (memberTemplate != null)
+			{
+				PhantomCompanionManager.getInstance().release(memberTemplate, true);
+				PhantomFavors.getInstance().unfreeze(member);
+			}
 			if (owner != null)
 			{
 				PhantomFavors.getInstance().unfreeze(owner);
@@ -1470,6 +1564,116 @@ final class PhantomSupport
 					owner.leaveParty();
 				}
 			}
+		}
+	}
+
+	/**
+	 * Шаги 7 и 8 CURES — порядок снятия (переделка сопровождающего Эпилога): тяжёлый дебафф раньше лёгкого, досягаемый раньше дальнего.
+	 * Владелец первым в списке пати, поэтому без очереди хилер начинал бы с него.
+	 */
+	private static void orderSteps(String tag, List<String> failed, Player healer, Player owner, Player member, Skill poison, int purifyLevel) throws InterruptedException
+	{
+		// Шаг 7: на владельце яд, на охотнике рядом паралич, который берёт Purify, — первым снимается паралич.
+		Skill paralysis = null;
+		for (int id = 1; (id < 30000) && (paralysis == null); id++)
+		{
+			if (SkillData.getInstance().getMaxLevel(id) < 1)
+			{
+				continue;
+			}
+			final Skill skill = SkillData.getInstance().getSkill(id, 1);
+			if ((skill != null) && skill.isDebuff() && PhantomCompat.canBeDispeled(skill) && "PARALYZE".equals(String.valueOf(skill.getAbnormalType())) && purifyCures(purifyLevel, "PARALYZE", skill.getAbnormalLevel()))
+			{
+				paralysis = skill;
+			}
+		}
+		final int poisonId = poison.getId();
+		if (paralysis == null)
+		{
+			LOGGER.warning(tag + "7. no paralysis Purify takes in the datapack, the hard-first step is skipped.");
+		}
+		else
+		{
+			owner.setCurrentHp(owner.getMaxHp());
+			member.setCurrentHp(member.getMaxHp());
+			healer.setCurrentMp(healer.getMaxMp());
+			for (int i = 0; (i < 100) && (owner.getEffectList().getBuffInfoBySkillId(poisonId) == null); i++)
+			{
+				poison.applyEffects(owner, owner);
+			}
+			for (int i = 0; (i < 100) && (member.getEffectList().getBuffInfoBySkillId(paralysis.getId()) == null); i++)
+			{
+				paralysis.applyEffects(member, member);
+			}
+			final boolean laid = (owner.getEffectList().getBuffInfoBySkillId(poisonId) != null) && (member.getEffectList().getBuffInfoBySkillId(paralysis.getId()) != null);
+			final long[] gone = waitCured(owner, poisonId, member, paralysis.getId(), laid);
+			check(tag, failed, "7. тяжёлое первым: паралич охотника снят раньше яда владельца", laid && (gone[1] > 0) && ((gone[0] == 0) || (gone[1] < gone[0])),
+				"паралич " + paralysis.getId() + ", лёг " + laid + ", приоритеты " + curePriority(owner) + "/" + curePriority(member) + ", яд снят через " + gone[0] + " мс, паралич через " + gone[1] + " мс");
+			clearLeft(owner, poisonId);
+			clearLeft(member, paralysis.getId());
+		}
+
+		// Шаг 8: оба отравлены, владелец вне досягаемости Purify (в пати, в радиусе поддержки), охотник рядом — каст идёт на охотника.
+		// Решение берётся сразу после телепорта прямым вызовом cure: напарник бежит за владельцем и через пару секунд уже достаёт до него.
+		final int range = healer.getMagicalAttackRange(healer.getKnownSkill(PURIFY));
+		final int far = Math.min(SUPPORT_RANGE - 40, range + 220);
+		owner.setCurrentHp(owner.getMaxHp());
+		member.setCurrentHp(member.getMaxHp());
+		healer.setCurrentMp(healer.getMaxMp());
+		for (int i = 0; (i < 100) && (owner.getEffectList().getBuffInfoBySkillId(poisonId) == null); i++)
+		{
+			poison.applyEffects(owner, owner);
+		}
+		for (int i = 0; (i < 100) && (member.getEffectList().getBuffInfoBySkillId(poisonId) == null); i++)
+		{
+			poison.applyEffects(member, member);
+		}
+		final boolean laid = (owner.getEffectList().getBuffInfoBySkillId(poisonId) != null) && (member.getEffectList().getBuffInfoBySkillId(poisonId) != null);
+		healer.abortCast();
+		owner.teleToLocation(new Location(healer.getX() + far, healer.getY(), healer.getZ()), false);
+		member.teleToLocation(new Location(healer.getX() + 60, healer.getY(), healer.getZ()), false);
+		Thread.sleep(300);
+		healer.abortCast();
+		final int distance = (int) Math.round(healer.calculateDistance2D(owner));
+		final boolean listed = partyNearby(healer).contains(owner) && partyNearby(healer).contains(member);
+		final boolean first = !healer.getParty().getMembers().isEmpty() && (healer.getParty().getMembers().get(0) == owner);
+		final boolean started = cure(new State(), healer, partyNearby(healer), false, System.currentTimeMillis());
+		final WorldObject picked = healer.getTarget();
+		final long[] gone = waitCured(owner, poisonId, member, poisonId, laid);
+		// Цель сразу после вызова — только сведения: свой тик напарника может успеть навести её на себя. Проверка — кто вылечен первым.
+		check(tag, failed, "8. досягаемый первым: дальний владелец первым в пати, яд охотника рядом снят раньше", laid && listed && first && (distance > (range + 40)) && (gone[1] > 0) && ((gone[0] == 0) || (gone[1] < gone[0])),
+			"лёг " + laid + ", оба в радиусе поддержки " + listed + ", владелец первый в пати " + first + ", владелец в " + distance + " при дальности Purify " + range + ", первый каст " + started + " на " + (picked == null ? "нет" : picked.getName()) + ", яд владельца снят через " + gone[0] + " мс, охотника через " + gone[1] + " мс");
+		clearLeft(owner, poisonId);
+		clearLeft(member, poisonId);
+	}
+
+	/** Ждёт до 20 с, пока снимут оба дебаффа. @return через сколько мс снят первый и второй, 0 — не снят */
+	private static long[] waitCured(Player first, int firstSkill, Player second, int secondSkill, boolean laid) throws InterruptedException
+	{
+		final long[] gone = new long[2];
+		final long start = System.currentTimeMillis();
+		while (laid && ((gone[0] == 0) || (gone[1] == 0)) && ((System.currentTimeMillis() - start) < 20000))
+		{
+			Thread.sleep(100);
+			final long at = Math.max(1, System.currentTimeMillis() - start);
+			if ((gone[0] == 0) && (first.getEffectList().getBuffInfoBySkillId(firstSkill) == null))
+			{
+				gone[0] = at;
+			}
+			if ((gone[1] == 0) && (second.getEffectList().getBuffInfoBySkillId(secondSkill) == null))
+			{
+				gone[1] = at;
+			}
+		}
+		return gone;
+	}
+
+	/** Не оставлять самопроверочный дебафф: снять тем же путём, что и снятие в бою. */
+	private static void clearLeft(Player player, int skillId)
+	{
+		if (player.getEffectList().getBuffInfoBySkillId(skillId) != null)
+		{
+			player.stopSkillEffects(SkillFinishType.REMOVED, skillId);
 		}
 	}
 

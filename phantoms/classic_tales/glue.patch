@@ -212,7 +212,7 @@ index 6e1a0a289f404f96eb21f064cec03d8a06adaf39..ddff07fa3137b5c855ac6db8ead86eb7
  		{
  			final int region = MapRegionData.getInstance().getMapRegionLocId(activeChar);
 diff --git a/dist/game/data/scripts/handlers/chat/channels/ChatTrade.java b/dist/game/data/scripts/handlers/chat/channels/ChatTrade.java
-index b6848b4dd58185d6d8744c5e7da76911b899c059..d4266d46c39d9935ce40e0cb7a2360d69ce0a21a 100644
+index b6848b4dd58185d6d8744c5e7da76911b899c059..ea1b8ecde88bb27c419ddda4f5f5fc3ba8c2b534 100644
 --- a/dist/game/data/scripts/handlers/chat/channels/ChatTrade.java
 +++ b/dist/game/data/scripts/handlers/chat/channels/ChatTrade.java
 @@ -27,6 +27,8 @@ import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
@@ -310,7 +310,7 @@ index 7c6f14a5ff56cf1c16f13ffe35a494154bfb2593..4020121848b10e759e44800f0e6c30a3
  </list>
 \ No newline at end of file
 diff --git a/dist/game/data/stats/players/initialShortcuts.xml b/dist/game/data/stats/players/initialShortcuts.xml
-index c7cc9a2fcbe366bdf6deb47b4598ff03fda91bb9..c74313f0aa39a4df742ae09eb6ee06dfdd91e682 100644
+index c7cc9a2fcbe366bdf6deb47b4598ff03fda91bb9..5931990440014b8317821d5b321a9b6ff1a50644 100644
 --- a/dist/game/data/stats/players/initialShortcuts.xml
 +++ b/dist/game/data/stats/players/initialShortcuts.xml
 @@ -4,10 +4,16 @@
@@ -343,7 +343,7 @@ index c7cc9a2fcbe366bdf6deb47b4598ff03fda91bb9..c74313f0aa39a4df742ae09eb6ee06df
 +			<command type="TEXT">/unstuck</command>
 +		</macro>
 +		<!-- L2Hub: охотники мира — кто где качается, позвать в пати (.hunters). -->
-+		<macro macroId="10102" icon="3" name="Охотники" description="Кто где качается (.hunters)" acronym="HUNT">
++		<macro macroId="10102" icon="3" name="Пешки" description="Кто где качается (.hunters)" acronym="HUNT">
 +			<command type="TEXT">.hunters</command>
 +		</macro>
 +		<!-- L2Hub: поручения дня и награды за них (.daily). -->
@@ -351,7 +351,7 @@ index c7cc9a2fcbe366bdf6deb47b4598ff03fda91bb9..c74313f0aa39a4df742ae09eb6ee06df
 +			<command type="TEXT">.daily</command>
 +		</macro>
 +		<!-- L2Hub: рейд охотников на РБ — вступить, телепорт к сбору (.raid). -->
-+		<macro macroId="10104" icon="5" name="Рейд" description="Рейд охотников на РБ (.raid)" acronym="RAID">
++		<macro macroId="10104" icon="5" name="Рейд" description="Рейд пешек на РБ (.raid)" acronym="RAID">
 +			<command type="TEXT">.raid</command>
 +		</macro>
 +		<!-- L2Hub: мир сейчас — суперчемпионы, сезонные события, ивенты (.world). -->
@@ -472,7 +472,7 @@ index b6232039749567cb456a879ebde0f4b279b558b2..053001259a4d372d1ef1b36e60e9fb0a
  						stm3.setInt(1, pc.getObjectId()); // Char Id
  						stm3.setLong(2, pc.getOfflineStartTime());
 diff --git a/java/org/l2jmobius/gameserver/entity/actor/Creature.java b/java/org/l2jmobius/gameserver/entity/actor/Creature.java
-index a841484e8c1cd7f40fa54aba391edf7b5962e7f0..e22179511db6430d3564450fae10d206c15efb44 100644
+index 42fce6b2128533757ef15e226385895b00a6d126..69d92be2b7e48cd490528128712febf35cb82125 100644
 --- a/java/org/l2jmobius/gameserver/entity/actor/Creature.java
 +++ b/java/org/l2jmobius/gameserver/entity/actor/Creature.java
 @@ -972,11 +972,12 @@ public abstract class Creature extends WorldObject

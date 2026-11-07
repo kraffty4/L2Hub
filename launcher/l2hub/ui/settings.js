@@ -22,7 +22,7 @@
 
   function build(r) {
     const sw = Object.fromEntries((r.switches || []).filter((s) => s.available).map((s) => [s.id, s]));
-    const swKeys = new Set(Object.values(sw).flatMap((s) => s.keys));
+    const coveredBySwitch = (key) => Object.values(sw).some((s) => s.part === key.part && s.keys.includes(key.key) && s.file.split(/[\\/]/).pop() === key.file.split(/[\\/]/).pop());
     const placed = new Set();
     const all = r.pages.map((p) => {
       const absent = [];
@@ -32,9 +32,10 @@
           if (!sw[id]) absent.push(id);
         }
         // Ключ уже стоит выключателем на этой же сборке — второй строки не надо.
-        const keys = (x.keys || []).map(([key, title, choices, text]) => ({ k: findKey(key), title, choices, text: text && findKey(text) }))
-          .filter((x2) => x2.k && !swKeys.has(x2.k.key));
-        return { title: x.title || '', rows: (x.ids || []).filter((id) => sw[id]).map((id) => sw[id]), keys };
+        const scopedKey = (key) => x.file ? Object.values(KEYS).find((k) => k.part === 'game' && k.key === key && (k.file === x.file || k.file.endsWith('/' + x.file) || k.file.endsWith('\\' + x.file))) : findKey(key);
+        const keys = (x.keys || []).map(([key, title, choices, text]) => ({ k: scopedKey(key), title, choices, text: text && scopedKey(text) }))
+          .filter((x2) => x2.k && !coveredBySwitch(x2.k));
+        return { title: x.title || '', note: x.note, rows: (x.ids || []).filter((id) => sw[id]).map((id) => sw[id]), keys };
       }).filter((x) => x.rows.length || x.keys.length);
       return { ...p, subs, absent: absent.map((id) => r.switches.find((s) => s.id === id)?.title).filter(Boolean),
         rates: rateList(p.rates), fine: rateList(p.fine) };
@@ -100,7 +101,7 @@
       ctl.className = 'knum';
       ctl.innerHTML = x.choices.map((c) => `<option${c === valOf(k) ? ' selected' : ''}>${esc(c)}</option>`).join('');
       ctl.onchange = () => { setVal(k, ctl.value); mark(); };
-    } else if (k.type === 'bool' || k.secret || x.plain) {
+    } else if (k.type === 'bool' || k.secret || x.plain || !['int', 'float'].includes(k.type)) {
       ctl = control(k, mark);
     } else {
       ctl = document.createElement('input');
@@ -158,16 +159,18 @@
   function huntersBlock() {
     const hm = state.huntersMax;
     if (!hm) return '';
+    const selectedCount = hm.configured > 0 ? hm.configured : hm.count;
     const m = hm.machine;
     const room = m ? `На этой машине ОЗУ ${String(m.ramGb).replace('.', ',')} ГБ, ${m.threads} потоков, куча гейма ${hm.heapGb} ГБ: рекомендуем до ${m.recommended}.` : `Куча гейма на этой машине — ${hm.heapGb} ГБ.`;
-    return `<div class="phunters${opened.has('hunters-note') ? ' open' : ''}"><div class="phunters-h"><span class="prow-t">${esc(hm.title)}</span><input class="field knum" id="huntersMax" value="${hm.count}" inputmode="numeric" aria-label="${esc(hm.title)}"><small>из ${hm.top} в таблице</small></div>
+    return `<div class="phunters${opened.has('hunters-note') ? ' open' : ''}"><div class="phunters-h"><span class="prow-t">${esc(hm.title)}</span><input class="field knum" id="huntersMax" value="${selectedCount}" inputmode="numeric" aria-label="${esc(hm.title)}"><small>из ${hm.top} в таблице${hm.roster ? ` · всего персонажей ${hm.roster.templates}` : ''}</small></div>
       <input type="range" id="huntersRange" min="1" max="${hm.top}" value="${hm.count}" aria-label="${esc(hm.title)}">
+      ${hm.tableMismatch ? `<div class="note bad-text">Сохранён лимит ${selectedCount}, но в XML доступно ${hm.top} пешек. Настройка сохранена; нужно обновить таблицу персонажей.</div>` : ''}
       <button class="prow-m" id="huntersNote"><span class="prow-n"><span>${esc(hm.note)}</span> <span>${esc(room)}</span></span></button>
       ${(m?.warnings || []).map((w) => `<div class="note bad-text">${esc(w)}</div>`).join('')}${m && !m.fits ? `<button class="sbtn mini" id="huntersFit">Поставить ${m.recommended}</button>` : ''}</div>`;
   }
 
   function subsHtml(p) {
-    return p.subs.map((x) => `${x.title ? `<h4 class="psub">${esc(x.title)}</h4>` : ''}<div class="pgroup">${x.rows.map(swRow).join('')}${x.keys.map(keyRow).join('')}</div>`).join('');
+    return p.subs.map((x) => `${x.title ? `<h4 class="psub">${esc(x.title)}</h4>` : ''}${x.note ? `<p class="phint">${esc(x.note)}</p>` : ''}<div class="pgroup">${x.rows.map(swRow).join('')}${x.keys.map(keyRow).join('')}</div>`).join('');
   }
 
   function drawPage(box) {
@@ -276,7 +279,7 @@
   async function setHunters(value) {
     const res = await api.set_hunters_max(selected, value);
     if (!res.ok) { toast(res.error, true); return res; }
-    toast(`Охотников в мире: ${res.count} из ${res.top}${res.cut ? ' — больше в таблице нет' : ''}. Сервер применит сам, за 10 секунд.`);
+    toast(`Пешек в мире: ${res.count} из ${res.top}${res.cut ? ' — больше в таблице нет' : ''}. Сервер применит сам, за 10 секунд.`);
     await loadSchema();
     return res;
   }

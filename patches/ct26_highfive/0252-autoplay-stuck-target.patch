@@ -1,0 +1,293 @@
+L2Hub: автобой меняет цель, с которой не может начать бой. Если уже выбранный моб не атакуется дольше
+AutoPlayStuckTargetSeconds (AutoPlay.ini, по умолчанию 20 с, 0 — выключить), моб уходит на паузу DETOUR_PAUSE,
+цель снимается, и автобой ищет следующую; пока пауза идёт, моба не берёт ни поиск, ни помощь лидеру. Стан, каст,
+ожидание отката и нехватка маны застреванием не считаются (AutoPlayTargetProgress). Обход за препятствием (0153)
+теперь продолжает идти к тому же мобу, пока игрок в движении, и тоже бросает его по паузе. Только живые игроки:
+фантомов это не касается. Перенос патча 0500 сопровождающего Эпилога (ветка epilogue закрытого L2Hub-epilogue,
+класс EpilogueAutoPlayProgress — здесь AutoPlayTargetProgress), номера строк — по High Five.
+Откат: удалить патч и пересобрать сервер.
+
+diff --git a/dist/game/config/Custom/AutoPlay.ini b/dist/game/config/Custom/AutoPlay.ini
+index 9cfbd50..d6eec26 100644
+--- a/dist/game/config/Custom/AutoPlay.ini
++++ b/dist/game/config/Custom/AutoPlay.ini
+@@ -30,6 +30,11 @@ AssistLeader = False
+ ShortRange = 600
+ LongRange = 1400
+ 
++# Уже выбранный моб не атакуется: сменить цель через указанное число секунд.
++# Стан, каст и ожидание доступного умения не считаются застреванием. 0 — отключить.
++# Default: 20
++AutoPlayStuckTargetSeconds = 20
++
+ # Enable .play command only for premium players.
+ # Premium System must be enabled.
+ # Default: False
+diff --git a/java/org/l2jmobius/gameserver/config/custom/AutoPlayConfig.java b/java/org/l2jmobius/gameserver/config/custom/AutoPlayConfig.java
+index 6c5ccae..e06bcf4 100644
+--- a/java/org/l2jmobius/gameserver/config/custom/AutoPlayConfig.java
++++ b/java/org/l2jmobius/gameserver/config/custom/AutoPlayConfig.java
+@@ -43,6 +43,7 @@ public class AutoPlayConfig
+ 	public static boolean ENABLE_AUTO_ASSIST;
+ 	public static int AUTO_PLAY_SHORT_RANGE;
+ 	public static int AUTO_PLAY_LONG_RANGE;
++	public static int AUTO_PLAY_STUCK_TARGET_SECONDS;
+ 	public static boolean AUTO_PLAY_PREMIUM;
+ 	public static Set<Integer> DISABLED_AUTO_SKILLS = new HashSet<>();
+ 	public static Set<Integer> DISABLED_AUTO_ITEMS = new HashSet<>();
+@@ -60,6 +61,7 @@ public class AutoPlayConfig
+ 		ENABLE_AUTO_ASSIST = config.getBoolean("AssistLeader", false);
+ 		AUTO_PLAY_SHORT_RANGE = config.getInt("ShortRange", 600);
+ 		AUTO_PLAY_LONG_RANGE = config.getInt("LongRange", 1400);
++		AUTO_PLAY_STUCK_TARGET_SECONDS = Math.clamp(config.getInt("AutoPlayStuckTargetSeconds", 20), 0, 3600);
+ 		AUTO_PLAY_PREMIUM = config.getBoolean("AutoPlayPremium", false);
+ 		
+ 		DISABLED_AUTO_SKILLS.clear();
+diff --git a/b/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTargetProgress.java b/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTargetProgress.java
+new file mode 100644
+index 0000000..25c9a6e
+--- /dev/null
++++ b/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTargetProgress.java
+@@ -0,0 +1,107 @@
++package org.l2jmobius.gameserver.taskmanagers;
++
++import java.lang.reflect.Field;
++
++import org.l2jmobius.gameserver.config.custom.AutoPlayConfig;
++import org.l2jmobius.gameserver.entity.actor.Creature;
++import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.mechanics.skill.Skill;
++
++/**
++ * L2Hub: застрял ли автобой на уже выбранном мобе (AutoPlayStuckTargetSeconds). Часы и список исключений — у AutoPlayTaskManager.
++ * Перенос патча 0500 сопровождающего Эпилога (класс EpilogueAutoPlayProgress).
++ */
++public final class AutoPlayTargetProgress
++{
++	private static final long UNKNOWN_ATTACK = Long.MIN_VALUE;
++	private static final Field ATTACK_END = attackField();
++
++	private AutoPlayTargetProgress() { }
++
++	private static Field attackField()
++	{
++		try
++		{
++			Field field = Creature.class.getDeclaredField("_attackEndTime");
++			return field.getType() == long.class && field.trySetAccessible() ? field : null;
++		}
++		catch (ReflectiveOperationException | RuntimeException ignored) { return null; }
++	}
++
++	static long attackStamp(Creature actor)
++	{
++		if (ATTACK_END != null)
++		{
++			try { return ATTACK_END.getLong(actor); }
++			catch (IllegalAccessException | RuntimeException ignored) { }
++		}
++		return UNKNOWN_ATTACK;
++	}
++
++	/** Состояние живёт в прежнем Detour, без второго таймера или глобальной карты. */
++	public static final class State
++	{
++		private boolean tracking;
++		private int targetId, instance, castStamp;
++		private long since, attackStamp;
++		private double hp;
++
++		public void clear() { tracking = false; }
++
++		boolean observe(int target, int world, double health, long attack, int cast,
++			boolean attackStarted, boolean castStarted, boolean busy, long now, long timeout)
++		{
++			if (timeout <= 0 || !Double.isFinite(health)) { clear(); return false; }
++			if (!tracking || targetId != target || instance != world || now < since)
++			{
++				tracking = true; targetId = target; instance = world; since = now;
++				hp = health; attackStamp = attack; castStamp = cast;
++				return false;
++			}
++			// Дедлайн начала атаки сохраняется и после короткой анимации между проходами.
++			if (busy || health < hp || (attackStarted && attack != attackStamp) || (castStarted && cast != castStamp)) since = now;
++			hp = health; attackStamp = attack; castStamp = cast;
++			return now - since >= timeout;
++		}
++	}
++
++	private static boolean hasAttackChoice(Player player)
++	{
++		if (player.getAutoUseSettings().getAutoActions().contains(2)) return true;
++		if ((player.hasServitor() || player.hasPet()) && player.getSummon() != null
++			&& !player.getSummon().isAlikeDead() && !player.getSummon().isDisabled()) return true;
++		if (!AutoPlayConfig.ENABLE_AUTO_SKILL) return false;
++		for (Integer id : player.getAutoUseSettings().getAutoSkills())
++		{
++			Skill skill = player.getKnownSkill(id);
++			if (skill == null || player.isSkillDisabled(skill)
++				|| player.getCurrentMp() < skill.getMpInitialConsume() + skill.getMpConsume()
++				|| player.getCurrentHp() <= skill.getHpConsume()
++				|| player.getCharges() < skill.getChargeConsumeCount()) continue;
++			if (skill.getItemConsumeCount() > 0 && player.getInventory().getInventoryItemCount(skill.getItemConsumeId(), -1) < skill.getItemConsumeCount()) continue;
++			return true;
++		}
++		return false;
++	}
++
++	public static boolean stalled(State state, Player player, Creature target, long now, long timeout)
++	{
++		if (timeout <= 0 || !target.isMonster() || target.isAlikeDead() || !player.hasAI()
++			|| player.isAlikeDead() || player.isDisabled() || player.isRooted()
++			|| player.isSitting() || player.isTeleporting() || !hasAttackChoice(player))
++		{
++			state.clear(); return false;
++		}
++		long attack = attackStamp(player);
++		boolean autoAttack = player.getAutoUseSettings().getAutoActions().contains(2);
++		// Без поля _attackEndTime (другая версия Mobius) короткая атака не должна считаться застреванием.
++		if (autoAttack && attack == UNKNOWN_ATTACK) { state.clear(); return false; }
++		Creature attacked = player.getAI().getAttackTarget();
++		boolean attackStarted = attacked != null && attacked.getObjectId() == target.getObjectId();
++		Skill cast = player.getLastSkillCast();
++		boolean castStarted = cast != null && cast.hasNegativeEffect();
++		return state.observe(target.getObjectId(), player.getInstanceId(), target.getCurrentHp(), attack,
++			player.getCastInterruptTime(), attackStarted, castStarted,
++			player.isAttackingNow() || player.isRangeAttackingNow() || player.isCastingNow(), now, timeout);
++	}
++}
+diff --git a/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTaskManager.java b/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTaskManager.java
+index cde3272..9c3c163 100644
+--- a/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTaskManager.java
++++ b/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTaskManager.java
+@@ -73,6 +73,7 @@ public class AutoPlayTaskManager
+ 		int targetId;
+ 		long since;
+ 		final Map<Integer, Long> unreachable = new ConcurrentHashMap<>();
++		final AutoPlayTargetProgress.State progress = new AutoPlayTargetProgress.State();
+ 	}
+ 	
+ 	private class AutoPlay implements Runnable
+@@ -107,10 +108,15 @@ public class AutoPlayTaskManager
+ 					player.setQueuedSkill(null, false, false);
+ 				}
+ 				
++				final Detour watched = PhantomManager.getInstance().isPhantom(player) ? null : DETOURS.computeIfAbsent(player, key -> new Detour());
++				final long now = System.currentTimeMillis();
++				if (watched != null) watched.unreachable.entrySet().removeIf(entry -> entry.getValue() <= now);
+ 				if (player.isSitting() || player.isCastingNow() || (player.getQueuedSkill() != null))
+ 				{
++					if (watched != null) { watched.progress.clear(); watched.since = now; }
+ 					continue PLAY;
+ 				}
++				if (watched != null && (player.isDisabled() || player.isRooted())) { watched.progress.clear(); watched.since = now; }
+ 				
+ 				// Next target mode.
+ 				final int targetMode = player.getAutoPlaySettings().getNextTargetMode();
+@@ -120,7 +126,7 @@ public class AutoPlayTaskManager
+ 				if ((target != null) && target.isCreature())
+ 				{
+ 					final Creature creature = target.asCreature();
+-					if (creature.isAlikeDead() || !isTargetModeValid(targetMode, player, creature))
++					if (creature.isAlikeDead() || !isTargetModeValid(targetMode, player, creature) || skipStalledTarget(player, creature, watched, now))
+ 					{
+ 						// Logic for Spoil (254) skill.
+ 						if (creature.isMonster() && creature.isDead() && player.getAutoUseSettings().getAutoSkills().contains(254))
+@@ -247,6 +253,7 @@ public class AutoPlayTaskManager
+ 				
+ 				// Reset idle count.
+ 				IDLE_COUNT.remove(player);
++				if (watched != null) watched.progress.clear();
+ 				
+ 				// Pickup.
+ 				if (player.getAutoPlaySettings().doPickup())
+@@ -297,7 +304,7 @@ public class AutoPlayTaskManager
+ 					if (leader.calculateDistance3D(player) < (PlayerConfig.ALT_PARTY_RANGE * 2 /* 2? */))
+ 					{
+ 						final WorldObject leaderTarget = leader.getTarget();
+-						if ((leaderTarget != null) && (leaderTarget.isAttackable() || (leaderTarget.isPlayable() && !party.containsPlayer(leaderTarget.asPlayer()))))
++						if ((leaderTarget != null) && (leaderTarget.isAttackable() || (leaderTarget.isPlayable() && !party.containsPlayer(leaderTarget.asPlayer()))) && !isUnreachable(player, leaderTarget, now))
+ 						{
+ 							creature = leaderTarget.asCreature();
+ 						}
+@@ -312,7 +319,7 @@ public class AutoPlayTaskManager
+ 					creature = World.getNearestVisibleObjectInRange(player, Creature.class, player.getAutoPlaySettings().isShortRange() && (targetMode != 2 /* Characters */) ? AutoPlayConfig.AUTO_PLAY_SHORT_RANGE : AutoPlayConfig.AUTO_PLAY_LONG_RANGE, nearby ->
+ 					{
+ 						// Skip unavailable creatures.
+-						if (nearby.isAlikeDead())
++						if (nearby.isAlikeDead() || isUnreachable(player, nearby, now))
+ 						{
+ 							return false;
+ 						}
+@@ -367,6 +374,35 @@ public class AutoPlayTaskManager
+ 			return !player.getAutoUseSettings().getAutoActions().contains(AUTO_ATTACK_ACTION);
+ 		}
+ 		
++		/**
++		 * L2Hub: моб в паузе «не подойти» (AutoPlayStuckTargetSeconds или обход за препятствием) — пока не цель.
++		 */
++		private boolean isUnreachable(Player player, WorldObject target, long now)
++		{
++			final Detour detour = DETOURS.get(player);
++			return target != null && target.isMonster() && detour != null
++				&& detour.unreachable.getOrDefault(target.getObjectId(), 0L) > now;
++		}
++	
++		/**
++		 * L2Hub: автобой не может начать бой с выбранным мобом дольше AutoPlayStuckTargetSeconds — моб на паузу, цель снимается.
++		 * Стан, каст и ожидание доступного умения застреванием не считаются (AutoPlayTargetProgress). Перенос патча 0500 сопровождающего Эпилога.
++		 */
++		private boolean skipStalledTarget(Player player, Creature target, Detour detour, long now)
++		{
++			if (detour == null) return false;
++			if (!target.isMonster() || target.isAlikeDead()) { detour.progress.clear(); return false; }
++			final boolean ignored = isUnreachable(player, target, now);
++			if (!ignored && !AutoPlayTargetProgress.stalled(detour.progress, player, target, now,
++				AutoPlayConfig.AUTO_PLAY_STUCK_TARGET_SECONDS * 1000L)) return false;
++			if (!ignored) detour.unreachable.put(target.getObjectId(), now + DETOUR_PAUSE);
++			detour.targetId = 0;
++			detour.progress.clear();
++			player.stopMove(null);
++			if (player.hasAI()) player.getAI().setIntentionActive();
++			return true;
++		}
++	
+ 		/**
+ 		 * L2Hub: целей на виду нет, а за деревом или камнем моб есть. Поиск цели отбрасывает всех, до кого нельзя дойти по прямой, и игрок стоит, пока рядом кто-нибудь не реснётся.
+ 		 * Идёт к ближайшему обычным ходом с поиском пути, как по клику; когда моб окажется на виду, его возьмёт обычный поиск.
+@@ -375,7 +411,7 @@ public class AutoPlayTaskManager
+ 		 */
+ 		private void walkAround(Player player, int targetMode)
+ 		{
+-			if (player.isMoving() || !player.hasAI() || player.isDisabled())
++			if (!player.hasAI() || player.isDisabled() || player.isRooted())
+ 			{
+ 				return;
+ 			}
+@@ -383,7 +419,13 @@ public class AutoPlayTaskManager
+ 			final Detour detour = DETOURS.computeIfAbsent(player, key -> new Detour());
+ 			final long now = System.currentTimeMillis();
+ 			final boolean respectful = player.getAutoPlaySettings().isRespectfulHunting();
+-			final Monster blocked = World.getNearestVisibleObjectInRange(player, Monster.class, player.getAutoPlaySettings().isShortRange() ? AutoPlayConfig.AUTO_PLAY_SHORT_RANGE : AutoPlayConfig.AUTO_PLAY_LONG_RANGE, nearby -> !nearby.isAlikeDead() && (Math.abs(player.getZ() - nearby.getZ()) < DETOUR_MAX_DZ) && (detour.unreachable.getOrDefault(nearby.getObjectId(), 0L) <= now) && isTargetModeValid(targetMode, player, nearby) && !(respectful && isBusyWithOther(player, nearby)));
++			final WorldObject previous = player.isMoving() ? World.findObject(detour.targetId) : null;
++			final Monster movingTarget = previous != null && previous.isMonster() && !previous.asMonster().isAlikeDead()
++			    && previous.getInstanceId() == player.getInstanceId() && isTargetModeValid(targetMode, player, previous.asCreature())
++			    && Math.abs(player.getZ() - previous.getZ()) < DETOUR_MAX_DZ
++			    && !(respectful && isBusyWithOther(player, previous.asCreature()))
++			    && detour.unreachable.getOrDefault(previous.getObjectId(), 0L) <= now ? previous.asMonster() : null;
++			final Monster blocked = movingTarget != null ? movingTarget : World.getNearestVisibleObjectInRange(player, Monster.class, player.getAutoPlaySettings().isShortRange() ? AutoPlayConfig.AUTO_PLAY_SHORT_RANGE : AutoPlayConfig.AUTO_PLAY_LONG_RANGE, nearby -> !nearby.isAlikeDead() && (Math.abs(player.getZ() - nearby.getZ()) < DETOUR_MAX_DZ) && (detour.unreachable.getOrDefault(nearby.getObjectId(), 0L) <= now) && isTargetModeValid(targetMode, player, nearby) && !(respectful && isBusyWithOther(player, nearby)));
+ 			if (blocked == null)
+ 			{
+ 				return;
+@@ -398,8 +440,11 @@ public class AutoPlayTaskManager
+ 			{
+ 				detour.unreachable.put(blocked.getObjectId(), now + DETOUR_PAUSE);
+ 				detour.targetId = 0;
++				player.stopMove(null);
++				player.getAI().setIntentionActive();
+ 				return;
+ 			}
++			if (player.isMoving()) return;
+ 			
+ 			player.getAI().setIntentionMoveTo(blocked);
+ 			if (!player.isMoving())

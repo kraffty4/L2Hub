@@ -1,0 +1,12 @@
+diff --git a/java/org/l2jmobius/gameserver/mechanics/olympiad/Olympiad.java b/java/org/l2jmobius/gameserver/mechanics/olympiad/Olympiad.java
+--- a/java/org/l2jmobius/gameserver/mechanics/olympiad/Olympiad.java
++++ b/java/org/l2jmobius/gameserver/mechanics/olympiad/Olympiad.java
+@@ -1683,7 +1683,7 @@
+ 			ps.setInt(1, objId);
+ 			try (ResultSet rs = ps.executeQuery())
+ 			{
+-				if (rs.first())
++				if (rs.next())
+ 				{
+ 					result = rs.getInt(1);
+ 				}

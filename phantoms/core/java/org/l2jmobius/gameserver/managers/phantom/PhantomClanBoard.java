@@ -286,7 +286,7 @@ public final class PhantomClanBoard
 		final int page = Math.max(0, Math.min(requestedPage, pages - 1));
 
 		final StringBuilder out = new StringBuilder(9000);
-		out.append("<table width=520><tr><td>").append(button(tr("Все"), WARS + " all 0", 110)).append("</td><td>").append(button(tr("Кланы охотников"), WARS + " hunters 0", 145)).append("</td><td>").append(button(tr("Кланы игроков"), WARS + " players 0", 145)).append("</td></tr></table><br>");
+		out.append("<table width=520><tr><td>").append(button(tr("Все"), WARS + " all 0", 110)).append("</td><td>").append(button(tr("Кланы пешек"), WARS + " hunters 0", 145)).append("</td><td>").append(button(tr("Кланы игроков"), WARS + " players 0", 145)).append("</td></tr></table><br>");
 		if (!message.isEmpty())
 		{
 			out.append("<font color=\"LEVEL\">").append(escape(message)).append("</font><br><br>");
@@ -300,7 +300,7 @@ public final class PhantomClanBoard
 		for (int i = page * PAGE_SIZE; i < Math.min(clans.size(), (page + 1) * PAGE_SIZE); i++)
 		{
 			final Clan clan = clans.get(i);
-			out.append("<tr><td><font color=\"CDB67F\">").append(escape(clan.getName())).append("</font><br><font color=\"909090\">").append(PhantomHunterClans.isHunterClan(clan) ? tr("Охотники") : tr("Игроки")).append("; ").append(escape(clan.getLeaderName())).append("</font></td><td>").append(clan.getLevel()).append("</td><td>").append(clan.getMembersCount()).append(" / ").append(clan.getOnlineMembers(0).size()).append("</td><td>");
+			out.append("<tr><td><font color=\"CDB67F\">").append(escape(clan.getName())).append("</font><br><font color=\"909090\">").append(PhantomHunterClans.isHunterClan(clan) ? tr("Пешки") : tr("Игроки")).append("; ").append(escape(clan.getLeaderName())).append("</font></td><td>").append(clan.getLevel()).append("</td><td>").append(clan.getMembersCount()).append(" / ").append(clan.getOnlineMembers(0).size()).append("</td><td>");
 			final String refusal = own == null ? "" : refusal(player, own, clan);
 			if (refusal == null)
 			{
@@ -505,7 +505,7 @@ public final class PhantomClanBoard
 		final Clan clan = player.getClan();
 		if (clan == null)
 		{
-			return tr("Чтобы набирать охотников, вступи в клан или создай свой.");
+			return tr("Чтобы набирать пешек, вступи в клан или создай свой.");
 		}
 		if (!enabled())
 		{
@@ -570,7 +570,7 @@ public final class PhantomClanBoard
 			fill(recruit, clan, player, everyone, PhantomHuntersConfig.HUNTER_CLAN_RECRUIT_MAX, now);
 		}
 		recruit.nextFill = now + FILL_GAP;
-		return tr("Набор открыт. Подходящие свободные охотники подают заявки.");
+		return tr("Набор открыт. Подходящие свободные пешки подают заявки.");
 	}
 
 	private String applications(Recruit recruit, Clan clan, Player player, Set<Integer> picked, String[] args, String action, long now)
@@ -593,7 +593,7 @@ public final class PhantomClanBoard
 					return tr("Заявка уже недоступна.");
 				}
 				recruit.declined.put(id, now + APPLICATION_TIME);
-				return tr("Заявка отклонена. Этот охотник не подаст её снова ещё час.");
+				return tr("Заявка отклонена. Эта пешка не подаст её снова ещё час.");
 			}
 			case "accept":
 			case "acceptpicked":
@@ -601,7 +601,7 @@ public final class PhantomClanBoard
 				final List<Integer> ids = action.equals("accept") ? List.of(id) : new ArrayList<>(picked);
 				if (ids.isEmpty())
 				{
-					return tr("Сначала отметь охотников кнопкой «Выбрать».");
+					return tr("Сначала отметь пешек кнопкой «Выбрать».");
 				}
 				int accepted = 0;
 				String note = "";
@@ -614,7 +614,7 @@ public final class PhantomClanBoard
 					final Player hunter = World.getPlayer(applicantId);
 					if ((hunter == null) || !hunter.isOnline())
 					{
-						note = tr("Кто-то из охотников не в сети, заявка осталась.");
+						note = tr("Кто-то из пешек не в сети, заявка осталась.");
 						continue;
 					}
 					if (!eligible(hunter, clan) || !matches(recruit, hunter.getLevel(), role(hunter)))
@@ -705,7 +705,7 @@ public final class PhantomClanBoard
 			}
 			out.append("</td></tr>");
 		}
-		return out.append("</table><br><font color=\"909090\">").append(tr("Заявки подают свободные охотники, пока глава в игре. Заявка действует час; после отказа охотник час не подаёт снова. В клане охотник качается сам.")).append("</font>").toString();
+		return out.append("</table><br><font color=\"909090\">").append(tr("Заявки подают свободные пешки, пока глава в игре. Заявка действует час; после отказа пешка час не подаёт снова. В клане пешка качается сама.")).append("</font>").toString();
 	}
 
 	private static String levelCombo(String variable, int current)
@@ -774,7 +774,7 @@ public final class PhantomClanBoard
 
 	private static String recruitOff()
 	{
-		return tr("Набор охотников выключен в настройках сервера (HunterClanRecruit в PhantomHunters.ini).");
+		return tr("Набор пешек выключен в настройках сервера (HunterClanRecruit в PhantomHunters.ini).");
 	}
 
 	/**

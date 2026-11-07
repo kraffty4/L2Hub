@@ -1,0 +1,102 @@
+{
+  "date": "2026-11-06",
+  "status": "passed",
+  "source_commit": "ea1ff95a4d11914e4bcbfb526a1ad517c1153802",
+  "jar_sha256": "566dceff0b62a15ce68ea9456701288a5e092cdaa20a3019565afc8b56a5a728",
+  "production_helpers_compiled": false,
+  "class_resources_provenance_count": 40,
+  "tests": [
+    {
+      "name": "bytecode-bindings",
+      "passed": true,
+      "summary": [
+        "PASS FinalBytecodeCheck checks=29 actual final resource bindings/prepayment guards/literals; no production recompilation"
+      ]
+    },
+    {
+      "name": "noble-current-owner",
+      "passed": true,
+      "summary": [
+        "PASS FinalNobleOwnerCheck checks=34; actual final owner/policy/link/sync/cast/direct-refresh; no table/skill singleton replacement, no world/SQL"
+      ]
+    },
+    {
+      "name": "enchant-default",
+      "passed": true,
+      "summary": [
+        "PASS gmshop-enchants default checks=2210 NativeScrolls=60 supports=20 catalogs=3 world=false sql=false"
+      ]
+    },
+    {
+      "name": "enchant-crystal",
+      "passed": true,
+      "summary": [
+        "PASS gmshop-enchants crystal checks=2270 NativeScrolls=60 supports=20 catalogs=3 world=false sql=false"
+      ]
+    },
+    {
+      "name": "enchant-enhanced",
+      "passed": true,
+      "summary": [
+        "PASS gmshop-enchants enhanced checks=2246 NativeScrolls=60 supports=20 catalogs=3 world=false sql=false"
+      ]
+    },
+    {
+      "name": "enchant-ancient",
+      "passed": true,
+      "summary": [
+        "PASS gmshop-enchants ancient checks=2230 NativeScrolls=60 supports=20 catalogs=3 world=false sql=false"
+      ]
+    },
+    {
+      "name": "enchant-divine",
+      "passed": true,
+      "summary": [
+        "PASS gmshop-enchants divine checks=2230 NativeScrolls=60 supports=20 catalogs=3 world=false sql=false"
+      ]
+    },
+    {
+      "name": "enchant-special",
+      "passed": true,
+      "summary": [
+        "PASS gmshop-enchants special checks=2228 NativeScrolls=60 supports=20 catalogs=3 world=false sql=false"
+      ]
+    },
+    {
+      "name": "enchant-all",
+      "passed": true,
+      "summary": [
+        "PASS gmshop-enchants all checks=2364 NativeScrolls=60 supports=20 catalogs=3 world=false sql=false"
+      ]
+    },
+    {
+      "name": "enchant-off",
+      "passed": true,
+      "summary": [
+        "PASS gmshop-enchants off checks=2364 NativeScrolls=60 supports=20 catalogs=3 world=false sql=false"
+      ]
+    },
+    {
+      "name": "dialogue-readers",
+      "passed": true,
+      "summary": [
+        "PASS DialogueDataCheck checks=6709 replies=17190 runtimeScenes={LocalCityDialogues.xml=2546, LocalPartyDialogues.xml=1324, LocalPartyLongDialogues.xml=51, LocalClanDialogues.xml=29, LocalHeroDialogues.xml=18} metadata=1384/7245/12; actual source readers; no world/SQL"
+      ]
+    },
+    {
+      "name": "dialogue-runtime",
+      "passed": true,
+      "summary": [
+        "PASS DialogueRuntimeCheck checks=79; actual Controller/voice/hero-send/BlockList/clan routing/party interruption; no world/SQL, packets recorded in memory"
+      ]
+    }
+  ],
+  "input_files_unchanged": true,
+  "limits": [
+    "Only requested JAR/data verifier scope; no actual world/server/database/client startup or installation",
+    "Actors/world registries/scheduler/packets are controlled fixtures; no real MP/payment/save or network serialization proof",
+    "Eight frozen banks and supplied metadata checked; full residual literary rewrite not claimed"
+  ],
+  "source_provenance": "Git commit bound by external build receipt; the JAR does not embed a Git commit.",
+  "fixture_correction": "Follow the actual tick invokedynamic bootstrap handle for sceneAllowed/canBind; direct bind and all advance guards still checked."
+}

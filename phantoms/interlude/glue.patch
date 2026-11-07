@@ -309,7 +309,7 @@ index 18877c4cca77f25e760c8df6947631f3a6107749..0e35613d94227f424cd26077084a3c03
  </list>
 \ No newline at end of file
 diff --git a/dist/game/data/stats/players/initialShortcuts.xml b/dist/game/data/stats/players/initialShortcuts.xml
-index 43f3b9f8f5eda743e6590f91bd784377c1e5ba17..d919a32009912cc55c3bef781d7c96cb67b22814 100644
+index 43f3b9f8f5eda743e6590f91bd784377c1e5ba17..85403af8df0d8a670c666af71afc160149f0610b 100644
 --- a/dist/game/data/stats/players/initialShortcuts.xml
 +++ b/dist/game/data/stats/players/initialShortcuts.xml
 @@ -4,13 +4,47 @@
@@ -376,7 +376,7 @@ index 43f3b9f8f5eda743e6590f91bd784377c1e5ba17..d919a32009912cc55c3bef781d7c96cb
 +			<command type="TEXT">/unstuck</command>
 +		</macro>
 +		<!-- L2Hub: охотники мира — кто где качается, позвать в пати (.hunters). -->
-+		<macro macroId="10102" icon="3" name="Охотники" description="Кто где качается (.hunters)" acronym="HUNT">
++		<macro macroId="10102" icon="3" name="Пешки" description="Кто где качается (.hunters)" acronym="HUNT">
 +			<command type="TEXT">.hunters</command>
 +		</macro>
 +		<!-- L2Hub: поручения дня и награды за них (.daily). -->
@@ -384,7 +384,7 @@ index 43f3b9f8f5eda743e6590f91bd784377c1e5ba17..d919a32009912cc55c3bef781d7c96cb
 +			<command type="TEXT">.daily</command>
 +		</macro>
 +		<!-- L2Hub: рейд охотников на РБ — вступить, телепорт к сбору (.raid). -->
-+		<macro macroId="10104" icon="5" name="Рейд" description="Рейд охотников на РБ (.raid)" acronym="RAID">
++		<macro macroId="10104" icon="5" name="Рейд" description="Рейд пешек на РБ (.raid)" acronym="RAID">
 +			<command type="TEXT">.raid</command>
 +		</macro>
 +		<!-- L2Hub: мир сейчас — суперчемпионы, сезонные события, ивенты (.world). -->
@@ -428,7 +428,7 @@ index 43f3b9f8f5eda743e6590f91bd784377c1e5ba17..d919a32009912cc55c3bef781d7c96cb
 +			<command type="TEXT">.apoff</command>
 +		</macro>
 +		<!-- L2Hub: кланы охотников: уровень, состав, кто набирает. -->
-+		<macro macroId="10115" icon="4" name="Кланы" description="Кланы охотников (.clans)" acronym="CLAN">
++		<macro macroId="10115" icon="4" name="Кланы" description="Кланы пешек (.clans)" acronym="CLAN">
 +			<command type="TEXT">.clans</command>
 +		</macro>
 +		<!-- L2Hub: не получать опыт. -->
@@ -628,7 +628,7 @@ index f46fa2e052ad73fc3ef28335b3583613897c5ff0..af465292f7cdbcca335d3612a1a358bd
  					player.doAutoLoot(this, drop); // Give the item(s) to the Player that has killed the Attackable.
  				}
 diff --git a/java/org/l2jmobius/gameserver/entity/actor/Creature.java b/java/org/l2jmobius/gameserver/entity/actor/Creature.java
-index a909c34dbcba85904a6e12558330a3fa0d90c5ac..8066eb9489bc543b641021463761c4574217818b 100644
+index 88f8a809dd3a862cc7dbdf6150c9bdc613e08b89..ec2e8399762bcd23564c6e6345ec69e7116adf72 100644
 --- a/java/org/l2jmobius/gameserver/entity/actor/Creature.java
 +++ b/java/org/l2jmobius/gameserver/entity/actor/Creature.java
 @@ -836,11 +836,12 @@ public abstract class Creature extends WorldObject

@@ -1,0 +1,16 @@
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+@@ -6451,9 +6451,11 @@
+ 	 */
+ 	private void onDamaged(Hunter hunter, Player player, Creature attacker)
+ 	{
++		final Player enemy = actingPlayer(attacker);
++		// Sanctioned combat is controlled by its event AI, not world revenge/flee/chat.
++		if (CombatEventPolicy.sanctioned(player, enemy)) return;
+ 		// Моб добивает охотника — убьёт его живой игрок, значит «спас» (патч 0032).
+ 		PhantomRelations.getInstance().threat(attacker, player);
+-		final Player enemy = actingPlayer(attacker);
+ 		// Напал живой игрок или охотник (махач, патч 0037); напарники из .buddy — нет.
+ 		final boolean hunterEnemy = (enemy != null) && PhantomRelations.isHunter(enemy);
+ 		// Танатос (раздел 4.45) — тоже враг: фантом, но не напарник.

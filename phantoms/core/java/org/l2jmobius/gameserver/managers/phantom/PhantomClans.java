@@ -85,13 +85,13 @@ public final class PhantomClans
 		}
 		if (!PhantomHuntersConfig.HUNTER_CLAN_JOIN)
 		{
-			requestor.sendMessage(phantom.getName() + " в кланы не вступает: охотники в клане выключены (HunterClanJoin в PhantomHunters.ini).");
+			requestor.sendMessage(phantom.getName() + " в кланы не вступает: пешки в клане выключены (HunterClanJoin в PhantomHunters.ini).");
 			return;
 		}
 		final int hunters = hunters(clan);
 		if ((PhantomHuntersConfig.HUNTER_CLAN_JOIN_MAX > 0) && (hunters >= PhantomHuntersConfig.HUNTER_CLAN_JOIN_MAX))
 		{
-			requestor.sendMessage("В клане уже охотников: " + hunters + " — больше не берут (HunterClanJoinMax в PhantomHunters.ini).");
+			requestor.sendMessage("В клане уже пешек: " + hunters + " — больше не берут (HunterClanJoinMax в PhantomHunters.ini).");
 			return;
 		}
 
@@ -145,7 +145,7 @@ public final class PhantomClans
 		final PhantomRelations relations = PhantomRelations.getInstance();
 		final double gratitude = relations.gratitude(phantom, requestor);
 		final double need = PhantomHunterClans.getInstance().switchGratitude(phantom);
-		final String who = PhantomHunterManager.describe(requestor) + " зовёт тебя в свой клан «" + clan.getName() + "», а ты в клане охотников «" + own.getName() + "»";
+		final String who = PhantomHunterManager.describe(requestor) + " зовёт тебя в свой клан «" + clan.getName() + "», а ты в клане пешек «" + own.getName() + "»";
 		final Answer answer;
 		if (phantom.isClanLeader())
 		{
@@ -166,7 +166,7 @@ public final class PhantomClans
 			phantom.setClanJoinExpiryTime(0);
 			ThreadPool.execute(phantom::storeMe);
 			LOGGER.info(getClass().getSimpleName() + ": " + phantom.getName() + " leaves hunter clan " + own.getName() + " for " + requestor.getName() + "'s clan " + clan.getName() + String.format(Locale.ROOT, " (gratitude %.1f of %.1f).", gratitude, need));
-			PhantomNews.post("clan", phantom.getName() + (template.isFemale() ? " ушла" : " ушёл") + " из клана охотников «" + own.getName() + "» в клан «" + clan.getName() + "» к " + requestor.getName(), phantom.getName(), phantom);
+			PhantomNews.post("clan", phantom.getName() + (template.isFemale() ? " ушла" : " ушёл") + " из клана пешек «" + own.getName() + "» в клан «" + clan.getName() + "» к " + requestor.getName(), phantom.getName(), phantom);
 			return false;
 		}
 		LOGGER.info(getClass().getSimpleName() + ": " + requestor.getName() + " invites " + phantom.getName() + " of hunter clan " + own.getName() + " — stays (" + answer.why + ").");
@@ -296,7 +296,7 @@ public final class PhantomClans
 		}
 		for (Map.Entry<Clan, List<String>> entry : byHunters.entrySet())
 		{
-			award(entry.getKey(), away, what, "Клану +" + away + " репутации: охотники клана " + String.join(", ", entry.getValue()) + " убили " + what + " в рейде.", "clan hunters " + String.join(", ", entry.getValue()));
+			award(entry.getKey(), away, what, "Клану +" + away + " репутации: пешки клана " + String.join(", ", entry.getValue()) + " убили " + what + " в рейде.", "clan hunters " + String.join(", ", entry.getValue()));
 		}
 	}
 

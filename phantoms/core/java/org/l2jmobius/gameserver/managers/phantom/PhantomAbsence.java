@@ -220,7 +220,7 @@ final class PhantomAbsence
 		final String line = String.format(pool[Rnd.get(pool.length)], span, why);
 		GlobalVariablesManager.getInstance().set(SAID + name, item.from());
 		PhantomChat.getInstance().hunterShout(hunter, line);
-		PhantomNews.post("gone", en ? "Hunter " + name + " will be away for " + span + ": " + why : "Охотник " + name + " пропадает на " + span + ": " + why, name, hunter);
+		PhantomNews.post("gone", en ? "Pawn " + name + " will be away for " + span + ": " + why : name + " (пешка) пропадает на " + span + ": " + why, name, hunter);
 		LOGGER.info(PhantomAbsence.class.getSimpleName() + ": " + name + " says goodbye for " + (item.to() - item.from()) + " days: " + line);
 	}
 
@@ -238,7 +238,7 @@ final class PhantomAbsence
 
 		GlobalVariablesManager.getInstance().set(SAID + name, current.from());
 		final long nth = (today - current.from()) + 1;
-		PhantomNews.post("gone", en() ? "Hunter " + name + " has gone missing: day " + nth + " without logging in" : "Охотник " + name + " пропал" + (female ? "а" : "") + ": не заходит уже " + nth + "-й день", name, null);
+		PhantomNews.post("gone", en() ? "Pawn " + name + " has gone missing: day " + nth + " without logging in" : name + " (пешка) пропал" + (female ? "а" : "") + ": не заходит уже " + nth + "-й день", name, null);
 		LOGGER.info(PhantomAbsence.class.getSimpleName() + ": " + name + " went missing " + nth + " days ago, " + (current.to() - today) + " days left.");
 	}
 
@@ -259,7 +259,7 @@ final class PhantomAbsence
 		variables.set(AWAY + name, today + ":" + (today + days) + ":" + Rnd.get(WHY.length));
 		variables.set(SAID + name, today);
 		final boolean en = en();
-		PhantomNews.post("gone", en ? "Hunter " + name + " broke " + item + " +" + level + " and quit the game" : "Охотник " + name + " сломал" + (female(hunter) ? "а " : " ") + item + " +" + level + " и бросил" + (female(hunter) ? "а" : "") + " игру", name, hunter);
+		PhantomNews.post("gone", en ? "Pawn " + name + " broke " + item + " +" + level + " and quit the game" : name + " (пешка) сломал" + (female(hunter) ? "а " : " ") + item + " +" + level + " и бросил" + (female(hunter) ? "а" : "") + " игру", name, hunter);
 		final String[] pool = en ? RAGE_LINES_EN : RAGE_LINES;
 		final String line = pool[Rnd.get(pool.length)];
 		ThreadPool.schedule(() -> PhantomChat.getInstance().hunterShout(hunter, line), RAGE_SHOUT_DELAY);
@@ -292,7 +292,7 @@ final class PhantomAbsence
 
 		GlobalVariablesManager.getInstance().set(BACK + name, last.from());
 		final int days = (int) (today - last.from());
-		PhantomNews.post("back", en() ? "Hunter " + name + " is back after " + days + " days" : "Охотник " + name + " вернул" + (female(hunter) ? "ась" : "ся") + ": не было " + days + " дн.", name, hunter);
+		PhantomNews.post("back", en() ? "Pawn " + name + " is back after " + days + " days" : name + " (пешка) вернул" + (female(hunter) ? "ась" : "ся") + ": не было " + days + " дн.", name, hunter);
 		LOGGER.info(PhantomAbsence.class.getSimpleName() + ": " + name + " is back after " + days + " days.");
 		ThreadPool.schedule(() -> returned(hunter, days), pause(BACK_DELAY_MIN, BACK_DELAY_MAX));
 	}

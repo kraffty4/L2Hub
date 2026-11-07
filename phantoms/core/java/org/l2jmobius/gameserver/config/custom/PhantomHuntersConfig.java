@@ -243,6 +243,23 @@ public class PhantomHuntersConfig
 	public static int HUNTER_FAR_WHISPER_COOLDOWN;
 	/** Когда кулдаун прошёл: шанс письма за минуту, %. */
 	public static int HUNTER_FAR_WHISPER_CHANCE;
+	/** Наставники живых новичков (раздел 4.142). */
+	public static boolean HUNTER_MENTORS;
+	/** С какого уровня охотник может быть наставником. */
+	public static int HUNTER_MENTORS_MIN_LEVEL;
+	/** До какого уровня включительно живой — новичок. */
+	public static int HUNTER_MENTORS_NOVICE_LEVEL;
+	/** К одному новичку не чаще, с. */
+	public static int HUNTER_MENTORS_COOLDOWN;
+	/** Когда кулдаун прошёл: шанс за проход (раз в 30 с), %. */
+	public static int HUNTER_MENTORS_CHANCE;
+	/** Звать новичка в пати: только где есть врезка опыта в Attackable (High Five). */
+	public static boolean HUNTER_MENTORS_PARTY;
+	/** Сколько минут наставник ходит в пати новичка: от и до. */
+	public static int HUNTER_MENTORS_PARTY_MIN;
+	public static int HUNTER_MENTORS_PARTY_MAX;
+	/** Отказал в пати — столько часов наставники к нему не подходят. */
+	public static int HUNTER_MENTORS_REFUSAL_HOURS;
 	/** С проклятым оружием сам нападает на живых игроков и охотников рядом, раздел 4.114. */
 	public static boolean HUNTER_CURSED_ATTACKS;
 	/** Правки боя из вклада пользователя, раздел 4.119. */
@@ -503,6 +520,15 @@ public class PhantomHuntersConfig
 		HUNTER_FAR_WHISPER = config.getBoolean("HunterFarWhisper", false);
 		HUNTER_FAR_WHISPER_COOLDOWN = Math.max(60, config.getInt("HunterFarWhisperCooldown", 3600));
 		HUNTER_FAR_WHISPER_CHANCE = Math.max(0, Math.min(100, config.getInt("HunterFarWhisperChance", 5)));
+		HUNTER_MENTORS = config.getBoolean("HunterMentors", false);
+		HUNTER_MENTORS_MIN_LEVEL = Math.max(1, config.getInt("HunterMentorsMinLevel", 40));
+		HUNTER_MENTORS_NOVICE_LEVEL = Math.max(1, config.getInt("HunterMentorsNoviceLevel", 19));
+		HUNTER_MENTORS_COOLDOWN = Math.max(60, config.getInt("HunterMentorsCooldown", 1800));
+		HUNTER_MENTORS_CHANCE = Math.max(0, Math.min(100, config.getInt("HunterMentorsChance", 10)));
+		HUNTER_MENTORS_PARTY = config.getBoolean("HunterMentorsParty", false);
+		HUNTER_MENTORS_PARTY_MIN = Math.max(1, config.getInt("HunterMentorsPartyMin", 10));
+		HUNTER_MENTORS_PARTY_MAX = Math.max(HUNTER_MENTORS_PARTY_MIN, config.getInt("HunterMentorsPartyMax", 20));
+		HUNTER_MENTORS_REFUSAL_HOURS = Math.max(0, config.getInt("HunterMentorsRefusalHours", 24));
 		HUNTER_CURSED_ATTACKS = config.getBoolean("HunterCursedAttacks", true);
 		HUNTER_COMBAT_FIXES = config.getBoolean("HunterCombatFixes", false);
 		HUNTER_GESTURES = config.getBoolean("HunterGestures", false);

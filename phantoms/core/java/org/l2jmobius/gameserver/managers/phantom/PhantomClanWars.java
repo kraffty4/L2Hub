@@ -765,7 +765,7 @@ public final class PhantomClanWars
 	 */
 	public static String requirements()
 	{
-		return tr("Для войны клан должен быть от ") + requiredLevel() + tr("-го уровня и иметь не меньше ") + PlayerConfig.ALT_CLAN_MEMBERS_FOR_WAR + tr(" участников; у клана охотников число участников не важно.");
+		return tr("Для войны клан должен быть от ") + requiredLevel() + tr("-го уровня и иметь не меньше ") + PlayerConfig.ALT_CLAN_MEMBERS_FOR_WAR + tr(" участников; у клана пешек число участников не важно.");
 	}
 
 	// ---------- Видимость ----------

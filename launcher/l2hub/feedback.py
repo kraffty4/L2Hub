@@ -20,6 +20,8 @@ CONFIG = paths.PACKAGE / "feedback.json"
 STATE = paths.DATA / "feedback.json"
 TIMEOUT = 25           # Apps Script отвечает за 1–3 с, отзыв с отчётом — дольше
 MAX_REPORT = 8 * 1024 * 1024
+MAX_SHOT = 5 * 1024 * 1024    # скриншот к отзыву: png или jpg
+SHOT_TYPES = {b"\x89PNG\r\n\x1a\n": ("image/png", "png"), b"\xff\xd8\xff": ("image/jpeg", "jpg")}
 MAX_TEXT = 4000
 COUNTS_TTL = 300       # счётчики голосов спрашиваем не чаще раза в 5 минут
 KINDS = {"bug", "idea"}
@@ -105,8 +107,23 @@ def vote(chronicle: str, on: bool = True) -> dict:
     return {"on": bool(on), "count": _counts["votes"][chronicle]}
 
 
-def send(kind: str, text: str, contact: str = "", chronicle: str = "", attach: bool = False, running: str | None = None) -> dict:
-    """Отзыв автору. attach — собрать отчёт (как «Собрать отчёт») и приложить, если он не больше 8 МБ."""
+def shot_info(data: bytes) -> tuple[str, str]:
+    """Скриншот к отзыву: (mime, расширение) по первым байтам — png или jpg, не больше MAX_SHOT, иначе ValueError."""
+    if not data:
+        raise ValueError("Скриншот пустой")
+    if len(data) > MAX_SHOT:
+        raise ValueError(f"Скриншот {len(data) / 2**20:.1f} МБ — больше 5 МБ. Сожми его или отправь без скрина")
+    for magic, info in SHOT_TYPES.items():
+        if data.startswith(magic):
+            return info
+    raise ValueError("Скриншот — только png или jpg")
+
+
+def send(kind: str, text: str, contact: str = "", chronicle: str = "", attach: bool = False, running: str | None = None,
+         shot: bytes | None = None) -> dict:
+    """Отзыв автору. attach — собрать отчёт (как «Собрать отчёт») и приложить, если он не больше 8 МБ. shot — скриншот
+    (png или jpg до 5 МБ). Приёмник до 0.5.223 поле screenshot не знает и молча его пропускает: тогда отзыв всё равно уходит,
+    а в ответе screenshot = "lost" — окно скажет, что скрин не дошёл."""
     text = (text or "").strip()
     if kind not in KINDS:
         raise ValueError(f"Нет вида отзыва {kind!r}")
@@ -117,6 +134,9 @@ def send(kind: str, text: str, contact: str = "", chronicle: str = "", attach: b
     payload = {"action": "feedback", "install": install_id(), "kind": kind, "text": text, "contact": (contact or "").strip()[:200],
                "chronicle": chronicle or "", "version": __version__}
     name = None
+    if shot:
+        mime, ext = shot_info(shot)
+        payload["screenshot"] = {"name": f"screenshot.{ext}", "mime": mime, "data": base64.b64encode(shot).decode("ascii")}
     if attach:
         path = report.build(running)
         data = path.read_bytes()
@@ -124,5 +144,9 @@ def send(kind: str, text: str, contact: str = "", chronicle: str = "", attach: b
             raise ValueError(f"Отчёт {len(data) / 2**20:.1f} МБ — больше 8 МБ. Отправь без него, zip лежит в data\\reports ({path.name})")
         name = path.name
         payload["report"] = {"name": name, "data": base64.b64encode(data).decode("ascii")}
-    _call(payload)
-    return {"report": name}
+    out = _call(payload)
+    if not shot:
+        return {"report": name, "screenshot": None}
+    if out.get("screenshot"):
+        return {"report": name, "screenshot": "saved"}
+    return {"report": name, "screenshot": "lost", "screenshot_error": str(out.get("screenshot_error") or "приёмник не умеет принимать скриншоты")}

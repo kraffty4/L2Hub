@@ -28,7 +28,9 @@ import org.l2jmobius.gameserver.entity.clan.enums.CrestType;
  * L2Hub: у каждого клана охотников своя эмблема (docs/PHANTOMS.md, раздел 4.61; по вкладу пользователя). Набор — {@code data/ClanCrests/*.dds}, его пишет
  * {@code tools/clan_crests.py} по хронике; нет набора — ничего не происходит. Эмблему игрока и уже выданную не трогает, новая не повторяет занятую ни у кого на сервере.
  * Кончились свободные — остальные кланы ждут, выданные остаются. Исключение — снятый набор: суммы в {@code data/ClanCrests/retired.txt}, такую эмблему могла выдать только прежняя версия
- * генератора, клан охотников получает вместо неё новую.
+ * генератора, клан охотников получает вместо неё новую.<br>
+ * Союз, который возглавляет клан охотников, получает эмблему союза из эмблемы главы, сжатой по ширине до 8×16 (DXT1, 192 байта — предел {@code RequestSetAllyCrest}):
+ * без неё у союзов охотников эмблемы не было совсем (мост, ep-alliance-crest-not-assigned). Эмблему союза игрока не трогает.
  */
 public final class PhantomClanCrests
 {
@@ -62,6 +64,7 @@ public final class PhantomClanCrests
 		}
 		_nextCheck = now + CHECK_GAP;
 		give();
+		giveAlly();
 	}
 
 	/**
@@ -124,6 +127,248 @@ public final class PhantomClanCrests
 			LOGGER.info(getClass().getSimpleName() + ": clan " + clan.getName() + " received " + asset.name() + ".");
 		}
 		return given;
+	}
+
+	/**
+	 * Союзы во главе с кланом охотников без эмблемы: эмблема главы, сжатая до размера эмблемы союза, — всем кланам союза ({@code changeAllyCrest}, как RequestSetAllyCrest).
+	 * @return скольким союзам выдана
+	 */
+	private int giveAlly()
+	{
+		int given = 0;
+		for (Clan clan : ClanTable.getInstance().getClans())
+		{
+			if ((clan.getAllyId() == 0) || (clan.getAllyId() != clan.getId()) || (clan.getAllyCrestId() != 0) || (clan.getCrestId() == 0) || !PhantomHunterClans.isHunterClan(clan))
+			{
+				continue;
+			}
+			final Crest own = CrestTable.getInstance().getCrest(clan.getCrestId());
+			final byte[] data = own == null ? null : allyCrest(own.getData());
+			if (data == null)
+			{
+				continue;
+			}
+			final Crest crest = CrestTable.getInstance().createCrest(data, CrestType.ALLY);
+			if (crest == null)
+			{
+				continue;
+			}
+			clan.changeAllyCrest(crest.getId(), false);
+			given++;
+			LOGGER.info(getClass().getSimpleName() + ": alliance " + clan.getAllyName() + " of clan " + clan.getName() + " received an alliance crest.");
+		}
+		return given;
+	}
+
+	/**
+	 * Эмблема союза из эмблемы клана: DXT1 той же высоты 16, по ширине — до 8 средним по соседним точкам; прозрачная точка остаётся прозрачной, если прозрачна хотя бы половина.
+	 * @param clanCrest DDS эмблемы клана
+	 * @return DDS 8×16 или {@code null}, если формат не тот
+	 */
+	static byte[] allyCrest(byte[] clanCrest)
+	{
+		if (!valid(clanCrest))
+		{
+			return null;
+		}
+		final ByteBuffer header = ByteBuffer.wrap(clanCrest).order(ByteOrder.LITTLE_ENDIAN);
+		final int height = header.getInt(12);
+		final int width = header.getInt(16);
+		if ((height != 16) || (width < 8) || ((width % 8) != 0))
+		{
+			return null;
+		}
+		final int[] pixels = decode(clanCrest, width, height);
+		final int factor = width / 8;
+		final int[] small = new int[8 * height];
+		for (int y = 0; y < height; y++)
+		{
+			for (int x = 0; x < 8; x++)
+			{
+				int r = 0;
+				int g = 0;
+				int b = 0;
+				int solid = 0;
+				for (int i = 0; i < factor; i++)
+				{
+					final int argb = pixels[(y * width) + (x * factor) + i];
+					if ((argb >>> 24) != 0)
+					{
+						r += (argb >> 16) & 0xFF;
+						g += (argb >> 8) & 0xFF;
+						b += argb & 0xFF;
+						solid++;
+					}
+				}
+				small[(y * 8) + x] = (solid * 2) < factor ? 0 : (0xFF000000 | ((r / solid) << 16) | ((g / solid) << 8) | (b / solid));
+			}
+		}
+		final byte[] out = new byte[128 + ((8 / 4) * (height / 4) * 8)];
+		System.arraycopy(clanCrest, 0, out, 0, 128);
+		final ByteBuffer dds = ByteBuffer.wrap(out).order(ByteOrder.LITTLE_ENDIAN);
+		dds.putInt(16, 8);
+		dds.putInt(20, out.length - 128);
+		encode(small, 8, height, dds);
+		return out;
+	}
+
+	static int[] decode(byte[] data, int width, int height)
+	{
+		final ByteBuffer in = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN);
+		final int[] pixels = new int[width * height];
+		int offset = 128;
+		for (int by = 0; by < (height / 4); by++)
+		{
+			for (int bx = 0; bx < (width / 4); bx++)
+			{
+				final int c0 = in.getShort(offset) & 0xFFFF;
+				final int c1 = in.getShort(offset + 2) & 0xFFFF;
+				final int bits = in.getInt(offset + 4);
+				offset += 8;
+				final int[] palette = palette(c0, c1);
+				for (int i = 0; i < 16; i++)
+				{
+					pixels[(((by * 4) + (i / 4)) * width) + (bx * 4) + (i % 4)] = palette[(bits >>> (i * 2)) & 3];
+				}
+			}
+		}
+		return pixels;
+	}
+
+	private static void encode(int[] pixels, int width, int height, ByteBuffer out)
+	{
+		int offset = 128;
+		for (int by = 0; by < (height / 4); by++)
+		{
+			for (int bx = 0; bx < (width / 4); bx++)
+			{
+				final int[] block = new int[16];
+				boolean transparent = false;
+				int low = -1;
+				int high = -1;
+				for (int i = 0; i < 16; i++)
+				{
+					final int argb = pixels[(((by * 4) + (i / 4)) * width) + (bx * 4) + (i % 4)];
+					block[i] = argb;
+					if ((argb >>> 24) == 0)
+					{
+						transparent = true;
+						continue;
+					}
+					final int c = to565(argb);
+					if ((low < 0) || (luma(c) < luma(low)))
+					{
+						low = c;
+					}
+					if ((high < 0) || (luma(c) > luma(high)))
+					{
+						high = c;
+					}
+				}
+				int c0;
+				int c1;
+				if (low < 0)
+				{
+					c0 = 0;
+					c1 = 0;
+				}
+				else if (transparent || (low == high))
+				{
+					// Три цвета и прозрачный: c0 <= c1.
+					c0 = Math.min(low, high);
+					c1 = Math.max(low, high);
+				}
+				else
+				{
+					c0 = Math.max(low, high);
+					c1 = Math.min(low, high);
+				}
+				final int[] palette = palette(c0, c1);
+				final int colors = c0 > c1 ? 4 : 3;
+				int bits = 0;
+				for (int i = 0; i < 16; i++)
+				{
+					int index = 3;
+					if ((block[i] >>> 24) != 0)
+					{
+						long best = Long.MAX_VALUE;
+						for (int k = 0; k < colors; k++)
+						{
+							final long d = distance(block[i], palette[k]);
+							if (d < best)
+							{
+								best = d;
+								index = k;
+							}
+						}
+					}
+					bits |= index << (i * 2);
+				}
+				out.putShort(offset, (short) c0);
+				out.putShort(offset + 2, (short) c1);
+				out.putInt(offset + 4, bits);
+				offset += 8;
+			}
+		}
+	}
+
+	private static int[] palette(int c0, int c1)
+	{
+		final int a = from565(c0);
+		final int b = from565(c1);
+		if (c0 > c1)
+		{
+			return new int[]
+			{
+				a,
+				b,
+				mix(a, b, 2, 1),
+				mix(a, b, 1, 2)
+			};
+		}
+		return new int[]
+		{
+			a,
+			b,
+			mix(a, b, 1, 1),
+			0
+		};
+	}
+
+	private static int mix(int a, int b, int wa, int wb)
+	{
+		final int sum = wa + wb;
+		final int r = ((((a >> 16) & 0xFF) * wa) + (((b >> 16) & 0xFF) * wb)) / sum;
+		final int g = ((((a >> 8) & 0xFF) * wa) + (((b >> 8) & 0xFF) * wb)) / sum;
+		final int bl = (((a & 0xFF) * wa) + ((b & 0xFF) * wb)) / sum;
+		return 0xFF000000 | (r << 16) | (g << 8) | bl;
+	}
+
+	private static int from565(int c)
+	{
+		final int r = (c >> 11) & 0x1F;
+		final int g = (c >> 5) & 0x3F;
+		final int b = c & 0x1F;
+		return 0xFF000000 | (((r << 3) | (r >> 2)) << 16) | (((g << 2) | (g >> 4)) << 8) | ((b << 3) | (b >> 2));
+	}
+
+	private static int to565(int argb)
+	{
+		return ((((argb >> 16) & 0xFF) >> 3) << 11) | ((((argb >> 8) & 0xFF) >> 2) << 5) | ((argb & 0xFF) >> 3);
+	}
+
+	private static int luma(int c565)
+	{
+		final int argb = from565(c565);
+		return (((argb >> 16) & 0xFF) * 3) + (((argb >> 8) & 0xFF) * 6) + (argb & 0xFF);
+	}
+
+	private static long distance(int a, int b)
+	{
+		final long dr = ((a >> 16) & 0xFF) - ((b >> 16) & 0xFF);
+		final long dg = ((a >> 8) & 0xFF) - ((b >> 8) & 0xFF);
+		final long db = (a & 0xFF) - (b & 0xFF);
+		return (dr * dr) + (dg * dg) + (db * db);
 	}
 
 	private Asset choose(Set<String> used, int clanId)
@@ -283,6 +528,16 @@ public final class PhantomClanCrests
 				_retired.remove(oldHash);
 			}
 			LOGGER.info(tag + "retired " + _retired.size() + " on file; retiring one: replaced " + replaced + ", crest changed " + ((before != first.getCrestId()) && !oldHash.equals(newHash)) + ", other crest kept " + (kept == second.getCrestId()) + ", old row gone " + (CrestTable.getInstance().getCrest(before) == null) + ".");
+			// Союз во главе с первым кланом (ep-alliance-crest-not-assigned): эмблема союза 8×16 у обоих.
+			first.setAllyId(first.getId());
+			first.setAllyName("SelfTestAlly");
+			second.setAllyId(first.getId());
+			second.setAllyName("SelfTestAlly");
+			final int allies = giveAlly();
+			final Crest ally = CrestTable.getInstance().getCrest(first.getAllyCrestId());
+			final byte[] allyData = ally == null ? null : ally.getData();
+			final int allyWidth = allyData == null ? 0 : ByteBuffer.wrap(allyData).order(ByteOrder.LITTLE_ENDIAN).getInt(16);
+			LOGGER.info(tag + "alliance: given " + allies + ", crest " + first.getAllyCrestId() + ", the same at the member " + ((first.getAllyCrestId() != 0) && (second.getAllyCrestId() == first.getAllyCrestId())) + ", " + (allyData == null ? 0 : allyData.length) + " bytes, width " + allyWidth + ", valid " + ((allyData != null) && valid(allyData)) + ", second pass gives " + giveAlly() + ".");
 		}
 		catch (Exception e)
 		{
@@ -299,6 +554,15 @@ public final class PhantomClanCrests
 			{
 				if (clan != null)
 				{
+					if (clan.getAllyId() != 0)
+					{
+						if (clan.getAllyId() == clan.getId())
+						{
+							clan.changeAllyCrest(0, false);
+						}
+						clan.setAllyId(0);
+						clan.setAllyName(null);
+					}
 					clan.changeClanCrest(0);
 					ClanTable.getInstance().destroyClan(clan.getId());
 				}

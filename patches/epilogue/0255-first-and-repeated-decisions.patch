@@ -1,0 +1,48 @@
+diff --git a/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGame.java b/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGame.java
+--- a/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGame.java
++++ b/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGame.java
+@@ -153,7 +153,7 @@
+ 	
+ 	protected void clearPlayers()
+ 	{
+-		EpilogueOlympiadBufferCleanup.clear(this);
++		EpilogueOlympiadLifecycle.finished(this);
+ 		_playerOne = null;
+ 		_playerTwo = null;
+ 		_players = null;
+@@ -1045,7 +1045,7 @@
+ 		_startTime = System.currentTimeMillis();
+ 		if (_aborted)
+ 		{
+-			{ boolean epilogueStarted = false; if (epilogueStarted) EpilogueOlympiadBufferCleanup.clear(this); return epilogueStarted; }
++			{ boolean epilogueStarted = false; if (epilogueStarted) EpilogueOlympiadLifecycle.started(this); return epilogueStarted; }
+ 		}
+ 		
+ 		_sm = new SystemMessage(SystemMessageId.THE_MATCH_HAS_STARTED_FIGHT);
+@@ -1063,10 +1063,10 @@
+ 		{
+ 			LOGGER.log(Level.WARNING, "makeCompetitionStart: ", e);
+ 			_aborted = true;
+-			{ boolean epilogueStarted = false; if (epilogueStarted) EpilogueOlympiadBufferCleanup.clear(this); return epilogueStarted; }
+-		}
+-		
+-		{ boolean epilogueStarted = true; if (epilogueStarted) EpilogueOlympiadBufferCleanup.clear(this); return epilogueStarted; }
++			{ boolean epilogueStarted = false; if (epilogueStarted) EpilogueOlympiadLifecycle.started(this); return epilogueStarted; }
++		}
++		
++		{ boolean epilogueStarted = true; if (epilogueStarted) EpilogueOlympiadLifecycle.started(this); return epilogueStarted; }
+ 	}
+ 	
+ 	protected void addDamage(Player player, int damage)
+diff --git a/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGameTask.java b/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGameTask.java
+--- a/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGameTask.java
++++ b/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGameTask.java
+@@ -222,7 +222,7 @@
+ 		}
+ 		finally
+ 		{
+-			EpilogueOlympiadBufferCleanup.clear(_game);
++			EpilogueOlympiadLifecycle.finished(_game);
+ 		}
+ 	}
+ 	

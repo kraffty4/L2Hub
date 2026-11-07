@@ -5,6 +5,7 @@
 import json
 import os
 import re
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from . import catalog, configs, gmshop, l2solo, machine, paths, servers
@@ -14,6 +15,17 @@ ADENA = 57
 
 def table() -> dict:
     return json.loads((paths.PACKAGE / "server_modes.json").read_text(encoding="utf-8"))
+
+
+def _matches(p: dict, record: dict) -> bool:
+    chronicle = p.get("chronicle") or p["id"]
+    return (not record.get("chronicles") or chronicle in record["chronicles"]) and chronicle not in record.get("excludeChronicles", [])
+
+
+def pages(p: dict) -> list[dict]:
+    """Контролы хроники не показываются в соседних сборках даже при совпавшем имени INI-ключа."""
+    return [{**page, "subs": [sub for sub in page.get("subs", []) if _matches(p, sub)]}
+            for page in table()["pages"] if _matches(p, page)]
 
 
 def supported(p: dict) -> str | None:
@@ -128,6 +140,8 @@ def _present(p: dict, s: dict) -> dict[str, str]:
     """Ключи выключателя, которые есть в сборке, и их значения. Выключатель бывает на несколько ключей разом
     (ShowNpcLevel, ShowNpcAggression, AltGameViewNpc) и в конфигах логина ("part": "login")."""
     out = {}
+    if not _matches(p, s):
+        return out
     for key in s.get("keys") or [s["key"]]:
         v = _read(p, s["file"], key, s.get("part", "game"))
         if v is not None:
@@ -200,7 +214,7 @@ def state(p: dict) -> dict:
     """Режимы с отметкой активного (все его рейты и выключатели совпадают), выключатели модов и страницы вкладки настроек.
     Страницы — и там, где режимов нет: у своей сборки они показывают рейты и правила по ключам."""
     if why := supported(p):
-        return {"ok": False, "error": why, "pages": table()["pages"], "switches": []}
+        return {"ok": False, "error": why, "pages": pages(p), "switches": []}
     sw = {s["id"]: s for s in switches(p)}
     now = rates_now(p)
     modes = []
@@ -210,7 +224,7 @@ def state(p: dict) -> dict:
         same_set = all((cur := _read(p, f, k)) is None or cur.strip().lower() == str(v).lower()
                        for f, keys in _settings(p, m).items() for k, v in keys.items())
         modes.append({"id": m["id"], "title": m["title"], "short": m["short"], "note": m["note"], "active": same_rates and same_sw and same_set, "keepsRates": not m["rates"], "switches": m["switches"]})
-    return {"ok": True, "pages": table()["pages"], "modes": modes, "switches": list(sw.values()), "rates": now, "huntersMax": hunters_max(p),
+    return {"ok": True, "pages": pages(p), "modes": modes, "switches": list(sw.values()), "rates": now, "huntersMax": hunters_max(p),
             "restart": servers.part_process(p, "game") is not None}
 
 
@@ -241,8 +255,8 @@ def sync_mind(p: dict) -> None:
 
     ext = brain.load_settings(p.get("brain", {}))["extended"]
     keys = (("HunterMindExtended", "True" if ext["enabled"] else "False",
-             "Расширенное обдумывание (L2Hub, «Разум»): охотники рядом с живым игроком думают моделью с размышлением. Пишет лаунчер."),
-            ("HunterFocusMax", str(int(ext["focusMax"])), "Сколько охотников рядом с игроком думают расширенно — ближайшие. Пишет лаунчер."))
+             "Расширенное обдумывание (L2Hub, «Разум»): пешки рядом с живым игроком думают моделью с размышлением. Пишет лаунчер."),
+            ("HunterFocusMax", str(int(ext["focusMax"])), "Сколько пешек рядом с игроком думают расширенно — ближайшие. Пишет лаунчер."))
     try:
         for key, value, note in keys:
             configs.ensure_value(catalog.server_dir(p), paths.BACKUPS / "config" / p["id"], "game", "PhantomHunters.ini", key, value, note)
@@ -276,10 +290,25 @@ def set_switches(p: dict, values: dict) -> dict:
 
 def hunters_in_table(p: dict) -> int:
     """Сколько охотников в таблице сервера (L2HubPhantoms.xml, пишет tools/fake_players.py); нет файла — 0."""
+    return hunter_roster(p)["hunters"]
+
+
+def hunter_roster(p: dict) -> dict:
+    """Только сохранённый XML, без JVM/БД: уникальные имена как в PhantomData.
+
+    Это число записей, а не обещание онлайна: штатная загрузка ещё проверяет классы и экипировку.
+    Последняя запись того же имени заменяет предыдущую. Комментарии не считаются персонажами.
+    """
+    source = catalog.server_dir(p) / "game" / "data" / "L2HubPhantoms.xml"
     try:
-        return (catalog.server_dir(p) / "game" / "data" / "L2HubPhantoms.xml").read_text(encoding="utf-8", errors="replace").count('kind="hunter"')
-    except OSError:
-        return 0
+        root = ET.parse(source).getroot()
+        people = {row.get("name", "").lower(): row.get("kind", "companion")
+                  for row in root.findall("phantom") if row.get("name")}
+    except (OSError, ET.ParseError):
+        return {"hunters": 0, "companions": 0, "templates": 0, "readable": False}
+    return {"hunters": sum(kind == "hunter" for kind in people.values()),
+            "companions": sum(kind not in ("hunter", "reaper") for kind in people.values()),
+            "templates": len(people), "readable": True}
 
 
 def hunters_max(p: dict) -> dict | None:
@@ -288,12 +317,15 @@ def hunters_max(p: dict) -> dict | None:
     n = table().get("huntersMax")
     if not n or (p.get("chronicle") or p["id"]) not in n["chronicles"]:
         return None
-    raw, top = _read(p, n["file"], n["key"]), hunters_in_table(p)
+    raw, roster = _read(p, n["file"], n["key"]), hunter_roster(p)
+    top = roster["hunters"]
     if raw is None or not top:
         return None
     # Как читает сервер: не число или 0 — все из таблицы, больше таблицы — тоже все.
     count = (min(int(raw), top) if raw.isdigit() else 0) or top
-    return {**n, "count": count, "top": top, "heapGb": servers.game_heap_gb(), "machine": machine.assess(p, count, top)}
+    # Сохранённый лимит больше таблицы окно показывает как есть, ключ при чтении не меняется (у всех хроник).
+    return {**n, "count": count, "top": top, "heapGb": servers.game_heap_gb(), "machine": machine.assess(p, count, top),
+            "configured": int(raw) if raw.isdigit() else 0, "roster": roster, "tableMismatch": raw.isdigit() and int(raw) > top}
 
 
 def set_hunters_max(p: dict, value) -> dict:
@@ -301,10 +333,12 @@ def set_hunters_max(p: dict, value) -> dict:
     PhantomHunters.ini сервер перечитывает на ходу, перезапуск не нужен."""
     n = hunters_max(p)
     if n is None:
-        raise ValueError("В этой сборке нет настройки числа охотников")
+        raise ValueError("В этой сборке нет настройки числа пешек")
     v = str(value).strip()
     if not v.isdigit() or int(v) < 1:
-        raise ValueError(f"Охотников в мире: нужно целое число от 1 до {n['top']}")
+        raise ValueError(f"Пешек в мире: нужно целое число от 1 до {n['top']}")
+    if int(v) > n["top"]:
+        raise ValueError(f"В таблице только {n['top']} пешек. Выбранный лимит не изменён; сначала обнови таблицу персонажей.")
     count = min(int(v), n["top"])
     _save(p, [{"part": "game", "file": n["file"], "key": n["key"], "value": str(0 if count == n["top"] else count)}])
     return {"count": count, "top": n["top"], "cut": int(v) > n["top"]}

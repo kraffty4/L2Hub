@@ -161,7 +161,7 @@ index 5fe3cb3a64fa1cfe8ab8f679e8bc7eb8e61008ca..903cd2da13f9ca3587364ba53209b77f
  
 @@ -783,6 +818,7 @@ public class L2HubBoard implements IParseBoardHandler
  		worldRow(sb, tr("Поручения дня"), "voice .daily", tr("Задания на сегодня, прогресс, награды и место дня."));
- 		worldRow(sb, tr("Рейд охотников"), "voice .raid", tr("Кто кого собирается бить, где сбор, сколько до боя."));
+ 		worldRow(sb, tr("Рейд пешек"), "voice .raid", tr("Кто кого собирается бить, где сбор, сколько до боя."));
  		worldRow(sb, tr("Мир сейчас"), "voice .world", tr("Суперчемпионы, сезонные события и расписание ивентов."));
 +		worldRow(sb, tr("Поиск вещи"), L2HubFind.COMMAND, tr("Что почём в GM-шопе и кто продаёт в лавках."));
  		return page(player, tr("Мир"), sb.append("</table>").toString());

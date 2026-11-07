@@ -614,7 +614,7 @@ public final class PhantomEventBoard
 			}
 			if (wasHunters && (hunters == 0))
 			{
-				failed.add("охотники через менеджера не записались за 150 с");
+				failed.add("пешки через менеджера не записались за 150 с");
 			}
 			LOGGER.info(tag + hunters + " hunters signed up through the manager, by the script " + status("TvT", first) + ".");
 			PhantomHuntersConfig.HUNTER_PVP_EVENTS = false;

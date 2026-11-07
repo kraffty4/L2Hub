@@ -175,7 +175,7 @@ public final class PhantomOfflineWorld
 		}
 		final long days = _downMinutes / 1440;
 		final String time = days >= 1 ? days + (en ? " d" : " дн.") : (_downMinutes / 60) + (en ? " h" : " ч");
-		PhantomNews.post("world_offline", (en ? "While the server was off (" + time + ") hunters gained levels: " : "Пока сервер был выключен (" + time + "), охотники набрали уровней: ") + levels + (en ? ", furthest: " : ", дальше всех: ") + String.join(", ", names), null, null);
+		PhantomNews.post("world_offline", (en ? "While the server was off (" + time + ") pawns gained levels: " : "Пока сервер был выключен (" + time + "), пешки набрали уровней: ") + levels + (en ? ", furthest: " : ", дальше всех: ") + String.join(", ", names), null, null);
 	}
 
 	public static PhantomOfflineWorld getInstance()

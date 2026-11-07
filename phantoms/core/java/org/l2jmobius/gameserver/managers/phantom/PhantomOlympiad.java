@@ -144,7 +144,8 @@ public final class PhantomOlympiad
 		int registered = 0;
 		for (Player player : World.getPlayers())
 		{
-			if (PhantomManager.getInstance().isPhantom(player) && (PhantomCompat.olympiadRegistered(player) || player.isInOlympiadMode()))
+			// Пара подобрана: Mobius уже убрал её из очереди, а режим стадиона ещё не начался — номер матча держит место до телепорта.
+			if (PhantomManager.getInstance().isPhantom(player) && (PhantomCompat.olympiadRegistered(player) || player.isInOlympiadMode() || (player.getOlympiadGameId() >= 0)))
 			{
 				registered++;
 			}
@@ -167,6 +168,11 @@ public final class PhantomOlympiad
 				continue;
 			}
 			final PhantomTemplate template = PhantomData.getInstance().getTemplate(hunter.getName());
+			// Победитель периода сначала забирает геройство у монумента (PhantomHeroClaim), а потом снова записывается.
+			if (PhantomHeroClaim.wantsTown(hunter, template, now))
+			{
+				continue;
+			}
 			if (Rnd.get(100.0) >= (PhantomHuntersConfig.HUNTER_OLYMPIAD_CHANCE * (template != null ? template.getTemper() : 1)))
 			{
 				continue;
@@ -192,6 +198,15 @@ public final class PhantomOlympiad
 	 * @return {@link PhantomEvents.Drive#FIGHTS} — на стадионе, правила кача не трогать; иначе {@link PhantomEvents.Drive#NONE}
 	 */
 	PhantomEvents.Drive drive(Player player, PhantomTemplate template, long now)
+	{
+		synchronized (OlympiadStartKick.lockFor(player.getObjectId()))
+		{
+			if (!OlympiadActionPace.allowDecision(player, now)) return PhantomEvents.Drive.FIGHTS;
+			return driveLocked(player, template, now);
+		}
+	}
+
+	private PhantomEvents.Drive driveLocked(Player player, PhantomTemplate template, long now)
 	{
 		if (!player.isInOlympiadMode())
 		{
@@ -248,6 +263,11 @@ public final class PhantomOlympiad
 		}
 		final Player opponent = opponent(player);
 		if (opponent == null)
+		{
+			return PhantomEvents.Drive.FIGHTS;
+		}
+		// Свои навыки хроники на стадионе (точка расширения PhantomCompat).
+		if (PhantomCompat.olympiadSkills(player, opponent, now))
 		{
 			return PhantomEvents.Drive.FIGHTS;
 		}

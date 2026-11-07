@@ -92,7 +92,7 @@ public class PhantomHunterParty
 			return (member == null) || !member.isInParty() || (member.getParty() != leader.getParty());
 		});
 
-		final String reason = !PhantomHuntersConfig.HUNTER_PARTIES ? "пати охотников выключены" : leader.isDead() ? "лидер погиб" : !hunting ? "лидер ушёл с кача" : !leader.isInParty() || group.members.isEmpty() ? "остался один" : now >= group.until ? "время вышло" : null;
+		final String reason = !PhantomHuntersConfig.HUNTER_PARTIES ? "пати пешек выключены" : leader.isDead() ? "лидер погиб" : !hunting ? "лидер ушёл с кача" : !leader.isInParty() || group.members.isEmpty() ? "остался один" : now >= group.until ? "время вышло" : null;
 		if (reason != null)
 		{
 			disband(leader, group, reason, now);
@@ -232,7 +232,7 @@ public class PhantomHunterParty
 	{
 		if (!PhantomHuntersConfig.HUNTER_PARTIES)
 		{
-			return "пати охотников выключены";
+			return "пати пешек выключены";
 		}
 		final PhantomTemplate otherTemplate = PhantomData.getInstance().getTemplate(other.getName());
 		if (otherTemplate == null)

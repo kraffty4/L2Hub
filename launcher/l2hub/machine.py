@@ -123,7 +123,7 @@ def assess(p: dict, count: int, top: int) -> dict:
         warnings.append(_too_many(count, rec, why, f))
     if f["freeGb"] < t["limits"]["lowDiskGb"]:
         per_day = count * t["hunter"]["logMbPerHour"] * 24 + t["hunter"]["dbMbPerHour"] * count * 24
-        warnings.append(f"На диске с сервером свободно {_num(f['freeGb'])} ГБ. При {count} охотниках логи и база прибавляют около {round(per_day)} МБ в сутки, "
+        warnings.append(f"На диске с сервером свободно {_num(f['freeGb'])} ГБ. При {count} пешках логи и база прибавляют около {round(per_day)} МБ в сутки, "
                         f"логи растут до {t['limits']['logCeilingGb']} ГБ, плюс бэкапы базы: освободи место, пока сервер не упёрся в него.")
     return {**f, "recommended": rec, "limitedBy": why, "fits": count <= rec, "warnings": warnings}
 
@@ -199,11 +199,11 @@ def budget(p: dict, hunters: int | None = None, switches: dict | None = None) ->
     tick_pct = round(tick * 100 / period) if tick is not None else None
     cpu = _resource("cpu", "ЦПУ", "ядер", cpu_have, parts, "cpu", note=f"{f['cores']} ядер, скорость ядра {_num(f['speed'])} от машины замеров: {t['reference']['title']}",
                     tick={"haveMs": period, "usedMs": None if tick is None else round(tick), "percent": tick_pct, "comfort": round(t["limits"]["tickComfort"] * 100),
-                          "note": "Тик охотников однопоточный: он тормозит мир раньше, чем кончатся ядра."})
+                          "note": "Тик пешек однопоточный: он тормозит мир раньше, чем кончатся ядра."})
     cpu["level"] = _worst(cpu["level"], _level(tick_pct, t["limits"]["tickComfort"] * 100))
     ram = _resource("ram", "ОЗУ", "ГБ", f["ramGb"], parts, "ram",
                     heap={"have": f["heapGb"], "used": None if live is None else round(live, 2), "percent": heap_pct, "comfort": round(t["limits"]["heapComfort"] * 100),
-                          "note": "Куча гейма занята всегда целиком: ZGC берёт выданное. Тесно бывает внутри неё — после сборки мира и охотников."})
+                          "note": "Куча гейма занята всегда целиком: ZGC берёт выданное. Тесно бывает внутри неё — после сборки мира и пешек."})
     ram["level"] = _worst(ram["level"], _level(heap_pct, t["limits"]["heapComfort"] * 100))
     resources = [
         cpu,
@@ -227,15 +227,15 @@ def fresh_default(p: dict, out=print) -> None:
     hm = modes.hunters_max(p)
     if hm and hm["machine"]["recommended"] < hm["top"]:
         modes.set_hunters_max(p, hm["machine"]["recommended"])
-        out(f"Охотников в мире: {hm['machine']['recommended']} из {hm['top']}, по возможностям этой машины. Поменять — «Настройки сервера».")
+        out(f"Пешек в мире: {hm['machine']['recommended']} из {hm['top']}, по возможностям этой машины. Поменять — «Настройки сервера».")
 
 
 def _too_many(count: int, rec: int, why: str, f: dict) -> str:
     if why == "heap":
-        return (f"Сейчас {count} охотников, а этой машине рекомендуем до {rec}: куча гейма {f['heapGb']} ГБ, мир с геодатой занимает в ней около 3 ГБ, "
-                "каждая сотня охотников — ещё около 0,25 ГБ. Дальше сервер встаёт на сборку мусора, тик тянется секундами, а запись в базу "
+        return (f"Сейчас {count} пешек, а этой машине рекомендуем до {rec}: куча гейма {f['heapGb']} ГБ, мир с геодатой занимает в ней около 3 ГБ, "
+                "каждая сотня пешек — ещё около 0,25 ГБ. Дальше сервер встаёт на сборку мусора, тик тянется секундами, а запись в базу "
                 "начинает падать от нехватки памяти. Больше памяти даёт только больше ОЗУ.")
-    return (f"Сейчас {count} охотников, а этой машине рекомендуем до {rec}: процессор не успевает обдумать всех за тик, мир будет запаздывать. "
+    return (f"Сейчас {count} пешек, а этой машине рекомендуем до {rec}: процессор не успевает обдумать всех за тик, мир будет запаздывать. "
             "Запустить можно, просто будет тормозить.")
 
 

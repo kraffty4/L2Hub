@@ -68,7 +68,7 @@ index bbe357f1d3bcaad9b7f7b80fa0cc17b93dd82797..daba5e33329151e11e8ec0f41d121310
   * </ul>
   */
 @@ -91,7 +98,22 @@ public class L2HubBoard implements IParseBoardHandler
- 		java.util.Map.entry("Охотники", "Hunters"),
+ 		java.util.Map.entry("Пешки", "Pawns"),
  		java.util.Map.entry("Фантомы выключены (EnablePhantoms в Phantoms.ini).", "Phantoms are turned off (EnablePhantoms in Phantoms.ini)."),
  		java.util.Map.entry("Создать клан", "Create a clan"),
 -		java.util.Map.entry("С 10-го уровня. Имя: от 2 до 16 букв и цифр, без пробелов.", "From level 10. Name: 2 to 16 letters and digits, no spaces."));

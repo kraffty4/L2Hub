@@ -12,6 +12,7 @@ import org.l2jmobius.gameserver.util.LocationUtil;
 
 /**
  * L2Hub: доля фантомов в пати. По умолчанию опыт, SP, лут и адена достаются только живым игрокам (PhantomParty.ini). Охотники — как живые: качаются и копят на шмот сами.
+ * Кроме наставника в пати новичка ({@link PhantomMentors}, раздел 4.142): он не берёт долю опыта и не поднимает уровень пати.
  */
 public final class PhantomPartyRules
 {
@@ -34,7 +35,8 @@ public final class PhantomPartyRules
 	 */
 	public static List<Player> expMembers(List<Player> members)
 	{
-		if (PhantomPartyConfig.PHANTOM_PARTY_EXP_SHARE)
+		final boolean mentors = PhantomMentors.getInstance().active();
+		if (PhantomPartyConfig.PHANTOM_PARTY_EXP_SHARE && !mentors)
 		{
 			return members;
 		}
@@ -42,12 +44,41 @@ public final class PhantomPartyRules
 		final List<Player> result = new ArrayList<>(members.size());
 		for (Player member : members)
 		{
-			if (!isCompanion(member))
+			if ((PhantomPartyConfig.PHANTOM_PARTY_EXP_SHARE || !isCompanion(member)) && (!mentors || !PhantomMentors.getInstance().isMentor(member)))
 			{
 				result.add(member);
 			}
 		}
 		return result;
+	}
+
+	/**
+	 * Уровень пати для опыта за моба (врезка в {@code Attackable}, High Five): наставник 40+ рядом с новичком иначе обнулил бы ему опыт —
+	 * штраф за уровень моба и отсечка {@code PartyXpCutoffLevel} считаются от самого старшего в пати.
+	 * @param rewarded кто рядом с мобом
+	 * @param level уровень пати по правилам Mobius
+	 * @return тот же уровень или, если среди них наставник, старший уровень остальных
+	 */
+	public static int partyLevel(List<Player> rewarded, int level)
+	{
+		if (!PhantomMentors.getInstance().active())
+		{
+			return level;
+		}
+		boolean mentor = false;
+		int top = 0;
+		for (Player member : rewarded)
+		{
+			if (PhantomMentors.getInstance().isMentor(member))
+			{
+				mentor = true;
+			}
+			else
+			{
+				top = Math.max(top, member.getLevel());
+			}
+		}
+		return mentor && (top > 0) ? top : level;
 	}
 
 	/**

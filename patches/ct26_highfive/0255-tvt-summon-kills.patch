@@ -1,0 +1,65 @@
+L2Hub: TvT считает убийство саммоном хозяину, не падает на смерти без убийцы-игрока (NPE на asPlayer())
+и ставит таймер реса каждому участнику, а не только убитому игроком. Смерть вне матча и не участника
+обработчик пропускает. Из того же места патча 0512 сопровождающего Эпилога взята только эта правка: его умолчания
+TvT, свой предел мест для охотников и бафы без анимации — нет (у нас L2HubPvpEvents.full и наши значения).
+Откат: удалить патч и пересобрать сервер.
+
+diff --git a/dist/game/data/scripts/custom/events/TeamVsTeam/TvT.java b/dist/game/data/scripts/custom/events/TeamVsTeam/TvT.java
+index 7690b2c..8579e69 100644
+--- a/dist/game/data/scripts/custom/events/TeamVsTeam/TvT.java
++++ b/dist/game/data/scripts/custom/events/TeamVsTeam/TvT.java
+@@ -1066,32 +1066,36 @@ public class TvT extends Event
+ 	@RegisterEvent(EventType.ON_CREATURE_DEATH)
+ 	public void onPlayerDeath(OnCreatureDeath event)
+ 	{
+-		if (event.getTarget().isPlayer())
++		if ((event == null) || (event.getTarget() == null) || !event.getTarget().isPlayer())
+ 		{
+-			final Player killedPlayer = event.getTarget().asPlayer();
+-			final Player killer = event.getAttacker().asPlayer();
+-			
+-			// Confirm Blue team kill.
+-			if ((killer.getTeam() == Team.BLUE) && (killedPlayer.getTeam() == Team.RED))
++			return;
++		}
++		final Player killedPlayer = event.getTarget().asPlayer();
++		if (!IS_STARTED() || !PLAYER_LIST.contains(killedPlayer))
++		{
++			return;
++		}
++		// L2Hub: убийство саммоном засчитывается хозяину, смерть без убийцы-игрока не роняет обработчик (перенос из 0512 Эпилога).
++		final var attacker = event.getAttacker();
++		final Player killer = attacker == null ? null : (attacker.isSummon() ? attacker.asSummon().getOwner() : attacker.asPlayer());
++		if ((killer != null) && PLAYER_LIST.contains(killer) &&
++			(((killer.getTeam() == Team.BLUE) && (killedPlayer.getTeam() == Team.RED)) ||
++			((killer.getTeam() == Team.RED) && (killedPlayer.getTeam() == Team.BLUE))))
++		{
++			PLAYER_SCORES.merge(killer, 1, Integer::sum);
++			if (killer.getTeam() == Team.BLUE)
+ 			{
+-				PLAYER_SCORES.put(killer, PLAYER_SCORES.get(killer) + 1);
+ 				BLUE_SCORE++;
+-				broadcastScoreMessage();
+-				PVP_WORLD.broadcastPacket(new ExPVPMatchCCRecord(ExPVPMatchCCRecord.UPDATE, MapUtil.sortByValue(PLAYER_SCORES, true)));
+ 			}
+-			
+-			// Confirm Red team kill.
+-			if ((killer.getTeam() == Team.RED) && (killedPlayer.getTeam() == Team.BLUE))
++			else
+ 			{
+-				PLAYER_SCORES.put(killer, PLAYER_SCORES.get(killer) + 1);
+ 				RED_SCORE++;
+-				broadcastScoreMessage();
+-				PVP_WORLD.broadcastPacket(new ExPVPMatchCCRecord(ExPVPMatchCCRecord.UPDATE, MapUtil.sortByValue(PLAYER_SCORES, true)));
+ 			}
+-			
+-			// Auto release after 10 seconds.
+-			startQuestTimer("ResurrectPlayer", 10000, null, killedPlayer);
++			broadcastScoreMessage();
++			PVP_WORLD.broadcastPacket(new ExPVPMatchCCRecord(ExPVPMatchCCRecord.UPDATE, MapUtil.sortByValue(PLAYER_SCORES, true)));
+ 		}
++		// L2Hub: таймер реса — каждому участнику, и когда убил не игрок.
++		startQuestTimer("ResurrectPlayer", 10000, null, killedPlayer);
+ 	}
+ 	
+ 	@Override

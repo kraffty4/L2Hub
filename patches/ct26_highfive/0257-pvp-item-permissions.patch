@@ -1,0 +1,246 @@
+L2Hub: постоянные PvP-вещи (оружие и броня с флагом PvP, не геройские, не квестовые, без срока) можно разрешить
+передавать и продавать, класть на склад, слать почтой и вставлять в них атрибут (S, S80, S84) — каждое своим ключом
+в config/Custom/PvpItemPermissions.ini. Все ключи по умолчанию False: без правки ini поведение штатное.
+Перенос из патча 0512 сопровождающего Эпилога (его классы PvpItemPermissions и PvpAttributes здесь слиты в один,
+entity.item.PvpItemPermissions, два ini — в один), номера строк — по High Five.
+Откат: удалить патч и пересобрать сервер.
+
+diff --git a/b/dist/game/config/Custom/PvpItemPermissions.ini b/dist/game/config/Custom/PvpItemPermissions.ini
+new file mode 100644
+index 0000000..c3e3562
+--- /dev/null
++++ b/dist/game/config/Custom/PvpItemPermissions.ini
+@@ -0,0 +1,20 @@
++# L2Hub: постоянные PvP-вещи (не геройские, не квестовые, без срока). False — штатные запреты Mobius.
++# Читается при старте сервера.
++
++# Передача и торговля постоянными PvP-вещами.
++AllowPvpItemTrade = False
++
++# Продажа постоянных PvP-вещей.
++AllowPvpItemSale = False
++
++# Постоянные PvP-вещи на склад.
++AllowPvpItemWarehouse = False
++
++# Пересылка постоянных PvP-вещей через службу доставки.
++AllowPvpItemFreight = False
++
++# Атрибут в постоянное PvP-оружие S, S80 и S84.
++AllowAttributeOnPvpWeapons = False
++
++# Атрибут в постоянную PvP-броню S, S80 и S84 (голова, верх, полный доспех, низ, перчатки, сапоги).
++AllowAttributeOnPvpArmor = False
+diff --git a/java/org/l2jmobius/gameserver/entity/item/ItemTemplate.java b/java/org/l2jmobius/gameserver/entity/item/ItemTemplate.java
+index 6a5dd27..6ac41c0 100644
+--- a/java/org/l2jmobius/gameserver/entity/item/ItemTemplate.java
++++ b/java/org/l2jmobius/gameserver/entity/item/ItemTemplate.java
+@@ -581,7 +581,7 @@ public abstract class ItemTemplate extends ListenersContainer
+ 	 */
+ 	public boolean isSellable()
+ 	{
+-		return _sellable;
++		return _sellable || PvpItemPermissions.sale(this);
+ 	}
+ 	
+ 	/**
+@@ -605,7 +605,7 @@ public abstract class ItemTemplate extends ListenersContainer
+ 	 */
+ 	public boolean isTradeable()
+ 	{
+-		return _tradeable;
++		return _tradeable || PvpItemPermissions.trade(this);
+ 	}
+ 	
+ 	/**
+@@ -613,7 +613,7 @@ public abstract class ItemTemplate extends ListenersContainer
+ 	 */
+ 	public boolean isDepositable()
+ 	{
+-		return _depositable;
++		return _depositable || PvpItemPermissions.warehouse(this);
+ 	}
+ 	
+ 	/**
+@@ -630,7 +630,7 @@ public abstract class ItemTemplate extends ListenersContainer
+ 	 */
+ 	public boolean isElementable()
+ 	{
+-		return _elementable;
++		return _elementable || PvpItemPermissions.attribute(this);
+ 	}
+ 	
+ 	/**
+@@ -895,7 +895,7 @@ public abstract class ItemTemplate extends ListenersContainer
+ 	
+ 	public boolean isFreightable()
+ 	{
+-		return _freightable;
++		return _freightable || PvpItemPermissions.freight(this);
+ 	}
+ 	
+ 	public boolean isAllowSelfResurrection()
+diff --git a/b/java/org/l2jmobius/gameserver/entity/item/PvpItemPermissions.java b/java/org/l2jmobius/gameserver/entity/item/PvpItemPermissions.java
+new file mode 100644
+index 0000000..e60d5b0
+--- /dev/null
++++ b/java/org/l2jmobius/gameserver/entity/item/PvpItemPermissions.java
+@@ -0,0 +1,128 @@
++package org.l2jmobius.gameserver.entity.item;
++
++import java.io.IOException;
++import java.io.Reader;
++import java.nio.charset.StandardCharsets;
++import java.nio.file.Files;
++import java.nio.file.Path;
++import java.util.Properties;
++import java.util.logging.Logger;
++
++import org.l2jmobius.gameserver.entity.item.instance.Item;
++import org.l2jmobius.gameserver.entity.item.type.CrystalType;
++import org.l2jmobius.gameserver.entity.item.type.WeaponType;
++
++/**
++ * L2Hub: постоянные PvP-вещи (не геройские, не квестовые, без срока) — передача, продажа, склад, почта и атрибут,
++ * каждое своим ключом в config/Custom/PvpItemPermissions.ini. Все ключи по умолчанию False: штатные запреты Mobius.
++ * Атрибут — только S, S80 и S84, оружие и шесть частей брони, без уже вставленного атрибута.
++ * Перенос из патча 0512 сопровождающего Эпилога (классы PvpItemPermissions и PvpAttributes).
++ */
++public final class PvpItemPermissions
++{
++	private static final Logger LOGGER = Logger.getLogger(PvpItemPermissions.class.getName());
++	private static final String FILE = "./config/Custom/PvpItemPermissions.ini";
++
++	private static final class Settings
++	{
++		static final Properties VALUES = load();
++		static final boolean TRADE = enabled("AllowPvpItemTrade");
++		static final boolean SALE = enabled("AllowPvpItemSale");
++		static final boolean WAREHOUSE = enabled("AllowPvpItemWarehouse");
++		static final boolean FREIGHT = enabled("AllowPvpItemFreight");
++		static final boolean ATTRIBUTE_WEAPONS = enabled("AllowAttributeOnPvpWeapons");
++		static final boolean ATTRIBUTE_ARMOR = enabled("AllowAttributeOnPvpArmor");
++
++		private static Properties load()
++		{
++			final Properties properties = new Properties();
++			final Path file = Path.of(FILE);
++			if (Files.isRegularFile(file))
++			{
++				try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8))
++				{
++					properties.load(reader);
++				}
++				catch (IOException e)
++				{
++					LOGGER.warning("PvpItemPermissions: " + FILE + " unreadable, native restrictions kept: " + e.getMessage());
++				}
++			}
++			return properties;
++		}
++
++		private static boolean enabled(String key)
++		{
++			return Boolean.parseBoolean(VALUES.getProperty(key, "False").trim());
++		}
++	}
++
++	private PvpItemPermissions()
++	{
++	}
++
++	private static boolean eligible(ItemTemplate template)
++	{
++		return (template != null) && template.isPvpItem() && (template.isWeapon() || template.isArmor()) && !template.isHeroItem() && !template.isQuestItem() && !template.isForNpc() && (template.getDuration() <= 0) && (template.getTime() <= 0);
++	}
++
++	public static boolean trade(ItemTemplate template)
++	{
++		return Settings.TRADE && eligible(template);
++	}
++
++	public static boolean sale(ItemTemplate template)
++	{
++		return Settings.SALE && eligible(template);
++	}
++
++	public static boolean warehouse(ItemTemplate template)
++	{
++		return Settings.WAREHOUSE && eligible(template);
++	}
++
++	public static boolean freight(ItemTemplate template)
++	{
++		return Settings.FREIGHT && eligible(template);
++	}
++
++	public static boolean augmentedTrade(Item item)
++	{
++		return (item != null) && trade(item.getTemplate());
++	}
++
++	public static boolean augmentedSale(Item item)
++	{
++		return (item != null) && sale(item.getTemplate());
++	}
++
++	public static boolean attribute(ItemTemplate item)
++	{
++		if ((!Settings.ATTRIBUTE_WEAPONS && !Settings.ATTRIBUTE_ARMOR) || (item == null) || !item.isPvpItem() || item.isHeroItem() || item.isForNpc() || item.isQuestItem() || (item.getDuration() > 0) || (item.getTime() > 0) || (item.getElementals() != null))
++		{
++			return false;
++		}
++
++		final CrystalType grade = item.getCrystalType();
++		if ((grade != CrystalType.S) && (grade != CrystalType.S80) && (grade != CrystalType.S84))
++		{
++			return false;
++		}
++
++		if (item.isWeapon())
++		{
++			return Settings.ATTRIBUTE_WEAPONS && (item.getItemType() != WeaponType.NONE) && (item.getItemType() != WeaponType.FISHINGROD);
++		}
++
++		if (item.isArmor())
++		{
++			return Settings.ATTRIBUTE_ARMOR && switch (item.getBodyPart())
++			{
++				case HEAD, CHEST, FULL_ARMOR, LEGS, GLOVES, FEET -> true;
++				default -> false;
++			};
++		}
++
++		return false;
++	}
++}
+diff --git a/java/org/l2jmobius/gameserver/entity/item/instance/Item.java b/java/org/l2jmobius/gameserver/entity/item/instance/Item.java
+index 1776f9f..40f2cb7 100644
+--- a/java/org/l2jmobius/gameserver/entity/item/instance/Item.java
++++ b/java/org/l2jmobius/gameserver/entity/item/instance/Item.java
+@@ -53,6 +53,7 @@ import org.l2jmobius.gameserver.entity.actor.enums.creature.InstanceType;
+ import org.l2jmobius.gameserver.entity.item.Armor;
+ import org.l2jmobius.gameserver.entity.item.EtcItem;
+ import org.l2jmobius.gameserver.entity.item.ItemTemplate;
++import org.l2jmobius.gameserver.entity.item.PvpItemPermissions;
+ import org.l2jmobius.gameserver.entity.item.Weapon;
+ import org.l2jmobius.gameserver.entity.item.enums.BodyPart;
+ import org.l2jmobius.gameserver.entity.item.enums.ItemLocation;
+@@ -801,7 +802,7 @@ public class Item extends WorldObject
+ 		
+ 		if (isAugmented())
+ 		{
+-			return PlayerConfig.ALT_ALLOW_AUGMENT_TRADE;
++			return PlayerConfig.ALT_ALLOW_AUGMENT_TRADE || PvpItemPermissions.augmentedTrade(this);
+ 		}
+ 		
+ 		return true;
+@@ -825,7 +826,7 @@ public class Item extends WorldObject
+ 		
+ 		if (isAugmented())
+ 		{
+-			return PlayerConfig.ALT_ALLOW_AUGMENT_TRADE;
++			return PlayerConfig.ALT_ALLOW_AUGMENT_TRADE || PvpItemPermissions.augmentedSale(this);
+ 		}
+ 		
+ 		return true;

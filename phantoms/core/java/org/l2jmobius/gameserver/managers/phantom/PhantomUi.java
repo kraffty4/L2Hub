@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.l2jmobius.gameserver.config.custom.PhantomPartyConfig;
 import org.l2jmobius.gameserver.entity.actor.Player;
+import org.l2jmobius.gameserver.entity.actor.enums.player.PlayerClass;
 import org.l2jmobius.gameserver.managers.phantom.PhantomOrders.Order;
 import static org.l2jmobius.gameserver.managers.phantom.PhantomText.tr;
 
@@ -162,7 +163,8 @@ public final class PhantomUi
 		{
 			sb.append(", ").append(phantom.getLevel()).append(" ").append(className(phantom));
 		}
-		sb.append("</td></tr><tr><td width=280><font color=\"B09878\">").append(companions.describe(player, template)).append("</font></td></tr></table>");
+		sb.append("</td></tr><tr><td width=280>").append(profile(player, template, phantom)).append("</td></tr>");
+		sb.append("<tr><td width=280><font color=\"B09878\">").append(companions.describe(player, template)).append("</font></td></tr></table>");
 
 		sb.append("<table width=280><tr>");
 		cell(sb, bypass, tr("Позвать"), "summon", name);
@@ -224,6 +226,7 @@ public final class PhantomUi
 	private static void row(StringBuilder sb, Player player, PhantomTemplate template, String bypass, String label, String action)
 	{
 		sb.append("<table width=280><tr><td width=195><font color=\"LEVEL\">").append(template.getName()).append("</font> — ").append(roleName(template.getRole()));
+		sb.append("<br1>").append(profile(player, template, PhantomManager.getInstance().getPhantom(template)));
 		sb.append("<br1><font color=\"B09878\">").append(PhantomCompanionManager.getInstance().describe(player, template)).append("</font></td>");
 		if (label != null)
 		{
@@ -242,11 +245,11 @@ public final class PhantomUi
 		order(sb, tr("стой"), tr("ждут на месте"));
 		order(sb, tr("бей"), tr("бьют твою цель"));
 		order(sb, tr("кач тут"), tr("сами бьют всех мобов вокруг тебя"));
-		order(sb, tr("веди"), tr("охотник качается, ты идёшь за ним"));
+		order(sb, tr("веди"), tr("пешка качается, ты идёшь за ней"));
 		order(sb, tr("сядь / встань"), tr("отдых на HP и MP"));
 		order(sb, tr("бафни / хил / рес"), tr("работа баффера и хилера"));
 		order(sb, tr("пока"), tr("уходит из пати"));
-		sb.append(tr("<tr><td width=280><font color=\"808080\">Охотника в пати — подойди и напиши «лфм» в общий чат. Где они сейчас — .hunters.</font></td></tr></table>"));
+		sb.append(tr("<tr><td width=280><font color=\"808080\">Пешку в пати — подойди и напиши «лфм» в общий чат. Где они сейчас — .hunters.</font></td></tr></table>"));
 	}
 
 	private static void order(StringBuilder sb, String phrase, String meaning)
@@ -302,6 +305,64 @@ public final class PhantomUi
 		sb.append("<td>").append(String.format(BUTTON, label, bypass, action, name)).append("</td>");
 	}
 
+	/** Смены профессии напарника: с каких уровней берётся следующий класс ветки (как в {@code PhantomTemplate}). */
+	private static final int[] TIER_LEVELS =
+	{
+		1,
+		20,
+		40,
+		76
+	};
+
+	/**
+	 * Кто он в пати (отчёт автора 2026-11-06: шесть напарников, и не понятно, кто какой профы будет и кто за что отвечает): что делает по роли,
+	 * каким классом придёт на твоём уровне (или какой он сейчас) и во что вырастет дальше.
+	 */
+	private static String profile(Player player, PhantomTemplate template, Player phantom)
+	{
+		final int level = phantom != null ? phantom.getLevel() : player.getLevel();
+		final StringBuilder sb = new StringBuilder(160);
+		sb.append("<font color=\"A3A0A3\">").append(roleJob(template.getRole())).append("</font><br1>");
+		sb.append(phantom != null ? tr("Класс: ") : tr("Придёт: ")).append(className(PlayerClass.getPlayerClass(template.getClassId(level))));
+		int last = template.getClassId(level);
+		for (int tier : TIER_LEVELS)
+		{
+			final int classId = template.getClassId(tier);
+			if ((tier > level) && (classId != last))
+			{
+				sb.append(", ").append(tr("с ")).append(tier).append(" — ").append(className(PlayerClass.getPlayerClass(classId)));
+				last = classId;
+			}
+		}
+		return sb.toString();
+	}
+
+	/**
+	 * @return что напарник делает в пати
+	 */
+	private static String roleJob(PhantomTemplate.Role role)
+	{
+		switch (role)
+		{
+			case HEALER:
+			{
+				return tr("Лечит и поднимает пати, сам не дерётся.");
+			}
+			case BUFFER:
+			{
+				return tr("Держит бафы на пати и поднимает павших, сам не дерётся.");
+			}
+			case TANK:
+			{
+				return tr("Держит мобов на себе и снимает их с пати.");
+			}
+			default:
+			{
+				return tr("Бьёт твою цель или мобов вокруг.");
+			}
+		}
+	}
+
 	private static String roleName(PhantomTemplate.Role role)
 	{
 		switch (role)
@@ -330,8 +391,20 @@ public final class PhantomUi
 	 */
 	static String className(Player phantom)
 	{
+		return className(phantom.getPlayerClass());
+	}
+
+	/**
+	 * BISHOP → Bishop, ELVEN_ELDER → Elven Elder.
+	 */
+	static String className(PlayerClass playerClass)
+	{
+		if (playerClass == null)
+		{
+			return "?";
+		}
 		final StringBuilder sb = new StringBuilder();
-		for (String word : phantom.getPlayerClass().name().split("_"))
+		for (String word : playerClass.name().split("_"))
 		{
 			if (sb.length() > 0)
 			{

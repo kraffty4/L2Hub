@@ -1,8 +1,8 @@
 diff --git a/dist/game/config/AdminCommands.xml b/dist/game/config/AdminCommands.xml
-index f74d0dfdd2d3704c021a844ef0372bcb27ad1284..8554cda55cbbb83ce0794d6e4b5b823c66fed364 100644
+index c712bdbce159f68e74466116f4ba18e6d1d67ebf..6eace12469f6d2585a3e9b6dd9de5bfae95f159a 100644
 --- a/dist/game/config/AdminCommands.xml
 +++ b/dist/game/config/AdminCommands.xml
-@@ -382,6 +382,10 @@
+@@ -383,6 +383,10 @@
  	<!-- ADMIN FAKE PLAYERS -->
  	<admin command="fakechat" description="Send a fake chat message appearing to come from a fake player." accessLevel="100" />
  
@@ -58,10 +58,10 @@ index ff0bdbc2cc2c8422505998bedc0d942f74c111e6..520ad00a5a08828ac9e2aa60bf6d7965
 +# L2Hub: общая цифра и из кого она: живых, охотников, фантомов (PhantomOnline).
 +EnableOnlineCommand = True
 diff --git a/dist/game/data/scripts/handlers/MasterHandler.java b/dist/game/data/scripts/handlers/MasterHandler.java
-index 0be61a281cad0747f31b763ba5aa94af04e818ce..93f89d500b6ba8446f71f85f1459a8d0d9835d4f 100644
+index c0f0968c404fc68c8629405b64b01664f5c5c931..692047fea0bc7dcd6bd764877c76b48ecbe8d274 100644
 --- a/dist/game/data/scripts/handlers/MasterHandler.java
 +++ b/dist/game/data/scripts/handlers/MasterHandler.java
-@@ -169,6 +169,8 @@ import handlers.chat.commands.admin.AdminPForge;
+@@ -170,6 +170,8 @@ import handlers.chat.commands.admin.AdminPForge;
  import handlers.chat.commands.admin.AdminPathNode;
  import handlers.chat.commands.admin.AdminPcCafePoints;
  import handlers.chat.commands.admin.AdminPetition;
@@ -70,7 +70,7 @@ index 0be61a281cad0747f31b763ba5aa94af04e818ce..93f89d500b6ba8446f71f85f1459a8d0
  import handlers.chat.commands.admin.AdminPledge;
  import handlers.chat.commands.admin.AdminPremium;
  import handlers.chat.commands.admin.AdminPunishment;
-@@ -216,9 +218,11 @@ import handlers.chat.commands.user.Unstuck;
+@@ -217,9 +219,11 @@ import handlers.chat.commands.user.Unstuck;
  import handlers.chat.commands.voiced.AutoPlay;
  import handlers.chat.commands.voiced.AutoPotion;
  import handlers.chat.commands.voiced.Banking;
@@ -82,7 +82,7 @@ index 0be61a281cad0747f31b763ba5aa94af04e818ce..93f89d500b6ba8446f71f85f1459a8d0
  import handlers.chat.commands.voiced.Lang;
  import handlers.chat.commands.voiced.Offline;
  import handlers.chat.commands.voiced.OfflinePlay;
-@@ -397,6 +401,8 @@ public class MasterHandler
+@@ -399,6 +403,8 @@ public class MasterHandler
  			AdminPcCafePoints.class,
  			AdminPetition.class,
  			AdminPForge.class,
@@ -91,7 +91,7 @@ index 0be61a281cad0747f31b763ba5aa94af04e818ce..93f89d500b6ba8446f71f85f1459a8d0
  			AdminPledge.class,
  			AdminPremium.class,
  			AdminPunishment.class,
-@@ -553,6 +559,8 @@ public class MasterHandler
+@@ -555,6 +561,8 @@ public class MasterHandler
  			// CastleHandler.class,
  			// ClanHandler.class,
  			ExperienceGain.class,
@@ -122,50 +122,6 @@ index 64c81ab486bdd305d52576020bba92c8d4b3403b..27593155602e607bf4714985157cba99
  	}
  	
  	@Override
-diff --git a/dist/game/data/scripts/handlers/chat/channels/ChatGeneral.java b/dist/game/data/scripts/handlers/chat/channels/ChatGeneral.java
-index 57b1a0aa48aa758b1c34807f0b146876e65e3bbd..fe189a3381d1bad7b8121443168ef731d2070848 100644
---- a/dist/game/data/scripts/handlers/chat/channels/ChatGeneral.java
-+++ b/dist/game/data/scripts/handlers/chat/channels/ChatGeneral.java
-@@ -20,12 +20,16 @@ import java.util.StringTokenizer;
- 
- import org.l2jmobius.gameserver.config.GeneralConfig;
- import org.l2jmobius.gameserver.config.custom.FactionSystemConfig;
-+import org.l2jmobius.gameserver.config.custom.FakePlayersConfig;
- import org.l2jmobius.gameserver.entity.World;
- import org.l2jmobius.gameserver.entity.actor.Player;
- import org.l2jmobius.gameserver.entity.actor.holders.player.BlockList;
- import org.l2jmobius.gameserver.handler.IChatHandler;
- import org.l2jmobius.gameserver.handler.IVoicedCommandHandler;
- import org.l2jmobius.gameserver.handler.VoicedCommandHandler;
-+import org.l2jmobius.gameserver.managers.FakePlayerChatManager;
-+import org.l2jmobius.gameserver.managers.phantom.PhantomChat;
-+import org.l2jmobius.gameserver.managers.phantom.PhantomHunterManager;
- import org.l2jmobius.gameserver.network.SystemMessageId;
- import org.l2jmobius.gameserver.network.enums.ChatType;
- import org.l2jmobius.gameserver.network.serverpackets.CreatureSay;
-@@ -119,6 +123,22 @@ public class ChatGeneral implements IChatHandler
- 			});
- 			
- 			activeChar.sendPacket(cs);
-+
-+			// L2Hub: фейки рядом слышат, когда к ним обращаются по имени.
-+			boolean answered = false;
-+			if (FakePlayersConfig.FAKE_PLAYERS_ENABLED && FakePlayersConfig.FAKE_PLAYER_CHAT)
-+			{
-+				answered = FakePlayerChatManager.getInstance().manageSay(activeChar, text);
-+			}
-+
-+			// L2Hub: охотники-фантомы рядом слышат «лфм», «нужен хил» и просятся в пати.
-+			answered |= PhantomHunterManager.getInstance().onLfm(activeChar, type, text);
-+
-+			// L2Hub: остальное слышат фантомы рядом — напарники из пати отвечают вслух, охотник — если назвали или есть что сказать.
-+			if (!answered)
-+			{
-+				PhantomChat.getInstance().onGeneralChat(activeChar, text);
-+			}
- 		}
- 	}
- 	
 diff --git a/dist/game/data/scripts/handlers/chat/channels/ChatParty.java b/dist/game/data/scripts/handlers/chat/channels/ChatParty.java
 index 4ceb6b47637fa222fec22a5e405322578c2a047e..75549434092045cece8b261c52a799b66a377343 100644
 --- a/dist/game/data/scripts/handlers/chat/channels/ChatParty.java
@@ -188,52 +144,6 @@ index 4ceb6b47637fa222fec22a5e405322578c2a047e..75549434092045cece8b261c52a799b6
  	}
  	
  	@Override
-diff --git a/dist/game/data/scripts/handlers/chat/channels/ChatShout.java b/dist/game/data/scripts/handlers/chat/channels/ChatShout.java
-index c55514d487bcddb301a25654d15972ef230ac683..35e2f7561d0f6fe99a3495da3fd6e109ad2163c5 100644
---- a/dist/game/data/scripts/handlers/chat/channels/ChatShout.java
-+++ b/dist/game/data/scripts/handlers/chat/channels/ChatShout.java
-@@ -24,6 +24,7 @@ import org.l2jmobius.gameserver.entity.actor.Player;
- import org.l2jmobius.gameserver.entity.actor.enums.player.ChatBroadcastType;
- import org.l2jmobius.gameserver.entity.actor.holders.player.BlockList;
- import org.l2jmobius.gameserver.handler.IChatHandler;
-+import org.l2jmobius.gameserver.managers.phantom.PhantomHunterManager;
- import org.l2jmobius.gameserver.network.SystemMessageId;
- import org.l2jmobius.gameserver.network.enums.ChatType;
- import org.l2jmobius.gameserver.network.serverpackets.CreatureSay;
-@@ -61,6 +62,9 @@ public class ChatShout implements IChatHandler
- 		}
- 		
- 		final CreatureSay cs = new CreatureSay(activeChar, type, activeChar.getName(), text);
-+
-+		// L2Hub: охотники-фантомы слышат «лфм», «нужен хил» и просятся в пати.
-+		PhantomHunterManager.getInstance().onLfm(activeChar, type, text);
- 		if ((GeneralConfig.DEFAULT_GLOBAL_CHAT == ChatBroadcastType.ON) || ((GeneralConfig.DEFAULT_GLOBAL_CHAT == ChatBroadcastType.GM) && activeChar.isGM()))
- 		{
- 			final int region = MapRegionData.getInstance().getMapRegionLocId(activeChar);
-diff --git a/dist/game/data/scripts/handlers/chat/channels/ChatTrade.java b/dist/game/data/scripts/handlers/chat/channels/ChatTrade.java
-index bed5544ab822a3a1cdf4a12decf7214a1bf0d7b7..c95bce7854650574aeb9a652840baad852eccf38 100644
---- a/dist/game/data/scripts/handlers/chat/channels/ChatTrade.java
-+++ b/dist/game/data/scripts/handlers/chat/channels/ChatTrade.java
-@@ -24,6 +24,8 @@ import org.l2jmobius.gameserver.entity.actor.Player;
- import org.l2jmobius.gameserver.entity.actor.enums.player.ChatBroadcastType;
- import org.l2jmobius.gameserver.entity.actor.holders.player.BlockList;
- import org.l2jmobius.gameserver.handler.IChatHandler;
-+import org.l2jmobius.gameserver.managers.phantom.PhantomChatFlow;
-+import org.l2jmobius.gameserver.managers.phantom.PhantomHunterManager;
- import org.l2jmobius.gameserver.network.SystemMessageId;
- import org.l2jmobius.gameserver.network.enums.ChatType;
- import org.l2jmobius.gameserver.network.serverpackets.CreatureSay;
-@@ -61,6 +63,10 @@ public class ChatTrade implements IChatHandler
- 		}
- 		
- 		final CreatureSay cs = new CreatureSay(activeChar, type, activeChar.getName(), text);
-+
-+		// L2Hub: охотники-фантомы слышат «лфм», «нужен хил» и просятся в пати.
-+		PhantomHunterManager.getInstance().onLfm(activeChar, type, text);
-+		PhantomChatFlow.getInstance().onTrade(activeChar, text);
- 		if ((GeneralConfig.DEFAULT_TRADE_CHAT == ChatBroadcastType.ON) || ((GeneralConfig.DEFAULT_TRADE_CHAT == ChatBroadcastType.GM) && activeChar.isGM()))
- 		{
- 			final int region = MapRegionData.getInstance().getMapRegionLocId(activeChar);
 diff --git a/dist/game/data/scripts/handlers/chat/channels/ChatWhisper.java b/dist/game/data/scripts/handlers/chat/channels/ChatWhisper.java
 index 7567f39a9dcf052361e4f7eb8c67931a05a6f222..92df3ecd858be0714c0bbd269a8dde7a7389b8a0 100644
 --- a/dist/game/data/scripts/handlers/chat/channels/ChatWhisper.java
@@ -309,7 +219,7 @@ index 9737ae466d526dc0fb375b8267b9632e34ac0348..841c64712187fea204e986938fcbc088
  </list>
 \ No newline at end of file
 diff --git a/dist/game/data/stats/players/initialShortcuts.xml b/dist/game/data/stats/players/initialShortcuts.xml
-index 43f3b9f8f5eda743e6590f91bd784377c1e5ba17..f54b315f4a7e0a638177159a2d25f3573179588a 100644
+index 43f3b9f8f5eda743e6590f91bd784377c1e5ba17..600d0d75cac0a2c2c158ac5baa10100a5ab715f9 100644
 --- a/dist/game/data/stats/players/initialShortcuts.xml
 +++ b/dist/game/data/stats/players/initialShortcuts.xml
 @@ -4,13 +4,48 @@
@@ -377,7 +287,7 @@ index 43f3b9f8f5eda743e6590f91bd784377c1e5ba17..f54b315f4a7e0a638177159a2d25f357
 +			<command type="TEXT">/unstuck</command>
 +		</macro>
 +		<!-- L2Hub: охотники мира — кто где качается, позвать в пати (.hunters). -->
-+		<macro macroId="10102" icon="3" name="Охотники" description="Кто где качается (.hunters)" acronym="HUNT">
++		<macro macroId="10102" icon="3" name="Пешки" description="Кто где качается (.hunters)" acronym="HUNT">
 +			<command type="TEXT">.hunters</command>
 +		</macro>
 +		<!-- L2Hub: поручения дня и награды за них (.daily). -->
@@ -385,7 +295,7 @@ index 43f3b9f8f5eda743e6590f91bd784377c1e5ba17..f54b315f4a7e0a638177159a2d25f357
 +			<command type="TEXT">.daily</command>
 +		</macro>
 +		<!-- L2Hub: рейд охотников на РБ — вступить, телепорт к сбору (.raid). -->
-+		<macro macroId="10104" icon="5" name="Рейд" description="Рейд охотников на РБ (.raid)" acronym="RAID">
++		<macro macroId="10104" icon="5" name="Рейд" description="Рейд пешек на РБ (.raid)" acronym="RAID">
 +			<command type="TEXT">.raid</command>
 +		</macro>
 +		<!-- L2Hub: мир сейчас — суперчемпионы, сезонные события, ивенты (.world). -->
@@ -429,7 +339,7 @@ index 43f3b9f8f5eda743e6590f91bd784377c1e5ba17..f54b315f4a7e0a638177159a2d25f357
 +			<command type="TEXT">.apoff</command>
 +		</macro>
 +		<!-- L2Hub: кланы охотников: уровень, состав, кто набирает. -->
-+		<macro macroId="10115" icon="4" name="Кланы" description="Кланы охотников (.clans)" acronym="CLAN">
++		<macro macroId="10115" icon="4" name="Кланы" description="Кланы пешек (.clans)" acronym="CLAN">
 +			<command type="TEXT">.clans</command>
 +		</macro>
 +		<!-- L2Hub: не получать опыт. -->
@@ -500,7 +410,7 @@ index 43f3b9f8f5eda743e6590f91bd784377c1e5ba17..f54b315f4a7e0a638177159a2d25f357
  </list>
 \ No newline at end of file
 diff --git a/java/org/l2jmobius/gameserver/GameServer.java b/java/org/l2jmobius/gameserver/GameServer.java
-index a2925943199ab2714f1077319db922e69fda0162..042516bbeac6424d17aae14fc679b22c8d130f49 100644
+index e5abf6bc7b3d40bd8700a01e59c273a0e0432cd7..b18427f95c6f52c37f206f8deb47d95af2bc8dab 100644
 --- a/java/org/l2jmobius/gameserver/GameServer.java
 +++ b/java/org/l2jmobius/gameserver/GameServer.java
 @@ -141,6 +141,7 @@ import org.l2jmobius.gameserver.managers.MailManager;
@@ -511,7 +421,7 @@ index a2925943199ab2714f1077319db922e69fda0162..042516bbeac6424d17aae14fc679b22c
  import org.l2jmobius.gameserver.managers.PrecautionaryRestartManager;
  import org.l2jmobius.gameserver.managers.PremiumManager;
  import org.l2jmobius.gameserver.managers.PunishmentManager;
-@@ -444,7 +445,10 @@ public class GameServer
+@@ -445,7 +446,10 @@ public class GameServer
  		{
  			OfflinePlayTable.getInstance().restoreOfflinePlayers();
  		}
@@ -610,10 +520,10 @@ index e37efb9dd798efe79ba105072e8dcb1d2e980f54..a12e7a9bec8470e786c1419e82f35b55
  						stm3.setInt(1, pc.getObjectId()); // Char Id
  						stm3.setLong(2, pc.getOfflineStartTime());
 diff --git a/java/org/l2jmobius/gameserver/entity/actor/Creature.java b/java/org/l2jmobius/gameserver/entity/actor/Creature.java
-index da7aa01002b628adb7fafb15721c2e08630e6ce0..c45946f425c73ecadf84e04559266a442c6f7278 100644
+index 70af30e00267c859ea6ff644e72bc8039b39a04d..164a3bb427f310213a951f625082336acfa37996 100644
 --- a/java/org/l2jmobius/gameserver/entity/actor/Creature.java
 +++ b/java/org/l2jmobius/gameserver/entity/actor/Creature.java
-@@ -866,11 +866,12 @@ public abstract class Creature extends WorldObject
+@@ -871,11 +871,12 @@ public abstract class Creature extends WorldObject
  		}
  		
  		// Allow recall of the detached characters.
@@ -628,10 +538,10 @@ index da7aa01002b628adb7fafb15721c2e08630e6ce0..c45946f425c73ecadf84e04559266a44
  				onTeleported();
  			}
 diff --git a/java/org/l2jmobius/gameserver/entity/actor/templates/NpcTemplate.java b/java/org/l2jmobius/gameserver/entity/actor/templates/NpcTemplate.java
-index fe20c7d9f1ce0a3ca1f26a2dba9a17c05311ac3a..2677aaa3ef1c6f53c788f4c4835365e93fc76440 100644
+index e64a605ea7b984f630ac7f1b189d78e4523c587c..ebecb8557a98487798d633128f46a1f1bf912294 100644
 --- a/java/org/l2jmobius/gameserver/entity/actor/templates/NpcTemplate.java
 +++ b/java/org/l2jmobius/gameserver/entity/actor/templates/NpcTemplate.java
-@@ -51,6 +51,7 @@ import org.l2jmobius.gameserver.entity.actor.stat.PlayerStat;
+@@ -53,6 +53,7 @@ import org.l2jmobius.gameserver.entity.actor.stat.PlayerStat;
  import org.l2jmobius.gameserver.entity.item.ItemTemplate;
  import org.l2jmobius.gameserver.entity.item.holders.ItemHolder;
  import org.l2jmobius.gameserver.entity.itemcontainer.Inventory;
@@ -639,7 +549,7 @@ index fe20c7d9f1ce0a3ca1f26a2dba9a17c05311ac3a..2677aaa3ef1c6f53c788f4c4835365e9
  import org.l2jmobius.gameserver.mechanics.skill.Skill;
  import org.l2jmobius.gameserver.util.MathUtil;
  import org.l2jmobius.gameserver.util.StatSet;
-@@ -781,7 +782,7 @@ public class NpcTemplate extends CreatureTemplate
+@@ -783,7 +784,7 @@ public class NpcTemplate extends CreatureTemplate
  					}
  					else
  					{
@@ -648,7 +558,7 @@ index fe20c7d9f1ce0a3ca1f26a2dba9a17c05311ac3a..2677aaa3ef1c6f53c788f4c4835365e9
  					}
  					
  					// premium chance
-@@ -1148,7 +1149,7 @@ public class NpcTemplate extends CreatureTemplate
+@@ -1150,7 +1151,7 @@ public class NpcTemplate extends CreatureTemplate
  				}
  				else
  				{
@@ -742,125 +652,6 @@ index 71ea5ab7b3450b5752faa6f6e86da1f101a2f716..d7192921d1de821284f7e6447ca9ac4e
  		final List<Player> validMembers = getValidMembers(rewardedMembers, topLvl, target);
  		double xpReward = xpRewardValue * getExpBonus(validMembers.size());
  		double spReward = spRewardValue * getSpBonus(validMembers.size());
-diff --git a/java/org/l2jmobius/gameserver/managers/FakePlayerChatManager.java b/java/org/l2jmobius/gameserver/managers/FakePlayerChatManager.java
-index d0ce21d48cfc5c286419c8f2a832cec0e46c1f2e..4c364808ce72b3679ed4bceb943b08e1399839de 100644
---- a/java/org/l2jmobius/gameserver/managers/FakePlayerChatManager.java
-+++ b/java/org/l2jmobius/gameserver/managers/FakePlayerChatManager.java
-@@ -34,6 +34,7 @@ import org.l2jmobius.gameserver.config.custom.FakePlayersConfig;
- import org.l2jmobius.gameserver.data.SpawnTable;
- import org.l2jmobius.gameserver.data.holders.FakePlayerChatHolder;
- import org.l2jmobius.gameserver.data.xml.FakePlayerData;
-+import org.l2jmobius.gameserver.entity.World;
- import org.l2jmobius.gameserver.entity.actor.Npc;
- import org.l2jmobius.gameserver.entity.actor.Player;
- import org.l2jmobius.gameserver.entity.spawns.Spawn;
-@@ -88,8 +89,106 @@ public class FakePlayerChatManager implements IXmlReader
- 	
- 	public void manageChat(Player player, String fpcName, String message)
- 	{
-+		// L2Hub: шёпот сначала уходит в мозги фейков, заготовки — запасной вариант.
-+		final Npc npc = FakePlayersConfig.FAKE_PLAYER_BRAIN ? getFakePlayer(fpcName) : null;
-+		if (npc != null)
-+		{
-+			FakePlayerBrain.getInstance().ask(player, npc, "whisper", message, reply -> sendChat(player, fpcName, reply), () -> ThreadPool.schedule(() -> manageResponce(player, fpcName, message), Rnd.get(MIN_DELAY, MAX_DELAY)));
-+			return;
-+		}
-+
- 		ThreadPool.schedule(() -> manageResponce(player, fpcName, message), Rnd.get(MIN_DELAY, MAX_DELAY));
- 	}
-+
-+	/**
-+	 * L2Hub: фейк рядом отвечает в общий чат, если игрок назвал его по имени. Отвечает ближайший из названных.
-+	 * @param player игрок
-+	 * @param message что он сказал в общий чат
-+	 * @return {@code true}, если обратились к фейку и он отвечает
-+	 */
-+	public boolean manageSay(Player player, String message)
-+	{
-+		if (!FakePlayersConfig.FAKE_PLAYER_BRAIN || (FakePlayersConfig.FAKE_PLAYER_BRAIN_SAY_RANGE <= 0))
-+		{
-+			return false;
-+		}
-+
-+		final String text = message.toLowerCase();
-+		Npc nearest = null;
-+		double nearestDistance = Double.MAX_VALUE;
-+		for (Npc npc : World.getVisibleObjectsInRange(player, Npc.class, FakePlayersConfig.FAKE_PLAYER_BRAIN_SAY_RANGE))
-+		{
-+			if (!npc.isFakePlayer() || !FakePlayerData.getInstance().isTalkable(npc.getName()) || !isAddressed(text, npc))
-+			{
-+				continue;
-+			}
-+
-+			final double distance = npc.calculateDistance2D(player);
-+			if (distance < nearestDistance)
-+			{
-+				nearest = npc;
-+				nearestDistance = distance;
-+			}
-+		}
-+
-+		if (nearest != null)
-+		{
-+			final Npc npc = nearest;
-+			FakePlayerBrain.getInstance().ask(player, npc, "say", message, reply -> say(npc, reply), () ->
-+			{
-+			});
-+		}
-+		return nearest != null;
-+	}
-+
-+	/**
-+	 * Обращение по имени фейка или по одному из его прозвищ: параметр NPC aliases, через «;» (например «ева;эви»).
-+	 */
-+	private static boolean isAddressed(String text, Npc npc)
-+	{
-+		if (mentions(text, npc.getName().toLowerCase()))
-+		{
-+			return true;
-+		}
-+
-+		for (String alias : npc.getTemplate().getParameters().getString("aliases", "").toLowerCase().split(";"))
-+		{
-+			if (!alias.isBlank() && mentions(text, alias.strip()))
-+			{
-+				return true;
-+			}
-+		}
-+		return false;
-+	}
-+
-+	private static boolean mentions(String text, String name)
-+	{
-+		int index = text.indexOf(name);
-+		while (index >= 0)
-+		{
-+			final int end = index + name.length();
-+			final boolean startOk = (index == 0) || !Character.isLetterOrDigit(text.charAt(index - 1));
-+			final boolean endOk = (end == text.length()) || !Character.isLetterOrDigit(text.charAt(end));
-+			if (startOk && endOk)
-+			{
-+				return true;
-+			}
-+			index = text.indexOf(name, index + 1);
-+		}
-+		return false;
-+	}
-+
-+	private static Npc getFakePlayer(String fpcName)
-+	{
-+		final Spawn spawn = SpawnTable.getInstance().getAnySpawn(FakePlayerData.getInstance().getNpcIdByName(fpcName));
-+		return spawn != null ? spawn.getLastSpawn() : null;
-+	}
-+
-+	private static void say(Npc npc, String text)
-+	{
-+		final CreatureSay cs = new CreatureSay(npc, ChatType.GENERAL, npc.getName(), text);
-+		World.forEachVisibleObjectInRange(npc, Player.class, 1250, player -> player.sendPacket(cs));
-+	}
- 	
- 	public void manageChat(Player player, String fpcName, String message, int minDelay, int maxDelay)
- 	{
 diff --git a/java/org/l2jmobius/gameserver/network/clientpackets/RequestActionUse.java b/java/org/l2jmobius/gameserver/network/clientpackets/RequestActionUse.java
 index fea2773d82bff58653aaa02485e59bd855740d8c..b9df1904ca6d606f2e44e7e375515569a9286af3 100644
 --- a/java/org/l2jmobius/gameserver/network/clientpackets/RequestActionUse.java
@@ -1041,10 +832,10 @@ index 2a7650ac8eeb8f94f080b11d1e9a3618fc0b4781..133b340709eba904347b748c02d5c914
  	}
  }
 diff --git a/java/org/l2jmobius/gameserver/network/clientpackets/TradeRequest.java b/java/org/l2jmobius/gameserver/network/clientpackets/TradeRequest.java
-index f8fbf4a513ff7205ed8980a44e31d02d17923e28..f2b7d224808bbf66572eebeb13125fb604ab0407 100644
+index 04fc331e69054c976ec5ea80551fa9c53c22582b..3719bd9f5fc43bbf7aaf3b15575dedf81e6d5aff 100644
 --- a/java/org/l2jmobius/gameserver/network/clientpackets/TradeRequest.java
 +++ b/java/org/l2jmobius/gameserver/network/clientpackets/TradeRequest.java
-@@ -27,6 +27,8 @@ import org.l2jmobius.gameserver.entity.World;
+@@ -29,6 +29,8 @@ import org.l2jmobius.gameserver.entity.World;
  import org.l2jmobius.gameserver.entity.WorldObject;
  import org.l2jmobius.gameserver.entity.actor.Player;
  import org.l2jmobius.gameserver.entity.actor.holders.player.BlockList;
@@ -1053,7 +844,7 @@ index f8fbf4a513ff7205ed8980a44e31d02d17923e28..f2b7d224808bbf66572eebeb13125fb6
  import org.l2jmobius.gameserver.mechanics.effects.AbstractEffect;
  import org.l2jmobius.gameserver.mechanics.skill.AbnormalType;
  import org.l2jmobius.gameserver.mechanics.skill.BuffInfo;
-@@ -190,5 +192,11 @@ public class TradeRequest extends ClientPacket
+@@ -192,5 +194,11 @@ public class TradeRequest extends ClientPacket
  		sm = new SystemMessage(SystemMessageId.YOU_HAVE_REQUESTED_A_TRADE_WITH_C1);
  		sm.addString(partner.getName());
  		player.sendPacket(sm);
@@ -1066,7 +857,7 @@ index f8fbf4a513ff7205ed8980a44e31d02d17923e28..f2b7d224808bbf66572eebeb13125fb6
  	}
  }
 diff --git a/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTaskManager.java b/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTaskManager.java
-index cde3272f42e0fb279b5cb3158f5a91eed97708e4..548b021dd3cc1162fa13740cbe6797d2646c0cd1 100644
+index e9566be1e478a67dbb33a7dde9f66c9c2f0d3bb7..8f03d07db0b10a82f40314c5e310dd804eaefb98 100644
 --- a/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTaskManager.java
 +++ b/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTaskManager.java
 @@ -40,6 +40,7 @@ import org.l2jmobius.gameserver.entity.item.Weapon;
@@ -1077,7 +868,7 @@ index cde3272f42e0fb279b5cb3158f5a91eed97708e4..548b021dd3cc1162fa13740cbe6797d2
  import org.l2jmobius.gameserver.mechanics.skill.Skill;
  import org.l2jmobius.gameserver.util.LocationUtil;
  
-@@ -94,7 +95,8 @@ public class AutoPlayTaskManager
+@@ -95,7 +96,8 @@ public class AutoPlayTaskManager
  			
  			PLAY: for (Player player : _players)
  			{
@@ -1087,7 +878,7 @@ index cde3272f42e0fb279b5cb3158f5a91eed97708e4..548b021dd3cc1162fa13740cbe6797d2
  				{
  					stopAutoPlay(player);
  					continue PLAY;
-@@ -266,7 +268,9 @@ public class AutoPlayTaskManager
+@@ -273,7 +275,9 @@ public class AutoPlayTaskManager
  							return true;
  						}
  						// Close item: must be unprotected or owned by player.

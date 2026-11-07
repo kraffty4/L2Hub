@@ -102,7 +102,7 @@ index 775adffd024f27c8cb816279a083747fd77b3cc5..c47f0b498192659ffd144ee26a607b07
 @@ -84,7 +87,9 @@ public class L2HubBoard implements IParseBoardHandler
  		java.util.Map.entry("Напарники", "Companions"),
  		java.util.Map.entry("Напарники выключены (EnablePhantoms в Phantoms.ini).", "Companions are turned off (EnablePhantoms in Phantoms.ini)."),
- 		java.util.Map.entry("Охотники", "Hunters"),
+ 		java.util.Map.entry("Пешки", "Pawns"),
 -		java.util.Map.entry("Фантомы выключены (EnablePhantoms в Phantoms.ini).", "Phantoms are turned off (EnablePhantoms in Phantoms.ini)."));
 +		java.util.Map.entry("Фантомы выключены (EnablePhantoms в Phantoms.ini).", "Phantoms are turned off (EnablePhantoms in Phantoms.ini)."),
 +		java.util.Map.entry("Создать клан", "Create a clan"),
@@ -120,7 +120,7 @@ index 775adffd024f27c8cb816279a083747fd77b3cc5..c47f0b498192659ffd144ee26a607b07
  		else if (args[0].equalsIgnoreCase(EVENTS))
  		{
 @@ -641,6 +646,53 @@ public class L2HubBoard implements IParseBoardHandler
- 		return page(player, tr("Охотники"), PhantomHunterUi.board(player, args.length > i ? args[i] : null, args.length > (i + 1) ? parseInt(args[i + 1]) : 0, "bypass " + HUNTERS));
+ 		return page(player, tr("Пешки"), PhantomHunterUi.board(player, args.length > i ? args[i] : null, args.length > (i + 1) ? parseInt(args[i + 1]) : 0, "bypass " + HUNTERS));
  	}
  
 +	// ---------- Клан ----------

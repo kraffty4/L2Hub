@@ -1,0 +1,27 @@
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomOlympiad.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomOlympiad.java
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomOlympiad.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomOlympiad.java
+@@ -193,6 +193,15 @@
+ 	 */
+ 	PhantomEvents.Drive drive(Player player, PhantomTemplate template, long now)
+ 	{
++		synchronized (OlympiadStartKick.lockFor(player.getObjectId()))
++		{
++			if (!OlympiadActionPace.allowDecision(player, now)) return PhantomEvents.Drive.FIGHTS;
++			return driveLocked(player, template, now);
++		}
++	}
++
++	private PhantomEvents.Drive driveLocked(Player player, PhantomTemplate template, long now)
++	{
+ 		if (!player.isInOlympiadMode())
+ 		{
+ 			// Пара подобрана, идёт отсчёт до телепорта (раздел 4.131): ждать в городе, а не на споте.
+@@ -251,6 +260,7 @@
+ 		{
+ 			return PhantomEvents.Drive.FIGHTS;
+ 		}
++		if (EpilogueOlympiadSkills.tick(player, opponent, now)) return PhantomEvents.Drive.FIGHTS;
+ 		final int distance = (int) player.calculateDistance2D(opponent);
+ 		if (distance > ENGAGE_RANGE)
+ 		{

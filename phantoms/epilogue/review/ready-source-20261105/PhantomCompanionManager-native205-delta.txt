@@ -1,0 +1,30 @@
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java
+@@ -928,6 +928,7 @@
+ 	 */
+ 	private static void paceCasts(long now)
+ 	{
++		OlympiadActionPace.tick(now);
+ 		for (Pace pace : PACES.values())
+ 		{
+ 			final Player phantom = pace.phantom;
+@@ -940,6 +941,8 @@
+ 					continue;
+ 				}
+ 
++				// У зарегистрированного боя один полный проход решений; повторный cast-only проход пропускается.
++				if (OlympiadActionPace.owns(phantom)) continue;
+ 				if (phantom.isCastingNow())
+ 				{
+ 					pace.until = now + PACE_HOLD;
+@@ -994,6 +997,9 @@
+ 		PACES.put(phantom.getObjectId(), new Pace(phantom, target, until));
+ 		getInstance().startTicking();
+ 	}
++
++	static long combatPaceInterval() { return PACE_INTERVAL; }
++	static void ensureOlympiadPace() { getInstance().startTicking(); }
+ 
+ 	/**
+ 	 * Хилер: {@link PhantomSupport#paceHeal} между тиками.

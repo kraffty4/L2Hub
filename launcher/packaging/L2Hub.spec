@@ -1,6 +1,7 @@
 # Сборка стандалона L2Hub (docs/RELEASE.md, «Программа и установщик»): PyInstaller onedir, два exe в одной папке —
 # оконный L2Hub.exe и консольный l2hub-cli.exe (служебные процессы окна и cli). Запуск — packaging/build.py.
 import os
+import sysconfig
 
 from PyInstaller.utils.hooks import collect_submodules
 
@@ -12,6 +13,12 @@ UI = os.path.join(PKG, "ui")
 # Всё, что в пакете не Python (интерфейс, chronicles.json, js-помощники L2Solo и их данные), — кроме подложки карты
 # ui/maps: это картинки из клиента NCSoft, только локально (docs/RELEASE.md). Новые файлы попадают сами.
 datas = []
+# Некоторые сборки CPython хранят рядом с ssl.py отдельный список отозванного доверия.
+# Сохраняем его при упаковке: иначе SSLContext падает ещё до старта L2Hub.
+# Ничего не отключаем в TLS и не добавляем ресурс там, где его нет у исходного Python.
+ssl_rejected_cas = os.path.join(sysconfig.get_path("stdlib"), "codex-rejected-cas.pem")
+if os.path.isfile(ssl_rejected_cas):
+    datas.append((ssl_rejected_cas, "."))
 for top, dirs, files in os.walk(PKG):
     dirs[:] = [d for d in dirs if d != "__pycache__" and not (top == UI and d == "maps")]
     for f in files:

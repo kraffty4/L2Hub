@@ -76,7 +76,8 @@ ARMOR_SETS = {"D": "d_grade.xml", "C": "c_grade.xml", "B": "b_grade.xml", "A": "
 SKIP_WEAPON_WORDS = ("Shadow", "Event", "Limited", "Common", "Test", "Retail", "PvP", "Monster", "Sealed", "Infinity",
                      "Deluxe", "Lord", "Zariche", "Akamanah", "Sample", "Hero", "Olympiad", "Baguette", "Knight's", "Pantomime")
 # Оружие NPC без флага for_npc и иконки монстра: в клиенте без анимаций игрока, Т-поза (npc_only; в ядре — PhantomHunterOutfit.npcOnly).
-NPC_WEAPON_NAMES = frozenset({"Lizardspear"})
+# Список — по хватке из weapongrp клиентов High Five и Эпилога (tools/weapon_grip_check.py, 2026-11-07).
+NPC_WEAPON_NAMES = frozenset({"Lizardspear", "Draconic Peltast Weapon", "Airship Cannon Briquet", "Baguette's Two-handed Hammer"})
 DAMAGE_EFFECTS = ("PhysicalDamage", "MagicalDamage", "EnergyDamage", "SoulDamage", "FatalBlow", "Backstab", "DeathLink", "HpDrain",
                   "PhysicalAttack", "MagicalAttack", "SoulBlow")
 WEAPON_KINDS = {"BOW", "SWORD", "BLUNT", "DUAL", "DUALFIST", "CROSSBOW", "POLE", "DUALDAGGER", "DAGGER", "ANCIENTSWORD",

@@ -1,0 +1,219 @@
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/LocalReplyBank.java b/java/org/l2jmobius/gameserver/managers/phantom/LocalReplyBank.java
+--- a/java/org/l2jmobius/gameserver/managers/phantom/LocalReplyBank.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/LocalReplyBank.java
+@@ -14,6 +14,13 @@
+  record Query(String context,String situation){}
+  static final class Snapshot {
+   final List<Entry> entries;final Map<String,List<Entry>> contexts=new LinkedHashMap<>();final Map<String,List<Entry>> exact=new HashMap<>();final Map<String,List<Entry>> dialogues=new HashMap<>();
++  private Object voiceRevision;
++  private final Map<String,Snapshot> voicePools=new HashMap<>();
++  synchronized Snapshot voiced(Player actor){
++   Object revision=LocalDialogueBindings.rules();if(voiceRevision!=revision){voicePools.clear();voiceRevision=revision;}
++   String voice=LocalDialogueBindings.voice(actor);
++   return voicePools.computeIfAbsent(voice,v->new Snapshot(entries.stream().filter(e->!e.dialogue().isBlank()||LocalDialogueBindings.lineAllowed(v,"LocalReplyBank.xml",e.id())).toList()));
++  }
+   Snapshot(List<Entry> rows){entries=List.copyOf(rows);for(Entry x:rows){contexts.computeIfAbsent(x.context(),k->new ArrayList<>()).add(x);exact.computeIfAbsent(x.context()+"/"+x.situation(),k->new ArrayList<>()).add(x);if(!x.dialogue().isBlank())dialogues.computeIfAbsent(x.dialogue(),k->new ArrayList<>()).add(x);}dialogues.values().forEach(xs->xs.sort(Comparator.comparingInt(Entry::turn)));}
+  }
+  static Snapshot read(Path path)throws Exception {var f=DocumentBuilderFactory.newInstance();f.setFeature("http://apache.org/xml/features/disallow-doctype-decl",true);f.setFeature("http://xml.org/sax/features/external-general-entities",false);f.setFeature("http://xml.org/sax/features/external-parameter-entities",false);f.setXIncludeAware(false);f.setExpandEntityReferences(false);var d=f.newDocumentBuilder().parse(path.toFile());if(!d.getDocumentElement().getTagName().equals("replyBank"))throw new IllegalArgumentException("Unsupported reply pool");List<Entry> rows=new ArrayList<>();Set<String> ids=new HashSet<>();NodeList list=d.getElementsByTagName("line");for(int i=0;i<list.getLength();i++){Element e=(Element)list.item(i);String id=e.getAttribute("id"),text=e.getTextContent();if(id.isBlank()||!ids.add(id)||text.isBlank()||text.chars().anyMatch(c->c<32))throw new IllegalArgumentException("Invalid reply record: "+id);rows.add(new Entry(id,e.getAttribute("context"),e.getAttribute("situation"),e.getAttribute("channel"),text,e.getAttribute("dialogue_id"),e.hasAttribute("turn_index")?Integer.parseInt(e.getAttribute("turn_index")):0,e.getAttribute("speaker_role")));}if(rows.isEmpty())throw new IllegalArgumentException("Empty reply pool");return new Snapshot(rows);}
+@@ -42,7 +49,7 @@
+  static String render(String text,Map<String,String> vars){Matcher m=SLOT.matcher(text);StringBuffer b=new StringBuffer();while(m.find()){String value=vars.get(m.group(1));if(value==null||value.isBlank())return null;m.appendReplacement(b,Matcher.quoteReplacement(value));}m.appendTail(b);return b.toString();}
+  static String pick(Snapshot s,String context,String situation,String channel,Map<String,String> vars,String previous,Random random){List<Entry> pool=s.exact.getOrDefault(context+"/"+situation,List.of());List<Entry> matching=pool.stream().filter(x->(channel==null||x.channel().equals(channel))&&x.dialogue().isBlank()).toList();pool=matching;if(pool.isEmpty())return null;int offset=random.nextInt(pool.size());for(int i=0;i<pool.size();i++){Entry e=pool.get((offset+i)%pool.size());if(e.id().equals(previous))continue;String text=render(e.text(),vars);if(text!=null)return e.id()+"\n"+text;}return null;}
+  static Map<String,String> facts(Player actor,Player other){Map<String,String> vars=new HashMap<>();vars.put("level",Integer.toString(actor.getLevel()));vars.put("class",actor.getPlayerClass().name());try{for(var item:actor.getSellList().getItems())if(item.getCount()>0&&item.getItem()!=null){vars.put("item",item.getItem().getName());vars.put("itemId",Integer.toString(item.getItem().getId()));break;}}catch(RuntimeException ignored){}return vars;}
+- static String take(Player actor,Player other,Query q,String channel){if(q==null||!Settings.ENABLED)return null;String value=pick(bank(),q.context(),q.situation(),channel,facts(actor,other),last.get(actor.getObjectId()),RANDOM);if(value==null)return null;int at=value.indexOf('\n');last.put(actor.getObjectId(),value.substring(0,at));return value.substring(at+1);}
++ static String take(Player actor,Player other,Query q,String channel){if(q==null||!Settings.ENABLED)return null;String value=pick(bank().voiced(actor),q.context(),q.situation(),channel,facts(actor,other),last.get(actor.getObjectId()),RANDOM);if(value==null)return null;int at=value.indexOf('\n');last.put(actor.getObjectId(),value.substring(0,at));return value.substring(at+1);}
+  static Query classify(String kind,String message){String k=(kind==null?"":kind).toUpperCase(Locale.ROOT),s=(message==null?"":message).toLowerCase(Locale.ROOT);
+   if(k.equals("DIED")||k.equals("OWNER_DIED")||k.equals("KILLED"))return new Query("journey","death");if(k.equals("REVIVED"))return new Query("journey","return");if(k.equals("REST"))return new Query("support","low_mana");if(k.equals("JOINED")||k.contains("PARTY_JOIN"))return new Query("party_find","invite_pending");if(k.equals("OWNER_LEVEL_UP"))return new Query("hunt","exp");if(k.equals("OWNER_LOW_HP"))return new Query("support","support_intent");if(k.equals("WON"))return new Query("pvp","pvp_after");if(k.contains("CLAN"))return new Query("clan",k.contains("RECRUIT")?"recruitment":"clan_chat");if(k.contains("ALLY")||s.contains("альянс"))return new Query("alliance",s.contains("вар")?"future_diplomacy":"future_cooperation");
+   if(k.contains("DUEL")||s.contains("дуэл"))return new Query("pvp","duel_request");if(k.contains("OLY")||s.contains("олимп"))return new Query("events",k.contains("RESULT")||s.contains("побед")?"oly_result":"oly_queue");if(k.contains("TVT")||s.contains("tvt")||s.contains("твт"))return new Query("events","tvt_signup");if(k.contains("EVENT")||s.contains("ивент"))return new Query("events","event_schedule");if(k.startsWith("LOOT")||s.contains("дроп")||s.contains("добыч"))return new Query("hunt","loot");if(k.contains("RAID")||s.contains("рейд")||s.contains("босс"))return new Query("raid",s.contains("бь")?"boss_engage":"rally");if(k.contains("TRADE")||s.contains("куплю")||s.contains("продам")||s.contains("цен"))return new Query("trade",s.contains("куплю")?"buy_request":"price_talk");if(Pattern.compile("(?U)\\b(?:рес(?:ни|ните|нул|нуть|нуться|нитесь|ай|айте)?|воскрес\\p{L}*|подним(?:и|ите|ешь|ете))\\b").matcher(s).find())return new Query("support","res_request");if(s.contains("баф"))return new Query("support","buff_request");if(s.contains("ман")||s.contains("мп"))return new Query("support","low_mana");if(s.contains("хил")||s.contains("леч"))return new Query("support","heal_request");if(k.contains("ATTACK")||k.equals("GRUDGE")||k.equals("REVENGE"))return new Query("pvp","war_contact");if(s.contains("клан"))return new Query("clan",s.contains("набор")?"recruitment":"clan_chat");if(s.contains("пати")||s.contains("пачк"))return new Query("party_find","looking_for_group");if(s.contains("бьём")||s.contains("таргет")||s.contains("бей"))return new Query("party_fight","focus_target");if(s.contains("кач")||s.contains("моб"))return new Query("hunt","target_choice");if(s.contains("город")||s.contains("иду")||s.contains("летим"))return new Query("journey","travel");return new Query("city",s.contains("привет")?"greeting":"social");}
+@@ -77,7 +84,7 @@
+   Map.entry("party_find-0070","ищу пати на кач, есть место?"),
+   Map.entry("party_find-0080","лф пати на кач"),
+   Map.entry("party_find-0084","лф пати, кто собирает?"),
+-  Map.entry("party_find-0086","возьмите в пати, одному надоело"),
++  Map.entry("rr20261106-b019-e137","возьмите в пати, одной надоело"),
+   Map.entry("party_find-0100","кто на кач собирается?"),
+   Map.entry("party_find-0134","кто собирает пати на фарм?"),
+   Map.entry("party_find-0135","есть место в пати на кач?"),
+@@ -89,7 +96,7 @@
+   Map.entry("party_find-0196","кто на фарм собирается? возьмите"));
+  public static String afterLfpSignal(Player actor,String role){
+   if(actor==null||role==null||role.isBlank()||actor.isDead()||actor.isInParty()||actor.isInStoreMode()||!Settings.ENABLED)return null;
+-  Entry e=reviewedPick(bank(),"party_find","looking_for_group","shout",CONFIRMED_LFP,last.get(actor.getObjectId()),RANDOM);
++  Entry e=reviewedPick(bank().voiced(actor),"party_find","looking_for_group","shout",CONFIRMED_LFP,last.get(actor.getObjectId()),RANDOM);
+   if(e==null)return null;last.put(actor.getObjectId(),e.id());return formatLfp(e.text(),role,actor.getLevel(),RANDOM);
+  }
+  static String formatLfp(String text,String role,int level,Random random){
+@@ -174,12 +181,12 @@
+  static boolean confirmedOlympiadRegistration(boolean registered,boolean inMatch){return registered&&!inMatch;}
+  static String registeredOlympiad(Player actor){
+   if(actor==null||!Settings.ENABLED||!confirmedOlympiadRegistration(PhantomCompat.olympiadRegistered(actor),actor.isInOlympiadMode()))return null;
+-  Entry e=reviewedPick(bank(),"events","oly_queue","general",CONFIRMED_OLY_REGISTRATION,last.get(actor.getObjectId()),RANDOM);
++  Entry e=reviewedPick(bank().voiced(actor),"events","oly_queue","general",CONFIRMED_OLY_REGISTRATION,last.get(actor.getObjectId()),RANDOM);
+   if(e==null)return null;last.put(actor.getObjectId(),e.id());return e.text();
+  }
+  static String registeredTvT(Player actor,String event){
+   if(actor==null||!Settings.ENABLED||!confirmedTvTRegistration(event,actor.isRegisteredOnEvent(),actor.isOnEvent()))return null;
+-  Entry e=reviewedPick(bank(),"events","tvt_signup","general",CONFIRMED_TVT_REGISTRATION,last.get(actor.getObjectId()),RANDOM);
++  Entry e=reviewedPick(bank().voiced(actor),"events","tvt_signup","general",CONFIRMED_TVT_REGISTRATION,last.get(actor.getObjectId()),RANDOM);
+   if(e==null)return null;last.put(actor.getObjectId(),e.id());return e.text();
+  }
+  public static String event(Player actor,Player other,String kind,String what,String channel){
+@@ -190,11 +197,11 @@
+   // unrelated actor state or pick a line from the general bank for them.
+   if(kind==null||!Set.of("CLAN_JOIN","WON","DIED","REVIVED","JOINED","REST").contains(kind))return null;
+   var clan=actor.getClan();if(confirmedClanJoin(kind,channel,clan!=null&&clan==other.getClan()&&actor.getClan()==clan,!actor.isDead())){
+-   Entry e=reviewedClanJoinPick(bank(),channel,last.get(actor.getObjectId()),RANDOM);
++   Entry e=reviewedClanJoinPick(bank().voiced(actor),channel,last.get(actor.getObjectId()),RANDOM);
+    if(e==null)return null;last.put(actor.getObjectId(),e.id());return e.text();
+   }
+   if("WON".equals(kind)&&confirmedPvpWin(kind,channel,!actor.isDead(),other.isDead(),actor.getInstanceId()==other.getInstanceId(),actor.calculateDistance2D(other))){
+-   Entry e=reviewedPick(bank(),"pvp","pvp_after",channel,CONFIRMED_PVP_WIN,last.get(actor.getObjectId()),RANDOM);
++   Entry e=reviewedPick(bank().voiced(actor),"pvp","pvp_after",channel,CONFIRMED_PVP_WIN,last.get(actor.getObjectId()),RANDOM);
+    if(e==null)return null;last.put(actor.getObjectId(),e.id());return e.text();
+   }
+   Party eventParty=actor.getParty();boolean together=eventParty!=null&&eventParty==other.getParty();
+@@ -209,17 +216,12 @@
+    case "rest" -> {context="journey";situation="rest";approved=CONFIRMED_REST;}
+    default -> {return null;}
+   }
+-  Entry e=lane.equals("death")?reviewedDeathPick(bank(),channel,last.get(actor.getObjectId()),RANDOM):lane.equals("joined")?reviewedJoinPick(bank(),channel,last.get(actor.getObjectId()),RANDOM):lane.equals("rest")?reviewedRestPick(bank(),channel,last.get(actor.getObjectId()),RANDOM):reviewedPick(bank(),context,situation,channel,approved,last.get(actor.getObjectId()),RANDOM);
++  Entry e=lane.equals("death")?reviewedDeathPick(bank().voiced(actor),channel,last.get(actor.getObjectId()),RANDOM):lane.equals("joined")?reviewedJoinPick(bank().voiced(actor),channel,last.get(actor.getObjectId()),RANDOM):lane.equals("rest")?reviewedRestPick(bank().voiced(actor),channel,last.get(actor.getObjectId()),RANDOM):reviewedPick(bank().voiced(actor),context,situation,channel,approved,last.get(actor.getObjectId()),RANDOM);
+   if(e==null)return null;last.put(actor.getObjectId(),e.id());return e.text();
+  }
+  static String replyToPrompt(String promptId,String message){
+   if(promptId==null||message==null)return null;
+   String normalized=message.toLowerCase(Locale.ROOT).strip().replace('ё','е').replaceAll("[^\\p{L}\\p{N}]+"," ").strip();
+-  if("city-0112".equals(promptId)){
+-   if(normalized.matches("(?:(?:я|обычно|чаще|играю) )?(?:без|без музыки|без звука|без музыки играю|выключаю|выключил|не слушаю|выключена)"))return "понял, я иногда тоже выключаю";
+-   if(normalized.matches("(?:(?:я|обычно|чаще) )?(?:с музыкой|слушаю|включаю|играю с музыкой)"))return "а какую обычно слушаешь?";
+-   if(normalized.matches("(?:да|ага|угу)"))return "с музыкой или без?";
+-  }
+   if("city-manual-20261101-b01-0039".equals(promptId)&&normalized.matches("(?:я|я качался|норм|нормально|да|да норм|неплохо)"))return "понял, спасибо";
+   if("city-manual-20261101-b04-0068".equals(promptId)&&normalized.matches("(?:(?:еще )?(?:час|полчаса|немного|минут[аы]? \\d+)|до \\d{1,2}(?: часов)?)"))return "ага, я тут пока побуду";
+   if("city-manual-20261101-b02-0024".equals(promptId)&&normalized.matches("(?:(?:на |с )?\\d{1,3}|на двадцатом|двадцатый|двадцатом|двадцать)"))return "а, понял, спасибо";
+@@ -379,7 +381,7 @@
+   Map.entry("support-0007","мп мало, большую пачку пока не тяните"),
+   Map.entry("support-0028","мп на нуле, шикарно блять"),
+   Map.entry("support-0033","мп мало, большую пачку сейчас не тяните"),
+-  Map.entry("support-0064","сядем на пару минут? маны вообще нет"),
++  Map.entry("rr20261106-b018-e208","мп восстановим? маны вообще нет"),
+   Map.entry("support-0082","без мп новый бой не начинайте"),
+   Map.entry("support-0094","дайте посидеть, мп нет"),
+   Map.entry("support-0106","мп почти нет, можно посидеть минуту?"),
+@@ -400,7 +402,7 @@
+   Map.entry("support-0804","мп ушла, подождите немного"));
+  static final Map<String,String> LOW_HP=Map.ofEntries(
+   Map.entry("support-0004","хил, можешь меня подлечить?"),
+-  Map.entry("support-0069","хил, я красный уже!"),
++  Map.entry("rr20261106-b018-e321","хил, хп почти нет!"),
+   Map.entry("support-0517","хил есть? я красный уже"),
+   Map.entry("support-0541","хил, подхвати меня!"),
+   Map.entry("support-0589","хил, подлечи!"),
+@@ -431,7 +433,7 @@
+   Map.entry("hunt-0816","дроп потом разберём"));
+  static final Map<String,String> RAID_READY=Map.ofEntries(
+   Map.entry("raid-0005","как все будут готовы и бафнуты, скажите"),
+-  Map.entry("raid-0056","все готовы? лидер, когда начинаем?"),
++  Map.entry("rr20261106-b018-e250","все готовы? когда начинаем?"),
+   Map.entry("raid-0189","все бафнулись?"),
+   Map.entry("raid-0226","все на месте и по ролям готовы?"),
+   Map.entry("raid-0235","мы ещё кого-то ждём?"),
+@@ -460,7 +462,7 @@
+  }
+  // Text retained for matching a player response to the corresponding scene line.
+  static final Map<String,String> CITY_STARTERS=Map.of(
+-  "city-0112","а вы с музыкой играете или лучше без неё?"
++  
+  );
+  static final Map<String,String> ACTIVE_SALE=Map.ofEntries(
+   Map.entry("trade-0010","продаю {{item}}, кому нужно — пишите"),
+@@ -631,7 +633,7 @@
+    default -> {return false;}
+   }
+   if(!PhantomQuiet.getInstance().allowed(p,topic,now))return false;
+-  Entry chosen=lane.equals("split-target")?reviewedSplitPick(bank(),channel,last.get(p.getObjectId()),RANDOM):lane.equals("sale")?reviewedSalePick(bank(),vars.get("itemId"),last.get(p.getObjectId()),RANDOM):lane.equals("raid-ready")?reviewedRaidPick(bank(),channel,last.get(p.getObjectId()),RANDOM):reviewedPick(bank(),context,situation,channel,approved,last.get(p.getObjectId()),RANDOM);
++  Entry chosen=lane.equals("split-target")?reviewedSplitPick(bank().voiced(p),channel,last.get(p.getObjectId()),RANDOM):lane.equals("sale")?reviewedSalePick(bank().voiced(p),vars.get("itemId"),last.get(p.getObjectId()),RANDOM):lane.equals("raid-ready")?reviewedRaidPick(bank().voiced(p),channel,last.get(p.getObjectId()),RANDOM):reviewedPick(bank().voiced(p),context,situation,channel,approved,last.get(p.getObjectId()),RANDOM);
+   if(chosen==null)return false;String text=render(chosen.text(),vars);if(text==null)return false;
+   if(channel.equals("party")&&(party==null||p.getParty()!=party))return false;
+   if(lane.equals("raid-ready")&&!claimRaidQuestion(party,now))return false;
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/LocalCityDialogues.java b/java/org/l2jmobius/gameserver/managers/phantom/LocalCityDialogues.java
+--- a/java/org/l2jmobius/gameserver/managers/phantom/LocalCityDialogues.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/LocalCityDialogues.java
+@@ -159,9 +159,9 @@
+    int windowCap=Math.max(g.minimumBurstCapacity(),(settings.perHour()+11)/12);
+    int remaining=Math.min(settings.perHour()-times.size(),windowCap-recentCount);Map<String,List<Player>> eligibleByTopic=new HashMap<>();
+    java.util.function.Predicate<Scene> workable=s->{
+-    if(!g.acceptsScene(s)||now<sceneNext.getOrDefault(new SceneKey(region,s.id()),0L)||s.lines().size()>remaining)return false;
++    if(!g.acceptsScene(s)||!LocalDialogueBindings.sceneAllowed(bank.path,s.id(),s.lines().stream().map(Line::id).toList())||now<sceneNext.getOrDefault(new SceneKey(region,s.id()),0L)||s.lines().size()>remaining)return false;
+     List<Player> eligible=eligibleByTopic.computeIfAbsent(s.topic(),key->g.audibleGroup(first,actors.stream().filter(p->g.quiet(p,TOPIC+key,now)).toList()));
+-    return eligible.contains(first)&&eligible.size()>=s.roles().size();
++    return eligible.contains(first)&&eligible.size()>=s.roles().size()&&LocalDialogueBindings.canBind(bank.path,s.id(),s.roles(),eligible,first);
+    };
+    Deque<String> recent=recentTopics.computeIfAbsent(region,k->new ArrayDeque<>());Deque<Boolean> past=recentYesterday.computeIfAbsent(region,k->new ArrayDeque<>());
+    Deque<Boolean> acquaintances=recentAcquaintances.computeIfAbsent(region,k->new ArrayDeque<>());
+@@ -181,11 +181,12 @@
+    eligible.remove(first);Collections.shuffle(eligible,random);eligible.add(0,first);List<Player> selected=new ArrayList<>(eligible.subList(0,scene.roles().size()));
+    if(g.rotateInitiator())Collections.shuffle(selected,random);
+    Map<String,Player> bindings=new LinkedHashMap<>();for(int i=0;i<scene.roles().size();i++)bindings.put(scene.roles().get(i),selected.get(i));
++   bindings=LocalDialogueBindings.bind(bank.path,scene.id(),scene.roles(),eligible,first,random,bindings);if(bindings.isEmpty())return false;
+    Session session=new Session(region,scene,Map.copyOf(bindings),first);active.put(region,session);for(Player p:bindings.values())busy.put(p.getObjectId(),session);areaNext.put(region,now+(settings.minGap()+random.nextInt(settings.maxGap()-settings.minGap()+1))*1000L);sceneNext.put(new SceneKey(region,scene.id()),now+g.sceneReuseMillis());recent.addLast(scene.topic());if(recent.size()>3)recent.removeFirst();past.addLast(mentionsYesterday(scene));if(past.size()>3)past.removeFirst();acquaintances.addLast(mentionsAcquaintance(scene));if(acquaintances.size()>3)acquaintances.removeFirst();advance(session);return true;
+   }
+   static boolean mentionsYesterday(Scene scene){return scene.lines().stream().anyMatch(line->YESTERDAY.matcher(line.text()).find());}
+   static boolean mentionsAcquaintance(Scene scene){return scene.lines().stream().anyMatch(line->ACQUAINTANCE.matcher(line.text()).find());}
+-  synchronized void advance(Session s){if(active.get(s.region)!=s)return;Player anchor=s.anchor;if(!g.safe(anchor)||g.region(anchor)!=s.region||s.roles.values().stream().anyMatch(p->!g.safe(p)||!g.near(anchor,p,600))||!g.audience(anchor)||!g.sharedAudience(s.roles.values())){finish(s);return;}
++  synchronized void advance(Session s){if(active.get(s.region)!=s)return;Player anchor=s.anchor;if(!g.safe(anchor)||!LocalDialogueBindings.sceneAllowed(bank.path,s.scene.id(),s.scene.lines().stream().map(Line::id).toList())||!LocalDialogueBindings.compatible(bank.path,s.scene.id(),s.roles)||g.region(anchor)!=s.region||s.roles.values().stream().anyMatch(p->!g.safe(p)||!g.near(anchor,p,600))||!g.audience(anchor)||!g.sharedAudience(s.roles.values())){finish(s);return;}
+    long now=g.now();recentTrades.removeIf(speech->speech.expiresAt()<=now);recentShouts.removeIf(speech->speech.expiresAt()<=now);recentHumanSpeech.removeIf(speech->speech.expiresAt()<=now);
+    long tradeResume=recentTrades.stream().filter(speech->g.tradeAudienceOverlap(s.roles.values(),speech.speaker(),speech.global(),speech.origin(),speech.humanSender())).mapToLong(TradeSpeech::expiresAt).max().orElse(now);
+    long shoutResume=recentShouts.stream().filter(speech->g.shoutAudienceOverlap(s.roles.values(),speech.speaker(),speech.global(),speech.origin())).mapToLong(ShoutSpeech::expiresAt).max().orElse(now);
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/LocalHeroDialogues.java b/java/org/l2jmobius/gameserver/managers/phantom/LocalHeroDialogues.java
+--- a/java/org/l2jmobius/gameserver/managers/phantom/LocalHeroDialogues.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/LocalHeroDialogues.java
+@@ -97,9 +97,10 @@
+    List<Player> candidates=entry.getValue();Collections.shuffle(candidates,RANDOM);boolean started=false,solo=false;
+    for(Player p:candidates)if(Holder.G.audibleGroup(p,candidates).size()>=2&&Holder.C.tick(p,now)){started=true;break;}
+    if(!started){
+-    List<String> choices=Holder.O.get(now).stream().filter(line->now>=SOLO_REUSE.getOrDefault(line,0L)).toList();
++    Player speaker=candidates.get(0);
++    List<String> choices=Holder.O.get(now).stream().filter(line->now>=SOLO_REUSE.getOrDefault(line,0L)&&LocalDialogueBindings.openerAllowed(speaker,line)).toList();
+     if(!choices.isEmpty()){
+-     Player speaker=candidates.get(0);String text=choices.get(RANDOM.nextInt(choices.size()));
++     String text=choices.get(RANDOM.nextInt(choices.size()));
+      if(send(speaker,text,Holder.G)){SOLO_REUSE.put(text,now+14400000L);LocalCityDialogues.traceScene("hero",scope,"hero-opener",1,1,speaker,text);started=true;solo=true;}
+     }
+    }
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomChat.java
+@@ -93,10 +93,10 @@
+ 
+ 	private static final String[] CHAT_FALLBACK =
+ 	{
+-		"ага",
+-		"угу",
+-		"щас, погоди",
+-		")"
++		"а?",
++		"в смысле?",
++		"ты про что?",
++		"погоди, это о чём?"
+ 	};
+ 
+ 	private static final Map<Order, String> ORDER_FALLBACK = new EnumMap<>(Order.class);
+@@ -104,15 +104,15 @@
+ 	{
+ 		ORDER_FALLBACK.put(Order.FOLLOW, "иду");
+ 		ORDER_FALLBACK.put(Order.STAY, "стою");
+-		ORDER_FALLBACK.put(Order.ASSIST, "понял");
++		ORDER_FALLBACK.put(Order.ASSIST, "ок");
+ 		ORDER_FALLBACK.put(Order.BUFF, "бафаю");
+ 		ORDER_FALLBACK.put(Order.HEAL, "хилю");
+ 		ORDER_FALLBACK.put(Order.RES, "ща подниму");
+ 		ORDER_FALLBACK.put(Order.SIT, "сажусь");
+ 		ORDER_FALLBACK.put(Order.STAND, "встаю");
+ 		ORDER_FALLBACK.put(Order.LEAVE, "ну пока, зови если что");
+-		ORDER_FALLBACK.put(Order.HUNT, "го, мочим всех");
+-		ORDER_FALLBACK.put(Order.LEAD, "го за мной, щас натаскаем");
++		ORDER_FALLBACK.put(Order.HUNT, "го на кач");
++		ORDER_FALLBACK.put(Order.LEAD, "го за мной");
+ 	}
+ 
+ 	/** Кто кому последним отвечал: (фантом, игрок) → время. */

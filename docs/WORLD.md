@@ -8,7 +8,7 @@
 |---|---|---|---|
 | 1 | Поручения дня `.daily` | `WorldDaily` | все с фантомами |
 | 2 | Сезонные события круглый год — календарь (`0016-l2hub-event-calendar`, как у Interlude) | `Enabled` в `L2HubEvents.ini` | High Five, Epilogue, Interlude (своё расписание) |
-| 3 | Кнопки «Поручения дня» и «Рейд охотников» на доске Alt+B (`0017-board-daily-raid`) | — | High Five, Epilogue |
+| 3 | Кнопки «Поручения дня» и «Рейд пешек» на доске Alt+B (`0017-board-daily-raid`) | — | High Five, Epilogue |
 | 4 | Выключатели баффера и GM-шопа у гейткиперов и на доске (`0018-l2hub-town-switches`) | `TownBuffer`, `TownGmShop` в `L2HubTown.ini` | High Five, Epilogue |
 | 5 | Суперчемпион — третий уровень чемпионов, мини-РБ (`0020-super-champion`, c4-interlude); охотники собирают на него рейд (`docs/PHANTOMS.md`, 4.35) | `SuperChampionEnable` в `ChampionMonsters.ini`; охотники — `HunterSuperChampions` | High Five, Epilogue (и Interlude, Classic, Essence — у владельцев) |
 | 6 | Нашествие эльпи по расписанию и менеджеры L2 Day в больших городах (`0021-l2day-towns-elpies`, c4-interlude) | `Elpies`, `ElpiesSchedule`, `ElpiesMinutes`, `ElpiesOnlyWithPlayers` в `L2HubEvents.ini` | High Five, Epilogue (и Interlude; у Classic и Essence — своё) |
@@ -28,7 +28,7 @@
 | Охота | 100 мобов не слабее своего уровня − 5 (`WorldDailyHuntKills`) | всегда |
 | Место дня | 50 мобов на споте охотников по уровню: мобы на уровень−4 … +1 от своего, с 20-го — не в стартовых зонах (`WorldDailySpotKills`); в окне — кнопка «Туда»: телепорт на спот, выше `MaxFreeTeleportLevel` — за 15 000 (`WorldDailyTeleportFee`), из мирной зоны, с запретами доски | два из трёх, |
 | Чемпион | убить чемпиона, синего или красного (`WorldDailyChampions`) | на день наугад, |
-| Вместе с охотником | 40 мобов в пати с охотником-фантомом (`WorldDailyHunterPartyKills`) | у каждого свои |
+| Вместе с пешкой | 40 мобов в пати с пешкой-фантомом (`WorldDailyHunterPartyKills`) | у каждого свои |
 
 - В пати засчитывается то, что убила пати рядом с персонажем (как делится опыт пати, 1500), в том числе охотник или напарник.
 - Награда — сразу, как задание выполнено: `WorldDailyAdena` × уровень² адены (30 × 40² = 48 000 на 40-м) и `WorldDailyExpPercent` % опыта до следующего уровня (2%). Все три за день — бонус (`WorldDailyBonus`): свиток заточки брони своего грейда (с 20-го; до 20-го — ещё столько же адены).
@@ -62,7 +62,7 @@
 
 ## 3. Кнопки на доске Alt+B (2026-10-21, `0017-board-daily-raid`)
 
-В меню доски High Five и Epilogue после «Охотники» — «Поручения дня» (`bypass voice .daily`) и «Рейд охотников» (`bypass voice .raid`): окна команд, чтобы игрок нашёл их без знания команд. Текстуры кнопок — как у соседней «Охотники» (у Epilogue — `L2UI_CT1.Button_DF`). В клиенте не проверялось.
+В меню доски High Five и Epilogue после «Пешки» — «Поручения дня» (`bypass voice .daily`) и «Рейд пешек» (`bypass voice .raid`): окна команд, чтобы игрок нашёл их без знания команд. Текстуры кнопок — как у соседней «Пешки» (у Epilogue — `L2UI_CT1.Button_DF`). В клиенте не проверялось.
 
 ## 4. Выключатели баффера и GM-шопа (2026-10-21, `0018-l2hub-town-switches`)
 

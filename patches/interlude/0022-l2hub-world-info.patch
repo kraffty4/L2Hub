@@ -3,7 +3,7 @@ index 7185ca67e0960a079645290049be21f260dafa6f..a2e254d954f430d1f549e5d5b6a7b7a2
 --- a/dist/game/data/html/CommunityBoard/Custom/navigation.html
 +++ b/dist/game/data/html/CommunityBoard/Custom/navigation.html
 @@ -7,5 +7,6 @@
- <button value="Охотники" action="bypass _bbshubhunters" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
+ <button value="Пешки" action="bypass _bbshubhunters" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
  <button value="Поручения" action="bypass voice .daily" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
  <button value="Рейд" action="bypass voice .raid" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
 +<button value="Мир" action="bypass voice .world" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
@@ -481,7 +481,7 @@ index 0000000000000000000000000000000000000000..8a9dc12d377340b756f4c284f4992400
 +					sb.append(when(next)).append(": ").append(pvp[1]).append("<br1>");
 +				}
 +			}
-+			sb.append("<font color=\"808080\">Регистрация 10 минут у менеджера в Гиране (у Deathmatch — 1 минута), охотники записываются сами.</font><br1>");
++			sb.append("<font color=\"808080\">Регистрация 10 минут у менеджера в Гиране (у Deathmatch — 1 минута), пешки записываются сами.</font><br1>");
 +		}
 +		else
 +		{

@@ -201,7 +201,7 @@ index 226194a80916cf581834d279cd49de66e8d3bdd7..a7ef6569108266e07170dfc4fea3d743
  </tr>
  <tr>
 -	<td><button value="Delevel" action="bypass _bbstop;delevel/main.html" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Back_Down" fore="L2UI_CT1.OlympiadWnd_DF_Back"></td>
-+	<td><button value="Охотники" action="bypass _bbshubhunters" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Fight1None_Down" fore="L2UI_CT1.OlympiadWnd_DF_Fight1None"></td>
++	<td><button value="Пешки" action="bypass _bbshubhunters" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Fight1None_Down" fore="L2UI_CT1.OlympiadWnd_DF_Fight1None"></td>
  </tr>
  <tr>
 -	<td><button value="Premium" action="bypass _bbstop;premium/main.html" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Reward_Down" fore="L2UI_CT1.OlympiadWnd_DF_Reward"></td>
@@ -646,7 +646,7 @@ index 0000000000000000000000000000000000000000..c779e5f744e0c3dd0400f6b30a69ac8c
 +	{
 +		if (!PhantomsConfig.PHANTOMS_ENABLED)
 +		{
-+			return page(player, "Охотники", "Фантомы выключены (EnablePhantoms в Phantoms.ini).");
++			return page(player, "Пешки", "Фантомы выключены (EnablePhantoms в Phantoms.ini).");
 +		}
 +
 +		int i = 1;
@@ -663,7 +663,7 @@ index 0000000000000000000000000000000000000000..c779e5f744e0c3dd0400f6b30a69ac8c
 +			}
 +			i = 3;
 +		}
-+		return page(player, "Охотники", PhantomHunterUi.board(player, args.length > i ? args[i] : null, args.length > (i + 1) ? parseInt(args[i + 1]) : 0, "bypass " + HUNTERS));
++		return page(player, "Пешки", PhantomHunterUi.board(player, args.length > i ? args[i] : null, args.length > (i + 1) ? parseInt(args[i + 1]) : 0, "bypass " + HUNTERS));
 +	}
 +
 +	// ---------- Общее ----------

@@ -4,13 +4,13 @@ index 552ec00..f682f0b 100644
 +++ b/dist/game/data/html/CommunityBoard/Custom/navigation.html
 @@ -20,6 +20,15 @@
  <tr>
- 	<td><button value="Охотники" action="bypass _bbshubhunters" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Back_Down" fore="L2UI_CT1.OlympiadWnd_DF_Back"></td>
+ 	<td><button value="Пешки" action="bypass _bbshubhunters" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Back_Down" fore="L2UI_CT1.OlympiadWnd_DF_Back"></td>
  </tr>
 +<tr>
 +	<td><button value="Поручения дня" action="bypass voice .daily" width=200 height=30 back="L2UI_CT1.HtmlWnd_DF_Campaign_Down" fore="L2UI_CT1.HtmlWnd_DF_Campaign"></td>
 +</tr>
 +<tr>
-+	<td><button value="Рейд охотников" action="bypass voice .raid" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Back_Down" fore="L2UI_CT1.OlympiadWnd_DF_Back"></td>
++	<td><button value="Рейд пешек" action="bypass voice .raid" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Back_Down" fore="L2UI_CT1.OlympiadWnd_DF_Back"></td>
 +</tr>
 +<tr>
 +	<td><button value="Мир сейчас" action="bypass voice .world" width=200 height=30 back="L2UI_CT1.HtmlWnd_DF_Area_Down" fore="L2UI_CT1.HtmlWnd_DF_Area"></td>

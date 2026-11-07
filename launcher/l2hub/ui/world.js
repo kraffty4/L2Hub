@@ -337,7 +337,7 @@
       const age = liveAge();
       if (W.hErr) fresh = pill('bad', `нет ответа: ${esc(W.hErr)}`);
       else if (!W.h) fresh = pill('', 'загружаю…');
-      else if (age === null) fresh = pill('warn', 'сервер ещё не прислал состояние охотников');
+      else if (age === null) fresh = pill('warn', 'сервер ещё не прислал состояние пешек');
       else fresh = age <= 25 ? pill('', `живые данные · обновлено ${age} с назад`) : pill('warn', `данные устарели: сервер молчит ${age} с`);
     }
     setHtml('worldFresh', fresh);
@@ -404,13 +404,13 @@
     const c = byId(W.chron);
     return `<div class="card" style="max-width:640px;margin:40px auto;text-align:center;padding:26px">
       <div style="font-family:var(--serif);font-size:20px;color:var(--gold-hi)">В ${esc(c?.name || W.chron)} нет живого мира</div>
-      <p class="w-t2" style="line-height:1.6;font-size:14px">Охотников, напарников и мозгов в этой сборке нет. Сервер отвечает: <span class="w-cmd">${esc(W.h.error)}</span></p>
+      <p class="w-t2" style="line-height:1.6;font-size:14px">Пешек, напарников и мозгов в этой сборке нет. Сервер отвечает: <span class="w-cmd">${esc(W.h.error)}</span></p>
       <p class="w-muted" style="font-size:13px">Живой мир есть там, где стоит модуль фантомов — выбери мир слева.</p></div>`;
   }
 
   // ---------- Карта мира (worldmap.js) ----------
-  const MAP_KINDS = [['hunter', 'Охотники'], ['store', 'Лавки'], ['companion', 'Напарники'], ['player', 'Игроки'], ['superchampion', 'Суперчемпионы'], ['raidboss', 'Рейд-боссы'], ['epic', 'Эпики']];
-  const KIND_NAME = { hunter: 'охотник', store: 'лавка', companion: 'напарник', player: 'игрок', superchampion: 'суперчемпион', raidboss: 'рейд-босс', epic: 'эпик' };
+  const MAP_KINDS = [['hunter', 'Пешки'], ['store', 'Лавки'], ['companion', 'Напарники'], ['player', 'Игроки'], ['superchampion', 'Суперчемпионы'], ['raidboss', 'Рейд-боссы'], ['epic', 'Эпики']];
+  const KIND_NAME = { hunter: 'пешка', store: 'лавка', companion: 'напарник', player: 'игрок', superchampion: 'суперчемпион', raidboss: 'рейд-босс', epic: 'эпик' };
   function mapTip(p) {
     if (p.kind === 'raidboss' || p.kind === 'epic') return `<b>${esc(p.name)}</b> <span class="w-muted">${p.grand ? 'эпик' : 'рейд-босс'} · ${p.level} ур.</span>${p.town ? `<br>у ${esc(p.town)}` : ''}<br>жив`;
     if (p.kind === 'superchampion') return `<b>${esc(p.name)}</b> <span class="w-muted">суперчемпион · ${p.level} ур.</span>${p.town ? `<br>у ${esc(p.town)}` : ''}${p.since ? `<br>живёт ${ago(p.since).replace(' назад', '')}` : ''}`;
@@ -484,7 +484,7 @@
         <td>${act}</td></tr>`;
     }).join('');
     main.innerHTML = `<div class="w-title"><h3 class="w-h">Модуль фантомов</h3><span class="w-pill">phantoms/core · файлов ${W.mods.coreFiles}</span></div>
-      <div class="w-t2" style="font-size:13px;line-height:1.55;margin:4px 0 12px;max-width:820px">Один код охотников, напарников и мозгов на все хроники Mobius. Хроника получает модуль при сборке сервера:
+      <div class="w-t2" style="font-size:13px;line-height:1.55;margin:4px 0 12px;max-width:820px">Один код пешек, напарников и мозгов на все хроники Mobius. Хроника получает модуль при сборке сервера:
         код — из <span class="w-cmd">core</span>, данные мира — свои (<span class="w-cmd">phantoms/&lt;id&gt;/dist</span>), врезки в Mobius — <span class="w-cmd">glue.patch</span>.
         «Свежий» — файлы модуля и патчи хроники совпадают с теми, что были в последней сборке (<span class="w-cmd">.module_manifest.json</span>, <span class="w-cmd">.patches_manifest.json</span>).</div>
       <div class="card" style="padding:4px 8px"><table class="mt"><tr><th>Хроника</th><th>Данные мира</th><th>Врезки</th><th>В сборке сервера</th><th></th></tr>${rows}</table></div>
@@ -507,8 +507,8 @@
   }
   function serverOffNote() {
     const job = last.job;
-    if (job && !job.done && job.chronicle === W.chron) return `<div class="note w-note-warn">Сервер меняет состояние: ${esc(job.step || '')}. Охотники выйдут в мир, когда гейм-сервер загрузится.</div>`;
-    return `<div class="note">Сервер выключен — мир стоит: охотники не качаются, напарники спят. ${W.h?.db ? 'Уровни и классы — из базы.' : 'База тоже выключена — уровней не видно.'}
+    if (job && !job.done && job.chronicle === W.chron) return `<div class="note w-note-warn">Сервер меняет состояние: ${esc(job.step || '')}. Пешки выйдут в мир, когда гейм-сервер загрузится.</div>`;
+    return `<div class="note">Сервер выключен — мир стоит: пешки не качаются, напарники спят. ${W.h?.db ? 'Уровни и классы — из базы.' : 'База тоже выключена — уровней не видно.'}
       <div class="row2"><button class="sbtn primary" data-act="start">Запустить мир без клиента</button><span class="w-muted" style="font-size:12.5px">то же, что «Играть» → «Только сервер»</span></div></div>`;
   }
   function bindCommon(root) {
@@ -547,7 +547,7 @@
     }).join('');
     main.innerHTML = `<div class="card"><h3>Летопись мира <span class="r w-muted">${r.entries.length ? `последние ${r.entries.length}` : ''}</span></h3>
       <div class="seg w-chron-f">${chips}</div>
-      <div class="w-chron-list" data-keep="chron">${rows || '<div class="note">Пока пусто — летопись пишется по ходу игры: убитые боссы, ивенты, уровни охотников.</div>'}</div></div>`;
+      <div class="w-chron-list" data-keep="chron">${rows || '<div class="note">Пока пусто — летопись пишется по ходу игры: убитые боссы, ивенты, уровни пешек.</div>'}</div></div>`;
     main.querySelectorAll('[data-cf]').forEach((b) => (b.onclick = () => { W.chronFilter = b.dataset.cf; render(true); }));
   }
 
@@ -612,7 +612,7 @@
     const rows = f.threads.map((x) => `<tr data-ft="${x.id}"><td title="${esc(x.title)}"><span class="nm">${esc(x.title)}</span></td><td>${esc(x.by)}</td><td class="w-n">${x.posts.length}</td><td>${hhmmDay(x.updated)}</td></tr>`).join('');
     return `${notes}<div class="w-tbl" data-keep="soc" style="max-height:56vh"><table><colgroup><col style="width:55%"><col style="width:18%"><col style="width:10%"><col style="width:17%"></colgroup>
       <thead><tr><th>Тема</th><th>Автор</th><th class="w-n">Постов</th><th>Обновлена</th></tr></thead><tbody>${rows}</tbody></table>${rows ? '' : `<div class="w-blank">${W.forumBusy ? 'Первые темы пишутся.' : 'Тем пока нет.'}</div>`}</div>
-      <div class="w-muted" style="font-size:12px;margin-top:8px">Пишут охотники через мозги: темы из летописи мира, новая ветка раз в 4 часа, и то когда страница открыта.</div>`;
+      <div class="w-muted" style="font-size:12px;margin-top:8px">Пишут пешки через мозги: темы из летописи мира, новая ветка раз в 4 часа, и то когда страница открыта.</div>`;
   }
   async function loadForum(fresh = false) {
     const chron = W.chron;
@@ -740,7 +740,7 @@
     let html = running() ? '' : serverOffNote() + '<div style="height:12px"></div>';
     if (stale() && live) html += `<div class="note w-note-warn" style="margin-bottom:12px">Сервер ${liveAge()} с не обновлял L2HubHunters.json. Цифры ниже — с того момента.</div>`;
     html += `<div class="w-grid w-g4 w-top">
-      <div class="card w-stat"><h3>Охотники</h3><div class="v">${live ? inWorld : h.db ? started : '—'}<small> / ${items.length}</small></div>
+      <div class="card w-stat"><h3>Пешки</h3><div class="v">${live ? inWorld : h.db ? started : '—'}<small> / ${items.length}</small></div>
         <div class="s">${live ? 'в мире сейчас' : !h.db ? 'база выключена — уровней не видно' : started ? 'начали путь (из базы)' : 'ещё не начинали'}</div>
         <div class="row2"><span class="seg" id="worldMode">${modeSeg}</span></div></div>
       <div class="card w-stat"><h3>Напарники</h3><div class="v">${W.comps?.ok ? comps.length : '—'}</div>
@@ -751,7 +751,7 @@
         <div class="s2">стратег: ${st ? { OFF: 'выключен', WITH_PLAYERS: 'с игроками', ALWAYS: 'всегда' }[st.when] : 'нет в сборке'}${b.decisions != null ? ` · решений с запуска: ${b.decisions}` : ''}</div></div>
       <div class="card w-stat"><h3>Игроки</h3><div class="v">${h.players ?? '—'}</div>
         <div class="s">${!running() ? 'сервер выключен' : h.players ? 'живых в игре' : 'живых нет'}</div>
-        <div class="s2">охотники ${{ OFF: 'выключены', ALWAYS: 'живут всегда', WITH_PLAYERS: 'живут только с игроками' }[h.mode]}</div></div>
+        <div class="s2">пешки ${{ OFF: 'выключены', ALWAYS: 'живут всегда', WITH_PLAYERS: 'живут только с игроками' }[h.mode]}</div></div>
     </div>`;
     html += worldNowCard(h.world);
     if (live) {
@@ -773,7 +773,7 @@
       const hunterNames = new Set(items.map((x) => x.name));
       const partyRows = Object.entries(parties).map(([lead, members]) => `<div class="it"><span class="who">${esc(lead)}</span>${hunterNames.has(lead) ? '' : ' <span class="w-muted">(живой игрок)</span>'} → ${members.filter((n) => n !== lead).map(esc).join(', ') || '—'}</div>`).join('');
       html += `<div class="w-grid w-g2" style="margin-top:12px">
-        <div class="card"><h3>Чем занят мир <span class="r"><button class="w-link" data-f="ALL">все охотники →</button></span></h3><div class="w-occ">${bar}</div><div class="w-legend">${leg}</div></div>
+        <div class="card"><h3>Чем занят мир <span class="r"><button class="w-link" data-f="ALL">все пешки →</button></span></h3><div class="w-occ">${bar}</div><div class="w-legend">${leg}</div></div>
         <div class="card"><h3>Экономика</h3><div class="w-kv">
           <span>Адены у всех</span><span>${money(items.reduce((s, x) => s + (x.adena || 0), 0))}</span>
           <span>Доход с охоты, медиана</span><span>${earned.length ? `~${money(median(earned))}/ч` : '—'}</span>
@@ -782,20 +782,20 @@
           <span>Лавок в Гиране</span><span>${items.filter((x) => x.store).length}</span></div></div>
       </div>
       <div class="w-grid w-g2" style="margin-top:12px">
-        <div class="card"><h3>Уровни охотников</h3><div class="w-hist">${hist || '<span class="w-muted">—</span>'}</div></div>
+        <div class="card"><h3>Уровни пешек</h3><div class="w-hist">${hist || '<span class="w-muted">—</span>'}</div></div>
         <div class="card"><h3>Последние решения стратега${st && st.when === 'OFF' ? ' <span class="r w-muted">стратег выключен</span>' : ''}</h3>
           <div class="w-feed">${recent.length ? recent.map((x) => `<div class="it"><span class="who">${esc(x.name)}</span> <span class="w-dec">${esc(decisionText(x.strategy.decision))}</span>${refused(x.strategy)} <span class="w-muted">${ago(x.strategy.at)}</span>${x.strategy.thought ? `<br><span class="th">«${esc(x.strategy.thought)}»</span>` : ''}</div>`).join('') : '<span class="w-muted">Пока никто не решал.</span>'}</div></div>
       </div>
       <div class="card" style="margin-top:12px"><h3>Пати сейчас <span class="r w-muted">${Object.keys(parties).length}</span></h3><div class="w-feed">${partyRows || '<span class="w-muted">Никто ни с кем не в пати.</span>'}</div></div>`;
     } else if (running() && !started) {
-      html += '<div class="card" style="margin-top:12px"><div class="w-blank">Охотники ещё не начинали: после сброса они выходят с 1 уровня в течение 10 секунд.</div></div>';
+      html += '<div class="card" style="margin-top:12px"><div class="w-blank">Пешки ещё не начинали: после сброса они выходят с 1 уровня в течение 10 секунд.</div></div>';
     }
     main.innerHTML = html;
     main.querySelectorAll('[data-f]').forEach((b2) => (b2.onclick = () => { W.filter = b2.dataset.f; enter('people'); }));
     main.querySelectorAll('#worldMode button').forEach((b2) => (b2.onclick = async () => {
       const r = await api.set_hunters_mode(W.chron, b2.dataset.mode);
       if (!r.ok) return toast(r.error, true);
-      toast({ OFF: 'Охотники уйдут из мира.', ALWAYS: 'Охотники живут всегда.', WITH_PLAYERS: 'Охотники живут, пока в игре есть игроки.' }[b2.dataset.mode] + (running() ? ' Сервер подхватит за 10 секунд.' : ''));
+      toast({ OFF: 'Пешки уйдут из мира.', ALWAYS: 'Пешки живут всегда.', WITH_PLAYERS: 'Пешки живут, пока в игре есть игроки.' }[b2.dataset.mode] + (running() ? ' Сервер подхватит за 10 секунд.' : ''));
       await loadHunters(); render(true);
     }));
   }
@@ -826,7 +826,7 @@
     const table = anyStarted || !running()
       ? `<table><colgroup><col style="width:15%"><col style="width:7%"><col style="width:17%"><col style="width:26%"><col style="width:11%"><col style="width:11%"><col style="width:13%"></colgroup>
           <thead><tr><th>Имя</th><th class="w-n">Ур.</th><th>Профессия</th><th>Где и чем занят</th><th class="w-n">Адена</th><th class="w-n" title="Доход с охоты в час">В час</th><th>Стратег</th></tr></thead><tbody>${tbody}</tbody></table>${rows.length ? '' : '<div class="w-blank">Никого не нашлось — сбрось фильтр или поиск.</div>'}`
-      : '<div class="w-blank">Охотники ещё не начинали путь.<br>Они выходят с 1 уровня в стартовых деревнях своих рас — после сброса это 10 секунд.</div>';
+      : '<div class="w-blank">Пешки ещё не начинали путь.<br>Они выходят с 1 уровня в стартовых деревнях своих рас — после сброса это 10 секунд.</div>';
     main.innerHTML = `<div class="w-pop">
       <div class="w-pop-l">
         <div class="w-tools"><input class="search" id="worldQuery" placeholder="Найти по имени" value="${esc(W.query)}"><div class="w-chips">${chips}</div><span class="spacer"></span>
@@ -836,7 +836,7 @@
         <div class="w-tbl ${stale() ? 'stale' : ''}" data-keep="tbl">${table}</div>
         <div class="w-tools" style="border-top:1px solid var(--line);border-bottom:0"><span class="w-muted" style="font-size:12.5px">${rows.length} из ${h.items.length} · обновляется раз в 10 с</span><span class="spacer"></span><button class="sbtn danger" id="worldResetAll">Сбросить всех</button></div>
       </div>
-      <div class="w-pop-r" data-keep="card">${sel ? hunterCard(sel, h) : '<div class="w-blank">Выбери охотника в списке — здесь появится его карточка: что делает, экономика, квест, лавка и мысли стратега.</div>'}</div>
+      <div class="w-pop-r" data-keep="card">${sel ? hunterCard(sel, h) : '<div class="w-blank">Выбери пешку в списке — здесь появится её карточка: что делает, экономика, квест, лавка и мысли стратега.</div>'}</div>
     </div>`;
     $('worldSort').value = W.sort;
     $('worldQuery').oninput = (e) => { W.query = e.target.value; render(true); };
@@ -894,8 +894,8 @@
   async function resetHunters(name) {
     const n = W.h.items.length;
     const ok = await ask({
-      title: name ? `Сбросить ${esc(name)}?` : 'Сбросить всех охотников?', danger: true, ok: name ? `Сбросить ${esc(name)}` : 'Сбросить всех',
-      body: `<p>${name ? `<b>${esc(name)}</b> удалится` : `<b>Все ${n} охотников</b> удалятся`} из базы и ${name ? 'начнёт' : 'начнут'} заново с 1 уровня: уровень, профессия, адена, шмот и квесты пропадут.</p>
+      title: name ? `Сбросить ${esc(name)}?` : 'Сбросить всех пешек?', danger: true, ok: name ? `Сбросить ${esc(name)}` : 'Сбросить всех',
+      body: `<p>${name ? `<b>${esc(name)}</b> удалится` : `<b>Все ${n} пешек</b> удалятся`} из базы и ${name ? 'начнёт' : 'начнут'} заново с 1 уровня: уровень, профессия, адена, шмот и квесты пропадут.</p>
         <p class="w-small">Перед сбросом лаунчер сам снимет бэкап базы <span class="w-cmd">before-reset</span> — откат: «Сервис» → «Бэкапы базы», только на остановленном сервере. ${running() ? 'Сервер запущен — сброс за 10 секунд, без рестарта.' : 'Сервер выключен — сброс выполнится при старте.'}</p>`,
     });
     if (!ok) return;
@@ -966,10 +966,10 @@
     const st = W.h?.strategy;
     let state;
     if (!running()) state = ['var(--off)', 'Мозги спят вместе с сервером', 'Сервис мозгов поднимается вместе с сервером. Модель и тариф можно менять и сейчас.'];
-    else if (b.state === 'nokey' || (s.mode === 'api' && !W.brain.key)) state = ['var(--warn)', 'Мир живёт без LLM: нет ключа', `Охотники качаются, торгуют и ходят в пати по правилам, фейки и напарники отвечают заготовками. Положи ключ одной строкой в data\\brain\\${esc(s.api.keyFile)} — подхватится со следующей реплики.`];
+    else if (b.state === 'nokey' || (s.mode === 'api' && !W.brain.key)) state = ['var(--warn)', 'Мир живёт без LLM: нет ключа', `Пешки качаются, торгуют и ходят в пати по правилам, фейки и напарники отвечают заготовками. Положи ключ одной строкой в data\\brain\\${esc(s.api.keyFile)} — подхватится со следующей реплики.`];
     else if (b.state === 'off') state = ['var(--bad)', 'Сервис мозгов не отвечает', 'Мир не остановился: решают правила, реплики — заготовки. Перезапуск сервера поднимет мозги заново.'];
     else if (llmDown(b)) state = ['var(--bad)', 'LLM недоступна', `Последняя ошибка: <span class="w-cmd">${esc(b.lastError)}</span>. Мир не остановился: решают правила, реплики — заготовки.`];
-    else if (st && st.when === 'OFF') state = ['var(--warn)', 'LLM на связи, стратег выключен', 'Фейки и напарники говорят через модель, охотники решают по правилам — это не остановка мира.', llmNotes(b)];
+    else if (st && st.when === 'OFF') state = ['var(--warn)', 'LLM на связи, стратег выключен', 'Фейки и напарники говорят через модель, пешки решают по правилам — это не остановка мира.', llmNotes(b)];
     else {
       const think = !st ? '' : st.when === 'ALWAYS' ? ' Стратег думает всегда.' : W.h.players ? ` Стратег думает: живых игроков — ${W.h.players}.` : ' Стратег ждёт живых игроков: без них решают правила, запросы не тратятся.';
       state = ['var(--ok)', `LLM на связи: ${esc(b.model || '')}`, `${b.lastReplyAt ? `Последний ответ в ${esc(b.lastReplyAt)}, ` : ''}сбоев модели с запуска — ${b.errors ?? 0}.${think}`, llmNotes(b)];
@@ -996,21 +996,21 @@
     const part = s[m];
     const u = W.brain.usage;
     const urow = (t, x) => `<span>${t}</span><span>${x.requests}</span><span>${tokens(x.in + x.out)}</span><span>${x.cost ? usd(x.cost) : '—'}</span>`;
-    let stratCard = '<div class="card"><h3>Стратегия охотников</h3><div class="note">В этой сборке нет мозгов-стратега (патч 0019).</div></div>';
+    let stratCard = '<div class="card"><h3>Стратегия пешек</h3><div class="note">В этой сборке нет мозгов-стратега (патч 0019).</div></div>';
     if (st) {
       const perH = Number(W.strat.HunterStrategyPerHour), perM = Math.min(Number(W.strat.HunterStrategyPerMinute), st.rateCap);
       let cost = 'Выключен — запросов к модели нет.';
       if (W.strat.when !== 'OFF' && perH >= 1 && perM >= 1) {
         const n = Math.min(perH * st.hunters, perM * 60);
-        cost = `Потолок: ≈ ${n} решений в час на ${st.hunters} охотников · ≈ ${tokens(n * (st.tokensIn + st.tokensOut))} токенов`;
+        cost = `Потолок: ≈ ${n} решений в час на ${st.hunters} пешек · ≈ ${tokens(n * (st.tokensIn + st.tokensOut))} токенов`;
         if (st.mode === 'local') cost += ' · своя модель — бесплатно';
         else if (st.priceIn || st.priceOut) cost += ` · ≈ ${usd((n * (st.tokensIn * st.priceIn + st.tokensOut * st.priceOut)) / 1e6)} в час игры`;
         cost += W.strat.when === 'WITH_PLAYERS' ? '. Без живых игроков — ноль.' : '.';
       }
       const num = (label, hint, key, lo, hi) => `<div class="opt"><div class="l">${label}<small>${hint}</small></div><input class="field ${String(W.strat[key]) !== String(st[key]) ? 'chg' : ''}" style="width:64px" data-sk="${key}" value="${esc(W.strat[key])}" inputmode="numeric" data-lo="${lo}" data-hi="${hi}"></div>`;
-      stratCard = `<div class="card"><h3>Стратегия охотников</h3>
+      stratCard = `<div class="card"><h3>Стратегия пешек</h3>
         <div class="opt"><div class="l">Когда думать</div><span class="seg" id="worldStratWhen">${[['OFF', 'выкл'], ['WITH_PLAYERS', 'с игроками'], ['ALWAYS', 'всегда']].map(([k, t]) => `<button data-w="${k}" class="${W.strat.when === k ? 'on' : ''}">${t}</button>`).join('')}</span></div>
-        ${num('Решений в час на охотника', '1–60, по умолчанию 6', 'HunterStrategyPerHour', 1, 60)}
+        ${num('Решений в час на пешку', '1–60, по умолчанию 6', 'HunterStrategyPerHour', 1, 60)}
         ${num('Запросов в минуту на всех', `1–60; мозги дают стратегу до ${st.rateCap}`, 'HunterStrategyPerMinute', 1, 60)}
         ${num('Сказать мысль вслух, %', '0–100, если рядом живой игрок', 'HunterStrategySayChance', 0, 100)}
         <div class="row2"><button class="sbtn primary" id="worldStratSave" ${stratDirty() ? '' : 'disabled'}>Сохранить</button><span class="hint">${stratDirty() ? 'не сохранено' : ''}</span><span class="w-muted" style="font-size:12px">сервер подхватит на ходу</span></div>
@@ -1089,7 +1089,7 @@
       $('worldStratSave').onclick = async () => {
         const r = await api.set_hunter_strategy(W.chron, W.strat);
         if (!r.ok) return toast(r.error, true);
-        toast({ OFF: 'Стратег выключен: охотники живут по правилам.', WITH_PLAYERS: 'Сохранил: стратег думает, пока в игре есть игроки.', ALWAYS: 'Сохранил: стратег думает всегда.' }[W.strat.when] + (running() ? ' Сервер подхватит на ходу.' : ''));
+        toast({ OFF: 'Стратег выключен: пешки живут по правилам.', WITH_PLAYERS: 'Сохранил: стратег думает, пока в игре есть игроки.', ALWAYS: 'Сохранил: стратег думает всегда.' }[W.strat.when] + (running() ? ' Сервер подхватит на ходу.' : ''));
         W.strat = null;
         await loadHunters();
         render(true);
@@ -1129,19 +1129,19 @@
     const items = m.feed.filter((x) => !W.mindWho || x.fpc === W.mindWho);
     const extOn = W.brain?.settings?.extended?.enabled;
     const ext = m.extNow.length ? `<div class="note" style="margin-bottom:12px">Сейчас в расширенном режиме: <b>${m.extNow.map(esc).join(', ')}</b> — решают моделью с размышлением, рядом с живым игроком.</div>`
-      : extOn && running() ? '<div class="w-muted" style="font-size:12.5px;margin-bottom:10px">Расширенное обдумывание включено, но за 15 минут никто не решал с размышлением: оно — для охотников рядом с живым игроком.</div>' : '';
-    const who = W.mindWho ? `<span class="r"><span class="w-muted">только ${esc(W.mindWho)} · </span><button class="w-link" data-who="">все охотники</button></span>`
+      : extOn && running() ? '<div class="w-muted" style="font-size:12.5px;margin-bottom:10px">Расширенное обдумывание включено, но за 15 минут никто не решал с размышлением: оно — для пешек рядом с живым игроком.</div>' : '';
+    const who = W.mindWho ? `<span class="r"><span class="w-muted">только ${esc(W.mindWho)} · </span><button class="w-link" data-who="">все пешки</button></span>`
       : m.feed.length ? `<span class="r w-muted">последние ${m.feed.length}</span>` : '';
     const rows = items.map((x) => `<div class="it"><button class="w-link who" data-who="${esc(x.fpc)}">${esc(x.fpc)}</button> <span class="w-dec">${esc(decisionText(x.decision))}</span>${x.ext ? ' <span class="w-dec w-ext" title="Решал с размышлением: расширенный режим">думал</span>' : ''} <span class="w-muted">${when(x.at)}</span>`
       + (x.goal ? `<div class="w-t2" style="font-size:12.5px">цель: <span translate="no">${esc(x.goal)}</span></div>` : '')
       + (x.thought ? `<div class="th" translate="no">«${esc(x.thought)}»</div>` : '') + resultHtml(x.result) + '</div>').join('');
     return `${ext}<div class="card"><h3><span>Лента мыслей</span>${who}</h3>
-      <div class="w-feed w-mfeed">${rows || `<div class="w-blank">${W.mindWho ? 'У этого охотника решений в ленте нет.' : 'Стратег в этом мире ещё ничего не решал. Решения появятся, когда стратег включён и думает — вкладка «Модель и стратег».'}</div>`}</div>
-      <div class="w-muted" style="font-size:12px;margin-top:10px">Итог под решением — что оно дало до следующего: его присылает сервер, когда охотник решает снова. Без итога — решение свежее или сервер собран до «Разума 2.0», шаг 4.</div></div>`;
+      <div class="w-feed w-mfeed">${rows || `<div class="w-blank">${W.mindWho ? 'У этой пешки решений в ленте нет.' : 'Стратег в этом мире ещё ничего не решал. Решения появятся, когда стратег включён и думает — вкладка «Модель и стратег».'}</div>`}</div>
+      <div class="w-muted" style="font-size:12px;margin-top:10px">Итог под решением — что оно дало до следующего: его присылает сервер, когда пешка решает снова. Без итога — решение свежее или сервер собран до «Разума 2.0», шаг 4.</div></div>`;
   }
   function mindLessons() {
     const all = W.mind.hunters;
-    if (!all.length) return '<div class="card"><div class="w-blank">Охотники этого мира ещё ничего не решали моделью — ни опыта, ни выводов нет.</div></div>';
+    if (!all.length) return '<div class="card"><div class="w-blank">Пешки этого мира ещё ничего не решали моделью — ни опыта, ни выводов нет.</div></div>';
     // Без итогов и выводов — одной строкой: карточка «итогов нет» на каждого — шум.
     const hs = all.filter((h) => h.results || h.lessons);
     const bare = all.filter((h) => !h.results && !h.lessons);
@@ -1159,7 +1159,7 @@
         ${h.results || h.lessons ? `<div class="row2"><button class="sbtn" data-forget="lessons" data-fpc="${esc(h.fpc)}" data-n="${h.results}">Забыть опыт</button></div>` : ''}</div>`;
     }).join('');
     return `${cards ? `<div class="w-grid w-g2">${cards}</div>` : ''}${bareNote}
-      <div class="w-muted" style="font-size:12px;margin-top:10px">Опыт по местам — за двое суток на уровнях ±3 от нынешнего, места от 10 минут. Его и выводы охотник видит, когда решает, что делать дальше.</div>`;
+      <div class="w-muted" style="font-size:12px;margin-top:10px">Опыт по местам — за двое суток на уровнях ±3 от нынешнего, места от 10 минут. Его и выводы пешка видит, когда решает, что делать дальше.</div>`;
   }
   function mindMemory() {
     const m = W.mind;
@@ -1217,7 +1217,7 @@
     const e = s.extended;
     if (s.mode !== 'api') return '<div class="opt"><div class="l">Расширенное обдумывание<small>только в облаке: у своей модели размышления нет</small></div></div>';
     const spent = u.extendedToday || { cost: 0, requests: 0 };
-    return `<div class="opt"><div class="l">Расширенное обдумывание<small>охотники рядом с тобой (до ${e.focusMax}) думают с размышлением — дороже</small></div><button class="switch" role="switch" aria-checked="${e.enabled}" id="worldBrainExt"></button></div>
+    return `<div class="opt"><div class="l">Расширенное обдумывание<small>пешки рядом с тобой (до ${e.focusMax}) думают с размышлением — дороже</small></div><button class="switch" role="switch" aria-checked="${e.enabled}" id="worldBrainExt"></button></div>
       <div class="opt"><div class="l">Лимит в день, $<small>сегодня: ${usd(spent.cost)} за ${spent.requests} решений; дошли до лимита — до завтра обычные мозги</small></div><input class="field" style="width:56px" id="worldBrainExtUsd" value="${esc(e.dailyUsd)}"></div>`;
   }
   // Живая речь (docs/MIND.md): манера письма и жизнь за окном у фейков, напарников и охотников; мат — отдельно.
@@ -1229,30 +1229,30 @@
       <div class="opt"><div class="l">Форум сервера<small>«Общество» → «Форум»: темы из летописи пишут сами жители; новая ветка раз в 4 часа, пока страница открыта</small></div><button class="switch" role="switch" aria-checked="${v.forum}" id="worldBrainForum"></button></div>`;
   }
   function extWarning(s) {
-    return `<p>Охотники рядом с тобой — до ${s.extended.focusMax} ближайших, кого ты видишь, с кем ты в пати или говоришь, — будут решать, что делать дальше, моделью с размышлением. Остальные живут по правилам, как сейчас.</p>
-      <p>Это дороже: решение около $0,002 — раз в пять дороже обычного. При 3–5 охотниках рядом выходит примерно $0,13–0,33 за час игры.</p>
-      <p class="note">Больше $${s.extended.dailyUsd} в день не уйдёт: лимит выбран — до завтра обычные мозги. Работает, когда сервер помечает охотников рядом (модуль фантомов).</p>`;
+    return `<p>Пешки рядом с тобой — до ${s.extended.focusMax} ближайших, кого ты видишь, с кем ты в пати или говоришь, — будут решать, что делать дальше, моделью с размышлением. Остальные живут по правилам, как сейчас.</p>
+      <p>Это дороже: решение около $0,002 — раз в пять дороже обычного. При 3–5 пешках рядом выходит примерно $0,13–0,33 за час игры.</p>
+      <p class="note">Больше $${s.extended.dailyUsd} в день не уйдёт: лимит выбран — до завтра обычные мозги. Работает, когда сервер помечает пешек рядом (модуль фантомов).</p>`;
   }
 
   // ---------- Создатель ----------
   // Метаданные — здесь: в ini нет диапазонов и признака «на ходу». На ходу сервер перечитывает только PhantomHunters.ini (раз в 10 с),
   // остальное — после перезапуска гейм-сервера. Показываются только ключи, которые есть в схеме этой сборки.
-  const GROUPS = [['activity', 'Активность охотников'], ['economy', 'Экономика и снабжение'], ['progress', 'Охота и прогрессия'],
-    ['players', 'Взаимодействие с игроками'], ['clans', 'Кланы охотников'], ['companions', 'Поведение напарников'], ['ai', 'Параметры ИИ']];
+  const GROUPS = [['activity', 'Активность пешек'], ['economy', 'Экономика и снабжение'], ['progress', 'Охота и прогрессия'],
+    ['players', 'Взаимодействие с игроками'], ['clans', 'Кланы пешек'], ['companions', 'Поведение напарников'], ['ai', 'Параметры ИИ']];
   const META = {
-    HuntersMode: ['activity', 'Когда живут охотники', 'enum', ['OFF', 'ALWAYS', 'WITH_PLAYERS'], 'OFF — их нет в мире, ALWAYS — пока запущен сервер, WITH_PLAYERS — только пока в игре есть живой игрок.'],
+    HuntersMode: ['activity', 'Когда живут пешки', 'enum', ['OFF', 'ALWAYS', 'WITH_PLAYERS'], 'OFF — их нет в мире, ALWAYS — пока запущен сервер, WITH_PLAYERS — только пока в игре есть живой игрок.'],
     HuntersIdleTimeout: ['activity', 'Уходят из мира без игроков через, с', 'int', [0, null], 'Только для «с игроками»: столько ждут после выхода последнего игрока.'],
-    HuntersPerSpot: ['activity', 'Охотников на спот', 'int', [1, null], 'Больше не ставится, пока есть свободные споты того же уровня.'],
+    HuntersPerSpot: ['activity', 'Пешек на спот', 'int', [1, null], 'Больше не ставится, пока есть свободные споты того же уровня.'],
     HunterTownInterval: ['activity', 'Заход в город раз в, мин', 'int', [1, null], 'Даже если сосов и места хватает.'],
     HunterRespawnDelay: ['activity', 'Лежит убитым, с', 'int', [0, null], 'Потом возвращается в город.'],
     HunterReviveWait: ['activity', 'Ждёт реса, если рядом живой, с', 'int', [0, null], 'Живой игрок (не враг) в 1500 от трупа — лежит дольше: вдруг реснёт. На каст реса ждёт до конца в любом случае. 0 — не ждать.'],
     DropAmountMultiplierByItemId: ['economy', 'Адена с мобов (для всех)', 'list', null, 'Rates.ini: «57,3» — адена ×3. Касается и живых игроков.'],
-    HunterDropChanceMultiplier: ['economy', 'Шанс вещей с мобов охотников', 'float', [0, null], 'Только охотникам — чтобы было что ставить в лавку.'],
+    HunterDropChanceMultiplier: ['economy', 'Шанс вещей с мобов пешек', 'float', [0, null], 'Только пешкам — чтобы было что ставить в лавку.'],
     HunterShotBudget: ['economy', 'Бюджет на сосы, % свободной адены', 'int', [0, 100], 'Мало денег — бьёт без сосов, как новичок.'],
     HunterShotCount: ['economy', 'Запас сосов', 'int', [0, null], 'Покупает в городе по цене магазина.'],
     HunterAmmoCount: ['economy', 'Запас стрел у лучников', 'int', [0, null], 'Покупаются первыми: без них лук не стреляет.'],
     HunterPotionCount: ['economy', 'Запас хилок', 'int', [0, null], 'AutoUse пьёт их на 40 % HP.'],
-    HunterTeleportFee: ['economy', 'Телепорт с 40-го уровня', 'int', [0, null], 'До 40-го бесплатно. Та же цена у телепорта игрока на спот охотника с Alt+B.'],
+    HunterTeleportFee: ['economy', 'Телепорт с 40-го уровня', 'int', [0, null], 'До 40-го бесплатно. Та же цена у телепорта игрока на спот пешки с Alt+B.'],
     HunterProfessionPrices: ['economy', 'Цена профессии', 'list', null, '«уровень:цена;…» — не накопил, качается без профы и копит. 0 — даром (у Essence так по умолчанию).'],
     HunterStoreMinPrices: ['economy', 'Порог вещи для лавки', 'list', null, '«уровень:адена;…» — дороже порога не сдаёт NPC, а продаёт в Гиране.'],
     HunterMaxStores: ['economy', 'Лавок одновременно', 'int', [0, null], ''],
@@ -1267,36 +1267,36 @@
     HunterQuestMinutes: ['progress', 'Длительность квеста, мин', 'list', null, '«от,до».'],
     HunterQuestReward: ['progress', 'Награда квеста', 'int', [0, null], 'Награда = это × уровень² адены (40 → 16 тыс. на 20-м).'],
     HunterLfm: ['players', 'Отклик на «лфм»', 'bool', null, 'Слышат «лфм / нужен хил / танк / дд» и просятся в пати.'],
-    PhantomGeneralChat: ['players', 'Белый чат рядом', 'bool', null, 'Напарники из пати отвечают вслух, охотник — по имени.'],
-    PhantomOverhearChance: ['players', 'Охотник встревает сам, %', 'int', [0, 100], 'Без имени и только если рядом нет других живых.'],
-    PhantomOverhearCooldown: ['players', 'Один охотник встревает не чаще, с', 'int', [0, null], ''],
+    PhantomGeneralChat: ['players', 'Белый чат рядом', 'bool', null, 'Напарники из пати отвечают вслух, пешка — по имени.'],
+    PhantomOverhearChance: ['players', 'Пешка встревает сама, %', 'int', [0, 100], 'Без имени и только если рядом нет других живых.'],
+    PhantomOverhearCooldown: ['players', 'Одна пешка встревает не чаще, с', 'int', [0, null], ''],
     PhantomOverhearPlayerCooldown: ['players', 'На одного игрока не чаще, с', 'int', [0, null], ''],
     FakePlayerBrainSayRange: ['players', 'Фейк отвечает в белый чат на расстоянии', 'int', [0, null], '0 — выключить.'],
-    HunterInitiative: ['players', 'Охотник заговаривает первым', 'bool', null, 'Заметил живого игрока рядом — иногда сам здоровается или говорит по ситуации. Без мозгов молчит.'],
+    HunterInitiative: ['players', 'Пешка заговаривает первой', 'bool', null, 'Заметил живого игрока рядом — иногда сам здоровается или говорит по ситуации. Без мозгов молчит.'],
     HunterInitiativeRange: ['players', 'Замечает игрока на расстоянии', 'int', [100, null], 'Игрок должен побыть рядом пару секунд: пролёт мимо не в счёт.'],
-    HunterInitiativeChanceKnown: ['players', 'Шанс со знакомым, %', 'int', [0, 100], 'Знакомый — кто уже писал этому охотнику. × общительность охотника (0,2–1,5).'],
-    HunterInitiativeChanceStranger: ['players', 'Шанс с незнакомым, %', 'int', [0, 100], '× общительность охотника.'],
-    HunterInitiativeHunterCooldown: ['players', 'Один охотник заговаривает первым не чаще, с', 'int', [0, null], 'С кем угодно.'],
+    HunterInitiativeChanceKnown: ['players', 'Шанс со знакомым, %', 'int', [0, 100], 'Знакомый — кто уже писал этой пешке. × общительность пешки (0,2–1,5).'],
+    HunterInitiativeChanceStranger: ['players', 'Шанс с незнакомым, %', 'int', [0, 100], '× общительность пешки.'],
+    HunterInitiativeHunterCooldown: ['players', 'Одна пешка заговаривает первой не чаще, с', 'int', [0, null], 'С кем угодно.'],
     HunterInitiativePairCooldown: ['players', 'С тем же игроком — не чаще, с', 'int', [0, null], 'Переживает рестарт сервера.'],
-    HunterInitiativePlayerGap: ['players', 'К одному игроку любой охотник — не чаще, с', 'int', [0, null], 'Двое разом не здороваются.'],
-    HunterInitiativePlayerPerHour: ['players', 'Обращений к одному игроку в час', 'int', [0, null], 'От всех охотников вместе; 0 — выключить.'],
-    HunterInitiativeAnswerWait: ['players', 'Ждёт ответа, с', 'int', [10, null], 'Не ответил — этот охотник больше не заговаривает с ним первым, пока игрок сам не напишет.'],
+    HunterInitiativePlayerGap: ['players', 'К одному игроку любая пешка — не чаще, с', 'int', [0, null], 'Двое разом не здороваются.'],
+    HunterInitiativePlayerPerHour: ['players', 'Обращений к одному игроку в час', 'int', [0, null], 'От всех пешек вместе; 0 — выключить.'],
+    HunterInitiativeAnswerWait: ['players', 'Ждёт ответа, с', 'int', [10, null], 'Не ответил — эта пешка больше не заговаривает с ним первой, пока игрок сам не напишет.'],
     HunterInitiativeRecentTalk: ['players', 'Говорили недавно — молчит, с', 'int', [0, null], 'Разговор только что был — первым не лезет.'],
     HunterChatQuiet: ['players', 'Тишина в округе после реплики, с', 'int', [0, null], 'Сказал кто-то из фантомов вслух — другие рядом молчат с непрошеным: мысли вслух, «о, опять ты», встрять, заговорить первым. Ответы игроку не ждут. 0 — выключить.'],
     HunterChatSpeakerGap: ['players', 'Сам говоривший молчит, с', 'int', [0, null], 'Следующая непрошеная реплика того же фантома — не раньше.'],
     HunterChatTopicGap: ['players', 'Та же тема рядом — не чаще, с', 'int', [0, null], 'Например, две мысли вслух подряд от соседей по споту.'],
-    HunterRelations: ['players', 'Отношения охотников к игрокам', 'bool', null, 'Обида (убил, нападал) и благодарность (хилил, реснул, спас, качались в пати) копятся и остывают. Враг — отказ в пати и «о, опять ты», друг — заговаривает чаще. Выкл — как раньше: убил хоть раз — враг навсегда.'],
-    HunterRelationHalfLife: ['players', 'Обида и благодарность остывают вдвое за, ч', 'int', [0, null], 'Часы игры охотника: пока сервер выключен, не остывают. 0 — не остывают.'],
-    HunterNeighbors: ['players', 'Охотники помогают и спорят между собой', 'bool', null, 'Хилеры-охотники хилят и ресают соседей-охотников (врагам — нет); «отжал моба» — обида тому, кто стал бить чужого моба (охотнику или тебе).'],
-    HunterBanter: ['players', 'Перепалки и приветствия охотников', 'bool', null, 'Встретились враги — подкалывают друг друга, друзья — здороваются. Только если рядом живой игрок и вокруг тихо. Две реплики модели на встречу.'],
-    HunterBanterChance: ['players', 'Шанс перепалки при встрече, %', 'int', [0, 100], '× общительность охотника.'],
-    HunterBanterCooldown: ['players', 'Одна пара охотников — не чаще, с', 'int', [0, null], 'Бросок тоже: не выпало — молчат до следующего раза.'],
-    HunterParties: ['players', 'Пати охотников между собой', 'bool', null, 'Друзья собираются, враги — никогда, остальные — бросок. Лидер качается на своём споте, остальные ходят с ним. Ушёл лидер с кача или время вышло — пати распускается.'],
-    HunterPartyMax: ['players', 'Охотников в такой пати', 'int', [2, 9], 'Вместе с лидером.'],
+    HunterRelations: ['players', 'Отношения пешек к игрокам', 'bool', null, 'Обида (убил, нападал) и благодарность (хилил, реснул, спас, качались в пати) копятся и остывают. Враг — отказ в пати и «о, опять ты», друг — заговаривает чаще. Выкл — как раньше: убил хоть раз — враг навсегда.'],
+    HunterRelationHalfLife: ['players', 'Обида и благодарность остывают вдвое за, ч', 'int', [0, null], 'Часы игры пешки: пока сервер выключен, не остывают. 0 — не остывают.'],
+    HunterNeighbors: ['players', 'Пешки помогают и спорят между собой', 'bool', null, 'Хилеры-пешки хилят и ресают соседних пешек (врагам — нет); «отжал моба» — обида тому, кто стал бить чужого моба (пешке или тебе).'],
+    HunterBanter: ['players', 'Перепалки и приветствия пешек', 'bool', null, 'Встретились враги — подкалывают друг друга, друзья — здороваются. Только если рядом живой игрок и вокруг тихо. Две реплики модели на встречу.'],
+    HunterBanterChance: ['players', 'Шанс перепалки при встрече, %', 'int', [0, 100], '× общительность пешки.'],
+    HunterBanterCooldown: ['players', 'Одна пара пешек — не чаще, с', 'int', [0, null], 'Бросок тоже: не выпало — молчат до следующего раза.'],
+    HunterParties: ['players', 'Пати пешек между собой', 'bool', null, 'Друзья собираются, враги — никогда, остальные — бросок. Лидер качается на своём споте, остальные ходят с ним. Ушёл лидер с кача или время вышло — пати распускается.'],
+    HunterPartyMax: ['players', 'Пешек в такой пати', 'int', [2, 9], 'Вместе с лидером.'],
     HunterPartyChance: ['players', 'Шанс собраться: незнакомые и «сложные», %', 'int', [0, 100], '× общительность того, кто зовёт.'],
     HunterPartyChanceFriend: ['players', 'Шанс собраться: друзья, %', 'int', [0, 100], ''],
-    HunterPartyMinutes: ['players', 'Пати охотников живёт, мин', 'list', null, '«от,до».'],
-    HunterBrawls: ['players', 'Махач охотников-врагов', 'bool', null, 'После порога обиды враги дерутся. Зачинщик бьёт, только если второй ответит (флаг, ПвП без кармы), иначе отходит. Угрозы и итог — вслух при живом зрителе.'],
+    HunterPartyMinutes: ['players', 'Пати пешек живёт, мин', 'list', null, '«от,до».'],
+    HunterBrawls: ['players', 'Махач пешек-врагов', 'bool', null, 'После порога обиды враги дерутся. Зачинщик бьёт, только если второй ответит (флаг, ПвП без кармы), иначе отходит. Угрозы и итог — вслух при живом зрителе.'],
     HunterBrawlGrudge: ['players', 'Невозможно терпеть — с обиды', 'int', [1, null], 'Убил — +3, напал — +1, отжал моба — +1. Остывает вдвое за 72 ч игры.'],
     HunterBrawlChance: ['players', 'Шанс сорваться при поводе, %', 'int', [0, 100], 'Повод — отжал моба или встреча врагов.'],
     HunterBrawlCooldown: ['players', 'Одна пара дерётся не чаще, с', 'int', [0, null], ''],
@@ -1304,19 +1304,19 @@
     HunterBrawlWitness: ['players', 'Махач только при живом зрителе', 'bool', null, 'Живой игрок в 2000 — драка должна быть видна.'],
     HunterContestRudeChance: ['players', 'Шанс «пнх» на предъяву за моба, %', 'int', [0, 100], '× вспыльчивость (0,5–1,5); врагу чаще, другу реже. Иначе «сорян» и уходит на другой спот.'],
     HunterRelationEnemy: ['players', 'Враг — с обиды', 'int', [1, null], 'И если она больше благодарности. Убил — +3, напал — +1. Два реса перевешивают одно убийство.'],
-    HunterMood: ['players', 'Настроение охотников', 'bool', null, 'Из состояния, без модели: устал, настороже, занят, скучает, хочет поболтать. Усталый и настороженный не встревают, скучающий заговаривает чаще; мозги говорят в настроении.'],
+    HunterMood: ['players', 'Настроение пешек', 'bool', null, 'Из состояния, без модели: устал, настороже, занят, скучает, хочет поболтать. Усталый и настороженный не встревают, скучающий заговаривает чаще; мозги говорят в настроении.'],
     // Кланы охотников (docs/PHANTOMS.md, 4.41 и 4.50).
-    HunterClans: ['clans', 'Охотники основывают кланы', 'bool', null, 'Сами: основание, набор, уровни, скиллы, роспуск. Имя клана придумывают мозги, без них — из слогов. Кланы ложатся в базу; .clans reset (GM) — распустить все.'],
-    HunterClanFoundChance: ['clans', 'Шанс основать клан раз в 10 минут, %', 'int', [0, 100], '× лидерство охотника × доля охотников без клана × друзья рядом.'],
+    HunterClans: ['clans', 'Пешки основывают кланы', 'bool', null, 'Сами: основание, набор, уровни, скиллы, роспуск. Имя клана придумывают мозги, без них — из слогов. Кланы ложатся в базу; .clans reset (GM) — распустить все.'],
+    HunterClanFoundChance: ['clans', 'Шанс основать клан раз в 10 минут, %', 'int', [0, 100], '× лидерство пешки × доля пешек без клана × друзья рядом.'],
     HunterClanSize: ['clans', 'Размер, к которому стремится клан', 'list', null, '«от,до»; у общительного главы — ближе к верху.'],
     HunterClanShare: ['clans', 'Обида и благодарность расходятся по клану, %', 'int', [0, 100], 'Обидел одного — остальные в сети помнят столько. 0 — каждый помнит только своё.'],
-    HunterClanJoin: ['clans', 'Охотник вступает в клан игрока', 'bool', null, 'Приглашение из окна клана, как живому. Друг вступает, враг и незнакомый отказывают; из клана охотников уходит, только если ты для него сделал достаточно.'],
-    HunterClanJoinMax: ['clans', 'Охотников в клане игрока, не больше', 'int', [0, null], '0 — без предела (предел — лимит членов Mobius по уровню клана).'],
-    HunterClanReputation: ['clans', 'Репутация клану за рейды охотников', 'bool', null, 'Убит РБ — клану каждого живого из рейда (.raid). Клан, чьи охотники были там без своих живых, получает долю ниже; клан охотников — с 5-го уровня.'],
+    HunterClanJoin: ['clans', 'Пешка вступает в клан игрока', 'bool', null, 'Приглашение из окна клана, как живому. Друг вступает, враг и незнакомый отказывают; из клана пешек уходит, только если ты для него сделал достаточно.'],
+    HunterClanJoinMax: ['clans', 'Пешек в клане игрока, не больше', 'int', [0, null], '0 — без предела (предел — лимит членов Mobius по уровню клана).'],
+    HunterClanReputation: ['clans', 'Репутация клану за рейды пешек', 'bool', null, 'Убит РБ — клану каждого живого из рейда (.raid). Клан, чьи пешки были там без своих живых, получает долю ниже; клан пешек — с 5-го уровня.'],
     HunterClanRaidReputation: ['clans', 'Репутация за рейд', 'list', null, '«от,до»: РБ 20-го уровня и ниже — от, 80-го и выше — до; эпик — вдвое больше.'],
-    HunterClanReputationAway: ['clans', 'Без своих живых в рейде — доля, %', 'int', [0, 100], 'Клану, чьи охотники были в рейде без его живых игроков.'],
-    HunterClanWars: ['clans', 'Войны кланов охотников', 'bool', null, 'Обиды между кланами копятся — глава обиженного объявляет войну. Враги дерутся при встрече без флага и кармы, счёт и перемирие — в «Летописи». Выкл — идущие войны кончаются перемирием.'],
-    HunterClanWarGrudge: ['clans', 'Война — с суммы обид', 'int', [1, null], 'Обиды охотников одного клана на членов другого, в обе стороны. Убил — +3, напал — +1.'],
+    HunterClanReputationAway: ['clans', 'Без своих живых в рейде — доля, %', 'int', [0, 100], 'Клану, чьи пешки были в рейде без его живых игроков.'],
+    HunterClanWars: ['clans', 'Войны кланов пешек', 'bool', null, 'Обиды между кланами копятся — глава обиженного объявляет войну. Враги дерутся при встрече без флага и кармы, счёт и перемирие — в «Летописи». Выкл — идущие войны кончаются перемирием.'],
+    HunterClanWarGrudge: ['clans', 'Война — с суммы обид', 'int', [1, null], 'Обиды пешек одного клана на членов другого, в обе стороны. Убил — +3, напал — +1.'],
     HunterClanWarLevel: ['clans', 'Воюют кланы с уровня', 'int', [0, null], ''],
     HunterClanWarHours: ['clans', 'Перемирие через, ч', 'int', [0, null], '0 — без предела.'],
     HunterClanWarKills: ['clans', 'Перемирие после убийств на двоих', 'int', [0, null], '0 — без предела.'],
@@ -1332,14 +1332,14 @@
     HunterRaidRivalChance: ['activity', 'Очередь за РБ: шанс второго рейда, %', 'int', [0, 100], ''],
     HunterRaidWatchMinutes: ['activity', 'Караул у респа: выходят заранее, не больше чем за, мин', 'int', [3, null], ''],
     HunterStoryGapMinutes: ['activity', 'Истории: ссора и махач на весь мир не чаще, мин', 'int', [0, null], '0 — без предела.'],
-    HunterAbsenceChance: ['activity', 'Перерывы в игре: шанс раз в 4 недели, %', 'int', [0, 100], 'При 35 % отсутствуют в среднем 7 охотников из 109.'],
+    HunterAbsenceChance: ['activity', 'Перерывы в игре: шанс раз в 4 недели, %', 'int', [0, 100], 'При 35 % отсутствуют в среднем 7 пешек из 109.'],
     HunterAbsenceDaysMin: ['activity', 'Перерывы в игре: дней от', 'int', [1, 28], ''],
     HunterAbsenceDaysMax: ['activity', 'Перерывы в игре: дней до', 'int', [1, 28], ''],
     HunterAbsenceRageChance: ['activity', 'Уход сгоряча после поломки, %', 'int', [0, 100], 'Сломал заточку от +6 и бросил игру на 2–6 дней.'],
     HunterMomentGapMinutes: ['activity', 'Случайности: случай одного вида на мир не чаще, мин', 'int', [1, null], 'Подарки, разборки за дроп, кидалы.'],
     HunterGestureIdleCooldown: ['activity', 'Жесты: от скуки в городе не чаще, с', 'int', [10, null], 'Каждый раз × 0,5–1,5.'],
-    HunterGestureIdleChance: ['activity', 'Жесты: шанс от скуки, %', 'int', [0, 100], '× общительность охотника.'],
-    HunterFavorChance: ['players', 'Просьбы встреченных: шанс, %', 'int', [0, 100], '× общительность охотника. Только мозгами.'],
+    HunterGestureIdleChance: ['activity', 'Жесты: шанс от скуки, %', 'int', [0, 100], '× общительность пешки.'],
+    HunterFavorChance: ['players', 'Просьбы встреченных: шанс, %', 'int', [0, 100], '× общительность пешки. Только мозгами.'],
     HunterFarWhisperCooldown: ['players', 'Знакомый пишет издалека: одному игроку не чаще, с', 'int', [60, null], ''],
     HunterFarWhisperChance: ['players', 'Знакомый пишет издалека: шанс за минуту, %', 'int', [0, 100], 'Когда прошло время выше. Только мозгами.'],
     HunterChatFlowBranchChance: ['players', 'Поток в трейде: другой ответит на строку, %', 'int', [0, 100], 'Только мозгами.'],
@@ -1359,8 +1359,8 @@
     HunterClanRecruitMax: ['clans', 'Заявки в твой клан: лежит разом', 'int', [1, null], ''],
     HunterClanDramaHours: ['clans', 'Драма кланов на весь мир не чаще, ч', 'int', [0, null], '0 — без ограничения.'],
     HunterClanWarWitness: ['clans', 'Драки войны только при живом зрителе', 'bool', null, 'Выкл — война идёт и без живых рядом.'],
-    HunterClanWarsPlayer: ['clans', 'Войны кланов охотников с кланом игрока', 'bool', null, 'Твой клан или соклановцы сильно обидели клан охотников — его глава объявляет войну твоему клану (у обоих — от уровня войн). Одна такая война за раз, после неё — сутки мира. Выйти можно и самому — окном клана, по правилам Mobius.'],
-    HunterClanWarPlayerAttackers: ['clans', 'На одного живого нападают разом, не больше', 'int', [1, null], 'Охотники клана-врага бьют тебя при встрече без флага и кармы.'],
+    HunterClanWarsPlayer: ['clans', 'Войны кланов пешек с кланом игрока', 'bool', null, 'Твой клан или соклановцы сильно обидели клан пешек — его глава объявляет войну твоему клану (у обоих — от уровня войн). Одна такая война за раз, после неё — сутки мира. Выйти можно и самому — окном клана, по правилам Mobius.'],
+    HunterClanWarPlayerAttackers: ['clans', 'На одного живого нападают разом, не больше', 'int', [1, null], 'Пешки клана-врага бьют тебя при встрече без флага и кармы.'],
     PhantomPartyExpShare: ['companions', 'Напарник берёт долю опыта', 'bool', null, 'Выкл — весь опыт живым.'],
     PhantomPartyLootShare: ['companions', 'Напарник берёт долю лута', 'bool', null, ''],
     PhantomCatchUpRange: ['companions', 'Отстал дальше — телепорт к тебе', 'int', [0, null], 'Игровые единицы.'],
@@ -1396,7 +1396,7 @@
     const idx = schemaIndex();
     const E = edits();
     const keys = Object.keys(META).filter((k) => idx[k]);
-    if (!keys.length) { main.className = 'w-main'; main.innerHTML = '<div class="note">В конфигах этой сборки нет правил живого мира — они появляются с патчами охотников и напарников High Five.</div>'; return; }
+    if (!keys.length) { main.className = 'w-main'; main.innerHTML = '<div class="note">В конфигах этой сборки нет правил живого мира — они появляются с патчами пешек и напарников High Five.</div>'; return; }
     const inGroup = (g) => keys.filter((k) => META[k][0] === g);
     if (!inGroup(W.crGroup).length) W.crGroup = GROUPS.find(([g]) => inGroup(g).length)[0];
     const groups = GROUPS.filter(([g]) => inGroup(g).length).map(([g, t]) => {
@@ -1423,9 +1423,9 @@
     const anyBad = Object.keys(E).some((k) => invalid(k, E[k]));
     const files = W.restart?.running ? W.restart.files : [];
     main.innerHTML = `<div class="w-cr"><div class="w-cr-groups">${groups}
-        <div class="note" style="margin-top:12px;font-size:12px">Стратег охотников — в «Разуме». Служебное (сброс, самопроверки, аккаунт фантомов) и остальные ключи — в «Настройки сервера» → «Все ключи».</div></div>
+        <div class="note" style="margin-top:12px;font-size:12px">Стратег пешек — в «Разуме». Служебное (сброс, самопроверки, аккаунт фантомов) и остальные ключи — в «Настройки сервера» → «Все ключи».</div></div>
       <div class="w-cr-r">
-        ${files.length ? `<div class="w-rst note w-note-warn">Сохранено, но ждёт перезапуска гейм-сервера: ${files.map((f) => `<span class="w-cmd">${esc(f)}</span>`).join(' ')}.<div class="row2"><button class="sbtn" id="worldRestart">Перезапустить гейм-сервер</button><span class="w-muted" style="font-size:12.5px">игроки и охотники вылетят примерно на полминуты</span></div></div>` : ''}
+        ${files.length ? `<div class="w-rst note w-note-warn">Сохранено, но ждёт перезапуска гейм-сервера: ${files.map((f) => `<span class="w-cmd">${esc(f)}</span>`).join(' ')}.<div class="row2"><button class="sbtn" id="worldRestart">Перезапустить гейм-сервер</button><span class="w-muted" style="font-size:12.5px">игроки и пешки вылетят примерно на полминуты</span></div></div>` : ''}
         <div class="w-cr-list" data-keep="cr">${list}</div>
         <div class="w-cr-foot"><span class="info ${n ? 'dirty' : ''}">${n ? `Не сохранено: ${n}${later ? ` · после перезапуска: ${later}` : ''}${anyBad ? ' · есть ошибки' : ''}. Правки не пропадут при переходе между разделами.` : 'Изменений нет.'}</span>
           <button class="sbtn" id="worldDiscard" ${n ? '' : 'disabled'}>Отменить правки</button><button class="sbtn primary" id="worldSave" ${n && !anyBad ? '' : 'disabled'}>Сохранить</button></div>
@@ -1453,7 +1453,7 @@
     const rs = $('worldRestart');
     if (rs) rs.onclick = async () => {
       const ok = await ask({ title: 'Перезапустить гейм-сервер?', ok: 'Перезапустить',
-        body: '<p>Мир сохранится и поднимется заново примерно за полминуты: игроки и охотники вылетят и вернутся, текущие квесты охотников начнутся заново.</p>' });
+        body: '<p>Мир сохранится и поднимется заново примерно за полминуты: игроки и пешки вылетят и вернутся, текущие квесты пешек начнутся заново.</p>' });
       if (!ok) return;
       await call(api.restart_game(W.chron));
       W.restart = null;

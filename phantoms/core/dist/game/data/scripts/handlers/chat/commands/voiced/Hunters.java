@@ -53,7 +53,7 @@ public class Hunters implements IVoicedCommandHandler
 		}
 
 		final String content = PhantomHunterUi.board(player, args.length > i ? args[i] : null, args.length > (i + 1) ? parseInt(args[i + 1]) : 0, BYPASS);
-		CommunityBoardHandler.separateAndSend(tr("<html><body><br><center><font color=\"LEVEL\">Охотники</font><br><br>") + content + "</center></body></html>", player);
+		CommunityBoardHandler.separateAndSend(tr("<html><body><br><center><font color=\"LEVEL\">Пешки</font><br><br>") + content + "</center></body></html>", player);
 		return true;
 	}
 
@@ -61,7 +61,7 @@ public class Hunters implements IVoicedCommandHandler
 	{
 		if (CommunityBoardConfig.COMMUNITYBOARD_KARMA_DISABLED && (PhantomCompat.karma(player) > 0))
 		{
-			player.sendMessage(tr("С кармой телепорт к охотникам закрыт."));
+			player.sendMessage(tr("С кармой телепорт к пешкам закрыт."));
 			return false;
 		}
 
@@ -73,7 +73,7 @@ public class Hunters implements IVoicedCommandHandler
 
 		if (CommunityBoardConfig.COMMUNITYBOARD_PEACE_ONLY && !player.isInsideZone(ZoneId.PEACE))
 		{
-			player.sendMessage(tr("Телепорт к охотникам — только из мирной зоны."));
+			player.sendMessage(tr("Телепорт к пешкам — только из мирной зоны."));
 			return false;
 		}
 		return true;

@@ -413,7 +413,7 @@ public class PhantomRift
 	{
 		for (Player player : live)
 		{
-			player.sendMessage(tr("Охотники идут в Dimensional Rift (") + TYPE_NAMES[run.type] + tr(") — .rift join: вступить, .rift go: телепорт к ним"));
+			player.sendMessage(tr("Пешки идут в Dimensional Rift (") + TYPE_NAMES[run.type] + tr(") — .rift join: вступить, .rift go: телепорт к ним"));
 		}
 	}
 
@@ -470,7 +470,7 @@ public class PhantomRift
 		final Player leader = run == null ? null : World.getPlayer(run.leaderId);
 		if ((run == null) || run.entered || (run.gatherUntil == 0) || (leader == null))
 		{
-			return tr("Сейчас охотники в Rift не собираются.");
+			return tr("Сейчас пешки в Rift не собираются.");
 		}
 		if (riftType(player.getLevel()) != run.type)
 		{
@@ -497,7 +497,7 @@ public class PhantomRift
 		}
 		if (!leader.isInParty())
 		{
-			return tr("Сейчас охотники в Rift не собираются.");
+			return tr("Сейчас пешки в Rift не собираются.");
 		}
 		player.joinParty(leader.getParty());
 		run.players.add(Integer.valueOf(player.getObjectId()));
@@ -539,10 +539,10 @@ public class PhantomRift
 		final Player leader = run == null ? null : World.getPlayer(run.leaderId);
 		if ((run == null) || run.entered || (run.gatherUntil == 0) || (leader == null))
 		{
-			player.sendMessage(tr("Сейчас охотники в Rift не собираются."));
+			player.sendMessage(tr("Сейчас пешки в Rift не собираются."));
 			return;
 		}
-		player.sendMessage(tr("Охотники собираются в Dimensional Rift (") + TYPE_NAMES[run.type] + tr("), лидер — ") + leader.getName() + tr(", в пати ") + (leader.isInParty() ? leader.getParty().getMemberCount() : 1) + tr("."));
+		player.sendMessage(tr("Пешки собираются в Dimensional Rift (") + TYPE_NAMES[run.type] + tr("), лидер — ") + leader.getName() + tr(", в пати ") + (leader.isInParty() ? leader.getParty().getMemberCount() : 1) + tr("."));
 		player.sendMessage(tr("До входа ~") + Math.max(0, (run.gatherUntil - System.currentTimeMillis()) / 1000) + tr(" с. .rift join — вступить, .rift go — телепорт к ним."));
 	}
 

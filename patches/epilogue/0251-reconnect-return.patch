@@ -1,0 +1,34 @@
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/Player.java b/java/org/l2jmobius/gameserver/entity/actor/Player.java
+--- a/java/org/l2jmobius/gameserver/entity/actor/Player.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/Player.java
+@@ -11288,7 +11288,7 @@
+ 			}, 300);
+ 		}
+ 	
+-        org.l2jmobius.gameserver.managers.phantom.SkillLevelChoice.entered(this);
++        org.l2jmobius.gameserver.managers.phantom.SkillLevelChoice.entered(this); org.l2jmobius.gameserver.mechanics.olympiad.EpilogueOlympiadReconnect.entered(this);
+ }
+ 	
+ 	/**
+diff --git a/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGame.java b/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGame.java
+--- a/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGame.java
++++ b/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGame.java
+@@ -456,10 +456,18 @@
+ 			_playerTwo.sendPacket(ExOlympiadMatchEnd.STATIC_PACKET);
+ 			_playerTwo.teleToLocation(x2, y2, z2, true);
+ 		}
++		EpilogueOlympiadReconnect.completed(_playerOneID, _stadiumID, _startTime);
++		EpilogueOlympiadReconnect.completed(_playerTwoID, _stadiumID, _startTime);
+ 	}
+ 	
+ 	protected void PlayersStatusBack()
+ 	{
++		if (_gamestarted)
++		{
++			EpilogueOlympiadReconnect.remember(_playerOneID, _stadiumID, x1, y1, z1, _startTime);
++			EpilogueOlympiadReconnect.remember(_playerTwoID, _stadiumID, x2, y2, z2, _startTime);
++			EpilogueOlympiadReconnect.refresh(this);
++		}
+ 		for (Player player : _players)
+ 		{
+ 			if (player == null)

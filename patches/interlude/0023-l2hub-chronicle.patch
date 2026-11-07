@@ -243,9 +243,9 @@ index 0000000000000000000000000000000000000000..4750feec696f13354a0a7cc22e724418
 +		if ((party != null) && (party.getMemberCount() > 1))
 +		{
 +			final Player leader = party.getLeader();
-+			return (hunter(leader) ? "охотники " : "пати ") + leader.getName() + " (" + party.getMemberCount() + ")";
++			return (hunter(leader) ? "пешки " : "пати ") + leader.getName() + " (" + party.getMemberCount() + ")";
 +		}
-+		return (hunter(player) ? "охотник " : "игрок ") + player.getName();
++		return (hunter(player) ? "пешка " : "игрок ") + player.getName();
 +	}
 +
 +	private static String town(Npc npc)
@@ -285,7 +285,7 @@ index 0000000000000000000000000000000000000000..4750feec696f13354a0a7cc22e724418
 +				final String name = target.getName() + " (" + target.getLevel() + ")";
 +				final int count = _skippedSupers + 1;
 +				_skippedSupers = 0;
-+				add("super_killed", "en".equals(org.l2jmobius.gameserver.config.custom.L2HubWorldConfig.LANGUAGE) ? "Hunters killed " + count + " super champions, the last one " + name : "Охотники убили суперчемпионов: " + count + ", последний — " + name, who(killer), town(target), target.getX(), target.getY());
++				add("super_killed", "en".equals(org.l2jmobius.gameserver.config.custom.L2HubWorldConfig.LANGUAGE) ? "Pawns killed " + count + " super champions, the last one " + name : "Пешки убили суперчемпионов: " + count + ", последний — " + name, who(killer), town(target), target.getX(), target.getY());
 +				return;
 +			}
 +		}
@@ -327,7 +327,7 @@ index 0000000000000000000000000000000000000000..4750feec696f13354a0a7cc22e724418
 +		{
 +			if ((event.getOldLevel() < level) && (event.getNewLevel() >= level))
 +			{
-+				final String name = (hunter(player) ? "Охотник " : "Игрок ") + player.getName();
++				final String name = (hunter(player) ? player.getName() + " (пешка)" : "Игрок " + player.getName());
 +				add("level", name + " достиг " + level + "-го уровня", player.getName(), null, null, null);
 +			}
 +		}
@@ -344,7 +344,7 @@ index 0000000000000000000000000000000000000000..4750feec696f13354a0a7cc22e724418
 +		{
 +			return;
 +		}
-+		final String name = (hunter(player) ? "Охотник " : "Игрок ") + player.getName();
++		final String name = (hunter(player) ? player.getName() + " (пешка)" : "Игрок " + player.getName());
 +		add("profession", name + " стал " + className(event.getTemplate().getPlayerClass().name()), player.getName(), null, null, null);
 +	}
 +

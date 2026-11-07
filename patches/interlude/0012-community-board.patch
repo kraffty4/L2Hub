@@ -145,7 +145,7 @@ index 37d20d196f7e211219836e8ee269a80d0fa8b2ac..f8886abe35ff7925bf7ac79633d6dc96
 +<button value="GM-шоп" action="bypass _bbshubshop" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
 +<button value="Телепорт" action="bypass _bbstop;gatekeeper/main.html" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
 +<button value="Напарники" action="bypass _bbshubbuddy" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
-+<button value="Охотники" action="bypass _bbshubhunters" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
++<button value="Пешки" action="bypass _bbshubhunters" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
 +<button value="Поиск дропа" action="bypass _bbstop;dropsearch/main.html" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
  </td><td height=440></td></tr></table>
 \ No newline at end of file
@@ -585,7 +585,7 @@ index 0000000000000000000000000000000000000000..9275365a3d8d2d56dd7069529dda2a9f
 +	{
 +		if (!PhantomsConfig.PHANTOMS_ENABLED)
 +		{
-+			return page(player, "Охотники", "Фантомы выключены (EnablePhantoms в Phantoms.ini).");
++			return page(player, "Пешки", "Фантомы выключены (EnablePhantoms в Phantoms.ini).");
 +		}
 +
 +		int i = 1;
@@ -602,7 +602,7 @@ index 0000000000000000000000000000000000000000..9275365a3d8d2d56dd7069529dda2a9f
 +			}
 +			i = 3;
 +		}
-+		return page(player, "Охотники", PhantomHunterUi.board(player, args.length > i ? args[i] : null, args.length > (i + 1) ? parseInt(args[i + 1]) : 0, "bypass " + HUNTERS));
++		return page(player, "Пешки", PhantomHunterUi.board(player, args.length > i ? args[i] : null, args.length > (i + 1) ? parseInt(args[i + 1]) : 0, "bypass " + HUNTERS));
 +	}
 +
 +	// ---------- Общее ----------

@@ -1,0 +1,38 @@
+--- a/java/org/l2jmobius/gameserver/entity/actor/Creature.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/Creature.java
+@@ -6266,9 +6266,34 @@
+ 				return;
+ 			}
+ 			
+-			if ((targets == null) || targets.isEmpty())
++			if (targets == null)
+ 			{
+ 				return;
++			}
++			if (targets.isEmpty())
++			{
++				// Native useMagic/launch допускают AURA без внешней цели.
++				// GENERAL не получает фиктивного caster-target; SELF выполняется один раз
++				// штатным Skill.activateSkill (Blink, Vengeance и другие SELF-эффекты).
++				if (!skill.hasEffects(EffectScope.SELF))
++				{
++					return;
++				}
++				switch (skill.getTargetType())
++				{
++					case AURA:
++					case FRONT_AURA:
++					case BEHIND_AURA:
++					case AURA_CORPSE_MOB:
++					case AURA_FRIENDLY:
++					{
++						break;
++					}
++					default:
++					{
++						return;
++					}
++				}
+ 			}
+ 			
+ 			// Block RaidBoss from receiving heals/buffs from players (and their pet/summon).

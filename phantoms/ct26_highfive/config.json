@@ -30,7 +30,9 @@
       "HunterLearning": "True",
       "HunterSlang": "True",
       "HunterRift": "True",
-      "HunterKamaloka": "True"
+      "HunterKamaloka": "True",
+      "HunterMentors": "True",
+      "HunterMentorsParty": "True"
     }
   }
 }

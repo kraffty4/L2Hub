@@ -5,7 +5,7 @@ index 8fdd2a96a76d0c5d3c9ccca0f000577b764e5218..0945a7c3d1ae3c818c0caad6cd7049b1
 @@ -25,6 +25,7 @@
  </tr>
  <tr>
- 	<td><button value="Рейд охотников" action="bypass voice .raid" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Fight1None_Down" fore="L2UI_CT1.OlympiadWnd_DF_Fight1None"></td>
+ 	<td><button value="Рейд пешек" action="bypass voice .raid" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Fight1None_Down" fore="L2UI_CT1.OlympiadWnd_DF_Fight1None"></td>
 +<button value="Мир" action="bypass voice .world" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
  </tr>
  <tr>
@@ -374,7 +374,7 @@ index 0000000000000000000000000000000000000000..f2a4f34999049ba060664d9aa1ab0b3e
 +					sb.append(when(next)).append(": ").append(pvp[1]).append("<br1>");
 +				}
 +			}
-+			sb.append("<font color=\"808080\">Регистрация 10 минут у менеджера в Гиране (у Deathmatch — 1 минута), охотники записываются сами.</font><br1>");
++			sb.append("<font color=\"808080\">Регистрация 10 минут у менеджера в Гиране (у Deathmatch — 1 минута), пешки записываются сами.</font><br1>");
 +		}
 +		else
 +		{

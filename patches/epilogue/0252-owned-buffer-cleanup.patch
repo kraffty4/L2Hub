@@ -1,0 +1,140 @@
+diff --git a/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGame.java b/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGame.java
+--- a/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGame.java
++++ b/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGame.java
+@@ -153,6 +153,7 @@
+ 	
+ 	protected void clearPlayers()
+ 	{
++		EpilogueOlympiadBufferCleanup.clear(this);
+ 		_playerOne = null;
+ 		_playerTwo = null;
+ 		_players = null;
+@@ -1044,7 +1045,7 @@
+ 		_startTime = System.currentTimeMillis();
+ 		if (_aborted)
+ 		{
+-			return false;
++			{ boolean epilogueStarted = false; if (epilogueStarted) EpilogueOlympiadBufferCleanup.clear(this); return epilogueStarted; }
+ 		}
+ 		
+ 		_sm = new SystemMessage(SystemMessageId.THE_MATCH_HAS_STARTED_FIGHT);
+@@ -1062,10 +1063,10 @@
+ 		{
+ 			LOGGER.log(Level.WARNING, "makeCompetitionStart: ", e);
+ 			_aborted = true;
+-			return false;
+-		}
+-		
+-		return true;
++			{ boolean epilogueStarted = false; if (epilogueStarted) EpilogueOlympiadBufferCleanup.clear(this); return epilogueStarted; }
++		}
++		
++		{ boolean epilogueStarted = true; if (epilogueStarted) EpilogueOlympiadBufferCleanup.clear(this); return epilogueStarted; }
+ 	}
+ 	
+ 	protected void addDamage(Player player, int damage)
+diff --git a/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGameTask.java b/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGameTask.java
+--- a/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGameTask.java
++++ b/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGameTask.java
+@@ -171,51 +171,58 @@
+ 	@Override
+ 	public void run()
+ 	{
+-		_started = true;
+-		if (_game != null)
+-		{
+-			if ((_game._playerOne == null) || (_game._playerTwo == null))
+-			{
+-				return;
+-			}
+-			
+-			if (teleportCountdown())
+-			{
+-				runGame();
+-			}
+-			
+-			_game.validateWinner();
+-			_game.PlayersStatusBack();
+-			_game.cleanEffects();
+-			
+-			if (_game._gamestarted)
+-			{
+-				_game._gamestarted = false;
+-				try
+-				{
+-					_game.portPlayersBack();
+-				}
+-				catch (Exception e)
+-				{
+-					_log.log(Level.WARNING, "Exception on portPlayersBack(): " + e.getMessage(), e);
+-				}
+-			}
+-			
+-			if (OlympiadManager.STADIUMS[_game._stadiumID].getSpectators() != null)
+-			{
+-				for (Player spec : OlympiadManager.STADIUMS[_game._stadiumID].getSpectators())
+-				{
+-					if (spec != null)
++		try
++		{
++			_started = true;
++			if (_game != null)
++			{
++				if ((_game._playerOne == null) || (_game._playerTwo == null))
++				{
++					return;
++				}
++
++				if (teleportCountdown())
++				{
++					runGame();
++				}
++
++				_game.validateWinner();
++				_game.PlayersStatusBack();
++				_game.cleanEffects();
++
++				if (_game._gamestarted)
++				{
++					_game._gamestarted = false;
++					try
+ 					{
+-						spec.sendPacket(ExOlympiadMatchEnd.STATIC_PACKET);
++						_game.portPlayersBack();
+ 					}
+-				}
+-			}
+-			
+-			_game.clearPlayers();
+-			OlympiadManager.getInstance().removeGame(_game);
+-			_game = null;
+-			_terminated = true;
++					catch (Exception e)
++					{
++						_log.log(Level.WARNING, "Exception on portPlayersBack(): " + e.getMessage(), e);
++					}
++				}
++
++				if (OlympiadManager.STADIUMS[_game._stadiumID].getSpectators() != null)
++				{
++					for (Player spec : OlympiadManager.STADIUMS[_game._stadiumID].getSpectators())
++					{
++						if (spec != null)
++						{
++							spec.sendPacket(ExOlympiadMatchEnd.STATIC_PACKET);
++						}
++					}
++				}
++
++				_game.clearPlayers();
++				OlympiadManager.getInstance().removeGame(_game);
++				_game = null;
++				_terminated = true;
++			}
++		}
++		finally
++		{
++			EpilogueOlympiadBufferCleanup.clear(_game);
+ 		}
+ 	}
+ 	

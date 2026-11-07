@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "bank_source_commit": "f95b804f6ecc36c6ecb4614c2387682aec1114dc",
+  "banks": {
+    "LocalReplyBank.xml": "647df1e941818fc70863b07f5221a6b68d1211f650b08f9de3fb3e08c4cad1e0",
+    "LocalCityDialogues.xml": "0e5a1ffa6ea6ade0aca39e3bf6631d584fd356a297f8592521c93b9dc8f9fb7b",
+    "LocalPartyDialogues.xml": "aaeeb7040a8c6986040b4c0f1d56f8425deac9cfc9f56668c70b8da624b13d45",
+    "LocalPartyLongDialogues.xml": "774e4ba0e3b6c6e09ce9ed5d122380a44640b1f1e60b06ebca5753568efce976",
+    "LocalClanDialogues.xml": "a9ab1580c121ca1cffed7a28d2c26e1f7e948fca9c5718e1a4e3bb2a112a0f4b",
+    "LocalHeroDialogues.xml": "454eb222f8d2c1d2ca706c4f0f2affb96bab6d55022791dec887abeb9dbead9e",
+    "LocalHeroOpeners.txt": "076c01de2a18aaf6fe99c305d1c500cf65200fbc5e45804f9c52dc59357205f0",
+    "LocalDialogueBindings.xml": "f30539aabeedc0369e3007b9121ecba51de0121d5f6d458d51f43d22c5c59ba7"
+  }
+}

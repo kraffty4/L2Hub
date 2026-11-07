@@ -930,6 +930,7 @@ public class PhantomCompanionManager
 	 */
 	private static void paceCasts(long now)
 	{
+		OlympiadActionPace.tick(now);
 		for (Pace pace : PACES.values())
 		{
 			final Player phantom = pace.phantom;
@@ -942,6 +943,8 @@ public class PhantomCompanionManager
 					continue;
 				}
 
+				// У зарегистрированного боя один полный проход решений; повторный cast-only проход пропускается.
+				if (OlympiadActionPace.owns(phantom)) continue;
 				if (phantom.isCastingNow())
 				{
 					pace.until = now + PACE_HOLD;
@@ -996,6 +999,9 @@ public class PhantomCompanionManager
 		PACES.put(phantom.getObjectId(), new Pace(phantom, target, until));
 		getInstance().startTicking();
 	}
+
+	static long combatPaceInterval() { return PACE_INTERVAL; }
+	static void ensureOlympiadPace() { getInstance().startTicking(); }
 
 	/**
 	 * Хилер: {@link PhantomSupport#paceHeal} между тиками.

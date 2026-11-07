@@ -1,0 +1,57 @@
+L2Hub: у канального умения на землю без effectRange (Volcano, Cyclone, Raging Waves, Gehenna) цели ограничены
+кругом affectRange вокруг точки каста, а не всеми захваченными без предела от мага (ChannelRangePolicy).
+Остальные каналы — прежняя проверка дальности. Перенос из патча 0512 сопровождающего Эпилога, номера строк — по High Five.
+Откат: удалить патч и пересобрать сервер.
+
+diff --git a/b/java/org/l2jmobius/gameserver/mechanics/skill/ChannelRangePolicy.java b/java/org/l2jmobius/gameserver/mechanics/skill/ChannelRangePolicy.java
+new file mode 100644
+index 0000000..961ed12
+--- /dev/null
++++ b/java/org/l2jmobius/gameserver/mechanics/skill/ChannelRangePolicy.java
+@@ -0,0 +1,33 @@
++package org.l2jmobius.gameserver.mechanics.skill;
++
++import org.l2jmobius.gameserver.entity.actor.Creature;
++import org.l2jmobius.gameserver.mechanics.skill.targets.TargetType;
++import org.l2jmobius.gameserver.util.LocationUtil;
++
++/**
++ * L2Hub: дальность действия канального умения. У GROUND-канала без effectRange (Volcano, Cyclone, Raging Waves, Gehenna)
++ * цели ограничены кругом affectRange вокруг точки на земле, а не «без предела» от мага.
++ * Перенос из патча 0512 сопровождающего Эпилога.
++ */
++public final class ChannelRangePolicy
++{
++	private ChannelRangePolicy()
++	{
++	}
++
++	public static boolean inRange(Skill skill, Creature caster, Creature target)
++	{
++		if ((skill == null) || (caster == null) || (target == null))
++		{
++			return false;
++		}
++
++		if ((skill.getEffectRange() == -1) && (skill.getTargetType() == TargetType.GROUND) && caster.isPlayer())
++		{
++			final var centre = caster.asPlayer().getCurrentSkillWorldPosition();
++			return (centre != null) && (caster.getInstanceId() == target.getInstanceId()) && target.isInsideRadius2D(centre, skill.getAffectRange());
++		}
++
++		return LocationUtil.checkIfInRange(skill.getEffectRange(), caster, target, true);
++	}
++}
+diff --git a/java/org/l2jmobius/gameserver/mechanics/skill/SkillChannelizer.java b/java/org/l2jmobius/gameserver/mechanics/skill/SkillChannelizer.java
+index dff9a5f..9df2752 100644
+--- a/java/org/l2jmobius/gameserver/mechanics/skill/SkillChannelizer.java
++++ b/java/org/l2jmobius/gameserver/mechanics/skill/SkillChannelizer.java
+@@ -191,7 +191,7 @@ public class SkillChannelizer implements Runnable
+ 				
+ 				for (Creature creature : _channelized)
+ 				{
+-					if (!LocationUtil.checkIfInRange(skill.getEffectRange(), _channelizer, creature, true))
++					if (!ChannelRangePolicy.inRange(skill, _channelizer, creature))
+ 					{
+ 						continue;
+ 					}

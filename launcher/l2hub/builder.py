@@ -27,129 +27,8 @@ Out = Callable[[str], None]
 
 # ---------- Патчи ----------
 
-HUNK_RE = re.compile(rb"^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@")
-
-
-class PatchError(RuntimeError):
-    pass
-
-
-class FilePatch:
-    """Один файл из патча: старый и новый путь (None — /dev/null) и ханки (строка в старом, в новом, старые строки, новые)."""
-
-    def __init__(self, old: str | None, new: str | None):
-        self.old, self.new = old, new
-        self.hunks: list[tuple[int, int, list[bytes], list[bytes]]] = []
-
-    @property
-    def path(self) -> str:
-        return self.new or self.old
-
-
-def _patch_path(raw: bytes) -> str | None:
-    p = raw.split(b"\t", 1)[0].rstrip(b"\r\n").decode("utf-8")
-    if p == "/dev/null":
-        return None
-    return p[2:] if p[:2] in ("a/", "b/") else p
-
-
-def parse_patch(data: bytes) -> list[FilePatch]:
-    lines = data.splitlines(keepends=True)
-    out, i = [], 0
-    while i < len(lines):
-        if not (lines[i].startswith(b"--- ") and i + 1 < len(lines) and lines[i + 1].startswith(b"+++ ")):
-            i += 1
-            continue
-        fp = FilePatch(_patch_path(lines[i][4:]), _patch_path(lines[i + 1][4:]))
-        out.append(fp)
-        i += 2
-        while i < len(lines) and (m := HUNK_RE.match(lines[i])):
-            old_n = int(m[2]) if m[2] is not None else 1
-            new_n = int(m[4]) if m[4] is not None else 1
-            old, new, last = [], [], None
-            i += 1
-            while i < len(lines) and (len(old) < old_n or len(new) < new_n or lines[i].startswith(b"\\")):
-                ln = lines[i]
-                tag, body = ln[:1], ln[1:]
-                if ln in (b"\n", b"\r\n"):  # пустая строка контекста без пробела
-                    tag, body = b" ", ln
-                if tag == b"\\":  # «\ No newline at end of file» — у предыдущей строки нет перевода строки
-                    for block in last or ():
-                        block[-1] = block[-1].rstrip(b"\r\n")
-                elif tag == b" ":
-                    old.append(body)
-                    new.append(body)
-                    last = (old, new)
-                elif tag == b"-":
-                    old.append(body)
-                    last = (old,)
-                elif tag == b"+":
-                    new.append(body)
-                    last = (new,)
-                else:
-                    raise PatchError(f"непонятная строка в ханке {fp.path}: {ln[:60]!r}")
-                i += 1
-            fp.hunks.append((int(m[1]), int(m[3]), old, new))
-    return out
-
-
-def _find(lines: list[bytes], block: list[bytes], near: int) -> int:
-    """Где в файле стоит блок: ближайшее к ожидаемой строке точное совпадение, -1 — нигде."""
-    n = len(block)
-    for d in range(len(lines) + 1):
-        for pos in (near - d, near + d) if d else (near,):
-            if 0 <= pos <= len(lines) - n and lines[pos:pos + n] == block:
-                return pos
-    return -1
-
-
-def apply_file(content: bytes | None, fp: FilePatch, reverse: bool = False) -> bytes | None:
-    """Наложить (или снять) патч одного файла; None на выходе — файл удалён. Не сошлось — PatchError."""
-    creates, deletes = fp.old is None, fp.new is None
-    if reverse:
-        creates, deletes = deletes, creates
-    if creates and content is not None:
-        raise PatchError(f"{fp.path}: файл уже есть")
-    if not creates and content is None:
-        raise PatchError(f"{fp.path}: файла нет")
-    lines = content.splitlines(keepends=True) if content else []
-    delta = 0
-    for old_start, new_start, old, new in fp.hunks:
-        a, b, start = (new, old, new_start) if reverse else (old, new, old_start)
-        # Пустой блок (только вставка): «-10,0» — вставить после 10-й строки.
-        near = max(start - 1 + delta, 0) if a else min(start + delta, len(lines))
-        pos = _find(lines, a, near) if a else near
-        if pos < 0:
-            raise PatchError(f"{fp.path}: ханк @@ -{start} не сошёлся")
-        lines[pos:pos + len(a)] = b
-        delta += len(b) - len(a)
-    if deletes:
-        if lines:
-            raise PatchError(f"{fp.path}: после удаления остались строки")
-        return None
-    return b"".join(lines)
-
-
-def apply_patch(root: Path, patch: Path, reverse: bool = False, check: bool = False) -> None:
-    """Весь патч на дерево root: сначала всё в памяти, потом на диск — не сошёлся один файл, не тронут ни один."""
-    results = {}
-    for fp in parse_patch(patch.read_bytes()):
-        src = root / fp.path  # переименований в наших патчах нет: старый и новый путь совпадают
-        current = results[fp.path] if fp.path in results else (src.read_bytes() if src.is_file() else None)
-        results[fp.path] = apply_file(current, fp, reverse)
-    if check:
-        return
-    for rel, data in results.items():
-        target = root / rel
-        if data is None:
-            target.unlink(missing_ok=True)
-        else:
-            target.parent.mkdir(parents=True, exist_ok=True)
-            target.write_bytes(data)
-
-
-def patch_files(patch: Path) -> set[str]:
-    return {fp.path for fp in parse_patch(patch.read_bytes())}
+# Движок — в patching.py (без зависимостей, его берут и инструменты); имена остаются доступны как builder.*.
+from .patching import HUNK_RE, FilePatch, PatchError, apply_file, apply_patch, parse_patch, patch_files  # noqa: E402,F401
 
 
 def applied_patches(patches: list[Path], src: Path, work: Path) -> set[str]:
@@ -549,6 +428,76 @@ def apply_stack(patches: list[Path], src: Path, base: Path, out: Out) -> None:
         out(f"{patch.name}: наложен")
 
 
+def prev_data_shas(archive: Path, touched: set[str]) -> dict[str, str]:
+    """SHA-256 файлов данных в прошлом архиве сборки (до Ant): с чем сервер был выложен в прошлый раз. Нужны
+    deploy_data_files на первой пересборке, пока у хроники нет индекса .data_base: файл, равный прошлой сборке,
+    пользователь не правил — его можно обновить; иначе новая версия уходит в .data_new."""
+    if not archive.is_file():
+        return {}
+    shas = {}
+    with zipfile.ZipFile(archive) as z:
+        names = set(z.namelist())
+        for rel in touched:
+            if rel in names and re.match(r"^(game|login)/data/", rel):
+                shas[rel] = hashlib.sha256(z.read(rel)).hexdigest()
+    return shas
+
+
+def deploy_data_files(cid: str, src: Path, srv: Path, touched: set[str], out: Out = print, prev: dict[str, str] | None = None) -> None:
+    """Preserve edited server data across native rebuilds.
+
+    The last distributed bytes are a baseline, not the current user choices. A
+    conflicting new version is kept for review instead of replacing local prices,
+    buff sets, the pawn roster or edited scripts. Fresh installations still receive
+    every new file. Unknown existing data is treated conservatively on the first
+    deployment; an explicit migration can record its known source baseline.
+
+    Для всех хроник. Базу ищем так: индекс .data_base, иначе байты прошлого архива сборки (prev, prev_data_shas);
+    без того и другого — бережно, как у сопровождающего Эпилога: отличающийся файл не трогаем, новая версия — в .data_new.
+    """
+    prev = prev or {}
+    home = paths.SERVERS / cid
+    record, pending = home / ".data_base", home / ".data_new"
+    index_file = record / "index.json"
+    index = json.loads(index_file.read_text(encoding="utf-8")) if index_file.is_file() else {}
+    next_index = dict(index)
+    backup = paths.BACKUPS / "data" / cid / datetime.now().strftime("%Y-%m-%d_%H-%M-%S_%f_build")
+    for rel in sorted(touched):
+        frm, to = src / "dist" / rel, srv / rel
+        if not frm.is_file() or not re.match(r"^(game|login)/data/", rel):
+            continue
+        data = frm.read_bytes()
+        cur = to.read_bytes() if to.is_file() else None
+        before_sha = _sha(record / rel) if (record / rel).is_file() else index.get(rel, prev.get(rel))
+        new_sha = hashlib.sha256(data).hexdigest()
+        if cur == data:
+            (pending / rel).unlink(missing_ok=True)
+        elif cur is None or (before_sha is not None and hashlib.sha256(cur).hexdigest() == before_sha):
+            if cur is not None:
+                saved = backup / rel
+                saved.parent.mkdir(parents=True, exist_ok=True)
+                saved.write_bytes(cur)
+            to.parent.mkdir(parents=True, exist_ok=True)
+            to.write_bytes(data)
+            (pending / rel).unlink(missing_ok=True)
+            out(f"Данные обновлены: {rel}")
+        elif before_sha != new_sha:
+            version = pending / rel
+            version.parent.mkdir(parents=True, exist_ok=True)
+            version.write_bytes(data)
+            out(f"{rel}: свои правки сохранены, новая версия сборки — {version}")
+        next_index[rel] = new_sha
+    # One atomic digest index avoids copying tens of thousands of unchanged
+    # datapack files solely to remember which version they came from.
+    record.mkdir(parents=True, exist_ok=True)
+    temp = record / ("index-" + uuid.uuid4().hex + ".tmp")
+    try:
+        temp.write_text(json.dumps(next_index, ensure_ascii=False, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+        os.replace(temp, index_file)
+    finally:
+        temp.unlink(missing_ok=True)
+
+
 def server_build(p: dict, out: Out = print) -> None:
     """Исходники + модуль фантомов + патчи → Ant → jar-ы, данные и конфиги в развёрнутый сервер (или распаковка целиком)."""
     cid = p["id"]
@@ -570,6 +519,10 @@ def server_build(p: dict, out: Out = print) -> None:
 
     archive = base / "build" / f"{src.name}.zip"
     prev = zip_configs(archive)  # прошлый архив Ant перезапишет — его конфиги нужны выкладке
+    # Данные из патчей и модуля; их байты в прошлом архиве — база для deploy_data_files, пока нет индекса .data_base.
+    touched = {rel[5:] for patch in patches for rel in patch_files(patch) if rel.startswith("dist/")}
+    touched |= {key[5:] for key in module if key.startswith("dist/")}
+    prev_data = prev_data_shas(archive, touched)
     ant(src, base / "build.log")
     srv = base / "server"
     if not srv.is_dir():
@@ -587,17 +540,7 @@ def server_build(p: dict, out: Out = print) -> None:
     out(f"Сборка готова, jar-ы обновлены в {srv / 'libs'} ({len(jars)})")
 
     # Данные из патчей и модуля Ant кладёт только в архив — копируем в развёрнутый сервер; конфиги — deploy_configs.
-    touched = {rel[5:] for patch in patches for rel in patch_files(patch) if rel.startswith("dist/")}
-    touched |= {key[5:] for key in module if key.startswith("dist/")}
-    for rel in sorted(touched):
-        frm, to = src / "dist" / rel, srv / rel
-        if not frm.is_file() or not re.match(r"^(game|login)/data/", rel):
-            continue
-        if to.is_file() and _sha(to) == _sha(frm):
-            continue
-        to.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(frm, to)
-        out(f"Данные обновлены: {rel}")
+    deploy_data_files(cid, src, srv, touched, out, prev_data)
     deploy_configs(cid, archive, srv, patches, prev, out)
     record_patches(base, patches)
 

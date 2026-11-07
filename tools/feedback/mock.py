@@ -1,8 +1,10 @@
 """Заглушка приёмника L2Hub (tools/feedback/Code.gs) для проверки лаунчера: как Apps Script — POST отвечает 302 на /echo,
 ответ забирается GET-ом. Голоса — в памяти, запросы и присланные отчёты — data/feedback_mock. Запуск:
-`python -X utf8 tools/feedback/mock.py [порт]`, окно с ней — l2hub-devserver-fb в .claude/launch.json (docs/FEEDBACK.md)."""
+`python -X utf8 tools/feedback/mock.py [порт]`, окно с ней — l2hub-devserver-fb в .claude/launch.json (docs/FEEDBACK.md).
+Переменная L2HUB_MOCK_OLD=1 — как приёмник до 0.5.223: скриншот молча пропускается (окно должно сказать, что скрин не дошёл)."""
 import base64
 import json
+import os
 import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -10,6 +12,7 @@ from urllib.parse import parse_qs, urlparse
 
 DATA = Path(__file__).resolve().parents[2] / "data" / "feedback_mock"   # data/ — не в git
 DATA.mkdir(parents=True, exist_ok=True)
+OLD = os.environ.get("L2HUB_MOCK_OLD") == "1"
 votes = {}          # (install, chronicle)
 answers = {}
 log = []
@@ -43,7 +46,7 @@ class H(BaseHTTPRequestHandler):
     def do_POST(self):
         n = int(self.headers.get("Content-Length") or 0)
         req = json.loads(self.rfile.read(n).decode("utf-8"))
-        log.append({k: (v if k != "report" else {"name": v["name"], "bytes": len(v["data"])}) for k, v in req.items()})
+        log.append({k: (v if k not in ("report", "screenshot") else {"name": v.get("name"), "bytes": len(v["data"])}) for k, v in req.items()})
         (DATA / "log.json").write_text(json.dumps(log, ensure_ascii=False, indent=1), encoding="utf-8")
         if req.get("action") == "vote":
             key = (req["install"], req["chronicle"])
@@ -53,6 +56,18 @@ class H(BaseHTTPRequestHandler):
             if req.get("report"):
                 (DATA / req["report"]["name"]).write_bytes(base64.b64decode(req["report"]["data"]))
             out = {"ok": True}
+            shot = req.get("screenshot")
+            if shot and not OLD:
+                ext = {"image/png": "png", "image/jpeg": "jpg"}.get(shot.get("mime"))
+                data = base64.b64decode(shot["data"])
+                if not ext:
+                    out["screenshot_error"] = "скриншот не png и не jpg"
+                elif len(data) > 5 * 1024 * 1024:
+                    out["screenshot_error"] = "скриншот больше 5 МБ"
+                else:
+                    name = f"screenshot_{len(log)}.{ext}"
+                    (DATA / name).write_bytes(data)
+                    out["screenshot"] = f"mock://{name}"
         else:
             out = {"ok": False, "error": "нет такого действия"}
         rid = str(len(log))

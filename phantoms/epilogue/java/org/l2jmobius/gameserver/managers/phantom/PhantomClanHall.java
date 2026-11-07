@@ -170,7 +170,7 @@ final class PhantomClanHall implements PhantomClanHallLogic
 			final AuctionableHall hall = ClanHallTable.getInstance().getAuctionableHallById(current);
 			final String name = hall == null ? String.valueOf(current) : hall.getName();
 			LOGGER.info(PhantomClanHall.class.getSimpleName() + ": clan " + clan.getName() + " got the clan hall " + name + " (" + current + "), treasury " + clan.getWarehouse().getAdena() + ".");
-			PhantomNews.post("clan", "Клан охотников «" + clan.getName() + "» получил кланхолл " + name, clan.getLeaderName(), leader);
+			PhantomNews.post("clan", "Клан пешек «" + clan.getName() + "» получил кланхолл " + name, clan.getLeaderName(), leader);
 		}
 		else
 		{
@@ -178,7 +178,7 @@ final class PhantomClanHall implements PhantomClanHallLogic
 			final AuctionableHall hall = ClanHallTable.getInstance().getAuctionableHallById(known);
 			final String name = hall == null ? String.valueOf(known) : hall.getName();
 			LOGGER.info(PhantomClanHall.class.getSimpleName() + ": clan " + clan.getName() + " lost the clan hall " + name + " (" + known + "), treasury " + clan.getWarehouse().getAdena() + ".");
-			PhantomNews.post("clan", "Клан охотников «" + clan.getName() + "» потерял кланхолл " + name + ": нечем платить", clan.getLeaderName(), leader);
+			PhantomNews.post("clan", "Клан пешек «" + clan.getName() + "» потерял кланхолл " + name + ": нечем платить", clan.getLeaderName(), leader);
 		}
 	}
 
@@ -523,7 +523,7 @@ final class PhantomClanHall implements PhantomClanHallLogic
 		}
 		final long days = Math.max(0, (auction.getEndDate() - System.currentTimeMillis()) / 86400000);
 		LOGGER.info(PhantomClanHall.class.getSimpleName() + ": clan " + clan.getName() + " bids " + start + " on the clan hall " + auction.getItemName() + " (" + auction.getItemId() + "), treasury " + before + " -> " + clan.getWarehouse().getAdena() + ", ends in " + days + " days.");
-		PhantomNews.post("clan", "Клан охотников «" + clan.getName() + "» поставил на кланхолл " + auction.getItemName(), clan.getLeaderName(), leader);
+		PhantomNews.post("clan", "Клан пешек «" + clan.getName() + "» поставил на кланхолл " + auction.getItemName(), clan.getLeaderName(), leader);
 	}
 
 	/**

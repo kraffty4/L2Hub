@@ -1,0 +1,2382 @@
+--- a/dist/game/config/AdminCommands.xml
++++ b/dist/game/config/AdminCommands.xml
+@@ -1,6 +1,7 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../data/xsd/AdminCommands.xsd">
+ 	<!-- ADMIN ADMIN -->
++	<admin command="playinggm" description="Личный режим обычной игры с сохранением админских команд." accessLevel="30" />
+ 	<admin command="admin" description="Open main Admin menu." accessLevel="30" />
+ 	<admin command="admin1" description="Open main Admin menu." accessLevel="30" />
+ 	<admin command="admin2" description="Open game panel." accessLevel="30" />
+--- a/dist/game/data/html/admin/main_menu.htm
++++ b/dist/game/data/html/admin/main_menu.htm
+@@ -36,6 +36,7 @@
+ </tr>
+ </table>
+ <br>
++<button value="Playing GM" action="bypass admin_playinggm" width=250 height=25 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"><br>
+ Other Target Related Actions:<br1>
+ <table width=270>
+ <tr>
+--- a/dist/game/data/scripts/handlers/MasterHandler.java
++++ b/dist/game/data/scripts/handlers/MasterHandler.java
+@@ -117,6 +117,7 @@
+ import handlers.chat.channels.ChatTrade;
+ import handlers.chat.channels.ChatWhisper;
+ import handlers.chat.commands.admin.AdminAdmin;
++import handlers.chat.commands.admin.AdminPlayingGm;
+ import handlers.chat.commands.admin.AdminAnnouncements;
+ import handlers.chat.commands.admin.AdminAugment;
+ import handlers.chat.commands.admin.AdminBuffs;
+@@ -345,6 +346,7 @@
+ 		{
+ 			// Admin Command Handlers
+ 			AdminAdmin.class,
++			AdminPlayingGm.class,
+ 			AdminAnnouncements.class,
+ 			AdminAugment.class,
+ 			AdminBuffs.class,
+--- a/dist/game/data/scripts/ai/areas/Gracia/AI/EnergySeeds.java
++++ b/dist/game/data/scripts/ai/areas/Gracia/AI/EnergySeeds.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package ai.areas.Gracia.AI;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.util.ArrayList;
+ import java.util.HashMap;
+@@ -441,7 +443,7 @@
+ 			{
+ 				case SOD_ZONE:
+ 				{
+-					if (!isSeedActive(GraciaSeeds.DESTRUCTION) && !creature.isGM())
++					if (!isSeedActive(GraciaSeeds.DESTRUCTION) && !PlayingGmPolicy.hasGameplayBypass(creature))
+ 					{
+ 						creature.teleToLocation(SOD_EXIT_POINT);
+ 					}
+--- a/dist/game/data/scripts/ai/areas/Gracia/instances/HallOfErosionAttack/HallOfErosionAttack.java
++++ b/dist/game/data/scripts/ai/areas/Gracia/instances/HallOfErosionAttack/HallOfErosionAttack.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package ai.areas.Gracia.instances.HallOfErosionAttack;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.util.ArrayList;
+ import java.util.Calendar;
+@@ -232,7 +234,7 @@
+ 	
+ 	private boolean checkConditions(Player player)
+ 	{
+-		if (player.isGM())
++		if (PlayingGmPolicy.hasGameplayBypass(player))
+ 		{
+ 			return true;
+ 		}
+--- a/dist/game/data/scripts/ai/areas/Gracia/instances/HallOfErosionDefence/HallOfErosionDefence.java
++++ b/dist/game/data/scripts/ai/areas/Gracia/instances/HallOfErosionDefence/HallOfErosionDefence.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package ai.areas.Gracia.instances.HallOfErosionDefence;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.util.ArrayList;
+ import java.util.List;
+@@ -234,7 +236,7 @@
+ 	
+ 	private boolean checkConditions(Player player)
+ 	{
+-		if (player.isGM())
++		if (PlayingGmPolicy.hasGameplayBypass(player))
+ 		{
+ 			return true;
+ 		}
+--- a/dist/game/data/scripts/ai/areas/Gracia/instances/HallOfSufferingAttack/HallOfSufferingAttack.java
++++ b/dist/game/data/scripts/ai/areas/Gracia/instances/HallOfSufferingAttack/HallOfSufferingAttack.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package ai.areas.Gracia.instances.HallOfSufferingAttack;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.util.Calendar;
+ import java.util.HashMap;
+@@ -147,7 +149,7 @@
+ 	
+ 	private boolean checkConditions(Player player)
+ 	{
+-		if (debug || player.isGM())
++		if (debug || PlayingGmPolicy.hasGameplayBypass(player))
+ 		{
+ 			return true;
+ 		}
+--- a/dist/game/data/scripts/ai/areas/Gracia/instances/HallOfSufferingDefence/HallOfSufferingDefence.java
++++ b/dist/game/data/scripts/ai/areas/Gracia/instances/HallOfSufferingDefence/HallOfSufferingDefence.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package ai.areas.Gracia.instances.HallOfSufferingDefence;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.util.Calendar;
+ import java.util.HashMap;
+@@ -147,7 +149,7 @@
+ 	
+ 	private boolean checkConditions(Player player)
+ 	{
+-		if (debug || player.isGM())
++		if (debug || PlayingGmPolicy.hasGameplayBypass(player))
+ 		{
+ 			return true;
+ 		}
+--- a/dist/game/data/scripts/ai/areas/Gracia/instances/HeartInfinityDefence/HeartInfinityDefence.java
++++ b/dist/game/data/scripts/ai/areas/Gracia/instances/HeartInfinityDefence/HeartInfinityDefence.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package ai.areas.Gracia.instances.HeartInfinityDefence;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.util.ArrayList;
+ import java.util.List;
+@@ -262,7 +264,7 @@
+ 	
+ 	private boolean checkConditions(Player player)
+ 	{
+-		if (player.isGM())
++		if (PlayingGmPolicy.hasGameplayBypass(player))
+ 		{
+ 			return true;
+ 		}
+@@ -346,7 +348,7 @@
+ 			InstanceManager.getInstance().addWorld(world);
+ 			LOGGER.info("Heart Infinity Defence started " + INSTANCEID + " Instance: " + world.getInstanceId() + " created by player: " + player.getName());
+ 			
+-			if (player.isGM())
++			if (PlayingGmPolicy.hasGameplayBypass(player))
+ 			{
+ 				teleportPlayer(player, coords, world.getInstanceId());
+ 				world.addAllowed(player);
+--- a/dist/game/data/scripts/ai/areas/Gracia/instances/SeedOfDestruction/SeedOfDestruction.java
++++ b/dist/game/data/scripts/ai/areas/Gracia/instances/SeedOfDestruction/SeedOfDestruction.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package ai.areas.Gracia.instances.SeedOfDestruction;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.util.ArrayList;
+ import java.util.Calendar;
+@@ -811,7 +813,7 @@
+ 	
+ 	private boolean checkConditions(Player player)
+ 	{
+-		if (DEBUG || player.isGM())
++		if (DEBUG || PlayingGmPolicy.hasGameplayBypass(player))
+ 		{
+ 			LOGGER.info("SoD is now in test mode - DEBUG OR GM PLAYER");
+ 			return true;
+--- a/dist/game/data/scripts/ai/areas/Hellbound/AI/NPC/Warpgate/Warpgate.java
++++ b/dist/game/data/scripts/ai/areas/Hellbound/AI/NPC/Warpgate/Warpgate.java
+@@ -15,6 +15,8 @@
+  * along with this program. If not, see <http://www.gnu.org/licenses/>.
+  */
+ package ai.areas.Hellbound.AI.NPC.Warpgate;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import org.l2jmobius.gameserver.config.GeneralConfig;
+ import org.l2jmobius.gameserver.entity.Location;
+@@ -98,7 +100,7 @@
+ 		if (creature.isPlayer())
+ 		{
+ 			final Player player = creature.asPlayer();
+-			if (!canEnter(player) && !player.isGM() && !player.isOnEvent())
++			if (!canEnter(player) && !PlayingGmPolicy.hasGameplayBypass(player) && !player.isOnEvent())
+ 			{
+ 				startQuestTimer("TELEPORT", 1000, null, player);
+ 			}
+--- a/dist/game/data/scripts/ai/areas/Hellbound/Instances/DemonPrinceFloor/DemonPrinceFloor.java
++++ b/dist/game/data/scripts/ai/areas/Hellbound/Instances/DemonPrinceFloor/DemonPrinceFloor.java
+@@ -15,6 +15,8 @@
+  * along with this program. If not, see <http://www.gnu.org/licenses/>.
+  */
+ package ai.areas.Hellbound.Instances.DemonPrinceFloor;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import org.l2jmobius.gameserver.entity.Location;
+ import org.l2jmobius.gameserver.entity.actor.Npc;
+@@ -64,7 +66,7 @@
+ 		String htmltext = null;
+ 		if (npc.getId() == GK_4)
+ 		{
+-			if (!player.isGM())
++			if (!PlayingGmPolicy.hasGameplayBypass(player))
+ 			{
+ 				final Party party = player.getParty();
+ 				if (party == null)
+@@ -113,7 +115,7 @@
+ 	@Override
+ 	protected boolean checkConditions(Player player)
+ 	{
+-		if (player.isGM())
++		if (PlayingGmPolicy.hasGameplayBypass(player))
+ 		{
+ 			return true;
+ 		}
+--- a/dist/game/data/scripts/ai/areas/Hellbound/Instances/RankuFloor/RankuFloor.java
++++ b/dist/game/data/scripts/ai/areas/Hellbound/Instances/RankuFloor/RankuFloor.java
+@@ -15,6 +15,8 @@
+  * along with this program. If not, see <http://www.gnu.org/licenses/>.
+  */
+ package ai.areas.Hellbound.Instances.RankuFloor;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import org.l2jmobius.gameserver.entity.Location;
+ import org.l2jmobius.gameserver.entity.actor.Npc;
+@@ -64,7 +66,7 @@
+ 		String htmltext = null;
+ 		if (npc.getId() == GK_9)
+ 		{
+-			if (!player.isGM())
++			if (!PlayingGmPolicy.hasGameplayBypass(player))
+ 			{
+ 				final Party party = player.getParty();
+ 				if (party == null)
+@@ -111,7 +113,7 @@
+ 	@Override
+ 	protected boolean checkConditions(Player player)
+ 	{
+-		if (player.isGM())
++		if (PlayingGmPolicy.hasGameplayBypass(player))
+ 		{
+ 			return true;
+ 		}
+--- a/dist/game/data/scripts/ai/areas/Hellbound/Instances/UrbanArea/UrbanArea.java
++++ b/dist/game/data/scripts/ai/areas/Hellbound/Instances/UrbanArea/UrbanArea.java
+@@ -15,6 +15,8 @@
+  * along with this program. If not, see <http://www.gnu.org/licenses/>.
+  */
+ package ai.areas.Hellbound.Instances.UrbanArea;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.util.concurrent.ScheduledFuture;
+ 
+@@ -111,7 +113,7 @@
+ 		String htmltext = null;
+ 		if (npc.getId() == KANAF)
+ 		{
+-			if (!player.isGM())
++			if (!PlayingGmPolicy.hasGameplayBypass(player))
+ 			{
+ 				if (HellboundEngine.getInstance().getLevel() < 10)
+ 				{
+@@ -328,7 +330,7 @@
+ 	@Override
+ 	protected boolean checkConditions(Player player)
+ 	{
+-		if (player.isGM())
++		if (PlayingGmPolicy.hasGameplayBypass(player))
+ 		{
+ 			return true;
+ 		}
+--- a/dist/game/data/scripts/ai/bosses/Antharas/Antharas.java
++++ b/dist/game/data/scripts/ai/bosses/Antharas/Antharas.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package ai.bosses.Antharas;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.util.HashMap;
+ import java.util.List;
+@@ -753,7 +755,7 @@
+ 								creature.deleteMe();
+ 							}
+ 						}
+-						else if (creature.isPlayer() && !creature.isGM())
++						else if (creature.isPlayer() && !PlayingGmPolicy.hasGameplayBypass(creature))
+ 						{
+ 							creature.teleToLocation(TELEPORT_EXIT_BASE_X + getRandom(600), TELEPORT_EXIT_BASE_Y + getRandom(1100), TELEPORT_EXIT_Z);
+ 						}
+--- a/dist/game/data/scripts/ai/bosses/Frintezza/Frintezza.java
++++ b/dist/game/data/scripts/ai/bosses/Frintezza/Frintezza.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package ai.bosses.Frintezza;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.util.List;
+ import java.util.concurrent.CopyOnWriteArrayList;
+@@ -1432,7 +1434,7 @@
+ 		}
+ 		else if (GrandBossManager.getInstance().getStatus(FRINTEZZA) == DORMANT)
+ 		{
+-			if (player.isGM() && (player.getParty() == null)) // For single GM testing. Will lock boss for all other players.
++			if (PlayingGmPolicy.hasGameplayBypass(player) && (player.getParty() == null)) // For single GM testing. Will lock boss for all other players.
+ 			{
+ 				GrandBossManager.getInstance().setStatus(FRINTEZZA, WAITING);
+ 				startQuestTimer("close", 0, npc, null);
+--- a/dist/game/data/scripts/ai/bosses/QueenAnt/QueenAnt.java
++++ b/dist/game/data/scripts/ai/bosses/QueenAnt/QueenAnt.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package ai.bosses.QueenAnt;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.util.Set;
+ import java.util.concurrent.ConcurrentHashMap;
+@@ -396,7 +398,7 @@
+ 			return;
+ 		}
+ 		
+-		if (player.isGM() && player.isInvisible())
++		if (PlayingGmPolicy.hasGameplayBypass(player) && player.isInvisible())
+ 		{
+ 			return;
+ 		}
+--- a/dist/game/data/scripts/ai/others/CastleBlacksmith/CastleBlacksmith.java
++++ b/dist/game/data/scripts/ai/others/CastleBlacksmith/CastleBlacksmith.java
+@@ -15,6 +15,8 @@
+  * along with this program. If not, see <http://www.gnu.org/licenses/>.
+  */
+ package ai.others.CastleBlacksmith;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import org.l2jmobius.gameserver.entity.actor.Npc;
+ import org.l2jmobius.gameserver.entity.actor.Player;
+@@ -50,7 +52,7 @@
+ 	
+ 	private boolean hasRights(Player player, Npc npc)
+ 	{
+-		return player.isGM() || npc.isMyLord(player) || ((player.getClanId() == npc.getCastle().getOwnerId()) && player.hasAccess(ClanAccess.CASTLE_MANOR));
++		return PlayingGmPolicy.hasGameplayBypass(player) || npc.isMyLord(player) || ((player.getClanId() == npc.getCastle().getOwnerId()) && player.hasAccess(ClanAccess.CASTLE_MANOR));
+ 	}
+ 	
+ 	@Override
+--- a/dist/game/data/scripts/ai/others/CastleChamberlain/CastleChamberlain.java
++++ b/dist/game/data/scripts/ai/others/CastleChamberlain/CastleChamberlain.java
+@@ -15,6 +15,8 @@
+  * along with this program. If not, see <http://www.gnu.org/licenses/>.
+  */
+ package ai.others.CastleChamberlain;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.util.Arrays;
+ import java.util.Calendar;
+@@ -471,7 +473,7 @@
+ 	
+ 	private boolean isOwner(Player player, Npc npc)
+ 	{
+-		return player.isGM() || ((player.getClan() != null) && (player.getClanId() == npc.getCastle().getOwnerId()));
++		return PlayingGmPolicy.hasGameplayBypass(player) || ((player.getClan() != null) && (player.getClanId() == npc.getCastle().getOwnerId()));
+ 	}
+ 	
+ 	@Override
+--- a/dist/game/data/scripts/ai/others/CastleMercenaryManager/CastleMercenaryManager.java
++++ b/dist/game/data/scripts/ai/others/CastleMercenaryManager/CastleMercenaryManager.java
+@@ -15,6 +15,8 @@
+  * along with this program. If not, see <http://www.gnu.org/licenses/>.
+  */
+ package ai.others.CastleMercenaryManager;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.util.StringTokenizer;
+ 
+@@ -114,7 +116,7 @@
+ 	public String onFirstTalk(Npc npc, Player player)
+ 	{
+ 		final String htmltext;
+-		if (player.isGM() || ((player.getClanId() == npc.getCastle().getOwnerId()) && player.hasAccess(ClanAccess.CASTLE_MERCENARIES)))
++		if (PlayingGmPolicy.hasGameplayBypass(player) || ((player.getClanId() == npc.getCastle().getOwnerId()) && player.hasAccess(ClanAccess.CASTLE_MERCENARIES)))
+ 		{
+ 			if (npc.getCastle().getSiege().isInProgress())
+ 			{
+--- a/dist/game/data/scripts/custom/events/CaptureTheFlag/CtF.java
++++ b/dist/game/data/scripts/custom/events/CaptureTheFlag/CtF.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package custom.events.CaptureTheFlag;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import static java.util.concurrent.TimeUnit.MINUTES;
+ 
+@@ -332,7 +334,7 @@
+ 			}
+ 			case "BuffHeal":
+ 			{
+-				if (player.isOnEvent() || player.isGM())
++				if (player.isOnEvent() || PlayingGmPolicy.hasGameplayBypass(player))
+ 				{
+ 					if (player.isInCombat())
+ 					{
+--- a/dist/game/data/scripts/custom/events/Deathmatch/Deathmatch.java
++++ b/dist/game/data/scripts/custom/events/Deathmatch/Deathmatch.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package custom.events.Deathmatch;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.io.File;
+ import java.util.ArrayList;
+@@ -258,7 +260,7 @@
+ 			}
+ 			case "BuffHeal":
+ 			{
+-				if (player.isOnEvent() || player.isGM())
++				if (player.isOnEvent() || PlayingGmPolicy.hasGameplayBypass(player))
+ 				{
+ 					if (player.isInCombat())
+ 					{
+--- a/dist/game/data/scripts/custom/events/TeamVsTeam/TvT.java
++++ b/dist/game/data/scripts/custom/events/TeamVsTeam/TvT.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package custom.events.TeamVsTeam;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import static java.util.concurrent.TimeUnit.MINUTES;
+ 
+@@ -290,7 +292,7 @@
+ 			}
+ 			case "BuffHeal":
+ 			{
+-				if (player.isOnEvent() || player.isGM())
++				if (player.isOnEvent() || PlayingGmPolicy.hasGameplayBypass(player))
+ 				{
+ 					if (player.isInCombat())
+ 					{
+--- a/dist/game/data/scripts/handlers/bypass/npc/FindPvP.java
++++ b/dist/game/data/scripts/handlers/bypass/npc/FindPvP.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package handlers.bypass.npc;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.util.HashMap;
+ import java.util.Map;
+@@ -61,7 +63,7 @@
+ 			if ((plr == null) //
+ 				|| (plr.getPvpFlag() == 0) //
+ 				|| (plr.getInstanceId() != 0) //
+-				|| plr.isGM() //
++				|| PlayingGmPolicy.hasGameplayBypass(plr) //
+ 				|| plr.isInsideZone(ZoneId.PEACE) //
+ 				|| plr.isInsideZone(ZoneId.SIEGE) //
+ 				|| plr.isInsideZone(ZoneId.NO_SUMMON_FRIEND))
+@@ -132,7 +134,7 @@
+ 			
+ 			player.teleToLocation((mostPvP.getX() + Rnd.get(300)) - 150, (mostPvP.getY() + Rnd.get(300)) - 150, mostPvP.getZ());
+ 			player.setSpawnProtection(true);
+-			if (!player.isGM())
++			if (!PlayingGmPolicy.hasGameplayBypass(player))
+ 			{
+ 				player.setPvpFlagLasts(System.currentTimeMillis() + PvpConfig.PVP_PVP_TIME);
+ 				player.startPvPFlag();
+--- a/dist/game/data/scripts/handlers/chat/channels/ChatGeneral.java
++++ b/dist/game/data/scripts/handlers/chat/channels/ChatGeneral.java
+@@ -15,6 +15,8 @@
+  * along with this program. If not, see <http://www.gnu.org/licenses/>.
+  */
+ package handlers.chat.channels;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.util.StringTokenizer;
+ 
+@@ -81,7 +83,7 @@
+ 				return;
+ 			}
+ 			
+-			if ((activeChar.getLevel() < GeneralConfig.MINIMUM_CHAT_LEVEL) && !activeChar.isGM())
++			if ((activeChar.getLevel() < GeneralConfig.MINIMUM_CHAT_LEVEL) && !PlayingGmPolicy.hasGameplayBypass(activeChar))
+ 			{
+ 				activeChar.sendMessage("Players can use general chat after Lv. " + GeneralConfig.MINIMUM_CHAT_LEVEL + ".");
+ 				return;
+--- a/dist/game/data/scripts/handlers/chat/channels/ChatHeroVoice.java
++++ b/dist/game/data/scripts/handlers/chat/channels/ChatHeroVoice.java
+@@ -15,6 +15,8 @@
+  * along with this program. If not, see <http://www.gnu.org/licenses/>.
+  */
+ package handlers.chat.channels;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import org.l2jmobius.gameserver.config.GeneralConfig;
+ import org.l2jmobius.gameserver.config.custom.FactionSystemConfig;
+@@ -40,7 +42,7 @@
+ 	@Override
+ 	public void onChat(ChatType type, Player activeChar, String target, String text)
+ 	{
+-		if (!activeChar.isHero() && !activeChar.isGM())
++		if (!activeChar.isHero() && !PlayingGmPolicy.hasGameplayBypass(activeChar))
+ 		{
+ 			activeChar.sendMessage("Only Heroes can enter the Hero channel.");
+ 			return;
+@@ -52,7 +54,7 @@
+ 			return;
+ 		}
+ 		
+-		if (GeneralConfig.JAIL_DISABLE_CHAT && activeChar.isJailed() && !activeChar.isGM())
++		if (GeneralConfig.JAIL_DISABLE_CHAT && activeChar.isJailed() && !PlayingGmPolicy.hasGameplayBypass(activeChar))
+ 		{
+ 			activeChar.sendPacket(SystemMessageId.CHATTING_IS_CURRENTLY_PROHIBITED);
+ 			return;
+--- a/dist/game/data/scripts/handlers/chat/channels/ChatShout.java
++++ b/dist/game/data/scripts/handlers/chat/channels/ChatShout.java
+@@ -15,6 +15,8 @@
+  * along with this program. If not, see <http://www.gnu.org/licenses/>.
+  */
+ package handlers.chat.channels;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import org.l2jmobius.gameserver.config.GeneralConfig;
+ import org.l2jmobius.gameserver.config.custom.FactionSystemConfig;
+@@ -48,20 +50,20 @@
+ 			return;
+ 		}
+ 		
+-		if (GeneralConfig.JAIL_DISABLE_CHAT && activeChar.isJailed() && !activeChar.isGM())
++		if (GeneralConfig.JAIL_DISABLE_CHAT && activeChar.isJailed() && !PlayingGmPolicy.hasGameplayBypass(activeChar))
+ 		{
+ 			activeChar.sendPacket(SystemMessageId.CHATTING_IS_CURRENTLY_PROHIBITED);
+ 			return;
+ 		}
+ 		
+-		if ((activeChar.getLevel() < GeneralConfig.MINIMUM_CHAT_LEVEL) && !activeChar.isGM())
++		if ((activeChar.getLevel() < GeneralConfig.MINIMUM_CHAT_LEVEL) && !PlayingGmPolicy.hasGameplayBypass(activeChar))
+ 		{
+ 			activeChar.sendMessage("Players can Shout after Lv. " + GeneralConfig.MINIMUM_CHAT_LEVEL + ".");
+ 			return;
+ 		}
+ 		
+ 		final CreatureSay cs = new CreatureSay(activeChar, type, activeChar.getName(), text);
+-		if ((GeneralConfig.DEFAULT_GLOBAL_CHAT == ChatBroadcastType.ON) || ((GeneralConfig.DEFAULT_GLOBAL_CHAT == ChatBroadcastType.GM) && activeChar.isGM()))
++		if ((GeneralConfig.DEFAULT_GLOBAL_CHAT == ChatBroadcastType.ON) || ((GeneralConfig.DEFAULT_GLOBAL_CHAT == ChatBroadcastType.GM) && PlayingGmPolicy.hasGameplayBypass(activeChar)))
+ 		{
+ 			final int region = MapRegionData.getInstance().getMapRegionLocId(activeChar);
+ 			for (Player player : World.getPlayers())
+@@ -91,7 +93,7 @@
+ 		}
+ 		else if (GeneralConfig.DEFAULT_GLOBAL_CHAT == ChatBroadcastType.GLOBAL)
+ 		{
+-			if (!activeChar.isGM() && !activeChar.getClient().getFloodProtectors().canUseGlobalChat())
++			if (!PlayingGmPolicy.hasGameplayBypass(activeChar) && !activeChar.getClient().getFloodProtectors().canUseGlobalChat())
+ 			{
+ 				activeChar.sendMessage("Do not spam shout channel.");
+ 				return;
+--- a/dist/game/data/scripts/handlers/chat/channels/ChatTrade.java
++++ b/dist/game/data/scripts/handlers/chat/channels/ChatTrade.java
+@@ -15,6 +15,8 @@
+  * along with this program. If not, see <http://www.gnu.org/licenses/>.
+  */
+ package handlers.chat.channels;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import org.l2jmobius.gameserver.config.GeneralConfig;
+ import org.l2jmobius.gameserver.config.custom.FactionSystemConfig;
+@@ -48,7 +50,7 @@
+ 			return;
+ 		}
+ 		
+-		if (GeneralConfig.JAIL_DISABLE_CHAT && activeChar.isJailed() && !activeChar.isGM())
++		if (GeneralConfig.JAIL_DISABLE_CHAT && activeChar.isJailed() && !PlayingGmPolicy.hasGameplayBypass(activeChar))
+ 		{
+ 			activeChar.sendPacket(SystemMessageId.CHATTING_IS_CURRENTLY_PROHIBITED);
+ 			return;
+@@ -61,7 +63,7 @@
+ 		}
+ 		
+ 		final CreatureSay cs = new CreatureSay(activeChar, type, activeChar.getName(), text);
+-		if ((GeneralConfig.DEFAULT_TRADE_CHAT == ChatBroadcastType.ON) || ((GeneralConfig.DEFAULT_TRADE_CHAT == ChatBroadcastType.GM) && activeChar.isGM()))
++		if ((GeneralConfig.DEFAULT_TRADE_CHAT == ChatBroadcastType.ON) || ((GeneralConfig.DEFAULT_TRADE_CHAT == ChatBroadcastType.GM) && PlayingGmPolicy.hasGameplayBypass(activeChar)))
+ 		{
+ 			final int region = MapRegionData.getInstance().getMapRegionLocId(activeChar);
+ 			for (Player player : World.getPlayers())
+@@ -91,7 +93,7 @@
+ 		}
+ 		else if (GeneralConfig.DEFAULT_TRADE_CHAT == ChatBroadcastType.GLOBAL)
+ 		{
+-			if (!activeChar.isGM() && !activeChar.getClient().getFloodProtectors().canUseGlobalChat())
++			if (!PlayingGmPolicy.hasGameplayBypass(activeChar) && !activeChar.getClient().getFloodProtectors().canUseGlobalChat())
+ 			{
+ 				activeChar.sendMessage("Do not spam trade channel.");
+ 				return;
+--- a/dist/game/data/scripts/handlers/chat/commands/user/Unstuck.java
++++ b/dist/game/data/scripts/handlers/chat/commands/user/Unstuck.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package handlers.chat.commands.user;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import org.l2jmobius.commons.threads.ThreadPool;
+ import org.l2jmobius.gameserver.config.PlayerConfig;
+@@ -64,7 +66,7 @@
+ 			return false;
+ 		}
+ 		
+-		final int unstuckTimer = (player.getAccessLevel().isGm() ? 1000 : PlayerConfig.UNSTUCK_INTERVAL * 1000);
++		final int unstuckTimer = (PlayingGmPolicy.hasGameplayBypass(player) ? 1000 : PlayerConfig.UNSTUCK_INTERVAL * 1000);
+ 		if (player.isInOlympiadMode())
+ 		{
+ 			player.sendPacket(SystemMessageId.YOU_CANNOT_USE_THAT_SKILL_IN_A_GRAND_OLYMPIAD_GAMES_MATCH);
+@@ -80,7 +82,7 @@
+ 		
+ 		final Skill escape = SkillData.getInstance().getSkill(2099, 1); // 5 minutes escape
+ 		final Skill gmEscape = SkillData.getInstance().getSkill(2100, 1); // 1 second escape
+-		if (player.getAccessLevel().isGm())
++		if (PlayingGmPolicy.hasGameplayBypass(player))
+ 		{
+ 			if (gmEscape != null)
+ 			{
+--- a/dist/game/data/scripts/handlers/skill/effects/Lethal.java
++++ b/dist/game/data/scripts/handlers/skill/effects/Lethal.java
+@@ -15,6 +15,8 @@
+  * along with this program. If not, see <http://www.gnu.org/licenses/>.
+  */
+ package handlers.skill.effects;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import org.l2jmobius.commons.util.Rnd;
+ import org.l2jmobius.gameserver.entity.actor.Creature;
+@@ -51,7 +53,7 @@
+ 	@Override
+ 	public void onStart(Creature effector, Creature effected, Skill skill)
+ 	{
+-		if (effector.isPlayer() && !effector.getAccessLevel().canGiveDamage())
++		if (effector.isPlayer() && !PlayingGmPolicy.canGiveDamage(effector))
+ 		{
+ 			return;
+ 		}
+--- a/dist/game/data/scripts/instances/CavernOfThePirateCaptain/CavernOfThePirateCaptain.java
++++ b/dist/game/data/scripts/instances/CavernOfThePirateCaptain/CavernOfThePirateCaptain.java
+@@ -15,6 +15,8 @@
+  * along with this program. If not, see <http://www.gnu.org/licenses/>.
+  */
+ package instances.CavernOfThePirateCaptain;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.util.ArrayList;
+ import java.util.List;
+@@ -190,7 +192,7 @@
+ 	
+ 	private boolean checkConditions(Player player, int templateId)
+ 	{
+-		if (player.isGM())
++		if (PlayingGmPolicy.hasGameplayBypass(player))
+ 		{
+ 			return true;
+ 		}
+--- a/dist/game/data/scripts/instances/CrystalCaverns/CrystalCaverns.java
++++ b/dist/game/data/scripts/instances/CrystalCaverns/CrystalCaverns.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package instances.CrystalCaverns;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.util.ArrayList;
+ import java.util.HashMap;
+@@ -516,7 +518,7 @@
+ 	@Override
+ 	protected boolean checkConditions(Player player)
+ 	{
+-		if (player.isGM())
++		if (PlayingGmPolicy.hasGameplayBypass(player))
+ 		{
+ 			return true;
+ 		}
+@@ -575,7 +577,7 @@
+ 	
+ 	private boolean checkOracleConditions(Player player)
+ 	{
+-		if (player.isGM())
++		if (PlayingGmPolicy.hasGameplayBypass(player))
+ 		{
+ 			return true;
+ 		}
+@@ -618,7 +620,7 @@
+ 	
+ 	private boolean checkBaylorConditions(Player player)
+ 	{
+-		if (player.isGM())
++		if (PlayingGmPolicy.hasGameplayBypass(player))
+ 		{
+ 			return true;
+ 		}
+@@ -1038,14 +1040,14 @@
+ 			{
+ 				final CCWorld world = (CCWorld) tmpworld;
+ 				final Party party = caster.getParty();
+-				if ((party == null) && !caster.isGM())
++				if ((party == null) && !PlayingGmPolicy.hasGameplayBypass(caster))
+ 				{
+ 					return;
+ 				}
+ 				else if (((world.dragonScaleStart + DRAGONSCALETIME) <= System.currentTimeMillis()) || (world.dragonScaleNeed <= 0))
+ 				{
+ 					world.dragonScaleStart = System.currentTimeMillis();
+-					world.dragonScaleNeed = ((party == null) && caster.isGM()) ? 0 : party != null ? (party.getMemberCount() - 1) : 100;
++					world.dragonScaleNeed = ((party == null) && PlayingGmPolicy.hasGameplayBypass(caster)) ? 0 : party != null ? (party.getMemberCount() - 1) : 100;
+ 				}
+ 				else
+ 				{
+--- a/java/org/l2jmobius/gameserver/ai/AttackableAI.java
++++ b/java/org/l2jmobius/gameserver/ai/AttackableAI.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package org.l2jmobius.gameserver.ai;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.util.ArrayList;
+ import java.util.List;
+@@ -129,12 +131,12 @@
+ 		if (target.isInvul())
+ 		{
+ 			// However EffectInvincible requires to check GMs specially.
+-			if (target.isPlayer() && target.isGM())
++			if (target.isPlayer() && PlayingGmPolicy.hasGameplayBypass(target))
+ 			{
+ 				return false;
+ 			}
+ 			
+-			if (target.isSummon() && target.asSummon().getOwner().isGM())
++			if (target.isSummon() && PlayingGmPolicy.hasGameplayBypass(target.asSummon().getOwner()))
+ 			{
+ 				return false;
+ 			}
+@@ -164,7 +166,7 @@
+ 		if (player != null)
+ 		{
+ 			// Don't take the aggro if the GM has the access level below or equal to GM_DONT_TAKE_AGGRO.
+-			if (!player.getAccessLevel().canTakeAggro())
++			if (!PlayingGmPolicy.canTakeAggro(player))
+ 			{
+ 				return false;
+ 			}
+--- a/java/org/l2jmobius/gameserver/ai/FortSiegeGuardAI.java
++++ b/java/org/l2jmobius/gameserver/ai/FortSiegeGuardAI.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package org.l2jmobius.gameserver.ai;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.util.Collection;
+ import java.util.concurrent.Future;
+@@ -147,7 +149,7 @@
+ 			}
+ 		}
+ 		
+-		if (target.isInvul() && ((target.isPlayer() && target.isGM()) || (target.isSummon() && target.asSummon().getOwner().isGM())))
++		if (target.isInvul() && ((target.isPlayer() && PlayingGmPolicy.hasGameplayBypass(target)) || (target.isSummon() && PlayingGmPolicy.hasGameplayBypass(target.asSummon().getOwner()))))
+ 		{
+ 			return false;
+ 		}
+--- a/java/org/l2jmobius/gameserver/ai/SiegeGuardAI.java
++++ b/java/org/l2jmobius/gameserver/ai/SiegeGuardAI.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package org.l2jmobius.gameserver.ai;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.util.Collection;
+ import java.util.concurrent.Future;
+@@ -130,7 +132,7 @@
+ 		}
+ 		
+ 		// Check if the target isn't invulnerable.
+-		if (target.isInvul() && ((target.isPlayer() && target.isGM()) || (target.isSummon() && target.asSummon().getOwner().isGM())))
++		if (target.isInvul() && ((target.isPlayer() && PlayingGmPolicy.hasGameplayBypass(target)) || (target.isSummon() && PlayingGmPolicy.hasGameplayBypass(target.asSummon().getOwner()))))
+ 		{
+ 			return false;
+ 		}
+--- a/java/org/l2jmobius/gameserver/data/xml/MultisellData.java
++++ b/java/org/l2jmobius/gameserver/data/xml/MultisellData.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package org.l2jmobius.gameserver.data.xml;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.io.File;
+ import java.util.Iterator;
+@@ -272,7 +274,7 @@
+ 		{
+ 			if ((npc == null) || !template.isNpcAllowed(npc.getId()))
+ 			{
+-				if (player.isGM())
++				if (PlayingGmPolicy.hasGameplayBypass(player))
+ 				{
+ 					player.sendMessage("Multisell " + listId + " is restricted. Under current conditions cannot be used. Only GMs are allowed to use it.");
+ 				}
+--- a/java/org/l2jmobius/gameserver/data/xml/SkillTreeData.java
++++ b/java/org/l2jmobius/gameserver/data/xml/SkillTreeData.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package org.l2jmobius.gameserver.data.xml;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.io.File;
+ import java.util.ArrayList;
+@@ -557,7 +559,7 @@
+ 		
+ 		for (SkillLearn skill : skills.values())
+ 		{
+-			if (((skill.getSkillId() == CommonSkill.DIVINE_INSPIRATION.getId()) && (!PlayerConfig.AUTO_LEARN_DIVINE_INSPIRATION && includeAutoGet) && !player.isGM()))
++			if (((skill.getSkillId() == CommonSkill.DIVINE_INSPIRATION.getId()) && (!PlayerConfig.AUTO_LEARN_DIVINE_INSPIRATION && includeAutoGet) && !PlayingGmPolicy.hasGameplayBypass(player)))
+ 			{
+ 				continue;
+ 			}
+--- a/java/org/l2jmobius/gameserver/entity/actor/Creature.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/Creature.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package org.l2jmobius.gameserver.entity.actor;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.util.ArrayList;
+ import java.util.Collection;
+@@ -1129,7 +1131,7 @@
+ 			if (getActiveWeaponItem() != null)
+ 			{
+ 				final Weapon wpn = getActiveWeaponItem();
+-				if (!wpn.isAttackWeapon() && !isGM())
++				if (!wpn.isAttackWeapon() && !PlayingGmPolicy.hasGameplayBypass(this))
+ 				{
+ 					if (wpn.getItemType() == WeaponType.FISHINGROD)
+ 					{
+@@ -2315,7 +2317,7 @@
+ 		if (getActiveWeaponItem() != null)
+ 		{
+ 			final Weapon wep = getActiveWeaponItem();
+-			if (wep.useWeaponSkillsOnly() && !isGM() && wep.hasSkills())
++			if (wep.useWeaponSkillsOnly() && !PlayingGmPolicy.hasGameplayBypass(this) && wep.hasSkills())
+ 			{
+ 				boolean found = false;
+ 				for (SkillHolder sh : wep.getSkills())
+@@ -2698,7 +2700,7 @@
+ 			}
+ 			
+ 			// Clan help range aggro on kill.
+-			if ((killer != null) && killer.isPlayable() && !killer.asPlayer().isGM())
++			if ((killer != null) && killer.isPlayable() && !PlayingGmPolicy.hasGameplayBypass(killer.asPlayer()))
+ 			{
+ 				final NpcTemplate template = asAttackable().getTemplate();
+ 				final Set<Integer> clans = template.getClans();
+@@ -5577,7 +5579,7 @@
+ 			}
+ 		}
+ 		
+-		if ((player.getTarget() != null) && !player.getTarget().canBeAttacked() && !player.getAccessLevel().allowPeaceAttack())
++		if ((player.getTarget() != null) && !player.getTarget().canBeAttacked() && !PlayingGmPolicy.allowsPrivilege(player, player.getAccessLevel().allowPeaceAttack()))
+ 		{
+ 			// If target is not attackable, send a Server->Client packet ActionFailed.
+ 			player.sendPacket(ActionFailed.STATIC_PACKET);
+@@ -5620,7 +5622,7 @@
+ 	
+ 	public boolean isInsidePeaceZone(Player attacker, WorldObject target)
+ 	{
+-		return (!attacker.getAccessLevel().allowPeaceAttack() && isInsidePeaceZone((WorldObject) attacker, target));
++		return (!PlayingGmPolicy.allowsPrivilege(attacker, attacker.getAccessLevel().allowPeaceAttack()) && isInsidePeaceZone((WorldObject) attacker, target));
+ 	}
+ 	
+ 	public boolean isInsidePeaceZone(WorldObject attacker, WorldObject target)
+--- a/java/org/l2jmobius/gameserver/entity/actor/Player.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/Player.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package org.l2jmobius.gameserver.entity.actor;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.sql.Connection;
+ import java.sql.PreparedStatement;
+@@ -2595,7 +2597,7 @@
+ 			// Add AutoGet skills and normal skills and/or learnByFS depending on configurations.
+ 			rewardSkills();
+ 			
+-			if (!isGM() && PlayerConfig.DECREASE_SKILL_LEVEL)
++			if (!PlayingGmPolicy.hasGameplayBypass(this) && PlayerConfig.DECREASE_SKILL_LEVEL)
+ 			{
+ 				checkPlayerSkills();
+ 			}
+@@ -2790,7 +2792,7 @@
+ 			giveAvailableAutoGetSkills();
+ 		}
+ 		
+-		if (PlayerConfig.DECREASE_SKILL_LEVEL && !isGM())
++		if (PlayerConfig.DECREASE_SKILL_LEVEL && !PlayingGmPolicy.hasGameplayBypass(this))
+ 		{
+ 			checkPlayerSkills();
+ 		}
+@@ -3523,7 +3525,7 @@
+ 			sendPacket(su);
+ 			
+ 			// If over capacity, drop the item.
+-			if (!isGM() && !_inventory.validateCapacity(0, item.isQuestItem()) && newitem.isDropable() && (!newitem.isStackable() || (newitem.getLastChange() != Item.MODIFIED)))
++			if (!PlayingGmPolicy.hasGameplayBypass(this) && !_inventory.validateCapacity(0, item.isQuestItem()) && newitem.isDropable() && (!newitem.isStackable() || (newitem.getLastChange() != Item.MODIFIED)))
+ 			{
+ 				dropItem(ItemProcessType.DROP, newitem, null, true, true);
+ 			}
+@@ -3654,7 +3656,7 @@
+ 				}
+ 				
+ 				// If over capacity, drop the item.
+-				if (!isGM() && !_inventory.validateCapacity(0, item.isQuestItem()) && createdItem.isDropable() && (!createdItem.isStackable() || (createdItem.getLastChange() != Item.MODIFIED)))
++				if (!PlayingGmPolicy.hasGameplayBypass(this) && !_inventory.validateCapacity(0, item.isQuestItem()) && createdItem.isDropable() && (!createdItem.isStackable() || (createdItem.getLastChange() != Item.MODIFIED)))
+ 				{
+ 					dropItem(ItemProcessType.DROP, createdItem, null, true);
+ 				}
+@@ -5632,7 +5634,7 @@
+ 			return;
+ 		}
+ 		
+-		if ((!isInsideZone(ZoneId.PVP) || (pk == null)) && (!isGM() || PvpConfig.KARMA_DROP_GM))
++		if ((!isInsideZone(ZoneId.PVP) || (pk == null)) && (!PlayingGmPolicy.hasGameplayBypass(this) || PvpConfig.KARMA_DROP_GM))
+ 		{
+ 			boolean isKarmaDrop = false;
+ 			final boolean isKillerNpc = killer instanceof Npc;
+@@ -6868,7 +6870,7 @@
+ 		}
+ 		else if (isMounted())
+ 		{
+-			if ((_mountType == MountType.WYVERN) && isInsideZone(ZoneId.NO_LANDING) && !isGM())
++			if ((_mountType == MountType.WYVERN) && isInsideZone(ZoneId.NO_LANDING) && !PlayingGmPolicy.hasGameplayBypass(this))
+ 			{
+ 				sendPacket(ActionFailed.STATIC_PACKET);
+ 				sendPacket(SystemMessageId.YOU_ARE_NOT_ALLOWED_TO_DISMOUNT_AT_THIS_LOCATION);
+@@ -6893,7 +6895,7 @@
+ 	{
+ 		if (ZoneManager.getInstance().getZone(getX(), getY(), getZ() - 300, WaterZone.class) == null)
+ 		{
+-			if (!isGM() && !isInWater() && (getZ() > 10000))
++			if (!PlayingGmPolicy.hasGameplayBypass(this) && !isInWater() && (getZ() > 10000))
+ 			{
+ 				sendPacket(SystemMessageId.YOU_ARE_NOT_ALLOWED_TO_DISMOUNT_AT_THIS_LOCATION);
+ 				sendPacket(ActionFailed.STATIC_PACKET);
+@@ -8810,7 +8812,7 @@
+ 			return false;
+ 		}
+ 		
+-		if (AttackStanceTaskManager.getInstance().hasAttackStanceTask(this) && !(isGM() && GeneralConfig.GM_RESTART_FIGHTING))
++		if (AttackStanceTaskManager.getInstance().hasAttackStanceTask(this) && !(PlayingGmPolicy.hasGameplayBypass(this) && GeneralConfig.GM_RESTART_FIGHTING))
+ 		{
+ 			sendPacket(SystemMessageId.YOU_CANNOT_EXIT_WHILE_IN_COMBAT);
+ 			return false;
+@@ -9337,7 +9339,7 @@
+ 		// Check if this is bad magic skill.
+ 		if (skill.hasNegativeEffect())
+ 		{
+-			if (isInsidePeaceZone(this, target) && !getAccessLevel().allowPeaceAttack())
++			if (isInsidePeaceZone(this, target) && !PlayingGmPolicy.allowsPrivilege(this, getAccessLevel().allowPeaceAttack()))
+ 			{
+ 				// If Creature or target is in a peace zone, send a system message TARGET_IN_PEACEZONE a Server->Client packet ActionFailed.
+ 				sendPacket(SystemMessageId.YOU_MAY_NOT_ATTACK_THIS_TARGET_IN_A_PEACEFUL_ZONE);
+@@ -9367,7 +9369,7 @@
+ 				return false;
+ 			}
+ 			
+-			if (!target.canBeAttacked() && !getAccessLevel().allowPeaceAttack() && !target.isDoor())
++			if (!target.canBeAttacked() && !PlayingGmPolicy.allowsPrivilege(this, getAccessLevel().allowPeaceAttack()) && !target.isDoor())
+ 			{
+ 				// If target is not attackable, send a Server->Client packet ActionFailed.
+ 				sendPacket(ActionFailed.STATIC_PACKET);
+@@ -9461,7 +9463,7 @@
+ 			default:
+ 			{
+ 				// Verify that player can attack a player or summon.
+-				if (target.isPlayable() && !getAccessLevel().allowPeaceAttack() && !checkPvpSkill(target, skill))
++				if (target.isPlayable() && !PlayingGmPolicy.allowsPrivilege(this, getAccessLevel().allowPeaceAttack()) && !checkPvpSkill(target, skill))
+ 				{
+ 					// Send a System Message to the player.
+ 					sendPacket(SystemMessageId.THAT_IS_THE_INCORRECT_TARGET);
+@@ -10162,8 +10164,8 @@
+ 	/** L2Hub: игрок выходит обычным, GM — каким вошёл: раньше он оставался невидимым и неуязвимым, даже если входил без этого. */
+ 	private void restoreObserverPrior()
+ 	{
+-		setInvisible(isGM() && _observerPriorInvisible);
+-		setInvul(isGM() && _observerPriorInvul);
++		setInvisible(PlayingGmPolicy.hasGameplayBypass(this) && _observerPriorInvisible);
++		setInvul(PlayingGmPolicy.hasGameplayBypass(this) && _observerPriorInvul);
+ 	}
+ 	
+ 	public void setLastLocation()
+@@ -11209,7 +11211,7 @@
+ 		
+ 		if (SevenSigns.getInstance().isSealValidationPeriod() || SevenSigns.getInstance().isCompResultsPeriod())
+ 		{
+-			if (!isGM() && isIn7sDungeon() && (SevenSigns.getInstance().getPlayerCabal(getObjectId()) != SevenSigns.getInstance().getCabalHighestScore()))
++			if (!PlayingGmPolicy.hasGameplayBypass(this) && isIn7sDungeon() && (SevenSigns.getInstance().getPlayerCabal(getObjectId()) != SevenSigns.getInstance().getCabalHighestScore()))
+ 			{
+ 				teleToLocation(TeleportWhereType.TOWN);
+ 				setIn7sDungeon(false);
+@@ -11218,7 +11220,7 @@
+ 		}
+ 		else
+ 		{
+-			if (!isGM() && isIn7sDungeon() && (SevenSigns.getInstance().getPlayerCabal(getObjectId()) == SevenSigns.CABAL_NULL))
++			if (!PlayingGmPolicy.hasGameplayBypass(this) && isIn7sDungeon() && (SevenSigns.getInstance().getPlayerCabal(getObjectId()) == SevenSigns.CABAL_NULL))
+ 			{
+ 				teleToLocation(TeleportWhereType.TOWN);
+ 				setIn7sDungeon(false);
+@@ -11254,7 +11256,7 @@
+ 		revalidateZone(true);
+ 		
+ 		notifyFriends();
+-		if (!isGM() && PlayerConfig.DECREASE_SKILL_LEVEL)
++		if (!PlayingGmPolicy.hasGameplayBypass(this) && PlayerConfig.DECREASE_SKILL_LEVEL)
+ 		{
+ 			checkPlayerSkills();
+ 		}
+@@ -12789,7 +12791,7 @@
+ 	public int getInventoryLimit()
+ 	{
+ 		int ivlim;
+-		if (isGM())
++		if (PlayingGmPolicy.hasGameplayBypass(this))
+ 		{
+ 			ivlim = PlayerConfig.INVENTORY_MAXIMUM_GM;
+ 		}
+@@ -13133,7 +13135,7 @@
+ 			return;
+ 		}
+ 		
+-		if (isResurrectSpecialAffected() || isLucky() || isOnEvent() || isInsideZone(ZoneId.PVP) || isInsideZone(ZoneId.SIEGE) || isGM())
++		if (isResurrectSpecialAffected() || isLucky() || isOnEvent() || isInsideZone(ZoneId.PVP) || isInsideZone(ZoneId.SIEGE) || PlayingGmPolicy.hasGameplayBypass(this))
+ 		{
+ 			return;
+ 		}
+--- a/java/org/l2jmobius/gameserver/entity/actor/Summon.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/Summon.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package org.l2jmobius.gameserver.entity.actor;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.util.concurrent.ScheduledFuture;
+ 
+@@ -713,7 +715,7 @@
+ 			}
+ 			
+ 			// Summons can cast skills on NPCs inside peace zones.
+-			if (isInsidePeaceZone(this, target) && !_owner.getAccessLevel().allowPeaceAttack())
++			if (isInsidePeaceZone(this, target) && !PlayingGmPolicy.allowsPrivilege(_owner, _owner.getAccessLevel().allowPeaceAttack()))
+ 			{
+ 				// If summon or target is in a peace zone, send a system message:
+ 				sendPacket(SystemMessageId.YOU_MAY_NOT_ATTACK_THIS_TARGET_IN_A_PEACEFUL_ZONE);
+@@ -753,7 +755,7 @@
+ 			else
+ 			{
+ 				// Summons can cast skills on NPCs inside peace zones.
+-				if (!target.canBeAttacked() && !_owner.getAccessLevel().allowPeaceAttack())
++				if (!target.canBeAttacked() && !PlayingGmPolicy.allowsPrivilege(_owner, _owner.getAccessLevel().allowPeaceAttack()))
+ 				{
+ 					return false;
+ 				}
+@@ -861,7 +863,7 @@
+ 	public void doCast(Skill skill)
+ 	{
+ 		final Player actingPlayer = getOwner();
+-		if (!actingPlayer.checkPvpSkill(getTarget(), skill) && !actingPlayer.getAccessLevel().allowPeaceAttack())
++		if (!actingPlayer.checkPvpSkill(getTarget(), skill) && !PlayingGmPolicy.allowsPrivilege(actingPlayer, actingPlayer.getAccessLevel().allowPeaceAttack()))
+ 		{
+ 			// Send a System Message to the Player.
+ 			actingPlayer.sendPacket(SystemMessageId.THAT_IS_THE_INCORRECT_TARGET);
+@@ -1069,7 +1071,7 @@
+ 			return false;
+ 		}
+ 		
+-		if (!_owner.getAccessLevel().allowPeaceAttack() && _owner.isInsidePeaceZone(this, target))
++		if (!PlayingGmPolicy.allowsPrivilege(_owner, _owner.getAccessLevel().allowPeaceAttack()) && _owner.isInsidePeaceZone(this, target))
+ 		{
+ 			sendPacket(SystemMessageId.YOU_MAY_NOT_ATTACK_THIS_TARGET_IN_A_PEACEFUL_ZONE);
+ 			return false;
+--- a/java/org/l2jmobius/gameserver/entity/item/ItemTemplate.java
++++ b/java/org/l2jmobius/gameserver/entity/item/ItemTemplate.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package org.l2jmobius.gameserver.entity.item;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.util.ArrayList;
+ import java.util.Arrays;
+@@ -815,7 +817,7 @@
+ 	
+ 	public boolean checkCondition(Creature creature, WorldObject object, boolean sendMessage)
+ 	{
+-		if (creature.isGM() && !GeneralConfig.GM_ITEM_RESTRICTION)
++		if (PlayingGmPolicy.hasGameplayBypass(creature) && !GeneralConfig.GM_ITEM_RESTRICTION)
+ 		{
+ 			return true;
+ 		}
+--- a/java/org/l2jmobius/gameserver/entity/itemcontainer/Inventory.java
++++ b/java/org/l2jmobius/gameserver/entity/itemcontainer/Inventory.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package org.l2jmobius.gameserver.entity.itemcontainer;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.sql.Connection;
+ import java.sql.PreparedStatement;
+@@ -1270,7 +1272,7 @@
+ 			}
+ 			
+ 			final Player player = getOwner().asPlayer();
+-			if (!player.isGM() && !player.isHero() && item.isHeroItem())
++			if (!PlayingGmPolicy.hasGameplayBypass(player) && !player.isHero() && item.isHeroItem())
+ 			{
+ 				return;
+ 			}
+@@ -1586,7 +1588,7 @@
+ 					if (getOwner().isPlayer())
+ 					{
+ 						final Player player = getOwner().asPlayer();
+-						if (!player.isGM() && !player.isHero() && item.isHeroItem())
++						if (!PlayingGmPolicy.hasGameplayBypass(player) && !player.isHero() && item.isHeroItem())
+ 						{
+ 							item.setItemLocation(ItemLocation.INVENTORY);
+ 						}
+--- a/java/org/l2jmobius/gameserver/entity/itemcontainer/PlayerInventory.java
++++ b/java/org/l2jmobius/gameserver/entity/itemcontainer/PlayerInventory.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package org.l2jmobius.gameserver.entity.itemcontainer;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.sql.Connection;
+ import java.sql.PreparedStatement;
+@@ -934,7 +936,7 @@
+ 	public boolean validateWeight(long weight)
+ 	{
+ 		// Disable weight check for GMs.
+-		if (_owner.isGM() && _owner.getDietMode() && _owner.getAccessLevel().allowTransaction())
++		if (PlayingGmPolicy.hasGameplayBypass(_owner) && _owner.getDietMode() && PlayingGmPolicy.canTrade(_owner))
+ 		{
+ 			return true;
+ 		}
+--- a/java/org/l2jmobius/gameserver/entity/actor/instance/ClanHallManager.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/instance/ClanHallManager.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package org.l2jmobius.gameserver.entity.actor.instance;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.io.File;
+ import java.time.Instant;
+@@ -1778,7 +1780,7 @@
+ 			return COND_ALL_FALSE;
+ 		}
+ 		
+-		if (player.isGM())
++		if (PlayingGmPolicy.hasGameplayBypass(player))
+ 		{
+ 			return COND_OWNER;
+ 		}
+--- a/java/org/l2jmobius/gameserver/entity/actor/instance/Cubic.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/instance/Cubic.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package org.l2jmobius.gameserver.entity.actor.instance;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.util.List;
+ import java.util.concurrent.Future;
+@@ -524,7 +526,7 @@
+ 	
+ 	private void applyCubicEffects(Skill skill, Creature target)
+ 	{
+-		if ((target == null) || ((target != _owner) && skill.hasNegativeEffect() && (target.isInvul() || (_owner.isGM() && !_owner.getAccessLevel().canGiveDamage()))))
++		if ((target == null) || ((target != _owner) && skill.hasNegativeEffect() && (target.isInvul() || (PlayingGmPolicy.hasGameplayBypass(_owner) && !PlayingGmPolicy.canGiveDamage(_owner)))))
+ 		{
+ 			return;
+ 		}
+--- a/java/org/l2jmobius/gameserver/entity/actor/stat/PlayerStat.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/stat/PlayerStat.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package org.l2jmobius.gameserver.entity.actor.stat;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.util.concurrent.atomic.AtomicInteger;
+ 
+@@ -86,7 +88,7 @@
+ 		final Player player = getActiveChar();
+ 		
+ 		// Allowed to gain exp?
+-		if (!player.getAccessLevel().canGainExp())
++		if (!PlayingGmPolicy.canGainExp(player))
+ 		{
+ 			return false;
+ 		}
+@@ -119,7 +121,7 @@
+ 		final Player player = getActiveChar();
+ 		
+ 		// Allowed to gain exp/sp?
+-		if (!player.getAccessLevel().canGainExp())
++		if (!PlayingGmPolicy.canGainExp(player))
+ 		{
+ 			return false;
+ 		}
+@@ -606,7 +608,7 @@
+ 		
+ 		// Apply max run speed cap.
+ 		final Player player = getActiveChar();
+-		if ((val > PlayerConfig.MAX_RUN_SPEED) && !player.isGM())
++		if ((val > PlayerConfig.MAX_RUN_SPEED) && !PlayingGmPolicy.hasGameplayBypass(player))
+ 		{
+ 			return PlayerConfig.MAX_RUN_SPEED;
+ 		}
+@@ -637,7 +639,7 @@
+ 		
+ 		// Apply max run speed cap.
+ 		final Player player = getActiveChar();
+-		if ((val > PlayerConfig.MAX_RUN_SPEED) && !player.isGM())
++		if ((val > PlayerConfig.MAX_RUN_SPEED) && !PlayingGmPolicy.hasGameplayBypass(player))
+ 		{
+ 			return PlayerConfig.MAX_RUN_SPEED;
+ 		}
+@@ -664,7 +666,7 @@
+ 	public double getPAtkSpd()
+ 	{
+ 		final double val = super.getPAtkSpd();
+-		if ((val > PlayerConfig.MAX_PATK_SPEED) && !getActiveChar().isGM())
++		if ((val > PlayerConfig.MAX_PATK_SPEED) && !PlayingGmPolicy.hasGameplayBypass(getActiveChar()))
+ 		{
+ 			return PlayerConfig.MAX_PATK_SPEED;
+ 		}
+--- a/java/org/l2jmobius/gameserver/entity/actor/status/CreatureStatus.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/status/CreatureStatus.java
+@@ -20,6 +20,8 @@
+  */
+ package org.l2jmobius.gameserver.entity.actor.status;
+ 
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
++
+ import java.util.Set;
+ import java.util.concurrent.ConcurrentHashMap;
+ import java.util.concurrent.Future;
+@@ -157,7 +159,7 @@
+ 		if (attacker != null)
+ 		{
+ 			final Player attackerPlayer = attacker.asPlayer();
+-			if ((attackerPlayer != null) && attackerPlayer.isGM() && !attackerPlayer.getAccessLevel().canGiveDamage())
++			if ((attackerPlayer != null) && PlayingGmPolicy.hasGameplayBypass(attackerPlayer) && !PlayingGmPolicy.canGiveDamage(attackerPlayer))
+ 			{
+ 				return;
+ 			}
+--- a/java/org/l2jmobius/gameserver/entity/actor/status/PlayerStatus.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/status/PlayerStatus.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package org.l2jmobius.gameserver.entity.actor.status;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import org.l2jmobius.commons.util.Rnd;
+ import org.l2jmobius.gameserver.config.PlayerConfig;
+@@ -118,7 +120,7 @@
+ 			final Player attackerPlayer = attacker.asPlayer();
+ 			if (attackerPlayer != null)
+ 			{
+-				if (attackerPlayer.isGM() && !attackerPlayer.getAccessLevel().canGiveDamage())
++				if (PlayingGmPolicy.hasGameplayBypass(attackerPlayer) && !PlayingGmPolicy.canGiveDamage(attackerPlayer))
+ 				{
+ 					return;
+ 				}
+--- a/java/org/l2jmobius/gameserver/entity/zone/type/BossZone.java
++++ b/java/org/l2jmobius/gameserver/entity/zone/type/BossZone.java
+@@ -15,6 +15,8 @@
+  * along with this program. If not, see <http://www.gnu.org/licenses/>.
+  */
+ package org.l2jmobius.gameserver.entity.zone.type;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.util.List;
+ import java.util.Map;
+@@ -149,7 +151,7 @@
+ 		if (creature.isPlayer())
+ 		{
+ 			final Player player = creature.asPlayer();
+-			if (player.isGM())
++			if (PlayingGmPolicy.hasGameplayBypass(player))
+ 			{
+ 				return;
+ 			}
+@@ -210,7 +212,7 @@
+ 					return;
+ 				}
+ 				
+-				if (getSettings().getPlayersAllowed().contains(player.getObjectId()) || player.isGM())
++				if (getSettings().getPlayersAllowed().contains(player.getObjectId()) || PlayingGmPolicy.hasGameplayBypass(player))
+ 				{
+ 					return;
+ 				}
+@@ -248,7 +250,7 @@
+ 		
+ 		for (Player member : player.getParty().getMembers())
+ 		{
+-			if ((member != player) && !PhantomManager.getInstance().isPhantom(member) && (getSettings().getPlayersAllowed().contains(member.getObjectId()) || (member.isGM() && isCharacterInZone(member))))
++			if ((member != player) && !PhantomManager.getInstance().isPhantom(member) && (getSettings().getPlayersAllowed().contains(member.getObjectId()) || (PlayingGmPolicy.hasGameplayBypass(member) && isCharacterInZone(member))))
+ 			{
+ 				return true;
+ 			}
+@@ -263,7 +265,7 @@
+ 		if (creature.isPlayer())
+ 		{
+ 			final Player player = creature.asPlayer();
+-			if (player.isGM())
++			if (PlayingGmPolicy.hasGameplayBypass(player))
+ 			{
+ 				return;
+ 			}
+@@ -364,7 +366,7 @@
+ 	
+ 	public boolean isPlayerAllowed(Player player)
+ 	{
+-		if (player.isGM() || getSettings().getPlayersAllowed().contains(player.getObjectId()))
++		if (PlayingGmPolicy.hasGameplayBypass(player) || getSettings().getPlayersAllowed().contains(player.getObjectId()))
+ 		{
+ 			return true;
+ 		}
+@@ -442,7 +444,7 @@
+ 	 */
+ 	public void allowPlayerEntry(Player player, int durationInSec)
+ 	{
+-		if (player.isGM())
++		if (PlayingGmPolicy.hasGameplayBypass(player))
+ 		{
+ 			return;
+ 		}
+@@ -457,7 +459,7 @@
+ 	
+ 	public void removePlayer(Player player)
+ 	{
+-		if (player.isGM())
++		if (PlayingGmPolicy.hasGameplayBypass(player))
+ 		{
+ 			return;
+ 		}
+--- a/java/org/l2jmobius/gameserver/entity/zone/type/OlympiadStadiumZone.java
++++ b/java/org/l2jmobius/gameserver/entity/zone/type/OlympiadStadiumZone.java
+@@ -15,6 +15,8 @@
+  * along with this program. If not, see <http://www.gnu.org/licenses/>.
+  */
+ package org.l2jmobius.gameserver.entity.zone.type;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import org.l2jmobius.gameserver.entity.actor.Creature;
+ import org.l2jmobius.gameserver.entity.actor.Playable;
+@@ -69,7 +71,7 @@
+ 		{
+ 			// Only participants, observers and GMs allowed.
+ 			final Player player = character.asPlayer();
+-			if ((player != null) && !player.isGM() && !player.isInOlympiadMode() && !player.inObserverMode())
++			if ((player != null) && !PlayingGmPolicy.hasGameplayBypass(player) && !player.isInOlympiadMode() && !player.inObserverMode())
+ 			{
+ 				if (character instanceof Summon)
+ 				{
+--- a/java/org/l2jmobius/gameserver/entity/zone/type/SiegeZone.java
++++ b/java/org/l2jmobius/gameserver/entity/zone/type/SiegeZone.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package org.l2jmobius.gameserver.entity.zone.type;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import org.l2jmobius.gameserver.config.FeatureConfig;
+ import org.l2jmobius.gameserver.data.xml.SkillData;
+@@ -201,7 +203,7 @@
+ 			return;
+ 		}
+ 		
+-		if (player.isGM())
++		if (PlayingGmPolicy.hasGameplayBypass(player))
+ 		{
+ 			player.sendMessage("You have entered a siege zone. GM dismount restrictions are ignored.");
+ 			return;
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
+@@ -1,4 +1,6 @@
+ package org.l2jmobius.gameserver.managers.phantom;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.io.File;
+ import java.nio.charset.StandardCharsets;
+@@ -7097,7 +7099,7 @@
+ 		double nearestDistance = Double.MAX_VALUE;
+ 		for (Player other : World.getVisibleObjectsInRange(player, Player.class, CURSED_PREY_RANGE))
+ 		{
+-			if (other.isDead() || other.isInvisible() || other.isGM() || other.isInsideZone(ZoneId.PEACE) || other.isInsideZone(ZoneId.NO_PVP) || other.isInStoreMode() || other.isInOlympiadMode() || other.isInDuel() || other.isOnEvent() || other.isSpawnProtected() || PhantomThanatos.is(other) || PhantomPk.barredByCursed(player, other))
++			if (other.isDead() || other.isInvisible() || PlayingGmPolicy.hasGameplayBypass(other) || other.isInsideZone(ZoneId.PEACE) || other.isInsideZone(ZoneId.NO_PVP) || other.isInStoreMode() || other.isInOlympiadMode() || other.isInDuel() || other.isOnEvent() || other.isSpawnProtected() || PhantomThanatos.is(other) || PhantomPk.barredByCursed(player, other))
+ 			{
+ 				continue;
+ 			}
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomPk.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomPk.java
+@@ -1,4 +1,6 @@
+ package org.l2jmobius.gameserver.managers.phantom;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.util.ArrayList;
+ import java.util.List;
+@@ -233,7 +235,7 @@
+ 			}
+ 			for (Player other : World.getVisibleObjectsInRange(hunter, Player.class, REVENGE_RANGE))
+ 			{
+-				if (PhantomManager.getInstance().isPhantom(other) || other.isDead() || other.isInvisible() || other.isGM() || other.isInsideZone(ZoneId.PEACE) || other.isInOlympiadMode() || other.isInDuel() || other.isOnEvent() || !PhantomRelations.getInstance().isEnemy(hunter, other) || (hunter.getLevel() < (other.getLevel() - REVENGE_LEVEL_GAP)) || barredByCursed(hunter, other))
++				if (PhantomManager.getInstance().isPhantom(other) || other.isDead() || other.isInvisible() || PlayingGmPolicy.hasGameplayBypass(other) || other.isInsideZone(ZoneId.PEACE) || other.isInOlympiadMode() || other.isInDuel() || other.isOnEvent() || !PhantomRelations.getInstance().isEnemy(hunter, other) || (hunter.getLevel() < (other.getLevel() - REVENGE_LEVEL_GAP)) || barredByCursed(hunter, other))
+ 				{
+ 					continue;
+ 				}
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomStores.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomStores.java
+@@ -1,4 +1,6 @@
+ package org.l2jmobius.gameserver.managers.phantom;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.lang.reflect.Method;
+ import java.util.ArrayList;
+@@ -543,7 +545,7 @@
+ 
+ 	private static boolean canDeal(Player player, Npc npc)
+ 	{
+-		return !player.isCursedWeaponEquipped() && player.getAccessLevel().allowTransaction() && player.isInsideRadius3D(npc, Npc.INTERACTION_DISTANCE);
++		return !player.isCursedWeaponEquipped() && PlayingGmPolicy.canTrade(player) && player.isInsideRadius3D(npc, Npc.INTERACTION_DISTANCE);
+ 	}
+ 
+ 	private static Npc npc(int objectId)
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomThanatos.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomThanatos.java
+@@ -1,4 +1,6 @@
+ package org.l2jmobius.gameserver.managers.phantom;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.util.ArrayList;
+ import java.util.HashMap;
+@@ -1599,7 +1601,7 @@
+ 	 */
+ 	private static boolean fair(Player other)
+ 	{
+-		return !other.isDead() && !other.isInvisible() && !other.isGM() && !other.isInsideZone(ZoneId.PEACE) && !other.isInOlympiadMode() && !other.isOnEvent() && !other.isInDuel() && !is(other);
++		return !other.isDead() && !other.isInvisible() && !PlayingGmPolicy.hasGameplayBypass(other) && !other.isInsideZone(ZoneId.PEACE) && !other.isInOlympiadMode() && !other.isOnEvent() && !other.isInDuel() && !is(other);
+ 	}
+ 
+ 	/**
+--- a/java/org/l2jmobius/gameserver/mechanics/conditions/ConditionPlayerCanEscape.java
++++ b/java/org/l2jmobius/gameserver/mechanics/conditions/ConditionPlayerCanEscape.java
+@@ -15,6 +15,8 @@
+  * along with this program. If not, see <http://www.gnu.org/licenses/>.
+  */
+ package org.l2jmobius.gameserver.mechanics.conditions;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import org.l2jmobius.gameserver.entity.actor.Creature;
+ import org.l2jmobius.gameserver.entity.actor.Player;
+@@ -68,7 +70,7 @@
+ 		{
+ 			canTeleport = false;
+ 		}
+-		else if ((GrandBossManager.getInstance().getZone(player) != null) && !player.isGM())
++		else if ((GrandBossManager.getInstance().getZone(player) != null) && !PlayingGmPolicy.hasGameplayBypass(player))
+ 		{
+ 			canTeleport = false;
+ 		}
+--- a/java/org/l2jmobius/gameserver/mechanics/sevensigns/SevenSigns.java
++++ b/java/org/l2jmobius/gameserver/mechanics/sevensigns/SevenSigns.java
+@@ -15,6 +15,8 @@
+  * along with this program. If not, see <http://www.gnu.org/licenses/>.
+  */
+ package org.l2jmobius.gameserver.mechanics.sevensigns;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.sql.Connection;
+ import java.sql.PreparedStatement;
+@@ -1482,7 +1484,7 @@
+ 			final StatSet currPlayer = _signsPlayerData.get(player.getObjectId());
+ 			if (isSealValidationPeriod() || isCompResultsPeriod())
+ 			{
+-				if (!player.isGM() && player.isIn7sDungeon() && ((currPlayer == null) || !currPlayer.getString("cabal").equals(compWinner)))
++				if (!PlayingGmPolicy.hasGameplayBypass(player) && player.isIn7sDungeon() && ((currPlayer == null) || !currPlayer.getString("cabal").equals(compWinner)))
+ 				{
+ 					player.teleToLocation(TeleportWhereType.TOWN);
+ 					player.setIn7sDungeon(false);
+@@ -1491,7 +1493,7 @@
+ 			}
+ 			else
+ 			{
+-				if (!player.isGM() && player.isIn7sDungeon() && ((currPlayer == null) || !currPlayer.getString("cabal").isEmpty()))
++				if (!PlayingGmPolicy.hasGameplayBypass(player) && player.isIn7sDungeon() && ((currPlayer == null) || !currPlayer.getString("cabal").isEmpty()))
+ 				{
+ 					player.teleToLocation(TeleportWhereType.TOWN);
+ 					player.setIn7sDungeon(false);
+--- a/java/org/l2jmobius/gameserver/mechanics/siege/FortSiege.java
++++ b/java/org/l2jmobius/gameserver/mechanics/siege/FortSiege.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package org.l2jmobius.gameserver.mechanics.siege;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.sql.Connection;
+ import java.sql.PreparedStatement;
+@@ -944,7 +946,7 @@
+ 		
+ 		for (Player player : players)
+ 		{
+-			if (player.isGM() || player.isJailed())
++			if (PlayingGmPolicy.hasGameplayBypass(player) || player.isJailed())
+ 			{
+ 				continue;
+ 			}
+--- a/java/org/l2jmobius/gameserver/mechanics/siege/Siege.java
++++ b/java/org/l2jmobius/gameserver/mechanics/siege/Siege.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package org.l2jmobius.gameserver.mechanics.siege;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.sql.Connection;
+ import java.sql.PreparedStatement;
+@@ -1085,7 +1087,7 @@
+ 		
+ 		for (Player player : players)
+ 		{
+-			if (player.isGM() || player.isJailed())
++			if (PlayingGmPolicy.hasGameplayBypass(player) || player.isJailed())
+ 			{
+ 				continue;
+ 			}
+--- a/java/org/l2jmobius/gameserver/mechanics/skill/Skill.java
++++ b/java/org/l2jmobius/gameserver/mechanics/skill/Skill.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package org.l2jmobius.gameserver.mechanics.skill;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.util.ArrayList;
+ import java.util.Arrays;
+@@ -939,9 +941,15 @@
+ 	
+ 	public boolean checkCondition(Creature creature, WorldObject object, boolean itemOrWeapon)
+ 	{
+-		if (creature.isFakePlayer() || (creature.isGM() && !GeneralConfig.GM_SKILL_RESTRICTION))
++		if (creature.isFakePlayer() || (PlayingGmPolicy.hasGameplayBypass(creature) && !GeneralConfig.GM_SKILL_RESTRICTION))
+ 		{
+ 			return true;
++		}
++		
++		// GM-умения доступны через явные админские действия, но не как обычные игровые навыки.
++		if (_isGMSkill && creature.isPlayer() && PlayingGmPolicy.isPlaying(creature.asPlayer()))
++		{
++			return false;
+ 		}
+ 		
+ 		if (creature.isPlayer() && creature.asPlayer().isMounted() && hasNegativeEffect() && !MountEnabledSkillList.contains(_id))
+@@ -1338,7 +1346,7 @@
+ 		}
+ 		
+ 		// Check negative effect skills against target.
+-		if ((effector != effected) && hasNegativeEffect() && (effected.isInvul() || (effector.isGM() && !effector.getAccessLevel().canGiveDamage())))
++		if ((effector != effected) && hasNegativeEffect() && (effected.isInvul() || (PlayingGmPolicy.hasGameplayBypass(effector) && !PlayingGmPolicy.canGiveDamage(effector))))
+ 		{
+ 			return;
+ 		}
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/AddTradeItem.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/AddTradeItem.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package org.l2jmobius.gameserver.network.clientpackets;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import org.l2jmobius.gameserver.entity.World;
+ import org.l2jmobius.gameserver.entity.actor.Player;
+@@ -89,7 +91,7 @@
+ 			return;
+ 		}
+ 		
+-		if (!player.getAccessLevel().allowTransaction())
++		if (!PlayingGmPolicy.canTrade(player))
+ 		{
+ 			player.sendMessage("Transactions are disabled for your Access Level.");
+ 			player.cancelActiveTrade();
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/AnswerTradeRequest.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/AnswerTradeRequest.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package org.l2jmobius.gameserver.network.clientpackets;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import org.l2jmobius.gameserver.entity.World;
+ import org.l2jmobius.gameserver.entity.actor.Player;
+@@ -49,7 +51,7 @@
+ 			return;
+ 		}
+ 		
+-		if (!player.getAccessLevel().allowTransaction())
++		if (!PlayingGmPolicy.canTrade(player))
+ 		{
+ 			player.sendPacket(SystemMessageId.YOU_ARE_NOT_AUTHORIZED_TO_DO_THAT);
+ 			player.sendPacket(ActionFailed.STATIC_PACKET);
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/CharacterSelect.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/CharacterSelect.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package org.l2jmobius.gameserver.network.clientpackets;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.util.logging.Logger;
+ 
+@@ -186,7 +188,7 @@
+ 					CharInfoTable.getInstance().addName(cha);
+ 					
+ 					// Prevent instant disappear of invisible GMs on login.
+-					if (cha.isGM() && GeneralConfig.GM_STARTUP_INVISIBLE && AdminData.getInstance().hasAccess("admin_invisible", cha.getAccessLevel()))
++					if (PlayingGmPolicy.hasGameplayBypass(cha) && GeneralConfig.GM_STARTUP_INVISIBLE && AdminData.getInstance().hasAccess("admin_invisible", cha.getAccessLevel()))
+ 					{
+ 						cha.setInvisible(true);
+ 					}
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/EnterWorld.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/EnterWorld.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package org.l2jmobius.gameserver.network.clientpackets;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.util.Calendar;
+ import java.util.Map;
+@@ -204,6 +206,10 @@
+ 		{
+ 			gmStartupProcess:
+ 			{
++				if (PlayingGmPolicy.isPlaying(player))
++				{
++					break gmStartupProcess;
++				}
+ 				if (GeneralConfig.GM_STARTUP_BUILDER_HIDE && AdminData.getInstance().hasAccess("admin_hide", player.getAccessLevel()))
+ 				{
+ 					player.setHiding(true);
+@@ -246,12 +252,12 @@
+ 				AdminData.getInstance().addGm(player, true);
+ 			}
+ 			
+-			if (GeneralConfig.GM_GIVE_SPECIAL_SKILLS)
++			if (GeneralConfig.GM_GIVE_SPECIAL_SKILLS && !PlayingGmPolicy.isPlaying(player))
+ 			{
+ 				SkillTreeData.getInstance().addSkills(player, false);
+ 			}
+ 			
+-			if (GeneralConfig.GM_GIVE_SPECIAL_AURA_SKILLS)
++			if (GeneralConfig.GM_GIVE_SPECIAL_AURA_SKILLS && !PlayingGmPolicy.isPlaying(player))
+ 			{
+ 				SkillTreeData.getInstance().addSkills(player, true);
+ 			}
+@@ -514,6 +520,7 @@
+ 		}
+ 		
+ 		player.onPlayerEnter();
++		org.l2jmobius.gameserver.managers.PlayingGmState.normalize(player);
+ 		
+ 		// Apply item skills.
+ 		player.getInventory().applyItemSkills();
+@@ -571,7 +578,7 @@
+ 		
+ 		// Attacker or spectator logging in to a siege zone.
+ 		// Actually should be checked for inside castle only?
+-		if (!player.isGM() && player.isInsideZone(ZoneId.SIEGE) && (!player.isInSiege() || (player.getSiegeState() < 2)))
++		if (!PlayingGmPolicy.hasGameplayBypass(player) && player.isInsideZone(ZoneId.SIEGE) && (!player.isInSiege() || (player.getSiegeState() < 2)))
+ 		{
+ 			player.teleToLocation(TeleportWhereType.TOWN);
+ 		}
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/MoveToLocation.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/MoveToLocation.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package org.l2jmobius.gameserver.network.clientpackets;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import org.l2jmobius.gameserver.config.PlayerConfig;
+ import org.l2jmobius.gameserver.data.xml.DoorData;
+@@ -71,7 +73,7 @@
+ 			return;
+ 		}
+ 		
+-		if ((PlayerConfig.PLAYER_MOVEMENT_BLOCK_TIME > 0) && !player.isGM() && (player.getNotMoveUntil() > System.currentTimeMillis()))
++		if ((PlayerConfig.PLAYER_MOVEMENT_BLOCK_TIME > 0) && !PlayingGmPolicy.hasGameplayBypass(player) && (player.getNotMoveUntil() > System.currentTimeMillis()))
+ 		{
+ 			player.sendMessage("You cannot move while speaking to an NPC. One moment please.");
+ 			player.sendPacket(ActionFailed.STATIC_PACKET);
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/MultiSellChoose.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/MultiSellChoose.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package org.l2jmobius.gameserver.network.clientpackets;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.util.ArrayList;
+ import java.util.Collection;
+@@ -131,7 +133,7 @@
+ 				|| (player.getInstanceId() != npc.getInstanceId()) //
+ 				|| !player.isInsideRadius3D(npc, Npc.INTERACTION_DISTANCE))
+ 			{
+-				if (player.isGM())
++				if (PlayingGmPolicy.hasGameplayBypass(player))
+ 				{
+ 					player.sendMessage("Multisell " + _listId + " is restricted. Under current conditions cannot be used. Only GMs are allowed to use it.");
+ 				}
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/RequestAcquireSkill.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/RequestAcquireSkill.java
+@@ -15,6 +15,8 @@
+  * along with this program. If not, see <http://www.gnu.org/licenses/>.
+  */
+ package org.l2jmobius.gameserver.network.clientpackets;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.util.List;
+ 
+@@ -108,7 +110,7 @@
+ 		}
+ 		
+ 		final Npc trainer = player.getLastFolkNPC();
+-		if ((trainer == null) || !trainer.isNpc() || (!trainer.canInteract(player) && !player.isGM()))
++		if ((trainer == null) || !trainer.isNpc() || (!trainer.canInteract(player) && !PlayingGmPolicy.hasGameplayBypass(player)))
+ 		{
+ 			return;
+ 		}
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/RequestAcquireSkillInfo.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/RequestAcquireSkillInfo.java
+@@ -15,6 +15,8 @@
+  * along with this program. If not, see <http://www.gnu.org/licenses/>.
+  */
+ package org.l2jmobius.gameserver.network.clientpackets;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import org.l2jmobius.gameserver.data.xml.SkillData;
+ import org.l2jmobius.gameserver.data.xml.SkillTreeData;
+@@ -61,7 +63,7 @@
+ 		}
+ 		
+ 		final Npc trainer = player.getLastFolkNPC();
+-		if ((trainer == null) || !trainer.isNpc() || (!trainer.canInteract(player) && !player.isGM()))
++		if ((trainer == null) || !trainer.isNpc() || (!trainer.canInteract(player) && !PlayingGmPolicy.hasGameplayBypass(player)))
+ 		{
+ 			return;
+ 		}
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/RequestBuyItem.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/RequestBuyItem.java
+@@ -20,6 +20,8 @@
+  */
+ package org.l2jmobius.gameserver.network.clientpackets;
+ 
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
++
+ import static org.l2jmobius.gameserver.entity.actor.Npc.INTERACTION_DISTANCE;
+ import static org.l2jmobius.gameserver.entity.itemcontainer.Inventory.MAX_ADENA;
+ 
+@@ -108,7 +110,7 @@
+ 		
+ 		final WorldObject target = player.getTarget();
+ 		Creature merchant = null;
+-		if (!player.isGM() && (_listId != CUSTOM_CB_SELL_LIST))
++		if (!PlayingGmPolicy.hasGameplayBypass(player) && (_listId != CUSTOM_CB_SELL_LIST))
+ 		{
+ 			if (!(target instanceof Merchant) || (!player.isInsideRadius3D(target, INTERACTION_DISTANCE)) || (player.getInstanceId() != target.getInstanceId()))
+ 			{
+@@ -121,7 +123,7 @@
+ 		
+ 		double castleTaxRate = 0;
+ 		double baseTaxRate = 0;
+-		if ((merchant == null) && !player.isGM() && (_listId != CUSTOM_CB_SELL_LIST))
++		if ((merchant == null) && !PlayingGmPolicy.hasGameplayBypass(player) && (_listId != CUSTOM_CB_SELL_LIST))
+ 		{
+ 			player.sendPacket(ActionFailed.STATIC_PACKET);
+ 			return;
+@@ -189,7 +191,7 @@
+ 				return;
+ 			}
+ 			
+-			if ((price == 0) && !player.isGM() && GeneralConfig.ONLY_GM_ITEMS_FREE)
++			if ((price == 0) && !PlayingGmPolicy.hasGameplayBypass(player) && GeneralConfig.ONLY_GM_ITEMS_FREE)
+ 			{
+ 				player.sendMessage("Ohh Cheat does not work? You have a problem now!");
+ 				PunishmentManager.handleIllegalPlayerAction(player, "Warning!! Character " + player.getName() + " of account " + player.getAccountName() + " tried buy item for 0 adena.", GeneralConfig.DEFAULT_PUNISH);
+@@ -225,14 +227,14 @@
+ 			}
+ 		}
+ 		
+-		if (!player.isGM() && ((weight > Integer.MAX_VALUE) || (weight < 0) || !player.getInventory().validateWeight((int) weight)))
++		if (!PlayingGmPolicy.hasGameplayBypass(player) && ((weight > Integer.MAX_VALUE) || (weight < 0) || !player.getInventory().validateWeight((int) weight)))
+ 		{
+ 			player.sendPacket(SystemMessageId.YOU_HAVE_EXCEEDED_THE_WEIGHT_LIMIT);
+ 			player.sendPacket(ActionFailed.STATIC_PACKET);
+ 			return;
+ 		}
+ 		
+-		if (!player.isGM() && ((slots > Integer.MAX_VALUE) || (slots < 0) || !player.getInventory().validateCapacity((int) slots)))
++		if (!PlayingGmPolicy.hasGameplayBypass(player) && ((slots > Integer.MAX_VALUE) || (slots < 0) || !player.getInventory().validateCapacity((int) slots)))
+ 		{
+ 			player.sendPacket(SystemMessageId.YOUR_INVENTORY_IS_FULL);
+ 			player.sendPacket(ActionFailed.STATIC_PACKET);
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/RequestDestroyItem.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/RequestDestroyItem.java
+@@ -20,6 +20,8 @@
+  */
+ package org.l2jmobius.gameserver.network.clientpackets;
+ 
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
++
+ import java.sql.Connection;
+ import java.sql.PreparedStatement;
+ 
+@@ -108,7 +110,7 @@
+ 		}
+ 		
+ 		final int itemId = itemToRemove.getId();
+-		if (!GeneralConfig.DESTROY_ALL_ITEMS && ((!player.isGM() && !itemToRemove.isDestroyable()) || CursedWeaponsManager.getInstance().isCursed(itemId)))
++		if (!GeneralConfig.DESTROY_ALL_ITEMS && ((!PlayingGmPolicy.hasGameplayBypass(player) && !itemToRemove.isDestroyable()) || CursedWeaponsManager.getInstance().isCursed(itemId)))
+ 		{
+ 			if (itemToRemove.isHeroItem())
+ 			{
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/RequestDropItem.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/RequestDropItem.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package org.l2jmobius.gameserver.network.clientpackets;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import org.l2jmobius.gameserver.config.GeneralConfig;
+ import org.l2jmobius.gameserver.config.PlayerConfig;
+@@ -75,7 +77,7 @@
+ 		}
+ 		
+ 		final Item item = player.getInventory().getItemByObjectId(_objectId);
+-		if ((item == null) || (_count == 0) || !player.validateItemManipulation(_objectId, ItemProcessType.DROP) || (!GeneralConfig.ALLOW_DISCARDITEM && !player.isGM()) || (!item.isDropable() && !(player.isGM() && GeneralConfig.GM_TRADE_RESTRICTED_ITEMS)) || ((item.getItemType() == EtcItemType.PET_COLLAR) && player.havePetInvItems()) || player.isInsideZone(ZoneId.NO_ITEM_DROP))
++		if ((item == null) || (_count == 0) || !player.validateItemManipulation(_objectId, ItemProcessType.DROP) || (!GeneralConfig.ALLOW_DISCARDITEM && !PlayingGmPolicy.hasGameplayBypass(player)) || (!item.isDropable() && !(PlayingGmPolicy.hasGameplayBypass(player) && GeneralConfig.GM_TRADE_RESTRICTED_ITEMS)) || ((item.getItemType() == EtcItemType.PET_COLLAR) && player.havePetInvItems()) || player.isInsideZone(ZoneId.NO_ITEM_DROP))
+ 		{
+ 			if ((item != null) && item.isAugmented())
+ 			{
+@@ -123,7 +125,7 @@
+ 			return;
+ 		}
+ 		
+-		if (!player.getAccessLevel().allowTransaction())
++		if (!PlayingGmPolicy.canTrade(player))
+ 		{
+ 			player.sendMessage("Transactions are disabled for your Access Level.");
+ 			player.sendPacket(SystemMessageId.NOTHING_HAPPENED);
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/RequestHennaEquip.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/RequestHennaEquip.java
+@@ -15,6 +15,8 @@
+  * along with this program. If not, see <http://www.gnu.org/licenses/>.
+  */
+ package org.l2jmobius.gameserver.network.clientpackets;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import org.l2jmobius.gameserver.config.GeneralConfig;
+ import org.l2jmobius.gameserver.data.xml.HennaData;
+@@ -82,7 +84,7 @@
+ 		else
+ 		{
+ 			player.sendPacket(SystemMessageId.THE_SYMBOL_CANNOT_BE_DRAWN);
+-			if (!player.isGM() && !henna.isAllowedClass(player.getPlayerClass()))
++			if (!PlayingGmPolicy.hasGameplayBypass(player) && !henna.isAllowedClass(player.getPlayerClass()))
+ 			{
+ 				PunishmentManager.handleIllegalPlayerAction(player, "Exploit attempt: " + player + " tryed to add a forbidden henna.", GeneralConfig.DEFAULT_PUNISH);
+ 			}
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/RequestPostAttachment.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/RequestPostAttachment.java
+@@ -15,6 +15,8 @@
+  * along with this program. If not, see <http://www.gnu.org/licenses/>.
+  */
+ package org.l2jmobius.gameserver.network.clientpackets;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import static org.l2jmobius.gameserver.entity.itemcontainer.Inventory.ADENA_ID;
+ 
+@@ -69,7 +71,7 @@
+ 			return;
+ 		}
+ 		
+-		if (!player.getAccessLevel().allowTransaction())
++		if (!PlayingGmPolicy.canTrade(player))
+ 		{
+ 			player.sendMessage("Transactions are disabled for your Access Level");
+ 			return;
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/RequestPreviewItem.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/RequestPreviewItem.java
+@@ -15,6 +15,8 @@
+  * along with this program. If not, see <http://www.gnu.org/licenses/>.
+  */
+ package org.l2jmobius.gameserver.network.clientpackets;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.util.HashMap;
+ import java.util.Map;
+@@ -125,7 +127,7 @@
+ 			return;
+ 		}
+ 		
+-		if (!player.getAccessLevel().allowTransaction())
++		if (!PlayingGmPolicy.canTrade(player))
+ 		{
+ 			player.sendMessage("Transactions are disabled for your access level.");
+ 			player.sendPacket(ActionFailed.STATIC_PACKET);
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/RequestPrivateStoreBuy.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/RequestPrivateStoreBuy.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package org.l2jmobius.gameserver.network.clientpackets;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import static org.l2jmobius.gameserver.entity.actor.Npc.INTERACTION_DISTANCE;
+ 
+@@ -134,7 +136,7 @@
+ 			return;
+ 		}
+ 		
+-		if (!player.getAccessLevel().allowTransaction())
++		if (!PlayingGmPolicy.canTrade(player))
+ 		{
+ 			player.sendMessage("Transactions are disabled for your Access Level.");
+ 			player.sendPacket(ActionFailed.STATIC_PACKET);
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/RequestPrivateStoreSell.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/RequestPrivateStoreSell.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package org.l2jmobius.gameserver.network.clientpackets;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import static org.l2jmobius.gameserver.entity.actor.Npc.INTERACTION_DISTANCE;
+ 
+@@ -134,7 +136,7 @@
+ 			return;
+ 		}
+ 		
+-		if (!player.getAccessLevel().allowTransaction())
++		if (!PlayingGmPolicy.canTrade(player))
+ 		{
+ 			player.sendMessage("Transactions are disabled for your Access Level.");
+ 			player.sendPacket(ActionFailed.STATIC_PACKET);
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/RequestRefundItem.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/RequestRefundItem.java
+@@ -20,6 +20,8 @@
+  */
+ package org.l2jmobius.gameserver.network.clientpackets;
+ 
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
++
+ import static org.l2jmobius.gameserver.entity.actor.Npc.INTERACTION_DISTANCE;
+ 
+ import org.l2jmobius.gameserver.config.GeneralConfig;
+@@ -101,7 +103,7 @@
+ 
+ 		final WorldObject target = player.getTarget();
+ 		Creature merchant = null;
+-		if (!player.isGM() && !boardSale && (_listId != CUSTOM_CB_SELL_LIST))
++		if (!PlayingGmPolicy.hasGameplayBypass(player) && !boardSale && (_listId != CUSTOM_CB_SELL_LIST))
+ 		{
+ 			if (!(target instanceof Merchant) || (!player.isInsideRadius3D(target, INTERACTION_DISTANCE)) || (player.getInstanceId() != target.getInstanceId()))
+ 			{
+@@ -112,7 +114,7 @@
+ 			merchant = target.asCreature();
+ 		}
+ 		
+-		if ((merchant == null) && !player.isGM() && !boardSale && (_listId != CUSTOM_CB_SELL_LIST))
++		if ((merchant == null) && !PlayingGmPolicy.hasGameplayBypass(player) && !boardSale && (_listId != CUSTOM_CB_SELL_LIST))
+ 		{
+ 			player.sendPacket(ActionFailed.STATIC_PACKET);
+ 			return;
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/RequestRestart.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/RequestRestart.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package org.l2jmobius.gameserver.network.clientpackets;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.util.logging.Logger;
+ 
+@@ -87,7 +89,7 @@
+ 			return;
+ 		}
+ 		
+-		if (AttackStanceTaskManager.getInstance().hasAttackStanceTask(player) && !(player.isGM() && GeneralConfig.GM_RESTART_FIGHTING))
++		if (AttackStanceTaskManager.getInstance().hasAttackStanceTask(player) && !(PlayingGmPolicy.hasGameplayBypass(player) && GeneralConfig.GM_RESTART_FIGHTING))
+ 		{
+ 			player.sendPacket(SystemMessageId.YOU_CANNOT_RESTART_WHILE_IN_COMBAT);
+ 			player.sendPacket(RestartResponse.valueOf(false));
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/RequestRestartPoint.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/RequestRestartPoint.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package org.l2jmobius.gameserver.network.clientpackets;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import org.l2jmobius.commons.threads.ThreadPool;
+ import org.l2jmobius.gameserver.data.sql.ClanHallTable;
+@@ -259,13 +261,13 @@
+ 			}
+ 			case 5: // Fixed or Player is a festival participant.
+ 			{
+-				if (!player.isGM() && !player.isFestivalParticipant() && !player.getInventory().haveItemForSelfResurrection())
++				if (!PlayingGmPolicy.hasGameplayBypass(player) && !player.isFestivalParticipant() && !player.getInventory().haveItemForSelfResurrection())
+ 				{
+ 					PacketLogger.warning("Player [" + player.getName() + "] called RestartPointPacket - Fixed and he isn't festival participant!");
+ 					return;
+ 				}
+ 				
+-				if (player.isGM() || player.destroyItemByItemId(ItemProcessType.FEE, 10649, 1, player, false) || player.destroyItemByItemId(ItemProcessType.FEE, 13300, 1, player, false) || player.destroyItemByItemId(ItemProcessType.FEE, 13128, 1, player, false))
++				if (PlayingGmPolicy.hasGameplayBypass(player) || player.destroyItemByItemId(ItemProcessType.FEE, 10649, 1, player, false) || player.destroyItemByItemId(ItemProcessType.FEE, 13300, 1, player, false) || player.destroyItemByItemId(ItemProcessType.FEE, 13128, 1, player, false))
+ 				{
+ 					player.doRevive(100.00);
+ 				}
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/RequestSellItem.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/RequestSellItem.java
+@@ -20,6 +20,8 @@
+  */
+ package org.l2jmobius.gameserver.network.clientpackets;
+ 
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
++
+ import static org.l2jmobius.gameserver.entity.actor.Npc.INTERACTION_DISTANCE;
+ import static org.l2jmobius.gameserver.entity.itemcontainer.Inventory.MAX_ADENA;
+ 
+@@ -120,7 +122,7 @@
+ 
+ 		final WorldObject target = player.getTarget();
+ 		Creature merchant = null;
+-		if (!player.isGM() && !boardSale && (_listId != CUSTOM_CB_SELL_LIST))
++		if (!PlayingGmPolicy.hasGameplayBypass(player) && !boardSale && (_listId != CUSTOM_CB_SELL_LIST))
+ 		{
+ 			if ((target == null) || (!player.isInsideRadius3D(target, INTERACTION_DISTANCE)) || (player.getInstanceId() != target.getInstanceId()))
+ 			{
+@@ -139,7 +141,7 @@
+ 			}
+ 		}
+ 		
+-		if ((merchant == null) && !player.isGM() && !boardSale && (_listId != CUSTOM_CB_SELL_LIST))
++		if ((merchant == null) && !PlayingGmPolicy.hasGameplayBypass(player) && !boardSale && (_listId != CUSTOM_CB_SELL_LIST))
+ 		{
+ 			player.sendPacket(ActionFailed.STATIC_PACKET);
+ 			return;
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/RequestSendPost.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/RequestSendPost.java
+@@ -15,6 +15,8 @@
+  * along with this program. If not, see <http://www.gnu.org/licenses/>.
+  */
+ package org.l2jmobius.gameserver.network.clientpackets;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import static org.l2jmobius.gameserver.entity.itemcontainer.Inventory.ADENA_ID;
+ import static org.l2jmobius.gameserver.entity.itemcontainer.Inventory.MAX_ADENA;
+@@ -122,7 +124,7 @@
+ 			_reqAdena = 0;
+ 		}
+ 		
+-		if (!player.getAccessLevel().allowTransaction())
++		if (!PlayingGmPolicy.canTrade(player))
+ 		{
+ 			player.sendMessage("Transactions are disabled for your Access Level.");
+ 			return;
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/RequestUnEquipItem.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/RequestUnEquipItem.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package org.l2jmobius.gameserver.network.clientpackets;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.util.Collection;
+ 
+@@ -94,7 +96,7 @@
+ 			return;
+ 		}
+ 		
+-		if (item.isWeapon() && item.getWeaponItem().isForceEquip() && !player.isGM())
++		if (item.isWeapon() && item.getWeaponItem().isForceEquip() && !PlayingGmPolicy.hasGameplayBypass(player))
+ 		{
+ 			player.sendPacket(SystemMessageId.THAT_ITEM_CANNOT_BE_TAKEN_OFF);
+ 			return;
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/SendWareHouseDepositList.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/SendWareHouseDepositList.java
+@@ -20,6 +20,8 @@
+  */
+ package org.l2jmobius.gameserver.network.clientpackets;
+ 
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
++
+ import static org.l2jmobius.gameserver.entity.itemcontainer.Inventory.ADENA_ID;
+ 
+ import java.util.ArrayList;
+@@ -106,7 +108,7 @@
+ 		}
+ 		
+ 		final boolean isPrivate = warehouse instanceof PlayerWarehouse;
+-		if (!isPrivate && !player.getAccessLevel().allowTransaction())
++		if (!isPrivate && !PlayingGmPolicy.canTrade(player))
+ 		{
+ 			player.sendMessage("Transactions are disabled for your Access Level.");
+ 			return;
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/SendWareHouseWithDrawList.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/SendWareHouseWithDrawList.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package org.l2jmobius.gameserver.network.clientpackets;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import org.l2jmobius.gameserver.config.GeneralConfig;
+ import org.l2jmobius.gameserver.config.PlayerConfig;
+@@ -104,7 +106,7 @@
+ 			return;
+ 		}
+ 		
+-		if (!(warehouse instanceof PlayerWarehouse) && !player.getAccessLevel().allowTransaction())
++		if (!(warehouse instanceof PlayerWarehouse) && !PlayingGmPolicy.canTrade(player))
+ 		{
+ 			player.sendMessage("Transactions are disabled for your Access Level.");
+ 			return;
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/SetPrivateStoreListBuy.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/SetPrivateStoreListBuy.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package org.l2jmobius.gameserver.network.clientpackets;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import static org.l2jmobius.gameserver.entity.itemcontainer.Inventory.MAX_ADENA;
+ 
+@@ -92,7 +94,7 @@
+ 			return;
+ 		}
+ 		
+-		if (!player.getAccessLevel().allowTransaction())
++		if (!PlayingGmPolicy.canTrade(player))
+ 		{
+ 			player.sendPacket(SystemMessageId.YOU_ARE_NOT_AUTHORIZED_TO_DO_THAT);
+ 			return;
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/SetPrivateStoreListSell.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/SetPrivateStoreListSell.java
+@@ -20,6 +20,8 @@
+  */
+ package org.l2jmobius.gameserver.network.clientpackets;
+ 
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
++
+ import static org.l2jmobius.gameserver.entity.itemcontainer.Inventory.MAX_ADENA;
+ 
+ import org.l2jmobius.gameserver.config.PlayerConfig;
+@@ -87,7 +89,7 @@
+ 			return;
+ 		}
+ 		
+-		if (!player.getAccessLevel().allowTransaction())
++		if (!PlayingGmPolicy.canTrade(player))
+ 		{
+ 			player.sendPacket(SystemMessageId.YOU_ARE_NOT_AUTHORIZED_TO_DO_THAT);
+ 			return;
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/TradeDone.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/TradeDone.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package org.l2jmobius.gameserver.network.clientpackets;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import org.l2jmobius.gameserver.entity.World;
+ import org.l2jmobius.gameserver.entity.actor.Player;
+@@ -79,7 +81,7 @@
+ 				return;
+ 			}
+ 			
+-			if (!player.getAccessLevel().allowTransaction())
++			if (!PlayingGmPolicy.canTrade(player))
+ 			{
+ 				player.cancelActiveTrade();
+ 				player.sendPacket(SystemMessageId.YOU_ARE_NOT_AUTHORIZED_TO_DO_THAT);
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/TradeRequest.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/TradeRequest.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package org.l2jmobius.gameserver.network.clientpackets;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import org.l2jmobius.gameserver.config.GeneralConfig;
+ import org.l2jmobius.gameserver.config.PlayerConfig;
+@@ -57,7 +59,7 @@
+ 			return;
+ 		}
+ 		
+-		if (!player.getAccessLevel().allowTransaction())
++		if (!PlayingGmPolicy.canTrade(player))
+ 		{
+ 			player.sendMessage("Transactions are disabled for your current Access Level.");
+ 			player.sendPacket(ActionFailed.STATIC_PACKET);
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/UseItem.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/UseItem.java
+@@ -19,6 +19,8 @@
+  * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  */
+ package org.l2jmobius.gameserver.network.clientpackets;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import java.util.concurrent.TimeUnit;
+ 
+@@ -248,7 +250,7 @@
+ 					}
+ 					
+ 					// Don't allow other Race to Wear Kamael exclusive Weapons.
+-					if (!item.isEquipped() && item.isWeapon() && !player.isGM())
++					if (!item.isEquipped() && item.isWeapon() && !PlayingGmPolicy.hasGameplayBypass(player))
+ 					{
+ 						final Weapon wpn = (Weapon) item.getTemplate();
+ 						
+--- a/java/org/l2jmobius/gameserver/network/holders/TradeList.java
++++ b/java/org/l2jmobius/gameserver/network/holders/TradeList.java
+@@ -15,6 +15,8 @@
+  * along with this program. If not, see <http://www.gnu.org/licenses/>.
+  */
+ package org.l2jmobius.gameserver.network.holders;
++
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
+ 
+ import static org.l2jmobius.gameserver.entity.itemcontainer.Inventory.MAX_ADENA;
+ 
+@@ -193,7 +195,7 @@
+ 		}
+ 		
+ 		final Item item = (Item) o;
+-		if (!(item.isTradeable() || (_owner.isGM() && GeneralConfig.GM_TRADE_RESTRICTED_ITEMS)) || item.isQuestItem())
++		if (!(item.isTradeable() || (PlayingGmPolicy.hasGameplayBypass(_owner) && GeneralConfig.GM_TRADE_RESTRICTED_ITEMS)) || item.isQuestItem())
+ 		{
+ 			return null;
+ 		}
+--- a/java/org/l2jmobius/gameserver/network/serverpackets/TradeStart.java
++++ b/java/org/l2jmobius/gameserver/network/serverpackets/TradeStart.java
+@@ -20,6 +20,8 @@
+  */
+ package org.l2jmobius.gameserver.network.serverpackets;
+ 
++import org.l2jmobius.gameserver.managers.PlayingGmPolicy;
++
+ import java.util.Collection;
+ 
+ import org.l2jmobius.commons.network.buffer.WriteBuffer;
+@@ -37,7 +39,7 @@
+ 	public TradeStart(Player player)
+ 	{
+ 		_player = player;
+-		_itemList = _player.getInventory().getAvailableItems(true, (_player.isGM() && GeneralConfig.GM_TRADE_RESTRICTED_ITEMS), false);
++		_itemList = _player.getInventory().getAvailableItems(true, (PlayingGmPolicy.hasGameplayBypass(_player) && GeneralConfig.GM_TRADE_RESTRICTED_ITEMS), false);
+ 	}
+ 	
+ 	@Override

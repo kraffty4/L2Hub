@@ -172,7 +172,7 @@ public class PhantomBrawl
 	{
 		if (!PhantomHunterManager.getInstance().isHunting(angry))
 		{
-			return "охотник не на каче";
+			return "пешка не на каче";
 		}
 		if (other.isDead() || other.isInvisible() || other.isInOlympiadMode() || other.isOnEvent() || other.isInStoreMode())
 		{

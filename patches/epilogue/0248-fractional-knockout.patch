@@ -1,0 +1,39 @@
+diff --git a/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGame.java b/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGame.java
+--- a/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGame.java
++++ b/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGame.java
+@@ -549,7 +549,9 @@
+ 	
+ 	protected boolean haveWinner()
+ 	{
+-		if (_aborted || (_playerOne == null) || (_playerTwo == null) || _playerOneDisconnected || _playerTwoDisconnected)
++		// PlayerStatus отмечает КО ниже0.5HP, оставляя положительный остаток.
++		// Native validateWinner считает isDead поражением; арбитраж использует тот же признак.
++		if (_aborted || (_playerOne == null) || (_playerTwo == null) || _playerOneDisconnected || _playerTwoDisconnected || _playerOne.isDead() || _playerTwo.isDead())
+ 		{
+ 			return true;
+ 		}
+diff --git a/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGameTask.java b/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGameTask.java
+--- a/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGameTask.java
++++ b/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGameTask.java
+@@ -41,6 +41,7 @@
+ 	protected static final Logger _log = Logger.getLogger(OlympiadGameTask.class.getName());
+ 	public OlympiadGame _game = null;
+ 	protected static final long BATTLE_PERIOD = OlympiadConfig.OLYMPIAD_BATTLE; // 6 mins
++	private static final int WINNER_CHECK_PERIOD = 200;
+ 	
+ 	// Buffs
+ 	private static final SkillHolder[] FIGHTER_BUFFS =
+@@ -355,11 +356,11 @@
+ 		}
+ 		
+ 		// Wait 3 mins (Battle)
+-		for (int i = 0; i < BATTLE_PERIOD; i += 10000)
++		for (int i = 0; i < BATTLE_PERIOD; i += WINNER_CHECK_PERIOD)
+ 		{
+ 			try
+ 			{
+-				Thread.sleep(10000);
++				Thread.sleep(WINNER_CHECK_PERIOD);
+ 				
+ 				// If game haveWinner then stop waiting battle_period
+ 				// and validate winner

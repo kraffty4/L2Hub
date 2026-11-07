@@ -1,0 +1,17 @@
+Epilogue0506: сообщить причину превышения Native лимита multisell.
+Лимит, сброс списка, проверки денег/веса/количества и вся торговля прежние.
+
+diff --git a/java/org/l2jmobius/gameserver/network/clientpackets/MultiSellChoose.java b/java/org/l2jmobius/gameserver/network/clientpackets/MultiSellChoose.java
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/MultiSellChoose.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/MultiSellChoose.java
+@@ -110,6 +110,10 @@
+ 		
+ 		if ((_amount < 1) || (_amount > GeneralConfig.MULTISELL_AMOUNT_LIMIT))
+ 		{
++			if (_amount > GeneralConfig.MULTISELL_AMOUNT_LIMIT)
++			{
++				player.sendPacket(SystemMessageId.YOU_HAVE_EXCEEDED_THE_QUANTITY_THAT_CAN_BE_INPUTTED);
++			}
+ 			player.setMultiSell(null);
+ 			return;
+ 		}

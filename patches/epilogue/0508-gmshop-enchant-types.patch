@@ -1,0 +1,160 @@
+Epilogue0508: виды свитков в GM-шопе по Native metadata и отдельным INI-флагам.
+Единое правило для списка/страниц/покупки; не менять свойства/шансы/использование предметов.
+
+diff --git a/java/org/l2jmobius/gameserver/data/xml/EnchantItemData.java b/java/org/l2jmobius/gameserver/data/xml/EnchantItemData.java
+--- a/java/org/l2jmobius/gameserver/data/xml/EnchantItemData.java
++++ b/java/org/l2jmobius/gameserver/data/xml/EnchantItemData.java
+@@ -137,6 +137,12 @@
+ 		return _scrolls.values();
+ 	}
+ 	
++	/** Получить действующие metadata свитка без создания экземпляра Item. */
++	public EnchantScroll getEnchantScroll(int itemId)
++	{
++		return _scrolls.get(itemId);
++	}
++
+ 	/**
+ 	 * Retrieves the enchant scroll template associated with the specified item.
+ 	 * @param item the {@link Item} representing the scroll to retrieve.
+diff --git a/java/org/l2jmobius/gameserver/data/xml/MultisellData.java b/java/org/l2jmobius/gameserver/data/xml/MultisellData.java
+--- a/java/org/l2jmobius/gameserver/data/xml/MultisellData.java
++++ b/java/org/l2jmobius/gameserver/data/xml/MultisellData.java
+@@ -85,6 +85,7 @@
+ 	@Override
+ 	public void parseDocument(Document document, File file)
+ 	{
++		org.l2jmobius.gameserver.managers.GmShopEnchantPolicy.filterLegacyDocument(document, file);
+ 		try
+ 		{
+ 			final int id = Integer.parseInt(file.getName().replace(".xml", ""));
+@@ -149,6 +150,7 @@
+ 				}
+ 			}
+ 			
++			org.l2jmobius.gameserver.managers.GmShopEnchantPolicy.filter(list, null);
+ 			_entries.put(id, list);
+ 		}
+ 		catch (Exception e)
+@@ -285,6 +287,7 @@
+ 		}
+ 		
+ 		final PreparedListContainer list = new PreparedListContainer(template, inventoryOnly, player, npc);
++		org.l2jmobius.gameserver.managers.GmShopEnchantPolicy.filter(list, npc);
+ 		
+ 		// Pass through this only when multipliers are different from 1.
+ 		if ((productMultiplier != 1) || (ingredientMultiplier != 1))
+@@ -331,6 +334,7 @@
+ 
+ 		final PreparedListContainer list = new PreparedListContainer(template, false, player, null);
+ 		list.setFromBoard(true);
++		org.l2jmobius.gameserver.managers.GmShopEnchantPolicy.filter(list, null);
+ 		int index = 0;
+ 		do
+ 		{
+diff --git a/java/org/l2jmobius/gameserver/network/clientpackets/MultiSellChoose.java b/java/org/l2jmobius/gameserver/network/clientpackets/MultiSellChoose.java
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/MultiSellChoose.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/MultiSellChoose.java
+@@ -147,6 +147,12 @@
+ 		{
+ 			if (entry.getEntryId() == _entryId)
+ 			{
++				if (!org.l2jmobius.gameserver.managers.GmShopEnchantPolicy.canExchange(list, npc, entry))
++				{
++					org.l2jmobius.gameserver.managers.GmShopEnchantPolicy.reject(player);
++					return;
++				}
++
+ 				if (!entry.isStackable() && (_amount > 1))
+ 				{
+ 					PacketLogger.warning("Character: " + player.getName() + " is trying to set amount > 1 on non-stackable multisell, id:" + _listId + ":" + _entryId);
+diff --git a/java/org/l2jmobius/gameserver/data/xml/BuyListData.java b/java/org/l2jmobius/gameserver/data/xml/BuyListData.java
+--- a/java/org/l2jmobius/gameserver/data/xml/BuyListData.java
++++ b/java/org/l2jmobius/gameserver/data/xml/BuyListData.java
+@@ -105,6 +105,7 @@
+ 	@Override
+ 	public void parseDocument(Document document, File file)
+ 	{
++		org.l2jmobius.gameserver.managers.GmShopEnchantPolicy.filterLegacyDocument(document, file);
+ 		try
+ 		{
+ 			final int buyListId = Integer.parseInt(file.getName().replace(".xml", ""));
+@@ -173,6 +174,7 @@
+ 						}
+ 					}
+ 					
++					org.l2jmobius.gameserver.managers.GmShopEnchantPolicy.filter(buyList);
+ 					_buyLists.put(buyList.getListId(), buyList);
+ 				}
+ 			}
+diff --git a/java/org/l2jmobius/gameserver/network/clientpackets/RequestBuyItem.java b/java/org/l2jmobius/gameserver/network/clientpackets/RequestBuyItem.java
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/RequestBuyItem.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/RequestBuyItem.java
+@@ -169,6 +169,12 @@
+ 				return;
+ 			}
+ 			
++			if (!org.l2jmobius.gameserver.managers.GmShopEnchantPolicy.canBuy(buyList, player, i.getId()))
++			{
++				org.l2jmobius.gameserver.managers.GmShopEnchantPolicy.reject(player);
++				return;
++			}
++
+ 			if (!product.getItem().isStackable() && (i.getCount() > 1))
+ 			{
+ 				PunishmentManager.handleIllegalPlayerAction(player, "Warning!! Character " + player.getName() + " of account " + player.getAccountName() + " tried to purchase invalid quantity of items at the same time.", GeneralConfig.DEFAULT_PUNISH);
+diff --git a/java/org/l2jmobius/gameserver/network/serverpackets/BuyList.java b/java/org/l2jmobius/gameserver/network/serverpackets/BuyList.java
+--- a/java/org/l2jmobius/gameserver/network/serverpackets/BuyList.java
++++ b/java/org/l2jmobius/gameserver/network/serverpackets/BuyList.java
+@@ -34,6 +34,7 @@
+ {
+ 	private final int _listId;
+ 	private final Collection<Product> _list;
++	private final BuyListHolder _catalog;
+ 	private final long _money;
+ 	private double _taxRate = 0;
+ 	
+@@ -41,6 +42,7 @@
+ 	{
+ 		_listId = list.getListId();
+ 		_list = list.getProducts();
++		_catalog = list;
+ 		_money = currentMoney;
+ 		_taxRate = taxRate;
+ 	}
+@@ -48,11 +50,12 @@
+ 	@Override
+ 	public void writeImpl(GameClient client, WriteBuffer buffer)
+ 	{
++		final Collection<Product> visible = org.l2jmobius.gameserver.managers.GmShopEnchantPolicy.productsForViewer(_catalog, client == null ? null : client.getPlayer());
+ 		ServerPackets.EX_BUY_SELL_LIST.writeId(this, buffer); // buffer.writeByte(7) ?
+ 		buffer.writeLong(_money); // current money
+ 		buffer.writeInt(_listId);
+-		buffer.writeShort(_list.size());
+-		for (Product product : _list)
++		buffer.writeShort(visible.size());
++		for (Product product : visible)
+ 		{
+ 			if ((product.getCount() > 0) || !product.hasLimitedStock())
+ 			{
+diff --git a/java/org/l2jmobius/gameserver/network/serverpackets/ExBuySellList.java b/java/org/l2jmobius/gameserver/network/serverpackets/ExBuySellList.java
+--- a/java/org/l2jmobius/gameserver/network/serverpackets/ExBuySellList.java
++++ b/java/org/l2jmobius/gameserver/network/serverpackets/ExBuySellList.java
+@@ -48,7 +48,7 @@
+ 	{
+ 		_money = player.getAdena();
+ 		_buyListId = list.getListId();
+-		for (Product item : list.getProducts())
++		for (Product item : org.l2jmobius.gameserver.managers.GmShopEnchantPolicy.productsForViewer(list, player))
+ 		{
+ 			if (item.hasLimitedStock() && (item.getCount() <= 0))
+ 			{
+@@ -72,7 +72,7 @@
+ 		_money = player.getAdena();
+ 		_taxRate = taxRate;
+ 		_buyListId = list.getListId();
+-		for (Product item : list.getProducts())
++		for (Product item : org.l2jmobius.gameserver.managers.GmShopEnchantPolicy.productsForViewer(list, player))
+ 		{
+ 			if (item.hasLimitedStock() && (item.getCount() <= 0))
+ 			{

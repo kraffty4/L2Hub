@@ -318,7 +318,7 @@ public final class PhantomPk
 		LOGGER.info(getClass().getSimpleName() + ": " + hunter.getName() + " killed " + victim.getName() + " for revenge (karma " + karma + ").");
 		final String ending = hunter.getAppearance().isFemale() ? "а" : "";
 		// Обидчик отбивался (флаг) — по правилам это ПвП, кармы нет.
-		PhantomNews.post("pk", "Кровь за кровь: охотник " + hunter.getName() + " (" + hunter.getLevel() + ") отомстил" + ending + " игроку " + victim.getName() + " (" + victim.getLevel() + ")" + (karma > 0 ? " — и стал" + ending + " ПК" : ""), hunter.getName(), hunter);
+		PhantomNews.post("pk", "Кровь за кровь: " + hunter.getName() + " (пешка, " + hunter.getLevel() + ") отомстил" + ending + " игроку " + victim.getName() + " (" + victim.getLevel() + ")" + (karma > 0 ? " — и стал" + ending + " ПК" : ""), hunter.getName(), hunter);
 		if (PhantomBanter.audience(hunter))
 		{
 			PhantomChat.getInstance().hunterSay(hunter, Rnd.nextBoolean() ? "кровь за кровь" : "теперь квиты", "PK");
@@ -331,7 +331,7 @@ public final class PhantomPk
 	void onPkKilled(Player pk, Player killer)
 	{
 		LOGGER.info(getClass().getSimpleName() + ": PK " + pk.getName() + " was killed by " + killer.getName() + ".");
-		PhantomNews.post("pk", "ПК " + pk.getName() + " (" + pk.getLevel() + ") получил по заслугам: " + (PhantomManager.getInstance().isPhantom(killer) ? "охотник " : "игрок ") + killer.getName() + " (" + killer.getLevel() + ")", killer.getName(), pk);
+		PhantomNews.post("pk", "ПК " + pk.getName() + " (" + pk.getLevel() + ") получил по заслугам: " + (PhantomManager.getInstance().isPhantom(killer) ? "пешка " : "игрок ") + killer.getName() + " (" + killer.getLevel() + ")", killer.getName(), pk);
 	}
 
 	public static PhantomPk getInstance()

@@ -1,0 +1,20 @@
+--- a/dist/game/config/Custom/PhantomHunters.ini
++++ b/dist/game/config/Custom/PhantomHunters.ini
+@@ -820,3 +820,6 @@
+ # «отжал моба»; «пнх» — ещё минус очко, может начаться махач. Решает сервер всегда, вслух — при живом зрителе.
+ # Шанс (%) ответить «пнх» у обычного охотника:
+ HunterContestRudeChance = 40
++
++# Epilogue native gameplay options.
++HunterOlympiadPreparation = False
+--- a/dist/game/config/Custom/PhantomParty.ini
++++ b/dist/game/config/Custom/PhantomParty.ini
+@@ -56,3 +56,8 @@
+ # Встревает не чаще раза в столько секунд — один охотник и на одного игрока. Реплики считаются в PhantomEventsPerMinute.
+ PhantomOverhearCooldown = 90
+ PhantomOverhearPlayerCooldown = 30
++
++# Epilogue native gameplay options.
++PersonalCompanionPotionStock = 10
++PersonalCompanionSpiritOreStock = 100
++PersonalCompanionHolyWaterStock = 10

@@ -106,13 +106,13 @@ index 47ccdb1569a32376e9ceb7b425e72da90e1cf55b..bfdf6f0a852050b3ffa4724f4b8b636f
  		java.util.Map.entry("С ", "From "),
  		java.util.Map.entry("<font color=\"LEVEL\">Ивенты по расписанию</font><br1>", "<font color=\"LEVEL\">Scheduled events</font><br1>"),
 +		java.util.Map.entry("<font color=\"808080\">Записаться можно и издалека: Alt+B, кнопка «Ивенты».</font><br1>", "<font color=\"808080\">You can also sign up from anywhere: Alt+B, the Events button.</font><br1>"),
- 		java.util.Map.entry("<font color=\"808080\">Регистрация 10 минут у менеджера в Гиране (у Deathmatch — 1 минута), охотники записываются сами.</font><br1>", "<font color=\"808080\">Registration: 10 minutes at the manager in Giran (Deathmatch: 1 minute); hunters sign up on their own.</font><br1>"),
+ 		java.util.Map.entry("<font color=\"808080\">Регистрация 10 минут у менеджера в Гиране (у Deathmatch — 1 минута), пешки записываются сами.</font><br1>", "<font color=\"808080\">Registration: 10 minutes at the manager in Giran (Deathmatch: 1 minute); pawns sign up on their own.</font><br1>"),
  		java.util.Map.entry("<font color=\"808080\">PvP-ивенты выключены (PvpEvents в L2HubEvents.ini).</font><br1>", "<font color=\"808080\">PvP events are disabled (PvpEvents in L2HubEvents.ini).</font><br1>"),
  		java.util.Map.entry(": нашествие эльпи на ", ": elpy invasion for "),
 @@ -527,6 +528,7 @@
  				}
  			}
- 			sb.append(tr("<font color=\"808080\">Регистрация 10 минут у менеджера в Гиране (у Deathmatch — 1 минута), охотники записываются сами.</font><br1>"));
+ 			sb.append(tr("<font color=\"808080\">Регистрация 10 минут у менеджера в Гиране (у Deathmatch — 1 минута), пешки записываются сами.</font><br1>"));
 +			sb.append(tr("<font color=\"808080\">Записаться можно и издалека: Alt+B, кнопка «Ивенты».</font><br1>"));
  		}
  		else

@@ -234,6 +234,12 @@ public class PhantomHunterManager
 	// Пати на РБ (раздел 4.140): «собираю пати на рб», «го на рб», «лфм на босса», «кто на рейд».
 	private static final Pattern RAID_WORD = Pattern.compile(START + "(рб|rb|рбшк\\p{L}*|рейд\\p{L}*|raid|босс\\p{L}*|boss)" + END, Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
 	private static final Pattern RAID_GATHER = Pattern.compile(START + "(собира\\p{L}*|сбор|го|пати|party|pt|кто (на|в|со мной|с нами|ид[её]т|пойд[её]т))" + END, Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+	// Не сбор пати (перенос с Эпилога): «кому нужен хил» — предлагает себя; «хил не нужен» — роль из сбора вычеркнуть; «ищу книгу, совет» — не про пати.
+	// «Ищу пати» от игрока у нас по-прежнему зовёт охотников, они просят у него инвайт.
+	private static final String ROLE_WORD = "(?:хил(?:ер|а|ера)?|танк(?:а)?|дд|биш(?:оп|а)?|баф{1,2}ер(?:а)?)";
+	private static final Pattern OFFERING_OWN_ROLE = Pattern.compile(START + "кому\\s+(?:нужен|нужна|нужны)\\s+" + ROLE_WORD + END, Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+	private static final Pattern ROLE_NOT_NEEDED = Pattern.compile(START + "(?:не\\s+(?:нужен|нужна|нужны|ищу|ищем)\\s+" + ROLE_WORD + "|" + ROLE_WORD + "\\s+не\\s+(?:нужен|нужна|нужны))" + END, Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+	private static final Pattern SEEKING_ITEM_OR_ADVICE = Pattern.compile(START + "ищ(?:у|ем)\\s+(?:книгу|книжку|рецепт|совет|информацию|гайд|предмет)" + END, Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
 
 	// Мозги-стратег.
 	/** Крик «ищу пати» (роль, уровень). */
@@ -656,7 +662,7 @@ public class PhantomHunterManager
 				final String raid = PhantomRaid.getInstance().raidOf(player);
 				if (PhantomRaid.RIFT.equals(raid) || PhantomRaid.KAMALOKA.equals(raid))
 				{
-					return "ведёшь пати в " + (PhantomRaid.RIFT.equals(raid) ? "Dimensional Rift" : "Камалоку") + ": собрал охотников, ждёте вход или уже бьётесь внутри" + wallet;
+					return "ведёшь пати в " + (PhantomRaid.RIFT.equals(raid) ? "Dimensional Rift" : "Камалоку") + ": собрал пешек, ждёте вход или уже бьётесь внутри" + wallet;
 				}
 				if (raid != null)
 				{
@@ -1530,6 +1536,15 @@ public class PhantomHunterManager
 				backToHunt(hunter, player);
 				return;
 			}
+			// Перегруженная сумка: выгрузиться при первой безопасной паузе, даже пока ещё висит боевой флаг.
+			if ((hunter.enemyId == 0) && ((now - hunter.lastTown) >= TOWN_COOLDOWN)
+				&& PhantomHunterLoot.pressured(player) && !PhantomHunterLoot.hasHumanParty(player)
+				&& !player.isInOlympiadMode() && !player.isInDuel() && !inDanger(player)
+				&& ((player.getTarget() == null) || !player.getTarget().isPlayable()))
+			{
+				goToTown(hunter, player, now);
+				return;
+			}
 			// Призыватель (раздел 4.37): на споте держит слугу, слуга бьёт его цель.
 			if ((hunter.walkBackUntil == 0) && (hunter.gatekeeperSpot == null) && (hunter.spot != null) && PhantomSummoner.tick(player, now))
 			{
@@ -1559,6 +1574,15 @@ public class PhantomHunterManager
 					LOGGER.info(getClass().getSimpleName() + ": " + player.getName() + " left the party, back to hunting.");
 					backToHuntNearby(hunter, player);
 					return;
+				}
+				// Пати с человеком не покидает: разгружает сумку, когда вместе пришли в мирную зону города.
+				if (((now - hunter.lastTown) >= TOWN_COOLDOWN) && PhantomHunterLoot.pressured(player)
+					&& player.isInsideZone(org.l2jmobius.gameserver.entity.zone.ZoneId.PEACE)
+					&& !player.isInCombat() && !player.isAttackingNow() && !player.isCastingNow())
+				{
+					PhantomHunterOutfit.townChores(player, hunter.template, hunter.unsold);
+					hunter.lastTown = now;
+					player.storeMe();
 				}
 				// Тактика по классу и в чужой пати (раздел 4.38): танк держит агро, лучник и маг — дистанцию.
 				if (PhantomTactics.tick(player, hunter.template, now))
@@ -2373,6 +2397,11 @@ public class PhantomHunterManager
 		{
 			return false;
 		}
+		// Победитель Олимпиады идёт в город к монументу забрать геройство (PhantomHeroClaim), с обычной безопасной паузой.
+		if (PhantomHeroClaim.wantsTown(player, hunter.template, now))
+		{
+			return true;
+		}
 
 		if (PhantomHunterOutfit.outOfAmmo(player) || bagNeedsTown(hunter, player))
 		{
@@ -2583,6 +2612,12 @@ public class PhantomHunterManager
 		// Попросил на гейт (раздел 4.78): стоит и ждёт ответа.
 		if (PhantomFavors.getInstance().holds(player, PhantomFavors.Favor.GATE, now))
 		{
+			return;
+		}
+		// Геройство: подойти к настоящему монументу и забрать только штатную запись победителя.
+		if (PhantomHeroClaim.tick(player, hunter.template, now))
+		{
+			hunter.phaseUntil = Math.max(hunter.phaseUntil, now + 5000);
 			return;
 		}
 		// Рынок (патч 0035): идёт к лавке в Гиране за покупкой.
@@ -3653,7 +3688,17 @@ public class PhantomHunterManager
 	 */
 	static boolean isLfm(String text)
 	{
-		return (text != null) && (LFM.matcher(text).find() || raidCall(text));
+		if ((text == null) || OFFERING_OWN_ROLE.matcher(text).find() || SEEKING_ITEM_OR_ADVICE.matcher(text).find())
+		{
+			return false;
+		}
+		if (raidCall(text))
+		{
+			return true;
+		}
+		final boolean rejectedRole = ROLE_NOT_NEEDED.matcher(text).find();
+		final String requested = recruitmentText(text);
+		return LFM.matcher(requested).find() && (!rejectedRole || WANT_HEALER.matcher(requested).find() || WANT_TANK.matcher(requested).find() || WANT_DAMAGE.matcher(requested).find());
 	}
 
 	/**
@@ -3662,6 +3707,14 @@ public class PhantomHunterManager
 	private static boolean raidCall(String text)
 	{
 		return RAID_WORD.matcher(text).find() && (LFM.matcher(text).find() || RAID_GATHER.matcher(text).find());
+	}
+
+	/**
+	 * @return крик без вычеркнутых ролей («хил не нужен»): по нему ищутся нужные роли
+	 */
+	static String recruitmentText(String text)
+	{
+		return ROLE_NOT_NEEDED.matcher(text).replaceAll(" ");
 	}
 
 	public boolean onLfm(Player shouter, ChatType type, String text)
@@ -3675,15 +3728,16 @@ public class PhantomHunterManager
 	 */
 	private List<Hunter> lfm(Player shouter, ChatType type, String text, boolean test)
 	{
-		if (!PhantomHuntersConfig.HUNTER_LFM || !_wanted || (shouter == null) || (text == null) || (!test && PhantomManager.getInstance().isPhantom(shouter)) || !isLfm(text))
+		if (!PhantomHuntersConfig.HUNTER_LFM || !_wanted || (shouter == null) || (text == null) || !isLfm(text) || (!test && PhantomManager.getInstance().isPhantom(shouter)))
 		{
 			return List.of();
 		}
 
 		final boolean raid = raidCall(text);
-		final boolean healer = WANT_HEALER.matcher(text).find();
-		final boolean tank = WANT_TANK.matcher(text).find();
-		final boolean damage = WANT_DAMAGE.matcher(text).find();
+		final String requested = recruitmentText(text);
+		final boolean healer = WANT_HEALER.matcher(requested).find();
+		final boolean tank = WANT_TANK.matcher(requested).find();
+		final boolean damage = WANT_DAMAGE.matcher(requested).find();
 		if (!raid && !healer && !tank && !damage && !WANT_PARTY.matcher(text).find() && !text.toLowerCase().contains("лфм") && !text.toLowerCase().contains("lfm"))
 		{
 			return List.of(); // «нужен совет» — не про пати
@@ -6618,9 +6672,11 @@ public class PhantomHunterManager
 	 */
 	private void onDamaged(Hunter hunter, Player player, Creature attacker)
 	{
+		final Player enemy = actingPlayer(attacker);
+		// Sanctioned combat is controlled by its event AI, not world revenge/flee/chat.
+		if (CombatEventPolicy.sanctioned(player, enemy)) return;
 		// Моб добивает охотника — убьёт его живой игрок, значит «спас» (патч 0032).
 		PhantomRelations.getInstance().threat(attacker, player);
-		final Player enemy = actingPlayer(attacker);
 		// Напал живой игрок или охотник (махач, патч 0037); напарники из .buddy — нет.
 		final boolean hunterEnemy = (enemy != null) && PhantomRelations.isHunter(enemy);
 		// Танатос (раздел 4.45) — тоже враг: фантом, но не напарник.
@@ -7631,7 +7687,7 @@ public class PhantomHunterManager
 			}
 		};
 		final StringBuilder sb = new StringBuilder(65536);
-		sb.append("<!doctype html><meta charset=\"utf-8\"><title>L2Hub: окна охотников</title><body style=\"background:#1b1b1b;color:#ddd;font:12px Tahoma\">");
+		sb.append("<!doctype html><meta charset=\"utf-8\"><title>L2Hub: окна пешек</title><body style=\"background:#1b1b1b;color:#ddd;font:12px Tahoma\">");
 		sb.append("<p>Зритель: ").append(viewer.getName()).append(" (").append(viewer.getLevel()).append(" ур.). Кнопки не работают.</p>");
 		for (String[] args : admin)
 		{

@@ -291,7 +291,7 @@ index 0000000000000000000000000000000000000000..f6df3c688b63691f1f06bf9dbb62956c
 +		final boolean daily = VoicedCommandHandler.getInstance().getHandler("daily") != null;
 +		final boolean raid = VoicedCommandHandler.getInstance().getHandler("raid") != null;
 +		final boolean dailyOn = L2HubWorldConfig.WORLD_DAILY;
-+		return new Check("", (daily || !dailyOn) && raid, ".daily " + (daily ? "есть" : dailyOn ? "нет" : "выключены (WorldDaily)") + ", .raid " + (raid ? "есть" : "нет") + ", рейды охотников " + onOff(PhantomHuntersConfig.HUNTER_RAIDS));
++		return new Check("", (daily || !dailyOn) && raid, ".daily " + (daily ? "есть" : dailyOn ? "нет" : "выключены (WorldDaily)") + ", .raid " + (raid ? "есть" : "нет") + ", рейды пешек " + onOff(PhantomHuntersConfig.HUNTER_RAIDS));
 +	}
 +
 +	private static Check npcView() throws Exception
@@ -320,7 +320,7 @@ index 0000000000000000000000000000000000000000..f6df3c688b63691f1f06bf9dbb62956c
 +				live++;
 +			}
 +		}
-+		return new Check("", true, "фантомов в мире " + phantoms + ", из них охотников " + hunters + ", живых игроков " + live);
++		return new Check("", true, "фантомов в мире " + phantoms + ", из них пешек " + hunters + ", живых игроков " + live);
 +	}
 +
 +	private static Check seasonalEvents()

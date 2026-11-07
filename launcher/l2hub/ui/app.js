@@ -35,7 +35,7 @@ function toast(text, err = false) {
 function store(key, value) { try { localStorage.setItem('l2hub.' + key, value); } catch (e) { /* без хранилища тоже работаем */ } }
 function load(key) { try { return localStorage.getItem('l2hub.' + key); } catch (e) { return null; } }
 function fmtUptime(s) { if (s == null) return ''; const m = Math.floor(s / 60); return m < 60 ? `${m} мин` : `${Math.floor(m / 60)} ч ${m % 60} мин`; }
-const onlineParts = (w) => `живых ${w.live}, охотников ${w.hunters}, фантомов ${w.phantoms}`; // L2HubOnline.json, health.py
+const onlineParts = (w) => `живых ${w.live}, пешек ${w.hunters}, фантомов ${w.phantoms}`; // L2HubOnline.json, health.py
 
 const ICON = {
   play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l12.5-7.5z"/></svg>',
@@ -643,7 +643,7 @@ async function renderOverviewCards() {
   const cards = [wantCard(c, v)];
   if (h && h.ok) {
     const n = h.items?.filter((x) => !x.secret).length || 0;  // секретного (Танатос) в счёте нет
-    cards.push(card('world', 'Живой мир', last.running === id ? 'on' : '', `<b>${n}</b>охотников`, last.running === id ? 'мир живёт, пока сервер работает' : 'мир стоит — сервер выключен'));
+    cards.push(card('world', 'Живой мир', last.running === id ? 'on' : '', `<b>${n}</b>пешек`, last.running === id ? 'мир живёт, пока сервер работает' : 'мир стоит — сервер выключен'));
   } else {
     cards.push(card('world', 'Живой мир', '', 'Без фантомов', esc(h?.error || 'модуль фантомов в этой сборке не стоит')));
   }
@@ -756,8 +756,8 @@ function wantCard(c, v) {
   const mine = v.mine.includes(base);
   const n = v.votes[base] || 0;
   const what = c.server === 'none'
-    ? 'Сервера для неё пока нет. Если хронику хотят многие — найдём сборку и доведём до ума: охотники, моды, наши настройки.'
-    : 'Сервер ставится и сейчас, но голый: без охотников, модов и наших настроек. До ума доведём первой ту, которую хотят больше.';
+    ? 'Сервера для неё пока нет. Если хронику хотят многие — найдём сборку и доведём до ума: пешки, моды, наши настройки.'
+    : 'Сервер ставится и сейчас, но голый: без пешек, модов и наших настроек. До ума доведём первой ту, которую хотят больше.';
   const count = n ? `уже хотят: <b>${n}</b>${mine ? ', и ты тоже' : ''}` : 'пока никто — будь первым';
   return `<div class="ocard want"><h3><span class="dot ${mine ? 'on' : ''}"></span>Хочу эту хронику</h3><div class="m">${what}</div>
     <div class="want-row"><button class="sbtn${mine ? '' : ' primary'}" id="wantBtn" data-id="${esc(base)}" data-on="${mine ? 0 : 1}">${mine ? 'Отозвать голос' : 'Хочу эту хронику'}</button><span class="m">${count}</span></div>
@@ -776,8 +776,10 @@ function bindWant() {
   };
 }
 
-// Отзыв автору: баг или идея, контакт и отчёт — по желанию. Черновик живёт до удачной отправки.
-let fbDraft = { kind: 'bug', text: '', contact: '' };
+// Отзыв автору: баг или идея, контакт, отчёт и скриншот — по желанию. Черновик живёт до удачной отправки.
+// Скриншот (отчёт автора 2026-11-06: в баг или идею не прикрепить скрин) — файлом или Ctrl+V, png или jpg до 5 МБ.
+const FB_SHOT_MAX = 5 * 1024 * 1024;
+let fbDraft = { kind: 'bug', text: '', contact: '', shot: '' };
 async function feedbackFlow() {
   if (!fbEnabled) return toast('Приём отзывов в этой версии L2Hub не настроен.', true);
   const c = byId(selected);
@@ -786,7 +788,10 @@ async function feedbackFlow() {
     <textarea class="field fb-text" id="fbText" maxlength="4000"></textarea>
     <input class="field fb-contact" id="fbContact" maxlength="200" placeholder="Как ответить: Telegram, Discord, почта — не обязательно">
     <label class="fb-check"><input type="checkbox" id="fbReport"><span>Приложить отчёт: версия, «Проверить всё», хвосты логов — без паролей и ключей</span></label>
-    <p class="note">Уйдёт автору L2Hub: текст, контакт, хроника (${c ? esc(listName(c)) : '—'}), версия L2Hub и случайный номер установки, с галкой — ещё отчёт.</p>` });
+    <div class="fb-shot"><button class="sbtn" id="fbShotPick" type="button">Прикрепить скриншот</button><button class="sbtn" id="fbShotDel" type="button" hidden>Убрать</button>
+      <input type="file" id="fbShotFile" accept="image/png,image/jpeg" hidden><span class="m" id="fbShotInfo"></span></div>
+    <img class="fb-shot-img" id="fbShotImg" alt="" hidden>
+    <p class="note">Уйдёт автору L2Hub: текст, контакт, хроника (${c ? esc(listName(c)) : '—'}), версия L2Hub и случайный номер установки, с галкой — ещё отчёт, со скриншотом — картинка.</p>` });
   const kinds = $('fbKind').querySelectorAll('button');
   const yes = $('uiModalBox').querySelector('[data-a="yes"]');
   const setKind = (k) => {
@@ -797,6 +802,32 @@ async function feedbackFlow() {
   };
   const sync = () => { fbDraft.text = $('fbText').value; fbDraft.contact = $('fbContact').value; yes.disabled = !fbDraft.text.trim(); };
   kinds.forEach((b) => (b.onclick = () => setKind(b.dataset.v)));
+  const showShot = () => {
+    const on = Boolean(fbDraft.shot);
+    $('fbShotImg').hidden = !on;
+    $('fbShotDel').hidden = !on;
+    if (on) $('fbShotImg').src = fbDraft.shot;
+    $('fbShotInfo').textContent = on ? `скриншот: ${Math.ceil((fbDraft.shot.length * 3) / 4 / 1024)} КБ` : 'png или jpg до 5 МБ, можно вставить из буфера: Ctrl+V';
+  };
+  const takeShot = (file) => {
+    if (!file) return;
+    if (!/^image\/(png|jpeg)$/.test(file.type)) return toast('Скриншот — только png или jpg.', true);
+    if (file.size > FB_SHOT_MAX) return toast(`Скриншот ${(file.size / 1048576).toFixed(1)} МБ — больше 5 МБ. Сожми его или вырежи нужный кусок.`, true);
+    const rd = new FileReader();
+    rd.onload = () => { fbDraft.shot = String(rd.result); showShot(); };
+    rd.onerror = () => toast('Скриншот не прочитался — выбери файл ещё раз.', true);
+    rd.readAsDataURL(file);
+  };
+  $('fbShotPick').onclick = () => $('fbShotFile').click();
+  $('fbShotFile').onchange = (e) => { takeShot(e.target.files[0]); e.target.value = ''; };
+  $('fbShotDel').onclick = () => { fbDraft.shot = ''; showShot(); };
+  $('uiModalBox').onpaste = (e) => {
+    const item = [...(e.clipboardData?.items || [])].find((i) => i.kind === 'file' && i.type.startsWith('image/'));
+    if (!item) return; // текст вставляется как обычно
+    e.preventDefault();
+    takeShot(item.getAsFile());
+  };
+  showShot();
   setKind(fbDraft.kind);
   $('fbText').value = fbDraft.text;
   $('fbContact').value = fbDraft.contact;
@@ -804,13 +835,16 @@ async function feedbackFlow() {
   $('fbContact').oninput = sync;
   sync();
   $('fbText').focus();
-  if (!(await ask)) return;
+  const answered = await ask;
+  $('uiModalBox').onpaste = null;
+  if (!answered) return;
   const attach = $('fbReport').checked;
   toast(attach ? 'Собираю отчёт и отправляю…' : 'Отправляю…');
-  const r = await api.send_feedback(fbDraft.kind, fbDraft.text, fbDraft.contact, c ? c.id : '', attach);
+  const r = await api.send_feedback(fbDraft.kind, fbDraft.text, fbDraft.contact, c ? c.id : '', attach, fbDraft.shot);
   if (!r.ok) return toast(`${r.error}. Текст сохранён — нажми «Отзыв» ещё раз.`, true);
-  fbDraft = { kind: fbDraft.kind, text: '', contact: fbDraft.contact };
-  toast(`Отправлено, спасибо!${r.report ? ' Отчёт ушёл вместе с отзывом.' : ''}`);
+  fbDraft = { kind: fbDraft.kind, text: '', contact: fbDraft.contact, shot: '' };
+  if (r.screenshot === 'lost') return toast(`Отзыв ушёл, а скриншот не дошёл: ${r.screenshot_error}. Пришли его автору другим путём.`, true);
+  toast(`Отправлено, спасибо!${r.report ? ' Отчёт ушёл вместе с отзывом.' : ''}${r.screenshot === 'saved' ? ' Скриншот тоже.' : ''}`);
 }
 $('railFeedback').onclick = feedbackFlow;
 $('fbOpen').onclick = feedbackFlow;
@@ -1211,7 +1245,7 @@ async function askTrash(x) {
 async function askReinstallDb() {
   const name = byId(selected)?.name || selected;
   const ok = await askModal({ title: `Переустановить базу ${esc(name)}?`, ok: 'Переустановить',
-    body: `<p>База поставится заново из установщика сборки, как при первой установке: персонажи, кланы, предметы, охотники и <b>учётки</b> начнутся с нуля.</p>
+    body: `<p>База поставится заново из установщика сборки, как при первой установке: персонажи, кланы, предметы, пешки и <b>учётки</b> начнутся с нуля.</p>
       <p class="w-muted" style="font-size:13px">Сначала снимается бэкап «перед переустановкой базы»: вернуть всё можно кнопкой «Откатить» в «Бэкапах». Файлы мира вне базы (память мозгов, журналы модов) уйдут в Корзину. Настройки сервера и ключи мозгов останутся. Чтобы сохранить учётки, есть вайп мира выше.</p>
       <label style="display:block;margin:10px 0"><input type="checkbox" id="reinstallSure"> Понимаю, что учётки тоже начнутся с нуля</label>` });
   if (!ok) return;
@@ -1226,7 +1260,7 @@ async function askRemove(r) {
     body: `<p>Сервер (${sizeText(part('server').size || 0)}: исходники, сборка, папка server) и профиль хроники уйдут в Корзину. Поставить заново — кнопкой «Установить»: исходники скачаются и соберутся снова, папку клиента нужно будет указать заново.</p>
       <label style="display:block;margin:8px 0"><input type="checkbox" id="removeDb"> И базу мира (${part('database').size == null ? 'база выключена' : sizeText(part('database').size)}): перед сносом — бэкап «перед удалением хроники»</label>
       <label style="display:block;margin:8px 0"><input type="checkbox" id="removeBackups"> И бэкапы базы (${sizeText(part('backups').size || 0)}) — в Корзину</label>
-      <p class="w-muted" style="font-size:13px">Без галочки «И базу» мир остаётся в MariaDB: после новой установки персонажи и охотники будут на месте. Копии настроек, старые миры и клиент для друзей не трогаются — их можно убрать здесь же по отдельности.</p>
+      <p class="w-muted" style="font-size:13px">Без галочки «И базу» мир остаётся в MariaDB: после новой установки персонажи и пешки будут на месте. Копии настроек, старые миры и клиент для друзей не трогаются — их можно убрать здесь же по отдельности.</p>
       <label style="display:block;margin:10px 0"><input type="checkbox" id="removeSure"> Понимаю, что хроника уйдёт из списка до новой установки</label>` });
   if (!ok) return;
   if (!$('removeSure').checked) return toast('Удаление отменено: галочка не поставлена.', true);
@@ -1245,7 +1279,7 @@ async function renderWipe() {
   const r = await api.wipe_state(selected);
   box.innerHTML = '';
   if (!r.allowed) return;
-  box.innerHTML = `<div class="note" style="margin-top:10px"><b>Вайп мира.</b> Персонажи, кланы, предметы и охотники начнутся с нуля. Учётки, настройки сервера и ключи мозгов останутся. Перед вайпом снимается бэкап, он проверяется заливкой рядом, а откатить вайп можно здесь же.${r.blocker ? `<br>${esc(r.blocker)}` : ''}</div>
+  box.innerHTML = `<div class="note" style="margin-top:10px"><b>Вайп мира.</b> Персонажи, кланы, предметы и пешки начнутся с нуля. Учётки, настройки сервера и ключи мозгов останутся. Перед вайпом снимается бэкап, он проверяется заливкой рядом, а откатить вайп можно здесь же.${r.blocker ? `<br>${esc(r.blocker)}` : ''}</div>
     <div class="row2" style="margin:10px 0 0"><button class="sbtn danger" id="wipeWorld" ${r.blocker ? 'disabled' : ''}>Вайпнуть мир…</button></div>`;
   $('wipeWorld').onclick = askWipe;
   for (const m of r.wipes) {
@@ -1276,7 +1310,7 @@ async function askWipe() {
   const n = (t) => pre.before[t] || 0;
   const names = pre.people.slice(0, 8).map((x) => `${esc(x[0])} (${esc(x[1])})`).join(', ');
   const ok = await askModal({ title: `Вайпнуть мир ${esc(name)}?`, ok: 'Вайпнуть',
-    body: `<p>Людей: <b>${pre.people.length}</b>${names ? ` — ${names}${pre.people.length > 8 ? '…' : ''}` : ''}.<br>Охотников и прочих фантомов: <b>${n('characters') - pre.people.length}</b>. Кланов: <b>${n('clan_data')}</b>. Предметов: <b>${n('items')}</b>.</p>
+    body: `<p>Людей: <b>${pre.people.length}</b>${names ? ` — ${names}${pre.people.length > 8 ? '…' : ''}` : ''}.<br>Пешек и прочих фантомов: <b>${n('characters') - pre.people.length}</b>. Кланов: <b>${n('clan_data')}</b>. Предметов: <b>${n('items')}</b>.</p>
       <p class="w-muted" style="font-size:13px">Останутся учётки, настройки сервера, журналы, ключи мозгов и бэкапы. Старый мир уйдёт в бэкап «перед вайпом», файлы мира — в папку вайпа; откат — кнопкой в «Бэкапах».${pre.schema.length ? ` Столбцы базы станут как в установщике: ${pre.schema.length}.` : ''}</p>
       <label style="display:block;margin:10px 0"><input type="checkbox" id="wipeSure"> Понимаю, что мир начнётся с нуля</label>` });
   if (!ok) return;

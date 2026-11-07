@@ -182,7 +182,7 @@ index 4ec9c8365e8c887b74097800252e4d64df493165..c8add4f63d36e15ca06b333fb985a62b
 -<button value="Споты" action="bypass _bbshubspots" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
 +<button value="Телепорт" action="bypass _bbshubspots" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
  <button value="Напарники" action="bypass _bbshubbuddy" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
--<button value="Охотники" action="bypass _bbshubhunters" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
+-<button value="Пешки" action="bypass _bbshubhunters" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
 -<button value="Поручения" action="bypass voice .daily" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
 -<button value="Рейд" action="bypass voice .raid" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
 -<button value="Мир" action="bypass voice .world" width=114 height=30 back="L2UI_CH3.Button.bigbutton2_down" fore="L2UI_CH3.Button.bigbutton2"><br>
@@ -274,7 +274,7 @@ index 67e54462921dba79862fbf6b27ff6f4fd379fd3c..d19b4d1d423d79ce0e66a2d026212e29
 +		java.util.Map.entry("Кто где качается и торгует, телепорт к ним.", "Who levels and trades where, teleport to them."),
 +		java.util.Map.entry("Поручения дня", "Daily tasks"),
 +		java.util.Map.entry("Задания на сегодня, прогресс, награды и место дня.", "Today's tasks, progress, rewards and the place of the day."),
-+		java.util.Map.entry("Рейд охотников", "Hunters' raid"),
++		java.util.Map.entry("Рейд пешек", "Pawns' raid"),
 +		java.util.Map.entry("Кто кого собирается бить, где сбор, сколько до боя.", "Who is going to fight whom, where they gather, how long until the fight."),
 +		java.util.Map.entry("Мир сейчас", "The world now"),
 +		java.util.Map.entry("Суперчемпионы, сезонные события и расписание ивентов.", "Super champions, seasonal events and the event schedule."),
@@ -342,9 +342,9 @@ index 67e54462921dba79862fbf6b27ff6f4fd379fd3c..d19b4d1d423d79ce0e66a2d026212e29
 +	public static String world(Player player)
 +	{
 +		final StringBuilder sb = new StringBuilder(1024).append("<table width=500>");
-+		worldRow(sb, tr("Охотники"), HUNTERS, tr("Кто где качается и торгует, телепорт к ним."));
++		worldRow(sb, tr("Пешки"), HUNTERS, tr("Кто где качается и торгует, телепорт к ним."));
 +		worldRow(sb, tr("Поручения дня"), "voice .daily", tr("Задания на сегодня, прогресс, награды и место дня."));
-+		worldRow(sb, tr("Рейд охотников"), "voice .raid", tr("Кто кого собирается бить, где сбор, сколько до боя."));
++		worldRow(sb, tr("Рейд пешек"), "voice .raid", tr("Кто кого собирается бить, где сбор, сколько до боя."));
 +		worldRow(sb, tr("Мир сейчас"), "voice .world", tr("Суперчемпионы, сезонные события и расписание ивентов."));
 +		return page(player, tr("Мир"), sb.append("</table>").toString());
 +	}

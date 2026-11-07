@@ -88,6 +88,13 @@ final class PhantomPartyNoblesse
 	 */
 	static void synchronize(Player owner, Player bot, PhantomTemplate template, long now)
 	{
+		// Личный помощник наследует право на автоматический1323 только от текущего дворянина.
+		if ((bot != null) && ((owner == null) || (template == null)
+			|| (!template.isHunter() && !template.isReaper() && (!owner.isNoble() || !PhantomPersonalNoblesse.allows(bot, BLESSING)))))
+		{
+			LINKS.remove(bot.getObjectId());
+			return;
+		}
 		if (!PhantomHuntersConfig.HUNTER_PARTY_NOBLESSE || (owner == null) || (bot == null) || (owner == bot) || !live(owner) || !PhantomManager.getInstance().isPhantom(bot) || (!owner.isNoble() && !bot.isNoble()) || bot.isInOlympiadMode() || bot.isOnEvent() || bot.isInDuel() || !bot.isInParty() || (bot.getParty() != owner.getParty()))
 		{
 			return;
@@ -160,7 +167,7 @@ final class PhantomPartyNoblesse
 		{
 			if (member.getObjectId() == link.owner())
 			{
-				return true;
+				return PhantomPersonalNoblesse.allows(caster, BLESSING);
 			}
 		}
 		return false;
@@ -230,7 +237,7 @@ final class PhantomPartyNoblesse
 
 	private static boolean cast(Player caster, Player target, long now)
 	{
-		if (target.isDead() || (target.getInstanceId() != caster.getInstanceId()) || !caster.getParty().getMembers().contains(target) || protectedBy(target))
+		if (!eligible(caster) || target.isDead() || (target.getInstanceId() != caster.getInstanceId()) || !caster.getParty().getMembers().contains(target) || protectedBy(target))
 		{
 			return false;
 		}

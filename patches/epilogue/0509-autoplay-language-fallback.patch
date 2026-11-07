@@ -1,0 +1,79 @@
+--- a/dist/game/data/scripts/handlers/chat/commands/voiced/AutoPlay.java
++++ b/dist/game/data/scripts/handlers/chat/commands/voiced/AutoPlay.java
+@@ -30,6 +30,7 @@
+ import org.l2jmobius.commons.util.StringUtil;
+ import org.l2jmobius.gameserver.cache.HtmCache;
+ import org.l2jmobius.gameserver.config.custom.AutoPlayConfig;
++import org.l2jmobius.gameserver.config.custom.MultilingualSupportConfig;
+ import org.l2jmobius.gameserver.data.xml.ItemData;
+ import org.l2jmobius.gameserver.data.xml.OptionData;
+ import org.l2jmobius.gameserver.data.xml.PetSkillData;
+@@ -285,7 +286,7 @@
+ 				}
+ 				
+ 				final NpcHtmlMessage html = new NpcHtmlMessage();
+-				String content = HtmCache.getInstance().getHtm(player, "data/html/mods/AutoPlay/Main.htm");
++				String content = html(player, "Main");
+ 				
+ 				content = content.replace("%attack%", player.getAutoUseSettings().getAutoActions().contains(AUTO_ATTACK_ACTION) ? "L2UI.CheckBox_checked" : "L2UI.CheckBox");
+ 				content = content.replace("%loot%", player.getAutoPlaySettings().doPickup() ? "L2UI.CheckBox_checked" : "L2UI.CheckBox");
+@@ -319,7 +320,7 @@
+ 			case "playskills":
+ 			{
+ 				final NpcHtmlMessage html = new NpcHtmlMessage();
+-				final String content = HtmCache.getInstance().getHtm(player, "data/html/mods/AutoPlay/Skills.htm");
++				final String content = html(player, "Skills");
+ 				
+ 				// Generate the skill list. Filter our some skills.
+ 				List<Skill> skills = new ArrayList<>();
+@@ -549,7 +550,7 @@
+ 			case "playitems":
+ 			{
+ 				final NpcHtmlMessage html = new NpcHtmlMessage();
+-				final String content = HtmCache.getInstance().getHtm(player, "data/html/mods/AutoPlay/Items.htm");
++				final String content = html(player, "Items");
+ 				
+ 				// Generate the item list. Filter our some items.
+ 				List<ItemTemplate> items = new ArrayList<>();
+@@ -651,7 +652,7 @@
+ 			case "playpotion":
+ 			{
+ 				final NpcHtmlMessage html = new NpcHtmlMessage();
+-				final String content = HtmCache.getInstance().getHtm(player, "data/html/mods/AutoPlay/Potion.htm");
++				final String content = html(player, "Potion");
+ 				
+ 				// Generate the item list. Filter our some items.
+ 				List<ItemTemplate> items = new ArrayList<>();
+@@ -753,7 +754,7 @@
+ 			case "playmana":
+ 			{
+ 				final NpcHtmlMessage html = new NpcHtmlMessage();
+-				final String content = HtmCache.getInstance().getHtm(player, "data/html/mods/AutoPlay/Potion.htm").replace("Select Healing Potion", "Select Mana Potion");
++				final String content = html(player, "Potion").replace("Select Healing Potion", "Select Mana Potion");
+ 				
+ 				// Generate the item list. Filter our some items.
+ 				List<ItemTemplate> items = new ArrayList<>();
+@@ -902,7 +903,22 @@
+ 	 */
+ 	private static String tr(Player player, String en, String ru)
+ 	{
+-		return "ru".equals(player.getLang()) ? ru : en;
++		return isRussian(player) ? ru : en;
++	}
++	
++	/** Выбранный язык персонажа имеет приоритет; при выключенном MultiLang берём язык L2Hub. */
++	private static boolean isRussian(Player player)
++	{
++		final String selected = player.getLang();
++		final String language = (selected == null) || selected.isBlank() ? MultilingualSupportConfig.MULTILANG_DEFAULT : selected;
++		return "ru".equalsIgnoreCase(language);
++	}
++	
++	private static String html(Player player, String page)
++	{
++		final String base = "data/html/mods/AutoPlay/" + page + ".htm";
++		// Явный путь нужен и локальному overlay: Native htmlPrefix при MultiLang=False пуст.
++		return HtmCache.getInstance().getHtm(player, isRussian(player) ? "data/lang/ru/" + base : base);
+ 	}
+ 	
+ 	private static String moveButton(int page, int skillId, String direction, String label)

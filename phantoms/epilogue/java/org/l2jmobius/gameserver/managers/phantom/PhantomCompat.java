@@ -234,6 +234,33 @@ public final class PhantomCompat
 		return Olympiad.getInstance().isRegistered(player);
 	}
 
+	/**
+	 * Свои навыки фантома на стадионе (защита, самолечение) до обычного боя: на Эпилоге — {@link OlympiadCombatSkills}.
+	 * @return начал каст — дальше в этот тик не решать
+	 */
+	public static boolean olympiadSkills(Player player, Player opponent, long now)
+	{
+		return OlympiadCombatSkills.tick(player, opponent, now);
+	}
+
+	/**
+	 * Реакция фантома на стадионе, пока он бежит или отходит: на Эпилоге — {@link OlympiadCombatSkills#reactiveTick}.
+	 * @return начал каст
+	 */
+	public static boolean olympiadReactive(Player player, Player opponent, long now)
+	{
+		return OlympiadCombatSkills.reactiveTick(player, opponent, now);
+	}
+
+	/**
+	 * Охотника ждёт приглашение в пати с приоритетом (соклан позвал): своих дел не начинать ({@link PhantomHeroClaim}); на Эпилоге — {@link ClanPartyPriority#pending}.
+	 * @return приглашение ждёт
+	 */
+	public static boolean partyInvitePending(Player player)
+	{
+		return ClanPartyPriority.pending(player);
+	}
+
 	public static boolean olympiadUnregister(Player player)
 	{
 		return Olympiad.getInstance().unRegisterNoble(player);

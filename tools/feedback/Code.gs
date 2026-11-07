@@ -1,7 +1,8 @@
 /**
  * Приёмник голосов «Хочу эту хронику» и отзывов из лаунчера L2Hub (docs/FEEDBACK.md, клиент — launcher/l2hub/feedback.py).
  * Google Apps Script, привязанный к таблице автора: листы «Голоса» и «Отзывы» создаёт сам, об отзыве пишет письмо
- * владельцу таблицы, отчёт (zip без паролей и ключей) кладёт в папку «L2Hub — отчёты» на его Диске, доступ — только у него.
+ * владельцу таблицы, отчёт (zip без паролей и ключей) и скриншот (png или jpg) кладёт в папку «L2Hub — отчёты» на его Диске,
+ * доступ — только у него. Скриншот не сохранился — отзыв всё равно записан, в ответе screenshot_error.
  * Развернуть: «Начать развёртывание» → «Новое развёртывание» → «Веб-приложение», запуск от своего имени, доступ — все.
  * Telegram — по желанию: свойства скрипта TG_TOKEN и TG_CHAT (вписывает автор сам, в код и в лаунчер они не попадают).
  */
@@ -11,6 +12,8 @@ const FEEDBACK = 'Отзывы';
 const REPORTS = 'L2Hub — отчёты';
 const MAX_TEXT = 4000;
 const MAX_REPORT = 8 * 1024 * 1024;              // байт zip
+const MAX_SHOT = 5 * 1024 * 1024;                // байт скриншота
+const SHOT_TYPES = { 'image/png': 'png', 'image/jpeg': 'jpg' };
 const LIMITS = { vote: 60, feedback: 5 };        // запросов в час с одной установки
 const KINDS = { bug: 'Баг', idea: 'Идея' };
 
@@ -69,14 +72,31 @@ function feedback_(req, install) {
     const name = String(req.report.name || 'report.zip').replace(/[^\w.-]/g, '_').slice(0, 80);
     link = folder_().createFile(Utilities.newBlob(bytes, 'application/zip', name)).getUrl();
   }
-  const sh = sheet_(FEEDBACK, ['Время', 'Вид', 'Текст', 'Контакт', 'Хроника', 'Версия L2Hub', 'Установка', 'Отчёт']);
-  sh.appendRow([new Date(), KINDS[kind], cell_(text, MAX_TEXT), cell_(req.contact, 200), chronicle, cell_(req.version, 20), install, link]);
+  const shot = screenshot_(req.screenshot, install);
+  const sh = sheet_(FEEDBACK, ['Время', 'Вид', 'Текст', 'Контакт', 'Хроника', 'Версия L2Hub', 'Установка', 'Отчёт', 'Скриншот']);
+  sh.appendRow([new Date(), KINDS[kind], cell_(text, MAX_TEXT), cell_(req.contact, 200), chronicle, cell_(req.version, 20), install, link, shot.link || shot.error || '']);
   const subject = `L2Hub: ${KINDS[kind].toLowerCase()}${chronicle ? ' — ' + chronicle : ''}`;
   const body = `${text}\n\nКонтакт: ${req.contact || '—'}\nХроника: ${chronicle || '—'}\nL2Hub ${req.version || '?'}\n`
-    + (link ? `Отчёт: ${link}\n` : '') + `Таблица: ${SpreadsheetApp.getActiveSpreadsheet().getUrl()}`;
+    + (link ? `Отчёт: ${link}\n` : '') + (shot.link ? `Скриншот: ${shot.link}\n` : '') + (shot.error ? `Скриншот не сохранился: ${shot.error}\n` : '')
+    + `Таблица: ${SpreadsheetApp.getActiveSpreadsheet().getUrl()}`;
   MailApp.sendEmail(Session.getEffectiveUser().getEmail(), subject, body);
   telegram_(`${subject}\n\n${body}`);
-  return { ok: true };
+  return shot.error ? { ok: true, screenshot_error: shot.error } : { ok: true, screenshot: shot.link || '' };
+}
+
+// Скриншот к отзыву — в ту же папку, что отчёты. Ошибка не роняет отзыв: он записывается, окно скажет, что скрин не дошёл.
+function screenshot_(s, install) {
+  if (!s || !s.data) return {};
+  try {
+    const ext = SHOT_TYPES[s.mime];
+    if (!ext) return { error: 'скриншот не png и не jpg' };
+    const bytes = Utilities.base64Decode(String(s.data));
+    if (bytes.length > MAX_SHOT) return { error: 'скриншот больше 5 МБ' };
+    const name = `${Utilities.formatDate(new Date(), 'UTC', 'yyyy-MM-dd_HH-mm-ss')}_${install.slice(0, 8)}_screenshot.${ext}`;
+    return { link: folder_().createFile(Utilities.newBlob(bytes, s.mime, name)).getUrl() };
+  } catch (err) {
+    return { error: 'не сохранился на Диске: ' + err };
+  }
 }
 
 function counts_() {
@@ -106,6 +126,9 @@ function sheet_(name, head) {
     sh = book.insertSheet(name);
     sh.appendRow(head);
     sh.setFrozenRows(1);
+  } else if (sh.getLastColumn() < head.length) {
+    // Новая колонка у старого листа (так появился «Скриншот»): дописать заголовок, старые строки не трогать.
+    sh.getRange(1, 1, 1, head.length).setValues([head]);
   }
   return sh;
 }

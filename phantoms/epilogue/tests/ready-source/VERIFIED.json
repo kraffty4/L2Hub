@@ -1,0 +1,81 @@
+{
+  "all_passed": true,
+  "results": [
+    {
+      "name": "source-tests-compile",
+      "passed": true,
+      "summary": []
+    },
+    {
+      "name": "source-skill-levels",
+      "passed": true,
+      "summary": [
+        "SkillLevelChoice: 55 checks passed; no world/SQL/client started."
+      ]
+    },
+    {
+      "name": "source-chat",
+      "passed": true,
+      "summary": [
+        "CombatEventPolicy: 73 checks passed; no world/SQL/client started."
+      ]
+    },
+    {
+      "name": "source-first-action",
+      "passed": true,
+      "summary": [
+        "OlympiadStartKick: 29 checks passed; no world/SQL/client started."
+      ]
+    },
+    {
+      "name": "source-action-pace",
+      "passed": true,
+      "summary": [
+        "OlympiadActionPace: 227 checks passed; timeline model only, no world/SQL/client started."
+      ]
+    },
+    {
+      "name": "source-reconnect",
+      "passed": true,
+      "summary": [
+        "OlympiadReconnectCheck: 26 checks passed; no World/SQL/player mutation"
+      ]
+    },
+    {
+      "name": "source-owned-npc",
+      "passed": true,
+      "summary": [
+        "OLYMPIAD_BUFFER_CLEANUP_OK checks=3311; exact ownership, unchanged quotas, forty games, native205 ownership-only fixture; lifecycle checked by SourceIntegrationCheck; no world/SQL/live JVM"
+      ]
+    },
+    {
+      "name": "source-native-wiring",
+      "passed": true,
+      "summary": [
+        "SOURCE_INTEGRATION_OK checks=950; native class bytes only, no class init/world/SQL/client"
+      ]
+    },
+    {
+      "name": "source-knockout",
+      "passed": true,
+      "summary": [
+        "KNOCKOUT_FRACTION fixed native_damage=0.75 remaining_hp=0.25 dead=true pending_revive=true haveWinner=true; no world/SQL/client",
+        "KNOCKOUT_BOUNDARIES fixed checks=57; real native damage/status, both sides and0.5boundary"
+      ]
+    },
+    {
+      "name": "source-new-skills",
+      "passed": true,
+      "summary": [
+        "MIXED_PALADIN_EXPECTED=true learned=[45:9, 262:37, 341:1] first=341 disabled341_fallback=45 casts=2",
+        "MIXED_EVA_EXPECTED=true shorter_reuse=true learned=[58:55, 341:1, 787:1] Will3_first=787 Will2_fallback=341 disabled787_fallback=341 disabledBoth_fallback=58",
+        "EPILOGUE_NEW_SKILLS_CHECK_OK checks=226 profiles=103 aura_defence_profiles=4 heal_profiles=59; native skills/conditions/effect contract; casts recorded, not live arena"
+      ]
+    }
+  ],
+  "module_agent_on_classpath": false,
+  "world_started": false,
+  "database_blocked": true,
+  "client_started": false,
+  "new_native_adapter_tested": true
+}
