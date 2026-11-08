@@ -37,7 +37,7 @@
 | L2J Geodata (High Five, Epilogue) | GPL-3.0 (LICENSE в архиве) | bitbucket.org/l2jgeo/l2j_geodata |
 | L2J Geodata Project (Interlude) | лицензия не указана | github.com/ChaosPaladin/l2j-geodata-project |
 
-Наши патчи к исходникам L2J Mobius (`patches/`) и модуль фантомов (`phantoms/`) — производные от GPL-3.0 кода и распространяются под GPL-3.0.
+Наши патчи к исходникам L2J Mobius (`patches/`) и модуль фантомов (`phantoms/`) — производные от GPL-3.0 кода и распространяются под GPL-3.0. Остальной код L2Hub (лаунчер, инструменты, доки) с 0.5.245 — под PolyForm Noncommercial 1.0.0; разбивка по папкам — в `LICENSE`, тексты — в `LICENSES/`.
 
 ## Не раздаём
 

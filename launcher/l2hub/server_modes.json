@@ -1,25 +1,323 @@
 {
   "_note": "Режимы сервера и выключатели модов в «Настройках сервера» (задачи автора 2026-10-21, docs/PLAN.md). Только для Mobius: файлы — в game/config или game/config/Custom сборки, с \"part\": \"login\" — в login/config. Выключатель показывается, если в сборке есть его файл и хоть один ключ; \"keys\" — несколько ключей одним выключателем. Режим ставит рейты, выключатели и свои ключи (settings: {файл: {ключ: значение}} — удобства вроде автоподбора) разом; чего в сборке нет — пропускает. dynamicExp — полосы [с какого уровня, exp, sp] для DynamicExpRates.xml, gmshopGrades — множители цен GM-шопа по грейду покупаемой вещи поверх сборки и ручных правок. chronicles: {id хроники: {файл: {ключ: значение}}} — ключи режима только у этой хроники, где официал хроник расходится: у Classic официал — без Vitality (Sayha's Grace), а у Essence и High Five она есть. Рейты PvP-крафт и PvP — предложение агента по объявлениям приватных серверов (средние x50, PvP — x1000), правятся здесь. Вкладка настроек (docs/design/PULT.md): pages — страницы по порядку, subs — подгруппы: ids — выключатели таблицы, keys — ключи конфигов [ключ, название, варианты, ключ текста под строкой]; страницы без единой строки в этой сборке не показываются. Выключатель, которого нет ни на одной странице, попадает в «Прочее». У выключателя restart: game | login — применится после перезапуска, brain — работает только с мозгами, bulk: false — «Включить все» его не включает.",
+  "validation": {
+    "L2HubX10.ini": {
+      "EventHuntersEnabled": {
+        "type": "bool",
+        "title": "Боты помогают в ивентах"
+      },
+      "EventStartGapMinutes": {
+        "type": "int",
+        "min": 1,
+        "max": 10080,
+        "title": "Минимум между стартами, мин"
+      },
+      "EventRegistrationMinutes": {
+        "type": "int",
+        "min": 1,
+        "max": 30,
+        "title": "Запись перед стартом, мин"
+      },
+      "EventActivityPercent": {
+        "type": "int",
+        "min": 1,
+        "max": 100,
+        "title": "Полезная активность для награды, %"
+      },
+      "EventPlayerRespawnSeconds": {
+        "type": "int",
+        "min": 1,
+        "max": 60,
+        "title": "Возрождение участника, сек"
+      },
+      "FarmEnabled": {
+        "type": "bool",
+        "title": "Включить: Массовая охота"
+      },
+      "FarmIntervalMinutes": {
+        "type": "int",
+        "min": 5,
+        "max": 10080,
+        "title": "Период этого ивента, мин"
+      },
+      "FarmFirstDelayMinutes": {
+        "type": "int",
+        "min": 1,
+        "max": 10080,
+        "title": "Первый старт через, мин"
+      },
+      "FarmMinutes": {
+        "type": "int",
+        "min": 1,
+        "max": 30,
+        "title": "Длительность боя, мин"
+      },
+      "FarmCoins": {
+        "type": "int",
+        "min": 0,
+        "max": 100000,
+        "title": "Базовые монеты за участие"
+      },
+      "FarmStyleReward": {
+        "type": "int",
+        "min": 0,
+        "max": 1000,
+        "title": "Жетоны стиля за полный бой"
+      },
+      "FarmRoomSize": {
+        "type": "int",
+        "min": 1,
+        "max": 10,
+        "title": "Участников на одну арену"
+      },
+      "FarmMonsterCount": {
+        "type": "int",
+        "min": 1,
+        "max": 100,
+        "title": "Мобов на арену"
+      },
+      "FarmRespawnSeconds": {
+        "type": "int",
+        "min": 1,
+        "max": 120,
+        "title": "Возрождение мобов, сек"
+      },
+      "DefenceEnabled": {
+        "type": "bool",
+        "title": "Включить: Оборона Гирана"
+      },
+      "DefenceIntervalMinutes": {
+        "type": "int",
+        "min": 5,
+        "max": 10080,
+        "title": "Период этого ивента, мин"
+      },
+      "DefenceFirstDelayMinutes": {
+        "type": "int",
+        "min": 1,
+        "max": 10080,
+        "title": "Первый старт через, мин"
+      },
+      "DefenceMinutes": {
+        "type": "int",
+        "min": 1,
+        "max": 30,
+        "title": "Длительность боя, мин"
+      },
+      "DefenceCoins": {
+        "type": "int",
+        "min": 0,
+        "max": 100000,
+        "title": "Базовые монеты за участие"
+      },
+      "DefenceStyleReward": {
+        "type": "int",
+        "min": 0,
+        "max": 1000,
+        "title": "Жетоны стиля за полный бой"
+      },
+      "DefenceWaveCount": {
+        "type": "int",
+        "min": 1,
+        "max": 30,
+        "title": "Количество волн"
+      },
+      "DefenceFirstWaveSize": {
+        "type": "int",
+        "min": 1,
+        "max": 100,
+        "title": "Базовый размер первой волны"
+      },
+      "DefenceWaveGrowth": {
+        "type": "int",
+        "min": 0,
+        "max": 30,
+        "title": "Прибавка мобов за волну"
+      },
+      "DefenceWaveCap": {
+        "type": "int",
+        "min": 1,
+        "max": 100,
+        "title": "Мобов в одной волне, максимум"
+      },
+      "DefenceMaxMonsters": {
+        "type": "int",
+        "min": 1,
+        "max": 150,
+        "title": "Живых мобов, максимум"
+      },
+      "DefenceHitPercent": {
+        "type": "float",
+        "min": 0.01,
+        "max": 10,
+        "title": "Урон одного моба по Штабу, %"
+      },
+      "DefenceMinimumRewardPercent": {
+        "type": "int",
+        "min": 0,
+        "max": 100,
+        "title": "Нижняя доля награды по прочности, %"
+      },
+      "HuntEnabled": {
+        "type": "bool",
+        "title": "Включить: Охота на сильнейшего"
+      },
+      "HuntIntervalMinutes": {
+        "type": "int",
+        "min": 5,
+        "max": 10080,
+        "title": "Период этого ивента, мин"
+      },
+      "HuntFirstDelayMinutes": {
+        "type": "int",
+        "min": 1,
+        "max": 10080,
+        "title": "Первый старт через, мин"
+      },
+      "HuntMinutes": {
+        "type": "int",
+        "min": 1,
+        "max": 30,
+        "title": "Длительность боя, мин"
+      },
+      "HuntCoins": {
+        "type": "int",
+        "min": 0,
+        "max": 100000,
+        "title": "Базовые монеты за участие"
+      },
+      "HuntStyleReward": {
+        "type": "int",
+        "min": 0,
+        "max": 1000,
+        "title": "Жетоны стиля за полный бой"
+      },
+      "HuntRetreatEnabled": {
+        "type": "bool",
+        "title": "Цель отступает при низком HP"
+      },
+      "HuntHpMultiplier": {
+        "type": "float",
+        "min": 1,
+        "max": 20,
+        "title": "Множитель HP цели"
+      },
+      "HuntGroupBonus": {
+        "type": "int",
+        "min": 0,
+        "max": 10000,
+        "title": "Бонус участнику победившей группы"
+      },
+      "HuntUniqueKillBonus": {
+        "type": "int",
+        "min": 0,
+        "max": 10000,
+        "title": "Бонус цели за уникального игрока"
+      },
+      "HuntTargetBonusCap": {
+        "type": "int",
+        "min": 0,
+        "max": 100000,
+        "title": "Предел бонуса цели за бой"
+      },
+      "HuntRetreatHpPercent": {
+        "type": "int",
+        "min": 1,
+        "max": 90,
+        "title": "Отступление при HP ниже, %"
+      },
+      "FarmSpotsEnabled": {
+        "type": "bool",
+        "title": "Дополнительные фарм-споты"
+      },
+      "DailyCoins": {
+        "type": "int",
+        "min": 0,
+        "max": 100000,
+        "title": "Монет за ежедневное поручение"
+      },
+      "WeeklyCoins": {
+        "type": "int",
+        "min": 0,
+        "max": 100000,
+        "title": "Монет за недельное поручение"
+      },
+      "CoinDropChance": {
+        "type": "int",
+        "min": 0,
+        "max": 10000,
+        "title": "Шанс монеты с обычного моба, %"
+      },
+      "EventsEnabled": {
+        "type": "bool",
+        "title": "Общая очередь боевых событий"
+      },
+      "ContractsEnabled": {
+        "type": "bool",
+        "title": "Новые ежедневные и недельные задания"
+      },
+      "CoinDropEnabled": {
+        "type": "bool",
+        "title": "Монеты с обычных мобов"
+      },
+      "DailyMinLevel": {
+        "type": "int",
+        "min": 1,
+        "max": 85,
+        "title": "Ежедневные с уровня"
+      },
+      "WeeklyMinLevel": {
+        "type": "int",
+        "min": 1,
+        "max": 85,
+        "title": "Недельные с уровня"
+      },
+      "AdenaAlwaysDrop": {
+        "type": "bool",
+        "title": "Адена с каждого обычного моба"
+      }
+    }
+  },
   "pages": [
+    {"id": "event-rules", "head": "Удобства", "title": "Общие правила", "file": "L2HubX10.ini", "about": "Правила общей очереди массовой охоты, обороны и охоты на сильнейшего. События доступны при любых рейтах; x10 включает подготовленный набор. Изменения применяются после перезапуска сервера.", "bulk": false, "subs": [{"title": "Включение системы", "ids": ["event-engine", "x10-hunters"]}, {"title": "Расписание и участие", "keys": [["EventStartGapMinutes", "Минимум между стартами, мин", null, null, {"hint": "Общий промежуток между началами любых двух событий. При совпадении сроков они идут по очереди; действующий бой и время на запись тоже учитываются.", "min": 1.0, "max": 10080.0, "step": 1, "scale": 1}], ["EventRegistrationMinutes", "Запись перед стартом, мин", null, null, {"hint": "За сколько минут открывается регистрация в Alt+B. После перезапуска игрокам снова даётся время записаться.", "min": 1.0, "max": 30.0, "step": 1, "scale": 1}], ["EventActivityPercent", "Полезная активность для награды, %", null, null, {"hint": "Доля 30-секундных отрезков боя с полезными действиями. Учитываются урон, полезное лечение и бафы рядом с сражающимся союзником. Простого присутствия недостаточно.", "min": 1.0, "max": 100.0, "step": 1, "scale": 1}], ["EventPlayerRespawnSeconds", "Возрождение участника, сек", null, null, {"hint": "Через сколько секунд погибший участник возвращается в бой. У цели в охоте отдельное правило: её смерть завершает событие.", "min": 1.0, "max": 60.0, "step": 1, "scale": 1}]]}], "parent": "events", "section": "rules"},
+    {"id": "event-farm", "head": "Удобства", "title": "Массовая охота", "file": "L2HubX10.ini", "about": "Отдельные арены по уровню, много слабых мобов и одинаковая награда за полезное участие. При заполнении арены создаётся следующая копия. Обычных опыта и дропа здесь нет.", "bulk": false, "subs": [{"title": "Запуск и награды", "keys": [["FarmIntervalMinutes", "Период этого ивента, мин", null, null, {"hint": "Отсчитывается от последнего запланированного старта этого формата по времени работы мира. Это желаемый период: общий промежуток и очередь могут отложить старт.", "min": 5.0, "max": 10080.0, "step": 1, "scale": 1}], ["FarmFirstDelayMinutes", "Первый старт через, мин", null, null, {"hint": "Отсчёт при первом включении или смене периода/первой задержки. Обычный перезапуск продолжает сохранённый отсчёт. Изменение наград таймер не сбрасывает.", "min": 1.0, "max": 10080.0, "step": 1, "scale": 1}], ["FarmMinutes", "Длительность боя, мин", null, null, {"hint": "Максимальное время боя. Между событиями сохраняется время на регистрацию; два боя одновременно не запускаются.", "min": 1.0, "max": 30.0, "step": 1, "scale": 1}], ["FarmCoins", "Базовые монеты за участие", null, null, {"hint": "Награда активному участнику за полный бой. В обороне дополнительно учитывается прочность Штаба; в охоте ранний конец уменьшает базу пропорционально времени. 0 отключает эту часть награды.", "min": 0.0, "max": 100000.0, "step": 1, "scale": 1}], ["FarmStyleReward", "Жетоны стиля за полный бой", null, null, {"hint": "Отдельная валюта оформления за полную длительность и полезную активность. Раннее завершение не даёт жетонов. 0 отключает выдачу.", "min": 0.0, "max": 1000.0, "step": 1, "scale": 1}]], "ids": ["x10-farm"]}, {"title": "Арена и мобы", "keys": [["FarmRoomSize", "Участников на одну арену", null, null, {"hint": "От 1 до 10, включая ботов. Пати не разрезается: если вся группа не помещается, её не зарегистрируют. При большом онлайне арены копируются.", "min": 1.0, "max": 10.0, "step": 1, "scale": 1}], ["FarmMonsterCount", "Мобов на арену", null, null, {"hint": "Одновременно созданных слабых мобов в каждой копии. Их уровень подбирается по участникам.", "min": 1.0, "max": 100.0, "step": 1, "scale": 1}], ["FarmRespawnSeconds", "Возрождение мобов, сек", null, null, {"hint": "Пауза после убийства моба перед появлением замены в этой арене.", "min": 1.0, "max": 120.0, "step": 1, "scale": 1}]]}], "parent": "events", "section": "catalog", "category": "pve", "eventSwitch": "x10-farm", "eventGroup": "event-engine"},
+    {"id": "event-defence", "head": "Удобства", "title": "Оборона Гирана", "file": "L2HubX10.ini", "about": "Бесплатный ТП к отдельной копии входа в замок. Волны атакуют Штаб; награда зависит от оставшейся прочности. Уровень мобов растёт по накопленному времени работы мира, которое сохраняется после перезапуска.", "bulk": false, "subs": [{"title": "Запуск и награды", "keys": [["DefenceIntervalMinutes", "Период этого ивента, мин", null, null, {"hint": "Отсчитывается от последнего запланированного старта этого формата по времени работы мира. Это желаемый период: общий промежуток и очередь могут отложить старт.", "min": 5.0, "max": 10080.0, "step": 1, "scale": 1}], ["DefenceFirstDelayMinutes", "Первый старт через, мин", null, null, {"hint": "Отсчёт при первом включении или смене периода/первой задержки. Обычный перезапуск продолжает сохранённый отсчёт. Изменение наград таймер не сбрасывает.", "min": 1.0, "max": 10080.0, "step": 1, "scale": 1}], ["DefenceMinutes", "Длительность боя, мин", null, null, {"hint": "Максимальное время боя. Между событиями сохраняется время на регистрацию; два боя одновременно не запускаются.", "min": 1.0, "max": 30.0, "step": 1, "scale": 1}], ["DefenceCoins", "Базовые монеты за участие", null, null, {"hint": "Награда активному участнику за полный бой. В обороне дополнительно учитывается прочность Штаба; в охоте ранний конец уменьшает базу пропорционально времени. 0 отключает эту часть награды.", "min": 0.0, "max": 100000.0, "step": 1, "scale": 1}], ["DefenceStyleReward", "Жетоны стиля за полный бой", null, null, {"hint": "Отдельная валюта оформления за полную длительность и полезную активность. Раннее завершение не даёт жетонов. 0 отключает выдачу.", "min": 0.0, "max": 1000.0, "step": 1, "scale": 1}]], "ids": ["x10-defence"]}, {"title": "Волны и прочность Штаба", "keys": [["DefenceWaveCount", "Количество волн", null, null, {"hint": "Волны равномерно распределены по длительности события. Побеждённые мобы не возрождаются.", "min": 1.0, "max": 30.0, "step": 1, "scale": 1}], ["DefenceFirstWaveSize", "Базовый размер первой волны", null, null, {"hint": "Нижняя база первой волны. При большом составе используется большее из этого числа и трети участников.", "min": 1.0, "max": 100.0, "step": 1, "scale": 1}], ["DefenceWaveGrowth", "Прибавка мобов за волну", null, null, {"hint": "Каждая следующая волна больше на это число до ограничения размера волны.", "min": 0.0, "max": 30.0, "step": 1, "scale": 1}], ["DefenceWaveCap", "Мобов в одной волне, максимум", null, null, {"hint": "Ограничивает размер отдельной волны. Общий предел живых мобов действует дополнительно.", "min": 1.0, "max": 100.0, "step": 1, "scale": 1}], ["DefenceMaxMonsters", "Живых мобов, максимум", null, null, {"hint": "Если на площадке достигнут предел, очередная волна добавляет только недостающее количество.", "min": 1.0, "max": 150.0, "step": 1, "scale": 1}], ["DefenceHitPercent", "Урон одного моба по Штабу, %", null, null, {"hint": "Доля прочности за один удар раз в 3 секунды от добравшегося моба. При составе больше 10 участников урон делится на размер состава / 10. Выше значение — сложнее защита.", "min": 0.01, "max": 10.0, "step": 0.01, "scale": 1}], ["DefenceMinimumRewardPercent", "Нижняя доля награды по прочности, %", null, null, {"hint": "Например, при 20% активный участник получает минимум 20% базы по прочности. При раннем разрушении результат ещё умножается на долю прошедшего времени.", "min": 0.0, "max": 100.0, "step": 1, "scale": 1}]]}], "parent": "events", "section": "catalog", "category": "pve", "eventSwitch": "x10-defence", "eventGroup": "event-engine"},
+    {"id": "event-hunt", "head": "Удобства", "title": "Охота на сильнейшего", "file": "L2HubX10.ini", "about": "Цель — самый сильный свободный охотник-бот с временно увеличенным HP. Игроки и их группы преследуют его; саппорты получают награду за полезную помощь. Смерть цели завершает бой раньше таймера.", "bulk": false, "subs": [{"title": "Запуск и награды", "keys": [["HuntIntervalMinutes", "Период этого ивента, мин", null, null, {"hint": "Отсчитывается от последнего запланированного старта этого формата по времени работы мира. Это желаемый период: общий промежуток и очередь могут отложить старт.", "min": 5.0, "max": 10080.0, "step": 1, "scale": 1}], ["HuntFirstDelayMinutes", "Первый старт через, мин", null, null, {"hint": "Отсчёт при первом включении или смене периода/первой задержки. Обычный перезапуск продолжает сохранённый отсчёт. Изменение наград таймер не сбрасывает.", "min": 1.0, "max": 10080.0, "step": 1, "scale": 1}], ["HuntMinutes", "Длительность боя, мин", null, null, {"hint": "Максимальное время боя. Между событиями сохраняется время на регистрацию; два боя одновременно не запускаются.", "min": 1.0, "max": 30.0, "step": 1, "scale": 1}], ["HuntCoins", "Базовые монеты за участие", null, null, {"hint": "Награда активному участнику за полный бой. В обороне дополнительно учитывается прочность Штаба; в охоте ранний конец уменьшает базу пропорционально времени. 0 отключает эту часть награды.", "min": 0.0, "max": 100000.0, "step": 1, "scale": 1}], ["HuntStyleReward", "Жетоны стиля за полный бой", null, null, {"hint": "Отдельная валюта оформления за полную длительность и полезную активность. Раннее завершение не даёт жетонов. 0 отключает выдачу.", "min": 0.0, "max": 1000.0, "step": 1, "scale": 1}]], "ids": ["x10-hunt"]}, {"title": "Цель и дополнительные монеты", "keys": [["HuntHpMultiplier", "Множитель HP цели", null, null, {"hint": "Временное усиление только на этот бой. После окончания возвращаются обычные характеристики охотника.", "min": 1.0, "max": 20.0, "step": 0.1, "scale": 1}], ["HuntGroupBonus", "Бонус участнику победившей группы", null, null, {"hint": "Каждому активному участнику боевой группы, убившей цель. Один последний удар без активности не даёт награды.", "min": 0.0, "max": 10000.0, "step": 1, "scale": 1}], ["HuntUniqueKillBonus", "Бонус цели за уникального игрока", null, null, {"hint": "За убийство уникального активного преследователя. Повторные убийства того же персонажа не учитываются.", "min": 0.0, "max": 10000.0, "step": 1, "scale": 1}], ["HuntTargetBonusCap", "Предел бонуса цели за бой", null, null, {"hint": "Суммарный предел дополнительных монет цели за убийства; базовая награда считается отдельно.", "min": 0.0, "max": 100000.0, "step": 1, "scale": 1}], ["HuntRetreatHpPercent", "Отступление при HP ниже, %", null, null, {"hint": "Порог для включённого отступления. Если переключатель выше выключен, это значение не используется.", "min": 1.0, "max": 90.0, "step": 1, "scale": 1}]], "ids": ["x10-retreat"]}], "parent": "events", "section": "catalog", "category": "pvp", "eventSwitch": "x10-hunt", "eventGroup": "event-engine"},
+    {"id": "event-rewards", "head": "Удобства", "title": "Награды и валюты", "file": "L2HubX10.ini", "about": "Монеты и жетоны новых событий хранятся в кошельке. У прежних PvP и календарных событий свои награды. Выключение боёв не отключает кошелёк и магазин.", "bulk": false, "subs": [{"title": "Монеты с обычных мобов", "ids": ["event-coin-drop"], "keys": [["CoinDropChance", "Шанс монеты с обычного моба, %", null, null, {"hint": "Например, 2 означает 2%, независимо от рейтов сервера. Одна монета за срабатывание; ивентовые, призванные и слишком слабые мобы не подходят.", "min": 0.0, "max": 100.0, "step": 0.01, "scale": 100}]]}], "parent": "events", "section": "rewards"},
     {"id": "mode", "head": "Как играется", "title": "Режим и рейты", "kind": "mode", "about": "Готовый набор одной кнопкой: рейты и выключатели перепишутся разом, прежние конфиги уйдут в бэкап.", "rates": [["RateXp", "Опыт"], ["RateSp", "SP"], ["@adena", "Адена"], ["DeathDropAmountMultiplier", "Дроп"], ["SpoilDropAmountMultiplier", "Спойл"], ["RateDropAdena", "Адена"], ["RateDropItems", "Дроп"], ["RateDropSpoil", "Спойл"]], "fine": [["RatePartyXp", "Опыт в группе"], ["RatePartySp", "SP в группе"], ["DeathDropChanceMultiplier", "Дроп: шанс"], ["SpoilDropChanceMultiplier", "Спойл: шанс"], ["RaidDropAmountMultiplier", "Рейды: количество"], ["RaidDropChanceMultiplier", "Рейды: шанс"], ["HerbDropAmountMultiplier", "Хербы"], ["RateQuestRewardXP", "Квесты: опыт"], ["RateQuestRewardSP", "Квесты: SP"], ["RateQuestRewardAdena", "Квесты: адена"], ["RateDropManor", "Манор"], ["RateRaidDropItems", "Рейды: дроп"], ["RateDropQuest", "Квесты: дроп"], ["RateQuestsReward", "Квесты: награда"], ["RateCommonHerbs", "Хербы"], ["PetXpRate", "Опыт питомцев"]]},
     {"id": "rules", "head": "Как играется", "title": "Правила игры", "about": "Как устроена игра для всех персонажей.", "subs": [{"keys": [["AutoLoot", "Автоподбор дропа"], ["AutoLootHerbs", "Автоподбор хербов"], ["AutoLearnSkills", "Автоизучение скиллов"], ["AltSubClassWithoutQuests", "Саб-класс без квеста"], ["MaxSubclass", "Максимум сабов"], ["StartingAdena", "Стартовая адена"], ["EnableVitality", "Виталити"], ["OlympiadEnabled", "Олимпиада"], ["RebirthAllow", "Перерождения"], ["AllowWedding", "Свадьбы"], ["GlobalChat", "Глобальный чат", ["ON", "OFF", "GM", "GLOBAL"]], ["DeleteCharAfterDays", "Удалять персонажа через, дней"]]}, {"title": "Скорость и карма", "keys": [["RunSpeedBoost", "Прибавка к бегу"], ["PlayerPAtkSpeedMultiplier", "Скорость атаки, множитель"], ["PlayerMAtkSpeedMultiplier", "Скорость каста, множитель"], ["RateKarmaLost", "Отмывание кармы: -1 — как рейт опыта, 1 — быстро"]]}]},
-    {"id": "people", "head": "Живой мир", "title": "Население", "kind": "people", "about": "Сколько народу в мире и как он живёт по времени. Здесь главный рычаг нагрузки.", "subs": [{"title": "Фейки в городах", "ids": ["fakes", "fakestores", "fakemarket"], "keys": [["EnableFakePlayers", "Боты-игроки"], ["TownFakesDensity", "Фейков в городах, %"]]}, {"title": "Ритм жизни", "ids": ["dailyrhythm", "regulars", "absences", "offlineworld", "welcome"]}]},
-    {"id": "hunters", "head": "Живой мир", "title": "Поведение пешек", "short": "Пешки", "about": "Что пешки делают рядом с тобой и друг с другом.", "subs": [{"title": "Общение", "ids": ["gestures", "favors", "farwhisper", "hunterfriends", "gifts", "mentors", "stories", "petition"]}, {"title": "Торговля", "ids": ["chatflow", "huntertrade", "hunterenchant", "scams"]}, {"title": "Конфликты", "ids": ["spotdisputes", "lootfights"]}]},
+    {"id": "people", "head": "Живой мир", "title": "Население", "kind": "people", "about": "Сколько народу в мире и как он живёт по времени. Здесь главный рычаг нагрузки.", "subs": [{"title": "Фейки в городах", "ids": ["fakes", "fakestores", "fakemarket"], "keys": [["EnableFakePlayers", "Боты-игроки"], ["TownFakesDensity", "Фейков в городах, %"]]}, {"title": "Ритм жизни", "ids": ["dailyrhythm", "regulars", "absences", "offlineworld", "welcome"]}, {"title": "Новый мир", "ids": ["veterans"]}]},
+    {"id": "hunters", "head": "Живой мир", "title": "Поведение пешек", "short": "Пешки", "about": "Что пешки делают рядом с тобой и друг с другом.", "subs": [{"title": "Общение", "ids": ["gestures", "favors", "farwhisper", "hunterfriends", "gifts", "mentors", "stories", "petition"]}, {"title": "Торговля", "ids": ["chatflow", "huntertrade", "hunterenchant", "shopprices", "scams"]}, {"title": "Конфликты", "ids": ["spotdisputes", "lootfights"]}]},
     {"id": "clans", "head": "Живой мир", "title": "Кланы пешек", "short": "Кланы", "about": "Жизнь кланов: от титулов и эмблем до драм и настоящих осад.", "subs": [{"title": "Внутри клана", "ids": ["clantitles", "clanranks", "clanwh", "clancrests", "clandrama"]}, {"title": "Ты и кланы", "ids": ["claninvite", "clanrecruit", "clanwarreply"]}, {"title": "Кланы между собой", "ids": ["clanally", "clantop", "sieges"]}]},
     {"id": "bosses", "head": "Живой мир", "title": "Боссы и монстры", "about": "Кто бродит по миру и кто за ним охотится.", "subs": [{"title": "Монстры", "ids": ["champions", "superchampion"], "keys": [["ChampionEnable", "Мобы-чемпионы"]]}, {"title": "Рейд-боссы", "ids": ["rbannounce", "raids", "raidrivals", "raidwatch", "raidtakebusy"]}]},
     {"id": "small", "head": "Живой мир", "title": "Малый мир", "about": "Правила, смягчённые под маленький онлайн: то, что на официале требовало толпу.", "subs": [{"ids": ["smallepics", "smallclans", "sepulchers", "rift"]}]},
     {"id": "town", "head": "Удобства", "title": "Город", "about": "NPC и наборы, которые экономят время.", "subs": [{"title": "У гейткипера", "ids": ["buffer", "gmshop"]}, {"title": "Новичку", "ids": ["starterkits"]}, {"title": "Бафы", "ids": ["durations"]}, {"title": "Мастера", "ids": ["classmaster", "noblesse"]}]},
     {"id": "helpers", "head": "Удобства", "title": "Помощники", "about": "Что упрощает игру персонажу.", "subs": [{"ids": ["autopotions", "offlineplay", "freemounts", "transmog", "unstuck", "npcinfo"], "keys": [["EnableAutoPlay", "Автобой .play"], ["OfflineTradeEnable", "Оффлайн-торговля"], ["EnableOfflinePlayCommand", "Оффлайн-фарм .offlineplay"], ["EnableFreeStrider", "Бесплатный страйдер"], ["EnableFreeWyvern", "Бесплатная виверна"]]}]},
-    {"id": "events", "head": "Удобства", "title": "Ивенты", "kind": "events", "about": "Что случается по расписанию.", "subs": [{"title": "Каждый день", "ids": ["daily", "elpies"]}, {"title": "PvP", "ids": ["pvpevents", "hunterpvp"]}, {"title": "Сезонные", "ids": ["calendar"]}]},
+    {"id": "events", "head": "Удобства", "title": "Ивенты", "kind": "eventHub", "about": "Все события и их настройки в одном разделе. Доступны при любых рейтах; пресет x10 включает готовый набор. Изменения применяются после перезапуска сервера.", "subs": []},
+    {"id": "event-contracts", "head": "Удобства", "parent": "events", "section": "contracts", "title": "Задания", "file": "L2HubX10.ini", "bulk": false, "about": "Новые ежедневные и недельные поручения включаются независимо от боёв. Прежние поручения дня используются, когда новая система выключена.", "subs": [{"title": "Ежедневные и недельные", "ids": ["event-contracts-enabled"], "keys": [["DailyCoins", "Монет за ежедневное поручение", null, null, {"hint": "За одно выполненное поручение. За день можно взять до пяти; полезный вклад пати учитывается.", "min": 0.0, "max": 100000.0, "step": 1, "scale": 1}], ["WeeklyCoins", "Монет за недельное поручение", null, null, {"hint": "За одно из 15 недельных поручений. Предусмотрены бой, крафт и сбор ресурсов; обновление в понедельник.", "min": 0.0, "max": 100000.0, "step": 1, "scale": 1}]]}, {"title": "Прежняя система поручений", "ids": ["daily"]}, {"title": "Открытие заданий", "file": "L2HubX10.ini", "keys": [["DailyMinLevel", "Ежедневные с уровня", null, null, {"min": 1, "max": 85, "step": 1, "hint": "По умолчанию с40: сначала прокачка, затем уведомление об открытии ежедневных.", "scale": 1}], ["WeeklyMinLevel", "Недельные с уровня", null, null, {"min": 1, "max": 85, "step": 1, "hint": "По умолчанию с50. Цели выбираются и обновляются по уровню персонажа.", "scale": 1}]]}]},
+    {"id": "farming", "head": "Живой мир", "title": "Фарм-споты", "file": "L2HubX10.ini", "about": "Дополнительные рекомендованные участки и усиленные пачки для обычного фарма. Работают независимо от ивентов.", "bulk": false, "subs": [{"ids": ["x10-spots"]}, {"ids": ["adena-always"]}]},
+    {"id": "event-pvp", "parent": "events", "head": "Удобства", "section": "catalog", "category": "pvp", "title": "TvT / Deathmatch / CtF", "eventSwitch": "pvpevents", "calendar": "pvp", "bulk": false, "about": "Прежние PvP-события Mobius: общий выключатель и отдельные расписания трёх форматов. Их награды и правила сохраняются.", "subs": [{"ids": ["pvpevents", "hunterpvp"]}]},
+    {"id": "event-elpies", "parent": "events", "head": "Удобства", "section": "catalog", "category": "pve", "title": "Нашествие эльпи", "eventSwitch": "elpies", "calendar": "elpies", "bulk": false, "about": "Кролики с расходниками появляются в городе рядом с живым игроком. Существующие расписание и длительность сохранены.", "subs": [{"ids": ["elpies"]}]},
+    {"id": "event-seasonal", "parent": "events", "head": "Удобства", "section": "catalog", "category": "seasonal", "title": "Календарные события", "eventSwitch": "calendar", "calendar": "seasonal", "bulk": false, "about": "Месячные и сезонные события: Санта, валентинки, L2 Day, арбузы, медали, праздник Фреи и другие. Настраиваются прежние даты каждого события.", "subs": [{"ids": ["calendar"]}]},
     {"id": "native", "head": "Удобства", "title": "Родное Classic и Essence", "short": "Родное", "about": "Штатные механики этих хроник.", "subs": [{"ids": ["attendance", "lcoin", "huntpass", "magiclamp"]}]},
-    {"id": "custom", "head": "Кастом", "title": "Кастом сервера", "about": "Дополнительные правила сервера. Выбор хранится в обычных настройках.", "subs": [{"title": "Автобой", "keys": [["AutoPlayStuckTargetSeconds", "Сменять недоступную цель через, секунд (0 — выкл.)"]]}, {"title": "Магазин", "keys": [["MultisellAmountLimit", "Максимум обменов за одну покупку"]]}, {"title": "Рейд-боссы без уровневых штрафов", "ids": ["epicnopenalty", "raidnopenalty"]}, {"title": "Прежний допуск эпиков по уровню", "ids": ["epiclevelaccess"], "keys": [["EpicQueenAntLevel", "АК — уровень для штрафов"], ["EpicCoreLevel", "Ядро — уровень для штрафов"], ["EpicOrfenLevel", "Орфен — уровень для штрафов"], ["EpicZakenLevel", "Закен — уровень для штрафов"], ["EpicBaiumLevel", "Баюм — уровень для штрафов"], ["EpicAntharasLevel", "Антарас — уровень для штрафов"], ["EpicValakasLevel", "Валакас — уровень для штрафов"], ["EpicFrintezzaLevel", "Фринтезза — уровень для штрафов"], ["EpicBelethLevel", "Белеф — уровень для штрафов"], ["EpicBaylorLevel", "Байлор — уровень для штрафов"], ["EpicEkimusLevel", "Экимус — уровень для штрафов"], ["EpicTiatLevel", "Тиат — уровень для штрафов"], ["EpicChaosGolemLevel", "Голем Хаоса — уровень для штрафов"]]}, {"title": "Играющий GM", "ids": ["playinggm"], "keys": [["PlayingGmDefaultMode", "GM играет по обычным правилам по умолчанию"]], "chronicles": ["epilogue"], "file": "PlayingGm.ini"}, {"title": "Цвета, инвентарь и переносимый вес", "file": "AppearanceServices.ini", "chronicles": ["epilogue"], "note": "После перезапуска игрового сервера. Сохранение не перезапускает его автоматически.", "keys": [["Enabled", "Услуги цвета имени и титула"], ["NameColorPrice", "Цвет имени — цена, адена"], ["TitleColorPrice", "Цвет титула — цена, адена"], ["InventoryExpansionEnabled", "Продажа расширения инвентаря"], ["InventoryExpansionPrice", "Расширение инвентаря — цена, адена"], ["CarryWeightExpansionEnabled", "Продажа грузоподъёмности"], ["CarryWeightExpansionPrice", "Грузоподъёмность — цена покупки, адена"], ["CarryWeightExpansionBonusPercent", "Грузоподъёмность — прибавка за покупку, %"]]}, {"title": "Олимпиада", "file": "OlympiadLocal.ini", "chronicles": ["epilogue"], "note": "После перезапуска игрового сервера. Сохранение не перезапускает его автоматически.", "keys": [["OlympiadReturnDelaySeconds", "Возврат с арены после результата, секунд"], ["OlympiadOpponentHudClass", "Профессия соперника на плашке HP/CP"]]}, {"title": "Выбор уровня навыков", "file": "SkillLevelSelection.ini", "chronicles": ["epilogue", "ct26_highfive"], "note": "После перезапуска игрового сервера. Сохранение не перезапускает его автоматически.", "keys": [["SkillLevelSelectionEnabled", "Выбор изученного уровня навыка через Alt+B"]]}, {"title": "Улучшение PvP-экипировки", "file": "PvpAttributes.ini", "chronicles": ["epilogue"], "note": "После перезапуска игрового сервера. Сохранение не перезапускает его автоматически.", "keys": [["AllowAttributeOnPvpWeapons", "Вставлять атрибут в PvP-оружие"], ["AllowAttributeOnPvpArmor", "Вставлять атрибут в PvP-броню"]]}, {"title": "Улучшение PvP-экипировки", "file": "PvpItemPermissions.ini", "chronicles": ["ct26_highfive"], "note": "После перезапуска игрового сервера. Сохранение не перезапускает его автоматически.", "keys": [["AllowAttributeOnPvpWeapons", "Вставлять атрибут в PvP-оружие"], ["AllowAttributeOnPvpArmor", "Вставлять атрибут в PvP-броню"]]}, {"title": "Передача и продажа PvP-экипировки", "file": "PvpItemPermissions.ini", "chronicles": ["epilogue", "ct26_highfive"], "note": "После перезапуска игрового сервера. Сохранение не перезапускает его автоматически.", "keys": [["AllowPvpItemTrade", "Обмен и частная торговля"], ["AllowPvpItemSale", "Продажа NPC и через услугу продажи"], ["AllowPvpItemWarehouse", "Личный и клановый склад"], ["AllowPvpItemFreight", "Грузовая служба"]]}, {"title": "Тату пешек и помощников", "file": "BotClassKits.ini", "chronicles": ["epilogue"], "note": "После перезапуска игрового сервера. Сохранение не перезапускает его автоматически.", "keys": [["BotClassDyesEnabled", "Классовые тату"], ["BotFighterDyes", "Бойцы — ID тату через запятую"], ["BotTankDyes", "Танки — ID тату через запятую"], ["BotMageDyes", "Маги — ID тату через запятую"], ["BotSupportDyes", "Поддержка — ID тату через запятую"]]}, {"title": "Поддержка группы", "file": "HunterSupport.ini", "chronicles": ["epilogue"], "note": "После перезапуска игрового сервера. Сохранение не перезапускает его автоматически.", "keys": [["ManaPotionsEnabled", "Использовать банки маны"], ["ManaPotionCount", "Запас MP-банок"], ["ManaPotionPercent", "Пить MP-банку ниже, % MP"], ["SpiritOreCount", "Запас Spirit Ore"], ["HolyWaterCount", "Запас Holy Water"], ["HealBeforeRest", "Сначала лечить группу, затем отдыхать"], ["CureDebuffs", "Снимать доступные классу дебафы"], ["PreparePartyBuffs", "Готовить баффы группы"], ["PartyBuffCheckSeconds", "Проверка баффов, секунд"], ["PartyBuffRefreshSeconds", "Обновлять баффы при остатке, секунд"], ["PartySupplyCheckSeconds", "Проверка расходников, секунд"], ["AutoChargeSkills", "Набирать заряды классовых навыков"], ["OffensiveReagentCasts", "Запас реагентов для атакующих навыков, применений"]]}, {"title": "Запас расходников призывных помощников", "file": "PhantomParty.ini", "chronicles": ["epilogue"], "note": "После перезапуска игрового сервера. Сохранение не перезапускает его автоматически.", "keys": [["PersonalCompanionPotionStock", "Запас банок"], ["PersonalCompanionSpiritOreStock", "Запас Spirit Ore"], ["PersonalCompanionHolyWaterStock", "Запас Holy Water"]]}, {"title": "Имена призывных помощников", "file": "PersonalCompanionNames.ini", "chronicles": ["epilogue"], "note": "После перезапуска игрового сервера. Сохранение не перезапускает его автоматически.", "keys": [["healer", "Биш — основное имя"], ["buffer", "Баффер — основное имя"], ["gladiator", "Гладиатор — основное имя"], ["destroyer", "Дестро — основное имя"], ["tyrant", "Тирант — основное имя"], ["warlord", "Варлорд — основное имя"], ["spellhowler", "СХ — основное имя"], ["spellsinger", "СС — основное имя"], ["sorcerer", "Сорк — основное имя"], ["necromancer", "Некромант — основное имя"]]}, {"title": "Дополнительные имена помощников", "file": "PersonalCompanionNamePool.ini", "chronicles": ["epilogue"], "note": "После перезапуска игрового сервера. Сохранение не перезапускает его автоматически.", "keys": [["PreferredNames", "Готовые имена"], ["Prefixes", "Начала имён"], ["Suffixes", "Окончания имён"]]}, {"title": "Автоматические банки игрока", "file": "AutoPotions.ini", "chronicles": ["epilogue"], "note": "После перезапуска игрового сервера. Сохранение не перезапускает его автоматически.", "keys": [["AutoPotionsEnabled", "Разрешить автопоты (.apon)"], ["AutoPotionsInOlympiad", "Автопоты на Олимпиаде"], ["AutoPotionMinimumLevel", "Минимальный уровень"], ["AutoCpEnabled", "Использовать CP-банки"], ["AutoCpPercentage", "Пить CP ниже, %"], ["AutoCpItemIds", "CP-банки — ID через запятую"], ["AutoHpEnabled", "Использовать HP-банки"], ["AutoHpPercentage", "Пить HP ниже, %"], ["AutoHpItemIds", "HP-банки — ID через запятую"], ["AutoMpEnabled", "Использовать MP-банки"], ["AutoMpPercentage", "Пить MP ниже, %"], ["AutoMpItemIds", "MP-банки — ID через запятую"]]}, {"title": "Живое общение пешек", "file": "ChatBank.ini", "chronicles": ["epilogue"], "note": "После перезапуска игрового сервера. Сохранение не перезапускает его автоматически.", "keys": [["ReplyBankEnabled", "Банк ответов пешек"], ["ReplyBankFile", "Файл банка ответов"], ["PartyLongDialogueFile", "Файл длинных диалогов группы"], ["HeroOpenersFile", "Файл начала диалогов героев"], ["CityDialoguesEnabled", "Город — диалоги"], ["CityDialogueFile", "Город — файл диалогов"], ["CityMinimumGapSeconds", "Город — минимальная пауза, секунд"], ["CityMaximumGapSeconds", "Город — максимальная пауза, секунд"], ["CitySpeakerGapSeconds", "Город — пауза одного собеседника, секунд"], ["CityLinesPerHour", "Город — реплик в час"], ["CityMinimumReplyMilliseconds", "Город — минимальная задержка ответа, мс"], ["CityMaximumReplyMilliseconds", "Город — максимальная задержка ответа, мс"], ["PartyDialoguesEnabled", "Группа — диалоги"], ["PartyDialogueFile", "Группа — файл диалогов"], ["PartyMinimumGapSeconds", "Группа — минимальная пауза, секунд"], ["PartyMaximumGapSeconds", "Группа — максимальная пауза, секунд"], ["PartySpeakerGapSeconds", "Группа — пауза одного собеседника, секунд"], ["PartyLinesPerHour", "Группа — реплик в час"], ["PartyMinimumReplyMilliseconds", "Группа — минимальная задержка ответа, мс"], ["PartyMaximumReplyMilliseconds", "Группа — максимальная задержка ответа, мс"], ["ClanDialoguesEnabled", "Клан — диалоги"], ["ClanDialogueFile", "Клан — файл диалогов"], ["ClanMinimumGapSeconds", "Клан — минимальная пауза, секунд"], ["ClanMaximumGapSeconds", "Клан — максимальная пауза, секунд"], ["ClanSpeakerGapSeconds", "Клан — пауза одного собеседника, секунд"], ["ClanLinesPerHour", "Клан — реплик в час"], ["ClanMinimumReplyMilliseconds", "Клан — минимальная задержка ответа, мс"], ["ClanMaximumReplyMilliseconds", "Клан — максимальная задержка ответа, мс"], ["HeroDialoguesEnabled", "Герои — диалоги"], ["HeroDialogueFile", "Герои — файл диалогов"], ["HeroMinimumGapSeconds", "Герои — минимальная пауза, секунд"], ["HeroMaximumGapSeconds", "Герои — максимальная пауза, секунд"], ["HeroSpeakerGapSeconds", "Герои — пауза одного собеседника, секунд"], ["HeroLinesPerHour", "Герои — реплик в час"], ["HeroMinimumReplyMilliseconds", "Герои — минимальная задержка ответа, мс"], ["HeroMaximumReplyMilliseconds", "Герои — максимальная задержка ответа, мс"], ["HeroSoloMinimumGapSeconds", "Герои — минимальная пауза одиночной реплики, секунд"], ["HeroSoloMaximumGapSeconds", "Герои — максимальная пауза одиночной реплики, секунд"]]}, {"title": "Кланы", "ids": ["instantclanleader"]}, {"title": "Набор и поддержка пешек", "file": "PhantomHunters.ini", "chronicles": ["epilogue"], "note": "Сохраняются текущие значения. Если файл не заявляет горячее применение, нужен перезапуск игрового сервера.", "keys": [["HunterClanInvitePriority", "Приоритет приглашения от соклана"], ["HunterPartyNoblesse", "Ноблес для участников группы"], ["HunterSupportCures", "Классовое снятие дебафов поддержки"], ["HunterTvtEventMax", "Максимум пешек на TVT"], ["HunterOlympiadPreparation", "Классовая подготовка к Олимпиаде"]]}, {"title": "Перемирие кланов", "file": "PhantomHunters.ini", "chronicles": ["epilogue"], "note": "После перезапуска игрового сервера. 0 сохраняет отсутствие дополнительного срока перемирия.", "keys": [["HunterClanWarTruceHours", "Перемирие после клановой войны, часов"]]}, {"title": "Диагностика поддержки группы", "file": "PartyDiagnostics.ini", "chronicles": ["epilogue"], "note": "Служебный журнал для проверки поведения выбранных пешек. По умолчанию выключен; после перезапуска игрового сервера.", "keys": [["Enabled", "Записывать диагностику группы"], ["Hunters", "Имена пешек для наблюдения"], ["LogEverySeconds", "Интервал снимков, секунд"], ["MinGapMilliseconds", "Минимальная пауза записей, мс"], ["ReportChanges", "Записывать изменения состояния"]]}, {"title": "Свитки заточки в GM-шопе", "ids": ["gmshopenchants", "gmshopcrystal", "gmshopenhanced", "gmshopancient", "gmshopdivine", "gmshopspecial"], "chronicles": ["epilogue"]}]},
+    {"id": "custom", "head": "Кастом", "title": "Кастом сервера", "about": "Дополнительные правила сервера. Выбор хранится в обычных настройках.", "subs": [{"title": "Автобой", "keys": [["AutoPlayStuckTargetSeconds", "Сменять недоступную цель через, секунд (0 — выкл.)"]]}, {"title": "Магазин", "ids": ["gmshopterritoryflags"], "keys": [["MultisellAmountLimit", "Максимум обменов за одну покупку"]]}, {"title": "Рейд-боссы без уровневых штрафов", "ids": ["epicnopenalty", "raidnopenalty"]}, {"title": "Прежний допуск эпиков по уровню", "ids": ["epiclevelaccess"], "keys": [["EpicQueenAntLevel", "АК — уровень для штрафов"], ["EpicCoreLevel", "Ядро — уровень для штрафов"], ["EpicOrfenLevel", "Орфен — уровень для штрафов"], ["EpicZakenLevel", "Закен — уровень для штрафов"], ["EpicBaiumLevel", "Баюм — уровень для штрафов"], ["EpicAntharasLevel", "Антарас — уровень для штрафов"], ["EpicValakasLevel", "Валакас — уровень для штрафов"], ["EpicFrintezzaLevel", "Фринтезза — уровень для штрафов"], ["EpicBelethLevel", "Белеф — уровень для штрафов"], ["EpicBaylorLevel", "Байлор — уровень для штрафов"], ["EpicEkimusLevel", "Экимус — уровень для штрафов"], ["EpicTiatLevel", "Тиат — уровень для штрафов"], ["EpicChaosGolemLevel", "Голем Хаоса — уровень для штрафов"]]}, {"title": "Играющий GM", "ids": ["playinggm"], "keys": [["PlayingGmDefaultMode", "GM играет по обычным правилам по умолчанию"]], "chronicles": ["epilogue"], "file": "PlayingGm.ini"}, {"title": "Цвета, инвентарь и переносимый вес", "file": "AppearanceServices.ini", "chronicles": ["epilogue"], "note": "После перезапуска игрового сервера. Сохранение не перезапускает его автоматически.", "keys": [["Enabled", "Услуги цвета имени и титула"], ["NameColorPrice", "Цвет имени — цена, адена"], ["TitleColorPrice", "Цвет титула — цена, адена"], ["InventoryExpansionEnabled", "Продажа расширения инвентаря"], ["InventoryExpansionPrice", "Расширение инвентаря — цена, адена"], ["CarryWeightExpansionEnabled", "Продажа грузоподъёмности"], ["CarryWeightExpansionPrice", "Грузоподъёмность — цена покупки, адена"], ["CarryWeightExpansionBonusPercent", "Грузоподъёмность — прибавка за покупку, %"]]}, {"title": "Олимпиада", "file": "OlympiadLocal.ini", "chronicles": ["epilogue"], "note": "После перезапуска игрового сервера. Сохранение не перезапускает его автоматически.", "keys": [["OlympiadReturnDelaySeconds", "Возврат с арены после результата, секунд"], ["OlympiadOpponentHudClass", "Профессия соперника на плашке HP/CP"]]}, {"title": "Выбор уровня навыков", "file": "SkillLevelSelection.ini", "chronicles": ["epilogue", "ct26_highfive"], "note": "После перезапуска игрового сервера. Сохранение не перезапускает его автоматически.", "keys": [["SkillLevelSelectionEnabled", "Выбор изученного уровня навыка через Alt+B"]]}, {"title": "Улучшение PvP-экипировки", "file": "PvpAttributes.ini", "chronicles": ["epilogue"], "note": "После перезапуска игрового сервера. Сохранение не перезапускает его автоматически.", "keys": [["AllowAttributeOnPvpWeapons", "Вставлять атрибут в PvP-оружие"], ["AllowAttributeOnPvpArmor", "Вставлять атрибут в PvP-броню"]]}, {"title": "Улучшение PvP-экипировки", "file": "PvpItemPermissions.ini", "chronicles": ["ct26_highfive"], "note": "После перезапуска игрового сервера. Сохранение не перезапускает его автоматически.", "keys": [["AllowAttributeOnPvpWeapons", "Вставлять атрибут в PvP-оружие"], ["AllowAttributeOnPvpArmor", "Вставлять атрибут в PvP-броню"]]}, {"title": "Передача и продажа PvP-экипировки", "file": "PvpItemPermissions.ini", "chronicles": ["epilogue", "ct26_highfive"], "note": "После перезапуска игрового сервера. Сохранение не перезапускает его автоматически.", "keys": [["AllowPvpItemTrade", "Обмен и частная торговля"], ["AllowPvpItemSale", "Продажа NPC и через услугу продажи"], ["AllowPvpItemWarehouse", "Личный и клановый склад"], ["AllowPvpItemFreight", "Грузовая служба"]]}, {"title": "Тату пешек и помощников", "file": "BotClassKits.ini", "chronicles": ["epilogue", "ct26_highfive"], "note": "После перезапуска игрового сервера. Сохранение не перезапускает его автоматически.", "keys": [["BotClassDyesEnabled", "Классовые тату"], ["BotFighterDyes", "Бойцы — ID тату через запятую"], ["BotTankDyes", "Танки — ID тату через запятую"], ["BotMageDyes", "Маги — ID тату через запятую"], ["BotSupportDyes", "Поддержка — ID тату через запятую"]]}, {"title": "Поддержка группы", "file": "HunterSupport.ini", "chronicles": ["epilogue"], "note": "После перезапуска игрового сервера. Сохранение не перезапускает его автоматически.", "keys": [["ManaPotionsEnabled", "Использовать банки маны"], ["ManaPotionCount", "Запас MP-банок"], ["ManaPotionPercent", "Пить MP-банку ниже, % MP"], ["SpiritOreCount", "Запас Spirit Ore"], ["HolyWaterCount", "Запас Holy Water"], ["HealBeforeRest", "Сначала лечить группу, затем отдыхать"], ["CureDebuffs", "Снимать доступные классу дебафы"], ["PreparePartyBuffs", "Готовить баффы группы"], ["PartyBuffCheckSeconds", "Проверка баффов, секунд"], ["PartyBuffRefreshSeconds", "Обновлять баффы при остатке, секунд"], ["PartySupplyCheckSeconds", "Проверка расходников, секунд"], ["AutoChargeSkills", "Набирать заряды классовых навыков"], ["OffensiveReagentCasts", "Запас реагентов для атакующих навыков, применений"]]}, {"title": "Запас расходников призывных помощников", "file": "PhantomParty.ini", "chronicles": ["epilogue", "ct26_highfive"], "note": "После перезапуска игрового сервера. Сохранение не перезапускает его автоматически.", "keys": [["PersonalCompanionPotionStock", "Запас банок"], ["PersonalCompanionSpiritOreStock", "Запас Spirit Ore"], ["PersonalCompanionHolyWaterStock", "Запас Holy Water"]]}, {"title": "Имена призывных помощников", "file": "PersonalCompanionNames.ini", "chronicles": ["epilogue", "ct26_highfive"], "note": "После перезапуска игрового сервера. Сохранение не перезапускает его автоматически.", "keys": [["healer", "Биш — основное имя"], ["buffer", "Баффер — основное имя"], ["gladiator", "Гладиатор — основное имя"], ["destroyer", "Дестро — основное имя"], ["tyrant", "Тирант — основное имя"], ["warlord", "Варлорд — основное имя"], ["spellhowler", "СХ — основное имя"], ["spellsinger", "СС — основное имя"], ["sorcerer", "Сорк — основное имя"], ["necromancer", "Некромант — основное имя"]]}, {"title": "Дополнительные имена помощников", "file": "PersonalCompanionNamePool.ini", "chronicles": ["epilogue", "ct26_highfive"], "note": "После перезапуска игрового сервера. Сохранение не перезапускает его автоматически.", "keys": [["PreferredNames", "Готовые имена"], ["Prefixes", "Начала имён"], ["Suffixes", "Окончания имён"]]}, {"title": "Автоматические банки игрока", "file": "AutoPotions.ini", "chronicles": ["epilogue"], "note": "После перезапуска игрового сервера. Сохранение не перезапускает его автоматически.", "keys": [["AutoPotionsEnabled", "Разрешить автопоты (.apon)"], ["AutoPotionsInOlympiad", "Автопоты на Олимпиаде"], ["AutoPotionMinimumLevel", "Минимальный уровень"], ["AutoCpEnabled", "Использовать CP-банки"], ["AutoCpPercentage", "Пить CP ниже, %"], ["AutoCpItemIds", "CP-банки — ID через запятую"], ["AutoHpEnabled", "Использовать HP-банки"], ["AutoHpPercentage", "Пить HP ниже, %"], ["AutoHpItemIds", "HP-банки — ID через запятую"], ["AutoMpEnabled", "Использовать MP-банки"], ["AutoMpPercentage", "Пить MP ниже, %"], ["AutoMpItemIds", "MP-банки — ID через запятую"]]}, {"title": "Живое общение пешек", "file": "ChatBank.ini", "chronicles": ["epilogue"], "note": "После перезапуска игрового сервера. Сохранение не перезапускает его автоматически.", "keys": [["ReplyBankEnabled", "Банк ответов пешек"], ["ReplyBankFile", "Файл банка ответов"], ["PartyLongDialogueFile", "Файл длинных диалогов группы"], ["HeroOpenersFile", "Файл начала диалогов героев"], ["CityDialoguesEnabled", "Город — диалоги"], ["CityDialogueFile", "Город — файл диалогов"], ["CityMinimumGapSeconds", "Город — минимальная пауза, секунд"], ["CityMaximumGapSeconds", "Город — максимальная пауза, секунд"], ["CitySpeakerGapSeconds", "Город — пауза одного собеседника, секунд"], ["CityLinesPerHour", "Город — реплик в час"], ["CityMinimumReplyMilliseconds", "Город — минимальная задержка ответа, мс"], ["CityMaximumReplyMilliseconds", "Город — максимальная задержка ответа, мс"], ["PartyDialoguesEnabled", "Группа — диалоги"], ["PartyDialogueFile", "Группа — файл диалогов"], ["PartyMinimumGapSeconds", "Группа — минимальная пауза, секунд"], ["PartyMaximumGapSeconds", "Группа — максимальная пауза, секунд"], ["PartySpeakerGapSeconds", "Группа — пауза одного собеседника, секунд"], ["PartyLinesPerHour", "Группа — реплик в час"], ["PartyMinimumReplyMilliseconds", "Группа — минимальная задержка ответа, мс"], ["PartyMaximumReplyMilliseconds", "Группа — максимальная задержка ответа, мс"], ["ClanDialoguesEnabled", "Клан — диалоги"], ["ClanDialogueFile", "Клан — файл диалогов"], ["ClanMinimumGapSeconds", "Клан — минимальная пауза, секунд"], ["ClanMaximumGapSeconds", "Клан — максимальная пауза, секунд"], ["ClanSpeakerGapSeconds", "Клан — пауза одного собеседника, секунд"], ["ClanLinesPerHour", "Клан — реплик в час"], ["ClanMinimumReplyMilliseconds", "Клан — минимальная задержка ответа, мс"], ["ClanMaximumReplyMilliseconds", "Клан — максимальная задержка ответа, мс"], ["HeroDialoguesEnabled", "Герои — диалоги"], ["HeroDialogueFile", "Герои — файл диалогов"], ["HeroMinimumGapSeconds", "Герои — минимальная пауза, секунд"], ["HeroMaximumGapSeconds", "Герои — максимальная пауза, секунд"], ["HeroSpeakerGapSeconds", "Герои — пауза одного собеседника, секунд"], ["HeroLinesPerHour", "Герои — реплик в час"], ["HeroMinimumReplyMilliseconds", "Герои — минимальная задержка ответа, мс"], ["HeroMaximumReplyMilliseconds", "Герои — максимальная задержка ответа, мс"], ["HeroSoloMinimumGapSeconds", "Герои — минимальная пауза одиночной реплики, секунд"], ["HeroSoloMaximumGapSeconds", "Герои — максимальная пауза одиночной реплики, секунд"]]}, {"title": "Кланы", "ids": ["instantclanleader"]}, {"title": "Набор и поддержка пешек", "file": "PhantomHunters.ini", "chronicles": ["epilogue"], "note": "Сохраняются текущие значения. Если файл не заявляет горячее применение, нужен перезапуск игрового сервера.", "keys": [["HunterClanInvitePriority", "Приоритет приглашения от соклана"], ["HunterPartyNoblesse", "Ноблес для участников группы"], ["HunterSupportCures", "Классовое снятие дебафов поддержки"], ["HunterTvtEventMax", "Максимум пешек на TVT"], ["HunterOlympiadPreparation", "Классовая подготовка к Олимпиаде"]]}, {"title": "Перемирие кланов", "file": "PhantomHunters.ini", "chronicles": ["epilogue"], "note": "После перезапуска игрового сервера. 0 сохраняет отсутствие дополнительного срока перемирия.", "keys": [["HunterClanWarTruceHours", "Перемирие после клановой войны, часов"]]}, {"title": "Диагностика поддержки группы", "file": "PartyDiagnostics.ini", "chronicles": ["epilogue"], "note": "Служебный журнал для проверки поведения выбранных пешек. По умолчанию выключен; после перезапуска игрового сервера.", "keys": [["Enabled", "Записывать диагностику группы"], ["Hunters", "Имена пешек для наблюдения"], ["LogEverySeconds", "Интервал снимков, секунд"], ["MinGapMilliseconds", "Минимальная пауза записей, мс"], ["ReportChanges", "Записывать изменения состояния"]]}, {"title": "Свитки заточки в GM-шопе", "ids": ["gmshopenchants", "gmshopcrystal", "gmshopenhanced", "gmshopancient", "gmshopdivine", "gmshopspecial"], "chronicles": ["epilogue"]}]},
     {"id": "entry", "head": "Служебное", "title": "Вход и права GM", "short": "Вход и GM", "about": "Что видит игрок при входе и какие права у GM.", "subs": [{"title": "Вход", "ids": ["licence"], "keys": [["ScreenWelcomeMessageEnable", "Сообщение на экране при входе", null, "ScreenWelcomeMessageText"], ["ShowServerNews", "Окно новостей при входе"], ["CustomStartingLocation", "Новые персонажи — в Гиран"]]}, {"title": "Играющий GM", "ids": ["playinggm"], "keys": [["PlayingGmDefaultMode", "GM играет по обычным правилам по умолчанию"]], "excludeChronicles": ["epilogue"]}, {"title": "Права GM", "keys": [["EverybodyHasAdminRights", "Все игроки — админы"], ["GMStartupInvisible", "GM входит невидимым"], ["GMStartupInvulnerable", "GM входит бессмертным"], ["GMStartupSilence", "GM без личных сообщений"], ["GMStartupDietMode", "GM без перевеса"]]}]}
   ],
   "switches": [
+    {"id": "event-engine", "title": "Общая очередь боевых событий", "note": "Включает расписание массовой охоты, обороны Гирана и охоты на сильнейшего. Не отключает задания, кошелёк, магазин или обычные фарм-споты. PvP Mobius, календарь и эльпи имеют свои выключатели.", "file": "L2HubX10.ini", "key": "EventsEnabled", "restart": "game", "bulk": false, "technical": false},
+    {"id": "event-contracts-enabled", "title": "Новые ежедневные и недельные задания", "note": "До пяти ежедневных и пятнадцать недельных поручений. Работают независимо от боевых событий.", "file": "L2HubX10.ini", "key": "ContractsEnabled", "restart": "game", "bulk": false, "technical": false},
+    {"id": "event-coin-drop", "title": "Монеты с обычных мобов", "note": "Включает только шанс добычи одной монеты при обычной охоте. Награды событий и заданий, кошелёк и магазин работают независимо.", "file": "L2HubX10.ini", "key": "CoinDropEnabled", "restart": "game", "bulk": false, "technical": false},
+    {"id": "x10-hunters", "title": "Боты помогают в ивентах", "note": "Свободные охотники дополняют группы. В охоте на сильнейшего сама цель всегда бот, даже если помощь ботов выключена.", "file": "L2HubX10.ini", "key": "EventHuntersEnabled", "restart": "game", "bulk": false, "technical": false},
+    {"id": "x10-farm", "title": "Включить: Массовая охота", "note": "Запускает этот формат по расписанию. После выключения он не объявляется, запись и GM-тест недоступны. Остальные события продолжают работать.", "file": "L2HubX10.ini", "key": "FarmEnabled", "restart": "game", "bulk": false, "technical": false},
+    {"id": "x10-defence", "title": "Включить: Оборона Гирана", "note": "Запускает этот формат по расписанию. После выключения он не объявляется, запись и GM-тест недоступны. Остальные события продолжают работать.", "file": "L2HubX10.ini", "key": "DefenceEnabled", "restart": "game", "bulk": false, "technical": false},
+    {"id": "x10-hunt", "title": "Включить: Охота на сильнейшего", "note": "Запускает этот формат по расписанию. После выключения он не объявляется, запись и GM-тест недоступны. Остальные события продолжают работать.", "file": "L2HubX10.ini", "key": "HuntEnabled", "restart": "game", "bulk": false, "technical": false},
+    {"id": "x10-retreat", "title": "Цель отступает при низком HP", "note": "Бот отходит от ближайшего преследователя, когда его HP ниже заданного порога. Решение проверяется раз в 5 секунд.", "file": "L2HubX10.ini", "key": "HuntRetreatEnabled", "restart": "game", "bulk": false, "technical": false},
+    {"id": "x10-spots", "title": "Дополнительные фарм-споты", "note": "Каталог в Alt+B → Телепорт и дополнительные пачки. Самостоятельный выключатель: остановка ивентов не отключает фарм.", "file": "L2HubX10.ini", "key": "FarmSpotsEnabled", "restart": "game", "bulk": false, "technical": false},
     {"id": "gmshopenchants", "title": "Ограничить виды свитков в GM-шопе", "note": "По умолчанию продаются только обычные и благословенные. Дополнительные виды включаются ниже; выключение этого правила разрешит все виды. Применяется после перезапуска сервера.", "file": "GmShopEnchantScrolls.ini", "key": "GmShopEnchantPolicyEnabled", "restart": "game", "bulk": false, "chronicles": ["epilogue"]},
     {"id": "gmshopcrystal", "title": "Кристальные свитки", "note": "Разрешить продажу кристальных свитков заточки в GM-шопе, включая разделы за медали. Шансы заточки прежние.", "file": "GmShopEnchantScrolls.ini", "key": "GmShopAllowCrystalScrolls", "restart": "game", "bulk": false, "chronicles": ["epilogue"]},
     {"id": "gmshopenhanced", "title": "Улучшенные свитки", "note": "Разрешить продажу улучшенных свитков с повышенной вероятностью заточки. Шансы заточки прежние.", "file": "GmShopEnchantScrolls.ini", "key": "GmShopAllowEnhancedScrolls", "restart": "game", "bulk": false, "chronicles": ["epilogue"]},
     {"id": "gmshopancient", "title": "Древние свитки", "note": "Разрешить продажу древних свитков, сохраняющих заточку при неудаче. Шансы заточки прежние.", "file": "GmShopEnchantScrolls.ini", "key": "GmShopAllowAncientScrolls", "restart": "game", "bulk": false, "chronicles": ["epilogue"]},
+    {"id": "gmshopterritoryflags", "title": "Территориальные флаги и варды в GM-шопе", "note": "Разрешить продажу территориальных флагов и вардов игрокам и NPC. По умолчанию выключено. Применяется после перезапуска сервера.", "file": "GmShopTerritory.ini", "key": "GmShopAllowTerritoryFlags", "restart": "game", "bulk": false, "chronicles": ["ct26_highfive"]},
     {"id": "gmshopdivine", "title": "Божественные свитки", "note": "Разрешить продажу божественных свитков со стопроцентной заточкой. Определения предметов прежние.", "file": "GmShopEnchantScrolls.ini", "key": "GmShopAllowDivineScrolls", "restart": "game", "bulk": false, "chronicles": ["epilogue"]},
     {"id": "gmshopspecial", "title": "Особые и событийные свитки", "note": "Разрешить продажу специальных свитков для отдельных предметов, ПК-клуба и событий. Действует только в GM-шопе.", "file": "GmShopEnchantScrolls.ini", "key": "GmShopAllowSpecialScrolls", "restart": "game", "bulk": false, "chronicles": ["epilogue"]},
     {"id": "instantclanleader", "title": "Мгновенная передача лидерства клана", "note": "После перезапуска: новые допустимые заявки исполняются сразу. Ранее поданные отложенные заявки сохраняют штатную обработку; включение не исполняет их разом. Проверки получателя и клана прежние.", "file": "Player.ini", "key": "AltClanLeaderInstantActivation", "restart": "game", "bulk": false},
@@ -43,6 +341,7 @@
     {"id": "fakestores", "title": "Лавки и ряды фейков", "note": "торговцев и скупщиков можно щёлкнуть: настоящее окно лавки, в Гиране — торговые ряды; выключено — только вывески", "file": "L2HubTownFakes.ini", "key": "TownFakesStores", "restart": "game"},
     {"id": "fakemarket", "title": "Рынок с памятью цен", "note": "спрос и дефицит двигают цены лавок фейков, торговцы говорят о ценах, фейки торгуют между собой; цены магазинов не меняются; работает вместе с лавками фейков", "file": "L2HubTownFakes.ini", "key": "TownFakesMarketMemory", "restart": "game"},
     {"id": "hunterenchant", "title": "Заточки пешек", "note": "пешки точат настоящими свитками и ломают вещи; заметное идёт в трейд и в летопись", "file": "PhantomHunters.ini", "key": "HunterEnchant"},
+    {"id": "shopprices", "title": "Покупки по ценам GM-шопа", "note": "пешки платят за шмот, бижу, расходники, свитки и краски столько же, сколько ты в GM-шопе, с правками цен и множителями режима; что там только за жетоны, не покупают. Выключи — будут платить цену предмета, как раньше. После перезапуска игрового сервера", "file": "PhantomHunters.ini", "key": "HunterShopPrices", "excludeChronicles": ["epilogue"]},
     {"id": "hunterfriends", "title": "Пешки в друзьях", "note": "пешка отвечает на заявку в друзья и видна в сети", "file": "PhantomHunters.ini", "key": "HunterFriends"},
     {"id": "huntertrade", "title": "Обмен с пешками", "note": "пешка идёт в /trade: платит адену за вещи и принимает подарки; продаёт по-прежнему только лавкой", "file": "PhantomHunters.ini", "key": "HunterTrade"},
     {"id": "chatflow", "title": "Поток в торговом чате", "note": "пешки пишут WTS и WTB из своих лавок и отвечают друг другу там, где есть ты: 60 строк в час на регион", "file": "PhantomHunters.ini", "key": "HunterChatFlowPerHour", "on": "60", "off": "0", "anyOn": true},
@@ -71,12 +370,13 @@
     {"id": "farwhisper", "title": "Знакомый пишет издалека", "note": "друг или старый знакомый сам пишет шёпотом с другого конца мира", "file": "PhantomHunters.ini", "key": "HunterFarWhisper", "brain": true},
     {"id": "gestures", "title": "Жесты пешек", "note": "машут при встрече, празднуют победу, отвечают на твой жест, от скуки жестикулируют в городе", "file": "PhantomHunters.ini", "key": "HunterGestures"},
     {"id": "gifts", "title": "Подарки новичкам", "note": "пешка много старше зовёт живого новичка до 25-го уровня в обмен и кладёт адену и шоты; отказ уважает, твоих вещей не берёт", "file": "PhantomHunters.ini", "key": "HunterGifts"},
+    {"id": "veterans", "title": "Старожилы с готовыми уровнями", "note": "новая пешка из таблицы старожилов и призывателей рождается сразу своего уровня, со шмотом и аденой; выключи для честного x1 — придут с 1-го и будут качаться сами. Действует на тех, кого ещё нет в мире: живущих не трогает, вайпа не делает", "file": "PhantomHunters.ini", "key": "HunterVeterans"},
     {"id": "mentors", "title": "Наставники новичков", "note": "пешка от 40-го подходит к живому новичку до 20-го: подсказывает спот по уровню, отдаёт из сумки банки и шоты, бафер бафает; на High Five ещё зовёт в пати на 10–20 минут и не забирает опыт. Отказ запоминает", "file": "PhantomHunters.ini", "key": "HunterMentors"},
     {"id": "lootfights", "title": "Разборки за дроп", "note": "заметная вещь досталась пешке в пати: сосед предъявляет, иногда уходит. С живым в пати — только слова", "file": "PhantomHunters.ini", "key": "HunterLootFights"},
     {"id": "scams", "title": "Кидалы в трейде", "note": "«кинул в трейде» между пешками в городе, настоящая адена, жертва кричит в торговый чат. Живого не кидают никогда", "file": "PhantomHunters.ini", "key": "HunterScams"},
     {"id": "petition", "title": "Ответ на петицию", "note": "когда GM нет, сервер сам отвечает, что пишет программа, и даёт подсказку; текст ложится в log/L2HubPetitions.log", "file": "PhantomHunters.ini", "key": "PetitionAnswer"},
     {"id": "calendar", "title": "Сезонные события по календарю", "note": "L2 Day, Heavy Medal, Рождество и другие", "file": "L2HubEvents.ini", "key": "Enabled"},
-    {"id": "daily", "title": "Поручения дня (.daily)", "note": "задания на день с наградой", "file": "L2HubWorld.ini", "key": "WorldDaily"},
+    {"id": "daily", "title": "Поручения дня (.daily)", "note": "Прежние поручения дня. На High Five используются, если новая система ежедневных и недельных заданий выключена.", "file": "L2HubWorld.ini", "key": "WorldDaily"},
     {"id": "raids", "title": "Рейды пешек на РБ", "note": "пешки собираются и идут на рейд-боссов", "file": "PhantomHunters.ini", "key": "HunterRaids"},
     {"id": "pvpevents", "title": "PvP-ивенты по расписанию", "note": "TvT, Deathmatch, CtF — пешки записываются; только при живом игроке", "file": "L2HubEvents.ini", "key": "PvpEvents"},
     {"id": "hunterpvp", "title": "Пешки на PvP-ивентах", "note": "сами записываются на TvT, Deathmatch и CtF; без них одному игроку участников не набрать", "file": "PhantomHunters.ini", "key": "HunterPvpEvents"},
@@ -92,55 +392,36 @@
     {"id": "huntpass", "title": "L2 Pass", "note": "награды за охоту по сезону (Essence)", "file": "HuntPass.ini", "key": "EnabledHuntPass"},
     {"id": "magiclamp", "title": "Волшебная лампа", "note": "копит опыт охоты и дарит бонус (Essence). Осторожно: у Mobius до 45-го уровня лампа полна за пару десятков убийств и даёт 100–800 тыс. опыта — с 6-го сразу 34–47-й, у пешек тоже. Режимы её не включают", "file": "MagicLamp.ini", "key": "MagicLampEnabled", "bulk": false},
     {"id": "npcinfo", "title": "Уровень и агрессия моба", "note": "в окне цели; Shift+клик по NPC — подробности", "file": "NPC.ini", "keys": ["ShowNpcLevel", "ShowNpcAggression", "AltGameViewNpc"]},
-    {"id": "licence", "title": "Соглашение на входе", "note": "окно лицензии перед списком серверов", "part": "login", "file": "Server.ini", "key": "ShowLicence", "restart": "login"}
+    {"id": "licence", "title": "Соглашение на входе", "note": "окно лицензии перед списком серверов", "part": "login", "file": "Server.ini", "key": "ShowLicence", "restart": "login"},
+    {"id": "adena-always", "title": "Адена с каждого обычного моба", "note": "Гарантирует денежный дроп, если он есть у этого вида монстров. Количество по текущему рейту; прочие предметы не меняются.", "file": "L2HubX10.ini", "key": "AdenaAlwaysDrop", "restart": "game", "bulk": false, "technical": false}
   ],
   "huntersMax": {"title": "Пешек в мире", "note": "В мире живут первые по таблице, остальные выходят и ждут в базе: их уровни, кланы, друзья и память целы, вернёшь число — войдут теми же. Глава клана, оставшийся за чертой, клан не теряет, но клан без него не растёт. Применится на ходу, без перезапуска. Около 3 ГБ кучи занимает сам мир с геодатой, каждая сотня пешек — ещё около 0,25 ГБ: при куче 8 ГБ это не упор, а при 4 ГБ мир встаёт уже на 150. Сколько потянет эта машина, лаунчер считает сам и подсказывает рядом.", "file": "PhantomHunters.ini", "key": "HuntersMax", "chronicles": ["ct26_highfive", "epilogue", "interlude"]},
   "rates": {
     "file": "Rates.ini",
-    "xp": ["RateXp", "RateQuestRewardXP"],
-    "sp": ["RateSp", "RateQuestRewardSP"],
-    "adena": ["@adena", "RateQuestRewardAdena"],
-    "drop": ["DeathDropAmountMultiplier"],
-    "spoil": ["SpoilDropAmountMultiplier"]
+    "xp": [
+      "RateXp",
+      "RateQuestRewardXP"
+    ],
+    "sp": [
+      "RateSp",
+      "RateQuestRewardSP"
+    ],
+    "adena": [
+      "@adena",
+      "RateQuestRewardAdena"
+    ],
+    "drop": [
+      "DeathDropAmountMultiplier"
+    ],
+    "spoil": [
+      "SpoilDropAmountMultiplier"
+    ]
   },
   "modes": [
-    {"id": "hardcore", "short": "как на официале: всё x1, без удобств", "title": "Хардкор", "note": "как на официале: всё x1, без баффера, GM-шопа, долгих бафов, чемпионов и поручений дня, без телепорта и хила с доски Alt+B, без автоподбора дропа и автоизучения скиллов, сабкласс — квестом, страйдер и виверна — не даром, эпики — по официальному расписанию, в Четыре гробницы — пати от четырёх, в Разлом — фрагменты у каждого, без мастера дворянства",
-     "rates": {"xp": 1, "sp": 1, "adena": 1, "drop": 1, "spoil": 1},
-     "switches": {"buffer": false, "gmshop": false, "starterkits": false, "durations": false, "champions": false, "daily": false, "pvpevents": false, "rbannounce": false, "superchampion": false, "elpies": false, "freemounts": false, "autopotions": false, "offlineplay": false, "unstuck": false, "classmaster": false, "smallepics": false, "smallclans": false, "sepulchers": false, "rift": false, "noblesse": false, "attendance": true, "lcoin": true, "huntpass": true},
-     "settings": {"Rates.ini": {"RatePartyXp": "1", "RatePartySp": "1", "DeathDropChanceMultiplier": "1", "SpoilDropChanceMultiplier": "1", "RateKarmaLost": "-1"},
-                  "Player.ini": {"AutoLoot": "False", "AutoLootHerbs": "False", "AutoLearnSkills": "False", "AltSubClassWithoutQuests": "False", "AltKarmaPlayerCanShop": "False", "RunSpeedBoost": "0"},
-                  "L2HubWorld.ini": {"PlayerPAtkSpeedMultiplier": "1.0", "PlayerMAtkSpeedMultiplier": "1.0"},
-                  "CommunityBoard.ini": {"CommunityEnableTeleports": "False", "CommunityEnableHeal": "False", "CommunityEnableBuffs": "False"}},
-     "chronicles": {"classic_tales": {"Player.ini": {"EnableVitality": "False"}}}},
-    {"id": "x10", "short": "опыт x15 → x1 по уровню, адена x5, дроп и спойл x3, быстрее бег и бой", "title": "x10", "note": "быстрый старт, медленный топ: опыт падает с x15 до x1 по уровню. GM-шоп до B по обычной цене, A ×5, S и выше ×20 — топ фармят, спойлят и крафтят; бег +20 %, атака и каст +10 %",
-     "rates": {"xp": 10, "sp": 10, "adena": 5, "drop": 3, "spoil": 3},
-     "switches": {"buffer": true, "gmshop": true, "starterkits": true, "durations": true, "champions": true, "rbannounce": true, "superchampion": true, "autopotions": true, "classmaster": true, "smallepics": false, "smallclans": true, "sepulchers": true, "rift": true, "noblesse": true, "attendance": true, "lcoin": true, "huntpass": false},
-     "dynamicExp": [[1, 15, 15], [21, 12, 12], [41, 10, 10], [53, 8, 8], [62, 5, 6], [76, 3, 5], [80, 1, 3]],
-     "gmshopGrades": {"A": 5, "S": 20, "S80": 20, "S84": 20},
-     "settings": {"Rates.ini": {"RatePartyXp": "1", "RatePartySp": "1", "DeathDropChanceMultiplier": "1", "SpoilDropChanceMultiplier": "1", "RateKarmaLost": "1"},
-                  "Player.ini": {"AutoLoot": "True", "AutoLootHerbs": "True", "AutoLearnSkills": "True", "AltSubClassWithoutQuests": "True", "RunSpeedBoost": "25"},
-                  "L2HubWorld.ini": {"PlayerPAtkSpeedMultiplier": "1.1", "PlayerMAtkSpeedMultiplier": "1.1"},
-                  "CommunityBoard.ini": {"CommunityEnableTeleports": "True", "CommunityEnableHeal": "True", "CommunityEnableBuffs": "True"}},
-     "chronicles": {"classic_tales": {"Player.ini": {"EnableVitality": "True"}}}},
-    {"id": "pvpcraft", "short": "опыт и SP x50, адена x10, дроп и спойл x5", "title": "PvP-крафт", "note": "опыт и SP x50, адена x10, дроп и спойл x5 — быстрый кач, крафт ещё важен",
-     "rates": {"xp": 50, "sp": 50, "adena": 10, "drop": 5, "spoil": 5},
-     "switches": {"buffer": true, "gmshop": true, "starterkits": true, "durations": true, "champions": true, "rbannounce": true, "superchampion": true, "autopotions": true, "classmaster": true, "smallepics": true, "smallclans": true, "sepulchers": true, "rift": true, "noblesse": true, "attendance": true, "lcoin": true, "huntpass": true},
-     "settings": {"Rates.ini": {"RatePartyXp": "1", "RatePartySp": "1", "DeathDropChanceMultiplier": "1", "SpoilDropChanceMultiplier": "1", "RateKarmaLost": "-1"},
-                  "Player.ini": {"AutoLoot": "True", "AutoLootHerbs": "True", "AutoLearnSkills": "True", "AltSubClassWithoutQuests": "True", "RunSpeedBoost": "0"},
-                  "L2HubWorld.ini": {"PlayerPAtkSpeedMultiplier": "1.0", "PlayerMAtkSpeedMultiplier": "1.0"},
-                  "CommunityBoard.ini": {"CommunityEnableTeleports": "True", "CommunityEnableHeal": "True", "CommunityEnableBuffs": "True"}},
-     "chronicles": {"classic_tales": {"Player.ini": {"EnableVitality": "True"}}}},
-    {"id": "pvp", "short": "опыт, SP и адена x1000, дроп и спойл x10", "title": "PvP", "note": "опыт, SP и адена x1000, дроп и спойл x10 — сразу в PvP",
-     "rates": {"xp": 1000, "sp": 1000, "adena": 1000, "drop": 10, "spoil": 10},
-     "switches": {"buffer": true, "gmshop": true, "starterkits": true, "durations": true, "champions": true, "pvpevents": true, "rbannounce": true, "superchampion": true, "autopotions": true, "classmaster": true, "smallepics": true, "smallclans": true, "sepulchers": true, "rift": true, "noblesse": true, "attendance": true, "lcoin": true, "huntpass": true},
-     "settings": {"Rates.ini": {"RatePartyXp": "1", "RatePartySp": "1", "DeathDropChanceMultiplier": "1", "SpoilDropChanceMultiplier": "1", "RateKarmaLost": "-1"},
-                  "Player.ini": {"AutoLoot": "True", "AutoLootHerbs": "True", "AutoLearnSkills": "True", "AltSubClassWithoutQuests": "True", "RunSpeedBoost": "0"},
-                  "L2HubWorld.ini": {"PlayerPAtkSpeedMultiplier": "1.0", "PlayerMAtkSpeedMultiplier": "1.0"},
-                  "CommunityBoard.ini": {"CommunityEnableTeleports": "True", "CommunityEnableHeal": "True", "CommunityEnableBuffs": "True"}},
-     "chronicles": {"classic_tales": {"Player.ini": {"EnableVitality": "True"}}}},
-    {"id": "live", "short": "мир живёт как старый сервер с онлайном, рейты не меняет", "title": "Живой сервер", "note": "всё, от чего мир живёт как старый сервер с онлайном: настоящие сутки, завсегдатаи, очередь за РБ, караул у респа и отбор занятого, споры за спот, лавки и рынок, поток в трейде, заточки, друзья и обмен, кланы и осады, истории и перерывы, случайности людей, просьбы встреченных, шёпот издалека и жесты, PvP-ивенты, мир при выключенном сервере. Рейты не меняет и сочетается с другими режимами",
-     "rates": {},
-     "switches": {"fakes": true, "fakestores": true, "fakemarket": true, "hunterenchant": true, "hunterfriends": true, "huntertrade": true, "chatflow": true, "welcome": true, "claninvite": true, "clantitles": true, "clanally": true, "clantop": true, "clandrama": true, "clanwarreply": true, "clanrecruit": true, "clancrests": true, "dailyrhythm": true, "regulars": true, "raidrivals": true, "spotdisputes": true, "raidtakebusy": true, "raidwatch": true, "sieges": true, "stories": true, "absences": true, "favors": true, "farwhisper": true, "gestures": true, "gifts": true, "mentors": true, "lootfights": true, "scams": true, "petition": true, "offlineworld": true, "pvpevents": true, "hunterpvp": true},
-     "settings": {}, "chronicles": {}}
+    {"id": "hardcore", "short": "как на официале: всё x1, без удобств", "title": "Хардкор", "note": "как на официале: всё x1, без баффера, GM-шопа, долгих бафов, чемпионов и поручений дня, без телепорта и хила с доски Alt+B, без автоподбора дропа и автоизучения скиллов, сабкласс — квестом, страйдер и виверна — не даром, эпики — по официальному расписанию, в Четыре гробницы — пати от четырёх, в Разлом — фрагменты у каждого, без мастера дворянства", "rates": {"xp": 1, "sp": 1, "adena": 1, "drop": 1, "spoil": 1}, "switches": {"buffer": false, "gmshop": false, "starterkits": false, "durations": false, "champions": false, "daily": false, "pvpevents": false, "rbannounce": false, "superchampion": false, "elpies": false, "freemounts": false, "autopotions": false, "offlineplay": false, "unstuck": false, "classmaster": false, "smallepics": false, "smallclans": false, "sepulchers": false, "rift": false, "noblesse": false, "attendance": true, "lcoin": true, "huntpass": true}, "settings": {"Rates.ini": {"RatePartyXp": "1", "RatePartySp": "1", "DeathDropChanceMultiplier": "1", "SpoilDropChanceMultiplier": "1", "RateKarmaLost": "-1"}, "Player.ini": {"AutoLoot": "False", "AutoLootHerbs": "False", "AutoLearnSkills": "False", "AltSubClassWithoutQuests": "False", "AltKarmaPlayerCanShop": "False", "RunSpeedBoost": "0"}, "L2HubWorld.ini": {"PlayerPAtkSpeedMultiplier": "1.0", "PlayerMAtkSpeedMultiplier": "1.0"}, "CommunityBoard.ini": {"CommunityEnableTeleports": "False", "CommunityEnableHeal": "False", "CommunityEnableBuffs": "False"}}, "chronicles": {"ct26_highfive": {"L2HubX10.ini": {"EventsEnabled": "False", "ContractsEnabled": "False", "CoinDropEnabled": "False", "FarmSpotsEnabled": "False", "AdenaAlwaysDrop": "False"}, "ChampionMonsters.ini": {"ChampionRewardItems": "40001,25", "SuperChampionRewardItems": "40001,250"}}, "classic_tales": {"Player.ini": {"EnableVitality": "False"}}}},
+    {"id": "x10", "short": "опыт x15 → x1 по уровню, адена x5, дроп и спойл x3, быстрее бег и бой", "title": "x10", "note": "быстрый старт, медленный топ: опыт падает с x15 до x1 по уровню. GM-шоп до B по обычной цене, A ×5, S и выше ×20. На High Five: атака и каст +15 %, групповые XP/SP ×1,5, шансы дропа/спойла ×2, отмывание кармы ×0,5; эпики малого мира включены", "rates": {"xp": 10, "sp": 10, "adena": 5, "drop": 3, "spoil": 3}, "switches": {"buffer": true, "gmshop": true, "starterkits": true, "durations": true, "champions": true, "rbannounce": true, "superchampion": true, "autopotions": true, "classmaster": true, "smallclans": true, "sepulchers": true, "rift": true, "noblesse": true, "attendance": true, "lcoin": true, "huntpass": false}, "dynamicExp": [[1, 15, 15], [21, 12, 12], [41, 10, 10], [53, 8, 8], [62, 5, 6], [76, 3, 5], [80, 1, 3]], "gmshopGrades": {"A": 5, "S": 20, "S80": 20, "S84": 20}, "settings": {"Rates.ini": {"RatePartyXp": "1", "RatePartySp": "1", "DeathDropChanceMultiplier": "1", "SpoilDropChanceMultiplier": "1", "RateKarmaLost": "1"}, "Player.ini": {"AutoLoot": "True", "AutoLootHerbs": "True", "AutoLearnSkills": "True", "AltSubClassWithoutQuests": "True", "RunSpeedBoost": "25"}, "L2HubWorld.ini": {"PlayerPAtkSpeedMultiplier": "1.1", "PlayerMAtkSpeedMultiplier": "1.1"}, "CommunityBoard.ini": {"CommunityEnableTeleports": "True", "CommunityEnableHeal": "True", "CommunityEnableBuffs": "True"}, "GrandBoss.ini": {"SmallWorldEpics": "False"}}, "chronicles": {"ct26_highfive": {"L2HubX10.ini": {"EventsEnabled": "True", "ContractsEnabled": "True", "CoinDropEnabled": "True", "FarmSpotsEnabled": "True", "AdenaAlwaysDrop": "True"}, "Rates.ini": {"RatePartyXp": "1.5", "RatePartySp": "1.5", "RateKarmaLost": "0.5", "DeathDropChanceMultiplier": "2", "SpoilDropChanceMultiplier": "2"}, "L2HubWorld.ini": {"PlayerPAtkSpeedMultiplier": "1.15", "PlayerMAtkSpeedMultiplier": "1.15"}, "GrandBoss.ini": {"SmallWorldEpics": "True"}, "General.ini": {"EverybodyHasAdminRights": "False", "ServerGMOnly": "False"}, "ChampionMonsters.ini": {"ChampionRewardItems": "40001,25", "SuperChampionRewardItems": "40001,250"}}, "classic_tales": {"Player.ini": {"EnableVitality": "True"}}}},
+    {"id": "pvpcraft", "short": "опыт и SP x50, адена x10, дроп и спойл x5", "title": "PvP-крафт", "note": "опыт и SP x50, адена x10, дроп и спойл x5 — быстрый кач, крафт ещё важен", "rates": {"xp": 50, "sp": 50, "adena": 10, "drop": 5, "spoil": 5}, "switches": {"buffer": true, "gmshop": true, "starterkits": true, "durations": true, "champions": true, "rbannounce": true, "superchampion": true, "autopotions": true, "classmaster": true, "smallepics": true, "smallclans": true, "sepulchers": true, "rift": true, "noblesse": true, "attendance": true, "lcoin": true, "huntpass": true}, "settings": {"Rates.ini": {"RatePartyXp": "1", "RatePartySp": "1", "DeathDropChanceMultiplier": "1", "SpoilDropChanceMultiplier": "1", "RateKarmaLost": "-1"}, "Player.ini": {"AutoLoot": "True", "AutoLootHerbs": "True", "AutoLearnSkills": "True", "AltSubClassWithoutQuests": "True", "RunSpeedBoost": "0"}, "L2HubWorld.ini": {"PlayerPAtkSpeedMultiplier": "1.0", "PlayerMAtkSpeedMultiplier": "1.0"}, "CommunityBoard.ini": {"CommunityEnableTeleports": "True", "CommunityEnableHeal": "True", "CommunityEnableBuffs": "True"}}, "chronicles": {"ct26_highfive": {"L2HubX10.ini": {"EventsEnabled": "False", "ContractsEnabled": "False", "CoinDropEnabled": "False", "FarmSpotsEnabled": "False", "AdenaAlwaysDrop": "False"}, "ChampionMonsters.ini": {"ChampionRewardItems": "40001,25", "SuperChampionRewardItems": "40001,250"}}, "classic_tales": {"Player.ini": {"EnableVitality": "True"}}}},
+    {"id": "pvp", "short": "опыт, SP и адена x1000, дроп и спойл x10", "title": "PvP", "note": "опыт, SP и адена x1000, дроп и спойл x10 — сразу в PvP", "rates": {"xp": 1000, "sp": 1000, "adena": 1000, "drop": 10, "spoil": 10}, "switches": {"buffer": true, "gmshop": true, "starterkits": true, "durations": true, "champions": true, "pvpevents": true, "rbannounce": true, "superchampion": true, "autopotions": true, "classmaster": true, "smallepics": true, "smallclans": true, "sepulchers": true, "rift": true, "noblesse": true, "attendance": true, "lcoin": true, "huntpass": true}, "settings": {"Rates.ini": {"RatePartyXp": "1", "RatePartySp": "1", "DeathDropChanceMultiplier": "1", "SpoilDropChanceMultiplier": "1", "RateKarmaLost": "-1"}, "Player.ini": {"AutoLoot": "True", "AutoLootHerbs": "True", "AutoLearnSkills": "True", "AltSubClassWithoutQuests": "True", "RunSpeedBoost": "0"}, "L2HubWorld.ini": {"PlayerPAtkSpeedMultiplier": "1.0", "PlayerMAtkSpeedMultiplier": "1.0"}, "CommunityBoard.ini": {"CommunityEnableTeleports": "True", "CommunityEnableHeal": "True", "CommunityEnableBuffs": "True"}}, "chronicles": {"ct26_highfive": {"L2HubX10.ini": {"EventsEnabled": "False", "ContractsEnabled": "False", "CoinDropEnabled": "False", "FarmSpotsEnabled": "False", "AdenaAlwaysDrop": "False"}, "ChampionMonsters.ini": {"ChampionRewardItems": "40001,25", "SuperChampionRewardItems": "40001,250"}}, "classic_tales": {"Player.ini": {"EnableVitality": "True"}}}},
+    {"id": "live", "short": "мир живёт как старый сервер с онлайном, рейты не меняет", "title": "Живой сервер", "note": "всё, от чего мир живёт как старый сервер с онлайном: настоящие сутки, завсегдатаи, очередь за РБ, караул у респа и отбор занятого, споры за спот, лавки и рынок, поток в трейде, заточки, друзья и обмен, кланы и осады, истории и перерывы, случайности людей, просьбы встреченных, шёпот издалека и жесты, PvP-ивенты, мир при выключенном сервере. Рейты не меняет и сочетается с другими режимами", "rates": {}, "switches": {"fakes": true, "fakestores": true, "fakemarket": true, "hunterenchant": true, "hunterfriends": true, "huntertrade": true, "chatflow": true, "welcome": true, "claninvite": true, "clantitles": true, "clanally": true, "clantop": true, "clandrama": true, "clanwarreply": true, "clanrecruit": true, "clancrests": true, "dailyrhythm": true, "regulars": true, "raidrivals": true, "spotdisputes": true, "raidtakebusy": true, "raidwatch": true, "sieges": true, "stories": true, "absences": true, "favors": true, "farwhisper": true, "gestures": true, "gifts": true, "mentors": true, "lootfights": true, "scams": true, "petition": true, "offlineworld": true, "pvpevents": true, "hunterpvp": true}, "settings": {}, "chronicles": {}}
   ]
 }

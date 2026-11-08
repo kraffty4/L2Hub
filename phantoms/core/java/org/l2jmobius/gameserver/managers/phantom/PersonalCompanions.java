@@ -20,17 +20,17 @@ public final class PersonalCompanions {
  public static void afterRevive(Player p){
   if(p==null||p.isDead()||!owned(p))return;
   p.abortAttack();p.abortCast();if(p.hasAI())p.getAI().setIntentionActive();p.setTarget(null);
-  PREPARING.add(p.getObjectId());PartyBuffs.request(p);CompanionSelfSkills.clear(p);
+  PREPARING.add(p.getObjectId());PhantomCompat.personalRequest(p);PhantomCompat.personalClear(p);
  }
  /** Hold personal fighters until their actual preset effects are active; no command required. */
  public static boolean readyForAction(Player p,long now){
   if(!owned(p))return true;
   if(p.isDead()||p.isTeleporting()||p.isOnEvent()||p.isInOlympiadMode()||p.isInDuel())return false;
-  if(PartyBuffs.ready(p)){if(PREPARING.remove(p.getObjectId()))p.getEffectList().updateEffectIcons(true);return true;}
+  if(PhantomCompat.personalReady(p)){if(PREPARING.remove(p.getObjectId()))p.getEffectList().updateEffectIcons(true);return true;}
   if(!PREPARING.contains(p.getObjectId())&&p.isInCombat())return true; // Preserve combat restrictions for ordinary dispels/expiry.
   if(PREPARING.contains(p.getObjectId())){p.abortAttack();if(p.isCastingNow())p.abortCast();if(p.hasAI())p.getAI().setIntentionActive();p.setTarget(null);}
-  PartyBuffs.request(p);PartyBuffs.prepare(p,now);
-  if(!PartyBuffs.ready(p))return false;
+  PhantomCompat.personalRequest(p);PhantomCompat.personalPrepare(p,now);
+  if(!PhantomCompat.personalReady(p))return false;
   PREPARING.remove(p.getObjectId());p.getEffectList().updateEffectIcons(true);return true;
  }
  private PersonalCompanions(){}
@@ -59,13 +59,13 @@ public final class PersonalCompanions {
  }
  /** Called on native build/refresh, after class learning and equipment. Hunters/reaper are untouched. */
  public static void configured(Player p,PhantomTemplate t){
-  if(!personal(t))return;PREPARING.add(p.getObjectId());PartyBuffs.request(p);configureCombat(p,t);refill(p,t);NEXT_STOCK.remove(p.getObjectId());CompanionSelfSkills.clear(p);
+  if(!personal(t))return;PREPARING.add(p.getObjectId());PhantomCompat.personalRequest(p);configureCombat(p,t);refill(p,t);NEXT_STOCK.remove(p.getObjectId());PhantomCompat.personalClear(p);
  }
  static void refill(Player p,PhantomTemplate t){
   var gear=t.getGear(p.getLevel());int shot=gear==null?0:gear.shots;
   for(var e:stockFor(p.getAllSkills(),p.getAutoUseSettings().getAutoSkills(),PhantomSummoner.summonSkill(p),shot,PhantomsConfig.PHANTOM_SHOT_COUNT).entrySet()){
    long have=p.getInventory().getInventoryItemCount(e.getKey(),-1),missing=e.getValue()-have;
-   if(missing>0)p.getInventory().addItem(ItemProcessType.REWARD,e.getKey(),missing,p,null);
+   if(missing>0)PhantomCompat.addItem(p,ItemProcessType.REWARD,e.getKey(),missing,null);
   }
   p.getAutoUseSettings().getAutoSupplyItems().remove(QUICK_HP);p.getAutoUseSettings().setAutoPotionItem(HP);
   if(shot>0){p.addAutoSoulShot(shot);PhantomCompat.rechargeShots(p);}
@@ -77,11 +77,11 @@ public final class PersonalCompanions {
    NEXT_STOCK.put(p.getObjectId(),now+60000);refill(p,t);
   }
   p.getAutoUseSettings().getAutoSupplyItems().remove(QUICK_HP);p.getAutoUseSettings().setAutoPotionItem(HP);
-  SupportSupplies.useMana(p);
+  PhantomCompat.personalMana(p);
  }
  public static String prepareNow(Player owner,PhantomTemplate t){
   var companions=PhantomCompanionManager.getInstance();if(!personal(t)||!companions.isOwner(owner,t)||!companions.isPartiedWith(owner,t))return "Это не твой призванный помощник в пати.";
   Player p=PhantomManager.getInstance().getPhantom(t);if(p==null||p.isDead()||p.isInCombat()||p.isCastingNow()||p.isTeleporting()||p.isInOlympiadMode()||p.isOnEvent()||p.isInDuel())return "Подготовиться можно вне боя, каста и телепорта.";
-  PartyBuffs.request(p);PartyBuffs.prepare(p,System.currentTimeMillis());CompanionSelfSkills.clear(p);return null;
+  PhantomCompat.personalRequest(p);PhantomCompat.personalPrepare(p,System.currentTimeMillis());PhantomCompat.personalClear(p);return null;
  }
 }

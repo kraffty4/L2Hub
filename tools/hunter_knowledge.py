@@ -8,8 +8,9 @@
               по типу с ценой магазина, разброс цен обычного оружия, сосы
   classes   — ветки профессий (PlayerClass.java и stats/players/classList.xml): имя, маг ли, куда дальше
   spots     — споты охотников (L2HubHuntSpots.xml) по имени: мобы рядом с уровнем и агрессией, опыт и HP моба, адена
-              и ценный дроп за убийство, спойл, рейд-боссы рядом
+              и ценный дроп за убийство, спойл, рейд-боссы рядом; guide — кому место советуют гайды игроков (роли через пробел)
   raids     — рейд-боссы мира (без эпиков) с уровнем и ориентиром
+  faq       — ЧаВо новичков (вопрос, варианты, ответ) из tools/hunter_faq/<id хроники>.json; нет файла — ключа нет
 Результат детерминирован. Обычно его пишет tools/fake_players.py вместе со спотами; отдельно, по готовым спотам модуля:
   python -X utf8 -I tools/hunter_knowledge.py <папка data сборки> <папка data модуля>
 """
@@ -38,6 +39,7 @@ SETS_PER_TYPE = 3       # дешёвых сетов на тип брони
 DROP_MAX_KILLS = 1000   # дроп реже, чем раз на столько убийств, в справку не идёт: за час охотник бьёт сотню-другую мобов
 SPOIL_MIN = 1.0         # и спойл с шансом ниже этого, %
 CELL = 4096             # сетка для поиска мобов у спота
+FAQ_DIR = Path(__file__).resolve().parent / "hunter_faq"   # ЧаВо новичков по хроникам (docs/MIND.md, «ЧаВо новичков»)
 
 
 def _float(text, default=0.0) -> float:
@@ -265,10 +267,11 @@ def spots_and_raids(d: fp.Data, spots: list[dict]) -> tuple[dict, list]:
         near = sorted({(r[3], r[4]) for r in raids if abs(r[2] - s["z"]) <= RAID_NEAR_Z and math.dist(r[:2], (s["x"], s["y"])) <= RAID_NEAR},
                       key=lambda r: (r[1], r[0]))
         entry = by_name.setdefault(s["name"], {"region": fp.camel_words(s["region"]), "min": s["min"], "max": s["max"],
-                                               "counts": collections.Counter(), "raids": set()})
+                                               "counts": collections.Counter(), "raids": set(), "guide": set()})
         entry["min"], entry["max"] = min(entry["min"], s["min"]), max(entry["max"], s["max"])
         entry["counts"].update(counts)
         entry["raids"].update(near)
+        entry["guide"].update(s.get("guide", "").split())
 
     out = {}
     for name in sorted(by_name):
@@ -300,6 +303,8 @@ def spots_and_raids(d: fp.Data, spots: list[dict]) -> tuple[dict, list]:
                      "count": total, "aggro": round(aggro, 2), "exp": round(exp), "adena": round(adena),
                      "drop": _top(drops, d, SPOT_DROPS, "kills"), "spoil": _top(spoil, d, SPOT_DROPS, "pct"),
                      "raids": [list(r) for r in sorted(e["raids"], key=lambda r: (r[1], r[0]))]}
+        if e["guide"]:  # кому место советуют гайды (атрибут guide спотов, docs/PHANTOMS.md, 4.147); нет — ключа нет, вывод прежний
+            out[name]["guide"] = fp.guide_roles(" ".join(e["guide"]))
     return out, raids
 
 
@@ -316,21 +321,35 @@ def raid_places(raids: list, spots: list[dict], marks: list[tuple[str, int, int,
     return out
 
 
-def build(d: fp.Data, spots: list[dict]) -> dict:
+def faq(*paths: Path) -> list[dict]:
+    """ЧаВо новичков хроники: файл tools/hunter_faq/<id>.json, если id хроники есть в пути датапака или модуля."""
+    parts = {part for path in paths for part in path.resolve().parts}
+    for f in sorted(FAQ_DIR.glob("*.json")):
+        if f.stem in parts:
+            return [{"topic": e["topic"], "q": e["q"], "v": e["variants"], "a": e["a"]}
+                    for e in json.loads(f.read_text(encoding="utf-8"))["faq"]]
+    return []
+
+
+def build(d: fp.Data, spots: list[dict], out: Path | None = None) -> dict:
     build_dir = d.data.parents[2]
     levels, loss = level_tables(d.data)
     grade_list, grade_source = grades(d)
     spot_facts, raids = spots_and_raids(d, spots)
-    return {"version": 1,
-            "comment": "L2Hub: база знаний охотников для мозгов (brain.py). Сгенерировано tools/hunter_knowledge.py из датапака сборки.",
-            "exp": exp_rule(build_dir), "levels": levels, "deathLoss": loss,
-            "grades": grade_list, "gradeSource": grade_source,
-            "classes": classes(d, build_dir), "spots": spot_facts, "raids": raid_places(raids, spots, fp.landmarks(d.data))}
+    kb = {"version": 1,
+          "comment": "L2Hub: база знаний охотников для мозгов (brain.py). Сгенерировано tools/hunter_knowledge.py из датапака сборки.",
+          "exp": exp_rule(build_dir), "levels": levels, "deathLoss": loss,
+          "grades": grade_list, "gradeSource": grade_source,
+          "classes": classes(d, build_dir), "spots": spot_facts, "raids": raid_places(raids, spots, fp.landmarks(d.data))}
+    newbie = faq(d.data, *([out] if out else []))
+    if newbie:  # нет ЧаВо у хроники — ключа нет, вывод прежний
+        kb["faq"] = newbie
+    return kb
 
 
 def write(d: fp.Data, spots: list[dict], out: Path) -> dict:
     """L2HubHunterKnowledge.json в out; LF, ключи по порядку — вывод совпадает байт в байт, пока не изменились данные."""
-    kb = build(d, spots)
+    kb = build(d, spots, out)
     (out / "L2HubHunterKnowledge.json").write_bytes((json.dumps(kb, ensure_ascii=False, separators=(",", ":")) + "\n").encode("utf-8"))
     return kb
 
@@ -349,7 +368,7 @@ def main(data: Path, out: Path) -> int:
     if empty:
         print(f"споты, где мобы не дают опыта ({len(empty)}): {', '.join(empty)}")
     print(f"опыт: {kb['exp']}; грейдов {len(kb['grades'])} ({kb['gradeSource']}), классов {len(kb['classes'])}, "
-          f"спотов {len(kb['spots'])}, рейд-боссов {len(kb['raids'])}; {size // 1024} КБ")
+          f"спотов {len(kb['spots'])}, рейд-боссов {len(kb['raids'])}, ЧаВо {len(kb.get('faq', []))}; {size // 1024} КБ")
     return 0
 
 

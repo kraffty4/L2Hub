@@ -260,6 +260,14 @@ public final class PhantomHunterClans
 	}
 
 	/**
+	 * @return двое из разных кланов одного союза (мост, ep-alliances: союзник в рейде — сразу после соклановца)
+	 */
+	static boolean allies(Player a, Player b)
+	{
+		return (a != null) && (b != null) && (a != b) && (a.getClan() != null) && (b.getClan() != null) && (a.getClan() != b.getClan()) && PhantomClanPower.allied(a.getClan(), b.getClan());
+	}
+
+	/**
 	 * «Аппетит» клана: до скольких членов глава набирает — случайно из {@code HunterClanSize} (зерно — id клана); у общительного главы — больше, у нелюдимого — меньше.
 	 */
 	int appetite(Clan clan)

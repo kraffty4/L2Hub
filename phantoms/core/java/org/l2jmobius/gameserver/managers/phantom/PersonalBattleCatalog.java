@@ -10,6 +10,8 @@ public final class PersonalBattleCatalog {
  private static final Map<Integer,Integer> PAGES=new ConcurrentHashMap<>();
  static final int PAGE_SIZE=2;
  private PersonalBattleCatalog(){}
+ /** L2Hub: in the data there is at least one class blueprint (profile in L2HubPhantoms.xml); otherwise the .buddy window stays as before. */
+ static boolean available(){return PROFILES.stream().anyMatch(x->PersonalCompanionNames.named(x.name())!=null);}
  static Profile profile(PhantomTemplate t){return t==null?null:PROFILES.stream().filter(x->x.key().equals(PersonalCompanionPool.baseKey(t))).findFirst().orElse(null);}
  static boolean visible(Player viewer,PhantomTemplate t){return (!PersonalCompanionPool.dynamic(t)&&(profile(t)==null||t.getRole()==PhantomTemplate.Role.HEALER||t.getRole()==PhantomTemplate.Role.BUFFER))||PersonalCompanionPool.ownerId(t)==viewer.getObjectId()||PhantomCompanionManager.getInstance().isOwner(viewer,t)||PersonalCompanionClans.sameClan(viewer,t);}
  static String caption(PhantomTemplate t){Profile p=profile(t);return p==null?null:(t.getRole()==PhantomTemplate.Role.HEALER?"хилер — ":p.family().equals("mage")?"маг — ":"воин — ")+p.label();}

@@ -1,0 +1,437 @@
+<?xml version='1.0' encoding='utf-8'?>
+<spots>
+	<spot id="cruma" kind="recommended" ru="Башня Крумы" en="Cruma Tower" min="40" max="44" maxPlayer="55" role="solo" conditional="false" x="17776" y="113968" z="-11672">
+		<pack npc="21035" x="20326" y="111328" z="-12088" count="3" />
+		<pack npc="20213" x="12519" y="116858" z="-12080" count="3" />
+		<pack npc="20751" x="13685" y="109655" z="-12080" count="3" />
+		<pack npc="21035" x="21229" y="117666" z="-12088" count="3" />
+		<pack npc="20214" x="15219" y="119301" z="-12088" count="3" />
+		<pack npc="21036" x="21362" y="109206" z="-12080" count="3" />
+		<pack npc="21035" x="15018" y="116977" z="-12088" count="3" />
+		<pack npc="20217" x="14800" y="111440" z="-12088" count="3" />
+		<pack npc="20214" x="23091" y="116717" z="-12080" count="3" />
+		<pack npc="20216" x="22336" y="110646" z="-12080" count="3" />
+		<pack npc="20216" x="13111" y="111487" z="-12080" count="3" />
+		<pack npc="20217" x="14999" y="109706" z="-12080" count="3" />
+	</spot>
+	<spot id="alligator" kind="recommended" ru="Остров Аллигаторов" en="Alligator Island" min="43" max="43" maxPlayer="85" role="solo" conditional="false" x="111342" y="169118" z="-3336">
+		<pack npc="20806" x="112506" y="168340" z="-3312" count="3" />
+		<pack npc="20806" x="112806" y="168340" z="-3264" count="3" />
+		<pack npc="20806" x="112656" y="168600" z="-3296" count="3" />
+		<pack npc="20806" x="112356" y="168600" z="-3344" count="3" />
+		<pack npc="20806" x="112206" y="168340" z="-3336" count="3" />
+		<pack npc="20806" x="112356" y="168080" z="-3256" count="3" />
+		<pack npc="20806" x="112656" y="168080" z="-3240" count="3" />
+		<pack npc="20806" x="113106" y="168340" z="-3296" count="3" />
+		<pack npc="20806" x="113026" y="168640" z="-3272" count="3" />
+		<pack npc="20806" x="112806" y="168860" z="-3272" count="3" />
+		<pack npc="20806" x="112506" y="168940" z="-3336" count="3" />
+		<pack npc="20806" x="112206" y="168860" z="-3336" count="3" />
+	</spot>
+	<spot id="adena_alligator" kind="adena" ru="Остров Аллигаторов" en="Alligator Island" min="42" max="42" maxPlayer="85" role="party" conditional="false" x="104354" y="179437" z="-3368">
+		<pack npc="940805" source="20805" x="105518" y="178659" z="-3544" count="6" />
+		<pack npc="940805" source="20805" x="105818" y="178659" z="-3608" count="6" />
+		<pack npc="940805" source="20805" x="105668" y="178919" z="-3592" count="6" />
+		<pack npc="940805" source="20805" x="105368" y="178919" z="-3528" count="6" />
+		<pack npc="940805" source="20805" x="105218" y="178659" z="-3544" count="6" />
+		<pack npc="940805" source="20805" x="105368" y="178399" z="-3576" count="6" />
+		<pack npc="940805" source="20805" x="105668" y="178399" z="-3584" count="6" />
+		<pack npc="940805" source="20805" x="106118" y="178659" z="-3640" count="6" />
+		<pack npc="940805" source="20805" x="106038" y="178959" z="-3664" count="6" />
+		<pack npc="940805" source="20805" x="105818" y="179179" z="-3648" count="6" />
+		<pack npc="940805" source="20805" x="105518" y="179259" z="-3576" count="6" />
+		<pack npc="940805" source="20805" x="105218" y="179179" z="-3512" count="6" />
+	</spot>
+	<spot id="mirrors" kind="recommended" ru="Лес Зеркал" en="Forest of Mirrors" min="43" max="45" maxPlayer="85" role="solo" conditional="false" x="143425" y="79042" z="-2776">
+		<pack npc="20634" x="143850" y="78004" z="-2568" count="3" />
+		<pack npc="20633" x="144554" y="77826" z="-2728" count="3" />
+		<pack npc="20633" x="143850" y="77292" z="-2544" count="3" />
+		<pack npc="20635" x="144354" y="78182" z="-2776" count="3" />
+		<pack npc="20633" x="144152" y="77470" z="-2640" count="3" />
+		<pack npc="20633" x="144844" y="77904" z="-2784" count="3" />
+		<pack npc="20635" x="144566" y="78394" z="-2808" count="3" />
+		<pack npc="20634" x="143928" y="78294" z="-2664" count="3" />
+		<pack npc="20633" x="143772" y="77582" z="-2480" count="3" />
+		<pack npc="20635" x="144204" y="78442" z="-2784" count="3" />
+		<pack npc="20634" x="143590" y="78154" z="-2624" count="3" />
+		<pack npc="20633" x="144264" y="77904" z="-2704" count="3" />
+	</spot>
+	<spot id="spores" kind="recommended" ru="Море Спор" en="Sea of Spores" min="46" max="46" maxPlayer="85" role="spoil" conditional="false" x="53746" y="13592" z="-5840">
+		<pack npc="20561" x="52582" y="14370" z="-5720" count="3" />
+		<pack npc="20561" x="52882" y="14370" z="-5760" count="3" />
+		<pack npc="20561" x="52732" y="14630" z="-5680" count="3" />
+		<pack npc="20561" x="52432" y="14630" z="-5648" count="3" />
+		<pack npc="20561" x="52432" y="14110" z="-5696" count="3" />
+		<pack npc="20561" x="52732" y="14110" z="-5744" count="3" />
+		<pack npc="20561" x="53182" y="14370" z="-5800" count="3" />
+		<pack npc="20561" x="53102" y="14670" z="-5712" count="3" />
+		<pack npc="20561" x="52882" y="14890" z="-5608" count="3" />
+		<pack npc="20561" x="52582" y="14970" z="-5552" count="3" />
+		<pack npc="20561" x="52282" y="14890" z="-5536" count="3" />
+		<pack npc="20561" x="52582" y="13770" z="-5656" count="3" />
+	</spot>
+	<spot id="glory" kind="recommended" ru="Равнины Славы" en="Plains of Glory" min="48" max="48" maxPlayer="85" role="spoil" conditional="false" x="135222" y="11687" z="-4168">
+		<pack npc="20684" x="136386" y="10909" z="-4064" count="3" />
+		<pack npc="20684" x="136686" y="10909" z="-4064" count="3" />
+		<pack npc="20684" x="136536" y="11169" z="-4040" count="3" />
+		<pack npc="20684" x="136236" y="11169" z="-4056" count="3" />
+		<pack npc="20684" x="136086" y="10909" z="-4088" count="3" />
+		<pack npc="20684" x="136236" y="10649" z="-4088" count="3" />
+		<pack npc="20684" x="136536" y="10649" z="-4072" count="3" />
+		<pack npc="20684" x="136986" y="10909" z="-4088" count="3" />
+		<pack npc="20684" x="136906" y="11209" z="-4064" count="3" />
+		<pack npc="20684" x="136686" y="11429" z="-4040" count="3" />
+		<pack npc="20684" x="136386" y="11509" z="-4032" count="3" />
+		<pack npc="20684" x="136086" y="11429" z="-4056" count="3" />
+	</spot>
+	<spot id="timak" kind="recommended" ru="Аванпост Тимак" en="Timak Outpost" min="44" max="44" maxPlayer="85" role="solo" conditional="false" x="73389" y="60163" z="-2936">
+		<pack npc="20587" x="74762" y="59890" z="-2776" count="3" />
+		<pack npc="20587" x="75062" y="59890" z="-2776" count="3" />
+		<pack npc="20587" x="74912" y="60150" z="-2808" count="3" />
+		<pack npc="20587" x="74612" y="60150" z="-2816" count="3" />
+		<pack npc="20587" x="74462" y="59890" z="-2792" count="3" />
+		<pack npc="20587" x="74612" y="59630" z="-2744" count="3" />
+		<pack npc="20587" x="74912" y="59630" z="-2744" count="3" />
+		<pack npc="20587" x="75362" y="59890" z="-2776" count="3" />
+		<pack npc="20587" x="75282" y="60190" z="-2800" count="3" />
+		<pack npc="20587" x="75062" y="60410" z="-2824" count="3" />
+		<pack npc="20587" x="74762" y="60490" z="-2848" count="3" />
+		<pack npc="20587" x="74338" y="60314" z="-2848" count="3" />
+	</spot>
+	<spot id="labyrinth" kind="recommended" ru="Ледяной Лабиринт" en="Frozen Labyrinth" min="53" max="56" maxPlayer="85" role="spoil" conditional="false" x="113409" y="-99478" z="-3648">
+		<pack npc="22081" x="112136" y="-100751" z="-3640" count="3" />
+		<pack npc="22081" x="114672" y="-100567" z="-3640" count="3" />
+		<pack npc="22082" x="113649" y="-101871" z="-3640" count="3" />
+		<pack npc="22080" x="112044" y="-101920" z="-3640" count="3" />
+		<pack npc="22081" x="113545" y="-100749" z="-3640" count="3" />
+		<pack npc="22082" x="112540" y="-99896" z="-3640" count="3" />
+		<pack npc="22082" x="111372" y="-100370" z="-3640" count="3" />
+		<pack npc="22084" x="114241" y="-101228" z="-3640" count="3" />
+		<pack npc="22084" x="112741" y="-101203" z="-3640" count="3" />
+		<pack npc="22082" x="113975" y="-100244" z="-3640" count="3" />
+		<pack npc="22080" x="111852" y="-99920" z="-3640" count="3" />
+		<pack npc="22081" x="111489" y="-101006" z="-3640" count="3" />
+	</spot>
+	<spot id="cemetery" kind="recommended" ru="Кладбище" en="Cemetery" min="54" max="55" maxPlayer="85" role="undead" conditional="false" x="180746" y="23737" z="-3168">
+		<pack npc="21000" x="181577" y="23181" z="-3168" count="3" />
+		<pack npc="20669" x="180270" y="24708" z="-3168" count="3" />
+		<pack npc="20669" x="182250" y="24732" z="-3168" count="3" />
+		<pack npc="20669" x="180250" y="22292" z="-3168" count="3" />
+		<pack npc="20669" x="182246" y="22328" z="-3168" count="3" />
+		<pack npc="21000" x="181877" y="23181" z="-3168" count="3" />
+		<pack npc="20669" x="180560" y="24786" z="-3168" count="3" />
+		<pack npc="20669" x="182510" y="24882" z="-3168" count="3" />
+		<pack npc="20669" x="180462" y="22504" z="-3168" count="3" />
+		<pack npc="20669" x="182396" y="22588" z="-3168" count="3" />
+		<pack npc="21000" x="181655" y="23471" z="-3168" count="3" />
+		<pack npc="20669" x="180100" y="22552" z="-3168" count="3" />
+	</spot>
+	<spot id="massacre" kind="recommended" ru="Поля Бойни" en="Fields of Massacre" min="61" max="61" maxPlayer="85" role="undead" conditional="false" x="186757" y="-14868" z="-1408">
+		<pack npc="21007" x="187921" y="-15646" z="-1344" count="3" />
+		<pack npc="21007" x="188221" y="-15646" z="-1336" count="3" />
+		<pack npc="21007" x="188071" y="-15386" z="-1352" count="3" />
+		<pack npc="21007" x="187771" y="-15386" z="-1384" count="3" />
+		<pack npc="21007" x="187621" y="-15646" z="-1360" count="3" />
+		<pack npc="21007" x="187771" y="-15906" z="-1320" count="3" />
+		<pack npc="21007" x="188071" y="-15906" z="-1320" count="3" />
+		<pack npc="21007" x="188521" y="-15646" z="-1336" count="3" />
+		<pack npc="21007" x="188441" y="-15346" z="-1328" count="3" />
+		<pack npc="21007" x="188221" y="-15126" z="-1344" count="3" />
+		<pack npc="21007" x="187921" y="-15046" z="-1392" count="3" />
+		<pack npc="21007" x="187621" y="-15126" z="-1416" count="3" />
+	</spot>
+	<spot id="adena_massacre" kind="adena" ru="Поля Бойни" en="Fields of Massacre" min="61" max="61" maxPlayer="85" role="party" conditional="false" x="189938" y="-20666" z="-1120">
+		<pack npc="941007" source="21007" x="188490" y="-20666" z="-1376" count="6" />
+		<pack npc="941007" source="21007" x="188271" y="-18211" z="-1216" count="6" />
+		<pack npc="941007" source="21007" x="188790" y="-20666" z="-1320" count="6" />
+		<pack npc="941007" source="21007" x="188561" y="-18133" z="-1144" count="6" />
+		<pack npc="941007" source="21007" x="188640" y="-20406" z="-1368" count="6" />
+		<pack npc="941007" source="21007" x="188349" y="-17921" z="-1216" count="6" />
+		<pack npc="941007" source="21007" x="188340" y="-20406" z="-1424" count="6" />
+		<pack npc="941007" source="21007" x="188059" y="-17999" z="-1272" count="6" />
+		<pack npc="941007" source="21007" x="187981" y="-18289" z="-1304" count="6" />
+		<pack npc="941007" source="21007" x="188340" y="-20926" z="-1376" count="6" />
+		<pack npc="941007" source="21007" x="188193" y="-18501" z="-1240" count="6" />
+		<pack npc="941007" source="21007" x="188640" y="-20926" z="-1320" count="6" />
+	</spot>
+	<spot id="toi" kind="recommended" ru="Башня Дерзости" en="Tower of Insolence" min="64" max="65" maxPlayer="85" role="party" conditional="false" x="113847" y="15793" z="-640">
+		<pack npc="20818" x="112654" y="16058" z="-640" count="3" />
+		<pack npc="20977" x="113124" y="13680" z="-640" count="3" />
+		<pack npc="20818" x="114724" y="15551" z="-640" count="3" />
+		<pack npc="20818" x="113892" y="17589" z="-640" count="3" />
+		<pack npc="20818" x="113827" y="14502" z="-640" count="3" />
+		<pack npc="20818" x="114563" y="16496" z="-640" count="3" />
+		<pack npc="20818" x="113111" y="16856" z="-640" count="3" />
+		<pack npc="20818" x="112839" y="15207" z="-640" count="3" />
+		<pack npc="20818" x="112954" y="16058" z="-640" count="3" />
+		<pack npc="20977" x="113414" y="13758" z="-640" count="3" />
+		<pack npc="20818" x="114984" y="15701" z="-640" count="3" />
+		<pack npc="20818" x="114104" y="17801" z="-640" count="3" />
+	</spot>
+	<spot id="saints" kind="recommended" ru="Долина Святых" en="Valley of Saints" min="65" max="65" maxPlayer="85" role="mage" conditional="false" x="84572" y="-80126" z="-3544">
+		<pack npc="21532" x="85972" y="-80126" z="-3680" count="3" />
+		<pack npc="21532" x="86272" y="-80126" z="-3688" count="3" />
+		<pack npc="21532" x="86122" y="-79866" z="-3680" count="3" />
+		<pack npc="21532" x="85822" y="-79866" z="-3688" count="3" />
+		<pack npc="21532" x="85672" y="-80126" z="-3664" count="3" />
+		<pack npc="21532" x="85822" y="-80386" z="-3672" count="3" />
+		<pack npc="21532" x="86122" y="-80386" z="-3696" count="3" />
+		<pack npc="21532" x="86572" y="-80126" z="-3688" count="3" />
+		<pack npc="21532" x="86492" y="-79826" z="-3680" count="3" />
+		<pack npc="21532" x="86272" y="-79606" z="-3696" count="3" />
+		<pack npc="21532" x="85972" y="-79526" z="-3704" count="3" />
+		<pack npc="21532" x="85672" y="-79606" z="-3696" count="3" />
+	</spot>
+	<spot id="argos" kind="recommended" ru="Стена Аргоса" en="Wall of Argos" min="71" max="71" maxPlayer="85" role="spoil" conditional="false" x="176243" y="-57320" z="-3184">
+		<pack npc="21297" x="177616" y="-57593" z="-3248" count="3" />
+		<pack npc="21297" x="177906" y="-57515" z="-3272" count="3" />
+		<pack npc="21297" x="177694" y="-57303" z="-3248" count="3" />
+		<pack npc="21297" x="177404" y="-57381" z="-3248" count="3" />
+		<pack npc="21297" x="177326" y="-57671" z="-3240" count="3" />
+		<pack npc="21297" x="177538" y="-57883" z="-3208" count="3" />
+		<pack npc="21297" x="177828" y="-57805" z="-3208" count="3" />
+		<pack npc="21297" x="178196" y="-57438" z="-3216" count="3" />
+		<pack npc="21297" x="178040" y="-57169" z="-3248" count="3" />
+		<pack npc="21297" x="177771" y="-57013" z="-3256" count="3" />
+		<pack npc="21297" x="177461" y="-57013" z="-3264" count="3" />
+		<pack npc="21297" x="177192" y="-57169" z="-3272" count="3" />
+	</spot>
+	<spot id="swamp" kind="recommended" ru="Раскалённые Топи" en="Blazing Swamp" min="68" max="68" maxPlayer="85" role="spoil" conditional="false" x="157585" y="-10197" z="-3312">
+		<pack npc="21109" x="158749" y="-9419" z="-3360" count="3" />
+		<pack npc="21109" x="159049" y="-9419" z="-3360" count="3" />
+		<pack npc="21109" x="158827" y="-9129" z="-3400" count="3" />
+		<pack npc="21109" x="158537" y="-9207" z="-3400" count="3" />
+		<pack npc="21109" x="158459" y="-9497" z="-3360" count="3" />
+		<pack npc="21109" x="158671" y="-9709" z="-3320" count="3" />
+		<pack npc="21109" x="159349" y="-9419" z="-3376" count="3" />
+		<pack npc="21109" x="159269" y="-9119" z="-3440" count="3" />
+		<pack npc="21109" x="158904" y="-8839" z="-3448" count="3" />
+		<pack npc="21109" x="158594" y="-8839" z="-3448" count="3" />
+		<pack npc="21109" x="158325" y="-8995" z="-3432" count="3" />
+		<pack npc="21109" x="158149" y="-9419" z="-3376" count="3" />
+	</spot>
+	<spot id="springs" kind="recommended" ru="Горячие Источники" en="Hot Springs" min="75" max="75" maxPlayer="85" role="spoil" conditional="false" x="152754" y="-104760" z="-2856">
+		<pack npc="21319" x="153918" y="-105538" z="-2736" count="3" />
+		<pack npc="21319" x="154218" y="-105538" z="-2720" count="3" />
+		<pack npc="21319" x="154068" y="-105278" z="-2744" count="3" />
+		<pack npc="21319" x="153768" y="-105278" z="-2760" count="3" />
+		<pack npc="21319" x="153618" y="-105538" z="-2768" count="3" />
+		<pack npc="21319" x="153768" y="-105798" z="-2744" count="3" />
+		<pack npc="21319" x="154068" y="-105798" z="-2712" count="3" />
+		<pack npc="21319" x="154518" y="-105538" z="-2712" count="3" />
+		<pack npc="21319" x="154438" y="-105238" z="-2728" count="3" />
+		<pack npc="21319" x="154218" y="-105018" z="-2768" count="3" />
+		<pack npc="21319" x="153918" y="-104938" z="-2784" count="3" />
+		<pack npc="21319" x="153618" y="-105018" z="-2792" count="3" />
+	</spot>
+	<spot id="adena_springs" kind="adena" ru="Горячие Источники" en="Hot Springs" min="73" max="73" maxPlayer="85" role="party" conditional="false" x="155155" y="-113946" z="-1648">
+		<pack npc="941314" source="21314" x="156528" y="-113673" z="-1744" count="6" />
+		<pack npc="941314" source="21314" x="156828" y="-113673" z="-1760" count="6" />
+		<pack npc="941314" source="21314" x="156678" y="-113413" z="-1760" count="6" />
+		<pack npc="941314" source="21314" x="156378" y="-113413" z="-1760" count="6" />
+		<pack npc="941314" source="21314" x="156228" y="-113673" z="-1744" count="6" />
+		<pack npc="941314" source="21314" x="156378" y="-113933" z="-1728" count="6" />
+		<pack npc="941314" source="21314" x="156678" y="-113933" z="-1736" count="6" />
+		<pack npc="941314" source="21314" x="157108" y="-113518" z="-1776" count="6" />
+		<pack npc="941314" source="21314" x="156683" y="-113093" z="-1776" count="6" />
+		<pack npc="941314" source="21314" x="156373" y="-113093" z="-1784" count="6" />
+		<pack npc="941314" source="21314" x="156104" y="-113249" z="-1760" count="6" />
+		<pack npc="941314" source="21314" x="155948" y="-113518" z="-1736" count="6" />
+	</spot>
+	<spot id="pavel" kind="recommended" ru="Заброшенная Мастерская" en="Pavel Ruins" min="72" max="73" maxPlayer="85" role="solo" conditional="false" x="87287" y="-122984" z="-4408">
+		<pack npc="22804" x="86692" y="-121251" z="-4392" count="3" />
+		<pack npc="22801" x="84727" y="-122906" z="-4392" count="3" />
+		<pack npc="22807" x="84795" y="-120253" z="-4400" count="3" />
+		<pack npc="22804" x="86109" y="-119749" z="-4384" count="3" />
+		<pack npc="22807" x="86050" y="-123204" z="-4384" count="3" />
+		<pack npc="22807" x="87909" y="-121710" z="-4368" count="3" />
+		<pack npc="22807" x="84644" y="-121421" z="-4392" count="3" />
+		<pack npc="22801" x="86209" y="-122144" z="-4376" count="3" />
+		<pack npc="22801" x="86946" y="-120376" z="-4384" count="3" />
+		<pack npc="22807" x="86120" y="-120577" z="-4384" count="3" />
+		<pack npc="22804" x="85843" y="-121409" z="-4392" count="3" />
+		<pack npc="22801" x="85106" y="-122204" z="-4392" count="3" />
+	</spot>
+	<spot id="silent" kind="recommended" ru="Долина Безмолвия" en="Silent Valley" min="75" max="75" maxPlayer="85" role="spoil" conditional="false" x="181411" y="52684" z="-6016">
+		<pack npc="20971" x="182575" y="51906" z="-6024" count="3" />
+		<pack npc="20971" x="182875" y="51906" z="-6000" count="3" />
+		<pack npc="20971" x="182725" y="52166" z="-5984" count="3" />
+		<pack npc="20971" x="182425" y="52166" z="-6008" count="3" />
+		<pack npc="20971" x="182275" y="51906" z="-6040" count="3" />
+		<pack npc="20971" x="182425" y="51646" z="-6048" count="3" />
+		<pack npc="20971" x="182725" y="51646" z="-6040" count="3" />
+		<pack npc="20971" x="183175" y="51906" z="-5976" count="3" />
+		<pack npc="20971" x="183095" y="52206" z="-5944" count="3" />
+		<pack npc="20971" x="182875" y="52426" z="-5944" count="3" />
+		<pack npc="20971" x="182575" y="52506" z="-5968" count="3" />
+		<pack npc="20971" x="182275" y="52426" z="-5992" count="3" />
+	</spot>
+	<spot id="tomb" kind="recommended" ru="Императорская Гробница" en="Imperial Tomb" min="78" max="78" maxPlayer="85" role="party" conditional="false" x="188356" y="-80988" z="-6416">
+		<pack npc="21407" x="186556" y="-80988" z="-5960" count="3" />
+		<pack npc="21407" x="186856" y="-80988" z="-5960" count="3" />
+		<pack npc="21407" x="186706" y="-80728" z="-5960" count="3" />
+		<pack npc="21407" x="186406" y="-80728" z="-5960" count="3" />
+		<pack npc="21407" x="186256" y="-80988" z="-5960" count="3" />
+		<pack npc="21407" x="186406" y="-81248" z="-5960" count="3" />
+		<pack npc="21407" x="186706" y="-81248" z="-5960" count="3" />
+		<pack npc="21407" x="187156" y="-80988" z="-5976" count="3" />
+		<pack npc="21407" x="186556" y="-80388" z="-5976" count="3" />
+		<pack npc="21407" x="185956" y="-80988" z="-5944" count="3" />
+		<pack npc="21407" x="186556" y="-81588" z="-5936" count="3" />
+		<pack npc="21407" x="187456" y="-80988" z="-6088" count="3" />
+	</spot>
+	<spot id="varka" kind="recommended" ru="Казармы Варка Силенос" en="Varka Silenos Barracks" min="78" max="78" maxPlayer="85" role="party" conditional="false" x="116445" y="-51352" z="-2608">
+		<pack npc="21361" x="117609" y="-52130" z="-2528" count="3" />
+		<pack npc="21361" x="117909" y="-52130" z="-2512" count="3" />
+		<pack npc="21361" x="117759" y="-51870" z="-2496" count="3" />
+		<pack npc="21361" x="117459" y="-51870" z="-2544" count="3" />
+		<pack npc="21361" x="117309" y="-52130" z="-2544" count="3" />
+		<pack npc="21361" x="117459" y="-52390" z="-2520" count="3" />
+		<pack npc="21361" x="117759" y="-52390" z="-2504" count="3" />
+		<pack npc="21361" x="118209" y="-52130" z="-2504" count="3" />
+		<pack npc="21361" x="118129" y="-51830" z="-2432" count="3" />
+		<pack npc="21361" x="117909" y="-51610" z="-2520" count="3" />
+		<pack npc="21361" x="117609" y="-51530" z="-2488" count="3" />
+		<pack npc="21361" x="117309" y="-51610" z="-2560" count="3" />
+	</spot>
+	<spot id="ketra" kind="recommended" ru="Аванпост Орков Кетра" en="Ketra Orc Outpost" min="78" max="78" maxPlayer="85" role="party" conditional="false" x="151898" y="-89144" z="-4608">
+		<pack npc="21331" x="153062" y="-88366" z="-4640" count="3" />
+		<pack npc="21331" x="153362" y="-88366" z="-4624" count="3" />
+		<pack npc="21331" x="153212" y="-88106" z="-4664" count="3" />
+		<pack npc="21331" x="152912" y="-88106" z="-4680" count="3" />
+		<pack npc="21331" x="152802" y="-88516" z="-4632" count="3" />
+		<pack npc="21331" x="153062" y="-88666" z="-4568" count="3" />
+		<pack npc="21331" x="153662" y="-88366" z="-4592" count="3" />
+		<pack npc="21331" x="153582" y="-88066" z="-4648" count="3" />
+		<pack npc="21331" x="153362" y="-87846" z="-4680" count="3" />
+		<pack npc="21331" x="153062" y="-87766" z="-4704" count="3" />
+		<pack npc="21331" x="152762" y="-87846" z="-4712" count="3" />
+		<pack npc="21331" x="152542" y="-88066" z="-4712" count="3" />
+	</spot>
+	<spot id="forge" kind="recommended" ru="Кузница Богов" en="Forge of the Gods" min="78" max="78" maxPlayer="85" role="party" conditional="false" x="185129" y="-109582" z="-5888">
+		<pack npc="22642" x="184308" y="-110032" z="-5928" count="3" />
+		<pack npc="22642" x="188380" y="-110828" z="-5888" count="3" />
+		<pack npc="22643" x="187067" y="-108618" z="-5888" count="3" />
+		<pack npc="22643" x="185930" y="-111614" z="-5888" count="3" />
+		<pack npc="22643" x="186343" y="-110189" z="-5888" count="3" />
+		<pack npc="22643" x="185645" y="-108821" z="-5888" count="3" />
+		<pack npc="22642" x="188110" y="-109605" z="-5888" count="3" />
+		<pack npc="22643" x="187106" y="-111116" z="-5872" count="3" />
+		<pack npc="22642" x="185012" y="-111063" z="-5888" count="3" />
+		<pack npc="22642" x="186424" y="-109216" z="-5872" count="3" />
+		<pack npc="22642" x="187298" y="-109412" z="-5888" count="3" />
+		<pack npc="22643" x="185656" y="-110569" z="-5888" count="3" />
+	</spot>
+	<spot id="giants" kind="recommended" ru="Пещера Великанов" en="Giant's Cave" min="81" max="82" maxPlayer="85" role="party" conditional="false" x="186014" y="58310" z="-4520">
+		<pack npc="22669" x="186856" y="56277" z="-4576" count="3" />
+		<pack npc="22661" x="188128" y="55056" z="-4568" count="3" />
+		<pack npc="22661" x="187934" y="57662" z="-4568" count="3" />
+		<pack npc="22661" x="185610" y="57412" z="-4568" count="3" />
+		<pack npc="22661" x="185712" y="55137" z="-4568" count="3" />
+		<pack npc="22661" x="188177" y="56261" z="-4568" count="3" />
+		<pack npc="22661" x="186784" y="57674" z="-4568" count="3" />
+		<pack npc="22661" x="186813" y="54888" z="-4568" count="3" />
+		<pack npc="22661" x="185600" y="56592" z="-4568" count="3" />
+		<pack npc="22663" x="187562" y="56978" z="-4568" count="3" />
+		<pack npc="22663" x="187540" y="55561" z="-4568" count="3" />
+		<pack npc="22663" x="186256" y="55599" z="-4568" count="3" />
+	</spot>
+	<spot id="adena_giants" kind="adena" ru="Пещера Великанов" en="Giant's Cave" min="81" max="82" maxPlayer="85" role="party" conditional="false" x="186014" y="58310" z="-4520">
+		<pack npc="942669" source="22669" x="186856" y="56277" z="-4576" count="6" />
+		<pack npc="942661" source="22661" x="188128" y="55056" z="-4568" count="6" />
+		<pack npc="942661" source="22661" x="187934" y="57662" z="-4568" count="6" />
+		<pack npc="942661" source="22661" x="185610" y="57412" z="-4568" count="6" />
+		<pack npc="942661" source="22661" x="185712" y="55137" z="-4568" count="6" />
+		<pack npc="942661" source="22661" x="188177" y="56261" z="-4568" count="6" />
+		<pack npc="942661" source="22661" x="186784" y="57674" z="-4568" count="6" />
+		<pack npc="942661" source="22661" x="186813" y="54888" z="-4568" count="6" />
+		<pack npc="942661" source="22661" x="185600" y="56592" z="-4568" count="6" />
+		<pack npc="942663" source="22663" x="187562" y="56978" z="-4568" count="6" />
+		<pack npc="942663" source="22663" x="187540" y="55561" z="-4568" count="6" />
+		<pack npc="942663" source="22663" x="186256" y="55599" z="-4568" count="6" />
+	</spot>
+	<spot id="monastery" kind="recommended" ru="Монастырь Безмолвия" en="Monastery of Silence" min="83" max="83" maxPlayer="85" role="party" conditional="false" x="115941" y="-81568" z="-3392">
+		<pack npc="22789" x="112245" y="-83439" z="-3392" count="3" />
+		<pack npc="22793" x="119316" y="-78722" z="-3520" count="3" />
+		<pack npc="22793" x="118467" y="-84275" z="-3088" count="3" />
+		<pack npc="22793" x="115243" y="-78558" z="-3392" count="3" />
+		<pack npc="22793" x="115642" y="-82551" z="-3392" count="3" />
+		<pack npc="22793" x="115867" y="-84992" z="-3392" count="3" />
+		<pack npc="22789" x="117144" y="-77639" z="-3392" count="3" />
+		<pack npc="22793" x="115890" y="-80444" z="-3392" count="3" />
+		<pack npc="22790" x="113024" y="-84985" z="-3392" count="3" />
+		<pack npc="22789" x="111817" y="-81796" z="-3392" count="3" />
+		<pack npc="22793" x="118874" y="-82651" z="-3088" count="3" />
+		<pack npc="22791" x="116819" y="-81849" z="-3392" count="3" />
+	</spot>
+	<spot id="hellbound" kind="recommended" ru="Хеллбаунд — первые области" en="Hellbound — first areas" min="81" max="81" maxPlayer="85" role="conditional" conditional="true" x="-11218" y="236665" z="-3224">
+		<pack npc="22321" x="-10387" y="237221" z="-3136" count="3" />
+		<pack npc="22324" x="-12805" y="236324" z="-3288" count="3" />
+		<pack npc="22325" x="-12266" y="237500" z="-3184" count="3" />
+		<pack npc="22321" x="-11142" y="237759" z="-3088" count="3" />
+		<pack npc="22320" x="-10501" y="237750" z="-3120" count="3" />
+		<pack npc="22321" x="-10805" y="237616" z="-3104" count="3" />
+		<pack npc="22321" x="-10245" y="237540" z="-3144" count="3" />
+		<pack npc="22324" x="-12416" y="237243" z="-3184" count="3" />
+		<pack npc="22321" x="-10087" y="237221" z="-3128" count="3" />
+		<pack npc="22324" x="-12515" y="236402" z="-3280" count="3" />
+		<pack npc="22325" x="-12006" y="237650" z="-3176" count="3" />
+		<pack npc="22320" x="-10351" y="238010" z="-3072" count="3" />
+	</spot>
+	<spot id="dragon" kind="recommended" ru="Долина Драконов" en="Dragon Valley" min="49" max="49" maxPlayer="85" role="party" conditional="false" x="74503" y="105611" z="-2672">
+		<pack npc="20239" x="75903" y="105611" z="-2872" count="3" />
+		<pack npc="20239" x="76203" y="105611" z="-2920" count="3" />
+		<pack npc="20239" x="76053" y="105871" z="-2872" count="3" />
+		<pack npc="20239" x="75753" y="105871" z="-2840" count="3" />
+		<pack npc="20239" x="75603" y="105611" z="-2824" count="3" />
+		<pack npc="20239" x="75753" y="105351" z="-2848" count="3" />
+		<pack npc="20239" x="76053" y="105351" z="-2920" count="3" />
+		<pack npc="20239" x="76423" y="105911" z="-2928" count="3" />
+		<pack npc="20239" x="76203" y="106131" z="-2872" count="3" />
+		<pack npc="20239" x="75903" y="106211" z="-2840" count="3" />
+		<pack npc="20239" x="75603" y="106131" z="-2832" count="3" />
+		<pack npc="20239" x="75383" y="105911" z="-2792" count="3" />
+	</spot>
+	<spot id="stakato" kind="recommended" ru="Гнездо Стакато" en="Stakato Nest" min="82" max="83" maxPlayer="85" role="party" conditional="false" x="85536" y="-44994" z="-4512">
+		<pack npc="22617" x="85872" y="-46475" z="-4640" count="3" />
+		<pack npc="22617" x="86701" y="-47156" z="-4640" count="3" />
+		<pack npc="22617" x="85192" y="-47184" z="-4640" count="3" />
+		<pack npc="22625" x="85007" y="-46064" z="-4640" count="3" />
+		<pack npc="22625" x="86388" y="-46376" z="-4640" count="3" />
+		<pack npc="22617" x="86020" y="-46029" z="-4632" count="3" />
+		<pack npc="22625" x="85497" y="-46631" z="-4640" count="3" />
+		<pack npc="22617" x="85452" y="-47034" z="-4640" count="3" />
+		<pack npc="22625" x="85219" y="-45852" z="-4640" count="3" />
+		<pack npc="22625" x="86538" y="-46116" z="-4640" count="3" />
+		<pack npc="22617" x="86098" y="-45739" z="-4640" count="3" />
+		<pack npc="22625" x="85497" y="-46331" z="-4640" count="3" />
+	</spot>
+	<spot id="antharas" kind="recommended" ru="Логово Антараса" en="Antharas's Lair" min="83" max="85" maxPlayer="85" role="party" conditional="false" x="134231" y="114607" z="-3720">
+		<pack npc="22841" x="135212" y="114412" z="-3720" count="3" />
+		<pack npc="22828" x="125802" y="115108" z="-3720" count="3" />
+		<pack npc="22823" x="126213" y="112012" z="-3280" count="3" />
+		<pack npc="22840" x="137026" y="114332" z="-3720" count="3" />
+		<pack npc="22823" x="126624" y="112939" z="-3544" count="3" />
+		<pack npc="22839" x="136501" y="113861" z="-3720" count="3" />
+		<pack npc="22828" x="126144" y="114596" z="-3704" count="3" />
+		<pack npc="22839" x="135493" y="113954" z="-3720" count="3" />
+		<pack npc="22841" x="136601" y="114640" z="-3720" count="3" />
+		<pack npc="22841" x="135512" y="114412" z="-3720" count="3" />
+		<pack npc="22828" x="126092" y="115186" z="-3720" count="3" />
+		<pack npc="22823" x="126473" y="112162" z="-3320" count="3" />
+	</spot>
+	<spot id="annihilation" kind="recommended" ru="Семя Уничтожения" en="Seed of Annihilation" min="85" max="85" maxPlayer="85" role="conditional" conditional="true" x="-182145" y="182474" z="-10576">
+		<pack npc="22752" x="-182681" y="183767" z="-10528" count="3" />
+		<pack npc="22750" x="-177467" y="182600" z="-10600" count="3" />
+		<pack npc="22750" x="-184808" y="182012" z="-10496" count="3" />
+		<pack npc="22751" x="-184171" y="183580" z="-10416" count="3" />
+		<pack npc="22753" x="-183371" y="183001" z="-10560" count="3" />
+		<pack npc="22752" x="-178189" y="182923" z="-10576" count="3" />
+		<pack npc="22752" x="-183453" y="183667" z="-10464" count="3" />
+		<pack npc="22750" x="-184510" y="183037" z="-10448" count="3" />
+		<pack npc="22753" x="-183786" y="182917" z="-10520" count="3" />
+		<pack npc="22753" x="-177823" y="182767" z="-10584" count="3" />
+		<pack npc="22753" x="-183072" y="182953" z="-10568" count="3" />
+		<pack npc="22752" x="-182381" y="183767" z="-10544" count="3" />
+	</spot>
+</spots>

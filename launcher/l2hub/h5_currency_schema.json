@@ -1,0 +1,610 @@
+{
+  "itemname": {
+    "tag": "file",
+    "name": null,
+    "reader": null,
+    "size": null,
+    "children": [
+      {
+        "tag": "node",
+        "name": "data",
+        "reader": "UINT",
+        "size": null,
+        "children": []
+      },
+      {
+        "tag": "for",
+        "name": "item_name",
+        "reader": null,
+        "size": "#data",
+        "children": [
+          {
+            "tag": "node",
+            "name": "id",
+            "reader": "UINT",
+            "size": null,
+            "children": []
+          },
+          {
+            "tag": "node",
+            "name": "name",
+            "reader": "UNICODE",
+            "size": null,
+            "children": []
+          },
+          {
+            "tag": "node",
+            "name": "additionalname",
+            "reader": "UNICODE",
+            "size": null,
+            "children": []
+          },
+          {
+            "tag": "node",
+            "name": "description",
+            "reader": "ASCF",
+            "size": null,
+            "children": []
+          },
+          {
+            "tag": "node",
+            "name": "popup",
+            "reader": "INT",
+            "size": null,
+            "children": []
+          },
+          {
+            "tag": "node",
+            "name": "supercnt0",
+            "reader": "UINT",
+            "size": null,
+            "children": []
+          },
+          {
+            "tag": "node",
+            "name": "setid_1",
+            "reader": "UINT",
+            "size": null,
+            "children": []
+          },
+          {
+            "tag": "for",
+            "name": "setid_1",
+            "reader": null,
+            "size": "#setid_1",
+            "children": [
+              {
+                "tag": "node",
+                "name": "seteffect_1",
+                "reader": "UNICODE",
+                "size": null,
+                "children": []
+              }
+            ]
+          },
+          {
+            "tag": "node",
+            "name": "set_bonus_desc",
+            "reader": "ASCF",
+            "size": null,
+            "children": []
+          },
+          {
+            "tag": "node",
+            "name": "supercnt1",
+            "reader": "UINT",
+            "size": null,
+            "children": []
+          },
+          {
+            "tag": "node",
+            "name": "setid_2",
+            "reader": "UINT",
+            "size": null,
+            "children": []
+          },
+          {
+            "tag": "for",
+            "name": "setid_2",
+            "reader": null,
+            "size": "#setid_2",
+            "children": [
+              {
+                "tag": "node",
+                "name": "seteffect_2",
+                "reader": "UNICODE",
+                "size": null,
+                "children": []
+              }
+            ]
+          },
+          {
+            "tag": "node",
+            "name": "set_extra_desc",
+            "reader": "ASCF",
+            "size": null,
+            "children": []
+          },
+          {
+            "tag": "wrapper",
+            "name": "unk_bytes",
+            "reader": null,
+            "size": null,
+            "children": [
+              {
+                "tag": "node",
+                "name": "unk_byte_1",
+                "reader": "UBYTE",
+                "size": null,
+                "children": []
+              },
+              {
+                "tag": "node",
+                "name": "unk_byte_2",
+                "reader": "UBYTE",
+                "size": null,
+                "children": []
+              },
+              {
+                "tag": "node",
+                "name": "unk_byte_3",
+                "reader": "UBYTE",
+                "size": null,
+                "children": []
+              },
+              {
+                "tag": "node",
+                "name": "unk_byte_4",
+                "reader": "UBYTE",
+                "size": null,
+                "children": []
+              },
+              {
+                "tag": "node",
+                "name": "unk_byte_5",
+                "reader": "UBYTE",
+                "size": null,
+                "children": []
+              },
+              {
+                "tag": "node",
+                "name": "unk_byte_6",
+                "reader": "UBYTE",
+                "size": null,
+                "children": []
+              },
+              {
+                "tag": "node",
+                "name": "unk_byte_7",
+                "reader": "UBYTE",
+                "size": null,
+                "children": []
+              },
+              {
+                "tag": "node",
+                "name": "unk_byte_8",
+                "reader": "UBYTE",
+                "size": null,
+                "children": []
+              },
+              {
+                "tag": "node",
+                "name": "unk_byte_9",
+                "reader": "UBYTE",
+                "size": null,
+                "children": []
+              }
+            ]
+          },
+          {
+            "tag": "node",
+            "name": "special_enchant_amount",
+            "reader": "UINT",
+            "size": null,
+            "children": []
+          },
+          {
+            "tag": "node",
+            "name": "special_enchant_desc",
+            "reader": "ASCF",
+            "size": null,
+            "children": []
+          },
+          {
+            "tag": "node",
+            "name": "unk2",
+            "reader": "UINT",
+            "size": null,
+            "children": []
+          }
+        ]
+      }
+    ]
+  },
+  "etcitemgrp": {
+    "tag": "file",
+    "name": null,
+    "reader": null,
+    "size": null,
+    "children": [
+      {
+        "tag": "node",
+        "name": "data",
+        "reader": "UINT",
+        "size": null,
+        "children": []
+      },
+      {
+        "tag": "for",
+        "name": "item",
+        "reader": null,
+        "size": "#data",
+        "children": [
+          {
+            "tag": "node",
+            "name": "tag",
+            "reader": "UINT",
+            "size": null,
+            "children": []
+          },
+          {
+            "tag": "node",
+            "name": "object_id",
+            "reader": "UINT",
+            "size": null,
+            "children": []
+          },
+          {
+            "tag": "node",
+            "name": "drop_type",
+            "reader": "UINT",
+            "size": null,
+            "children": []
+          },
+          {
+            "tag": "node",
+            "name": "drop_anim_type",
+            "reader": "UINT",
+            "size": null,
+            "children": []
+          },
+          {
+            "tag": "node",
+            "name": "drop_radius",
+            "reader": "UINT",
+            "size": null,
+            "children": []
+          },
+          {
+            "tag": "node",
+            "name": "drop_height",
+            "reader": "UINT",
+            "size": null,
+            "children": []
+          },
+          {
+            "tag": "node",
+            "name": "UNK_0",
+            "reader": "UINT",
+            "size": null,
+            "children": []
+          },
+          {
+            "tag": "wrapper",
+            "name": "drop_mesh",
+            "reader": null,
+            "size": null,
+            "children": [
+              {
+                "tag": "node",
+                "name": "drop_mesh1",
+                "reader": "UNICODE",
+                "size": null,
+                "children": []
+              },
+              {
+                "tag": "node",
+                "name": "drop_mesh2",
+                "reader": "UNICODE",
+                "size": null,
+                "children": []
+              },
+              {
+                "tag": "node",
+                "name": "drop_mesh3",
+                "reader": "UNICODE",
+                "size": null,
+                "children": []
+              }
+            ]
+          },
+          {
+            "tag": "wrapper",
+            "name": "drop_texture",
+            "reader": null,
+            "size": null,
+            "children": [
+              {
+                "tag": "node",
+                "name": "drop_tex1",
+                "reader": "UNICODE",
+                "size": null,
+                "children": []
+              },
+              {
+                "tag": "node",
+                "name": "drop_tex2",
+                "reader": "UNICODE",
+                "size": null,
+                "children": []
+              },
+              {
+                "tag": "node",
+                "name": "drop_tex3",
+                "reader": "UNICODE",
+                "size": null,
+                "children": []
+              },
+              {
+                "tag": "node",
+                "name": "drop_tex4",
+                "reader": "UNICODE",
+                "size": null,
+                "children": []
+              },
+              {
+                "tag": "node",
+                "name": "drop_tex5",
+                "reader": "UNICODE",
+                "size": null,
+                "children": []
+              },
+              {
+                "tag": "node",
+                "name": "drop_tex6",
+                "reader": "UNICODE",
+                "size": null,
+                "children": []
+              },
+              {
+                "tag": "node",
+                "name": "drop_tex7",
+                "reader": "UNICODE",
+                "size": null,
+                "children": []
+              },
+              {
+                "tag": "node",
+                "name": "drop_tex8",
+                "reader": "UNICODE",
+                "size": null,
+                "children": []
+              },
+              {
+                "tag": "node",
+                "name": "drop_tex9",
+                "reader": "UNICODE",
+                "size": null,
+                "children": []
+              }
+            ]
+          },
+          {
+            "tag": "node",
+            "name": "UNK_6",
+            "reader": "UINT",
+            "size": null,
+            "children": []
+          },
+          {
+            "tag": "node",
+            "name": "UNK_7",
+            "reader": "UINT",
+            "size": null,
+            "children": []
+          },
+          {
+            "tag": "node",
+            "name": "UNK_8",
+            "reader": "UINT",
+            "size": null,
+            "children": []
+          },
+          {
+            "tag": "wrapper",
+            "name": "icon",
+            "reader": null,
+            "size": null,
+            "children": [
+              {
+                "tag": "node",
+                "name": "icon1",
+                "reader": "UNICODE",
+                "size": null,
+                "children": []
+              },
+              {
+                "tag": "node",
+                "name": "icon2",
+                "reader": "UNICODE",
+                "size": null,
+                "children": []
+              },
+              {
+                "tag": "node",
+                "name": "icon3",
+                "reader": "UNICODE",
+                "size": null,
+                "children": []
+              },
+              {
+                "tag": "node",
+                "name": "icon4",
+                "reader": "UNICODE",
+                "size": null,
+                "children": []
+              },
+              {
+                "tag": "node",
+                "name": "icon5",
+                "reader": "UNICODE",
+                "size": null,
+                "children": []
+              }
+            ]
+          },
+          {
+            "tag": "node",
+            "name": "durability",
+            "reader": "UINT",
+            "size": null,
+            "children": []
+          },
+          {
+            "tag": "node",
+            "name": "weight",
+            "reader": "UINT",
+            "size": null,
+            "children": []
+          },
+          {
+            "tag": "node",
+            "name": "material_type",
+            "reader": "UINT",
+            "size": null,
+            "children": []
+          },
+          {
+            "tag": "node",
+            "name": "crystallizable",
+            "reader": "UINT",
+            "size": null,
+            "children": []
+          },
+          {
+            "tag": "node",
+            "name": "UNK_9",
+            "reader": "UINT",
+            "size": null,
+            "children": []
+          },
+          {
+            "tag": "node",
+            "name": "related_quest_id",
+            "reader": "UINT",
+            "size": null,
+            "children": []
+          },
+          {
+            "tag": "for",
+            "name": "related_quest_id",
+            "reader": null,
+            "size": "#related_quest_id",
+            "children": [
+              {
+                "tag": "node",
+                "name": "quest_id",
+                "reader": "UINT",
+                "size": null,
+                "children": []
+              }
+            ]
+          },
+          {
+            "tag": "node",
+            "name": "color",
+            "reader": "UINT",
+            "size": null,
+            "children": []
+          },
+          {
+            "tag": "node",
+            "name": "icon_panel",
+            "reader": "UNICODE",
+            "size": null,
+            "children": []
+          },
+          {
+            "tag": "node",
+            "name": "mesh",
+            "reader": "UINT",
+            "size": null,
+            "children": []
+          },
+          {
+            "tag": "for",
+            "name": "mesh",
+            "reader": null,
+            "size": "#mesh",
+            "children": [
+              {
+                "tag": "node",
+                "name": "tab",
+                "reader": "UNICODE",
+                "size": null,
+                "children": []
+              }
+            ]
+          },
+          {
+            "tag": "node",
+            "name": "texture",
+            "reader": "UINT",
+            "size": null,
+            "children": []
+          },
+          {
+            "tag": "for",
+            "name": "texture",
+            "reader": null,
+            "size": "#texture",
+            "children": [
+              {
+                "tag": "node",
+                "name": "tab1",
+                "reader": "UNICODE",
+                "size": null,
+                "children": []
+              }
+            ]
+          },
+          {
+            "tag": "node",
+            "name": "drop_sound",
+            "reader": "UNICODE",
+            "size": null,
+            "children": []
+          },
+          {
+            "tag": "node",
+            "name": "equip_sound",
+            "reader": "UNICODE",
+            "size": null,
+            "children": []
+          },
+          {
+            "tag": "node",
+            "name": "consume_type",
+            "reader": "UINT",
+            "size": null,
+            "children": []
+          },
+          {
+            "tag": "node",
+            "name": "etcitem_type",
+            "reader": "UINT",
+            "size": null,
+            "children": []
+          },
+          {
+            "tag": "node",
+            "name": "crystal_type",
+            "reader": "UINT",
+            "size": null,
+            "children": []
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -398,6 +398,8 @@ CAL_FILE = "L2HubEvents.ini"
 # Ключи расписаний рядом с окнами событий (не окна): PvP-ивенты (0019) и нашествие эльпи (Interlude, 0021). Выключатели
 # PvpEvents и Elpies — на странице «Ивенты» (server_modes.json); в карточке календаря — остальные.
 PVP_KEYS = {"PvpEvents": "bool", "PvpOnlyWithPlayers": "bool", "PvpMinLevel": "int", "TvTMinParticipants": "int", "TvTMaxParticipants": "int", "TvTReservedSlots": "int", "TvTFightMinutes": "int", "TvT": "cron", "Deathmatch": "cron", "CtF": "cron",
+			"PvpRegistrationMinutes": "int", "CtFFightMinutes": "int", "DeathmatchFightMinutes": "int",
+            "PvpLevelGap": "int", "PvpRewardMobs": "int", "PvpRewardWinnerFactor": "int", "PvpRewardScrolls": "bool", "PvpRewardMedals": "int", "PvpRewardMedalItem": "int",
             "Elpies": "bool", "ElpiesSchedule": "cron", "ElpiesMinutes": "int", "ElpiesOnlyWithPlayers": "bool"}
 WINDOW = re.compile(r"^(?:(\d{2}) (\d{2})(?: \d{4})?-(\d{2}) (\d{2})(?: \d{4})?|Off)?$", re.IGNORECASE)
 CRON = re.compile(r"^(?:\S+(?:\s+\S+){4})?$")

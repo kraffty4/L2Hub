@@ -1,0 +1,103 @@
+L2Hub High Five: минуты боя TvT одни у ивента и у доски Alt+B (сумма награды на странице «Ивенты» считается от них):
+умолчание 7 минут, как в L2HubEvents.ini (вклад пользователя), граница 1–120, как была у TvT. Раньше TvT.java брал
+без ключа 20 минут с границей 120, а доска — 7 с границей 30.
+Самопроверка L2HUBBOARD: в навигации 11 кнопок (кнопка «Команды», 0404); проверка списка Alt+R не ловит разовую раскладку
+служебной панели (0402); отметки наборов у охотника снимаются на проверку и возвращаются: охотники берут наборы сами,
+а база копии мира живёт между прогонами.
+
+diff --git a/dist/game/data/scripts/custom/L2HubBoardTest/L2HubBoardTest.java b/dist/game/data/scripts/custom/L2HubBoardTest/L2HubBoardTest.java
+index d240aea..deb48a2 100644
+--- a/dist/game/data/scripts/custom/L2HubBoardTest/L2HubBoardTest.java
++++ b/dist/game/data/scripts/custom/L2HubBoardTest/L2HubBoardTest.java
+@@ -521,7 +521,7 @@ public class L2HubBoardTest
+ 	private static void sections(Player player)
+ 	{
+ 		final String navigation = HtmCache.getInstance().getHtm(player, "data/html/CommunityBoard/Custom/navigation.html");
+-		check("navigation: " + (navigation.split("<button").length - 1) + " buttons", ((navigation.split("<button").length - 1) == 10) && navigation.contains("bypass _bbshubplay\"") && navigation.contains("bypass _bbshubspots\"") && navigation.contains("bypass _bbshubworld\"") && navigation.contains("bypass _bbshubclan\"") && !navigation.contains("_bbshubwars") && !navigation.contains("gatekeeper/main.html") && !navigation.contains("voice ."));
++		check("navigation: " + (navigation.split("<button").length - 1) + " buttons", ((navigation.split("<button").length - 1) == 11) && navigation.contains("bypass _bbshubhelp\"") && navigation.contains("bypass _bbshubplay\"") && navigation.contains("bypass _bbshubspots\"") && navigation.contains("bypass _bbshubworld\"") && navigation.contains("bypass _bbshubclan\"") && !navigation.contains("_bbshubwars") && !navigation.contains("gatekeeper/main.html") && !navigation.contains("voice ."));
+ 		final String world = L2HubBoard.world(player);
+ 		check("world: hunters, daily, raid, world now", world.contains("bypass _bbshubhunters\"") && world.contains("bypass voice .daily\"") && world.contains("bypass voice .raid\"") && world.contains("bypass voice .world\"") && (world.length() < PAGE_LIMIT));
+ 		final String recruit = L2HubBoard.clanTabs("_bbshubclan");
+@@ -790,6 +790,8 @@ public class L2HubBoardTest
+ 			player.deleteShortcut(9, 1);
+ 			final int bars = player.getAllShortcuts().size();
+ 			player.getVariables().remove(InitialShortcutData.MACROS_GIVEN);
++			// Разовая раскладка служебной панели (L2HubServiceBarV2, вклад пользователя) — не тема этой проверки: здесь только список Alt+R.
++			player.getVariables().set("L2HubServiceBarV2", true);
+ 			final int before = player.getMacros().getAllMacroses().size();
+ 			final long available = all.stream().filter(data::isAvailable).count();
+ 			data.giveMissingMacros(player);
+@@ -900,13 +902,34 @@ public class L2HubBoardTest
+ 		final int slots = bag.getNonQuestSize();
+ 		final int load = bag.getTotalWeight();
+ 		final List<long[]> moved = unload(player);
++		final Map<String, Boolean> marks = new HashMap<>();
+ 		LOGGER.info(TAG + who + "bag " + slots + " of " + player.getInventoryLimit() + " slots, weight " + load + " of " + player.getMaxLoad() + "; unloaded " + moved.size() + ": " + bag.getNonQuestSize() + " slots, weight " + bag.getTotalWeight() + "; ng " + armor + " kit needs " + L2HubKits.goods(player, 0, armor).size() + " slots, weight " + weight(L2HubKits.goods(player, 0, armor)) + ".");
+ 		try
+ 		{
++			// Охотники в мире сами берут наборы, а база копии живёт между прогонами: отметки снимаются на проверку и возвращаются.
++			for (String grade : L2HubKits.GRADES)
++			{
++				for (String name : new String[] { "L2HubKit_" + grade, "L2HubKitBox_" + grade })
++				{
++					marks.put(name, player.getVariables().getBoolean(name, false));
++					player.getVariables().remove(name);
++				}
++			}
+ 			kitChecks(who, role, player, armor);
+ 		}
+ 		finally
+ 		{
++			for (Map.Entry<String, Boolean> mark : marks.entrySet())
++			{
++				if (mark.getValue())
++				{
++					player.getVariables().set(mark.getKey(), true);
++				}
++				else
++				{
++					player.getVariables().remove(mark.getKey());
++				}
++			}
+ 			reload(player, moved);
+ 			check(who + "bag back: " + bag.getNonQuestSize() + " slots, weight " + bag.getTotalWeight(), (bag.getNonQuestSize() == slots) && (bag.getTotalWeight() == load));
+ 		}
+diff --git a/dist/game/data/scripts/custom/events/TeamVsTeam/TvT.java b/dist/game/data/scripts/custom/events/TeamVsTeam/TvT.java
+index 5d6edf2..ad6b73d 100644
+--- a/dist/game/data/scripts/custom/events/TeamVsTeam/TvT.java
++++ b/dist/game/data/scripts/custom/events/TeamVsTeam/TvT.java
+@@ -138,7 +138,7 @@ public class TvT extends Event
+ 	// Settings
+ 	private static final int REGISTRATION_TIME = custom.L2HubPvpEvents.L2HubPvpEvents.tvt("PvpRegistrationMinutes", 10, 1, 30); // Minutes
+ 	private static final int WAIT_TIME = 1; // Minutes
+-	private static final int FIGHT_TIME = custom.L2HubPvpEvents.L2HubPvpEvents.tvt("TvTFightMinutes", 20, 1, 120); // L2Hub: минуты
++	private static final int FIGHT_TIME = custom.L2HubPvpEvents.L2HubPvpEvents.tvt("TvTFightMinutes", 7, 1, 120); // L2Hub: минуты
+ 	private static final int INACTIVITY_TIME = 2; // Minutes
+ 	private static final int MINIMUM_PARTICIPANT_LEVEL = custom.L2HubPvpEvents.L2HubPvpEvents.minLevel(76); // L2Hub: PvpMinLevel
+ 	private static final int MAXIMUM_PARTICIPANT_LEVEL = 200;
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+index 3cc5d39..e419619 100644
+--- a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+@@ -465,7 +465,7 @@ public class L2HubBoard implements IParseBoardHandler
+ 	 */
+ 	private static String medals(Player player)
+ 	{
+-		final int plain = custom.L2HubPvpEvents.L2HubPvpEvents.rewardMedals(custom.L2HubPvpEvents.L2HubPvpEvents.tvt("TvTFightMinutes", 7, 1, 30), false);
++		final int plain = custom.L2HubPvpEvents.L2HubPvpEvents.rewardMedals(custom.L2HubPvpEvents.L2HubPvpEvents.tvt("TvTFightMinutes", 7, 1, 120), false);
+ 		if (plain <= 0)
+ 		{
+ 			return "";
+@@ -474,10 +474,10 @@ public class L2HubBoard implements IParseBoardHandler
+ 		{
+ 			final int rate = org.l2jmobius.gameserver.managers.world.X10World.MEDAL_COINS;
+ 			final boolean en = "en".equals(org.l2jmobius.gameserver.config.custom.L2HubWorldConfig.LANGUAGE);
+-			final int winner = custom.L2HubPvpEvents.L2HubPvpEvents.rewardMedals(custom.L2HubPvpEvents.L2HubPvpEvents.tvt("TvTFightMinutes", 7, 1, 30), true);
++			final int winner = custom.L2HubPvpEvents.L2HubPvpEvents.rewardMedals(custom.L2HubPvpEvents.L2HubPvpEvents.tvt("TvTFightMinutes", 7, 1, 120), true);
+ 			return "<br><br>" + (en ? "A full PvP fight pays " + (plain * rate) + " Coins, the winner " + (winner * rate) + ". Coins go straight to your wallet; champions drop Coins too." : "За полный PvP-бой: " + (plain * rate) + " коинов, победителю " + (winner * rate) + ". Коины сразу в кошельке; чемпионы тоже роняют коины.") + "<br1>" + button(en ? "Coin shop" : "Магазин за коины", EVENTS + " medals", 150);
+ 		}
+-		return "<br><br>" + tr("Медали у тебя: ") + "<font color=\"LEVEL\">" + player.getInventory().getInventoryItemCount(custom.L2HubPvpEvents.L2HubPvpEvents.MEDAL_ITEM, -1) + "</font><br1>" + ("en".equals(org.l2jmobius.gameserver.config.custom.L2HubWorldConfig.LANGUAGE) ? "For a full PvP fight: " : "За полный PvP-бой: ") + plain + tr(", победителю ") + custom.L2HubPvpEvents.L2HubPvpEvents.rewardMedals(custom.L2HubPvpEvents.L2HubPvpEvents.tvt("TvTFightMinutes", 7, 1, 30), true) + tr(". Падают и с чемпионов.") + "<br1>" + button(tr("Обмен медалей"), EVENTS + " medals", 150);
++		return "<br><br>" + tr("Медали у тебя: ") + "<font color=\"LEVEL\">" + player.getInventory().getInventoryItemCount(custom.L2HubPvpEvents.L2HubPvpEvents.MEDAL_ITEM, -1) + "</font><br1>" + ("en".equals(org.l2jmobius.gameserver.config.custom.L2HubWorldConfig.LANGUAGE) ? "For a full PvP fight: " : "За полный PvP-бой: ") + plain + tr(", победителю ") + custom.L2HubPvpEvents.L2HubPvpEvents.rewardMedals(custom.L2HubPvpEvents.L2HubPvpEvents.tvt("TvTFightMinutes", 7, 1, 120), true) + tr(". Падают и с чемпионов.") + "<br1>" + button(tr("Обмен медалей"), EVENTS + " medals", 150);
+ 	}
+ 
+ 	/**

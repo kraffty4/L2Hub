@@ -1,0 +1,36 @@
+L2Hub: охотник на Олимпиаде решает сразу после старта боя и дальше каждые 200 мс, а не раз в 2 с на тике охотника (сообщение группы 411: «на олимпе затупают»). Общее ядро (OlympiadStartKick, OlympiadActionPace) уже было, на High Five его не звал никто (docs/PHANTOMS.md, раздел 4.145).
+
+diff --git a/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGameNormal.java b/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGameNormal.java
+index 466accab766030d51d7d4e90f5c693848ba8acf0..469fb46a3815913472e9a33d49f10ca8c06a79fe 100644
+--- a/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGameNormal.java
++++ b/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGameNormal.java
+@@ -31,6 +31,7 @@ import org.l2jmobius.gameserver.entity.World;
+ import org.l2jmobius.gameserver.entity.actor.Creature;
+ import org.l2jmobius.gameserver.entity.actor.Player;
+ import org.l2jmobius.gameserver.entity.zone.type.OlympiadStadiumZone;
++import org.l2jmobius.gameserver.managers.phantom.OlympiadStartKick;
+ import org.l2jmobius.gameserver.mechanics.events.EventDispatcher;
+ import org.l2jmobius.gameserver.mechanics.events.EventType;
+ import org.l2jmobius.gameserver.mechanics.events.holders.olympiad.OnOlympiadMatchResult;
+@@ -181,6 +182,13 @@ public abstract class OlympiadGameNormal extends AbstractOlympiadGame
+ 		_playerOne.getPlayer().updateEffectIcons();
+ 		_playerTwo.getPlayer().setOlympiadStart(true);
+ 		_playerTwo.getPlayer().updateEffectIcons();
++
++		// L2Hub: бой начался — охотник решает сразу и дальше каждые 200 мс, а не раз в 2 с на своём тике (OlympiadStartKick, OlympiadActionPace; docs/PHANTOMS.md, раздел 4.145).
++		final Participant first = _playerOne;
++		final Participant second = _playerTwo;
++		final Player one = first.getPlayer();
++		final Player two = second.getPlayer();
++		OlympiadStartKick.started(this, one, two, _stadiumID, () -> !isAborted() && (first.getPlayer() == one) && (second.getPlayer() == two) && !first.isDisconnected() && !second.isDisconnected());
+ 		return true;
+ 	}
+ 	
+@@ -229,6 +237,7 @@ public abstract class OlympiadGameNormal extends AbstractOlympiadGame
+ 	@Override
+ 	protected void clearPlayers()
+ 	{
++		OlympiadStartKick.clear(this); // L2Hub: бой окончен — быстрый проход охотников снят.
+ 		_playerOne.setPlayer(null);
+ 		_playerOne = null;
+ 		_playerTwo.setPlayer(null);

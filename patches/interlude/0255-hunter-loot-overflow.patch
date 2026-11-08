@@ -1,0 +1,28 @@
+L2Hub: лут и свип сверх ячеек сумки охотник оставляет у себя до разгрузки в городе, а не выбрасывает на землю.
+Штатная ветка Player.addItem «сумка полна — выбросить» зовёт PhantomHunterLoot.overflowDrop: для охотника (не жнеца)
+с LOOT и SWEEP вещь остаётся, для всех остальных и любых других получений — прежний dropItem. Разгрузку и порядок
+продажи (PhantomHunterLoot.pressured, saleOrder, keep) ядро уже делает на всех хрониках. Перенос ep-local-b12
+сопровождающего Эпилога (у Эпилога эта врезка — в 0512).
+
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/Player.java b/java/org/l2jmobius/gameserver/entity/actor/Player.java
+index 2a35f9f..924e8f4 100644
+--- a/java/org/l2jmobius/gameserver/entity/actor/Player.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/Player.java
+@@ -3305,7 +3305,7 @@ public class Player extends Playable
+ 			// If over capacity, drop the item.
+ 			if (!isGM() && !_inventory.validateCapacity(0, item.isQuestItem()) && newitem.isDropable() && (!newitem.isStackable() || (newitem.getLastChange() != Item.MODIFIED)))
+ 			{
+-				dropItem(ItemProcessType.DROP, newitem, null, true, true);
++				org.l2jmobius.gameserver.managers.phantom.PhantomHunterLoot.overflowDrop(this, ItemProcessType.DROP, newitem, null, true, true, process); // L2Hub: лут охотника — в сумку до разгрузки.
+ 			}
+ 			else if (CursedWeaponsManager.getInstance().isCursed(newitem.getId()))
+ 			{
+@@ -3417,7 +3417,7 @@ public class Player extends Playable
+ 				// If over capacity, drop the item.
+ 				if (!isGM() && !_inventory.validateCapacity(0, item.isQuestItem()) && createdItem.isDropable() && (!createdItem.isStackable() || (createdItem.getLastChange() != Item.MODIFIED)))
+ 				{
+-					dropItem(ItemProcessType.DROP, createdItem, null, true);
++					org.l2jmobius.gameserver.managers.phantom.PhantomHunterLoot.overflowDrop(this, ItemProcessType.DROP, createdItem, null, true, process); // L2Hub: лут охотника — в сумку до разгрузки.
+ 				}
+ 				else if (CursedWeaponsManager.getInstance().isCursed(createdItem.getId()))
+ 				{

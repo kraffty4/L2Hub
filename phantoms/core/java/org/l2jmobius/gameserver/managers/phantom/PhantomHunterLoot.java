@@ -20,7 +20,8 @@ import org.l2jmobius.gameserver.entity.item.instance.Item;
  * <li>{@link #reliefNeeded} — всё ещё тесно (55 % ячеек или 45 % веса): в аварию продаётся и товар лавки;</li>
  * <li>{@link #saleOrder} — продажа от дешёвого к дорогому; {@link #keep} — вещи из списка Эпилога (Coin of Luck, Ancient Adena и др.), заточенное и с ЛС не продаются;</li>
  * <li>{@link #overflowDrop} — лут сверх ячеек охотник оставляет в сумке до разгрузки вместо выброса на землю; на Эпилоге его зовёт врезка в
- * {@code Player.addItem}, на других хрониках врезки нет, и лишнее падает на землю, как раньше.</li>
+ * {@code Player.addItem} (в {@code 0512}), на High Five и Interlude — патчи {@code 0262} и {@code 0255}; на Classic и Essence
+ * врезки нет, и лишнее падает на землю, как раньше.</li>
  * </ul>
  */
 public final class PhantomHunterLoot

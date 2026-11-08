@@ -1,0 +1,22 @@
+L2Hub: бой Олимпиады, прерванный отключением участника, записывается в историю боёв (olympiad_fights), как обычный:
+победитель — оставшийся, отключились оба — ничья. Бой, сорванный до начала схватки, не пишется. Патч сопровождающего
+Эпилога 0249 (ep-olympiad-disconnect-fight-history) байт в байт; на High Five то же — патч 0261.
+
+diff --git a/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGame.java b/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGame.java
+--- a/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGame.java
++++ b/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGame.java
+@@ -826,6 +826,14 @@
+ 			
+ 			playerOneStat.set(COMP_DONE, playerOnePlayed + 1);
+ 			playerTwoStat.set(COMP_DONE, playerTwoPlayed + 1);
++			// Завершённый из-за отключения бой также сохраняет соперника в истории.
++			if (_startTime > 0)
++			{
++				final int disconnectedWinner = _pOneCrash && _pTwoCrash ? 0 : (_pOneCrash ? 2 : 1);
++				saveResults(_playerOneID, _playerTwoID, _playerOneClass, _playerTwoClass,
++					disconnectedWinner, _startTime, Math.max(0L, System.currentTimeMillis() - _startTime),
++					(_type == CompetitionType.CLASSED ? 1 : 0));
++			}
+ 			return;
+ 		}
+ 		

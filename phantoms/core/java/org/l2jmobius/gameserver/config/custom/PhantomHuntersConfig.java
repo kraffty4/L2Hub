@@ -68,6 +68,7 @@ public class PhantomHuntersConfig
 	public static NavigableMap<Integer, Long> HUNTER_STORE_MIN_PRICES;
 	public static float HUNTER_DROP_CHANCE_MULTIPLIER;
 	public static NavigableMap<Integer, Long> HUNTER_PROFESSION_PRICES;
+	public static boolean HUNTER_SHOP_PRICES;
 	public static boolean HUNTER_QUESTS;
 	public static int[] HUNTER_QUEST_LEVELS;
 	public static int HUNTER_QUEST_MIN_MINUTES;
@@ -260,10 +261,30 @@ public class PhantomHuntersConfig
 	public static int HUNTER_MENTORS_PARTY_MAX;
 	/** Отказал в пати — столько часов наставники к нему не подходят. */
 	public static int HUNTER_MENTORS_REFUSAL_HOURS;
+	/** Старожилы, раздел 4.52: новый охотник со стартовым уровнем рождается сразу им. Выключено — с 1-го, уже живущих не трогает. */
+	public static boolean HUNTER_VETERANS;
+	/** Жизненный цикл, раздел 4.151: тип игрока, потолок уровня, уход насовсем и новички на освободившиеся места. */
+	public static boolean HUNTER_LIFECYCLE;
+	/** Жизненный цикл только в журнале: мир не меняется. */
+	public static boolean HUNTER_LIFECYCLE_SHADOW;
+	/** Новичков и уходов в день в среднем (± 1). */
+	public static int HUNTER_LIFECYCLE_NEW_PER_DAY;
+	/** Новичков и уходов в день — не больше. */
+	public static int HUNTER_LIFECYCLE_MAX_NEW_PER_DAY;
+	/** Мастерство по связкам классов, раздел 4.153: ветеран жмёт атаки по связке своего класса, новичок — хуже. */
+	public static boolean HUNTER_CLASS_COMBOS;
 	/** С проклятым оружием сам нападает на живых игроков и охотников рядом, раздел 4.114. */
 	public static boolean HUNTER_CURSED_ATTACKS;
 	/** Правки боя из вклада пользователя, раздел 4.119. */
 	public static boolean HUNTER_COMBAT_FIXES;
+	/** Охотник в пати живого живёт, как на кач: тактика в бою, городские дела в городе (раздел 4.146). */
+	public static boolean HUNTER_PARTY_LIFE;
+	/** Бой Олимпиады сопровождающего Эпилога: защиты, контроль, самолечение и снятие (раздел 4.149); точка — PhantomCompat.olympiadSkills. */
+	public static boolean HUNTER_OLYMPIAD_SKILLS;
+	/** Первая профа квестом (раздел 4.152). */
+	public static boolean HUNTER_PROFESSION_QUESTS;
+	/** Какие ступени профы квестом: 1 — первая, 2 — вторая. */
+	public static java.util.Set<Integer> HUNTER_PROFESSION_QUEST_TIERS = java.util.Set.of(1);
 	/** Жесты охотников (раздел 4.80). */
 	public static boolean HUNTER_GESTURES;
 	/** Стоит в городе без дела: раз в столько секунд, × 0,5–1,5, бросок на жест. */
@@ -344,6 +365,7 @@ public class PhantomHuntersConfig
 		HUNTER_STORE_MIN_PRICES = levelMap(config.getString("HunterStoreMinPrices", "1:2000;20:5000;40:20000;52:50000;61:100000;76:300000"));
 		HUNTER_DROP_CHANCE_MULTIPLIER = Math.max(0, config.getFloat("HunterDropChanceMultiplier", 2));
 		HUNTER_PROFESSION_PRICES = levelMap(config.getString("HunterProfessionPrices", "20:50000;40:1000000;76:10000000"));
+		HUNTER_SHOP_PRICES = config.getBoolean("HunterShopPrices", false);
 		HUNTER_QUESTS = config.getBoolean("HunterQuests", true);
 		HUNTER_QUEST_LEVELS = levels(config.getString("HunterQuestLevels", "6,10,14,17,20,23,26,30,34,38,42,46,50,55,60,65,70,75,80"));
 		final int[] minutes = levels(config.getString("HunterQuestMinutes", "15,25"));
@@ -529,8 +551,26 @@ public class PhantomHuntersConfig
 		HUNTER_MENTORS_PARTY_MIN = Math.max(1, config.getInt("HunterMentorsPartyMin", 10));
 		HUNTER_MENTORS_PARTY_MAX = Math.max(HUNTER_MENTORS_PARTY_MIN, config.getInt("HunterMentorsPartyMax", 20));
 		HUNTER_MENTORS_REFUSAL_HOURS = Math.max(0, config.getInt("HunterMentorsRefusalHours", 24));
+		HUNTER_VETERANS = config.getBoolean("HunterVeterans", true);
+		HUNTER_LIFECYCLE = config.getBoolean("HunterLifecycle", false);
+		HUNTER_LIFECYCLE_SHADOW = config.getBoolean("HunterLifecycleShadow", true);
+		HUNTER_LIFECYCLE_MAX_NEW_PER_DAY = Math.max(0, config.getInt("HunterLifecycleMaxNewPerDay", 4));
+		HUNTER_LIFECYCLE_NEW_PER_DAY = Math.max(0, Math.min(HUNTER_LIFECYCLE_MAX_NEW_PER_DAY, config.getInt("HunterLifecycleNewPerDay", 2)));
+		HUNTER_CLASS_COMBOS = config.getBoolean("HunterClassCombos", true);
 		HUNTER_CURSED_ATTACKS = config.getBoolean("HunterCursedAttacks", true);
 		HUNTER_COMBAT_FIXES = config.getBoolean("HunterCombatFixes", false);
+		HUNTER_PARTY_LIFE = config.getBoolean("HunterPartyLife", false);
+		HUNTER_OLYMPIAD_SKILLS = config.getBoolean("HunterOlympiadSkills", false);
+		HUNTER_PROFESSION_QUESTS = config.getBoolean("HunterProfessionQuests", false);
+		final java.util.Set<Integer> professionTiers = new java.util.HashSet<>();
+		for (String tier : config.getString("HunterProfessionQuestTiers", "1").split(","))
+		{
+			if (tier.strip().matches("[12]"))
+			{
+				professionTiers.add(Integer.parseInt(tier.strip()));
+			}
+		}
+		HUNTER_PROFESSION_QUEST_TIERS = java.util.Set.copyOf(professionTiers);
 		HUNTER_GESTURES = config.getBoolean("HunterGestures", false);
 		HUNTER_GESTURE_IDLE_COOLDOWN = Math.max(10, config.getInt("HunterGestureIdleCooldown", 300));
 		HUNTER_GESTURE_IDLE_CHANCE = Math.max(0, Math.min(100, config.getInt("HunterGestureIdleChance", 30)));

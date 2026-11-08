@@ -74,6 +74,10 @@
 						<xs:attribute name="classes" type="xs:string" use="required" />
 						<!-- Прозвища для чата пати через «;» (имя учитывается и так). -->
 						<xs:attribute name="aliases" type="xs:string" />
+						<!-- Личная пачка (PersonalCompanionNames): ключ профиля помощника — healer, buffer, gladiator… (имя меняется в PersonalCompanionNames.ini). -->
+						<xs:attribute name="profile" type="xs:string" />
+						<!-- Личная пачка: прежние имена профиля через «;» — по ним находится уже созданный персонаж. -->
+						<xs:attribute name="legacyNames" type="xs:string" />
 						<!-- Общительность охотника: множитель шанса заговорить первым (1 — обычный). -->
 						<xs:attribute name="social" type="xs:decimal" default="1" />
 						<xs:attribute name="temper" type="xs:decimal" default="1" />
@@ -81,6 +85,8 @@
 						<xs:attribute name="risk" type="xs:decimal" default="1" />
 						<!-- Ветеран (раздел 4.52): новый охотник рождается сразу этого уровня — класс по цепочке, скиллы, шмот своего грейда, адена живого такого уровня. Кто уже есть в базе, того не трогает. -->
 						<xs:attribute name="startLevel" type="xs:positiveInteger" />
+						<!-- Запас «следующего поколения» (раздел 4.155): охотник входит в мир только новичком жизненного цикла с 1-го уровня, на место ушедшего насовсем. Места в мире (HuntersMax = 0 — все) — таблица без запаса. -->
+						<xs:attribute name="reserve" type="xs:boolean" default="false" />
 						<xs:attribute name="x" type="xs:integer" use="required" />
 						<xs:attribute name="y" type="xs:integer" use="required" />
 						<xs:attribute name="z" type="xs:integer" use="required" />

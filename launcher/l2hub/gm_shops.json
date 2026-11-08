@@ -10,6 +10,25 @@
       },
       "items": "game/data/stats/items",
       "skills": "game/data/stats/skills"
+    },
+    "epilogue": {
+      "npc": 50010,
+      "folders": ["game/data/multisell/custom", "game/data/multisell"],
+      "pages": {
+        "en": "game/data/html/merchant",
+        "ru": "game/data/lang/ru/data/html/merchant"
+      },
+      "items": "game/data/stats/items",
+      "skills": "game/data/stats/skills"
+    },
+    "interlude": {
+      "npc": 50010,
+      "folders": ["game/data/multisell/custom", "game/data/multisell"],
+      "pages": {
+        "en": "game/data/html/merchant"
+      },
+      "items": "game/data/stats/items",
+      "skills": "game/data/stats/skills"
     }
   }
 }

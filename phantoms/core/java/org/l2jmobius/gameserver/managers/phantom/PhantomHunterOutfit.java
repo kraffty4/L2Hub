@@ -44,7 +44,9 @@ import org.l2jmobius.gameserver.entity.item.instance.Item;
 import org.l2jmobius.gameserver.entity.item.type.WeaponType;
 import org.l2jmobius.gameserver.entity.itemcontainer.Inventory;
 import org.l2jmobius.gameserver.entity.spawns.Spawn;
+import org.l2jmobius.gameserver.mechanics.effects.AbstractEffect;
 import org.l2jmobius.gameserver.mechanics.effects.EffectType;
+import org.l2jmobius.gameserver.mechanics.skill.EffectScope;
 import org.l2jmobius.gameserver.mechanics.skill.Skill;
 
 /**
@@ -192,7 +194,7 @@ final class PhantomHunterOutfit
 		// Профу не отнимают: смерть уронила ниже 20/40/76 — класс остаётся, как у живого (раньше охотник терял купленную профу и платил за неё снова).
 		final PlayerClass target = PlayerClass.getPlayerClass(classId);
 		final boolean downgrade = (target != null) && (target.level() < player.getPlayerClass().level());
-		if ((player.getPlayerClass().getId() != classId) && !downgrade && !professionLocked(player, classId))
+		if ((player.getPlayerClass().getId() != classId) && !downgrade && !professionLocked(player, classId) && !PhantomProfessionQuest.holds(player, template))
 		{
 			player.setPlayerClass(classId);
 			player.setBaseClass(classId);
@@ -290,7 +292,7 @@ final class PhantomHunterOutfit
 	{
 		final List<String> done = new ArrayList<>();
 		long price;
-		while ((price = professionDue(player)) > 0)
+		while (((price = professionDue(player)) > 0) && !PhantomProfessionQuest.holds(player, template))
 		{
 			if (player.getAdena() < price)
 			{
@@ -569,6 +571,11 @@ final class PhantomHunterOutfit
 
 		PhantomClanStock.borrow(player, template, done);
 		done.addAll(buyGear(player, template, reserve, behind));
+		// Тату по роли класса (BotClassKits.ini) — на то, что осталось после шмота; оружие отстало — не до них.
+		if (!behind)
+		{
+			done.addAll(PhantomClassKits.applyDyes(player, false, Math.max(0, buyBudget(player) - reserve)));
+		}
 
 		// Заточка — на то, что осталось; сломал — новая вещь на что хватит, совсем без оружия — стартовое, как у нового персонажа.
 		final List<String> enchanted = behind ? List.of() : PhantomEnchant.chore(player, template);
@@ -697,8 +704,8 @@ final class PhantomHunterOutfit
 			final ItemTemplate wanted = best == null ? null : ItemData.getInstance().getTemplate(itemFor(best, slot));
 			if ((wanted != null) && (wanted.getCrystalType().getLevel() > currentGrade))
 			{
-				missing.add(SLOT_NAMES[i] + " (~" + PhantomHunterManager.money(wanted.getReferencePrice()) + ")");
-				missingPrice += wanted.getReferencePrice();
+				missing.add(SLOT_NAMES[i] + " (~" + PhantomHunterManager.money(HunterShopPrices.buyPrice(wanted)) + ")");
+				missingPrice += HunterShopPrices.buyPrice(wanted);
 			}
 		}
 
@@ -715,8 +722,8 @@ final class PhantomHunterOutfit
 				final ItemTemplate wanted = ItemData.getInstance().getTemplate(jewel(Math.min(7, grade(best.rhand)), slot));
 				if (wanted != null)
 				{
-					missing.add("бижа (~" + PhantomHunterManager.money(wanted.getReferencePrice()) + ")");
-					missingPrice += wanted.getReferencePrice();
+					missing.add("бижа (~" + PhantomHunterManager.money(HunterShopPrices.buyPrice(wanted)) + ")");
+					missingPrice += HunterShopPrices.buyPrice(wanted);
 				}
 			}
 		}
@@ -1616,12 +1623,12 @@ final class PhantomHunterOutfit
 			final int itemId = jewel(grade, slot);
 			final ItemTemplate item = itemId > 0 ? ItemData.getInstance().getTemplate(itemId) : null;
 			final Item current = player.getInventory().getPaperdollItem(slot);
-			if ((item == null) || ((current != null) && (current.getTemplate().getCrystalType().getLevel() >= item.getCrystalType().getLevel())))
+			if ((item == null) || HunterShopPrices.notForSale(item) || ((current != null) && (current.getTemplate().getCrystalType().getLevel() >= item.getCrystalType().getLevel())))
 			{
 				continue;
 			}
 
-			if (!gift && (((player.getAdena() - reserve) < item.getReferencePrice()) || !player.reduceAdena(ItemProcessType.BUY, item.getReferencePrice(), player, false)))
+			if (!gift && (((player.getAdena() - reserve) < HunterShopPrices.buyPrice(item)) || !PhantomCompat.reduceAdena(player, ItemProcessType.BUY, HunterShopPrices.buyPrice(item), player, false)))
 			{
 				break;
 			}
@@ -1676,7 +1683,7 @@ final class PhantomHunterOutfit
 		final long[][] best = new long[8][3];
 		for (ItemTemplate item : ItemData.getInstance().getAllItems())
 		{
-			if ((item == null) || !item.isArmor() || (item.getReferencePrice() <= 0) || !item.isSellable() || !item.isTradeable() || item.isQuestItem() || item.isHeroItem() || item.isPvpItem() || npcOnly(item))
+			if ((item == null) || !item.isArmor() || (HunterShopPrices.buyPrice(item) <= 0) || !item.isSellable() || !item.isTradeable() || item.isQuestItem() || item.isHeroItem() || item.isPvpItem() || npcOnly(item))
 			{
 				continue;
 			}
@@ -1690,10 +1697,10 @@ final class PhantomHunterOutfit
 			}
 
 			final int grade = Math.min(7, item.getCrystalType().getLevel());
-			if ((catalog[grade][kind] == 0) || (item.getReferencePrice() < best[grade][kind]))
+			if ((catalog[grade][kind] == 0) || (HunterShopPrices.buyPrice(item) < best[grade][kind]))
 			{
 				catalog[grade][kind] = item.getId();
-				best[grade][kind] = item.getReferencePrice();
+				best[grade][kind] = HunterShopPrices.buyPrice(item);
 			}
 		}
 		_jewels = catalog;
@@ -1706,6 +1713,10 @@ final class PhantomHunterOutfit
 	 */
 	private static long buy(Player player, int itemId, int stock, long budget)
 	{
+		if ((itemId > 0) && HunterShopPrices.notForSale(ItemData.getInstance().getTemplate(itemId)))
+		{
+			return 0; // в шопе только за жетоны или обменом — не покупает
+		}
 		final long price = Math.max(1, price(itemId));
 		final long want = itemId <= 0 ? 0 : Math.min(stock - count(player, itemId), budget / price);
 		if ((want <= 0) || !PhantomCompat.reduceAdena(player, ItemProcessType.BUY, want * price, player, false))
@@ -1717,10 +1728,13 @@ final class PhantomHunterOutfit
 		return want;
 	}
 
+	/**
+	 * @return почём пешка покупает вещь ({@link HunterShopPrices}: цена GM-шопа или, без неё, цена предмета)
+	 */
 	static long price(int itemId)
 	{
 		final ItemTemplate template = itemId > 0 ? ItemData.getInstance().getTemplate(itemId) : null;
-		return template == null ? 0 : template.getReferencePrice();
+		return HunterShopPrices.buyPrice(template);
 	}
 
 	/**
@@ -1800,6 +1814,10 @@ final class PhantomHunterOutfit
 				}
 
 				final ItemTemplate item = ItemData.getInstance().getTemplate(itemId);
+				if (HunterShopPrices.notForSale(item))
+				{
+					continue; // в шопе только за жетоны или обменом — посмотреть грейд ниже
+				}
 				if ((item == null) || (item.getCrystalType().getLevel() <= currentGrade) || ((current != null) && (current.getId() == itemId)))
 				{
 					break; // надетое не хуже этого грейда, ниже искать нечего
@@ -1811,12 +1829,12 @@ final class PhantomHunterOutfit
 				final int g = Math.min(7, grade(gear.rhand));
 				final long ammoReserve = (slot == Inventory.PAPERDOLL_RHAND ? isRanged(gear.rhand) : ammoId(player) > 0) ? price(ARROWS[g]) * AMMO_RESERVE : 0;
 				final long reserve = (price(shotId(player.isMageClass(), g)) * SHOT_RESERVE) + ammoReserve + (player.getLevel() > PlayerConfig.MAX_FREE_TELEPORT_LEVEL ? PhantomHuntersConfig.HUNTER_TELEPORT_FEE : 0) + professionReserve;
-				if (!gift && ((player.getAdena() - reserve) < item.getReferencePrice()))
+				if (!gift && ((player.getAdena() - reserve) < HunterShopPrices.buyPrice(item)))
 				{
 					continue; // не хватает — посмотреть грейд ниже
 				}
 
-				if (!gift && !player.reduceAdena(ItemProcessType.BUY, item.getReferencePrice(), player, false))
+				if (!gift && !PhantomCompat.reduceAdena(player, ItemProcessType.BUY, HunterShopPrices.buyPrice(item), player, false))
 				{
 					break;
 				}
@@ -2238,6 +2256,10 @@ final class PhantomHunterOutfit
 				}
 
 				final ItemTemplate item = ItemData.getInstance().getTemplate(itemId);
+				if (HunterShopPrices.notForSale(item))
+				{
+					continue;
+				}
 				if ((item == null) || (item.getCrystalType().getLevel() <= currentGrade) || ((current != null) && (current.getId() == itemId)))
 				{
 					break;
@@ -2251,13 +2273,13 @@ final class PhantomHunterOutfit
 				final int g = Math.min(7, grade(gear.rhand));
 				final long ammoReserve = (slot == Inventory.PAPERDOLL_RHAND ? isRanged(gear.rhand) : ammoId(player) > 0) ? price(ARROWS[g]) * AMMO_RESERVE : 0;
 				final long reserve = (price(shotId(player.isMageClass(), g)) * SHOT_RESERVE) + ammoReserve + (player.getLevel() > PlayerConfig.MAX_FREE_TELEPORT_LEVEL ? PhantomHuntersConfig.HUNTER_TELEPORT_FEE : 0) + professionReserve;
-				if ((adena - reserve) >= item.getReferencePrice())
+				if ((adena - reserve) >= HunterShopPrices.buyPrice(item))
 				{
-					adena -= item.getReferencePrice();
+					adena -= HunterShopPrices.buyPrice(item);
 					bought = true;
 					break;
 				}
-				missing = new Want(itemId, item.getReferencePrice(), (item.getReferencePrice() + reserve) - adena); // грейдом ниже — дешевле: остаётся самая маленькая нехватка
+				missing = new Want(itemId, HunterShopPrices.buyPrice(item), (HunterShopPrices.buyPrice(item) + reserve) - adena); // грейдом ниже — дешевле: остаётся самая маленькая нехватка
 			}
 			if (!bought && (missing != null) && (missing.missing() > 0))
 			{
@@ -2590,22 +2612,18 @@ final class PhantomHunterOutfit
 	/**
 	 * AutoPlay и AutoUse: цель — мобы рядом, не отбивать чужих мобов, подбирать лут; два-три самых сильных атакующих скилла класса. Воин бьёт ещё и оружием; кастер без атакующих скиллов (хилер) — тоже.
 	 */
+	/** Бой личного помощника (PersonalCompanions.configureCombat) — тот же, что у охотника. */
+	static void setupCompanionCombat(Player player)
+	{
+		setupCombat(player);
+	}
+
 	private static void setupCombat(Player player)
 	{
-		final List<Skill> attacks = new ArrayList<>();
-		for (Skill skill : player.getAllSkills())
-		{
-			if (!skill.isActive() || skill.isToggle() || (skill.getItemConsumeCount() > 0) || (skill.getChargeConsumeCount() > 0) || !PhantomCompat.isAttackSkillTarget(skill))
-			{
-				continue;
-			}
-
-			if (skill.hasEffectType(EffectType.PHYSICAL_ATTACK, EffectType.MAGICAL_ATTACK, EffectType.HP_DRAIN, EffectType.DEATH_LINK, EffectType.PHYSICAL_ATTACK_HP_LINK))
-			{
-				attacks.add(skill);
-			}
-		}
-		attacks.sort((a, b) -> Double.compare(PhantomCompat.skillPower(b), PhantomCompat.skillPower(a)));
+		// Заряды воина (раздел 4.150): с набором зарядов в бафах автобоя скиллы на зарядах не отсекаются — автобой сам заряжается и пропускает удар, пока зарядов мало.
+		final Skill focus = PhantomHuntersConfig.HUNTER_COMBAT_FIXES ? focusSkill(player) : null;
+		// Мастерство (раздел 4.153): ветеран ставит атаки по связке своего класса, новичок — как раньше.
+		final List<Skill> attacks = PhantomClassCombos.order(player, attackList(player, focus));
 
 		final boolean caster = player.isMageClass() && !attacks.isEmpty();
 		final AutoUseSettingsHolder use = player.getAutoUseSettings();
@@ -2616,9 +2634,13 @@ final class PhantomHunterOutfit
 		{
 			use.getAutoActions().add(AUTO_ATTACK_ACTION);
 		}
-		for (Skill skill : autoAttacks(attacks, caster ? 3 : 2))
+		for (Skill skill : autoAttacks(attacks, (caster || (focus != null)) ? 3 : 2))
 		{
 			use.getAutoSkills().add(skill.getId());
+		}
+		if ((focus != null) && !use.getAutoBuffs().contains(focus.getId()))
+		{
+			use.getAutoBuffs().add(focus.getId());
 		}
 
 		final AutoPlaySettingsHolder play = player.getAutoPlaySettings();
@@ -2627,6 +2649,195 @@ final class PhantomHunterOutfit
 		play.setShortRange(false);
 		play.setRespectfulHunting(true);
 		play.setPickup(true);
+	}
+
+	/**
+	 * Для самопроверки COMBOS: какой была бы очередь атак автобоя при этом мастерстве.
+	 */
+	static List<Integer> testQueue(Player player, PhantomClassCombos.Mastery mastery)
+	{
+		final Skill focus = PhantomHuntersConfig.HUNTER_COMBAT_FIXES ? focusSkill(player) : null;
+		final List<Skill> attacks = PhantomClassCombos.order(player, attackList(player, focus), mastery);
+		final List<Integer> ids = new ArrayList<>();
+		for (Skill skill : autoAttacks(attacks, ((player.isMageClass() && !attacks.isEmpty()) || (focus != null)) ? 3 : 2))
+		{
+			ids.add(skill.getId());
+		}
+		return ids;
+	}
+
+	/**
+	 * @return атакующие скиллы для автобоя по силе; с набором зарядов первыми — до {@value #CHARGED_SLOTS} ударов на зарядах
+	 */
+	private static List<Skill> attackList(Player player, Skill focus)
+	{
+		final List<Skill> attacks = new ArrayList<>();
+		for (Skill skill : player.getAllSkills())
+		{
+			if (!skill.isActive() || skill.isToggle() || (skill.getItemConsumeCount() > 0) || ((skill.getChargeConsumeCount() > 0) && (focus == null)) || !PhantomCompat.isAttackSkillTarget(skill))
+			{
+				continue;
+			}
+
+			if (skill.hasEffectType(EffectType.PHYSICAL_ATTACK, EffectType.MAGICAL_ATTACK, EffectType.HP_DRAIN, EffectType.DEATH_LINK, EffectType.PHYSICAL_ATTACK_HP_LINK))
+			{
+				attacks.add(skill);
+			}
+		}
+		attacks.sort((a, b) -> Double.compare(PhantomCompat.skillPower(b), PhantomCompat.skillPower(a)));
+		if (focus != null)
+		{
+			// Сила удара на зарядах — в эффекте (EnergyDamage), у скилла она 0, и по силе он уходил в конец. Первыми — самые тяжёлые по зарядам, остальные слоты — обычным.
+			final List<Skill> charged = new ArrayList<>();
+			for (Skill skill : attacks)
+			{
+				if (skill.getChargeConsumeCount() > 0)
+				{
+					charged.add(skill);
+				}
+			}
+			charged.sort((a, b) -> Integer.compare(b.getChargeConsumeCount(), a.getChargeConsumeCount()));
+			attacks.removeIf(skill -> skill.getChargeConsumeCount() > 0);
+			attacks.addAll(0, charged.subList(0, Math.min(CHARGED_SLOTS, charged.size())));
+		}
+		return attacks;
+	}
+
+	/**
+	 * @return скилл набора зарядов на себя (Sonic Focus, Focused Force: эффект {@code FocusEnergy}); {@code null} — не знает. Полные заряды он не жмёт: в датапаке условие на
+	 *         максимум, автобой его пропустит.
+	 */
+	private static Skill focusSkill(Player player)
+	{
+		for (Skill skill : player.getAllSkills())
+		{
+			if (!skill.isActive() || !"SELF".equals(skill.getTargetType().name()))
+			{
+				continue;
+			}
+			final List<AbstractEffect> effects = skill.getEffects(EffectScope.GENERAL);
+			if (effects == null)
+			{
+				continue;
+			}
+			for (AbstractEffect effect : effects)
+			{
+				if ("FocusEnergy".equals(effect.getClass().getSimpleName()))
+				{
+					return skill;
+				}
+			}
+		}
+		return null;
+	}
+
+	/** Сколько ударов на зарядах ставить в очередь воина (раздел 4.150); остальные слоты — обычным. */
+	private static final int CHARGED_SLOTS = 2;
+
+	/** Самопроверка CHARGES: сколько смотреть бой, мс, и как часто. */
+	private static final long CHARGES_TEST_WATCH = 180000;
+	private static final long CHARGES_TEST_STEP = 1000;
+
+	/**
+	 * Самопроверка CHARGES ({@code HuntersSelfTest}, раздел 4.150, только на копии базы): у каждого охотника в мире с набором зарядов — набор в бафах автобоя, скиллы на
+	 * зарядах в очереди атак; потом {@value #CHARGES_TEST_WATCH} мс смотрит бой: заряды растут, удары на зарядах уходят в откат. Итог — {@code PASS}, если настройка верна у
+	 * всех, а из тех, кто дрался, ударом на зарядах бил хотя бы каждый второй.
+	 * @param online кто в мире
+	 */
+	static void chargesSelfTest(java.util.function.Supplier<List<Player>> online)
+	{
+		org.l2jmobius.commons.threads.ThreadPool.execute(() ->
+		{
+			final String tag = "SelfTest CHARGES: ";
+			try
+			{
+				LOGGER.info(tag + "HunterCombatFixes " + PhantomHuntersConfig.HUNTER_COMBAT_FIXES + ", in the world " + online.get().size() + ".");
+				final Map<Player, List<Skill>> watched = new LinkedHashMap<>();
+				int wrong = 0;
+				for (Player player : online.get())
+				{
+					final Skill focus = focusSkill(player);
+					if (focus == null)
+					{
+						continue;
+					}
+					final List<Skill> consumers = new ArrayList<>();
+					final List<Skill> queued = new ArrayList<>();
+					for (Skill skill : player.getAllSkills())
+					{
+						if (skill.isActive() && (skill.getChargeConsumeCount() > 0) && PhantomCompat.isAttackSkillTarget(skill) && skill.hasEffectType(EffectType.PHYSICAL_ATTACK, EffectType.PHYSICAL_ATTACK_HP_LINK))
+						{
+							consumers.add(skill);
+							if (player.getAutoUseSettings().getAutoSkills().contains(skill.getId()))
+							{
+								queued.add(skill);
+							}
+						}
+					}
+					final boolean ok = player.getAutoUseSettings().getAutoBuffs().contains(focus.getId()) && (consumers.isEmpty() || !queued.isEmpty());
+					wrong += ok ? 0 : 1;
+					LOGGER.info(tag + (ok ? "" : "WRONG ") + player.getName() + " level " + player.getLevel() + " " + player.getPlayerClass().name() + ": focus " + focus.getName() + " in buffs " + player.getAutoUseSettings().getAutoBuffs().contains(focus.getId()) + ", queue " + names(player, player.getAutoUseSettings().getAutoSkills()) + ", charge skills known " + consumers.size() + ", queued " + queued.size() + ".");
+					if (!queued.isEmpty())
+					{
+						watched.put(player, queued);
+					}
+				}
+
+				final Map<Player, Set<String>> used = new LinkedHashMap<>();
+				final Map<Player, Integer> charges = new HashMap<>();
+				final Set<Player> fought = new HashSet<>();
+				for (long waited = 0; waited < CHARGES_TEST_WATCH; waited += CHARGES_TEST_STEP)
+				{
+					Thread.sleep(CHARGES_TEST_STEP);
+					for (Map.Entry<Player, List<Skill>> entry : watched.entrySet())
+					{
+						final Player player = entry.getKey();
+						if (player.isAttackingNow() || player.isCastingNow() || player.isInCombat())
+						{
+							fought.add(player);
+						}
+						charges.merge(player, player.getCharges(), Math::max);
+						for (Skill skill : entry.getValue())
+						{
+							if (player.isSkillDisabled(skill))
+							{
+								used.computeIfAbsent(player, p -> new LinkedHashSet<>()).add(skill.getName());
+							}
+						}
+					}
+				}
+				int hit = 0;
+				for (Player player : watched.keySet())
+				{
+					final Set<String> skills = used.getOrDefault(player, Set.of());
+					hit += fought.contains(player) && !skills.isEmpty() ? 1 : 0;
+					LOGGER.info(tag + player.getName() + " level " + player.getLevel() + " " + player.getPlayerClass().name() + ": fought " + fought.contains(player) + ", max charges " + charges.getOrDefault(player, 0) + ", charge skills used " + skills + ".");
+				}
+				final long fighters = watched.keySet().stream().filter(fought::contains).count();
+				final boolean pass = (wrong == 0) && !watched.isEmpty() && (fighters > 0) && ((hit * 2) >= fighters);
+				LOGGER.info(tag + (pass ? "PASS" : "FAIL") + ": wrong setup " + wrong + ", watched " + watched.size() + ", fought " + fighters + ", used charge skills " + hit + ".");
+			}
+			catch (InterruptedException e)
+			{
+				Thread.currentThread().interrupt();
+			}
+			catch (Exception e)
+			{
+				LOGGER.warning(tag + "failed: " + e);
+			}
+			LOGGER.info(tag + "done.");
+		});
+	}
+
+	private static List<String> names(Player player, List<Integer> skillIds)
+	{
+		final List<String> result = new ArrayList<>();
+		for (Integer id : skillIds)
+		{
+			final Skill skill = player.getKnownSkill(id);
+			result.add(skill == null ? String.valueOf(id) : skill.getName() + (skill.getChargeConsumeCount() > 0 ? " (" + skill.getChargeConsumeCount() + " charges)" : ""));
+		}
+		return result;
 	}
 
 	/** Откат длиннее этого — не основной скилл автобоя ({@link #autoAttacks}). */

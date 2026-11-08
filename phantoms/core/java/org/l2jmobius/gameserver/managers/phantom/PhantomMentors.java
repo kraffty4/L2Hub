@@ -540,12 +540,15 @@ public final class PhantomMentors
 	// ---------- Что дать и куда послать ----------
 
 	/**
-	 * Спот по уровню новичка: мобы вокруг его уровня, ближайший к нему.
+	 * Спот по уровню новичка: мобы вокруг его уровня. Сначала тот, что гайды советуют его роли, потом тот, о котором гайды молчат,
+	 * последним — советуемый только другим (docs/PHANTOMS.md, 4.147); среди равных — ближайший к нему.
 	 */
 	static HuntSpot spotFor(Player novice)
 	{
 		final int level = novice.getLevel();
+		final String role = HuntSpotData.role(novice);
 		HuntSpot best = null;
+		int bestTier = Integer.MAX_VALUE;
 		double bestDistance = Double.MAX_VALUE;
 		for (HuntSpot spot : HuntSpotData.getInstance().getSpots())
 		{
@@ -553,10 +556,12 @@ public final class PhantomMentors
 			{
 				continue;
 			}
+			final int tier = spot.suits(role) ? 0 : spot.against(role) ? 2 : 1;
 			final double distance = novice.calculateDistance2D(spot.entry);
-			if (distance < bestDistance)
+			if ((tier < bestTier) || ((tier == bestTier) && (distance < bestDistance)))
 			{
 				best = spot;
+				bestTier = tier;
 				bestDistance = distance;
 			}
 		}

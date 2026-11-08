@@ -1,0 +1,167 @@
+<?xml version='1.0' encoding='utf-8'?>
+<shop referenceAdenaPerCoin="200000">
+	<item id="858" name="Tateossian Earring" category="gear" level="76" adena="65400000" coins="327" />
+	<item id="889" name="Tateossian Ring" category="gear" level="76" adena="43600000" coins="218" />
+	<item id="920" name="Tateossian Necklace" category="gear" level="76" adena="87200000" coins="436" />
+	<item id="959" name="Scroll: Enchant Weapon (S-Grade)" category="supplies" level="1" adena="5000000" coins="25" />
+	<item id="960" name="Scroll: Enchant Armor (S-Grade)" category="supplies" level="1" adena="500000" coins="3" />
+	<item id="6364" name="Forgotten Blade" category="gear" level="76" adena="855000000" coins="4275" />
+	<item id="6365" name="Basalt Battlehammer" category="gear" level="76" adena="855000000" coins="4275" />
+	<item id="6366" name="Imperial Staff" category="gear" level="76" adena="855000000" coins="4275" />
+	<item id="6367" name="Angel Slayer" category="gear" level="76" adena="855000000" coins="4275" />
+	<item id="6368" name="Shining Bow" category="gear" level="76" adena="976000000" coins="4880" />
+	<item id="6369" name="Dragon Hunter Axe" category="gear" level="76" adena="855000000" coins="4275" />
+	<item id="6370" name="Saint Spear" category="gear" level="76" adena="855000000" coins="4275" />
+	<item id="6371" name="Demon Splinter" category="gear" level="76" adena="855000000" coins="4275" />
+	<item id="6372" name="Heaven's Divider" category="gear" level="76" adena="855000000" coins="4275" />
+	<item id="6373" name="Imperial Crusader Breastplate" category="gear" level="76" adena="256000000" coins="1280" />
+	<item id="6374" name="Imperial Crusader Gaiters" category="gear" level="76" adena="160000000" coins="800" />
+	<item id="6375" name="Imperial Crusader Gauntlets" category="gear" level="76" adena="63900000" coins="320" />
+	<item id="6376" name="Imperial Crusader Boots" category="gear" level="76" adena="63900000" coins="320" />
+	<item id="6377" name="Imperial Crusader Shield" category="gear" level="76" adena="67100000" coins="336" />
+	<item id="6378" name="Imperial Crusader Helmet" category="gear" level="76" adena="95900000" coins="480" />
+	<item id="6379" name="Draconic Leather Armor" category="gear" level="76" adena="312000000" coins="1560" />
+	<item id="6380" name="Draconic Leather Gloves" category="gear" level="76" adena="63900000" coins="320" />
+	<item id="6381" name="Draconic Leather Boots" category="gear" level="76" adena="63900000" coins="320" />
+	<item id="6382" name="Draconic Leather Helmet" category="gear" level="76" adena="95900000" coins="480" />
+	<item id="6383" name="Major Arcana Robe" category="gear" level="76" adena="312000000" coins="1560" />
+	<item id="6384" name="Major Arcana Gloves" category="gear" level="76" adena="63900000" coins="320" />
+	<item id="6385" name="Major Arcana Boots" category="gear" level="76" adena="63900000" coins="320" />
+	<item id="6386" name="Major Arcana Circlet" category="gear" level="76" adena="95900000" coins="480" />
+	<item id="6579" name="Arcana Mace" category="gear" level="76" adena="855000000" coins="4275" />
+	<item id="6580" name="Tallum Blade*Dark Legion's Edge" category="gear" level="76" adena="855000000" coins="4275" />
+	<item id="7575" name="Draconic Bow" category="gear" level="76" adena="855000000" coins="4275" />
+	<!-- R2: улучшения, престиж (S80/S84, эпики) и агатионы. adena = коины × referenceAdenaPerCoin. -->
+	<item id="9546" name="Fire Stone" category="enhance" level="1" adena="4000000" coins="20" />
+	<item id="9547" name="Water Stone" category="enhance" level="1" adena="4000000" coins="20" />
+	<item id="9548" name="Earth Stone" category="enhance" level="1" adena="4000000" coins="20" />
+	<item id="9549" name="Wind Stone" category="enhance" level="1" adena="4000000" coins="20" />
+	<item id="9550" name="Dark Stone" category="enhance" level="1" adena="4000000" coins="20" />
+	<item id="9551" name="Holy Stone" category="enhance" level="1" adena="4000000" coins="20" />
+	<item id="9552" name="Fire Crystal" category="enhance" level="1" adena="24000000" coins="120" />
+	<item id="9553" name="Water Crystal" category="enhance" level="1" adena="24000000" coins="120" />
+	<item id="9554" name="Earth Crystal" category="enhance" level="1" adena="24000000" coins="120" />
+	<item id="9555" name="Wind Crystal" category="enhance" level="1" adena="24000000" coins="120" />
+	<item id="9556" name="Dark Crystal" category="enhance" level="1" adena="24000000" coins="120" />
+	<item id="9557" name="Holy Crystal" category="enhance" level="1" adena="24000000" coins="120" />
+	<item id="10215" name="Icarus Sawsword" category="prestige" level="80" adena="1400000000" coins="7000" />
+	<item id="10216" name="Icarus Disperser" category="prestige" level="80" adena="1400000000" coins="7000" />
+	<item id="10217" name="Icarus Spirit" category="prestige" level="80" adena="1400000000" coins="7000" />
+	<item id="10218" name="Icarus Heavy Arms" category="prestige" level="80" adena="1400000000" coins="7000" />
+	<item id="10219" name="Icarus Trident" category="prestige" level="80" adena="1400000000" coins="7000" />
+	<item id="10220" name="Icarus Hammer" category="prestige" level="80" adena="1400000000" coins="7000" />
+	<item id="10221" name="Icarus Hand" category="prestige" level="80" adena="1400000000" coins="7000" />
+	<item id="10222" name="Icarus Hall" category="prestige" level="80" adena="1400000000" coins="7000" />
+	<item id="10223" name="Icarus Spitter" category="prestige" level="80" adena="1400000000" coins="7000" />
+	<item id="10224" name="Icarus Stinger" category="prestige" level="80" adena="1400000000" coins="7000" />
+	<item id="10225" name="Icarus Wingblade" category="prestige" level="80" adena="1400000000" coins="7000" />
+	<item id="10226" name="Icarus Shooter" category="prestige" level="80" adena="1400000000" coins="7000" />
+	<item id="10415" name="Icarus Dual Sword" category="prestige" level="80" adena="1400000000" coins="7000" />
+	<item id="13457" name="Vesper Cutter" category="prestige" level="84" adena="2400000000" coins="12000" />
+	<item id="13458" name="Vesper Slasher" category="prestige" level="84" adena="2400000000" coins="12000" />
+	<item id="13459" name="Vesper Buster" category="prestige" level="84" adena="2400000000" coins="12000" />
+	<item id="13460" name="Vesper Shaper" category="prestige" level="84" adena="2400000000" coins="12000" />
+	<item id="13461" name="Vesper Fighter" category="prestige" level="84" adena="2400000000" coins="12000" />
+	<item id="13462" name="Vesper Stormer" category="prestige" level="84" adena="2400000000" coins="12000" />
+	<item id="13463" name="Vesper Avenger" category="prestige" level="84" adena="2400000000" coins="12000" />
+	<item id="13464" name="Vesper Retributer" category="prestige" level="84" adena="2400000000" coins="12000" />
+	<item id="13465" name="Vesper Caster" category="prestige" level="84" adena="2400000000" coins="12000" />
+	<item id="13466" name="Vesper Singer" category="prestige" level="84" adena="2400000000" coins="12000" />
+	<item id="13467" name="Vesper Thrower" category="prestige" level="84" adena="2400000000" coins="12000" />
+	<item id="13468" name="Vesper Pincer" category="prestige" level="84" adena="2400000000" coins="12000" />
+	<item id="13469" name="Vesper Shooter" category="prestige" level="84" adena="2400000000" coins="12000" />
+	<item id="13470" name="Vesper Nagan" category="prestige" level="84" adena="2400000000" coins="12000" />
+	<item id="13884" name="Vesper Dual Daggers" category="prestige" level="84" adena="2400000000" coins="12000" />
+	<item id="52" name="Vesper Dual Sword" category="prestige" level="84" adena="2400000000" coins="12000" />
+	<item id="13432" name="Vesper Breastplate" category="prestige" level="84" adena="800000000" coins="4000" />
+	<item id="13433" name="Vesper Leather Breastplate" category="prestige" level="84" adena="800000000" coins="4000" />
+	<item id="13434" name="Vesper Tunic" category="prestige" level="84" adena="800000000" coins="4000" />
+	<item id="13438" name="Vesper Gaiters" category="prestige" level="84" adena="500000000" coins="2500" />
+	<item id="13441" name="Vesper Leather Leggings" category="prestige" level="84" adena="500000000" coins="2500" />
+	<item id="13444" name="Vesper Stockings" category="prestige" level="84" adena="500000000" coins="2500" />
+	<item id="13137" name="Vesper Helmet" category="prestige" level="84" adena="240000000" coins="1200" />
+	<item id="13138" name="Vesper Leather Helmet" category="prestige" level="84" adena="240000000" coins="1200" />
+	<item id="13139" name="Vesper Circlet" category="prestige" level="84" adena="240000000" coins="1200" />
+	<item id="13439" name="Vesper Gauntlet" category="prestige" level="84" adena="240000000" coins="1200" />
+	<item id="13442" name="Vesper Leather Gloves" category="prestige" level="84" adena="240000000" coins="1200" />
+	<item id="13445" name="Vesper Gloves" category="prestige" level="84" adena="240000000" coins="1200" />
+	<item id="13440" name="Vesper Boots" category="prestige" level="84" adena="240000000" coins="1200" />
+	<item id="13443" name="Vesper Leather Boots" category="prestige" level="84" adena="240000000" coins="1200" />
+	<item id="13446" name="Vesper Shoes" category="prestige" level="84" adena="240000000" coins="1200" />
+	<item id="13471" name="Vesper Shield" category="prestige" level="84" adena="240000000" coins="1200" />
+	<item id="12813" name="Vesper Sigil" category="prestige" level="84" adena="240000000" coins="1200" />
+	<item id="14165" name="Vesper Ring" category="prestige" level="84" adena="200000000" coins="1000" />
+	<item id="14163" name="Vesper Earring" category="prestige" level="84" adena="260000000" coins="1300" />
+	<item id="14164" name="Vesper Necklace" category="prestige" level="84" adena="360000000" coins="1800" />
+	<item id="6660" name="Ring of Queen Ant" category="prestige" level="76" adena="1200000000" coins="6000" />
+	<item id="6662" name="Ring of Core" category="prestige" level="76" adena="1000000000" coins="5000" />
+	<item id="6661" name="Earring of Orfen" category="prestige" level="76" adena="1000000000" coins="5000" />
+	<item id="6659" name="Earring of Zaken" category="prestige" level="76" adena="1800000000" coins="9000" />
+	<item id="8191" name="Necklace of Frintezza" category="prestige" level="76" adena="2400000000" coins="12000" />
+	<item id="6658" name="Ring of Baium" category="prestige" level="76" adena="3000000000" coins="15000" />
+	<item id="10314" name="Ring of Beleth" category="prestige" level="76" adena="3000000000" coins="15000" />
+	<item id="6656" name="Earring of Antharas" category="prestige" level="76" adena="4000000000" coins="20000" />
+	<item id="6657" name="Necklace of Valakas" category="prestige" level="76" adena="5000000000" coins="25000" />
+	<item id="20006" name="Agathion Seal Bracelet - Majo" category="agathion" level="1" adena="300000000" coins="1500" />
+	<item id="20007" name="Agathion Seal Bracelet - Gold Majo" category="agathion" level="1" adena="300000000" coins="1500" />
+	<item id="20008" name="Agathion Seal Bracelet - Black Majo" category="agathion" level="1" adena="300000000" coins="1500" />
+	<item id="20012" name="Agathion Seal Bracelet - Plaipitak" category="agathion" level="1" adena="300000000" coins="1500" />
+	<item id="20063" name="Agathion Seal Bracelet - Baby Panda" category="agathion" level="1" adena="300000000" coins="1500" />
+	<item id="20064" name="Agathion Seal Bracelet - Bamboo Panda" category="agathion" level="1" adena="300000000" coins="1500" />
+	<item id="20065" name="Agathion Seal Bracelet - Sexy Panda" category="agathion" level="1" adena="300000000" coins="1500" />
+	<item id="10320" name="Agathion Seal Bracelet - Little Angel" category="agathion" level="1" adena="300000000" coins="1500" />
+	<item id="10326" name="Agathion Seal Bracelet - Little Devil" category="agathion" level="1" adena="300000000" coins="1500" />
+	<item id="20236" name="Agathion Seal Bracelet - Pegasus" category="agathion" level="1" adena="300000000" coins="1500" />
+	<item id="20212" name="Agathion Seal Bracelet - Charming Cupid" category="agathion" level="1" adena="300000000" coins="1500" />
+	<item id="20213" name="Agathion Seal Bracelet - Naughty Cupid" category="agathion" level="1" adena="300000000" coins="1500" />
+	<item id="20222" name="Agathion Seal Bracelet - Black Maneki Neko" category="agathion" level="1" adena="300000000" coins="1500" />
+	<item id="20223" name="Agathion Seal Bracelet - Brown Maneki Neko" category="agathion" level="1" adena="300000000" coins="1500" />
+	<item id="20297" name="Agathion Seal Bracelet - Red Sumo Wrestler" category="agathion" level="1" adena="300000000" coins="1500" />
+	<item id="20299" name="Agathion Seal Bracelet - Blue Sumo Wrestler" category="agathion" level="1" adena="300000000" coins="1500" />
+	<item id="20307" name="Agathion Seal Bracelet - God of Fortune" category="agathion" level="1" adena="300000000" coins="1500" />
+	<item id="20309" name="Agathion Seal Bracelet - Dryad" category="agathion" level="1" adena="300000000" coins="1500" />
+	<item id="20779" name="Agathion Seal Bracelet - Opera" category="agathion" level="1" adena="300000000" coins="1500" />
+	<item id="20660" name="Agathion Seal Bracelet - Monkey King" category="agathion" level="1" adena="300000000" coins="1500" />
+	<!-- Бывший обмен PvP-медалей (multisell 90003000): медали теперь коины, цена — как у медалей в адене (150 000 за медаль). -->
+	<item id="20335" name="Rune of Experience Points 30% - 5-hour limited period" category="supplies" level="1" adena="1500000" coins="8" />
+	<item id="20336" name="Rune of Experience Points 50% - 5-hour limited period" category="supplies" level="1" adena="3000000" coins="15" />
+	<item id="20337" name="Rune of Experience Points 30% - 10-hour limited period" category="supplies" level="1" adena="2700000" coins="14" />
+	<item id="20338" name="Rune of Experience Points 50% - 10-hour limited period" category="supplies" level="1" adena="5250000" coins="27" />
+	<item id="20339" name="Rune of Experience Points 30% - 7-day limited period" category="supplies" level="1" adena="13500000" coins="68" />
+	<item id="20340" name="Rune of Experience Points 50% - 7-day limited period" category="supplies" level="1" adena="22500000" coins="113" />
+	<item id="20341" name="Rune of SP 30% - 5-hour limited period" category="supplies" level="1" adena="750000" coins="4" />
+	<item id="20342" name="Rune of SP 50% - 5-hour limited period" category="supplies" level="1" adena="1500000" coins="8" />
+	<item id="8753" name="Top-Grade Life Stone - Level 46" category="enhance" level="1" adena="1050000" coins="6" />
+	<item id="8754" name="Top-Grade Life Stone - Level 49" category="enhance" level="1" adena="1200000" coins="6" />
+	<item id="8755" name="Top-Grade Life Stone - Level 52" category="enhance" level="1" adena="1500000" coins="8" />
+	<item id="8756" name="Top-Grade Life Stone - Level 55" category="enhance" level="1" adena="1800000" coins="9" />
+	<item id="8757" name="Top-Grade Life Stone - Level 58" category="enhance" level="1" adena="1950000" coins="10" />
+	<item id="8758" name="Top-Grade Life Stone - Level 61" category="enhance" level="1" adena="2400000" coins="12" />
+	<item id="8759" name="Top-Grade Life Stone - Level 64" category="enhance" level="1" adena="3000000" coins="15" />
+	<item id="8760" name="Top-Grade Life Stone - Level 67" category="enhance" level="1" adena="3600000" coins="18" />
+	<item id="8761" name="Top-Grade Life Stone - Level 70" category="enhance" level="1" adena="4350000" coins="22" />
+	<item id="8762" name="Top-Grade Life Stone - Level 76" category="enhance" level="1" adena="4500000" coins="23" />
+	<item id="9576" name="Top-Grade Life Stone - Level 80" category="enhance" level="1" adena="5700000" coins="29" />
+	<item id="10486" name="Top-Grade Life Stone - Level 82" category="enhance" level="1" adena="6900000" coins="35" />
+	<item id="14169" name="Top-Grade Life Stone - Level 84" category="enhance" level="1" adena="8250000" coins="42" />
+	<item id="6576" name="Blessed Scroll: Enchant Armor (D-Grade)" category="enhance" level="1" adena="150000" coins="1" />
+	<item id="6575" name="Blessed Scroll: Enchant Weapon (D-Grade)" category="enhance" level="1" adena="900000" coins="5" />
+	<item id="6574" name="Blessed Scroll: Enchant Armor (C-Grade)" category="enhance" level="1" adena="450000" coins="3" />
+	<item id="6573" name="Blessed Scroll: Enchant Weapon (C-Grade)" category="enhance" level="1" adena="3000000" coins="15" />
+	<item id="6572" name="Blessed Scroll: Enchant Armor (B-Grade)" category="enhance" level="1" adena="750000" coins="4" />
+	<item id="6571" name="Blessed Scroll: Enchant Weapon (B-Grade)" category="enhance" level="1" adena="6750000" coins="34" />
+	<item id="6570" name="Blessed Scroll: Enchant Armor (A-Grade)" category="enhance" level="1" adena="1800000" coins="9" />
+	<item id="6569" name="Blessed Scroll: Enchant Weapon (A-Grade)" category="enhance" level="1" adena="15000000" coins="75" />
+	<item id="6578" name="Blessed Scroll: Enchant Armor (S-Grade)" category="enhance" level="1" adena="4500000" coins="23" />
+	<item id="6577" name="Blessed Scroll: Enchant Weapon (S-Grade)" category="enhance" level="1" adena="30000000" coins="150" />
+	<item id="958" name="Crystal Scroll: Enchant Armor (D-Grade)" category="enhance" level="1" adena="1200000" coins="6" />
+	<item id="957" name="Crystal Scroll: Enchant Weapon (D-Grade)" category="enhance" level="1" adena="6000000" coins="30" />
+	<item id="954" name="Crystal Scroll: Enchant Armor (C-Grade)" category="enhance" level="1" adena="2250000" coins="12" />
+	<item id="953" name="Crystal Scroll: Enchant Weapon (C-Grade)" category="enhance" level="1" adena="12000000" coins="60" />
+	<item id="950" name="Crystal Scroll: Enchant Armor (B-Grade)" category="enhance" level="1" adena="3750000" coins="19" />
+	<item id="949" name="Crystal Scroll: Enchant Weapon (B-Grade)" category="enhance" level="1" adena="21000000" coins="105" />
+	<item id="732" name="Crystal Scroll: Enchant Armor (A-Grade)" category="enhance" level="1" adena="6000000" coins="30" />
+	<item id="731" name="Crystal Scroll: Enchant Weapon (A-Grade)" category="enhance" level="1" adena="30000000" coins="150" />
+	<item id="962" name="Crystal Scroll: Enchant Armor (S-Grade)" category="enhance" level="1" adena="9000000" coins="45" />
+	<item id="961" name="Crystal Scroll: Enchant Weapon (S-Grade)" category="enhance" level="1" adena="45000000" coins="225" />
+</shop>

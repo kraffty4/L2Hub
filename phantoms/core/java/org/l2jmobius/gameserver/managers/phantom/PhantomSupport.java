@@ -186,7 +186,32 @@ final class PhantomSupport
 		volatile boolean sitOrdered;
 		volatile long noRestUntil;
 		int smiteTarget;
+		/** Бафер ждёт, что труп поднимет хилер: труп (objectId) → с какого времени ждёт. */
+		final Map<Integer, Long> resWaitSince = new HashMap<>();
 	}
+
+	/**
+	 * Заявка на рес: один труп — один ресающий. Кто первым взял, тот и поднимает; остальные берут другой труп или ждут.
+	 * Живёт {@link #RES_CLAIM_TIME} с последнего продления и всё время, пока ресающий кастует по трупу или идёт на каст.
+	 */
+	private static final class ResClaim
+	{
+		final int casterId;
+		final long until;
+
+		ResClaim(int casterId, long until)
+		{
+			this.casterId = casterId;
+			this.until = until;
+		}
+	}
+
+	/** Труп (objectId) → заявка. */
+	private static final Map<Integer, ResClaim> RES_CLAIMS = new ConcurrentHashMap<>();
+	/** Заявка без продления живёт столько, мс: ресающий отвлёкся — труп свободен. */
+	private static final long RES_CLAIM_TIME = 8000;
+	/** Бафер не берёт труп, пока свободный хилер пати с готовым Resurrection может поднять его сам, — но ждёт не дольше этого, мс. */
+	private static final long HEALER_RES_FIRST = 10000;
 
 	private static final Map<Integer, State> STATES = new ConcurrentHashMap<>();
 
@@ -576,6 +601,125 @@ final class PhantomSupport
 	}
 
 	/**
+	 * Заявка жива: труп лежит без предложенного реса, ресающий в игре, жив, в том же инстансе и не бросил труп
+	 * (срок не вышел или он кастует по трупу и идёт на каст).
+	 */
+	private static boolean claimActive(int corpseId, ResClaim claim, long now)
+	{
+		final Player corpse = World.getPlayer(corpseId);
+		final Player caster = World.getPlayer(claim.casterId);
+		if ((corpse == null) || !corpse.isDead() || corpse.isReviveRequested() || (caster == null) || !caster.isOnline() || caster.isDead() || (caster.getInstanceId() != corpse.getInstanceId()))
+		{
+			return false;
+		}
+		return (now < claim.until) || ((caster.getTarget() == corpse) && (caster.isCastingNow() || (caster.getAI().getIntention() == Intention.CAST)));
+	}
+
+	/**
+	 * @return труп уже поднимает другой
+	 */
+	private static boolean claimedByOther(Player phantom, Player corpse, long now)
+	{
+		final ResClaim claim = RES_CLAIMS.get(corpse.getObjectId());
+		if ((claim == null) || (claim.casterId == phantom.getObjectId()))
+		{
+			return false;
+		}
+		if (claimActive(corpse.getObjectId(), claim, now))
+		{
+			return true;
+		}
+		RES_CLAIMS.remove(corpse.getObjectId(), claim);
+		return false;
+	}
+
+	/**
+	 * Взять труп себе или продлить свою заявку. {@code force} — приказ «рес» от игрока: главнее чужой заявки.
+	 * @return труп за этим фантомом
+	 */
+	private static boolean claimRes(Player phantom, Player corpse, long now, boolean force)
+	{
+		final int me = phantom.getObjectId();
+		final ResClaim claim = RES_CLAIMS.compute(corpse.getObjectId(), (id, old) -> force || (old == null) || (old.casterId == me) || !claimActive(id, old, now) ? new ResClaim(me, now + RES_CLAIM_TIME) : old);
+		if (RES_CLAIMS.size() > 32)
+		{
+			RES_CLAIMS.entrySet().removeIf(entry -> !claimActive(entry.getKey(), entry.getValue(), now));
+		}
+		return claim.casterId == me;
+	}
+
+	/**
+	 * @return фантом держит живую заявку на другой труп — занят
+	 */
+	private static boolean ressingOther(Player phantom, Player corpse, long now)
+	{
+		for (Map.Entry<Integer, ResClaim> entry : RES_CLAIMS.entrySet())
+		{
+			if ((entry.getValue().casterId == phantom.getObjectId()) && (entry.getKey() != corpse.getObjectId()) && claimActive(entry.getKey(), entry.getValue(), now))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Resurrection готов и труп удалось взять себе — скилл, иначе {@code null}: труп поднимет другой.
+	 */
+	private static Skill resSkill(Player phantom, Player corpse, long now)
+	{
+		final Skill res = usable(phantom, RESURRECTION);
+		return (res != null) && claimRes(phantom, corpse, now, false) ? res : null;
+	}
+
+	/**
+	 * Пати без трупов, которые уже поднимает другой: хилер выбирает павшего только из свободных.
+	 */
+	private static List<Player> withoutClaimed(Player phantom, List<Player> members, long now)
+	{
+		final List<Player> result = new ArrayList<>(members.size());
+		for (Player member : members)
+		{
+			if (!member.isDead() || !claimedByOther(phantom, member, now))
+			{
+				result.add(member);
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Хилер раньше бафера: в пати есть живой хилер-фантом с готовым Resurrection, не занятый другим трупом, —
+	 * бафер ждёт его до {@link #HEALER_RES_FIRST}, потом поднимает сам.
+	 */
+	private static boolean healerResFirst(State state, Player phantom, Player corpse, List<Player> members, long now)
+	{
+		state.resWaitSince.keySet().removeIf(id ->
+		{
+			final Player player = World.getPlayer(id);
+			return (player == null) || !player.isDead();
+		});
+		final long since = state.resWaitSince.computeIfAbsent(corpse.getObjectId(), id -> now);
+		if ((now - since) >= HEALER_RES_FIRST)
+		{
+			return false;
+		}
+		for (Player member : members)
+		{
+			if ((member == phantom) || member.isDead())
+			{
+				continue;
+			}
+			final PhantomTemplate template = PhantomData.getInstance().getTemplate(member.getName());
+			if ((template != null) && (template.getRole() == PhantomTemplate.Role.HEALER) && (usable(member, RESURRECTION) != null) && !ressingOther(member, corpse, now))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * «Бафни»: свои бафы на пати перекидываются заново, отложенные после неудач — пробуются снова.
 	 * @return что сделано — для мозгов
 	 */
@@ -640,7 +784,8 @@ final class PhantomSupport
 			{
 				state.resTarget = 0;
 			}
-			else if ((phantom.calculateDistance2D(dead) <= SUPPORT_RANGE) && cast(state, phantom, usable(phantom, RESURRECTION), dead, now))
+			// Приказ игрока главнее заявок: труп переходит к этому фантому, остальные его пропускают.
+			else if (claimRes(phantom, dead, now, true) && (phantom.calculateDistance2D(dead) <= SUPPORT_RANGE) && cast(state, phantom, usable(phantom, RESURRECTION), dead, now))
 			{
 				if (!sitting)
 				{
@@ -709,7 +854,7 @@ final class PhantomSupport
 		Player dead = null;
 		int below70 = 0;
 		int below40 = 0;
-		for (Player member : members)
+		for (Player member : withoutClaimed(phantom, members, now))
 		{
 			if (member.isDead())
 			{
@@ -783,7 +928,7 @@ final class PhantomSupport
 		// Поднять павшего, если остальным ничего не грозит.
 		if ((dead != null) && (worstHp >= 50))
 		{
-			final Skill res = usable(phantom, RESURRECTION);
+			final Skill res = resSkill(phantom, dead, now);
 			if (cast(state, phantom, res, dead, now))
 			{
 				partySay(phantom, "ресаю " + dead.getName());
@@ -807,7 +952,7 @@ final class PhantomSupport
 
 		if (dead != null)
 		{
-			final Skill res = usable(phantom, RESURRECTION);
+			final Skill res = resSkill(phantom, dead, now);
 			if (cast(state, phantom, res, dead, now))
 			{
 				partySay(phantom, "ресаю " + dead.getName());
@@ -857,6 +1002,31 @@ final class PhantomSupport
 	 */
 	private static boolean buff(State state, Player phantom, List<Player> members, long now)
 	{
+		// Бафер с Resurrection поднимает павших из пати сам, как хилер, — описание в окне это обещает. Раньше — только по приказу «рес».
+		final Skill res = usable(phantom, RESURRECTION);
+		if (res != null)
+		{
+			for (Player member : members)
+			{
+				// Один труп — один ресающий; свободный хилер пати поднимает раньше бафера.
+				if (!member.isDead() || member.isReviveRequested() || claimedByOther(phantom, member, now) || healerResFirst(state, phantom, member, members, now) || !claimRes(phantom, member, now, false))
+				{
+					continue;
+				}
+				// Сидя cast() только встаёт; сам каст — в следующий тик, «ресаю» — тогда же.
+				final boolean sitting = phantom.isSitting();
+				if (cast(state, phantom, res, member, now))
+				{
+					if (!sitting)
+					{
+						partySay(phantom, "ресаю " + member.getName());
+					}
+					return true;
+				}
+				break;
+			}
+		}
+
 		final List<Player> order = new ArrayList<>(members);
 		order.remove(phantom);
 		order.add(phantom);

@@ -1,0 +1,104 @@
+<?xml version='1.0' encoding='utf-8'?>
+<guides>
+	<source item="1865" name="Isle Of Souls · северо-запад" region="Kamael" level="1" min="1" max="1" x="-124216" y="45095" z="880" />
+	<source item="1865" name="Dark Elf Starting · восток" region="DarkElfTerritory" level="5" min="4" max="6" x="30648" y="14201" z="-3688" />
+	<source item="1865" name="Isle Of Souls · юго-запад" region="Kamael" level="10" min="9" max="11" x="-108419" y="64031" z="-2920" />
+	<source item="1865" name="Isle Of Souls · Isle of Souls Harbor" region="Kamael" level="15" min="13" max="16" x="-76979" y="49459" z="-3360" />
+	<source item="1865" name="Dwarven Starting · северо-восток" region="DwarvenTerritory" level="19" min="18" max="20" x="157262" y="-217568" z="-3600" />
+	<source item="1865" name="Plains Of Dion · запад" region="Dion" level="27" min="26" max="28" x="5545" y="168980" z="-3448" />
+	<source item="1865" name="Cruma Marshlands · северо-запад" region="Dion" level="30" min="29" max="31" x="13830" y="104934" z="-3568" />
+	<source item="1865" name="Wasteland · запад" region="Gludio" level="35" min="34" max="36" x="-31114" y="179463" z="-4208" />
+	<source item="1865" name="Hardins Academy" region="Giran" level="39" min="38" max="40" x="70402" y="100686" z="-3680" />
+	<source item="1865" name="Devils Isle · северо-восток" region="Giran" level="45" min="44" max="46" x="49987" y="208692" z="-3728" />
+	<source item="1865" name="Devils Isle · юг" region="Giran" level="50" min="50" max="54" x="47942" y="212506" z="-3344" />
+	<source item="1865" name="Cemetery · Seal of Shilen" region="Aden" level="54" min="53" max="55" x="181577" y="23181" z="-3168" />
+	<source item="1865" name="Tower Of Insolence" region="Aden" level="60" min="60" max="62" x="113343" y="14754" z="-5096" />
+	<source item="1865" name="Tower Of Insolence" region="Aden" level="65" min="63" max="66" x="114647" y="16068" z="-2120" />
+	<source item="1865" name="Garden Of Beasts · северо-запад" region="Goddard" level="70" min="69" max="70" x="140568" y="-58185" z="-3152" />
+	<source item="1865" name="Wall Of Argos · северо-восток" region="Goddard" level="75" min="74" max="75" x="187696" y="-50220" z="-3040" />
+	<source item="1865" name="Ketra Orc Outpost · север" region="Goddard" level="78" min="78" max="78" x="147563" y="-90471" z="-4360" />
+	<source item="1867" name="Dwarven Starting · юго-запад" region="DwarvenTerritory" level="5" min="4" max="6" x="119302" y="-186196" z="-3232" />
+	<source item="1867" name="Dwarven Starting · северо-запад" region="DwarvenTerritory" level="10" min="10" max="11" x="122311" y="-211511" z="-3720" />
+	<source item="1867" name="Elven Starting · запад" region="ElvenTerritory" level="15" min="14" max="16" x="11150" y="56050" z="-3456" />
+	<source item="1867" name="Elven Starting · юго-запад" region="ElvenTerritory" level="19" min="18" max="19" x="1595" y="77168" z="-3552" />
+	<source item="1867" name="Wasteland · Ant Nest" region="Gludio" level="26" min="25" max="27" x="-12830" y="175145" z="-4008" />
+	<source item="1867" name="Plains Of Dion · юг" region="Dion" level="30" min="29" max="30" x="10928" y="179276" z="-3312" />
+	<source item="1867" name="Wasteland · юго-запад" region="Gludio" level="35" min="35" max="36" x="-25590" y="187679" z="-4104" />
+	<source item="1867" name="Alligator Island · юго-запад" region="Innadril" level="40" min="40" max="41" x="108633" y="186588" z="-3760" />
+	<source item="1867" name="Devils Isle · северо-восток" region="Giran" level="45" min="44" max="46" x="49987" y="208692" z="-3728" />
+	<source item="1867" name="Cemetery · северо-запад" region="Aden" level="50" min="50" max="51" x="170019" y="7344" z="-2728" />
+	<source item="1867" name="Fields Of Massacre · юго-восток" region="Aden" level="56" min="55" max="57" x="182975" y="-12951" z="-2984" />
+	<source item="1867" name="Valley Of Saints · юго-запад" region="Rune" level="61" min="60" max="62" x="69281" y="-72490" z="-3800" />
+	<source item="1867" name="Tower Of Insolence" region="Aden" level="65" min="63" max="66" x="114647" y="16068" z="-2120" />
+	<source item="1867" name="Garden Of Beasts · запад" region="Goddard" level="70" min="69" max="70" x="132286" y="-52519" z="-3512" />
+	<source item="1867" name="Hot Springs · северо-восток" region="Goddard" level="75" min="73" max="76" x="153110" y="-114305" z="-1624" />
+	<source item="1867" name="Imperial Tomb · юго-запад" region="Goddard" level="78" min="78" max="78" x="177900" y="-75318" z="-2728" />
+	<source item="1868" name="Dark Elf Starting · восток" region="DarkElfTerritory" level="1" min="1" max="3" x="26135" y="13674" z="-3696" />
+	<source item="1868" name="Dark Elf Starting · восток" region="DarkElfTerritory" level="5" min="4" max="6" x="30648" y="14201" z="-3688" />
+	<source item="1868" name="Dark Elf Starting · запад" region="DarkElfTerritory" level="10" min="8" max="10" x="-10101" y="8842" z="-3344" />
+	<source item="1868" name="Elven Starting · запад" region="ElvenTerritory" level="15" min="14" max="16" x="11150" y="56050" z="-3456" />
+	<source item="1868" name="Dwarven Starting · северо-восток" region="DwarvenTerritory" level="19" min="18" max="20" x="157262" y="-217568" z="-3600" />
+	<source item="1868" name="Plains Of Dion · северо-восток" region="Dion" level="25" min="24" max="25" x="29404" y="154028" z="-2800" />
+	<source item="1868" name="Cruma Marshlands · Cruma Tower" region="Dion" level="31" min="30" max="31" x="14485" y="116441" z="-3728" />
+	<source item="1868" name="Death Pass · Dragon Valley" region="Giran" level="36" min="35" max="37" x="67125" y="116010" z="-3616" />
+	<source item="1868" name="Ivory Tower · Forest of Evil" region="Oren" level="42" min="41" max="44" x="88758" y="19467" z="-5272" />
+	<source item="1868" name="Devils Isle · северо-запад" region="Giran" level="45" min="45" max="46" x="46632" y="210594" z="-3592" />
+	<source item="1868" name="Cemetery · северо-запад" region="Aden" level="50" min="50" max="51" x="170019" y="7344" z="-2728" />
+	<source item="1868" name="Fields Of Massacre · юго-восток" region="Aden" level="56" min="55" max="57" x="182975" y="-12951" z="-2984" />
+	<source item="1868" name="Tower Of Insolence" region="Aden" level="60" min="60" max="62" x="113343" y="14754" z="-5096" />
+	<source item="1868" name="Tower Of Insolence" region="Aden" level="65" min="63" max="66" x="114647" y="16068" z="-2120" />
+	<source item="1868" name="Garden Of Beasts · северо-запад" region="Goddard" level="70" min="69" max="70" x="140568" y="-58185" z="-3152" />
+	<source item="1868" name="Hot Springs · северо-восток" region="Goddard" level="75" min="73" max="76" x="153110" y="-114305" z="-1624" />
+	<source item="1868" name="Imperial Tomb · юго-запад" region="Goddard" level="78" min="78" max="78" x="177900" y="-75318" z="-2728" />
+	<source item="1868" name="Chrysocolla · северо-запад" region="Others" level="83" min="82" max="83" x="152505" y="148726" z="-3264" />
+	<source item="1869" name="Dark Elf Starting · восток" region="DarkElfTerritory" level="1" min="1" max="3" x="26135" y="13674" z="-3696" />
+	<source item="1869" name="Dwarven Starting · юго-запад" region="DwarvenTerritory" level="5" min="4" max="6" x="119302" y="-186196" z="-3232" />
+	<source item="1869" name="Dark Elf Starting · запад" region="DarkElfTerritory" level="10" min="8" max="10" x="-10101" y="8842" z="-3344" />
+	<source item="1869" name="Orc Starting · северо-восток" region="OrcTerritory" level="15" min="14" max="15" x="5608" y="-125962" z="-2792" />
+	<source item="1869" name="Elven Starting · юго-запад" region="ElvenTerritory" level="19" min="18" max="19" x="1595" y="77168" z="-3552" />
+	<source item="1869" name="Plains Of Dion · северо-запад" region="Dion" level="25" min="24" max="26" x="1676" y="165946" z="-3576" />
+	<source item="1869" name="Cruma Marshlands · северо-запад" region="Dion" level="30" min="29" max="31" x="13830" y="104934" z="-3568" />
+	<source item="1869" name="Wasteland · юго-запад" region="Gludio" level="35" min="35" max="36" x="-25590" y="187679" z="-4104" />
+	<source item="1869" name="Alligator Island · юго-запад" region="Innadril" level="40" min="40" max="41" x="108633" y="186588" z="-3760" />
+	<source item="1869" name="Devils Isle · северо-восток" region="Giran" level="45" min="44" max="46" x="49987" y="208692" z="-3728" />
+	<source item="1869" name="Cemetery · северо-запад" region="Aden" level="50" min="50" max="51" x="170019" y="7344" z="-2728" />
+	<source item="1869" name="Death Pass · юго-запад" region="Giran" level="56" min="54" max="57" x="65002" y="115864" z="-3640" />
+	<source item="1869" name="Fields Of Massacre · северо-восток" region="Aden" level="59" min="58" max="60" x="180980" y="-21272" z="-2808" />
+	<source item="1869" name="Tower Of Insolence" region="Aden" level="65" min="63" max="66" x="114647" y="16068" z="-2120" />
+	<source item="1869" name="Blazing Swamp · запад" region="Aden" level="71" min="70" max="72" x="140695" y="-14940" z="-4432" />
+	<source item="1869" name="Hot Springs · северо-восток" region="Goddard" level="75" min="73" max="76" x="153110" y="-114305" z="-1624" />
+	<source item="1869" name="Imperial Tomb · юго-запад" region="Goddard" level="78" min="78" max="78" x="177900" y="-75318" z="-2728" />
+	<source item="1870" name="Keltir" region="TalkingIsland" level="1" min="1" max="4" x="-85796" y="252746" z="-3672" />
+	<source item="1870" name="Dark Elf Starting · юго-восток" region="DarkElfTerritory" level="5" min="4" max="7" x="23026" y="20175" z="-3432" />
+	<source item="1870" name="Dwarven Starting · северо-запад" region="DwarvenTerritory" level="10" min="10" max="11" x="122311" y="-211511" z="-3720" />
+	<source item="1870" name="Isle Of Souls · Isle of Souls Harbor" region="Kamael" level="15" min="13" max="16" x="-76979" y="49459" z="-3360" />
+	<source item="1870" name="Dwarven Starting · северо-восток" region="DwarvenTerritory" level="19" min="18" max="20" x="157262" y="-217568" z="-3600" />
+	<source item="1870" name="Plains Of Dion · запад" region="Dion" level="27" min="26" max="28" x="5545" y="168980" z="-3448" />
+	<source item="1870" name="Cruma Marshlands · северо-запад" region="Dion" level="30" min="29" max="31" x="13830" y="104934" z="-3568" />
+	<source item="1870" name="Wasteland · запад" region="Gludio" level="35" min="34" max="36" x="-31114" y="179463" z="-4208" />
+	<source item="1870" name="Hardins Academy" region="Giran" level="39" min="38" max="40" x="70402" y="100686" z="-3680" />
+	<source item="1870" name="Devils Isle · северо-восток" region="Giran" level="45" min="44" max="46" x="49987" y="208692" z="-3728" />
+	<source item="1870" name="Devils Isle · юг" region="Giran" level="50" min="50" max="54" x="47942" y="212506" z="-3344" />
+	<source item="1870" name="Cemetery · Seal of Shilen" region="Aden" level="54" min="53" max="55" x="181577" y="23181" z="-3168" />
+	<source item="1870" name="Tower Of Insolence" region="Aden" level="60" min="60" max="62" x="113343" y="14754" z="-5096" />
+	<source item="1870" name="Tower Of Insolence" region="Aden" level="65" min="63" max="66" x="114647" y="16068" z="-2120" />
+	<source item="1870" name="Garden Of Beasts · северо-запад" region="Goddard" level="70" min="69" max="70" x="140568" y="-58185" z="-3152" />
+	<source item="1870" name="Wall Of Argos · северо-восток" region="Goddard" level="75" min="74" max="75" x="187696" y="-50220" z="-3040" />
+	<source item="1870" name="Imperial Tomb · юго-запад" region="Goddard" level="78" min="78" max="78" x="177900" y="-75318" z="-2728" />
+	<source item="1872" name="Dwarven Starting · юго-запад" region="DwarvenTerritory" level="5" min="4" max="6" x="119302" y="-186196" z="-3232" />
+	<source item="1872" name="Dwarven Starting · северо-запад" region="DwarvenTerritory" level="10" min="10" max="11" x="122311" y="-211511" z="-3720" />
+	<source item="1872" name="Elven Starting · запад" region="ElvenTerritory" level="15" min="14" max="16" x="11150" y="56050" z="-3456" />
+	<source item="1872" name="Elven Starting · юго-запад" region="ElvenTerritory" level="19" min="18" max="19" x="1595" y="77168" z="-3552" />
+	<source item="1872" name="Wasteland · Ant Nest" region="Gludio" level="26" min="25" max="27" x="-12830" y="175145" z="-4008" />
+	<source item="1872" name="Plains Of Dion · юг" region="Dion" level="30" min="29" max="30" x="10928" y="179276" z="-3312" />
+	<source item="1872" name="Wasteland · юго-запад" region="Gludio" level="35" min="35" max="36" x="-25590" y="187679" z="-4104" />
+	<source item="1872" name="Alligator Island · юго-запад" region="Innadril" level="40" min="40" max="41" x="108633" y="186588" z="-3760" />
+	<source item="1872" name="Devils Isle · северо-восток" region="Giran" level="45" min="44" max="46" x="49987" y="208692" z="-3728" />
+	<source item="1872" name="Cemetery · северо-запад" region="Aden" level="50" min="50" max="51" x="170019" y="7344" z="-2728" />
+	<source item="1872" name="Fields Of Massacre · юго-восток" region="Aden" level="56" min="55" max="57" x="182975" y="-12951" z="-2984" />
+	<source item="1872" name="Valley Of Saints · юго-запад" region="Rune" level="61" min="60" max="62" x="69281" y="-72490" z="-3800" />
+	<source item="1872" name="Tower Of Insolence" region="Aden" level="65" min="63" max="66" x="114647" y="16068" z="-2120" />
+	<source item="1872" name="Garden Of Beasts · запад" region="Goddard" level="70" min="69" max="70" x="132286" y="-52519" z="-3512" />
+	<source item="1872" name="Hot Springs · северо-восток" region="Goddard" level="75" min="73" max="76" x="153110" y="-114305" z="-1624" />
+	<source item="1872" name="Imperial Tomb · юго-запад" region="Goddard" level="78" min="78" max="78" x="177900" y="-75318" z="-2728" />
+</guides>

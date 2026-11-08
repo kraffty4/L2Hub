@@ -206,7 +206,38 @@ public final class PhantomSiege
 				final String when = new SimpleDateFormat("dd.MM HH:mm").format(siege.getSiegeDate().getTime());
 				LOGGER.info(getClass().getSimpleName() + ": " + clan.getName() + " (" + clan.getLevel() + ", leader " + leader.getName() + ") registers for the siege of " + castle.getName() + " on " + when + ".");
 				PhantomNews.post("siege_register", en() ? "Clan " + clan.getName() + " will attack " + castle.getName() + " Castle on " + when + "." : "Клан " + clan.getName() + " идёт на замок " + castle.getName() + ": осада " + when + ".", leader.getName(), null);
+				joinAllies(castle, siege, clan, when);
 				return;
+			}
+		}
+	}
+
+	/**
+	 * Союз идёт вместе (мост, ep-alliances): кланы охотников союза записавшегося клана записываются на ту же осаду, если она им по силам и в этот день они свободны.
+	 * Предел {@code HunterSiegeAttackers} на них не действует: это одна сторона, клан и его союз.
+	 */
+	private void joinAllies(Castle castle, Siege siege, Clan clan, String when)
+	{
+		if (clan.getAllyId() == 0)
+		{
+			return;
+		}
+		for (Clan other : ClanTable.getInstance().getClans())
+		{
+			if ((other == clan) || !PhantomClanPower.allied(clan, other))
+			{
+				continue;
+			}
+			final Player leader = strongLeader(other);
+			if ((leader == null) || (other.getCastleId() > 0) || SiegeManager.getInstance().checkIsRegistered(other, castle.getResidenceId()) || siege.checkIfAlreadyRegisteredForSameDay(other))
+			{
+				continue;
+			}
+			siege.registerAttacker(leader);
+			if (siege.getAttackerClan(other) != null)
+			{
+				LOGGER.info(getClass().getSimpleName() + ": " + other.getName() + " joins its ally " + clan.getName() + " in the siege of " + castle.getName() + " on " + when + ".");
+				PhantomNews.post("siege_register", en() ? "Clan " + other.getName() + " joins its ally " + clan.getName() + " at " + castle.getName() + " Castle on " + when + "." : "Клан " + other.getName() + " идёт с союзником " + clan.getName() + " на замок " + castle.getName() + ": осада " + when + ".", leader.getName(), null);
 			}
 		}
 	}

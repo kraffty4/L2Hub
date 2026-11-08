@@ -8,6 +8,7 @@
 """
 
 import json
+import math
 import re
 from pathlib import Path
 
@@ -23,6 +24,81 @@ RULES = [
     "В пати мобы падают быстрее, опыт делится между теми, кто рядом; с хилером можно брать мобов посильнее.",
     "Рейд-босса в одиночку не убить — нужна пати или рейд.",
 ]
+# «Где качаться?» (docs/PHANTOMS.md, 4.147; docs/MIND.md, «Где качаться»): совет новичку — только когда об этом спросили.
+ASK_SPOT = re.compile(r"(?i)(?<![а-яёa-z])(по)?кач(?!еств)|(?<![а-яёa-z])ап(?:н|а[тю])|спот|где\s+(лучше\s+)?(фарм|бить|мобы)|куда\s+(идти|пойти|бежать|лучше)"
+                      r"|фарм(ить|лю)?\s+где|where\b.*\b(level|lvl|farm|grind|xp|exp)|\bspots?\b|\bgrind")
+ADVICE_SPOTS = 3     # мест в совете
+# Роль по классу — как HuntSpotData.role в ядре: саммонер, иначе PhantomBufferSets.classRole (танк, кинжал, лук, хил, маг, воин).
+ROLE_CLASSES = {
+    "summoner": {"WARLOCK", "ARCANA_LORD", "ELEMENTAL_SUMMONER", "ELEMENTAL_MASTER", "PHANTOM_SUMMONER", "SPECTRAL_MASTER"},
+    "tank": {"KNIGHT", "PALADIN", "DARK_AVENGER", "ELVEN_KNIGHT", "TEMPLE_KNIGHT", "PALUS_KNIGHT", "SHILLIEN_KNIGHT", "PHOENIX_KNIGHT",
+             "HELL_KNIGHT", "EVA_TEMPLAR", "SHILLIEN_TEMPLAR"},
+    "dagger": {"ROGUE", "TREASURE_HUNTER", "ADVENTURER", "ELVEN_SCOUT", "PLAINS_WALKER", "WIND_RIDER", "ASSASSIN", "ABYSS_WALKER", "GHOST_HUNTER"},
+    "archer": {"HAWKEYE", "SAGITTARIUS", "SILVER_RANGER", "MOONLIGHT_SENTINEL", "PHANTOM_RANGER", "GHOST_SENTINEL", "ARBALESTER", "TRICKSTER"},
+    "healer": {"CLERIC", "BISHOP", "CARDINAL", "PROPHET", "HIEROPHANT", "ORACLE", "ELDER", "EVA_SAINT", "SHILLIEN_ORACLE", "SHILLIEN_ELDER",
+               "SHILLIEN_SAINT", "ORC_SHAMAN", "OVERLORD", "DOMINATOR", "WARCRYER", "DOOMCRYER"},
+}
+ROLE_RU = {"summoner": "саммонера", "tank": "танка", "dagger": "кинжальщика", "archer": "лучника", "healer": "хила", "mage": "мага", "fighter": "воина"}
+# ЧаВо новичков (docs/MIND.md, «ЧаВо новичков»): ответы из базы (ключ faq, tools/hunter_faq/<id>.json), сверенные с датапаком.
+# Подбор по словам: редкие основы весят больше (idf), до трёх ближайших вопросов — какой из них про то, решает модель.
+FAQ_PICK = 3         # вопросов-кандидатов в запрос
+FAQ_MIN = 2.0        # совпало веса основ не меньше этого
+FAQ_COVER = 0.34     # и не меньше этой доли веса вопроса
+FAQ_NEAR = 0.5       # кандидаты не слабее этой доли лучшего
+FAQ_STOP = set("""где как что это на в с а и ли можно мне у до по за чтоб чтобы какои какая какие какую каком какого куда когда почему
+зачем сколько надо нужно нужен нужна тоже уже еще вообще хоть его ее их он она они я ты вы мы то же бы не ни да нет или так там тут
+здесь есть был была было от из к о об при для без про чем чего кто весь все брать взять делать дальше самому сам свои свой мои мой
+твои твой стать стал стала""".split())
+FAQ_LAT = [("shch", "щ"), ("sch", "щ"), ("zh", "ж"), ("kh", "х"), ("ch", "ч"), ("sh", "ш"), ("ts", "ц"), ("yu", "ю"), ("ya", "я"),
+           ("yo", "е"), ("ye", "е")]
+FAQ_LAT1 = dict(zip("abvgdezijklmnoprstufhcyxwq", "абвгдезиийклмнопрстуфхцыксвк"))
+FAQ_EN = {"grade": "грейд", "siege": "осада", "craft": "крафт", "drop": "дроп", "success": "успех", "warrior": "воин", "auto": "авто",
+          "poison": "яд", "bleed": "кровоток", "oly": "олимп", "olympiad": "олимп", "lvl": "лвл", "level": "лвл", "sub": "саб",
+          "main": "основа", "buff": "баф", "nobless": "нобл", "noble": "нобл", "pk": "пк", "trade": "обмен", "spoil": "спойл"}
+FAQ_SYN = {"соск": "сос", "сосо": "сос", "сс": "сос", "бсс": "сос", "сосы": "сос", "профе": "проф", "дворя": "нобл", "уров": "лвл",
+           "левел": "лвл", "олимп": "оли", "олли": "оли", "бафф": "баф", "мейн": "основ", "лвла": "лвл", "академ": "акад", "трансф": "транс"}
+FAQ_ORD = {"1": "#1", "перв": "#1", "2": "#2", "втор": "#2", "3": "#3", "трет": "#3"}
+FAQ_GRADE = {"д": "@d", "d": "@d", "ц": "@c", "c": "@c", "б": "@b", "b": "@b", "ы": "@s", "s": "@s"}
+FAQ_ENDS = sorted("ами ями ого его ому ему ыми ими ой ей ий ый ая яя ое ее ую юю ом ем ам ям ах ях ов ев ы и а я о е у ю ь й".split(),
+                  key=len, reverse=True)
+FAQ_WORD = re.compile(r"[a-zа-я0-9]+")
+# Вопрос к самому фейку («ты нобл?», «какой у тебя саб») — не ЧаВо; «не знаешь, где…», «подскажи» — ЧаВо.
+FAQ_ABOUT_YOU = re.compile(r"(?i)(?<![а-яёa-z])(ты|тебя|тебе|твой|твоя|твои|ty|tebya|tebe)(?![а-яёa-z])")
+FAQ_ASK_YOU = re.compile(r"(?i)знаешь|подскаж|скажи|в курсе|znaesh|podskaj")
+
+
+def _faq_lat(w: str) -> str:
+    for a, b in FAQ_LAT:
+        w = w.replace(a, b)
+    return "".join(FAQ_LAT1.get(ch, ch) for ch in w)
+
+
+def _faq_stem(w: str) -> str | None:
+    if w in FAQ_GRADE:
+        return FAQ_GRADE[w]
+    if w.isascii() and w.isalpha():
+        w = FAQ_EN.get(w) or _faq_lat(w)
+    w = w.replace("й", "и")
+    if w.isdigit():
+        return FAQ_ORD.get(w)
+    if len(w) < 2 or w in FAQ_STOP:
+        return None
+    for e in FAQ_ENDS:
+        if w.endswith(e) and len(w) - len(e) >= 3:
+            w = w[:-len(e)]
+            break
+    for k, v in FAQ_ORD.items():
+        if not k.isdigit() and w.startswith(k):
+            return v
+    for k in sorted(FAQ_SYN, key=len, reverse=True):
+        if w.startswith(k):
+            return FAQ_SYN[k]
+    return w[:5]
+
+
+def faq_stems(text: str) -> set[str]:
+    """Основы слов для подбора ЧаВо: транслит и английские слова — по-русски, окончания срезаны, «2»/«вторая» и «б»/«b» — одно."""
+    return {s for s in (_faq_stem(w) for w in FAQ_WORD.findall((text or "").lower().replace("ё", "е"))) if s}
 
 
 def adena(n: int | float) -> str:
@@ -222,6 +298,88 @@ class Knowledge:
         if not found:
             return ""
         return "Рейд-боссы твоего уровня: " + "; ".join(f"{n} ({lv}" + (f", у {place})" if place else ")") for n, lv, place in found[:RAIDS_NEAR]) + "."
+
+    @staticmethod
+    def role(kb: dict, cls: str) -> str:
+        """Роль собеседника для спотов из гайдов: по имени класса (как в ядре), иначе маг или воин по базе классов."""
+        for role, names in ROLE_CLASSES.items():
+            if cls in names:
+                return role
+        return "mage" if kb.get("classes", {}).get(cls, {}).get("mage") else "fighter"
+
+    def advice(self, message: str, level: int, cls: str) -> str:
+        """Совет «где качаться» собеседнику его уровня и роли — только когда спросили (ASK_SPOT). Места, куда ядро пустит
+        (как choices: уровень от min−4 до max+3), с опытом; сперва те, что гайды игроков советуют его роли, потом те, о которых
+        гайды молчат, советуемые только другим ролям — нет. Одно место — один раз, ближе к его уровню — первыми. Нет базы — пусто."""
+        kb = self.kb()
+        if not kb or level <= 0 or not ASK_SPOT.search(message or ""):
+            return ""
+        role = self.role(kb, cls)
+        ranked = []
+        for name, s in kb.get("spots", {}).items():
+            if not s.get("exp") or not s["min"] - 4 <= level <= s["max"] + 3:
+                continue
+            roles = s.get("guide", "").split()
+            if roles and role not in roles:
+                continue
+            ranked.append((0 if roles else 1, abs((s["min"] + s["max"]) / 2 - level), -s["count"], name, s))
+        ranked.sort(key=lambda x: x[:4])
+        places, picked = set(), []
+        for tier, _, _, name, s in ranked:
+            place = name.split(" · ")[0]
+            if place not in places and len(picked) < ADVICE_SPOTS:
+                places.add(place)
+                picked.append((tier, name, s))
+        if not picked:
+            return ""
+        def brief(name: str, s: dict) -> str:
+            return self.spot_brief(name, s)[:-1] + (", лучше в пати" if "party" in s.get("guide", "").split() else "") + ")"
+        guided = [brief(n, s) for t, n, s in picked if t == 0]
+        other = [brief(n, s) for t, n, s in picked if t == 1]
+        parts = []
+        if guided:
+            parts.append(f"игроки в гайдах советуют {ROLE_RU[role]} на {level} ур.: " + "; ".join(guided))
+        if other:
+            parts.append(("ещё подходят по уровню: " if guided else f"на {level} ур. подходят: ") + "; ".join(other))
+        return ("Если собеседник спрашивает, где качаться: " + ". ".join(parts)
+                + ". Посоветуй одно-два места своими словами, как игрок; других мест не придумывай.")
+
+    def _faq_index(self, kb: dict) -> tuple[list[tuple[dict, list[set[str]]]], dict[str, float]]:
+        """Основы вопросов ЧаВо и вес основ (idf), один раз на версию базы."""
+        if getattr(self, "_faq_for", None) is not kb:
+            entries = [(e, [faq_stems(x) for x in (e["q"], *e.get("v", []))]) for e in kb.get("faq", [])]
+            df: dict[str, int] = {}
+            for _, texts in entries:
+                for s in set().union(*texts):
+                    df[s] = df.get(s, 0) + 1
+            self._faq, self._faq_for = (entries, {s: math.log((len(entries) + 1) / c) for s, c in df.items()}), kb
+        return self._faq
+
+    def faq(self, message: str) -> str:
+        """ЧаВо новичков под вопрос собеседника: до FAQ_PICK ближайших вопросов с ответами, сверенными с датапаком.
+        Нет ЧаВо в базе, вопрос про самого фейка или ничего не похоже — пусто."""
+        kb = self.kb()
+        if not kb or not kb.get("faq") or not message or (FAQ_ABOUT_YOU.search(message) and not FAQ_ASK_YOU.search(message)):
+            return ""
+        entries, weight = self._faq_index(kb)
+        said = faq_stems(message)
+        scored = []
+        for n, (e, texts) in enumerate(entries):
+            best = 0.0
+            for ts in texts:
+                total = sum(weight.get(s, 0) for s in ts) or 1.0
+                got = sum(weight.get(s, 0) for s in said & ts)
+                if got >= FAQ_MIN and got / total >= FAQ_COVER:
+                    best = max(best, got * got / total)
+            if best:
+                scored.append((-best, n, e))
+        if not scored:
+            return ""
+        scored.sort(key=lambda x: x[:2])
+        picked = [e for score, _, e in scored[:FAQ_PICK] if score <= scored[0][0] * FAQ_NEAR]
+        return ("Если собеседник спрашивает о чём-то из этого, вот как на этом сервере (проверено; ответь своими словами коротко, "
+                "как игрок, чисел и имён не меняй; спрашивает о другом — не используй): "
+                + " ".join(f"«{e['q']}» — {e['a']}" for e in picked))
 
     def text(self, level: int, cls: str, spots: list[str], mage: bool | None = None, chat: bool = False) -> str:
         """Кусок базы под охотника. mage не известен (разговор) — по классу; chat — для разговора: ещё споты и рейд-боссы

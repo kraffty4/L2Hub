@@ -1233,367 +1233,9 @@
  		}
 --- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomClanCrests.java
 +++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomClanCrests.java
-@@ -8,6 +8,7 @@ import java.nio.file.Path;
- import java.security.MessageDigest;
- import java.security.NoSuchAlgorithmException;
- import java.util.ArrayList;
-+import java.util.Arrays;
- import java.util.Comparator;
- import java.util.HashSet;
- import java.util.HexFormat;
-@@ -19,8 +20,8 @@ import java.util.logging.Logger;
- import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
- import org.l2jmobius.gameserver.data.sql.ClanTable;
- import org.l2jmobius.gameserver.data.sql.CrestTable;
--import org.l2jmobius.gameserver.entity.actor.Player;
- import org.l2jmobius.gameserver.entity.clan.Clan;
-+import org.l2jmobius.gameserver.entity.actor.Player;
- import org.l2jmobius.gameserver.entity.clan.Crest;
- import org.l2jmobius.gameserver.entity.clan.enums.CrestType;
- 
-@@ -28,54 +29,45 @@ import org.l2jmobius.gameserver.entity.clan.enums.CrestType;
-  * L2Hub: у каждого клана охотников своя эмблема (docs/PHANTOMS.md, раздел 4.61; по вкладу пользователя). Набор — {@code data/ClanCrests/*.dds}, его пишет
-  * {@code tools/clan_crests.py} по хронике; нет набора — ничего не происходит. Эмблему игрока и уже выданную не трогает, новая не повторяет занятую ни у кого на сервере.
-  * Кончились свободные — остальные кланы ждут, выданные остаются. Исключение — снятый набор: суммы в {@code data/ClanCrests/retired.txt}, такую эмблему могла выдать только прежняя версия
-- * генератора, клан охотников получает вместо неё новую.<br>
-- * Союз, который возглавляет клан охотников, получает эмблему союза из эмблемы главы, сжатой по ширине до 8×16 (DXT1, 192 байта — предел {@code RequestSetAllyCrest}):
-- * без неё у союзов охотников эмблемы не было совсем (мост, ep-alliance-crest-not-assigned). Эмблему союза игрока не трогает.
-+ * генератора, клан охотников получает вместо неё новую. Отдельные эмблемы автономных бот-альянсов сохраняются.<br>
-+ * Эпилог: союз во главе с кланом охотников получает свою эмблему из набора ({@code giveAllies}); эмблема главы, сжатая до 8×16 ({@code giveAlly}, ядро),
-+ * здесь только в самопроверке CLANCREST.
-  */
- public final class PhantomClanCrests
- {
- 	private static final Logger LOGGER = Logger.getLogger(PhantomClanCrests.class.getName());
--
- 	private static final Path POOL = Path.of("data/ClanCrests");
- 	private static final Path RETIRED = POOL.resolve("retired.txt");
--	private static final long CHECK_GAP = 60000;
--	private static final int MAGIC = 0x20534444;
--	private static final int DXT1 = 0x31545844;
-+	private final Set<String> _retired = loadRetired();
-+	private final List<Asset> pool = loadPool(POOL);
-+	private final List<Asset> allyPool = alliancePool(pool.stream().filter(asset -> !_retired.contains(asset.hash())).toList());
-+	private long nextCheck;
-+	private boolean exhausted;
-+	private boolean allyExhausted;
- 
--	private record Asset(String name, String hash, byte[] data)
-+	record Asset(String name, String hash, byte[] data)
- 	{
- 	}
- 
--	private final List<Asset> _pool = load();
--	private final Set<String> _retired = loadRetired();
--	private long _nextCheck;
--	private boolean _exhausted;
--
- 	private PhantomClanCrests()
- 	{
--		LOGGER.info(getClass().getSimpleName() + ": loaded " + _pool.size() + " unique crests, " + _retired.size() + " retired.");
-+		LOGGER.info("PhantomClanCrests: loaded " + pool.size() + " unique crests, " + _retired.size() + " retired.");
- 	}
- 
- 	synchronized void control(long now)
- 	{
--		if (!PhantomHuntersConfig.HUNTER_CLAN_CRESTS || !PhantomHuntersConfig.HUNTER_CLANS || (now < _nextCheck))
-+		if (!PhantomHuntersConfig.HUNTER_CLANS || !PhantomHuntersConfig.HUNTER_CLAN_CRESTS || pool.isEmpty() || (now < nextCheck))
- 		{
- 			return;
- 		}
--		_nextCheck = now + CHECK_GAP;
-+		nextCheck = now + 60000;
- 		give();
--		giveAlly();
-+		giveAllies();
- 	}
- 
--	/**
--	 * @return сколько кланов получили эмблему
--	 */
- 	private int give()
- 	{
--		if (_pool.isEmpty())
--		{
--			return 0;
--		}
-+		int given=0;
- 		final Set<String> used = new HashSet<>();
- 		final List<Clan> pending = new ArrayList<>();
- 		for (Clan clan : ClanTable.getInstance().getClans())
-@@ -102,29 +94,99 @@ public final class PhantomClanCrests
- 			}
- 		}
- 		pending.sort(Comparator.comparingInt(Clan::getId));
--		int given = 0;
- 		for (Clan clan : pending)
- 		{
--			final Asset asset = choose(used, clan.getId());
-+			final Asset asset = choose(pool, used, _retired, clan.getId());
- 			if (asset == null)
- 			{
--				if (!_exhausted)
-+				if (!exhausted)
- 				{
--					LOGGER.warning(getClass().getSimpleName() + ": no unused crests remain, " + (pending.size() - given) + " clans wait; given crests stay.");
--					_exhausted = true;
-+					LOGGER.warning("PhantomClanCrests: no unused crests remain; waiting for more pool images. Existing emblems are kept.");
-+					exhausted = true;
- 				}
- 				break;
- 			}
--			_exhausted = false;
-+			exhausted = false;
- 			final Crest crest = CrestTable.getInstance().createCrest(asset.data(), CrestType.PLEDGE);
- 			if (crest == null)
- 			{
- 				continue;
- 			}
- 			clan.changeClanCrest(crest.getId());
-+			given++;
-+			used.add(asset.hash());
-+			LOGGER.info("PhantomClanCrests: clan " + clan.getName() + " received " + asset.name() + ".");
-+		}
-+		return given;
-+	}
-+
-+	/** Fill missing alliance crests only when an autonomous hunter clan leads the alliance. */
-+	private int giveAllies()
-+	{
-+		final List<Clan> clans = new ArrayList<>(ClanTable.getInstance().getClans());
-+		clans.sort(Comparator.comparingInt(Clan::getId));
-+		final Set<String> used = new HashSet<>();
-+		for (Clan clan : clans)
-+		{
-+			final Crest crest = allianceCrest(clan);
-+			if (crest != null)
-+			{
-+				used.add(hash(crest.getData()));
-+			}
-+		}
-+		int given = 0;
-+		for (Clan leader : clans)
-+		{
-+			if ((leader.getAllyId() == 0) || (leader.getAllyId() != leader.getId()) || !PhantomHunterClans.isHunterClan(leader))
-+			{
-+				continue;
-+			}
-+			final List<Clan> members = clans.stream().filter(clan -> clan.getAllyId() == leader.getAllyId()).toList();
-+			Crest existing = allianceCrest(leader);
-+			if (existing == null)
-+			{
-+				for (Clan member : members)
-+				{
-+					existing = allianceCrest(member);
-+					if (existing != null)
-+					{
-+						break;
-+					}
-+				}
-+			}
-+			if (existing != null)
-+			{
-+				// Preserve any chosen emblem; only restore missing copies in member clans.
-+				for (Clan member : members)
-+				{
-+					if (member.getAllyCrestId() == 0)
-+					{
-+						member.changeAllyCrest(existing.getId(), true);
-+					}
-+				}
-+				continue;
-+			}
-+			final Asset asset = choose(allyPool, used, leader.getAllyId());
-+			if (asset == null)
-+			{
-+				if (!allyExhausted)
-+				{
-+					LOGGER.warning("PhantomClanCrests: no unused alliance crests remain; existing emblems are kept.");
-+					allyExhausted = true;
-+				}
-+				continue;
-+			}
-+			allyExhausted = false;
-+			final Crest crest = CrestTable.getInstance().createCrest(asset.data(), CrestType.ALLY);
-+			if (crest == null)
-+			{
-+				continue;
-+			}
-+			// Native API persists the ID for the entire alliance and broadcasts member info.
-+			leader.changeAllyCrest(crest.getId(), false);
- 			used.add(asset.hash());
- 			given++;
--			LOGGER.info(getClass().getSimpleName() + ": clan " + clan.getName() + " received " + asset.name() + ".");
-+			LOGGER.info("PhantomClanCrests: alliance " + leader.getAllyName() + " received " + asset.name() + ".");
- 		}
- 		return given;
- 	}
-@@ -371,13 +433,113 @@ public final class PhantomClanCrests
- 		return (dr * dr) + (dg * dg) + (db * db);
- 	}
- 
--	private Asset choose(Set<String> used, int clanId)
-+	private static Crest allianceCrest(Clan clan)
- 	{
--		final int start = Math.floorMod(clanId * 0x9E3779B9, _pool.size());
--		for (int i = 0; i < _pool.size(); i++)
-+		final Crest crest = CrestTable.getInstance().getCrest(clan.getAllyCrestId());
-+		return ((crest != null) && (crest.getType() == CrestType.ALLY)) ? crest : null;
-+	}
-+
-+	/** Keep the central 8x12 visible pixels, padded to an 8x16 DXT1 texture (192 bytes). */
-+	static List<Asset> alliancePool(List<Asset> clans)
-+	{
-+		final List<Asset> result = new ArrayList<>();
-+		final Set<String> hashes = new HashSet<>();
-+		for (Asset clan : clans)
- 		{
--			final Asset asset = _pool.get((start + i) % _pool.size());
--			if (!used.contains(asset.hash()) && !_retired.contains(asset.hash()))
-+			if (!valid(clan.data()))
-+			{
-+				continue;
-+			}
-+			final byte[] data = Arrays.copyOf(clan.data(), 192);
-+			final ByteBuffer header = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN);
-+			header.putInt(16, 8);
-+			header.putInt(20, 64);
-+			for (int row = 0; row < 4; row++)
-+			{
-+				System.arraycopy(clan.data(), 128 + (row * 32) + 8, data, 128 + (row * 16), 16);
-+			}
-+			final String hash = hash(data);
-+			if (hashes.add(hash))
-+			{
-+				result.add(new Asset("ally-" + clan.name(), hash, data));
-+			}
-+		}
-+		return List.copyOf(result);
-+	}
-+
-+	/** Repair only legacy 16x12 DXT1 clan textures before players can connect. */
-+	public static int repairOnStartup()
-+	{
-+		return getInstance().repairExisting();
-+	}
-+
-+	private synchronized int repairExisting()
-+	{
-+		int repaired = 0;
-+		for (Clan clan : ClanTable.getInstance().getClans())
-+		{
-+			final Crest old = CrestTable.getInstance().getCrest(clan.getCrestId());
-+			if (old == null)
-+			{
-+				continue;
-+			}
-+			final byte[] replacement = correctedClanCrest(old.getData(), old.getType());
-+			if (replacement == null)
-+			{
-+				continue;
-+			}
-+			final Crest next = CrestTable.getInstance().createCrest(replacement, CrestType.PLEDGE);
-+			if (next == null)
-+			{
-+				throw new IllegalStateException("Could not repair legacy crest for clan " + clan.getId() + "; stop before accepting players.");
-+			}
-+			// Fresh IDs prevent clients from requesting the rejected cached texture again.
-+			clan.changeClanCrest(next.getId());
-+			repaired++;
-+			LOGGER.info("PhantomClanCrests: repaired clan " + clan.getName() + " crest " + old.getId() + " -> " + next.getId() + " (16x16 DDS, visible 16x12).");
-+		}
-+		LOGGER.info("PhantomClanCrests: startup repaired " + repaired + " legacy clan crests; valid clan and alliance crests retained.");
-+		return repaired;
-+	}
-+
-+	static byte[] correctedClanCrest(byte[] data, CrestType type)
-+	{
-+		if ((type != CrestType.PLEDGE) || (data == null) || (data.length != 224))
-+		{
-+			return null;
-+		}
-+		final ByteBuffer old = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN);
-+		if ((old.getInt(0) != 0x20534444) || (old.getInt(4) != 124) || (old.getInt(12) != 12) || (old.getInt(16) != 16) || (old.getInt(76) != 32) || (old.getInt(84) != 0x31545844))
-+		{
-+			return null;
-+		}
-+		final byte[] corrected = Arrays.copyOf(data, 256);
-+		final ByteBuffer header = ByteBuffer.wrap(corrected).order(ByteOrder.LITTLE_ENDIAN);
-+		header.putInt(12, 16);
-+		header.putInt(20, 128);
-+		if (!valid(corrected))
-+		{
-+			throw new IllegalStateException("Invalid corrected clan crest");
-+		}
-+		return corrected;
-+	}
-+
-+	static Asset choose(List<Asset> assets, Set<String> used, int clanId)
-+	{
-+		return choose(assets, used, Set.of(), clanId);
-+	}
-+
-+	static Asset choose(List<Asset> assets, Set<String> used, Set<String> retired, int clanId)
-+	{
-+		if (assets.isEmpty())
-+		{
-+			return null;
-+		}
-+		final int start = Math.floorMod(clanId * 0x9E3779B9, assets.size());
-+		for (int i = 0; i < assets.size(); i++)
-+		{
-+			final Asset asset = assets.get((start + i) % assets.size());
-+			if (!used.contains(asset.hash()) && !retired.contains(asset.hash()))
- 			{
- 				return asset;
- 			}
-@@ -385,22 +547,27 @@ public final class PhantomClanCrests
- 		return null;
- 	}
- 
--	private static List<Asset> load()
-+	static List<Asset> loadPool(Path directory)
- 	{
--		if (!Files.isDirectory(POOL))
-+		if (!Files.isDirectory(directory))
- 		{
- 			return List.of();
- 		}
- 		final List<Asset> result = new ArrayList<>();
- 		final Set<String> hashes = new HashSet<>();
--		try (var files = Files.list(POOL))
-+		try (var files = Files.list(directory))
- 		{
- 			for (Path path : files.filter(file -> Files.isRegularFile(file) && file.getFileName().toString().endsWith(".dds")).sorted().toList())
- 			{
-+				if (Files.size(path) != 256)
-+				{
-+					LOGGER.warning("PhantomClanCrests: skipped invalid image " + path.getFileName());
-+					continue;
-+				}
- 				final byte[] data = Files.readAllBytes(path);
- 				if (!valid(data))
- 				{
--					LOGGER.warning("PhantomClanCrests: skipped incompatible " + path.getFileName() + ".");
-+					LOGGER.warning("PhantomClanCrests: skipped incompatible image " + path.getFileName());
- 					continue;
- 				}
- 				final String hash = hash(data);
-@@ -412,7 +579,7 @@ public final class PhantomClanCrests
- 		}
- 		catch (IOException e)
- 		{
--			LOGGER.log(Level.WARNING, "PhantomClanCrests: could not load the crests.", e);
-+			LOGGER.log(Level.WARNING, "PhantomClanCrests: could not load crest pool.", e);
- 		}
- 		return List.copyOf(result);
- 	}
-@@ -443,19 +610,17 @@ public final class PhantomClanCrests
- 	/**
- 	 * Заголовок DDS DXT1, размер данных сходится с шириной и высотой. Предел по байтам у хроник разный, его держит генератор.
+@@ -623,14 +623,12 @@
  	 */
--	private static boolean valid(byte[] data)
-+	static boolean valid(byte[] data)
+ 	private static boolean valid(byte[] data)
  	{
 -		if (data.length <= 128)
 +		if (data.length != 256)
@@ -1607,45 +1249,7 @@
 +		return (header.getInt(0) == 0x20534444) && (header.getInt(4) == 124) && (header.getInt(12) == 16) && (header.getInt(20) == 128) && (header.getInt(16) == 16) && (header.getInt(76) == 32) && (header.getInt(84) == 0x31545844);
  	}
  
--	private static String hash(byte[] data)
-+	static String hash(byte[] data)
- 	{
- 		try
- 		{
-@@ -467,17 +632,10 @@ public final class PhantomClanCrests
- 		}
- 	}
- 
--	// ---------- Самопроверка ----------
--
--	/**
--	 * Самопроверка CLANCREST ({@code HuntersSelfTest}, только на копии базы): два клана охотников ниже и на нужном уровне, выдача, разные эмблемы, эмблема в таблице
--	 * и уцелела при второй выдаче; кланы распускаются.
--	 * @param hunters охотники в мире
--	 */
- 	void selfTest(List<Player> hunters)
- 	{
- 		final String tag = getClass().getSimpleName() + ": SelfTest CLANCREST: ";
--		LOGGER.info(tag + "pool " + _pool.size() + (_pool.isEmpty() ? "" : ", first " + _pool.get(0).name() + " of " + _pool.get(0).data().length + " bytes") + ".");
-+		LOGGER.info(tag + "pool " + pool.size() + (pool.isEmpty() ? "" : ", first " + pool.get(0).name() + " of " + pool.get(0).data().length + " bytes") + ".");
- 		final long started = System.currentTimeMillis();
- 		final List<Player> free = new ArrayList<>();
- 		for (Player hunter : hunters)
-@@ -573,11 +731,11 @@ public final class PhantomClanCrests
- 
- 	static PhantomClanCrests getInstance()
- 	{
--		return SingletonHolder.INSTANCE;
-+		return Holder.INSTANCE;
- 	}
- 
--	private static class SingletonHolder
-+	private static final class Holder
- 	{
--		protected static final PhantomClanCrests INSTANCE = new PhantomClanCrests();
-+		private static final PhantomClanCrests INSTANCE = new PhantomClanCrests();
- 	}
- }
+ 	private static String hash(byte[] data)
 --- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomClans.java
 +++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomClans.java
 @@ -22,7 +22,7 @@
@@ -1944,23 +1548,66 @@
  					final GlobalVariablesManager variables = GlobalVariablesManager.getInstance();
 --- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java
 +++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomCompanionManager.java
-@@ -197,6 +197,12 @@
+@@ -96,10 +96,6 @@ public class PhantomCompanionManager
+ 	private static final long HUNT_EMPTY_WAIT = 15000;
+ 	/** Как часто в пати проверяет банки, мс. */
+ 	private static final long SUPPLY_INTERVAL = 30000;
+-	/** Охотник в пати живого: городские дела, когда пати пришла в город, — не чаще раза в столько, мс (как {@code PhantomHunterManager.TOWN_COOLDOWN}). */
+-	private static final long CHORES_GAP = 60000;
+-	/** Пати стоит в городе: городские дела снова — раз в столько, мс (как {@code PhantomHunterManager.TOWN_SOFT_COOLDOWN}). */
+-	private static final long CHORES_INTERVAL = 600000;
+ 	/** Мобы сильнее владельца больше чем на столько уровней — не трогать самим (на них — только по его цели). */
+ 	private static final int HUNT_LEVEL_UP = 6;
+ 	// «Паровозик»: владелец идёт следом с задержкой Follow — пороги с запасом (патч 0030; было: ждать с 900, цель до 1400, телепорт с 2000).
+@@ -161,12 +157,6 @@ public class PhantomCompanionManager
+ 		long nextSupply;
+ 		/** С какого времени в HUNT вокруг пусто, а владелец стоит; 0 — есть кого бить. */
+ 		long huntEmptySince;
+-		/** Охотник в пати живого (раздел 4.146): прошлые городские дела, был ли в городе в прошлый тик и ждут ли дела после прихода в город. */
+-		long lastChores;
+-		boolean inTown;
+-		boolean choresDue;
+-		/** Что не продалось в лавке: после двух раз — NPC, как у охотника на кач ({@link PhantomHunterOutfit#townChores}). */
+-		final Map<Integer, Integer> unsold = new ConcurrentHashMap<>();
+ 
+ 		Companion(String name)
+ 		{
+@@ -207,22 +197,11 @@ public class PhantomCompanionManager
  	 */
  	public synchronized String summon(Player owner, PhantomTemplate template)
  	{
+-		// Личная пачка (PersonalCompanions): помощник чужого клана или чужой сохранённой пачки не зовётся; в чужую пати зовёт только лидер.
+-		final String accessError = PersonalCompanionClans.access(owner, template);
+-		if (accessError != null)
+-		{
+-			return accessError;
+-		}
+-		if (PersonalCompanions.personal(template) && owner.isInParty() && !isPartiedWith(owner, template))
+-		{
+-			if (!owner.getParty().isLeader(owner))
+-			{
+-				return tr("Призвать помощника в пати может её лидер.");
+-			}
+-			if (owner.getParty().getMemberCount() >= 9)
+-			{
+-				return tr("В пати нет места для помощника.");
+-			}
 +		final String accessError=PersonalCompanionClans.access(owner,template);
 +		if(accessError!=null)return accessError;
 +		if(PersonalCompanions.personal(template)&&owner.isInParty()&&!isPartiedWith(owner,template)){
 +			if(!owner.getParty().isLeader(owner))return "Призвать помощника в пати может её лидер.";
 +			if(owner.getParty().getMemberCount()>=9)return "В пати нет места для помощника.";
-+		}
+ 		}
  		if (!PhantomsConfig.PHANTOMS_ENABLED)
  		{
- 			return tr("Напарники выключены (EnablePhantoms в Phantoms.ini).");
-@@ -251,10 +257,11 @@
+@@ -278,14 +257,11 @@ public class PhantomCompanionManager
  			phantom.leaveParty();
  		}
  
+-		if (!template.isHunter())
+-		{
+-			PersonalCompanions.tick(phantom, System.currentTimeMillis());
+-		}
 +		if (!template.isHunter()) { PersonalCompanions.tick(phantom, System.currentTimeMillis()); PartyBuffs.prepare(phantom, System.currentTimeMillis()); }
  		startTicking();
  		if (phantom.isInParty())
@@ -1970,19 +1617,31 @@
  		}
  		else if (!owner.isInParty() || (owner.getParty().isLeader(owner) && (owner.getParty().getMemberCount() < 9)))
  		{
-@@ -324,6 +331,8 @@
+@@ -355,11 +331,8 @@ public class PhantomCompanionManager
  	 */
  	public synchronized String dismiss(Player owner, PhantomTemplate template, boolean quiet)
  	{
+-		final String accessError = PersonalCompanionClans.access(owner, template);
+-		if (accessError != null)
+-		{
+-			return accessError;
+-		}
 +		final String accessError=PersonalCompanionClans.access(owner,template);
 +		if(accessError!=null)return accessError;
  		final Companion companion = _companions.get(key(template.getName()));
  		final Player other = companion == null ? null : World.getPlayer(companion.ownerId);
  		if ((other != null) && (other != owner) && other.isOnline())
-@@ -510,18 +519,25 @@
+@@ -546,25 +519,25 @@ public class PhantomCompanionManager
  			return;
  		}
  
+-		final String accessError = PersonalCompanionClans.access(requestor, template);
+-		if (accessError != null)
+-		{
+-			requestor.sendMessage(accessError);
+-			return;
+-		}
+-
 -		// Охотник идёт, если звал криком именно этот игрок или если он свободен, уровень близкий и не обидчик; уровень остаётся свой.
 -		final boolean hunter = template.isHunter();
 -		// Зовёт живой соклан (раздел 4.123): отказ сказан сразу, а переход — на тике самого охотника.
@@ -2017,16 +1676,19 @@
  
  		if (phantom.isInParty())
  		{
-@@ -603,6 +619,8 @@
- 		{
+@@ -647,10 +620,7 @@ public class PhantomCompanionManager
  			return false;
  		}
-+
+ 
+-		if (PersonalCompanionClans.access(owner, template) != null)
+-		{
+-			return false;
+-		}
 +		if(PersonalCompanionClans.access(owner,template)!=null)return false;
  
  		if (party.isLeader(phantom))
  		{
-@@ -630,14 +648,16 @@
+@@ -678,14 +648,16 @@ public class PhantomCompanionManager
  		companion.nextSupply = 0;
  		companion.huntEmptySince = 0;
  		_companions.put(key(template.getName()), companion);
@@ -2045,11 +1707,19 @@
  	}
  
  	/**
-@@ -703,6 +723,13 @@
- 	{
+@@ -752,15 +724,12 @@ public class PhantomCompanionManager
  		return phantom.isInParty() && phantom.getParty().containsPlayer(viewer);
  	}
-+
+ 
+-	/**
+-	 * Помощник уже ходит с другим живым игроком (личная пачка: такого не выдаёт пул).
+-	 */
+-	public boolean hasHumanOwnerOtherThan(Player requestor, PhantomTemplate template)
+-	{
+-		final Companion existing = _companions.get(key(template.getName()));
+-		final Player other = existing == null ? null : World.getPlayer(existing.ownerId);
+-		return (other != null) && (other != requestor) && other.isOnline() && !PhantomManager.getInstance().isPhantom(other);
+-	}
 + public boolean hasHumanOwnerOtherThan(Player requestor,PhantomTemplate template)
 + {
 +  final Companion existing=_companions.get(key(template.getName()));
@@ -2059,7 +1729,7 @@
  
  	/**
  	 * @param player игрок
-@@ -943,7 +970,7 @@
+@@ -1001,7 +970,7 @@ public class PhantomCompanionManager
  					continue;
  				}
  
@@ -2068,20 +1738,23 @@
  				if (OlympiadActionPace.owns(phantom)) continue;
  				if (phantom.isCastingNow())
  				{
-@@ -1065,6 +1092,12 @@
+@@ -1123,13 +1092,9 @@ public class PhantomCompanionManager
  			}
  			return;
  		}
+-		if (PersonalCompanionClans.access(owner, template) != null)
+-		{
 +		if(PersonalCompanionClans.access(owner,template)!=null){
-+			_companions.remove(key(companion.name));
+ 			_companions.remove(key(companion.name));
+-			if (phantom.isInParty())
+-			{
+-				phantom.leaveParty();
+-			}
 +			if(phantom.isInParty())phantom.leaveParty();
-+			PhantomManager.getInstance().despawn(template);
-+			return;
-+		}
- 		companion.ownerAwaySince = 0;
- 		observe(companion, template, phantom, owner);
- 
-@@ -1079,7 +1112,7 @@
+ 			PhantomManager.getInstance().despawn(template);
+ 			return;
+ 		}
+@@ -1147,7 +1112,7 @@ public class PhantomCompanionManager
  			return;
  		}
  
@@ -2090,39 +1763,61 @@
  		{
  			return;
  		}
-@@ -1117,6 +1150,8 @@
- 		{
+@@ -1186,6 +1151,8 @@ public class PhantomCompanionManager
  			return;
  		}
-+
-+		PartyNoblesse.synchronize(owner, phantom, template, now);
  
++		PartyNoblesse.synchronize(owner, phantom, template, now);
++
  		// Владелец получил уровень — подтянуться до него, но не посреди драки: шмот и скиллы собираются заново.
  		if (!companion.hunter && (companion.relevelTo > phantom.getLevel()))
-@@ -1148,9 +1183,19 @@
+ 		{
+@@ -1216,25 +1183,20 @@ public class PhantomCompanionManager
  			return;
  		}
  
+-		// Охотник в пати живого пришёл с ней в город — свои городские дела, как после захода с кача (раздел 4.146).
+-		if (companion.hunter && PhantomHuntersConfig.HUNTER_PARTY_LIFE)
+-		{
+-			townChores(companion, template, phantom, owner, now);
+-		}
+-
 -		// Ноблесс в пати живого дворянина и фон банка реплик (разделы 4.124, 4.122).
 -		PhantomPartyNoblesse.synchronize(owner, phantom, template, now);
 -		PhantomChatBank.getInstance().partyTick(phantom, template, now);
 +        PhantomPartyNoblesse.synchronize(owner, phantom, template, now);
 +        if (PhantomChat.nativeAmbientEnabled()) PhantomChatBank.getInstance().partyTick(phantom, template, now);
-+		PersonalCompanions.tick(phantom, now);
+ 		PersonalCompanions.tick(phantom, now);
+-		if (!PersonalCompanions.readyForAction(phantom, now))
+-		{
+-			return;
+-		}
+-		if (PersonalCompanions.owned(phantom) && PhantomSummoner.tick(phantom, now))
 +		PartyBuffs.prepare(phantom, now);
 +		// Rare reviewed group conversations; summon greetings and ambient monologues remain disabled.
 +		LocalPartyDialogues.tick(phantom,owner,now);
 +		if(!PersonalCompanions.readyForAction(phantom,now))return;
 +		if (!PhantomSupport.isSupport(template) && PartyNoblesse.maintain(phantom, now)) return;
 +		if ((template.isHunter() || PersonalCompanions.owned(phantom)) && PhantomSummoner.tick(phantom, now))
-+		{
-+			return;
-+		}
-+
+ 		{
+ 			return;
+ 		}
  
++
  		if (PhantomSupport.isSupport(template))
  		{
-@@ -1200,6 +1245,7 @@
+ 			// Саппорты не дерутся (этап 3): лечат, бафают, отдыхают по MP, бьют только нежить, в остальное время идут следом.
+@@ -1279,16 +1241,11 @@ public class PhantomCompanionManager
+ 				return;
+ 			}
+ 
+-			// Охотник в пати живого — тактика, как на споте: спойл и свип у гнома, агро танка на мобов, что бьют пати, отход мага и лучника (раздел 4.146).
+-			if (companion.hunter && PhantomHuntersConfig.HUNTER_PARTY_LIFE && PhantomTactics.tick(phantom, template, now))
+-			{
+-				return;
+-			}
+-
+ 			final Creature enemy = chooseEnemy(companion, phantom, owner);
  			if (enemy != null)
  			{
  				companion.huntEmptySince = 0;
@@ -2130,7 +1825,7 @@
  				attack(phantom, enemy);
  				return;
  			}
-@@ -1219,6 +1265,8 @@
+@@ -1308,6 +1265,8 @@ public class PhantomCompanionManager
  			}
  		}
  
@@ -2139,17 +1834,53 @@
  		// Охотник подбирает, что лежит рядом: адену и вещи, брошенные игроком (лут с мобов по автолуту и так делит пати).
  		if (companion.hunter && pickUp(phantom))
  		{
-@@ -1288,7 +1336,8 @@
+@@ -1324,36 +1283,6 @@ public class PhantomCompanionManager
  		}
+ 	}
+ 
+-	/**
+-	 * Охотник в пати живого (раздел 4.146): своя жизнь, как на кач, — в городе надеть удачный дроп, сдать хлам, купить шмот, профу, заточку, стрелы, банки и сосы
+-	 * ({@link PhantomHunterOutfit#townChores}: за свою адену, автососки снова на сосы грейда). Сам в город не ходит, водит пати живой: дела — когда оба в мирной зоне
+-	 * и не в бою. Пришли в город — сразу (не чаще {@value #CHORES_GAP} мс), стоят в городе — раз в {@value #CHORES_INTERVAL} мс.
+-	 */
+-	private static void townChores(Companion companion, PhantomTemplate template, Player phantom, Player owner, long now)
+-	{
+-		final boolean inTown = phantom.isInsideZone(ZoneId.PEACE) && owner.isInsideZone(ZoneId.PEACE);
+-		if (inTown && !companion.inTown)
+-		{
+-			companion.choresDue = true;
+-		}
+-		companion.inTown = inTown;
+-		if (!inTown || phantom.isInCombat() || owner.isInCombat() || phantom.isCastingNow() || phantom.isAttackingNow())
+-		{
+-			return;
+-		}
+-
+-		final long since = now - companion.lastChores;
+-		if ((since < CHORES_GAP) || (!companion.choresDue && (since < CHORES_INTERVAL)))
+-		{
+-			return;
+-		}
+-
+-		companion.choresDue = false;
+-		companion.lastChores = now;
+-		final List<String> done = PhantomHunterOutfit.townChores(phantom, template, companion.unsold);
+-		LOGGER.info(PhantomCompanionManager.class.getSimpleName() + ": " + companion.name + " (" + phantom.getLevel() + ") in town with the party of " + owner.getName() + ": " + (done.isEmpty() ? "nothing to do" : String.join(", ", done)) + ".");
+-	}
+-
+ 	/**
+ 	 * @return режим HUNT, вокруг пусто и владелец стоит уже {@value #HUNT_EMPTY_WAIT} мс
+ 	 */
+@@ -1408,7 +1337,7 @@ public class PhantomCompanionManager
  		else if (!phantom.isDead() && companion.selfDead)
  		{
+ 			PersonalCompanions.afterRevive(phantom);
 -			chat.event(phantom, owner, Event.REVIVED, "тебя подняли, ты снова на ногах", "спс за рес");
-+			PersonalCompanions.afterRevive(phantom);
 +			chat.event(phantom, owner, Event.REVIVED, "ты снова на ногах после смерти", "встал, щас гляну где");
  		}
  		companion.selfDead = phantom.isDead();
  
-@@ -1318,6 +1367,9 @@
+@@ -1438,6 +1367,9 @@ public class PhantomCompanionManager
  	 */
  	private static Creature chooseEnemy(Companion companion, Player phantom, Player owner)
  	{
@@ -2159,7 +1890,7 @@
  		// Рейд (разделы 4.43, 4.45): своё дело (личинка Королевы) и охота на Танатоса — цель-игрок, которую ниже не берут.
  		final Creature raidTarget = PhantomRaid.getInstance().companionTarget(phantom);
  		if (raidTarget != null)
-@@ -1601,6 +1653,10 @@
+@@ -1721,6 +1653,10 @@ public class PhantomCompanionManager
  		}
  
  		// Охотник бьёт своими скиллами, как на споте: AutoUse без AutoPlay атакующие скиллы не кастует, поэтому — отсюда.
@@ -2170,7 +1901,7 @@
  		if (!melee && castSkill(phantom, target))
  		{
  			return;
-@@ -1865,7 +1921,7 @@
+@@ -1985,7 +1921,7 @@ public class PhantomCompanionManager
  		for (Integer skillId : phantom.getAutoUseSettings().getAutoSkills())
  		{
  			final Skill skill = phantom.getKnownSkill(skillId);
@@ -2179,7 +1910,7 @@
  			{
  				continue;
  			}
-@@ -2102,6 +2158,8 @@
+@@ -2222,6 +2158,8 @@ public class PhantomCompanionManager
  	{
  		if (phantom.isInParty())
  		{
@@ -2190,10 +1921,11 @@
  	}
 --- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomData.java
 +++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomData.java
-@@ -38,12 +38,14 @@
+@@ -38,14 +38,14 @@
  		parseDatapackFile("data/L2HubPhantoms.xml");
  		_templates = Collections.unmodifiableMap(_loading);
  		_loading = null;
+-		PersonalCompanionPool.restore(this); // личная пачка: свои экземпляры помощников, data/L2HubPersonalInstances.properties
 +		PersonalCompanionPool.restore(this);
  		LOGGER.info(getClass().getSimpleName() + ": Loaded " + getCompanions().size() + " phantom companions and " + getHunters().size() + " hunters.");
  	}
@@ -2201,15 +1933,42 @@
  	@Override
  	public void parseDocument(Document document, File file)
  	{
+-		PersonalCompanionNames.prepare(document); // профили личной пачки (атрибут profile) и их имена из PersonalCompanionNames.ini
 +		PersonalCompanionNames.prepare(document);
  		forEach(document, "list", listNode -> forEach(listNode, "phantom", phantomNode ->
  		{
  			final StatSet set = new StatSet(parseAttributes(phantomNode));
-@@ -102,6 +104,13 @@
- 			}
+@@ -77,8 +77,6 @@
+ 				template.setRisk(set.getFloat("risk", 1));
+ 				// Ветеран (раздел 4.52): новый охотник рождается сразу этого уровня.
+ 				template.setStartLevel(set.getInt("startLevel", 0));
+-				// Запас «следующего поколения» (раздел 4.155): только новичком жизненного цикла.
+-				template.setReserve(set.getBoolean("reserve", false));
+ 				// Тела Танатоса после смерти (раздел 4.45): тело с классом без шаблона у хроники — мимо, остальные — в силе.
+ 				final List<PhantomTemplate.Body> bodies = new ArrayList<>();
+ 				forEach(phantomNode, "body", bodyNode ->
+@@ -107,24 +105,12 @@
  		}));
  	}
-+
+ 
+-	/**
+-	 * Личная пачка: экземпляр помощника (PersonalCompanionPool) — в общий список шаблонов, после загрузки XML.
+-	 */
+-	synchronized void registerPersonal(PhantomTemplate template)
+-	{
+-		if (template.isHunter() || template.isReaper())
+-		{
+-			throw new IllegalArgumentException("Only personal companions can be registered");
+-		}
+-		final String key = template.getName().toLowerCase(java.util.Locale.ROOT);
+-		if (_templates.containsKey(key))
+-		{
+-			throw new IllegalArgumentException("Personal name already registered: " + template.getName());
+-		}
+-		final Map<String, PhantomTemplate> next = new LinkedHashMap<>(_templates);
+-		next.put(key, template);
+-		_templates = Collections.unmodifiableMap(next);
+-	}
 +    synchronized void registerPersonal(PhantomTemplate template){
 +        if(template.isHunter()||template.isReaper())throw new IllegalArgumentException("Only personal companions can be registered");
 +        final String key=template.getName().toLowerCase(java.util.Locale.ROOT);
@@ -2219,18 +1978,6 @@
  
  	/**
  	 * @param name имя напарника (без учёта регистра)
---- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomEnchant.java
-+++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomEnchant.java
-@@ -257,7 +257,8 @@
- 	private static long marketPrice(int scrollId)
- 	{
- 		final ItemTemplate scroll = ItemData.getInstance().getTemplate(scrollId);
--		return scroll == null ? 0 : Math.round(scroll.getReferencePrice() * PhantomMarketMemory.factor(scrollId));
-+		final var shop = HunterShopPrices.shopPrice(scrollId);
-+		return shop.isPresent() ? shop.getAsLong() : HunterShopPrices.listed(scrollId) ? 0 : scroll == null ? 0 : Math.round(scroll.getReferencePrice() * PhantomMarketMemory.factor(scrollId));
- 	}
- 
- 	/**
 --- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomEvents.java
 +++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomEvents.java
 @@ -116,6 +116,11 @@
@@ -2393,7 +2140,7 @@
  		if (!clan.checkClanJoinCondition(leader, hunter, unit))
 --- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
 +++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterManager.java
-@@ -238,6 +238,8 @@ public class PhantomHunterManager
+@@ -236,6 +236,8 @@
  	private static final Pattern RAID_GATHER = Pattern.compile(START + "(собира\\p{L}*|сбор|го|пати|party|pt|кто (на|в|со мной|с нами|ид[её]т|пойд[её]т))" + END, Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
  	// Не сбор пати (перенос с Эпилога): «кому нужен хил» — предлагает себя; «хил не нужен» — роль из сбора вычеркнуть; «ищу книгу, совет» — не про пати.
  	// «Ищу пати» от игрока у нас по-прежнему зовёт охотников, они просят у него инвайт.
@@ -2402,7 +2149,27 @@
  	private static final String ROLE_WORD = "(?:хил(?:ер|а|ера)?|танк(?:а)?|дд|биш(?:оп|а)?|баф{1,2}ер(?:а)?)";
  	private static final Pattern OFFERING_OWN_ROLE = Pattern.compile(START + "кому\\s+(?:нужен|нужна|нужны)\\s+" + ROLE_WORD + END, Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
  	private static final Pattern ROLE_NOT_NEEDED = Pattern.compile(START + "(?:не\\s+(?:нужен|нужна|нужны|ищу|ищем)\\s+" + ROLE_WORD + "|" + ROLE_WORD + "\\s+не\\s+(?:нужен|нужна|нужны))" + END, Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
-@@ -977,7 +979,15 @@ public class PhantomHunterManager
+@@ -531,8 +533,8 @@
+ 		 */
+ 		boolean spare()
+ 		{
+-			// Жизненный цикл (раздел 4.151): пришедший новичком на освободившееся место не лишний. Запас «следующего поколения» (4.155) — в мире только так.
+-			return (template.isReserve() || ((PhantomHuntersConfig.HUNTERS_MAX > 0) && (order >= PhantomHuntersConfig.HUNTERS_MAX))) && !PhantomLifecycle.getInstance().joined(template.getName());
++			// Жизненный цикл (раздел 4.151): пришедший новичком на освободившееся место не лишний.
++			return (PhantomHuntersConfig.HUNTERS_MAX > 0) && (order >= PhantomHuntersConfig.HUNTERS_MAX) && !PhantomLifecycle.getInstance().joined(template.getName());
+ 		}
+ 	}
+ 
+@@ -773,7 +775,7 @@
+ 					{
+ 						if (hunter.spare())
+ 						{
+-							LOGGER.info(getClass().getSimpleName() + ": " + hunter.template.getName() + " (" + player.getLevel() + ") logs off: " + (hunter.template.isReserve() ? "next generation reserve, not joined" : "beyond HuntersMax " + PhantomHuntersConfig.HUNTERS_MAX) + (player.isInParty() ? ", leaves the party" : "") + (player.isInCombat() ? ", drops the fight" : "") + ".");
++							LOGGER.info(getClass().getSimpleName() + ": " + hunter.template.getName() + " (" + player.getLevel() + ") logs off: beyond HuntersMax " + PhantomHuntersConfig.HUNTERS_MAX + (player.isInParty() ? ", leaves the party" : "") + (player.isInCombat() ? ", drops the fight" : "") + ".");
+ 							PhantomHunterParty.getInstance().leaderLeaves(player, now);
+ 						}
+ 						else
+@@ -976,7 +978,15 @@
  					onSpots.add(player);
  				}
  			}
@@ -2419,7 +2186,22 @@
  			// Олимпиада (раздел 4.39): дворянство с 76-го, запись в часы соревнований.
  			PhantomOlympiad.getInstance().control(onSpots, now);
  			// Дуэли (раздел 4.40): охотник вызывает соседа по споту.
-@@ -1348,6 +1358,7 @@ public class PhantomHunterManager
+@@ -1082,13 +1092,7 @@
+ 	 */
+ 	int worldSize()
+ 	{
+-		// Запас «следующего поколения» (раздел 4.155) — не место в мире, пока не пришёл новичком.
+-		int size = 0;
+-		for (Hunter hunter : _hunters.values())
+-		{
+-			size += hunter.spare() ? 0 : 1;
+-		}
+-		return size;
++		return PhantomHuntersConfig.HUNTERS_MAX > 0 ? Math.min(PhantomHuntersConfig.HUNTERS_MAX, _hunters.size()) : _hunters.size();
+ 	}
+ 
+ 	/**
+@@ -1373,6 +1377,7 @@
  
  	private void think(Hunter hunter, Player player, long now)
  	{
@@ -2427,7 +2209,7 @@
  		played(hunter, player, now);
  		track(hunter, player, now);
  		// Зовёт живой соклан (раздел 4.123): ответ только здесь, чтобы старое дело в городе не доехало уже в пати.
-@@ -3690,7 +3701,7 @@ public class PhantomHunterManager
+@@ -3722,7 +3727,7 @@
  	 */
  	static boolean isLfm(String text)
  	{
@@ -2436,7 +2218,7 @@
  		{
  			return false;
  		}
-@@ -4767,21 +4778,36 @@ public class PhantomHunterManager
+@@ -4862,21 +4867,36 @@
  	 * @param requestor кто приглашает
  	 * @return пойдёт ли в пати
  	 */
@@ -2490,40 +2272,33 @@
  	 * Зовёт живой соклан ({@link PhantomClanInvite}): кач, город, лавка и пати охотников уступают, а это нет.
 --- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterOutfit.java
 +++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomHunterOutfit.java
-@@ -567,8 +567,10 @@ final class PhantomHunterOutfit
+@@ -44,9 +44,7 @@
+ import org.l2jmobius.gameserver.entity.item.type.WeaponType;
+ import org.l2jmobius.gameserver.entity.itemcontainer.Inventory;
+ import org.l2jmobius.gameserver.entity.spawns.Spawn;
+-import org.l2jmobius.gameserver.mechanics.effects.AbstractEffect;
+ import org.l2jmobius.gameserver.mechanics.effects.EffectType;
+-import org.l2jmobius.gameserver.mechanics.skill.EffectScope;
+ import org.l2jmobius.gameserver.mechanics.skill.Skill;
+ 
+ /**
+@@ -569,13 +567,10 @@
  		}
  		final long reserve = behind ? 0 : professionDue(player);
  
 +		SupportSupplies.restock(player);
  		PhantomClanStock.borrow(player, template, done);
  		done.addAll(buyGear(player, template, reserve, behind));
+-		// Тату по роли класса (BotClassKits.ini) — на то, что осталось после шмота; оружие отстало — не до них.
+-		if (!behind)
+-		{
+-			done.addAll(PhantomClassKits.applyDyes(player, false, Math.max(0, buyBudget(player) - reserve)));
+-		}
 +		if (!behind) done.addAll(PhantomClassKits.applyDyes(player, false, Math.max(0, buyBudget(player) - reserve)));
  
  		// Заточка — на то, что осталось; сломал — новая вещь на что хватит, совсем без оружия — стартовое, как у нового персонажа.
  		final List<String> enchanted = behind ? List.of() : PhantomEnchant.chore(player, template);
-@@ -697,8 +699,8 @@ final class PhantomHunterOutfit
- 			final ItemTemplate wanted = best == null ? null : ItemData.getInstance().getTemplate(itemFor(best, slot));
- 			if ((wanted != null) && (wanted.getCrystalType().getLevel() > currentGrade))
- 			{
--				missing.add(SLOT_NAMES[i] + " (~" + PhantomHunterManager.money(wanted.getReferencePrice()) + ")");
--				missingPrice += wanted.getReferencePrice();
-+				missing.add(SLOT_NAMES[i] + " (~" + PhantomHunterManager.money(HunterShopPrices.buyPrice(wanted)) + ")");
-+				missingPrice += HunterShopPrices.buyPrice(wanted);
- 			}
- 		}
- 
-@@ -715,8 +717,8 @@ final class PhantomHunterOutfit
- 				final ItemTemplate wanted = ItemData.getInstance().getTemplate(jewel(Math.min(7, grade(best.rhand)), slot));
- 				if (wanted != null)
- 				{
--					missing.add("бижа (~" + PhantomHunterManager.money(wanted.getReferencePrice()) + ")");
--					missingPrice += wanted.getReferencePrice();
-+					missing.add("бижа (~" + PhantomHunterManager.money(HunterShopPrices.buyPrice(wanted)) + ")");
-+					missingPrice += HunterShopPrices.buyPrice(wanted);
- 				}
- 			}
- 		}
-@@ -1007,6 +1009,8 @@ final class PhantomHunterOutfit
+@@ -1014,6 +1009,8 @@
  
  	private static synchronized Map<String, Map<Integer, Long>> townGoods()
  	{
@@ -2532,7 +2307,7 @@
  		final long now = System.currentTimeMillis();
  		if ((_townGoods != null) && ((now - _townGoodsAt) < TOWN_GOODS_TTL))
  		{
-@@ -1105,57 +1109,16 @@ final class PhantomHunterOutfit
+@@ -1112,57 +1109,16 @@
  	 * Что GM-шоп продаёт за адену: мультиселлы с его NPC ({@value #GM_SHOP}), у товара один ингредиент — адена, на выходе одна вещь. XML читается сам: у MultisellData хроник API разный.
  	 * @return id вещи → цена
  	 */
@@ -2598,115 +2373,83 @@
  	}
  
  	/**
-@@ -1616,12 +1579,12 @@ final class PhantomHunterOutfit
+@@ -1623,12 +1579,12 @@
  			final int itemId = jewel(grade, slot);
  			final ItemTemplate item = itemId > 0 ? ItemData.getInstance().getTemplate(itemId) : null;
  			final Item current = player.getInventory().getPaperdollItem(slot);
--			if ((item == null) || ((current != null) && (current.getTemplate().getCrystalType().getLevel() >= item.getCrystalType().getLevel())))
+-			if ((item == null) || HunterShopPrices.notForSale(item) || ((current != null) && (current.getTemplate().getCrystalType().getLevel() >= item.getCrystalType().getLevel())))
 +			if ((item == null) || (HunterShopPrices.buyPrice(item) <= 0) || ((current != null) && (current.getTemplate().getCrystalType().getLevel() >= item.getCrystalType().getLevel())))
  			{
  				continue;
  			}
  
--			if (!gift && (((player.getAdena() - reserve) < item.getReferencePrice()) || !player.reduceAdena(ItemProcessType.BUY, item.getReferencePrice(), player, false)))
+-			if (!gift && (((player.getAdena() - reserve) < HunterShopPrices.buyPrice(item)) || !PhantomCompat.reduceAdena(player, ItemProcessType.BUY, HunterShopPrices.buyPrice(item), player, false)))
 +			if (!gift && (((player.getAdena() - reserve) < HunterShopPrices.buyPrice(item)) || !player.reduceAdena(ItemProcessType.BUY, HunterShopPrices.buyPrice(item), player, false)))
  			{
  				break;
  			}
-@@ -1676,7 +1639,7 @@ final class PhantomHunterOutfit
- 		final long[][] best = new long[8][3];
- 		for (ItemTemplate item : ItemData.getInstance().getAllItems())
- 		{
--			if ((item == null) || !item.isArmor() || (item.getReferencePrice() <= 0) || !item.isSellable() || !item.isTradeable() || item.isQuestItem() || item.isHeroItem() || item.isPvpItem() || npcOnly(item))
-+			if ((item == null) || !item.isArmor() || (HunterShopPrices.buyPrice(item) <= 0) || !item.isSellable() || !item.isTradeable() || item.isQuestItem() || item.isHeroItem() || item.isPvpItem() || npcOnly(item))
- 			{
- 				continue;
- 			}
-@@ -1690,10 +1653,10 @@ final class PhantomHunterOutfit
- 			}
- 
- 			final int grade = Math.min(7, item.getCrystalType().getLevel());
--			if ((catalog[grade][kind] == 0) || (item.getReferencePrice() < best[grade][kind]))
-+			if ((catalog[grade][kind] == 0) || (HunterShopPrices.buyPrice(item) < best[grade][kind]))
- 			{
- 				catalog[grade][kind] = item.getId();
--				best[grade][kind] = item.getReferencePrice();
-+				best[grade][kind] = HunterShopPrices.buyPrice(item);
- 			}
- 		}
- 		_jewels = catalog;
-@@ -1706,7 +1669,8 @@ final class PhantomHunterOutfit
+@@ -1713,11 +1669,8 @@
  	 */
  	private static long buy(Player player, int itemId, int stock, long budget)
  	{
+-		if ((itemId > 0) && HunterShopPrices.notForSale(ItemData.getInstance().getTemplate(itemId)))
+-		{
+-			return 0; // в шопе только за жетоны или обменом — не покупает
+-		}
 -		final long price = Math.max(1, price(itemId));
 +		final long price = price(itemId);
 +		if (price <= 0) return 0;
  		final long want = itemId <= 0 ? 0 : Math.min(stock - count(player, itemId), budget / price);
  		if ((want <= 0) || !PhantomCompat.reduceAdena(player, ItemProcessType.BUY, want * price, player, false))
  		{
-@@ -1720,7 +1684,7 @@ final class PhantomHunterOutfit
+@@ -1728,9 +1681,6 @@
+ 		return want;
+ 	}
+ 
+-	/**
+-	 * @return почём пешка покупает вещь ({@link HunterShopPrices}: цена GM-шопа или, без неё, цена предмета)
+-	 */
  	static long price(int itemId)
  	{
  		final ItemTemplate template = itemId > 0 ? ItemData.getInstance().getTemplate(itemId) : null;
--		return template == null ? 0 : template.getReferencePrice();
-+		return HunterShopPrices.buyPrice(template);
- 	}
- 
- 	/**
-@@ -1798,7 +1762,8 @@ final class PhantomHunterOutfit
+@@ -1814,11 +1764,8 @@
  				}
  
  				final ItemTemplate item = ItemData.getInstance().getTemplate(itemId);
+-				if (HunterShopPrices.notForSale(item))
+-				{
+-					continue; // в шопе только за жетоны или обменом — посмотреть грейд ниже
+-				}
 -				if ((item == null) || (item.getCrystalType().getLevel() <= currentGrade) || ((current != null) && (current.getId() == itemId)))
 +				if ((item != null) && (npcOnly(item) || HunterShopPrices.buyPrice(item) <= 0)) continue;
 +				if ((item == null) || ((item.getCrystalType().getLevel() <= currentGrade) && !PhantomClassKits.sameGradeUpgrade(current, item)) || ((current != null) && (current.getId() == itemId)))
  				{
  					break; // надетое не хуже этого грейда, ниже искать нечего
  				}
-@@ -1809,12 +1774,12 @@ final class PhantomHunterOutfit
- 				final int g = Math.min(7, grade(gear.rhand));
- 				final long ammoReserve = (slot == Inventory.PAPERDOLL_RHAND ? isRanged(gear.rhand) : ammoId(player) > 0) ? price(ARROWS[g]) * AMMO_RESERVE : 0;
- 				final long reserve = (price(shotId(player.isMageClass(), g)) * SHOT_RESERVE) + ammoReserve + (player.getLevel() > PlayerConfig.MAX_FREE_TELEPORT_LEVEL ? PhantomHuntersConfig.HUNTER_TELEPORT_FEE : 0) + professionReserve;
--				if (!gift && ((player.getAdena() - reserve) < item.getReferencePrice()))
-+				if (!gift && ((player.getAdena() - reserve) < HunterShopPrices.buyPrice(item)))
- 				{
+@@ -1834,7 +1781,7 @@
  					continue; // не хватает — посмотреть грейд ниже
  				}
  
--				if (!gift && !player.reduceAdena(ItemProcessType.BUY, item.getReferencePrice(), player, false))
+-				if (!gift && !PhantomCompat.reduceAdena(player, ItemProcessType.BUY, HunterShopPrices.buyPrice(item), player, false))
 +				if (!gift && !player.reduceAdena(ItemProcessType.BUY, HunterShopPrices.buyPrice(item), player, false))
  				{
  					break;
  				}
-@@ -2236,7 +2201,8 @@ final class PhantomHunterOutfit
+@@ -2256,11 +2203,8 @@
  				}
  
  				final ItemTemplate item = ItemData.getInstance().getTemplate(itemId);
+-				if (HunterShopPrices.notForSale(item))
+-				{
+-					continue;
+-				}
 -				if ((item == null) || (item.getCrystalType().getLevel() <= currentGrade) || ((current != null) && (current.getId() == itemId)))
 +				if ((item != null) && (npcOnly(item) || HunterShopPrices.buyPrice(item) <= 0)) continue;
 +				if ((item == null) || ((item.getCrystalType().getLevel() <= currentGrade) && !PhantomClassKits.sameGradeUpgrade(current, item)) || ((current != null) && (current.getId() == itemId)))
  				{
  					break;
  				}
-@@ -2249,13 +2215,13 @@ final class PhantomHunterOutfit
- 				final int g = Math.min(7, grade(gear.rhand));
- 				final long ammoReserve = (slot == Inventory.PAPERDOLL_RHAND ? isRanged(gear.rhand) : ammoId(player) > 0) ? price(ARROWS[g]) * AMMO_RESERVE : 0;
- 				final long reserve = (price(shotId(player.isMageClass(), g)) * SHOT_RESERVE) + ammoReserve + (player.getLevel() > PlayerConfig.MAX_FREE_TELEPORT_LEVEL ? PhantomHuntersConfig.HUNTER_TELEPORT_FEE : 0) + professionReserve;
--				if ((adena - reserve) >= item.getReferencePrice())
-+				if ((adena - reserve) >= HunterShopPrices.buyPrice(item))
- 				{
--					adena -= item.getReferencePrice();
-+					adena -= HunterShopPrices.buyPrice(item);
- 					bought = true;
- 					break;
- 				}
--				missing = new Want(itemId, item.getReferencePrice(), (item.getReferencePrice() + reserve) - adena); // грейдом ниже — дешевле: остаётся самая маленькая нехватка
-+				missing = new Want(itemId, HunterShopPrices.buyPrice(item), (HunterShopPrices.buyPrice(item) + reserve) - adena); // грейдом ниже — дешевле: остаётся самая маленькая нехватка
- 			}
- 			if (!bought && (missing != null) && (missing.missing() > 0))
- 			{
-@@ -2423,6 +2389,10 @@ final class PhantomHunterOutfit
+@@ -2447,6 +2391,10 @@
  		{
  			return false;
  		}
@@ -2717,45 +2460,44 @@
  		for (int potion : HEALING_POTIONS)
  		{
  			if (id == potion)
-@@ -2588,33 +2558,38 @@ final class PhantomHunterOutfit
+@@ -2612,36 +2560,41 @@
  	/**
  	 * AutoPlay и AutoUse: цель — мобы рядом, не отбивать чужих мобов, подбирать лут; два-три самых сильных атакующих скилла класса. Воин бьёт ещё и оружием; кастер без атакующих скиллов (хилер) — тоже.
  	 */
+-	/** Бой личного помощника (PersonalCompanions.configureCombat) — тот же, что у охотника. */
+-	static void setupCompanionCombat(Player player)
+-	{
+-		setupCombat(player);
+-	}
 +	static void setupCompanionCombat(Player player){setupCombat(player);}
-+
+ 
  	private static void setupCombat(Player player)
  	{
--		final List<Skill> attacks = new ArrayList<>();
--		for (Skill skill : player.getAllSkills())
+-		// Заряды воина (раздел 4.150): с набором зарядов в бафах автобоя скиллы на зарядах не отсекаются — автобой сам заряжается и пропускает удар, пока зарядов мало.
+-		final Skill focus = PhantomHuntersConfig.HUNTER_COMBAT_FIXES ? focusSkill(player) : null;
+-		// Мастерство (раздел 4.153): ветеран ставит атаки по связке своего класса, новичок — как раньше.
+-		final List<Skill> attacks = PhantomClassCombos.order(player, attackList(player, focus));
+-
+-		final boolean caster = player.isMageClass() && !attacks.isEmpty();
 +		final boolean caster = player.isMageClass();
 +		final List<Skill> attacks = new ArrayList<>(player.getAllSkills());
 +		attacks.sort((a, b) -> Double.compare(PhantomCompat.skillPower(b), PhantomCompat.skillPower(a)));
 +		final int weaponMask = player.getActiveWeaponItem() == null ? player.getAttackType().mask() : player.getActiveWeaponItem().getItemMask();
 +		final List<Skill> selected = AttackSkillPlan.select(attacks, caster, weaponMask);
 +		if (PhantomHuntersConfig.HUNTER_COMBAT_FIXES)
- 		{
--			if (!skill.isActive() || skill.isToggle() || (skill.getItemConsumeCount() > 0) || (skill.getChargeConsumeCount() > 0) || !PhantomCompat.isAttackSkillTarget(skill))
--			{
--				continue;
--			}
--
--			if (skill.hasEffectType(EffectType.PHYSICAL_ATTACK, EffectType.MAGICAL_ATTACK, EffectType.HP_DRAIN, EffectType.DEATH_LINK, EffectType.PHYSICAL_ATTACK_HP_LINK))
++		{
 +			// Keep the local primary/fallback order; native long-reuse attacks belong after the main slots.
 +			final List<Skill> compatible = attacks.stream().filter(AttackSkillPlan::hpDamage)
 +				.filter(skill -> AttackSkillPlan.weaponCompatible(skill, weaponMask)).toList();
 +			selected.removeIf(skill -> skill.getReuseDelay() > LONG_REUSE);
 +			for (Skill skill : autoAttacks(compatible, caster ? 3 : 2))
- 			{
--				attacks.add(skill);
++			{
 +				if (!selected.contains(skill) && ((skill.getReuseDelay() > LONG_REUSE) || (selected.size() < (caster ? 4 : 3))))
 +				{
 +					selected.add(skill);
 +				}
- 			}
- 		}
--		attacks.sort((a, b) -> Double.compare(PhantomCompat.skillPower(b), PhantomCompat.skillPower(a)));
--
--		final boolean caster = player.isMageClass() && !attacks.isEmpty();
++			}
++		}
  		final AutoUseSettingsHolder use = player.getAutoUseSettings();
  		use.getAutoSkills().clear();
  		use.getAutoActions().clear();
@@ -2765,12 +2507,215 @@
  		{
  			use.getAutoActions().add(AUTO_ATTACK_ACTION);
  		}
--		for (Skill skill : autoAttacks(attacks, caster ? 3 : 2))
+-		for (Skill skill : autoAttacks(attacks, (caster || (focus != null)) ? 3 : 2))
 +		for (Skill skill : selected)
  		{
  			use.getAutoSkills().add(skill.getId());
  		}
-@@ -2715,7 +2690,7 @@ final class PhantomHunterOutfit
+-		if ((focus != null) && !use.getAutoBuffs().contains(focus.getId()))
+-		{
+-			use.getAutoBuffs().add(focus.getId());
+-		}
+ 
+ 		final AutoPlaySettingsHolder play = player.getAutoPlaySettings();
+ 		play.setNextTargetMode(1); // мобы
+@@ -2651,195 +2604,6 @@
+ 		play.setPickup(true);
+ 	}
+ 
+-	/**
+-	 * Для самопроверки COMBOS: какой была бы очередь атак автобоя при этом мастерстве.
+-	 */
+-	static List<Integer> testQueue(Player player, PhantomClassCombos.Mastery mastery)
+-	{
+-		final Skill focus = PhantomHuntersConfig.HUNTER_COMBAT_FIXES ? focusSkill(player) : null;
+-		final List<Skill> attacks = PhantomClassCombos.order(player, attackList(player, focus), mastery);
+-		final List<Integer> ids = new ArrayList<>();
+-		for (Skill skill : autoAttacks(attacks, ((player.isMageClass() && !attacks.isEmpty()) || (focus != null)) ? 3 : 2))
+-		{
+-			ids.add(skill.getId());
+-		}
+-		return ids;
+-	}
+-
+-	/**
+-	 * @return атакующие скиллы для автобоя по силе; с набором зарядов первыми — до {@value #CHARGED_SLOTS} ударов на зарядах
+-	 */
+-	private static List<Skill> attackList(Player player, Skill focus)
+-	{
+-		final List<Skill> attacks = new ArrayList<>();
+-		for (Skill skill : player.getAllSkills())
+-		{
+-			if (!skill.isActive() || skill.isToggle() || (skill.getItemConsumeCount() > 0) || ((skill.getChargeConsumeCount() > 0) && (focus == null)) || !PhantomCompat.isAttackSkillTarget(skill))
+-			{
+-				continue;
+-			}
+-
+-			if (skill.hasEffectType(EffectType.PHYSICAL_ATTACK, EffectType.MAGICAL_ATTACK, EffectType.HP_DRAIN, EffectType.DEATH_LINK, EffectType.PHYSICAL_ATTACK_HP_LINK))
+-			{
+-				attacks.add(skill);
+-			}
+-		}
+-		attacks.sort((a, b) -> Double.compare(PhantomCompat.skillPower(b), PhantomCompat.skillPower(a)));
+-		if (focus != null)
+-		{
+-			// Сила удара на зарядах — в эффекте (EnergyDamage), у скилла она 0, и по силе он уходил в конец. Первыми — самые тяжёлые по зарядам, остальные слоты — обычным.
+-			final List<Skill> charged = new ArrayList<>();
+-			for (Skill skill : attacks)
+-			{
+-				if (skill.getChargeConsumeCount() > 0)
+-				{
+-					charged.add(skill);
+-				}
+-			}
+-			charged.sort((a, b) -> Integer.compare(b.getChargeConsumeCount(), a.getChargeConsumeCount()));
+-			attacks.removeIf(skill -> skill.getChargeConsumeCount() > 0);
+-			attacks.addAll(0, charged.subList(0, Math.min(CHARGED_SLOTS, charged.size())));
+-		}
+-		return attacks;
+-	}
+-
+-	/**
+-	 * @return скилл набора зарядов на себя (Sonic Focus, Focused Force: эффект {@code FocusEnergy}); {@code null} — не знает. Полные заряды он не жмёт: в датапаке условие на
+-	 *         максимум, автобой его пропустит.
+-	 */
+-	private static Skill focusSkill(Player player)
+-	{
+-		for (Skill skill : player.getAllSkills())
+-		{
+-			if (!skill.isActive() || !"SELF".equals(skill.getTargetType().name()))
+-			{
+-				continue;
+-			}
+-			final List<AbstractEffect> effects = skill.getEffects(EffectScope.GENERAL);
+-			if (effects == null)
+-			{
+-				continue;
+-			}
+-			for (AbstractEffect effect : effects)
+-			{
+-				if ("FocusEnergy".equals(effect.getClass().getSimpleName()))
+-				{
+-					return skill;
+-				}
+-			}
+-		}
+-		return null;
+-	}
+-
+-	/** Сколько ударов на зарядах ставить в очередь воина (раздел 4.150); остальные слоты — обычным. */
+-	private static final int CHARGED_SLOTS = 2;
+-
+-	/** Самопроверка CHARGES: сколько смотреть бой, мс, и как часто. */
+-	private static final long CHARGES_TEST_WATCH = 180000;
+-	private static final long CHARGES_TEST_STEP = 1000;
+-
+-	/**
+-	 * Самопроверка CHARGES ({@code HuntersSelfTest}, раздел 4.150, только на копии базы): у каждого охотника в мире с набором зарядов — набор в бафах автобоя, скиллы на
+-	 * зарядах в очереди атак; потом {@value #CHARGES_TEST_WATCH} мс смотрит бой: заряды растут, удары на зарядах уходят в откат. Итог — {@code PASS}, если настройка верна у
+-	 * всех, а из тех, кто дрался, ударом на зарядах бил хотя бы каждый второй.
+-	 * @param online кто в мире
+-	 */
+-	static void chargesSelfTest(java.util.function.Supplier<List<Player>> online)
+-	{
+-		org.l2jmobius.commons.threads.ThreadPool.execute(() ->
+-		{
+-			final String tag = "SelfTest CHARGES: ";
+-			try
+-			{
+-				LOGGER.info(tag + "HunterCombatFixes " + PhantomHuntersConfig.HUNTER_COMBAT_FIXES + ", in the world " + online.get().size() + ".");
+-				final Map<Player, List<Skill>> watched = new LinkedHashMap<>();
+-				int wrong = 0;
+-				for (Player player : online.get())
+-				{
+-					final Skill focus = focusSkill(player);
+-					if (focus == null)
+-					{
+-						continue;
+-					}
+-					final List<Skill> consumers = new ArrayList<>();
+-					final List<Skill> queued = new ArrayList<>();
+-					for (Skill skill : player.getAllSkills())
+-					{
+-						if (skill.isActive() && (skill.getChargeConsumeCount() > 0) && PhantomCompat.isAttackSkillTarget(skill) && skill.hasEffectType(EffectType.PHYSICAL_ATTACK, EffectType.PHYSICAL_ATTACK_HP_LINK))
+-						{
+-							consumers.add(skill);
+-							if (player.getAutoUseSettings().getAutoSkills().contains(skill.getId()))
+-							{
+-								queued.add(skill);
+-							}
+-						}
+-					}
+-					final boolean ok = player.getAutoUseSettings().getAutoBuffs().contains(focus.getId()) && (consumers.isEmpty() || !queued.isEmpty());
+-					wrong += ok ? 0 : 1;
+-					LOGGER.info(tag + (ok ? "" : "WRONG ") + player.getName() + " level " + player.getLevel() + " " + player.getPlayerClass().name() + ": focus " + focus.getName() + " in buffs " + player.getAutoUseSettings().getAutoBuffs().contains(focus.getId()) + ", queue " + names(player, player.getAutoUseSettings().getAutoSkills()) + ", charge skills known " + consumers.size() + ", queued " + queued.size() + ".");
+-					if (!queued.isEmpty())
+-					{
+-						watched.put(player, queued);
+-					}
+-				}
+-
+-				final Map<Player, Set<String>> used = new LinkedHashMap<>();
+-				final Map<Player, Integer> charges = new HashMap<>();
+-				final Set<Player> fought = new HashSet<>();
+-				for (long waited = 0; waited < CHARGES_TEST_WATCH; waited += CHARGES_TEST_STEP)
+-				{
+-					Thread.sleep(CHARGES_TEST_STEP);
+-					for (Map.Entry<Player, List<Skill>> entry : watched.entrySet())
+-					{
+-						final Player player = entry.getKey();
+-						if (player.isAttackingNow() || player.isCastingNow() || player.isInCombat())
+-						{
+-							fought.add(player);
+-						}
+-						charges.merge(player, player.getCharges(), Math::max);
+-						for (Skill skill : entry.getValue())
+-						{
+-							if (player.isSkillDisabled(skill))
+-							{
+-								used.computeIfAbsent(player, p -> new LinkedHashSet<>()).add(skill.getName());
+-							}
+-						}
+-					}
+-				}
+-				int hit = 0;
+-				for (Player player : watched.keySet())
+-				{
+-					final Set<String> skills = used.getOrDefault(player, Set.of());
+-					hit += fought.contains(player) && !skills.isEmpty() ? 1 : 0;
+-					LOGGER.info(tag + player.getName() + " level " + player.getLevel() + " " + player.getPlayerClass().name() + ": fought " + fought.contains(player) + ", max charges " + charges.getOrDefault(player, 0) + ", charge skills used " + skills + ".");
+-				}
+-				final long fighters = watched.keySet().stream().filter(fought::contains).count();
+-				final boolean pass = (wrong == 0) && !watched.isEmpty() && (fighters > 0) && ((hit * 2) >= fighters);
+-				LOGGER.info(tag + (pass ? "PASS" : "FAIL") + ": wrong setup " + wrong + ", watched " + watched.size() + ", fought " + fighters + ", used charge skills " + hit + ".");
+-			}
+-			catch (InterruptedException e)
+-			{
+-				Thread.currentThread().interrupt();
+-			}
+-			catch (Exception e)
+-			{
+-				LOGGER.warning(tag + "failed: " + e);
+-			}
+-			LOGGER.info(tag + "done.");
+-		});
+-	}
+-
+-	private static List<String> names(Player player, List<Integer> skillIds)
+-	{
+-		final List<String> result = new ArrayList<>();
+-		for (Integer id : skillIds)
+-		{
+-			final Skill skill = player.getKnownSkill(id);
+-			result.add(skill == null ? String.valueOf(id) : skill.getName() + (skill.getChargeConsumeCount() > 0 ? " (" + skill.getChargeConsumeCount() + " charges)" : ""));
+-		}
+-		return result;
+-	}
+-
+ 	/** Откат длиннее этого — не основной скилл автобоя ({@link #autoAttacks}). */
+ 	private static final int LONG_REUSE = 60000;
+ 
+@@ -2928,7 +2692,7 @@
  		for (Integer skillId : player.getAutoUseSettings().getAutoSkills())
  		{
  			final Skill skill = player.getKnownSkill(skillId);
@@ -2792,10 +2737,48 @@
  		if (own != null)
 --- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomManager.java
 +++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomManager.java
-@@ -451,6 +451,28 @@
+@@ -453,44 +453,28 @@ public class PhantomManager
  	private Player loadOrCreate(PhantomTemplate template)
  	{
  		int charId = findCharId(template.getName());
+-		// Личная пачка: у профиля свой персонаж по сохранённому ID; переименование в PersonalCompanionNames.ini не создаёт нового.
+-		String previousName = null;
+-		int previousId = 0;
+-		final int trackedId = PersonalCompanionNames.characterId(template.getName());
+-		if (trackedId > 0)
+-		{
+-			previousName = CharInfoTable.getInstance().getNameById(trackedId);
+-			if ((previousName == null) || (findCharId(previousName) != trackedId))
+-			{
+-				LOGGER.warning(getClass().getSimpleName() + ": Stored personal identity is missing or belongs to another account; no replacement created.");
+-				return null;
+-			}
+-			previousId = trackedId;
+-		}
+-		else
+-		{
+-			for (String old : PersonalCompanionNames.candidates(template.getName()))
+-			{
+-				final int candidateId = findCharId(old);
+-				if (candidateId > 0)
+-				{
+-					if ((previousId > 0) && (previousId != candidateId))
+-					{
+-						LOGGER.warning(getClass().getSimpleName() + ": Conflicting legacy personal identities; no character changed.");
+-						return null;
+-					}
+-					previousId = candidateId;
+-					previousName = old;
+-				}
+-			}
+-		}
+-		final var resolution = PersonalCompanionNames.resolve(charId, previousId, CharInfoTable.getInstance().doesCharNameExist(template.getName()));
+-		if (resolution.conflict())
+-		{
+-			LOGGER.warning(getClass().getSimpleName() + ": Personal name collision: " + template.getName() + "; existing characters retained.");
+-			return null;
+-		}
+-		charId = resolution.charId();
 +        String previousName=null;int previousId=0;
 +        final int trackedId=PersonalCompanionNames.characterId(template.getName());
 +        if(trackedId>0){
@@ -2821,10 +2804,31 @@
  		if (charId <= 0)
  		{
  			if (CharInfoTable.getInstance().doesCharNameExist(template.getName()))
-@@ -490,6 +512,19 @@
+@@ -530,27 +514,19 @@ public class PhantomManager
  		{
  			LOGGER.warning(getClass().getSimpleName() + ": Could not load phantom character " + template.getName() + " (" + charId + ").");
  		}
+-		if ((phantom != null) && !PersonalCompanionNames.remember(template.getName(), charId, phantom.getName()))
+-		{
+-			return null;
+-		}
+-		if ((phantom != null) && !phantom.getName().equals(template.getName()))
+-		{
+-			phantom.setName(template.getName());
+-			phantom.storeMe();
+-			if (findCharId(template.getName()) != charId)
+-			{
+-				phantom.setName(previousName);
+-				CharInfoTable.getInstance().addName(phantom);
+-				LOGGER.warning(getClass().getSimpleName() + ": Personal rename could not be saved; spawn cancelled.");
+-				return null;
+-			}
+-			CharInfoTable.getInstance().addName(phantom);
+-			if (!PersonalCompanionNames.remember(template.getName(), charId, phantom.getName()))
+-			{
+-				return null;
+-			}
+-		}
 +        if(phantom!=null&&!PersonalCompanionNames.remember(template.getName(),charId,phantom.getName()))return null;
 +        if(phantom!=null&&!phantom.getName().equals(template.getName())){
 +            phantom.setName(template.getName());
@@ -2841,7 +2845,7 @@
  		return phantom;
  	}
  
-@@ -513,6 +548,8 @@
+@@ -574,6 +550,8 @@ public class PhantomManager
  			PhantomAbsence.onEnter(phantom);
  		}
  		LOGGER.info(getClass().getSimpleName() + ": " + template.getName() + " entered the world at " + location.getX() + ", " + location.getY() + ", " + location.getZ() + ".");
@@ -2850,15 +2854,6 @@
  	}
  
  	/**
-@@ -583,7 +620,7 @@
- 		{
- 			if (!name.isBlank())
- 			{
--				names.add(name.strip());
-+				names.add(PersonalCompanionNames.canonical(name.strip()));
- 			}
- 		}
- 		return names;
 --- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomOlympiad.java
 +++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomOlympiad.java
 @@ -177,10 +177,23 @@ public final class PhantomOlympiad
@@ -3007,7 +3002,7 @@
  
 --- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomOutfit.java
 +++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomOutfit.java
-@@ -31,6 +31,8 @@
+@@ -31,6 +31,8 @@ final class PhantomOutfit
  	 */
  	static void build(Player player, PhantomTemplate template, int level)
  	{
@@ -3016,7 +3011,7 @@
  		// Стопка BSS даёт перегруз, а с перегрузом 4-й степени фантом не может сдвинуться с места.
  		player.setDietMode(true);
  		revive(player);
-@@ -38,8 +40,8 @@
+@@ -38,8 +40,8 @@ final class PhantomOutfit
  		final int classId = template.getClassId(level);
  		final boolean relearn = (player.getLevel() != level) || (player.getPlayerClass().getId() != classId) || player.getAllSkills().isEmpty();
  
@@ -3027,28 +3022,16 @@
  		player.getAutoSoulShot().clear();
  
  		setLevel(player, level);
-@@ -48,8 +50,10 @@
+@@ -48,7 +50,7 @@ final class PhantomOutfit
  			relearn(player, classId);
  		}
  
 -		dress(player, template.getGear(level));
 +		dress(player, template.getGear(level), savedGear);
  		refill(player, template.getGear(level));
-+		PersonalCompanions.configured(player, template);
-+		PhantomClassKits.personal(player, template);
- 		fullBars(player);
- 		LOGGER.info("PhantomOutfit: " + player.getName() + " is level " + player.getLevel() + " " + player.getPlayerClass().name() + ", " + player.getAllSkills().size() + " skills" + (relearn ? " (relearned)" : "") + ".");
- 	}
-@@ -69,6 +73,8 @@
- 			dress(player, gear);
- 		}
- 		refill(player, gear);
-+		PersonalCompanions.configured(player, template);
-+		PhantomClassKits.personal(player, template);
- 		fullBars(player);
- 	}
- 
-@@ -251,6 +257,26 @@
+ 		PersonalCompanions.configured(player, template);
+ 		PhantomClassKits.personal(player, template);
+@@ -255,6 +257,26 @@ final class PhantomOutfit
  		PhantomCompat.refreshExpertisePenalty(player);
  	}
  
@@ -3569,7 +3552,7 @@
  import org.l2jmobius.gameserver.entity.actor.Player;
  import org.l2jmobius.gameserver.entity.actor.enums.player.PlayerClass;
  import org.l2jmobius.gameserver.managers.phantom.PhantomOrders.Order;
-@@ -18,8 +15,6 @@
+@@ -18,8 +15,6 @@ import static org.l2jmobius.gameserver.managers.phantom.PhantomText.tr;
  public final class PhantomUi
  {
  	private static final String BUTTON = "<button value=\"%s\" action=\"%s %s %s\" width=85 height=21 back=\"" + PhantomCompat.BUTTON_BACK + "\" fore=\"" + PhantomCompat.BUTTON_FORE + "\">";
@@ -3578,10 +3561,33 @@
  
  	/** Кнопки приказов: действие → приказ и как он звучал бы словами (для мозгов). */
  	private static final Map<String, Order> ORDERS = Map.of("assist", Order.ASSIST, "follow", Order.FOLLOW, "stay", Order.STAY, "sit", Order.SIT, "stand", Order.STAND, "buff", Order.BUFF, "heal", Order.HEAL, "res", Order.RES);
-@@ -49,19 +44,33 @@
+@@ -49,56 +44,33 @@ public final class PhantomUi
  	 */
  	public static String handle(Player player, String action, String key)
  	{
+-		// Личная пачка (PersonalSavedParty, PersonalBattleCatalog): свой состав, выбор класса, страницы списка.
+-		if ("squad".equalsIgnoreCase(action))
+-		{
+-			return PersonalSavedParty.handle(player, key);
+-		}
+-		if ("add".equalsIgnoreCase(action))
+-		{
+-			return PersonalBattleCatalog.add(player, key);
+-		}
+-		if ("page".equalsIgnoreCase(action))
+-		{
+-			return PersonalBattleCatalog.setPage(player, key);
+-		}
+-		if ("classes".equalsIgnoreCase(action))
+-		{
+-			return PersonalBattleCatalog.open(player, key);
+-		}
+-		if ("back".equalsIgnoreCase(action))
+-		{
+-			PersonalBattleCatalog.back(player);
+-			PersonalSavedParty.close(player);
+-			return null;
+-		}
 -		final boolean summon = "summon".equalsIgnoreCase(action);
 -		final PhantomTemplate template = key == null ? null : find(player, key, summon);
 +		if ("squad".equalsIgnoreCase(action)) return PersonalSavedParty.handle(player,key);
@@ -3593,11 +3599,14 @@
  		if (template == null)
  		{
 -			return summon && (key != null) && (find(player, key, false) != null) ? tr("Свободных напарников такой роли нет: все заняты. Кто с кем — в .buddy") : tr("Нет такого напарника. Список — .buddy");
--		}
--
 +			return "Нет такого напарника. Список — .buddy";
-+		}
-+
+ 		}
+ 
+-		final String accessError = PersonalCompanionClans.access(player, template);
+-		if (accessError != null)
+-		{
+-			return accessError;
+-		}
 +		String accessError=PersonalCompanionClans.access(player,template);
 +		if(accessError!=null)return accessError;
  		final PhantomCompanionManager companions = PhantomCompanionManager.getInstance();
@@ -3605,20 +3614,23 @@
  		{
  			case "summon":
  			{
--				return companions.summon(player, template);
+-				// Помощник с профилем пачки — через каталог: сразу в пати и в сохранённый состав.
+-				return PersonalCompanionNames.named(template.getName()) != null ? PersonalBattleCatalog.summon(player, template) : companions.summon(player, template);
 +				return PersonalBattleCatalog.summon(player, template);
-+			}
-+			case "clan":
-+			{
+ 			}
+ 			case "clan":
+ 			{
+-				return PersonalCompanionClans.join(player, template);
 +				return PersonalCompanionClans.join(player,template);
-+			}
-+			case "selfbuff":
-+			{
+ 			}
+ 			case "selfbuff":
+ 			{
+-				return PersonalCompanions.prepareNow(player, template);
 +				return PersonalCompanions.prepareNow(player,template);
  			}
  			case "invite":
  			{
-@@ -76,12 +85,12 @@
+@@ -113,12 +85,12 @@ public final class PhantomUi
  				final Order order = ORDERS.get(action.toLowerCase());
  				if (order == null)
  				{
@@ -3633,59 +3645,67 @@
  				}
  
  				PhantomChat.getInstance().command(player, template, order, SAID.get(order));
-@@ -97,159 +106,113 @@
+@@ -134,189 +106,96 @@ public final class PhantomUi
  	 */
  	public static String render(Player player, String bypass)
  	{
+-		if (PersonalSavedParty.open(player))
+-		{
+-			return PersonalSavedParty.board(player, bypass);
+-		}
+-		final String view = PersonalBattleCatalog.view(player);
+-		if (view != null)
+-		{
+-			return PersonalBattleCatalog.chooser(player, bypass, view);
+-		}
 +		if(PersonalSavedParty.open(player))return PersonalSavedParty.board(player,bypass);
  		final PhantomCompanionManager companions = PhantomCompanionManager.getInstance();
 +		final String view=PersonalBattleCatalog.view(player);
 +		if(view!=null)return PersonalBattleCatalog.chooser(player,bypass,view);
  		final StringBuilder sb = new StringBuilder(6144);
--		final List<PhantomTemplate> mine = new ArrayList<>();
--		final List<PhantomTemplate> free = new ArrayList<>();
--		final List<PhantomTemplate> busy = new ArrayList<>();
--		for (PhantomTemplate template : PhantomData.getInstance().getCompanions())
--		{
--			if ((PhantomManager.getInstance().getPhantom(template) != null) && companions.isOwner(player, template))
--			{
--				mine.add(template);
--			}
--			else if (companions.busyWith(player, template) != null)
--			{
--				busy.add(template);
+-		if (PersonalBattleCatalog.available())
 +		sb.append(PersonalSavedParty.summary(player,bypass));
 +		sb.append(PersonalBattleCatalog.menu(bypass));
 +		final var roster=PhantomData.getInstance().getCompanions().stream().filter(t->PersonalBattleCatalog.visible(player,t)).toList();
 +		sb.append(PersonalBattleCatalog.pages(player,bypass,roster.size()));
 +		final int offset=PersonalBattleCatalog.page(player,roster.size())*PersonalBattleCatalog.PAGE_SIZE;
 +		for (PhantomTemplate template : roster.stream().skip(offset).limit(PersonalBattleCatalog.PAGE_SIZE).toList())
-+		{
+ 		{
+-			sb.append(PersonalSavedParty.summary(player, bypass));
+-			sb.append(PersonalBattleCatalog.menu(bypass));
+-		}
+-		final List<PhantomTemplate> mine = new ArrayList<>();
+-		final List<PhantomTemplate> free = new ArrayList<>();
+-		final List<PhantomTemplate> busy = new ArrayList<>();
+-		for (PhantomTemplate template : PhantomData.getInstance().getCompanions())
+-		{
+-			if (!PersonalBattleCatalog.visible(player, template))
+-			{
+-				continue; // чертёж класса пачки и чужие экземпляры не показываются
+-			}
+-			if ((PhantomManager.getInstance().getPhantom(template) != null) && companions.isOwner(player, template))
+-			{
+-				mine.add(template);
+-			}
+-			else if (companions.busyWith(player, template) != null)
 +			final String name = template.getName();
 +			final Player phantom = PhantomManager.getInstance().getPhantom(template);
 +			final boolean partied = companions.isPartiedWith(player, template);
 +			final boolean mine = (phantom != null) && companions.isOwner(player, template);
 +			sb.append("<table width=280><tr><td width=280><font color=\"LEVEL\">").append(name).append("</font> — ").append(PersonalBattleCatalog.caption(template)==null?roleName(template.getRole()):PersonalBattleCatalog.caption(template));
 +			if (phantom != null)
-+			{
-+				sb.append(", ").append(phantom.getLevel()).append(" ").append(className(phantom));
-+			}
-+			sb.append("</td></tr><tr><td width=280>").append(profile(player, template, phantom)).append("</td></tr>");
-+			sb.append("<tr><td width=280><font color=\"B09878\">").append(companions.describe(player, template)).append("</font></td></tr></table>");
-+
-+			sb.append("<table width=280><tr>");
-+			cell(sb, bypass, "Позвать", "summon", name);
-+			cell(sb, bypass, "Отпустить", "dismiss", name);
-+			if (mine && !partied)
-+			{
-+				cell(sb, bypass, "В пати", "invite", name);
- 			}
- 			else
  			{
+-				busy.add(template);
++				sb.append(", ").append(phantom.getLevel()).append(" ").append(className(phantom));
+ 			}
+-			else
+-			{
 -				free.add(template);
 -			}
 -		}
--
++			sb.append("</td></tr><tr><td width=280>").append(profile(player, template, phantom)).append("</td></tr>");
++			sb.append("<tr><td width=280><font color=\"B09878\">").append(companions.describe(player, template)).append("</font></td></tr></table>");
+ 
 -		final int limit = PhantomPartyConfig.PHANTOM_COMPANIONS_PER_PLAYER;
 -		if (limit > 0)
 -		{
@@ -3694,13 +3714,19 @@
 -		for (int i = 0; i < mine.size(); i++)
 -		{
 -			if (i < FULL_BLOCKS)
--			{
++			sb.append("<table width=280><tr>");
++			cell(sb, bypass, "Позвать", "summon", name);
++			cell(sb, bypass, "Отпустить", "dismiss", name);
++			if (mine && !partied)
+ 			{
 -				full(sb, player, mine.get(i), bypass);
--			}
--			else
--			{
++				cell(sb, bypass, "В пати", "invite", name);
+ 			}
+ 			else
+ 			{
 -				row(sb, player, mine.get(i), bypass, tr("Отпустить"), "dismiss");
--			}
++				sb.append("<td></td>");
+ 			}
 -		}
 -		for (PhantomTemplate template : free)
 -		{
@@ -3713,16 +3739,79 @@
 -		sb.append("<br>");
 -		sb.append(tr("<table width=280><tr><td width=280><font color=\"808080\">«Позвать» — напарник прибежит, подтянется до твоего уровня и сразу вступит в пати. Идёт следом, отставший телепортируется к тебе. Хилер лечит и поднимает, баффер держит бафы, оба садятся на MP. Опыт и лут — тебе.</font></td></tr>"));
 -		sb.append(tr("<tr><td width=280><font color=\"808080\">Кнопки — то же, что словами в чате пати или шёпотом: «за мной», «стой», «бафни», «хил», «рес», «сядь», «встань», «пока». По имени — только одному: «Митяй, бафни». Просто поговорить с ними тоже можно.</font></td></tr></table><br>"));
-+				sb.append("<td></td>");
-+			}
+-		commands(sb);
+-		return sb.toString();
+-	}
+-
+-	/**
+-	 * Свой напарник: состояние и все кнопки.
+-	 */
+-	private static void full(StringBuilder sb, Player player, PhantomTemplate template, String bypass)
+-	{
+-		final PhantomCompanionManager companions = PhantomCompanionManager.getInstance();
+-		final String name = template.getName();
+-		final Player phantom = PhantomManager.getInstance().getPhantom(template);
+-		final boolean partied = companions.isPartiedWith(player, template);
+-		sb.append("<table width=280><tr><td width=280><font color=\"LEVEL\">").append(name).append("</font> — ").append(caption(template));
+-		if (phantom != null)
+-		{
+-			sb.append(", ").append(phantom.getLevel()).append(" ").append(className(phantom));
+-		}
+-		sb.append("</td></tr><tr><td width=280>").append(profile(player, template, phantom)).append("</td></tr>");
+-		sb.append("<tr><td width=280><font color=\"B09878\">").append(companions.describe(player, template)).append("</font></td></tr></table>");
+-
+-		sb.append("<table width=280><tr>");
+-		cell(sb, bypass, tr("Позвать"), "summon", name);
+-		cell(sb, bypass, tr("Отпустить"), "dismiss", name);
+-		if (!partied)
+-		{
+-			cell(sb, bypass, tr("В пати"), "invite", name);
+-		}
+-		else
+-		{
+-			sb.append("<td></td>");
+-		}
+-		sb.append("</tr>");
 +			sb.append("</tr>");
-+
+ 
+-		if (partied)
+-		{
+-			// Хилер и баффер не дерутся: вместо «Бей мою цель» — их работа по кнопке.
+-			sb.append("<tr>");
+-			switch (template.getRole())
 +			if (partied)
-+			{
+ 			{
+-				case HEALER:
+-				{
+-					cell(sb, bypass, tr("За мной"), "follow", name);
+-					cell(sb, bypass, tr("Стой"), "stay", name);
+-					cell(sb, bypass, tr("Хильни"), "heal", name);
+-					sb.append("</tr><tr>");
+-					cell(sb, bypass, tr("Рес"), "res", name);
+-					cell(sb, bypass, tr("Сядь"), "sit", name);
+-					cell(sb, bypass, tr("Встань"), "stand", name);
+-					break;
+-				}
+-				case BUFFER:
+-				{
+-					cell(sb, bypass, tr("За мной"), "follow", name);
+-					cell(sb, bypass, tr("Стой"), "stay", name);
+-					cell(sb, bypass, tr("Бафни"), "buff", name);
+-					sb.append("</tr><tr>");
+-					cell(sb, bypass, tr("Рес"), "res", name);
+-					cell(sb, bypass, tr("Сядь"), "sit", name);
+-					cell(sb, bypass, tr("Встань"), "stand", name);
+-					break;
+-				}
+-				default:
 +				// Хилер и баффер не дерутся: вместо «Бей мою цель» — их работа по кнопке.
 +				sb.append("<tr>");
 +				switch (template.getRole())
-+				{
+ 				{
+-					cell(sb, bypass, tr("Бей мою цель"), "assist", name);
+-					cell(sb, bypass, tr("За мной"), "follow", name);
+-					cell(sb, bypass, tr("Стой"), "stay", name);
+-					break;
 +					case HEALER:
 +					{
 +						cell(sb, bypass, "За мной", "follow", name);
@@ -3752,91 +3841,36 @@
 +						cell(sb, bypass, "Стой", "stay", name);
 +						break;
 +					}
-+				}
+ 				}
 +				sb.append("</tr><tr>");
 +				cell(sb,bypass,"Бафы себе","selfbuff",name);
 +				sb.append("<td></td><td></td>");
 +				sb.append("</tr>");
-+			}
+ 			}
+-			sb.append("</tr>");
+-			if (PhantomCompat.personalPrepareSupported() && PersonalCompanions.personal(template))
+-			{
 +			if(mine && player.getClan()!=null){
-+				sb.append("<tr>");
+ 				sb.append("<tr>");
+-				cell(sb, bypass, tr("Бафы себе"), "selfbuff", name);
+-				sb.append("<td></td><td></td></tr>");
 +				if(phantom.getClanId()==0)cell(sb,bypass,"В клан","clan",name);
 +				else sb.append("<td colspan=3><font color=808080>").append(phantom.getClanId()==player.getClanId()?"В твоём клане":"В другом клане").append("</font></td>");
 +				sb.append("</tr>");
-+			}
+ 			}
 +			sb.append("</table><br>");
-+		}
-+		sb.append("<table width=280><tr><td width=280><font color=\"808080\">«Позвать» — напарник прибежит, подтянется до твоего уровня и сразу вступит в пати. Идёт следом, отставший телепортируется к тебе. Хилер лечит и поднимает, баффер поддерживает группу, воин и маг бьют твою цель. Баффы себе и расходники готовятся автоматически. «В клан» принимает призванного помощника в твой клан; отзыв членство сохраняет. Можно собрать несколько классов, до 9 участников пати. Опыт и лут — тебе.</font></td></tr>");
-+		sb.append("<tr><td width=280><font color=\"808080\">Кнопки — то же, что словами в чате пати или шёпотом: «за мной», «стой», «бафни», «хил», «рес», «сядь», «встань», «пока». По имени — только одному: «Митяй, бафни». Просто поговорить с ними тоже можно.</font></td></tr></table><br>");
- 		commands(sb);
- 		return sb.toString();
- 	}
- 
- 	/**
--	 * Свой напарник: состояние и все кнопки.
--	 */
--	private static void full(StringBuilder sb, Player player, PhantomTemplate template, String bypass)
--	{
--		final PhantomCompanionManager companions = PhantomCompanionManager.getInstance();
--		final String name = template.getName();
--		final Player phantom = PhantomManager.getInstance().getPhantom(template);
--		final boolean partied = companions.isPartiedWith(player, template);
--		sb.append("<table width=280><tr><td width=280><font color=\"LEVEL\">").append(name).append("</font> — ").append(roleName(template.getRole()));
--		if (phantom != null)
+ 		}
+-		// Свой помощник с профилем пачки — в клан владельца; членство остаётся и после отзыва.
+-		if ((phantom != null) && companions.isOwner(player, template) && (player.getClan() != null) && (PersonalCompanionNames.named(name) != null))
 -		{
--			sb.append(", ").append(phantom.getLevel()).append(" ").append(className(phantom));
--		}
--		sb.append("</td></tr><tr><td width=280>").append(profile(player, template, phantom)).append("</td></tr>");
--		sb.append("<tr><td width=280><font color=\"B09878\">").append(companions.describe(player, template)).append("</font></td></tr></table>");
--
--		sb.append("<table width=280><tr>");
--		cell(sb, bypass, tr("Позвать"), "summon", name);
--		cell(sb, bypass, tr("Отпустить"), "dismiss", name);
--		if (!partied)
--		{
--			cell(sb, bypass, tr("В пати"), "invite", name);
--		}
--		else
--		{
--			sb.append("<td></td>");
--		}
--		sb.append("</tr>");
--
--		if (partied)
--		{
--			// Хилер и баффер не дерутся: вместо «Бей мою цель» — их работа по кнопке.
 -			sb.append("<tr>");
--			switch (template.getRole())
+-			if (phantom.getClanId() == 0)
 -			{
--				case HEALER:
--				{
--					cell(sb, bypass, tr("За мной"), "follow", name);
--					cell(sb, bypass, tr("Стой"), "stay", name);
--					cell(sb, bypass, tr("Хильни"), "heal", name);
--					sb.append("</tr><tr>");
--					cell(sb, bypass, tr("Рес"), "res", name);
--					cell(sb, bypass, tr("Сядь"), "sit", name);
--					cell(sb, bypass, tr("Встань"), "stand", name);
--					break;
--				}
--				case BUFFER:
--				{
--					cell(sb, bypass, tr("За мной"), "follow", name);
--					cell(sb, bypass, tr("Стой"), "stay", name);
--					cell(sb, bypass, tr("Бафни"), "buff", name);
--					sb.append("</tr><tr>");
--					cell(sb, bypass, tr("Рес"), "res", name);
--					cell(sb, bypass, tr("Сядь"), "sit", name);
--					cell(sb, bypass, tr("Встань"), "stand", name);
--					break;
--				}
--				default:
--				{
--					cell(sb, bypass, tr("Бей мою цель"), "assist", name);
--					cell(sb, bypass, tr("За мной"), "follow", name);
--					cell(sb, bypass, tr("Стой"), "stay", name);
--					break;
--				}
+-				cell(sb, bypass, tr("В клан"), "clan", name);
+-			}
+-			else
+-			{
+-				sb.append("<td colspan=3><font color=808080>").append(phantom.getClanId() == player.getClanId() ? tr("В твоём клане") : tr("В другом клане")).append("</font></td>");
 -			}
 -			sb.append("</tr>");
 -		}
@@ -3844,11 +3878,20 @@
 -	}
 -
 -	/**
+-	 * Роль напарника или класс помощника пачки («воин — Гладиатор»).
+-	 */
+-	private static String caption(PhantomTemplate template)
+-	{
+-		final String caption = PersonalBattleCatalog.caption(template);
+-		return caption == null ? roleName(template.getRole()) : caption;
+-	}
+-
+-	/**
 -	 * Напарник одной строкой: имя, роль, состояние и не больше одной кнопки.
 -	 */
 -	private static void row(StringBuilder sb, Player player, PhantomTemplate template, String bypass, String label, String action)
 -	{
--		sb.append("<table width=280><tr><td width=195><font color=\"LEVEL\">").append(template.getName()).append("</font> — ").append(roleName(template.getRole()));
+-		sb.append("<table width=280><tr><td width=195><font color=\"LEVEL\">").append(template.getName()).append("</font> — ").append(caption(template));
 -		sb.append("<br1>").append(profile(player, template, PhantomManager.getInstance().getPhantom(template)));
 -		sb.append("<br1><font color=\"B09878\">").append(PhantomCompanionManager.getInstance().describe(player, template)).append("</font></td>");
 -		if (label != null)
@@ -3856,10 +3899,14 @@
 -			cell(sb, bypass, label, action, template.getName());
 -		}
 -		sb.append("</tr></table>");
--	}
--
--	/**
- 	 * Шпаргалка приказов: напарникам и охотникам в пати (их понимает {@link PhantomOrders}), где искать охотников.
++		sb.append("<table width=280><tr><td width=280><font color=\"808080\">«Позвать» — напарник прибежит, подтянется до твоего уровня и сразу вступит в пати. Идёт следом, отставший телепортируется к тебе. Хилер лечит и поднимает, баффер поддерживает группу, воин и маг бьют твою цель. Баффы себе и расходники готовятся автоматически. «В клан» принимает призванного помощника в твой клан; отзыв членство сохраняет. Можно собрать несколько классов, до 9 участников пати. Опыт и лут — тебе.</font></td></tr>");
++		sb.append("<tr><td width=280><font color=\"808080\">Кнопки — то же, что словами в чате пати или шёпотом: «за мной», «стой», «бафни», «хил», «рес», «сядь», «встань», «пока». По имени — только одному: «Митяй, бафни». Просто поговорить с ними тоже можно.</font></td></tr></table><br>");
++		commands(sb);
++		return sb.toString();
+ 	}
+ 
+ 	/**
+@@ -324,16 +203,16 @@ public final class PhantomUi
  	 */
  	private static void commands(StringBuilder sb)
  	{
@@ -3886,7 +3933,7 @@
  	}
  
  	private static void order(StringBuilder sb, String phrase, String meaning)
-@@ -258,46 +221,24 @@
+@@ -342,13 +221,9 @@ public final class PhantomUi
  	}
  
  	/**
@@ -3895,17 +3942,14 @@
 -	 * @param key имя или роль
 -	 * @param free зовут: занятый другими по роли не подходит
 -	 * @return напарник или {@code null}
--	 */
--	private static PhantomTemplate find(Player player, String key, boolean free)
--	{
--		final PhantomTemplate byName = PhantomData.getInstance().getTemplate(key);
 +	 * Имя напарника или его роль (healer, buffer).
-+	 */
+ 	 */
+-	private static PhantomTemplate find(Player player, String key, boolean free)
 +	private static PhantomTemplate find(String key)
-+	{
-+		final PhantomTemplate byName = PhantomData.getInstance().getTemplate(PersonalCompanionNames.canonical(key));
+ 	{
+ 		final PhantomTemplate byName = PhantomData.getInstance().getTemplate(PersonalCompanionNames.canonical(key));
  		if (byName != null)
- 		{
+@@ -356,32 +231,14 @@ public final class PhantomUi
  			return byName;
  		}
  
@@ -3916,9 +3960,11 @@
  		for (PhantomTemplate template : PhantomData.getInstance().getCompanions())
  		{
 -			if (!template.getRole().name().equalsIgnoreCase(key))
--			{
++			if (template.getRole().name().equalsIgnoreCase(key))
+ 			{
 -				continue;
--			}
++				return template;
+ 			}
 -
 -			any = any == null ? template : any;
 -			if (companions.isOwner(player, template))
@@ -3933,18 +3979,13 @@
 -		if (free)
 -		{
 -			return idle != null ? idle : mine;
--		}
+ 		}
 -		return mine != null ? mine : any;
-+			if (template.getRole().name().equalsIgnoreCase(key))
-+			{
-+				return template;
-+			}
-+		}
 +		return null;
  	}
  
  	private static void cell(StringBuilder sb, String bypass, String label, String action, String name)
-@@ -369,19 +310,19 @@
+@@ -453,19 +310,19 @@ public final class PhantomUi
  		{
  			case HEALER:
  			{

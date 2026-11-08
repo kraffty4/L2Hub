@@ -1,0 +1,1254 @@
+{
+ "comment": "L2Hub: ЧаВо новичков High Five для мозгов фейков и пешек (docs/MIND.md, «ЧаВо новичков»). Ответы своими словами; числа, ID и имена сверены с датапаком сборки (facts — где смотреть). «Где качаться» сюда не входит: его даёт совет по спотам (knowledge.advice). В базу знаний модуля кладёт tools/hunter_knowledge.py.",
+ "faq": [
+  {
+   "topic": "Профессии",
+   "q": "На каком лвле первая профа?",
+   "variants": [
+    "когда брать первую профу",
+    "kogda 1 profa"
+   ],
+   "levels": "18–20",
+   "a": "Первую профу получаешь с 20-го. Квест можно начать раньше: например, на Warrior — уже с 18-го.",
+   "facts": [
+    "quest 401",
+    "scripts/quests/Q00401_PathOfTheWarrior/Q00401_PathOfTheWarrior.java: MIN_LEVEL",
+    "scripts/village_master/ElfHumanFighterChange1/ElfHumanFighterChange1.java: проверка уровня 20"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Профессии",
+   "q": "Где взять профу на воина человеком?",
+   "variants": [
+    "где квест на варриора",
+    "gde profa warrior"
+   ],
+   "levels": "18–20",
+   "a": "Квест бери у Auron (Аурон) в Gludin (Глудин). После квеста и достижения 20-го меняй класс у грандмастера, например Rains (Рейнс) в Gludio (Глудио).",
+   "facts": [
+    "npc 30010",
+    "npc 30288",
+    "quest 401",
+    "item 1145",
+    "spawns/Others/17_22.xml",
+    "scripts/village_master/ElfHumanFighterChange1/ElfHumanFighterChange1.java"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Профессии",
+   "q": "Где гному взять профу спойлера?",
+   "variants": [
+    "как стать собирателем",
+    "gde profa spoilera"
+   ],
+   "levels": "18–20",
+   "a": "Начинай у Pippi (Пиппи) в деревне гномов, квест Path of the Scavenger. Первой профой будет Scavenger (Собиратель).",
+   "facts": [
+    "npc 30524",
+    "quest 417",
+    "item 1642",
+    "scripts/quests/Q00417_PathOfTheScavenger/Q00417_PathOfTheScavenger.java",
+    "spawns/Others/23_12.xml"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Профессии",
+   "q": "Крафтеру где первую профу делать?",
+   "variants": [
+    "где квест на артизана",
+    "gde profa craft"
+   ],
+   "levels": "18–20",
+   "a": "У Silvera (Сильвера) в деревне гномов бери Path of the Artisan. Это ветка Artisan (Ремесленник), дальше из неё получается крафтер.",
+   "facts": [
+    "npc 30527",
+    "quest 418",
+    "item 1635",
+    "scripts/quests/Q00418_PathOfTheArtisan/Q00418_PathOfTheArtisan.java",
+    "stats/players/classList.xml"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Профессии",
+   "q": "Когда вторую профу брать?",
+   "variants": [
+    "на каком лвле вторая",
+    "kogda 2 profa"
+   ],
+   "levels": "35–40",
+   "a": "Сам класс меняется с 40-го. Обычные испытания начинаются раньше: есть квесты с 35-го, 37-го и 39-го, набор зависит от выбранной профы.",
+   "facts": [
+    "quest 211",
+    "quest 219",
+    "quest 222",
+    "scripts/quests/Q00211_TrialOfTheChallenger/Q00211_TrialOfTheChallenger.java: MIN_LEVEL",
+    "scripts/quests/Q00219_TestimonyOfFate/Q00219_TestimonyOfFate.java: MIN_LEVEL",
+    "scripts/quests/Q00222_TestOfTheDuelist/Q00222_TestOfTheDuelist.java: MIN_LEVEL",
+    "scripts/village_master/ElfHumanFighterChange2/ElfHumanFighterChange2.java"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Профессии",
+   "q": "Вторую профу можно купить, чтоб не бегать?",
+   "variants": [
+    "сколько стоит короткая вторая профа",
+    "2 profa za adenu gde"
+   ],
+   "levels": "39–40",
+   "a": "С 39-го у Daeger (Дегер) в Giran (Гиран) есть Good Works Reward: базовая трата — 3 000 000 аден за сокращённый путь к маркам. Камаэлям этот квест не подходит.",
+   "facts": [
+    "npc 31435",
+    "npc 30081",
+    "quest 60",
+    "item 57",
+    "scripts/quests/Q00060_GoodWorksReward/Q00060_GoodWorksReward.java: MIN_LEVEL, THREE_MILLION, проверка расы",
+    "spawns/Others/22_22.xml"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Профессии",
+   "q": "Марки получил, а профа не поменялась?",
+   "variants": [
+    "прошёл дегера но всё ещё первая",
+    "marki est profy net"
+   ],
+   "levels": "39–40",
+   "a": "Марки сами класс не меняют. Докачайся до 40-го и поговори с мастером своей ветки про смену профессии.",
+   "facts": [
+    "quest 60",
+    "scripts/quests/Q00060_GoodWorksReward/Q00060_GoodWorksReward.java: выдача марок",
+    "scripts/village_master/ElfHumanFighterChange2/ElfHumanFighterChange2.java: смена класса"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Профессии",
+   "q": "Третья профа с какого уровня?",
+   "variants": [
+    "когда можно третью",
+    "kogda 3 profa"
+   ],
+   "levels": "76+",
+   "a": "С 76-го. Квест выбирай под свой класс: сага глада не подойдёт магу или спойлеру.",
+   "facts": [
+    "scripts/quests/AbstractSagaQuest.java: проверка уровня 76",
+    "scripts/quests/Q00073_SagaOfTheDuelist/Q00073_SagaOfTheDuelist.java: _prevClass, _classId"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Профессии",
+   "q": "Гладу где третью профу начинать?",
+   "variants": [
+    "где квест на дуэлиста",
+    "glad 3 profa gde"
+   ],
+   "levels": "76+",
+   "a": "У Sedrick (Седрик) в Aden (Аден) бери Saga of the Duelist. Это переход из Gladiator (Гладиатор) в Duelist (Дуэлист).",
+   "facts": [
+    "npc 30849",
+    "quest 73",
+    "scripts/quests/Q00073_SagaOfTheDuelist/Q00073_SagaOfTheDuelist.java",
+    "spawns/Others/24_18.xml",
+    "stats/players/classList.xml"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Саб-класс",
+   "q": "С чего начинать квест на саб?",
+   "variants": [
+    "где взять сабкласс",
+    "gde sab brat"
+   ],
+   "levels": "75+",
+   "a": "С 75-го начинай Fate's Whisper у Maestro Reorin (Маэстро Реорин), он возле Oren (Орен). После него идёт квест, который открывает сабы для твоей расы.",
+   "facts": [
+    "npc 31002",
+    "quest 234",
+    "item 5011",
+    "scripts/quests/Q00234_FatesWhisper/Q00234_FatesWhisper.java",
+    "spawns/Others/22_19.xml"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Саб-класс",
+   "q": "Сколько Б кристаллов надо на саб?",
+   "variants": [
+    "сколько бкри реорину",
+    "skolko b crystal na sab"
+   ],
+   "levels": "75+",
+   "a": "Реорину нужны 984 Crystal (B-Grade), кристалла B-грейда. Ещё приготовь подходящее оружие из его списка обмена.",
+   "facts": [
+    "npc 31002",
+    "quest 234",
+    "item 1460",
+    "scripts/quests/Q00234_FatesWhisper/Q00234_FatesWhisper.java: takeItems CRYSTAL_B 984, список принимаемого оружия"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Саб-класс",
+   "q": "Баюма на саб обязательно колоть?",
+   "variants": [
+    "можно саб без баюма",
+    "sab bez baiuma mojno"
+   ],
+   "levels": "75+",
+   "a": "Здесь есть обходной вариант: у Kaspar (Каспар) выбираешь ткани и окрашиваешь 30 штук на указанных мобах в Tower of Insolence (Башня Дерзости). Ждать Баюма для этого пути не нужно.",
+   "facts": [
+    "npc 30833",
+    "quest 234",
+    "item 14361",
+    "item 14362",
+    "scripts/quests/Q00234_FatesWhisper/Q00234_FatesWhisper.java: альтернативная ветка с тканями"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Саб-класс",
+   "q": "Реорина прошёл, дальше куда?",
+   "variants": [
+    "где мимир эликсир",
+    "reorin sdal chto dalshe"
+   ],
+   "levels": "75+",
+   "a": "Если ты не камаэль — к Ladd (Ладд) в Ivory Tower (Башня Слоновой Кости), на Mimir's Elixir (Эликсир Мимира). Не выбрасывай Star of Destiny (Звезда Судьбы), она нужна для квеста.",
+   "facts": [
+    "npc 30721",
+    "quest 235",
+    "item 5011",
+    "item 6319",
+    "scripts/quests/Q00235_MimirsElixir/Q00235_MimirsElixir.java"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Саб-класс",
+   "q": "Камаэлю тоже к Ладду за сабом?",
+   "variants": [
+    "каму где саб открывать",
+    "kamael sab gde"
+   ],
+   "levels": "75+",
+   "a": "У камаэлей после Fate's Whisper свой квест — Seeds of Chaos (Семена Хаоса). Начинай у Kekropus (Кекропус) в деревне камаэлей.",
+   "facts": [
+    "npc 32138",
+    "quest 236",
+    "item 5011",
+    "scripts/quests/Q00236_SeedsOfChaos/Q00236_SeedsOfChaos.java: условия начала"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Саб-класс",
+   "q": "Как обратно на основу переключиться?",
+   "variants": [
+    "где сменить саб на мейн",
+    "kak vernutsya na main"
+   ],
+   "levels": "",
+   "a": "У подходящего грандмастера открой меню саб-класса и выбери смену класса. Там можно вернуться на основу или на уже взятый саб.",
+   "facts": [
+    "html/villagemaster/SubClass.htm",
+    "html/villagemaster/SubClass_Change.htm",
+    "html/villagemaster/SubClass_ChangeNotFound.htm"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Саб-класс",
+   "q": "Почему саб не переключает?",
+   "variants": [
+    "саб сменить не даёт",
+    "ne mogu pomenyat sab"
+   ],
+   "levels": "",
+   "a": "Убери питомца или саммона и выйди из трансформы. С ними смена саба блокируется.",
+   "facts": [
+    "html/villagemaster/SubClass_NoSummon.htm",
+    "html/villagemaster/SubClass_NoTransformed.htm"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Саб-класс",
+   "q": "После смены саба баф пропал, это нормально?",
+   "variants": [
+    "саб сменил весь баф слетел",
+    "sab pomenyal buff propal"
+   ],
+   "levels": "",
+   "a": "Да, при смене класса положительные эффекты снимаются. Переключайся до бафа, чтобы потом не бафаться заново.",
+   "facts": [
+    "html/villagemaster/SubClass_Change.htm: предупреждение о снятии положительных эффектов"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Дворянство",
+   "q": "Нобл где начинать?",
+   "variants": [
+    "квест на дворянство у кого",
+    "gde nachat nobl"
+   ],
+   "levels": "50+ на саб-классе",
+   "a": "Первую часть бери у Talien (Талиен) в Aden (Аден), на сабе от 50-го. На основе он этот путь не даст.",
+   "facts": [
+    "npc 31739",
+    "quest 241",
+    "scripts/quests/Q00241_PossessorOfAPreciousSoul1/Q00241_PossessorOfAPreciousSoul1.java: isSubClassActive, уровень 50"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Дворянство",
+   "q": "Вторая часть нобла где?",
+   "variants": [
+    "талие́на прошёл куда дальше",
+    "nobl 2 chast gde"
+   ],
+   "levels": "60+ на саб-классе",
+   "a": "К Virgil (Вирджил) в Rune (Руна), после первой части. Нужен активный саб от 60-го и письмо из предыдущего квеста.",
+   "facts": [
+    "npc 31742",
+    "quest 242",
+    "item 7677",
+    "scripts/quests/Q00242_PossessorOfAPreciousSoul2/Q00242_PossessorOfAPreciousSoul2.java"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Дворянство",
+   "q": "На Баракеля с какого саба идти?",
+   "variants": [
+    "когда третья часть нобла",
+    "barakiel na kakom lvl"
+   ],
+   "levels": "65+ на саб-классе",
+   "a": "Третья часть берётся с 65-го саба у Caradine (Карадин) в Goddard (Годдард), после второй части. Сам Flame of Splendor Barakiel (Баракиэль) здесь 70-го уровня.",
+   "facts": [
+    "npc 31740",
+    "npc 25325",
+    "quest 246",
+    "stats/npcs/25300-25399.xml: уровень Barakiel",
+    "scripts/quests/Q00246_PossessorOfAPreciousSoul3/Q00246_PossessorOfAPreciousSoul3.java"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Дворянство",
+   "q": "Нобл без Баракеля можно сделать?",
+   "variants": [
+    "не хочу ждать барака есть другой путь",
+    "nobl bez baraka"
+   ],
+   "levels": "65+ на саб-классе",
+   "a": "Да, после нужного этапа у Ossian (Оссиан) можно собрать 100 фрагментов посоха с указанных мобов в Valley of Saints (Долина Святых). Потом сдаёшь их вместо посоха с Баракиэля.",
+   "facts": [
+    "npc 31741",
+    "quest 246",
+    "item 21725",
+    "npc 21535",
+    "npc 21536",
+    "npc 21537",
+    "npc 21538",
+    "npc 21539",
+    "npc 21540",
+    "scripts/quests/Q00246_PossessorOfAPreciousSoul3/Q00246_PossessorOfAPreciousSoul3.java: FRAGMENTS, MOBS, условия 4 и 5"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Дворянство",
+   "q": "Всё на нобл прошёл, почему дворянство не дали?",
+   "variants": [
+    "когда финал нобла",
+    "nobl final kogda"
+   ],
+   "levels": "75+ на саб-классе",
+   "a": "После третьей части докачай саб до 75-го и снова иди к Caradine (Карадин). Последняя часть приведёт к Lady of the Lake (Леди Озера), там и получишь дворянство.",
+   "facts": [
+    "npc 31740",
+    "npc 31745",
+    "quest 247",
+    "item 7679",
+    "item 7694",
+    "scripts/quests/Q00247_PossessorOfAPreciousSoul4/Q00247_PossessorOfAPreciousSoul4.java"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Грейды и экипировка",
+   "q": "Д шмот с какого лвла носить?",
+   "variants": [
+    "когда можно D грейд",
+    "d grade s kakogo lvl"
+   ],
+   "levels": "20+",
+   "a": "D-грейд — с 20-го, тогда получаешь Expertise D (Владение D-грейдом). До этого лучше оставаться в NG.",
+   "facts": [
+    "skill 239 level 1",
+    "stats/players/skillTrees/StartingClass/HumanFighter.xml: getLevel 20"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Грейды и экипировка",
+   "q": "Ц грейд когда надевать?",
+   "variants": [
+    "с какого цешка",
+    "c grade kogda"
+   ],
+   "levels": "40+",
+   "a": "C-грейд — с 40-го, по Expertise C. Это касается и оружия, и брони.",
+   "facts": [
+    "skill 239 level 2",
+    "stats/players/skillTrees/StartingClass/HumanFighter.xml: getLevel 40"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Грейды и экипировка",
+   "q": "Б и А шмот с какого уровня?",
+   "variants": [
+    "когда бэшка и ашка",
+    "b a grade s kakogo"
+   ],
+   "levels": "52–61+",
+   "a": "B-грейд — с 52-го, A-грейд — с 61-го. Ориентируйся на Expertise (Владение грейдом).",
+   "facts": [
+    "skill 239 level 3",
+    "skill 239 level 4",
+    "stats/players/skillTrees/StartingClass/HumanFighter.xml: getLevel 52 и 61"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Грейды и экипировка",
+   "q": "Ы, ы80 и ы84 когда можно?",
+   "variants": [
+    "какие уровни у S грейда",
+    "s s80 s84 kogda"
+   ],
+   "levels": "76–84+",
+   "a": "S — с 76-го, S80 — с 80-го, S84 — с 84-го. Смотри грейд конкретной вещи, а не только название сета.",
+   "facts": [
+    "skill 239 level 5",
+    "skill 239 level 6",
+    "skill 239 level 7",
+    "stats/players/skillTrees/StartingClass/HumanFighter.xml"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Грейды и экипировка",
+   "q": "Магу какую Б пушку посмотреть?",
+   "variants": [
+    "что взять магу на б грейд",
+    "mag b puha kakaya"
+   ],
+   "levels": "52+",
+   "a": "Посмотри Sword of Valhalla (Меч Вальхаллы): это магическая B-пушка, она есть у Galladucci (Галадуччи) в Giran (Гиран). Для старта понятный вариант, дальше уже смотри бюджет и нужный СА.",
+   "facts": [
+    "item 148: crystal_type B, is_magic_weapon true",
+    "npc 30097",
+    "skill 239 level 3",
+    "multisell/300974001.xml"
+   ],
+   "source": "вывод, сверено с датапаком"
+  },
+  {
+   "topic": "Грейды и экипировка",
+   "q": "В люксор кристаллы нести или адену?",
+   "variants": [
+    "чем платить в люксоре",
+    "luxor adena ili crystaly"
+   ],
+   "levels": "",
+   "a": "За оружие у Galladucci (Галадуччи) здесь платят аденой. Старые советы про оплату кристаллами к этому списку не подходят.",
+   "facts": [
+    "npc 30097",
+    "item 57",
+    "html/merchant/30097.htm",
+    "multisell/300974001.xml: ingredient id 57"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Соски и расходники",
+   "q": "Где соски купить?",
+   "variants": [
+    "кто продаёт сосы",
+    "gde sosy"
+   ],
+   "levels": "",
+   "a": "В Giran (Гиран) у Helvetia (Хельветия), в бакалее. У неё есть обычные физические соски NG, D и C, а ещё магические блессы этих грейдов.",
+   "facts": [
+    "npc 30081",
+    "item 1835",
+    "item 1463",
+    "item 1464",
+    "item 3947",
+    "item 3948",
+    "item 3949",
+    "buylists/3008100.xml"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Соски и расходники",
+   "q": "Почему соски не включаются?",
+   "variants": [
+    "купил сосы а они не работают",
+    "sosy ne rabotayut"
+   ],
+   "levels": "",
+   "a": "Проверь грейд пушки: соски нужны под оружие, не под броню. С NG-пушкой D-соски не сработают.",
+   "facts": [
+    "item 1835",
+    "item 1463",
+    "scripts/handlers/items/SoulShots.java: проверка соответствия грейда оружия и заряда"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Соски и расходники",
+   "q": "Магу какие соски нужны?",
+   "variants": [
+    "сс или бсс магу",
+    "mag kakie sosy"
+   ],
+   "levels": "",
+   "a": "На магию бери Spiritshot (Заряд Духа) или Blessed Spiritshot (Благословенный Заряд Духа), под грейд пушки. Soulshot (Заряд Души) нужен для физического удара.",
+   "facts": [
+    "item 2509",
+    "item 3947",
+    "item 1835",
+    "scripts/handlers/items/SpiritShot.java",
+    "scripts/handlers/items/BlessedSpiritShot.java",
+    "scripts/handlers/items/SoulShots.java"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Соски и расходники",
+   "q": "Как соски на автомат поставить?",
+   "variants": [
+    "как включить автососки",
+    "kak auto sosy vkl"
+   ],
+   "levels": "",
+   "a": "Перетащи соски на панель и нажми по ним правой кнопкой. Повторным правым кликом выключишь.",
+   "facts": [
+    "item 1835",
+    "item 1463",
+    "scripts/handlers/items/SoulShots.java: поддержка автоматических зарядов"
+   ],
+   "source": "общая механика из гайдов, сверено с датапаком и ядром"
+  },
+  {
+   "topic": "Соски и расходники",
+   "q": "Волку обычные соски покупать?",
+   "variants": [
+    "пету какие сосы",
+    "volku kakie sosy"
+   ],
+   "levels": "",
+   "a": "Питомцам и саммонам нужны звериные: Beast Soulshot (Заряд Души Зверя), а на магию — Beast Spiritshot (Заряд Духа Зверя). Твои оружейные соски им не подходят.",
+   "facts": [
+    "item 6645",
+    "item 6646",
+    "item 6647",
+    "scripts/handlers/items/BeastSoulShot.java",
+    "scripts/handlers/items/BeastSpiritShot.java"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Соски и расходники",
+   "q": "Где банки хп купить?",
+   "variants": [
+    "кто хилки продаёт",
+    "gde hp banki"
+   ],
+   "levels": "",
+   "a": "У Helvetia (Хельветия) в Giran (Гиран) есть Greater Healing Potion (Большое Зелье Исцеления). Оно лечит постепенно, не рассчитывай на мгновенный полный отхил.",
+   "facts": [
+    "npc 30081",
+    "item 1061",
+    "skill 2032: HealOverTime",
+    "buylists/3008100.xml"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Соски и расходники",
+   "q": "Яд и кровоток чем снимать?",
+   "variants": [
+    "чем убрать poison bleed",
+    "yad krovotok chem snyat"
+   ],
+   "levels": "",
+   "a": "От слабого яда — Antidote (Противоядие), от слабого кровотока — Bandage (Бинт). Оба есть в бакалее у Helvetia (Хельветия), но сильные эффекты они могут не снять.",
+   "facts": [
+    "npc 30081",
+    "item 1831",
+    "item 1833",
+    "skill 2042: ограничение уровня POISON",
+    "skill 2044: ограничение уровня BLEEDING",
+    "buylists/3008100.xml"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Соски и расходники",
+   "q": "СоЕ и бсоЕ чем отличаются?",
+   "variants": [
+    "бсое быстрее обычного",
+    "soe bsoe raznica"
+   ],
+   "levels": "",
+   "a": "Scroll of Escape (Свиток Телепорта) возвращает в город с долгим кастом. Blessed Scroll of Escape (Благословенный Свиток Телепорта) делает это гораздо быстрее.",
+   "facts": [
+    "item 736",
+    "item 1538",
+    "skill 2013: hitTime 20000",
+    "skill 2036: hitTime 200"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Соски и расходники",
+   "q": "Чем друга воскресить?",
+   "variants": [
+    "как реснуть лежачего",
+    "chem druga resnut"
+   ],
+   "levels": "",
+   "a": "Возьми его в цель и используй Scroll of Resurrection (Свиток Воскрешения). Обычный свиток есть у Helvetia (Хельветия) в Giran (Гиран).",
+   "facts": [
+    "npc 30081",
+    "item 737",
+    "skill 2014",
+    "buylists/3008100.xml"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Телепорты и маршруты",
+   "q": "Как из Глудио в Гиран попасть?",
+   "variants": [
+    "где тп в гиран",
+    "gludio giran kak doehat"
+   ],
+   "levels": "",
+   "a": "У Bella (Белла), гейткипера Gludio (Глудио), выбери The Town of Giran (Гиран). Такой прямой телепорт у неё есть.",
+   "facts": [
+    "npc 30256",
+    "teleporters/town/30256.xml: NORMAL, The Town of Giran"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Телепорты и маршруты",
+   "q": "В Круму откуда тп?",
+   "variants": [
+    "как дойти до крумы",
+    "gde tp cruma"
+   ],
+   "levels": "",
+   "a": "Из Dion (Дион), у Trisha (Триша). Cruma Tower (Башня Крумы) — сама башня, Cruma Marshlands (Болота Крумы) — поле вокруг.",
+   "facts": [
+    "npc 30059",
+    "teleporters/town/30059.xml: NORMAL, Cruma Tower и Cruma Marshlands"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Телепорты и маршруты",
+   "q": "Как в Ивори попасть?",
+   "variants": [
+    "где тп в башню слоновой кости",
+    "kak v ivory tower"
+   ],
+   "levels": "",
+   "a": "Из Oren (Орен) у Valentina (Валентина) выбирай Ivory Tower (Башня Слоновой Кости). Оттуда уже заходишь в башню.",
+   "facts": [
+    "npc 30177",
+    "teleporters/town/30177.xml: NORMAL, Ivory Tower"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Телепорты и маршруты",
+   "q": "Застрял в камне, что делать?",
+   "variants": [
+    "не могу выйти из текстур",
+    "zastryal chto delat"
+   ],
+   "levels": "",
+   "a": "Попробуй /unstuck и дождись завершения. Если можешь пользоваться свитками, подойдёт и Scroll of Escape (Свиток Телепорта).",
+   "facts": [
+    "item 736",
+    "skill 2013"
+   ],
+   "source": "общая механика из гайдов, сверено с датапаком и ядром"
+  },
+  {
+   "topic": "Бафы",
+   "q": "Где новичку баф взять?",
+   "variants": [
+    "кто нубов бафает",
+    "gde buff novichku"
+   ],
+   "levels": "6–75",
+   "a": "У Newbie Guide (Помощник Новичков) или Adventurers' Guide (Помощник Путешественников) выбирай вспомогательную магию. Обычная поддержка здесь рассчитана на уровни 6–75.",
+   "facts": [
+    "npc 30598",
+    "npc 32327",
+    "scripts/handlers/bypass/npc/SupportMagic.java: LOWEST_LEVEL 6, HIGHEST_LEVEL 75",
+    "scripts/ai/others/NewbieGuide/NewbieGuide.java"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Бафы",
+   "q": "Обычный баф сколько держится?",
+   "variants": [
+    "на сколько минут вв и майт",
+    "buff skolko jivet"
+   ],
+   "levels": "",
+   "a": "Обычные Wind Walk (Лёгкая Походка), Might (Могущество) и Acumen (Проницательность) от игрока без заточки длятся 20 минут. У вспомогательных бафов NPC свои версии, смотри таймер на иконке.",
+   "facts": [
+    "skill 1204: abnormalTime 1200",
+    "skill 1068: abnormalTime 1200",
+    "skill 1085: abnormalTime 1200",
+    "scripts/handlers/bypass/npc/SupportMagic.java: отдельные ID бафов поддержки"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Бафы",
+   "q": "Почему денсы так быстро кончаются?",
+   "variants": [
+    "дс всего на пару минут",
+    "dance song skolko"
+   ],
+   "levels": "",
+   "a": "У обычных денсов и сонгов короткий таймер: например, Dance of the Warrior (Танец Воина) и Song of Earth (Песня Земли) без заточки идут на 2 минуты. Их надо регулярно обновлять.",
+   "facts": [
+    "skill 271: abnormalTime 120",
+    "skill 264: abnormalTime 120"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Бафы",
+   "q": "Мне баф на мага или на воина брать?",
+   "variants": [
+    "какой баф нужен физу и магу",
+    "kakoi buff brat"
+   ],
+   "levels": "6–75",
+   "a": "Для физического боя нужен воинский набор, для заклинаний — магический. В поддержке магу дают Acumen (Проницательность) и Empower (Воодушевление), физику — в том числе Vampiric Rage (Гнев Вампира) и Haste (Ускорение).",
+   "facts": [
+    "skill 4329",
+    "skill 4331",
+    "skill 4325",
+    "skill 4327",
+    "skill 5632",
+    "scripts/handlers/bypass/npc/SupportMagic.java: MAGE_BUFFS, FIGHTER_BUFFS"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Бафы",
+   "q": "Нобл баф зачем перед рейдом просят?",
+   "variants": [
+    "что даёт ноблес блесс",
+    "zachem nobles buff"
+   ],
+   "levels": "",
+   "a": "Noblesse Blessing (Благословение Дворянина) сохраняет бафы после смерти. Сам нобл при этом расходуется, после реса его обновляют.",
+   "facts": [
+    "skill 1323",
+    "scripts/handlers/skill/effects/NoblesseBless.java"
+   ],
+   "source": "общая механика из гайдов, сверено с датапаком и ядром"
+  },
+  {
+   "topic": "Клан и альянс",
+   "q": "Как свой клан создать?",
+   "variants": [
+    "где клан регать",
+    "kak sozdat clan"
+   ],
+   "levels": "",
+   "a": "У грандмастера открой «Клан» → «Создать клан» и введи название. Например, такое меню есть у Rains (Рейнс) в Gludio (Глудио).",
+   "facts": [
+    "npc 30288",
+    "html/villagemaster/30288.htm",
+    "scripts/village_master/ClanMaster/9000-01.htm",
+    "scripts/village_master/ClanMaster/9000-02.htm"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Клан и альянс",
+   "q": "В академию до какого уровня берут?",
+   "variants": [
+    "после второй профы можно в академку",
+    "academia do kakogo lvl"
+   ],
+   "levels": "до 40",
+   "a": "Нужно быть ниже 40-го и без второй профы. После получения второй профы академик выпускается автоматически.",
+   "facts": [
+    "scripts/village_master/ClanMaster/9000-12.htm: условия вступления и выпуска"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Клан и альянс",
+   "q": "В алли меня отдельно принять могут?",
+   "variants": [
+    "как вступить в альянс без клана",
+    "kak vstupit v ally"
+   ],
+   "levels": "",
+   "a": "В алли входят кланами, отдельно персонажа туда не принимают. Договаривайся через своего КЛа: приглашение идёт другому лидеру клана.",
+   "facts": [
+    "scripts/village_master/AllianceMaster/9001-04.htm",
+    "scripts/village_master/AllianceMaster/AllianceMaster.java"
+   ],
+   "source": "общая механика из гайдов, сверено с датапаком и ядром"
+  },
+  {
+   "topic": "Олимпиада",
+   "q": "Что нужно чтоб на оли пойти?",
+   "variants": [
+    "почему не регает на олимп",
+    "kak popast na oly"
+   ],
+   "levels": "76+",
+   "a": "Нужны дворянство и третья профа, регаться надо на основе. На активном сабе в Олимпиаду не пускают.",
+   "facts": [
+    "npc 31688",
+    "html/olympiad/noble_thirdclass.htm",
+    "html/olympiad/noble_sub.htm",
+    "scripts/quests/AbstractSagaQuest.java: третья профессия с уровня 76"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Олимпиада",
+   "q": "Можно оли просто посмотреть?",
+   "variants": [
+    "где наблюдать олимп",
+    "oly smotret kak"
+   ],
+   "levels": "",
+   "a": "У Grand Olympiad Manager (Управляющий Олимпиады) выбери наблюдение за боями, потом арену. Для просмотра самому выходить на бой не надо.",
+   "facts": [
+    "npc 31688",
+    "html/olympiad/olympiad_arena_observe.htm",
+    "scripts/handlers/bypass/npc/OlympiadObservation.java"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Олимпиада",
+   "q": "Почему банки на олимпе не жмутся?",
+   "variants": [
+    "хилки и бсое на оли запрещены",
+    "banki na oly ne rabotayut"
+   ],
+   "levels": "76+",
+   "a": "У расходников есть ограничения Олимпиады. Обычные лечебные банки и Blessed Scroll of Escape (Благословенный Свиток Телепорта) здесь помечены как запрещённые для оли.",
+   "facts": [
+    "item 1061: is_oly_restricted true",
+    "item 1539: is_oly_restricted true",
+    "item 1538: is_oly_restricted true"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Осады",
+   "q": "Когда осада Гирана?",
+   "variants": [
+    "где дату осады посмотреть",
+    "kogda siege giran"
+   ],
+   "levels": "",
+   "a": "Открой карту и информацию о замках — там смотри ближайшую осаду Giran (Гиран). По чужому серверному расписанию лучше не ориентироваться.",
+   "facts": [
+    "stats/npcs/35100-35199.xml: npc 35147, Giran Holy Artifact"
+   ],
+   "source": "общая механика из гайдов, сверено с датапаком и ядром"
+  },
+  {
+   "topic": "Осады",
+   "q": "Замок взяли если всех защитников убили?",
+   "variants": [
+    "как захватить замок на осаде",
+    "kak vzyat castle"
+   ],
+   "levels": "",
+   "a": "Нужно довести КЛа до священного артефакта и дать ему дочитать Seal of Ruler (Печать Правителя). Просто убить защитников недостаточно.",
+   "facts": [
+    "skill 246: targetType HOLY, effect TakeCastle",
+    "npc 35063",
+    "npc 35147"
+   ],
+   "source": "общая механика из гайдов, сверено с датапаком и ядром"
+  },
+  {
+   "topic": "Рейды",
+   "q": "РБ своего уровня соло потяну?",
+   "variants": [
+    "рейд такой же лвл как я можно одному",
+    "rb solo potyanu"
+   ],
+   "levels": "",
+   "a": "На один уровень не смотри: рейд-босс — отдельная история. Новичку лучше искать пати и заранее сказать, какой у тебя класс и шмот.",
+   "facts": [
+    "npc 25325: type RaidBoss",
+    "stats/npcs/25300-25399.xml: характеристики и умения Barakiel"
+   ],
+   "source": "вывод, сверено с датапаком"
+  },
+  {
+   "topic": "Эпики",
+   "q": "На Антараса какой проход нужен?",
+   "variants": [
+    "где камень на тараса",
+    "antharas vhod quest"
+   ],
+   "levels": "50+ для квеста",
+   "a": "Нужен Portal Stone (Камень Портала) из Audience with the Land Dragon (Аудиенция у Дракона Земли). Квест начинается у Gabrielle (Габриэль) в Giran (Гиран); уровень квеста не означает, что уже пора идти на самого дракона.",
+   "facts": [
+    "npc 30753",
+    "quest 337",
+    "item 3865",
+    "scripts/quests/Q00337_AudienceWithTheLandDragon/Q00337_AudienceWithTheLandDragon.java: MIN_LEVEL 50",
+    "scripts/ai/bosses/Antharas/Antharas.java: ANTHARAS_STONE_ITEM_ID"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Эпики",
+   "q": "К Валакасу без квеста пустят?",
+   "variants": [
+    "где проход на валика",
+    "valakas vhod kak"
+   ],
+   "levels": "60+ для квеста",
+   "a": "Для обычного прохода нужен Vacualite Floating Stone (Парящий Камень). Его получаешь по Into the Flame (В Огненное Пекло) у Klein (Кляйн); сам квест доступен с 60-го.",
+   "facts": [
+    "npc 31540",
+    "quest 618",
+    "item 7267",
+    "scripts/quests/Q00618_IntoTheFlame/Q00618_IntoTheFlame.java",
+    "scripts/ai/others/ValakasTeleporters/ValakasTeleporters.java"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Эпики",
+   "q": "На Баюма какую тряпку надо?",
+   "variants": [
+    "какой итем на вход к баюму",
+    "baium kakaya tryapka"
+   ],
+   "levels": "60+ для квеста",
+   "a": "Для входа нужна Blooded Fabric (Окровавленная Ткань) из An Arrogant Search (Самонадеянный Поиск) у Hanellin (Ханелин). С тканями из альтернативного квеста на саб не путай — это разные предметы.",
+   "facts": [
+    "npc 30864",
+    "quest 348",
+    "item 4295",
+    "item 14361",
+    "scripts/quests/Q00348_AnArrogantSearch/Q00348_AnArrogantSearch.java: MIN_LEVEL 60",
+    "scripts/ai/bosses/Baium/Baium.java: BLOODED_FABRIC_ITEM_ID"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Гномы, крафт и спойл",
+   "q": "Спойлер и крафтер это одна профа?",
+   "variants": [
+    "какого гнома делать на ресурсы",
+    "spoil craft odno i toje"
+   ],
+   "levels": "20+",
+   "a": "Это разные ветки: Scavenger (Собиратель) — в спойл, Artisan (Ремесленник) — в крафт. У гнома базовые умения есть и до профы, но дальше развиваются по-разному.",
+   "facts": [
+    "stats/players/classList.xml",
+    "stats/players/skillTrees/1stClass/Scavenger.xml",
+    "stats/players/skillTrees/1stClass/Artisan.xml",
+    "stats/players/skillTrees/StartingClass/DwarvenFighter.xml"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Гномы, крафт и спойл",
+   "q": "Гном когда спойлить начинает?",
+   "variants": [
+    "спойл до первой профы есть",
+    "spoil s kakogo lvl"
+   ],
+   "levels": "10+",
+   "a": "Spoil (Оценка) и Sweeper (Присвоение) доступны гному уже с 10-го. Для дальнейшего развития спойла выбирай Scavenger (Собиратель).",
+   "facts": [
+    "skill 254",
+    "skill 42",
+    "stats/players/skillTrees/StartingClass/DwarvenFighter.xml: getLevel 10",
+    "stats/players/skillTrees/1stClass/Scavenger.xml"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Гномы, крафт и спойл",
+   "q": "Спойл нажал, а ресурсы где?",
+   "variants": [
+    "как собирать спойл",
+    "spoil najal drop gde"
+   ],
+   "levels": "10+",
+   "a": "Spoil (Оценка) жми на живого моба, потом убивай. С синего трупа забирай добычу через Sweeper (Присвоение), обычного подбора недостаточно.",
+   "facts": [
+    "skill 254",
+    "skill 42"
+   ],
+   "source": "общая механика из гайдов, сверено с датапаком и ядром"
+  },
+  {
+   "topic": "Гномы, крафт и спойл",
+   "q": "Пишет спойл прошёл, а труп не синий?",
+   "variants": [
+    "успешный спойл но пусто",
+    "spoil success no drop"
+   ],
+   "levels": "10+",
+   "a": "Успешно повесить спойл ещё не значит получить предмет. Добыча тоже выпадает по шансу, поэтому пустой моб бывает и после успешного Spoil (Оценка).",
+   "facts": [
+    "skill 254",
+    "skill 42",
+    "stats/npcs/20500-20599.xml: dropLists/spoil, отдельные шансы предметов"
+   ],
+   "source": "общая механика из гайдов, сверено с датапаком и ядром"
+  },
+  {
+   "topic": "Гномы, крафт и спойл",
+   "q": "Рецепт купил, как его выучить?",
+   "variants": [
+    "как добавить рец в книгу",
+    "kak viuchit recipe"
+   ],
+   "levels": "",
+   "a": "Двойной клик по рецепту добавляет его в книгу, если хватает уровня крафта. Если пишет, что умение низкое, сначала подними Create Item (Создание Предмета) для гномьего рецепта.",
+   "facts": [
+    "skill 172",
+    "item 1804",
+    "scripts/handlers/items/Recipes.java: проверка уровня рецепта и регистрация"
+   ],
+   "source": "общая механика из гайдов, сверено с датапаком и ядром"
+  },
+  {
+   "topic": "Гномы, крафт и спойл",
+   "q": "Крафт 60% это может вообще ничего не дать?",
+   "variants": [
+    "при фейле крафта ресы вернут",
+    "craft fail resy vernutsya"
+   ],
+   "levels": "",
+   "a": "Да, при неудаче материалы пропадают, вещи не получишь. Например, у Sword of Valhalla (Меч Вальхаллы) есть разные рецепты на 60% и 100%, не перепутай.",
+   "facts": [
+    "item 4967",
+    "item 4186",
+    "item 148",
+    "Recipes.xml: recipeId 4967 successRate 60; recipeId 4186 successRate 100"
+   ],
+   "source": "общая механика из гайдов, сверено с датапаком и ядром"
+  },
+  {
+   "topic": "Гномы, крафт и спойл",
+   "q": "Д соски самому крафтить можно?",
+   "variants": [
+    "что нужно на крафт ссд",
+    "kak craft ssd"
+   ],
+   "levels": "20+ для ветки Artisan",
+   "a": "С рецептом и Create Item (Создание Предмета) второго уровня — да. На один крафт здесь идут 9 Soul Ore (Руда Души) и 3 D-кристалла, выходит 468 D-сосок.",
+   "facts": [
+    "item 1804",
+    "item 1785",
+    "item 1458",
+    "item 1463",
+    "skill 172 level 2",
+    "Recipes.xml: recipeId 1804",
+    "stats/players/skillTrees/1stClass/Artisan.xml: getLevel 20"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Гномы, крафт и спойл",
+   "q": "В Море Спор хоть что-то спойлится?",
+   "variants": [
+    "что спойлить в споре",
+    "sea spores spoil est"
+   ],
+   "levels": "40–42",
+   "a": "Да, например с Giant Fungus (Гигантский Гриб) спойлится Braided Hemp (Грубая Нить). Но гарантированного выпадения нет.",
+   "facts": [
+    "npc 20555",
+    "item 1878",
+    "stats/npcs/20500-20599.xml: npc 20555, dropLists/spoil",
+    "L2HubHuntSpots.xml: Sea Of Spores · восток"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Смерть и опыт",
+   "q": "Умер от моба и опыт пропал, это баг?",
+   "variants": [
+    "почему после смерти минус проценты",
+    "umer exp propal"
+   ],
+   "levels": "",
+   "a": "Это обычная потеря опыта при смерти. Если опыта на уровне почти не осталось, можно и уровень потерять.",
+   "facts": [],
+   "source": "общая механика из гайдов, сверено с датапаком и ядром"
+  },
+  {
+   "topic": "Смерть и опыт",
+   "q": "Брес весь потерянный опыт вернёт?",
+   "variants": [
+    "чем реснуть без потери экспы",
+    "bres exp vernet"
+   ],
+   "levels": "",
+   "a": "Blessed Scroll of Resurrection (Благословенный Свиток Воскрешения) возвращает 100% опыта, потерянного при этой смерти. Обычный рес-свиток такого эффекта не даёт.",
+   "facts": [
+    "item 3936",
+    "item 737",
+    "skill 2049: Resurrection power 100",
+    "skill 2014: обычное воскрешение"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Карма и ПК",
+   "q": "Убью белого — стану ПК?",
+   "variants": [
+    "за белого карма будет",
+    "ubyu belogo budu pk"
+   ],
+   "levels": "",
+   "a": "В обычной ситуации вне войн и специальных зон — да: за убийство мирного белого получаешь карму. Если он ответил и стал фиолетовым, это уже PvP.",
+   "facts": [],
+   "source": "общая механика из гайдов, сверено с датапаком и ядром"
+  },
+  {
+   "topic": "Карма и ПК",
+   "q": "Красный ник как отмыть?",
+   "variants": [
+    "как убрать карму",
+    "kak otmyt karmu"
+   ],
+   "levels": "",
+   "a": "Карму снижают убийствами мобов, при смерти она тоже убывает. Пока красный, держись подальше от городской стражи.",
+   "facts": [],
+   "source": "общая механика из гайдов, сверено с датапаком и ядром"
+  },
+  {
+   "topic": "Карма и ПК",
+   "q": "Карму отмыл, почему счётчик ПК остался?",
+   "variants": [
+    "как убрать пк киллы",
+    "karma net pk ostalis"
+   ],
+   "levels": "",
+   "a": "Карма и счётчик ПК — разные вещи. За снижением счётчика иди к Black Judge (Чёрный Судья), квест Repent Your Sins (Покаяние).",
+   "facts": [
+    "npc 30981",
+    "quest 422",
+    "scripts/quests/Q00422_RepentYourSins/Q00422_RepentYourSins.java: изменение getPkKills через setPkKills"
+   ],
+   "source": "датапак"
+  },
+  {
+   "topic": "Торговля и лавки",
+   "q": "Как другу вещь передать?",
+   "variants": [
+    "как кинуть трейд",
+    "kak peredat item"
+   ],
+   "levels": "",
+   "a": "Подойди к нему, возьми в цель и нажми обмен или /trade. Перед подтверждением проверь предметы в окне сделки.",
+   "facts": [],
+   "source": "общая механика из гайдов, сверено с датапаком и ядром"
+  },
+  {
+   "topic": "Торговля и лавки",
+   "q": "Как сесть продавать?",
+   "variants": [
+    "как лавку на продажу открыть",
+    "kak sest prodavat"
+   ],
+   "levels": "",
+   "a": "Открой /vendor или продажу в действиях персонажа. Добавь товар, выставь цену и открой лавку.",
+   "facts": [],
+   "source": "общая механика из гайдов, сверено с датапаком и ядром"
+  },
+  {
+   "topic": "Торговля и лавки",
+   "q": "Как поставить скупку ресурсов?",
+   "variants": [
+    "как лавку на покупку сделать",
+    "kak postavit skupku"
+   ],
+   "levels": "",
+   "a": "Открой /buy или покупку в действиях персонажа. Укажи нужные предметы, количество и цену.",
+   "facts": [],
+   "source": "общая механика из гайдов, сверено с датапаком и ядром"
+  },
+  {
+   "topic": "Торговля и лавки",
+   "q": "Почём ресы продавать?",
+   "variants": [
+    "сколько сейчас стоит руда",
+    "pochem resy prodat"
+   ],
+   "levels": "",
+   "a": "Сравни несколько лавок покупки и продажи, потом ставь свою цену. По базовой цене предмета у NPC рынок не угадаешь.",
+   "facts": [
+    "stats/items/01800-01899.xml: базовые цены материалов не являются ценами сделок игроков"
+   ],
+   "source": "вывод, сверено с датапаком"
+  },
+  {
+   "topic": "Торговля и лавки",
+   "q": "Как в торговый чат написать?",
+   "variants": [
+    "какой знак перед продажей",
+    "kak pisat v trade chat"
+   ],
+   "levels": "",
+   "a": "Поставь + перед сообщением. Например: +Куплю D-соски, цену в пм.",
+   "facts": [
+    "item 1463",
+    "scripts/handlers/chat/channels/ChatTrade.java"
+   ],
+   "source": "общая механика из гайдов, сверено с датапаком и ядром"
+  }
+ ]
+}

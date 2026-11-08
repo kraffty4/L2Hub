@@ -133,6 +133,7 @@ public class PhantomTemplate
 	private float _temper = 1;
 	private float _risk = 1;
 	private int _startLevel;
+	private boolean _reserve;
 	private List<Body> _bodies = List.of();
 
 	public PhantomTemplate(String name, Role role, boolean female, byte face, byte hairStyle, byte hairColor, int[] classes, Location home, List<Gear> gear, String aliases, String kind, float social)
@@ -234,6 +235,19 @@ public class PhantomTemplate
 	void setStartLevel(int startLevel)
 	{
 		_startLevel = Math.max(0, startLevel);
+	}
+
+	/**
+	 * @return запас «следующего поколения» (раздел 4.155): в мир входит только новичком жизненного цикла на место ушедшего насовсем; места в мире — таблица без запаса
+	 */
+	public boolean isReserve()
+	{
+		return _reserve;
+	}
+
+	void setReserve(boolean reserve)
+	{
+		_reserve = reserve;
 	}
 
 	/**

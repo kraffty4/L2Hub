@@ -1,0 +1,22 @@
+diff --git a/dist/game/data/html/CommunityBoard/Custom/gatekeeper/main.html b/dist/game/data/html/CommunityBoard/Custom/gatekeeper/main.html
+--- a/dist/game/data/html/CommunityBoard/Custom/gatekeeper/main.html
++++ b/dist/game/data/html/CommunityBoard/Custom/gatekeeper/main.html
+@@ -29,6 +29,7 @@
+ 							</tr>
+ 							<tr>
+ 								<td align="center">
++									<table align=center><tr><td><button value="Recommended x10" action="bypass _bbshubevents spots recommended 0" width=240 height=27 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td><td><button value="Stronger: adena x2" action="bypass _bbshubevents spots adena 0" width=240 height=27 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td></tr></table>
+ 									<table align=center border="0" height=45>
+ 										<tr>
+ 											<td><button value="Giran" action="bypass _bbsteleport;Giran" width=140 height=27 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+diff --git a/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/gatekeeper/main.html b/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/gatekeeper/main.html
+--- a/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/gatekeeper/main.html
++++ b/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/gatekeeper/main.html
+@@ -29,6 +29,7 @@
+ 							</tr>
+ 							<tr>
+ 								<td align="center">
++									<table align=center><tr><td><button value="Рекомендованные x10" action="bypass _bbshubevents spots recommended 0" width=240 height=27 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td><td><button value="Усиленные: адена x2" action="bypass _bbshubevents spots adena 0" width=240 height=27 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td></tr></table>
+ 									<table align=center border="0" height=45>
+ 										<tr>
+ 											<td><button value="Гиран" action="bypass _bbsteleport;Giran" width=140 height=27 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>

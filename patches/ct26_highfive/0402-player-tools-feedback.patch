@@ -1,0 +1,462 @@
+--- a/dist/game/data/html/CommunityBoard/Custom/gatekeeper/main.html
++++ b/dist/game/data/html/CommunityBoard/Custom/gatekeeper/main.html
+@@ -29,7 +29,7 @@
+ 							</tr>
+ 							<tr>
+ 								<td align="center">
+-									<table align=center><tr><td><button value="Recommended x10" action="bypass _bbshubevents spots recommended 0" width=240 height=27 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td><td><button value="Stronger: adena x2" action="bypass _bbshubevents spots adena 0" width=240 height=27 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td></tr></table>
++									<table align=center><tr><td><button value="Expanded areas" action="bypass _bbshubfarm spots recommended 0" width=240 height=27 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td><td><button value="Stronger: adena x2" action="bypass _bbshubfarm spots adena 0" width=240 height=27 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td></tr></table>
+ 									<table align=center border="0" height=45>
+ 										<tr>
+ 											<td><button value="Giran" action="bypass _bbsteleport;Giran" width=140 height=27 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+--- a/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/gatekeeper/main.html
++++ b/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/gatekeeper/main.html
+@@ -29,7 +29,7 @@
+ 							</tr>
+ 							<tr>
+ 								<td align="center">
+-									<table align=center><tr><td><button value="Рекомендованные x10" action="bypass _bbshubevents spots recommended 0" width=240 height=27 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td><td><button value="Усиленные: адена x2" action="bypass _bbshubevents spots adena 0" width=240 height=27 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td></tr></table>
++									<table align=center><tr><td><button value="Увеличенные споты" action="bypass _bbshubfarm spots recommended 0" width=240 height=27 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td><td><button value="Усиленные: адена x2" action="bypass _bbshubfarm spots adena 0" width=240 height=27 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td></tr></table>
+ 									<table align=center border="0" height=45>
+ 										<tr>
+ 											<td><button value="Гиран" action="bypass _bbsteleport;Giran" width=140 height=27 back="L2UI_CT1.Button_DF_Down" fore="L2UI_CT1.Button_DF"></td>
+--- a/dist/game/data/scripts/custom/events/CaptureTheFlag/CtF.java
++++ b/dist/game/data/scripts/custom/events/CaptureTheFlag/CtF.java
+@@ -175,9 +175,9 @@
+ 	private static final ZoneType RED_PEACE_ZONE = ZoneManager.getInstance().getZoneByName("colosseum_peace2");
+ 	
+ 	// Settings
+-	private static final int REGISTRATION_TIME = 10; // Minutes
++	private static final int REGISTRATION_TIME = custom.L2HubPvpEvents.L2HubPvpEvents.tvt("PvpRegistrationMinutes", 10, 1, 30); // Minutes
+ 	private static final int WAIT_TIME = 1; // Minutes
+-	private static final int FIGHT_TIME = 20; // Minutes
++	private static final int FIGHT_TIME = custom.L2HubPvpEvents.L2HubPvpEvents.tvt("CtFFightMinutes", 7, 1, 30); // Minutes
+ 	private static final int INACTIVITY_TIME = 2; // Minutes
+ 	private static final int MINIMUM_PARTICIPANT_LEVEL = custom.L2HubPvpEvents.L2HubPvpEvents.minLevel(76); // L2Hub: PvpMinLevel
+ 	private static final int MAXIMUM_PARTICIPANT_LEVEL = 200;
+@@ -390,7 +390,7 @@
+ 				// Check if there are enough players to start the event.
+ 				if (PLAYER_LIST.size() < MINIMUM_PARTICIPANT_COUNT)
+ 				{
+-					World.broadcastToAllOnlinePlayers("CtF Event: Event was canceled, not enough participants.");
++					org.l2jmobius.gameserver.managers.world.X10Announcements.broadcast("CtF Event: Event was canceled, not enough participants.");
+ 					for (Player participant : PLAYER_LIST)
+ 					{
+ 						removeListeners(participant);
+@@ -846,7 +846,7 @@
+ 		if (event.startsWith("RegistrationWarn:"))
+ 		{
+ 			int minutesLeft = Integer.parseInt(event.split(":")[1]);
+-			World.broadcastToAllOnlinePlayers("CtF Event: Registration opened for " + minutesLeft + " minutes.");
++			org.l2jmobius.gameserver.managers.world.X10Announcements.broadcast("CtF Event: Registration opened for " + minutesLeft + " minutes.");
+ 		}
+ 		
+ 		return htmltext;
+@@ -1489,8 +1489,8 @@
+ 		startQuestTimer("TeleportToArena", REGISTRATION_TIME * 60000, null, null);
+ 		
+ 		// Send message to players.
+-		World.broadcastToAllOnlinePlayers("CtF Event: Registration opened for " + REGISTRATION_TIME + " minutes.");
+-		World.broadcastToAllOnlinePlayers("CtF Event: You can register at Giran CtF Event Manager.");
++		org.l2jmobius.gameserver.managers.world.X10Announcements.broadcast("CtF Event: Registration opened for " + REGISTRATION_TIME + " minutes.");
++		org.l2jmobius.gameserver.managers.world.X10Announcements.broadcast("CtF Event: You can register at Giran CtF Event Manager.");
+ 		
+ 		// @formatter:off
+ 		final int[] warnings = {10, 5, 4, 3, 2, 1};
+@@ -1583,7 +1583,7 @@
+ 		}
+ 		
+ 		// Send message to players.
+-		World.broadcastToAllOnlinePlayers("CtF Event: Event was canceled.");
++		org.l2jmobius.gameserver.managers.world.X10Announcements.broadcast("CtF Event: Event was canceled.");
+ 		
+ 		// Set state PARTICIPATING
+ 		setState(EventState.INACTIVE);
+--- a/dist/game/data/scripts/custom/events/Deathmatch/Deathmatch.java
++++ b/dist/game/data/scripts/custom/events/Deathmatch/Deathmatch.java
+@@ -111,9 +111,9 @@
+ 	private static final ZoneForm SPAWN_3 = ZoneManager.getInstance().getZoneByName("colosseum_battle3").getZone();
+ 	
+ 	// Settings
+-	private static final int REGISTRATION_TIME = 1; // Minutes
++	private static final int REGISTRATION_TIME = custom.L2HubPvpEvents.L2HubPvpEvents.tvt("PvpRegistrationMinutes", 10, 1, 30); // Minutes
+ 	private static final int WAIT_TIME = 20; // Seconds
+-	private static final int FIGHT_TIME = 3; // Minutes
++	private static final int FIGHT_TIME = custom.L2HubPvpEvents.L2HubPvpEvents.tvt("DeathmatchFightMinutes", 7, 1, 30); // Minutes
+ 	private static final int INACTIVITY_TIME = 2; // Minutes
+ 	private static final int MINIMUM_PARTICIPANT_LEVEL = custom.L2HubPvpEvents.L2HubPvpEvents.minLevel(85); // L2Hub: PvpMinLevel
+ 	private static final int MAXIMUM_PARTICIPANT_LEVEL = 200;
+@@ -314,7 +314,7 @@
+ 				// Check if there are enough players to start the event.
+ 				if (PLAYER_LIST.size() < MINIMUM_PARTICIPANT_COUNT)
+ 				{
+-					World.broadcastToAllOnlinePlayers("Deathmatch Event: Event was canceled, not enough participants.");
++					org.l2jmobius.gameserver.managers.world.X10Announcements.broadcast("Deathmatch Event: Event was canceled, not enough participants.");
+ 					for (Player participant : PLAYER_LIST)
+ 					{
+ 						removeListeners(participant);
+@@ -608,7 +608,7 @@
+ 		if (event.startsWith("RegistrationWarn:"))
+ 		{
+ 			final int minutesLeft = Integer.parseInt(event.split(":")[1]);
+-			World.broadcastToAllOnlinePlayers("Deathmatch Event: Registration opened for " + minutesLeft + " minutes.");
++			org.l2jmobius.gameserver.managers.world.X10Announcements.broadcast("Deathmatch Event: Registration opened for " + minutesLeft + " minutes.");
+ 		}
+ 		
+ 		return htmltext;
+@@ -881,8 +881,8 @@
+ 		startQuestTimer("TeleportToArena", REGISTRATION_TIME * 60000, null, null);
+ 		
+ 		// Send message to players.
+-		World.broadcastToAllOnlinePlayers("Deathmatch Event: Registration opened for " + REGISTRATION_TIME + " minutes.");
+-		World.broadcastToAllOnlinePlayers("Deathmatch Event: You can register at Giran Event Manager.");
++		org.l2jmobius.gameserver.managers.world.X10Announcements.broadcast("Deathmatch Event: Registration opened for " + REGISTRATION_TIME + " minutes.");
++		org.l2jmobius.gameserver.managers.world.X10Announcements.broadcast("Deathmatch Event: You can register at Giran Event Manager.");
+ 		
+ 		// @formatter:off
+ 		final int[] warnings = {10, 5, 4, 3, 2, 1};
+@@ -954,7 +954,7 @@
+ 		}
+ 		
+ 		// Send message to players.
+-		World.broadcastToAllOnlinePlayers("Deathmatch Event: Event was canceled.");
++		org.l2jmobius.gameserver.managers.world.X10Announcements.broadcast("Deathmatch Event: Event was canceled.");
+ 		return true;
+ 	}
+ 	
+--- a/dist/game/data/scripts/custom/events/TeamVsTeam/TvT.java
++++ b/dist/game/data/scripts/custom/events/TeamVsTeam/TvT.java
+@@ -136,7 +136,7 @@
+ 	private static final ZoneType RED_PEACE_ZONE = ZoneManager.getInstance().getZoneByName("colosseum_peace2");
+ 	
+ 	// Settings
+-	private static final int REGISTRATION_TIME = 10; // Minutes
++	private static final int REGISTRATION_TIME = custom.L2HubPvpEvents.L2HubPvpEvents.tvt("PvpRegistrationMinutes", 10, 1, 30); // Minutes
+ 	private static final int WAIT_TIME = 1; // Minutes
+ 	private static final int FIGHT_TIME = custom.L2HubPvpEvents.L2HubPvpEvents.tvt("TvTFightMinutes", 20, 1, 120); // L2Hub: минуты
+ 	private static final int INACTIVITY_TIME = 2; // Minutes
+@@ -350,7 +350,7 @@
+ 				// Check if there are enough players to start the event.
+ 				if (PLAYER_LIST.size() < MINIMUM_PARTICIPANT_COUNT)
+ 				{
+-					World.broadcastToAllOnlinePlayers("TvT Event: Event was canceled, not enough participants.");
++					org.l2jmobius.gameserver.managers.world.X10Announcements.broadcast("TvT Event: Event was canceled, not enough participants.");
+ 					for (Player participant : PLAYER_LIST)
+ 					{
+ 						removeListeners(participant);
+@@ -777,7 +777,7 @@
+ 		if (event.startsWith("RegistrationWarn:"))
+ 		{
+ 			final int minutesLeft = Integer.parseInt(event.split(":")[1]);
+-			World.broadcastToAllOnlinePlayers("TvT Event: Registration opened for " + minutesLeft + " minutes.");
++			org.l2jmobius.gameserver.managers.world.X10Announcements.broadcast("TvT Event: Registration opened for " + minutesLeft + " minutes.");
+ 		}
+ 		
+ 		return htmltext;
+@@ -1128,8 +1128,8 @@
+ 		startQuestTimer("TeleportToArena", REGISTRATION_TIME * 60000, null, null);
+ 		
+ 		// Send message to players.
+-		World.broadcastToAllOnlinePlayers("TvT Event: Registration opened for " + REGISTRATION_TIME + " minutes.");
+-		World.broadcastToAllOnlinePlayers("TvT Event: You can register at Giran TvT Event Manager.");
++		org.l2jmobius.gameserver.managers.world.X10Announcements.broadcast("TvT Event: Registration opened for " + REGISTRATION_TIME + " minutes.");
++		org.l2jmobius.gameserver.managers.world.X10Announcements.broadcast("TvT Event: You can register at Giran TvT Event Manager.");
+ 		
+ 		// @formatter:off
+ 		final int[] warnings = {10, 5, 4, 3, 2, 1};
+@@ -1197,7 +1197,7 @@
+ 		}
+ 		
+ 		// Send message to players.
+-		World.broadcastToAllOnlinePlayers("TvT Event: Event was canceled.");
++		org.l2jmobius.gameserver.managers.world.X10Announcements.broadcast("TvT Event: Event was canceled.");
+ 		
+ 		// Set state PARTICIPATING
+ 		setState(EventState.INACTIVE);
+--- a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+@@ -292,6 +292,7 @@
+ 		CLAN_RECRUIT,
+ 		EVENTS,
+ 		SPOTS,
++		"_bbshubfarm",
+ 		WORLD,
+ 		PLAY,
+ 		L2HubKits.COMMAND,
+@@ -341,6 +342,10 @@
+ 		{
+ 			html = page(player, tr("Клан"), clanTabs(CLAN_RECRUIT) + clan(player, args));
+ 		}
++		else if (args[0].equalsIgnoreCase("_bbshubfarm"))
++		{
++			html = page(player, tr("Телепорт"), org.l2jmobius.gameserver.managers.world.X10World.farmSpots(player, args));
++		}
+ 		else if (args[0].equalsIgnoreCase(SPOTS))
+ 		{
+ 			html = spots(player, args);
+@@ -376,7 +381,7 @@
+ 			{
+ 				MultisellData.getInstance().separateAndSendFromBoard(MEDAL_SHOP, player);
+ 			}
+-			html = page(player, PhantomEventBoard.title(), canOpen(player) ? PhantomEventBoard.getInstance().page(player, args) + medals(player) + eventLogoutNote(player) : PhantomClanBoard.busy());
++			html = page(player, PhantomEventBoard.title(), canOpen(player) ? PhantomEventBoard.getInstance().page(player, args) + ((args.length > 1 && java.util.Set.of("legacy", "join", "cancel", "medals").contains(args[1])) ? medals(player) : "") + eventLogoutNote(player) : PhantomClanBoard.busy());
+ 		}
+ 		else
+ 		{
+@@ -397,12 +402,12 @@
+ 	 */
+ 	private static String medals(Player player)
+ 	{
+-		final int plain = custom.L2HubPvpEvents.L2HubPvpEvents.rewardMedals(20, false);
++		final int plain = custom.L2HubPvpEvents.L2HubPvpEvents.rewardMedals(custom.L2HubPvpEvents.L2HubPvpEvents.tvt("TvTFightMinutes", 7, 1, 30), false);
+ 		if (plain <= 0)
+ 		{
+ 			return "";
+ 		}
+-		return "<br><br>" + tr("Медали у тебя: ") + "<font color=\"LEVEL\">" + player.getInventory().getInventoryItemCount(custom.L2HubPvpEvents.L2HubPvpEvents.MEDAL_ITEM, -1) + "</font><br1>" + tr("За 20 минут боя: ") + plain + tr(", победителю ") + custom.L2HubPvpEvents.L2HubPvpEvents.rewardMedals(20, true) + tr(". Падают и с чемпионов.") + "<br1>" + button(tr("Обмен медалей"), EVENTS + " medals", 150);
++		return "<br><br>" + tr("Медали у тебя: ") + "<font color=\"LEVEL\">" + player.getInventory().getInventoryItemCount(custom.L2HubPvpEvents.L2HubPvpEvents.MEDAL_ITEM, -1) + "</font><br1>" + ("en".equals(org.l2jmobius.gameserver.config.custom.L2HubWorldConfig.LANGUAGE) ? "For a full PvP fight: " : "За полный PvP-бой: ") + plain + tr(", победителю ") + custom.L2HubPvpEvents.L2HubPvpEvents.rewardMedals(custom.L2HubPvpEvents.L2HubPvpEvents.tvt("TvTFightMinutes", 7, 1, 30), true) + tr(". Падают и с чемпионов.") + "<br1>" + button(tr("Обмен медалей"), EVENTS + " medals", 150);
+ 	}
+ 
+ 	/**
+--- a/dist/game/data/scripts/handlers/chat/commands/voiced/AutoPotion.java
++++ b/dist/game/data/scripts/handlers/chat/commands/voiced/AutoPotion.java
+@@ -41,6 +41,10 @@
+ 	@Override
+ 	public boolean onCommand(String command, Player activeChar, String target)
+ 	{
++		if (org.l2jmobius.gameserver.managers.world.X10World.enabled())
++		{
++			return org.l2jmobius.gameserver.managers.world.X10PlayerTools.potions(activeChar, command.equals("apon") || command.equals("potionon") ? "on" : "off");
++		}
+ 		if (!AutoPotionsConfig.AUTO_POTIONS_ENABLED || (activeChar == null))
+ 		{
+ 			return false;
+--- a/java/org/l2jmobius/gameserver/data/xml/InitialShortcutData.java
++++ b/java/org/l2jmobius/gameserver/data/xml/InitialShortcutData.java
+@@ -327,19 +327,10 @@
+ 	 */
+ 	public List<Macro> getGlobalMacros()
+ 	{
+-		final List<Macro> macros = new ArrayList<>();
+-		for (Shortcut shortcut : _initialGlobalShortcutList)
+-		{
+-			final Macro macro = shortcut.getType() == ShortcutType.MACRO ? _macroPresets.get(shortcut.getId()) : null;
+-			if (macro != null)
+-			{
+-				macros.add(macro);
+-			}
+-		}
+-		
+-		return macros;
+-	}
+-	
++		return _macroPresets.values().stream().sorted(java.util.Comparator.comparingInt(Macro::getId)).toList();
++	}
++	
++
+ 	/**
+ 	 * L2Hub: есть ли на сервере команды макроса. Команда без обработчика ушла бы текстом в общий чат, а автобой, банк и другие включаются в настройках.
+ 	 * @param macro макрос
+@@ -365,12 +356,12 @@
+ 	 */
+ 	public void giveMissingMacros(Player player)
+ 	{
++		cleanServiceBar(player);
+ 		final List<Integer> given = new ArrayList<>(player.getVariables().getIntegerList(MACROS_GIVEN));
+ 		final int before = given.size();
+-		for (Shortcut shortcut : _initialGlobalShortcutList)
+-		{
+-			final Integer id = shortcut.getId();
+-			final Macro macro = shortcut.getType() == ShortcutType.MACRO ? _macroPresets.get(id) : null;
++		for (Macro macro : getGlobalMacros())
++		{
++			final Integer id = macro.getId();
+ 			if ((macro == null) || given.contains(id) || !isAvailable(macro))
+ 			{
+ 				continue;
+@@ -395,6 +386,39 @@
+ 		}
+ 	}
+ 	
++	/** Однократный перенос только наших неизменённых ярлыков, без стирания чужих ячеек. */
++	private void cleanServiceBar(Player player)
++	{
++		if (player.getVariables().getBoolean("L2HubServiceBarV2", false)) { return; }
++		final java.util.Set<Integer> owned = new java.util.HashSet<>();
++		for (Macro macro : player.getMacros().getAllMacroses().values())
++		{
++			final Macro preset = _macroPresets.get(macro.getId());
++			if (preset == null || macro.getId() < 10100 || macro.getId() > 10131 || macro.getCommands().size() != 1) { continue; }
++			final String command = macro.getCommands().getFirst().getCmd();
++			if ((macro.getName().equals(preset.getName()) && command.equals(preset.getCommands().getFirst().getCmd()))
++				|| macro.getId() == 10113 && macro.getName().equals("Автопоты вкл") && command.equals(".apon")
++				|| macro.getId() == 10106 && macro.getName().equals("Автобой") && command.equals(".play"))
++			{ owned.add(macro.getId()); player.registerMacro(preset); }
++		}
++		for (Shortcut shortcut : new ArrayList<>(player.getAllShortcuts()))
++		{
++			if (shortcut.getType() == ShortcutType.MACRO && owned.contains(shortcut.getId())) { player.deleteShortcut(shortcut.getSlot(), shortcut.getPage()); }
++		}
++		final int[] ids = {10105,10104,10103,10102,10101,10100,10113,10115};
++		for (int slot = 0; slot < ids.length; slot++)
++		{
++			final Macro macro = _macroPresets.get(ids[slot]);
++			if (player.getShortcut(slot, 1) != null || !isAvailable(macro)) { continue; }
++			if (!owned.contains(ids[slot]) && player.getMacros().getAllMacroses().containsKey(ids[slot])) { continue; }
++			if (!player.getMacros().getAllMacroses().containsKey(ids[slot])) { player.registerMacro(macro); }
++			final Shortcut shortcut = new Shortcut(slot, 1, ShortcutType.MACRO, ids[slot], -1, 1);
++			player.registerShortcut(shortcut); player.sendPacket(new ShortcutRegister(shortcut));
++		}
++		player.getVariables().set("L2HubServiceBarV2", true);
++		player.sendPacket(new org.l2jmobius.gameserver.network.serverpackets.ShortcutInit(player));
++	}
++
+ 	public static InitialShortcutData getInstance()
+ 	{
+ 		return SingletonHolder.INSTANCE;
+--- a/java/org/l2jmobius/gameserver/entity/actor/Creature.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/Creature.java
+@@ -2739,8 +2739,8 @@
+ 				final String name = NpcData.getInstance().getTemplate(getId()).getName();
+ 				if ((name != null) && !BossAnnouncementsConfig.RAIDBOSSES_EXCLUDED_FROM_DEFEAT_ANNOUNCEMENTS.contains(getId()))
+ 				{
+-					World.broadcastToAllOnlinePlayers(name + " has been defeated!");
+-					World.broadcastToAllOnlinePlayersOnScreen(name + " has been defeated!");
++					World.broadcastToAllOnlinePlayers(name + ("en".equals(org.l2jmobius.gameserver.config.custom.L2HubWorldConfig.LANGUAGE) ? " has been defeated!" : " повержен!"));
++					World.broadcastToAllOnlinePlayersOnScreen(name + ("en".equals(org.l2jmobius.gameserver.config.custom.L2HubWorldConfig.LANGUAGE) ? " has been defeated!" : " повержен!"));
+ 				}
+ 			}
+ 		}
+@@ -2749,8 +2749,8 @@
+ 			final String name = NpcData.getInstance().getTemplate(getId()).getName();
+ 			if ((name != null) && !BossAnnouncementsConfig.RAIDBOSSES_EXCLUDED_FROM_DEFEAT_ANNOUNCEMENTS.contains(getId()))
+ 			{
+-				World.broadcastToAllOnlinePlayers(name + " has been defeated!");
+-				World.broadcastToAllOnlinePlayersOnScreen(name + " has been defeated!");
++				World.broadcastToAllOnlinePlayers(name + ("en".equals(org.l2jmobius.gameserver.config.custom.L2HubWorldConfig.LANGUAGE) ? " has been defeated!" : " повержен!"));
++				World.broadcastToAllOnlinePlayersOnScreen(name + ("en".equals(org.l2jmobius.gameserver.config.custom.L2HubWorldConfig.LANGUAGE) ? " has been defeated!" : " повержен!"));
+ 			}
+ 		}
+ 		
+--- a/java/org/l2jmobius/gameserver/entity/actor/templates/NpcTemplate.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/templates/NpcTemplate.java
+@@ -706,6 +706,24 @@
+ 				}
+ 			}
+ 			
++			// H5 x10: меняем только вероятность адены, количество считает штатная функция рейтов.
++			if (org.l2jmobius.gameserver.config.custom.L2HubX10Config.ADENA_ALWAYS_DROP && victim.isMonster() && !victim.isRaid()
++				&& !victim.asNpc().getVariables().getBoolean("L2HubX10Event", false)
++				&& (groupDrops == null || groupDrops.stream().noneMatch(i -> i.getId() == 57)) && (ungroupedDrops == null || ungroupedDrops.stream().noneMatch(i -> i.getId() == 57)))
++			{
++				DropHolder adena = null;
++				if (_dropListDeath != null) { adena = _dropListDeath.stream().filter(d -> d.getItemId() == 57).findFirst().orElse(null); }
++				if (adena == null && _dropGroups != null)
++				{
++					for (DropGroupHolder group : _dropGroups) { adena = group.getDropList().stream().filter(d -> d.getItemId() == 57).findFirst().orElse(null); if (adena != null) { break; } }
++				}
++				if (adena != null)
++				{
++					final ItemHolder guaranteed = calculateGroupDrop(null, adena, victim, killer, 100);
++					if (guaranteed != null && guaranteed.getCount() > 0) { if (groupDrops == null) { groupDrops = new ArrayList<>(); } groupDrops.add(guaranteed); }
++				}
++			}
++			
+ 			// return results
+ 			if ((groupDrops != null) && (ungroupedDrops != null))
+ 			{
+--- a/java/org/l2jmobius/gameserver/taskmanagers/AutoUseTaskManager.java
++++ b/java/org/l2jmobius/gameserver/taskmanagers/AutoUseTaskManager.java
+@@ -150,7 +150,7 @@
+ 					}
+ 				}
+ 				
+-				if (AutoPlayConfig.ENABLE_AUTO_POTION && !isInPeaceZone && (player.getCurrentHpPercent() < player.getAutoPlaySettings().getAutoPotionPercent()))
++				if (!org.l2jmobius.gameserver.managers.world.X10PlayerTools.autoPotionsEnabled(player) && AutoPlayConfig.ENABLE_AUTO_POTION && !isInPeaceZone && (player.getCurrentHpPercent() < player.getAutoPlaySettings().getAutoPotionPercent()))
+ 				{
+ 					final int itemId = player.getAutoUseSettings().getAutoPotionItem();
+ 					if (itemId > 0)
+@@ -177,7 +177,7 @@
+ 				}
+ 				
+ 				// L2Hub: второй слот, мана со своим порогом. Кончились банки — слот остаётся: докупил, и снова пьёт.
+-				if (AutoPlayConfig.ENABLE_AUTO_POTION && !isInPeaceZone && (player.getCurrentMpPercent() < player.getAutoPlaySettings().getAutoManaPercent()))
++				if (!org.l2jmobius.gameserver.managers.world.X10PlayerTools.autoPotionsEnabled(player) && AutoPlayConfig.ENABLE_AUTO_POTION && !isInPeaceZone && (player.getCurrentMpPercent() < player.getAutoPlaySettings().getAutoManaPercent()))
+ 				{
+ 					final int itemId = player.getAutoUseSettings().getAutoManaItem();
+ 					final Item item = itemId > 0 ? player.getInventory().getItemByItemId(itemId) : null;
+--- a/dist/game/config/Custom/L2HubEvents.ini
++++ b/dist/game/config/Custom/L2HubEvents.ini
+@@ -103,7 +103,7 @@
+ 
+ # Длительность боя, минуты (от 1 до 120).
+ # Default: 20
+-TvTFightMinutes = 20
++TvTFightMinutes = 7
+ 
+ # Расписание — крон «минуты часы день месяц день_недели», как schedule у Mobius; пусто — не запускать.
+ # Пока идёт один PvP-ивент (менеджер в мире), следующий не стартует. Регистрация 10 мин, бой 20 мин (у TvT — TvTFightMinutes; Deathmatch — 1 и 3).
+@@ -130,3 +130,11 @@
+ # Старт по расписанию только при живом игроке в мире (с клиентом; фантомы и офлайн-торговцы не считаются).
+ # Default: True
+ ElpiesOnlyWithPlayers = True
++
++# H5: интервалы записи и длительность PvP-арен.
++# Default: 7
++CtFFightMinutes = 7
++# Default: 7
++DeathmatchFightMinutes = 7
++# Default: 10
++PvpRegistrationMinutes = 10
+--- a/java/org/l2jmobius/gameserver/data/xml/InitialShortcutData.java
++++ b/java/org/l2jmobius/gameserver/data/xml/InitialShortcutData.java
+@@ -411,7 +411,7 @@
+ 			final Macro macro = _macroPresets.get(ids[slot]);
+ 			if (player.getShortcut(slot, 1) != null || !isAvailable(macro)) { continue; }
+ 			if (!owned.contains(ids[slot]) && player.getMacros().getAllMacroses().containsKey(ids[slot])) { continue; }
+-			if (!player.getMacros().getAllMacroses().containsKey(ids[slot])) { player.registerMacro(macro); }
++			if (!player.getMacros().getAllMacroses().containsKey(ids[slot])) { if (player.getMacros().getAllMacroses().size() >= MAX_MACROS) { continue; } player.registerMacro(macro); }
+ 			final Shortcut shortcut = new Shortcut(slot, 1, ShortcutType.MACRO, ids[slot], -1, 1);
+ 			player.registerShortcut(shortcut); player.sendPacket(new ShortcutRegister(shortcut));
+ 		}
+--- a/java/org/l2jmobius/gameserver/taskmanagers/AutoUseTaskManager.java
++++ b/java/org/l2jmobius/gameserver/taskmanagers/AutoUseTaskManager.java
+@@ -96,6 +96,7 @@
+ 				{
+ 					ITEMS: for (Integer itemId : player.getAutoUseSettings().getAutoSupplyItems())
+ 					{
++						if (org.l2jmobius.gameserver.managers.world.X10PlayerTools.managesPotions(player) && org.l2jmobius.gameserver.managers.world.X10PlayerTools.isManagedPotion(itemId)) { continue ITEMS; }
+ 						if (player.isTeleporting())
+ 						{
+ 							break ITEMS;
+@@ -150,7 +151,7 @@
+ 					}
+ 				}
+ 				
+-				if (!org.l2jmobius.gameserver.managers.world.X10PlayerTools.autoPotionsEnabled(player) && AutoPlayConfig.ENABLE_AUTO_POTION && !isInPeaceZone && (player.getCurrentHpPercent() < player.getAutoPlaySettings().getAutoPotionPercent()))
++				if (!org.l2jmobius.gameserver.managers.world.X10PlayerTools.managesPotions(player) && AutoPlayConfig.ENABLE_AUTO_POTION && !isInPeaceZone && (player.getCurrentHpPercent() < player.getAutoPlaySettings().getAutoPotionPercent()))
+ 				{
+ 					final int itemId = player.getAutoUseSettings().getAutoPotionItem();
+ 					if (itemId > 0)
+@@ -177,7 +178,7 @@
+ 				}
+ 				
+ 				// L2Hub: второй слот, мана со своим порогом. Кончились банки — слот остаётся: докупил, и снова пьёт.
+-				if (!org.l2jmobius.gameserver.managers.world.X10PlayerTools.autoPotionsEnabled(player) && AutoPlayConfig.ENABLE_AUTO_POTION && !isInPeaceZone && (player.getCurrentMpPercent() < player.getAutoPlaySettings().getAutoManaPercent()))
++				if (!org.l2jmobius.gameserver.managers.world.X10PlayerTools.managesPotions(player) && AutoPlayConfig.ENABLE_AUTO_POTION && !isInPeaceZone && (player.getCurrentMpPercent() < player.getAutoPlaySettings().getAutoManaPercent()))
+ 				{
+ 					final int itemId = player.getAutoUseSettings().getAutoManaItem();
+ 					final Item item = itemId > 0 ? player.getInventory().getItemByItemId(itemId) : null;
+--- a/dist/game/data/scripts/handlers/chat/commands/voiced/AutoPlay.java
++++ b/dist/game/data/scripts/handlers/chat/commands/voiced/AutoPlay.java
+@@ -184,6 +184,10 @@
+ 	@Override
+ 	public boolean onCommand(String command, Player player, String params)
+ 	{
++		if ((command.equals("playpotion") || command.equals("playmana")) && org.l2jmobius.gameserver.managers.world.X10PlayerTools.managesPotions(player))
++		{
++			return org.l2jmobius.gameserver.managers.world.X10PlayerTools.potions(player, null);
++		}
+ 		if (!AutoPlayConfig.ENABLE_AUTO_PLAY || (player == null))
+ 		{
+ 			return false;

@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.HexFormat;
@@ -29,8 +30,9 @@ import org.l2jmobius.gameserver.entity.clan.enums.CrestType;
  * {@code tools/clan_crests.py} по хронике; нет набора — ничего не происходит. Эмблему игрока и уже выданную не трогает, новая не повторяет занятую ни у кого на сервере.
  * Кончились свободные — остальные кланы ждут, выданные остаются. Исключение — снятый набор: суммы в {@code data/ClanCrests/retired.txt}, такую эмблему могла выдать только прежняя версия
  * генератора, клан охотников получает вместо неё новую.<br>
- * Союз, который возглавляет клан охотников, получает эмблему союза из эмблемы главы, сжатой по ширине до 8×16 (DXT1, 192 байта — предел {@code RequestSetAllyCrest}):
- * без неё у союзов охотников эмблемы не было совсем (мост, ep-alliance-crest-not-assigned). Эмблему союза игрока не трогает.
+ * Союз, который возглавляет клан охотников, получает свою эмблему союза из того же набора (мост, ep-alliance-crest-not-assigned; вариант сопровождающего Эпилога,
+ * решение автора 2026-11-07): середина эмблемы клана 8×16 (DXT1, 192 байта — предел {@code RequestSetAllyCrest}), не занятая ни у кого на сервере. Выбранную не меняет,
+ * недостающие копии у кланов союза возвращает. Свободных в наборе не осталось — эмблема главы, сжатая по ширине до 8×16 ({@link #allyCrest}). Эмблему союза игрока не трогает.
  */
 public final class PhantomClanCrests
 {
@@ -48,12 +50,14 @@ public final class PhantomClanCrests
 
 	private final List<Asset> _pool = load();
 	private final Set<String> _retired = loadRetired();
+	private final List<Asset> _allyPool = alliancePool(_pool, _retired);
 	private long _nextCheck;
 	private boolean _exhausted;
+	private boolean _allyExhausted;
 
 	private PhantomClanCrests()
 	{
-		LOGGER.info(getClass().getSimpleName() + ": loaded " + _pool.size() + " unique crests, " + _retired.size() + " retired.");
+		LOGGER.info(getClass().getSimpleName() + ": loaded " + _pool.size() + " unique crests, " + _retired.size() + " retired, " + _allyPool.size() + " alliance crests.");
 	}
 
 	synchronized void control(long now)
@@ -64,7 +68,7 @@ public final class PhantomClanCrests
 		}
 		_nextCheck = now + CHECK_GAP;
 		give();
-		giveAlly();
+		giveAllies(_allyPool);
 	}
 
 	/**
@@ -130,34 +134,199 @@ public final class PhantomClanCrests
 	}
 
 	/**
-	 * Союзы во главе с кланом охотников без эмблемы: эмблема главы, сжатая до размера эмблемы союза, — всем кланам союза ({@code changeAllyCrest}, как RequestSetAllyCrest).
+	 * Союзы во главе с кланом охотников (вариант сопровождающего Эпилога). Эмблема у союза уже есть — остаётся, кланам союза без неё возвращается та же копия.
+	 * Нет — своя из набора союзов ({@link #alliancePool}), не занятая ни у кого; набор кончился — эмблема главы, сжатая до 8×16 ({@link #allyCrest}).
+	 * Всем кланам союза — {@code changeAllyCrest}, как RequestSetAllyCrest.
+	 * @param allyPool набор эмблем союза; самопроверка передаёт пустой, чтобы пройти запасной путь
 	 * @return скольким союзам выдана
 	 */
-	private int giveAlly()
+	private int giveAllies(List<Asset> allyPool)
 	{
-		int given = 0;
-		for (Clan clan : ClanTable.getInstance().getClans())
+		final List<Clan> clans = new ArrayList<>(ClanTable.getInstance().getClans());
+		clans.sort(Comparator.comparingInt(Clan::getId));
+		final Set<String> used = new HashSet<>();
+		for (Clan clan : clans)
 		{
-			if ((clan.getAllyId() == 0) || (clan.getAllyId() != clan.getId()) || (clan.getAllyCrestId() != 0) || (clan.getCrestId() == 0) || !PhantomHunterClans.isHunterClan(clan))
+			final Crest crest = allianceCrest(clan);
+			if (crest != null)
+			{
+				used.add(hash(crest.getData()));
+			}
+		}
+		int given = 0;
+		for (Clan leader : clans)
+		{
+			if ((leader.getAllyId() == 0) || (leader.getAllyId() != leader.getId()) || !PhantomHunterClans.isHunterClan(leader))
 			{
 				continue;
 			}
-			final Crest own = CrestTable.getInstance().getCrest(clan.getCrestId());
-			final byte[] data = own == null ? null : allyCrest(own.getData());
-			if (data == null)
+			final List<Clan> members = clans.stream().filter(clan -> clan.getAllyId() == leader.getAllyId()).toList();
+			Crest existing = allianceCrest(leader);
+			if (existing == null)
 			{
+				for (Clan member : members)
+				{
+					existing = allianceCrest(member);
+					if (existing != null)
+					{
+						break;
+					}
+				}
+			}
+			if (existing != null)
+			{
+				// Выбранную эмблему не меняем, только возвращаем копии кланам союза, где её нет.
+				for (Clan member : members)
+				{
+					if (member.getAllyCrestId() == 0)
+					{
+						member.changeAllyCrest(existing.getId(), true);
+					}
+				}
 				continue;
+			}
+			final Asset asset = choose(allyPool, used, Set.of(), leader.getAllyId());
+			final byte[] data;
+			if (asset != null)
+			{
+				_allyExhausted = false;
+				data = asset.data();
+			}
+			else
+			{
+				if (!_allyExhausted)
+				{
+					LOGGER.warning(getClass().getSimpleName() + ": no unused alliance crests remain, alliances get the leader's crest compressed to 8x16; given crests stay.");
+					_allyExhausted = true;
+				}
+				final Crest own = CrestTable.getInstance().getCrest(leader.getCrestId());
+				data = own == null ? null : allyCrest(own.getData());
+				if (data == null)
+				{
+					continue;
+				}
 			}
 			final Crest crest = CrestTable.getInstance().createCrest(data, CrestType.ALLY);
 			if (crest == null)
 			{
 				continue;
 			}
-			clan.changeAllyCrest(crest.getId(), false);
+			leader.changeAllyCrest(crest.getId(), false);
+			used.add(hash(data));
 			given++;
-			LOGGER.info(getClass().getSimpleName() + ": alliance " + clan.getAllyName() + " of clan " + clan.getName() + " received an alliance crest.");
+			LOGGER.info(getClass().getSimpleName() + ": alliance " + leader.getAllyName() + " of clan " + leader.getName() + " received " + (asset != null ? asset.name() : "the leader's crest compressed") + ".");
 		}
 		return given;
+	}
+
+	private static Crest allianceCrest(Clan clan)
+	{
+		final Crest crest = CrestTable.getInstance().getCrest(clan.getAllyCrestId());
+		return ((crest != null) && (crest.getType() == CrestType.ALLY)) ? crest : null;
+	}
+
+	/**
+	 * Набор эмблем союза из набора кланов (вариант сопровождающего Эпилога): середина эмблемы клана по ширине, 8×16, блоки DXT1 как есть, без пересжатия —
+	 * два средних блока в каждой из четырёх строк. Эмблема клана не 16 в высоту или уже 8 — пропускается; снятые ({@code retired.txt}) — тоже.
+	 * @param clans набор эмблем кланов
+	 * @param retired суммы снятых
+	 * @return эмблемы союза 192 байта, без повторов
+	 */
+	static List<Asset> alliancePool(List<Asset> clans, Set<String> retired)
+	{
+		final List<Asset> result = new ArrayList<>();
+		final Set<String> hashes = new HashSet<>();
+		for (Asset clan : clans)
+		{
+			final byte[] source = clan.data();
+			if (retired.contains(clan.hash()) || !valid(source))
+			{
+				continue;
+			}
+			final ByteBuffer header = ByteBuffer.wrap(source).order(ByteOrder.LITTLE_ENDIAN);
+			final int height = header.getInt(12);
+			final int width = header.getInt(16);
+			if ((height != 16) || (width < 8))
+			{
+				continue;
+			}
+			final int blocks = width / 4;
+			final int from = (blocks - 2) / 2;
+			final byte[] data = Arrays.copyOf(source, 192);
+			final ByteBuffer out = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN);
+			out.putInt(16, 8);
+			out.putInt(20, 64);
+			for (int row = 0; row < 4; row++)
+			{
+				System.arraycopy(source, 128 + (row * blocks * 8) + (from * 8), data, 128 + (row * 16), 16);
+			}
+			final String hash = hash(data);
+			if (hashes.add(hash))
+			{
+				result.add(new Asset("ally-" + clan.name(), hash, data));
+			}
+		}
+		return List.copyOf(result);
+	}
+
+	/**
+	 * Правка при старте (вариант сопровождающего Эпилога): эмблемы кланов старого формата 16×12 (224 байта) переписываются в 16×16 с той же видимой частью,
+	 * под новыми номерами, чтобы клиент не просил отвергнутую. Зовёт сервер до входа игроков; правильные эмблемы кланов и союзов не трогает.
+	 * @return сколько эмблем поправлено
+	 */
+	public static int repairOnStartup()
+	{
+		return getInstance().repairExisting();
+	}
+
+	private synchronized int repairExisting()
+	{
+		int repaired = 0;
+		for (Clan clan : ClanTable.getInstance().getClans())
+		{
+			final Crest old = CrestTable.getInstance().getCrest(clan.getCrestId());
+			if (old == null)
+			{
+				continue;
+			}
+			final byte[] replacement = correctedClanCrest(old.getData(), old.getType());
+			if (replacement == null)
+			{
+				continue;
+			}
+			final Crest next = CrestTable.getInstance().createCrest(replacement, CrestType.PLEDGE);
+			if (next == null)
+			{
+				throw new IllegalStateException("Could not repair legacy crest for clan " + clan.getId() + "; stop before accepting players.");
+			}
+			clan.changeClanCrest(next.getId());
+			repaired++;
+			LOGGER.info(getClass().getSimpleName() + ": repaired clan " + clan.getName() + " crest " + old.getId() + " -> " + next.getId() + " (16x16 DDS, visible 16x12).");
+		}
+		LOGGER.info(getClass().getSimpleName() + ": startup repaired " + repaired + " legacy clan crests; valid clan and alliance crests retained.");
+		return repaired;
+	}
+
+	static byte[] correctedClanCrest(byte[] data, CrestType type)
+	{
+		if ((type != CrestType.PLEDGE) || (data == null) || (data.length != 224))
+		{
+			return null;
+		}
+		final ByteBuffer old = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN);
+		if ((old.getInt(0) != MAGIC) || (old.getInt(4) != 124) || (old.getInt(12) != 12) || (old.getInt(16) != 16) || (old.getInt(76) != 32) || (old.getInt(84) != DXT1))
+		{
+			return null;
+		}
+		final byte[] corrected = Arrays.copyOf(data, 256);
+		final ByteBuffer header = ByteBuffer.wrap(corrected).order(ByteOrder.LITTLE_ENDIAN);
+		header.putInt(12, 16);
+		header.putInt(20, 128);
+		if (!valid(corrected))
+		{
+			throw new IllegalStateException("Invalid corrected clan crest");
+		}
+		return corrected;
 	}
 
 	/**
@@ -373,11 +542,20 @@ public final class PhantomClanCrests
 
 	private Asset choose(Set<String> used, int clanId)
 	{
-		final int start = Math.floorMod(clanId * 0x9E3779B9, _pool.size());
-		for (int i = 0; i < _pool.size(); i++)
+		return choose(_pool, used, _retired, clanId);
+	}
+
+	private static Asset choose(List<Asset> assets, Set<String> used, Set<String> retired, int id)
+	{
+		if (assets.isEmpty())
 		{
-			final Asset asset = _pool.get((start + i) % _pool.size());
-			if (!used.contains(asset.hash()) && !_retired.contains(asset.hash()))
+			return null;
+		}
+		final int start = Math.floorMod(id * 0x9E3779B9, assets.size());
+		for (int i = 0; i < assets.size(); i++)
+		{
+			final Asset asset = assets.get((start + i) % assets.size());
+			if (!used.contains(asset.hash()) && !retired.contains(asset.hash()))
 			{
 				return asset;
 			}
@@ -528,16 +706,31 @@ public final class PhantomClanCrests
 				_retired.remove(oldHash);
 			}
 			LOGGER.info(tag + "retired " + _retired.size() + " on file; retiring one: replaced " + replaced + ", crest changed " + ((before != first.getCrestId()) && !oldHash.equals(newHash)) + ", other crest kept " + (kept == second.getCrestId()) + ", old row gone " + (CrestTable.getInstance().getCrest(before) == null) + ".");
-			// Союз во главе с первым кланом (ep-alliance-crest-not-assigned): эмблема союза 8×16 у обоих.
+			// Союз во главе с первым кланом (ep-alliance-crest-not-assigned, вариант сопровождающего Эпилога): своя эмблема из набора союзов у обоих.
 			first.setAllyId(first.getId());
 			first.setAllyName("SelfTestAlly");
 			second.setAllyId(first.getId());
 			second.setAllyName("SelfTestAlly");
-			final int allies = giveAlly();
-			final Crest ally = CrestTable.getInstance().getCrest(first.getAllyCrestId());
-			final byte[] allyData = ally == null ? null : ally.getData();
-			final int allyWidth = allyData == null ? 0 : ByteBuffer.wrap(allyData).order(ByteOrder.LITTLE_ENDIAN).getInt(16);
-			LOGGER.info(tag + "alliance: given " + allies + ", crest " + first.getAllyCrestId() + ", the same at the member " + ((first.getAllyCrestId() != 0) && (second.getAllyCrestId() == first.getAllyCrestId())) + ", " + (allyData == null ? 0 : allyData.length) + " bytes, width " + allyWidth + ", valid " + ((allyData != null) && valid(allyData)) + ", second pass gives " + giveAlly() + ".");
+			final Set<String> poolHashes = new HashSet<>();
+			for (Asset asset : _allyPool)
+			{
+				poolHashes.add(asset.hash());
+			}
+			final int allies = giveAllies(_allyPool);
+			final byte[] allyData = crestData(first.getAllyCrestId());
+			LOGGER.info(tag + "alliance: pool " + _allyPool.size() + ", given " + allies + ", crest " + first.getAllyCrestId() + ", from the alliance pool " + ((allyData != null) && poolHashes.contains(hash(allyData))) + ", the same at the member " + ((first.getAllyCrestId() != 0) && (second.getAllyCrestId() == first.getAllyCrestId())) + ", " + (allyData == null ? 0 : allyData.length) + " bytes, width " + width(allyData) + ", valid " + ((allyData != null) && valid(allyData)) + ", second pass gives " + giveAllies(_allyPool) + ".");
+			// Копия у члена союза пропала — возвращается та же, выбранная у главы не меняется.
+			final int chosen = first.getAllyCrestId();
+			second.changeAllyCrest(0, true);
+			final boolean lost = second.getAllyCrestId() == 0;
+			final int copies = giveAllies(_allyPool);
+			LOGGER.info(tag + "alliance copy: member lost it " + lost + ", pass gives " + copies + ", restored the same " + ((chosen != 0) && (second.getAllyCrestId() == chosen)) + ", leader kept " + (first.getAllyCrestId() == chosen) + ".");
+			// Набор кончился — запасной путь: эмблема главы, сжатая до 8×16.
+			first.changeAllyCrest(0, false);
+			final int spare = giveAllies(List.of());
+			final byte[] spareData = crestData(first.getAllyCrestId());
+			final byte[] leaderData = crestData(first.getCrestId());
+			LOGGER.info(tag + "alliance fallback: given " + spare + ", " + (spareData == null ? 0 : spareData.length) + " bytes, width " + width(spareData) + ", the leader's crest compressed " + ((spareData != null) && (leaderData != null) && Arrays.equals(spareData, allyCrest(leaderData))) + ", the same at the member " + ((first.getAllyCrestId() != 0) && (second.getAllyCrestId() == first.getAllyCrestId())) + ".");
 		}
 		catch (Exception e)
 		{
@@ -569,6 +762,17 @@ public final class PhantomClanCrests
 			}
 			LOGGER.info(tag + "clans dismissed, done.");
 		}
+	}
+
+	private static byte[] crestData(int crestId)
+	{
+		final Crest crest = CrestTable.getInstance().getCrest(crestId);
+		return crest == null ? null : crest.getData();
+	}
+
+	private static int width(byte[] data)
+	{
+		return (data == null) || (data.length < 128) ? 0 : ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN).getInt(16);
 	}
 
 	static PhantomClanCrests getInstance()

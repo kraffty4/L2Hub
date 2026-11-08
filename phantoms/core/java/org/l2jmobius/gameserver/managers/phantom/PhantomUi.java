@@ -49,6 +49,29 @@ public final class PhantomUi
 	 */
 	public static String handle(Player player, String action, String key)
 	{
+		// Личная пачка (PersonalSavedParty, PersonalBattleCatalog): свой состав, выбор класса, страницы списка.
+		if ("squad".equalsIgnoreCase(action))
+		{
+			return PersonalSavedParty.handle(player, key);
+		}
+		if ("add".equalsIgnoreCase(action))
+		{
+			return PersonalBattleCatalog.add(player, key);
+		}
+		if ("page".equalsIgnoreCase(action))
+		{
+			return PersonalBattleCatalog.setPage(player, key);
+		}
+		if ("classes".equalsIgnoreCase(action))
+		{
+			return PersonalBattleCatalog.open(player, key);
+		}
+		if ("back".equalsIgnoreCase(action))
+		{
+			PersonalBattleCatalog.back(player);
+			PersonalSavedParty.close(player);
+			return null;
+		}
 		final boolean summon = "summon".equalsIgnoreCase(action);
 		final PhantomTemplate template = key == null ? null : find(player, key, summon);
 		if (template == null)
@@ -56,12 +79,26 @@ public final class PhantomUi
 			return summon && (key != null) && (find(player, key, false) != null) ? tr("Свободных напарников такой роли нет: все заняты. Кто с кем — в .buddy") : tr("Нет такого напарника. Список — .buddy");
 		}
 
+		final String accessError = PersonalCompanionClans.access(player, template);
+		if (accessError != null)
+		{
+			return accessError;
+		}
 		final PhantomCompanionManager companions = PhantomCompanionManager.getInstance();
 		switch (action.toLowerCase())
 		{
 			case "summon":
 			{
-				return companions.summon(player, template);
+				// Помощник с профилем пачки — через каталог: сразу в пати и в сохранённый состав.
+				return PersonalCompanionNames.named(template.getName()) != null ? PersonalBattleCatalog.summon(player, template) : companions.summon(player, template);
+			}
+			case "clan":
+			{
+				return PersonalCompanionClans.join(player, template);
+			}
+			case "selfbuff":
+			{
+				return PersonalCompanions.prepareNow(player, template);
 			}
 			case "invite":
 			{
@@ -97,13 +134,31 @@ public final class PhantomUi
 	 */
 	public static String render(Player player, String bypass)
 	{
+		if (PersonalSavedParty.open(player))
+		{
+			return PersonalSavedParty.board(player, bypass);
+		}
+		final String view = PersonalBattleCatalog.view(player);
+		if (view != null)
+		{
+			return PersonalBattleCatalog.chooser(player, bypass, view);
+		}
 		final PhantomCompanionManager companions = PhantomCompanionManager.getInstance();
 		final StringBuilder sb = new StringBuilder(6144);
+		if (PersonalBattleCatalog.available())
+		{
+			sb.append(PersonalSavedParty.summary(player, bypass));
+			sb.append(PersonalBattleCatalog.menu(bypass));
+		}
 		final List<PhantomTemplate> mine = new ArrayList<>();
 		final List<PhantomTemplate> free = new ArrayList<>();
 		final List<PhantomTemplate> busy = new ArrayList<>();
 		for (PhantomTemplate template : PhantomData.getInstance().getCompanions())
 		{
+			if (!PersonalBattleCatalog.visible(player, template))
+			{
+				continue; // чертёж класса пачки и чужие экземпляры не показываются
+			}
 			if ((PhantomManager.getInstance().getPhantom(template) != null) && companions.isOwner(player, template))
 			{
 				mine.add(template);
@@ -158,7 +213,7 @@ public final class PhantomUi
 		final String name = template.getName();
 		final Player phantom = PhantomManager.getInstance().getPhantom(template);
 		final boolean partied = companions.isPartiedWith(player, template);
-		sb.append("<table width=280><tr><td width=280><font color=\"LEVEL\">").append(name).append("</font> — ").append(roleName(template.getRole()));
+		sb.append("<table width=280><tr><td width=280><font color=\"LEVEL\">").append(name).append("</font> — ").append(caption(template));
 		if (phantom != null)
 		{
 			sb.append(", ").append(phantom.getLevel()).append(" ").append(className(phantom));
@@ -216,8 +271,37 @@ public final class PhantomUi
 				}
 			}
 			sb.append("</tr>");
+			if (PhantomCompat.personalPrepareSupported() && PersonalCompanions.personal(template))
+			{
+				sb.append("<tr>");
+				cell(sb, bypass, tr("Бафы себе"), "selfbuff", name);
+				sb.append("<td></td><td></td></tr>");
+			}
+		}
+		// Свой помощник с профилем пачки — в клан владельца; членство остаётся и после отзыва.
+		if ((phantom != null) && companions.isOwner(player, template) && (player.getClan() != null) && (PersonalCompanionNames.named(name) != null))
+		{
+			sb.append("<tr>");
+			if (phantom.getClanId() == 0)
+			{
+				cell(sb, bypass, tr("В клан"), "clan", name);
+			}
+			else
+			{
+				sb.append("<td colspan=3><font color=808080>").append(phantom.getClanId() == player.getClanId() ? tr("В твоём клане") : tr("В другом клане")).append("</font></td>");
+			}
+			sb.append("</tr>");
 		}
 		sb.append("</table><br>");
+	}
+
+	/**
+	 * Роль напарника или класс помощника пачки («воин — Гладиатор»).
+	 */
+	private static String caption(PhantomTemplate template)
+	{
+		final String caption = PersonalBattleCatalog.caption(template);
+		return caption == null ? roleName(template.getRole()) : caption;
 	}
 
 	/**
@@ -225,7 +309,7 @@ public final class PhantomUi
 	 */
 	private static void row(StringBuilder sb, Player player, PhantomTemplate template, String bypass, String label, String action)
 	{
-		sb.append("<table width=280><tr><td width=195><font color=\"LEVEL\">").append(template.getName()).append("</font> — ").append(roleName(template.getRole()));
+		sb.append("<table width=280><tr><td width=195><font color=\"LEVEL\">").append(template.getName()).append("</font> — ").append(caption(template));
 		sb.append("<br1>").append(profile(player, template, PhantomManager.getInstance().getPhantom(template)));
 		sb.append("<br1><font color=\"B09878\">").append(PhantomCompanionManager.getInstance().describe(player, template)).append("</font></td>");
 		if (label != null)
@@ -266,7 +350,7 @@ public final class PhantomUi
 	 */
 	private static PhantomTemplate find(Player player, String key, boolean free)
 	{
-		final PhantomTemplate byName = PhantomData.getInstance().getTemplate(key);
+		final PhantomTemplate byName = PhantomData.getInstance().getTemplate(PersonalCompanionNames.canonical(key));
 		if (byName != null)
 		{
 			return byName;

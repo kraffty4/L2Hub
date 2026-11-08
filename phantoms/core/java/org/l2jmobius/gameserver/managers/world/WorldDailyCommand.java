@@ -19,12 +19,23 @@ public class WorldDailyCommand implements IVoicedCommandHandler
 {
 	private static final String[] VOICED_COMMANDS =
 	{
-		"daily"
+		"daily",
+		"weekly"
 	};
 
 	@Override
 	public boolean onCommand(String command, Player player, String params)
 	{
+		if (X10World.contractsEnabled())
+		{
+			X10World.showContracts(player, command.equals("weekly"), params);
+			return true;
+		}
+		if (command.equals("weekly"))
+		{
+			player.sendMessage(tr("Недельные поручения недоступны или выключены."));
+			return false;
+		}
 		if (!WorldDaily.getInstance().isEnabled())
 		{
 			player.sendMessage(tr("Поручения дня выключены (WorldDaily в L2HubWorld.ini)."));

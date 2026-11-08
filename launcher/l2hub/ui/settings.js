@@ -14,6 +14,8 @@
   let activeTab = 'basic';
   let query = '';
   let drawnFor = null;   // какая страница сейчас на экране: другая — прокрутка в начало
+  let eventSection = 'catalog';
+  let eventFilter = 'all';
   const opened = new Set(); // раскрытые заметки и свёртки переживают перерисовку после щелчка
 
   const norm = (s) => String(s ?? '').toLowerCase().normalize('NFD').replace(/̈/g, ''); // без точек над ё: ищем и «щелкнуть»
@@ -33,17 +35,20 @@
         }
         // Ключ уже стоит выключателем на этой же сборке — второй строки не надо.
         const scopedKey = (key) => x.file ? Object.values(KEYS).find((k) => k.part === 'game' && k.key === key && (k.file === x.file || k.file.endsWith('/' + x.file) || k.file.endsWith('\\' + x.file))) : findKey(key);
-        const keys = (x.keys || []).map(([key, title, choices, text]) => ({ k: scopedKey(key), title, choices, text: text && scopedKey(text) }))
+        const keys = (x.keys || []).map(([key, title, choices, text, meta]) => ({ k: scopedKey(key), title, choices, text: text && scopedKey(text), ...meta }))
           .filter((x2) => x2.k && !coveredBySwitch(x2.k));
-        return { title: x.title || '', note: x.note, rows: (x.ids || []).filter((id) => sw[id]).map((id) => sw[id]), keys };
+        return { title: x.title || '', note: x.note || x.about, rows: (x.ids || []).filter((id) => sw[id]).map((id) => sw[id]), keys };
       }).filter((x) => x.rows.length || x.keys.length);
       return { ...p, subs, absent: absent.map((id) => r.switches.find((s) => s.id === id)?.title).filter(Boolean),
         rates: rateList(p.rates), fine: rateList(p.fine) };
     });
     const rest = Object.values(sw).filter((s) => !placed.has(s.id));
     if (rest.length) all.push({ ...OTHER, subs: [{ title: '', rows: rest, keys: [] }], absent: [], rates: [], fine: [] });
-    pages = all.filter((p) => p.subs.length || p.rates.length || p.fine.length || (p.kind === 'mode' && r.modes?.length) || (p.kind === 'people' && r.huntersMax));
-    if (!pages.some((p) => p.id === page)) page = pages.some((p) => p.id === load('setPage')) ? load('setPage') : pages[0]?.id;
+    pages = all.filter((p) => p.subs.length || p.rates.length || p.fine.length || (p.kind === 'eventHub' && all.some((c) => c.parent === p.id && c.subs.length)) || (p.kind === 'mode' && r.modes?.length) || (p.kind === 'people' && r.huntersMax));
+    const saved = String(load('setPage') || '').replace(/^x10-(general|farm|defence|hunt|rewards)$/, (_, name) => `event-${name === 'general' ? 'rules' : name}`);
+    if (!pages.some((p) => p.id === page)) page = pages.some((p) => p.id === saved) ? saved : pages.find((p) => !p.parent)?.id;
+    const current = pages.find((p) => p.id === page);
+    if (current?.parent === 'events') eventSection = current.section;
   }
   // @adena — множитель адены внутри DropAmountMultiplierByItemId.
   const rateKey = (key) => findKey(key === '@adena' ? 'DropAmountMultiplierByItemId' : key);
@@ -53,11 +58,12 @@
 
   // ---------- Дерево ----------
   function drawNav() {
-    const heads = [...new Set(pages.map((p) => p.head)), 'Служебное'];
-    el('pnavTree').innerHTML = [...new Set(heads)].map((h) => `<div class="pnav-h">${esc(h)}</div>` + pages.filter((p) => p.head === h).map((p) => {
+    const visible = pages.filter((p) => !p.parent);
+    const heads = [...new Set(visible.map((p) => p.head)), 'Служебное'];
+    el('pnavTree').innerHTML = [...new Set(heads)].map((h) => `<div class="pnav-h">${esc(h)}</div>` + visible.filter((p) => p.head === h).map((p) => {
       const rows = rowsOf(p);
       const count = rows.length > 1 ? `<span class="c">${rows.filter((s) => s.value).length}/${rows.length}</span>` : '';
-      const on = activeTab === 'basic' && !query && p.id === page;
+      const on = activeTab === 'basic' && !query && (p.id === page || pages.find((x) => x.id === page)?.parent === p.id);
       return `<button class="${on ? 'on' : ''}" data-p="${p.id}" title="${esc(p.title)}"${on ? ' aria-current="page"' : ''}><span>${esc(p.short || p.title)}</span>${count}</button>`;
     }).join('')).join('');
     el('pnavTree').querySelectorAll('[data-p]').forEach((b) => (b.onclick = () => openPage(b.dataset.p)));
@@ -65,6 +71,8 @@
 
   function openPage(id) {
     page = id;
+    const p = pages.find((x) => x.id === id);
+    if (p?.parent === 'events') eventSection = p.section;
     store('setPage', id);
     clearQuery();
     if (activeTab !== 'basic') document.querySelector('.tab[data-tab="basic"]').click();
@@ -81,7 +89,7 @@
     const open = opened.has(s.id);
     const tags = (s.restart ? `<i title="${s.restart === 'login' ? 'Применится после перезапуска логина' : 'Применится после перезапуска сервера'}">перезапуск</i>` : '')
       + (s.brain ? '<i title="Работает только с мозгами">мозги</i>' : '');
-    return `<div class="prow${open ? ' open' : ''}" data-id="${s.id}"><button class="prow-m" aria-expanded="${open}"><span class="prow-t">${esc(s.title)}</span><span class="prow-n">${esc(s.note)}</span><span class="prow-k">${esc(s.file)} · ${esc(s.keys.join(', '))}</span></button>
+    return `<div class="prow${open ? ' open' : ''}" data-id="${s.id}"><button class="prow-m" aria-expanded="${open}"><span class="prow-t">${esc(s.title)}</span><span class="prow-n">${esc(s.note)}</span>${s.technical === false ? '' : `<span class="prow-k">${esc(s.file)} · ${esc(s.keys.join(', '))}</span>`}</button>
       <span class="prow-tags">${window.L2Load?.chip(s.id) ?? ''}${tags}</span><button class="switch" role="switch" aria-checked="${s.value}" aria-label="${esc(s.title)}" data-sw="${s.id}"></button></div>`;
   }
 
@@ -89,7 +97,7 @@
   const slots = [];
   function keyRow(x) {
     slots.push(x);
-    return `<div class="prow key${x.k.id in edits ? ' edited' : ''}" data-slot="${slots.length - 1}"><div class="prow-m"><span class="prow-t">${esc(x.title)}</span><span class="prow-c" hidden></span></div><span class="prow-ctl"></span></div>${x.text ? `<textarea class="field prow-text" data-text="${slots.length - 1}" spellcheck="false"></textarea>` : ''}`;
+    return `<div class="prow key${x.k.id in edits ? ' edited' : ''}" data-slot="${slots.length - 1}"><div class="prow-m"><span class="prow-t">${esc(x.title)}</span>${x.hint ? `<span class="prow-n">${esc(x.hint)}</span>` : ''}<span class="prow-c" hidden></span></div><span class="prow-ctl"></span></div>${x.text ? `<textarea class="field prow-text" data-text="${slots.length - 1}" spellcheck="false"></textarea>` : ''}`;
   }
 
   function fillKey(row, x) {
@@ -107,13 +115,21 @@
       ctl = document.createElement('input');
       ctl.className = 'field knum';
       ctl.type = 'number';
-      ctl.value = valOf(k);
-      ctl.oninput = () => { setVal(k, ctl.value); mark(); };
+      const scale = x.scale || 1;
+      ctl.value = x.scale ? Number(valOf(k)) / scale : valOf(k);
+      if (x.min !== undefined) ctl.min = x.min;
+      if (x.max !== undefined) ctl.max = x.max;
+      if (x.step !== undefined) ctl.step = x.step;
+      ctl.oninput = () => {
+        const value = x.scale && ctl.value !== '' ? String(Number((Number(ctl.value) * scale).toFixed(8))) : ctl.value;
+        setVal(k, value); mark();
+      };
     }
-    ctl.title ||= k.key;
+    ctl.setAttribute('aria-label', x.title);
+    ctl.title ||= x.hint || k.key;
     row.querySelector('.prow-ctl').appendChild(ctl);
     const c = row.querySelector('.prow-c');
-    c.hidden = false;
+    c.hidden = !!x.hint;
     c.textContent = x.plain ? k.file : k.key;
     if (x.plain && k.description) {
       const d = document.createElement('span');
@@ -173,14 +189,47 @@
     return p.subs.map((x) => `${x.title ? `<h4 class="psub">${esc(x.title)}</h4>` : ''}${x.note ? `<p class="phint">${esc(x.note)}</p>` : ''}<div class="pgroup">${x.rows.map(swRow).join('')}${x.keys.map(keyRow).join('')}</div>`).join('');
   }
 
+  // Один пункт дерева: растущий каталог живёт внутри раздела, карточки используют те же ключи и API.
+  function drawEvents(box, current) {
+    const root = pages.find((p) => p.id === 'events');
+    const children = pages.filter((p) => p.parent === 'events');
+    const tabs = [['catalog', 'Каталог событий'], ['rules', 'Общие правила'], ['contracts', 'Задания'], ['rewards', 'Награды и валюты']]
+      .filter(([key]) => children.some((p) => p.section === key));
+    if (!tabs.some(([key]) => key === eventSection)) eventSection = tabs[0]?.[0];
+    const detail = current.parent === 'events' ? current : children.find((p) => p.section === eventSection);
+    slots.length = 0;
+    box.innerHTML = `<div class="event-hub"><div class="ppage-h"><h2>${esc(root.title)}</h2></div><p class="pabout">${esc(root.about)}</p>
+      <nav class="event-tabs" aria-label="Разделы ивентов">${tabs.map(([key, title]) => `<button class="sbtn mini${key === eventSection ? ' on' : ''}" data-event-section="${key}" aria-pressed="${key === eventSection}">${esc(title)}</button>`).join('')}</nav><div id="eventContent"></div></div>`;
+    const content = el('eventContent');
+    if (eventSection === 'catalog' && current.id === 'events') {
+      const categories = [['all', 'Все'], ['pve', 'PvE'], ['pvp', 'PvP'], ['seasonal', 'Сезонные']];
+      const engine = swOf('event-engine');
+      content.innerHTML = (engine?.available ? `<div class="event-engine">${swRow(engine)}</div>` : '')
+        + `<div class="event-filters" aria-label="Виды ивентов">${categories.map(([key, title]) => `<button class="sbtn mini${key === eventFilter ? ' on' : ''}" data-event-filter="${key}" aria-pressed="${key === eventFilter}">${esc(title)}</button>`).join('')}</div><div class="event-cards"></div>`;
+      const list = children.filter((p) => p.section === 'catalog' && (eventFilter === 'all' || p.category === eventFilter));
+      content.querySelector('.event-cards').innerHTML = list.map((p) => {
+        const s = swOf(p.eventSwitch);
+        const paused = p.eventGroup && !swOf(p.eventGroup)?.value;
+        const status = !s?.value ? 'Выключен в настройках' : paused ? 'Общая очередь выключена' : 'Включён в настройках';
+        const summary = p.subs.flatMap((s) => s.keys).filter((x) => /^(Farm|Defence|Hunt)(IntervalMinutes|Minutes|Coins)$/.test(x.k.key));
+        return `<article class="event-card"><div class="event-card-head"><h3>${esc(p.title)}</h3>${s ? `<button class="switch" role="switch" aria-checked="${s.value}" aria-label="${esc(s.title)}" data-sw="${s.id}"></button>` : ''}</div>
+          <span class="event-status">${esc(status)}</span><p>${esc(p.about)}</p>${summary.length ? `<dl>${summary.map((x) => `<div><dt>${esc(x.title)}</dt><dd>${esc(valOf(x.k))}</dd></div>`).join('')}</dl>` : ''}<button class="sbtn event-configure" data-event-open="${p.id}">${esc('Настроить')}</button></article>`;
+      }).join('') || `<p class="phint">${esc('В этой категории нет доступных событий.')}</p>`;
+    } else if (detail) {
+      content.innerHTML = `${detail.section === 'catalog' ? `<button class="sbtn mini" data-event-back>${esc('К каталогу')}</button>` : ''}<h3 class="event-detail-title">${esc(detail.title)}</h3><p class="pabout">${esc(detail.about)}</p>${subsHtml(detail)}${detail.calendar ? '<div id="eventCalendar"></div>' : ''}`;
+      if (detail.calendar) renderCalendar(el('eventCalendar'), selected, detail.calendar);
+    }
+  }
+
   function drawPage(box) {
     const p = pages.find((x) => x.id === page);
     if (!p) { box.innerHTML = `<div class="note">${esc(state.error || 'У этой сборки настроек на страницах нет: всё — в «Все ключи».')}</div>`; return; }
+    if (p.kind === 'eventHub' || p.parent === 'events') { drawEvents(box, p); return; }
     const rows = rowsOf(p);
     const onN = rows.filter((s) => s.value).length;
     const canOn = rows.some((s) => !s.value && s.bulk !== false);
     slots.length = 0;
-    box.innerHTML = `<div class="ppage-h"><h2>${esc(p.title)}</h2>${rows.length > 1 ? `<span class="c">${onN} из ${rows.length}</span><span class="spacer"></span><button class="sbtn mini" data-all="1"${canOn ? '' : ' disabled'}>Включить все</button><button class="sbtn mini" data-all="0"${onN ? '' : ' disabled'}>Выключить все</button>` : ''}</div>
+    box.innerHTML = `<div class="ppage-h"><h2>${esc(p.title)}</h2>${rows.length > 1 && p.bulk !== false ? `<span class="c">${onN} из ${rows.length}</span><span class="spacer"></span><button class="sbtn mini" data-all="1"${canOn ? '' : ' disabled'}>Включить все</button><button class="sbtn mini" data-all="0"${onN ? '' : ' disabled'}>Выключить все</button>` : ''}</div>
       ${p.about && (p.kind !== 'mode' || state.ok) ? `<p class="pabout">${esc(p.about)}</p>` : ''}
       ${p.kind === 'mode' ? modeBlock() : ''}${p.kind === 'people' ? huntersBlock() : ''}
       <div id="rateMain"></div>${subsHtml(p)}${p.fine.length ? fold('fine', 'Тонкие рейты: группа, шансы, рейды, хербы, квесты, манор') : ''}
@@ -208,7 +257,7 @@
       const rows = rowsOf(p).filter((s) => hit(said(s.title), said(s.note), s.file, s.keys.join(' ')));
       const keys = p.subs.flatMap((x) => x.keys);
       keys.forEach((x) => { shown.add(x.k.key); if (x.text) shown.add(x.text.key); });
-      const keyHits = keys.filter((x) => hit(said(x.title), x.k.key, x.k.file, x.k.description));
+      const keyHits = keys.filter((x) => hit(said(x.title), said(x.hint), x.k.key, x.k.file, x.k.description));
       const rates = [...p.rates, ...p.fine];
       rates.forEach(([key]) => shown.add(rateKey(key).key));
       const rateHits = rates.filter(([key, label]) => hit(said(label), rateKey(key).key));
@@ -234,7 +283,7 @@
   function draw() {
     const box = el('basic');
     if (!state) return;
-    const key = query ? '?' : page;
+    const key = query ? '?' : `${page}:${eventSection}:${eventFilter}`;
     const top = box.scrollTop;
     if (query) drawSearch(box); else drawPage(box);
     box.scrollTop = key === drawnFor ? top : 0;
@@ -310,6 +359,10 @@
   }
 
   function bind(box) {
+    box.querySelectorAll('[data-event-section]').forEach((b) => (b.onclick = () => { eventSection = b.dataset.eventSection; openPage('events'); }));
+    box.querySelectorAll('[data-event-filter]').forEach((b) => (b.onclick = () => { eventFilter = b.dataset.eventFilter; draw(); }));
+    box.querySelectorAll('[data-event-open]').forEach((b) => (b.onclick = () => openPage(b.dataset.eventOpen)));
+    box.querySelectorAll('[data-event-back]').forEach((b) => (b.onclick = () => { eventSection = 'catalog'; openPage('events'); }));
     box.querySelectorAll('[data-sw]').forEach((b) => (b.onclick = () => toggle(b)));
     // Тень на полосках: что изменится от щелчка.
     const shade = (node, switches) => {

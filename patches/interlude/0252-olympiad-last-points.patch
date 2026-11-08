@@ -1,0 +1,16 @@
+L2Hub: очки прошлого периода у Олимпийского менеджера читаются rs.next(), а не rs.first(): на forward-only соединении
+first() бросал ошибку, и очков не было видно. Патч сопровождающего Эпилога 0250 (ep-olympiad-last-points-cursor)
+байт в байт; на High Five то же — патч 0249.
+
+diff --git a/java/org/l2jmobius/gameserver/mechanics/olympiad/Olympiad.java b/java/org/l2jmobius/gameserver/mechanics/olympiad/Olympiad.java
+--- a/java/org/l2jmobius/gameserver/mechanics/olympiad/Olympiad.java
++++ b/java/org/l2jmobius/gameserver/mechanics/olympiad/Olympiad.java
+@@ -1683,7 +1683,7 @@
+ 			ps.setInt(1, objId);
+ 			try (ResultSet rs = ps.executeQuery())
+ 			{
+-				if (rs.first())
++				if (rs.next())
+ 				{
+ 					result = rs.getInt(1);
+ 				}

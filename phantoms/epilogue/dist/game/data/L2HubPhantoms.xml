@@ -2,7 +2,7 @@
 <list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="xsd/L2HubPhantoms.xsd">
 	<!-- L2Hub: напарники-фантомы. Сгенерировано tools/fake_players.py, правки — в таблице COMPANIONS. -->
 	<!-- Vesna: хилер, Human Mystic, Cleric, Bishop, Cardinal -->
-	<phantom name="Vesna" role="HEALER" female="true" face="0" hairStyle="3" hairColor="0" classes="10,15,16,97" aliases="весна;веснушка;vesnushka" x="83208" y="148132" z="-3408">
+	<phantom name="Vesna" role="HEALER" female="true" face="0" hairStyle="3" hairColor="0" classes="10,15,16,97" aliases="весна;веснушка;vesnushka" profile="healer" x="83208" y="148132" z="-3408">
 		<gear grade="NONE" minLevel="1" rhand="7" shots="3947" /> <!-- Apprentice's Rod -->
 		<gear grade="D" minLevel="20" rhand="180" chest="436" legs="469" gloves="2447" shots="3948" /> <!-- Mace of Judgment, Tunic of Knowledge, Stockings of Knowledge, Gloves of Knowledge -->
 		<gear grade="C" minLevel="40" rhand="174" chest="441" legs="472" gloves="2459" shots="3949" /> <!-- Nirvana Axe, Demon's Tunic, Demon's Stockings, Demon's Gloves -->
@@ -13,7 +13,7 @@
 		<gear grade="S84" minLevel="84" rhand="14142" head="13139" chest="13434" legs="13444" gloves="13445" feet="13446" shots="3952" /> <!-- Vesper Caster - Acumen, Vesper Circlet, Vesper Tunic, Vesper Stockings, Vesper Gloves, Vesper Shoes -->
 	</phantom>
 	<!-- Mityai: баффер, Human Mystic, Cleric, Prophet, Hierophant -->
-	<phantom name="Mityai" role="BUFFER" female="false" face="0" hairStyle="3" hairColor="0" classes="10,15,17,98" aliases="митяй;митя;мить;mityay;mitya;mitia" x="83374" y="148422" z="-3400">
+	<phantom name="Mityai" role="BUFFER" female="false" face="0" hairStyle="3" hairColor="0" classes="10,15,17,98" aliases="митяй;митя;мить;mityay;mitya;mitia" profile="buffer" x="83374" y="148422" z="-3400">
 		<gear grade="NONE" minLevel="1" rhand="7816" shots="3947" /> <!-- Apprentice Adventurer's Staff -->
 		<gear grade="D" minLevel="20" rhand="7825" chest="436" legs="469" gloves="2447" shots="3948" /> <!-- Traveler's Staff, Tunic of Knowledge, Stockings of Knowledge, Gloves of Knowledge -->
 		<gear grade="C" minLevel="40" rhand="195" chest="441" legs="472" gloves="2459" shots="3949" /> <!-- Cursed Staff, Demon's Tunic, Demon's Stockings, Demon's Gloves -->
@@ -67,6 +67,94 @@
 		<gear grade="S80" minLevel="80" rhand="11277" head="9438" chest="10237" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Dynasty Staff - Holy Spirit - Mana Up, Dynasty Circlet, Dynasty Silver Satin Tunic - Enchanter, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
 		<gear grade="S84" minLevel="84" rhand="14145" head="13139" chest="13434" legs="13444" gloves="13445" feet="13446" shots="3952" /> <!-- Vesper Singer - Empower, Vesper Circlet, Vesper Tunic, Vesper Stockings, Vesper Gloves, Vesper Shoes -->
 	</phantom>
+	<!-- Bulat: дамагер, Human Fighter, Warrior, Gladiator, Duelist -->
+	<phantom name="Bulat" role="DAMAGE" female="false" face="2" hairStyle="0" hairColor="2" classes="0,1,2,88" aliases="булат" profile="gladiator" x="83502" y="148281" z="-3400">
+		<gear grade="NONE" minLevel="1" rhand="1299" shots="1835" /> <!-- Great Sword -->
+		<gear grade="D" minLevel="20" rhand="2518" head="2411" chest="352" legs="2378" shots="1463" /> <!-- Saber*Spinebone Sword, Brigandine Helmet, Brigandine Tunic, Brigandine Gaiters -->
+		<gear grade="C" minLevel="40" rhand="2544" head="2413" chest="354" legs="381" shots="1464" /> <!-- Artisan's Sword*Sword of Revolution, Chain Hood, Chain Mail Shirt, Chain Gaiters -->
+		<gear grade="B" minLevel="52" rhand="2602" head="2415" chest="2376" legs="2379" gloves="5714" feet="5730" shots="1465" /> <!-- Raid Sword*Sword of Delusion, Avadon Circlet, Avadon Breastplate, Avadon Gaiters, Avadon Gloves - Heavy Armor, Avadon Boots - Heavy Armor -->
+		<gear grade="A" minLevel="61" rhand="5233" head="547" chest="2382" gloves="5768" feet="5780" shots="1466" /> <!-- Keshanberk*Keshanberk, Tallum Helm, Tallum Plate Armor, Tallum Gloves - Heavy Armor, Tallum Boots - Heavy Armor -->
+		<gear grade="S" minLevel="76" rhand="6580" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" shots="1467" /> <!-- Tallum Blade*Dark Legion's Edge, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots -->
+		<gear grade="S80" minLevel="80" rhand="10004" head="9422" chest="9419" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Dynasty Dual Sword, Dynasty Helmet, Dynasty Breast Plate - Force Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
+		<gear grade="S84" minLevel="84" rhand="52" head="13140" chest="13435" legs="13448" gloves="13449" feet="13450" shots="1467" /> <!-- Vesper Dual Sword, Vesper Noble Helmet, Vesper Noble Breastplate, Vesper Noble Gaiters, Vesper Noble Gauntlet, Vesper Noble Boots -->
+	</phantom>
+	<!-- Gromila: дамагер, Orc Fighter, Orc Raider, Destroyer, Titan -->
+	<phantom name="Gromila" role="DAMAGE" female="false" face="1" hairStyle="3" hairColor="2" classes="44,45,46,113" aliases="громила" profile="destroyer" x="83473" y="148508" z="-3400">
+		<gear grade="NONE" minLevel="1" rhand="981" shots="1835" /> <!-- Red Sunset Sword -->
+		<gear grade="D" minLevel="20" rhand="7880" head="47" chest="58" legs="59" shots="1463" /> <!-- Steel Sword, Helmet, Mithril Breastplate, Mithril Gaiters -->
+		<gear grade="C" minLevel="40" rhand="71" head="517" chest="60" shots="1464" /> <!-- Flamberge, Composite Helmet, Composite Armor -->
+		<gear grade="B" minLevel="52" rhand="78" head="503" chest="357" legs="383" gloves="5710" feet="5726" shots="1465" /> <!-- Great Sword, Zubei's Helmet, Zubei's Breastplate, Zubei's Gaiters, Zubei's Gauntlets - Heavy Armor, Zubei's Boots - Heavy Armor -->
+		<gear grade="A" minLevel="61" rhand="7884" head="512" chest="365" legs="388" gloves="5765" feet="5777" shots="1466" /> <!-- Infernal Master, Dark Crystal Helmet, Dark Crystal Breastplate, Dark Crystal Gaiters, Dark Crystal Gloves - Heavy Armor, Dark Crystal Boots - Heavy Armor -->
+		<gear grade="S" minLevel="76" rhand="6372" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" shots="1467" /> <!-- Heaven's Divider, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots -->
+		<gear grade="S80" minLevel="80" rhand="9443" head="9422" chest="9418" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Dynasty Blade, Dynasty Helmet, Dynasty Breast Plate - Weapon Master, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
+		<gear grade="S84" minLevel="84" rhand="13458" head="13137" chest="13432" legs="13438" gloves="13439" feet="13440" shots="1467" /> <!-- Vesper Slasher, Vesper Helmet, Vesper Breastplate, Vesper Gaiters, Vesper Gauntlet, Vesper Boots -->
+	</phantom>
+	<!-- Kulak: дамагер, Orc Fighter, Monk, Tyrant, Grand Khavatari -->
+	<phantom name="Kulak" role="DAMAGE" female="false" face="1" hairStyle="2" hairColor="1" classes="44,47,48,114" aliases="кулак" profile="tyrant" x="83394" y="148220" z="-3400">
+		<gear grade="NONE" minLevel="1" rhand="2368" shots="1835" /> <!-- Training Gloves -->
+		<gear grade="D" minLevel="20" rhand="258" chest="394" legs="416" feet="2422" shots="1463" /> <!-- Bagh-Nakh, Reinforced Leather Shirt, Reinforced Leather Gaiters, Reinforced Leather Boots -->
+		<gear grade="C" minLevel="40" rhand="263" chest="400" legs="420" feet="2436" shots="1464" /> <!-- Chakram, Theca Leather Armor, Theca Leather Gaiters, Theca Leather Boots -->
+		<gear grade="B" minLevel="52" rhand="264" head="2416" chest="2391" gloves="5719" feet="5735" shots="1465" /> <!-- Pata, Blue Wolf Helmet, Blue Wolf Leather Armor, Blue Wolf Gloves - Light Armor, Blue Wolf Boots - Light Armor -->
+		<gear grade="A" minLevel="61" rhand="269" head="2418" chest="2394" gloves="5772" feet="5784" shots="1466" /> <!-- Blood Tornado, Helm of Nightmare, Leather Armor of Nightmare, Gauntlets of Nightmare - Light Armor, Boots of Nightmare - Light Armor -->
+		<gear grade="S" minLevel="76" rhand="6371" head="6382" chest="6379" gloves="6380" feet="6381" shots="1467" /> <!-- Demon Splinter, Draconic Leather Helmet, Draconic Leather Armor, Draconic Leather Gloves, Draconic Leather Boots -->
+		<gear grade="S80" minLevel="80" rhand="9450" head="9429" chest="10487" legs="9428" gloves="9430" feet="9431" shots="1467" /> <!-- Dynasty Bagh-Nakh, Dynasty Leather Helmet, Dynasty Jeweled Leather Armor - Force Master, Dynasty Leather Leggings, Dynasty Leather Gloves - Light Armor, Dynasty Leather Boots - Light Armor -->
+		<gear grade="S84" minLevel="84" rhand="13461" head="13138" chest="13433" legs="13441" gloves="13442" feet="13443" shots="1467" /> <!-- Vesper Fighter, Vesper Leather Helmet, Vesper Leather Breastplate, Vesper Leather Leggings, Vesper Leather Gloves, Vesper Leather Boots -->
+	</phantom>
+	<!-- Vityaz: дамагер, Human Fighter, Warrior, Warlord, Dreadnought -->
+	<phantom name="Vityaz" role="DAMAGE" female="false" face="1" hairStyle="1" hairColor="3" classes="0,1,3,89" aliases="витязь" profile="warlord" x="83335" y="148326" z="-3400">
+		<gear grade="NONE" minLevel="1" rhand="1303" shots="1835" /> <!-- Lance -->
+		<gear grade="D" minLevel="20" rhand="1376" head="47" chest="58" legs="59" shots="1463" /> <!-- Guard Spear, Helmet, Mithril Breastplate, Mithril Gaiters -->
+		<gear grade="C" minLevel="40" rhand="302" head="517" chest="60" shots="1464" /> <!-- Body Slasher, Composite Helmet, Composite Armor -->
+		<gear grade="B" minLevel="52" rhand="300" head="2416" chest="358" legs="2380" gloves="5718" feet="5734" shots="1465" /> <!-- Great Axe, Blue Wolf Helmet, Blue Wolf Breastplate, Blue Wolf Gaiters, Blue Wolf Gloves - Heavy Armor, Blue Wolf Boots - Heavy Armor -->
+		<gear grade="A" minLevel="61" rhand="98" head="2418" chest="374" gloves="5771" feet="5783" shots="1466" /> <!-- Halberd, Helm of Nightmare, Armor of Nightmare, Gauntlets of Nightmare - Heavy Armor, Boots of Nightmare - Heavy Armor -->
+		<gear grade="S" minLevel="76" rhand="6370" head="6378" chest="6373" legs="6374" gloves="6375" feet="6376" shots="1467" /> <!-- Saint Spear, Imperial Crusader Helmet, Imperial Crusader Breastplate, Imperial Crusader Gaiters, Imperial Crusader Gauntlets, Imperial Crusader Boots -->
+		<gear grade="S80" minLevel="80" rhand="9447" head="9422" chest="9416" legs="9421" gloves="9423" feet="9424" shots="1467" /> <!-- Dynasty Halberd, Dynasty Helmet, Dynasty Breast Plate, Dynasty Gaiters, Dynasty Gauntlet - Heavy Armor, Dynasty Boots - Heavy Armor -->
+		<gear grade="S84" minLevel="84" rhand="13462" head="13137" chest="13432" legs="13438" gloves="13439" feet="13440" shots="1467" /> <!-- Vesper Stormer, Vesper Helmet, Vesper Breastplate, Vesper Gaiters, Vesper Gauntlet, Vesper Boots -->
+	</phantom>
+	<!-- Vyuga: дамагер, Dark Mystic, Dark Wizard, Spellhowler, Storm Screamer -->
+	<phantom name="Vyuga" role="DAMAGE" female="true" face="2" hairStyle="6" hairColor="3" classes="38,39,40,110" aliases="вьюга" profile="spellhowler" x="83633" y="148430" z="-3400">
+		<gear grade="NONE" minLevel="1" rhand="14631" shots="3947" /> <!-- Santa Claus' Daimon Crystal -->
+		<gear grade="D" minLevel="20" rhand="90" chest="436" legs="469" gloves="2447" shots="3948" /> <!-- Goat Head Staff, Tunic of Knowledge, Stockings of Knowledge, Gloves of Knowledge -->
+		<gear grade="C" minLevel="40" rhand="199" chest="441" legs="472" gloves="2459" shots="3949" /> <!-- Pa'agrian Hammer, Demon's Tunic, Demon's Stockings, Demon's Gloves -->
+		<gear grade="B" minLevel="52" rhand="207" head="2416" chest="2398" legs="2403" gloves="5720" feet="5736" shots="3950" /> <!-- Staff of Phantom, Blue Wolf Helmet, Blue Wolf Tunic, Blue Wolf Stockings, Blue Wolf Gloves - Robe, Blue Wolf Boots - Robe -->
+		<gear grade="A" minLevel="61" rhand="5597" head="2418" chest="2408" gloves="5773" feet="5785" shots="3951" /> <!-- Dasparion's Staff - Conversion, Helm of Nightmare, Robe of Nightmare, Gauntlets of Nightmare - Robe, Boots of Nightmare - Robe -->
+		<gear grade="S" minLevel="76" rhand="6587" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- Imperial Staff - Empower, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
+		<gear grade="S80" minLevel="80" rhand="10527" head="9438" chest="9432" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Dynasty Staff - Mana Up, Dynasty Circlet, Dynasty Tunic, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
+		<gear grade="S84" minLevel="84" rhand="14145" head="13139" chest="13434" legs="13444" gloves="13445" feet="13446" shots="3952" /> <!-- Vesper Singer - Empower, Vesper Circlet, Vesper Tunic, Vesper Stockings, Vesper Gloves, Vesper Shoes -->
+	</phantom>
+	<!-- Ineya: дамагер, Elven Mystic, Elven Wizard, Spellsinger, Mystic Muse -->
+	<phantom name="Ineya" role="DAMAGE" female="true" face="2" hairStyle="5" hairColor="0" classes="25,26,27,103" aliases="инея" profile="spellsinger" x="83203" y="148285" z="-3408">
+		<gear grade="NONE" minLevel="1" rhand="9908" shots="3947" /> <!-- Improved Mage Staff -->
+		<gear grade="D" minLevel="20" rhand="7825" chest="436" legs="469" gloves="2447" shots="3948" /> <!-- Traveler's Staff, Tunic of Knowledge, Stockings of Knowledge, Gloves of Knowledge -->
+		<gear grade="C" minLevel="40" rhand="4868" chest="441" legs="472" gloves="2459" shots="3949" /> <!-- Crystal Staff - Mana Up, Demon's Tunic, Demon's Stockings, Demon's Gloves -->
+		<gear grade="B" minLevel="52" rhand="209" head="2416" chest="2398" legs="2403" gloves="5720" feet="5736" shots="3950" /> <!-- Divine Staff, Blue Wolf Helmet, Blue Wolf Tunic, Blue Wolf Stockings, Blue Wolf Gloves - Robe, Blue Wolf Boots - Robe -->
+		<gear grade="A" minLevel="61" rhand="4905" head="2418" chest="2408" gloves="5773" feet="5785" shots="3951" /> <!-- Dasparion's Staff, Helm of Nightmare, Robe of Nightmare, Gauntlets of Nightmare - Robe, Boots of Nightmare - Robe -->
+		<gear grade="S" minLevel="76" rhand="6589" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- Imperial Staff - Magic Hold, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
+		<gear grade="S80" minLevel="80" rhand="10529" head="9438" chest="9432" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Dynasty Staff - Acumen, Dynasty Circlet, Dynasty Tunic, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
+		<gear grade="S84" minLevel="84" rhand="14147" head="13139" chest="13434" legs="13444" gloves="13445" feet="13446" shots="3952" /> <!-- Vesper Singer - Magic Hold, Vesper Circlet, Vesper Tunic, Vesper Stockings, Vesper Gloves, Vesper Shoes -->
+	</phantom>
+	<!-- Plamya: дамагер, Human Mystic, Human Wizard, Sorcerer, Archmage -->
+	<phantom name="Plamya" role="DAMAGE" female="true" face="1" hairStyle="6" hairColor="0" classes="10,11,12,94" aliases="пламя" profile="sorcerer" x="83573" y="148173" z="-3400">
+		<gear grade="NONE" minLevel="1" rhand="9908" shots="3947" /> <!-- Improved Mage Staff -->
+		<gear grade="D" minLevel="20" rhand="178" chest="437" legs="470" gloves="2450" shots="3948" /> <!-- Bone Staff, Mithril Tunic, Mithril Stockings, Mithril Gloves -->
+		<gear grade="C" minLevel="40" rhand="4882" chest="441" legs="472" gloves="2459" shots="3949" /> <!-- Sage's Staff - Magic Hold, Demon's Tunic, Demon's Stockings, Demon's Gloves -->
+		<gear grade="B" minLevel="52" rhand="10916" head="2415" chest="2406" gloves="5716" feet="5732" shots="3950" /> <!-- Sprite's Staff - Hail, Avadon Circlet, Avadon Robe, Avadon Gloves - Robe, Avadon Boots - Robe -->
+		<gear grade="A" minLevel="61" rhand="212" head="512" chest="2407" gloves="5767" feet="5779" shots="3951" /> <!-- Dasparion's Staff, Dark Crystal Helmet, Dark Crystal Robe, Dark Crystal Gloves - Robe, Dark Crystal Boots - Robe -->
+		<gear grade="S" minLevel="76" rhand="11230" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- Imperial Staff - Nature, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
+		<gear grade="S80" minLevel="80" rhand="11276" head="9438" chest="9432" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Dynasty Staff - Holy Spirit, Dynasty Circlet, Dynasty Tunic, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
+		<gear grade="S84" minLevel="84" rhand="13466" head="13142" chest="13437" legs="13454" gloves="13455" feet="13456" shots="3952" /> <!-- Vesper Singer, Vesper Noble Circlet, Vesper Noble Tunic, Vesper Noble Stockings, Vesper Noble Gloves, Vesper Noble Shoes -->
+	</phantom>
+	<!-- Kostey: дамагер, Human Mystic, Human Wizard, Necromancer, Soultaker -->
+	<phantom name="Kostey" role="DAMAGE" female="false" face="2" hairStyle="2" hairColor="2" classes="10,11,13,95" aliases="костей;кощей" profile="necromancer" x="83573" y="148300" z="-3400">
+		<gear grade="NONE" minLevel="1" rhand="754" shots="3947" /> <!-- Red Sunset Staff -->
+		<gear grade="D" minLevel="20" rhand="185" chest="437" legs="470" gloves="2450" shots="3948" /> <!-- Staff of Mana, Mithril Tunic, Mithril Stockings, Mithril Gloves -->
+		<gear grade="C" minLevel="40" rhand="4873" chest="442" legs="473" gloves="2463" shots="3949" /> <!-- Cursed Staff - Magic Hold, Divine Tunic, Divine Stockings, Divine Gloves -->
+		<gear grade="B" minLevel="52" rhand="4899" head="2417" chest="2399" legs="2404" gloves="5724" feet="5740" shots="3950" /> <!-- Sprite's Staff - Magic Hold, Doom Helmet, Tunic of Doom, Stockings of Doom, Doom Gloves - Robe, Doom Boots - Robe -->
+		<gear grade="A" minLevel="61" rhand="212" head="2419" chest="2409" gloves="5776" feet="5788" shots="3951" /> <!-- Dasparion's Staff, Majestic Circlet, Majestic Robe, Majestic Gauntlets - Robe, Majestic Boots - Robe -->
+		<gear grade="S" minLevel="76" rhand="6366" head="6386" chest="6383" gloves="6384" feet="6385" shots="3952" /> <!-- Imperial Staff, Major Arcana Circlet, Major Arcana Robe, Major Arcana Gloves, Major Arcana Boots -->
+		<gear grade="S80" minLevel="80" rhand="10252" head="9438" chest="10239" legs="9437" gloves="9439" feet="9440" shots="3952" /> <!-- Dynasty Staff, Dynasty Circlet, Dynasty Silver Satin Tunic - Wizard, Dynasty Stockings, Dynasty Gloves - Robe, Dynasty Shoes - Robe -->
+		<gear grade="S84" minLevel="84" rhand="13466" head="13142" chest="13437" legs="13454" gloves="13455" feet="13456" shots="3952" /> <!-- Vesper Singer, Vesper Noble Circlet, Vesper Noble Tunic, Vesper Noble Stockings, Vesper Noble Gloves, Vesper Noble Shoes -->
+	</phantom>
 	<!-- Kuzya: охотник, Dwarf Fighter, Artisan, Warsmith, Maestro -->
 	<phantom name="Kuzya" kind="hunter" role="DAMAGE" female="false" face="0" hairStyle="0" hairColor="3" classes="53,56,57,118" aliases="кузя;кузьма" social="1.5" temper="0.5" risk="1" x="115502" y="-177693" z="-904">
 		<gear grade="NONE" minLevel="1" rhand="2370" chest="1146" legs="1147" shots="1835" /> <!-- Guild Member's Club, Squire's Shirt, Squire's Pants -->
@@ -103,7 +191,7 @@
 	<!-- Shadowmoth: охотник, Dark Fighter, Assassin, Abyss Walker, Ghost Hunter -->
 	<phantom name="Shadowmoth" kind="hunter" role="DAMAGE" female="false" face="0" hairStyle="2" hairColor="0" classes="31,35,36,108" aliases="шэдоу;шадоу;моль" social="0.2" temper="1" risk="1" x="9745" y="15868" z="-4568">
 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
-		<gear grade="D" minLevel="20" rhand="221" chest="395" legs="417" feet="2424" shots="1463" /> <!-- Assassin Knife, Manticore Skin Shirt, Manticore Skin Gaiters, Manticore Skin Boots -->
+		<gear grade="D" minLevel="20" rhand="220" chest="395" legs="417" feet="2424" shots="1463" /> <!-- Crafted Dagger, Manticore Skin Shirt, Manticore Skin Gaiters, Manticore Skin Boots -->
 		<gear grade="C" minLevel="40" rhand="226" chest="401" feet="2437" shots="1464" /> <!-- Cursed Dagger, Drake Leather Armor, Drake Leather Boots -->
 		<gear grade="B" minLevel="52" rhand="229" head="2417" chest="2392" gloves="5723" feet="5739" shots="1465" /> <!-- Kris, Doom Helmet, Leather Armor of Doom, Doom Gloves - Light Armor, Doom Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="235" head="2419" chest="2395" gloves="5775" feet="5787" shots="1466" /> <!-- Bloody Orchid, Majestic Circlet, Majestic Leather Armor, Majestic Gauntlets - Light Armor, Majestic Boots - Light Armor -->
@@ -499,7 +587,7 @@
 	<!-- Shustryi: охотник, Human Fighter, Rogue, Treasure Hunter, Adventurer -->
 	<phantom name="Shustryi" kind="hunter" role="DAMAGE" female="false" face="2" hairStyle="2" hairColor="0" classes="0,7,8,93" aliases="шустрый;шустрик" social="1" temper="1" risk="1.5" x="-84207" y="244848" z="-3728">
 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
-		<gear grade="D" minLevel="20" rhand="220" chest="394" legs="416" feet="2422" shots="1463" /> <!-- Crafted Dagger, Reinforced Leather Shirt, Reinforced Leather Gaiters, Reinforced Leather Boots -->
+		<gear grade="D" minLevel="20" rhand="221" chest="394" legs="416" feet="2422" shots="1463" /> <!-- Assassin Knife, Reinforced Leather Shirt, Reinforced Leather Gaiters, Reinforced Leather Boots -->
 		<gear grade="C" minLevel="40" rhand="232" chest="400" legs="420" feet="2436" shots="1464" /> <!-- Dark Elven Dagger, Theca Leather Armor, Theca Leather Gaiters, Theca Leather Boots -->
 		<gear grade="B" minLevel="52" rhand="229" head="2416" chest="2391" gloves="5719" feet="5735" shots="1465" /> <!-- Kris, Blue Wolf Helmet, Blue Wolf Leather Armor, Blue Wolf Gloves - Light Armor, Blue Wolf Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="235" head="2418" chest="2394" gloves="5772" feet="5784" shots="1466" /> <!-- Bloody Orchid, Helm of Nightmare, Leather Armor of Nightmare, Gauntlets of Nightmare - Light Armor, Boots of Nightmare - Light Armor -->
@@ -653,7 +741,7 @@
 	<!-- Prizrak: охотник, Elven Fighter, Elven Scout, Plains Walker, Wind Rider -->
 	<phantom name="Prizrak" kind="hunter" role="DAMAGE" female="false" face="1" hairStyle="2" hairColor="0" classes="18,22,23,101" aliases="призрак;призя" social="0.5" temper="1" risk="1" x="47509" y="51686" z="-2992">
 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
-		<gear grade="D" minLevel="20" rhand="221" chest="395" legs="417" feet="2424" shots="1463" /> <!-- Assassin Knife, Manticore Skin Shirt, Manticore Skin Gaiters, Manticore Skin Boots -->
+		<gear grade="D" minLevel="20" rhand="220" chest="395" legs="417" feet="2424" shots="1463" /> <!-- Crafted Dagger, Manticore Skin Shirt, Manticore Skin Gaiters, Manticore Skin Boots -->
 		<gear grade="C" minLevel="40" rhand="226" chest="401" feet="2437" shots="1464" /> <!-- Cursed Dagger, Drake Leather Armor, Drake Leather Boots -->
 		<gear grade="B" minLevel="52" rhand="229" head="2417" chest="2392" gloves="5723" feet="5739" shots="1465" /> <!-- Kris, Doom Helmet, Leather Armor of Doom, Doom Gloves - Light Armor, Doom Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="235" head="2419" chest="2395" gloves="5775" feet="5787" shots="1466" /> <!-- Bloody Orchid, Majestic Circlet, Majestic Leather Armor, Majestic Gauntlets - Light Armor, Majestic Boots - Light Armor -->
@@ -796,7 +884,7 @@
 	<!-- Nindzya: охотник, Dark Fighter, Assassin, Abyss Walker, Ghost Hunter -->
 	<phantom name="Nindzya" kind="hunter" role="DAMAGE" female="false" face="1" hairStyle="1" hairColor="1" classes="31,35,36,108" aliases="ниндзя;нинзя" social="1" temper="1" risk="1" x="9773" y="15768" z="-4568">
 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
-		<gear grade="D" minLevel="20" rhand="221" chest="394" legs="416" feet="2422" shots="1463" /> <!-- Assassin Knife, Reinforced Leather Shirt, Reinforced Leather Gaiters, Reinforced Leather Boots -->
+		<gear grade="D" minLevel="20" rhand="220" chest="394" legs="416" feet="2422" shots="1463" /> <!-- Crafted Dagger, Reinforced Leather Shirt, Reinforced Leather Gaiters, Reinforced Leather Boots -->
 		<gear grade="C" minLevel="40" rhand="226" chest="400" legs="420" feet="2436" shots="1464" /> <!-- Cursed Dagger, Theca Leather Armor, Theca Leather Gaiters, Theca Leather Boots -->
 		<gear grade="B" minLevel="52" rhand="229" head="2416" chest="2391" gloves="5719" feet="5735" shots="1465" /> <!-- Kris, Blue Wolf Helmet, Blue Wolf Leather Armor, Blue Wolf Gloves - Light Armor, Blue Wolf Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="235" head="2418" chest="2394" gloves="5772" feet="5784" shots="1466" /> <!-- Bloody Orchid, Helm of Nightmare, Leather Armor of Nightmare, Gauntlets of Nightmare - Light Armor, Boots of Nightmare - Light Armor -->
@@ -807,7 +895,7 @@
 	<!-- Ehidna: охотник, Dark Fighter, Assassin, Abyss Walker, Ghost Hunter -->
 	<phantom name="Ehidna" kind="hunter" role="DAMAGE" female="true" face="2" hairStyle="6" hairColor="1" classes="31,35,36,108" aliases="ехидна;ехидка" social="1" temper="1.2" risk="1.5" x="9975" y="15947" z="-4568">
 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
-		<gear grade="D" minLevel="20" rhand="220" chest="395" legs="417" feet="2424" shots="1463" /> <!-- Crafted Dagger, Manticore Skin Shirt, Manticore Skin Gaiters, Manticore Skin Boots -->
+		<gear grade="D" minLevel="20" rhand="221" chest="395" legs="417" feet="2424" shots="1463" /> <!-- Assassin Knife, Manticore Skin Shirt, Manticore Skin Gaiters, Manticore Skin Boots -->
 		<gear grade="C" minLevel="40" rhand="227" chest="401" feet="2437" shots="1464" /> <!-- Stiletto, Drake Leather Armor, Drake Leather Boots -->
 		<gear grade="B" minLevel="52" rhand="229" head="2417" chest="2392" gloves="5723" feet="5739" shots="1465" /> <!-- Kris, Doom Helmet, Leather Armor of Doom, Doom Gloves - Light Armor, Doom Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="235" head="2419" chest="2395" gloves="5775" feet="5787" shots="1466" /> <!-- Bloody Orchid, Majestic Circlet, Majestic Leather Armor, Majestic Gauntlets - Light Armor, Majestic Boots - Light Armor -->
@@ -1533,7 +1621,7 @@
 	<!-- Prohodimets: охотник, Human Fighter, Rogue, Treasure Hunter, Adventurer -->
 	<phantom name="Prohodimets" kind="hunter" role="DAMAGE" female="false" face="0" hairStyle="1" hairColor="2" classes="0,7,8,93" aliases="проходимец" social="1" temper="1.2" risk="1.5" x="-84730" y="244476" z="-3728">
 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
-		<gear grade="D" minLevel="20" rhand="221" chest="394" legs="416" feet="2422" shots="1463" /> <!-- Assassin Knife, Reinforced Leather Shirt, Reinforced Leather Gaiters, Reinforced Leather Boots -->
+		<gear grade="D" minLevel="20" rhand="220" chest="394" legs="416" feet="2422" shots="1463" /> <!-- Crafted Dagger, Reinforced Leather Shirt, Reinforced Leather Gaiters, Reinforced Leather Boots -->
 		<gear grade="C" minLevel="40" rhand="226" chest="397" legs="2387" feet="62" shots="1464" /> <!-- Cursed Dagger, Mithril Shirt, Reinforced Mithril Gaiters, Reinforced Mithril Boots -->
 		<gear grade="B" minLevel="52" rhand="229" head="503" chest="2384" legs="2388" gloves="5711" feet="5727" shots="1465" /> <!-- Kris, Zubei's Helmet, Zubei's Leather Shirt, Zubei's Leather Gaiters, Zubei's Gauntlets - Light Armor, Zubei's Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="235" head="512" chest="2385" legs="2389" gloves="5766" feet="5778" shots="1466" /> <!-- Bloody Orchid, Dark Crystal Helmet, Dark Crystal Leather Armor, Dark Crystal Leggings, Dark Crystal Gloves - Light Armor, Dark Crystal Boots - Light Armor -->
@@ -1797,7 +1885,7 @@
 	<!-- Shoroh: охотник, Elven Fighter, Elven Scout, Plains Walker, Wind Rider -->
 	<phantom name="Shoroh" kind="hunter" role="DAMAGE" female="true" face="1" hairStyle="0" hairColor="2" classes="18,22,23,101" aliases="шорох;шорошка" social="1" temper="1" risk="1" x="46674" y="51301" z="-2992">
 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
-		<gear grade="D" minLevel="20" rhand="221" chest="395" legs="417" feet="2424" shots="1463" /> <!-- Assassin Knife, Manticore Skin Shirt, Manticore Skin Gaiters, Manticore Skin Boots -->
+		<gear grade="D" minLevel="20" rhand="220" chest="395" legs="417" feet="2424" shots="1463" /> <!-- Crafted Dagger, Manticore Skin Shirt, Manticore Skin Gaiters, Manticore Skin Boots -->
 		<gear grade="C" minLevel="40" rhand="230" chest="398" legs="418" feet="2431" shots="1464" /> <!-- Wolverine Needle, Plated Leather, Plated Leather Gaiters, Plated Leather Boots -->
 		<gear grade="B" minLevel="52" rhand="229" head="2415" chest="2390" gloves="5715" feet="5731" shots="1465" /> <!-- Kris, Avadon Circlet, Avadon Leather Armor, Avadon Gloves - Light Armor, Avadon Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="235" head="547" chest="2393" gloves="5769" feet="5781" shots="1466" /> <!-- Bloody Orchid, Tallum Helm, Tallum Leather Armor, Tallum Gloves - Light Armor, Tallum Boots - Light Armor -->
@@ -2083,7 +2171,7 @@
 	<!-- Gadyuka: охотник, Dark Fighter, Assassin, Abyss Walker, Ghost Hunter -->
 	<phantom name="Gadyuka" kind="hunter" role="DAMAGE" female="true" face="1" hairStyle="0" hairColor="3" classes="31,35,36,108" aliases="гадюка;гадючка" social="1" temper="1.5" risk="1" x="9925" y="16168" z="-4568">
 		<gear grade="NONE" minLevel="1" rhand="2369" chest="1146" legs="1147" shots="1835" /> <!-- Squire's Sword, Squire's Shirt, Squire's Pants -->
-		<gear grade="D" minLevel="20" rhand="220" chest="395" legs="417" feet="2424" shots="1463" /> <!-- Crafted Dagger, Manticore Skin Shirt, Manticore Skin Gaiters, Manticore Skin Boots -->
+		<gear grade="D" minLevel="20" rhand="221" chest="395" legs="417" feet="2424" shots="1463" /> <!-- Assassin Knife, Manticore Skin Shirt, Manticore Skin Gaiters, Manticore Skin Boots -->
 		<gear grade="C" minLevel="40" rhand="232" chest="401" feet="2437" shots="1464" /> <!-- Dark Elven Dagger, Drake Leather Armor, Drake Leather Boots -->
 		<gear grade="B" minLevel="52" rhand="229" head="2417" chest="2392" gloves="5723" feet="5739" shots="1465" /> <!-- Kris, Doom Helmet, Leather Armor of Doom, Doom Gloves - Light Armor, Doom Boots - Light Armor -->
 		<gear grade="A" minLevel="61" rhand="235" head="2419" chest="2395" gloves="5775" feet="5787" shots="1466" /> <!-- Bloody Orchid, Majestic Circlet, Majestic Leather Armor, Majestic Gauntlets - Light Armor, Majestic Boots - Light Armor -->

@@ -1,0 +1,309 @@
+L2Hub High Five (вклад пользователя): .help и .commands, кнопка «Команды» на доске Alt+B со всеми командами сервера по разделам,
+строка о них при входе. Команда в списке, только если её обработчик зарегистрирован (выключенная не показывается),
+строки GM — только GM. .help регистрирует L2HubBoard, MasterHandler не тронут.
+
+diff --git a/dist/game/data/html/CommunityBoard/Custom/home.html b/dist/game/data/html/CommunityBoard/Custom/home.html
+index a1246df..86f3c2a 100644
+--- a/dist/game/data/html/CommunityBoard/Custom/home.html
++++ b/dist/game/data/html/CommunityBoard/Custom/home.html
+@@ -20,7 +20,7 @@
+ 							</tr>
+ 							<tr>
+ 								<td align="center" height=240>
+-									<font name="hs12" color="CDB67F">L2Hub — a server for friends</font><br><br><font color="B09878">Buffer: sets by role and your own.<br1>GM Shop: gear, starter kits, Clan Items, loot sale.<br1>Teleport: towns and hunting spots by mob level.<br1>Companions: Vesna heals, Mityai buffs.<br1>Auto-play: settings and start.<br1>World: hunters, daily tasks, hunters' raid, the world now.<br1>Clan: create, recruit, wars.<br1>Events: sign up for TvT, Deathmatch and CtF.<br1>Drop search: who drops what.</font><br><br><font color="808080">You can tell companions in nearby general chat or in party chat: "follow", "buff", "heal", "res", "bye".</font>
++									<font name="hs12" color="CDB67F">L2Hub — a server for friends</font><br><br><font color="B09878">Buffer: sets by role and your own.<br1>GM Shop: gear, starter kits, Clan Items, loot sale.<br1>Teleport: towns and hunting spots by mob level.<br1>Companions: Vesna heals, Mityai buffs.<br1>Auto-play: settings and start.<br1>World: hunters, daily tasks, hunters' raid, the world now.<br1>Clan: create, recruit, wars.<br1>Events: sign up for TvT, Deathmatch and CtF.<br1>Drop search: who drops what.<br1>Commands: every server command in one list, also .help in chat.</font><br><br><font color="808080">You can tell companions in nearby general chat or in party chat: "follow", "buff", "heal", "res", "bye".</font>
+ 								</td>
+ 							</tr>
+ 						</table>
+diff --git a/dist/game/data/html/CommunityBoard/Custom/navigation.html b/dist/game/data/html/CommunityBoard/Custom/navigation.html
+index 7fa63be..604f3dd 100644
+--- a/dist/game/data/html/CommunityBoard/Custom/navigation.html
++++ b/dist/game/data/html/CommunityBoard/Custom/navigation.html
+@@ -32,4 +32,7 @@
+ <tr>
+ 	<td><button value="Drop search" action="bypass _bbstop;dropsearch/main.html" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Watch_Down" fore="L2UI_CT1.OlympiadWnd_DF_Watch"></td>
+ </tr>
++<tr>
++	<td><button value="Commands" action="bypass _bbshubhelp" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Info_Down" fore="L2UI_CT1.OlympiadWnd_DF_Info"></td>
++</tr>
+ </table>
+diff --git a/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/home.html b/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/home.html
+index a7982d6..a963f56 100644
+--- a/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/home.html
++++ b/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/home.html
+@@ -20,7 +20,7 @@
+ 							</tr>
+ 							<tr>
+ 								<td align="center" height=240>
+-									<font name="hs12" color="CDB67F">L2Hub — сервер для своих</font><br><br><font color="B09878">Баффер: наборы по ролям и свои.<br1>GM-шоп: снаряжение, стартовые наборы, Clan Items, продажа лута.<br1>Телепорт: города и споты по уровню мобов.<br1>Напарники: Весна лечит, Митяй бафает.<br1>Автобой: настройка и запуск.<br1>Мир: охотники, поручения дня, рейд охотников, мир сейчас.<br1>Клан: создать, набрать, войны.<br1>Ивенты: запись на TvT, Deathmatch и CtF.<br1>Поиск дропа: с кого что падает.</font><br><br><font color="808080">Напарникам можно писать в общий чат рядом или в чат пати: «за мной», «бафни», «хил», «рес», «пока».</font>
++									<font name="hs12" color="CDB67F">L2Hub — сервер для своих</font><br><br><font color="B09878">Баффер: наборы по ролям и свои.<br1>GM-шоп: снаряжение, стартовые наборы, Clan Items, продажа лута.<br1>Телепорт: города и споты по уровню мобов.<br1>Напарники: Весна лечит, Митяй бафает.<br1>Автобой: настройка и запуск.<br1>Мир: охотники, поручения дня, рейд охотников, мир сейчас.<br1>Клан: создать, набрать, войны.<br1>Ивенты: запись на TvT, Deathmatch и CtF.<br1>Поиск дропа: с кого что падает.<br1>Команды: все команды сервера списком, в чате — .help.</font><br><br><font color="808080">Напарникам можно писать в общий чат рядом или в чат пати: «за мной», «бафни», «хил», «рес», «пока».</font>
+ 								</td>
+ 							</tr>
+ 						</table>
+diff --git a/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/navigation.html b/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/navigation.html
+index d133f19..1428600 100644
+--- a/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/navigation.html
++++ b/dist/game/data/lang/ru/data/html/CommunityBoard/Custom/navigation.html
+@@ -32,4 +32,7 @@
+ <tr>
+ 	<td><button value="Поиск дропа" action="bypass _bbstop;dropsearch/main.html" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Watch_Down" fore="L2UI_CT1.OlympiadWnd_DF_Watch"></td>
+ </tr>
++<tr>
++	<td><button value="Команды" action="bypass _bbshubhelp" width=200 height=30 back="L2UI_CT1.OlympiadWnd_DF_Info_Down" fore="L2UI_CT1.OlympiadWnd_DF_Info"></td>
++</tr>
+ </table>
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+index ce79b3b..6a0a090 100644
+--- a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+@@ -57,6 +57,7 @@ import org.l2jmobius.gameserver.network.serverpackets.ShowBoard;
+  * <li>_bbshubraids … — кто из рейд-боссов жив ({@link L2HubRaids})</li>
+  * <li>_bbshubkarma [pay …] — снятие кармы за адену ({@link L2HubKarma})</li>
+  * <li>_bbshubskills … — выбор уровня изученных навыков ({@link L2HubSkillLevels})</li>
++ * <li>_bbshubhelp [run &lt;команда&gt;] — все команды сервера, то же окно у {@code .help} ({@link L2HubHelp})</li>
+  * </ul>
+  */
+ public class L2HubBoard implements IParseBoardHandler
+@@ -330,9 +331,16 @@ public class L2HubBoard implements IParseBoardHandler
+ 		L2HubFind.COMMAND,
+ 		L2HubRaids.COMMAND,
+ 		L2HubKarma.COMMAND,
+-		L2HubSkillLevels.COMMAND
++		L2HubSkillLevels.COMMAND,
++		L2HubHelp.COMMAND
+ 	};
+ 
++	static
++	{
++		// .help: свой обработчик рядом с доской, MasterHandler не трогаем — его правит и модуль фантомов.
++		VoicedCommandHandler.getInstance().registerHandler(new handlers.chat.commands.voiced.Help());
++	}
++
+ 	private static final Pattern NPC_CHAT = Pattern.compile("bypass (?:-h )?npc_%objectId%_Chat (\\d+)");
+ 	private static final Pattern NPC_MULTISELL = Pattern.compile("bypass (?:-h )?npc_%objectId%_multisell (\\d+)");
+ 	private static final Pattern BODY = Pattern.compile("(?is)<body[^>]*>(.*)</body>");
+@@ -411,6 +419,11 @@ public class L2HubBoard implements IParseBoardHandler
+ 		{
+ 			html = page(player, tr("Уровни навыков"), L2HubSkillLevels.content(player, args));
+ 		}
++		else if (args[0].equalsIgnoreCase(L2HubHelp.COMMAND))
++		{
++			final String commands = L2HubHelp.content(player, args);
++			html = commands != null ? page(player, tr("Команды"), commands) : null; // команда выполнена — доска закрыта
++		}
+ 		else if (args[0].equalsIgnoreCase(EVENTS))
+ 		{
+ 			if ((args.length > 1) && args[1].equalsIgnoreCase("medals") && canUse(player))
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubHelp.java b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubHelp.java
+new file mode 100644
+index 0000000..f4f85bb
+--- /dev/null
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubHelp.java
+@@ -0,0 +1,140 @@
++package handlers.bypass.communityboard;
++
++import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.handler.IVoicedCommandHandler;
++import org.l2jmobius.gameserver.handler.VoicedCommandHandler;
++import org.l2jmobius.gameserver.network.serverpackets.ShowBoard;
++
++/**
++ * L2Hub: все команды сервера в одном окне — кнопка «Команды» на доске Alt+B и команда {@code .help} ({@code handlers.chat.commands.voiced.Help}).
++ * <ul>
++ * <li>_bbshubhelp — список по разделам. Команда в списке, только если её обработчик зарегистрирован: выключенная в настройках не показывается.</li>
++ * <li>_bbshubhelp run &lt;команда&gt; — выполнить команду без аргументов: доска закрывается, как перед окном автобоя ({@link L2HubBoard#play}), дальше отвечает сама команда.</li>
++ * </ul>
++ * Админские строки — только GM.
++ */
++public final class L2HubHelp
++{
++	public static final String COMMAND = "_bbshubhelp";
++
++	/** Раздел, команда (без точки), что делает, можно ли выполнить кнопкой без аргументов. Пустая команда — заголовок раздела. */
++	private static final String[][] COMMANDS =
++	{
++		{ "Бой", "", "", "" },
++		{ "", "play", "окно автобоя: настройки, пуск и стоп. Ярлык «Автобой» на панели — то же одной кнопкой", "run" },
++		{ "", "autopots", "автопоты: какие банки и с какого процента", "run" },
++		{ "", "apon", "включить автопоты (.apoff — выключить)", "run" },
++		{ "", "expoff", "не получать опыт (.expon — снова получать)", "" },
++		{ "Ивенты и мир", "", "", "" },
++		{ "", "events", "ивенты, поручения, кошелёк и магазин коинов", "run" },
++		{ "", "daily", "поручения дня (.weekly — недели)", "run" },
++		{ "", "raid", "рейд охотников: кого бьют, где сбор (.raid join — в пати)", "run" },
++		{ "", "kama", "охотники идут в Камалоку (.kama join — в пати)", "run" },
++		{ "", "rift", "охотники идут в Rift (.rift join — в пати)", "run" },
++		{ "", "hunters", "кто из охотников где, телепорт к ним", "run" },
++		{ "", "clans", "кланы охотников и кто набирает", "run" },
++		{ "", "online", "сколько людей в игре", "run" },
++		{ "", "hellbound", "уровень Хеллбаунда", "run" },
++		{ "Персонаж", "", "", "" },
++		{ "", "buddy", "напарники: позвать, отпустить, настроить", "run" },
++		{ "", "offline", "оставить лавку или крафт в офлайне", "" },
++		{ "", "offlineplay", "оставить автобой в офлайне", "" },
++		{ "", "bank", "адена в слитки и обратно (.deposit, .withdraw)", "run" },
++		{ "", "lang", "язык сервера", "" },
++		{ "", "premium", "срок премиума", "run" },
++		{ "", "changepassword", "сменить пароль учётки", "" },
++		{ "", "engage", "свадьба: .engage, .gotolove, .divorce", "" }
++	};
++	/** Команды клиента, не сервера: работают всегда. */
++	private static final String[][] CLIENT =
++	{
++		{ "/unstuck", "выбраться, если застрял в текстурах" },
++		{ "/partymatching", "поиск пати (Alt+P на этом клиенте не привязан)" },
++		{ "/loc", "где ты: координаты" },
++		{ "/time", "игровое время" },
++		{ "/instancezone", "откаты инстансов" }
++	};
++	private static final String[][] ADMIN =
++	{
++		{ "//admin", "панель GM" },
++		{ ".banchat <ник> [мин]", "запрет чата (.unbanchat — снять)" },
++		{ ".clans reset", "распустить все кланы охотников" }
++	};
++
++	private L2HubHelp()
++	{
++	}
++
++	public static String content(Player player, String[] args)
++	{
++		if ((args.length > 2) && args[1].equalsIgnoreCase("run") && run(player, args[2]))
++		{
++			return null; // доска закрыта, отвечает команда
++		}
++
++		final StringBuilder sb = new StringBuilder(6144);
++		sb.append("<br><font color=\"909090\">").append(L2HubBoard.tr("Команды пишутся в чат с точкой: .play, .help. Кнопка «Выполнить» делает то же без чата.")).append("</font><br>");
++		final StringBuilder section = new StringBuilder();
++		String title = null;
++		for (String[] row : COMMANDS)
++		{
++			if (row[1].isEmpty())
++			{
++				flush(sb, title, section);
++				title = row[0];
++				continue;
++			}
++			if (VoicedCommandHandler.getInstance().getHandler(row[1]) == null)
++			{
++				continue; // выключена в настройках
++			}
++			section.append("<tr><td width=110><font color=\"CDB67F\">.").append(row[1]).append("</font></td><td width=310>").append(L2HubBoard.tr(row[2])).append("</td><td width=100 align=center>");
++			section.append(row[3].isEmpty() ? "" : L2HubBoard.button(L2HubBoard.tr("Выполнить"), COMMAND + " run " + row[1], 90)).append("</td></tr>");
++		}
++		flush(sb, title, section);
++
++		for (String[] row : CLIENT)
++		{
++			section.append("<tr><td width=110><font color=\"CDB67F\">").append(row[0]).append("</font></td><td width=410>").append(L2HubBoard.tr(row[1])).append("</td></tr>");
++		}
++		flush(sb, L2HubBoard.tr("Клиент"), section);
++		if (player.isGM())
++		{
++			for (String[] row : ADMIN)
++			{
++				section.append("<tr><td width=150><font color=\"CDB67F\">").append(row[0].replace("<", "&lt;").replace(">", "&gt;")).append("</font></td><td width=370>").append(L2HubBoard.tr(row[1])).append("</td></tr>");
++			}
++			flush(sb, L2HubBoard.tr("GM"), section);
++		}
++		return sb.append("<font color=\"909090\">").append(L2HubBoard.tr("Остальное — кнопками слева: баффер, GM-шоп, телепорт, ивенты.")).append("</font>").toString();
++	}
++
++	private static void flush(StringBuilder sb, String title, StringBuilder section)
++	{
++		if ((title != null) && (section.length() > 0))
++		{
++			sb.append("<br><font color=\"LEVEL\">").append(L2HubBoard.tr(title)).append("</font><br1><table width=520 cellpadding=2 cellspacing=0>").append(section).append("</table>");
++		}
++		section.setLength(0);
++	}
++
++	/**
++	 * @return команда выполнена; {@code false} — её нет или кнопкой её не выполнить
++	 */
++	private static boolean run(Player player, String command)
++	{
++		boolean runnable = false;
++		for (String[] row : COMMANDS)
++		{
++			runnable |= row[1].equalsIgnoreCase(command) && !row[3].isEmpty();
++		}
++		final IVoicedCommandHandler handler = runnable ? VoicedCommandHandler.getInstance().getHandler(command) : null;
++		if (handler == null)
++		{
++			return false;
++		}
++		player.sendPacket(new ShowBoard());
++		handler.onCommand(command.toLowerCase(java.util.Locale.ROOT), player, null);
++		return true;
++	}
++}
+diff --git a/dist/game/data/scripts/handlers/chat/commands/voiced/Help.java b/dist/game/data/scripts/handlers/chat/commands/voiced/Help.java
+new file mode 100644
+index 0000000..f3ae9a3
+--- /dev/null
++++ b/dist/game/data/scripts/handlers/chat/commands/voiced/Help.java
+@@ -0,0 +1,61 @@
++package handlers.chat.commands.voiced;
++
++import org.l2jmobius.commons.threads.ThreadPool;
++import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.handler.CommunityBoardHandler;
++import org.l2jmobius.gameserver.handler.IVoicedCommandHandler;
++import org.l2jmobius.gameserver.managers.phantom.PhantomManager;
++import org.l2jmobius.gameserver.mechanics.events.Containers;
++import org.l2jmobius.gameserver.mechanics.events.EventType;
++import org.l2jmobius.gameserver.mechanics.events.holders.actor.player.OnPlayerLogin;
++import org.l2jmobius.gameserver.mechanics.events.listeners.ConsumerEventListener;
++
++import handlers.bypass.communityboard.L2HubHelp;
++
++/**
++ * L2Hub: {@code .help} (и {@code .commands}) — окно со всеми командами сервера, то же, что кнопка «Команды» на доске Alt+B ({@link L2HubHelp}).
++ * При входе в игру — одна строка в системный чат, где искать команды.
++ */
++public class Help implements IVoicedCommandHandler
++{
++	private static final String[] VOICED_COMMANDS =
++	{
++		"help",
++		"commands"
++	};
++	/** Клиент ещё грузит мир: раньше строка потеряется среди приветствий сервера. */
++	private static final long HINT_DELAY = 6000;
++
++	public Help()
++	{
++		Containers.Global().addListener(new ConsumerEventListener(Containers.Global(), EventType.ON_PLAYER_LOGIN, (OnPlayerLogin event) -> hint(event.getPlayer()), this));
++	}
++
++	private static void hint(Player player)
++	{
++		if ((player == null) || PhantomManager.getInstance().isPhantom(player))
++		{
++			return;
++		}
++		ThreadPool.schedule(() ->
++		{
++			if (player.isOnline())
++			{
++				player.sendMessage("en".equals(org.l2jmobius.gameserver.config.custom.L2HubWorldConfig.LANGUAGE) ? "All server commands: type .help or open Alt+B → Commands." : "Все команды сервера: напиши .help или открой Alt+B → «Команды».");
++			}
++		}, HINT_DELAY);
++	}
++
++	@Override
++	public boolean onCommand(String command, Player player, String params)
++	{
++		CommunityBoardHandler.getInstance().handleParseCommand(L2HubHelp.COMMAND, player);
++		return true;
++	}
++
++	@Override
++	public String[] getCommandList()
++	{
++		return VOICED_COMMANDS;
++	}
++}

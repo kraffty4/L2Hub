@@ -31,6 +31,8 @@ from xml.sax.saxutils import quoteattr
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import town_npcs as tn  # noqa: E402
+from fake_players_w4 import HUNTERS_H5_W4  # noqa: E402
+from fake_players_w5 import HUNTERS_H5_W5  # noqa: E402
 
 NPC_ID_BASE = 80100
 
@@ -1721,6 +1723,46 @@ COMPANIONS = [
          style="по-домашнему, без мата: «милок», «ну-ка стой, бафну», «поешь сперва»",
          bio="Хиерофант с характером деревенской бабушки. Считает, что голодным и без бафа в данж не ходят, и обижается, если убегают не дослушав."),
 ]
+# Личная пачка (PersonalBattleCatalog, общее ядро; docs/PHANTOMS.md): чертежи классов каталога — атрибут profile в L2HubPhantoms.xml.
+# Чертёж — первый помощник своего класса; следующих того же класса ядро делает копией с именем из пула (PersonalCompanionNamePool.ini).
+# Хилер и баффер каталога — прежние Vesna и Mityai (SQUAD_PROFILES). High Five и Epilogue (до 0.5.259 в Эпилог их вставляли руками,
+# и перегенерация стирала); на остальных хрониках вывод прежний.
+SQUAD_PROFILES = {"Vesna": "healer", "Mityai": "buffer"}
+SQUAD_BLUEPRINTS = [
+    dict(name="Bulat", profile="gladiator", aliases="булат", race="HUMAN", sex="M", chain=[0, 1, 2, 88], role="DAMAGE", kit="dual",
+         traits="молчаливый мечник с двумя клинками, держится рядом с хозяином и бьёт его цель",
+         style="коротко и по делу: «понял», «бью», «чисто»",
+         bio="Гладиатор из личной пачки игрока: ходит за ним и бьёт, кого покажут."),
+    dict(name="Gromila", profile="destroyer", aliases="громила", race="ORC", sex="M", chain=[44, 45, 46, 113], role="DAMAGE", kit="bigsword",
+         traits="здоровенный орк с двуручником, любит первым влететь в толпу",
+         style="грубовато и просто: «ща снесу», «ещё давай»",
+         bio="Дестроер из личной пачки игрока: идёт следом и сносит его цель."),
+    dict(name="Kulak", profile="tyrant", aliases="кулак", race="ORC", sex="M", chain=[44, 47, 48, 114], role="DAMAGE", kit="fist",
+         traits="орк-кастетчик, быстрый и азартный, считает удары",
+         style="бодро: «раз-два», «поехали»",
+         bio="Тирант из личной пачки игрока: бьёт его цель кастетами."),
+    dict(name="Vityaz", profile="warlord", aliases="витязь", race="HUMAN", sex="M", chain=[0, 1, 3, 89], role="DAMAGE", kit="pole",
+         traits="копейщик старой школы, собирает мобов вокруг себя",
+         style="степенно: «стоим», «держу»",
+         bio="Варлорд из личной пачки игрока: бьёт копьём его цель и всё, что рядом."),
+    dict(name="Vyuga", profile="spellhowler", aliases="вьюга", race="DARK_ELF", sex="F", chain=[38, 39, 40, 110], role="DAMAGE", kit="mage",
+         traits="тёмная эльфийка-маг ветра, холодная и точная",
+         style="сухо и колко: «готово», «следующий»",
+         bio="Спеллхаулер из личной пачки игрока: бьёт магией его цель."),
+    dict(name="Ineya", profile="spellsinger", aliases="инея", race="ELF", sex="F", chain=[25, 26, 27, 103], role="DAMAGE", kit="mage",
+         traits="эльфийка-маг льда, спокойная и внимательная",
+         style="мягко: «замедлила», «держу на расстоянии»",
+         bio="Спеллсингер из личной пачки игрока: бьёт льдом его цель."),
+    dict(name="Plamya", profile="sorcerer", aliases="пламя", race="HUMAN", sex="F", chain=[10, 11, 12, 94], role="DAMAGE", kit="mage",
+         traits="вспыльчивая волшебница огня, любит большие цифры урона",
+         style="живо: «горит!», «ещё разок»",
+         bio="Сорсерер из личной пачки игрока: жжёт его цель."),
+    dict(name="Kostey", profile="necromancer", aliases="костей;кощей", race="HUMAN", sex="M", chain=[10, 11, 13, 95], role="DAMAGE", kit="mage",
+         traits="мрачный некромант с чёрным юмором",
+         style="негромко и мрачно: «упокоен», «следующий клиент»",
+         bio="Некромант из личной пачки игрока: проклинает и бьёт его цель."),
+]
+
 ROLE_RU = {"HEALER": "хилер", "BUFFER": "баффер", "TANK": "танк", "DAMAGE": "дамагер"}
 
 # Танатос (решения автора 2026-10-23, docs/PHANTOMS.md, раздел 4.45): единственный ПК сервера — орк-кастетчик линии Тирана,
@@ -1818,6 +1860,63 @@ HUNT_MAX_SPREAD = 6
 # LimitedZones (Classic, Essence) — временные зоны (zones/timed_hunting.xml): без своего таймера зоны фантома выкидывает в город.
 HUNT_SKIP_DIRS = {"Custom", "Castles", "Catacombs", "Hellbound", "Gracia", "SevenSigns", "LimitedZones"}
 HUNT_SKIP_FILES = {"Gremlins.xml"}
+# Споты, которые советуют гайды High Five (база data/knowledge/h5_leveling_spots.json, вне git; docs/PHANTOMS.md, 4.147): файл спавна,
+# центр зоны, уровни из гайдов и кому — mage, fighter, tank, archer, dagger, summoner, healer; party — гайды зовут туда пачкой.
+# Только цифры датапака и коды ролей. Спот генератора получает guide="…", если его мобы из того же файла (у квадрата Others/
+# несколько зон — ещё и ближе GUIDE_RANGE к центру) и его уровень в пределах гайда ±GUIDE_LEVEL_SLACK. Катакомбы (HUNT_SKIP_DIRS)
+# не совпадут — спотов там нет. Пешка выбирает спот по своей роли (HuntSpotData.choose), наставник советует такие же.
+# Только хроники с датапаком CT (High Five, Epilogue, Interlude): у Classic и Essence другие уровни зон, пометки нет.
+GUIDE_RANGE = 6000
+GUIDE_LEVEL_SLACK = 2
+GUIDE_SPOTS = [
+    ("Kamael/IsleOfSouls.xml", -125473, 45431, 1, 10, "mage fighter tank archer dagger summoner healer"),  # Isle of Souls
+    ("ElvenTerritory/ElvenStarting.xml", 48053, 43254, 1, 10, "mage fighter tank archer dagger summoner healer"),  # Elven Starting
+    ("TalkingIsland/TalkingIslandMonsters.xml", -81412, 246563, 1, 10, "mage fighter tank archer dagger summoner healer"),  # Talking Island
+    ("Kamael/IsleOfSouls.xml", -109030, 64322, 10, 20, "mage fighter tank archer dagger summoner healer"),  # Isle of Souls
+    ("Others/21_25.xml", 44954, 248458, 10, 20, "mage fighter tank archer dagger summoner party"),  # Elven Ruins
+    ("Others/18_22.xml", -49868, 149683, 20, 30, "mage fighter tank archer dagger summoner"),  # Abandoned Camp
+    ("Dion/ExecutionGrounds.xml", 53686, 151138, 20, 30, "mage fighter tank dagger summoner healer"),  # Execution Grounds
+    ("Catacombs/NecropolisOfSacrifice.xml", -43004, 210862, 20, 30, "fighter tank dagger summoner healer party"),  # Necropolis of Sacrifice
+    ("Dion/CrumaMarshlands.xml", 13830, 104934, 30, 40, "mage summoner"),  # Cruma Marshlands
+    ("Giran/HardinsAcademy.xml", 71361, 125970, 30, 40, "mage fighter dagger summoner"),  # Hardin's Academy / Death Pass
+    ("Others/18_23.xml", -57426, 185996, 30, 40, "mage fighter tank dagger summoner party"),  # Forgotten Temple
+    ("Others/20_21.xml", 11598, 120256, 40, 50, "fighter tank dagger summoner healer party"),  # Cruma Tower
+    ("Hunters/EnchantedValley.xml", 107513, 38459, 40, 50, "mage summoner"),  # Enchanted Valley
+    ("Innadril/AlligatorIsland.xml", 105518, 178659, 40, 50, "fighter tank dagger summoner"),  # Alligator Island
+    ("Dion/TanorCanyon.xml", 37774, 162582, 40, 50, "fighter tank healer party"),  # Tanor Canyon
+    ("Aden/Cemetery.xml", 170019, 7344, 50, 60, "mage summoner healer"),  # Cemetery
+    ("Others/25_19.xml", 166582, 52110, 50, 60, "mage fighter archer dagger summoner"),  # Forsaken Plains
+    ("Others/23_14.xml", 103046, -113302, 50, 60, "fighter summoner party"),  # Frozen Labyrinth
+    ("Catacombs/CatacombOfTheApostate.xml", -20207, -249052, 50, 60, "fighter tank dagger summoner healer party"),  # Catacomb of the Apostate
+    ("Rune/ValleyOfSaints.xml", 67087, -72136, 60, 70, "mage summoner"),  # Valley of Saints
+    ("Others/21_16.xml", 50376, -61053, 60, 70, "mage fighter summoner healer party"),  # Forest of the Dead
+    ("Aden/FieldsOfMassacre.xml", 180980, -21272, 60, 70, "fighter tank healer party"),  # Fields of Massacre
+    ("Goddard/GardenOfBeasts.xml", 155882, -43042, 60, 70, "fighter tank archer dagger summoner"),  # Garden of Beasts
+    ("Aden/TowerOfInsolence.xml", 113343, 14754, 60, 70, "fighter tank summoner healer party"),  # Tower of Insolence
+    ("Goddard/HotSprings.xml", 146876, -112050, 70, 76, "fighter tank dagger summoner party"),  # Hot Springs
+    ("Others/22_14.xml", 84727, -122906, 70, 76, "mage fighter summoner healer party"),  # Pavel Ruins
+    ("Rune/SwampOfScreams.xml", 71570, -56764, 70, 76, "fighter tank healer party"),  # Swamp of Screams
+    ("Aden/BlazingSwamp.xml", 139384, -10695, 70, 76, "mage fighter archer summoner"),  # Blazing Swamp
+    ("Aden/SilentValley.xml", 174365, 55831, 76, 80, "fighter tank dagger summoner"),  # Silent Valley
+    ("Goddard/KetraOrcOutpost.xml", 137735, -90379, 76, 80, "mage fighter dagger summoner healer party"),  # Ketra Orc Outpost
+    ("Goddard/VarkaSlenosOutpost.xml", 121388, -38689, 76, 80, "mage fighter dagger summoner healer party"),  # Varka Silenos Outpost
+    ("Others/25_14.xml", 176332, -121141, 76, 80, "mage fighter tank summoner healer party"),  # Forge of the Gods
+    ("Others/19_16.xml", -20730, -39814, 76, 80, "fighter tank dagger summoner healer party"),  # Pagan Temple
+    ("Others/24_23.xml", 140223, 186871, 76, 80, "fighter dagger summoner"),  # Isle of Prayer
+    ("Rune/PrimevalIsle.xml", 6123, -20955, 80, 85, "mage summoner party"),  # Primeval Isle
+    ("Others/22_20.xml", 80941, 81354, 80, 85, "archer"),  # Plains of the Lizardmen
+    ("Oren/SelMahums.xml", 88347, 56413, 80, 85, "fighter tank healer party"),  # Sel Mahum Training Grounds
+    ("Innadril/FieldOfWhispers.xml", 75940, 205584, 80, 85, "mage summoner"),  # Field of Whispers
+    ("Innadril/FieldOfSilence.xml", 75435, 189733, 80, 85, "mage summoner"),  # Field of Silence
+    ("Aden/GiantsCave.xml", 174450, 55384, 80, 85, "fighter tank summoner healer party"),  # Giant's Cave
+    ("Others/23_21.xml", 110058, 111108, 80, 85, "fighter dagger summoner party"),  # Dragon Valley
+    ("Others/23_15.xml", 109244, -80350, 80, 85, "fighter tank dagger summoner healer party"),  # Monastery of Silence
+    ("Others/21_14.xml", 62541, -116848, 80, 85, "fighter dagger summoner"),  # Den of Evil
+    ("Others/25_12.xml", 173489, -183304, 80, 85, "fighter archer summoner"),  # Mithril Mines
+    ("Others/22_16.xml", 76913, -47454, 80, 85, "mage fighter tank summoner healer party"),  # Stakato Nest
+    ("Others/21_15.xml", 46251, -82565, 80, 85, "fighter dagger summoner"),  # Beast Farm
+    ("Others/21_14.xml", 43344, -119565, 80, 85, "fighter party"),  # Crypts of Disgrace
+]
 # Спавны с spawnByDefault="false" Mobius не ставит сам: их поднимает скрипт по событию (замок, ивент, рейд) — споту там пусто.
 # Кроме этих: их скрипт держит в мире почти всё время (Essence: Долина Драконов без Антараса — все дни, кроме субботы).
 HUNT_SCRIPT_SPAWNS = {"Dragon Valley No Antharas"}
@@ -2262,6 +2361,11 @@ def spot_camp(d: Data, geo: tn.Geo, spot, spawns) -> tuple[int, int, int, dict]:
 
 
 def place_near(geo, spawns, cx, cy, cz, taken, name, rmin=60, rmax=320, gap=70) -> tuple[int, int, int]:
+    # Точка не дальше rmax (+1 от округления) от центра: соседей дальше rmax + зазор проверять незачем. Отбор заранее не меняет
+    # ни одного ответа, а 1000 охотникам у одной деревни без него генерация шла в разы дольше (каждая попытка — все спавны мира).
+    reach = rmax + 2
+    taken = [t for t in taken if math.dist((cx, cy), t[:2]) < reach + gap]
+    spawns = [s for s in spawns if abs(s["z"] - cz) < 300 and math.dist((s["x"], s["y"]), (cx, cy)) < reach + tn.NPC_GAP]
     for attempt in range(400):
         r = rmin + rnd(name, f"r{attempt}") % (rmax - rmin)
         a = (rnd(name, f"a{attempt}") % 3600) / 10
@@ -2428,8 +2532,8 @@ def cluster_spots(geo: tn.Geo, tiles: dict, loose: list[tuple], radius: int = HU
             region, name, by_mobs = spot_place(tiles, next(iter(files)), [p[4] for p in pts], entry[0], entry[1])
         else:
             region, name, by_mobs = tile_region(tiles, entry[0], entry[1]), mob_family([p[4] for p in pts]), True
-        spots.append(dict(file="cluster", region=region, name=name, by_mobs=by_mobs, level=round(statistics.median(levels)), min=min(levels), max=max(levels),
-                          mobs=len(pts), x=entry[0], y=entry[1], z=entry[2],
+        spots.append(dict(file="cluster", files=sorted(files), region=region, name=name, by_mobs=by_mobs, level=round(statistics.median(levels)),
+                          min=min(levels), max=max(levels), mobs=len(pts), x=entry[0], y=entry[1], z=entry[2],
                           radius=max(400, min(1500, round(max(math.dist((cx, cy), p[:2]) for p in pts))))))
     return spots, [loose[i] for i in sorted(free)]
 
@@ -2464,7 +2568,7 @@ def spawn_units(sp: ET.Element) -> list[tuple[list[ET.Element], ET.Element | Non
     return units
 
 
-def hunt_spots(d: Data, geo: tn.Geo) -> list[dict]:
+def hunt_spots(d: Data, geo: tn.Geo, guides: bool = True) -> list[dict]:
     """Споты охотников по датапаку: группа спавна мобов (не РБ) с узким разбросом уровней — уровень (медиана), точка входа
     по геодате у центра и радиус охоты. Мобы-точки из групп, которые спотом не стали (целый квадрат карты в spawns/Others,
     мелкие группы), собираются в кластеры (cluster_spots); имя такого спота — по мобам, зона — по региону карты.
@@ -2540,9 +2644,75 @@ def hunt_spots(d: Data, geo: tn.Geo) -> list[dict]:
         else:
             twin["mobs"] += s["mobs"]
             twin["min"], twin["max"] = min(twin["min"], s["min"]), max(twin["max"], s["max"])
+            twin["files"] = sorted(set(spot_files(twin)) | set(spot_files(s)))
     add_landmarks(spots, landmarks(d.data))
+    if guides:
+        matched = mark_guides(spots)
+        spots += guide_fill(d, geo, tiles, [row for i, row in enumerate(GUIDE_SPOTS) if i not in matched])
     spots.sort(key=lambda s: (s["level"], s["region"], s["name"]))
     return spots
+
+
+def spot_files(s: dict) -> list[str]:
+    """Файлы спавна, из мобов которых собран спот: у кластера и слитых тёзок их несколько."""
+    return s.get("files") or [s["file"]]
+
+
+def mark_guides(spots: list[dict]) -> None:
+    """Спотам, которые советуют гайды (GUIDE_SPOTS), — guide: кому они, роли через пробел. Совпали две строки — роли вместе.
+    Совпадение — мобы спота из файла строки. Файл-квадрат Others/ держит несколько зон, а центр зоны у гайдов не всегда у мобов:
+    там спот ближе GUIDE_RANGE к центру из любого файла или ближе двух GUIDE_RANGE из своего.
+    :return: номера строк GUIDE_SPOTS, которым нашёлся хоть один спот"""
+    matched = set()
+    for i, (file, cx, cy, lo, hi, roles) in enumerate(GUIDE_SPOTS):
+        for s in spots:
+            if not lo - GUIDE_LEVEL_SLACK <= s["level"] <= hi + GUIDE_LEVEL_SLACK:
+                continue
+            far = math.dist((s["x"], s["y"]), (cx, cy))
+            if not (far < GUIDE_RANGE or (file in spot_files(s) and far < 2 * GUIDE_RANGE)) if file.startswith("Others/") else file not in spot_files(s):
+                continue
+            s["guide"] = guide_roles(s.get("guide", ""), roles)
+            matched.add(i)
+    return matched
+
+
+def guide_roles(*lists: str) -> str:
+    """Роли из нескольких строк guide — одной строкой в постоянном порядке."""
+    have = {r for roles in lists for r in roles.split()}
+    return " ".join(r for r in ("mage", "fighter", "tank", "archer", "dagger", "summoner", "healer", "party") if r in have)
+
+
+def guide_fill(d: Data, geo: tn.Geo, tiles: dict, rows: list[tuple]) -> list[dict]:
+    """Гайдовым зонам без единого спота (docs/PHANTOMS.md, 4.147) — спот из мобов их файла: мобы-монстры с опытом ближе GUIDE_RANGE
+    к центру зоны, уровень гайда ±GUIDE_LEVEL_SLACK, не меньше HUNT_MIN_MOBS. Так Abandoned Camp (Ol Mahum в квадрате 18_22 не сложились
+    в кластер) и Beast Farm (кроме кормимых зверей FeedableBeast там только Farm Bandit и Beast Devourer). Папки HUNT_SKIP_DIRS — мимо."""
+    found = []
+    for file, cx, cy, lo, hi, roles in rows:
+        path = d.data / "spawns" / file
+        if file.split("/")[0] in HUNT_SKIP_DIRS or not path.is_file():
+            continue
+        pts = []
+        for npcs, _ in (u for sp in ET.parse(path).getroot().iter("spawn") for u in spawn_units(sp)):
+            for n in npcs:
+                t = d.npcs.get(int(n.get("id")))
+                if t is None or n.get("x") is None or t.get("type") != "Monster" or not mob_exp(t):
+                    continue
+                level, x, y = int(t.get("level", "0")), int(n.get("x")), int(n.get("y"))
+                if lo - GUIDE_LEVEL_SLACK <= level <= hi + GUIDE_LEVEL_SLACK and math.dist((x, y), (cx, cy)) < GUIDE_RANGE:
+                    pts += [(x, y, int(n.get("z")), level, t.get("name"))] * int(n.get("count", "1"))
+        if len(pts) < HUNT_MIN_MOBS:
+            continue
+        mx, my = statistics.mean(p[0] for p in pts), statistics.mean(p[1] for p in pts)
+        zmed = round(statistics.median(p[2] for p in pts))
+        entry = entry_point(geo, mx, my, zmed - 150, zmed + 150)
+        if entry is None:
+            continue
+        levels = [p[3] for p in pts]
+        region, name, by_mobs = spot_place(tiles, file, [p[4] for p in pts], entry[0], entry[1])
+        found.append(dict(file=file, region=region, name=name, by_mobs=by_mobs, level=round(statistics.median(levels)), min=min(levels),
+                          max=max(levels), mobs=len(pts), x=entry[0], y=entry[1], z=entry[2], guide=guide_roles(roles),
+                          radius=max(400, min(1500, round(max(math.dist((mx, my), p[:2]) for p in pts))))))
+    return found
 
 
 def hunt_spots_xml(spots: list[dict]) -> bytes:
@@ -2552,7 +2722,8 @@ def hunt_spots_xml(spots: list[dict]) -> bytes:
             "\t<!-- L2Hub: споты охотников-фантомов — группы спавна мобов с узким разбросом уровней и кластеры мобов-точек. "
             "Сгенерировано tools/fake_players.py. -->\n"
             + "".join(f'\t<spot level="{s["level"]}" min="{s["min"]}" max="{s["max"]}" region="{s["region"]}" name={quoteattr(s["name"])} '
-                      f'x="{s["x"]}" y="{s["y"]}" z="{s["z"]}" radius="{s["radius"]}" mobs="{s["mobs"]}" />\n' for s in spots)
+                      f'x="{s["x"]}" y="{s["y"]}" z="{s["z"]}" radius="{s["radius"]}" mobs="{s["mobs"]}"'
+                      + (f' guide="{s["guide"]}"' if s.get("guide") else "") + " />\n" for s in spots)
             + "</list>\n").encode("utf-8")
 
 
@@ -2604,8 +2775,9 @@ def main(data: Path, geodata: Path, out: Path | None = None) -> int:
         # вторая сотня — High Five, Epilogue и Interlude (у него без камаэлей: NO_KAMAEL; docs/INTERLUDE.md); так же, в конце
         table = table + [dict(h, spot=None, **(NO_KAMAEL[h["name"]] if (123 not in d.classes) and (h["race"] == "KAMAEL") else {})) for h in HUNTERS_HF]
     if HUNTERS and "ct26_highfive" in data.resolve().parts:
-        # третья волна — только High Five: на остальных хрониках вывод прежний; так же, в конце
-        table = table + [dict(h, spot=None) for h in HUNTERS_H5]
+        # третья и четвёртая волны — только High Five: на остальных хрониках вывод прежний; так же, в конце. Пятая — запас «следующего
+        # поколения» (reserve, раздел 4.155): в мир только новичками жизненного цикла, места в мире — таблица без него.
+        table = table + [dict(h, spot=None) for h in HUNTERS_H5 + HUNTERS_H5_W4 + HUNTERS_H5_W5]
     # Свой прошлый вывод в датапаке сборки (туда его копирует server_build.ps1 из модуля) — не входные данные.
     own_spawn = data / "spawns/Custom/L2HubFakePlayers.xml"
     out_spawn = out / "spawns/Custom/L2HubFakePlayers.xml"
@@ -2698,7 +2870,10 @@ def main(data: Path, geodata: Path, out: Path | None = None) -> int:
     phantom_xml, phantom_report, phantom_personas = [], [], {}
     hunter_names = {h["name"].lower() for h in hunters}
     hunter_aliases = {a.lower() for h in hunters for a in h["aliases"].split(";")}
-    for c in COMPANIONS:
+    squad = bool({"ct26_highfive", "epilogue"} & set(data.resolve().parts))  # личная пачка: чертежи и метки profile (SQUAD_BLUEPRINTS)
+    companions = [dict(c, profile=SQUAD_PROFILES[c["name"]]) if squad and c["name"] in SQUAD_PROFILES else c for c in COMPANIONS]
+    companions += SQUAD_BLUEPRINTS if squad else []
+    for c in companions:
         name, kit = c["name"], KITS[c["kit"]]
         if name in personas or name == "Evi":
             sys.exit(f"{name}: имя напарника совпадает с фейком — шёпот ушёл бы фейку")
@@ -2716,24 +2891,27 @@ def main(data: Path, geodata: Path, out: Path | None = None) -> int:
         gear = []
         for gr, min_level in GRADES:
             who = dict(race=c["race"], sex=c["sex"], level=min_level, cls=c["chain"][min(tier_index(min_level), len(c["chain"]) - 1)])
-            armor = d.armor_set(gr, "MAGIC", name, who, kit["shield"])
-            parts = {"rhand": d.companion_weapon(gr, kit, name, who)}
+            fighter = c["role"] == "DAMAGE" and not kit["weapon"][2]  # воин пачки: броня и оружие по набору, как у охотника
+            armor = d.armor_set(gr, kit["armor"] if c["role"] == "DAMAGE" else "MAGIC", name, who, kit["shield"])
+            parts = {"rhand": d.hunter_weapon(gr, kit, name, who) if fighter else d.companion_weapon(gr, kit, name, who)}
             parts.update((slot, armor[slot]) for slot in ("head", "chest", "legs", "gloves", "feet") if slot in armor)
             if kit["shield"] and "shield" in armor:
                 parts["lhand"] = armor["shield"]
             attrs = "".join(f' {k}="{v}"' for k, v in parts.items())
             names = ", ".join(d.items[v]["name"] for v in parts.values())
-            gear.append(f'\t\t<gear grade="{gr}" minLevel="{min_level}"{attrs} shots="{d.blessed_spiritshot(gr)}" /> <!-- {names} -->\n')
+            shots = d.soulshot(gr) if fighter else d.blessed_spiritshot(gr)
+            gear.append(f'\t\t<gear grade="{gr}" minLevel="{min_level}"{attrs} shots="{shots}" /> <!-- {names} -->\n')
         classes = ", ".join(d.classes[cid][0] for cid in c["chain"])
         phantom_xml.append(
             f'\t<!-- {name}: {ROLE_RU[c["role"]]}, {classes} -->\n'
             f'\t<phantom name="{name}" role="{c["role"]}" female="{"true" if c["sex"] == "F" else "false"}" '
             f'face="{rnd(name, "face") % 3}" hairStyle="{rnd(name, "hair") % (hair_max + 1)}" hairColor="{rnd(name, "hc") % 4}" '
-            f'classes="{",".join(map(str, c["chain"]))}" aliases="{c["aliases"]}" x="{x}" y="{y}" z="{z}">\n' + "".join(gear) + '\t</phantom>\n')
+            f'classes="{",".join(map(str, c["chain"]))}" aliases="{c["aliases"]}"' + (f' profile="{c["profile"]}"' if c.get("profile") else "")
+            + f' x="{x}" y="{y}" z="{z}">\n' + "".join(gear) + '\t</phantom>\n')
         race_ru = RACE_RU[c["race"]][1 if c["sex"] == "F" else 0]
         phantom_personas[name] = dict(race=race_ru, sex=c["sex"], **{"class": d.classes[c["chain"][-1]][0]}, role=ROLE_RU[c["role"]], companion=True,
                               place="ходит в пати с напарником по всему миру",
-                              activity=f"напарник в пати: {'лечит' if c['role'] == 'HEALER' else 'бафает'} своих и ходит следом",
+                              activity=f"напарник в пати: {'лечит' if c['role'] == 'HEALER' else 'бафает' if c['role'] == 'BUFFER' else 'бьёт цель хозяина'} своих и ходит следом",
                               traits=c["traits"], style=c["style"], bio=c["bio"], aliases=c["aliases"])
         phantom_report.append(f"фантом {name:<8} {ROLE_RU[c['role']]:<7} {classes}; дом у гейткипера Гирана {x} {y} {z}")
 
@@ -2778,16 +2956,16 @@ def main(data: Path, geodata: Path, out: Path | None = None) -> int:
         hair_max = 6 if p["sex"] == "F" else 4
         start = p.get("start_level")
         phantom_xml.append(
-            f'\t<!-- {name}: охотник, {classes}{f"; ветеран, приходит {start}-м" if start else ""} -->\n'
+            f'\t<!-- {name}: охотник, {classes}{f"; ветеран, приходит {start}-м" if start else ""}{"; запас следующего поколения" if p.get("reserve") else ""} -->\n'
             f'\t<phantom name="{name}" kind="hunter" role="{role}" female="{"true" if p["sex"] == "F" else "false"}" '
             f'face="{rnd(name, "face") % 3}" hairStyle="{rnd(name, "hair") % (hair_max + 1)}" hairColor="{rnd(name, "hc") % 4}" '
-            f'classes="{",".join(map(str, p["chain"]))}" aliases="{p["aliases"]}" social="{SOCIAL.get(name, 1)}" temper="{TEMPER.get(name, 1)}" risk="{RISK.get(name, 1)}"{f' startLevel="{start}"' if start else ""} x="{x}" y="{y}" z="{z}">\n'
+            f'classes="{",".join(map(str, p["chain"]))}" aliases="{p["aliases"]}" social="{SOCIAL.get(name, 1)}" temper="{TEMPER.get(name, 1)}" risk="{RISK.get(name, 1)}"{f' startLevel="{start}"' if start else ""}{' reserve="true"' if p.get("reserve") else ""} x="{x}" y="{y}" z="{z}">\n'
             + "".join(gear) + '\t</phantom>\n')
         race_ru = RACE_RU[p["race"]][1 if p["sex"] == "F" else 0]
         phantom_personas[name] = dict(race=race_ru, sex=p["sex"], **{"class": d.classes[p["chain"][-1]][0]}, role="охотник", hunter=True,
                                       place="", activity="качается сам, соло",
                                       traits=p["traits"], style=p["style"], bio=p["bio"], aliases=p["aliases"])
-        phantom_report.append(f"охотник {name:<10} {classes}{f'; ветеран {start}-го' if start else ''}; дом — {tn.GATEKEEPERS[START_VILLAGE_GK[p['race']]]} {x} {y} {z}")
+        phantom_report.append(f"охотник {name:<10} {classes}{f'; ветеран {start}-го' if start else ''}{'; запас' if p.get('reserve') else ''}; дом — {tn.GATEKEEPERS[START_VILLAGE_GK[p['race']]]} {x} {y} {z}")
     phantom_report.extend(f"ВНИМАНИЕ, не наденет: {u}" for u in d.unworn)
 
     # Танатос (раздел 4.45): дом — у гейткипера деревни орков (в мир он выходит на спот, дом — только для создания персонажа).
@@ -2852,7 +3030,7 @@ def main(data: Path, geodata: Path, out: Path | None = None) -> int:
         phantom_personas[name] = dict(race=RACE_RU[r["race"]][0], sex=r["sex"], **{"class": d.classes[r["chain"][-1]][0]}, role="жнец", reaper=True,
                                       traits=r["traits"], style=r["style"], bio=r["bio"])
 
-    spots = hunt_spots(d, geo) if HUNTERS else []
+    spots = hunt_spots(d, geo, guides=not new_format) if HUNTERS else []  # гайды — High Five: у Classic и Essence другие уровни зон
     (out / "stats/npcs/custom").mkdir(parents=True, exist_ok=True)
     (out / "L2HubHuntSpots.xml").write_bytes(hunt_spots_xml(spots))
     if spots:
@@ -2877,7 +3055,7 @@ def main(data: Path, geodata: Path, out: Path | None = None) -> int:
     (out / "L2HubFakePersonas.json").write_text(json.dumps({"version": 1, "personas": personas}, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     (out / "L2HubPhantomPersonas.json").write_text(json.dumps({"version": 1, "personas": phantom_personas}, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     print("\n".join(report + phantom_report))
-    print(f"\n{len(table) - len(hunters)} фейков, {len(COMPANIONS)} напарников, {len(hunters)} охотников, {len(spots)} спотов охоты, "
+    print(f"\n{len(table) - len(hunters)} фейков, {len(companions)} напарников, {len(hunters)} охотников, {len(spots)} спотов охоты, "
           f"характеров {len(personas) + len(phantom_personas)}")
     return 0
 

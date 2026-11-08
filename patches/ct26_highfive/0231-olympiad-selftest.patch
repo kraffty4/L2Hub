@@ -5,7 +5,7 @@ new file mode 100644
 index 0000000..811156a
 --- /dev/null
 +++ b/dist/game/data/scripts/custom/L2HubOlympiadTest/L2HubOlympiadTest.java
-@@ -0,0 +1,404 @@
+@@ -0,0 +1,414 @@
 +package custom.L2HubOlympiadTest;
 +
 +import java.lang.reflect.Field;
@@ -23,6 +23,7 @@ index 0000000..811156a
 +import org.l2jmobius.gameserver.entity.World;
 +import org.l2jmobius.gameserver.entity.actor.Player;
 +import org.l2jmobius.gameserver.entity.item.type.WeaponType;
++import org.l2jmobius.gameserver.managers.phantom.OlympiadActionPace;
 +import org.l2jmobius.gameserver.managers.phantom.PhantomCompat;
 +import org.l2jmobius.gameserver.managers.phantom.PhantomData;
 +import org.l2jmobius.gameserver.managers.phantom.PhantomManager;
@@ -71,6 +72,8 @@ index 0000000..811156a
 +		boolean autoPlay;
 +		int casting;
 +		int attacking;
++		int fast;
++		final java.util.Set<String> casts = new java.util.TreeSet<>();
 +		int running;
 +		int samples;
 +		double minHp = 1;
@@ -253,6 +256,11 @@ index 0000000..811156a
 +			fighter.autoPlay |= player.isAutoPlaying();
 +			fighter.casting += player.isCastingNow() ? 1 : 0;
 +			fighter.attacking += player.isAttackingNow() ? 1 : 0;
++			fighter.fast += OlympiadActionPace.owns(player) ? 1 : 0;
++			if (player.getLastSkillCast() != null)
++			{
++				fighter.casts.add(player.getLastSkillCast().getName());
++			}
 +			fighter.running += player.isMoving() ? 1 : 0;
 +			fighter.minHp = Math.min(fighter.minHp, player.getCurrentHp() / Math.max(1, player.getMaxHp()));
 +		}
@@ -309,10 +317,12 @@ index 0000000..811156a
 +			check(name + " keeps the longest skill first", fighter.firstIsLongest);
 +			// Кинжал мог не добежать до мага: бег к сопернику — тоже ход.
 +			check(name + " acted in the match (cast " + fighter.casting + ", hit " + fighter.attacking + ", ran " + fighter.running + ")", (fighter.casting + fighter.attacking + fighter.running) > 0);
++			check(name + " decides on the fast Olympiad pass, not the 2 s hunter tick (" + fighter.fast + " of " + fighter.samples + " samples)", !PhantomHuntersConfig.HUNTER_COMBAT_FIXES || (fighter.fast > 0));
 +			check(name + " has the match counted", Olympiad.getInstance().getCompetitionDone(id) > fighter.done);
 +			check(name + " is out of the stadium", !player.isInOlympiadMode() && (player.getInstanceId() == 0) && !player.isTeleporting() && !player.isDead());
 +			check(name + " has its skills after the match", !player.getAutoUseSettings().getAutoSkills().isEmpty());
 +			note(name + " after the match: auto play " + player.isAutoPlaying() + ", moving " + player.isMoving() + ", auto shots " + player.getAutoSoulShot().size() + ".");
++			note(name + " cast in the match: " + fighter.casts + ".");
 +		}
 +		for (Fighter a : FIGHTERS)
 +		{

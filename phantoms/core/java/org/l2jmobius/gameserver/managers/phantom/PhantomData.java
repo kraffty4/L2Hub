@@ -38,12 +38,14 @@ public class PhantomData implements IXmlReader
 		parseDatapackFile("data/L2HubPhantoms.xml");
 		_templates = Collections.unmodifiableMap(_loading);
 		_loading = null;
+		PersonalCompanionPool.restore(this); // личная пачка: свои экземпляры помощников, data/L2HubPersonalInstances.properties
 		LOGGER.info(getClass().getSimpleName() + ": Loaded " + getCompanions().size() + " phantom companions and " + getHunters().size() + " hunters.");
 	}
 
 	@Override
 	public void parseDocument(Document document, File file)
 	{
+		PersonalCompanionNames.prepare(document); // профили личной пачки (атрибут profile) и их имена из PersonalCompanionNames.ini
 		forEach(document, "list", listNode -> forEach(listNode, "phantom", phantomNode ->
 		{
 			final StatSet set = new StatSet(parseAttributes(phantomNode));
@@ -75,6 +77,8 @@ public class PhantomData implements IXmlReader
 				template.setRisk(set.getFloat("risk", 1));
 				// Ветеран (раздел 4.52): новый охотник рождается сразу этого уровня.
 				template.setStartLevel(set.getInt("startLevel", 0));
+				// Запас «следующего поколения» (раздел 4.155): только новичком жизненного цикла.
+				template.setReserve(set.getBoolean("reserve", false));
 				// Тела Танатоса после смерти (раздел 4.45): тело с классом без шаблона у хроники — мимо, остальные — в силе.
 				final List<PhantomTemplate.Body> bodies = new ArrayList<>();
 				forEach(phantomNode, "body", bodyNode ->
@@ -101,6 +105,25 @@ public class PhantomData implements IXmlReader
 				LOGGER.warning(getClass().getSimpleName() + ": Skipped phantom " + name + ": " + e.getMessage());
 			}
 		}));
+	}
+
+	/**
+	 * Личная пачка: экземпляр помощника (PersonalCompanionPool) — в общий список шаблонов, после загрузки XML.
+	 */
+	synchronized void registerPersonal(PhantomTemplate template)
+	{
+		if (template.isHunter() || template.isReaper())
+		{
+			throw new IllegalArgumentException("Only personal companions can be registered");
+		}
+		final String key = template.getName().toLowerCase(java.util.Locale.ROOT);
+		if (_templates.containsKey(key))
+		{
+			throw new IllegalArgumentException("Personal name already registered: " + template.getName());
+		}
+		final Map<String, PhantomTemplate> next = new LinkedHashMap<>(_templates);
+		next.put(key, template);
+		_templates = Collections.unmodifiableMap(next);
 	}
 
 	/**

@@ -257,7 +257,8 @@ final class PhantomEnchant
 	private static long marketPrice(int scrollId)
 	{
 		final ItemTemplate scroll = ItemData.getInstance().getTemplate(scrollId);
-		return scroll == null ? 0 : Math.round(scroll.getReferencePrice() * PhantomMarketMemory.factor(scrollId));
+		final var shop = HunterShopPrices.shopPrice(scrollId);
+		return shop.isPresent() ? shop.getAsLong() : HunterShopPrices.listed(scrollId) ? 0 : scroll == null ? 0 : Math.round(scroll.getReferencePrice() * PhantomMarketMemory.factor(scrollId));
 	}
 
 	/**

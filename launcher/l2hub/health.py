@@ -331,8 +331,11 @@ def diagnostics(p: dict) -> list[dict]:
     if l2ini_path.exists():
         try:
             addr = l2ini.server_addr(l2ini_path)
-            add("ok" if addr == "127.0.0.1" else "warn", title, f"ServerAddr={addr}",
-                "" if addr == "127.0.0.1" else "Клиент будет стучаться не на этот ПК")
+            local = addr is not None and (addr.lower() in servers.LOOPBACK_HOSTS or addr.startswith("127."))
+            add("ok" if local else "warn", title, f"ServerAddr={addr}",
+                "" if local else "Клиент стучится не на этот ПК: при «Играть» лаунчер сам поставит 127.0.0.1, "
+                f"исходный файл сохранит в data\\backups\\client\\{p['id']}" if not clientsys.is_4game(p)
+                else "Клиент будет стучаться не на этот ПК")
         except ValueError as e:
             add("warn", title, f"не прочитать: {e}")
     else:

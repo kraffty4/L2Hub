@@ -21,7 +21,7 @@ LAUNCHER = HERE.parent
 REPO = LAUNCHER.parent
 DIST = LAUNCHER / "dist" / "L2Hub"
 DIRS = ("patches", "phantoms", "scripts", "profiles")
-FILES = ("LICENSE", "CHANGELOG.md", "docs/CHRONICLES.md", "THIRD_PARTY.md")
+FILES = ("LICENSE", "LICENSES/GPL-3.0.txt", "LICENSES/PolyForm-Noncommercial-1.0.0.md", "CHANGELOG.md", "docs/CHRONICLES.md", "THIRD_PARTY.md")
 # Пакеты внутри exe, чьи лицензии требуют текст рядом с программой (THIRD_PARTY.md) — в dist\L2Hub\licenses\<пакет>.
 LICENSED = ("pywebview", "pythonnet", "clr_loader", "bottle", "proxy_tools", "cffi", "pycparser", "psutil", "pillow", "typing_extensions", "pyinstaller")
 # Старая серия патчей H5 — только история, не накладывается (AGENTS.md).

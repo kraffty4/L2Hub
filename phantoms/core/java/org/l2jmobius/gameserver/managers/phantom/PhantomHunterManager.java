@@ -531,7 +531,8 @@ public class PhantomHunterManager
 		 */
 		boolean spare()
 		{
-			return (PhantomHuntersConfig.HUNTERS_MAX > 0) && (order >= PhantomHuntersConfig.HUNTERS_MAX);
+			// Жизненный цикл (раздел 4.151): пришедший новичком на освободившееся место не лишний. Запас «следующего поколения» (4.155) — в мире только так.
+			return (template.isReserve() || ((PhantomHuntersConfig.HUNTERS_MAX > 0) && (order >= PhantomHuntersConfig.HUNTERS_MAX))) && !PhantomLifecycle.getInstance().joined(template.getName());
 		}
 	}
 
@@ -772,7 +773,7 @@ public class PhantomHunterManager
 					{
 						if (hunter.spare())
 						{
-							LOGGER.info(getClass().getSimpleName() + ": " + hunter.template.getName() + " (" + player.getLevel() + ") logs off: beyond HuntersMax " + PhantomHuntersConfig.HUNTERS_MAX + (player.isInParty() ? ", leaves the party" : "") + (player.isInCombat() ? ", drops the fight" : "") + ".");
+							LOGGER.info(getClass().getSimpleName() + ": " + hunter.template.getName() + " (" + player.getLevel() + ") logs off: " + (hunter.template.isReserve() ? "next generation reserve, not joined" : "beyond HuntersMax " + PhantomHuntersConfig.HUNTERS_MAX) + (player.isInParty() ? ", leaves the party" : "") + (player.isInCombat() ? ", drops the fight" : "") + ".");
 							PhantomHunterParty.getInstance().leaderLeaves(player, now);
 						}
 						else
@@ -1053,7 +1054,27 @@ public class PhantomHunterManager
 				hunter.scheduled = false;
 				PhantomAbsence.notice(name, hunter.template.isFemale(), now);
 			}
+			if (PhantomLifecycle.getInstance().retired(name))
+			{
+				hunter.scheduled = false;
+			}
 		}
+		PhantomLifecycle.getInstance().control(now, this::tableNames);
+	}
+
+	/**
+	 * @return имена всей таблицы охотников в её порядке ({@link PhantomLifecycle})
+	 */
+	private List<String> tableNames()
+	{
+		final List<Hunter> all = new ArrayList<>(_hunters.values());
+		all.sort(Comparator.comparingInt(hunter -> hunter.order));
+		final List<String> names = new ArrayList<>(all.size());
+		for (Hunter hunter : all)
+		{
+			names.add(hunter.template.getName());
+		}
+		return names;
 	}
 
 	/**
@@ -1061,7 +1082,13 @@ public class PhantomHunterManager
 	 */
 	int worldSize()
 	{
-		return PhantomHuntersConfig.HUNTERS_MAX > 0 ? Math.min(PhantomHuntersConfig.HUNTERS_MAX, _hunters.size()) : _hunters.size();
+		// Запас «следующего поколения» (раздел 4.155) — не место в мире, пока не пришёл новичком.
+		int size = 0;
+		for (Hunter hunter : _hunters.values())
+		{
+			size += hunter.spare() ? 0 : 1;
+		}
+		return size;
 	}
 
 	/**
@@ -1453,6 +1480,13 @@ public class PhantomHunterManager
 			hunter.lastStore = now;
 			player.getVariables().set(PLAYED_VARIABLE, hunter.played / 1000);
 			player.storeMe();
+		}
+
+		// Первая профа квестом (раздел 4.152): пока идёт квест, тик его.
+		if (PhantomProfessionQuest.tick(player, hunter.template, now))
+		{
+			hunter.lastActive = now;
+			return;
 		}
 
 		// Доход с охоты: прирост адены, пока он на споте (город, лавка и сдача квеста — не в счёт).
@@ -2272,7 +2306,7 @@ public class PhantomHunterManager
 				continue;
 			}
 			final List<HuntSpot> choice = free.isEmpty() ? fitting : free;
-			return choice.get(Rnd.get(choice.size()));
+			return HuntSpotData.choose(player, choice); // по роли из гайдов (docs/PHANTOMS.md, 4.147)
 		}
 		return null;
 	}
@@ -4312,6 +4346,7 @@ public class PhantomHunterManager
 		final boolean clanBoard = "CLANBOARD".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
 		final boolean boardShop = "BOARDSHOP".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
 		final boolean clanCrest = "CLANCREST".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
+		final boolean allies = "ALLIES".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
 		// Подгруппам, складу и холлу нужны кланы с людьми в мире: ждём большинство охотников.
 		final boolean subUnits = "SUBUNITS".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
 		final boolean clanStock = "CLANSTOCK".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
@@ -4329,7 +4364,17 @@ public class PhantomHunterManager
 		{
 			return;
 		}
-		if ((clanLife || clanWar || clanWarPlayer || clanBoard || boardShop || clanCrest) && (inWorld().stream().filter(p -> (p.getLevel() >= 10) && (p.getClan() == null)).count() < 12))
+		if ((clanLife || clanWar || clanWarPlayer || clanBoard || boardShop || clanCrest || allies) && (inWorld().stream().filter(p -> (p.getLevel() >= 10) && (p.getClan() == null)).count() < 12))
+		{
+			return;
+		}
+		// Тату нужны пешки с 40-го и второй профой: ждём большинство в мире.
+		if ("KITS".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST) && (inWorld().size() < Math.min(80, worldSize())))
+		{
+			return;
+		}
+		// Заряды воина (раздел 4.150) и жизненный цикл (4.151): ждём большинство в мире.
+		if (("CHARGES".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST) || "LIFECYCLE".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST) || "COMBOS".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST)) && (inWorld().size() < Math.min(80, worldSize())))
 		{
 			return;
 		}
@@ -4544,6 +4589,58 @@ public class PhantomHunterManager
 			synchronized (PhantomHunterClans.getInstance())
 			{
 				PhantomClanCrests.getInstance().selfTest(inWorld());
+			}
+			return;
+		}
+		if ("KITS".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST))
+		{
+			// У Эпилога свой PhantomClassKits (phantoms/epilogue/java) без этой самопроверки: вызов по имени, чтобы ядро собиралось и там.
+			try
+			{
+				PhantomClassKits.class.getDeclaredMethod("selfTest", List.class).invoke(null, inWorld());
+			}
+			catch (NoSuchMethodException e)
+			{
+				LOGGER.warning("PhantomClassKits: SelfTest KITS: not available on this chronicle.");
+			}
+			catch (ReflectiveOperationException e)
+			{
+				LOGGER.log(Level.WARNING, "PhantomClassKits: SelfTest KITS: failed: " + e.getMessage(), e);
+			}
+			return;
+		}
+		if ("CHARGES".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST))
+		{
+			// У Эпилога свой setupCombat (patches/epilogue/0512) без этой самопроверки: вызов по имени, чтобы ядро собиралось и там.
+			try
+			{
+				PhantomHunterOutfit.class.getDeclaredMethod("chargesSelfTest", java.util.function.Supplier.class).invoke(null, (java.util.function.Supplier<List<Player>>) this::inWorld);
+			}
+			catch (NoSuchMethodException e)
+			{
+				LOGGER.warning("PhantomHunterOutfit: SelfTest CHARGES: not available on this chronicle.");
+			}
+			catch (ReflectiveOperationException e)
+			{
+				LOGGER.log(Level.WARNING, "PhantomHunterOutfit: SelfTest CHARGES: failed: " + e.getMessage(), e);
+			}
+			return;
+		}
+		if ("COMBOS".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST))
+		{
+			PhantomClassCombos.selfTest(this::inWorld);
+			return;
+		}
+		if ("LIFECYCLE".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST))
+		{
+			PhantomLifecycle.getInstance().selfTest(this::tableNames, this::inWorld);
+			return;
+		}
+		if ("ALLIES".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST))
+		{
+			synchronized (PhantomHunterClans.getInstance())
+			{
+				PhantomRaid.alliesSelfTest(inWorld());
 			}
 			return;
 		}

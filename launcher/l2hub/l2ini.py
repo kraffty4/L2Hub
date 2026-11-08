@@ -94,9 +94,10 @@ def encode(data: bytes) -> bytes:
 
 
 def with_server_addr(raw: bytes, addr: str) -> bytes:
-    """Тот же L2.ini (зашифрованный ключом комьюнити), но с другим ServerAddr; кодировка текста сохраняется."""
-    key, data = decode(raw)
-    if key != "community":
+    """Тот же L2.ini (зашифрованный ключом комьюнити или открытый), но с другим ServerAddr; кодировка текста сохраняется."""
+    plain = not raw.startswith(HEADER)  # открытый ini: остальные байты остаются как были, шифровать не нужно
+    key, data = ("plain", raw) if plain else decode(raw)
+    if key not in ("community", "plain"):
         raise ValueError("L2.ini зашифрован не ключом комьюнити — перешифровать его нечем")
     # UTF-16 с BOM или однобайтный текст (бывают байты cp1251): latin-1 сохраняет каждый байт как есть.
     bom = data[:2] == b"\xff\xfe"
@@ -104,7 +105,8 @@ def with_server_addr(raw: bytes, addr: str) -> bytes:
     new, count = re.subn(r"(?m)^(\s*ServerAddr\s*=\s*)\S+", lambda m: m.group(1) + addr, text)
     if count != 1:
         raise ValueError(f"в L2.ini строк ServerAddr: {count}, ожидалась одна")
-    return encode(b"\xff\xfe" + new.encode("utf-16-le") if bom else new.encode("latin-1"))
+    out = b"\xff\xfe" + new.encode("utf-16-le") if bom else new.encode("latin-1")
+    return out if plain else encode(out)
 
 
 def read_text(path: Path) -> tuple[str, str]:

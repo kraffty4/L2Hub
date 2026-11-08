@@ -1,0 +1,234 @@
+L2Hub x10, повторный прогон R2: магазин коинов и стиля в штатном окне обмена, ярлык «Автобой» (40003) со свечением, прежнее полное окно автобоя.
+
+--- a/dist/game/config/Custom/ChampionMonsters.ini
++++ b/dist/game/config/Custom/ChampionMonsters.ini
+@@ -56,7 +56,7 @@
+ 
+ # Предметы-награды красного чемпиона: id,количество через ; (пусто — без наград).
+ # Example: 6393,1;57,5000
+-ChampionRewardItems = 6393,1
++ChampionRewardItems = 40001,25
+ 
+ # % Chance to obtain a specified reward item from a lower level Champion mob.
+ # Default: 0
+@@ -165,7 +165,7 @@
+ SuperChampionSpdAtk = 1.5
+ 
+ # Предметы-награды суперчемпиона: id,количество через ; (пусто — без наград).
+-SuperChampionRewardItems = 6393,10
++SuperChampionRewardItems = 40001,250
+ 
+ # Эффекты над моделью (AbnormalVisualEffect через запятую, пусто — без эффектов): BIG_BODY — моб крупнее,
+ # ULTIMATE_DEFENCE — свечение скилла Ultimate Defense, MAGIC_SQUARE — белый круг под ногами («Magic Circle»).
+--- a/dist/game/data/scripts/custom/L2HubPvpEvents/L2HubPvpEvents.java
++++ b/dist/game/data/scripts/custom/L2HubPvpEvents/L2HubPvpEvents.java
+@@ -511,7 +511,12 @@
+ 				}
+ 			}
+ 			final int medals = rewardMedals(minutes, winner);
+-			if (medals > 0)
++			// L2Hub x10: награда за бой — сразу коины в кошелёк, без медалей (у x10 две валюты: коины и жетоны стиля).
++			if ((medals > 0) && org.l2jmobius.gameserver.managers.world.X10World.enabled())
++			{
++				org.l2jmobius.gameserver.managers.world.X10World.pvpReward(player, medals);
++			}
++			else if (medals > 0)
+ 			{
+ 				player.addItem(ItemProcessType.REWARD, MEDAL_ITEM, medals, player, true);
+ 			}
+--- a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+@@ -415,7 +415,15 @@
+ 		{
+ 			if ((args.length > 1) && args[1].equalsIgnoreCase("medals") && canUse(player))
+ 			{
+-				MultisellData.getInstance().separateAndSendFromBoard(MEDAL_SHOP, player);
++				// L2Hub x10: медали сами превращаются в коины, их товары — в магазине за коины.
++				if (org.l2jmobius.gameserver.managers.world.X10World.enabled())
++				{
++					org.l2jmobius.gameserver.managers.world.X10World.openShop(player, "enhance");
++				}
++				else
++				{
++					MultisellData.getInstance().separateAndSendFromBoard(MEDAL_SHOP, player);
++				}
+ 			}
+ 			html = page(player, PhantomEventBoard.title(), canOpen(player) ? PhantomEventBoard.getInstance().page(player, args) + ((args.length > 1 && java.util.Set.of("legacy", "join", "cancel", "medals").contains(args[1])) ? medals(player) : "") + eventLogoutNote(player) : PhantomClanBoard.busy());
+ 		}
+@@ -442,6 +450,13 @@
+ 		if (plain <= 0)
+ 		{
+ 			return "";
++		}
++		if (org.l2jmobius.gameserver.managers.world.X10World.enabled())
++		{
++			final int rate = org.l2jmobius.gameserver.managers.world.X10World.MEDAL_COINS;
++			final boolean en = "en".equals(org.l2jmobius.gameserver.config.custom.L2HubWorldConfig.LANGUAGE);
++			final int winner = custom.L2HubPvpEvents.L2HubPvpEvents.rewardMedals(custom.L2HubPvpEvents.L2HubPvpEvents.tvt("TvTFightMinutes", 7, 1, 30), true);
++			return "<br><br>" + (en ? "A full PvP fight pays " + (plain * rate) + " Coins, the winner " + (winner * rate) + ". Coins go straight to your wallet; champions drop Coins too." : "За полный PvP-бой: " + (plain * rate) + " коинов, победителю " + (winner * rate) + ". Коины сразу в кошельке; чемпионы тоже роняют коины.") + "<br1>" + button(en ? "Coin shop" : "Магазин за коины", EVENTS + " medals", 150);
+ 		}
+ 		return "<br><br>" + tr("Медали у тебя: ") + "<font color=\"LEVEL\">" + player.getInventory().getInventoryItemCount(custom.L2HubPvpEvents.L2HubPvpEvents.MEDAL_ITEM, -1) + "</font><br1>" + ("en".equals(org.l2jmobius.gameserver.config.custom.L2HubWorldConfig.LANGUAGE) ? "For a full PvP fight: " : "За полный PvP-бой: ") + plain + tr(", победителю ") + custom.L2HubPvpEvents.L2HubPvpEvents.rewardMedals(custom.L2HubPvpEvents.L2HubPvpEvents.tvt("TvTFightMinutes", 7, 1, 30), true) + tr(". Падают и с чемпионов.") + "<br1>" + button(tr("Обмен медалей"), EVENTS + " medals", 150);
+ 	}
+--- a/dist/game/data/scripts/handlers/chat/commands/voiced/AutoPlay.java
++++ b/dist/game/data/scripts/handlers/chat/commands/voiced/AutoPlay.java
+@@ -72,6 +72,7 @@
+ 	private static final String[] VOICED_COMMANDS =
+ 	{
+ 		"play",
++		"playmini",
+ 		"playskills",
+ 		"playitems",
+ 		"playpotion",
+@@ -202,11 +203,15 @@
+ 		
+ 		switch (command)
+ 		{
++			case "playmini": // L2Hub: старые макросы ведут в то же полное окно
+ 			case "play":
+ 			{
++				boolean quiet = false;
+ 				if (params != null)
+ 				{
+ 					final String[] paramArray = params.toLowerCase().split(" ");
++					// L2Hub: ярлык «Автобой» включает и выключает бой без открытия окна.
++					quiet = (paramArray.length > 1) && paramArray[1].equals("quiet");
+ 					COMMAND: switch (paramArray[0])
+ 					{
+ 						case "attack":
+@@ -261,6 +266,7 @@
+ 							if ((paramArray.length > 1) && StringUtil.isNumeric(paramArray[1]))
+ 							{
+ 								player.getAutoPlaySettings().setAutoPotionPercent(Math.max(0, Math.min(100, Integer.parseInt(paramArray[1]))));
++								org.l2jmobius.gameserver.managers.world.X10PlayerTools.setThreshold(player, "hp", Integer.parseInt(paramArray[1]));
+ 							}
+ 							break COMMAND;
+ 						}
+@@ -269,6 +275,7 @@
+ 							if ((paramArray.length > 1) && StringUtil.isNumeric(paramArray[1]))
+ 							{
+ 								player.getAutoPlaySettings().setAutoManaPercent(Math.max(0, Math.min(100, Integer.parseInt(paramArray[1]))));
++								org.l2jmobius.gameserver.managers.world.X10PlayerTools.setThreshold(player, "mp", Integer.parseInt(paramArray[1]));
+ 							}
+ 							break COMMAND;
+ 						}
+@@ -286,6 +293,11 @@
+ 							break COMMAND;
+ 						}
+ 					}
++				}
++				
++				if (quiet)
++				{
++					return true;
+ 				}
+ 				
+ 				final NpcHtmlMessage html = new NpcHtmlMessage();
+@@ -304,8 +316,8 @@
+ 				content = content.replace("%skill_button%", AutoPlayConfig.ENABLE_AUTO_SKILL ? "<br><table width=295><tr><td height=31><center><button action=\"bypass voice .playskills\" value=\"" + tr(player, "Select Skills", "Выбрать умения") + "\" width=200 height=31 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"></center></td></tr></table>" : "");
+ 				content = content.replace("%item_button%", AutoPlayConfig.ENABLE_AUTO_ITEM ? "<br><table width=295><tr><td height=31><center><button action=\"bypass voice .playitems\" value=\"" + tr(player, "Select Supply Items", "Выбрать расходники") + "\" width=200 height=31 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"></center></td></tr></table>" : "");
+ 				content = content.replace("%potion_button%", AutoPlayConfig.ENABLE_AUTO_POTION ? "<br><table width=295><tr><td width=147 height=31><center><button action=\"bypass voice .playpotion\" value=\"" + tr(player, "Healing Potion", "Зелье HP") + "\" width=140 height=31 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"></center></td><td width=148><center><button action=\"bypass voice .playmana\" value=\"" + tr(player, "Mana Potion", "Зелье MP") + "\" width=140 height=31 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"></center></td></tr><tr><td height=31><center><table width=140><tr><td width=55><font color=\"CDB67F\">HP (%percent%)</font></td><td><edit var=\"percentbox\" width=30 height=15></td><td><button value=\"" + tr(player, "Set", "ОК") + "\" action=\"bypass voice .play percent $percentbox\" width=40 height=21 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"></td></tr></table></center></td><td><center><table width=140><tr><td width=55><font color=\"CDB67F\">MP (%manapercent%)</font></td><td><edit var=\"manabox\" width=30 height=15></td><td><button value=\"" + tr(player, "Set", "ОК") + "\" action=\"bypass voice .play manapercent $manabox\" width=40 height=21 back=\"L2UI_CT1.Button_DF_Down\" fore=\"L2UI_CT1.Button_DF\"></td></tr></table></center></td></tr></table>" : "");
+-				content = content.replace("%percent%", String.valueOf(player.getAutoPlaySettings().getAutoPotionPercent()));
+-				content = content.replace("%manapercent%", String.valueOf(player.getAutoPlaySettings().getAutoManaPercent()));
++				content = content.replace("%percent%", String.valueOf(org.l2jmobius.gameserver.managers.world.X10PlayerTools.managesPotions(player) ? org.l2jmobius.gameserver.managers.world.X10PlayerTools.threshold(player, "hp") : player.getAutoPlaySettings().getAutoPotionPercent()));
++				content = content.replace("%manapercent%", String.valueOf(org.l2jmobius.gameserver.managers.world.X10PlayerTools.managesPotions(player) ? org.l2jmobius.gameserver.managers.world.X10PlayerTools.threshold(player, "mp") : player.getAutoPlaySettings().getAutoManaPercent()));
+ 				
+ 				if (player.isAutoPlaying())
+ 				{
+--- a/java/org/l2jmobius/gameserver/data/xml/MultisellData.java
++++ b/java/org/l2jmobius/gameserver/data/xml/MultisellData.java
+@@ -326,6 +326,15 @@
+ 	}
+ 
+ 	/**
++	 * L2Hub x10: список, собранный в коде (магазин коинов и стиля), открывается тем же штатным окном обмена.
++	 * @param list готовый список
++	 */
++	public void registerList(ListContainer list)
++	{
++		_entries.put(list.getListId(), list);
++	}
++
++	/**
+ 	 * L2Hub: мультиселл GM-шопа с доски Alt+B. Открываются только списки без ограничений и списки, разрешённые NPC GM-шопа ({@code CommunityShopNpc} в CommunityBoard.ini): с доски — то же, что у NPC в городе. При покупке такой список NPC рядом не требует.
+ 	 * @param listId мультиселл
+ 	 * @param player игрок
+--- a/java/org/l2jmobius/gameserver/entity/actor/holders/player/Shortcuts.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/holders/player/Shortcuts.java
+@@ -135,6 +135,9 @@
+ 		{
+ 			_owner.sendPacket(new ExAutoSoulShot(shotId, 1));
+ 		}
++		
++		// L2Hub x10: ShortcutInit гасит у клиента всё свечение; ярлык автобоя не заряд и в список выше не входит.
++		org.l2jmobius.gameserver.managers.world.X10World.refreshAutoPlayGlow(_owner);
+ 	}
+ 	
+ 	public void deleteShortcutByObjectId(int objectId)
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/MultiSellChoose.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/MultiSellChoose.java
+@@ -157,7 +157,14 @@
+ 					player.setMultiSell(null);
+ 					return;
+ 				}
+-				
++
++				// L2Hub x10: магазин коинов и стиля списывает цену через кошелёк, предметы-валюты в рюкзаке лишь отражают баланс.
++				if (org.l2jmobius.gameserver.managers.world.X10World.isShopList(_listId))
++				{
++					org.l2jmobius.gameserver.managers.world.X10World.shopBuy(player, entry.getProducts().get(0).getItemId(), _amount);
++					return;
++				}
++
+ 				final PlayerInventory inv = player.getInventory();
+ 				int slots = 0;
+ 				int weight = 0;
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/RequestAutoSoulShot.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/RequestAutoSoulShot.java
+@@ -52,7 +52,14 @@
+ 		{
+ 			return;
+ 		}
+-		
++
++		// L2Hub x10: ярлык «Автобой» включается правым кликом, как авто-сосками; это не заряд и в список зарядов не попадает.
++		if (org.l2jmobius.gameserver.managers.world.X10World.isAutoPlayToggle(_itemId))
++		{
++			org.l2jmobius.gameserver.managers.world.X10World.autoPlay(player, _type == 1);
++			return;
++		}
++
+ 		if (!player.isInStoreMode() && (player.getActiveRequester() == null) && !player.isDead())
+ 		{
+ 			final Item item = player.getInventory().getItemByItemId(_itemId);
+--- a/java/org/l2jmobius/gameserver/network/serverpackets/CharInfo.java
++++ b/java/org/l2jmobius/gameserver/network/serverpackets/CharInfo.java
+@@ -209,11 +209,11 @@
+ 		buffer.writeInt(_player.getMountNpcId() + 1000000);
+ 		buffer.writeInt(_player.getPlayerClass().getId());
+ 		buffer.writeInt(0); // ?
+-		buffer.writeByte(_player.isMounted() ? 0 : _player.getEnchantEffect());
++		buffer.writeByte(_player.isMounted() ? 0 : org.l2jmobius.gameserver.managers.world.X10World.enchantEffect(_player)); // L2Hub x10: свечение оружия из магазина стиля — только вид
+ 		buffer.writeByte(_player.getTeam().getId());
+ 		buffer.writeInt(_player.getClanCrestLargeId());
+ 		buffer.writeByte(_player.isNoble()); // Symbol on char menu ctrl+I
+-		buffer.writeByte(_player.isHero() || (_player.isGM() && GeneralConfig.GM_HERO_AURA)); // Hero Aura
++		buffer.writeByte(_player.isHero() || (_player.isGM() && GeneralConfig.GM_HERO_AURA) || org.l2jmobius.gameserver.managers.world.X10World.heroAura(_player)); // Hero Aura (L2Hub x10: аура из магазина стиля)
+ 		
+ 		buffer.writeByte(_player.isFishing()); // 1: Fishing Mode (Cannot be undone by setting back to 0)
+ 		buffer.writeInt(_player.getFishX());
+--- a/java/org/l2jmobius/gameserver/network/serverpackets/UserInfo.java
++++ b/java/org/l2jmobius/gameserver/network/serverpackets/UserInfo.java
+@@ -208,11 +208,11 @@
+ 		buffer.writeInt(0); // special effects? circles around player...
+ 		buffer.writeInt(_player.getMaxCp());
+ 		buffer.writeInt((int) _player.getCurrentCp());
+-		buffer.writeByte(_player.isMounted() || (_airShipHelm != 0) ? 0 : _player.getEnchantEffect());
++		buffer.writeByte(_player.isMounted() || (_airShipHelm != 0) ? 0 : org.l2jmobius.gameserver.managers.world.X10World.enchantEffect(_player)); // L2Hub x10: свечение оружия из магазина стиля — только вид
+ 		buffer.writeByte(_player.getTeam().getId());
+ 		buffer.writeInt(_player.getClanCrestLargeId());
+ 		buffer.writeByte(_player.isNoble()); // 1: symbol on char menu ctrl+I
+-		buffer.writeByte(_player.isHero() || (_player.isGM() && GeneralConfig.GM_HERO_AURA)); // 1: Hero Aura
++		buffer.writeByte(_player.isHero() || (_player.isGM() && GeneralConfig.GM_HERO_AURA) || org.l2jmobius.gameserver.managers.world.X10World.heroAura(_player)); // 1: Hero Aura (L2Hub x10: аура из магазина стиля)
+ 		
+ 		buffer.writeByte(_player.isFishing()); // Fishing Mode
+ 		buffer.writeInt(_player.getFishX()); // fishing x

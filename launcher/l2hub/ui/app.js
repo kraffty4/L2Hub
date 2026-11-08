@@ -1396,6 +1396,7 @@ function control(k, onChange) {
 const DAYS_IN = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 const dayOfYear = (d, m) => DAYS_IN.slice(0, m - 1).reduce((s, x) => s + x, 0) + d - 1;
 const WINDOW_RE = /^(\d{2}) (\d{2})(?: \d{4})?-(\d{2}) (\d{2})(?: \d{4})?$/;
+const calendarDrafts = {};
 const windowOk = (v) => { const m = WINDOW_RE.exec(v); return v === '' || /^off$/i.test(v) || (!!m && +m[1] >= 1 && +m[1] <= 31 && +m[2] >= 1 && +m[2] <= 12 && +m[3] >= 1 && +m[3] <= 31 && +m[4] >= 1 && +m[4] <= 12); };
 function calBar(v) {
   const m = WINDOW_RE.exec(v || '');
@@ -1404,13 +1405,17 @@ function calBar(v) {
   const seg = (x, y) => `<i style="left:${(x / 365 * 100).toFixed(2)}%;width:${Math.max(0.8, (y - x) / 365 * 100).toFixed(2)}%"></i>`;
   return `<div class="cal-bar">${b > a ? seg(a, b) : seg(a, 365) + (b > 0 ? seg(0, b) : '')}</div>`;
 }
-async function renderCalendar(host, id) {
+async function renderCalendar(host, id, section = 'all') {
   const r = await api.event_calendar(id).catch(() => null);
-  if (id !== selected || !host.isConnected || !r?.ok || !r.events.length) return;
+  if (id !== selected || !host.isConnected || !r?.ok) return;
+  if (section !== 'all') {
+    if (section !== 'seasonal') r.events = [];
+    r.pvp = Object.fromEntries(Object.entries(r.pvp).filter(([key]) => section === 'pvp' ? !key.startsWith('Elpies') : section === 'elpies' ? key.startsWith('Elpies') : false));
+  }
   const name = (e) => { const i = e.note.indexOf(':'); return i > 0 && i < 40 ? [e.note.slice(0, i), e.note.slice(i + 1).trim()] : [e.key, e.note]; };
   const rows = r.events.map((e) => { const [n, d] = name(e); return `<div class="cal-row"><div class="cal-name" title="${esc(e.key)}: ${esc(e.note)}">${esc(n)}<small>${esc(d || e.key)}</small></div>
-    ${calBar(e.value)}<input class="field cal-in" data-cal="${esc(e.key)}" data-was="${esc(e.value)}" value="${esc(e.value)}" placeholder="как в Mobius" spellcheck="false"></div>`; }).join('');
-  const PVP = { PvpOnlyWithPlayers: 'Только при живом игроке', PvpMinLevel: 'Минимальный уровень', TvTMinParticipants: 'TvT — минимум участников', TvTMaxParticipants: 'TvT — всего мест', TvTReservedSlots: 'TvT — места живым игрокам', TvTFightMinutes: 'TvT — бой, минут', TvT: 'TvT — расписание', Deathmatch: 'Deathmatch — расписание', CtF: 'CtF — расписание' };
+    ${calBar(e.value)}<input class="field cal-in" aria-label="${esc(n)}" data-cal="${esc(e.key)}" data-was="${esc(e.value)}" value="${esc(e.value)}" placeholder="как в Mobius" spellcheck="false"></div>`; }).join('');
+  const PVP = { PvpOnlyWithPlayers: 'Только при живом игроке', PvpMinLevel: 'Минимальный уровень', TvTMinParticipants: 'TvT — минимум участников', TvTMaxParticipants: 'TvT — всего мест', TvTReservedSlots: 'TvT — места живым игрокам', TvTFightMinutes: 'TvT — бой, минут', PvpRegistrationMinutes: 'PvP — запись, минут', CtFFightMinutes: 'CtF — бой, минут', DeathmatchFightMinutes: 'Deathmatch — бой, минут', TvT: 'TvT — расписание', Deathmatch: 'Deathmatch — расписание', CtF: 'CtF — расписание', PvpLevelGap: 'Разница уровней участников', PvpRewardMobs: 'Базовая награда, эквивалент мобов', PvpRewardWinnerFactor: 'Множитель награды победителя', PvpRewardScrolls: 'Свитки победителям', PvpRewardMedals: 'Медали за полный бой', PvpRewardMedalItem: 'Предмет медали' };
   const ELP = { ElpiesSchedule: 'Расписание', ElpiesMinutes: 'Длительность, мин', ElpiesOnlyWithPlayers: 'Только при живом игроке' };
   const rowsOf = (labels) => Object.entries(labels).filter(([k]) => r.pvp[k]).map(([k, t]) => { const x = r.pvp[k];
     const input = x.type === 'bool' ? `<select class="field cal-in" data-cal="${k}" data-was="${esc(x.value)}"><option${x.value === 'True' ? ' selected' : ''}>True</option><option${x.value === 'False' ? ' selected' : ''}>False</option></select>`
@@ -1419,14 +1424,18 @@ async function renderCalendar(host, id) {
   const pvp = rowsOf(PVP), elp = rowsOf(ELP);
   const card = document.createElement('div');
   card.className = 'card wide cal-card';
-  card.innerHTML = `<h3>Календарь событий<span class="src">L2HubEvents.ini</span></h3>
-    <div class="note">Окно — «дд ММ-дд ММ» каждый год (конец — начало указанного дня; конец не позже начала — через Новый год, «01 01-01 01» — весь год), «дд ММ гггг-дд ММ гггг» — один раз, Off — выключено, пусто — как в Mobius. Действует со следующего запуска гейма.</div>
-    <div class="cal-row cal-head"><div></div><div class="cal-months">${'ЯФМАМИИАСОНД'.split('').map((c) => `<span>${c}</span>`).join('')}</div><div></div></div>
+  card.innerHTML = `<h3>${esc(section === 'pvp' ? 'Расписание и награды PvP' : section === 'elpies' ? 'Расписание нашествия эльпи' : 'Календарь событий')}</h3>
+    ${r.events.length ? `<div class="note">Окно — «дд ММ-дд ММ» каждый год (конец — начало указанного дня; конец не позже начала — через Новый год, «01 01-01 01» — весь год), «дд ММ гггг-дд ММ гггг» — один раз, Off — выключено, пусто — как в Mobius. Действует со следующего запуска гейма.</div>
+    <div class="cal-row cal-head"><div></div><div class="cal-months">${(window.L2I18N?.lang === 'en' ? 'JFMAMJJASOND' : 'ЯФМАМИИАСОНД').split('').map((c) => `<span>${c}</span>`).join('')}</div><div></div></div>` : '<p class="phint">Изменения расписания применяются после перезапуска сервера.</p>'}
     ${rows}${pvp ? `<div class="mode-group">PvP-ивенты</div>${pvp}` : ''}${elp ? `<div class="mode-group">Нашествие эльпи</div>${elp}` : ''}
-    <div class="cal-foot"><span class="cal-state" id="calState"></span><button class="sbtn" id="calReset" disabled>Отменить</button><button class="sbtn primary" id="calSave" disabled>Сохранить календарь</button></div>`;
+    <div class="cal-foot"><span class="cal-state" id="calState"></span><button class="sbtn" id="calReset" disabled>Отменить</button><button class="sbtn primary" id="calSave" disabled>${esc(r.events.length ? 'Сохранить календарь' : 'Сохранить расписание')}</button></div>`;
   host.querySelector('.cal-card')?.remove();
   host.appendChild(card);
   const inputs = [...card.querySelectorAll('[data-cal]')];
+  inputs.forEach((i) => { i.setAttribute('aria-label', i.closest('.cal-row').querySelector('.cal-name').childNodes[0].textContent); });
+  const draft = calendarDrafts[id] ||= {};
+  let saving = false;
+  inputs.forEach((i) => { if (i.dataset.cal in draft) i.value = draft[i.dataset.cal]; });
   const changed = () => inputs.filter((i) => i.value.trim() !== i.dataset.was);
   const sync = () => {
     let bad = 0;
@@ -1435,22 +1444,35 @@ async function renderCalendar(host, id) {
       const ok = isWin ? windowOk(i.value.trim()) : true;
       i.classList.toggle('bad', !ok);
       i.classList.toggle('chg', i.value.trim() !== i.dataset.was);
+      if (i.value.trim() !== i.dataset.was) draft[i.dataset.cal] = i.value.trim(); else delete draft[i.dataset.cal];
       if (!ok) bad++;
       if (isWin && ok) i.previousElementSibling.outerHTML = calBar(i.value.trim());
     });
     const n = changed().length;
-    $('calSave').disabled = !n || bad > 0;
-    $('calReset').disabled = !n;
-    $('calState').textContent = bad ? `ошибок в окнах: ${bad}` : n ? `изменено: ${n}` : '';
+    card.querySelector('#calSave').disabled = saving || !n || bad > 0;
+    card.querySelector('#calReset').disabled = !n;
+    card.querySelector('#calState').textContent = bad ? `ошибок в окнах: ${bad}` : n ? `изменено: ${n}` : '';
   };
   inputs.forEach((i) => (i.oninput = i.onchange = sync));
-  $('calReset').onclick = () => { inputs.forEach((i) => (i.value = i.dataset.was)); sync(); };
-  $('calSave').onclick = async () => {
+  sync();
+  card.querySelector('#calReset').onclick = () => { inputs.forEach((i) => (i.value = i.dataset.was)); sync(); };
+  card.querySelector('#calSave').onclick = async () => {
     const values = Object.fromEntries(changed().map((i) => [i.dataset.cal, i.value.trim()]));
+    saving = true; sync();
     const res = await api.save_calendar(id, values);
-    if (!res.ok) return toast(res.error, true);
+    saving = false;
+    if (!res.ok) { sync(); return toast(res.error, true); }
+    // Обновляем текущую форму без запоздалой перерисовки, которая могла стереть следующую правку.
+    inputs.forEach((i) => {
+      if (!(i.dataset.cal in values)) return;
+      i.dataset.was = values[i.dataset.cal];
+      const k = Object.values(KEYS).find((k) => k.file.endsWith('L2HubEvents.ini') && k.key === i.dataset.cal);
+      if (id === selected && k) k.value = i.dataset.was;
+    });
+    sync();
     toast(`Календарь: правок ${res.changed}${res.restart ? ' — после перезапуска гейма' : ''}. Прежний файл — в бэкапе конфигов.`);
-    await loadSchema();
+    // Те же ключи L2HubEvents.ini стоят выключателями на страницах (PvP-ивенты, эльпи): схема перечитывается, черновики правок — в calendarDrafts.
+    if (id === selected) window.renderBasic?.();
   };
 }
 

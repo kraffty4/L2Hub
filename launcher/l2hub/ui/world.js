@@ -984,6 +984,24 @@
       b.limited ? `<span>Свой лимит запросов в минуту срабатывал: ${b.limited}.</span>` : '',
     ].filter(Boolean).join(' ');
   }
+  // «Потянет ли этот ПК» (docs/MIND.md, «Своя модель на этом ПК»): замер brain.bench против потолка стратега и прочих запросов (+25 %).
+  function benchRow(need) {
+    const r = W.brain.bench;
+    const loc = W.brain.settings.local;
+    const fresh = r && r.mode === 'local' && r.baseUrl === loc.baseUrl && r.model === loc.model;
+    let text = 'Шесть запросов размером с настоящие, по одному, — около полуминуты. Замер идёт по сохранённым настройкам.';
+    if (fresh) {
+      let verdict;
+      if (r.fails) verdict = `<span class="bad-text">сбоев ${r.fails} из ${r.requests}: модель не успевает или недоступна</span>`;
+      else if (r.empty) verdict = '<span class="bad-text">пустые ответы: выключи у модели размышление (thinking)</span>';
+      else if (!need) verdict = 'стратег выключен — модели хватит болтовни';
+      else if (r.perHour >= need * 1.5) verdict = `<span class="ok-text">потянет: нужно ≈ ${need} в час</span>`;
+      else if (r.perHour >= need) verdict = `<span class="hint">впритык: нужно ≈ ${need} в час, в пики пешки будут ждать</span>`;
+      else verdict = `<span class="bad-text">не потянет: нужно ≈ ${need} в час — убавь «Решений в час» или «Запросов в минуту»</span>`;
+      text = `${esc(r.at)}: ≈ ${r.perHour} запросов в час, в среднем ${r.avgSec} с, худшее ${r.worstSec} с · ${verdict}`;
+    } else if (r) text += ' Прошлый замер был для другой модели.';
+    return `<div class="opt"><div class="l">Потянет ли этот ПК<small>${text}</small></div><button class="sbtn" id="worldBrainBench">Замерить</button></div>`;
+  }
   function mindSettings(main, head) {
     if (W.brainErr) { main.innerHTML = head + errorView(W.brainErr); return; }
     if (!W.brain) { main.innerHTML = head + loadingView(); return; }
@@ -1016,6 +1034,8 @@
         <div class="row2"><button class="sbtn primary" id="worldStratSave" ${stratDirty() ? '' : 'disabled'}>Сохранить</button><span class="hint">${stratDirty() ? 'не сохранено' : ''}</span><span class="w-muted" style="font-size:12px">сервер подхватит на ходу</span></div>
         <div class="note" style="margin-top:10px">${cost}</div></div>`;
     }
+    const need = st && W.strat.when !== 'OFF'
+      ? Math.ceil(Math.min(Number(W.strat.HunterStrategyPerHour) * st.hunters, Math.min(Number(W.strat.HunterStrategyPerMinute), st.rateCap) * 60) * 1.25) : null;
     main.innerHTML = `${head}
       <div class="w-grid w-g3">
         <div class="card"><h3>Модель <span class="r seg" id="worldBrainMode"><button data-m="api" class="${m === 'api' ? 'on' : ''}">облако</button><button data-m="local" class="${m === 'local' ? 'on' : ''}">своя</button></span></h3>
@@ -1024,7 +1044,10 @@
           ${m === 'local' ? '<div class="row2" style="margin-top:6px"><button class="sbtn" data-preset="http://127.0.0.1:1234/v1">LM Studio</button><button class="sbtn" data-preset="http://127.0.0.1:11434/v1">Ollama</button></div>' : ''}
           <div class="opt"><div class="l">Модель<small>${m === 'api' ? 'например deepseek-flash' : 'пусто — первая загруженная'}</small></div></div>
           <input class="field" style="width:100%" id="worldBrainModel" list="worldModelList" value="${esc(part.model)}"><datalist id="worldModelList">${W.models.map((x) => `<option value="${esc(x)}">`).join('')}</datalist>
-          ${m === 'api' ? `<div class="opt"><div class="l">Ключ<small>${esc(s.api.keyFile)} в папке мозгов; сам ключ здесь не показывается</small></div>${W.brain.key ? '<span class="ok-text">есть</span>' : '<span class="bad-text">нет</span>'}</div>` : ''}
+          ${m === 'api' ? `<div class="opt"><div class="l">Ключ<small>${esc(W.brain.settings.api.keyFile)} в папке мозгов; сам ключ здесь не показывается${W.brain.keyEnv ? ' · задана переменная DEEPSEEK_API_KEY — она главнее файла' : ''}</small></div>${W.brain.key ? '<span class="ok-text">есть</span>' : '<span class="bad-text">нет</span>'}</div>
+          <input class="field" style="width:100%" type="password" id="worldBrainKey" autocomplete="off" spellcheck="false" placeholder="${W.brain.key ? 'новый ключ — заменит прежний' : 'вставь ключ API'}">
+          <div class="row2" style="margin-top:6px"><button class="sbtn" id="worldBrainKeySave">Записать ключ</button></div>` : ''}
+          ${m === 'local' ? benchRow(need) : ''}
           <div class="opt"><div class="l">Длина ответа<small>токенов, 16–1024</small></div><input class="field" style="width:70px" id="worldBrainTokens" value="${esc(s.maxTokens)}"></div>
           ${extRows(s, u)}
           ${voiceRows(s)}
@@ -1066,6 +1089,26 @@
       W.models = r.models;
       render(true);
       toast(r.models.length ? `Моделей: ${r.models.length} — выбери в поле «Модель».` : 'Сервер ответил, но моделей нет: загрузи модель.', !r.models.length);
+    };
+    const benchBtn = $('worldBrainBench');
+    if (benchBtn) benchBtn.onclick = async () => {
+      if (brainDirty()) return toast('Сначала сохрани правки модели: замер идёт по сохранённым настройкам.', true);
+      benchBtn.disabled = true;
+      toast('Замеряю свою модель — около полуминуты…');
+      const r = await api.brain_bench(W.chron);
+      if (!r.ok) { benchBtn.disabled = false; return toast(`Замер не вышел: ${r.error}`, true); }
+      toast(`≈ ${r.bench.perHour} запросов в час, в среднем ${r.bench.avgSec} с.`, !!(r.bench.fails || r.bench.empty));
+      await loadBrain(); render(true);
+    };
+    const keySave = $('worldBrainKeySave');
+    if (keySave) keySave.onclick = async () => {
+      const box = $('worldBrainKey');
+      if (!box.value.trim()) return toast('Вставь ключ в поле слева.', true);
+      const r = await api.save_brain_key(W.chron, box.value);
+      box.value = '';
+      if (!r.ok) return toast(r.error, true);
+      toast(`Ключ записан в ${r.keyFile}${r.keyEnv ? ', но действует переменная DEEPSEEK_API_KEY' : ''}. Жми «Проверить».`, r.keyEnv);
+      await loadBrain(); render(true);
     };
     $('worldBrainTest').onclick = async () => {
       if (brainDirty()) return toast('Сначала сохрани правки модели: проверка идёт по сохранённым настройкам.', true);
@@ -1367,6 +1410,8 @@
     PhantomAssistRange: ['companions', 'Бьёт твою цель в радиусе', 'int', [0, null], ''],
     PhantomDefendRange: ['companions', 'Защищает пати в радиусе', 'int', [0, null], ''],
     PhantomOwnerLogoutGrace: ['companions', 'Ждёт вышедшего владельца, с', 'int', [0, null], ''],
+    PhantomDeadRecallRange: ['companions', 'Мёртвый встаёт у тебя, если ты дальше', 'int', [0, null], 'Игровые единицы; и если ты в другом инстансе. 0 — не смотреть на расстояние.'],
+    PhantomDeadRecallSeconds: ['companions', 'Мёртвый без реса встаёт у тебя через, с', 'int', [0, null], '0 — ждёт реса без срока.'],
     PhantomEventCooldown: ['companions', 'Реплика на событие не чаще, с', 'int', [0, null], ''],
     PhantomEventsPerMinute: ['companions', 'Реплик на события в минуту', 'int', [0, null], 'На всех напарников; сверх — заготовки или молчание.'],
     PhantomBrain: ['ai', 'Напарники говорят через мозги', 'bool', null, 'Выкл — только заготовки и приказы.'],

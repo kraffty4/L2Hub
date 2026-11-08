@@ -56,7 +56,8 @@ final class PhantomHuntersMaxTest
 	};
 
 	private final Supplier<List<Player>> _online;
-	private final List<PhantomTemplate> _table = PhantomData.getInstance().getHunters();
+	/** Таблица без запаса «следующего поколения» (раздел 4.155): тот в мир без жизненного цикла не входит. */
+	private final List<PhantomTemplate> _table = PhantomData.getInstance().getHunters().stream().filter(template -> !template.isReserve()).toList();
 	/** Лишние: имя, objectId, клан и уровень до выхода. */
 	private final Map<String, int[]> _spares = new HashMap<>();
 	/** Клан с лишними: кто глава и кто из лишних в нём. */

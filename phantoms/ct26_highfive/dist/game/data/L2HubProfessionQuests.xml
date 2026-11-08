@@ -1,0 +1,603 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- L2Hub: профа охотника квестом (docs/PHANTOMS.md, раздел 4.152). Пишет tools/profession_quests.py: только номера, сверенные с Java квестов и мастеров. -->
+<!-- quest: tier — ступень профы, level — с какого уровня берётся, mark — знак, который берёт мастер. step: npc — с кем говорить, mobs — кого бить на этом шаге. -->
+<!-- path: квесты класса по порядку и мастера смены класса. weapon="fist" — квест на кулаки. -->
+<list>
+	<quest id="401" tier="1" script="Q00401_PathOfTheWarrior" level="18" start="30010" mark="1145">
+		<step npc="30010"/>
+		<step npc="30253"/>
+		<step mobs="20035,20042"/>
+		<step npc="30253"/>
+		<step npc="30010"/>
+		<step mobs="20038,20043"/>
+		<step npc="30010"/>
+	</quest>
+	<quest id="402" tier="1" script="Q00402_PathOfTheHumanKnight" level="18" start="30417" mark="1161">
+		<step npc="30417"/>
+		<step npc="30037" mobs="20024,20027,20030"/>
+		<step npc="30379" mobs="20038,20043,20050"/>
+		<step npc="30332" mobs="20775"/>
+		<step npc="30289" mobs="27024"/>
+		<step npc="30039" mobs="20103,20106,20108"/>
+		<step npc="30031" mobs="20404"/>
+		<step npc="30417"/>
+	</quest>
+	<quest id="403" tier="1" script="Q00403_PathOfTheRogue" level="18" start="30379" mark="1190">
+		<step npc="30379"/>
+		<step npc="30425"/>
+		<step mobs="20035,20042,20045,20051,20054,20060"/>
+		<step npc="30425"/>
+		<step npc="30379"/>
+		<step mobs="27038"/>
+		<step npc="30379"/>
+	</quest>
+	<quest id="404" tier="1" script="Q00404_PathOfTheHumanWizard" level="18" start="30391" mark="1292">
+		<step npc="30391"/>
+		<step npc="30411"/>
+		<step npc="30411" mobs="20359"/>
+		<step npc="30412"/>
+		<step npc="30410"/>
+		<step npc="30412"/>
+		<step npc="30413"/>
+		<step npc="30413" mobs="27030"/>
+		<step npc="30409"/>
+		<step npc="30409" mobs="20021"/>
+		<step npc="30391"/>
+	</quest>
+	<quest id="405" tier="1" script="Q00405_PathOfTheCleric" level="18" start="30022" mark="1201">
+		<step npc="30022"/>
+		<step npc="30253"/>
+		<step npc="30030"/>
+		<step npc="30333"/>
+		<step npc="30333" mobs="20026,20029"/>
+		<step npc="30022"/>
+		<step npc="30408"/>
+		<step npc="30017"/>
+		<step npc="30408"/>
+		<step npc="30022"/>
+	</quest>
+	<quest id="406" tier="1" script="Q00406_PathOfTheElvenKnight" level="18" start="30327" mark="1204">
+		<step npc="30327"/>
+		<step mobs="20035,20042,20045,20051,20054,20060"/>
+		<step npc="30327"/>
+		<step npc="30317"/>
+		<step mobs="20782"/>
+		<step npc="30317"/>
+		<step npc="30327"/>
+	</quest>
+	<quest id="407" tier="1" script="Q00407_PathOfTheElvenScout" level="18" start="30328" mark="1217">
+		<step npc="30328"/>
+		<step npc="30337"/>
+		<step mobs="20053"/>
+		<step npc="30337"/>
+		<step npc="30426"/>
+		<step npc="30426" mobs="27031"/>
+		<step npc="30337"/>
+		<step npc="30328"/>
+	</quest>
+	<quest id="408" tier="1" script="Q00408_PathOfTheElvenWizard" level="18" start="30414" mark="1230">
+		<step npc="30414"/>
+		<step npc="30157"/>
+		<step npc="30157" mobs="20466"/>
+		<step npc="30414"/>
+		<step npc="30371"/>
+		<step npc="30371" mobs="20019"/>
+		<step npc="30414"/>
+		<step npc="30423"/>
+		<step npc="30423" mobs="20047"/>
+		<step npc="30414"/>
+	</quest>
+	<quest id="409" tier="1" script="Q00409_PathOfTheElvenOracle" level="18" start="30293" mark="1235">
+		<step npc="30293"/>
+		<step npc="30424" mobs="27032,27033,27034"/>
+		<step mobs="27032,27033,27034"/>
+		<step npc="30424"/>
+		<step npc="30428" mobs="27035"/>
+		<step npc="30428" mobs="27035"/>
+		<step npc="30424"/>
+		<step npc="30293"/>
+	</quest>
+	<quest id="410" tier="1" script="Q00410_PathOfThePalusKnight" level="18" start="30329" mark="1244">
+		<step npc="30329"/>
+		<step mobs="20049"/>
+		<step npc="30329"/>
+		<step npc="30422"/>
+		<step mobs="20038,20043"/>
+		<step npc="30422"/>
+		<step npc="30329"/>
+	</quest>
+	<quest id="411" tier="1" script="Q00411_PathOfTheAssassin" level="18" start="30416" mark="1252">
+		<step npc="30416"/>
+		<step npc="30419"/>
+		<step npc="30382"/>
+		<step mobs="20369"/>
+		<step npc="30382"/>
+		<step mobs="27036"/>
+		<step npc="30419"/>
+		<step npc="30416"/>
+	</quest>
+	<quest id="412" tier="1" script="Q00412_PathOfTheDarkWizard" level="18" start="30421" mark="1261">
+		<step npc="30421"/>
+		<step npc="30418"/>
+		<step npc="30418" mobs="20022,20517,20518"/>
+		<step npc="30415"/>
+		<step npc="30415" mobs="20015"/>
+		<step npc="30419"/>
+		<step npc="30419" mobs="20045"/>
+		<step npc="30421"/>
+	</quest>
+	<quest id="413" tier="1" script="Q00413_PathOfTheShillienOracle" level="18" start="30330" mark="1270">
+		<step npc="30330"/>
+		<step npc="30377"/>
+		<step mobs="20776"/>
+		<step npc="30377"/>
+		<step npc="30375"/>
+		<step npc="30375" mobs="20457,20458,20514,20515"/>
+		<step npc="30330"/>
+	</quest>
+	<quest id="414" tier="1" script="Q00414_PathOfTheOrcRaider" level="18" start="30570" mark="1592">
+		<step npc="30570"/>
+		<step mobs="20320,27045"/>
+		<step npc="30570"/>
+		<step mobs="27054"/>
+		<step npc="30501"/>
+		<step npc="31978"/>
+		<step mobs="27320"/>
+		<step npc="31978"/>
+	</quest>
+	<quest id="415" tier="1" script="Q00415_PathOfTheOrcMonk" level="18" start="30587" mark="1615" weapon="fist">
+		<step npc="30587"/>
+		<step npc="30590"/>
+		<step npc="30590" mobs="20479"/>
+		<step npc="30590" mobs="20478"/>
+		<step npc="30590" mobs="20415"/>
+		<step npc="30587"/>
+		<step npc="30501"/>
+		<step npc="30591"/>
+		<step mobs="20017,20359,20024,20014"/>
+		<step npc="30591"/>
+		<step npc="30501"/>
+		<step npc="32056"/>
+		<step npc="32056" mobs="20476,20478"/>
+		<step npc="32056" mobs="21118"/>
+		<step npc="31979"/>
+	</quest>
+	<quest id="416" tier="1" script="Q00416_PathOfTheOrcShaman" level="18" start="30585" mark="1631">
+		<step npc="30585"/>
+		<step mobs="20479,20478,20415"/>
+		<step npc="30585"/>
+		<step npc="30592"/>
+		<step npc="30585"/>
+		<step npc="30502"/>
+		<step npc="30502" mobs="20335"/>
+		<step npc="30593"/>
+		<step mobs="20038,20043,27056"/>
+		<step npc="30593"/>
+		<step npc="30502"/>
+		<step npc="31979"/>
+		<step npc="32057"/>
+		<step npc="32090" mobs="27319"/>
+		<step npc="32090" mobs="27319"/>
+		<step npc="32090" mobs="27319"/>
+		<step npc="32057"/>
+		<step npc="31979"/>
+	</quest>
+	<quest id="417" tier="1" script="Q00417_PathOfTheScavenger" level="18" start="30524" mark="1642">
+		<step npc="30524"/>
+		<step npc="30519"/>
+		<step npc="30556"/>
+		<step mobs="20777,27058"/>
+		<step npc="30556"/>
+		<step mobs="20403,20508"/>
+		<step npc="30556"/>
+		<step npc="30316"/>
+		<step npc="30557"/>
+		<step npc="30316"/>
+		<step npc="31958"/>
+	</quest>
+	<quest id="418" tier="1" script="Q00418_PathOfTheArtisan" level="18" start="30527" mark="1635">
+		<step npc="30527"/>
+		<step mobs="20389,20390"/>
+		<step npc="30527"/>
+		<step npc="30317"/>
+		<step npc="30298"/>
+		<step mobs="20017"/>
+		<step npc="30298"/>
+		<step npc="30317"/>
+		<step npc="32052"/>
+		<step npc="31963"/>
+	</quest>
+	<quest id="62" tier="1" script="Q00062_PathOfTheTrooper" level="18" start="32197" mark="9753">
+		<step npc="32197"/>
+		<step npc="32194"/>
+		<step npc="32194" mobs="20014"/>
+		<step npc="32194" mobs="20038"/>
+		<step npc="32197"/>
+		<step mobs="20062"/>
+		<step npc="32197"/>
+	</quest>
+	<quest id="63" tier="1" script="Q00063_PathOfTheWarder" level="18" start="32195" mark="9772">
+		<step npc="32195"/>
+		<step mobs="20782,20053"/>
+		<step npc="32195"/>
+		<step npc="32198"/>
+		<step npc="30332"/>
+		<step npc="32198"/>
+		<step npc="30297"/>
+		<step npc="32198"/>
+		<step npc="32195"/>
+		<step npc="32198"/>
+		<step mobs="20919,20920,20921,27337"/>
+		<step npc="32198"/>
+	</quest>
+	<quest id="211" tier="2" script="Q00211_TrialOfTheChallenger" level="35" start="30644" mark="2627">
+		<step npc="30644"/>
+		<step mobs="27110"/>
+		<step npc="30647"/>
+		<step npc="30644"/>
+		<step npc="30645"/>
+		<step npc="30645" mobs="27112"/>
+		<step npc="30646" mobs="27113"/>
+		<step npc="30535"/>
+		<step npc="30646" mobs="27114"/>
+	</quest>
+	<quest id="212" tier="2" script="Q00212_TrialOfDuty" level="35" start="30109" mark="2633">
+		<step npc="30109"/>
+		<step npc="30653"/>
+		<step mobs="20190,20191,27119"/>
+		<step npc="30654"/>
+		<step npc="30654" mobs="20200,20201"/>
+		<step npc="30656" mobs="20144"/>
+		<step npc="30655"/>
+		<step npc="30655" mobs="20577,20578,20579,20580,20581,20582"/>
+		<step npc="30116"/>
+		<step npc="30116" mobs="20270"/>
+		<step npc="30311"/>
+		<step npc="30109"/>
+	</quest>
+	<quest id="213" tier="2" script="Q00213_TrialOfTheSeeker" level="35" start="30106" mark="2673">
+		<step npc="30064"/>
+		<step npc="30064" mobs="20198"/>
+		<step npc="30064" mobs="20211,20495,20080,20249"/>
+		<step npc="30684"/>
+		<step npc="30684" mobs="20158"/>
+		<step npc="30715"/>
+		<step npc="30715"/>
+		<step npc="30064"/>
+		<step mobs="20234,20270,20088,20580"/>
+		<step npc="30106"/>
+	</quest>
+	<quest id="214" tier="2" script="Q00214_TrialOfTheScholar" level="35" start="30461" mark="2674">
+		<step npc="30070"/>
+		<step npc="30608"/>
+		<step npc="30071"/>
+		<step npc="30608" mobs="20580"/>
+		<step npc="30461"/>
+		<step npc="30115"/>
+		<step npc="30115" mobs="20068,20269,20235,20279"/>
+		<step npc="30610"/>
+		<step npc="30316"/>
+		<step npc="30611"/>
+		<step npc="30103"/>
+		<step mobs="20554"/>
+		<step npc="30612"/>
+		<step npc="30612" mobs="20201,20158,20552,20567"/>
+		<step npc="30461"/>
+	</quest>
+	<quest id="215" tier="2" script="Q00215_TrialOfThePilgrim" level="35" start="30648" mark="2721">
+		<step npc="30648"/>
+		<step npc="30649"/>
+		<step npc="30649" mobs="27116"/>
+		<step npc="30651"/>
+		<step npc="30036"/>
+		<step npc="30036" mobs="27117"/>
+		<step npc="30362"/>
+		<step npc="30652" mobs="27118"/>
+		<step npc="30612"/>
+		<step npc="30648"/>
+	</quest>
+	<quest id="216" tier="2" script="Q00216_TrialOfTheGuildsman" level="35" start="30103" mark="3119">
+		<step npc="30103"/>
+		<step npc="30103"/>
+		<step npc="30283" mobs="20154,20155,20156,20223"/>
+		<step npc="30298"/>
+		<step npc="30298" mobs="20079,20080,20081"/>
+		<step npc="30688" mobs="20267,20268,20269,20270,20271"/>
+		<step npc="30210"/>
+		<step npc="30210" mobs="20200,20201,20083,20202,20168"/>
+		<step npc="30210"/>
+		<step npc="30103"/>
+	</quest>
+	<quest id="217" tier="2" script="Q00217_TestimonyOfTrust" level="37" start="30191" mark="2734">
+		<step npc="30191"/>
+		<step npc="30154"/>
+		<step mobs="20013,20019,20036,20044,27120,27121"/>
+		<step npc="30358"/>
+		<step npc="30464"/>
+		<step mobs="20550,20082,20084,20086,20087,20088,20157,20230,20232,20234"/>
+		<step npc="30358"/>
+		<step npc="30657"/>
+		<step npc="30515"/>
+		<step npc="30565" mobs="20553"/>
+		<step npc="30621"/>
+		<step npc="30531" mobs="20213"/>
+		<step npc="30031"/>
+	</quest>
+	<quest id="218" tier="2" script="Q00218_TestimonyOfLife" level="37" start="30460" mark="3140">
+		<step npc="30371"/>
+		<step npc="30300"/>
+		<step npc="30300" mobs="20550,20082,20084,20086,20087,20088,20176"/>
+		<step npc="30371"/>
+		<step npc="30375"/>
+		<step npc="30375" mobs="20233,20145"/>
+		<step npc="30371"/>
+		<step npc="30655" mobs="20581,20582"/>
+		<step npc="30371"/>
+		<step npc="30371" mobs="27077"/>
+		<step npc="30460"/>
+	</quest>
+	<quest id="219" tier="2" script="Q00219_TestimonyOfFate" level="37" start="30476" mark="3172">
+		<step npc="30614"/>
+		<step npc="30614" mobs="20144"/>
+		<step npc="30463" mobs="20158,20233,20202,20192,20193,20157,20230,20232,20234"/>
+		<step npc="30476"/>
+		<step npc="30114"/>
+		<step npc="30476"/>
+		<step npc="31850"/>
+		<step mobs="20554,20600,20270,20582,27079"/>
+		<step npc="30419"/>
+		<step npc="30358"/>
+	</quest>
+	<quest id="220" tier="2" script="Q00220_TestimonyOfGlory" level="37" start="30514" mark="3203">
+		<step npc="30514" mobs="20563,20192,20193,20550"/>
+		<step npc="30642"/>
+		<step npc="30515"/>
+		<step npc="30615" mobs="27080,27081"/>
+		<step npc="30616" mobs="27082"/>
+		<step npc="30501"/>
+		<step npc="30618"/>
+		<step npc="30617" mobs="27083"/>
+		<step npc="30619" mobs="20234"/>
+		<step npc="30642" mobs="20601,20602,20583,20584,20585,20586,20587,20588"/>
+		<step npc="30571" mobs="20778,20779,27086"/>
+		<step npc="30565"/>
+	</quest>
+	<quest id="221" tier="2" script="Q00221_TestimonyOfProsperity" level="37" start="30104" mark="3238">
+		<step npc="30104"/>
+		<step npc="30466" mobs="20154,20155,20156,20223,20228"/>
+		<step npc="30620"/>
+		<step npc="30368"/>
+		<step npc="30597"/>
+		<step npc="30531"/>
+		<step npc="30531"/>
+		<step npc="30531"/>
+		<step npc="30621"/>
+		<step npc="30621"/>
+		<step mobs="20157,20230,20232,20234,20231,20233"/>
+		<step npc="30104"/>
+	</quest>
+	<quest id="222" tier="2" script="Q00222_TestOfTheDuelist" level="39" start="30623" mark="2762">
+		<step npc="30623"/>
+		<step mobs="20085,20090,20234,20202"/>
+		<step mobs="20270,20552,20582,20564"/>
+		<step mobs="20601,20602"/>
+		<step npc="30623"/>
+		<step mobs="20214,20217,20554,20588,20604"/>
+		<step npc="30623"/>
+	</quest>
+	<quest id="223" tier="2" script="Q00223_TestOfTheChampion" level="39" start="30624" mark="3276">
+		<step npc="30625"/>
+		<step npc="30625" mobs="20780"/>
+		<step npc="30093"/>
+		<step npc="30093" mobs="20145,27088,20158,20553"/>
+		<step npc="30196"/>
+		<step npc="30196" mobs="20551,27089"/>
+		<step npc="30196" mobs="20577,20578,20579,20580,20581,20582"/>
+		<step npc="30624"/>
+	</quest>
+	<quest id="224" tier="2" script="Q00224_TestOfSagittarius" level="39" start="30702" mark="3293">
+		<step npc="30626"/>
+		<step npc="30653"/>
+		<step npc="30626" mobs="20079,20080,20081,20082,20084,20086,20089,20090"/>
+		<step npc="30514" mobs="20269,20270"/>
+		<step npc="30717"/>
+		<step npc="30717" mobs="20551,20230,20232,20234,20233,20563"/>
+		<step npc="30626"/>
+		<step mobs="20577,20578,20579,20580,20581,20582,27090"/>
+		<step npc="30626"/>
+	</quest>
+	<quest id="225" tier="2" script="Q00225_TestOfTheSearcher" level="39" start="30690" mark="2809">
+		<step npc="30728"/>
+		<step npc="30728" mobs="20781"/>
+		<step npc="30728" mobs="27093"/>
+		<step npc="30729"/>
+		<step npc="30420" mobs="20555"/>
+		<step npc="30730"/>
+		<step mobs="20144,20551"/>
+		<step npc="30627"/>
+		<step npc="30291"/>
+		<step npc="30690"/>
+	</quest>
+	<quest id="226" tier="2" script="Q00226_TestOfTheHealer" level="39" start="30473" mark="2820">
+		<step npc="30428"/>
+		<step npc="30424" mobs="27134"/>
+		<step npc="30658"/>
+		<step npc="30327"/>
+		<step npc="30674" mobs="27122,27123"/>
+		<step npc="30661"/>
+		<step npc="30661" mobs="27124,27125,27126,27127"/>
+		<step npc="30665"/>
+		<step npc="30473"/>
+	</quest>
+	<quest id="227" tier="2" script="Q00227_TestOfTheReformer" level="39" start="30118" mark="2821">
+		<step npc="30118"/>
+		<step mobs="27099,27128"/>
+		<step npc="30666"/>
+		<step npc="30732" mobs="27129"/>
+		<step npc="30668" mobs="27130"/>
+		<step npc="30666"/>
+		<step npc="30669" mobs="27131"/>
+		<step npc="30670" mobs="27132"/>
+		<step npc="30667" mobs="20404,20104,20102,20022,20100"/>
+		<step npc="30666"/>
+	</quest>
+	<quest id="228" tier="2" script="Q00228_TestOfMagus" level="39" start="30629" mark="2840">
+		<step npc="30612"/>
+		<step mobs="27095,27096,27097"/>
+		<step npc="30629"/>
+		<step npc="30409"/>
+		<step mobs="20157,20230,20231,20232,20234,27098"/>
+		<step mobs="20145,20176,20553"/>
+		<step mobs="20564,20565,20566"/>
+		<step npc="30629"/>
+	</quest>
+	<quest id="229" tier="2" script="Q00229_TestOfWitchcraft" level="39" start="30630" mark="3307">
+		<step npc="30098"/>
+		<step npc="30110" mobs="20557,20565,20577,20578,20579,20580,20581,20582"/>
+		<step npc="30476"/>
+		<step npc="30063" mobs="27099"/>
+		<step npc="30435" mobs="27100"/>
+		<step npc="30630" mobs="27101"/>
+		<step npc="30188"/>
+		<step npc="30188" mobs="20601,20602"/>
+		<step npc="30417"/>
+		<step npc="30633"/>
+		<step npc="30630" mobs="27101"/>
+	</quest>
+	<quest id="230" tier="2" script="Q00230_TestOfTheSummoner" level="39" start="30634" mark="3336">
+		<step npc="30063"/>
+		<step npc="30063" mobs="20577,20578,20579,20580,20581,20582,20555,20600,20563,20267,20268,20269,20270,20271,20552,20192,20193,20553,20089,20090,20176"/>
+		<step npc="30635" mobs="27102"/>
+		<step npc="30638" mobs="27105"/>
+		<step npc="30639" mobs="27106"/>
+		<step npc="30637" mobs="27104"/>
+		<step npc="30636" mobs="27103"/>
+		<step npc="30640" mobs="27107"/>
+		<step npc="30634"/>
+	</quest>
+	<quest id="231" tier="2" script="Q00231_TestOfTheMaestro" level="39" start="30531" mark="2867">
+		<step npc="30536"/>
+		<step npc="30556" mobs="20150"/>
+		<step npc="30536"/>
+		<step npc="30671"/>
+		<step npc="30672" mobs="27133"/>
+		<step npc="30533"/>
+		<step npc="30673"/>
+		<step npc="30673" mobs="20229,20233,20225"/>
+		<step npc="30531"/>
+	</quest>
+	<quest id="232" tier="2" script="Q00232_TestOfTheLord" level="39" start="30565" mark="3390">
+		<step npc="30565"/>
+		<step npc="30567"/>
+		<step npc="30510"/>
+		<step npc="30515" mobs="20269,20270"/>
+		<step npc="30641" mobs="20233"/>
+		<step npc="30642" mobs="20564"/>
+		<step npc="30568" mobs="20583,20584,20585,20586,20587,20588"/>
+		<step npc="30565"/>
+		<step npc="30649"/>
+		<step npc="30649" mobs="20778,20779"/>
+		<step npc="30565"/>
+	</quest>
+	<quest id="233" tier="2" script="Q00233_TestOfTheWarSpirit" level="39" start="30510" mark="2879">
+		<step npc="30630"/>
+		<step npc="30630" mobs="20213,20214,20215"/>
+		<step npc="30436"/>
+		<step npc="30507" mobs="20089,20090"/>
+		<step npc="30682" mobs="20581,20582"/>
+		<step npc="30515" mobs="20158,27108"/>
+		<step npc="30510"/>
+		<step npc="30510" mobs="20601,20602"/>
+		<step npc="30649"/>
+	</quest>
+	<quest id="64" tier="2" script="Q00064_CertifiedBerserker" level="39" start="32207" mark="9760">
+		<step npc="32215"/>
+		<step npc="32215" mobs="20267,20268,20269,20270,20271"/>
+		<step npc="32252" mobs="20551"/>
+		<step npc="32200"/>
+		<step npc="32200" mobs="20202,20234"/>
+		<step npc="32215"/>
+		<step npc="32253" mobs="27323"/>
+		<step npc="32207"/>
+	</quest>
+	<quest id="65" tier="2" script="Q00065_CertifiedSoulBreaker" level="39" start="32213" mark="9806">
+		<step npc="32138"/>
+		<step npc="32199"/>
+		<step npc="32199"/>
+		<step npc="30071"/>
+		<step npc="30124"/>
+		<step npc="30879"/>
+		<step npc="32243" mobs="27332"/>
+		<step npc="32242"/>
+		<step npc="32138"/>
+		<step npc="32138" mobs="20176"/>
+		<step npc="32213"/>
+	</quest>
+	<quest id="66" tier="2" script="Q00066_CertifiedArbalester" level="39" start="32201" mark="9782">
+		<step npc="30464"/>
+		<step npc="30464" mobs="20781,21102,21103,21104,21105,21106,21107"/>
+		<step npc="30058"/>
+		<step npc="30058" mobs="20083,20144,20199,20200,20201,20202"/>
+		<step npc="32220"/>
+		<step mobs="20554"/>
+		<step npc="30171" mobs="20563"/>
+		<step npc="32220"/>
+		<step mobs="20583,20584,27336"/>
+		<step npc="32220"/>
+	</quest>
+	<path tier="1" class="1" quests="401" masters="30373,30066,30288,32094"/>
+	<path tier="1" class="4" quests="402" masters="30373,30066,30288,32094"/>
+	<path tier="1" class="7" quests="403" masters="30373,30066,30288,32094"/>
+	<path tier="1" class="11" quests="404" masters="30037,30070,30289,32095,32098"/>
+	<path tier="1" class="15" quests="405" masters="30037,30070,30289,32095,32098"/>
+	<path tier="1" class="19" quests="406" masters="30288,30066,30373,32094"/>
+	<path tier="1" class="22" quests="407" masters="30288,30066,30373,32094"/>
+	<path tier="1" class="26" quests="408" masters="30289,30037,30070,32095,32098"/>
+	<path tier="1" class="29" quests="409" masters="30289,30037,30070,32095,32098"/>
+	<path tier="1" class="32" quests="410" masters="30297,30290,30462,32160"/>
+	<path tier="1" class="35" quests="411" masters="30297,30290,30462,32160"/>
+	<path tier="1" class="39" quests="412" masters="30290,30297,30462,32160"/>
+	<path tier="1" class="42" quests="413" masters="30297,30290,30462,32160"/>
+	<path tier="1" class="45" quests="414" masters="30500,30505,30508,32097"/>
+	<path tier="1" class="47" quests="415" masters="30500,30505,30508,32097"/>
+	<path tier="1" class="50" quests="416" masters="30500,30505,30508,32097"/>
+	<path tier="1" class="54" quests="417" masters="30503,30498,30594,32092"/>
+	<path tier="1" class="56" quests="418" masters="30499,30504,30595,32093"/>
+	<path tier="1" class="125" quests="62" masters="32196,32191,32193,32199,32202"/>
+	<path tier="1" class="126" quests="63" masters="32196,32191,32193,32199,32202"/>
+	<path tier="2" class="2" quests="211,217,222" masters="30109,30187,30689,30849,30900,31276,31321,31965"/>
+	<path tier="2" class="3" quests="211,217,223" masters="30109,30187,30689,30849,30900,31276,31321,31965"/>
+	<path tier="2" class="5" quests="212,217,226" masters="30109,30187,30689,30849,30900,31276,31321,31965"/>
+	<path tier="2" class="6" quests="212,217,229" masters="30109,30187,30689,30849,30900,31276,31321,31965"/>
+	<path tier="2" class="8" quests="213,217,225" masters="30109,30187,30689,30849,30900,31276,31321,31965"/>
+	<path tier="2" class="9" quests="213,217,224" masters="30109,30187,30689,30849,30900,31276,31321,31965"/>
+	<path tier="2" class="12" quests="214,217,228" masters="30115,30174,30176,30694,30854,31331,31755,31996"/>
+	<path tier="2" class="13" quests="214,217,229" masters="30115,30174,30176,30694,30854,31331,31755,31996"/>
+	<path tier="2" class="14" quests="214,217,230" masters="30115,30174,30176,30694,30854,31331,31755,31996"/>
+	<path tier="2" class="16" quests="215,217,226" masters="30120,30191,30857,30905,31279,31328,31968"/>
+	<path tier="2" class="17" quests="215,217,227" masters="30120,30191,30857,30905,31279,31328,31968"/>
+	<path tier="2" class="20" quests="212,218,226" masters="30109,30187,30689,30849,30900,31276,31321,31965"/>
+	<path tier="2" class="21" quests="211,218,222" masters="30109,30187,30689,30849,30900,31276,31321,31965"/>
+	<path tier="2" class="23" quests="213,218,225" masters="30109,30187,30689,30849,30900,31276,31321,31965"/>
+	<path tier="2" class="24" quests="213,218,224" masters="30109,30187,30689,30849,30900,31276,31321,31965"/>
+	<path tier="2" class="27" quests="214,218,228" masters="30115,30174,30176,30694,30854,31331,31755,31996"/>
+	<path tier="2" class="28" quests="214,218,230" masters="30115,30174,30176,30694,30854,31331,31755,31996"/>
+	<path tier="2" class="30" quests="215,218,226" masters="30120,30191,30857,30905,31279,31328,31968"/>
+	<path tier="2" class="33" quests="212,219,229" masters="30195,30699,30474,31324,30862,30910,31285,31334,31974,32096"/>
+	<path tier="2" class="34" quests="211,219,222" masters="30195,30699,30474,31324,30862,30910,31285,31334,31974,32096"/>
+	<path tier="2" class="36" quests="213,219,225" masters="30195,30699,30474,31324,30862,30910,31285,31334,31974,32096"/>
+	<path tier="2" class="37" quests="213,219,224" masters="30195,30699,30474,31324,30862,30910,31285,31334,31974,32096"/>
+	<path tier="2" class="40" quests="214,219,228" masters="30195,30699,30474,31324,30862,30910,31285,31334,31974,32096"/>
+	<path tier="2" class="41" quests="214,219,230" masters="30195,30699,30474,31324,30862,30910,31285,31334,31974,32096"/>
+	<path tier="2" class="43" quests="215,219,227" masters="30195,30699,30474,31324,30862,30910,31285,31334,31974,32096"/>
+	<path tier="2" class="46" quests="211,220,223" masters="30513,30681,30704,30865,30913,31288,31326,31336,31977"/>
+	<path tier="2" class="48" quests="211,220,222" masters="30513,30681,30704,30865,30913,31288,31326,31336,31977"/>
+	<path tier="2" class="51" quests="215,220,232" masters="30513,30681,30704,30865,30913,31288,31326,31336,31977"/>
+	<path tier="2" class="52" quests="215,220,233" masters="30513,30681,30704,30865,30913,31288,31326,31336,31977"/>
+	<path tier="2" class="55" quests="216,221,225" masters="30511,30676,30685,30845,30894,31269,31314,31958"/>
+	<path tier="2" class="57" quests="216,221,231" masters="30512,30677,30687,30847,30897,31272,31317,31961"/>
+	<path tier="2" class="127" quests="64" masters="32146,32205,32209,32213,32217,32221,32225,32229,32233,32145,32206,32210,32214,32218,32222,32226,32230,32234"/>
+	<path tier="2" class="128" quests="65" masters="32146,32205,32209,32213,32217,32221,32225,32229,32233,32145,32206,32210,32214,32218,32222,32226,32230,32234"/>
+	<path tier="2" class="129" quests="65" masters="32146,32205,32209,32213,32217,32221,32225,32229,32233,32145,32206,32210,32214,32218,32222,32226,32230,32234"/>
+	<path tier="2" class="130" quests="66" masters="32146,32205,32209,32213,32217,32221,32225,32229,32233,32145,32206,32210,32214,32218,32222,32226,32230,32234"/>
+</list>

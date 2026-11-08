@@ -1,0 +1,36 @@
+L2Hub x10: точный прирост ресурсов и успешный крафт для поручений; покупки и склад не засчитываются.
+
+diff --git a/java/org/l2jmobius/gameserver/entity/itemcontainer/PlayerInventory.java b/java/org/l2jmobius/gameserver/entity/itemcontainer/PlayerInventory.java
+--- a/java/org/l2jmobius/gameserver/entity/itemcontainer/PlayerInventory.java
++++ b/java/org/l2jmobius/gameserver/entity/itemcontainer/PlayerInventory.java
+@@ -448,6 +448,8 @@
+ 	@Override
+ 	public Item addItem(ItemProcessType process, Item item, Player actor, Object reference)
+ 	{
++		final int x10ItemId = item.getId();
++		final long x10Count = item.getCount();
+ 		final Item addedItem = super.addItem(process, item, actor, reference);
+ 		if (addedItem != null)
+ 		{
+@@ -467,6 +469,10 @@
+ 			}
+ 		}
+ 		
++		if (addedItem != null)
++		{
++			org.l2jmobius.gameserver.managers.world.X10World.itemObtained(getOwner(), process, x10ItemId, x10Count);
++		}
+ 		return addedItem;
+ 	}
+ 	
+@@ -522,6 +528,10 @@
+ 			}
+ 		}
+ 		
++		if (item != null)
++		{
++			org.l2jmobius.gameserver.managers.world.X10World.itemObtained(getOwner(), process, itemId, count);
++		}
+ 		return item;
+ 	}
+ 	

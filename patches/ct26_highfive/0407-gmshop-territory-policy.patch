@@ -1,0 +1,64 @@
+L2Hub High Five: флаги территорий 13530–13538 и варды 13560–13568 в GM-шопе — выключателем GmShopAllowTerritoryFlags
+(Custom/GmShopTerritory.ini, по умолчанию False), как у сопровождающего Эпилога (его 0542). XML мультиселлов и страницы
+не меняются: при False HtmCache снимает две кнопки со страниц 50010-6 и admin/gmstore/territory.htm, а записи с этими
+товарами не попадают в списки 50039991/50039992 и в buylist 9991/9992 при загрузке — ни в окно, ни в покупку.
+Пешкам — тот же каталог (HunterShopPrices через PhantomCompat.gmShopSells). Применяется после перезапуска.
+
+diff --git a/java/org/l2jmobius/gameserver/cache/HtmCache.java b/java/org/l2jmobius/gameserver/cache/HtmCache.java
+index be4f81a..eb15ace 100644
+--- a/java/org/l2jmobius/gameserver/cache/HtmCache.java
++++ b/java/org/l2jmobius/gameserver/cache/HtmCache.java
+@@ -204,7 +204,7 @@ public class HtmCache
+ 			player.sendPacket(new CreatureSay(null, ChatType.GENERAL, "HTML", newPath.substring(5)));
+ 		}
+ 		
+-		return content;
++		return org.l2jmobius.gameserver.managers.GmShopTerritoryPolicy.html(newPath, content);
+ 	}
+ 	
+ 	public boolean contains(String path)
+diff --git a/java/org/l2jmobius/gameserver/data/xml/BuyListData.java b/java/org/l2jmobius/gameserver/data/xml/BuyListData.java
+index 5bedc8d..3a4b37a 100644
+--- a/java/org/l2jmobius/gameserver/data/xml/BuyListData.java
++++ b/java/org/l2jmobius/gameserver/data/xml/BuyListData.java
+@@ -124,6 +124,11 @@ public class BuyListData implements IXmlReader
+ 							final NamedNodeMap attrs = list_node.getAttributes();
+ 							Node attr = attrs.getNamedItem("id");
+ 							itemId = Integer.parseInt(attr.getNodeValue());
++							// L2Hub: админский магазин 9991/9992 — те же флаги и варды, что и в GM-шопе.
++							if (org.l2jmobius.gameserver.managers.GmShopTerritoryPolicy.catalog(buyListId) && !org.l2jmobius.gameserver.managers.GmShopTerritoryPolicy.allows(itemId))
++							{
++								continue;
++							}
+ 							attr = attrs.getNamedItem("price");
+ 							if (attr != null)
+ 							{
+diff --git a/java/org/l2jmobius/gameserver/data/xml/MultisellData.java b/java/org/l2jmobius/gameserver/data/xml/MultisellData.java
+index efa2cda..93f4947 100644
+--- a/java/org/l2jmobius/gameserver/data/xml/MultisellData.java
++++ b/java/org/l2jmobius/gameserver/data/xml/MultisellData.java
+@@ -133,7 +133,12 @@ public class MultisellData implements IXmlReader
+ 						if ("item".equalsIgnoreCase(d.getNodeName()))
+ 						{
+ 							final Entry e = parseEntry(d, entryId++, list);
+-							list.getEntries().add(e);
++							// L2Hub: флаги территорий и варды в GM-шопе (50039991/50039992) — только с GmShopAllowTerritoryFlags. Список собирается заново
++							// при старте и перезагрузке, так что запись пропадает и из окна (NPC и Alt+B), и из покупки.
++							if (!org.l2jmobius.gameserver.managers.GmShopTerritoryPolicy.catalog(id) || e.getProducts().stream().allMatch(p -> org.l2jmobius.gameserver.managers.GmShopTerritoryPolicy.allows(p.getItemId())))
++							{
++								list.getEntries().add(e);
++							}
+ 						}
+ 						else if ("npcs".equalsIgnoreCase(d.getNodeName()))
+ 						{
+@@ -149,6 +154,10 @@ public class MultisellData implements IXmlReader
+ 				}
+ 			}
+ 			
++			if (org.l2jmobius.gameserver.managers.GmShopTerritoryPolicy.catalog(id) && !org.l2jmobius.gameserver.managers.GmShopTerritoryPolicy.enabled())
++			{
++				LOGGER.info(getClass().getSimpleName() + ": list " + id + " without territory flags and wards (GmShopAllowTerritoryFlags = False), " + list.getEntries().size() + " entries left.");
++			}
+ 			_entries.put(id, list);
+ 		}
+ 		catch (Exception e)

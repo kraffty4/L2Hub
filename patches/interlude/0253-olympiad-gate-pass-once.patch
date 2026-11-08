@@ -1,0 +1,22 @@
+L2Hub: Gate Pass за очки Олимпиады у Interlude умножался на OlympiadGPPerPoint дважды — в Olympiad.getNoblessePasses
+и ещё раз у Олимпийского менеджера при выдаче: герой при 100 очках и множителе 1000 получал 100 000 000 вместо 100 000.
+Теперь getNoblessePasses отдаёт очки, переводит в Gate Pass только NPC, как на High Five и Эпилоге. Бонус героя получает
+и герой, ещё не забравший статус у монумента (isUnclaimedHero), как на High Five. Ранговых бонусов у Interlude по-прежнему нет.
+Найдено при переносе ep-olympiad-token-reward-scale сопровождающего Эпилога: у Эпилога этот код другой.
+
+diff --git a/java/org/l2jmobius/gameserver/mechanics/olympiad/Olympiad.java b/java/org/l2jmobius/gameserver/mechanics/olympiad/Olympiad.java
+index e15c6b9..1c123f7 100644
+--- a/java/org/l2jmobius/gameserver/mechanics/olympiad/Olympiad.java
++++ b/java/org/l2jmobius/gameserver/mechanics/olympiad/Olympiad.java
+@@ -1582,9 +1582,9 @@ public class Olympiad extends ListenersContainer
+ 		}
+ 		
+ 		// Hero point bonus
+-		int points = Hero.getInstance().isHero(objectId) ? OlympiadConfig.OLYMPIAD_HERO_POINTS : 0;
++		int points = Hero.getInstance().isHero(objectId) || Hero.getInstance().isUnclaimedHero(objectId) ? OlympiadConfig.OLYMPIAD_HERO_POINTS : 0;
+ 		
+-		points *= OlympiadConfig.OLYMPIAD_GP_PER_POINT;
++		// L2Hub: в Gate Pass очки переводит NPC (OlympiadManager, OlympiadGPPerPoint), здесь только очки — иначе множитель дважды.
+ 		
+ 		// This is a one time calculation.
+ 		noble.set(POINTS, 0);

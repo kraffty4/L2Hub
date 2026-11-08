@@ -238,21 +238,52 @@ public final class PhantomCompat
 	}
 
 	/**
-	 * Свои навыки фантома на стадионе (защита, самолечение) до обычного боя. Точка расширения хроники: здесь ничего.
+	 * Свои навыки фантома на стадионе (защита, контроль, самолечение, снятие) до обычного боя: бой сопровождающего Эпилога, раздел 4.149, ключ {@code HunterOlympiadSkills}.
 	 * @return начал каст — дальше в этот тик не решать
 	 */
 	public static boolean olympiadSkills(Player player, Player opponent, long now)
 	{
-		return false;
+		return org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig.HUNTER_OLYMPIAD_SKILLS && OlympiadCombatSkills.tick(player, opponent, now);
 	}
 
 	/**
-	 * Реакция фантома на стадионе, пока он бежит или отходит: только самозащита, лечение, снятие. Точка расширения хроники: здесь ничего.
+	 * Реакция фантома на стадионе, пока он бежит или отходит: только самозащита, лечение, снятие ({@link OlympiadCombatSkills#reactiveTick}, ключ {@code HunterOlympiadSkills}).
 	 * @return начал каст
 	 */
 	public static boolean olympiadReactive(Player player, Player opponent, long now)
 	{
+		return org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig.HUNTER_OLYMPIAD_SKILLS && OlympiadCombatSkills.reactiveTick(player, opponent, now);
+	}
+
+	/**
+	 * Личная пачка (PersonalCompanions, общее ядро): подготовка помощника перед боем — баффы группы, свои баффы, банки маны.
+	 * У Эпилога это его механика ({@code HunterSupport.ini}: PartyBuffs, CompanionSelfSkills, SupportSupplies); у остальных хроник
+	 * подготовки нет: помощник готов сразу, кнопка «Бафы себе» не показывается.
+	 */
+	public static boolean personalPrepareSupported()
+	{
 		return false;
+	}
+
+	public static void personalRequest(Player player)
+	{
+	}
+
+	public static void personalPrepare(Player player, long now)
+	{
+	}
+
+	public static boolean personalReady(Player player)
+	{
+		return true;
+	}
+
+	public static void personalClear(Player player)
+	{
+	}
+
+	public static void personalMana(Player player)
+	{
 	}
 
 	/**
@@ -1314,5 +1345,64 @@ public final class PhantomCompat
 	public static boolean inRift(Player player)
 	{
 		return player.isInParty() && player.getParty().isInDimensionalRift();
+	}
+
+	// ---------- Тату (A16, PhantomClassKits): у Essence другой API, тип Henna в ядре не называется ----------
+
+	/**
+	 * @return тату с этим id есть и подходит классу игрока
+	 */
+	static boolean hennaAllowed(Player player, int dyeId)
+	{
+		final var henna = org.l2jmobius.gameserver.data.xml.HennaData.getInstance().getHenna(dyeId);
+		return (henna != null) && henna.isAllowedClass(player.getPlayerClass());
+	}
+
+	/**
+	 * @return {id краски, сколько краски на нанесение, плата за нанесение}; {@code null} — такого тату нет
+	 */
+	static long[] hennaWear(int dyeId)
+	{
+		final var henna = org.l2jmobius.gameserver.data.xml.HennaData.getInstance().getHenna(dyeId);
+		return henna == null ? null : new long[]
+		{
+			henna.getDyeItemId(),
+			henna.getWearCount(),
+			henna.getWearFee()
+		};
+	}
+
+	/**
+	 * @return это тату уже нанесено
+	 */
+	static boolean hasHenna(Player player, int dyeId)
+	{
+		for (var henna : player.getHennaList())
+		{
+			if ((henna != null) && (henna.getDyeId() == dyeId))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Нанести тату в свободный слот, без платы: плату берёт вызывающий.
+	 * @return нанесено
+	 */
+	static boolean addHenna(Player player, int dyeId)
+	{
+		final var henna = org.l2jmobius.gameserver.data.xml.HennaData.getInstance().getHenna(dyeId);
+		return (henna != null) && player.addHenna(henna);
+	}
+
+	/**
+	 * Продаёт ли GM-шоп вещь из списка ({@link HunterShopPrices}): флаги территорий и варды — только с
+	 * {@code GmShopAllowTerritoryFlags} ({@link org.l2jmobius.gameserver.managers.GmShopTerritoryPolicy}).
+	 */
+	static boolean gmShopSells(int listId, int itemId)
+	{
+		return !org.l2jmobius.gameserver.managers.GmShopTerritoryPolicy.catalog(listId) || org.l2jmobius.gameserver.managers.GmShopTerritoryPolicy.allows(itemId);
 	}
 }

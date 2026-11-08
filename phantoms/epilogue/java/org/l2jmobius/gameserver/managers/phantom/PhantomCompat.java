@@ -253,6 +253,41 @@ public final class PhantomCompat
 	}
 
 	/**
+	 * Личная пачка (PersonalCompanions, общее ядро): подготовка помощника перед боем — баффы группы, свои баффы, банки маны.
+	 * У Эпилога это его механика ({@code HunterSupport.ini}: PartyBuffs, CompanionSelfSkills, SupportSupplies); у остальных хроник
+	 * подготовки нет: помощник готов сразу, кнопка «Бафы себе» не показывается.
+	 */
+	public static boolean personalPrepareSupported()
+	{
+		return true;
+	}
+
+	public static void personalRequest(Player player)
+	{
+		PartyBuffs.request(player);
+	}
+
+	public static void personalPrepare(Player player, long now)
+	{
+		PartyBuffs.prepare(player, now);
+	}
+
+	public static boolean personalReady(Player player)
+	{
+		return PartyBuffs.ready(player);
+	}
+
+	public static void personalClear(Player player)
+	{
+		CompanionSelfSkills.clear(player);
+	}
+
+	public static void personalMana(Player player)
+	{
+		SupportSupplies.useMana(player);
+	}
+
+	/**
 	 * Охотника ждёт приглашение в пати с приоритетом (соклан позвал): своих дел не начинать ({@link PhantomHeroClaim}); на Эпилоге — {@link ClanPartyPriority#pending}.
 	 * @return приглашение ждёт
 	 */

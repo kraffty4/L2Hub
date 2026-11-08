@@ -7,6 +7,8 @@
 
 import re
 import shutil
+import json
+from decimal import Decimal, InvalidOperation
 from datetime import datetime
 from pathlib import Path
 
@@ -273,15 +275,41 @@ def merge_ini(cur: bytes, new: bytes, base: bytes | None) -> tuple[bytes, dict]:
     return (BOM if cur.startswith(BOM) else b"") + data, report
 
 
+def _validated_edit(edit: dict, rules: dict) -> dict:
+    """Границы явных полей страниц — те же для GUI и API. Остальные конфиги сохраняют прежнее поведение."""
+    rule = rules.get(edit.get("file"), {}).get(edit.get("key")) if edit.get("part") == "game" else None
+    if not rule:
+        return edit
+    value = str(edit["value"]).strip()
+    title = rule["title"]
+    if rule["type"] == "bool":
+        if value.lower() not in ("true", "false"):
+            raise ValueError(f"{title}: требуется True или False")
+        value = value.capitalize()
+    else:
+        try:
+            number = Decimal(value)
+        except InvalidOperation:
+            raise ValueError(f"{title}: требуется число") from None
+        if not number.is_finite() or not Decimal(str(rule["min"])) <= number <= Decimal(str(rule["max"])):
+            raise ValueError(f"{title}: допустимо от {rule['min']} до {rule['max']}")
+        if rule["type"] == "int" and number != number.to_integral_value():
+            raise ValueError(f"{title}: требуется целое число")
+        value = str(int(number)) if rule["type"] == "int" else format(number, "f")
+    return {**edit, "value": value}
+
+
 def save_edits(server: Path, backup_root: Path, edits: list[dict]) -> dict:
     """Пишет правки {part, file, key, value} в .ini. Комментарии и порядок строк не трогаются,
     меняется только значение в строке ключа. Оригиналы изменённых файлов копируются в backup_root.
     В .xml-конфиге key — атрибут (первый вне комментариев); правка {part, file, parent, block, value} заменяет все блоки
     <block> внутри <parent> на value (ClassMaster.xml: цены профессий)."""
     by_file: dict[tuple[str, str], list[dict]] = {}
+    rules = json.loads(Path(__file__).with_name("server_modes.json").read_text(encoding="utf-8")).get("validation", {})
     for e in edits:
         if is_secret(e.get("key", "")):
             raise ValueError(f"Ключ {e['key']} правится только лаунчером")
+        e = _validated_edit(e, rules)
         by_file.setdefault((e["part"], e["file"]), []).append(e)
 
     stamp_dir = backup_root / datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -318,7 +346,13 @@ def save_edits(server: Path, backup_root: Path, edits: list[dict]) -> dict:
                     break
             else:
                 raise KeyError(f"В {part}/{file} нет ключа {e['key']}")
-        planned.append((path, part, newline.join(lines), bom))
+        result = newline.join(lines)
+        if part == "game" and Path(file).name == "L2HubX10.ini":
+            daily = re.search(r"(?m)^DailyMinLevel\s*=\s*(\d+)", result)
+            weekly = re.search(r"(?m)^WeeklyMinLevel\s*=\s*(\d+)", result)
+            if daily and weekly and int(weekly[1]) < int(daily[1]):
+                raise ValueError("Уровень недельных поручений не может быть ниже уровня ежедневных.")
+        planned.append((path, part, result, bom))
 
     # Сначала все проверки, потом бэкап и запись: либо применяются все правки, либо ни одной.
     for path, part, new_text, bom in planned:

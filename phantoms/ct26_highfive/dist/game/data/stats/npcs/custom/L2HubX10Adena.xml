@@ -1,0 +1,610 @@
+<?xml version='1.0' encoding='utf-8'?>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../xsd/npcs.xsd">
+	<npc id="940805" level="42" type="Monster" name="Dailaon Lad" displayId="20805" usingServerSideTitle="true" title="Adena x2">
+		<parameters>
+			<param name="MoveAroundSocial" value="70" />
+			<param name="MoveAroundSocial1" value="70" />
+			<param name="MoveAroundSocial2" value="70" />
+			<param name="SoulShot" value="100" />
+			<param name="SoulShotRate" value="10" />
+			<param name="SpiritShot" value="100" />
+			<param name="SpiritShotRate" value="5" />
+			<skill name="PhysicalSpecial" id="4228" level="4" />
+		</parameters>
+		<race>HUMANOID</race>
+		<sex>MALE</sex>
+		<equipment rhand="5127" />
+		<acquire exp="6697" sp="446" />
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="2101.633040" hpRegen="5.5" mp="531.0" mpRegen="2.1" />
+			<attack physical="297.518865" magical="203.166810" random="10" critical="8" accuracy="0" attackSpeed="253" reuseDelay="1500" type="BOW" range="1100" distance="10" width="0" />
+			<defence physical="164.88513" magical="109.782377202178" />
+			<attribute>
+				<defence fire="20" water="20" wind="20" earth="20" holy="20" dark="20" />
+			</attribute>
+			<speed>
+				<walk ground="18" />
+				<run ground="174" />
+			</speed>
+			<hitTime>910</hitTime>
+		</stats>
+		<status undying="false" canBeSown="true" />
+		<skillList>
+			<skill id="4228" level="4" />
+			<skill id="4408" level="10" />
+			<skill id="4409" level="1" />
+			<skill id="4410" level="12" />
+			<skill id="4411" level="12" />
+			<skill id="4412" level="10" />
+			<skill id="4413" level="10" />
+			<skill id="4414" level="2" />
+			<skill id="4415" level="9" />
+			<skill id="4416" level="6" />
+		</skillList>
+		<shots shotChance="30" spiritChance="30" />
+		<exCrtEffect>false</exCrtEffect>
+		<sNpcPropHpRate>2</sNpcPropHpRate>
+		<ai type="ARCHER" aggroRange="350" clanHelpRange="300" isAggressive="true">
+			<clanList>
+				<clan>L2HubAdena</clan>
+			</clanList>
+		</ai>
+		<dropLists>
+			<drop>
+				<group chance="70">
+					<item id="57" min="1784" max="3606" chance="100" />
+				</group>
+				<group chance="0.47909998893737793">
+					<item id="159" min="1" max="1" chance="0.3349" />
+					<item id="2048" min="1" max="1" chance="19.2018" />
+					<item id="187" min="1" max="1" chance="0.3349" />
+					<item id="2049" min="1" max="1" chance="19.2018" />
+					<item id="188" min="1" max="1" chance="0.3349" />
+					<item id="2050" min="1" max="1" chance="20.3601" />
+					<item id="189" min="1" max="1" chance="0.3349" />
+					<item id="2051" min="1" max="1" chance="20.3601" />
+					<item id="190" min="1" max="1" chance="0.3349" />
+					<item id="2058" min="1" max="1" chance="19.2017" />
+				</group>
+				<group chance="15.180700302124023">
+					<item id="1895" min="1" max="1" chance="41.8811" />
+					<item id="2305" min="1" max="1" chance="0.6401" />
+					<item id="2205" min="1" max="1" chance="4.6387" />
+					<item id="5164" min="1" max="1" chance="0.4886" />
+				</group>
+				<group chance="42.0">
+					<item id="8600" min="1" max="1" chance="20" />
+					<item id="8601" min="1" max="1" chance="45" />
+					<item id="8602" min="1" max="1" chance="35" />
+				</group>
+				<group chance="11.0">
+					<item id="8603" min="1" max="1" chance="12" />
+					<item id="8604" min="1" max="1" chance="56" />
+					<item id="8605" min="1" max="1" chance="32" />
+				</group>
+				<group chance="25.0">
+					<item id="8606" min="1" max="1" chance="20" />
+					<item id="8608" min="1" max="1" chance="20" />
+					<item id="8610" min="1" max="1" chance="20" />
+					<item id="10655" min="1" max="1" chance="20" />
+					<item id="10656" min="1" max="1" chance="20" />
+				</group>
+				<group chance="10.0">
+					<item id="8607" min="1" max="1" chance="50" />
+					<item id="8609" min="1" max="1" chance="50" />
+				</group>
+				<group chance="1.0">
+					<item id="8612" min="1" max="1" chance="33" />
+					<item id="8613" min="1" max="1" chance="33" />
+					<item id="8614" min="1" max="1" chance="34" />
+				</group>
+				<group chance="11.0">
+					<item id="8611" min="1" max="1" chance="94" />
+					<item id="10657" min="1" max="1" chance="3" />
+					<item id="13028" min="1" max="1" chance="3" />
+				</group>
+			</drop>
+			<spoil>
+				<item id="2162" min="1" max="1" chance="10.7039" />
+				<item id="2053" min="1" max="1" chance="1.8321" />
+				<item id="1905" min="1" max="1" chance="21.5536" />
+			</spoil>
+		</dropLists>
+		<collision>
+			<radius normal="40" />
+			<height normal="58" />
+		</collision>
+	</npc>
+	<npc id="941007" level="61" type="Monster" name="Doom Guard" displayId="21007" usingServerSideTitle="true" title="Adena x2">
+		<parameters>
+			<param name="MoveAroundSocial" value="130" />
+			<param name="MoveAroundSocial1" value="130" />
+			<param name="MoveAroundSocial2" value="130" />
+			<param name="SoulShot" value="100" />
+			<param name="SoulShotRate" value="10" />
+			<param name="SpiritShot" value="100" />
+			<param name="SpiritShotRate" value="5" />
+			<param name="LongRangeGuardRate" value="5" />
+			<skill name="DeBuff" id="4036" level="6" />
+		</parameters>
+		<race>UNDEAD</race>
+		<sex>MALE</sex>
+		<acquire exp="7013" sp="617" />
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="3971.118520" hpRegen="7.5" mp="1066.8" mpRegen="2.7" />
+			<attack physical="751.621020" magical="513.259725" random="50" critical="1" accuracy="9" attackSpeed="253" type="BLUNT" range="40" distance="80" width="120" />
+			<defence physical="252.49346" magical="168.112997103103" />
+			<attribute>
+				<attack type="DARK" value="20" />
+				<defence fire="20" water="20" wind="20" earth="20" holy="-32" dark="53" />
+			</attribute>
+			<speed>
+				<walk ground="15" />
+				<run ground="174" />
+			</speed>
+			<hitTime>450</hitTime>
+		</stats>
+		<status undying="false" canBeSown="true" />
+		<skillList>
+			<skill id="4036" level="6" />
+			<skill id="4085" level="1" />
+			<skill id="4408" level="1" />
+			<skill id="4409" level="1" />
+			<skill id="4410" level="12" />
+			<skill id="4411" level="12" />
+			<skill id="4412" level="10" />
+			<skill id="4413" level="10" />
+			<skill id="4414" level="2" />
+			<skill id="4415" level="5" />
+			<skill id="4416" level="1" />
+		</skillList>
+		<shots shotChance="30" spiritChance="30" />
+		<exCrtEffect>false</exCrtEffect>
+		<ai aggroRange="350" clanHelpRange="300" isAggressive="true">
+			<clanList>
+				<clan>L2HubAdena</clan>
+			</clanList>
+		</ai>
+		<dropLists>
+			<drop>
+				<group chance="70">
+					<item id="57" min="1892" max="3836" chance="100" />
+				</group>
+				<group chance="0.22020000219345093">
+					<item id="11918" min="1" max="1" chance="4.5796" />
+					<item id="4105" min="1" max="1" chance="45.7961" />
+					<item id="11908" min="1" max="1" chance="4.5796" />
+					<item id="4106" min="1" max="1" chance="45.0447" />
+				</group>
+				<group chance="7.4309000968933105">
+					<item id="1894" min="1" max="1" chance="2.7738" />
+					<item id="4039" min="1" max="1" chance="2.6351" />
+					<item id="4041" min="1" max="1" chance="0.6874" />
+					<item id="4044" min="1" max="1" chance="2.6351" />
+					<item id="4621" min="1" max="1" chance="0.109" />
+					<item id="4998" min="1" max="1" chance="0.9832" />
+					<item id="4166" min="1" max="1" chance="0.6533" />
+					<item id="8728" min="1" max="1" chance="1.3175" />
+					<item id="8738" min="1" max="1" chance="0.3294" />
+					<item id="8748" min="1" max="1" chance="0.0329" />
+					<item id="8758" min="1" max="1" chance="0.0066" />
+					<item id="1832" min="1" max="1" chance="87.8367" />
+				</group>
+				<group chance="42.0">
+					<item id="8600" min="1" max="1" chance="55" />
+					<item id="8601" min="1" max="1" chance="38" />
+					<item id="8602" min="1" max="1" chance="7" />
+				</group>
+				<group chance="11.0">
+					<item id="8603" min="1" max="1" chance="14" />
+					<item id="8604" min="1" max="1" chance="74" />
+					<item id="8605" min="1" max="1" chance="12" />
+				</group>
+				<group chance="25.0">
+					<item id="8606" min="1" max="1" chance="20" />
+					<item id="8608" min="1" max="1" chance="20" />
+					<item id="8610" min="1" max="1" chance="20" />
+					<item id="10655" min="1" max="1" chance="20" />
+					<item id="10656" min="1" max="1" chance="20" />
+				</group>
+				<group chance="10.0">
+					<item id="8607" min="1" max="1" chance="50" />
+					<item id="8609" min="1" max="1" chance="50" />
+				</group>
+				<group chance="1.0">
+					<item id="8612" min="1" max="1" chance="33" />
+					<item id="8613" min="1" max="1" chance="33" />
+					<item id="8614" min="1" max="1" chance="34" />
+				</group>
+				<group chance="11.0">
+					<item id="8611" min="1" max="1" chance="94" />
+					<item id="10657" min="1" max="1" chance="3" />
+					<item id="13028" min="1" max="1" chance="3" />
+				</group>
+			</drop>
+			<spoil>
+				<item id="4981" min="1" max="1" chance="0.7411" />
+				<item id="4051" min="1" max="1" chance="9.2552" />
+				<item id="948" min="1" max="1" chance="0.5966" />
+			</spoil>
+		</dropLists>
+		<collision>
+			<radius normal="30" grown="15.5" />
+			<height normal="40" grown="48.5" />
+		</collision>
+	</npc>
+	<npc id="941314" level="73" type="Monster" name="Hot Springs Bandersnatchling" displayId="21314" usingServerSideTitle="true" title="Adena x2">
+		<parameters>
+			<param name="MoveAroundSocial" value="78" />
+			<param name="MoveAroundSocial1" value="78" />
+			<param name="MoveAroundSocial2" value="78" />
+			<param name="SoulShot" value="200" />
+			<param name="SoulShotRate" value="5" />
+			<param name="SpiritShot" value="100" />
+			<param name="SpiritShotRate" value="10" />
+			<param name="LongRangeGuardRate" value="10" />
+			<skill name="DDMagic" id="4002" level="7" />
+			<skill name="PhysicalSpecial" id="4073" level="7" />
+			<skill name="Buff1" id="4074" level="2" />
+			<skill name="Buff2" id="4096" level="3" />
+		</parameters>
+		<race>BEAST</race>
+		<sex>MALE</sex>
+		<acquire exp="20661" sp="2126" />
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="5173.337960" hpRegen="8.5" mp="1442.4" mpRegen="3" />
+			<attack physical="1129.108920" magical="771.035025" random="30" critical="4" accuracy="4.75" attackSpeed="253" type="SWORD" range="40" distance="80" width="120" />
+			<defence physical="310.02959" magical="206.421198742611" />
+			<attribute>
+				<defence fire="20" water="20" wind="20" earth="20" holy="20" dark="20" />
+			</attribute>
+			<speed>
+				<walk ground="30" />
+				<run ground="170" />
+			</speed>
+			<hitTime>490</hitTime>
+		</stats>
+		<status undying="false" canBeSown="true" />
+		<skillList>
+			<skill id="4002" level="7" />
+			<skill id="4073" level="7" />
+			<skill id="4074" level="2" />
+			<skill id="4085" level="1" />
+			<skill id="4086" level="1" />
+			<skill id="4096" level="3" />
+			<skill id="4408" level="10" />
+			<skill id="4409" level="1" />
+			<skill id="4410" level="11" />
+			<skill id="4411" level="11" />
+			<skill id="4412" level="11" />
+			<skill id="4413" level="11" />
+			<skill id="4414" level="2" />
+			<skill id="4415" level="4" />
+			<skill id="4416" level="3" />
+			<skill id="4555" level="1" />
+			<skill id="4789" level="3" />
+		</skillList>
+		<shots shotChance="30" spiritChance="30" />
+		<exCrtEffect>false</exCrtEffect>
+		<sNpcPropHpRate>2</sNpcPropHpRate>
+		<ai aggroRange="350" clanHelpRange="300" isAggressive="true">
+			<clanList>
+				<clan>L2HubAdena</clan>
+			</clanList>
+		</ai>
+		<dropLists>
+			<drop>
+				<group chance="70">
+					<item id="57" min="5738" max="11684" chance="100" />
+				</group>
+				<group chance="0.3912999927997589">
+					<item id="11950" min="1" max="1" chance="7.5474" />
+					<item id="5539" min="1" max="1" chance="92.4526" />
+				</group>
+				<group chance="8.772199630737305">
+					<item id="1895" min="1" max="1" chance="77.6375" />
+					<item id="4040" min="1" max="1" chance="5.4346" />
+					<item id="4042" min="1" max="1" chance="4.5289" />
+					<item id="4043" min="1" max="1" chance="9.0577" />
+					<item id="5272" min="1" max="1" chance="0.1208" />
+					<item id="8731" min="1" max="1" chance="2.516" />
+					<item id="8741" min="1" max="1" chance="0.629" />
+					<item id="8751" min="1" max="1" chance="0.0629" />
+					<item id="8761" min="1" max="1" chance="0.0126" />
+				</group>
+				<group chance="42.0">
+					<item id="8600" min="1" max="1" chance="20" />
+					<item id="8601" min="1" max="1" chance="45" />
+					<item id="8602" min="1" max="1" chance="35" />
+				</group>
+				<group chance="11.0">
+					<item id="8603" min="1" max="1" chance="10" />
+					<item id="8604" min="1" max="1" chance="54" />
+					<item id="8605" min="1" max="1" chance="36" />
+				</group>
+				<group chance="25.0">
+					<item id="8606" min="1" max="1" chance="20" />
+					<item id="8608" min="1" max="1" chance="20" />
+					<item id="8610" min="1" max="1" chance="20" />
+					<item id="10655" min="1" max="1" chance="20" />
+					<item id="10656" min="1" max="1" chance="20" />
+				</group>
+				<group chance="10.0">
+					<item id="8607" min="1" max="1" chance="50" />
+					<item id="8609" min="1" max="1" chance="50" />
+				</group>
+				<group chance="1.0">
+					<item id="8612" min="1" max="1" chance="33" />
+					<item id="8613" min="1" max="1" chance="33" />
+					<item id="8614" min="1" max="1" chance="34" />
+				</group>
+				<group chance="11.0">
+					<item id="8611" min="1" max="1" chance="94" />
+					<item id="10657" min="1" max="1" chance="3" />
+					<item id="13028" min="1" max="1" chance="3" />
+				</group>
+			</drop>
+			<spoil>
+				<item id="6335" min="1" max="1" chance="2.2347" />
+				<item id="6341" min="1" max="1" chance="16.0703" />
+				<item id="730" min="1" max="1" chance="0.4842" />
+			</spoil>
+		</dropLists>
+		<collision>
+			<radius normal="18" />
+			<height normal="25" />
+		</collision>
+	</npc>
+	<npc id="942661" level="81" type="Monster" name="Lesser Giant Soldier" displayId="22661" usingServerSideTitle="true" title="Adena x2">
+		<parameters>
+			<param name="SetHateGroup" value="ATTACKER_GROUP" />
+			<param name="SetHateGroupRatio" value="35" />
+			<skill name="PhysicalSpecial" id="4073" level="9" />
+		</parameters>
+		<race>GIANT</race>
+		<sex>MALE</sex>
+		<equipment rhand="3937" />
+		<acquire exp="340299" sp="35858" />
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="66007.965602" hpRegen="113.419259781018" mp="1708.8" mpRegen="3" />
+			<attack physical="8655.218362" magical="5910.392149" random="30" critical="4" accuracy="5" attackSpeed="253" type="SWORD" range="40" distance="80" width="120" />
+			<defence physical="552.978032" magical="606.967992" />
+			<attribute>
+				<attack type="WATER" value="150" />
+				<defence fire="90" water="150" wind="130" earth="130" holy="130" dark="130" default="100" />
+			</attribute>
+			<speed>
+				<walk ground="15" />
+				<run ground="180" />
+			</speed>
+			<hitTime>580</hitTime>
+		</stats>
+		<status undying="false" canBeSown="true" />
+		<skillList>
+			<skill id="4073" level="9" />
+			<skill id="4116" level="9" />
+			<skill id="4408" level="10" />
+			<skill id="4409" level="1" />
+			<skill id="4410" level="13" />
+			<skill id="4411" level="13" />
+			<skill id="4412" level="11" />
+			<skill id="4413" level="9" />
+			<skill id="4414" level="1" />
+			<skill id="4415" level="3" />
+			<skill id="4416" level="11" />
+			<skill id="4439" level="4" />
+			<skill id="4444" level="2" />
+			<skill id="5463" level="1" />
+		</skillList>
+		<exCrtEffect>false</exCrtEffect>
+		<sNpcPropHpRate>2</sNpcPropHpRate>
+		<ai aggroRange="350" clanHelpRange="300" isAggressive="true">
+			<clanList>
+				<clan>L2HubAdena</clan>
+			</clanList>
+		</ai>
+		<dropLists>
+			<drop>
+				<group chance="70">
+					<item id="57" min="25120" max="50672" chance="100" />
+				</group>
+				<group chance="4.4572">
+					<item id="9516" min="1" max="1" chance="0.0826" />
+					<item id="9529" min="1" max="1" chance="0.118" />
+					<item id="13886" min="1" max="1" chance="0.118" />
+					<item id="9521" min="1" max="1" chance="0.0826" />
+					<item id="9526" min="1" max="1" chance="0.0826" />
+					<item id="9532" min="1" max="1" chance="20.3864" />
+					<item id="9537" min="1" max="1" chance="20.3864" />
+					<item id="9542" min="1" max="1" chance="20.3864" />
+					<item id="9545" min="1" max="1" chance="24.2999" />
+					<item id="10114" min="1" max="1" chance="14.0571" />
+				</group>
+				<group chance="38.7008">
+					<item id="1879" min="3" max="9" chance="20.1471" />
+					<item id="1885" min="1" max="1" chance="60.4414" />
+					<item id="9628" min="1" max="1" chance="5.6886" />
+					<item id="9630" min="1" max="1" chance="3.8174" />
+					<item id="9629" min="1" max="1" chance="3.1534" />
+					<item id="9573" min="1" max="1" chance="5.0368" />
+					<item id="9574" min="1" max="1" chance="1.2592" />
+					<item id="9575" min="1" max="1" chance="0.1259" />
+					<item id="960" min="1" max="1" chance="0.2901" />
+					<item id="9627" min="1" max="1" chance="0.04" />
+				</group>
+			</drop>
+			<spoil>
+				<item id="9541" min="1" max="1" chance="13.4861" />
+				<item id="1808" min="1" max="1" chance="2.2792" />
+				<item id="9620" min="1" max="1" chance="2.8491" />
+			</spoil>
+		</dropLists>
+		<collision>
+			<radius normal="31.5" />
+			<height normal="69" />
+		</collision>
+	</npc>
+	<npc id="942663" level="82" type="Monster" name="Lesser Giant Scout" displayId="22663" usingServerSideTitle="true" title="Adena x2">
+		<parameters>
+			<skill name="DDMagic" id="6143" level="1" />
+		</parameters>
+		<race>GIANT</race>
+		<sex>MALE</sex>
+		<equipment rhand="4028" />
+		<acquire exp="327338" sp="34009" />
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="65892.084936" hpRegen="112.558039826218" mp="1743.0" mpRegen="3" />
+			<attack physical="8689.983532" magical="5934.132216" random="10" critical="8" accuracy="0" attackSpeed="253" reuseDelay="1500" type="BOW" range="1100" distance="10" width="0" />
+			<defence physical="559.639632" magical="614.28" />
+			<attribute>
+				<attack type="WATER" value="150" />
+				<defence fire="90" water="150" wind="130" earth="130" holy="130" dark="130" default="100" />
+			</attribute>
+			<speed>
+				<walk ground="80" />
+				<run ground="180" />
+			</speed>
+			<hitTime>630</hitTime>
+		</stats>
+		<status undying="false" canBeSown="true" />
+		<skillList>
+			<skill id="4086" level="1" />
+			<skill id="4116" level="9" />
+			<skill id="4408" level="10" />
+			<skill id="4409" level="1" />
+			<skill id="4410" level="11" />
+			<skill id="4411" level="12" />
+			<skill id="4412" level="11" />
+			<skill id="4413" level="11" />
+			<skill id="4414" level="1" />
+			<skill id="4415" level="9" />
+			<skill id="4416" level="11" />
+			<skill id="4438" level="4" />
+			<skill id="4444" level="2" />
+			<skill id="5463" level="1" />
+			<skill id="6143" level="1" />
+		</skillList>
+		<exCrtEffect>false</exCrtEffect>
+		<sNpcPropHpRate>2</sNpcPropHpRate>
+		<ai aggroRange="350" clanHelpRange="300" isAggressive="true">
+			<clanList>
+				<clan>L2HubAdena</clan>
+			</clanList>
+		</ai>
+		<dropLists>
+			<drop>
+				<group chance="70">
+					<item id="57" min="23884" max="48114" chance="100" />
+				</group>
+				<group chance="0.6598">
+					<item id="9448" min="1" max="1" chance="0.0809" />
+					<item id="9449" min="1" max="1" chance="0.0809" />
+					<item id="10252" min="1" max="1" chance="0.0809" />
+					<item id="10253" min="1" max="1" chance="0.0809" />
+					<item id="9622" min="1" max="1" chance="24.4737" />
+					<item id="9623" min="1" max="1" chance="24.4737" />
+					<item id="10546" min="1" max="1" chance="25.3646" />
+					<item id="10547" min="1" max="1" chance="25.3644" />
+				</group>
+				<group chance="36.7771">
+					<item id="1879" min="3" max="9" chance="20.1427" />
+					<item id="1885" min="1" max="1" chance="60.428" />
+					<item id="9628" min="1" max="1" chance="5.6873" />
+					<item id="9630" min="1" max="1" chance="3.8165" />
+					<item id="9629" min="1" max="1" chance="3.1528" />
+					<item id="9573" min="1" max="1" chance="5.0357" />
+					<item id="9574" min="1" max="1" chance="1.2589" />
+					<item id="9575" min="1" max="1" chance="0.1259" />
+					<item id="5277" min="1" max="1" chance="0.3224" />
+					<item id="9627" min="1" max="1" chance="0.03" />
+				</group>
+			</drop>
+			<spoil>
+				<item id="9992" min="1" max="1" chance="8.7677" />
+				<item id="9624" min="1" max="1" chance="2.6227" />
+				<item id="9530" min="1" max="1" chance="7.096" />
+			</spoil>
+		</dropLists>
+		<collision>
+			<radius normal="30" />
+			<height normal="66" />
+		</collision>
+	</npc>
+	<npc id="942669" level="81" type="Monster" name="Leogul" title="Adena x2" displayId="22669" usingServerSideTitle="true">
+		<parameters>
+			<skill name="DeBuff" id="4037" level="3" />
+		</parameters>
+		<race>CONSTRUCT</race>
+		<sex>MALE</sex>
+		<acquire exp="25150" sp="2646" />
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="6923.545064" hpRegen="8.5" mp="1708.8" mpRegen="3" />
+			<attack physical="1518.484027" magical="1036.927746" random="30" critical="4" accuracy="5" attackSpeed="253" type="SWORD" range="40" distance="80" width="120" />
+			<defence physical="345.61127" magical="252.90333" />
+			<attribute>
+				<attack type="WATER" value="150" />
+				<defence fire="90" water="150" wind="130" earth="130" holy="130" dark="130" default="100" />
+			</attribute>
+			<speed>
+				<walk ground="80" />
+				<run ground="170" />
+			</speed>
+			<hitTime>720</hitTime>
+		</stats>
+		<status undying="false" canBeSown="true" />
+		<skillList>
+			<skill id="4037" level="3" />
+			<skill id="4116" level="9" />
+			<skill id="4408" level="10" />
+			<skill id="4409" level="1" />
+			<skill id="4410" level="10" />
+			<skill id="4411" level="10" />
+			<skill id="4412" level="12" />
+			<skill id="4413" level="12" />
+			<skill id="4414" level="1" />
+			<skill id="4415" level="3" />
+			<skill id="4416" level="2" />
+			<skill id="5463" level="1" />
+		</skillList>
+		<exCrtEffect>false</exCrtEffect>
+		<sNpcPropHpRate>2</sNpcPropHpRate>
+		<ai aggroRange="350" clanHelpRange="300" isAggressive="true">
+			<clanList>
+				<clan>L2HubAdena</clan>
+			</clanList>
+		</ai>
+		<dropLists>
+			<drop>
+				<group chance="70">
+					<item id="57" min="2490" max="5022" chance="100" />
+				</group>
+				<group chance="0.2778">
+					<item id="9519" min="1" max="1" chance="0.1642" />
+					<item id="9520" min="1" max="1" chance="0.2627" />
+					<item id="9535" min="1" max="1" chance="40.3139" />
+					<item id="9536" min="1" max="1" chance="59.2592" />
+				</group>
+				<group chance="3.7447">
+					<item id="1894" min="1" max="1" chance="29.3259" />
+					<item id="4039" min="1" max="1" chance="27.8596" />
+					<item id="4041" min="1" max="1" chance="7.2677" />
+					<item id="4044" min="1" max="1" chance="27.8596" />
+					<item id="9573" min="1" max="1" chance="5.804" />
+					<item id="9574" min="1" max="1" chance="1.4511" />
+					<item id="9575" min="1" max="1" chance="0.1451" />
+					<item id="9625" min="1" max="1" chance="0.1672" />
+					<item id="9626" min="1" max="1" chance="0.1199" />
+				</group>
+			</drop>
+			<spoil>
+				<item id="9628" min="1" max="1" chance="3.9865" />
+				<item id="9993" min="1" max="1" chance="1.6748" />
+				<item id="5162" min="1" max="1" chance="0.2259" />
+			</spoil>
+		</dropLists>
+		<collision>
+			<radius normal="15" />
+			<height normal="35" />
+		</collision>
+	</npc>
+</list>

@@ -1,0 +1,23 @@
+L2Hub: бой Олимпиады, прерванный отключением участника, записывается в историю боёв (olympiad_fights), как обычный.
+Раньше ветка отключения в OlympiadGameNormal.validateWinner считала очки и победы, но выходила без saveResults:
+у соперника и у Олимпийского менеджера такого боя в истории не было. Победитель — оставшийся (1 или 2),
+отключились оба — ничья (0); время боя — от начала схватки. Бой, сорванный до начала схватки, по-прежнему не пишется.
+Перенос правки сопровождающего Эпилога (его патч 0249, ep-olympiad-disconnect-fight-history) на Олимпиаду High Five.
+
+diff --git a/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGameNormal.java b/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGameNormal.java
+index 466acca..627d2bb 100644
+--- a/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGameNormal.java
++++ b/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGameNormal.java
+@@ -503,6 +503,12 @@ public abstract class OlympiadGameNormal extends AbstractOlympiadGame
+ 				_playerOne.updateStat(getWeeklyMatchType(), 1);
+ 				_playerTwo.updateStat(getWeeklyMatchType(), 1);
+ 				
++				// L2Hub: бой, прерванный отключением, тоже в истории боёв (как у Эпилога, 0249).
++				if (_startTime > 0)
++				{
++					saveResults(_playerOne, _playerTwo, _pOneCrash && _pTwoCrash ? 0 : (_pOneCrash ? 2 : 1), _startTime, Math.max(0, System.currentTimeMillis() - _startTime), getType());
++				}
++				
+ 				if (winside == 1)
+ 				{
+ 					result = new ExOlympiadMatchResult(tie, winside, list1, list2);

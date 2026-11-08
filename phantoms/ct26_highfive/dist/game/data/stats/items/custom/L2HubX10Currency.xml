@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../xsd/items.xsd">
+	<item id="40001" type="EtcItem" name="Coins">
+		<set name="icon" val="icon.etc_coins_gold_i00" />
+		<set name="material" val="GOLD" />
+		<set name="weight" val="0" />
+		<set name="price" val="0" />
+		<set name="is_stackable" val="true" />
+		<set name="is_tradable" val="false" />
+		<set name="is_dropable" val="false" />
+		<set name="is_sellable" val="false" />
+		<set name="is_depositable" val="false" />
+		<set name="is_destroyable" val="false" />
+	</item>
+	<item id="40002" type="EtcItem" name="Style Tokens">
+		<set name="icon" val="icon.etc_event_medal_i00" />
+		<set name="material" val="STEEL" />
+		<set name="weight" val="0" />
+		<set name="price" val="0" />
+		<set name="is_stackable" val="true" />
+		<set name="is_tradable" val="false" />
+		<set name="is_dropable" val="false" />
+		<set name="is_sellable" val="false" />
+		<set name="is_depositable" val="false" />
+		<set name="is_destroyable" val="false" />
+	</item>
+	<item id="40003" type="EtcItem" name="Auto Combat">
+		<!-- L2Hub x10: ярлык автобоя на панели. Клик — пуск/стоп, правый клик — как авто-соски; светится, пока бой идёт. -->
+		<set name="icon" val="icon.skill0340" />
+		<set name="handler" val="L2HubAutoPlayToggle" />
+		<set name="material" val="STEEL" />
+		<set name="weight" val="0" />
+		<set name="price" val="0" />
+		<set name="is_stackable" val="true" />
+		<set name="is_tradable" val="false" />
+		<set name="is_dropable" val="false" />
+		<set name="is_sellable" val="false" />
+		<set name="is_depositable" val="false" />
+		<set name="is_destroyable" val="false" />
+	</item>
+</list>

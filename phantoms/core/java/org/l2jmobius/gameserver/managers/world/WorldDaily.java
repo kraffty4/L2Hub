@@ -171,6 +171,11 @@ public final class WorldDaily
 		SmallWorldClans.apply();
 		// Без команды текст макроса «.daily» ушёл бы в общий чат.
 		VoicedCommandHandler.getInstance().registerHandler(new WorldDailyCommand());
+		X10World.start();
+		if (X10World.contractsEnabled())
+		{
+			return;
+		}
 		if (!L2HubWorldConfig.WORLD_DAILY)
 		{
 			LOGGER.info(getClass().getSimpleName() + ": Disabled.");

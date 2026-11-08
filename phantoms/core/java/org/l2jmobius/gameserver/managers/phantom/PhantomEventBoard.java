@@ -74,6 +74,11 @@ public final class PhantomEventBoard
 	 */
 	public String page(Player player, String[] args)
 	{
+		final String x10 = org.l2jmobius.gameserver.managers.world.X10World.board(player, args);
+		if (x10 != null)
+		{
+			return x10;
+		}
 		final String action = args.length > 1 ? args[1].toLowerCase(Locale.ROOT) : "";
 		String message = "";
 		if (action.equals("join") || action.equals("cancel"))
@@ -299,6 +304,10 @@ public final class PhantomEventBoard
 	private static String render(Player player, String message)
 	{
 		final StringBuilder out = new StringBuilder("<br>");
+		if (org.l2jmobius.gameserver.managers.world.X10World.enabled())
+		{
+			out.append(button(tr("Ивенты"), "bypass _bbshubevents", 130)).append("<br>");
+		}
 		if (!message.isEmpty())
 		{
 			out.append("<font color=\"LEVEL\">").append(message).append("</font><br><br>");

@@ -96,6 +96,10 @@ public class PhantomCompanionManager
 	private static final long HUNT_EMPTY_WAIT = 15000;
 	/** Как часто в пати проверяет банки, мс. */
 	private static final long SUPPLY_INTERVAL = 30000;
+	/** Охотник в пати живого: городские дела, когда пати пришла в город, — не чаще раза в столько, мс (как {@code PhantomHunterManager.TOWN_COOLDOWN}). */
+	private static final long CHORES_GAP = 60000;
+	/** Пати стоит в городе: городские дела снова — раз в столько, мс (как {@code PhantomHunterManager.TOWN_SOFT_COOLDOWN}). */
+	private static final long CHORES_INTERVAL = 600000;
 	/** Мобы сильнее владельца больше чем на столько уровней — не трогать самим (на них — только по его цели). */
 	private static final int HUNT_LEVEL_UP = 6;
 	// «Паровозик»: владелец идёт следом с задержкой Follow — пороги с запасом (патч 0030; было: ждать с 900, цель до 1400, телепорт с 2000).
@@ -138,6 +142,8 @@ public class PhantomCompanionManager
 		/** «Паровозик»: владелец отстал — ждёт его (до {@link #LEAD_RESUME}), новых мобов не берёт. */
 		boolean leadWaiting;
 		long ownerAwaySince;
+		/** С какого времени лежит мёртвым без реса; 0 — жив. */
+		long deadSince;
 		Location stayAt;
 		Location lastDestination;
 		int lastX;
@@ -157,6 +163,12 @@ public class PhantomCompanionManager
 		long nextSupply;
 		/** С какого времени в HUNT вокруг пусто, а владелец стоит; 0 — есть кого бить. */
 		long huntEmptySince;
+		/** Охотник в пати живого (раздел 4.146): прошлые городские дела, был ли в городе в прошлый тик и ждут ли дела после прихода в город. */
+		long lastChores;
+		boolean inTown;
+		boolean choresDue;
+		/** Что не продалось в лавке: после двух раз — NPC, как у охотника на кач ({@link PhantomHunterOutfit#townChores}). */
+		final Map<Integer, Integer> unsold = new ConcurrentHashMap<>();
 
 		Companion(String name)
 		{
@@ -197,6 +209,23 @@ public class PhantomCompanionManager
 	 */
 	public synchronized String summon(Player owner, PhantomTemplate template)
 	{
+		// Личная пачка (PersonalCompanions): помощник чужого клана или чужой сохранённой пачки не зовётся; в чужую пати зовёт только лидер.
+		final String accessError = PersonalCompanionClans.access(owner, template);
+		if (accessError != null)
+		{
+			return accessError;
+		}
+		if (PersonalCompanions.personal(template) && owner.isInParty() && !isPartiedWith(owner, template))
+		{
+			if (!owner.getParty().isLeader(owner))
+			{
+				return tr("Призвать помощника в пати может её лидер.");
+			}
+			if (owner.getParty().getMemberCount() >= 9)
+			{
+				return tr("В пати нет места для помощника.");
+			}
+		}
 		if (!PhantomsConfig.PHANTOMS_ENABLED)
 		{
 			return tr("Напарники выключены (EnablePhantoms в Phantoms.ini).");
@@ -251,6 +280,10 @@ public class PhantomCompanionManager
 			phantom.leaveParty();
 		}
 
+		if (!template.isHunter())
+		{
+			PersonalCompanions.tick(phantom, System.currentTimeMillis());
+		}
 		startTicking();
 		if (phantom.isInParty())
 		{
@@ -324,6 +357,11 @@ public class PhantomCompanionManager
 	 */
 	public synchronized String dismiss(Player owner, PhantomTemplate template, boolean quiet)
 	{
+		final String accessError = PersonalCompanionClans.access(owner, template);
+		if (accessError != null)
+		{
+			return accessError;
+		}
 		final Companion companion = _companions.get(key(template.getName()));
 		final Player other = companion == null ? null : World.getPlayer(companion.ownerId);
 		if ((other != null) && (other != owner) && other.isOnline())
@@ -510,6 +548,13 @@ public class PhantomCompanionManager
 			return;
 		}
 
+		final String accessError = PersonalCompanionClans.access(requestor, template);
+		if (accessError != null)
+		{
+			requestor.sendMessage(accessError);
+			return;
+		}
+
 		// Охотник идёт, если звал криком именно этот игрок или если он свободен, уровень близкий и не обидчик; уровень остаётся свой.
 		final boolean hunter = template.isHunter();
 		// Зовёт живой соклан (раздел 4.123): отказ сказан сразу, а переход — на тике самого охотника.
@@ -600,6 +645,11 @@ public class PhantomCompanionManager
 		final PhantomTemplate template = PhantomData.getInstance().getTemplate(phantom.getName());
 		final Party party = phantom.getParty();
 		if ((template == null) || (party == null) || (owner.getParty() != party))
+		{
+			return false;
+		}
+
+		if (PersonalCompanionClans.access(owner, template) != null)
 		{
 			return false;
 		}
@@ -702,6 +752,16 @@ public class PhantomCompanionManager
 	private static boolean isPartiedWith(Player viewer, Player phantom)
 	{
 		return phantom.isInParty() && phantom.getParty().containsPlayer(viewer);
+	}
+
+	/**
+	 * Помощник уже ходит с другим живым игроком (личная пачка: такого не выдаёт пул).
+	 */
+	public boolean hasHumanOwnerOtherThan(Player requestor, PhantomTemplate template)
+	{
+		final Companion existing = _companions.get(key(template.getName()));
+		final Player other = existing == null ? null : World.getPlayer(existing.ownerId);
+		return (other != null) && (other != requestor) && other.isOnline() && !PhantomManager.getInstance().isPhantom(other);
 	}
 
 	/**
@@ -1065,6 +1125,16 @@ public class PhantomCompanionManager
 			}
 			return;
 		}
+		if (PersonalCompanionClans.access(owner, template) != null)
+		{
+			_companions.remove(key(companion.name));
+			if (phantom.isInParty())
+			{
+				phantom.leaveParty();
+			}
+			PhantomManager.getInstance().despawn(template);
+			return;
+		}
 		companion.ownerAwaySince = 0;
 		observe(companion, template, phantom, owner);
 
@@ -1075,7 +1145,14 @@ public class PhantomCompanionManager
 			if (phantom.isReviveRequested())
 			{
 				phantom.reviveAnswer(1);
+				companion.deadSince = 0;
+				return;
 			}
+			if (companion.deadSince == 0)
+			{
+				companion.deadSince = now;
+			}
+			recallDead(companion, phantom, owner, now);
 			return;
 		}
 
@@ -1084,6 +1161,7 @@ public class PhantomCompanionManager
 			return;
 		}
 
+		companion.deadSince = 0;
 		autoBuff(companion, phantom, now);
 
 		// Не в пати с владельцем (выгнал, распустил пати или ещё не пригласил) — ждёт на месте.
@@ -1148,9 +1226,24 @@ public class PhantomCompanionManager
 			return;
 		}
 
+		// Охотник в пати живого пришёл с ней в город — свои городские дела, как после захода с кача (раздел 4.146).
+		if (companion.hunter && PhantomHuntersConfig.HUNTER_PARTY_LIFE)
+		{
+			townChores(companion, template, phantom, owner, now);
+		}
+
 		// Ноблесс в пати живого дворянина и фон банка реплик (разделы 4.124, 4.122).
 		PhantomPartyNoblesse.synchronize(owner, phantom, template, now);
 		PhantomChatBank.getInstance().partyTick(phantom, template, now);
+		PersonalCompanions.tick(phantom, now);
+		if (!PersonalCompanions.readyForAction(phantom, now))
+		{
+			return;
+		}
+		if (PersonalCompanions.owned(phantom) && PhantomSummoner.tick(phantom, now))
+		{
+			return;
+		}
 
 		if (PhantomSupport.isSupport(template))
 		{
@@ -1196,6 +1289,12 @@ public class PhantomCompanionManager
 				return;
 			}
 
+			// Охотник в пати живого — тактика, как на споте: спойл и свип у гнома, агро танка на мобов, что бьют пати, отход мага и лучника (раздел 4.146).
+			if (companion.hunter && PhantomHuntersConfig.HUNTER_PARTY_LIFE && PhantomTactics.tick(phantom, template, now))
+			{
+				return;
+			}
+
 			final Creature enemy = chooseEnemy(companion, phantom, owner);
 			if (enemy != null)
 			{
@@ -1233,6 +1332,36 @@ public class PhantomCompanionManager
 		{
 			follow(companion, phantom, owner, slotIndex);
 		}
+	}
+
+	/**
+	 * Охотник в пати живого (раздел 4.146): своя жизнь, как на кач, — в городе надеть удачный дроп, сдать хлам, купить шмот, профу, заточку, стрелы, банки и сосы
+	 * ({@link PhantomHunterOutfit#townChores}: за свою адену, автососки снова на сосы грейда). Сам в город не ходит, водит пати живой: дела — когда оба в мирной зоне
+	 * и не в бою. Пришли в город — сразу (не чаще {@value #CHORES_GAP} мс), стоят в городе — раз в {@value #CHORES_INTERVAL} мс.
+	 */
+	private static void townChores(Companion companion, PhantomTemplate template, Player phantom, Player owner, long now)
+	{
+		final boolean inTown = phantom.isInsideZone(ZoneId.PEACE) && owner.isInsideZone(ZoneId.PEACE);
+		if (inTown && !companion.inTown)
+		{
+			companion.choresDue = true;
+		}
+		companion.inTown = inTown;
+		if (!inTown || phantom.isInCombat() || owner.isInCombat() || phantom.isCastingNow() || phantom.isAttackingNow())
+		{
+			return;
+		}
+
+		final long since = now - companion.lastChores;
+		if ((since < CHORES_GAP) || (!companion.choresDue && (since < CHORES_INTERVAL)))
+		{
+			return;
+		}
+
+		companion.choresDue = false;
+		companion.lastChores = now;
+		final List<String> done = PhantomHunterOutfit.townChores(phantom, template, companion.unsold);
+		LOGGER.info(PhantomCompanionManager.class.getSimpleName() + ": " + companion.name + " (" + phantom.getLevel() + ") in town with the party of " + owner.getName() + ": " + (done.isEmpty() ? "nothing to do" : String.join(", ", done)) + ".");
 	}
 
 	/**
@@ -1288,6 +1417,7 @@ public class PhantomCompanionManager
 		}
 		else if (!phantom.isDead() && companion.selfDead)
 		{
+			PersonalCompanions.afterRevive(phantom);
 			chat.event(phantom, owner, Event.REVIVED, "тебя подняли, ты снова на ногах", "спс за рес");
 		}
 		companion.selfDead = phantom.isDead();
@@ -2026,6 +2156,35 @@ public class PhantomCompanionManager
 			phantom.setRunning();
 			phantom.getAI().setIntentionMoveTo(companion.stayAt);
 		}
+	}
+
+	/**
+	 * Мёртвый напарник, которого никто не ресает: владелец ушёл далеко (другой инстанс, дальше {@code PhantomDeadRecallRange})
+	 * или прошло {@code PhantomDeadRecallSeconds} — встаёт и становится к владельцу, как после отзыва и призыва.
+	 * Пока владелец рядом и срок не вышел — лежит и ждёт рес. Владелец мёртв, в бою, в инстансе или на олимпиаде — ждём.
+	 */
+	private void recallDead(Companion companion, Player phantom, Player owner, long now)
+	{
+		final boolean away = (owner.getInstanceId() != phantom.getInstanceId()) || ((PhantomPartyConfig.PHANTOM_DEAD_RECALL_RANGE > 0) && (phantom.calculateDistance2D(owner) > PhantomPartyConfig.PHANTOM_DEAD_RECALL_RANGE));
+		final boolean expired = (PhantomPartyConfig.PHANTOM_DEAD_RECALL_SECONDS > 0) && ((now - companion.deadSince) > (PhantomPartyConfig.PHANTOM_DEAD_RECALL_SECONDS * 1000L));
+		if (!away && !expired)
+		{
+			return;
+		}
+		if (owner.isDead() || owner.isInCombat() || owner.isTeleporting() || (owner.getInstanceId() != 0) || owner.isInOlympiadMode())
+		{
+			return;
+		}
+
+		companion.deadSince = 0;
+		companion.nextAutoBuff = 0;
+		companion.stayAt = null;
+		phantom.doRevive();
+		phantom.setCurrentHp(phantom.getMaxHp());
+		phantom.setCurrentMp(phantom.getMaxMp());
+		phantom.setCurrentCp(phantom.getMaxCp());
+		teleport(companion, phantom, slot(owner, slotIndex(companion)));
+		LOGGER.info(getClass().getSimpleName() + ": " + companion.name + " was not revived (" + (away ? "owner away" : "time out") + "), gets up next to " + owner.getName() + ".");
 	}
 
 	/**

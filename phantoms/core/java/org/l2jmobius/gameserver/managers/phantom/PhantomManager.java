@@ -268,8 +268,11 @@ public class PhantomManager
 		phantom.setOnlineStatus(true, false);
 		// Стартовый уровень — только новому (раздел 4.52), возраст мира — и тому, кто уже есть (раздел 4.90). Только вверх.
 		final int from = phantom.getLevel();
-		final int aged = PhantomWorldAge.levelFor(phantom, template);
-		final int start = Math.max(existed ? 0 : template.getStartLevel(), aged);
+		// Новичок на освободившееся место (жизненный цикл, раздел 4.151) — с 1-го, без старта ветерана и возраста мира.
+		final boolean newcomer = PhantomLifecycle.getInstance().newcomer(template.getName());
+		final int aged = newcomer ? 0 : PhantomWorldAge.levelFor(phantom, template);
+		// Старожилы выключены (HunterVeterans, раздел 4.52) — новый приходит с 1-го, как все; кто уже в базе, тот и так не меняется.
+		final int start = Math.max((existed || newcomer || !org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig.HUNTER_VETERANS) ? 0 : template.getStartLevel(), aged);
 		if (start > Math.max(1, from))
 		{
 			veteran(phantom, template, start);
@@ -452,6 +455,44 @@ public class PhantomManager
 	private Player loadOrCreate(PhantomTemplate template)
 	{
 		int charId = findCharId(template.getName());
+		// Личная пачка: у профиля свой персонаж по сохранённому ID; переименование в PersonalCompanionNames.ini не создаёт нового.
+		String previousName = null;
+		int previousId = 0;
+		final int trackedId = PersonalCompanionNames.characterId(template.getName());
+		if (trackedId > 0)
+		{
+			previousName = CharInfoTable.getInstance().getNameById(trackedId);
+			if ((previousName == null) || (findCharId(previousName) != trackedId))
+			{
+				LOGGER.warning(getClass().getSimpleName() + ": Stored personal identity is missing or belongs to another account; no replacement created.");
+				return null;
+			}
+			previousId = trackedId;
+		}
+		else
+		{
+			for (String old : PersonalCompanionNames.candidates(template.getName()))
+			{
+				final int candidateId = findCharId(old);
+				if (candidateId > 0)
+				{
+					if ((previousId > 0) && (previousId != candidateId))
+					{
+						LOGGER.warning(getClass().getSimpleName() + ": Conflicting legacy personal identities; no character changed.");
+						return null;
+					}
+					previousId = candidateId;
+					previousName = old;
+				}
+			}
+		}
+		final var resolution = PersonalCompanionNames.resolve(charId, previousId, CharInfoTable.getInstance().doesCharNameExist(template.getName()));
+		if (resolution.conflict())
+		{
+			LOGGER.warning(getClass().getSimpleName() + ": Personal name collision: " + template.getName() + "; existing characters retained.");
+			return null;
+		}
+		charId = resolution.charId();
 		if (charId <= 0)
 		{
 			if (CharInfoTable.getInstance().doesCharNameExist(template.getName()))
@@ -490,6 +531,27 @@ public class PhantomManager
 		if (phantom == null)
 		{
 			LOGGER.warning(getClass().getSimpleName() + ": Could not load phantom character " + template.getName() + " (" + charId + ").");
+		}
+		if ((phantom != null) && !PersonalCompanionNames.remember(template.getName(), charId, phantom.getName()))
+		{
+			return null;
+		}
+		if ((phantom != null) && !phantom.getName().equals(template.getName()))
+		{
+			phantom.setName(template.getName());
+			phantom.storeMe();
+			if (findCharId(template.getName()) != charId)
+			{
+				phantom.setName(previousName);
+				CharInfoTable.getInstance().addName(phantom);
+				LOGGER.warning(getClass().getSimpleName() + ": Personal rename could not be saved; spawn cancelled.");
+				return null;
+			}
+			CharInfoTable.getInstance().addName(phantom);
+			if (!PersonalCompanionNames.remember(template.getName(), charId, phantom.getName()))
+			{
+				return null;
+			}
 		}
 		return phantom;
 	}
@@ -584,7 +646,7 @@ public class PhantomManager
 		{
 			if (!name.isBlank())
 			{
-				names.add(name.strip());
+				names.add(PersonalCompanionNames.canonical(name.strip()));
 			}
 		}
 		return names;

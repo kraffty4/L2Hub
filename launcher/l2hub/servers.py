@@ -9,14 +9,16 @@ import ctypes
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import time
+from datetime import datetime
 from pathlib import Path
 
 import psutil
 
-from . import catalog, clientsys, gmshop, l2solo, paths
+from . import catalog, clientsys, gmshop, l2ini, l2solo, paths
 
 JARS = {"login": "LoginServer.jar", "game": "GameServer.jar"}
 STOP_TIMEOUT = {"game": 120, "login": 30}
@@ -410,6 +412,36 @@ def kill_all(p: dict) -> list[str]:
 
 # ---------- Клиент ----------
 
+LOOPBACK_HOSTS = ("127.0.0.1", "localhost", "::1")
+CLIENT_BACKUPS = paths.DATA / "backups" / "client"
+
+
+def ensure_local_addr(p: dict) -> str | None:
+    """Свой клиент ходит на сервер этого ПК: если в L2.ini клиента (не 4game) ServerAddr не локальный, ставит 127.0.0.1.
+    У клиентов 4game адрес в открытом L2Hub.ini пишет clientsys.ensure_ini. Исходный файл перед правкой — в
+    data/backups/client/<id>/<время>/ (откат — положить его обратно). Возвращает прежний адрес, если правил, иначе None.
+    L2.ini на ключе NCSoft перешифровать нечем — тогда RuntimeError с объяснением: клиент повис бы на «logging in»."""
+    if clientsys.is_4game(p) or not (p.get("client") or {}).get("path"):
+        return None
+    ini = catalog.client_ini(p)
+    if not ini.is_file():
+        return None
+    raw = ini.read_bytes()
+    try:
+        addr = l2ini.server_addr_of(raw)
+        if addr is None or addr.lower() in LOOPBACK_HOSTS or addr.startswith("127."):
+            return None
+        fixed = l2ini.with_server_addr(raw, "127.0.0.1")
+    except ValueError as e:
+        raise RuntimeError(f"В {ini} адрес сервера не этот ПК, а исправить его лаунчер не может ({e}). "
+                           "Нужна система клиента под локальный сервер с адресом 127.0.0.1.") from e
+    backup = CLIENT_BACKUPS / p["id"] / datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    backup.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(ini, backup / ini.name)
+    ini.write_bytes(fixed)
+    return addr
+
+
 def start_client(p: dict) -> int:
     if part_process(p, "client"):
         return read_pids(p["id"])["client"]
@@ -421,6 +453,7 @@ def start_client(p: dict) -> int:
         raise RuntimeError("Клиент с русским вводом работает только на Windows с русским языком системы, здесь он упадёт. "
                            "Выбери штатную систему: «Клиент и сеть» → «Указать другую папку клиента», папка system (чат — только латиницей). "
                            "Или смени язык системы на русский: Win+R, intl.cpl, «Дополнительно», «Изменить язык системы», перезагрузка.")
+    ensure_local_addr(p)  # иначе клиент чужой сборки висит на «logging in», стучась на свой сервер
     # L2.exe требует администратора в манифесте (requireAdministrator, наследство GameGuard):
     # из обычного процесса CreateProcess падает с WinError 740. RunAsInvoker запускает клиент
     # с правами лаунчера — без UAC, и лаунчер может проверить и закрыть его по PID.

@@ -1,0 +1,36 @@
+L2Hub: охотник на Олимпиаде Interlude решает сразу после старта боя и дальше каждые 200 мс, а не раз в 2 с на тике
+охотника. Общее ядро (OlympiadStartKick, OlympiadActionPace) было и здесь, но старт боя ему сообщали только Эпилог
+(патч 0255) и High Five (0260). Бой жив, пока матч не прерван, участники те же и не отключились; в clearPlayers проход
+снимается. Под HunterCombatFixes (docs/PHANTOMS.md, раздел 4.145).
+
+diff --git a/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGame.java b/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGame.java
+index d13f8a1..62c99f8 100644
+--- a/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGame.java
++++ b/java/org/l2jmobius/gameserver/mechanics/olympiad/OlympiadGame.java
+@@ -42,6 +42,7 @@ import org.l2jmobius.gameserver.entity.item.instance.Item;
+ import org.l2jmobius.gameserver.entity.spawns.Spawn;
+ import org.l2jmobius.gameserver.managers.AntiFeedManager;
+ import org.l2jmobius.gameserver.managers.CastleManager;
++import org.l2jmobius.gameserver.managers.phantom.OlympiadStartKick;
+ import org.l2jmobius.gameserver.mechanics.events.EventDispatcher;
+ import org.l2jmobius.gameserver.mechanics.events.EventType;
+ import org.l2jmobius.gameserver.mechanics.events.holders.olympiad.OnOlympiadMatchResult;
+@@ -148,6 +149,7 @@ class OlympiadGame
+ 	
+ 	protected void clearPlayers()
+ 	{
++		OlympiadStartKick.clear(this); // L2Hub: бой окончен — быстрый проход охотников снят.
+ 		_playerOne = null;
+ 		_playerTwo = null;
+ 		_players = null;
+@@ -1023,6 +1025,10 @@ class OlympiadGame
+ 			return false;
+ 		}
+ 		
++		// L2Hub: бой начался — охотник решает сразу и дальше каждые 200 мс, а не раз в 2 с на своём тике (OlympiadStartKick, OlympiadActionPace; docs/PHANTOMS.md, раздел 4.145).
++		final Player one = _playerOne;
++		final Player two = _playerTwo;
++		OlympiadStartKick.started(this, one, two, _stadiumID, () -> !_aborted && (_playerOne == one) && (_playerTwo == two) && !_playerOneDisconnected && !_playerTwoDisconnected);
+ 		return true;
+ 	}
+ 	

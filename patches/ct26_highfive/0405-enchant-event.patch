@@ -1,0 +1,372 @@
+L2Hub High Five (вклад пользователя): ивент «Мастер заточки» (Master Yogi) с доски Alt+B — карточка в «Ивентах», правила,
+награды, покупка за адену и сдача посоха через сам скрипт ивента. Награды +17…+23 при общем пределе заточки оружия +16
+(EnchantItemGroups.xml) показаны серыми. Посох и свитки Yogi убраны из GM-шопа (свиток стоил 1000 адены).
+
+diff --git a/dist/game/data/buylists/0009925.xml b/dist/game/data/buylists/0009925.xml
+index 9ce2c76..e49816e 100644
+--- a/dist/game/data/buylists/0009925.xml
++++ b/dist/game/data/buylists/0009925.xml
+@@ -67,7 +67,6 @@
+ 	<item id="13985" price="0" /> <!-- Exclusive to Monsters (Death Slayer_r) -->
+ 	<item id="13986" price="0" /> <!-- Exclusive to Monsters (Death Slayer_l) -->
+ 	<item id="13987" price="0" /> <!-- Exclusive to Monsters (Savage Warrior) -->
+-	<item id="13539" price="0" /> <!-- Staff of Master Yogi -->
+ 	<item id="13524" price="0" /> <!-- Gracian Soldier One-handed Sword -->
+ 	<item id="13525" price="0" /> <!-- Gracian Soldier Shield -->
+ 	<item id="13061" price="0" /> <!-- Exclusive to Monsters (Baroness' Employee) -->
+diff --git a/dist/game/data/buylists/0009977.xml b/dist/game/data/buylists/0009977.xml
+index 36aae92..0e48a8c 100644
+--- a/dist/game/data/buylists/0009977.xml
++++ b/dist/game/data/buylists/0009977.xml
+@@ -11,8 +11,6 @@
+ 	<item id="13972" price="0" /> <!-- Blue Boing Fantasy Hammer -->
+ 	<item id="13973" price="0" /> <!-- Small Red Boing Fantasy Hammer -->
+ 	<item id="13974" price="0" /> <!-- Small Blue Boing Fantasy Hammer -->
+-	<item id="13539" price="0" /> <!-- Staff of Master Yogi -->
+-	<item id="13540" price="0" /> <!-- Master Yogi's Scroll: Enchant Weapon -->
+ 	<item id="13541" price="0" /> <!-- Yogi's Enchanted Treasure Box -->
+ 	<item id="13542" price="0" /> <!-- Yogi's Enchanted Reward Cube -->
+ 	<item id="20189" price="0" /> <!-- Premium Valentine Decoration Pack -->
+diff --git a/dist/game/data/multisell/custom/50039925.xml b/dist/game/data/multisell/custom/50039925.xml
+index de63801..1dc36db 100644
+--- a/dist/game/data/multisell/custom/50039925.xml
++++ b/dist/game/data/multisell/custom/50039925.xml
+@@ -271,10 +271,6 @@
+ 		<ingredient id="57" count="6680500" />
+ 		<production id="13987" count="1" />
+ 	</item>
+-	<item>
+-		<ingredient id="57" count="41600" />
+-		<production id="13539" count="1" />
+-	</item>
+ 	<item>
+ 		<ingredient id="57" count="105000" />
+ 		<production id="13524" count="1" />
+diff --git a/dist/game/data/multisell/custom/50039977.xml b/dist/game/data/multisell/custom/50039977.xml
+index 8077005..26dfcb5 100644
+--- a/dist/game/data/multisell/custom/50039977.xml
++++ b/dist/game/data/multisell/custom/50039977.xml
+@@ -47,14 +47,6 @@
+ 		<ingredient id="57" count="3304300" />
+ 		<production id="13974" count="1" />
+ 	</item>
+-	<item>
+-		<ingredient id="57" count="41600" />
+-		<production id="13539" count="1" />
+-	</item>
+-	<item>
+-		<ingredient id="57" count="1000" />
+-		<production id="13540" count="1" />
+-	</item>
+ 	<item>
+ 		<ingredient id="57" count="10" />
+ 		<production id="13541" count="1" />
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+index 6a0a090..3cc5d39 100644
+--- a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+@@ -58,6 +58,7 @@ import org.l2jmobius.gameserver.network.serverpackets.ShowBoard;
+  * <li>_bbshubkarma [pay …] — снятие кармы за адену ({@link L2HubKarma})</li>
+  * <li>_bbshubskills … — выбор уровня изученных навыков ({@link L2HubSkillLevels})</li>
+  * <li>_bbshubhelp [run &lt;команда&gt;] — все команды сервера, то же окно у {@code .help} ({@link L2HubHelp})</li>
++ * <li>_bbshubyogi … — ивент «Мастер заточки»: правила, награды, покупка и сдача посоха ({@link L2HubYogi})</li>
+  * </ul>
+  */
+ public class L2HubBoard implements IParseBoardHandler
+@@ -332,7 +333,8 @@ public class L2HubBoard implements IParseBoardHandler
+ 		L2HubRaids.COMMAND,
+ 		L2HubKarma.COMMAND,
+ 		L2HubSkillLevels.COMMAND,
+-		L2HubHelp.COMMAND
++		L2HubHelp.COMMAND,
++		L2HubYogi.COMMAND
+ 	};
+ 
+ 	static
+@@ -424,6 +426,10 @@ public class L2HubBoard implements IParseBoardHandler
+ 			final String commands = L2HubHelp.content(player, args);
+ 			html = commands != null ? page(player, tr("Команды"), commands) : null; // команда выполнена — доска закрыта
+ 		}
++		else if (args[0].equalsIgnoreCase(L2HubYogi.COMMAND))
++		{
++			html = page(player, tr("Мастер заточки"), L2HubYogi.content(player, args));
++		}
+ 		else if (args[0].equalsIgnoreCase(EVENTS))
+ 		{
+ 			if ((args.length > 1) && args[1].equalsIgnoreCase("medals") && canUse(player))
+@@ -438,7 +444,7 @@ public class L2HubBoard implements IParseBoardHandler
+ 					MultisellData.getInstance().separateAndSendFromBoard(MEDAL_SHOP, player);
+ 				}
+ 			}
+-			html = page(player, PhantomEventBoard.title(), canOpen(player) ? PhantomEventBoard.getInstance().page(player, args) + ((args.length > 1 && java.util.Set.of("legacy", "join", "cancel", "medals").contains(args[1])) ? medals(player) : "") + eventLogoutNote(player) : PhantomClanBoard.busy());
++			html = page(player, PhantomEventBoard.title(), canOpen(player) ? PhantomEventBoard.getInstance().page(player, args) + ((args.length > 1 && java.util.Set.of("legacy", "join", "cancel", "medals").contains(args[1])) ? medals(player) : "") + L2HubYogi.card(player) + eventLogoutNote(player) : PhantomClanBoard.busy());
+ 		}
+ 		else
+ 		{
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubYogi.java b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubYogi.java
+new file mode 100644
+index 0000000..ad3e33c
+--- /dev/null
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubYogi.java
+@@ -0,0 +1,261 @@
++package handlers.bypass.communityboard;
++
++import java.text.SimpleDateFormat;
++import java.util.Locale;
++
++import org.l2jmobius.gameserver.data.xml.EnchantItemGroupsData;
++import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.entity.item.instance.Item;
++import org.l2jmobius.gameserver.mechanics.script.LongTimeEvent;
++import org.l2jmobius.gameserver.mechanics.script.Quest;
++import org.l2jmobius.gameserver.managers.ScriptManager;
++
++/**
++ * L2Hub: ивент «Мастер заточки» (MasterOfEnchanting, NPC Master Yogi) с доски Alt+B — правила, награды, покупка и сдача посоха в одном месте.
++ * <ul>
++ * <li>карточка на странице «Ивенты» ({@link #card}) — только пока ивент идёт (окно в config/Custom/L2HubEvents.ini);</li>
++ * <li>_bbshubyogi — правила и таблица наград;</li>
++ * <li>_bbshubyogi buy staff|1|10|24 и _bbshubyogi reward — то же, что кнопки у Yogi: проверки и цены решает сам скрипт ({@code onEvent} без NPC, как запись на TvT с доски).</li>
++ * </ul>
++ * Цены и награды — как у Mobius. Свиток Yogi точит только посох Yogi; на неудаче посох сгорает, до +3 — безопасно.
++ * Выше общего предела заточки оружия (шанс 0 в EnchantItemGroups.xml, по умолчанию +16) посох не точится — такие награды страница показывает серыми.
++ */
++public final class L2HubYogi
++{
++	public static final String COMMAND = "_bbshubyogi";
++
++	private static final String SCRIPT = "MasterOfEnchanting";
++	private static final int STAFF = 13539;
++	private static final int SCROLL = 13540;
++	// Как в MasterOfEnchanting: цены там зашиты в код.
++	private static final long STAFF_PRICE = 1000000;
++	private static final long SCROLL_1_PRICE = 500000;
++	private static final long SCROLL_10_PRICE = 5000000;
++	private static final long SCROLL_24_PRICE = 5000000;
++	private static final String[][] REWARDS =
++	{
++		{ "+4…+6", "фейерверки" },
++		{ "+7", "шляпа тени" },
++		{ "+8, +9", "свитки заточки D" },
++		{ "+10, +11", "свитки заточки C" },
++		{ "+12", "свиток заточки брони B" },
++		{ "+13", "свиток заточки оружия A" },
++		{ "+14", "ивентовая шляпа" },
++		{ "+15", "сундук S-бижутерии" },
++		{ "+16", "топовый камень жизни 76" },
++		{ "+17", "свиток заточки оружия S" },
++		{ "+18", "сундук S-брони" },
++		{ "+19", "сундук S-оружия" },
++		{ "+20", "кристалл души 14-й ступени" },
++		{ "+21", "камни жизни 76 и кристалл души 14" },
++		{ "+22", "сундук брони S80" },
++		{ "+23", "сундук оружия S80" }
++	};
++
++	private L2HubYogi()
++	{
++	}
++
++	private static LongTimeEvent event()
++	{
++		final Quest script = ScriptManager.getInstance().getScript(SCRIPT);
++		return (script instanceof LongTimeEvent event) && event.isEventPeriod() ? event : null;
++	}
++
++	/**
++	 * @return карточка для страницы «Ивенты»; пусто, если ивент не идёт
++	 */
++	public static String card(Player player)
++	{
++		final LongTimeEvent event = event();
++		if (event == null)
++		{
++			return "";
++		}
++		final StringBuilder sb = new StringBuilder(512);
++		sb.append("<br><br><table width=520 cellpadding=3 cellspacing=0><tr><td width=330><font color=\"CDB67F\">").append(L2HubBoard.tr("Мастер заточки")).append("</font><br1><font color=\"909090\">");
++		sb.append(L2HubBoard.tr("Точи посох Yogi и сдавай за награду. До ")).append(until(event)).append("</font></td><td width=190 align=center>");
++		sb.append(L2HubBoard.button(L2HubBoard.tr("Открыть"), COMMAND, 150)).append("</td></tr></table>");
++		return sb.toString();
++	}
++
++	public static String content(Player player, String[] args)
++	{
++		final LongTimeEvent event = event();
++		if (event == null)
++		{
++			return "<br><font color=\"808080\">" + L2HubBoard.tr("Ивент «Мастер заточки» сейчас не идёт: окно — MasterOfEnchanting в L2HubEvents.ini.") + "</font><br><br>" + L2HubBoard.button(L2HubBoard.tr("Ивенты"), "_bbshubevents", 130);
++		}
++		String message = "";
++		if ((args.length > 1) && L2HubBoard.canUse(player))
++		{
++			if (args[1].equalsIgnoreCase("buy") && (args.length > 2))
++			{
++				message = buy(player, args[2].toLowerCase(Locale.ROOT));
++			}
++			else if (args[1].equalsIgnoreCase("reward"))
++			{
++				message = reward(player);
++			}
++		}
++
++		final StringBuilder sb = new StringBuilder(4096);
++		sb.append("<br>").append(L2HubBoard.button(L2HubBoard.tr("Ивенты"), "_bbshubevents", 130)).append("<br>");
++		if (!message.isEmpty())
++		{
++			sb.append("<font color=\"LEVEL\">").append(message).append("</font><br><br>");
++		}
++		sb.append("<table width=520><tr><td><font color=\"B09878\">");
++		sb.append(L2HubBoard.tr("1. Купи посох Yogi и свитки Yogi (свитки ещё падают с мобов).<br1>2. Точи посох свитками: до +3 безопасно, дальше на неудаче посох сгорает.<br1>3. Надень посох и нажми «Сдать посох»: награда по заточке, посох забирают. Можно купить новый и заново."));
++		sb.append("</font><br1><font color=\"909090\">").append(L2HubBoard.tr("Ивент идёт до ")).append(until(event)).append(L2HubBoard.tr(". Мастера Yogi стоят в городах, у них то же самое.")).append("</font></td></tr></table><br>");
++
++		// Что у игрока сейчас.
++		final Item staff = player.getInventory().getItemByItemId(STAFF);
++		final long scrolls = player.getInventory().getInventoryItemCount(SCROLL, -1);
++		sb.append(L2HubBoard.tr("Твой посох: "));
++		if (staff == null)
++		{
++			sb.append("<font color=\"909090\">").append(L2HubBoard.tr("нет")).append("</font>");
++		}
++		else
++		{
++			sb.append("<font color=\"LEVEL\">+").append(staff.getEnchantLevel()).append("</font>").append(staff.isEquipped() ? L2HubBoard.tr(", надет") : L2HubBoard.tr(", не надет — надень перед сдачей"));
++			sb.append(L2HubBoard.tr(". Сдашь сейчас — ")).append(rewardFor(staff.getEnchantLevel())).append(".");
++		}
++		sb.append("<br1>").append(L2HubBoard.tr("Свитков Yogi: ")).append("<font color=\"LEVEL\">").append(scrolls).append("</font>").append(L2HubBoard.tr(", адены: ")).append(money(player.getAdena())).append("<br><br>");
++
++		// Покупка и сдача: кнопки скрипта.
++		sb.append("<table width=520 cellpadding=2><tr>");
++		sb.append("<td align=center>").append(L2HubBoard.button(L2HubBoard.tr("Посох — ") + compact(STAFF_PRICE), COMMAND + " buy staff", 160)).append("</td>");
++		sb.append("<td align=center>").append(L2HubBoard.button(L2HubBoard.tr("1 свиток — ") + compact(SCROLL_1_PRICE), COMMAND + " buy 1", 160)).append("</td>");
++		sb.append("<td align=center>").append(L2HubBoard.button(L2HubBoard.tr("10 свитков — ") + compact(SCROLL_10_PRICE), COMMAND + " buy 10", 160)).append("</td>");
++		sb.append("</tr><tr>");
++		sb.append("<td align=center>").append(L2HubBoard.button(L2HubBoard.tr("24 свитка — ") + compact(SCROLL_24_PRICE), COMMAND + " buy 24", 160)).append("</td>");
++		sb.append("<td align=center>").append(L2HubBoard.button(L2HubBoard.tr("Сдать посох"), COMMAND + " reward", 160)).append("</td>");
++		sb.append("<td align=center>").append(L2HubBoard.button(L2HubBoard.tr("Обновить"), COMMAND, 160)).append("</td>");
++		sb.append("</tr></table>");
++		sb.append("<font color=\"909090\">").append(L2HubBoard.tr("24 свитка — раз в 6 часов и только персонажам, созданным до начала ивента (")).append(new SimpleDateFormat("dd.MM").format(event.getStartDate())).append(").</font><br><br>");
++
++		// Награды.
++		sb.append("<font color=\"LEVEL\">").append(L2HubBoard.tr("Награды за заточку посоха")).append("</font><br1><table width=420 cellpadding=1 cellspacing=0>");
++		final int max = maxEnchant();
++		for (int i = 0; i < REWARDS.length; i += 2)
++		{
++			sb.append("<tr>").append(rewardCell(REWARDS[i], max)).append(i + 1 < REWARDS.length ? rewardCell(REWARDS[i + 1], max) : "<td></td><td></td>").append("</tr>");
++		}
++		sb.append("</table><br1><font color=\"909090\">").append(L2HubBoard.tr("Ниже +4 Yogi посох не примет. Предел заточки на этом сервере: +")).append(max).append(max < 23 ? L2HubBoard.tr(", серое выше него не достать.") : ".").append("</font>");
++		return sb.toString();
++	}
++
++	private static String rewardCell(String[] reward, int max)
++	{
++		// Первое число подписи — с какой заточки строка.
++		int from = 0;
++		for (int i = 1; (i < reward[0].length()) && Character.isDigit(reward[0].charAt(i)); i++)
++		{
++			from = (from * 10) + (reward[0].charAt(i) - '0');
++		}
++		final boolean reachable = from <= max;
++		return "<td width=60 align=right><font color=\"" + (reachable ? "CDB67F" : "606060") + "\">" + reward[0] + "</font></td><td width=150>&nbsp;" + (reachable ? "" : "<font color=\"606060\">") + L2HubBoard.tr(reward[1]) + (reachable ? "" : "</font>") + "</td>";
++	}
++
++	/** Выше этого посох не точится: свиток Yogi до +23, но шанс берётся из общей группы оружия. */
++	private static int maxEnchant()
++	{
++		final int max = EnchantItemGroupsData.getInstance().getMaxWeaponEnchant();
++		return (max > 0) ? Math.min(max, 23) : 23;
++	}
++
++	/**
++	 * @return что даст Yogi за посох с этой заточкой
++	 */
++	private static String rewardFor(int enchant)
++	{
++		if (enchant < 4)
++		{
++			return L2HubBoard.tr("не примет, нужно от +4");
++		}
++		// Строки REWARDS: +4…+6, +7, +8–9, +10–11, дальше по одной на уровень до +23.
++		final int row = enchant <= 6 ? 0 : enchant == 7 ? 1 : enchant <= 9 ? 2 : enchant <= 11 ? 3 : Math.min(enchant, 23) - 8;
++		return L2HubBoard.tr(REWARDS[row][1]);
++	}
++
++	private static String buy(Player player, String what)
++	{
++		final long before = player.getInventory().getInventoryItemCount(SCROLL, -1);
++		switch (what)
++		{
++			case "staff":
++			{
++				final String result = call("buy_staff", player);
++				if ("32599-staffbuyed.htm".equals(result))
++				{
++					return L2HubBoard.tr("Посох Yogi куплен. Надень его и точи свитками Yogi.");
++				}
++				return player.getInventory().getItemByItemId(STAFF) != null ? L2HubBoard.tr("Посох у тебя уже есть: сначала сдай его.") : L2HubBoard.tr("Не хватает адены: посох стоит ") + money(STAFF_PRICE) + ".";
++			}
++			case "1":
++			case "10":
++			{
++				final String result = call("buy_scroll_" + what, player);
++				return "32599-scroll-ok.htm".equals(result) ? L2HubBoard.tr("Куплено свитков Yogi: ") + what + "." : L2HubBoard.tr("Не хватает адены: нужно ") + money(what.equals("1") ? SCROLL_1_PRICE : SCROLL_10_PRICE) + ".";
++			}
++			case "24":
++			{
++				final String result = call("buy_scroll_24", player);
++				if ("32599-birth.htm".equals(result))
++				{
++					return L2HubBoard.tr("24 свитка продают только персонажам, созданным до начала ивента. Бери по 1 или 10.");
++				}
++				if ("32599-s24-no.htm".equals(result))
++				{
++					return L2HubBoard.tr("Не хватает адены: нужно ") + money(SCROLL_24_PRICE) + ".";
++				}
++				// Тот же ответ скрипт даёт и на перезарядку: сколько ждать, он пишет в системный чат.
++				return player.getInventory().getInventoryItemCount(SCROLL, -1) > before ? L2HubBoard.tr("Куплено 24 свитка Yogi. Следующие — через 6 часов.") : L2HubBoard.tr("24 свитка ещё рано: сколько ждать — в системном чате.");
++			}
++			default:
++			{
++				return "";
++			}
++		}
++	}
++
++	private static String reward(Player player)
++	{
++		final Item staff = player.getInventory().getItemByItemId(STAFF);
++		final int enchant = staff != null ? staff.getEnchantLevel() : 0;
++		final String result = call("receive_reward", player);
++		if ("32599-rewardok.htm".equals(result))
++		{
++			return L2HubBoard.tr("Yogi забрал посох +") + enchant + L2HubBoard.tr(" и выдал: ") + rewardFor(enchant) + L2HubBoard.tr(". Награда — в сумке.");
++		}
++		if (staff == null)
++		{
++			return L2HubBoard.tr("Посоха нет: купи его здесь же.");
++		}
++		return !staff.isEquipped() ? L2HubBoard.tr("Надень посох Yogi, потом сдавай.") : L2HubBoard.tr("Нужна заточка от +4, сейчас +") + enchant + ".";
++	}
++
++	private static String call(String event, Player player)
++	{
++		final Quest script = ScriptManager.getInstance().getScript(SCRIPT);
++		return script != null ? script.onEvent(event, null, player) : null;
++	}
++
++	private static String until(LongTimeEvent event)
++	{
++		return new SimpleDateFormat("dd.MM").format(event.getEndDate());
++	}
++
++	private static String money(long adena)
++	{
++		return String.format(Locale.ROOT, "%,d", adena).replace(',', ' ');
++	}
++
++	/** 1000000 → «1 млн», 500000 → «500 тыс.». */
++	private static String compact(long adena)
++	{
++		return adena >= 1000000 ? (adena / 1000000) + L2HubBoard.tr(" млн") : (adena / 1000) + L2HubBoard.tr(" тыс.");
++	}
++}

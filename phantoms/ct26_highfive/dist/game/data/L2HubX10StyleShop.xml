@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<shop>
+	<item id="5808" ru="Карнавальная маска" en="Party Mask" style="12" />
+	<item id="6394" ru="Красная карнавальная маска" en="Red Party Mask" style="14" />
+	<item id="6843" ru="Кошачьи ушки" en="Cat Ears" style="16" />
+	<item id="6846" ru="Монокль" en="Monocle" style="18" />
+	<item id="7680" ru="Ушки енота" en="Raccoon Ears" style="20" />
+	<item id="7683" ru="Кроличьи ушки" en="Rabbit Ears" style="20" />
+	<!-- Услуги стиля: цена в жетонах, срок в днях (0 — навсегда). Только внешний вид. -->
+	<service key="name" style="10" days="7" />
+	<service key="title" style="8" days="7" />
+	<service key="aura" style="25" days="7" />
+	<service key="glow" style="20" days="7" />
+	<service key="rename" style="30" days="0" />
+</shop>

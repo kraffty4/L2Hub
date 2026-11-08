@@ -264,6 +264,35 @@ public final class PhantomEvents
 	 */
 	Drive drive(Player player, PhantomTemplate template, long now)
 	{
+		if (org.l2jmobius.gameserver.managers.world.X10World.inPveEvent(player))
+		{
+			if (player.isDead() || player.isTeleporting() || player.isImmobilized() || player.isCastingNow())
+			{
+				return Drive.FIGHTS;
+			}
+			if (player.isSitting())
+			{
+				player.standUp();
+			}
+			if ((template != null) && ((template.getRole() == PhantomTemplate.Role.HEALER) || (template.getRole() == PhantomTemplate.Role.BUFFER)) && PhantomSupport.act(player, player, template.getRole(), now))
+			{
+				return Drive.FIGHTS;
+			}
+			final org.l2jmobius.gameserver.entity.actor.Creature target = org.l2jmobius.gameserver.managers.world.X10World.pveTarget(player);
+			if (target != null)
+			{
+				if (player.calculateDistance3D(target) > ENGAGE_RANGE)
+				{
+					player.setRunning();
+					player.getAI().setIntentionMoveTo(new Location(target.getX(), target.getY(), target.getZ()));
+				}
+				else
+				{
+					PhantomCompanionManager.fight(player, target);
+				}
+			}
+			return Drive.FIGHTS;
+		}
 		if (!player.isOnEvent())
 		{
 			final Score score = player.isRegisteredOnEvent() ? null : _participants.remove(player.getObjectId());

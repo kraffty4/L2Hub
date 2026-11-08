@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.l2jmobius.commons.database.DatabaseFactory;
@@ -21,6 +22,7 @@ import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.gameserver.config.PlayerConfig;
 import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
+import org.l2jmobius.gameserver.data.sql.ClanTable;
 import org.l2jmobius.gameserver.entity.Location;
 import org.l2jmobius.gameserver.entity.World;
 import org.l2jmobius.gameserver.entity.WorldObject;
@@ -30,6 +32,7 @@ import org.l2jmobius.gameserver.entity.actor.Player;
 import org.l2jmobius.gameserver.entity.actor.SuperChampion;
 import org.l2jmobius.gameserver.entity.actor.instance.GrandBoss;
 import org.l2jmobius.gameserver.entity.actor.instance.Monster;
+import org.l2jmobius.gameserver.entity.clan.Clan;
 import org.l2jmobius.gameserver.entity.groups.PartyDistributionType;
 import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
 import org.l2jmobius.gameserver.entity.spawns.Spawn;
@@ -649,7 +652,8 @@ public final class PhantomRaid
 	}
 
 	/**
-	 * @return кого лидер может взять на босса этого уровня: хилер — первым, дальше — соклановцы лидера (раздел 4.50), дальше — ближе по уровню к боссу
+	 * @return кого лидер может взять на босса этого уровня: хилер — первым, дальше — соклановцы лидера (раздел 4.50), за ними — охотники кланов его союза
+	 *         (мост, ep-alliances), дальше — ближе по уровню к боссу
 	 */
 	private static List<Player> members(Player leader, List<Player> hunting, int bossLevel, int curse)
 	{
@@ -661,8 +665,87 @@ public final class PhantomRaid
 				members.add(other);
 			}
 		}
-		members.sort(Comparator.comparingInt((Player p) -> isHealer(p) ? 0 : 1).thenComparingInt(p -> PhantomHunterClans.clanmates(leader, p) ? 0 : 1).thenComparingInt(p -> Math.abs(p.getLevel() - bossLevel)));
+		members.sort(order(leader, bossLevel));
 		return members;
+	}
+
+	/** Очередь в рейд лидера: хилер, соклановец, союзник, ближе по уровню к боссу. */
+	static Comparator<Player> order(Player leader, int bossLevel)
+	{
+		return Comparator.comparingInt((Player p) -> isHealer(p) ? 0 : 1).thenComparingInt(p -> PhantomHunterClans.clanmates(leader, p) ? 0 : PhantomHunterClans.allies(leader, p) ? 1 : 2).thenComparingInt(p -> Math.abs(p.getLevel() - bossLevel));
+	}
+
+	/**
+	 * Самопроверка ALLIES ({@code HuntersSelfTest}, мост ep-alliances; только на копии базы): двое свободных охотников основывают кланы и союз, третий — чужой.
+	 * Союзник — союзник, чужой — нет; в очереди рейда лидера союзник раньше чужого. Кланы распускаются.
+	 * @param world охотники в мире
+	 */
+	static void alliesSelfTest(List<Player> world)
+	{
+		final String tag = "SelfTest ALLIES: ";
+		final long now = System.currentTimeMillis();
+		final List<Player> free = new ArrayList<>();
+		for (Player hunter : world)
+		{
+			if (PhantomHunterClans.canFound(hunter, now) && !isHealer(hunter))
+			{
+				free.add(hunter);
+			}
+		}
+		if (free.size() < 3)
+		{
+			LOGGER.info(tag + "RESULT FAILED: needs three hunters who may found a clan, found " + free.size() + ".");
+			return;
+		}
+		Clan first = null;
+		Clan second = null;
+		try
+		{
+			final Player leader = free.get(0);
+			final Player ally = free.get(1);
+			final Player stranger = free.get(2);
+			first = PhantomHunterClans.getInstance().found(leader, PhantomHunterClans.fallbackName(), "self-test");
+			second = PhantomHunterClans.getInstance().found(ally, PhantomHunterClans.fallbackName(), "self-test");
+			if ((first == null) || (second == null))
+			{
+				LOGGER.info(tag + "RESULT FAILED: could not found two clans.");
+				return;
+			}
+			final boolean before = PhantomHunterClans.allies(leader, ally);
+			first.setAllyId(first.getId());
+			first.setAllyName("SelfTestAlly");
+			second.setAllyId(first.getId());
+			second.setAllyName("SelfTestAlly");
+			final boolean after = PhantomHunterClans.allies(leader, ally) && PhantomHunterClans.allies(ally, leader);
+			final boolean strangerOut = !PhantomHunterClans.allies(leader, stranger) && !PhantomHunterClans.allies(leader, leader);
+			final List<Player> queue = new ArrayList<>(List.of(stranger, ally));
+			queue.sort(order(leader, Math.max(1, stranger.getLevel())));
+			final boolean allyFirst = queue.get(0) == ally;
+			LOGGER.info(tag + "leader " + leader.getName() + " (" + leader.getLevel() + "), ally " + ally.getName() + " (" + ally.getLevel() + "), stranger " + stranger.getName() + " (" + stranger.getLevel() + "): allies before the alliance " + before + ", after " + after + ", stranger out " + strangerOut + ", raid queue " + queue.get(0).getName() + " first.");
+			LOGGER.info(tag + "RESULT " + ((!before && after && strangerOut && allyFirst) ? "OK" : "FAILED") + ".");
+		}
+		catch (Exception e)
+		{
+			LOGGER.log(Level.WARNING, tag + "failed: " + e.getMessage(), e);
+			LOGGER.info(tag + "RESULT FAILED: exception.");
+		}
+		finally
+		{
+			for (Clan clan : new Clan[]
+			{
+				first,
+				second
+			})
+			{
+				if (clan != null)
+				{
+					clan.setAllyId(0);
+					clan.setAllyName(null);
+					ClanTable.getInstance().destroyClan(clan.getId());
+				}
+			}
+			LOGGER.info(tag + "clans dismissed.");
+		}
 	}
 
 	/**

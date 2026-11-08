@@ -55,7 +55,7 @@ public final class PhantomLootSell
 	/**
 	 * Как выключатель на доске: нет файла или ключа — включено.
 	 */
-	private static boolean shopOn()
+	static boolean shopOn()
 	{
 		if (!Files.isRegularFile(TOWN))
 		{

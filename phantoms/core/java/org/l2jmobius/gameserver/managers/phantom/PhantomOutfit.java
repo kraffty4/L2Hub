@@ -50,6 +50,8 @@ final class PhantomOutfit
 
 		dress(player, template.getGear(level));
 		refill(player, template.getGear(level));
+		PersonalCompanions.configured(player, template);
+		PhantomClassKits.personal(player, template);
 		fullBars(player);
 		LOGGER.info("PhantomOutfit: " + player.getName() + " is level " + player.getLevel() + " " + player.getPlayerClass().name() + ", " + player.getAllSkills().size() + " skills" + (relearn ? " (relearned)" : "") + ".");
 	}
@@ -69,6 +71,8 @@ final class PhantomOutfit
 			dress(player, gear);
 		}
 		refill(player, gear);
+		PersonalCompanions.configured(player, template);
+		PhantomClassKits.personal(player, template);
 		fullBars(player);
 	}
 

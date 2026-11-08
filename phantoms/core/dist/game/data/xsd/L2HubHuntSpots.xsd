@@ -17,6 +17,8 @@
 						<xs:attribute name="z" type="xs:integer" use="required" />
 						<xs:attribute name="radius" type="xs:positiveInteger" use="required" />
 						<xs:attribute name="mobs" type="xs:positiveInteger" use="required" />
+						<!-- guide — кому спот советуют гайды (HuntSpotData.choose): mage fighter tank archer dagger summoner healer, party — пачкой. -->
+						<xs:attribute name="guide" type="xs:string" use="optional" />
 					</xs:complexType>
 				</xs:element>
 			</xs:sequence>

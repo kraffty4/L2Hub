@@ -177,6 +177,14 @@ def job_note(text: str, frac: float | None = None) -> None:
             job.frac = max(0.0, min(1.0, frac))
 
 
+def download_note(done: int, total: int, guess: int = 0) -> None:
+    """progress(done, total) скачивания → подробность шага «· скачано 12 из 25 МБ» и полоска. Архив исходников GitLab
+    отдаёт без Content-Length: тогда доля — от оценки guess, не дальше 95 %."""
+    size = total or guess
+    text = f"· скачано {done / 2**20:.0f} из {total / 2**20:.0f} МБ" if total else f"· скачано {done / 2**20:.0f} МБ"
+    job_note(text, min(done / size, 0.95 if not total else 1.0) if size else None)
+
+
 def job_cancelled() -> bool:
     job = getattr(_tls, "job", None)
     return bool(job and job.cancelled)
@@ -737,10 +745,11 @@ class Api:
         mods = chronicle_id in builder.pins()["chronicles"] and template.is_file()
         base = {"id": chronicle_id, "type": "mobius"}
         prof: dict = {}
-        steps = [(f"Скачиваю {r['title']}…", lambda rid=r["id"]: runtimes.install(rid))
+        steps = [(f"Скачиваю {r['title']}…", lambda rid=r["id"]: runtimes.install(rid, progress=download_note))
                  for r in runtimes.status() if not r["installed"]]
         if not (paths.SERVERS / chronicle_id / pin["build"]).is_dir():
-            steps.append(("Скачиваю исходники Mobius…", lambda: builder.fetch_sources(chronicle_id, pin=pin)))
+            steps.append(("Скачиваю исходники Mobius…",
+                          lambda: builder.fetch_sources(chronicle_id, pin=pin, progress=lambda d, t: download_note(d, t, 25 * 2**20))))
         steps.append(("Собираю сервер — несколько минут…", lambda: builder.server_build(base)))
 
         def make_profile():
@@ -789,7 +798,7 @@ class Api:
             self._install_failure_file(chronicle_id).unlink(missing_ok=True)
         if kind.get("runtime") != "ours":
             # У сборки-комбайна своя база, но онлайн, персонажей и права GM лаунчер читает клиентом MariaDB из рантаймов.
-            steps = [("Скачиваю MariaDB (её клиентом лаунчер читает базу сборки)…", lambda: runtimes.install("mariadb"))
+            steps = [("Скачиваю MariaDB (её клиентом лаунчер читает базу сборки)…", lambda: runtimes.install("mariadb", progress=download_note))
                      for r in runtimes.status() if r["id"] == "mariadb" and not r["installed"]]
             steps += [("Копирую сервер сборки…", lambda: prof.update(builder.import_bundle(chronicle_id, folder))),
                       ("Сохраняю профиль хроники…", save_profile)]
@@ -801,7 +810,7 @@ class Api:
             return {"ok": False, "error": f"Сборке нужна Java {need}, а у L2Hub — Java {ours}: такую сборку пока не запустить."}
         base = {"id": chronicle_id, "type": "mobius"}
         db_was_up = servers.db_running()
-        steps = [(f"Скачиваю {r['title']}…", lambda rid=r["id"]: runtimes.install(rid)) for r in runtimes.status() if not r["installed"]]
+        steps = [(f"Скачиваю {r['title']}…", lambda rid=r["id"]: runtimes.install(rid, progress=download_note)) for r in runtimes.status() if not r["installed"]]
         steps.append(("Копирую сервер сборки…", lambda: prof.update(builder.import_bundle(chronicle_id, folder))))
 
         mobius = kind.get("setup") == "mobius"
@@ -1228,7 +1237,34 @@ class Api:
             return {"ok": False, "error": "У этой хроники нет мозгов фейков."}
         s = brain.load_settings(p.get("brain", {}))
         return {"ok": True, "settings": s, "key": bool(brain.read_key(s)), "keyPath": str(brain.BRAIN_DIR / s["api"]["keyFile"]),
-                "usage": brain.usage_summary(s)}
+                "keyEnv": bool(os.environ.get("DEEPSEEK_API_KEY")), "usage": brain.usage_summary(s), "bench": brain.read_bench()}
+
+    def brain_bench(self, chronicle_id: str) -> dict:
+        """«Потянет ли этот ПК»: замер своей модели по сохранённым настройкам (brain.bench, около полуминуты)."""
+        if not servers.brain_port(catalog.profile(chronicle_id)):
+            return {"ok": False, "error": "У этой хроники нет мозгов фейков."}
+        try:
+            return {"ok": True, "bench": brain.bench(chronicle_id)}
+        except Exception as e:  # noqa: BLE001 — нет модели, не тот сервер
+            return {"ok": False, "error": str(e)}
+
+    def save_brain_key(self, chronicle_id: str, key: str) -> dict:
+        """Записать ключ облака в файл ключа из сохранённых настроек (api.keyFile). Обратно ключ не отдаётся ни здесь, ни в brain_settings:
+        окно знает только «есть / нет». Прежний ключ не пропадает — он в <файл>.prev, откат — переименовать обратно."""
+        p = catalog.profile(chronicle_id)
+        if not servers.brain_port(p):
+            return {"ok": False, "error": "У этой хроники нет мозгов фейков."}
+        key = str(key or "").strip()
+        if not 8 <= len(key) <= 512 or not all(33 <= ord(c) <= 126 for c in key):
+            return {"ok": False, "error": "Ключ — одна строка из латиницы, цифр и знаков, без пробелов, от 8 до 512 символов."}
+        path = brain.BRAIN_DIR / brain.load_settings(p.get("brain", {}))["api"]["keyFile"]
+        brain.BRAIN_DIR.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_name(path.name + ".tmp")
+        tmp.write_text(key + "\n", encoding="utf-8")
+        if path.exists() and path.read_text(encoding="utf-8").strip() != key:
+            path.replace(path.with_name(path.name + ".prev"))
+        tmp.replace(path)
+        return {"ok": True, "keyFile": path.name, "keyEnv": bool(os.environ.get("DEEPSEEK_API_KEY"))}
 
     def save_brain_settings(self, chronicle_id: str, settings: dict) -> dict:
         """Сохранить выбор модели: сервис мозгов подхватит его со следующей реплики, без перезапуска."""

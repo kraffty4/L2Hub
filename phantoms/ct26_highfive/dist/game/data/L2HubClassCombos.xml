@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- L2Hub: связки классов для автобоя охотников (docs/PHANTOMS.md, раздел 4.153). Сгенерировано tools/class_combos.py из базы знаний: только id и порядок атак. -->
+<list>
+	<class id="88" attacks="261,5,6" /> <!-- Duelist, b1 -->
+	<class id="89" attacks="920,921" /> <!-- Dreadnought, b1 -->
+	<class id="90" attacks="984,912" /> <!-- Phoenix Knight, v2 -->
+	<class id="91" attacks="984" /> <!-- Hell Knight, b2 -->
+	<class id="92" attacks="19,343,990" /> <!-- Sagittarius, v2 -->
+	<class id="93" attacks="30,263,344,409,928" /> <!-- Adventurer, v2 -->
+	<class id="94" attacks="1230,1451,1555" /> <!-- Archmage, v2 -->
+	<class id="95" attacks="1148,1234,1159" /> <!-- Soultaker, b4 -->
+	<class id="96" attacks="1558" /> <!-- Arcana Lord, b5 -->
+	<class id="97" attacks="1398,1028" /> <!-- Cardinal, v2 -->
+	<class id="98" attacks="1398" /> <!-- Hierophant, b5 -->
+	<class id="99" attacks="984" /> <!-- Eva's Templar, b2 -->
+	<class id="100" attacks="986" /> <!-- Sword Muse, b2 -->
+	<class id="101" attacks="30,263,344,928,321" /> <!-- Wind Rider, b3 -->
+	<class id="102" attacks="19,343,924,990,369" /> <!-- Moonlight Sentinel, b3 -->
+	<class id="103" attacks="1235,1453,1265,1237,1555" /> <!-- Mystic Muse, b4 -->
+	<class id="104" attacks="1558" /> <!-- Elemental Master, b5 -->
+	<class id="105" attacks="1398,1028" /> <!-- Eva's Saint, b5 -->
+	<class id="106" attacks="984" /> <!-- Shillien Templar, b2 -->
+	<class id="107" attacks="986" /> <!-- Spectral Dancer, b2 -->
+	<class id="108" attacks="30,263,344,928,321" /> <!-- Ghost Hunter, b3 -->
+	<class id="109" attacks="19,343,924,990,369,314" /> <!-- Ghost Sentinel, b3 -->
+	<class id="110" attacks="1239,1456,1267,1148,1234,1159,1555" /> <!-- Storm Screamer, b4 -->
+	<class id="111" attacks="1530,1558" /> <!-- Spectral Master, b5 -->
+	<class id="112" attacks="1398" /> <!-- Shillien Saint, b5 -->
+	<class id="113" attacks="315" /> <!-- Titan, v2 -->
+	<class id="114" attacks="54,284" /> <!-- Grand Khavatari, b1 -->
+	<class id="115" attacks="927" /> <!-- Dominator, b2 -->
+	<class id="116" attacks="927" /> <!-- Doomcryer, b2 -->
+	<class id="117" attacks="42,444,348,1560,190,30,263" /> <!-- Fortune Seeker, b1 -->
+	<class id="118" attacks="190" /> <!-- Maestro, b1 -->
+	<class id="131" attacks="477,497,498" /> <!-- Doombringer, b1 -->
+	<class id="132" attacks="1436,1516,1513,506,504,1439" /> <!-- Male Soulhound, b4 -->
+	<class id="133" attacks="1436,1516,1513,506,504,1439" /> <!-- Female Soulhound, b4 -->
+	<class id="134" attacks="507,990,510" /> <!-- Trickster, b3 -->
+	<class id="136" attacks="504" /> <!-- Judicator, b5 -->
+</list>

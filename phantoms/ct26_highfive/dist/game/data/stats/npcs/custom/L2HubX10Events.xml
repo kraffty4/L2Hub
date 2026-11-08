@@ -1,0 +1,426 @@
+<?xml version='1.0' encoding='utf-8'?>
+<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../xsd/npcs.xsd">
+	<npc id="900501" displayId="18342" level="1" type="Monster" name="Event Monster" usingServerSideName="true" title="Event" usingServerSideTitle="true">
+		<acquire exp="0" sp="0" />
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="50" hpRegen="0" mp="40.0" mpRegen="0.9" />
+			<attack physical="2" magical="1" random="30" critical="4" accuracy="4.75" attackSpeed="253" type="SWORD" range="40" distance="80" width="120" />
+			<defence physical="44.44444" magical="29.59016164" />
+			<attribute>
+				<defence fire="20" water="20" wind="53" earth="20" holy="20" dark="20" />
+			</attribute>
+			<speed>
+				<walk ground="20" />
+				<run ground="50" />
+			</speed>
+			<hitTime>370</hitTime>
+		</stats>
+		<status undying="false" canBeSown="false" />
+		<ai aggroRange="600" clanHelpRange="0" isAggressive="true" />
+		<collision>
+			<radius normal="10" />
+			<height normal="15" />
+		</collision>
+	</npc>
+	<npc id="900505" displayId="20003" level="5" type="Monster" name="Event Monster" usingServerSideName="true" title="Event" usingServerSideTitle="true">
+		<acquire exp="0" sp="0" />
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="50" hpRegen="0" mp="69.6" mpRegen="0.9" />
+			<attack physical="2" magical="2" random="50" critical="1" accuracy="9" attackSpeed="253" type="BLUNT" range="40" distance="80" width="120" />
+			<defence physical="51.60553" magical="34.3595464531323" />
+			<attribute>
+				<defence fire="20" water="20" wind="20" earth="20" holy="20" dark="20" />
+			</attribute>
+			<speed>
+				<walk ground="40" />
+				<run ground="110" />
+			</speed>
+			<hitTime>320</hitTime>
+		</stats>
+		<status undying="false" canBeSown="false" />
+		<ai aggroRange="600" clanHelpRange="0" isAggressive="true" />
+		<collision>
+			<radius normal="10" />
+			<height normal="16.5" />
+		</collision>
+	</npc>
+	<npc id="900510" displayId="18319" level="10" type="Monster" name="Event Monster" usingServerSideName="true" title="Event" usingServerSideTitle="true">
+		<acquire exp="0" sp="0" />
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="98" hpRegen="0" mp="108.4" mpRegen="0.9" />
+			<attack physical="4" magical="3" random="50" critical="1" accuracy="9" attackSpeed="253" type="BLUNT" range="40" distance="80" width="120" />
+			<defence physical="52.5514795" magical="37.4524577768779" evasion="10" />
+			<attribute>
+				<defence fire="20" water="20" wind="20" earth="20" holy="20" dark="20" />
+			</attribute>
+			<speed>
+				<walk ground="50" />
+				<run ground="110" />
+			</speed>
+			<hitTime>350</hitTime>
+		</stats>
+		<status undying="false" canBeSown="false" />
+		<ai aggroRange="600" clanHelpRange="0" isAggressive="true" />
+		<collision>
+			<radius normal="20" />
+			<height normal="10" />
+		</collision>
+	</npc>
+	<npc id="900515" displayId="20010" level="15" type="Monster" name="Event Monster" usingServerSideName="true" title="Event" usingServerSideTitle="true">
+		<acquire exp="0" sp="0" />
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="148" hpRegen="0" mp="149.2" mpRegen="1.2" />
+			<attack physical="6" magical="4" random="30" critical="4" accuracy="4.75" attackSpeed="253" type="SWORD" range="40" distance="80" width="120" />
+			<defence physical="73.55216" magical="48.9718589929237" />
+			<attribute>
+				<defence fire="20" water="20" wind="20" earth="20" holy="20" dark="20" />
+			</attribute>
+			<speed>
+				<walk ground="43" />
+				<run ground="130" />
+			</speed>
+			<hitTime>480</hitTime>
+		</stats>
+		<status undying="false" canBeSown="false" />
+		<ai aggroRange="600" clanHelpRange="0" isAggressive="true" />
+		<collision>
+			<radius normal="10" />
+			<height normal="23" />
+		</collision>
+	</npc>
+	<npc id="900520" displayId="18320" level="20" type="Monster" name="Event Monster" usingServerSideName="true" title="Event" usingServerSideTitle="true">
+		<acquire exp="0" sp="0" />
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="206" hpRegen="0" mp="192.0" mpRegen="1.2" />
+			<attack physical="9" magical="6" random="10" critical="4" accuracy="4.75" attackSpeed="253" type="FIST" range="40" distance="80" width="120" />
+			<defence physical="73.8399165" magical="52.6243330671097" evasion="10" />
+			<attribute>
+				<defence fire="20" water="20" wind="20" earth="20" holy="20" dark="20" />
+			</attribute>
+			<speed>
+				<walk ground="60" />
+				<run ground="120" />
+			</speed>
+			<hitTime>350</hitTime>
+		</stats>
+		<status undying="false" canBeSown="false" />
+		<ai aggroRange="600" clanHelpRange="0" isAggressive="true" />
+		<collision>
+			<radius normal="12" />
+			<height normal="27" />
+		</collision>
+	</npc>
+	<npc id="900525" displayId="20065" level="25" type="Monster" name="Event Monster" usingServerSideName="true" title="Event" usingServerSideTitle="true">
+		<acquire exp="0" sp="0" />
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="277" hpRegen="0" mp="259.2" mpRegen="1.5" />
+			<attack physical="13" magical="9" random="30" critical="4" accuracy="4.75" attackSpeed="253" type="SWORD" range="40" distance="80" width="120" />
+			<defence physical="101.83533" magical="67.8031159084826" />
+			<attribute>
+				<defence fire="20" water="20" wind="20" earth="20" holy="20" dark="20" />
+			</attribute>
+			<speed>
+				<walk ground="50" />
+				<run ground="110" />
+			</speed>
+			<hitTime>460</hitTime>
+		</stats>
+		<status undying="false" canBeSown="false" />
+		<ai aggroRange="600" clanHelpRange="0" isAggressive="true" />
+		<collision>
+			<radius normal="13.5" />
+			<height normal="25" />
+		</collision>
+	</npc>
+	<npc id="900530" displayId="18321" level="30" type="Monster" name="Event Monster" usingServerSideName="true" title="Event" usingServerSideTitle="true">
+		<acquire exp="0" sp="0" />
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="362" hpRegen="0" mp="329.4" mpRegen="1.5" />
+			<attack physical="19" magical="13" random="50" critical="1" accuracy="9" attackSpeed="253" type="BLUNT" range="40" distance="80" width="120" />
+			<defence physical="100.6946295" magical="71.7631875602859" evasion="10" />
+			<attribute>
+				<defence fire="20" water="20" wind="20" earth="20" holy="20" dark="53" />
+			</attribute>
+			<speed>
+				<walk ground="60" />
+				<run ground="130" />
+			</speed>
+			<hitTime>590</hitTime>
+		</stats>
+		<status undying="false" canBeSown="false" />
+		<ai aggroRange="600" clanHelpRange="0" isAggressive="true" />
+		<collision>
+			<radius normal="30" />
+			<height normal="39" />
+		</collision>
+	</npc>
+	<npc id="900535" displayId="20086" level="35" type="Monster" name="Event Monster" usingServerSideName="true" title="Event" usingServerSideTitle="true">
+		<acquire exp="0" sp="0" />
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="464" hpRegen="0" mp="402.6" mpRegen="1.8" />
+			<attack physical="26" magical="18" random="30" critical="4" accuracy="4.75" attackSpeed="253" type="SWORD" range="40" distance="80" width="120" />
+			<defence physical="136.72948" magical="91.0360303625432" />
+			<attribute>
+				<defence fire="-5" water="20" wind="20" earth="20" holy="20" dark="20" />
+			</attribute>
+			<speed>
+				<walk ground="80" />
+				<run ground="174" />
+			</speed>
+			<hitTime>610</hitTime>
+		</stats>
+		<status undying="false" canBeSown="false" />
+		<ai aggroRange="600" clanHelpRange="0" isAggressive="true" />
+		<collision>
+			<radius normal="35" grown="42" />
+			<height normal="17" grown="21" />
+		</collision>
+	</npc>
+	<npc id="900540" displayId="18322" level="40" type="Monster" name="Event Monster" usingServerSideName="true" title="Event" usingServerSideTitle="true">
+		<acquire exp="0" sp="0" />
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="580" hpRegen="0" mp="478.8" mpRegen="1.8" />
+			<attack physical="35" magical="24" random="30" critical="4" accuracy="4.75" attackSpeed="253" type="SWORD" range="40" distance="80" width="120" />
+			<defence physical="133.0677975" magical="94.8349307253096" evasion="10" />
+			<attribute>
+				<defence fire="20" water="20" wind="20" earth="20" holy="20" dark="20" />
+			</attribute>
+			<speed>
+				<walk ground="35" />
+				<run ground="140" />
+			</speed>
+			<hitTime>450</hitTime>
+		</stats>
+		<status undying="false" canBeSown="false" />
+		<ai aggroRange="600" clanHelpRange="0" isAggressive="true" />
+		<collision>
+			<radius normal="13" />
+			<height normal="44" />
+		</collision>
+	</npc>
+	<npc id="900545" displayId="20235" level="45" type="Monster" name="Event Monster" usingServerSideName="true" title="Event" usingServerSideTitle="true">
+		<acquire exp="0" sp="0" />
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="710" hpRegen="0" mp="610.8" mpRegen="2.1" />
+			<attack physical="47" magical="32" random="30" critical="4" accuracy="4.75" attackSpeed="253" type="SWORD" range="40" distance="80" width="120" />
+			<defence physical="177.78746" magical="118.372898457316" />
+			<attribute>
+				<attack type="DARK" value="20" />
+				<defence fire="20" water="20" wind="20" earth="20" holy="-32" dark="53" />
+			</attribute>
+			<speed>
+				<walk ground="15" />
+				<run ground="174" />
+			</speed>
+			<hitTime>450</hitTime>
+		</stats>
+		<status undying="false" canBeSown="false" />
+		<ai aggroRange="600" clanHelpRange="0" isAggressive="true" />
+		<collision>
+			<radius normal="30" grown="15.5" />
+			<height normal="40" grown="48.5" />
+		</collision>
+	</npc>
+	<npc id="900550" displayId="18323" level="50" type="Monster" name="Event Monster" usingServerSideName="true" title="Event" usingServerSideTitle="true">
+		<acquire exp="0" sp="0" />
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="853" hpRegen="0" mp="747.8" mpRegen="2.1" />
+			<attack physical="61" magical="42" random="30" critical="4" accuracy="0" attackSpeed="253" type="POLE" range="80" distance="80" width="120" />
+			<defence physical="170.202674" magical="121.300264676839" evasion="10" />
+			<attribute>
+				<defence fire="20" water="20" wind="20" earth="20" holy="20" dark="20" />
+			</attribute>
+			<speed>
+				<walk ground="80" />
+				<run ground="150" />
+			</speed>
+			<hitTime>450</hitTime>
+		</stats>
+		<status undying="false" canBeSown="false" />
+		<ai aggroRange="600" clanHelpRange="0" isAggressive="true" />
+		<collision>
+			<radius normal="9" />
+			<height normal="32" />
+		</collision>
+	</npc>
+	<npc id="900555" displayId="20244" level="55" type="Monster" name="Event Monster" usingServerSideName="true" title="Event" usingServerSideTitle="true">
+		<acquire exp="0" sp="0" />
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="1004" hpRegen="0" mp="889.8" mpRegen="2.4" />
+			<attack physical="78" magical="53" random="30" critical="4" accuracy="4.75" attackSpeed="253" type="SWORD" range="40" distance="80" width="120" />
+			<defence physical="223.6362" magical="148.899508363765" />
+			<attribute>
+				<attack type="DARK" value="20" />
+				<defence fire="20" water="20" wind="20" earth="20" holy="-13" dark="184" />
+			</attribute>
+			<speed>
+				<walk ground="60" />
+				<run ground="174" />
+			</speed>
+			<hitTime>840</hitTime>
+		</stats>
+		<status undying="false" canBeSown="false" />
+		<ai aggroRange="600" clanHelpRange="0" isAggressive="true" />
+		<collision>
+			<radius normal="10" />
+			<height normal="36" />
+		</collision>
+	</npc>
+	<npc id="900560" displayId="18001" level="60" type="Monster" name="Event Monster" usingServerSideName="true" title="Event" usingServerSideTitle="true">
+		<acquire exp="0" sp="0" />
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="1160" hpRegen="0" mp="1036.8" mpRegen="2.4" />
+			<attack physical="96" magical="66" random="30" critical="4" accuracy="4.75" attackSpeed="253" type="SWORD" range="40" distance="80" width="120" />
+			<defence physical="247.65008" magical="150.021245531891" />
+			<attribute>
+				<attack type="DARK" value="20" />
+				<defence fire="20" water="20" wind="20" earth="20" holy="-13" dark="184" />
+			</attribute>
+			<speed>
+				<walk ground="80" />
+				<run ground="160" />
+			</speed>
+			<hitTime>500</hitTime>
+		</stats>
+		<status undying="false" canBeSown="false" />
+		<ai aggroRange="600" clanHelpRange="0" isAggressive="true" />
+		<collision>
+			<radius normal="14" />
+			<height normal="40" />
+		</collision>
+	</npc>
+	<npc id="900565" displayId="20674" level="65" type="Monster" name="Event Monster" usingServerSideName="true" title="Event" usingServerSideTitle="true">
+		<acquire exp="0" sp="0" />
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="1316" hpRegen="0" mp="1188.8" mpRegen="2.7" />
+			<attack physical="117" magical="80" random="30" critical="4" accuracy="4.75" attackSpeed="253" type="SWORD" range="40" distance="80" width="120" />
+			<defence physical="271.89033" magical="181.027644954078" />
+			<attribute>
+				<attack type="DARK" value="20" />
+				<defence fire="20" water="20" wind="20" earth="20" holy="-32" dark="53" />
+			</attribute>
+			<speed>
+				<walk ground="100" />
+				<run ground="174" />
+			</speed>
+			<hitTime>450</hitTime>
+		</stats>
+		<status undying="false" canBeSown="false" />
+		<ai aggroRange="600" clanHelpRange="0" isAggressive="true" />
+		<collision>
+			<radius normal="15" />
+			<height normal="45" />
+		</collision>
+	</npc>
+	<npc id="900570" displayId="18325" level="70" type="Monster" name="Event Monster" usingServerSideName="true" title="Event" usingServerSideTitle="true">
+		<acquire exp="0" sp="0" />
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="1467" hpRegen="0" mp="1345.8" mpRegen="2.7" />
+			<attack physical="138" magical="94" random="50" critical="1" accuracy="9" attackSpeed="253" type="BLUNT" range="40" distance="80" width="120" />
+			<defence physical="251.5285745" magical="179.259718906208" evasion="10" />
+			<attribute>
+				<defence fire="-13" water="20" wind="20" earth="20" holy="20" dark="20" />
+			</attribute>
+			<speed>
+				<walk ground="30" />
+				<run ground="170" />
+			</speed>
+			<hitTime>450</hitTime>
+		</stats>
+		<status undying="false" canBeSown="false" />
+		<ai aggroRange="600" clanHelpRange="0" isAggressive="true" />
+		<collision>
+			<radius normal="18" />
+			<height normal="34" />
+		</collision>
+	</npc>
+	<npc id="900575" displayId="20862" level="75" type="Monster" name="Event Monster" usingServerSideName="true" title="Event" usingServerSideTitle="true">
+		<acquire exp="0" sp="0" />
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="1606" hpRegen="0" mp="1507.8" mpRegen="3" />
+			<attack physical="159" magical="109" random="30" critical="4" accuracy="4.75" attackSpeed="253" type="SWORD" range="40" distance="80" width="120" />
+			<defence physical="319.24623" magical="212.557735094503" />
+			<attribute>
+				<attack type="DARK" value="20" />
+				<defence fire="20" water="20" wind="20" earth="20" holy="-32" dark="53" />
+			</attribute>
+			<speed>
+				<walk ground="40" />
+				<run ground="174" />
+			</speed>
+			<hitTime>500</hitTime>
+		</stats>
+		<status undying="false" canBeSown="false" />
+		<ai aggroRange="600" clanHelpRange="0" isAggressive="true" />
+		<collision>
+			<radius normal="21" grown="25" />
+			<height normal="40" grown="48" />
+		</collision>
+	</npc>
+	<npc id="900580" displayId="22196" level="80" type="Monster" name="Event Monster" usingServerSideName="true" title="Event" usingServerSideTitle="true">
+		<acquire exp="0" sp="0" />
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="1974" hpRegen="0" mp="1674.8" mpRegen="3" />
+			<attack physical="194" magical="133" random="50" critical="1" accuracy="9" attackSpeed="253" type="BLUNT" range="40" distance="80" width="120" />
+			<defence physical="341.375" magical="249.80341" />
+			<attribute>
+				<defence fire="90" water="90" wind="30" earth="150" holy="90" dark="90" default="85" />
+			</attribute>
+			<speed>
+				<walk ground="33" />
+				<run ground="180" />
+			</speed>
+			<hitTime>430</hitTime>
+		</stats>
+		<status undying="false" canBeSown="false" />
+		<ai aggroRange="600" clanHelpRange="0" isAggressive="true" />
+		<collision>
+			<radius normal="20" />
+			<height normal="47.2" />
+		</collision>
+	</npc>
+	<npc id="900585" displayId="22838" level="85" type="Monster" name="Event Monster" usingServerSideName="true" title="Event" usingServerSideTitle="true">
+		<acquire exp="0" sp="0" />
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="33491" hpRegen="0" mp="1846.8" mpRegen="3" />
+			<attack physical="2402" magical="1742" random="30" critical="4" accuracy="5" attackSpeed="253" type="SWORD" range="40" distance="80" width="120" />
+			<defence physical="578.861024" magical="635.378064" />
+			<attribute>
+				<attack type="DARK" value="250" />
+				<defence fire="220" water="220" wind="220" earth="220" holy="170" dark="250" default="230" />
+			</attribute>
+			<speed>
+				<walk ground="45" />
+				<run ground="180" />
+			</speed>
+		</stats>
+		<status undying="false" canBeSown="false" />
+		<ai aggroRange="600" clanHelpRange="0" isAggressive="true" />
+		<collision>
+			<radius normal="20" />
+			<height normal="45" />
+		</collision>
+	</npc>
+	<npc id="900600" displayId="35062" level="1" type="Folk" name="Defence Headquarters" usingServerSideName="true" title="Integrity 100%" usingServerSideTitle="true">
+		<acquire exp="0" sp="0" />
+		<stats str="40" int="21" dex="30" wit="20" con="43" men="20">
+			<vitals hp="100000" hpRegen="0" mp="40.0" mpRegen="0.9" />
+			<attack physical="2" magical="1" random="30" critical="4" accuracy="4.75" attackSpeed="253" type="SWORD" range="40" distance="80" width="120" />
+			<defence physical="44.44444" magical="29.59016164" />
+			<attribute>
+				<defence fire="20" water="20" wind="53" earth="20" holy="20" dark="20" />
+			</attribute>
+			<speed>
+				<walk ground="20" />
+				<run ground="50" />
+			</speed>
+			<hitTime>370</hitTime>
+		</stats>
+		<status undying="true" canBeSown="false" />
+		<ai aggroRange="0" clanHelpRange="0" isAggressive="false" />
+		<collision>
+			<radius normal="25" />
+			<height normal="40" />
+		</collision>
+	</npc>
+</list>

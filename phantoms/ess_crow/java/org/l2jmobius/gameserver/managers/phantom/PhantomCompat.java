@@ -253,6 +253,37 @@ public final class PhantomCompat
 	}
 
 	/**
+	 * Личная пачка (PersonalCompanions, общее ядро): подготовка помощника перед боем — баффы группы, свои баффы, банки маны.
+	 * У Эпилога это его механика ({@code HunterSupport.ini}: PartyBuffs, CompanionSelfSkills, SupportSupplies); у остальных хроник
+	 * подготовки нет: помощник готов сразу, кнопка «Бафы себе» не показывается.
+	 */
+	public static boolean personalPrepareSupported()
+	{
+		return false;
+	}
+
+	public static void personalRequest(Player player)
+	{
+	}
+
+	public static void personalPrepare(Player player, long now)
+	{
+	}
+
+	public static boolean personalReady(Player player)
+	{
+		return true;
+	}
+
+	public static void personalClear(Player player)
+	{
+	}
+
+	public static void personalMana(Player player)
+	{
+	}
+
+	/**
 	 * Охотника ждёт приглашение в пати с приоритетом (соклан позвал): своих дел не начинать ({@link PhantomHeroClaim}); на этой хронике приоритета соклана нет.
 	 * @return приглашение ждёт
 	 */
@@ -1222,5 +1253,75 @@ public final class PhantomCompat
 	public static boolean inRift(Player player)
 	{
 		return false;
+	}
+
+	// ---------- Тату (A16, PhantomClassKits): у Essence другой API, тип Henna в ядре не называется ----------
+
+	/**
+	 * @return тату с этим id есть и подходит классу игрока
+	 */
+	static boolean hennaAllowed(Player player, int dyeId)
+	{
+		final var henna = org.l2jmobius.gameserver.data.xml.HennaData.getInstance().getHenna(dyeId);
+		return (henna != null) && henna.isAllowedClass(player);
+	}
+
+	/**
+	 * @return {id краски, сколько краски на нанесение, плата за нанесение}; {@code null} — такого тату нет
+	 */
+	static long[] hennaWear(int dyeId)
+	{
+		final var henna = org.l2jmobius.gameserver.data.xml.HennaData.getInstance().getHenna(dyeId);
+		return henna == null ? null : new long[]
+		{
+			henna.getDyeItemId(),
+			henna.getWearCount(),
+			henna.getWearFee()
+		};
+	}
+
+	/**
+	 * @return это тату уже нанесено (слоты Essence — с 1 по {@code getAvailableHennaSlots})
+	 */
+	static boolean hasHenna(Player player, int dyeId)
+	{
+		for (int slot = 1; slot <= player.getAvailableHennaSlots(); slot++)
+		{
+			final var henna = player.getHenna(slot);
+			if ((henna != null) && (henna.getDyeId() == dyeId))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Нанести тату в первый свободный слот, без платы: плату берёт вызывающий.
+	 * @return нанесено
+	 */
+	static boolean addHenna(Player player, int dyeId)
+	{
+		final var henna = org.l2jmobius.gameserver.data.xml.HennaData.getInstance().getHenna(dyeId);
+		if (henna == null)
+		{
+			return false;
+		}
+		for (int slot = 1; slot <= player.getAvailableHennaSlots(); slot++)
+		{
+			if (player.getHenna(slot) == null)
+			{
+				return player.addHenna(slot, henna);
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Продаёт ли GM-шоп вещь из списка ({@link HunterShopPrices}): своих ограничений у этой хроники нет.
+	 */
+	static boolean gmShopSells(int listId, int itemId)
+	{
+		return true;
 	}
 }

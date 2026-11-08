@@ -17,6 +17,7 @@ public final class PhantomText
 	static
 	{
 		EN.put("Ивенты", "Events");
+		EN.put("Недельные поручения недоступны или выключены.", "Weekly contracts are unavailable or disabled.");
 		EN.put("TvT, команда на команду", "TvT, team vs team");
 		EN.put("Deathmatch, каждый за себя", "Deathmatch, everyone for themselves");
 		EN.put("CtF, захват флага", "CtF, capture the flag");

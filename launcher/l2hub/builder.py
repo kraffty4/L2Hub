@@ -76,6 +76,10 @@ def copy_module(cid: str, src: Path, base: Path, out: Out, fresh: bool = False) 
                 if not f.is_file():
                     continue
                 rel = f.relative_to(root)
+                # Сначала разрешаем перекрытие хроники, чтобы общий файл не
+                # затирал её версию и не создавал ложный .module_overwritten.
+                if root != module and (module / rel).is_file():
+                    continue
                 key = rel.as_posix()
                 to = src / rel
                 digest = _sha(f)
@@ -769,7 +773,8 @@ def fill_database(p: dict, srv: Path, db: str, out: Out = print) -> None:
                 raise RuntimeError(f"Ошибка в {part}\\{sql.name}: {r.stderr.decode('utf-8', 'replace')[-500:]}")
             count += 1
     out(f"База {db}: залито файлов — {count}")
-    machine.fresh_default(p, out)
+    # Установка из окна зовёт server_setup с профилем без "server" (профиль пишется последним шагом) — папка сервера здесь srv.
+    machine.fresh_default({**p, "server": p.get("server") or str(srv)}, out)
 
 
 def server_setup(p: dict, out: Out = print) -> None:

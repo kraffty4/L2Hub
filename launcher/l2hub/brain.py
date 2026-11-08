@@ -1095,6 +1095,13 @@ class Brain:
             return ""
         return self.talk.text(fpc, clan, player, message, level, self.heard(fpc, player))
 
+    def spot_advice(self, req: dict) -> str:
+        """Вопрос новичка от собеседника: «где качаться?» — места под его уровень и роль из базы знаний (споты из гайдов,
+        knowledge.advice); остальное — ближайшие вопросы ЧаВо новичков с проверенными ответами (knowledge.faq)."""
+        player, message = req.get("player", {}), req.get("message", "")
+        return "\n".join(x for x in (self.knowledge.advice(message, int(player.get("level") or 0), player.get("class", "")),
+                                     self.knowledge.faq(message)) if x)
+
     def system_prompt(self, req: dict) -> str:
         fpc, npc, player = req["fpc"], req.get("npc", {}), req.get("player", {})
         p = self.personas.get(fpc, {})
@@ -1121,6 +1128,7 @@ class Brain:
             f"Где ты: {place}{near}. Что делаешь: {doing}. Игровое время {req.get('gameTime', '')}{', ночь' if req.get('night') else ''}.",
             self.life(fpc),
             self.world_talk(fpc, player.get("name", ""), req.get("message", ""), level=int(p.get("level") or npc.get("level") or 0)),
+            self.spot_advice(req),
             f"С тобой говорит {pl}. Он {channel}. {met}",
             slang_words(req),
             "Правила. Отвечай как в игровом чате: одна короткая фраза, до 100 символов, без кавычек и без своего имени в начале. "
@@ -1179,6 +1187,7 @@ class Brain:
             # В начале разговора по своей воле сообщение — служебное описание ситуации, а не вопрос собеседника.
             self.world_talk(fpc, player.get("name", ""), "" if req.get("channel") == "initiative" else req.get("message", ""), ph.get("clan") or "", int(ph.get("level") or 0))
             if req.get("channel") not in KB_SKIP_CHANNELS else "",
+            self.spot_advice(req) if req.get("channel") not in (*KB_SKIP_CHANNELS, "initiative") else "",
         ]
         name = player.get("name", "")
         grudge = player.get("grudge") or 0
@@ -2029,11 +2038,56 @@ def make_handler(brain: Brain):
     return Handler
 
 
+BENCH_REQUESTS = 6
+
+
+def bench(chronicle_id: str, n: int = BENCH_REQUESTS) -> dict:
+    """«Потянет ли этот ПК» (docs/MIND.md, «Своя модель на этом ПК»): n запросов по одному — шёпот фейку, промпт ~1000 токенов, как у
+    настоящих (стратег — 1100–1700). Номер в начале промпта не даёт серверу взять ответ из кеша: в живом мире промпты у всех свои.
+    Память пар не пишется. Итог — data/brain/bench.json: модель, адрес, среднее и худшее время, сбои, пустые ответы, запросов в час."""
+    b = Brain(chronicle_id)
+    names = sorted(b.personas) or ["Tester"]
+    stamp = int(time.time())
+    times, good, fails, empty, last_error = [], [], 0, 0, ""
+    for i in range(n):
+        req = {"fpc": names[(stamp + i * 7919) % len(names)], "channel": "whisper", "message": "привет, где лучше качаться на 30 уровне?",
+               "gameTime": "14:20", "night": False, "player": {"name": "Tester", "level": 30, "class": "TREASURE_HUNTER", "race": "HUMAN", "clan": ""},
+               "npc": {"level": 40, "hpPct": 100, "inCombat": False, "town": "Town of Giran"}}
+        msgs = b.messages(req)
+        msgs[0] = {**msgs[0], "content": f"[замер {stamp}-{i}]\n" + msgs[0]["content"]}
+        started = time.monotonic()
+        try:
+            text = b.call_llm(msgs)
+        except Exception as e:  # noqa: BLE001 — таймаут, сеть, не тот сервер: это и есть ответ замера
+            fails += 1
+            last_error = str(e)[:200]
+            times.append(time.monotonic() - started)
+            continue
+        times.append(time.monotonic() - started)
+        good.append(times[-1])
+        empty += 0 if text.strip() else 1
+    avg = sum(good) / len(good) if good else 0.0  # скорость — по удачным: отказ соединения за секунду не делает модель быстрой
+    result = {"at": datetime.now().strftime("%Y-%m-%d %H:%M"), "mode": b.cfg["mode"], "baseUrl": b.cfg["baseUrl"], "model": b.cfg["model"],
+              "requests": n, "avgSec": round(avg, 1), "worstSec": round(max(times), 1), "fails": fails, "empty": empty, "lastError": last_error,
+              "perHour": int(3600 / avg * len(good) / n) if avg else 0}
+    (BRAIN_DIR / "bench.json").write_text(json.dumps(result, ensure_ascii=False, indent=1), encoding="utf-8")
+    return result
+
+
+def read_bench() -> dict | None:
+    try:
+        return json.loads((BRAIN_DIR / "bench.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(prog="l2hub.brain")
     ap.add_argument("chronicle")
     ap.add_argument("--test", nargs=2, metavar=("FPC", "MESSAGE"))
     ap.add_argument("--player", default="Tester")
+    ap.add_argument("--plevel", type=int, default=52, help="с --test: уровень собеседника")
+    ap.add_argument("--pclass", default="TREASURE_HUNTER", help="с --test: класс собеседника, как его шлёт сервер (HUMAN_WIZARD, ELVEN_FIGHTER…)")
     ap.add_argument("--echo", action="store_true")
     ap.add_argument("--phantom", action="store_true", help="FPC — напарник-фантом в пати с игроком (чат пати)")
     ap.add_argument("--event", action="store_true", help="с --phantom: MESSAGE — описание события, а не реплика игрока")
@@ -2065,7 +2119,11 @@ def main() -> int:
                                                          "PARTY зовёт и --player — живого игрока рядом")
     ap.add_argument("--clanname", action="store_true", help="FPC — охотник: имя клана, который он основывает (раздел 4.50; MESSAGE не нужен)")
     ap.add_argument("--summarize", metavar="FPC", help="свернуть старые реплики пары FPC — --player в заметку сейчас, даже если их мало")
+    ap.add_argument("--bench", action="store_true", help=f"«потянет ли этот ПК»: {BENCH_REQUESTS} запросов размером с настоящие по одному, итог — data/brain/bench.json")
     args = ap.parse_args()
+    if args.bench:
+        print(json.dumps(bench(args.chronicle), ensure_ascii=False, indent=1))
+        return 0
     brain = Brain(args.chronicle, echo=args.echo)
     brain.force_ext = args.ext
     kb_spot = (brain.knowledge.kb() or {}).get("spots", {}).get(args.spot or "", {})
@@ -2182,7 +2240,7 @@ def main() -> int:
     if args.test:
         fpc, message = args.test
         req = {"fpc": fpc, "channel": "whisper", "message": message, "gameTime": "14:20", "night": False,
-               "player": {"name": args.player, "level": 52, "class": "TREASURE_HUNTER", "race": "HUMAN", "clan": ""},
+               "player": {"name": args.player, "level": args.plevel, "class": args.pclass, "race": "HUMAN", "clan": ""},
                "npc": {"level": brain.personas.get(fpc, {}).get("level", 40), "hpPct": 100, "inCombat": False, "town": "Town of Giran"}}
         if args.phantom:
             role = {"хилер": "HEALER", "баффер": "BUFFER"}.get(brain.personas.get(fpc, {}).get("role", ""), "DAMAGE")
