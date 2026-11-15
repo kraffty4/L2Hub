@@ -10,6 +10,9 @@ import java.util.logging.Logger;
 
 import org.l2jmobius.commons.util.Rnd;
 import org.l2jmobius.gameserver.ai.Intention;
+import org.l2jmobius.gameserver.managers.world.X10World;
+import org.l2jmobius.gameserver.taskmanagers.AutoUseTaskManager;
+import org.l2jmobius.gameserver.taskmanagers.AutoPlayTaskManager;
 import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
 import org.l2jmobius.gameserver.entity.Location;
 import org.l2jmobius.gameserver.entity.World;
@@ -264,33 +267,8 @@ public final class PhantomEvents
 	 */
 	Drive drive(Player player, PhantomTemplate template, long now)
 	{
-		if (org.l2jmobius.gameserver.managers.world.X10World.inPveEvent(player))
+		if (drivePve(player, template, player, now))
 		{
-			if (player.isDead() || player.isTeleporting() || player.isImmobilized() || player.isCastingNow())
-			{
-				return Drive.FIGHTS;
-			}
-			if (player.isSitting())
-			{
-				player.standUp();
-			}
-			if ((template != null) && ((template.getRole() == PhantomTemplate.Role.HEALER) || (template.getRole() == PhantomTemplate.Role.BUFFER)) && PhantomSupport.act(player, player, template.getRole(), now))
-			{
-				return Drive.FIGHTS;
-			}
-			final org.l2jmobius.gameserver.entity.actor.Creature target = org.l2jmobius.gameserver.managers.world.X10World.pveTarget(player);
-			if (target != null)
-			{
-				if (player.calculateDistance3D(target) > ENGAGE_RANGE)
-				{
-					player.setRunning();
-					player.getAI().setIntentionMoveTo(new Location(target.getX(), target.getY(), target.getZ()));
-				}
-				else
-				{
-					PhantomCompanionManager.fight(player, target);
-				}
-			}
 			return Drive.FIGHTS;
 		}
 		if (!player.isOnEvent())
@@ -360,6 +338,35 @@ public final class PhantomEvents
 		note(player, "attacks " + enemy.getName() + " (" + (int) player.calculateDistance2D(enemy) + (enemy == carrier ? ", carries our flag" : "") + ")", now);
 		PhantomCompanionManager.fight(player, enemy);
 		return Drive.FIGHTS;
+	}
+
+	// Один путь для охотников и личных помощников: обычный тик пати не уводит с площадки.
+	boolean drivePve(Player player, PhantomTemplate template, Player owner, long now)
+	{
+		if (!X10World.inPveEvent(player)) { return false; }
+		if (player.isDead() || player.isTeleporting() || player.isImmobilized()) { return true; }
+		if (player.isAutoPlaying()) { AutoPlayTaskManager.getInstance().stopAutoPlay(player); }
+		PersonalCompanions.tick(player, now);
+		// Авторасходники используют прежние запасы/покупку и обычные откаты.
+		PhantomHunterOutfit.partySupplies(player, PersonalCompanions.personal(template));
+		AutoUseTaskManager.getInstance().startAutoUseTask(player);
+		if (!PersonalCompanions.readyForAction(player, now)) { return true; }
+		if (PersonalCompanions.owned(player) && PhantomSummoner.tick(player, now)) { return true; }
+		final boolean support = template != null && (template.getRole() == PhantomTemplate.Role.HEALER || template.getRole() == PhantomTemplate.Role.BUFFER);
+		if (support && PhantomSupport.pveAct(player, owner, template.getRole(), now)) { return true; }
+		if (player.isCastingNow()) { return true; }
+		if (player.isSitting()) { player.standUp(); }
+		final Creature target = X10World.pveTarget(player);
+		if (target != null)
+		{
+			if (player.calculateDistance3D(target) > ENGAGE_RANGE)
+			{
+				player.setRunning();
+				player.getAI().setIntentionMoveTo(new Location(target.getX(), target.getY(), target.getZ()));
+			}
+			else { PhantomCompanionManager.fight(player, target); }
+		}
+		return true;
 	}
 
 	/** Что охотник делает на арене — в лог, не чаще раза в {@value #NOTE_GAP} мс: без клиента иначе не видно, почему он стоит. */

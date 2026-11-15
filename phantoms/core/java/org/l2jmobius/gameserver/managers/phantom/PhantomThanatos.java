@@ -1727,7 +1727,7 @@ public final class PhantomThanatos
 	 */
 	private static boolean ready(Player me, Skill skill, Creature target)
 	{
-		return !me.isSkillDisabled(skill) && (me.getCurrentMp() >= (skill.getMpInitialConsume() + skill.getMpConsume())) && (skill.getChargeConsumeCount() <= me.getCharges()) && skill.checkCondition(me, target, false);
+		return !me.isSkillDisabled(skill) && (me.getCurrentMp() >= (me.getStat().getMpInitialConsume(skill) + me.getStat().getMpConsume(skill))) && (skill.getChargeConsumeCount() <= me.getCharges()) && skill.checkCondition(me, target, false);
 	}
 
 	/**

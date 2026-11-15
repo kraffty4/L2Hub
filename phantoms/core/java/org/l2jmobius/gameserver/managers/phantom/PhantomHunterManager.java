@@ -4325,11 +4325,12 @@ public class PhantomHunterManager
 		final boolean petition = "PETITION".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
 		final boolean twinks = "TWINKS".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
 		final boolean buddies = "BUDDIES".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
+		final boolean buddyRes = "BUDDYRES".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
 		final boolean recs = "RECS".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
 		final boolean eventBoard = "EVENTBOARD".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
 		final boolean gearBehind = "GEARBEHIND".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
 		final boolean raidReach = "RAIDREACH".equalsIgnoreCase(PhantomHuntersConfig.HUNTERS_SELF_TEST);
-		if (((moments || twinks || buddies || recs || eventBoard || gearBehind || raidReach) && (inWorld().size() < 12)) || (petition && inWorld().isEmpty()))
+		if (((moments || twinks || buddies || buddyRes || recs || eventBoard || gearBehind || raidReach) && (inWorld().size() < 12)) || (petition && inWorld().isEmpty()))
 		{
 			return;
 		}
@@ -4448,6 +4449,11 @@ public class PhantomHunterManager
 		if (buddies)
 		{
 			PhantomCompanionManager.getInstance().selfTest(inWorld());
+			return;
+		}
+		if (buddyRes)
+		{
+			PhantomCompanionManager.getInstance().resSelfTest(inWorld());
 			return;
 		}
 		if (recs)

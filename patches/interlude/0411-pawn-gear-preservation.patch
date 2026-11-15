@@ -1,0 +1,72 @@
+L2Hub Interlude: перенос 0411-pawn-gear-preservation с High Five 0.5.305 (сведение модов 2026-11-15).
+При переносе: PawnGearPreservation — в модуле phantoms/interlude, без атрибутов (в Interlude их нет).
+
+На High Five:
+L2Hub High Five: пересборка пешки (PhantomOutfit.build) больше не уничтожает вложенный шмот — механизм сопровождающего
+Эпилога (PawnGearPreservation, его 0512, секция PhantomOutfit). Заточенные, с ЛС и с атрибутами вещи снимаются до смены
+уровня и навыков и переживают пересборку; кит надевает их снова по точному id, новые и другие вещи улучшений не наследуют.
+Прочее сбрасывается штатно, по одной вещи. Кит или сумка с заводской заточкой (enchanted > 0) — исключение вместо догадки.
+Ханки — четыре ханка PhantomOutfit из patches/epilogue/0512 без изменений (модуль копируется в исходники до патчей);
+класс managers/phantom/PawnGearPreservation.java — в модуле phantoms/ct26_highfive, как у него в phantoms/epilogue.
+Откат: удалить патч и пересобрать сервер.
+
+diff --git a/java/org/l2jmobius/gameserver/managers/phantom/PhantomOutfit.java b/java/org/l2jmobius/gameserver/managers/phantom/PhantomOutfit.java
+index 48b6c774..1460024d 100644
+--- a/java/org/l2jmobius/gameserver/managers/phantom/PhantomOutfit.java
++++ b/java/org/l2jmobius/gameserver/managers/phantom/PhantomOutfit.java
+@@ -31,6 +31,8 @@ final class PhantomOutfit
+ 	 */
+ 	static void build(Player player, PhantomTemplate template, int level)
+ 	{
++		// Reject ambiguous factory-enchanted kits before any inventory/level/class change.
++		PawnGearPreservation.requirePlainKit(template.getGear(level));
+ 		// Стопка BSS даёт перегруз, а с перегрузом 4-й степени фантом не может сдвинуться с места.
+ 		player.setDietMode(true);
+ 		revive(player);
+@@ -38,8 +40,8 @@ final class PhantomOutfit
+ 		final int classId = template.getClassId(level);
+ 		final boolean relearn = (player.getLevel() != level) || (player.getPlayerClass().getId() != classId) || player.getAllSkills().isEmpty();
+ 
+-		// Сначала снять и уничтожить старый шмот: его скиллы не должны пережить пересборку.
+-		player.getInventory().destroyAllItems(ItemProcessType.DESTROY, player, null);
++		// Снять старый шмот до смены навыков; улучшенные оригиналы сохранить, прочее сбросить штатно.
++		final PawnGearPreservation.Saved savedGear = PawnGearPreservation.reset(player);
+ 		player.getAutoSoulShot().clear();
+ 
+ 		setLevel(player, level);
+@@ -48,7 +50,7 @@ final class PhantomOutfit
+ 			relearn(player, classId);
+ 		}
+ 
+-		dress(player, template.getGear(level));
++		dress(player, template.getGear(level), savedGear);
+ 		refill(player, template.getGear(level));
+ 		PersonalCompanions.configured(player, template);
+ 		PhantomClassKits.personal(player, template);
+@@ -255,6 +257,26 @@ final class PhantomOutfit
+ 		PhantomCompat.refreshExpertisePenalty(player);
+ 	}
+ 
++
++    /** Exact-ID reuse only. Different/new kit items never inherit enchant/element/augmentation. */
++    private static void dress(Player player, PhantomTemplate.Gear gear, PawnGearPreservation.Saved saved)
++    {
++        if (saved.isEmpty()) { dress(player, gear); return; }
++        saved.verify(player.getInventory());
++        if (gear == null) return;
++        for (int itemId : gear.items())
++        {
++            if (itemId <= 0) continue;
++            Item item = saved.takeMatching(player.getInventory(), itemId);
++            if (item == null) item = player.getInventory().addItem(ItemProcessType.REWARD, itemId, 1, player, null);
++            if (item != null && item.isEquipable()) player.getInventory().equipItem(item);
++            else LOGGER.warning("PhantomOutfit: could not equip kit item " + itemId);
++        }
++        saved.verify(player.getInventory());
++        PhantomCompat.refreshOverloaded(player);
++        PhantomCompat.refreshExpertisePenalty(player);
++    }
++
+ 	private static void refill(Player player, PhantomTemplate.Gear gear)
+ 	{
+ 		if ((gear == null) || (gear.shots <= 0))

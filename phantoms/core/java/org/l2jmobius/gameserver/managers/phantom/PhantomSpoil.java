@@ -117,7 +117,7 @@ final class PhantomSpoil
 	private static Skill usable(Player player, int skillId)
 	{
 		final Skill skill = player.getKnownSkill(skillId);
-		return (skill == null) || player.isSkillDisabled(skill) || (player.getCurrentMp() < (skill.getMpConsume() + skill.getMpInitialConsume())) ? null : skill;
+		return (skill == null) || player.isSkillDisabled(skill) || (player.getCurrentMp() < (player.getStat().getMpConsume(skill) + player.getStat().getMpInitialConsume(skill))) ? null : skill;
 	}
 
 	private static void note(Player player, String what, long now)

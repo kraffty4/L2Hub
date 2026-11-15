@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='utf-8'?>
+<arenas>
+	<arena id="elven" ru="Эльфийский лес" en="Elven Forest" min="1" max="39" x="22462" y="45689" z="-3632" />
+	<arena id="agony" ru="Руины Агонии" en="Ruins of Agony" min="1" max="39" x="-41248" y="122848" z="-2904" />
+	<arena id="cruma" ru="Башня Крумы" en="Cruma Tower" min="40" max="64" x="21826" y="111328" z="-3736" />
+	<arena id="cemetery" ru="Кладбище" en="Cemetery" min="40" max="64" x="181246" y="23737" z="-3168" />
+	<arena id="dragon" ru="Долина Драконов" en="Dragon Valley" min="40" max="64" x="75003" y="105611" z="-2736" />
+	<arena id="silent" ru="Долина Безмолвия" en="Silent Valley" min="65" max="85" x="181411" y="52684" z="-6016" />
+	<arena id="ketra" ru="Аванпост Орков Кетра" en="Ketra Orc Outpost" min="65" max="85" x="151898" y="-89144" z="-4608" />
+	<arena id="springs" ru="Горячие Источники" en="Hot Springs" min="65" max="85" x="153918" y="-105538" z="-2736" />
+</arenas>

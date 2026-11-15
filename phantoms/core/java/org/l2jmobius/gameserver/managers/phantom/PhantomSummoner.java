@@ -308,7 +308,7 @@ final class PhantomSummoner
 		// Нечем призвать: кристаллы купит в городе; маны мало или откат — в следующий раз. Сидя откат — только по отметке отката: у Classic и Essence сидящий —
 		// hasBlockActions, isSkillDisabled у него всегда true, и охотник не вставал, пока не отдохнёт сам (Essence 2026-10-29: SUMMON 0 из 2, слуга вернулся через 6–8 минут).
 		final boolean disabled = player.isSitting() ? player.hasSkillReuse(skill.getReuseHashCode()) : player.isSkillDisabled(skill);
-		if (((skill.getItemConsumeId() > 0) && (player.getInventory().getInventoryItemCount(skill.getItemConsumeId(), -1) < skill.getItemConsumeCount())) || disabled || (player.getCurrentMp() < (skill.getMpConsume() + skill.getMpInitialConsume())))
+		if (((skill.getItemConsumeId() > 0) && (player.getInventory().getInventoryItemCount(skill.getItemConsumeId(), -1) < skill.getItemConsumeCount())) || disabled || (player.getCurrentMp() < (player.getStat().getMpConsume(skill) + player.getStat().getMpInitialConsume(skill))))
 		{
 			NEXT_TRY.put(player.getObjectId(), now + RETRY);
 			testWait(player, now, "can't cast " + skill.getName() + " (crystals " + player.getInventory().getInventoryItemCount(skill.getItemConsumeId(), -1) + " of " + skill.getItemConsumeCount() + ", disabled " + disabled + ", sitting " + player.isSitting() + ", MP " + (int) player.getCurrentMp() + " of " + (skill.getMpConsume() + skill.getMpInitialConsume()) + ")");
@@ -366,7 +366,7 @@ final class PhantomSummoner
 		final int mp = servitor.getMaxMp() > 0 ? (int) ((servitor.getCurrentMp() * 100) / servitor.getMaxMp()) : 100;
 		final Skill heal = hp < HEAL_BELOW ? player.getKnownSkill(SERVITOR_HEAL) : null;
 		final Skill skill = heal != null ? heal : mp < RECHARGE_BELOW ? player.getKnownSkill(SERVITOR_RECHARGE) : null;
-		if ((skill == null) || player.isSkillDisabled(skill) || (player.getCurrentMp() < (skill.getMpConsume() + skill.getMpInitialConsume())) || ((skill.getCastRange() > 0) && (player.calculateDistance2D(servitor) > skill.getCastRange())))
+		if ((skill == null) || player.isSkillDisabled(skill) || (player.getCurrentMp() < (player.getStat().getMpConsume(skill) + player.getStat().getMpInitialConsume(skill))) || ((skill.getCastRange() > 0) && (player.calculateDistance2D(servitor) > skill.getCastRange())))
 		{
 			return false;
 		}
@@ -424,7 +424,7 @@ final class PhantomSummoner
 		for (Skill skill : cubics)
 		{
 			final long last = LAST_CUBIC.getOrDefault(cubicKey(player, skill), 0L);
-			if (((now - last) >= CUBIC_REFRESH) && (last < pickLast) && !player.isSkillDisabled(skill) && (player.getCurrentMp() >= (skill.getMpConsume() + skill.getMpInitialConsume())))
+			if (((now - last) >= CUBIC_REFRESH) && (last < pickLast) && !player.isSkillDisabled(skill) && (player.getCurrentMp() >= (player.getStat().getMpConsume(skill) + player.getStat().getMpInitialConsume(skill))))
 			{
 				pick = skill;
 				pickLast = last;
@@ -521,7 +521,7 @@ final class PhantomSummoner
 		Skill pick = null;
 		for (Skill skill : servitorBuffs(player))
 		{
-			if ((PhantomCompat.buffByAbnormal(servitor, skill.getAbnormalType()) != null) || player.isSkillDisabled(skill) || (player.getCurrentMp() < (skill.getMpConsume() + skill.getMpInitialConsume())) || ((skill.getCastRange() > 0) && (player.calculateDistance2D(servitor) > skill.getCastRange())))
+			if ((PhantomCompat.buffByAbnormal(servitor, skill.getAbnormalType()) != null) || player.isSkillDisabled(skill) || (player.getCurrentMp() < (player.getStat().getMpConsume(skill) + player.getStat().getMpInitialConsume(skill))) || ((skill.getCastRange() > 0) && (player.calculateDistance2D(servitor) > skill.getCastRange())))
 			{
 				continue;
 			}

@@ -21,7 +21,7 @@ class H5X10DefaultsCheck(unittest.TestCase):
         self.assertEqual(ep['GrandBoss.ini']['SmallWorldEpics'],'False')
 
     def test_standard_apply_sets_all_updated_values(self):
-        with tempfile.TemporaryDirectory(dir=Path(__file__).resolve().parents[2]/'local/checks') as directory:
+        with tempfile.TemporaryDirectory() as directory:
             root=Path(directory);server=root/'server';cfg=server/'game/config';cfg.mkdir(parents=True)
             inputs={'Rates.ini':{'RatePartyXp':'1','RatePartySp':'1','RateKarmaLost':'1','DeathDropChanceMultiplier':'1','SpoilDropChanceMultiplier':'1'},
                     'L2HubWorld.ini':{'PlayerPAtkSpeedMultiplier':'1','PlayerMAtkSpeedMultiplier':'1'},

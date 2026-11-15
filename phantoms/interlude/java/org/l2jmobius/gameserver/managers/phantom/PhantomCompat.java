@@ -363,6 +363,27 @@ public final class PhantomCompat
 		return player.useMagic(skill, forceUse, dontMove);
 	}
 
+	/**
+	 * Метка текущего каста для замка реса ({@link SupportResurrection}): тот же объект, пока идёт этот каст.
+	 * @return {@code null}, если не кастует
+	 */
+	public static Object castingToken(Player player)
+	{
+		return player.getCurrentSkill();
+	}
+
+	/** @return id скилла текущего каста или 0 */
+	public static int castingSkillId(Player player)
+	{
+		return player.getCurrentSkill() == null ? 0 : player.getCurrentSkill().getSkillId();
+	}
+
+	/** Рес в core идёт через замок {@link SupportResurrection}. На Эпилоге — {@code false}: там свой путь сопровождающего ({@code 0512}). */
+	public static boolean coreResLock()
+	{
+		return true;
+	}
+
 	public static int karma(Player player)
 	{
 		return player.getKarma();

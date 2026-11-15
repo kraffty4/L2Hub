@@ -1,0 +1,26 @@
+L2Hub: закрытая лавка не выводит фантома из мира.
+OfflineDisconnectFinished отключает закрывшего лавку игрока без клиента: так задумано для офлайн-торговцев, но под условие попадали и фантомы. Охотник, свернувший лавку или распродавшийся, выходил и через 2 с входил снова (docs/PHANTOMS.md, раздел 4.121). Живого офлайн-торговца правка не меняет.
+Перенос патча High Five 0200 (тот же слаг), номера строк — по Эпилогу.
+
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/Player.java b/java/org/l2jmobius/gameserver/entity/actor/Player.java
+index bba75b8bb0d6d729b9381dd05d9a1ea9f0d29b02..ab0961687838a4899c7ab5eb6538485d31dae7a1 100644
+--- a/java/org/l2jmobius/gameserver/entity/actor/Player.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/Player.java
+@@ -232,6 +232,7 @@ import org.l2jmobius.gameserver.managers.ScriptManager;
+ import org.l2jmobius.gameserver.managers.SiegeManager;
+ import org.l2jmobius.gameserver.managers.TerritoryWarManager;
+ import org.l2jmobius.gameserver.managers.ZoneManager;
++import org.l2jmobius.gameserver.managers.phantom.PhantomManager;
+ import org.l2jmobius.gameserver.mechanics.effects.EffectFlag;
+ import org.l2jmobius.gameserver.mechanics.effects.EffectType;
+ import org.l2jmobius.gameserver.mechanics.events.EventDispatcher;
+@@ -6437,7 +6438,8 @@ public class Player extends Playable
+ 	public void setPrivateStoreType(PrivateStoreType privateStoreType)
+ 	{
+ 		_privateStoreType = privateStoreType;
+-		if (OfflineTradeConfig.OFFLINE_DISCONNECT_FINISHED && (privateStoreType == PrivateStoreType.NONE) && ((_client == null) || _client.isDetached()))
++		// L2Hub: фантом без клиента — не офлайн-торговец: закрыв лавку, он остаётся в мире, а не выходит, чтобы через пару секунд войти снова.
++		if (OfflineTradeConfig.OFFLINE_DISCONNECT_FINISHED && (privateStoreType == PrivateStoreType.NONE) && ((_client == null) || _client.isDetached()) && !PhantomManager.getInstance().isPhantom(this))
+ 		{
+ 			OfflineTraderTable.getInstance().removeTrader(getObjectId());
+ 			Disconnection.of(this).storeAndDelete();

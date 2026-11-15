@@ -1,0 +1,41 @@
+L2Hub: множители скорости атаки и каста игроков (`L2HubWorld.ini`: `PlayerPAtkSpeedMultiplier`, `PlayerMAtkSpeedMultiplier`, 1 — как в Mobius, от 0.5 до 3). Действуют и на охотников: они тоже игроки. Потолки `MaxPAtkSpeed` и `MaxMAtkSpeed` из `Player.ini` остаются. Режим «x10» в «Настройках сервера» ставит 1.1, остальные режимы — 1; применяется после перезапуска гейма.
+Вклад пользователя (режим x10, в его ветке — `0235`).
+Перенос патча High Five 0240 (тот же слаг); у Эпилога потолок атаки снимает не GM, а играющий GM (PlayingGmPolicy, 0503) — условие оставлено его.
+
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/stat/PlayerStat.java b/java/org/l2jmobius/gameserver/entity/actor/stat/PlayerStat.java
+index 89e4d4050ba6dc3be861552e75e8474537f4de6c..a80ad5f0a581094a64649746d7dcf87eb6d6892d 100644
+--- a/java/org/l2jmobius/gameserver/entity/actor/stat/PlayerStat.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/stat/PlayerStat.java
+@@ -27,6 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
+ import org.l2jmobius.gameserver.config.GeneralConfig;
+ import org.l2jmobius.gameserver.config.PlayerConfig;
+ import org.l2jmobius.gameserver.config.RatesConfig;
++import org.l2jmobius.gameserver.config.custom.L2HubWorldConfig;
+ import org.l2jmobius.gameserver.data.holders.PetLevelData;
+ import org.l2jmobius.gameserver.data.xml.ExperienceData;
+ import org.l2jmobius.gameserver.data.xml.PetDataTable;
+@@ -665,7 +666,8 @@ public class PlayerStat extends PlayableStat
+ 	@Override
+ 	public double getPAtkSpd()
+ 	{
+-		final double val = super.getPAtkSpd();
++		// L2Hub: множитель скорости атаки игроков (L2HubWorld.ini, PlayerPAtkSpeedMultiplier; режим «x10» — 1.1).
++		final double val = Math.round(super.getPAtkSpd() * L2HubWorldConfig.PLAYER_PATK_SPEED_MULTIPLIER);
+ 		if ((val > PlayerConfig.MAX_PATK_SPEED) && !PlayingGmPolicy.hasGameplayBypass(getActiveChar()))
+ 		{
+ 			return PlayerConfig.MAX_PATK_SPEED;
+@@ -674,6 +676,14 @@ public class PlayerStat extends PlayableStat
+ 		return val;
+ 	}
+ 	
++	@Override
++	public int getMAtkSpd()
++	{
++		// L2Hub: множитель скорости каста игроков (L2HubWorld.ini, PlayerMAtkSpeedMultiplier), потолок MaxMAtkSpeed тот же.
++		final int val = super.getMAtkSpd();
++		return L2HubWorldConfig.PLAYER_MATK_SPEED_MULTIPLIER == 1 ? val : (int) Math.min(val * L2HubWorldConfig.PLAYER_MATK_SPEED_MULTIPLIER, PlayerConfig.MAX_MATK_SPEED);
++	}
++	
+ 	private void updateVitalityLevel(boolean quiet)
+ 	{
+ 		final byte level;

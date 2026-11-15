@@ -1,0 +1,534 @@
+L2Hub: рейд-боссы и эпики без уровневых штрафов — выключатели в config/Custom/EpicLevelAccess.ini, все выключены.
+EpicNoLevelPenalty — эпики и их охрана, RaidNoLevelPenalty — все РБ и их рейдовые миньоны: без рейдового проклятия,
+без штрафа дропа и спойла за разницу уровней и без отсечки опыта. EpicLevelAccessEnabled и Epic*Level — свой уровень
+эпика только для этих проверок (сила босса, вход и награды прежние). Обычные монстры не меняются.
+Перенос патча 0505 сопровождающего Эпилога (selaquik) с классом RaidLevelAccess, без зависимости от «играющего GM».
+Откат: удалить патч и пересобрать сервер.
+Самопроверка модов (L2HubSelfTest): «Рейды без уровневых штрафов».
+
+diff --git a/dist/game/config/Custom/EpicLevelAccess.ini b/dist/game/config/Custom/EpicLevelAccess.ini
+new file mode 100644
+index 0000000000000000000000000000000000000000..ca75bc8c5b0b1ac5dcdb51231521c24764426260
+--- /dev/null
++++ b/dist/game/config/Custom/EpicLevelAccess.ini
+@@ -0,0 +1,65 @@
++# ---------------------------------------------------------------------------
++# Эпики — уровень для ограничений
++# ---------------------------------------------------------------------------
++# Эти уровни используются только для рейдового проклятия и штрафа дропа за разницу уровней.
++# Реальный уровень NPC, HP, урон, защита, навыки, базовая таблица дропа и базовые XP/SP не меняются.
++# Проходки, минимальный уровень входа, состав группы и таймеры сохраняются.
++# Настройка через L2Hub: Настройки сервера → Кастом сервера → Рейд-боссы.
++# Новые значения применяются после перезапуска игрового сервера.
++
++# Включить прежний допуск по уровням ниже. Новые выключатели штрафов работают независимо.
++# Default: False
++EpicLevelAccessEnabled = False
++
++# Для каждого босса: 0 — родной уровень; 1..99 — свой уровень для проверки штрафов.
++# Например, 85 для АК позволяет персонажу 85 уровня избежать штрафа за разницу уровней.
++# Default: 0
++
++# АК — Queen Ant. Родной уровень: 40; 0 — родной.
++# Default: 0
++EpicQueenAntLevel = 0
++# Ядро — Core. Родной уровень: 50; 0 — родной.
++# Default: 0
++EpicCoreLevel = 0
++# Орфен — Orfen. Родной уровень: 50; 0 — родной.
++# Default: 0
++EpicOrfenLevel = 0
++# Закен — день и ночь. Родной уровень: 60; 0 — родной.
++# Default: 0
++EpicZakenLevel = 0
++# Баюм — Baium. Родной уровень: 75; 0 — родной.
++# Default: 0
++EpicBaiumLevel = 0
++# Антарас — все варианты. Родной уровень: 79; 0 — родной.
++# Default: 0
++EpicAntharasLevel = 0
++# Валакас — Valakas. Родной уровень: 85; 0 — родной.
++# Default: 0
++EpicValakasLevel = 0
++# Фринтеза и Scarlet van Halisha. Родной уровень: 85; 0 — родной.
++# Default: 0
++EpicFrintezzaLevel = 0
++# Белеф — Beleth. Родной уровень: 83; 0 — родной.
++# Default: 0
++EpicBelethLevel = 0
++# Байлор — Baylor. Родной уровень: 83; 0 — родной.
++# Default: 0
++EpicBaylorLevel = 0
++# Экимус — Ekimus. Родной уровень: 82; 0 — родной.
++# Default: 0
++EpicEkimusLevel = 0
++# Тиада — Tiat. Родной уровень: 82; 0 — родной.
++# Default: 0
++EpicTiatLevel = 0
++# Гигантский голем хаоса. Родной уровень: 52; 0 — родной.
++# Default: 0
++EpicChaosGolemLevel = 0
++# Полностью снять уровневые наказания с эпиков и их связанной охраны.
++# Проклятие, штрафы дропа/спойла и XP/SP. Реальные характеристики и условия входа прежние.
++# Не зависит от EpicLevelAccessEnabled. Default: False
++EpicNoLevelPenalty = False
++
++# То же для всех рейд-боссов, включая эпиков и их рейдовых миньонов.
++# Обычные монстры сохраняют свои правила. Не зависит от EpicLevelAccessEnabled.
++# Default: False
++RaidNoLevelPenalty = False
+diff --git a/dist/game/data/scripts/ai/bosses/QueenAnt/QueenAnt.java b/dist/game/data/scripts/ai/bosses/QueenAnt/QueenAnt.java
+index 0bea1b438c0a7c9b85f430b7ba817f84072c09cd..b19112f9335125b23e50efa807a920f797f85cbb 100644
+--- a/dist/game/data/scripts/ai/bosses/QueenAnt/QueenAnt.java
++++ b/dist/game/data/scripts/ai/bosses/QueenAnt/QueenAnt.java
+@@ -36,6 +36,7 @@ import org.l2jmobius.gameserver.entity.actor.instance.GrandBoss;
+ import org.l2jmobius.gameserver.entity.actor.instance.Monster;
+ import org.l2jmobius.gameserver.entity.zone.type.BossZone;
+ import org.l2jmobius.gameserver.managers.GrandBossManager;
++import org.l2jmobius.gameserver.managers.RaidLevelAccess;
+ import org.l2jmobius.gameserver.managers.ZoneManager;
+ import org.l2jmobius.gameserver.mechanics.script.Script;
+ import org.l2jmobius.gameserver.mechanics.skill.CommonSkill;
+@@ -420,7 +421,7 @@ public class QueenAnt extends Script
+ 			return;
+ 		}
+ 		
+-		if (!NpcConfig.RAID_DISABLE_CURSE && ((attackerCharacter.getLevel() - npc.getLevel()) > RAID_CURSE_LEVEL_DIFFERENCE))
++		if (!NpcConfig.RAID_DISABLE_CURSE && RaidLevelAccess.exceedsCurseLevel(npc, attackerCharacter.getLevel(), RAID_CURSE_LEVEL_DIFFERENCE))
+ 		{
+ 			Skill curse = null;
+ 			
+diff --git a/dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java b/dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java
+index 5ebc024a58931802d135ea6c4efbb9edb2b0026d..038807f9d78ce3064d6cd9d82c9d9890004406c9 100644
+--- a/dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java
++++ b/dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java
+@@ -62,6 +62,9 @@ import org.l2jmobius.gameserver.managers.ScriptManager;
+ import org.l2jmobius.gameserver.managers.phantom.PhantomManager;
+ import org.l2jmobius.gameserver.mechanics.script.LongTimeEvent;
+ import org.l2jmobius.gameserver.mechanics.script.Quest;
++import org.l2jmobius.gameserver.entity.actor.instance.RaidBoss;
++import org.l2jmobius.gameserver.managers.RaidBossSpawnManager;
++import org.l2jmobius.gameserver.managers.RaidLevelAccess;
+ 
+ /**
+  * L2Hub: самопроверка модов на сервере, без игрока (только чтение).<br>
+@@ -301,6 +304,7 @@ public class L2HubSelfTest
+ 		probe(checks, tr("Фейки в городах"), L2HubSelfTest::townFakes);
+ 		probe(checks, tr("Гробницы малого мира"), L2HubSelfTest::sepulchers);
+ 		probe(checks, tr("Разлом малого мира"), L2HubSelfTest::rift);
++		probe(checks, tr("Рейды без уровневых штрафов"), L2HubSelfTest::raidPenalties); // L2Hub 0263
+ 		probe(checks, tr("Автолут"), () -> new Check("", true, tr("живым — ") + onOff(PlayerConfig.AUTO_LOOT) + tr(", травы — ") + onOff(PlayerConfig.AUTO_LOOT_HERBS) + tr(", рейды — ") + onOff(PlayerConfig.AUTO_LOOT_RAIDS)));
+ 
+ 		final long ok = checks.stream().filter(Check::ok).count();
+@@ -838,6 +842,46 @@ public class L2HubSelfTest
+ 		return new Check("", posts > 0, tr("вкл: фрагменты платят только живые; ") + rules);
+ 	}
+ 
++	/**
++	 * L2Hub 0263: рейд-боссы без уровневых штрафов. Живой РБ (не эпик) на уровень ниже на 20 и выше на 20:
++	 * с RaidNoLevelPenalty разница для дропа 0 и проклятия нет, без него — как у Mobius.
++	 */
++	private static Check raidPenalties() throws Exception
++	{
++		final Path ini = Paths.get("./config/Custom/EpicLevelAccess.ini");
++		if (!Files.isRegularFile(ini))
++		{
++			return new Check("", false, tr("нет config/Custom/EpicLevelAccess.ini"));
++		}
++		final Properties properties = new Properties();
++		try (Reader reader = Files.newBufferedReader(ini, StandardCharsets.UTF_8))
++		{
++			properties.load(reader);
++		}
++		final boolean epic = Boolean.parseBoolean(properties.getProperty("EpicNoLevelPenalty", "False").trim());
++		final boolean raid = Boolean.parseBoolean(properties.getProperty("RaidNoLevelPenalty", "False").trim());
++		final String state = tr("эпики — ") + onOff(epic) + tr(", все РБ — ") + onOff(raid);
++		RaidBoss boss = null;
++		for (RaidBoss candidate : RaidBossSpawnManager.getInstance().getBosses().values())
++		{
++			// Голем Хаоса (25512) — РБ, но в таблице эпиков RaidLevelAccess.
++			if ((candidate != null) && !candidate.isDead() && (candidate.getId() != 25512) && (candidate.getLevel() > 21))
++			{
++				boss = candidate;
++				break;
++			}
++		}
++		if (boss == null)
++		{
++			return new Check("", true, state + tr("; живого РБ в мире нет, расчёт не проверен"));
++		}
++		final int low = boss.getLevel() - 20;
++		final int diff = RaidLevelAccess.dropLevelDifference(boss, low);
++		final boolean curse = RaidLevelAccess.exceedsCurseLevel(boss, boss.getLevel() + 20, 8);
++		final boolean ok = raid ? ((diff == 0) && !curse) : ((diff == 20) && curse);
++		return new Check("", ok, state + "; " + boss.getName() + " (" + boss.getLevel() + tr("): разница уровней для дропа ") + diff + tr(", проклятие персонажу на 20 выше — ") + (curse ? tr("да") : tr("нет")));
++	}
++	
+ 	private static String onOff(boolean value)
+ 	{
+ 		return value ? tr("вкл") : tr("выкл");
+diff --git a/dist/game/data/scripts/quests/Q00511_AwlUnderFoot/Q00511_AwlUnderFoot.java b/dist/game/data/scripts/quests/Q00511_AwlUnderFoot/Q00511_AwlUnderFoot.java
+index 4549aac8c3f5bf78ff95160b3528279c2096dcc5..1854f4690f7ecfac7ffee20fcb0fa33305c3696b 100644
+--- a/dist/game/data/scripts/quests/Q00511_AwlUnderFoot/Q00511_AwlUnderFoot.java
++++ b/dist/game/data/scripts/quests/Q00511_AwlUnderFoot/Q00511_AwlUnderFoot.java
+@@ -29,6 +29,7 @@ import org.l2jmobius.gameserver.entity.groups.Party;
+ import org.l2jmobius.gameserver.entity.instancezone.Instance;
+ import org.l2jmobius.gameserver.entity.instancezone.InstanceWorld;
+ import org.l2jmobius.gameserver.managers.InstanceManager;
++import org.l2jmobius.gameserver.managers.RaidLevelAccess;
+ import org.l2jmobius.gameserver.mechanics.script.Quest;
+ import org.l2jmobius.gameserver.mechanics.script.QuestSound;
+ import org.l2jmobius.gameserver.mechanics.script.QuestState;
+@@ -365,7 +366,7 @@ public class Q00511_AwlUnderFoot extends Quest
+ 	public void onAttack(Npc npc, Player player, int damage, boolean isSummon)
+ 	{
+ 		final Playable attacker = (isSummon ? player.getSummon() : player);
+-		if ((attacker.getLevel() - npc.getLevel()) >= 9)
++		if (RaidLevelAccess.exceedsCurseLevel(npc, attacker.getLevel(), 8))
+ 		{
+ 			if ((attacker.getBuffCount() > 0) || (attacker.getDanceCount() > 0))
+ 			{
+diff --git a/dist/game/data/scripts/quests/Q00727_HopeWithinTheDarkness/Q00727_HopeWithinTheDarkness.java b/dist/game/data/scripts/quests/Q00727_HopeWithinTheDarkness/Q00727_HopeWithinTheDarkness.java
+index 795e5c0ca8ced48abd7326a5bb0dffc3085c1087..72207190861bdcbee14efef71dcd86418c3dee65 100644
+--- a/dist/game/data/scripts/quests/Q00727_HopeWithinTheDarkness/Q00727_HopeWithinTheDarkness.java
++++ b/dist/game/data/scripts/quests/Q00727_HopeWithinTheDarkness/Q00727_HopeWithinTheDarkness.java
+@@ -40,6 +40,7 @@ import org.l2jmobius.gameserver.entity.instancezone.InstanceWorld;
+ import org.l2jmobius.gameserver.managers.FortManager;
+ import org.l2jmobius.gameserver.managers.GlobalVariablesManager;
+ import org.l2jmobius.gameserver.managers.InstanceManager;
++import org.l2jmobius.gameserver.managers.RaidLevelAccess;
+ import org.l2jmobius.gameserver.mechanics.script.Quest;
+ import org.l2jmobius.gameserver.mechanics.script.QuestState;
+ import org.l2jmobius.gameserver.mechanics.siege.Castle;
+@@ -410,7 +411,7 @@ public class Q00727_HopeWithinTheDarkness extends Quest
+ 		if (player != null)
+ 		{
+ 			final Playable attacker = (isSummon ? player.getSummon() : player);
+-			if ((attacker.getLevel() - npc.getLevel()) >= 9)
++			if (RaidLevelAccess.exceedsCurseLevel(npc, attacker.getLevel(), 8))
+ 			{
+ 				if ((attacker.getBuffCount() > 0) || (attacker.getDanceCount() > 0))
+ 				{
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/Attackable.java b/java/org/l2jmobius/gameserver/entity/actor/Attackable.java
+index 7b1a8c74bb0e3906617da495a4dae3b689a4e393..114fde5f59355775b726fa225349de091bb49e06 100644
+--- a/java/org/l2jmobius/gameserver/entity/actor/Attackable.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/Attackable.java
+@@ -66,6 +66,7 @@ import org.l2jmobius.gameserver.entity.item.instance.Item;
+ import org.l2jmobius.gameserver.managers.CursedWeaponsManager;
+ import org.l2jmobius.gameserver.managers.EventDropManager;
+ import org.l2jmobius.gameserver.managers.PcCafePointsManager;
++import org.l2jmobius.gameserver.managers.RaidLevelAccess;
+ import org.l2jmobius.gameserver.managers.WalkingManager;
+ import org.l2jmobius.gameserver.mechanics.effects.EffectType;
+ import org.l2jmobius.gameserver.mechanics.events.EventDispatcher;
+@@ -1466,11 +1467,11 @@ public class Attackable extends Npc
+ 	 */
+ 	private double[] calculateExpAndSp(int charLevel, long damage, long totalDamage)
+ 	{
+-		final int levelDiff = charLevel - getLevel();
++		final int levelDiff = RaidLevelAccess.experienceLevelDifference(this, charLevel);
+ 		double xp = 0;
+ 		double sp = 0;
+ 		
+-		if ((levelDiff < RatesConfig.MONSTER_EXP_MAX_LEVEL_DIFFERENCE) && (levelDiff > -RatesConfig.MONSTER_EXP_MAX_LEVEL_DIFFERENCE))
++		if (RaidLevelAccess.penaltiesDisabled(this) || ((levelDiff < RatesConfig.MONSTER_EXP_MAX_LEVEL_DIFFERENCE) && (levelDiff > -RatesConfig.MONSTER_EXP_MAX_LEVEL_DIFFERENCE)))
+ 		{
+ 			xp = Math.max(0, (getExpReward(charLevel) * damage) / totalDamage);
+ 			sp = Math.max(0, (getSpReward(charLevel) * damage) / totalDamage);
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/Creature.java b/java/org/l2jmobius/gameserver/entity/actor/Creature.java
+index 85e3f4b95cdd578fed7b337fff75f609fa4d915a..b280222d49affe52c0ca670dba6f032d227a6c69 100644
+--- a/java/org/l2jmobius/gameserver/entity/actor/Creature.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/Creature.java
+@@ -104,6 +104,7 @@ import org.l2jmobius.gameserver.interfaces.ILocational;
+ import org.l2jmobius.gameserver.managers.CaptchaManager;
+ import org.l2jmobius.gameserver.managers.IdManager;
+ import org.l2jmobius.gameserver.managers.InstanceManager;
++import org.l2jmobius.gameserver.managers.RaidLevelAccess;
+ import org.l2jmobius.gameserver.managers.ScriptManager;
+ import org.l2jmobius.gameserver.managers.TerritoryWarManager;
+ import org.l2jmobius.gameserver.managers.ZoneManager;
+@@ -5313,7 +5314,7 @@ public abstract class Creature extends WorldObject
+ 		sendDamageMessage(target, damage, false, crit, miss);
+ 		
+ 		// Check Raidboss attack Creature will be petrified if attacking a raid that's more than 8 levels lower
+-		if (target.isRaid() && target.giveRaidCurse() && !NpcConfig.RAID_DISABLE_CURSE && (getLevel() > (target.getLevel() + 8)))
++		if (target.isRaid() && target.giveRaidCurse() && !NpcConfig.RAID_DISABLE_CURSE && RaidLevelAccess.exceedsCurseLevel(target, getLevel(), 8))
+ 		{
+ 			final Skill skill = CommonSkill.RAID_CURSE2.getSkill();
+ 			if (skill != null)
+@@ -5346,7 +5347,7 @@ public abstract class Creature extends WorldObject
+ 			if (!isBow && !target.isInvul()) // Do not reflect if weapon is of type bow or target is invunlerable
+ 			{
+ 				// quick fix for no drop from raid if boss attack high-level char with damage reflection
+-				if (!target.isRaid() || (asPlayer() == null) || (asPlayer().getLevel() <= (target.getLevel() + 8)))
++				if (!target.isRaid() || (asPlayer() == null) || !RaidLevelAccess.exceedsCurseLevel(target, asPlayer().getLevel(), 8))
+ 				{
+ 					// Reduce HP of the target and calculate reflection damage to reduce HP of attacker if necessary.
+ 					final double reflectPercent = target.getStat().calcStat(Stat.REFLECT_DAMAGE_PERCENT, 0, null, null);
+@@ -6319,7 +6320,7 @@ public abstract class Creature extends WorldObject
+ 					targetsCastTarget = target.getAI().getCastTarget();
+ 				}
+ 				
+-				if (!NpcConfig.RAID_DISABLE_CURSE && ((target.isRaid() && target.giveRaidCurse() && (getLevel() > (target.getLevel() + 8))) || (!skill.hasNegativeEffect() && (targetsAttackTarget != null) && targetsAttackTarget.isRaid() && targetsAttackTarget.giveRaidCurse() && targetsAttackTarget.getAttackByList().contains(target) && (getLevel() > (targetsAttackTarget.getLevel() + 8))) || (!skill.hasNegativeEffect() && (targetsCastTarget != null) && targetsCastTarget.isRaid() && targetsCastTarget.giveRaidCurse() && targetsCastTarget.getAttackByList().contains(target) && (getLevel() > (targetsCastTarget.getLevel() + 8)))))
++				if (!NpcConfig.RAID_DISABLE_CURSE && ((target.isRaid() && target.giveRaidCurse() && RaidLevelAccess.exceedsCurseLevel(target, getLevel(), 8)) || (!skill.hasNegativeEffect() && (targetsAttackTarget != null) && targetsAttackTarget.isRaid() && targetsAttackTarget.giveRaidCurse() && targetsAttackTarget.getAttackByList().contains(target) && RaidLevelAccess.exceedsCurseLevel(targetsAttackTarget, getLevel(), 8)) || (!skill.hasNegativeEffect() && (targetsCastTarget != null) && targetsCastTarget.isRaid() && targetsCastTarget.giveRaidCurse() && targetsCastTarget.getAttackByList().contains(target) && RaidLevelAccess.exceedsCurseLevel(targetsCastTarget, getLevel(), 8))))
+ 				{
+ 					final CommonSkill curse = skill.isMagic() ? CommonSkill.RAID_CURSE : CommonSkill.RAID_CURSE2;
+ 					final Skill curseSkill = curse.getSkill();
+@@ -6519,7 +6520,7 @@ public abstract class Creature extends WorldObject
+ 						
+ 						// Players which are 9 levels above a Raid Boss and cast a skill nearby, are silenced with the Raid Curse skill.
+ 						// Static skills (recipe books, potions and other item skills) are not casting.
+-						if (!NpcConfig.RAID_DISABLE_CURSE && !skill.isStatic() && attackable.isRaid() && attackable.giveRaidCurse() && attackable.isInCombat() && ((player.getLevel() - attackable.getLevel()) > 8))
++						if (!NpcConfig.RAID_DISABLE_CURSE && !skill.isStatic() && attackable.isRaid() && attackable.giveRaidCurse() && attackable.isInCombat() && RaidLevelAccess.exceedsCurseLevel(attackable, player.getLevel(), 8))
+ 						{
+ 							player.abortAttack();
+ 							player.abortCast();
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/templates/NpcTemplate.java b/java/org/l2jmobius/gameserver/entity/actor/templates/NpcTemplate.java
+index fe20c7d9f1ce0a3ca1f26a2dba9a17c05311ac3a..69aad8aa657142cc9bd4484d82240466f29f1045 100644
+--- a/java/org/l2jmobius/gameserver/entity/actor/templates/NpcTemplate.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/templates/NpcTemplate.java
+@@ -27,6 +27,7 @@ import java.util.Map;
+ import java.util.Set;
+ import java.util.logging.Logger;
+ 
++import org.l2jmobius.gameserver.managers.RaidLevelAccess;
+ import org.l2jmobius.commons.util.Rnd;
+ import org.l2jmobius.gameserver.config.NpcConfig;
+ import org.l2jmobius.gameserver.config.RatesConfig;
+@@ -735,7 +736,7 @@ public class NpcTemplate extends CreatureTemplate
+ 	private List<ItemHolder> calculateGroupDrops(Creature victim, Creature killer)
+ 	{
+ 		// level difference calculations
+-		final int levelDifference = victim.getLevel() - killer.getLevel();
++		final int levelDifference = RaidLevelAccess.dropLevelDifference(victim, killer.getLevel());
+ 		final double levelGapChanceToDropAdena = MathUtil.scaleToRange(levelDifference, -RatesConfig.DROP_ADENA_MAX_LEVEL_DIFFERENCE, -RatesConfig.DROP_ADENA_MIN_LEVEL_DIFFERENCE, RatesConfig.DROP_ADENA_MIN_LEVEL_GAP_CHANCE, 100d);
+ 		final double levelGapChanceToDrop = MathUtil.scaleToRange(levelDifference, -RatesConfig.DROP_ITEM_MAX_LEVEL_DIFFERENCE, -RatesConfig.DROP_ITEM_MIN_LEVEL_DIFFERENCE, RatesConfig.DROP_ITEM_MIN_LEVEL_GAP_CHANCE, 100d);
+ 		
+@@ -930,7 +931,7 @@ public class NpcTemplate extends CreatureTemplate
+ 		final List<DropHolder> dropList = dropType == DropType.SPOIL ? _dropListSpoil : _dropListDeath;
+ 		
+ 		// level difference calculations
+-		final int levelDifference = victim.getLevel() - killer.getLevel();
++		final int levelDifference = RaidLevelAccess.dropLevelDifference(victim, killer.getLevel());
+ 		final double levelGapChanceToDropAdena = MathUtil.scaleToRange(levelDifference, -RatesConfig.DROP_ADENA_MAX_LEVEL_DIFFERENCE, -RatesConfig.DROP_ADENA_MIN_LEVEL_DIFFERENCE, RatesConfig.DROP_ADENA_MIN_LEVEL_GAP_CHANCE, 100d);
+ 		final double levelGapChanceToDrop = MathUtil.scaleToRange(levelDifference, -RatesConfig.DROP_ITEM_MAX_LEVEL_DIFFERENCE, -RatesConfig.DROP_ITEM_MIN_LEVEL_DIFFERENCE, RatesConfig.DROP_ITEM_MIN_LEVEL_GAP_CHANCE, 100d);
+ 		
+diff --git a/java/org/l2jmobius/gameserver/entity/zone/ZoneType.java b/java/org/l2jmobius/gameserver/entity/zone/ZoneType.java
+index 28b622dff25bb4114d6f77c664de637756e255fa..f763a75ba3d452d054b92cd1d2a3a90c9d8d9670 100644
+--- a/java/org/l2jmobius/gameserver/entity/zone/ZoneType.java
++++ b/java/org/l2jmobius/gameserver/entity/zone/ZoneType.java
+@@ -31,6 +31,7 @@ import org.l2jmobius.gameserver.entity.actor.enums.player.TeleportWhereType;
+ import org.l2jmobius.gameserver.entity.instancezone.InstanceWorld;
+ import org.l2jmobius.gameserver.interfaces.ILocational;
+ import org.l2jmobius.gameserver.managers.InstanceManager;
++import org.l2jmobius.gameserver.managers.RaidLevelAccess;
+ import org.l2jmobius.gameserver.mechanics.events.EventDispatcher;
+ import org.l2jmobius.gameserver.mechanics.events.EventType;
+ import org.l2jmobius.gameserver.mechanics.events.ListenersContainer;
+@@ -209,7 +210,7 @@ public abstract class ZoneType extends ListenersContainer
+ 		}
+ 		
+ 		// Check level
+-		if ((creature.getLevel() < _minLevel) || (creature.getLevel() > _maxLevel))
++		if ((creature.getLevel() < RaidLevelAccess.minimumZoneLevel(this, _minLevel)) || (creature.getLevel() > _maxLevel))
+ 		{
+ 			return false;
+ 		}
+diff --git a/java/org/l2jmobius/gameserver/managers/RaidLevelAccess.java b/java/org/l2jmobius/gameserver/managers/RaidLevelAccess.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..d4e20b26fe9ebdc2dacbb2aeb1bf5ab0615025fa
+--- /dev/null
++++ b/java/org/l2jmobius/gameserver/managers/RaidLevelAccess.java
+@@ -0,0 +1,192 @@
++package org.l2jmobius.gameserver.managers;
++
++import java.io.IOException;
++import java.nio.charset.StandardCharsets;
++import java.nio.file.Files;
++import java.nio.file.Path;
++import java.util.HashMap;
++import java.util.Map;
++import java.util.Properties;
++import java.util.Set;
++import java.util.stream.Collectors;
++import java.util.logging.Logger;
++
++import org.l2jmobius.gameserver.entity.actor.Creature;
++import org.l2jmobius.gameserver.entity.actor.instance.Monster;
++import org.l2jmobius.gameserver.entity.actor.instance.GrandBoss;
++
++/** Настраиваемые уровневые штрафы рейд-боссов и совместимость прежнего допуска эпиков. */
++public final class RaidLevelAccess
++{
++    private static final Logger LOGGER = Logger.getLogger(RaidLevelAccess.class.getName());
++    static final Map<String, int[]> FAMILIES = Map.ofEntries(
++        Map.entry("EpicQueenAntLevel", new int[] {29001, 29002, 29003, 29004, 29005}),
++        Map.entry("EpicCoreLevel", new int[] {29006, 29007, 29008, 29011}),
++        Map.entry("EpicOrfenLevel", new int[] {29014, 29015, 29016, 29017, 29018}),
++        Map.entry("EpicZakenLevel", new int[] {29022, 29176, 29023, 29024, 29026, 29027}),
++        Map.entry("EpicBaiumLevel", new int[] {29020}),
++        Map.entry("EpicAntharasLevel", new int[] {29019, 29066, 29067, 29068}),
++        Map.entry("EpicValakasLevel", new int[] {29028}),
++        Map.entry("EpicFrintezzaLevel", new int[] {29045, 29046, 29047}),
++        Map.entry("EpicBelethLevel", new int[] {29118}),
++        Map.entry("EpicBaylorLevel", new int[] {29099}),
++        Map.entry("EpicEkimusLevel", new int[] {29150}),
++        Map.entry("EpicTiatLevel", new int[] {29163, 29175}),
++        Map.entry("EpicChaosGolemLevel", new int[] {25512}));
++
++    private static final Set<Integer> EPIC_IDS = FAMILIES.values().stream().flatMapToInt(java.util.Arrays::stream).boxed().collect(Collectors.toUnmodifiableSet());
++
++    record Settings(boolean enabled, boolean epicNoPenalty, boolean raidNoPenalty, Map<Integer, Integer> levels)
++    {
++        Settings
++        {
++            levels = Map.copyOf(levels);
++        }
++    }
++
++    private RaidLevelAccess()
++    {
++    }
++
++    static Settings parse(Properties properties)
++    {
++        final boolean enabled = Boolean.parseBoolean(properties.getProperty("EpicLevelAccessEnabled", "False").trim());
++        final Map<Integer, Integer> levels = new HashMap<>();
++        for (var family : FAMILIES.entrySet())
++        {
++            final String raw = properties.getProperty(family.getKey(), "0").trim();
++            try
++            {
++                final int level = Integer.parseInt(raw);
++                if ((level < 0) || (level > 99))
++                {
++                    throw new IllegalArgumentException("expected 0..99");
++                }
++                if (level > 0)
++                {
++                    for (int npcId : family.getValue())
++                    {
++                        levels.put(npcId, level);
++                    }
++                }
++            }
++            catch (IllegalArgumentException error)
++            {
++                LOGGER.warning("RaidLevelAccess: invalid " + family.getKey() + "=" + raw + "; native level retained.");
++            }
++        }
++        return new Settings(enabled, Boolean.parseBoolean(properties.getProperty("EpicNoLevelPenalty", "False").trim()),
++            Boolean.parseBoolean(properties.getProperty("RaidNoLevelPenalty", "False").trim()), levels);
++    }
++
++    static Settings load(Path file)
++    {
++        final Properties properties = new Properties();
++        if (Files.isRegularFile(file))
++        {
++            try (var reader = Files.newBufferedReader(file, StandardCharsets.UTF_8))
++            {
++                properties.load(reader);
++            }
++            catch (IOException | IllegalArgumentException error)
++            {
++                LOGGER.warning("RaidLevelAccess: could not read " + file + "; native levels retained: " + error.getMessage());
++                return new Settings(false, false, false, Map.of());
++            }
++        }
++        return parse(properties);
++    }
++
++    static int configuredLevel(int npcId, int nativeLevel, Settings settings)
++    {
++        return settings.enabled() ? settings.levels().getOrDefault(npcId, nativeLevel) : nativeLevel;
++    }
++
++    /** Использовать только в проверках рейдового проклятия и разницы уровней для дропа. */
++    public static int restrictionLevel(Creature target)
++    {
++        final int nativeLevel = target.getLevel();
++        final Settings settings = Holder.SETTINGS;
++        if (!settings.enabled() || !target.isNpc())
++        {
++            return nativeLevel;
++        }
++        final var npc = target.asNpc();
++        final Integer direct = settings.levels().get(npc.getId());
++        if (direct != null)
++        {
++            return direct;
++        }
++        // Связанные миньоны используют тот же допуск, даже если у них другой уровень.
++        if (target.isMonster())
++        {
++            Monster parent = target.asMonster().getLeader();
++            for (int depth = 0; (parent != null) && (depth < 4); depth++)
++            {
++                final Integer inherited = settings.levels().get(parent.getId());
++                if (inherited != null)
++                {
++                    return inherited;
++                }
++                parent = parent.getLeader();
++            }
++        }
++        return nativeLevel;
++    }
++
++    /** Определяет только принадлежность к рейду/эпику; обычные монстры остаются штатными. */
++    public static boolean penaltiesDisabled(Creature target)
++    {
++        return penaltiesDisabled(target, Holder.SETTINGS);
++    }
++
++    static boolean penaltiesDisabled(Creature target, Settings settings)
++    {
++        if ((target == null) || !target.isNpc() || (!settings.epicNoPenalty() && !settings.raidNoPenalty())) return false;
++        Creature current = target;
++        for (int depth = 0; (current != null) && (depth < 5); depth++)
++        {
++            final boolean epic = (current instanceof GrandBoss) || EPIC_IDS.contains(current.asNpc().getId());
++            if ((settings.epicNoPenalty() && epic)
++                || (settings.raidNoPenalty() && (epic || current.isRaid() || current.isRaidMinion()))) return true;
++            current = current.isMonster() ? current.asMonster().getLeader() : null;
++        }
++        return false;
++    }
++
++    /** Только предикат наказания за разницу уровней, с сохранением прежнего допуска85. */
++    public static boolean exceedsCurseLevel(Creature target, int attackerLevel, int allowance)
++    {
++        return !penaltiesDisabled(target) && ((long) attackerLevel > ((long) restrictionLevel(target) + allowance));
++    }
++
++    public static int dropLevelDifference(Creature victim, int killerLevel)
++    {
++        return penaltiesDisabled(victim) ? 0 : restrictionLevel(victim) - killerLevel;
++    }
++
++    /** Старый proxy эпиков не меняет XP; новые явные выключатели убирают уровневой штраф. */
++    public static int experienceLevelDifference(Creature victim, int characterLevel)
++    {
++        return penaltiesDisabled(victim) ? 0 : characterLevel - victim.getLevel();
++    }
++
++    /** Входная зона проклятия АК не зависит от агро и проверяется отдельно. */
++    public static int minimumZoneLevel(org.l2jmobius.gameserver.entity.zone.ZoneType zone, int nativeMinimum)
++    {
++        if (!(zone instanceof org.l2jmobius.gameserver.entity.zone.type.EffectZone effect)
++            || !"Queen Ant Curse Zone".equals(zone.getName()) || (effect.getSkillLevel(4515) < 1))
++        {
++            return nativeMinimum;
++        }
++        final Settings settings = Holder.SETTINGS;
++        if (settings.epicNoPenalty() || settings.raidNoPenalty()) return Integer.MAX_VALUE;
++        final Integer configured = settings.enabled() ? settings.levels().get(29001) : null;
++        return configured == null ? nativeMinimum : configured + 9;
++    }
++
++    private static final class Holder
++    {
++        private static final Settings SETTINGS = load(Path.of("config/Custom/EpicLevelAccess.ini"));
++    }
++}

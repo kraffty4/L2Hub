@@ -309,6 +309,7 @@ index 9737ae466d526dc0fb375b8267b9632e34ac0348..841c64712187fea204e986938fcbc088
  </list>
 \ No newline at end of file
 diff --git a/dist/game/data/stats/players/initialShortcuts.xml b/dist/game/data/stats/players/initialShortcuts.xml
+index 43f3b9f8f5eda743e6590f91bd784377c1e5ba17..60a1d6d9ae52dc3adb3bbedb4c388fb470cd7c71 100644
 --- a/dist/game/data/stats/players/initialShortcuts.xml
 +++ b/dist/game/data/stats/players/initialShortcuts.xml
 @@ -3,14 +3,19 @@
@@ -583,10 +584,10 @@ index 7f37beca75afe6f2371dd996384289663017c5cd..0651b73b58e7ae1c0a2db7a84b309f6b
  						stm3.setInt(1, pc.getObjectId()); // Char Id
  						stm3.setLong(2, pc.getOfflineStartTime());
 diff --git a/java/org/l2jmobius/gameserver/entity/actor/Attackable.java b/java/org/l2jmobius/gameserver/entity/actor/Attackable.java
-index 7b1a8c74bb0e3906617da495a4dae3b689a4e393..970fa1d5f182a2551933f55e82b742d2c2b3feb7 100644
+index 114fde5f59355775b726fa225349de091bb49e06..12f642356b7bf09fdd63be873319a3a1182eed64 100644
 --- a/java/org/l2jmobius/gameserver/entity/actor/Attackable.java
 +++ b/java/org/l2jmobius/gameserver/entity/actor/Attackable.java
-@@ -643,6 +643,9 @@ public class Attackable extends Npc
+@@ -644,6 +644,9 @@ public class Attackable extends Npc
  							}
  						}
  						
@@ -597,10 +598,10 @@ index 7b1a8c74bb0e3906617da495a4dae3b689a4e393..970fa1d5f182a2551933f55e82b742d2
  						if (partyDmg < totalDamage)
  						{
 diff --git a/java/org/l2jmobius/gameserver/entity/actor/Creature.java b/java/org/l2jmobius/gameserver/entity/actor/Creature.java
-index 85e3f4b95cdd578fed7b337fff75f609fa4d915a..e14f813134b6b3318505648011a3f4e90d0150e6 100644
+index 06ebb34741d92d820f2b81204c9ceebcee49ee98..0e75abebae94d75dfbb694fd2a22568b4d1f1245 100644
 --- a/java/org/l2jmobius/gameserver/entity/actor/Creature.java
 +++ b/java/org/l2jmobius/gameserver/entity/actor/Creature.java
-@@ -865,11 +865,12 @@ public abstract class Creature extends WorldObject
+@@ -866,11 +866,12 @@ public abstract class Creature extends WorldObject
  		}
  		
  		// Allow recall of the detached characters.
@@ -615,10 +616,10 @@ index 85e3f4b95cdd578fed7b337fff75f609fa4d915a..e14f813134b6b3318505648011a3f4e9
  				onTeleported();
  			}
 diff --git a/java/org/l2jmobius/gameserver/entity/actor/templates/NpcTemplate.java b/java/org/l2jmobius/gameserver/entity/actor/templates/NpcTemplate.java
-index fe20c7d9f1ce0a3ca1f26a2dba9a17c05311ac3a..2677aaa3ef1c6f53c788f4c4835365e93fc76440 100644
+index a07d90e81ab088d9ef7d3c10061c9a4020faf30a..820bd355fd37a45f4110fa3599ddd0867896ad52 100644
 --- a/java/org/l2jmobius/gameserver/entity/actor/templates/NpcTemplate.java
 +++ b/java/org/l2jmobius/gameserver/entity/actor/templates/NpcTemplate.java
-@@ -51,6 +51,7 @@ import org.l2jmobius.gameserver.entity.actor.stat.PlayerStat;
+@@ -52,6 +52,7 @@ import org.l2jmobius.gameserver.entity.actor.stat.PlayerStat;
  import org.l2jmobius.gameserver.entity.item.ItemTemplate;
  import org.l2jmobius.gameserver.entity.item.holders.ItemHolder;
  import org.l2jmobius.gameserver.entity.itemcontainer.Inventory;
@@ -626,7 +627,7 @@ index fe20c7d9f1ce0a3ca1f26a2dba9a17c05311ac3a..2677aaa3ef1c6f53c788f4c4835365e9
  import org.l2jmobius.gameserver.mechanics.skill.Skill;
  import org.l2jmobius.gameserver.util.MathUtil;
  import org.l2jmobius.gameserver.util.StatSet;
-@@ -781,7 +782,7 @@ public class NpcTemplate extends CreatureTemplate
+@@ -800,7 +801,7 @@ public class NpcTemplate extends CreatureTemplate
  					}
  					else
  					{
@@ -635,7 +636,7 @@ index fe20c7d9f1ce0a3ca1f26a2dba9a17c05311ac3a..2677aaa3ef1c6f53c788f4c4835365e9
  					}
  					
  					// premium chance
-@@ -1148,7 +1149,7 @@ public class NpcTemplate extends CreatureTemplate
+@@ -1167,7 +1168,7 @@ public class NpcTemplate extends CreatureTemplate
  				}
  				else
  				{

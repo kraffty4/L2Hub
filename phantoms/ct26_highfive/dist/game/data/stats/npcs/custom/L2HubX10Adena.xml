@@ -51,7 +51,7 @@
 		</ai>
 		<dropLists>
 			<drop>
-				<group chance="70">
+				<group chance="100">
 					<item id="57" min="1784" max="3606" chance="100" />
 				</group>
 				<group chance="0.47909998893737793">
@@ -167,7 +167,7 @@
 		</ai>
 		<dropLists>
 			<drop>
-				<group chance="70">
+				<group chance="100">
 					<item id="57" min="1892" max="3836" chance="100" />
 				</group>
 				<group chance="0.22020000219345093">
@@ -294,7 +294,7 @@
 		</ai>
 		<dropLists>
 			<drop>
-				<group chance="70">
+				<group chance="100">
 					<item id="57" min="5738" max="11684" chance="100" />
 				</group>
 				<group chance="0.3912999927997589">
@@ -405,7 +405,7 @@
 		</ai>
 		<dropLists>
 			<drop>
-				<group chance="70">
+				<group chance="100">
 					<item id="57" min="25120" max="50672" chance="100" />
 				</group>
 				<group chance="4.4572">
@@ -493,7 +493,7 @@
 		</ai>
 		<dropLists>
 			<drop>
-				<group chance="70">
+				<group chance="100">
 					<item id="57" min="23884" max="48114" chance="100" />
 				</group>
 				<group chance="0.6598">
@@ -575,7 +575,7 @@
 		</ai>
 		<dropLists>
 			<drop>
-				<group chance="70">
+				<group chance="100">
 					<item id="57" min="2490" max="5022" chance="100" />
 				</group>
 				<group chance="0.2778">

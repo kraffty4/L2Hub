@@ -122,9 +122,13 @@ def _internet_lan() -> tuple[str, str] | None:
 
 def internet_ports(open_: bool) -> dict:
     """Открыть или закрыть на роутере по UPnP порты логина и гейма. Закрываются только свои (на этот ПК, «L2Hub …»).
-    Нет UPnP — {"ok": False, "error": почему}: тогда порты пробрасываются в роутере вручную."""
+    Нет UPnP — {"ok": False, "error": почему, "upnp": False}: тогда порты пробрасываются в роутере вручную. UPnP есть,
+    а проброс не встал (порт занят другим устройством, роутер отказал) — "upnp": True."""
     try:
         gw = upnp.gateway(lan_sources())
+    except (RuntimeError, OSError, ET.ParseError) as e:
+        return {"ok": False, "error": str(e), "upnp": False}
+    try:
         done = []
         for what, port in PORTS.items():
             if open_:
@@ -133,7 +137,7 @@ def internet_ports(open_: bool) -> dict:
             elif upnp.close_port(gw, port):
                 done.append(port)
     except (RuntimeError, OSError, ET.ParseError) as e:
-        return {"ok": False, "error": str(e)}
+        return {"ok": False, "error": str(e), "upnp": True}
     upnp.probe(lan_sources(), PORTS, force=True)  # окно «Друзей» видит новые пробросы
     return {"ok": True, "ports": done, "localIp": gw.local_ip}
 

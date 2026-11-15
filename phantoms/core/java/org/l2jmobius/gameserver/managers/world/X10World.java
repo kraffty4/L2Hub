@@ -31,6 +31,16 @@ public final class X10World
 		return false;
 	}
 
+	public static java.util.List<Player> pveAllies(Player player, int range)
+	{
+		return java.util.List.of();
+	}
+
+	public static boolean pveEnemy(Player player, Creature target)
+	{
+		return false;
+	}
+
 	public static Creature pveTarget(Player player)
 	{
 		return null;

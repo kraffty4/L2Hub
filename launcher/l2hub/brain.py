@@ -41,6 +41,7 @@ import json
 import os
 import random
 import re
+import socket
 import sqlite3
 import sys
 import threading
@@ -345,6 +346,7 @@ STRATEGY_PLAYER = "#strategy"   # «собеседник» решений стр
 STRATEGY_HISTORY = 3            # прошлых решений в промпте
 STRATEGY_RATE_PER_MINUTE = 20   # запросов стратега в минуту на весь сервер: остальное из RATE_PER_MINUTE — разговорам
 STRATEGY_RE = re.compile(r"\[\[\s*([A-Z_]+)(?:[\s:]+([^\[\]]{1,120}?))?\s*\]\]")
+STRATEGY_HALF_CLOSED_RE = re.compile(r"(\[\[\s*[A-Z_]+[^\[\]]*)\](?!\])")  # «[[TAG арг]» — тег с одной закрывающей скобкой
 STRATEGY_HELP = {"HUNT": "качаться дальше тут", "SPOT_UP": "сменить спот на мобов посильнее",
                  "SPOT_DOWN": "сменить спот на мобов послабее",
                  "SPOT_TO": "перейти на другой спот",
@@ -552,6 +554,8 @@ def parse_strategy(raw: str, fpc: str, options: list[str], afk: list[int], named
     не в счёт, у PARTY — крик без имени. [[GOAL …]] берётся, только когда ядро держит цели (goal). Тега из списка нет —
     ValueError: это мусор."""
     text = " ".join(raw.split())
+    # Модель часто закрывает тег одной скобкой: «[[BUY Mithril Gloves] добиваю сет» — дописать вторую (аудит 2026-11-09).
+    text = STRATEGY_HALF_CLOSED_RE.sub(r"\1]]", text)
     named = named or {}
     m, arg = None, ""
     for x in STRATEGY_RE.finditer(text):
@@ -814,13 +818,17 @@ class Brain:
 
     def health(self) -> dict:
         self.refresh()
-        return {"ok": True, "mode": self.cfg["mode"], "model": self.cfg["model"] or "(загруженная)", "baseUrl": self.cfg["baseUrl"], "key": self.ready(),
+        return {"ok": True, "id": self.id, "mode": self.cfg["mode"], "model": self.cfg["model"] or "(загруженная)", "baseUrl": self.cfg["baseUrl"], "key": self.ready(),
                 "echo": self.echo, "personas": len(self.personas), "usage": usage_summary(self.settings)["today"], **self.stats}
 
     def _history(self, fpc: str, player: str) -> list[tuple[str, str, float]]:
         with self._db() as db:
             rows = db.execute("SELECT role, text, ts FROM lines WHERE fpc = ? AND player = ? ORDER BY ts DESC LIMIT ?", (fpc, player, HISTORY)).fetchall()
         return list(reversed(rows))
+
+    def _probe(self, req: dict) -> bool:
+        """Пробный запрос (проверка из консоли с "test" или сервис с --echo): память живого мира не трогает, как у стратега."""
+        return bool(req.get("test")) or self.echo
 
     def _remember(self, fpc: str, player: str, role: str, channel: str, text: str) -> None:
         with self._db() as db:
@@ -1918,19 +1926,23 @@ class Brain:
             tally, killers = self._reaper_tally(fpc, name, bool(player.get("female")))
             msgs = [{"role": "system", "content": self.reaper_prompt(req, tally, killers)}] + self._history_messages(fpc, name)
             forms = self._reaper_forms(bool(player.get("female")))
+            probe = self._probe(req)
             if event == "whisper":
                 msgs.append({"role": "user", "content": req.get("message", "")})
-                self._remember(fpc, name, "player", "whisper", req.get("message", ""))
+                if not probe:
+                    self._remember(fpc, name, "player", "whisper", req.get("message", ""))
             else:
                 party = f" вместе с охотой — их {req['party']}" if req.get("party") else ""
                 msgs.append({"role": "user", "content": f"(в игре: {REAPER_EVENTS[event][0].format(pl=name, party=party, **forms)})"})
-                self._remember(fpc, name, "event", event, REAPER_EVENTS[event][1].format(**forms))
+                if not probe:
+                    self._remember(fpc, name, "event", event, REAPER_EVENTS[event][1].format(**forms))
             raw = self.call_llm(msgs)
             reply = self.clean(TAG_RE.sub(" ", raw), fpc)[:REAPER_REPLY]
             if reply and self.cfg["alphabet"] == "translit" and req.get("lang") != "en":
                 reply = translit(reply)
             if reply:
-                self._remember(fpc, name, "fpc", event, reply)
+                if not probe:
+                    self._remember(fpc, name, "fpc", event, reply)
                 self.stats["replies"] += 1
                 self.stats["lastReplyAt"] = datetime.now().strftime("%H:%M:%S")
             else:
@@ -1977,11 +1989,13 @@ class Brain:
             if self.cfg["alphabet"] == "translit":
                 reply = translit(reply)
             event = req.get("channel") in ("event", "initiative", "banter")
+            probe = self._probe(req)
             # Подслушанное и своё молчаливое «заговорить первым» без ответа не запоминаются: иначе фантом «уже общался» бы с тем, кому не сказал ни слова.
-            if reply or req.get("channel") not in ("overheard", "initiative", "banter"):
+            if not probe and (reply or req.get("channel") not in ("overheard", "initiative", "banter")):
                 self._remember(fpc, player, "event" if event else "player", req.get("channel", ""), req.get("message", ""))
             if reply:
-                self._remember(fpc, player, "fpc", req.get("channel", ""), reply)
+                if not probe:
+                    self._remember(fpc, player, "fpc", req.get("channel", ""), reply)
                 self.stats["replies"] += 1
                 self.stats["lastReplyAt"] = datetime.now().strftime("%H:%M:%S")
             else:
@@ -1990,10 +2004,22 @@ class Brain:
             mood = f" [{req['phantom']['mood']}]" if req.get("phantom", {}).get("mood") else ""
             self._log(f"[{req.get('channel')}{'+' if ext else ''}] {player} -> {fpc}{mood}: {req.get('message', '')!r}{order} => {reply!r}"
                       f"{' [[' + tag + ']]' if tag else ''}{f' [[PRICE {price}]]' if price else ''} ({time.monotonic() - started:.1f} с)")
-        self.maybe_summarize(fpc, player)
+        if not self._probe(req):
+            self.maybe_summarize(fpc, player)
         out = f"{reply} [[{tag}]]".strip() if tag else reply
         # Цена уходит и при пустой реплике: модель могла ответить одним тегом.
         return f"{out} [[PRICE {price}]]".strip() if price else out
+
+
+class ExclusiveHTTPServer(ThreadingHTTPServer):
+    """Порт мозгов — только один процесс. Обычный HTTPServer ставит SO_REUSEADDR, и в Windows второй сервис мозгов (другая хроника,
+    осиротевшие мозги упавшего старта) молча садился на тот же порт: гейм говорил не с теми характерами (аудит 2026-11-09)."""
+    allow_reuse_address = False
+
+    def server_bind(self):
+        if hasattr(socket, "SO_EXCLUSIVEADDRUSE"):
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+        super().server_bind()
 
 
 def make_handler(brain: Brain):
@@ -2153,7 +2179,7 @@ def main() -> int:
         return 0
     if args.test and args.reaper:
         fpc, message = args.test
-        req = {"kind": "reaper", "fpc": fpc, "event": args.reaper, "message": message if args.reaper == "whisper" else "", "party": args.party,
+        req = {"kind": "reaper", "fpc": fpc, "test": "cli", "event": args.reaper, "message": message if args.reaper == "whisper" else "", "party": args.party,
                "player": {"name": args.player, "level": 58, "class": "TREASURE_HUNTER", "race": "HUMAN", "female": False, "hunter": False},
                "reaper": {"level": 76, "hpPct": 64, "class": args.body}}
         tally, killers = brain._reaper_tally(fpc, args.player, False)
@@ -2239,7 +2265,7 @@ def main() -> int:
         return 0
     if args.test:
         fpc, message = args.test
-        req = {"fpc": fpc, "channel": "whisper", "message": message, "gameTime": "14:20", "night": False,
+        req = {"fpc": fpc, "test": "cli", "channel": "whisper", "message": message, "gameTime": "14:20", "night": False,
                "player": {"name": args.player, "level": args.plevel, "class": args.pclass, "race": "HUMAN", "clan": ""},
                "npc": {"level": brain.personas.get(fpc, {}).get("level", 40), "hpPct": 100, "inCombat": False, "town": "Town of Giran"}}
         if args.phantom:
@@ -2280,7 +2306,11 @@ def main() -> int:
         print("--- ответ ---")
         print(brain.chat(req) or "(промолчал)")
         return 0
-    server = ThreadingHTTPServer(("127.0.0.1", int(brain.cfg["port"])), make_handler(brain))
+    try:
+        server = ExclusiveHTTPServer(("127.0.0.1", int(brain.cfg["port"])), make_handler(brain))
+    except OSError as e:
+        brain._log(f"старт не вышел: порт {brain.cfg['port']} занят другим процессом ({e})")
+        return 3
     brain._log(f"старт: порт {brain.cfg['port']}, модель {brain.cfg['model']}, характеров {len(brain.personas)}, ключ {'есть' if brain.key() else 'НЕТ'}{', echo' if args.echo else ''}")
     server.serve_forever()
     return 0

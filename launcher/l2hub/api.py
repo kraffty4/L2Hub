@@ -45,6 +45,10 @@ STRATEGY_NUMBERS = {"HunterStrategyPerHour": ("решений в час", 1, 60,
 # Токенов на вход и выход на одно решение (docs/PHANTOMS.md, 4.3) — пока в usage.json мало запросов для своего среднего.
 STRATEGY_TOKENS = (800, 30)
 BRAIN_URL_RE = re.compile(r"^https?://[^\s/]+(/[^\s]*)?$")
+# Авторы L2Hub — на равных, без «кто что делал» (решение автора 2026-11-04); то же в README и docs/README_PUBLIC*.md.
+AUTHORS = ({"name": "Kraffty", "url": "https://github.com/kraffty4"},
+           {"name": "selaquik", "url": "https://github.com/selaquik"},
+           {"name": "Лев Кейвилл", "url": "https://github.com/levkeyvill"})
 L2SOLO_NO_FRIENDS = "Режим друзей для L2Solo пока не подключён: сервер слушает только этот ПК (127.0.0.1)."
 
 
@@ -177,6 +181,12 @@ def job_note(text: str, frac: float | None = None) -> None:
             job.frac = max(0.0, min(1.0, frac))
 
 
+def job_warn(text: str) -> None:
+    """Предупреждение текущей задачи: шаг не главный, задача идёт дальше, а итог в окне его покажет."""
+    if job := getattr(_tls, "job", None):
+        job.warning = f"{job.warning} {text}".strip()
+
+
 def download_note(done: int, total: int, guess: int = 0) -> None:
     """progress(done, total) скачивания → подробность шага «· скачано 12 из 25 МБ» и полоска. Архив исходников GitLab
     отдаёт без Content-Length: тогда доля — от оценки guess, не дальше 95 %."""
@@ -202,6 +212,7 @@ class Job:
         self.frac = 0.0             # job_note: доля шага
         self.cancelled = False      # Api.cancel_job: долгий шаг сам смотрит job_cancelled()
         self.error = None
+        self.warning = ""           # job_warn: задача прошла, но что-то по дороге не вышло — окно покажет в итоге
         self.done = False
 
     def run(self):
@@ -228,7 +239,7 @@ class Job:
             "chronicle": self.chronicle_id, "action": self.action,
             "step": f"{self.step} {self.detail}" if self.detail and not self.done else self.step,
             "progress": (self.index + (1 if self.done else self.frac)) / max(1, len(self.steps)),
-            "error": self.error, "done": self.done, "cancelled": self.cancelled,
+            "error": self.error, "done": self.done, "cancelled": self.cancelled, "warning": self.warning,
         }
 
 
@@ -328,7 +339,14 @@ class Api:
                     break
         except OSError:
             pass
-        return {"version": __version__, "plan": plan, "news": items}
+        return {"version": __version__, "plan": plan, "news": items, "authors": [dict(a) for a in AUTHORS]}
+
+    def author_page(self, url: str) -> dict:
+        """Страница автора из «О программе» — только адрес из AUTHORS."""
+        if url not in {a["url"] for a in AUTHORS}:
+            return {"ok": False, "error": "Такой страницы автора нет"}
+        os.startfile(url)  # noqa: S606 — адрес из нашего списка AUTHORS
+        return {"ok": True}
 
     def catalog(self) -> list[dict]:
         return catalog.load_catalog()
@@ -386,6 +404,10 @@ class Api:
             other = self.running()
             if action.startswith("start") and other and other != chronicle_id:
                 return {"ok": False, "error": f"Сначала останови {other}: одновременно работает одна хроника."}
+            # «Стоп» и «рестарт» не той хроники (из консоли): её шаги прошли бы впустую, а последний погасил бы общую MariaDB
+            # под работающим миром (аудит 2026-11-09).
+            if action in ("stop", "restart") and other and other != chronicle_id:
+                return {"ok": False, "error": f"Сейчас работает {other}, а не {chronicle_id}: останавливай и перезапускай её."}
             self._job = Job(chronicle_id, action, steps, on_error)
             threading.Thread(target=self._job.run, daemon=True).start()
             return {"ok": True}
@@ -405,8 +427,13 @@ class Api:
             # До старта гейма: L2HubLanguage и «Расширенное обдумывание» (HunterMindExtended) — в конфиги модов.
             steps.append(("Язык модов в игре…", lambda: (modes.sync_language(p, i18n.lang()), modes.sync_mind(p))))
         if not only_db and network.state(p).get("kind") == "internet":
-            # Роутер мог забыть проброс после перезагрузки. Нет UPnP — порты проброшены вручную, молча дальше.
-            steps.append(("Порты на роутере…", lambda: network.internet_ports(True)))
+            # Роутер мог забыть проброс после перезагрузки. Нет UPnP — порты проброшены вручную, молча дальше; UPnP есть,
+            # а проброс не встал — запуск идёт, но итог в окне об этом скажет (аудит 2026-11-09).
+            def router_ports():
+                r = network.internet_ports(True)
+                if not r["ok"] and r.get("upnp"):
+                    job_warn(f"Порты на роутере не проброшены — друзья снаружи не зайдут: {r['error']}")
+            steps.append(("Порты на роутере…", router_ports))
         if not only_db:
             steps += [
                 ("Запускаю логин-сервер…", lambda: servers.start_part(p, "login")),
@@ -1220,13 +1247,22 @@ class Api:
         ini = catalog.server_dir(p) / "game" / "config" / "Custom" / HUNTERS_INI
         if not ini.is_file():
             return {"ok": False, "error": "В этой сборке нет пешек-фантомов."}
-        try:
-            backups.make(p, "before-reset")  # сервер удалит охотников из базы — откат будет к этому бэкапу
-        except Exception as e:  # noqa: BLE001
-            return {"ok": False, "error": f"Сброс отменён: не получился бэкап базы ({e})."}
-        next_id = int(_ini_value(ini, "HuntersResetId", "0") or 0) + 1
-        return self.save_settings(chronicle_id, [{"part": "game", "file": HUNTERS_INI, "key": "HuntersReset", "value": ",".join(names)},
-                                                 {"part": "game", "file": HUNTERS_INI, "key": "HuntersResetId", "value": str(next_id)}])
+        def backup():
+            try:
+                backups.make(p, "before-reset")  # сервер удалит охотников из базы — откат будет к этому бэкапу
+            except Exception as e:  # noqa: BLE001
+                raise RuntimeError(f"сброс отменён: не получился бэкап базы ({e})") from e
+
+        def write():
+            next_id = int(_ini_value(ini, "HuntersResetId", "0") or 0) + 1
+            r = self.save_settings(chronicle_id, [{"part": "game", "file": HUNTERS_INI, "key": "HuntersReset", "value": ",".join(names)},
+                                                  {"part": "game", "file": HUNTERS_INI, "key": "HuntersResetId", "value": str(next_id)}])
+            if not r["ok"]:
+                raise RuntimeError(r["error"])
+
+        # Шагами задачи, а не в потоке вызова (аудит 2026-11-09): бэкап сам поднимает и гасит базу, и «Играть» в это время
+        # получил бы базу, которую дамп потом выключит из-под логина и гейма. В очереди старт получит «Подожди».
+        return self._start_job(chronicle_id, "huntersreset", [("Бэкап базы…", backup), ("Записываю сброс пешек…", write)])
 
     # ---------- Мозги фейков ----------
 
@@ -1314,7 +1350,12 @@ class Api:
         if mode not in brain.MODES or not BRAIN_URL_RE.match(base_url or ""):
             return {"ok": False, "error": "Нужен адрес вида http://127.0.0.1:1234/v1"}
         p = catalog.profile(chronicle_id)
-        key = brain.read_key(brain.load_settings(p.get("brain", {}))) if mode == "api" else ""
+        key = ""
+        if mode == "api":
+            settings = brain.load_settings(p.get("brain", {}))
+            # Ключ — только на сохранённый адрес: иначе ключ прежнего провайдера ушёл бы на адрес из несохранённой формы (аудит 2026-11-09).
+            if base_url.strip().rstrip("/").lower() == str(settings["api"]["baseUrl"]).strip().rstrip("/").lower():
+                key = brain.read_key(settings)
         try:
             return {"ok": True, "models": brain.list_models(base_url, key)}
         except Exception as e:  # noqa: BLE001 — сеть, HTTP, не тот сервер
@@ -1515,6 +1556,9 @@ class Api:
 
     def wipe_preview(self, chronicle_id: str) -> dict:
         """Холостой прогон: мир не меняется, чистая база заливается рядом, поэтому ошибка в SQL видна до вайпа."""
+        with self._lock:
+            if self._job and not self._job.done:
+                return {"ok": False, "error": "Подожди: сервер ещё меняет состояние."}  # идёт вайп, откат или бэкап (аудит 2026-11-09)
         try:
             return {"ok": True, **wipe.preview(catalog.profile(chronicle_id))}
         except Exception as e:  # noqa: BLE001

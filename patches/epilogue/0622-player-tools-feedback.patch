@@ -1,0 +1,203 @@
+L2Hub (вклад пользователя): общие правки из пакета x10 High Five 0402 (тот же слаг) — минуты записи и боя TvT, CtF и Deathmatch
+в L2HubEvents.ini (PvpRegistrationMinutes 10, TvTFightMinutes/CtFFightMinutes/DeathmatchFightMinutes 7), сумма медалей на «Ивентах»
+от минут боя TvT, «повержен!» по-русски при L2HubLanguage = ru, разовая раскладка служебной панели макросов (L2HubServiceBarV2:
+переносятся только неизменённые наши ярлыки, чужие ячейки не стираются).
+Без хуков режима x10 (кошелёк, банки x10, адена всегда, фарм-споты): их нет без модуля x10 — так же у Интерлюда (его 0402).
+
+diff --git a/dist/game/config/Custom/L2HubEvents.ini b/dist/game/config/Custom/L2HubEvents.ini
+index 89bc1295972a7cc288b273da5849ec048b0a8c95..463ab9b918dc1652cde0bf039f7e0df023381bff 100644
+--- a/dist/game/config/Custom/L2HubEvents.ini
++++ b/dist/game/config/Custom/L2HubEvents.ini
+@@ -100,7 +100,7 @@ TvTReservedSlots = 0
+ 
+ # Длительность боя, минуты (от 1 до 120).
+ # Default: 20
+-TvTFightMinutes = 20
++TvTFightMinutes = 7
+ 
+ # Расписание — крон «минуты часы день месяц день_недели», как schedule у Mobius; пусто — не запускать.
+ # Пока идёт один PvP-ивент (менеджер в мире), следующий не стартует. Регистрация 10 мин, бой 20 мин (у TvT — TvTFightMinutes; Deathmatch — 1 и 3).
+@@ -127,3 +127,11 @@ ElpiesMinutes = 10
+ # Старт по расписанию только при живом игроке в мире (с клиентом; фантомы и офлайн-торговцы не считаются).
+ # Default: True
+ ElpiesOnlyWithPlayers = True
++
++# Интервалы записи и длительность PvP-арен.
++# Default: 7
++CtFFightMinutes = 7
++# Default: 7
++DeathmatchFightMinutes = 7
++# Default: 10
++PvpRegistrationMinutes = 10
+diff --git a/dist/game/data/scripts/custom/events/CaptureTheFlag/CtF.java b/dist/game/data/scripts/custom/events/CaptureTheFlag/CtF.java
+index 2befd8f45aed73bb3f110725e92f26be87f22dda..7281dc74cc8de2ad748f95c8bd5988e13ef06ee5 100644
+--- a/dist/game/data/scripts/custom/events/CaptureTheFlag/CtF.java
++++ b/dist/game/data/scripts/custom/events/CaptureTheFlag/CtF.java
+@@ -176,9 +176,9 @@ public class CtF extends Event
+ 	private static final ZoneType RED_PEACE_ZONE = ZoneManager.getInstance().getZoneByName("colosseum_peace2");
+ 	
+ 	// Settings
+-	private static final int REGISTRATION_TIME = 10; // Minutes
++	private static final int REGISTRATION_TIME = custom.L2HubPvpEvents.L2HubPvpEvents.tvt("PvpRegistrationMinutes", 10, 1, 30); // Minutes
+ 	private static final int WAIT_TIME = 1; // Minutes
+-	private static final int FIGHT_TIME = 20; // Minutes
++	private static final int FIGHT_TIME = custom.L2HubPvpEvents.L2HubPvpEvents.tvt("CtFFightMinutes", 7, 1, 30); // Minutes
+ 	private static final int INACTIVITY_TIME = 2; // Minutes
+ 	private static final int MINIMUM_PARTICIPANT_LEVEL = custom.L2HubPvpEvents.L2HubPvpEvents.minLevel(76); // L2Hub: PvpMinLevel
+ 	private static final int MAXIMUM_PARTICIPANT_LEVEL = 200;
+diff --git a/dist/game/data/scripts/custom/events/Deathmatch/Deathmatch.java b/dist/game/data/scripts/custom/events/Deathmatch/Deathmatch.java
+index 4f770bc78866cc11eb8053de46528e9c234e45ad..3ca26195ef1826dbc606b104e355314c24168566 100644
+--- a/dist/game/data/scripts/custom/events/Deathmatch/Deathmatch.java
++++ b/dist/game/data/scripts/custom/events/Deathmatch/Deathmatch.java
+@@ -113,9 +113,9 @@ public class Deathmatch extends Event
+ 	private static final ZoneForm SPAWN_3 = ZoneManager.getInstance().getZoneByName("colosseum_battle3").getZone();
+ 	
+ 	// Settings
+-	private static final int REGISTRATION_TIME = 1; // Minutes
++	private static final int REGISTRATION_TIME = custom.L2HubPvpEvents.L2HubPvpEvents.tvt("PvpRegistrationMinutes", 10, 1, 30); // Minutes
+ 	private static final int WAIT_TIME = 20; // Seconds
+-	private static final int FIGHT_TIME = 3; // Minutes
++	private static final int FIGHT_TIME = custom.L2HubPvpEvents.L2HubPvpEvents.tvt("DeathmatchFightMinutes", 7, 1, 30); // Minutes
+ 	private static final int INACTIVITY_TIME = 2; // Minutes
+ 	private static final int MINIMUM_PARTICIPANT_LEVEL = custom.L2HubPvpEvents.L2HubPvpEvents.minLevel(85); // L2Hub: PvpMinLevel
+ 	private static final int MAXIMUM_PARTICIPANT_LEVEL = 200;
+diff --git a/dist/game/data/scripts/custom/events/TeamVsTeam/TvT.java b/dist/game/data/scripts/custom/events/TeamVsTeam/TvT.java
+index 2fff5478fc06e932c4308695642e2eeaf91e67ae..c473d16b37ca3a9048b2fce33ddff85dc9320a88 100644
+--- a/dist/game/data/scripts/custom/events/TeamVsTeam/TvT.java
++++ b/dist/game/data/scripts/custom/events/TeamVsTeam/TvT.java
+@@ -138,7 +138,7 @@ public class TvT extends Event
+ 	private static final ZoneType RED_PEACE_ZONE = ZoneManager.getInstance().getZoneByName("colosseum_peace2");
+ 	
+ 	// Settings
+-	private static final int REGISTRATION_TIME = 10; // Minutes
++	private static final int REGISTRATION_TIME = custom.L2HubPvpEvents.L2HubPvpEvents.tvt("PvpRegistrationMinutes", 10, 1, 30); // Minutes
+ 	private static final int WAIT_TIME = 1; // Minutes
+ 	private static final int FIGHT_TIME = custom.L2HubPvpEvents.L2HubPvpEvents.tvt("TvTFightMinutes", 4, 1, 120); // L2Hub: минуты
+ 	private static final int INACTIVITY_TIME = 2; // Minutes
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+index 26db59d175505040ad9bf937951597c96df784b2..490a213e3a07f0183eb4f1e3a9f702cdf9191bf5 100644
+--- a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+@@ -447,12 +447,12 @@ public class L2HubBoard implements IParseBoardHandler
+ 	 */
+ 	private static String medals(Player player)
+ 	{
+-		final int plain = custom.L2HubPvpEvents.L2HubPvpEvents.rewardMedals(20, false);
++		final int plain = custom.L2HubPvpEvents.L2HubPvpEvents.rewardMedals(custom.L2HubPvpEvents.L2HubPvpEvents.tvt("TvTFightMinutes", 7, 1, 30), false);
+ 		if (plain <= 0)
+ 		{
+ 			return "";
+ 		}
+-		return "<br><br>" + tr("Медали у тебя: ") + "<font color=\"LEVEL\">" + player.getInventory().getInventoryItemCount(custom.L2HubPvpEvents.L2HubPvpEvents.MEDAL_ITEM, -1) + "</font><br1>" + tr("За 20 минут боя: ") + plain + tr(", победителю ") + custom.L2HubPvpEvents.L2HubPvpEvents.rewardMedals(20, true) + tr(". Падают и с чемпионов.") + "<br1>" + button(tr("Обмен медалей"), EVENTS + " medals", 150);
++		return "<br><br>" + tr("Медали у тебя: ") + "<font color=\"LEVEL\">" + player.getInventory().getInventoryItemCount(custom.L2HubPvpEvents.L2HubPvpEvents.MEDAL_ITEM, -1) + "</font><br1>" + ("en".equals(org.l2jmobius.gameserver.config.custom.L2HubWorldConfig.LANGUAGE) ? "For a full PvP fight: " : "За полный PvP-бой: ") + plain + tr(", победителю ") + custom.L2HubPvpEvents.L2HubPvpEvents.rewardMedals(custom.L2HubPvpEvents.L2HubPvpEvents.tvt("TvTFightMinutes", 7, 1, 30), true) + tr(". Падают и с чемпионов.") + "<br1>" + button(tr("Обмен медалей"), EVENTS + " medals", 150);
+ 	}
+ 
+ 	/**
+diff --git a/java/org/l2jmobius/gameserver/data/xml/InitialShortcutData.java b/java/org/l2jmobius/gameserver/data/xml/InitialShortcutData.java
+index 61a4e1b7b7153cb1ee78b1f176f4d1b06d5126ac..11443d627c73712b814e7f028fce99bfd08bc216 100644
+--- a/java/org/l2jmobius/gameserver/data/xml/InitialShortcutData.java
++++ b/java/org/l2jmobius/gameserver/data/xml/InitialShortcutData.java
+@@ -327,19 +327,10 @@ public class InitialShortcutData implements IXmlReader
+ 	 */
+ 	public List<Macro> getGlobalMacros()
+ 	{
+-		final List<Macro> macros = new ArrayList<>();
+-		for (Shortcut shortcut : _initialGlobalShortcutList)
+-		{
+-			final Macro macro = shortcut.getType() == ShortcutType.MACRO ? _macroPresets.get(shortcut.getId()) : null;
+-			if (macro != null)
+-			{
+-				macros.add(macro);
+-			}
+-		}
+-		
+-		return macros;
++		return _macroPresets.values().stream().sorted(java.util.Comparator.comparingInt(Macro::getId)).toList();
+ 	}
+ 	
++
+ 	/**
+ 	 * L2Hub: есть ли на сервере команды макроса. Команда без обработчика ушла бы текстом в общий чат, а автобой, банк и другие включаются в настройках.
+ 	 * @param macro макрос
+@@ -365,12 +356,12 @@ public class InitialShortcutData implements IXmlReader
+ 	 */
+ 	public void giveMissingMacros(Player player)
+ 	{
++		cleanServiceBar(player);
+ 		final List<Integer> given = new ArrayList<>(player.getVariables().getIntegerList(MACROS_GIVEN));
+ 		final int before = given.size();
+-		for (Shortcut shortcut : _initialGlobalShortcutList)
++		for (Macro macro : getGlobalMacros())
+ 		{
+-			final Integer id = shortcut.getId();
+-			final Macro macro = shortcut.getType() == ShortcutType.MACRO ? _macroPresets.get(id) : null;
++			final Integer id = macro.getId();
+ 			if ((macro == null) || given.contains(id) || !isAvailable(macro))
+ 			{
+ 				continue;
+@@ -395,6 +386,39 @@ public class InitialShortcutData implements IXmlReader
+ 		}
+ 	}
+ 	
++	/** Однократный перенос только наших неизменённых ярлыков, без стирания чужих ячеек. */
++	private void cleanServiceBar(Player player)
++	{
++		if (player.getVariables().getBoolean("L2HubServiceBarV2", false)) { return; }
++		final java.util.Set<Integer> owned = new java.util.HashSet<>();
++		for (Macro macro : player.getMacros().getAllMacroses().values())
++		{
++			final Macro preset = _macroPresets.get(macro.getId());
++			if (preset == null || macro.getId() < 10100 || macro.getId() > 10131 || macro.getCommands().size() != 1) { continue; }
++			final String command = macro.getCommands().getFirst().getCmd();
++			if ((macro.getName().equals(preset.getName()) && command.equals(preset.getCommands().getFirst().getCmd()))
++				|| macro.getId() == 10113 && macro.getName().equals("Автопоты вкл") && command.equals(".apon")
++				|| macro.getId() == 10106 && macro.getName().equals("Автобой") && command.equals(".play"))
++			{ owned.add(macro.getId()); player.registerMacro(preset); }
++		}
++		for (Shortcut shortcut : new ArrayList<>(player.getAllShortcuts()))
++		{
++			if (shortcut.getType() == ShortcutType.MACRO && owned.contains(shortcut.getId())) { player.deleteShortcut(shortcut.getSlot(), shortcut.getPage()); }
++		}
++		final int[] ids = {10105,10104,10103,10102,10101,10100,10113,10115};
++		for (int slot = 0; slot < ids.length; slot++)
++		{
++			final Macro macro = _macroPresets.get(ids[slot]);
++			if (player.getShortcut(slot, 1) != null || !isAvailable(macro)) { continue; }
++			if (!owned.contains(ids[slot]) && player.getMacros().getAllMacroses().containsKey(ids[slot])) { continue; }
++			if (!player.getMacros().getAllMacroses().containsKey(ids[slot])) { if (player.getMacros().getAllMacroses().size() >= MAX_MACROS) { continue; } player.registerMacro(macro); }
++			final Shortcut shortcut = new Shortcut(slot, 1, ShortcutType.MACRO, ids[slot], -1, 1);
++			player.registerShortcut(shortcut); player.sendPacket(new ShortcutRegister(shortcut));
++		}
++		player.getVariables().set("L2HubServiceBarV2", true);
++		player.sendPacket(new org.l2jmobius.gameserver.network.serverpackets.ShortcutInit(player));
++	}
++
+ 	public static InitialShortcutData getInstance()
+ 	{
+ 		return SingletonHolder.INSTANCE;
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/Creature.java b/java/org/l2jmobius/gameserver/entity/actor/Creature.java
+index 70af30e00267c859ea6ff644e72bc8039b39a04d..dff5d66f03c266b60e8f54ce099a67fd6ef4ec02 100644
+--- a/java/org/l2jmobius/gameserver/entity/actor/Creature.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/Creature.java
+@@ -2776,8 +2776,8 @@ public abstract class Creature extends WorldObject
+ 				final String name = NpcData.getInstance().getTemplate(getId()).getName();
+ 				if ((name != null) && !BossAnnouncementsConfig.RAIDBOSSES_EXCLUDED_FROM_DEFEAT_ANNOUNCEMENTS.contains(getId()))
+ 				{
+-					World.broadcastToAllOnlinePlayers(name + " has been defeated!");
+-					World.broadcastToAllOnlinePlayersOnScreen(name + " has been defeated!");
++					World.broadcastToAllOnlinePlayers(name + ("en".equals(org.l2jmobius.gameserver.config.custom.L2HubWorldConfig.LANGUAGE) ? " has been defeated!" : " повержен!"));
++					World.broadcastToAllOnlinePlayersOnScreen(name + ("en".equals(org.l2jmobius.gameserver.config.custom.L2HubWorldConfig.LANGUAGE) ? " has been defeated!" : " повержен!"));
+ 				}
+ 			}
+ 		}
+@@ -2786,8 +2786,8 @@ public abstract class Creature extends WorldObject
+ 			final String name = NpcData.getInstance().getTemplate(getId()).getName();
+ 			if ((name != null) && !BossAnnouncementsConfig.RAIDBOSSES_EXCLUDED_FROM_DEFEAT_ANNOUNCEMENTS.contains(getId()))
+ 			{
+-				World.broadcastToAllOnlinePlayers(name + " has been defeated!");
+-				World.broadcastToAllOnlinePlayersOnScreen(name + " has been defeated!");
++				World.broadcastToAllOnlinePlayers(name + ("en".equals(org.l2jmobius.gameserver.config.custom.L2HubWorldConfig.LANGUAGE) ? " has been defeated!" : " повержен!"));
++				World.broadcastToAllOnlinePlayersOnScreen(name + ("en".equals(org.l2jmobius.gameserver.config.custom.L2HubWorldConfig.LANGUAGE) ? " has been defeated!" : " повержен!"));
+ 			}
+ 		}
+ 		

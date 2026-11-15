@@ -148,7 +148,8 @@
     const head = `<div class="w-kv" style="margin-bottom:8px"><span>Сейчас</span><span>${esc(u.head)}</span>`
       + `<span>Новых у авторов</span><span>${u.detached ? 'код откачен на старый коммит' : u.behind || 'нет — всё свежее'}</span></div>`;
     const warn = u.dirty?.length ? `<div class="note w-note-warn">Правки в их файлах (${esc(u.dirty.slice(0, 3).join(', '))}) — обновление откажет.</div>`
-      : u.ahead ? `<div class="note w-note-warn">Свои коммиты поверх их ветки — обновлять руками (docs/L2SOLO.md).</div>` : '';
+      : u.ahead ? `<div class="note w-note-warn">Свои коммиты поверх их ветки — обновлять руками (docs/L2SOLO.md).</div>`
+      : u.npmPending ? '<div class="note w-note-warn">Прошлое обновление не доставило зависимости npm — «Обновить» доставит.</div>' : '';
     const list = u.commits?.length ? `<ul class="w-muted" style="font-size:12.5px;margin:0 0 8px;padding-left:18px">${u.commits.slice(0, 8).map((c) => `<li>${esc(c)}</li>`).join('')}</ul>` : '';
     return head + warn + list;
   }
@@ -197,7 +198,7 @@
           <div class="w-t2" style="font-size:13px;line-height:1.5;margin-bottom:8px">Обновление от авторов L2Solo: сохранение мира, <span class="w-cmd">git pull</span>, <span class="w-cmd">npm install</span> — только у выключенного сервера. Базу их код мигрирует сам при следующем запуске.</div>
           <div id="l2sUpd">${updView(ctx.chron)}</div>
           <div class="row2"><button class="sbtn" id="l2sUpdCheck" ${busy ? 'disabled' : ''}>Проверить обновление</button>
-            <button class="sbtn primary" id="l2sUpdGo" ${busy || ctx.running || !(U[ctx.chron]?.behind) ? 'disabled' : ''} title="${ctx.running ? 'Сначала останови сервер' : ''}">Обновить</button></div>
+            <button class="sbtn primary" id="l2sUpdGo" ${busy || ctx.running || !(U[ctx.chron]?.behind || U[ctx.chron]?.npmPending) ? 'disabled' : ''} title="${ctx.running ? 'Сначала останови сервер' : ''}">Обновить</button></div>
         </div>
         ${p.modes ? modeCard(ctx, p, busy) : ''}
         <div class="card"><h3>Рейты</h3>

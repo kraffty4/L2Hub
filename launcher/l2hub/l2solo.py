@@ -555,6 +555,8 @@ def install_problem(p: dict) -> str | None:
         return f"Node.js {'.'.join(map(str, v)) if v else '?'} старый, L2Solo нужен 22.15+: {exe}"
     if not (server / "node_modules").is_dir():
         return f"Не установлены зависимости: npm install --ignore-scripts в {p['server']}"
+    if npm_pending_path(p).is_file():
+        return "Код L2Solo обновлён, а зависимости npm — нет (npm install оборвался): на пульте L2Solo — «Проверить обновление», затем «Обновить»"
     if geodata_count(p) < geodata_needed(p):
         return f"Нет геодаты: npm run geodata в {p['server']} (209 МиБ с l2solo.com)"
     return None
@@ -1209,6 +1211,11 @@ def update_log_path(p: dict) -> Path:
     return LAYER_DIR / f"{p['id']}.update.log"
 
 
+def npm_pending_path(p: dict) -> Path:
+    """Отметка «после git pull зависимости не доставлены»: есть — npm install при следующем обновлении и проблема запуска."""
+    return LAYER_DIR / f"{p['id']}.npm_pending"
+
+
 def _exec(cmd: list, cwd: Path, timeout: float = 120, env: dict | None = None) -> str:
     try:
         r = subprocess.run([str(c) for c in cmd], cwd=str(cwd), capture_output=True, text=True, encoding="utf-8", errors="replace",
@@ -1240,7 +1247,8 @@ def update_check(p: dict, fetch: bool = True) -> dict:
     branch = _run(p, "git", "rev-parse", "--abbrev-ref", "HEAD").strip()
     head = _run(p, "git", "log", "-1", "--format=%h %cs %s").strip()
     dirty = [ln.strip() for ln in _run(p, "git", "status", "--porcelain", "--untracked-files=no").splitlines() if ln.strip()]
-    out = {"head": head, "branch": branch, "dirty": dirty, "running": bool(server_process(p)), "behind": 0, "ahead": 0, "commits": []}
+    out = {"head": head, "branch": branch, "dirty": dirty, "running": bool(server_process(p)), "behind": 0, "ahead": 0, "commits": [],
+           "npmPending": npm_pending_path(p).is_file()}
     if branch == "HEAD":
         out["detached"] = True
         return out
@@ -1258,6 +1266,7 @@ def update_steps(p: dict, save) -> list:
     --ff-only, npm install --ignore-scripts — если поменялись package.json или package-lock.json. Базу L2Solo
     мигрирует сам при следующем запуске; откат — docs/L2SOLO.md, «Обновление». Журнал — data/l2solo/<id>.update.log."""
     state: dict = {}
+    pending = npm_pending_path(p)
 
     def check():
         if server_process(p):
@@ -1283,12 +1292,17 @@ def update_steps(p: dict, save) -> list:
         state["new"] = _run(p, "git", "rev-parse", "HEAD").strip()
         changed = _run(p, "git", "diff", "--name-only", state["old"], state["new"]).split()
         state["npm"] = bool({"package.json", "package-lock.json"} & set(changed))
+        if state["npm"]:
+            # Отметка до npm install (аудит 2026-11-09): упал он — повтор «Обновить» видит behind 0 и без неё не ставил бы снова.
+            pending.parent.mkdir(parents=True, exist_ok=True)
+            pending.write_text(state["new"], encoding="utf-8")
         _cache.pop(("git", p["id"]), None)
 
     def npm():
-        if state.get("npm") or not (server_dir(p) / "node_modules").is_dir():
+        if state.get("npm") or pending.is_file() or not (server_dir(p) / "node_modules").is_dir():
             _run(p, _npm(p), "install", "--ignore-scripts", "--no-audit", "--no-fund", timeout=1800)
             state["npm"] = True
+            pending.unlink(missing_ok=True)
         line = (f"{datetime.now():%Y-%m-%d %H:%M:%S} | {state['old'][:8]} → {state.get('new', state['old'])[:8]} | "
                 f"коммитов {state['behind']} | npm install {'да' if state.get('npm') else 'нет'} | "
                 f"сохранение {state.get('save', '—')}\n")

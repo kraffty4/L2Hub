@@ -51,6 +51,14 @@ L2Hub checks for updates by itself and installs them with one click. Bugs and id
 
 Python 3.12 and [uv](https://docs.astral.sh/uv/): `cd launcher`, `uv sync`, `uv run python -m l2hub`. Project layout and rules (in Russian): [AGENTS.md](AGENTS.md); the plan: [docs/PLAN.md](docs/PLAN.md); building the exe and the installer: [docs/RELEASE.md](docs/RELEASE.md).
 
+## Authors
+
+L2Hub is made together, as equals:
+
+- [Kraffty](https://github.com/kraffty4)
+- [selaquik](https://github.com/selaquik)
+- [Лев Кейвилл](https://github.com/levkeyvill)
+
 ## Licenses and thanks
 
 L2Hub uses two licenses ([LICENSE](LICENSE)). The patches to L2J Mobius and the phantoms module (`patches/`, `phantoms/`) are [GPL-3.0](LICENSES/GPL-3.0.txt): part of Mobius is GPL, so they are too. Everything else — the launcher, tools and docs — is under [PolyForm Noncommercial 1.0.0](LICENSES/PolyForm-Noncommercial-1.0.0.md): you may use, change and share it for any noncommercial purpose, keeping the link to this project; commercial use, including a server for other people with donations or paid services, is not allowed. Versions up to 0.5.238 were released entirely under GPL-3.0. The L2Hub name and logo are not for promoting other servers. Third-party components and their licenses are listed in [THIRD_PARTY.md](THIRD_PARTY.md). Thanks to [L2J Mobius](https://gitlab.com/MobiusDevelopment/L2J_Mobius), [L2Solo](https://github.com/pmbstyle/L2Solo), L2J Geodata, [l2mapconv](https://github.com/m49n/l2mapconv-public) and [l2-world-map](https://github.com/npetrovski/l2-world-map).

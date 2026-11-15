@@ -479,6 +479,10 @@ select { height: 30px; border-radius: 6px; border: 1px solid var(--line); backgr
 .callout b { color: var(--text); font-weight: 600; }
 .about b { font-family: var(--serif); font-size: 19px; color: var(--gold-hi); display: block; }
 .about small { color: var(--muted); font-size: 12px; }
+.authors { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; justify-content: flex-end; }
+.authors button { background: none; border: 0; padding: 0; font: inherit; color: var(--gold-hi); cursor: pointer; }
+.authors button:hover { text-decoration: underline; }
+.authors i { color: var(--muted); font-style: normal; }
 .modal.close-ask { width: 480px; }
 .choice { display: flex; flex-direction: column; gap: 7px; }
 .choice button { display: flex; align-items: center; gap: 11px; text-align: left; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel-2); }

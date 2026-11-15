@@ -46,7 +46,7 @@
       "patch": "topics/04-disconnect-fight-history.patch",
       "sha256": "1ec0fbbd05fe55222249ccf2fb548e9374fea93cf6945b3dc58716d11b8636eb",
       "repo_files": [
-        "patches/epilogue/0249-disconnect-fight-history.patch"
+        "patches/epilogue/0249-olympiad-disconnect-history.patch"
       ],
       "depends_on": []
     },
@@ -56,7 +56,7 @@
       "patch": "topics/05-last-points-forward-only.patch",
       "sha256": "0033e9ea36cda6bb45e92009793ff4cd2c2bfd3e1df4c826d38d10725f688d14",
       "repo_files": [
-        "patches/epilogue/0250-last-points-forward-only.patch"
+        "patches/epilogue/0250-olympiad-points-forward-only.patch"
       ],
       "depends_on": []
     },
@@ -113,7 +113,7 @@
       "patch": "topics/10-first-and-repeated-decisions.patch",
       "sha256": "abd90c48ffd344ba96f5ccd58d078b9c235cf582b768f1d9b8a1edbe35ffd390",
       "repo_files": [
-        "patches/epilogue/0255-first-and-repeated-decisions.patch",
+        "patches/epilogue/0255-olympiad-action-pace.patch",
         "phantoms/epilogue/java/org/l2jmobius/gameserver/managers/phantom/OlympiadStartKick.java",
         "phantoms/epilogue/java/org/l2jmobius/gameserver/managers/phantom/OlympiadActionPace.java",
         "phantoms/epilogue/java/org/l2jmobius/gameserver/mechanics/olympiad/EpilogueOlympiadLifecycle.java",
@@ -242,12 +242,12 @@
       "sha256": "aecea330bc674688637844dfffa1d66c4a7ae232d750ea5c7549476cd808b66e"
     },
     {
-      "path": "patches/epilogue/0249-disconnect-fight-history.patch",
+      "path": "patches/epilogue/0249-olympiad-disconnect-history.patch",
       "bytes": 936,
       "sha256": "42114e12dfbec3b4b16f69742ace234aaf8f0608848039c64393958ecbf80d69"
     },
     {
-      "path": "patches/epilogue/0250-last-points-forward-only.patch",
+      "path": "patches/epilogue/0250-olympiad-points-forward-only.patch",
       "bytes": 459,
       "sha256": "13d8e5b38b5a48472338d0a728446aba956cb3fb57b623954ce9dd509f56f3e6"
     },
@@ -262,7 +262,7 @@
       "sha256": "9720533c240362f1047a3dc5b460d6722e5ff5cc802ac56bf18ee19ebc08da24"
     },
     {
-      "path": "patches/epilogue/0255-first-and-repeated-decisions.patch",
+      "path": "patches/epilogue/0255-olympiad-action-pace.patch",
       "bytes": 2091,
       "sha256": "d3fe6c41829810bb05d8584bf6e291c47a3dbf23d6a48e38da938867e5357d46"
     },

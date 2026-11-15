@@ -1,0 +1,21 @@
+L2Hub: член клана при выходе из игры больше не теряет подразделение в списке клана — баг Mobius.
+PledgeShowMemberListUpdate при офлайне писал два нуля: и присутствие (objectId), и pledgeType; клиент переносил вышедшего в основу.
+Теперь ноль — только присутствие, подразделение — настоящее. Правка сопровождающего Эпилога (его 0541 в ветке закрытого репо,
+в наше дерево не попадала), на High Five — 0410 (тот же слаг).
+
+diff --git a/java/org/l2jmobius/gameserver/network/serverpackets/PledgeShowMemberListUpdate.java b/java/org/l2jmobius/gameserver/network/serverpackets/PledgeShowMemberListUpdate.java
+index 91aeafdd1cd4b1fbfe5407dae413dd7f940a2dce..7827097c223c3378f2c8d5f57b3f34de96e5f401 100644
+--- a/java/org/l2jmobius/gameserver/network/serverpackets/PledgeShowMemberListUpdate.java
++++ b/java/org/l2jmobius/gameserver/network/serverpackets/PledgeShowMemberListUpdate.java
+@@ -95,9 +95,9 @@ public class PledgeShowMemberListUpdate extends ServerPacket
+ 		}
+ 		else
+ 		{
+-			// When going offline send as 0.
+-			buffer.writeInt(0);
++			// Offline clears presence, not the real clan subdivision.
+ 			buffer.writeInt(0);
++			buffer.writeInt(_pledgeType);
+ 		}
+ 		
+ 		buffer.writeInt(_hasSponsor);

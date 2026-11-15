@@ -367,6 +367,12 @@ public final class PhantomCompat
 		return player.useMagic(skill, forceUse, dontMove);
 	}
 
+	/** Рес в core не через замок: на Эпилоге свой путь сопровождающего ({@code 0512}, {@code SupportResurrection} и подход через следование). */
+	public static boolean coreResLock()
+	{
+		return false;
+	}
+
 	public static int karma(Player player)
 	{
 		return player.getKarma();

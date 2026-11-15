@@ -347,7 +347,7 @@ async function poll() {
     if (key !== lastJobKey) {
       lastJobKey = key;
       if (job.error) toast(job.cancelled ? job.error : `Не получилось: ${job.error}`, !job.cancelled);
-      else if (job.action === 'start') toast(`${byId(job.chronicle)?.name}: запущено.`);
+      else if (job.action === 'start') toast(`${byId(job.chronicle)?.name}: запущено.${job.warning ? ` ${job.warning}` : ''}`, !!job.warning);
       else if (job.action === 'stop') toast(`${byId(job.chronicle)?.name}: остановлено, мир сохранён.`);
       else if (job.action === 'stopdb') toast('База остановлена.');
       else if (job.action === 'restart') toast('Гейм-сервер перезапущен.');
@@ -904,6 +904,8 @@ async function renderAppPage() {
   api.update_check(false).then(renderUpdate);
   const r = await api.about();
   $('aboutVer').textContent = `L2Hub ${r.version}`;
+  $('aboutAuthors').innerHTML = (r.authors || []).map((a) => `<button data-url="${esc(a.url)}" title="${esc(a.url)}">${esc(a.name)}</button>`).join('<i>·</i>');
+  $('aboutAuthors').querySelectorAll('button').forEach((b) => { b.onclick = () => call(api.author_page(b.dataset.url)); });
   $('aboutPlan').innerHTML = r.plan.map((x) => `<span class="${x.ready ? 'ready' : x.playable ? 'play' : ''}" title="${esc(x.status)}">${x.ready ? '✓ ' : ''}${esc(x.name)}</span>`).join('')
     + `<span style="border:0">готово ${r.plan.filter((x) => x.ready).length} из ${r.plan.length}</span>`;
   $('aboutNews').innerHTML = r.news.map((n) => `<li><b>${esc(n.version)}</b><span>${esc(n.text)}</span></li>`).join('');

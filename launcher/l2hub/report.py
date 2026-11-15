@@ -20,6 +20,8 @@ TAIL = 256 * 1024  # с конца каждого лога: свежее — с�
 SCRUB = [
     (re.compile(r"(?im)^(\s*[\w.-]*pass(?:word)?[\w.-]*\s*[=:]\s*)\S.*$"), r"\1***"),
     (re.compile(r"(?i)(password=)[^&\s\"']+"), r"\1***"),
+    # Ключ JSON в кавычках («"dbPassword": "…"»): построчный шаблон выше его не ловит (аудит 2026-11-09).
+    (re.compile(r"(?i)(\"[\w.-]*pass(?:word)?[\w.-]*\"\s*:\s*\")(?:[^\"\\]|\\.)*(\")"), r"\1***\2"),
     (re.compile(r"sk-[A-Za-z0-9_-]{12,}"), "sk-***"),
     (re.compile(r"(?i)(bearer\s+)[A-Za-z0-9._-]{12,}"), r"\1***"),
 ]
@@ -30,7 +32,8 @@ def scrub(text: str) -> str:
         text = rx.sub(repl, text)
     user = os.environ.get("USERNAME")
     if user:
-        text = re.sub(rf"(?i)(\\Users\\){re.escape(user)}\b", r"\1<user>", text)
+        # Слэши любые и любым числом: в JSON путь записан как C:\\Users\\имя, Java пишет C:/Users/имя (аудит 2026-11-09).
+        text = re.sub(rf"(?i)([\\/]+Users[\\/]+){re.escape(user)}\b", r"\1<user>", text)
     pc = os.environ.get("COMPUTERNAME")
     if pc:
         text = re.sub(rf"(?i)\b{re.escape(pc)}\b", "<pc>", text)

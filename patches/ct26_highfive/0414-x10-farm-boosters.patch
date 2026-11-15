@@ -1,0 +1,26 @@
+Зачистка x10: временные усилители только для объектов своей арены.
+
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/Player.java b/java/org/l2jmobius/gameserver/entity/actor/Player.java
+--- a/java/org/l2jmobius/gameserver/entity/actor/Player.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/Player.java
+@@ -4660,6 +4660,9 @@
+ 			}
+ 		}
+ 		
++		// Временный херб Зачистки: штатный предмет не попадает в инвентарь.
++		if (org.l2jmobius.gameserver.managers.world.X10World.farmHerbPickup(this, target)) { return; }
++
+ 		// Auto use herbs - pick up.
+ 		if (target.getTemplate().hasExImmediateEffect())
+ 		{
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/Creature.java b/java/org/l2jmobius/gameserver/entity/actor/Creature.java
+--- a/java/org/l2jmobius/gameserver/entity/actor/Creature.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/Creature.java
+@@ -6835,6 +6835,7 @@
+ 	
+ 	public void reduceCurrentHp(double amount, Creature attacker, boolean awake, boolean isDOT, Skill skill)
+ 	{
++		amount = org.l2jmobius.gameserver.managers.world.X10World.farmDamage(attacker, this, amount, isDOT);
+ 		final ChampionMonstersConfig.Tier champion = getChampionTier();
+ 		if (ChampionMonstersConfig.CHAMPION_ENABLE && (champion != null) && (champion.hp() != 0))
+ 		{

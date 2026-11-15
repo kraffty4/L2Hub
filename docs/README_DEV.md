@@ -4,7 +4,7 @@
 
 **Статус (2026-10-22):** из окна ставятся и запускаются Interlude, Gracia Epilogue и High Five (L2J Mobius с модами: пешки-фантомы и напарники, рейды и PvP-ивенты пешек, чемпионы и суперчемпионы, баффер и GM-шоп, поручения дня, сезонные события по календарю), Classic и Essence (с теми же фантомами, клиент 4game), C4 (L2Solo и вариант L2JLisvus) и Gracia Final на копии La2offline; ещё три десятка хроник Mobius — «как есть». В окне: «Мой мир» (кто где и чем занят, карта), режимы сервера и выключатели модов, календарь событий, геодата по кнопке, бэкапы, друзья (Radmin, Tailscale, ZeroTier, локальная сеть), обновления, отзывы и голоса за хроники. Есть установщик и портативный zip (`docs/RELEASE.md`).
 
-**Версия:** 0.4.x — готовы 4 хроники из 7, которые составят 1.0: Interlude, High Five, Gracia Epilogue, Gracia Final, C4, Classic, Essence (Classic и Essence играбельны, C4 ждёт входа автора). История — [CHANGELOG.md](CHANGELOG.md).
+**Версия:** 1.0 — финальная: готовы Interlude, High Five, Gracia Epilogue, Gracia Final и C4; Classic и Essence играбельны, но к общему набору модов не сводились. Дальше — только исправления ошибок. История — [CHANGELOG.md](CHANGELOG.md).
 
 ## Клиент игры
 
@@ -37,3 +37,11 @@ L2Hub клиенты игры не содержит, не распростран
 - Правила для агентов — [AGENTS.md](AGENTS.md)
 
 Серверная часть — в основном [L2J Mobius](https://gitlab.com/MobiusDevelopment/L2J_Mobius) (по сборке на хронику). Клиенты игры проект не содержит и не распространяет.
+
+## Авторы
+
+L2Hub делаем вместе и на равных:
+
+- [Kraffty](https://github.com/kraffty4)
+- [selaquik](https://github.com/selaquik)
+- [Лев Кейвилл](https://github.com/levkeyvill)

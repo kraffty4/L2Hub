@@ -366,6 +366,27 @@ public final class PhantomCompat
 		return player.useMagic(skill, forceUse, dontMove);
 	}
 
+	/**
+	 * Метка текущего каста для замка реса ({@link SupportResurrection}): тот же объект, пока идёт этот каст.
+	 * @return {@code null}, если не кастует
+	 */
+	public static Object castingToken(Player player)
+	{
+		return player.getCurrentSkill();
+	}
+
+	/** @return id скилла текущего каста или 0 */
+	public static int castingSkillId(Player player)
+	{
+		return player.getCurrentSkill() == null ? 0 : player.getCurrentSkill().getSkillId();
+	}
+
+	/** Рес в core идёт через замок {@link SupportResurrection}. На Эпилоге — {@code false}: там свой путь сопровождающего ({@code 0512}). */
+	public static boolean coreResLock()
+	{
+		return true;
+	}
+
 	public static int karma(Player player)
 	{
 		return player.getKarma();
@@ -1399,10 +1420,11 @@ public final class PhantomCompat
 
 	/**
 	 * Продаёт ли GM-шоп вещь из списка ({@link HunterShopPrices}): флаги территорий и варды — только с
-	 * {@code GmShopAllowTerritoryFlags} ({@link org.l2jmobius.gameserver.managers.GmShopTerritoryPolicy}).
+	 * {@code GmShopAllowTerritoryFlags} ({@link org.l2jmobius.gameserver.managers.GmShopTerritoryPolicy}); свитки заточки —
+	 * по видам из {@code GmShopEnchantScrolls.ini} ({@link org.l2jmobius.gameserver.managers.GmShopEnchantPolicy}, патч 0415).
 	 */
 	static boolean gmShopSells(int listId, int itemId)
 	{
-		return !org.l2jmobius.gameserver.managers.GmShopTerritoryPolicy.catalog(listId) || org.l2jmobius.gameserver.managers.GmShopTerritoryPolicy.allows(itemId);
+		return (!org.l2jmobius.gameserver.managers.GmShopTerritoryPolicy.catalog(listId) || org.l2jmobius.gameserver.managers.GmShopTerritoryPolicy.allows(itemId)) && org.l2jmobius.gameserver.managers.GmShopEnchantPolicy.allows(itemId);
 	}
 }

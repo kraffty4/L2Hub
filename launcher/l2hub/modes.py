@@ -136,6 +136,14 @@ def _settings(p: dict, mode: dict) -> dict[str, dict[str, str]]:
     return out
 
 
+def _mode_switches(p: dict, mode: dict) -> dict[str, bool]:
+    """Выключатели режима: общие и свои у хроники ("chronicleSwitches": {id: {выключатель: значение}}) — так мод, который
+    у хроники есть, но режимами не включается (мастер дворянства на Эпилоге), не включается и не ломает отметку активного режима."""
+    out = dict(mode["switches"])
+    out.update(mode.get("chronicleSwitches", {}).get(p.get("chronicle") or p["id"], {}))
+    return out
+
+
 def _present(p: dict, s: dict) -> dict[str, str]:
     """Ключи выключателя, которые есть в сборке, и их значения. Выключатель бывает на несколько ключей разом
     (ShowNpcLevel, ShowNpcAggression, AltGameViewNpc) и в конфигах логина ("part": "login")."""
@@ -220,10 +228,11 @@ def state(p: dict) -> dict:
     modes = []
     for m in table()["modes"]:
         same_rates = all(now.get(g) == float(v) for g, v in m["rates"].items() if now.get(g) is not None)
-        same_sw = all(sw[k]["value"] == v for k, v in m["switches"].items() if sw.get(k, {}).get("available"))
+        msw = _mode_switches(p, m)
+        same_sw = all(sw[k]["value"] == v for k, v in msw.items() if sw.get(k, {}).get("available"))
         same_set = all((cur := _read(p, f, k)) is None or cur.strip().lower() == str(v).lower()
                        for f, keys in _settings(p, m).items() for k, v in keys.items())
-        modes.append({"id": m["id"], "title": m["title"], "short": m["short"], "note": m["note"], "active": same_rates and same_sw and same_set, "keepsRates": not m["rates"], "switches": m["switches"]})
+        modes.append({"id": m["id"], "title": m["title"], "short": m["short"], "note": m["note"], "active": same_rates and same_sw and same_set, "keepsRates": not m["rates"], "switches": msw})
     return {"ok": True, "pages": pages(p), "modes": modes, "switches": list(sw.values()), "rates": now, "huntersMax": hunters_max(p),
             "restart": servers.part_process(p, "game") is not None}
 
@@ -367,7 +376,7 @@ def apply_mode(p: dict, mode_id: str) -> dict:
             else:
                 edits.append({"part": "game", "file": rf, "key": key, "value": str(mult)})
     # Выключателя нет в сборке (чужая хроника: L2 Pass есть только у Essence) — молча мимо: окно его и не показывает.
-    for sid, value in mode["switches"].items():
+    for sid, value in _mode_switches(p, mode).items():
         s = next(x for x in t["switches"] if x["id"] == sid)
         if keys := _present(p, s):
             edits.extend(_edits(p, s, keys, value))

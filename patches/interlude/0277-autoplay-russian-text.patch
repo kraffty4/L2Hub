@@ -1,0 +1,70 @@
+L2Hub Interlude: перенос 0253-autoplay-russian-text с High Five 0.5.305 (сведение модов 2026-11-15).
+При переносе: Только AutoPlay.java: русских страниц автобоя (lang/ru …/AutoPlay) у Interlude нет — на High Five их даёт 0220-ru-pages, он вне сведения.
+
+На High Five:
+L2Hub: окно автобоя по-русски до конца. Сообщения «только для премиума», «умения / расходники / зелья не найдены»
+и подсказка о порядке атак идут через tr() на языке персонажа; заголовок выбора зелья общий для HP и MP
+(«Выбрать зелье», был «Выбрать Healing Potion»), окно называется «Автобой». Подписи настроек в Main.htm прежние:
+у High Five своя страница (0242). Только текст: команды, формы и подстановки не тронуты.
+Перенос части патча 0501 сопровождающего Эпилога (ветка epilogue закрытого L2Hub-epilogue), номера строк — по High Five.
+Откат: удалить патч и пересобрать сервер.
+
+diff --git a/dist/game/data/scripts/handlers/chat/commands/voiced/AutoPlay.java b/dist/game/data/scripts/handlers/chat/commands/voiced/AutoPlay.java
+index 2688ebda..88754772 100644
+--- a/dist/game/data/scripts/handlers/chat/commands/voiced/AutoPlay.java
++++ b/dist/game/data/scripts/handlers/chat/commands/voiced/AutoPlay.java
+@@ -190,8 +190,8 @@ public class AutoPlay implements IVoicedCommandHandler
+ 		
+ 		if (AutoPlayConfig.AUTO_PLAY_PREMIUM && !player.hasPremiumStatus())
+ 		{
+-			player.sendPacket(new ExShowScreenMessage("This command is only available to premium players.", 5000));
+-			player.sendMessage("This command is only available to premium players.");
++			player.sendPacket(new ExShowScreenMessage(tr(player, "This command is only available to premium players.", "Эта команда доступна только премиум-игрокам."), 5000));
++			player.sendMessage(tr(player, "This command is only available to premium players.", "Эта команда доступна только премиум-игрокам."));
+ 			player.sendPacket(ActionFailed.STATIC_PACKET);
+ 			return false;
+ 		}
+@@ -466,14 +466,14 @@ public class AutoPlay implements IVoicedCommandHandler
+ 				skills = skills.subList(Math.max(0, (page - 1) * PAGE_LIMIT), Math.min(page * PAGE_LIMIT, skills.size()));
+ 				if (skills.isEmpty())
+ 				{
+-					sb.append("<center><br>No skills found.<br></center>");
++					sb.append("<center><br>" + tr(player, "No skills found.", "Умения не найдены.") + "<br></center>");
+ 				}
+ 				else
+ 				{
+ 					final List<Integer> autoQueue = player.getAutoUseSettings().getAutoSkills();
+ 					if ((page == 1) && !autoQueue.isEmpty())
+ 					{
+-						sb.append("<center><font color=\"B09878\">Attacks go in a circle, from number 1 down.</font></center><br>");
++						sb.append("<center><font color=\"B09878\">" + tr(player, "Attacks go in a circle, from number 1 down.", "Атаки идут по кругу сверху вниз, с №1.") + "</font></center><br>");
+ 					}
+ 
+ 					// Generate skill table.
+@@ -582,7 +582,7 @@ public class AutoPlay implements IVoicedCommandHandler
+ 				items = items.subList(Math.max(0, (page - 1) * PAGE_LIMIT), Math.min(page * PAGE_LIMIT, items.size()));
+ 				if (items.isEmpty())
+ 				{
+-					sb.append("<center><br>No items found.<br></center>");
++					sb.append("<center><br>" + tr(player, "No items found.", "Расходники не найдены.") + "<br></center>");
+ 				}
+ 				else
+ 				{
+@@ -684,7 +684,7 @@ public class AutoPlay implements IVoicedCommandHandler
+ 				items = items.subList(Math.max(0, (page - 1) * PAGE_LIMIT), Math.min(page * PAGE_LIMIT, items.size()));
+ 				if (items.isEmpty())
+ 				{
+-					sb.append("<center><br>No potions found.<br></center>");
++					sb.append("<center><br>" + tr(player, "No potions found.", "Зелья HP не найдены.") + "<br></center>");
+ 				}
+ 				else
+ 				{
+@@ -786,7 +786,7 @@ public class AutoPlay implements IVoicedCommandHandler
+ 				items = items.subList(Math.max(0, (page - 1) * PAGE_LIMIT), Math.min(page * PAGE_LIMIT, items.size()));
+ 				if (items.isEmpty())
+ 				{
+-					sb.append("<center><br>No mana potions found.<br></center>");
++					sb.append("<center><br>" + tr(player, "No mana potions found.", "Зелья MP не найдены.") + "<br></center>");
+ 				}
+ 				else
+ 				{

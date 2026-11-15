@@ -1,0 +1,34 @@
+Оборона x10: выбывший участник ждёт общего возврата, воскрешение не возвращает в бой.
+
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/Player.java b/java/org/l2jmobius/gameserver/entity/actor/Player.java
+--- a/java/org/l2jmobius/gameserver/entity/actor/Player.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/Player.java
+@@ -11212,6 +11212,9 @@
+ 	@Override
+ 	public void doRevive()
+ 	{
++		// Оборона x10: смерть означает выбывание до общего возврата пати.
++		if (org.l2jmobius.gameserver.managers.world.X10World.defenceEliminated(this)) { return; }
++
+ 		super.doRevive();
+ 		
+ 		// Stop decay task.
+@@ -11259,12 +11262,18 @@
+ 	@Override
+ 	public void doRevive(double revivePower)
+ 	{
++		// Оборона x10: смерть означает выбывание до общего возврата пати.
++		if (org.l2jmobius.gameserver.managers.world.X10World.defenceEliminated(this)) { return; }
++
+ 		doRevive();
+ 		restoreExp(revivePower);
+ 	}
+ 	
+ 	public void reviveRequest(Player reviver, boolean pet, int power)
+ 	{
++		// Оборона x10: смерть означает выбывание до общего возврата пати.
++		if (!pet && org.l2jmobius.gameserver.managers.world.X10World.defenceEliminated(this)) { return; }
++
+ 		if (isResurrectionBlocked())
+ 		{
+ 			return;

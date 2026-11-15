@@ -7,4 +7,5 @@ from l2hub.h5currency import build
 if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('system',type=Path);parser.add_argument('output',type=Path);parser.add_argument('--language',choices=['ru','en'],default='ru')
-    args=parser.parse_args();print(build(args.system,args.output,args.language))
+    parser.add_argument('--itemname',default='itemname-e.dat',help='Файл имён из кода языка localization.ini')
+    args=parser.parse_args();print(build(args.system,args.output,args.language,itemname=args.itemname))

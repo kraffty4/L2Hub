@@ -251,7 +251,7 @@ public final class SkillLevelChoice {
         }
         public void refresh() {
             player.sendSkillList();
-            player.sendPacket(new ShortcutInit(player));
+            org.l2jmobius.gameserver.managers.ShortcutStateSync.send(player); // L2Hub 0628: init и следом флаги активной автозарядки
             player.broadcastUserInfo();
         }
     }

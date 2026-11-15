@@ -1,6 +1,7 @@
 """Перекрытия хроники не считаются чужой правкой при повторной сборке."""
 import hashlib
 import json
+import shutil
 import tempfile
 import unittest
 from pathlib import Path
@@ -21,10 +22,9 @@ class ModuleOverlayCheck(unittest.TestCase):
             self.assertNotIn("L2HubX10.ini", epilogue)
 
     def test_chronicle_override_and_real_local_edit(self):
-        # Мелкая проверочная среда остаётся рядом с остальными локальными проверками.
-        checks = Path(__file__).resolve().parents[2] / "local/checks"
-        checks.mkdir(parents=True, exist_ok=True)
-        fixture = Path(tempfile.mkdtemp(prefix="module-overlay-", dir=checks))
+        # Проверочная среда — во временной папке системы и убирается за собой (раньше копилась в local/checks корня).
+        fixture = Path(tempfile.mkdtemp(prefix="module-overlay-"))
+        self.addCleanup(shutil.rmtree, fixture, True)
         modules, source, state = fixture / "modules", fixture / "source", fixture / "state"
         for directory in (modules / "core/java", modules / "ct26_highfive/java", source / "java", state):
             directory.mkdir(parents=True, exist_ok=True)

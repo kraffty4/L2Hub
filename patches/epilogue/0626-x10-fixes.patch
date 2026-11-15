@@ -1,0 +1,88 @@
+L2Hub: минуты боя TvT одни у ивента и у доски Alt+B (сумма награды на странице «Ивенты» считается от них):
+умолчание 7 минут, как в L2HubEvents.ini (вклад пользователя), граница 1–120, как была у TvT. Раньше TvT.java брал
+без ключа 20 минут с границей 120, а доска — 7 с границей 30.
+Самопроверка L2HUBBOARD: в навигации 11 кнопок (кнопка «Команды», 0404); проверка списка Alt+R не ловит разовую раскладку
+служебной панели (0402); отметки наборов у охотника снимаются на проверку и возвращаются: охотники берут наборы сами,
+а база копии мира живёт между прогонами.
+Перенос патча High Five 0406 (тот же слаг) без строки о коинах x10 (модуля x10 у Эпилога нет). Умолчание TvT было 4 минуты (сопровождающий), теперь 7, как в L2HubEvents.ini; навигация на 11 кнопок — уже в 0616.
+
+diff --git a/dist/game/data/scripts/custom/L2HubBoardTest/L2HubBoardTest.java b/dist/game/data/scripts/custom/L2HubBoardTest/L2HubBoardTest.java
+index 020b90f2af25de7818bb44a9fca111a8b44b3874..f31ecbe1d4bd3a537f0de7911dbabfcf5cab307b 100644
+--- a/dist/game/data/scripts/custom/L2HubBoardTest/L2HubBoardTest.java
++++ b/dist/game/data/scripts/custom/L2HubBoardTest/L2HubBoardTest.java
+@@ -790,6 +790,8 @@ public class L2HubBoardTest
+ 			player.deleteShortcut(9, 1);
+ 			final int bars = player.getAllShortcuts().size();
+ 			player.getVariables().remove(InitialShortcutData.MACROS_GIVEN);
++			// Разовая раскладка служебной панели (L2HubServiceBarV2, вклад пользователя) — не тема этой проверки: здесь только список Alt+R.
++			player.getVariables().set("L2HubServiceBarV2", true);
+ 			final int before = player.getMacros().getAllMacroses().size();
+ 			final long available = all.stream().filter(data::isAvailable).count();
+ 			data.giveMissingMacros(player);
+@@ -900,13 +902,34 @@ public class L2HubBoardTest
+ 		final int slots = bag.getNonQuestSize();
+ 		final int load = bag.getTotalWeight();
+ 		final List<long[]> moved = unload(player);
++		final Map<String, Boolean> marks = new HashMap<>();
+ 		LOGGER.info(TAG + who + "bag " + slots + " of " + player.getInventoryLimit() + " slots, weight " + load + " of " + player.getMaxLoad() + "; unloaded " + moved.size() + ": " + bag.getNonQuestSize() + " slots, weight " + bag.getTotalWeight() + "; ng " + armor + " kit needs " + L2HubKits.goods(player, 0, armor).size() + " slots, weight " + weight(L2HubKits.goods(player, 0, armor)) + ".");
+ 		try
+ 		{
++			// Охотники в мире сами берут наборы, а база копии живёт между прогонами: отметки снимаются на проверку и возвращаются.
++			for (String grade : L2HubKits.GRADES)
++			{
++				for (String name : new String[] { "L2HubKit_" + grade, "L2HubKitBox_" + grade })
++				{
++					marks.put(name, player.getVariables().getBoolean(name, false));
++					player.getVariables().remove(name);
++				}
++			}
+ 			kitChecks(who, role, player, armor);
+ 		}
+ 		finally
+ 		{
++			for (Map.Entry<String, Boolean> mark : marks.entrySet())
++			{
++				if (mark.getValue())
++				{
++					player.getVariables().set(mark.getKey(), true);
++				}
++				else
++				{
++					player.getVariables().remove(mark.getKey());
++				}
++			}
+ 			reload(player, moved);
+ 			check(who + "bag back: " + bag.getNonQuestSize() + " slots, weight " + bag.getTotalWeight(), (bag.getNonQuestSize() == slots) && (bag.getTotalWeight() == load));
+ 		}
+diff --git a/dist/game/data/scripts/custom/events/TeamVsTeam/TvT.java b/dist/game/data/scripts/custom/events/TeamVsTeam/TvT.java
+index c473d16b37ca3a9048b2fce33ddff85dc9320a88..5deb2055906c3904b99dc99b95b6fb082b6aa6be 100644
+--- a/dist/game/data/scripts/custom/events/TeamVsTeam/TvT.java
++++ b/dist/game/data/scripts/custom/events/TeamVsTeam/TvT.java
+@@ -140,7 +140,7 @@ public class TvT extends Event
+ 	// Settings
+ 	private static final int REGISTRATION_TIME = custom.L2HubPvpEvents.L2HubPvpEvents.tvt("PvpRegistrationMinutes", 10, 1, 30); // Minutes
+ 	private static final int WAIT_TIME = 1; // Minutes
+-	private static final int FIGHT_TIME = custom.L2HubPvpEvents.L2HubPvpEvents.tvt("TvTFightMinutes", 4, 1, 120); // L2Hub: минуты
++	private static final int FIGHT_TIME = custom.L2HubPvpEvents.L2HubPvpEvents.tvt("TvTFightMinutes", 7, 1, 120); // L2Hub: минуты
+ 	private static final int INACTIVITY_TIME = 2; // Minutes
+ 	private static final int MINIMUM_PARTICIPANT_LEVEL = custom.L2HubPvpEvents.L2HubPvpEvents.minLevel(76); // L2Hub: PvpMinLevel
+ 	private static final int MAXIMUM_PARTICIPANT_LEVEL = 200;
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+index 490a213e3a07f0183eb4f1e3a9f702cdf9191bf5..2647d5e2b3fa98028c21659f4055374b604d972c 100644
+--- a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+@@ -447,12 +447,12 @@ public class L2HubBoard implements IParseBoardHandler
+ 	 */
+ 	private static String medals(Player player)
+ 	{
+-		final int plain = custom.L2HubPvpEvents.L2HubPvpEvents.rewardMedals(custom.L2HubPvpEvents.L2HubPvpEvents.tvt("TvTFightMinutes", 7, 1, 30), false);
++		final int plain = custom.L2HubPvpEvents.L2HubPvpEvents.rewardMedals(custom.L2HubPvpEvents.L2HubPvpEvents.tvt("TvTFightMinutes", 7, 1, 120), false);
+ 		if (plain <= 0)
+ 		{
+ 			return "";
+ 		}
+-		return "<br><br>" + tr("Медали у тебя: ") + "<font color=\"LEVEL\">" + player.getInventory().getInventoryItemCount(custom.L2HubPvpEvents.L2HubPvpEvents.MEDAL_ITEM, -1) + "</font><br1>" + ("en".equals(org.l2jmobius.gameserver.config.custom.L2HubWorldConfig.LANGUAGE) ? "For a full PvP fight: " : "За полный PvP-бой: ") + plain + tr(", победителю ") + custom.L2HubPvpEvents.L2HubPvpEvents.rewardMedals(custom.L2HubPvpEvents.L2HubPvpEvents.tvt("TvTFightMinutes", 7, 1, 30), true) + tr(". Падают и с чемпионов.") + "<br1>" + button(tr("Обмен медалей"), EVENTS + " medals", 150);
++		return "<br><br>" + tr("Медали у тебя: ") + "<font color=\"LEVEL\">" + player.getInventory().getInventoryItemCount(custom.L2HubPvpEvents.L2HubPvpEvents.MEDAL_ITEM, -1) + "</font><br1>" + ("en".equals(org.l2jmobius.gameserver.config.custom.L2HubWorldConfig.LANGUAGE) ? "For a full PvP fight: " : "За полный PvP-бой: ") + plain + tr(", победителю ") + custom.L2HubPvpEvents.L2HubPvpEvents.rewardMedals(custom.L2HubPvpEvents.L2HubPvpEvents.tvt("TvTFightMinutes", 7, 1, 120), true) + tr(". Падают и с чемпионов.") + "<br1>" + button(tr("Обмен медалей"), EVENTS + " medals", 150);
+ 	}
+ 
+ 	/**

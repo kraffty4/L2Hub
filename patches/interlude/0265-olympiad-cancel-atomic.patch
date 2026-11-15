@@ -1,0 +1,36 @@
+L2Hub Interlude: перенос 0233-olympiad-cancel-atomic с High Five 0.5.305 (сведение модов 2026-11-15).
+При переносе: У Interlude нет OlympiadGameManager: подбор пар — OlympiadManager.run() (synchronized, монитор отпускает в wait()), отмена — Olympiad.unRegisterNoble под тем же монитором.
+
+На High Five:
+Отмена записи на Олимпиаду и подбор пар — под одним монитором OlympiadManager: перенос 0233 с Gracia Epilogue
+на High Five. Вынутый подбором, но ещё не поставленный на арену игрок больше не получает «не зарегистрирован»,
+а remove(index) подбора не падает, если очередь укоротилась одновременной отменой.
+Откат: удалить патч и пересобрать сервер.
+
+diff --git a/java/org/l2jmobius/gameserver/mechanics/olympiad/Olympiad.java b/java/org/l2jmobius/gameserver/mechanics/olympiad/Olympiad.java
+index 1c123f73..0df72f70 100644
+--- a/java/org/l2jmobius/gameserver/mechanics/olympiad/Olympiad.java
++++ b/java/org/l2jmobius/gameserver/mechanics/olympiad/Olympiad.java
+@@ -734,7 +734,22 @@ public class Olympiad extends ListenersContainer
+ 		return result;
+ 	}
+ 	
++	/**
++	 * L2Hub: отмена записи — под монитором OlympiadManager, как подбор пар в OlympiadManager.run(): nextOpponents() вынимает
++	 * участников из очереди раньше, чем матч попадает в getOlympiadGames(). Без монитора вынутый, но ещё не поставленный игрок
++	 * получал «не зарегистрирован» и всё равно уходил на бой (перенос 0233 High Five). run() отпускает монитор в wait().
++	 * @param noble игрок
++	 * @return снят ли с записи
++	 */
+ 	public boolean unRegisterNoble(Player noble)
++	{
++		synchronized (OlympiadManager.getInstance())
++		{
++			return unRegisterNobleLocked(noble);
++		}
++	}
++	
++	private boolean unRegisterNobleLocked(Player noble)
+ 	{
+ 		if (!_inCompPeriod)
+ 		{

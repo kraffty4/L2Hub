@@ -189,12 +189,15 @@ def mapping(gw: Gateway, port: int) -> dict | None:
 
 
 def open_port(gw: Gateway, port: int, what: str) -> None:
-    """Проброс TCP-порта на этот ПК. Порт уже проброшен на другое устройство — ошибка с его адресом."""
+    """Проброс TCP-порта на этот ПК. Порт уже проброшен на другое устройство — ошибка с его адресом. Свой прошлый проброс
+    («L2Hub …») на старый адрес этого ПК (сменился DHCP, Wi-Fi на кабель) снимается и ставится заново (аудит 2026-11-09)."""
     m = mapping(gw, port)
     if m and m["client"] == gw.local_ip and m["port"] == port and m["enabled"]:
         return
     if m and m["client"] != gw.local_ip:
-        raise RuntimeError(f"порт {port} на роутере уже проброшен на {m['client']} ({m['desc'] or 'без описания'}) — освободи его в роутере")
+        if not m["desc"].startswith(DESC):
+            raise RuntimeError(f"порт {port} на роутере уже проброшен на {m['client']} ({m['desc'] or 'без описания'}) — освободи его в роутере")
+        soap(gw, "DeletePortMapping", {"NewRemoteHost": "", "NewExternalPort": port, "NewProtocol": "TCP"})
     try:
         soap(gw, "AddPortMapping", {"NewRemoteHost": "", "NewExternalPort": port, "NewProtocol": "TCP", "NewInternalPort": port,
                                     "NewInternalClient": gw.local_ip, "NewEnabled": 1, "NewPortMappingDescription": f"{DESC} {what}",
@@ -206,9 +209,9 @@ def open_port(gw: Gateway, port: int, what: str) -> None:
 
 
 def close_port(gw: Gateway, port: int) -> bool:
-    """Снять свой проброс (на этот ПК и с описанием L2Hub). Чужой не трогается. True — снят."""
+    """Снять свой проброс — с описанием L2Hub, в том числе на прошлый адрес этого ПК. Чужой не трогается. True — снят."""
     m = mapping(gw, port)
-    if not m or m["client"] != gw.local_ip or not m["desc"].startswith(DESC):
+    if not m or not m["desc"].startswith(DESC):
         return False
     soap(gw, "DeletePortMapping", {"NewRemoteHost": "", "NewExternalPort": port, "NewProtocol": "TCP"})
     return True

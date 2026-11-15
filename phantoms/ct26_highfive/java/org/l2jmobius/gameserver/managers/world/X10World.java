@@ -275,9 +275,24 @@ public final class X10World
 		}
 	}
 
+	public static boolean farmHerbPickup(Player player, org.l2jmobius.gameserver.entity.item.instance.Item item) { return X10FarmEvent.pickupHerb(player,item); }
+	public static double farmDamage(org.l2jmobius.gameserver.entity.actor.Creature attacker, org.l2jmobius.gameserver.entity.actor.Creature target, double damage, boolean dot) { return X10FarmEvent.farmDamage(attacker,target,damage,dot); }
+
+	public static boolean defenceEliminated(Player player) { return X10FarmEvent.eliminated(player); }
+
 	public static boolean inPveEvent(Player player)
 	{
 		return enabled && X10FarmEvent.contains(player);
+	}
+
+	public static java.util.List<Player> pveAllies(Player player, int range)
+	{
+		return enabled ? X10FarmEvent.allies(player, range) : java.util.List.of();
+	}
+
+	public static boolean pveEnemy(Player player, org.l2jmobius.gameserver.entity.actor.Creature target)
+	{
+		return enabled && X10FarmEvent.enemy(player, target);
 	}
 
 	public static org.l2jmobius.gameserver.entity.actor.Creature pveTarget(Player player)

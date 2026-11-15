@@ -23,6 +23,8 @@ from pathlib import Path
 from . import backups, builder, catalog, paths, servers
 
 NEW, CHECK, OLD = "__wipe_new", "__wipe_check", "__wipe_old"
+# Своя база у предпросмотра (аудит 2026-11-09): прежде он сносил и заливал заново __wipe_new, в которой идущий вайп держит чистый мир.
+PREVIEW = "__wipe_preview"
 LAST = "last"
 CREATE_RE = re.compile(r"CREATE TABLE(?: IF NOT EXISTS)?\s+`?(\w+)`?", re.IGNORECASE)
 DUMP_END = b"-- Dump completed"
@@ -38,7 +40,9 @@ SUMMARY = (("clan_data", "кланов"), ("items", "предметов"), ("cha
 
 def _sql(sql: str, db: str | None = None, timeout: int = 600) -> list[list[str]]:
     """Запрос через stdin: RENAME всех таблиц длиннее, чем можно передать в командной строке Windows."""
-    cmd = [str(paths.MARIA_BIN / "mariadb.exe"), f"--defaults-extra-file={paths.CLIENT_CNF}", "--default-character-set=utf8mb4", "-N", "-B"]
+    # --abort-source-on-error: ошибка внутри `source` (чистая база вайпа) — код ≠ 0, а не молча недолитая база (аудит 2026-11-09).
+    cmd = [str(paths.MARIA_BIN / "mariadb.exe"), f"--defaults-extra-file={paths.CLIENT_CNF}", "--default-character-set=utf8mb4",
+           "--abort-source-on-error", "-N", "-B"]
     r = subprocess.run([*cmd, db] if db else cmd, input=sql.encode("utf-8"), capture_output=True, timeout=timeout, creationflags=subprocess.CREATE_NO_WINDOW)
     if r.returncode:
         raise RuntimeError(f"MariaDB: {r.stderr.decode('utf-8', 'replace').strip()[-500:]}")
@@ -70,8 +74,8 @@ def _side(p: dict, suffix: str) -> str:
 
 
 def _drop_side(db: str) -> None:
-    if not db.endswith((NEW, CHECK, OLD)):
-        raise RuntimeError(f"{db} — не служебная база вайпа")  # DROP DATABASE здесь только для своих трёх имён
+    if not db.endswith((NEW, CHECK, OLD, PREVIEW)):
+        raise RuntimeError(f"{db} — не служебная база вайпа")  # DROP DATABASE здесь только для своих служебных имён
     _sql(f"DROP DATABASE IF EXISTS `{db}`")
 
 
@@ -142,9 +146,9 @@ def _installer(p: dict) -> tuple[list[Path], set[str]]:
     return game, keep
 
 
-def _build_new(p: dict, game: list[Path]) -> str:
+def _build_new(p: dict, game: list[Path], suffix: str = NEW) -> str:
     """Чистая база рядом и отметки одноразовых команд. Мир ещё не тронут: ошибка в SQL здесь ничего не ломает."""
-    new = _create_side(p, NEW)
+    new = _create_side(p, suffix)
     _sql("".join(f"source {f.as_posix()};\n" for f in game), new)
     db = p["database"]
     if {"global_variables"} <= set(_tables(db)) & set(_tables(new)):
@@ -262,7 +266,7 @@ def preview(p: dict) -> dict:
         before = _counts(db)
         if not before:
             raise RuntimeError(f"В базе {db} нет таблиц: вайпать нечего")
-        new = _build_new(p, game)
+        new = _build_new(p, game, PREVIEW)
         try:
             fresh = _counts(new)
             schema = _schema_diff(db, new, keep)

@@ -569,7 +569,7 @@ final class PhantomNear
 				return new Help(null, "", null, "его уже ресают");
 			}
 			// Скилл на откате или маны мало — не отказ: помощь дождётся отката, а ману — сидя (helpTick). Отказ — только когда рес не по карману и с полной маной.
-			return hunter.getMaxMp() < (res.getMpConsume() + res.getMpInitialConsume()) ? new Help(null, "", null, "мало MP") : new Help(Need.RES, res.getName(), null, null);
+			return hunter.getMaxMp() < (hunter.getStat().getMpConsume(res) + hunter.getStat().getMpInitialConsume(res)) ? new Help(null, "", null, "мало MP") : new Help(Need.RES, res.getName(), null, null);
 		}
 
 		boolean lowMp = false;

@@ -18,7 +18,7 @@ from pathlib import Path
 
 import psutil
 
-from . import catalog, clientsys, gmshop, l2ini, l2solo, paths
+from . import catalog, clientsys, gmshop, h5client, l2ini, l2solo, paths
 
 JARS = {"login": "LoginServer.jar", "game": "GameServer.jar"}
 STOP_TIMEOUT = {"game": 120, "login": 30}
@@ -193,10 +193,15 @@ def part_process(p: dict, part: str) -> psutil.Process | None:
         except psutil.Error:
             return None
         # Из исходников — python -m l2hub.brain, в собранном виде — l2hub-cli.exe brain (start_brain).
-        ours = BRAIN_MODULE in cmd or (len(cmd) > 1 and Path(cmd[0]).name.lower() == paths.CLI_EXE.name and cmd[1] == "brain")
-        return proc if ours else None
+        return proc if brain_cmd_id(cmd) is not None else None
     expected = part_exe(p, part) if part in JARS else catalog.client_exe(p)
-    return process(read_pids(p["id"]).get(part), expected)
+    pid = read_pids(p["id"]).get(part)
+    proc = process(pid, expected)
+    if proc is None and part == "client" and h5client.is_h5(p):
+        proc = process(pid, h5client.copy_exe(expected))
+        if proc is None and expected.parent.name.lower() == "system_ru":
+            proc = process(pid, expected.parent.parent / "system" / expected.name)
+    return proc
 
 
 # ---------- База ----------
@@ -282,10 +287,16 @@ def db_query(p: dict | str, sql: str) -> list[list[str]]:
     """Запрос к базе профиля p; вместо профиля можно имя базы в MariaDB (так зовут старые вызовы)."""
     if isinstance(p, str):
         p = {"database": p}
-    r = _no_window([*_db_client(p), p["database"], "-N", "-B", "-e", sql], timeout=10)
+    # Байтами и только по \n (аудит 2026-11-09): splitlines() и текстовый режим рвут строку и на \x1c, \x85, одиночном \r и прочих —
+    # имя аккаунта с таким символом (логин создаёт аккаунты как есть, порты открыты наружу) роняло «Кто играет», персонажей и карту.
+    r = subprocess.run([str(a) for a in [*_db_client(p), p["database"], "-N", "-B", "-e", sql]], capture_output=True, timeout=10,
+                       creationflags=subprocess.CREATE_NO_WINDOW)
     if r.returncode != 0:
-        raise RuntimeError(r.stderr.strip() or "ошибка запроса к базе")
-    return [line.split("\t") for line in r.stdout.splitlines() if line]
+        raise RuntimeError(r.stderr.decode("utf-8", "replace").strip() or "ошибка запроса к базе")
+    lines = [line[:-1] if line.endswith("\r") else line for line in r.stdout.decode("utf-8", "replace").split("\n")]
+    rows = [line.split("\t") for line in lines if line]
+    width = max((len(row) for row in rows), default=0)
+    return [row for row in rows if len(row) == width]  # строка не той ширины — битая, мимо: распаковка у вызывающих не падает
 
 
 # Аккаунт фантомов — персонажей без клиента (патч 0007, ключ PhantomAccount в Phantoms.ini). Это не люди:
@@ -445,6 +456,7 @@ def ensure_local_addr(p: dict) -> str | None:
 def start_client(p: dict) -> int:
     if part_process(p, "client"):
         return read_pids(p["id"])["client"]
+    p, h5_client = h5client.prepare(p)
     exe = catalog.client_exe(p)
     if not exe.exists():
         raise RuntimeError(f"Нет клиента: {exe}")
@@ -453,7 +465,9 @@ def start_client(p: dict) -> int:
         raise RuntimeError("Клиент с русским вводом работает только на Windows с русским языком системы, здесь он упадёт. "
                            "Выбери штатную систему: «Клиент и сеть» → «Указать другую папку клиента», папка system (чат — только латиницей). "
                            "Или смени язык системы на русский: Win+R, intl.cpl, «Дополнительно», «Изменить язык системы», перезагрузка.")
-    ensure_local_addr(p)  # иначе клиент чужой сборки висит на «logging in», стучась на свой сервер
+    # При неудаче создания рабочей копии запускаем оригинал без записи в его L2.ini.
+    if not h5_client or h5client.is_working(exe):
+        ensure_local_addr(p)
     # L2.exe требует администратора в манифесте (requireAdministrator, наследство GameGuard):
     # из обычного процесса CreateProcess падает с WinError 740. RunAsInvoker запускает клиент
     # с правами лаунчера — без UAC, и лаунчер может проверить и закрыть его по PID.
@@ -499,6 +513,33 @@ def brain_stderr(p: dict) -> Path:
     return paths.DATA / "brain" / f"{p['id']}.stderr.log"
 
 
+def brain_cmd_id(cmd: list[str]) -> str | None:
+    """Хроника процесса мозгов по его командной строке (python -m l2hub.brain <id> или l2hub-cli.exe brain <id>); None — не мозги."""
+    if BRAIN_MODULE in cmd:
+        i = cmd.index(BRAIN_MODULE)
+        return cmd[i + 1] if i + 1 < len(cmd) else ""
+    if len(cmd) > 1 and Path(cmd[0]).name.lower() == paths.CLI_EXE.name and cmd[1] == "brain":
+        return cmd[2] if len(cmd) > 2 else ""
+    return None
+
+
+def _stop_stray_brain(port: int) -> None:
+    """Порт мозгов общий у всех хроник: мозги, которых нет в pid-файле этой хроники (другая хроника, упавший старт), гасятся,
+    иначе гейм говорил бы с ними (аудит 2026-11-09). Чужие программы на порту не трогаются."""
+    for _, pid in listeners(port):
+        proc = process(pid)
+        try:
+            stray = proc is not None and brain_cmd_id(proc.cmdline()) is not None
+        except psutil.Error:
+            stray = False
+        if stray:
+            proc.terminate()
+            try:
+                proc.wait(5)
+            except psutil.TimeoutExpired:
+                proc.kill()
+
+
 def start_brain(p: dict) -> int | None:
     """Поднимает l2hub.brain. Не мешает игре: если мозги не встали, фейки отвечают заготовками."""
     port = brain_port(p)
@@ -506,6 +547,7 @@ def start_brain(p: dict) -> int | None:
         return None
     if part_process(p, "brain"):
         return read_pids(p["id"])["brain"]
+    _stop_stray_brain(port)
     if paths.FROZEN:
         cmd, cwd = [str(paths.CLI_EXE), "brain", p["id"]], paths.APP
     else:

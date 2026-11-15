@@ -1,0 +1,23 @@
+L2Hub Interlude: перенос 0251-multisell-limit-message с High Five 0.5.305 (сведение модов 2026-11-15).
+
+На High Five:
+L2Hub: мультиселл говорит, почему отказал: при количестве больше MULTISELL_AMOUNT_LIMIT игрок получает системное сообщение
+«превышено количество, которое можно ввести», а не молча закрытый список. Лимит, сброс списка и все проверки прежние.
+Перенос патча 0506 сопровождающего Эпилога (ветка epilogue закрытого L2Hub-epilogue), номера строк — по High Five.
+Откат: удалить патч и пересобрать сервер.
+
+diff --git a/java/org/l2jmobius/gameserver/network/clientpackets/MultiSellChoose.java b/java/org/l2jmobius/gameserver/network/clientpackets/MultiSellChoose.java
+index 341fcb78..267cb90d 100644
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/MultiSellChoose.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/MultiSellChoose.java
+@@ -76,6 +76,10 @@ public class MultiSellChoose extends ClientPacket
+ 		
+ 		if ((_amount < 1) || (_amount > GeneralConfig.MULTISELL_AMOUNT_LIMIT))
+ 		{
++			if (_amount > GeneralConfig.MULTISELL_AMOUNT_LIMIT)
++			{
++				player.sendPacket(SystemMessageId.YOU_HAVE_EXCEEDED_THE_QUANTITY_THAT_CAN_BE_INPUTTED);
++			}
+ 			player.setMultiSell(null);
+ 			return;
+ 		}

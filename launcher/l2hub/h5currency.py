@@ -102,19 +102,21 @@ def patch(raw, kind, language='ru'):
         for (start,stop),value in sorted(replacements.items()):
             pieces.extend((raw[cursor:start],value));cursor=stop
         pieces.append(raw[cursor:base['_end']]);additions[item_id]=b''.join(pieces)
-    records={row[key]:raw[row['_start']:row['_end']] for row in rows};records.update(additions)
+    records={row[key]:raw[row['_start']:row['_end']] for row in rows}
+    if all(records.get(item_id)==value for item_id,value in additions.items()): return raw
+    records.update(additions)
     result=struct.pack('<I',len(records))+b''.join(records[i] for i in sorted(records))+raw[end:]
     verified,_=parse(result,kind); after={row[key]:result[row['_start']:row['_end']] for row in verified}
     if any(after[row[key]]!=raw[row['_start']:row['_end']] for row in rows if row[key] not in additions): raise ValueError('Затронута штатная запись')
     return result
 
-def build(system: Path, output: Path, language='ru'):
+def build(system: Path, output: Path, language='ru', *, itemname='itemname-e.dat'):
     """Создаёт два новых DAT (валюты и ярлык автобоя) в отдельной папке, исходный клиент не меняет."""
     if language not in ('ru','en'): raise ValueError('Язык должен быть ru/en')
     if system.resolve()==output.resolve(): raise ValueError('Нужна отдельная выходная папка для проверки')
     output.mkdir(parents=True,exist_ok=True)
     report={}
-    for name,kind in (('itemname-e.dat','itemname'),('etcitemgrp.dat','etcitemgrp')):
+    for name,kind in ((itemname,'itemname'),('etcitemgrp.dat','etcitemgrp')):
         key,raw=l2ini.decode((system/name).read_bytes())
         if key!='community': raise ValueError('Клиент должен поддерживать ключ комьюнити413')
         result=patch(raw,kind,language); encrypted=l2ini.encode(result)

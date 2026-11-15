@@ -1,0 +1,27 @@
+L2Hub: чемпионов реже — суперчемпион 0.04 % вместо 0.1, синий 3 % вместо 5, красный прежний 1 %. Как на High Five (0244):
+с 0154 (MonsterSpawnMultiplier 1.5) мобов в полтора раза и охотников вдвое, бросок на каждое появление моба давал суперчемпионов под сотню в час.
+Перенос патча High Five 0244 (тот же слаг).
+
+diff --git a/dist/game/config/Custom/ChampionMonsters.ini b/dist/game/config/Custom/ChampionMonsters.ini
+index 63fa8ad208bf8a6d9fcad326824df8d29cd3dfad..3460e1f2e34d7767afd4dcdc9b3a5369f98c33ca 100644
+--- a/dist/game/config/Custom/ChampionMonsters.ini
++++ b/dist/game/config/Custom/ChampionMonsters.ini
+@@ -83,7 +83,7 @@ ChampionEnableInInstances = False
+ # ---------------------------------------------------------------------------
+ 
+ # Шанс синего чемпиона, % (0 — выключить). Допускаются дробные: 0.5.
+-ChampionBlueFrequency = 5
++ChampionBlueFrequency = 3
+ 
+ # Титул синего чемпиона.
+ ChampionBlueTitle = Champion
+@@ -129,7 +129,8 @@ ChampionBlueRewardItems =
+ SuperChampionEnable = True
+ 
+ # Шанс суперчемпиона, % (дробный: 0.1 — один моб из тысячи; бросается при каждом появлении моба).
+-SuperChampionFrequency = 0.1
++# 0.04, как на High Five: мобов в 1,5 раза (MonsterSpawnMultiplier) и охотников вдвое, при 0.1 суперчемпионов выходило под сотню в час.
++SuperChampionFrequency = 0.04
+ 
+ # Титул суперчемпиона.
+ SuperChampionTitle = Legendary Champion

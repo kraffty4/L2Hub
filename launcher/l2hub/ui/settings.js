@@ -211,7 +211,7 @@
         const s = swOf(p.eventSwitch);
         const paused = p.eventGroup && !swOf(p.eventGroup)?.value;
         const status = !s?.value ? 'Выключен в настройках' : paused ? 'Общая очередь выключена' : 'Включён в настройках';
-        const summary = p.subs.flatMap((s) => s.keys).filter((x) => /^(Farm|Defence|Hunt)(IntervalMinutes|Minutes|Coins)$/.test(x.k.key));
+        const summary = p.subs.flatMap((s) => s.keys).filter((x) => /^(Farm|Defence|Hunt)(IntervalMinutes|Minutes|Coins|WaveCoins)$/.test(x.k.key));
         return `<article class="event-card"><div class="event-card-head"><h3>${esc(p.title)}</h3>${s ? `<button class="switch" role="switch" aria-checked="${s.value}" aria-label="${esc(s.title)}" data-sw="${s.id}"></button>` : ''}</div>
           <span class="event-status">${esc(status)}</span><p>${esc(p.about)}</p>${summary.length ? `<dl>${summary.map((x) => `<div><dt>${esc(x.title)}</dt><dd>${esc(valOf(x.k))}</dd></div>`).join('')}</dl>` : ''}<button class="sbtn event-configure" data-event-open="${p.id}">${esc('Настроить')}</button></article>`;
       }).join('') || `<p class="phint">${esc('В этой категории нет доступных событий.')}</p>`;

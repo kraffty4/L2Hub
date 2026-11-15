@@ -1,0 +1,26 @@
+L2Hub Interlude: перенос 0265-native-config-templates с High Five (сведение модов 2026-11-15, второй проход; на Эпилоге — 0514 сопровождающего, selaquik).
+При переносе: Те же три ключа и значения, что на High Five.
+
+На High Five:
+L2Hub: ключи запаса расходников призывных помощников (PersonalCompanionPotionStock, PersonalCompanionSpiritOreStock,
+PersonalCompanionHolyWaterStock) в config/Custom/PhantomParty.ini. Их читает ядро (PersonalCompanions) со значениями
+по умолчанию 10, 100 и 10, но в ini High Five их не было, и страница окна «Запас расходников призывных помощников»
+на High Five не показывалась. Значения прежние. Часть патча 0514 сопровождающего Эпилога (selaquik) — PhantomParty.ini;
+ключ HunterOlympiadPreparation из него — механика Эпилога, не переносится. Откат: удалить патч и пересобрать сервер.
+
+diff --git a/dist/game/config/Custom/PhantomParty.ini b/dist/game/config/Custom/PhantomParty.ini
+index f0b15ef7..b141663f 100644
+--- a/dist/game/config/Custom/PhantomParty.ini
++++ b/dist/game/config/Custom/PhantomParty.ini
+@@ -63,3 +63,11 @@ PhantomOverhearChance = 25
+ # Встревает не чаще раза в столько секунд — один охотник и на одного игрока. Реплики считаются в PhantomEventsPerMinute.
+ PhantomOverhearCooldown = 90
+ PhantomOverhearPlayerCooldown = 30
++
++# Запас расходников призывных (личных) помощников: столько им выдаётся даром, без адены владельца.
++# Банки HP и MP (0–100, по умолчанию 10).
++PersonalCompanionPotionStock = 10
++# Spirit Ore (0–1000, по умолчанию 100).
++PersonalCompanionSpiritOreStock = 100
++# Holy Water (0–100, по умолчанию 10).
++PersonalCompanionHolyWaterStock = 10

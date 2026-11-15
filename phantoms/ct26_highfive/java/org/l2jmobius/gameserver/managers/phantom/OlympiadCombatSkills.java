@@ -114,7 +114,7 @@ public final class OlympiadCombatSkills
             final boolean cure = choice.kind() == Kind.CURE;
             final boolean self = defence || heal || cure || choice.kind() == Kind.BURST;
             final Player target = self ? player : enemy;
-            if (player.isSkillDisabled(skill) || player.getCurrentMp() < skill.getMpConsume() + skill.getMpInitialConsume() || player.getCurrentHp() <= skill.getHpConsume()
+            if (player.isSkillDisabled(skill) || player.getCurrentMp() < player.getStat().getMpConsume(skill) + player.getStat().getMpInitialConsume(skill) || player.getCurrentHp() <= skill.getHpConsume()
                 || player.getCharges() < skill.getChargeConsumeCount() || !OlympiadSkillRules.hasReagents(player, skill) || (!heal && !cure && covered(target, skill))) continue;
             if (heal && !OlympiadSelfHeal.worthwhile(player, skill)) continue;
             if (cure && !OlympiadSelfCure.worthwhile(player, skill)) continue;

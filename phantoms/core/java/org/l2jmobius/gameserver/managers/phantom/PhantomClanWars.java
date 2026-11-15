@@ -567,7 +567,7 @@ public final class PhantomClanWars
 		int started = 0;
 		for (Player target : playerClan.getOnlineMembers(0))
 		{
-			if (!PhantomClans.getInstance().living(target) || target.isDead())
+			if (!PhantomWarTargets.playerClanMember(target) || target.isDead())
 			{
 				continue;
 			}

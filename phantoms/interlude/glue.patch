@@ -605,18 +605,18 @@ index d1e7e7f373b634ca50df993aa6b4730ea1f5bb61..429a11cfc0cb36e02b8d40e77851e485
  						stm3.setInt(1, pc.getObjectId()); // Char Id
  						stm3.setLong(2, pc.getOfflineStartTime());
 diff --git a/java/org/l2jmobius/gameserver/entity/actor/Attackable.java b/java/org/l2jmobius/gameserver/entity/actor/Attackable.java
-index f46fa2e052ad73fc3ef28335b3583613897c5ff0..af465292f7cdbcca335d3612a1a358bdf226d74c 100644
+index 60b18434aca24d18b1dee5b439977739b8804b7c..29f91e942a4509ec3a44441f0263c65e8cf9f675 100644
 --- a/java/org/l2jmobius/gameserver/entity/actor/Attackable.java
 +++ b/java/org/l2jmobius/gameserver/entity/actor/Attackable.java
-@@ -66,6 +66,7 @@ import org.l2jmobius.gameserver.managers.CursedWeaponsManager;
- import org.l2jmobius.gameserver.managers.EventDropManager;
+@@ -67,6 +67,7 @@ import org.l2jmobius.gameserver.managers.EventDropManager;
  import org.l2jmobius.gameserver.managers.PcCafePointsManager;
+ import org.l2jmobius.gameserver.managers.RaidLevelAccess;
  import org.l2jmobius.gameserver.managers.WalkingManager;
 +import org.l2jmobius.gameserver.managers.phantom.PhantomHunterManager;
  import org.l2jmobius.gameserver.mechanics.effects.EffectType;
  import org.l2jmobius.gameserver.mechanics.events.EventDispatcher;
  import org.l2jmobius.gameserver.mechanics.events.EventType;
-@@ -1192,7 +1193,9 @@ public class Attackable extends Npc
+@@ -1193,7 +1194,9 @@ public class Attackable extends Npc
  				final ItemTemplate item = ItemData.getInstance().getTemplate(drop.getId());
  				
  				// Check if the autoLoot mode is active.
@@ -628,10 +628,10 @@ index f46fa2e052ad73fc3ef28335b3583613897c5ff0..af465292f7cdbcca335d3612a1a358bd
  					player.doAutoLoot(this, drop); // Give the item(s) to the Player that has killed the Attackable.
  				}
 diff --git a/java/org/l2jmobius/gameserver/entity/actor/Creature.java b/java/org/l2jmobius/gameserver/entity/actor/Creature.java
-index 88f8a809dd3a862cc7dbdf6150c9bdc613e08b89..ec2e8399762bcd23564c6e6345ec69e7116adf72 100644
+index 339a9254b9df37a82437cc40cf64be8dfaa9a0c2..a6f62721c2bcc8014174d91094ba253a6f541743 100644
 --- a/java/org/l2jmobius/gameserver/entity/actor/Creature.java
 +++ b/java/org/l2jmobius/gameserver/entity/actor/Creature.java
-@@ -836,11 +836,12 @@ public abstract class Creature extends WorldObject
+@@ -837,11 +837,12 @@ public abstract class Creature extends WorldObject
  		}
  		
  		// Allow recall of the detached characters.
@@ -646,10 +646,10 @@ index 88f8a809dd3a862cc7dbdf6150c9bdc613e08b89..ec2e8399762bcd23564c6e6345ec69e7
  				onTeleported();
  			}
 diff --git a/java/org/l2jmobius/gameserver/entity/actor/templates/NpcTemplate.java b/java/org/l2jmobius/gameserver/entity/actor/templates/NpcTemplate.java
-index 4deb66748034d7628d58c1c3aae8679cc082f9e9..49fe086a4ff3c570ab1348377dc88bd285acb744 100644
+index 0c1ca7ddff8f7df796f7cce841676675cb8eaf86..b1167786fd83bc420f3de800d5fc92436a16f5c0 100644
 --- a/java/org/l2jmobius/gameserver/entity/actor/templates/NpcTemplate.java
 +++ b/java/org/l2jmobius/gameserver/entity/actor/templates/NpcTemplate.java
-@@ -51,6 +51,7 @@ import org.l2jmobius.gameserver.entity.actor.stat.PlayerStat;
+@@ -52,6 +52,7 @@ import org.l2jmobius.gameserver.entity.actor.stat.PlayerStat;
  import org.l2jmobius.gameserver.entity.item.ItemTemplate;
  import org.l2jmobius.gameserver.entity.item.holders.ItemHolder;
  import org.l2jmobius.gameserver.entity.itemcontainer.Inventory;
@@ -657,7 +657,7 @@ index 4deb66748034d7628d58c1c3aae8679cc082f9e9..49fe086a4ff3c570ab1348377dc88bd2
  import org.l2jmobius.gameserver.mechanics.skill.Skill;
  import org.l2jmobius.gameserver.util.MathUtil;
  import org.l2jmobius.gameserver.util.StatSet;
-@@ -774,7 +775,7 @@ public class NpcTemplate extends CreatureTemplate
+@@ -775,7 +776,7 @@ public class NpcTemplate extends CreatureTemplate
  					}
  					else
  					{
@@ -666,7 +666,7 @@ index 4deb66748034d7628d58c1c3aae8679cc082f9e9..49fe086a4ff3c570ab1348377dc88bd2
  					}
  					
  					// premium chance
-@@ -1141,7 +1142,7 @@ public class NpcTemplate extends CreatureTemplate
+@@ -1142,7 +1143,7 @@ public class NpcTemplate extends CreatureTemplate
  				}
  				else
  				{
@@ -1104,7 +1104,7 @@ index 39a000409f110d77ffa485736337ec76cf0f5ace..8bf58c85ec4bb2a6d991e4973011bc85
  	}
  }
 diff --git a/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTaskManager.java b/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTaskManager.java
-index 1979a8774b439be74bd9834d2fa1d7fc92772316..1f7e6e880a3de45cc91c58f8831972aa07ba9739 100644
+index 49ae70afd63b804cafd3c5b2682e9540398902c9..332fd906b14311f16e80030f6970d830a6593057 100644
 --- a/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTaskManager.java
 +++ b/java/org/l2jmobius/gameserver/taskmanagers/AutoPlayTaskManager.java
 @@ -40,6 +40,7 @@ import org.l2jmobius.gameserver.entity.item.Weapon;
@@ -1115,7 +1115,7 @@ index 1979a8774b439be74bd9834d2fa1d7fc92772316..1f7e6e880a3de45cc91c58f8831972aa
  import org.l2jmobius.gameserver.mechanics.skill.Skill;
  import org.l2jmobius.gameserver.util.LocationUtil;
  
-@@ -94,7 +95,8 @@ public class AutoPlayTaskManager
+@@ -95,7 +96,8 @@ public class AutoPlayTaskManager
  			
  			PLAY: for (Player player : _players)
  			{
@@ -1125,7 +1125,7 @@ index 1979a8774b439be74bd9834d2fa1d7fc92772316..1f7e6e880a3de45cc91c58f8831972aa
  				{
  					stopAutoPlay(player);
  					continue PLAY;
-@@ -266,7 +268,9 @@ public class AutoPlayTaskManager
+@@ -273,7 +275,9 @@ public class AutoPlayTaskManager
  							return true;
  						}
  						// Close item: must be unprotected or owned by player.

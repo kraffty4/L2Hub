@@ -1,0 +1,1058 @@
+L2Hub Interlude: перенос 0192-gm-shop-stub-prices с High Five 0.5.305 (сведение модов 2026-11-15).
+При переносе: Цены — по спискам Interlude (из 710 заглушек цену получили 144: аналог из того же списка в ценах Interlude), кнопка Infinity снята.
+Откат: удалить патч и пересобрать сервер.
+
+diff --git a/dist/game/data/html/merchant/50010-1.htm b/dist/game/data/html/merchant/50010-1.htm
+index 1e3c6b52..86e4f744 100644
+--- a/dist/game/data/html/merchant/50010-1.htm
++++ b/dist/game/data/html/merchant/50010-1.htm
+@@ -11,7 +11,7 @@
+ <table width=260>
+ <tr>
+ <td align=center><button action="bypass -h npc_%objectId%_Chat 14" value="No Grade" width="95" height="21" back="bigbutton_over" fore="bigbutton"></td>
+-<td align=center><button action="bypass -h npc_%objectId%_multisell 50039980" value="Infinity Weapons" width="95" height="21" back="bigbutton_over" fore="bigbutton"></td>
++<td align=center></td>
+ </tr>
+ <tr>
+ <td align=center><button action="bypass -h npc_%objectId%_Chat 15" value="D Grade" width="95" height="21" back="bigbutton_over" fore="bigbutton"></td>
+diff --git a/dist/game/data/lang/ru/data/html/merchant/50010-1.htm b/dist/game/data/lang/ru/data/html/merchant/50010-1.htm
+index 3e2dc66b..104c3fc9 100644
+--- a/dist/game/data/lang/ru/data/html/merchant/50010-1.htm
++++ b/dist/game/data/lang/ru/data/html/merchant/50010-1.htm
+@@ -11,7 +11,7 @@
+ <table width=260>
+ <tr>
+ <td align=center><button action="bypass -h npc_%objectId%_Chat 14" value="Без грейда" width="95" height="21" back="bigbutton_over" fore="bigbutton"></td>
+-<td align=center><button action="bypass -h npc_%objectId%_multisell 50039980" value="Оружие Infinity" width="95" height="21" back="bigbutton_over" fore="bigbutton"></td>
++<td align=center></td>
+ </tr>
+ <tr>
+ <td align=center><button action="bypass -h npc_%objectId%_Chat 15" value="D грейд" width="95" height="21" back="bigbutton_over" fore="bigbutton"></td>
+diff --git a/dist/game/data/multisell/custom/50039001.xml b/dist/game/data/multisell/custom/50039001.xml
+index c614ef04..68160fc3 100644
+--- a/dist/game/data/multisell/custom/50039001.xml
++++ b/dist/game/data/multisell/custom/50039001.xml
+@@ -88,11 +88,11 @@
+ 		<production id="3029" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="54100" />
+ 		<production id="4027" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="54100" />
+ 		<production id="4202" count="1" />
+ 	</item>
+ 	<item>
+@@ -100,7 +100,7 @@
+ 		<production id="4219" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="244000" />
+ 		<production id="6354" count="1" />
+ 	</item>
+ 	<item>
+@@ -108,7 +108,7 @@
+ 		<production id="6717" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="54100" />
+ 		<production id="7821" count="1" />
+ 	</item>
+ </list>
+\ No newline at end of file
+diff --git a/dist/game/data/multisell/custom/50039003.xml b/dist/game/data/multisell/custom/50039003.xml
+index 6ba29561..244b6f2f 100644
+--- a/dist/game/data/multisell/custom/50039003.xml
++++ b/dist/game/data/multisell/custom/50039003.xml
+@@ -44,7 +44,7 @@
+ 		<production id="989" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="54100" />
+ 		<production id="1182" count="1" />
+ 	</item>
+ 	<item>
+@@ -64,7 +64,7 @@
+ 		<production id="2374" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="54100" />
+ 		<production id="3471" count="1" />
+ 	</item>
+ 	<item>
+@@ -72,11 +72,11 @@
+ 		<production id="4220" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="54100" />
+ 		<production id="4665" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="54100" />
+ 		<production id="7818" count="1" />
+ 	</item>
+ </list>
+\ No newline at end of file
+diff --git a/dist/game/data/multisell/custom/50039004.xml b/dist/game/data/multisell/custom/50039004.xml
+index 440cfda1..3cc0040c 100644
+--- a/dist/game/data/multisell/custom/50039004.xml
++++ b/dist/game/data/multisell/custom/50039004.xml
+@@ -24,7 +24,7 @@
+ 		<production id="273" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="54100" />
+ 		<production id="1181" count="1" />
+ 	</item>
+ 	<item>
+@@ -48,7 +48,7 @@
+ 		<production id="6720" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="54100" />
+ 		<production id="7820" count="1" />
+ 	</item>
+ 	<item>
+diff --git a/dist/game/data/multisell/custom/50039005.xml b/dist/game/data/multisell/custom/50039005.xml
+index 6f39c100..4fd71fa6 100644
+--- a/dist/game/data/multisell/custom/50039005.xml
++++ b/dist/game/data/multisell/custom/50039005.xml
+@@ -32,11 +32,11 @@
+ 		<production id="2371" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="54100" />
+ 		<production id="5133" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="54100" />
+ 		<production id="7819" count="1" />
+ 	</item>
+ </list>
+\ No newline at end of file
+diff --git a/dist/game/data/multisell/custom/50039006.xml b/dist/game/data/multisell/custom/50039006.xml
+index 39569b27..d22ce081 100644
+--- a/dist/game/data/multisell/custom/50039006.xml
++++ b/dist/game/data/multisell/custom/50039006.xml
+@@ -24,7 +24,7 @@
+ 		<production id="3026" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="54100" />
+ 		<production id="5817" count="1" />
+ 	</item>
+ </list>
+\ No newline at end of file
+diff --git a/dist/game/data/multisell/custom/50039007.xml b/dist/game/data/multisell/custom/50039007.xml
+index 976beea5..d31bbb28 100644
+--- a/dist/game/data/multisell/custom/50039007.xml
++++ b/dist/game/data/multisell/custom/50039007.xml
+@@ -72,7 +72,7 @@
+ 		<production id="4221" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="54100" />
+ 		<production id="7817" count="1" />
+ 	</item>
+ </list>
+\ No newline at end of file
+diff --git a/dist/game/data/multisell/custom/50039008.xml b/dist/game/data/multisell/custom/50039008.xml
+index c9c675f6..c3a77606 100644
+--- a/dist/game/data/multisell/custom/50039008.xml
++++ b/dist/game/data/multisell/custom/50039008.xml
+@@ -36,7 +36,7 @@
+ 		<production id="2373" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="244000" />
+ 		<production id="6355" count="1" />
+ 	</item>
+ 	<item>
+@@ -48,11 +48,11 @@
+ 		<production id="6718" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="54100" />
+ 		<production id="7058" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="54100" />
+ 		<production id="7816" count="1" />
+ 	</item>
+ </list>
+\ No newline at end of file
+diff --git a/dist/game/data/multisell/custom/50039009.xml b/dist/game/data/multisell/custom/50039009.xml
+index 02938b3f..a9bbe461 100644
+--- a/dist/game/data/multisell/custom/50039009.xml
++++ b/dist/game/data/multisell/custom/50039009.xml
+@@ -52,7 +52,7 @@
+ 		<production id="2499" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="644000" />
+ 		<production id="7826" count="1" />
+ 	</item>
+ </list>
+\ No newline at end of file
+diff --git a/dist/game/data/multisell/custom/50039012.xml b/dist/game/data/multisell/custom/50039012.xml
+index b1d6b727..e5e0f2ca 100644
+--- a/dist/game/data/multisell/custom/50039012.xml
++++ b/dist/game/data/multisell/custom/50039012.xml
+@@ -80,7 +80,7 @@
+ 		<production id="5132" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="644000" />
+ 		<production id="7830" count="1" />
+ 	</item>
+ </list>
+\ No newline at end of file
+diff --git a/dist/game/data/multisell/custom/50039013.xml b/dist/game/data/multisell/custom/50039013.xml
+index c98cf6c3..8e6b0570 100644
+--- a/dist/game/data/multisell/custom/50039013.xml
++++ b/dist/game/data/multisell/custom/50039013.xml
+@@ -32,11 +32,11 @@
+ 		<production id="280" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="644000" />
+ 		<production id="7823" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="644000" />
+ 		<production id="7824" count="1" />
+ 	</item>
+ 	<item>
+diff --git a/dist/game/data/multisell/custom/50039014.xml b/dist/game/data/multisell/custom/50039014.xml
+index aa6522e7..24803738 100644
+--- a/dist/game/data/multisell/custom/50039014.xml
++++ b/dist/game/data/multisell/custom/50039014.xml
+@@ -24,7 +24,7 @@
+ 		<production id="262" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="644000" />
+ 		<production id="7828" count="1" />
+ 	</item>
+ </list>
+\ No newline at end of file
+diff --git a/dist/game/data/multisell/custom/50039015.xml b/dist/game/data/multisell/custom/50039015.xml
+index cc078455..3dde80ea 100644
+--- a/dist/game/data/multisell/custom/50039015.xml
++++ b/dist/game/data/multisell/custom/50039015.xml
+@@ -56,7 +56,7 @@
+ 		<production id="3939" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="644000" />
+ 		<production id="7831" count="1" />
+ 	</item>
+ </list>
+\ No newline at end of file
+diff --git a/dist/game/data/multisell/custom/50039016.xml b/dist/game/data/multisell/custom/50039016.xml
+index e8e969b1..e8d7d442 100644
+--- a/dist/game/data/multisell/custom/50039016.xml
++++ b/dist/game/data/multisell/custom/50039016.xml
+@@ -68,11 +68,11 @@
+ 		<production id="189" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="644000" />
+ 		<production id="7822" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="644000" />
+ 		<production id="7829" count="1" />
+ 	</item>
+ </list>
+\ No newline at end of file
+diff --git a/dist/game/data/multisell/custom/50039017.xml b/dist/game/data/multisell/custom/50039017.xml
+index 49a8f58d..0fe2bb0f 100644
+--- a/dist/game/data/multisell/custom/50039017.xml
++++ b/dist/game/data/multisell/custom/50039017.xml
+@@ -44,7 +44,7 @@
+ 		<production id="749" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="644000" />
+ 		<production id="7825" count="1" />
+ 	</item>
+ </list>
+\ No newline at end of file
+diff --git a/dist/game/data/multisell/custom/50039905.xml b/dist/game/data/multisell/custom/50039905.xml
+index 0f84d846..0abc9d9f 100644
+--- a/dist/game/data/multisell/custom/50039905.xml
++++ b/dist/game/data/multisell/custom/50039905.xml
+@@ -4,7 +4,7 @@
+ 		<npc>50010</npc>
+ 	</npcs>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="500000" />
+ 		<production id="8618" count="1" />
+ 	</item>
+ 	<item>
+diff --git a/dist/game/data/multisell/custom/50039919.xml b/dist/game/data/multisell/custom/50039919.xml
+index 74d1e609..c8b44a64 100644
+--- a/dist/game/data/multisell/custom/50039919.xml
++++ b/dist/game/data/multisell/custom/50039919.xml
+@@ -40,7 +40,7 @@
+ 		<production id="8183" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="2000000" />
+ 		<production id="6841" count="1" />
+ 	</item>
+ </list>
+\ No newline at end of file
+diff --git a/dist/game/data/multisell/custom/50039920.xml b/dist/game/data/multisell/custom/50039920.xml
+index 60c74aa2..6b365ec3 100644
+--- a/dist/game/data/multisell/custom/50039920.xml
++++ b/dist/game/data/multisell/custom/50039920.xml
+@@ -28,11 +28,11 @@
+ 		<production id="6846" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="500000" />
+ 		<production id="7059" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="500000" />
+ 		<production id="7060" count="1" />
+ 	</item>
+ 	<item>
+@@ -52,7 +52,7 @@
+ 		<production id="7683" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="500000" />
+ 		<production id="7694" count="1" />
+ 	</item>
+ 	<item>
+@@ -64,55 +64,55 @@
+ 		<production id="7696" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="2000000" />
+ 		<production id="7836" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="500000" />
+ 		<production id="7837" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="500000" />
+ 		<production id="7839" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="500000" />
+ 		<production id="7840" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="500000" />
+ 		<production id="7841" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="500000" />
+ 		<production id="7842" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="500000" />
+ 		<production id="7843" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="500000" />
+ 		<production id="7844" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="500000" />
+ 		<production id="7845" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="500000" />
+ 		<production id="7846" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="500000" />
+ 		<production id="7847" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="500000" />
+ 		<production id="7848" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="500000" />
+ 		<production id="7849" count="1" />
+ 	</item>
+ 	<item>
+@@ -148,7 +148,7 @@
+ 		<production id="8186" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="500000" />
+ 		<production id="8187" count="1" />
+ 	</item>
+ 	<item>
+@@ -160,19 +160,19 @@
+ 		<production id="8189" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="500000" />
+ 		<production id="8552" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="2000000" />
+ 		<production id="8557" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="500000" />
+ 		<production id="8558" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="500000" />
+ 		<production id="8559" count="1" />
+ 	</item>
+ 	<item>
+@@ -200,7 +200,7 @@
+ 		<production id="8565" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="500000" />
+ 		<production id="8566" count="1" />
+ 	</item>
+ 	<item>
+@@ -216,23 +216,23 @@
+ 		<production id="8569" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="500000" />
+ 		<production id="8660" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="500000" />
+ 		<production id="8661" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="500000" />
+ 		<production id="8662" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="2000000" />
+ 		<production id="8910" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="500000" />
+ 		<production id="8911" count="1" />
+ 	</item>
+ 	<item>
+@@ -264,7 +264,7 @@
+ 		<production id="8918" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="2000000" />
+ 		<production id="8919" count="1" />
+ 	</item>
+ 	<item>
+@@ -284,51 +284,51 @@
+ 		<production id="8923" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="2000000" />
+ 		<production id="8936" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="25000" />
+ 		<production id="8947" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="25000" />
+ 		<production id="8948" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="25000" />
+ 		<production id="8949" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="100000" />
+ 		<production id="8950" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="100000" />
+ 		<production id="8951" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="2000000" />
+ 		<production id="9138" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="500000" />
+ 		<production id="9145" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="500000" />
+ 		<production id="9158" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="500000" />
+ 		<production id="9159" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="2000000" />
+ 		<production id="9160" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="2000000" />
+ 		<production id="9208" count="1" />
+ 	</item>
+ </list>
+\ No newline at end of file
+diff --git a/dist/game/data/multisell/custom/50039925.xml b/dist/game/data/multisell/custom/50039925.xml
+index 267693da..481249df 100644
+--- a/dist/game/data/multisell/custom/50039925.xml
++++ b/dist/game/data/multisell/custom/50039925.xml
+@@ -192,7 +192,7 @@
+ 		<production id="5802" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="54100" />
+ 		<production id="5817" count="1" />
+ 	</item>
+ </list>
+\ No newline at end of file
+diff --git a/dist/game/data/multisell/custom/50039927.xml b/dist/game/data/multisell/custom/50039927.xml
+index 6f138c7e..4f029e4b 100644
+--- a/dist/game/data/multisell/custom/50039927.xml
++++ b/dist/game/data/multisell/custom/50039927.xml
+@@ -4,171 +4,171 @@
+ 		<npc>50010</npc>
+ 	</npcs>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="10000" />
+ 		<production id="4629" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="16000" />
+ 		<production id="4630" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="25600" />
+ 		<production id="4631" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="41000" />
+ 		<production id="4632" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="65500" />
+ 		<production id="4633" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="105000" />
+ 		<production id="4634" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="168000" />
+ 		<production id="4635" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="268000" />
+ 		<production id="4636" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="429000" />
+ 		<production id="4637" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="687000" />
+ 		<production id="4638" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="1100000" />
+ 		<production id="4639" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="1760000" />
+ 		<production id="5577" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="2810000" />
+ 		<production id="5580" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="4500000" />
+ 		<production id="5908" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="10000" />
+ 		<production id="4640" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="16000" />
+ 		<production id="4641" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="25600" />
+ 		<production id="4642" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="41000" />
+ 		<production id="4643" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="65500" />
+ 		<production id="4644" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="105000" />
+ 		<production id="4645" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="168000" />
+ 		<production id="4646" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="268000" />
+ 		<production id="4647" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="429000" />
+ 		<production id="4648" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="687000" />
+ 		<production id="4649" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="1100000" />
+ 		<production id="4650" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="1760000" />
+ 		<production id="5578" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="2810000" />
+ 		<production id="5581" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="4500000" />
+ 		<production id="5911" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="10000" />
+ 		<production id="4651" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="16000" />
+ 		<production id="4652" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="25600" />
+ 		<production id="4653" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="41000" />
+ 		<production id="4654" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="65500" />
+ 		<production id="4655" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="105000" />
+ 		<production id="4656" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="168000" />
+ 		<production id="4657" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="268000" />
+ 		<production id="4658" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="429000" />
+ 		<production id="4659" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="687000" />
+ 		<production id="4660" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="1100000" />
+ 		<production id="4661" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="1760000" />
+ 		<production id="5579" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="2810000" />
+ 		<production id="5582" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="4500000" />
+ 		<production id="5914" count="1" />
+ 	</item>
+ </list>
+\ No newline at end of file
+diff --git a/dist/game/data/multisell/custom/50039928.xml b/dist/game/data/multisell/custom/50039928.xml
+index 1579ef60..cce21079 100644
+--- a/dist/game/data/multisell/custom/50039928.xml
++++ b/dist/game/data/multisell/custom/50039928.xml
+@@ -56,7 +56,7 @@
+ 		<production id="5592" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="10000" />
+ 		<production id="1073" count="1" />
+ 	</item>
+ 	<item>
+diff --git a/dist/game/data/multisell/custom/50039931.xml b/dist/game/data/multisell/custom/50039931.xml
+index 2a56dba8..98ed7058 100644
+--- a/dist/game/data/multisell/custom/50039931.xml
++++ b/dist/game/data/multisell/custom/50039931.xml
+@@ -20,11 +20,11 @@
+ 		<production id="6576" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="1800000" />
+ 		<production id="957" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="200000" />
+ 		<production id="958" count="1" />
+ 	</item>
+ 	<item>
+@@ -44,11 +44,11 @@
+ 		<production id="6574" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="6000000" />
+ 		<production id="953" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="700000" />
+ 		<production id="954" count="1" />
+ 	</item>
+ 	<item>
+@@ -68,11 +68,11 @@
+ 		<production id="6572" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="14000000" />
+ 		<production id="949" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="1500000" />
+ 		<production id="950" count="1" />
+ 	</item>
+ 	<item>
+@@ -92,11 +92,11 @@
+ 		<production id="6570" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="30000000" />
+ 		<production id="731" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="3600000" />
+ 		<production id="732" count="1" />
+ 	</item>
+ 	<item>
+@@ -116,11 +116,11 @@
+ 		<production id="6578" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="60000000" />
+ 		<production id="961" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="9000000" />
+ 		<production id="962" count="1" />
+ 	</item>
+ </list>
+\ No newline at end of file
+diff --git a/dist/game/data/multisell/custom/50039945.xml b/dist/game/data/multisell/custom/50039945.xml
+index c92814d4..f52f6164 100644
+--- a/dist/game/data/multisell/custom/50039945.xml
++++ b/dist/game/data/multisell/custom/50039945.xml
+@@ -4,43 +4,43 @@
+ 		<npc>50010</npc>
+ 	</npcs>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="5000" />
+ 		<production id="9146" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="5000" />
+ 		<production id="9147" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="5000" />
+ 		<production id="9148" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="5000" />
+ 		<production id="9149" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="5000" />
+ 		<production id="9150" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="5000" />
+ 		<production id="9151" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="5000" />
+ 		<production id="9152" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="5000" />
+ 		<production id="9153" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="5000" />
+ 		<production id="9154" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="5000" />
+ 		<production id="9155" count="1" />
+ 	</item>
+ </list>
+\ No newline at end of file
+diff --git a/dist/game/data/multisell/custom/50039950.xml b/dist/game/data/multisell/custom/50039950.xml
+index 2e1c0b73..82d9654c 100644
+--- a/dist/game/data/multisell/custom/50039950.xml
++++ b/dist/game/data/multisell/custom/50039950.xml
+@@ -44,7 +44,7 @@
+ 		<production id="6916" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="20000" />
+ 		<production id="7609" count="1" />
+ 	</item>
+ 	<item>
+@@ -100,19 +100,19 @@
+ 		<production id="6527" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="200" />
+ 		<production id="7610" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="200" />
+ 		<production id="7611" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="200" />
+ 		<production id="7612" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="200" />
+ 		<production id="7613" count="1" />
+ 	</item>
+ 	<item>
+diff --git a/dist/game/data/multisell/custom/50039977.xml b/dist/game/data/multisell/custom/50039977.xml
+index aab63fb7..84c8106e 100644
+--- a/dist/game/data/multisell/custom/50039977.xml
++++ b/dist/game/data/multisell/custom/50039977.xml
+@@ -4,11 +4,11 @@
+ 		<npc>50010</npc>
+ 	</npcs>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="1000" />
+ 		<production id="9142" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="1000" />
+ 		<production id="9143" count="1" />
+ 	</item>
+ </list>
+\ No newline at end of file
+diff --git a/dist/game/data/multisell/custom/50039979.xml b/dist/game/data/multisell/custom/50039979.xml
+index 7ee68ce1..e8027d85 100644
+--- a/dist/game/data/multisell/custom/50039979.xml
++++ b/dist/game/data/multisell/custom/50039979.xml
+@@ -28,7 +28,7 @@
+ 		<production id="1345" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="1000" />
+ 		<production id="8192" count="1" />
+ 	</item>
+ </list>
+\ No newline at end of file
+diff --git a/dist/game/data/multisell/custom/50060046.xml b/dist/game/data/multisell/custom/50060046.xml
+index 37997dd7..eddaf385 100644
+--- a/dist/game/data/multisell/custom/50060046.xml
++++ b/dist/game/data/multisell/custom/50060046.xml
+@@ -124,15 +124,15 @@
+ 		<production id="3022" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="6330" />
+ 		<production id="3023" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="6330" />
+ 		<production id="3024" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="6330" />
+ 		<production id="3025" count="1" />
+ 	</item>
+ 	<item>
+@@ -156,7 +156,7 @@
+ 		<production id="3036" count="1" />
+ 	</item>
+ 	<item>
+-		<ingredient id="57" count="56000000" />
++		<ingredient id="57" count="6330" />
+ 		<production id="3838" count="1" />
+ 	</item>
+ 	<item>

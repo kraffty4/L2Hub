@@ -176,6 +176,9 @@ def brain_state(p: dict) -> dict:
                 info = json.loads(r.read().decode("utf-8"))
         except (OSError, ValueError):
             info = {}
+        # На общем порту ответили мозги другой хроники (аудит 2026-11-09): это не наши.
+        if info.get("id") not in (None, p["id"]):
+            info = {}
     st = "on" if info else ("starting" if proc else "off")
     return {"state": st, "port": port, **_proc_info(proc), **{k: v for k, v in info.items() if k != "ok"}}
 

@@ -1,0 +1,962 @@
+L2Hub Interlude: перенос 0402-player-tools-feedback с High Five 0.5.305 (сведение модов 2026-11-15).
+При переносе: Только общее: минуты записи и боя TvT, CtF и Deathmatch (L2HubEvents.ini), «повержен» по-русски, разовая раскладка служебной панели макросов; Shortcut у Interlude без characterType. Хуки режима x10 (кошелёк, банки x10, адена всегда, фарм-споты, объявления x10) не перенесены: режима x10 у Interlude нет.
+Откат: удалить патч и пересобрать сервер.
+
+diff --git a/dist/game/config/Custom/L2HubEvents.ini b/dist/game/config/Custom/L2HubEvents.ini
+index 9c5b27a6..d3a775c6 100644
+--- a/dist/game/config/Custom/L2HubEvents.ini
++++ b/dist/game/config/Custom/L2HubEvents.ini
+@@ -86,7 +86,7 @@ TvTReservedSlots = 0
+ 
+ # Длительность боя, минуты (от 1 до 120).
+ # Default: 20
+-TvTFightMinutes = 20
++TvTFightMinutes = 7
+ 
+ # Расписание — крон «минуты часы день месяц день_недели», как schedule у Mobius; пусто — не запускать.
+ # Пока идёт один PvP-ивент (менеджер в мире), следующий не стартует. Регистрация 10 мин, бой 20 мин (у TvT — TvTFightMinutes; Deathmatch — 1 и 3).
+@@ -113,3 +113,11 @@ ElpiesMinutes = 10
+ # Старт по расписанию только при живом игроке в мире (с клиентом; фантомы и офлайн-торговцы не считаются).
+ # Default: True
+ ElpiesOnlyWithPlayers = True
++
++# Интервалы записи и длительность PvP-арен.
++# Default: 7
++CtFFightMinutes = 7
++# Default: 7
++DeathmatchFightMinutes = 7
++# Default: 10
++PvpRegistrationMinutes = 10
+diff --git a/dist/game/data/scripts/custom/events/CaptureTheFlag/CtF.java b/dist/game/data/scripts/custom/events/CaptureTheFlag/CtF.java
+index fc85fd7f..883d99ea 100644
+--- a/dist/game/data/scripts/custom/events/CaptureTheFlag/CtF.java
++++ b/dist/game/data/scripts/custom/events/CaptureTheFlag/CtF.java
+@@ -169,9 +169,9 @@ public class CtF extends Event
+ 	private static final ZoneType RED_PEACE_ZONE = ZoneManager.getInstance().getZoneByName("colosseum_peace2");
+ 	
+ 	// Settings
+-	private static final int REGISTRATION_TIME = 10; // Minutes
++	private static final int REGISTRATION_TIME = custom.L2HubPvpEvents.L2HubPvpEvents.tvt("PvpRegistrationMinutes", 10, 1, 30); // Minutes
+ 	private static final int WAIT_TIME = 1; // Minutes
+-	private static final int FIGHT_TIME = 20; // Minutes
++	private static final int FIGHT_TIME = custom.L2HubPvpEvents.L2HubPvpEvents.tvt("CtFFightMinutes", 7, 1, 30); // Minutes
+ 	private static final int INACTIVITY_TIME = 2; // Minutes
+ 	private static final int MINIMUM_PARTICIPANT_LEVEL = custom.L2HubPvpEvents.L2HubPvpEvents.minLevel(76); // L2Hub: PvpMinLevel
+ 	private static final int MAXIMUM_PARTICIPANT_LEVEL = 200;
+diff --git a/dist/game/data/scripts/custom/events/Deathmatch/Deathmatch.java b/dist/game/data/scripts/custom/events/Deathmatch/Deathmatch.java
+index c9f90ca3..16fa8b68 100644
+--- a/dist/game/data/scripts/custom/events/Deathmatch/Deathmatch.java
++++ b/dist/game/data/scripts/custom/events/Deathmatch/Deathmatch.java
+@@ -109,9 +109,9 @@ public class Deathmatch extends Event
+ 	private static final ZoneForm SPAWN_3 = ZoneManager.getInstance().getZoneByName("colosseum_battle3").getZone();
+ 	
+ 	// Settings
+-	private static final int REGISTRATION_TIME = 1; // Minutes
++	private static final int REGISTRATION_TIME = custom.L2HubPvpEvents.L2HubPvpEvents.tvt("PvpRegistrationMinutes", 10, 1, 30); // Minutes
+ 	private static final int WAIT_TIME = 20; // Seconds
+-	private static final int FIGHT_TIME = 3; // Minutes
++	private static final int FIGHT_TIME = custom.L2HubPvpEvents.L2HubPvpEvents.tvt("DeathmatchFightMinutes", 7, 1, 30); // Minutes
+ 	private static final int INACTIVITY_TIME = 2; // Minutes
+ 	private static final int MINIMUM_PARTICIPANT_LEVEL = custom.L2HubPvpEvents.L2HubPvpEvents.minLevel(76); // L2Hub: PvpMinLevel
+ 	private static final int MAXIMUM_PARTICIPANT_LEVEL = 200;
+diff --git a/dist/game/data/scripts/custom/events/TeamVsTeam/TvT.java b/dist/game/data/scripts/custom/events/TeamVsTeam/TvT.java
+index fed63d38..d106a8ce 100644
+--- a/dist/game/data/scripts/custom/events/TeamVsTeam/TvT.java
++++ b/dist/game/data/scripts/custom/events/TeamVsTeam/TvT.java
+@@ -130,7 +130,7 @@ public class TvT extends Event
+ 	private static final ZoneType RED_PEACE_ZONE = ZoneManager.getInstance().getZoneByName("colosseum_peace2");
+ 	
+ 	// Settings
+-	private static final int REGISTRATION_TIME = 10; // Minutes
++	private static final int REGISTRATION_TIME = custom.L2HubPvpEvents.L2HubPvpEvents.tvt("PvpRegistrationMinutes", 10, 1, 30); // Minutes
+ 	private static final int WAIT_TIME = 1; // Minutes
+ 	private static final int FIGHT_TIME = custom.L2HubPvpEvents.L2HubPvpEvents.tvt("TvTFightMinutes", 20, 1, 120); // L2Hub: минуты
+ 	private static final int INACTIVITY_TIME = 2; // Minutes
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+index 9aab5e6c..d7dec3de 100644
+--- a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+@@ -431,12 +431,12 @@ public class L2HubBoard implements IParseBoardHandler
+ 	 */
+ 	private static String medals(Player player)
+ 	{
+-		final int plain = custom.L2HubPvpEvents.L2HubPvpEvents.rewardMedals(20, false);
++		final int plain = custom.L2HubPvpEvents.L2HubPvpEvents.rewardMedals(custom.L2HubPvpEvents.L2HubPvpEvents.tvt("TvTFightMinutes", 7, 1, 30), false);
+ 		if (plain <= 0)
+ 		{
+ 			return "";
+ 		}
+-		return "<br><br>" + tr("Медали у тебя: ") + "<font color=\"LEVEL\">" + player.getInventory().getInventoryItemCount(custom.L2HubPvpEvents.L2HubPvpEvents.MEDAL_ITEM, -1) + "</font><br1>" + tr("За 20 минут боя: ") + plain + tr(", победителю ") + custom.L2HubPvpEvents.L2HubPvpEvents.rewardMedals(20, true) + tr(". Падают и с чемпионов.") + "<br1>" + button(tr("Обмен медалей"), EVENTS + " medals", 150);
++		return "<br><br>" + tr("Медали у тебя: ") + "<font color=\"LEVEL\">" + player.getInventory().getInventoryItemCount(custom.L2HubPvpEvents.L2HubPvpEvents.MEDAL_ITEM, -1) + "</font><br1>" + ("en".equals(org.l2jmobius.gameserver.config.custom.L2HubWorldConfig.LANGUAGE) ? "For a full PvP fight: " : "За полный PvP-бой: ") + plain + tr(", победителю ") + custom.L2HubPvpEvents.L2HubPvpEvents.rewardMedals(custom.L2HubPvpEvents.L2HubPvpEvents.tvt("TvTFightMinutes", 7, 1, 30), true) + tr(". Падают и с чемпионов.") + "<br1>" + button(tr("Обмен медалей"), EVENTS + " medals", 150);
+ 	}
+ 
+ 	/**
+diff --git a/java/org/l2jmobius/gameserver/data/xml/InitialShortcutData.java b/java/org/l2jmobius/gameserver/data/xml/InitialShortcutData.java
+index 463741ea..97bfd6f9 100644
+--- a/java/org/l2jmobius/gameserver/data/xml/InitialShortcutData.java
++++ b/java/org/l2jmobius/gameserver/data/xml/InitialShortcutData.java
+@@ -1,407 +1,431 @@
+-/*
+- * Copyright (c) 2013 L2jMobius
+- * 
+- * Permission is hereby granted, free of charge, to any person obtaining a copy
+- * of this software and associated documentation files (the "Software"), to deal
+- * in the Software without restriction, including without limitation the rights
+- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+- * copies of the Software, and to permit persons to whom the Software is
+- * furnished to do so, subject to the following conditions:
+- * 
+- * The above copyright notice and this permission notice shall be
+- * included in all copies or substantial portions of the Software.
+- * 
+- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+- * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+- * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+- */
+-package org.l2jmobius.gameserver.data.xml;
+-
+-import java.io.File;
+-import java.util.ArrayList;
+-import java.util.EnumMap;
+-import java.util.HashMap;
+-import java.util.List;
+-import java.util.Map;
+-import java.util.logging.Logger;
+-
+-import org.w3c.dom.Document;
+-import org.w3c.dom.NamedNodeMap;
+-import org.w3c.dom.Node;
+-
+-import org.l2jmobius.commons.util.IXmlReader;
+-import org.l2jmobius.gameserver.entity.actor.Player;
+-import org.l2jmobius.gameserver.entity.actor.enums.player.MacroType;
+-import org.l2jmobius.gameserver.entity.actor.enums.player.PlayerClass;
+-import org.l2jmobius.gameserver.entity.actor.enums.player.ShortcutType;
+-import org.l2jmobius.gameserver.entity.actor.holders.player.Macro;
+-import org.l2jmobius.gameserver.entity.actor.holders.player.MacroCmd;
+-import org.l2jmobius.gameserver.entity.actor.holders.player.Shortcut;
+-import org.l2jmobius.gameserver.entity.item.instance.Item;
+-import org.l2jmobius.gameserver.handler.VoicedCommandHandler;
+-import org.l2jmobius.gameserver.network.serverpackets.ShortcutRegister;
+-
+-/**
+- * Manages initial shortcut and macro configurations for new player characters.<br>
+- * Loads configuration data from XML files and provides shortcuts based on player class.
+- * <ul>
+- * <li>Class-specific shortcut configurations for different player classes.</li>
+- * <li>Global shortcut settings available to all players.</li>
+- * <li>Macro preset definitions with commands and parameters.</li>
+- * <li>Automatic shortcut registration for skills, items, and macros.</li>
+- * </ul>
+- * @author Zoey76, Mobius
+- */
+-public class InitialShortcutData implements IXmlReader
+-{
+-	private static final Logger LOGGER = Logger.getLogger(InitialShortcutData.class.getName());
+-	
+-	// L2Hub: какие макросы общего списка персонажу уже выдавали.
+-	public static final String MACROS_GIVEN = "L2HubMacrosGiven";
+-	private static final int MAX_MACROS = 48;
+-	
+-	// Shortcut Data Storage.
+-	private final Map<PlayerClass, List<Shortcut>> _initialShortcutData = new EnumMap<>(PlayerClass.class);
+-	private final List<Shortcut> _initialGlobalShortcutList = new ArrayList<>();
+-	
+-	// Macro Configuration.
+-	private final Map<Integer, Macro> _macroPresets = new HashMap<>();
+-	
+-	protected InitialShortcutData()
+-	{
+-		load();
+-	}
+-	
+-	@Override
+-	public void load()
+-	{
+-		_initialShortcutData.clear();
+-		_initialGlobalShortcutList.clear();
+-		
+-		parseDatapackFile("data/stats/players/initialShortcuts.xml");
+-		
+-		LOGGER.info(getClass().getSimpleName() + ": Loaded " + _initialGlobalShortcutList.size() + " initial global shortcut data.");
+-		LOGGER.info(getClass().getSimpleName() + ": Loaded " + _initialShortcutData.size() + " initial shortcut data.");
+-		LOGGER.info(getClass().getSimpleName() + ": Loaded " + _macroPresets.size() + " macro presets.");
+-	}
+-	
+-	@Override
+-	public void parseDocument(Document document, File file)
+-	{
+-		for (Node node = document.getFirstChild(); node != null; node = node.getNextSibling())
+-		{
+-			if ("list".equals(node.getNodeName()))
+-			{
+-				for (Node dataNode = node.getFirstChild(); dataNode != null; dataNode = dataNode.getNextSibling())
+-				{
+-					switch (dataNode.getNodeName())
+-					{
+-						case "shortcuts":
+-						{
+-							NamedNodeMap attributes = dataNode.getAttributes();
+-							final Node classIdNode = attributes.getNamedItem("classId");
+-							final List<Shortcut> shortcutList = new ArrayList<>();
+-							
+-							for (Node childNode = dataNode.getFirstChild(); childNode != null; childNode = childNode.getNextSibling())
+-							{
+-								if ("page".equals(childNode.getNodeName()))
+-								{
+-									attributes = childNode.getAttributes();
+-									final int pageId = parseInteger(attributes, "pageId");
+-									for (Node slotNode = childNode.getFirstChild(); slotNode != null; slotNode = slotNode.getNextSibling())
+-									{
+-										if ("slot".equals(slotNode.getNodeName()))
+-										{
+-											final NamedNodeMap slotAttributes = slotNode.getAttributes();
+-											final int slotId = parseInteger(slotAttributes, "slotId");
+-											final ShortcutType shortcutType = parseEnum(slotAttributes, ShortcutType.class, "shortcutType");
+-											final int shortcutId = parseInteger(slotAttributes, "shortcutId");
+-											final int shortcutLevel = parseInteger(slotAttributes, "shortcutLevel", 0);
+-											shortcutList.add(new Shortcut(slotId, pageId, shortcutType, shortcutId, shortcutLevel));
+-										}
+-									}
+-								}
+-							}
+-							
+-							if (classIdNode != null)
+-							{
+-								_initialShortcutData.put(PlayerClass.getPlayerClass(Integer.parseInt(classIdNode.getNodeValue())), shortcutList);
+-							}
+-							else
+-							{
+-								_initialGlobalShortcutList.addAll(shortcutList);
+-							}
+-							break;
+-						}
+-						case "macros":
+-						{
+-							for (Node childNode = dataNode.getFirstChild(); childNode != null; childNode = childNode.getNextSibling())
+-							{
+-								if ("macro".equals(childNode.getNodeName()))
+-								{
+-									NamedNodeMap attributes = childNode.getAttributes();
+-									if (!parseBoolean(attributes, "enabled", true))
+-									{
+-										continue;
+-									}
+-									
+-									final int macroId = parseInteger(attributes, "macroId");
+-									final int icon = parseInteger(attributes, "icon");
+-									final String name = parseString(attributes, "name");
+-									final String description = parseString(attributes, "description");
+-									final String acronym = parseString(attributes, "acronym");
+-									final List<MacroCmd> commands = new ArrayList<>(1);
+-									int entryIndex = 0;
+-									
+-									for (Node commandNode = childNode.getFirstChild(); commandNode != null; commandNode = commandNode.getNextSibling())
+-									{
+-										if ("command".equals(commandNode.getNodeName()))
+-										{
+-											attributes = commandNode.getAttributes();
+-											final MacroType type = parseEnum(attributes, MacroType.class, "type");
+-											int parameterOne = 0;
+-											int parameterTwo = 0;
+-											final String commandText = commandNode.getTextContent();
+-											
+-											switch (type)
+-											{
+-												case SKILL:
+-												{
+-													parameterOne = parseInteger(attributes, "skillId"); // Skill ID.
+-													parameterTwo = parseInteger(attributes, "skillLevel", 0); // Skill level.
+-													break;
+-												}
+-												case ACTION:
+-												{
+-													parameterOne = parseInteger(attributes, "actionId"); // Not handled by client.
+-													break;
+-												}
+-												case TEXT:
+-												{
+-													// Text commands have no numeric parameters.
+-													break;
+-												}
+-												case SHORTCUT:
+-												{
+-													parameterOne = parseInteger(attributes, "page"); // Page.
+-													parameterTwo = parseInteger(attributes, "slot", 0); // Slot.
+-													break;
+-												}
+-												case ITEM:
+-												{
+-													parameterOne = parseInteger(attributes, "itemId"); // Not handled by client.
+-													break;
+-												}
+-												case DELAY:
+-												{
+-													parameterOne = parseInteger(attributes, "delay"); // Delay in seconds.
+-													break;
+-												}
+-											}
+-											
+-											commands.add(new MacroCmd(entryIndex++, type, parameterOne, parameterTwo, commandText));
+-										}
+-									}
+-									
+-									_macroPresets.put(macroId, new Macro(macroId, icon, name, description, acronym, commands));
+-								}
+-							}
+-							break;
+-						}
+-					}
+-				}
+-			}
+-		}
+-	}
+-	
+-	/**
+-	 * Registers all available shortcuts for the specified player including global and class-specific shortcuts.<br>
+-	 * Validates item availability, skill knowledge, and macro definitions before registration.
+-	 * @param player the {@link Player} for whom to register the shortcuts.
+-	 */
+-	public void registerAllShortcuts(Player player)
+-	{
+-		if (player == null)
+-		{
+-			return;
+-		}
+-		
+-		// Register global shortcuts.
+-		for (Shortcut shortcut : _initialGlobalShortcutList)
+-		{
+-			int shortcutId = shortcut.getId();
+-			switch (shortcut.getType())
+-			{
+-				case ITEM:
+-				{
+-					final Item item = player.getInventory().getItemByItemId(shortcutId);
+-					if (item == null)
+-					{
+-						continue;
+-					}
+-					
+-					shortcutId = item.getObjectId();
+-					break;
+-				}
+-				case SKILL:
+-				{
+-					if (!player.getSkills().containsKey(shortcutId))
+-					{
+-						continue;
+-					}
+-					break;
+-				}
+-				case MACRO:
+-				{
+-					final Macro macro = _macroPresets.get(shortcutId);
+-					if ((macro == null) || !isAvailable(macro))
+-					{
+-						continue;
+-					}
+-					
+-					player.registerMacro(macro);
+-					break;
+-				}
+-			}
+-			
+-			// Register shortcut.
+-			final Shortcut newShortcut = new Shortcut(shortcut.getSlot(), shortcut.getPage(), shortcut.getType(), shortcutId, shortcut.getLevel());
+-			player.sendPacket(new ShortcutRegister(newShortcut));
+-			player.registerShortcut(newShortcut);
+-		}
+-		
+-		// Register class specific shortcuts.
+-		if (_initialShortcutData.containsKey(player.getPlayerClass()))
+-		{
+-			for (Shortcut shortcut : _initialShortcutData.get(player.getPlayerClass()))
+-			{
+-				int shortcutId = shortcut.getId();
+-				switch (shortcut.getType())
+-				{
+-					case ITEM:
+-					{
+-						final Item item = player.getInventory().getItemByItemId(shortcutId);
+-						if (item == null)
+-						{
+-							continue;
+-						}
+-						
+-						shortcutId = item.getObjectId();
+-						break;
+-					}
+-					case SKILL:
+-					{
+-						if (!player.getSkills().containsKey(shortcut.getId()))
+-						{
+-							continue;
+-						}
+-						break;
+-					}
+-					case MACRO:
+-					{
+-						final Macro macro = _macroPresets.get(shortcutId);
+-						if (macro == null)
+-						{
+-							continue;
+-						}
+-						
+-						player.registerMacro(macro);
+-						break;
+-					}
+-				}
+-				
+-				// Register shortcut.
+-				final Shortcut newShortcut = new Shortcut(shortcut.getSlot(), shortcut.getPage(), shortcut.getType(), shortcutId, shortcut.getLevel());
+-				player.sendPacket(new ShortcutRegister(newShortcut));
+-				player.registerShortcut(newShortcut);
+-			}
+-		}
+-	}
+-	
+-	/**
+-	 * L2Hub: макросы общего списка.
+-	 * @return макросы, у которых есть ярлык на панелях
+-	 */
+-	public List<Macro> getGlobalMacros()
+-	{
+-		final List<Macro> macros = new ArrayList<>();
+-		for (Shortcut shortcut : _initialGlobalShortcutList)
+-		{
+-			final Macro macro = shortcut.getType() == ShortcutType.MACRO ? _macroPresets.get(shortcut.getId()) : null;
+-			if (macro != null)
+-			{
+-				macros.add(macro);
+-			}
+-		}
+-		
+-		return macros;
+-	}
+-	
+-	/**
+-	 * L2Hub: есть ли на сервере команды макроса. Команда без обработчика ушла бы текстом в общий чат, а автобой, банк и другие включаются в настройках.
+-	 * @param macro макрос
+-	 * @return {@code true}, если все его команды работают
+-	 */
+-	public boolean isAvailable(Macro macro)
+-	{
+-		for (MacroCmd command : macro.getCommands())
+-		{
+-			if ((command.getType() == MacroType.TEXT) && command.getCmd().startsWith(".") && (VoicedCommandHandler.getInstance().getHandler(command.getCmd().substring(1)) == null))
+-			{
+-				return false;
+-			}
+-		}
+-		
+-		return true;
+-	}
+-	
+-	/**
+-	 * L2Hub: выдать макросы общего списка, которых у персонажа ещё не было: он создан раньше или команда тогда была выключена.<br>
+-	 * Только в список Alt+R: ярлыков на панели не ставит, у персонажа уже своя раскладка (места на панелях макросы получают только у нового персонажа). Выданное помнит переменная: удалённое игроком не возвращается.
+-	 * @param player персонаж
+-	 */
+-	public void giveMissingMacros(Player player)
+-	{
+-		final List<Integer> given = new ArrayList<>(player.getVariables().getIntegerList(MACROS_GIVEN));
+-		final int before = given.size();
+-		for (Shortcut shortcut : _initialGlobalShortcutList)
+-		{
+-			final Integer id = shortcut.getId();
+-			final Macro macro = shortcut.getType() == ShortcutType.MACRO ? _macroPresets.get(id) : null;
+-			if ((macro == null) || given.contains(id) || !isAvailable(macro))
+-			{
+-				continue;
+-			}
+-			
+-			if (!player.getMacros().getAllMacroses().containsKey(id))
+-			{
+-				if (player.getMacros().getAllMacroses().size() >= MAX_MACROS)
+-				{
+-					break;
+-				}
+-				
+-				player.registerMacro(macro);
+-			}
+-			
+-			given.add(id);
+-		}
+-		
+-		if (given.size() != before)
+-		{
+-			player.getVariables().setIntegerList(MACROS_GIVEN, given);
+-		}
+-	}
+-	
+-	public static InitialShortcutData getInstance()
+-	{
+-		return SingletonHolder.INSTANCE;
+-	}
+-	
+-	private static class SingletonHolder
+-	{
+-		protected static final InitialShortcutData INSTANCE = new InitialShortcutData();
+-	}
+-}
++/*
++ * Copyright (c) 2013 L2jMobius
++ * 
++ * Permission is hereby granted, free of charge, to any person obtaining a copy
++ * of this software and associated documentation files (the "Software"), to deal
++ * in the Software without restriction, including without limitation the rights
++ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
++ * copies of the Software, and to permit persons to whom the Software is
++ * furnished to do so, subject to the following conditions:
++ * 
++ * The above copyright notice and this permission notice shall be
++ * included in all copies or substantial portions of the Software.
++ * 
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
++ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
++ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
++ * IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
++ */
++package org.l2jmobius.gameserver.data.xml;
++
++import java.io.File;
++import java.util.ArrayList;
++import java.util.EnumMap;
++import java.util.HashMap;
++import java.util.List;
++import java.util.Map;
++import java.util.logging.Logger;
++
++import org.w3c.dom.Document;
++import org.w3c.dom.NamedNodeMap;
++import org.w3c.dom.Node;
++
++import org.l2jmobius.commons.util.IXmlReader;
++import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.entity.actor.enums.player.MacroType;
++import org.l2jmobius.gameserver.entity.actor.enums.player.PlayerClass;
++import org.l2jmobius.gameserver.entity.actor.enums.player.ShortcutType;
++import org.l2jmobius.gameserver.entity.actor.holders.player.Macro;
++import org.l2jmobius.gameserver.entity.actor.holders.player.MacroCmd;
++import org.l2jmobius.gameserver.entity.actor.holders.player.Shortcut;
++import org.l2jmobius.gameserver.entity.item.instance.Item;
++import org.l2jmobius.gameserver.handler.VoicedCommandHandler;
++import org.l2jmobius.gameserver.network.serverpackets.ShortcutRegister;
++
++/**
++ * Manages initial shortcut and macro configurations for new player characters.<br>
++ * Loads configuration data from XML files and provides shortcuts based on player class.
++ * <ul>
++ * <li>Class-specific shortcut configurations for different player classes.</li>
++ * <li>Global shortcut settings available to all players.</li>
++ * <li>Macro preset definitions with commands and parameters.</li>
++ * <li>Automatic shortcut registration for skills, items, and macros.</li>
++ * </ul>
++ * @author Zoey76, Mobius
++ */
++public class InitialShortcutData implements IXmlReader
++{
++	private static final Logger LOGGER = Logger.getLogger(InitialShortcutData.class.getName());
++	
++	// L2Hub: какие макросы общего списка персонажу уже выдавали.
++	public static final String MACROS_GIVEN = "L2HubMacrosGiven";
++	private static final int MAX_MACROS = 48;
++	
++	// Shortcut Data Storage.
++	private final Map<PlayerClass, List<Shortcut>> _initialShortcutData = new EnumMap<>(PlayerClass.class);
++	private final List<Shortcut> _initialGlobalShortcutList = new ArrayList<>();
++	
++	// Macro Configuration.
++	private final Map<Integer, Macro> _macroPresets = new HashMap<>();
++	
++	protected InitialShortcutData()
++	{
++		load();
++	}
++	
++	@Override
++	public void load()
++	{
++		_initialShortcutData.clear();
++		_initialGlobalShortcutList.clear();
++		
++		parseDatapackFile("data/stats/players/initialShortcuts.xml");
++		
++		LOGGER.info(getClass().getSimpleName() + ": Loaded " + _initialGlobalShortcutList.size() + " initial global shortcut data.");
++		LOGGER.info(getClass().getSimpleName() + ": Loaded " + _initialShortcutData.size() + " initial shortcut data.");
++		LOGGER.info(getClass().getSimpleName() + ": Loaded " + _macroPresets.size() + " macro presets.");
++	}
++	
++	@Override
++	public void parseDocument(Document document, File file)
++	{
++		for (Node node = document.getFirstChild(); node != null; node = node.getNextSibling())
++		{
++			if ("list".equals(node.getNodeName()))
++			{
++				for (Node dataNode = node.getFirstChild(); dataNode != null; dataNode = dataNode.getNextSibling())
++				{
++					switch (dataNode.getNodeName())
++					{
++						case "shortcuts":
++						{
++							NamedNodeMap attributes = dataNode.getAttributes();
++							final Node classIdNode = attributes.getNamedItem("classId");
++							final List<Shortcut> shortcutList = new ArrayList<>();
++							
++							for (Node childNode = dataNode.getFirstChild(); childNode != null; childNode = childNode.getNextSibling())
++							{
++								if ("page".equals(childNode.getNodeName()))
++								{
++									attributes = childNode.getAttributes();
++									final int pageId = parseInteger(attributes, "pageId");
++									for (Node slotNode = childNode.getFirstChild(); slotNode != null; slotNode = slotNode.getNextSibling())
++									{
++										if ("slot".equals(slotNode.getNodeName()))
++										{
++											final NamedNodeMap slotAttributes = slotNode.getAttributes();
++											final int slotId = parseInteger(slotAttributes, "slotId");
++											final ShortcutType shortcutType = parseEnum(slotAttributes, ShortcutType.class, "shortcutType");
++											final int shortcutId = parseInteger(slotAttributes, "shortcutId");
++											final int shortcutLevel = parseInteger(slotAttributes, "shortcutLevel", 0);
++											shortcutList.add(new Shortcut(slotId, pageId, shortcutType, shortcutId, shortcutLevel));
++										}
++									}
++								}
++							}
++							
++							if (classIdNode != null)
++							{
++								_initialShortcutData.put(PlayerClass.getPlayerClass(Integer.parseInt(classIdNode.getNodeValue())), shortcutList);
++							}
++							else
++							{
++								_initialGlobalShortcutList.addAll(shortcutList);
++							}
++							break;
++						}
++						case "macros":
++						{
++							for (Node childNode = dataNode.getFirstChild(); childNode != null; childNode = childNode.getNextSibling())
++							{
++								if ("macro".equals(childNode.getNodeName()))
++								{
++									NamedNodeMap attributes = childNode.getAttributes();
++									if (!parseBoolean(attributes, "enabled", true))
++									{
++										continue;
++									}
++									
++									final int macroId = parseInteger(attributes, "macroId");
++									final int icon = parseInteger(attributes, "icon");
++									final String name = parseString(attributes, "name");
++									final String description = parseString(attributes, "description");
++									final String acronym = parseString(attributes, "acronym");
++									final List<MacroCmd> commands = new ArrayList<>(1);
++									int entryIndex = 0;
++									
++									for (Node commandNode = childNode.getFirstChild(); commandNode != null; commandNode = commandNode.getNextSibling())
++									{
++										if ("command".equals(commandNode.getNodeName()))
++										{
++											attributes = commandNode.getAttributes();
++											final MacroType type = parseEnum(attributes, MacroType.class, "type");
++											int parameterOne = 0;
++											int parameterTwo = 0;
++											final String commandText = commandNode.getTextContent();
++											
++											switch (type)
++											{
++												case SKILL:
++												{
++													parameterOne = parseInteger(attributes, "skillId"); // Skill ID.
++													parameterTwo = parseInteger(attributes, "skillLevel", 0); // Skill level.
++													break;
++												}
++												case ACTION:
++												{
++													parameterOne = parseInteger(attributes, "actionId"); // Not handled by client.
++													break;
++												}
++												case TEXT:
++												{
++													// Text commands have no numeric parameters.
++													break;
++												}
++												case SHORTCUT:
++												{
++													parameterOne = parseInteger(attributes, "page"); // Page.
++													parameterTwo = parseInteger(attributes, "slot", 0); // Slot.
++													break;
++												}
++												case ITEM:
++												{
++													parameterOne = parseInteger(attributes, "itemId"); // Not handled by client.
++													break;
++												}
++												case DELAY:
++												{
++													parameterOne = parseInteger(attributes, "delay"); // Delay in seconds.
++													break;
++												}
++											}
++											
++											commands.add(new MacroCmd(entryIndex++, type, parameterOne, parameterTwo, commandText));
++										}
++									}
++									
++									_macroPresets.put(macroId, new Macro(macroId, icon, name, description, acronym, commands));
++								}
++							}
++							break;
++						}
++					}
++				}
++			}
++		}
++	}
++	
++	/**
++	 * Registers all available shortcuts for the specified player including global and class-specific shortcuts.<br>
++	 * Validates item availability, skill knowledge, and macro definitions before registration.
++	 * @param player the {@link Player} for whom to register the shortcuts.
++	 */
++	public void registerAllShortcuts(Player player)
++	{
++		if (player == null)
++		{
++			return;
++		}
++		
++		// Register global shortcuts.
++		for (Shortcut shortcut : _initialGlobalShortcutList)
++		{
++			int shortcutId = shortcut.getId();
++			switch (shortcut.getType())
++			{
++				case ITEM:
++				{
++					final Item item = player.getInventory().getItemByItemId(shortcutId);
++					if (item == null)
++					{
++						continue;
++					}
++					
++					shortcutId = item.getObjectId();
++					break;
++				}
++				case SKILL:
++				{
++					if (!player.getSkills().containsKey(shortcutId))
++					{
++						continue;
++					}
++					break;
++				}
++				case MACRO:
++				{
++					final Macro macro = _macroPresets.get(shortcutId);
++					if ((macro == null) || !isAvailable(macro))
++					{
++						continue;
++					}
++					
++					player.registerMacro(macro);
++					break;
++				}
++			}
++			
++			// Register shortcut.
++			final Shortcut newShortcut = new Shortcut(shortcut.getSlot(), shortcut.getPage(), shortcut.getType(), shortcutId, shortcut.getLevel());
++			player.sendPacket(new ShortcutRegister(newShortcut));
++			player.registerShortcut(newShortcut);
++		}
++		
++		// Register class specific shortcuts.
++		if (_initialShortcutData.containsKey(player.getPlayerClass()))
++		{
++			for (Shortcut shortcut : _initialShortcutData.get(player.getPlayerClass()))
++			{
++				int shortcutId = shortcut.getId();
++				switch (shortcut.getType())
++				{
++					case ITEM:
++					{
++						final Item item = player.getInventory().getItemByItemId(shortcutId);
++						if (item == null)
++						{
++							continue;
++						}
++						
++						shortcutId = item.getObjectId();
++						break;
++					}
++					case SKILL:
++					{
++						if (!player.getSkills().containsKey(shortcut.getId()))
++						{
++							continue;
++						}
++						break;
++					}
++					case MACRO:
++					{
++						final Macro macro = _macroPresets.get(shortcutId);
++						if (macro == null)
++						{
++							continue;
++						}
++						
++						player.registerMacro(macro);
++						break;
++					}
++				}
++				
++				// Register shortcut.
++				final Shortcut newShortcut = new Shortcut(shortcut.getSlot(), shortcut.getPage(), shortcut.getType(), shortcutId, shortcut.getLevel());
++				player.sendPacket(new ShortcutRegister(newShortcut));
++				player.registerShortcut(newShortcut);
++			}
++		}
++	}
++	
++	/**
++	 * L2Hub: макросы общего списка.
++	 * @return макросы, у которых есть ярлык на панелях
++	 */
++	public List<Macro> getGlobalMacros()
++	{
++		return _macroPresets.values().stream().sorted(java.util.Comparator.comparingInt(Macro::getId)).toList();
++	}
++	
++
++	/**
++	 * L2Hub: есть ли на сервере команды макроса. Команда без обработчика ушла бы текстом в общий чат, а автобой, банк и другие включаются в настройках.
++	 * @param macro макрос
++	 * @return {@code true}, если все его команды работают
++	 */
++	public boolean isAvailable(Macro macro)
++	{
++		for (MacroCmd command : macro.getCommands())
++		{
++			if ((command.getType() == MacroType.TEXT) && command.getCmd().startsWith(".") && (VoicedCommandHandler.getInstance().getHandler(command.getCmd().substring(1)) == null))
++			{
++				return false;
++			}
++		}
++		
++		return true;
++	}
++	
++	/**
++	 * L2Hub: выдать макросы общего списка, которых у персонажа ещё не было: он создан раньше или команда тогда была выключена.<br>
++	 * Только в список Alt+R: ярлыков на панели не ставит, у персонажа уже своя раскладка (места на панелях макросы получают только у нового персонажа). Выданное помнит переменная: удалённое игроком не возвращается.
++	 * @param player персонаж
++	 */
++	public void giveMissingMacros(Player player)
++	{
++		cleanServiceBar(player);
++		final List<Integer> given = new ArrayList<>(player.getVariables().getIntegerList(MACROS_GIVEN));
++		final int before = given.size();
++		for (Macro macro : getGlobalMacros())
++		{
++			final Integer id = macro.getId();
++			if ((macro == null) || given.contains(id) || !isAvailable(macro))
++			{
++				continue;
++			}
++			
++			if (!player.getMacros().getAllMacroses().containsKey(id))
++			{
++				if (player.getMacros().getAllMacroses().size() >= MAX_MACROS)
++				{
++					break;
++				}
++				
++				player.registerMacro(macro);
++			}
++			
++			given.add(id);
++		}
++		
++		if (given.size() != before)
++		{
++			player.getVariables().setIntegerList(MACROS_GIVEN, given);
++		}
++	}
++	
++	/** Однократный перенос только наших неизменённых ярлыков, без стирания чужих ячеек. */
++	private void cleanServiceBar(Player player)
++	{
++		if (player.getVariables().getBoolean("L2HubServiceBarV2", false)) { return; }
++		final java.util.Set<Integer> owned = new java.util.HashSet<>();
++		for (Macro macro : player.getMacros().getAllMacroses().values())
++		{
++			final Macro preset = _macroPresets.get(macro.getId());
++			if (preset == null || macro.getId() < 10100 || macro.getId() > 10131 || macro.getCommands().size() != 1) { continue; }
++			final String command = macro.getCommands().getFirst().getCmd();
++			if ((macro.getName().equals(preset.getName()) && command.equals(preset.getCommands().getFirst().getCmd()))
++				|| macro.getId() == 10113 && macro.getName().equals("Автопоты вкл") && command.equals(".apon")
++				|| macro.getId() == 10106 && macro.getName().equals("Автобой") && command.equals(".play"))
++			{ owned.add(macro.getId()); player.registerMacro(preset); }
++		}
++		for (Shortcut shortcut : new ArrayList<>(player.getAllShortcuts()))
++		{
++			if (shortcut.getType() == ShortcutType.MACRO && owned.contains(shortcut.getId())) { player.deleteShortcut(shortcut.getSlot(), shortcut.getPage()); }
++		}
++		final int[] ids = {10105,10104,10103,10102,10101,10100,10113,10115};
++		for (int slot = 0; slot < ids.length; slot++)
++		{
++			final Macro macro = _macroPresets.get(ids[slot]);
++			if (player.getShortcut(slot, 1) != null || !isAvailable(macro)) { continue; }
++			if (!owned.contains(ids[slot]) && player.getMacros().getAllMacroses().containsKey(ids[slot])) { continue; }
++			if (!player.getMacros().getAllMacroses().containsKey(ids[slot])) { if (player.getMacros().getAllMacroses().size() >= MAX_MACROS) { continue; } player.registerMacro(macro); }
++			final Shortcut shortcut = new Shortcut(slot, 1, ShortcutType.MACRO, ids[slot], -1);
++			player.registerShortcut(shortcut); player.sendPacket(new ShortcutRegister(shortcut));
++		}
++		player.getVariables().set("L2HubServiceBarV2", true);
++		player.sendPacket(new org.l2jmobius.gameserver.network.serverpackets.ShortcutInit(player));
++	}
++
++	public static InitialShortcutData getInstance()
++	{
++		return SingletonHolder.INSTANCE;
++	}
++	
++	private static class SingletonHolder
++	{
++		protected static final InitialShortcutData INSTANCE = new InitialShortcutData();
++	}
++}
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/Creature.java b/java/org/l2jmobius/gameserver/entity/actor/Creature.java
+index 88f8a809..e43b2d16 100644
+--- a/java/org/l2jmobius/gameserver/entity/actor/Creature.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/Creature.java
+@@ -2578,8 +2578,8 @@ public abstract class Creature extends WorldObject
+ 				final String name = NpcData.getInstance().getTemplate(getId()).getName();
+ 				if ((name != null) && !BossAnnouncementsConfig.RAIDBOSSES_EXCLUDED_FROM_DEFEAT_ANNOUNCEMENTS.contains(getId()))
+ 				{
+-					World.broadcastToAllOnlinePlayers(name + " has been defeated!");
+-					World.broadcastToAllOnlinePlayersOnScreen(name + " has been defeated!");
++					World.broadcastToAllOnlinePlayers(name + ("en".equals(org.l2jmobius.gameserver.config.custom.L2HubWorldConfig.LANGUAGE) ? " has been defeated!" : " повержен!"));
++					World.broadcastToAllOnlinePlayersOnScreen(name + ("en".equals(org.l2jmobius.gameserver.config.custom.L2HubWorldConfig.LANGUAGE) ? " has been defeated!" : " повержен!"));
+ 				}
+ 			}
+ 		}
+@@ -2588,8 +2588,8 @@ public abstract class Creature extends WorldObject
+ 			final String name = NpcData.getInstance().getTemplate(getId()).getName();
+ 			if ((name != null) && !BossAnnouncementsConfig.RAIDBOSSES_EXCLUDED_FROM_DEFEAT_ANNOUNCEMENTS.contains(getId()))
+ 			{
+-				World.broadcastToAllOnlinePlayers(name + " has been defeated!");
+-				World.broadcastToAllOnlinePlayersOnScreen(name + " has been defeated!");
++				World.broadcastToAllOnlinePlayers(name + ("en".equals(org.l2jmobius.gameserver.config.custom.L2HubWorldConfig.LANGUAGE) ? " has been defeated!" : " повержен!"));
++				World.broadcastToAllOnlinePlayersOnScreen(name + ("en".equals(org.l2jmobius.gameserver.config.custom.L2HubWorldConfig.LANGUAGE) ? " has been defeated!" : " повержен!"));
+ 			}
+ 		}
+ 		

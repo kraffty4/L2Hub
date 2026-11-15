@@ -1,0 +1,455 @@
+L2Hub: виды свитков заточки в GM-шопе отдельными флагами — config/Custom/GmShopEnchantScrolls.ini. При включённом
+GmShopEnchantPolicyEnabled GM-шоп (multisell NPC, Alt+B, GM buylist) продаёт обычные и благословенные свитки, а
+кристальные, улучшенные, древние, божественные и особые — только с их флагом; покупка проверяется повторно до оплаты.
+На High Five главный флаг по умолчанию False: шоп прежний. Перенос патча 0508 сопровождающего Эпилога (selaquik)
+без его прежних 20 запретов магазинов. Откат: удалить патч и пересобрать сервер.
+Самопроверка модов (L2HubSelfTest): «Виды свитков в GM-шопе».
+
+diff --git a/dist/game/config/Custom/GmShopEnchantScrolls.ini b/dist/game/config/Custom/GmShopEnchantScrolls.ini
+new file mode 100644
+index 0000000000000000000000000000000000000000..66a8bd601a21716a1dd07f3785ccee092d26c0b6
+--- /dev/null
++++ b/dist/game/config/Custom/GmShopEnchantScrolls.ini
+@@ -0,0 +1,24 @@
++# ---------------------------------------------------------------------------
++# GM-шоп: виды свитков заточки (L2Hub, патч 0415; перенос 0508 сопровождающего Эпилога)
++# ---------------------------------------------------------------------------
++# Правило действует на GM-шоп: multisell NPC, Alt+B и GM buylist; покупка проверяется повторно до оплаты.
++# Строка обмена скрывается целиком, если хоть один выдаваемый свиток запрещён. Свиток-ингредиент не запрещается.
++# Шансы заточки, дроп и уже имеющиеся у игроков свитки не меняются. Применяется после перезапуска игрового сервера.
++# Настройка через L2Hub: Настройки сервера -> Кастом сервера -> Свитки заточки в GM-шопе.
++
++# Ограничить виды свитков. False — GM-шоп продаёт все свитки, как раньше (флаги ниже не действуют).
++# Обычные и благословенные свитки продаются всегда.
++# Default: False
++GmShopEnchantPolicyEnabled = False
++
++# Разрешить отдельные виды при включённом ограничении.
++# Кристальные (Crystal Scroll).
++GmShopAllowCrystalScrolls = False
++# Улучшенные (с прибавкой к шансу).
++GmShopAllowEnhancedScrolls = False
++# Древние (Ancient Crystal Scroll).
++GmShopAllowAncientScrolls = False
++# Божественные (Divine Scroll).
++GmShopAllowDivineScrolls = False
++# Особые и событийные (для отдельных предметов, со сниженным шансом, без шаблона заточки).
++GmShopAllowSpecialScrolls = False
+diff --git a/dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java b/dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java
+index 038807f9d78ce3064d6cd9d82c9d9890004406c9..f6f35e751ee96e9e24fab796b135c89f718976a9 100644
+--- a/dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java
++++ b/dist/game/data/scripts/custom/L2HubSelfTest/L2HubSelfTest.java
+@@ -62,6 +62,11 @@ import org.l2jmobius.gameserver.managers.ScriptManager;
+ import org.l2jmobius.gameserver.managers.phantom.PhantomManager;
+ import org.l2jmobius.gameserver.mechanics.script.LongTimeEvent;
+ import org.l2jmobius.gameserver.mechanics.script.Quest;
++import org.l2jmobius.gameserver.data.xml.EnchantItemData;
++import org.l2jmobius.gameserver.entity.item.enchant.EnchantScroll;
++import org.l2jmobius.gameserver.managers.GmShopEnchantPolicy;
++import org.l2jmobius.gameserver.mechanics.multisell.Ingredient;
++import org.l2jmobius.gameserver.mechanics.multisell.ListContainer;
+ import org.l2jmobius.gameserver.entity.actor.instance.RaidBoss;
+ import org.l2jmobius.gameserver.managers.RaidBossSpawnManager;
+ import org.l2jmobius.gameserver.managers.RaidLevelAccess;
+@@ -305,6 +310,7 @@ public class L2HubSelfTest
+ 		probe(checks, tr("Гробницы малого мира"), L2HubSelfTest::sepulchers);
+ 		probe(checks, tr("Разлом малого мира"), L2HubSelfTest::rift);
+ 		probe(checks, tr("Рейды без уровневых штрафов"), L2HubSelfTest::raidPenalties); // L2Hub 0263
++		probe(checks, tr("Виды свитков в GM-шопе"), L2HubSelfTest::gmShopScrolls); // L2Hub 0415
+ 		probe(checks, tr("Автолут"), () -> new Check("", true, tr("живым — ") + onOff(PlayerConfig.AUTO_LOOT) + tr(", травы — ") + onOff(PlayerConfig.AUTO_LOOT_HERBS) + tr(", рейды — ") + onOff(PlayerConfig.AUTO_LOOT_RAIDS)));
+ 
+ 		final long ok = checks.stream().filter(Check::ok).count();
+@@ -882,6 +888,56 @@ public class L2HubSelfTest
+ 		return new Check("", ok, state + "; " + boss.getName() + " (" + boss.getLevel() + tr("): разница уровней для дропа ") + diff + tr(", проклятие персонажу на 20 выше — ") + (curse ? tr("да") : tr("нет")));
+ 	}
+ 	
++	/**
++	 * L2Hub 0415: виды свитков заточки в GM-шопе. Классификация находит обычные и благословенные свитки, а в
++	 * загруженных списках GM-шопа нет товара, который правило запрещает (при выключенном правиле — разрешено всё).
++	 */
++	@SuppressWarnings("unchecked")
++	private static Check gmShopScrolls() throws Exception
++	{
++		final Path ini = Paths.get("./config/Custom/GmShopEnchantScrolls.ini");
++		if (!Files.isRegularFile(ini))
++		{
++			return new Check("", false, tr("нет config/Custom/GmShopEnchantScrolls.ini"));
++		}
++		final Properties properties = new Properties();
++		try (Reader reader = Files.newBufferedReader(ini, StandardCharsets.UTF_8))
++		{
++			properties.load(reader);
++		}
++		final boolean enabled = Boolean.parseBoolean(properties.getProperty("GmShopEnchantPolicyEnabled", "False").trim());
++		final Map<GmShopEnchantPolicy.Kind, Integer> kinds = new java.util.EnumMap<>(GmShopEnchantPolicy.Kind.class);
++		for (EnchantScroll scroll : EnchantItemData.getInstance().getScrolls())
++		{
++			kinds.merge(GmShopEnchantPolicy.kind(scroll.getId()), 1, Integer::sum);
++		}
++		final Field field = MultisellData.class.getDeclaredField("_entries");
++		field.setAccessible(true);
++		final Map<Integer, ListContainer> entries = (Map<Integer, ListContainer>) field.get(MultisellData.getInstance());
++		int lists = 0;
++		final Set<Integer> banned = new TreeSet<>();
++		for (ListContainer list : entries.values())
++		{
++			if (!GmShopEnchantPolicy.applies(list, null))
++			{
++				continue;
++			}
++			lists++;
++			for (org.l2jmobius.gameserver.mechanics.multisell.Entry entry : list.getEntries())
++			{
++				for (Ingredient product : entry.getProducts())
++				{
++					if (!GmShopEnchantPolicy.allows(product.getItemId()))
++					{
++						banned.add(product.getItemId());
++					}
++				}
++			}
++		}
++		final boolean ok = (kinds.getOrDefault(GmShopEnchantPolicy.Kind.NORMAL, 0) > 0) && (kinds.getOrDefault(GmShopEnchantPolicy.Kind.BLESSED, 0) > 0) && (lists > 0) && banned.isEmpty();
++		return new Check("", ok, tr("ограничение — ") + onOff(enabled) + tr("; свитков по видам: ") + kinds + tr("; списков GM-шопа ") + lists + (banned.isEmpty() ? tr(", запрещённых товаров в них нет") : tr(", запрещённые товары: ") + banned));
++	}
++	
+ 	private static String onOff(boolean value)
+ 	{
+ 		return value ? tr("вкл") : tr("выкл");
+diff --git a/java/org/l2jmobius/gameserver/data/xml/BuyListData.java b/java/org/l2jmobius/gameserver/data/xml/BuyListData.java
+index 3a4b37a853893d742664d93e8f61e63b9d77228b..87fcf55b6eb17b7b1c8dd1daa6b05858d8d5096e 100644
+--- a/java/org/l2jmobius/gameserver/data/xml/BuyListData.java
++++ b/java/org/l2jmobius/gameserver/data/xml/BuyListData.java
+@@ -178,6 +178,7 @@ public class BuyListData implements IXmlReader
+ 						}
+ 					}
+ 					
++					org.l2jmobius.gameserver.managers.GmShopEnchantPolicy.filter(buyList);
+ 					_buyLists.put(buyList.getListId(), buyList);
+ 				}
+ 			}
+diff --git a/java/org/l2jmobius/gameserver/data/xml/EnchantItemData.java b/java/org/l2jmobius/gameserver/data/xml/EnchantItemData.java
+index e7a4d372e6583c5439928b153f041d8d9c76cc6d..0b0cf247d43cf3cad62b44b49be76b87aff7b054 100644
+--- a/java/org/l2jmobius/gameserver/data/xml/EnchantItemData.java
++++ b/java/org/l2jmobius/gameserver/data/xml/EnchantItemData.java
+@@ -137,6 +137,16 @@ public class EnchantItemData implements IXmlReader
+ 		return _scrolls.values();
+ 	}
+ 	
++	/**
++	 * L2Hub: шаблон свитка по ID предмета, без экземпляра Item (виды свитков GM-шопа, 0415).
++	 * @param itemId ID предмета
++	 * @return шаблон свитка или {@code null}
++	 */
++	public EnchantScroll getEnchantScroll(int itemId)
++	{
++		return _scrolls.get(itemId);
++	}
++	
+ 	/**
+ 	 * Retrieves the enchant scroll template associated with the specified item.
+ 	 * @param item the {@link Item} representing the scroll to retrieve.
+diff --git a/java/org/l2jmobius/gameserver/data/xml/MultisellData.java b/java/org/l2jmobius/gameserver/data/xml/MultisellData.java
+index 93f494768a26baae4c1e8a2e2cf0f3ee0ab9864e..c5cccb700e7bdfaf63d7a239f2464a17b1140897 100644
+--- a/java/org/l2jmobius/gameserver/data/xml/MultisellData.java
++++ b/java/org/l2jmobius/gameserver/data/xml/MultisellData.java
+@@ -158,6 +158,7 @@ public class MultisellData implements IXmlReader
+ 			{
+ 				LOGGER.info(getClass().getSimpleName() + ": list " + id + " without territory flags and wards (GmShopAllowTerritoryFlags = False), " + list.getEntries().size() + " entries left.");
+ 			}
++			org.l2jmobius.gameserver.managers.GmShopEnchantPolicy.filter(list, null);
+ 			_entries.put(id, list);
+ 		}
+ 		catch (Exception e)
+@@ -294,6 +295,7 @@ public class MultisellData implements IXmlReader
+ 		}
+ 		
+ 		final PreparedListContainer list = new PreparedListContainer(template, inventoryOnly, player, npc);
++		org.l2jmobius.gameserver.managers.GmShopEnchantPolicy.filter(list, npc);
+ 		
+ 		// Pass through this only when multipliers are different from 1.
+ 		if ((productMultiplier != 1) || (ingredientMultiplier != 1))
+@@ -359,6 +361,7 @@ public class MultisellData implements IXmlReader
+ 
+ 		final PreparedListContainer list = new PreparedListContainer(template, false, player, null);
+ 		list.setFromBoard(true);
++		org.l2jmobius.gameserver.managers.GmShopEnchantPolicy.filter(list, null);
+ 		int index = 0;
+ 		do
+ 		{
+diff --git a/java/org/l2jmobius/gameserver/managers/GmShopEnchantPolicy.java b/java/org/l2jmobius/gameserver/managers/GmShopEnchantPolicy.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..cf846e1ba5c2397dee35cf3b292e9b9a452dc174
+--- /dev/null
++++ b/java/org/l2jmobius/gameserver/managers/GmShopEnchantPolicy.java
+@@ -0,0 +1,200 @@
++package org.l2jmobius.gameserver.managers;
++
++import java.util.ArrayList;
++import java.util.Collection;
++import java.util.EnumSet;
++import java.util.List;
++import java.util.Set;
++
++import org.l2jmobius.commons.util.ConfigReader;
++import org.l2jmobius.gameserver.config.custom.CommunityBoardConfig;
++import org.l2jmobius.gameserver.data.xml.EnchantItemData;
++import org.l2jmobius.gameserver.data.xml.ItemData;
++import org.l2jmobius.gameserver.entity.actor.Npc;
++import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.entity.item.ItemTemplate;
++import org.l2jmobius.gameserver.entity.item.enchant.EnchantScroll;
++import org.l2jmobius.gameserver.entity.item.type.EtcItemType;
++import org.l2jmobius.gameserver.mechanics.buylist.BuyListHolder;
++import org.l2jmobius.gameserver.mechanics.buylist.Product;
++import org.l2jmobius.gameserver.mechanics.multisell.Entry;
++import org.l2jmobius.gameserver.mechanics.multisell.ListContainer;
++import org.l2jmobius.gameserver.mechanics.multisell.PreparedListContainer;
++import org.l2jmobius.gameserver.network.serverpackets.ActionFailed;
++
++/**
++ * L2Hub: виды свитков заточки в GM-шопе отдельными флагами ({@code config/Custom/GmShopEnchantScrolls.ini}).
++ * Перенос патча 0508 сопровождающего Эпилога (selaquik): классификация по типу предмета и метаданным
++ * {@link EnchantItemData}, одно правило для списка, страниц и повторной проверки покупки до оплаты.
++ * Без его «прежних 20 запретов» магазинов (SalePolicy Эпилога): они не про виды свитков и на High Five не нужны.
++ * Главный флаг на High Five по умолчанию выключен — GM-шоп продаёт всё, как раньше.
++ */
++public final class GmShopEnchantPolicy
++{
++	public enum Kind
++	{
++		NOT_SCROLL, NORMAL, BLESSED, CRYSTAL, ENHANCED, ANCIENT, DIVINE, SPECIAL
++	}
++
++	private static final Set<EtcItemType> SCROLL_TYPES = EnumSet.of(EtcItemType.SCRL_ENCHANT_AM, EtcItemType.SCRL_ENCHANT_WP, EtcItemType.BLESS_SCRL_ENCHANT_AM, EtcItemType.BLESS_SCRL_ENCHANT_WP, EtcItemType.ANCIENT_CRYSTAL_ENCHANT_AM, EtcItemType.ANCIENT_CRYSTAL_ENCHANT_WP);
++
++	private GmShopEnchantPolicy()
++	{
++	}
++
++	/** Настройки читаются при первом обращении, после перезапуска игрового сервера. */
++	private static final class Settings
++	{
++		private static final ConfigReader CONFIG = new ConfigReader("./config/Custom/GmShopEnchantScrolls.ini");
++		private static final boolean ENABLED = CONFIG.getBoolean("GmShopEnchantPolicyEnabled", false);
++		private static final boolean CRYSTAL = CONFIG.getBoolean("GmShopAllowCrystalScrolls", false);
++		private static final boolean ENHANCED = CONFIG.getBoolean("GmShopAllowEnhancedScrolls", false);
++		private static final boolean ANCIENT = CONFIG.getBoolean("GmShopAllowAncientScrolls", false);
++		private static final boolean DIVINE = CONFIG.getBoolean("GmShopAllowDivineScrolls", false);
++		private static final boolean SPECIAL = CONFIG.getBoolean("GmShopAllowSpecialScrolls", false);
++	}
++
++	/** Вид свитка по шаблону предмета, без списка запрещённых ID. */
++	public static Kind kind(int itemId)
++	{
++		if (itemId <= 0)
++		{
++			return Kind.NOT_SCROLL;
++		}
++		final ItemTemplate item = ItemData.getInstance().getTemplate(itemId);
++		if (item == null)
++		{
++			return Kind.SPECIAL;
++		}
++		if (!SCROLL_TYPES.contains(item.getItemType()))
++		{
++			return Kind.NOT_SCROLL;
++		}
++		return kind(item, EnchantItemData.getInstance().getEnchantScroll(itemId));
++	}
++
++	static Kind kind(ItemTemplate item, EnchantScroll scroll)
++	{
++		if ((item == null) || !SCROLL_TYPES.contains(item.getItemType()))
++		{
++			return Kind.NOT_SCROLL;
++		}
++		if ((scroll == null) || !scroll.getItems().isEmpty())
++		{
++			return Kind.SPECIAL;
++		}
++		if ((item.getItemType() == EtcItemType.ANCIENT_CRYSTAL_ENCHANT_AM) || (item.getItemType() == EtcItemType.ANCIENT_CRYSTAL_ENCHANT_WP))
++		{
++			return scroll.getBonusRate() >= 100 ? Kind.DIVINE : Kind.ANCIENT;
++		}
++		if (scroll.getBonusRate() >= 100)
++		{
++			return Kind.CRYSTAL;
++		}
++		if (scroll.getBonusRate() > 0)
++		{
++			return Kind.ENHANCED;
++		}
++		if (scroll.getBonusRate() < 0)
++		{
++			return Kind.SPECIAL;
++		}
++		return scroll.isBlessed() ? Kind.BLESSED : Kind.NORMAL;
++	}
++
++	public static boolean allows(int itemId)
++	{
++		if (!Settings.ENABLED)
++		{
++			return true;
++		}
++		return switch (kind(itemId))
++		{
++			case NOT_SCROLL, NORMAL, BLESSED -> true;
++			case CRYSTAL -> Settings.CRYSTAL;
++			case ENHANCED -> Settings.ENHANCED;
++			case ANCIENT -> Settings.ANCIENT;
++			case DIVINE -> Settings.DIVINE;
++			case SPECIAL -> Settings.SPECIAL;
++		};
++	}
++
++	private static boolean allows(Entry entry)
++	{
++		// Проверяются только выдаваемые предметы: свиток как ингредиент не запрещается.
++		return entry.getProducts().stream().allMatch(product -> allows(product.getItemId()));
++	}
++
++	public static boolean applies(ListContainer list, Npc npc)
++	{
++		return (list != null) && (list.isNpcAllowed(CommunityBoardConfig.COMMUNITY_SHOP_NPC) || ((list instanceof PreparedListContainer prepared) && prepared.isFromBoard()) || ((npc != null) && (npc.getId() == CommunityBoardConfig.COMMUNITY_SHOP_NPC)));
++	}
++
++	public static void filter(ListContainer list, Npc npc)
++	{
++		if (Settings.ENABLED && applies(list, npc))
++		{
++			list.getEntries().removeIf(entry -> !allows(entry));
++		}
++	}
++
++	/** Старый или подделанный запрос не выдаст скрытый товар: проверка до оплаты. */
++	public static boolean canExchange(PreparedListContainer list, Npc npc, Entry entry)
++	{
++		return !Settings.ENABLED || !applies(list, npc) || allows(entry);
++	}
++
++	private static boolean applies(BuyListHolder list, Player buyer)
++	{
++		if ((list != null) && list.isNpcAllowed(CommunityBoardConfig.COMMUNITY_SHOP_NPC))
++		{
++			return true;
++		}
++		if (buyer == null)
++		{
++			return false;
++		}
++		if (buyer.getTarget() instanceof Npc target)
++		{
++			return target.getId() == CommunityBoardConfig.COMMUNITY_SHOP_NPC;
++		}
++		final Npc npc = buyer.getLastFolkNPC();
++		return (npc != null) && (npc.getId() == CommunityBoardConfig.COMMUNITY_SHOP_NPC);
++	}
++
++	public static void filter(BuyListHolder list)
++	{
++		if (Settings.ENABLED && applies(list, null))
++		{
++			list.getProducts().removeIf(product -> !allows(product.getItemId()));
++		}
++	}
++
++	public static Collection<Product> productsForViewer(BuyListHolder list, Player buyer)
++	{
++		if (!Settings.ENABLED || !applies(list, buyer))
++		{
++			return list.getProducts();
++		}
++		final List<Product> result = new ArrayList<>();
++		for (Product product : list.getProducts())
++		{
++			if (allows(product.getItemId()))
++			{
++				result.add(product);
++			}
++		}
++		return result;
++	}
++
++	public static boolean canBuy(BuyListHolder list, Player buyer, int itemId)
++	{
++		return !Settings.ENABLED || !applies(list, buyer) || allows(itemId);
++	}
++
++	public static void reject(Player player)
++	{
++		player.sendMessage("ru".equals(player.getLang()) ? "Этот вид свитков отключён в GM-шопе настройками сервера." : "This scroll type is disabled in the GM shop by the server settings.");
++		player.sendPacket(ActionFailed.STATIC_PACKET);
++	}
++}
+diff --git a/java/org/l2jmobius/gameserver/network/clientpackets/MultiSellChoose.java b/java/org/l2jmobius/gameserver/network/clientpackets/MultiSellChoose.java
+index fac73ce309a62c574be18b5bbd95134635e180d2..947991e96dca9b3a8cfee5d6d2232c6b6b5feb29 100644
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/MultiSellChoose.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/MultiSellChoose.java
+@@ -151,6 +151,12 @@ public class MultiSellChoose extends ClientPacket
+ 		{
+ 			if (entry.getEntryId() == _entryId)
+ 			{
++				if (!org.l2jmobius.gameserver.managers.GmShopEnchantPolicy.canExchange(list, npc, entry))
++				{
++					org.l2jmobius.gameserver.managers.GmShopEnchantPolicy.reject(player);
++					return;
++				}
++				
+ 				if (!entry.isStackable() && (_amount > 1))
+ 				{
+ 					PacketLogger.warning("Character: " + player.getName() + " is trying to set amount > 1 on non-stackable multisell, id:" + _listId + ":" + _entryId);
+diff --git a/java/org/l2jmobius/gameserver/network/clientpackets/RequestBuyItem.java b/java/org/l2jmobius/gameserver/network/clientpackets/RequestBuyItem.java
+index 3ed7ee7db0f14b0033417950f8d3bc3264803016..2553fa518f376e84b11dcc29605e714e1c3fa201 100644
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/RequestBuyItem.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/RequestBuyItem.java
+@@ -169,6 +169,12 @@ public class RequestBuyItem extends ClientPacket
+ 				return;
+ 			}
+ 			
++			if (!org.l2jmobius.gameserver.managers.GmShopEnchantPolicy.canBuy(buyList, player, i.getId()))
++			{
++				org.l2jmobius.gameserver.managers.GmShopEnchantPolicy.reject(player);
++				return;
++			}
++			
+ 			if (!product.getItem().isStackable() && (i.getCount() > 1))
+ 			{
+ 				PunishmentManager.handleIllegalPlayerAction(player, "Warning!! Character " + player.getName() + " of account " + player.getAccountName() + " tried to purchase invalid quantity of items at the same time.", GeneralConfig.DEFAULT_PUNISH);
+diff --git a/java/org/l2jmobius/gameserver/network/serverpackets/BuyList.java b/java/org/l2jmobius/gameserver/network/serverpackets/BuyList.java
+index 67bbf48906a3c2514024776ab94fdb26ad80d1f6..2186fdf49713a6004f6880af19632bdd1459a44d 100644
+--- a/java/org/l2jmobius/gameserver/network/serverpackets/BuyList.java
++++ b/java/org/l2jmobius/gameserver/network/serverpackets/BuyList.java
+@@ -33,6 +33,7 @@ public class BuyList extends ServerPacket
+ {
+ 	private final int _listId;
+ 	private final Collection<Product> _list;
++	private final BuyListHolder _catalog;
+ 	private final long _money;
+ 	private double _taxRate = 0;
+ 	
+@@ -40,6 +41,7 @@ public class BuyList extends ServerPacket
+ 	{
+ 		_listId = list.getListId();
+ 		_list = list.getProducts();
++		_catalog = list;
+ 		_money = currentMoney;
+ 		_taxRate = taxRate;
+ 	}
+@@ -47,12 +49,13 @@ public class BuyList extends ServerPacket
+ 	@Override
+ 	public void writeImpl(GameClient client, WriteBuffer buffer)
+ 	{
++		final Collection<Product> visible = org.l2jmobius.gameserver.managers.GmShopEnchantPolicy.productsForViewer(_catalog, client == null ? null : client.getPlayer());
+ 		ServerPackets.EX_BUY_SELL_LIST.writeId(this, buffer);
+ 		buffer.writeInt(0);
+ 		buffer.writeLong(_money); // current money
+ 		buffer.writeInt(_listId);
+-		buffer.writeShort(_list.size());
+-		for (Product product : _list)
++		buffer.writeShort(visible.size());
++		for (Product product : visible)
+ 		{
+ 			if ((product.getCount() > 0) || !product.hasLimitedStock())
+ 			{

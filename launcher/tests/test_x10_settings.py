@@ -50,6 +50,34 @@ class X10SettingsCheck(unittest.TestCase):
         self.save(self.edit('DailyMinLevel','60'),self.edit('WeeklyMinLevel','65'),self.edit('AdenaAlwaysDrop','True'))
         self.assertIn(b'WeeklyMinLevel = 65',self.file.read_bytes())
 
+    def test_defence_wave_settings_roundtrip_and_bounds(self):
+        source=Path(__file__).resolve().parents[2]/'phantoms/ct26_highfive/dist/game/config/Custom/L2HubX10.ini'
+        self.file.write_bytes(source.read_bytes())
+        self.save(self.edit('DefenceLevelStep','2'),self.edit('DefenceWaveCoins','12'),
+                  self.edit('DefenceModifiersEnabled','false'),self.edit('DefenceDionEnabled','false'))
+        before=self.file.read_bytes()
+        self.assertIn(b'DefenceLevelStep = 2',before)
+        self.assertIn(b'DefenceCoins = 100',before)
+        self.assertIn(b'DefenceDionEnabled = False',before)
+        for key,value in [('DefenceLevelStep','0'),('DefenceLevelStep','2.5'),('DefenceWaveCoins','100001'),
+                          ('DefenceModifierChance','101'),('DefenceEliteHpMultiplier','NaN'),('DefenceAdenEnabled','yes')]:
+            with self.subTest(key=key,value=value),self.assertRaises(ValueError):
+                self.save(self.edit('DefenceWaveCoins','20'),self.edit(key,value))
+            self.assertEqual(self.file.read_bytes(),before)
+
+    def test_farm_settings_roundtrip_and_atomic_validation(self):
+        source=Path(__file__).resolve().parents[2]/'phantoms/ct26_highfive/dist/game/config/Custom/L2HubX10.ini'
+        self.file.write_bytes(source.read_bytes())
+        self.save(self.edit('FarmGoldenCoins','31'),self.edit('FarmGoldenEnabled','false'),
+                  self.edit('FarmBossHpMultiplier','9.5'),self.edit('FarmRoomSize','36'))
+        before=self.file.read_bytes()
+        self.assertIn(b'FarmBossHpMultiplier = 9.5',before)
+        for key,value in [('FarmScoreSeconds','9'),('FarmHerbChance','101'),('FarmGoldenCoins','-1'),
+                          ('FarmBossHpMultiplier','NaN'),('FarmArenaRandom','1'),('FarmRoomSize','37')]:
+            with self.subTest(key=key,value=value),self.assertRaises(ValueError):
+                self.save(self.edit('FarmGoldenCoins','90'),self.edit(key,value))
+            self.assertEqual(self.file.read_bytes(),before)
+
     def test_every_gui_control_has_matching_rule_and_default(self):
         table=modes.table()
         parsed=configs.parse_ini(Path(__file__).resolve().parents[2]/'phantoms/ct26_highfive/dist/game/config/Custom/L2HubX10.ini')
@@ -61,8 +89,11 @@ class X10SettingsCheck(unittest.TestCase):
             for sub in page['subs']:
                 for key,title,_,_,meta in sub.get('keys',[]):
                     rule=table['validation']['L2HubX10.ini'][key]
-                    self.assertEqual(meta['min']*meta['scale'],rule['min'])
-                    self.assertEqual(meta['max']*meta['scale'],rule['max'])
+                    if rule['type'] != 'bool':
+                        self.assertEqual(meta['min']*meta['scale'],rule['min'])
+                        self.assertEqual(meta['max']*meta['scale'],rule['max'])
+                    else:
+                        self.assertEqual(keys[key]['type'], 'bool')
                     self.assertFalse(keys[key]['secret'])
                     self.assertTrue(meta['hint'])
 

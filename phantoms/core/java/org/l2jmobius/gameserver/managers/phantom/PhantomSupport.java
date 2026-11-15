@@ -14,6 +14,7 @@ import java.util.logging.Logger;
 
 import org.l2jmobius.commons.threads.ThreadPool;
 import org.l2jmobius.gameserver.ai.Intention;
+import org.l2jmobius.gameserver.managers.world.X10World;
 import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
 import org.l2jmobius.gameserver.config.custom.PhantomPartyConfig;
 import org.l2jmobius.gameserver.data.SchemeBufferTable;
@@ -191,25 +192,26 @@ final class PhantomSupport
 	}
 
 	/**
-	 * Заявка на рес: один труп — один ресающий. Кто первым взял, тот и поднимает; остальные берут другой труп или ждут.
-	 * Живёт {@link #RES_CLAIM_TIME} с последнего продления и всё время, пока ресающий кастует по трупу или идёт на каст.
+	 * Рес — на основе {@link SupportResurrection} сопровождающего Эпилога: идущий каст реса держит его замок.
+	 * Поверх — заявка подхода: ресающий выбрал труп и идёт к нему, каста ещё нет. Один труп — один ресающий;
+	 * остальные берут другой труп или ждут. Живёт {@link #RES_APPROACH_TIME} с последнего продления.
 	 */
-	private static final class ResClaim
+	private static final class ResApproach
 	{
 		final int casterId;
 		final long until;
 
-		ResClaim(int casterId, long until)
+		ResApproach(int casterId, long until)
 		{
 			this.casterId = casterId;
 			this.until = until;
 		}
 	}
 
-	/** Труп (objectId) → заявка. */
-	private static final Map<Integer, ResClaim> RES_CLAIMS = new ConcurrentHashMap<>();
-	/** Заявка без продления живёт столько, мс: ресающий отвлёкся — труп свободен. */
-	private static final long RES_CLAIM_TIME = 8000;
+	/** Труп (objectId) → заявка подхода. */
+	private static final Map<Integer, ResApproach> RES_APPROACH = new ConcurrentHashMap<>();
+	/** Заявка подхода без продления живёт столько, мс: ресающий отвлёкся — труп свободен. */
+	private static final long RES_APPROACH_TIME = 8000;
 	/** Бафер не берёт труп, пока свободный хилер пати с готовым Resurrection может поднять его сам, — но ждёт не дольше этого, мс. */
 	private static final long HEALER_RES_FIRST = 10000;
 
@@ -597,14 +599,15 @@ final class PhantomSupport
 		final State state = state(phantom);
 		state.resTarget = dead.getObjectId();
 		state.resUntil = System.currentTimeMillis() + ORDER_TIMEOUT;
+		// Заявка — сразу, а не в следующий тик: иначе труп успеет взять другой.
+		claimRes(phantom, dead, System.currentTimeMillis(), true);
 		return "сделано: поднимаешь " + dead.getName();
 	}
 
 	/**
-	 * Заявка жива: труп лежит без предложенного реса, ресающий в игре, жив, в том же инстансе и не бросил труп
-	 * (срок не вышел или он кастует по трупу и идёт на каст).
+	 * Заявка подхода жива: труп лежит без предложенного реса, ресающий в игре, жив, в том же инстансе и срок не вышел.
 	 */
-	private static boolean claimActive(int corpseId, ResClaim claim, long now)
+	private static boolean approachActive(int corpseId, ResApproach claim, long now)
 	{
 		final Player corpse = World.getPlayer(corpseId);
 		final Player caster = World.getPlayer(claim.casterId);
@@ -612,7 +615,38 @@ final class PhantomSupport
 		{
 			return false;
 		}
-		return (now < claim.until) || ((caster.getTarget() == corpse) && (caster.isCastingNow() || (caster.getAI().getIntention() == Intention.CAST)));
+		return now < claim.until;
+	}
+
+	/**
+	 * @return кастует или идёт на каст по этому трупу
+	 */
+	private static boolean castingOn(Player player, Player corpse)
+	{
+		return (player.getTarget() == corpse) && (player.isCastingNow() || (player.getAI().getIntention() == Intention.CAST));
+	}
+
+	/**
+	 * По трупу уже идёт каст реса другого: замок {@link SupportResurrection} или каст и подход на каст у кого-то из пати
+	 * (рес, начатый ИИ после подхода, в замок не попадает).
+	 */
+	private static boolean resBusy(Player phantom, Player corpse)
+	{
+		if (SupportResurrection.inProgress(corpse) && !(phantom.isCastingNow() && (phantom.getTarget() == corpse)))
+		{
+			return true;
+		}
+		if (phantom.isInParty())
+		{
+			for (Player member : phantom.getParty().getMembers())
+			{
+				if ((member != phantom) && (member != corpse) && !member.isDead() && castingOn(member, corpse))
+				{
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -620,42 +654,55 @@ final class PhantomSupport
 	 */
 	private static boolean claimedByOther(Player phantom, Player corpse, long now)
 	{
-		final ResClaim claim = RES_CLAIMS.get(corpse.getObjectId());
+		if (resBusy(phantom, corpse))
+		{
+			return true;
+		}
+		final ResApproach claim = RES_APPROACH.get(corpse.getObjectId());
 		if ((claim == null) || (claim.casterId == phantom.getObjectId()))
 		{
 			return false;
 		}
-		if (claimActive(corpse.getObjectId(), claim, now))
+		if (approachActive(corpse.getObjectId(), claim, now))
 		{
 			return true;
 		}
-		RES_CLAIMS.remove(corpse.getObjectId(), claim);
+		RES_APPROACH.remove(corpse.getObjectId(), claim);
 		return false;
 	}
 
 	/**
-	 * Взять труп себе или продлить свою заявку. {@code force} — приказ «рес» от игрока: главнее чужой заявки.
+	 * Взять труп себе или продлить свою заявку подхода. {@code force} — приказ «рес» от игрока: главнее чужой заявки
+	 * (начатый чужой каст не прерывает: его держит замок).
 	 * @return труп за этим фантомом
 	 */
 	private static boolean claimRes(Player phantom, Player corpse, long now, boolean force)
 	{
-		final int me = phantom.getObjectId();
-		final ResClaim claim = RES_CLAIMS.compute(corpse.getObjectId(), (id, old) -> force || (old == null) || (old.casterId == me) || !claimActive(id, old, now) ? new ResClaim(me, now + RES_CLAIM_TIME) : old);
-		if (RES_CLAIMS.size() > 32)
+		if (!force && resBusy(phantom, corpse))
 		{
-			RES_CLAIMS.entrySet().removeIf(entry -> !claimActive(entry.getKey(), entry.getValue(), now));
+			return false;
+		}
+		final int me = phantom.getObjectId();
+		final ResApproach claim = RES_APPROACH.compute(corpse.getObjectId(), (id, old) -> force || (old == null) || (old.casterId == me) || !approachActive(id, old, now) ? new ResApproach(me, now + RES_APPROACH_TIME) : old);
+		if (RES_APPROACH.size() > 32)
+		{
+			RES_APPROACH.entrySet().removeIf(entry -> !approachActive(entry.getKey(), entry.getValue(), now));
 		}
 		return claim.casterId == me;
 	}
 
 	/**
-	 * @return фантом держит живую заявку на другой труп — занят
+	 * @return фантом уже поднимает другой труп (кастует, идёт на каст или держит заявку подхода) — занят
 	 */
 	private static boolean ressingOther(Player phantom, Player corpse, long now)
 	{
-		for (Map.Entry<Integer, ResClaim> entry : RES_CLAIMS.entrySet())
+		if ((phantom.getTarget() instanceof Player) && (phantom.getTarget() != corpse) && ((Player) phantom.getTarget()).isDead() && castingOn(phantom, (Player) phantom.getTarget()))
 		{
-			if ((entry.getValue().casterId == phantom.getObjectId()) && (entry.getKey() != corpse.getObjectId()) && claimActive(entry.getKey(), entry.getValue(), now))
+			return true;
+		}
+		for (Map.Entry<Integer, ResApproach> entry : RES_APPROACH.entrySet())
+		{
+			if ((entry.getValue().casterId == phantom.getObjectId()) && (entry.getKey() != corpse.getObjectId()) && approachActive(entry.getKey(), entry.getValue(), now))
 			{
 				return true;
 			}
@@ -717,6 +764,28 @@ final class PhantomSupport
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * Самопроверка BUDDYRES.
+	 * @return Resurrection фантома, если выучен
+	 */
+	static Skill resurrection(Player phantom)
+	{
+		return phantom.getKnownSkill(RESURRECTION);
+	}
+
+	/**
+	 * Самопроверка BUDDYRES: снять откат Resurrection, чтобы следующий пункт не ждал его.
+	 */
+	static void resetResurrection(Player phantom)
+	{
+		final Skill res = phantom.getKnownSkill(RESURRECTION);
+		if (res != null)
+		{
+			phantom.removeTimeStamp(res);
+			phantom.enableSkill(res);
+		}
 	}
 
 	/**
@@ -866,11 +935,12 @@ final class PhantomSupport
 			}
 
 			final double hp = hpPercent(member);
-			if (hp < 70)
+			final boolean group = !X10World.inPveEvent(phantom) || member == phantom || (phantom.isInParty() && phantom.getParty().containsPlayer(member));
+			if (group && hp < 70)
 			{
 				below70++;
 			}
-			if (hp < 40)
+			if (group && hp < 40)
 			{
 				below40++;
 			}
@@ -1169,8 +1239,27 @@ final class PhantomSupport
 
 	private static boolean cast(State state, Player phantom, Skill skill, Creature target, long now)
 	{
-		if (skill == null)
+		if (skill == null || (X10World.inPveEvent(phantom) && target instanceof Player ally
+			&& !X10World.pveAllies(phantom, SUPPORT_RANGE).contains(ally)))
 		{
+			return false;
+		}
+
+		// Рес по трупу — через замок SupportResurrection (механизм сопровождающего Эпилога): второй каст по тому же трупу не начнётся.
+		// На Эпилоге этого нет (coreResLock = false): там свой путь из 0512.
+		if (PhantomCompat.coreResLock() && (target instanceof Player) && ((Player) target).isDead())
+		{
+			if (phantom.isSitting())
+			{
+				phantom.standUp();
+				return true;
+			}
+			phantom.setTarget(target);
+			if (SupportResurrection.useMagic(phantom, skill, target))
+			{
+				state.castSince = now;
+				return true;
+			}
 			return false;
 		}
 
@@ -1266,7 +1355,7 @@ final class PhantomSupport
 	static Skill affordable(Player phantom, int skillId)
 	{
 		final Skill skill = phantom.getKnownSkill(skillId);
-		return (skill == null) || (phantom.getCurrentMp() < (skill.getMpConsume() + skill.getMpInitialConsume())) ? null : skill;
+		return (skill == null) || (phantom.getCurrentMp() < (phantom.getStat().getMpConsume(skill) + phantom.getStat().getMpInitialConsume(skill))) ? null : skill;
 	}
 
 	/**
@@ -1316,6 +1405,7 @@ final class PhantomSupport
 
 	private static List<Player> partyNearby(Player phantom)
 	{
+		if (X10World.inPveEvent(phantom)) { return X10World.pveAllies(phantom, SUPPORT_RANGE); }
 		final List<Player> result = new ArrayList<>();
 		if (!phantom.isInParty())
 		{
@@ -1854,5 +1944,55 @@ final class PhantomSupport
 		{
 			failed.add(name);
 		}
+	}
+
+	/**
+	 * PvE-площадка x10 ({@link X10World#inPveEvent}, вклад пользователя): то же, что {@link #act}, но любой саппорт сначала лечит союзников площадки,
+	 * потом бафает, и срочность — по ним. Отдельно от {@code act}: его строки — контекст патча 0512 Эпилога. Зовёт {@code PhantomEvents.drivePve}.
+	 */
+	static boolean pveAct(Player phantom, Player owner, PhantomTemplate.Role role, long now)
+	{
+		final State state = STATES.computeIfAbsent(phantom.getObjectId(), id -> new State());
+		if (role == PhantomTemplate.Role.HEALER)
+		{
+			PhantomCompanionManager.keepHealPace(phantom);
+		}
+
+		// Кастует или идёт на дистанцию каста: ждём, но не вечно (как в act).
+		if (phantom.isCastingNow() || (phantom.getAI().getIntention() == Intention.CAST))
+		{
+			if (state.castSince == 0)
+			{
+				state.castSince = now;
+			}
+			if ((now - state.castSince) > CAST_WATCHDOG)
+			{
+				phantom.abortCast();
+				phantom.getAI().setIntentionActive();
+				state.castSince = 0;
+				return false;
+			}
+			return true;
+		}
+		state.castSince = 0;
+
+		if (orders(state, phantom, now))
+		{
+			return true;
+		}
+
+		final List<Player> members = partyNearby(phantom);
+		final boolean danger = inDanger(phantom);
+		final boolean urgent = someoneBelow(members, 50);
+		if (!danger && !urgent && PhantomPartyNoblesse.protectParty(phantom, false, now))
+		{
+			state.castSince = now;
+			return true;
+		}
+		if (rest(state, phantom, owner, danger, urgent, now))
+		{
+			return true;
+		}
+		return heal(state, phantom, members, now) || buff(state, phantom, members, now);
 	}
 }

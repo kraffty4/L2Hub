@@ -27,7 +27,7 @@ class EventHubCheck(unittest.TestCase):
         self.assertIsNone(next(p for p in pages if p['id']=='farming').get('parent'))
 
     def test_calendar_separates_rewards_from_annual_dates_and_saves_only_requested(self):
-        with tempfile.TemporaryDirectory(dir=Path(__file__).resolve().parents[2]/'local/checks') as directory:
+        with tempfile.TemporaryDirectory() as directory:
             root=Path(directory);cfg=root/'server/game/config/Custom';cfg.mkdir(parents=True)
             file=cfg/'L2HubEvents.ini'
             original='Enabled = True\nL2Day = 22 03-30 04\nFreyaCelebration = 16 11-01 01\nPvpLevelGap = 3\nPvpRewardMobs = 60\nPvpRewardScrolls = True\nElpies = True\nElpiesMinutes = 10\nElpiesSchedule = 30 */4 * * *\n'

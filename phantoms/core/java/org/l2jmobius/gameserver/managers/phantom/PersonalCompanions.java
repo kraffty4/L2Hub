@@ -1,4 +1,5 @@
 package org.l2jmobius.gameserver.managers.phantom;
+import org.l2jmobius.gameserver.managers.world.X10World;
 import java.util.*;import java.util.concurrent.ConcurrentHashMap;
 import org.l2jmobius.commons.util.ConfigReader;
 import org.l2jmobius.gameserver.config.custom.PhantomsConfig;
@@ -25,7 +26,7 @@ public final class PersonalCompanions {
  /** Hold personal fighters until their actual preset effects are active; no command required. */
  public static boolean readyForAction(Player p,long now){
   if(!owned(p))return true;
-  if(p.isDead()||p.isTeleporting()||p.isOnEvent()||p.isInOlympiadMode()||p.isInDuel())return false;
+  if(p.isDead()||p.isTeleporting()||(p.isOnEvent()&&!X10World.inPveEvent(p))||p.isInOlympiadMode()||p.isInDuel())return false;
   if(PhantomCompat.personalReady(p)){if(PREPARING.remove(p.getObjectId()))p.getEffectList().updateEffectIcons(true);return true;}
   if(!PREPARING.contains(p.getObjectId())&&p.isInCombat())return true; // Preserve combat restrictions for ordinary dispels/expiry.
   if(PREPARING.contains(p.getObjectId())){p.abortAttack();if(p.isCastingNow())p.abortCast();if(p.hasAI())p.getAI().setIntentionActive();p.setTarget(null);}
@@ -71,7 +72,7 @@ public final class PersonalCompanions {
   if(shot>0){p.addAutoSoulShot(shot);PhantomCompat.rechargeShots(p);}
  }
  public static void tick(Player p,long now){
-  if(!owned(p)||p.isDead()||p.isTeleporting()||p.isInOlympiadMode()||p.isOnEvent()||p.isInDuel())return;
+  if(!owned(p)||p.isDead()||p.isTeleporting()||p.isInOlympiadMode()||(p.isOnEvent()&&!X10World.inPveEvent(p))||p.isInDuel())return;
   PhantomTemplate t=PhantomData.getInstance().getTemplate(p.getName());
   if(now>=NEXT_STOCK.getOrDefault(p.getObjectId(),0L)||(Settings.ORE>=5&&p.getKnownSkill(1323)!=null&&p.getInventory().getInventoryItemCount(3031,-1)<5)){
    NEXT_STOCK.put(p.getObjectId(),now+60000);refill(p,t);

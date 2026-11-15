@@ -93,6 +93,11 @@ def elite(source):
     for item in adena:
         for key in ("min", "max"):
             item.set(key, str(int(item.get(key)) * 2))
+    # Адена со спота «x2» падает всегда, независимо от AdenaAlwaysDrop: группа, где только адена, — 100 %.
+    # Смешанную группу не трогаем: там 100 % вытеснили бы остальные предметы группы.
+    for group in npc.findall(".//dropLists/drop/group"):
+        if [item.get("id") for item in group.findall("item")] == ["57"]:
+            group.set("chance", "100")
     ai = npc.find("ai")
     if ai is None:
         ai = ET.SubElement(npc, "ai")

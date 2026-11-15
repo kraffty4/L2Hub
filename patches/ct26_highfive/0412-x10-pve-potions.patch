@@ -1,0 +1,16 @@
+Банки участников PvE x10 проходят штатный обработчик с прежними условиями и откатами.
+
+diff --git a/dist/game/data/scripts/handlers/items/ItemSkillsTemplate.java b/dist/game/data/scripts/handlers/items/ItemSkillsTemplate.java
+--- a/dist/game/data/scripts/handlers/items/ItemSkillsTemplate.java
++++ b/dist/game/data/scripts/handlers/items/ItemSkillsTemplate.java
+@@ -40,7 +40,9 @@
+ 			return false;
+ 		}
+ 		
+-		if (playable.isOnEvent())
++		// На PvE x10 разрешены банки; остальные предметы и PvP-ивенты сохраняют запрет.
++		if (playable.isOnEvent() && !((item.isPotion() || item.isElixir())
++			&& org.l2jmobius.gameserver.managers.world.X10World.inPveEvent(playable.asPlayer())))
+ 		{
+ 			playable.sendPacket(ActionFailed.STATIC_PACKET);
+ 			return false;

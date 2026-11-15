@@ -1,0 +1,115 @@
+L2Hub High Five: полная панель ярлыков вместе с состоянием автозарядки — ShortcutStateSync сопровождающего Эпилога (его 0520).
+ShortcutInit заново рисует панель, и клиент гасит на ней включённую автозарядку, хотя на сервере она включена; повторного
+ExAutoSoulShot(id, 1) после init не было при автоизучении навыков, смене саба, входе в игру, раздаче служебных макросов и
+выборе уровня навыка на доске. Теперь везде ShortcutStateSync.send: init и следом флаги действительно активных зарядов.
+Класс managers/ShortcutStateSync.java — в модуле phantoms/ct26_highfive, байт в байт его. При автоизучении ещё и
+свечение ярлыка автобоя x10 (X10World.refreshAutoPlayGlow), как после удаления ярлыка (0403).
+
+diff --git a/java/org/l2jmobius/gameserver/data/xml/InitialShortcutData.java b/java/org/l2jmobius/gameserver/data/xml/InitialShortcutData.java
+--- a/java/org/l2jmobius/gameserver/data/xml/InitialShortcutData.java
++++ b/java/org/l2jmobius/gameserver/data/xml/InitialShortcutData.java
+@@ -416,7 +416,7 @@ public class InitialShortcutData implements IXmlReader
+ 			player.registerShortcut(shortcut); player.sendPacket(new ShortcutRegister(shortcut));
+ 		}
+ 		player.getVariables().set("L2HubServiceBarV2", true);
+-		player.sendPacket(new org.l2jmobius.gameserver.network.serverpackets.ShortcutInit(player));
++		org.l2jmobius.gameserver.managers.ShortcutStateSync.send(player);
+ 	}
+ 
+ 	public static InitialShortcutData getInstance()
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/Player.java b/java/org/l2jmobius/gameserver/entity/actor/Player.java
+--- a/java/org/l2jmobius/gameserver/entity/actor/Player.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/Player.java
+@@ -346,7 +346,6 @@ import org.l2jmobius.gameserver.network.serverpackets.RelationChanged;
+ import org.l2jmobius.gameserver.network.serverpackets.Ride;
+ import org.l2jmobius.gameserver.network.serverpackets.ServerPacket;
+ import org.l2jmobius.gameserver.network.serverpackets.SetupGauge;
+-import org.l2jmobius.gameserver.network.serverpackets.ShortcutInit;
+ import org.l2jmobius.gameserver.network.serverpackets.SkillCoolTime;
+ import org.l2jmobius.gameserver.network.serverpackets.SkillList;
+ import org.l2jmobius.gameserver.network.serverpackets.Snoop;
+@@ -2838,7 +2837,9 @@ public class Player extends Playable
+ 		
+ 		if (PlayerConfig.AUTO_LEARN_SKILLS && (skillCounter > 0))
+ 		{
+-			sendPacket(new ShortcutInit(this));
++			org.l2jmobius.gameserver.managers.ShortcutStateSync.send(this);
++			// L2Hub x10: ShortcutInit гасит у клиента свечение ярлыков; новые навыки приходят и посреди автобоя.
++			org.l2jmobius.gameserver.managers.world.X10World.refreshAutoPlayGlow(this);
+ 			sendMessage("You have learned " + skillCounter + " new skills.");
+ 		}
+ 		
+@@ -10985,7 +10986,7 @@ public class Player extends Playable
+ 			setExpBeforeDeath(0);
+ 			
+ 			_shortcuts.restoreMe();
+-			sendPacket(new ShortcutInit(this));
++			org.l2jmobius.gameserver.managers.ShortcutStateSync.send(this);
+ 			broadcastPacket(new SocialAction(getObjectId(), SocialAction.LEVEL_UP));
+ 			sendPacket(new SkillCoolTime(this));
+ 			sendPacket(new ExStorageMaxCount(this));
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/holders/player/Shortcuts.java b/java/org/l2jmobius/gameserver/entity/actor/holders/player/Shortcuts.java
+--- a/java/org/l2jmobius/gameserver/entity/actor/holders/player/Shortcuts.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/holders/player/Shortcuts.java
+@@ -35,7 +35,6 @@ import org.l2jmobius.gameserver.entity.actor.enums.player.ShortcutType;
+ import org.l2jmobius.gameserver.entity.item.instance.Item;
+ import org.l2jmobius.gameserver.entity.item.type.EtcItemType;
+ import org.l2jmobius.gameserver.network.serverpackets.ExAutoSoulShot;
+-import org.l2jmobius.gameserver.network.serverpackets.ShortcutInit;
+ import org.l2jmobius.gameserver.network.serverpackets.ShortcutRegister;
+ 
+ public class Shortcuts
+@@ -129,12 +128,7 @@ public class Shortcuts
+ 			}
+ 		}
+ 		
+-		_owner.sendPacket(new ShortcutInit(_owner));
+-		
+-		for (int shotId : _owner.getAutoSoulShot())
+-		{
+-			_owner.sendPacket(new ExAutoSoulShot(shotId, 1));
+-		}
++		org.l2jmobius.gameserver.managers.ShortcutStateSync.send(_owner);
+ 		
+ 		// L2Hub x10: ShortcutInit гасит у клиента всё свечение; ярлык автобоя не заряд и в список выше не входит.
+ 		org.l2jmobius.gameserver.managers.world.X10World.refreshAutoPlayGlow(_owner);
+diff --git a/java/org/l2jmobius/gameserver/mechanics/skill/SkillLevelChoice.java b/java/org/l2jmobius/gameserver/mechanics/skill/SkillLevelChoice.java
+--- a/java/org/l2jmobius/gameserver/mechanics/skill/SkillLevelChoice.java
++++ b/java/org/l2jmobius/gameserver/mechanics/skill/SkillLevelChoice.java
+@@ -19,7 +19,6 @@ import org.l2jmobius.gameserver.entity.actor.Player;
+ import org.l2jmobius.gameserver.mechanics.skill.enums.SkillFinishType;
+ import org.l2jmobius.gameserver.mechanics.skill.holders.SkillLearn;
+ import org.l2jmobius.gameserver.mechanics.variables.PlayerVariables;
+-import org.l2jmobius.gameserver.network.serverpackets.ShortcutInit;
+ 
+ /**
+  * L2Hub: выбор более низкого, уже изученного уровня классового навыка (страница доски Alt+B — L2HubSkillLevels).
+@@ -585,7 +584,7 @@ public final class SkillLevelChoice
+ 		void refresh()
+ 		{
+ 			player.sendSkillList();
+-			player.sendPacket(new ShortcutInit(player));
++			org.l2jmobius.gameserver.managers.ShortcutStateSync.send(player);
+ 			player.broadcastUserInfo();
+ 		}
+ 	}
+diff --git a/java/org/l2jmobius/gameserver/network/clientpackets/EnterWorld.java b/java/org/l2jmobius/gameserver/network/clientpackets/EnterWorld.java
+--- a/java/org/l2jmobius/gameserver/network/clientpackets/EnterWorld.java
++++ b/java/org/l2jmobius/gameserver/network/clientpackets/EnterWorld.java
+@@ -114,7 +114,6 @@ import org.l2jmobius.gameserver.network.serverpackets.PledgeShowMemberListUpdate
+ import org.l2jmobius.gameserver.network.serverpackets.PledgeSkillList;
+ import org.l2jmobius.gameserver.network.serverpackets.PledgeStatusChanged;
+ import org.l2jmobius.gameserver.network.serverpackets.QuestList;
+-import org.l2jmobius.gameserver.network.serverpackets.ShortcutInit;
+ import org.l2jmobius.gameserver.network.serverpackets.SkillCoolTime;
+ import org.l2jmobius.gameserver.network.serverpackets.SystemMessage;
+ import org.l2jmobius.gameserver.network.serverpackets.UserInfo;
+@@ -416,7 +415,7 @@ public class EnterWorld extends ClientPacket
+ 		player.sendPacket(new ExGetBookMarkInfoPacket(player));
+ 		
+ 		// Send Shortcuts
+-		player.sendPacket(new ShortcutInit(player));
++		org.l2jmobius.gameserver.managers.ShortcutStateSync.send(player);
+ 		
+ 		// Send Action list
+ 		player.sendPacket(ExBasicActionList.STATIC_PACKET);

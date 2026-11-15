@@ -188,15 +188,17 @@ final class X10FarmSpots
 		final int fee = player.getLevel() > PlayerConfig.MAX_FREE_TELEPORT_LEVEL ? L2HubWorldConfig.WORLD_DAILY_TELEPORT_FEE : 0;
 		for (Spot spot : selected.subList(page * 4, Math.min(selected.size(), page * 4 + 4)))
 		{
-			out.append("<tr><td width=").append(width - 145).append(" height=50 valign=top><font color=\"LEVEL\">").append(X10Text.escape(text(spot.ru, spot.en))).append("</font><br1>")
+			out.append("<tr><td width=").append(width - 145).append(" height=62 valign=top><font color=\"LEVEL\">").append(X10Text.escape(text(spot.ru, spot.en))).append("</font><br1>")
 				.append(text("Уровни ", "Levels ")).append(spot.min).append(spot.max == spot.min ? "" : "–" + spot.max).append(" · ").append(adena ? text("Адена x2", "Adena x2") : text("Больше мобов", "More monsters"));
-			out.append("<br1>").append(spot.maxPlayer < 85 ? text("Вход до ", "Entry up to ") + spot.maxPlayer : "&nbsp;");
+			out.append("<br1>").append(text("Доп. мобов: ", "Extra monsters: ")).append(spot.packs.stream().mapToInt(Pack::count).sum())
+				.append(" · ").append(text("ТП: ", "TP: ")).append(fee).append(text(" адены", " adena"));
+			if (spot.maxPlayer < 85) { out.append("<br1>").append(text("Вход до ", "Entry up to ")).append(spot.maxPlayer); }
 			out.append("</td><td width=140 valign=top>");
 			if (spot.active) { out.append(X10Text.button(text("Телепорт", "Teleport") + (fee > 0 ? " · " + fee + " A" : ""), prefix + " spots go " + spot.id + " " + category + " " + page, 130)); }
 			else { out.append(text("Сейчас закрыто", "Currently closed")); }
 			out.append("</td></tr><tr><td height=8></td></tr>");
 		}
-		for (int empty = Math.min(selected.size(), page * 4 + 4) - page * 4; empty < 4; empty++) { out.append("<tr><td height=50>&nbsp;</td><td></td></tr><tr><td height=8></td></tr>"); }
+		for (int empty = Math.min(selected.size(), page * 4 + 4) - page * 4; empty < 4; empty++) { out.append("<tr><td height=62>&nbsp;</td><td></td></tr><tr><td height=8></td></tr>"); }
 		out.append("</table>").append(X10Text.pager(page, pages, prefix + " spots " + category + " ", width));
 		if (selected.isEmpty()) { out.append(text("Каталог пока недоступен.", "The catalogue is currently unavailable.")); }
 		return out.toString();

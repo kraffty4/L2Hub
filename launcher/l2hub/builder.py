@@ -14,6 +14,7 @@ import re
 import secrets
 import shutil
 import subprocess
+import time
 import uuid
 import zipfile
 from collections.abc import Callable
@@ -183,13 +184,35 @@ def fetch_sources(cid: str, out: Out = print, progress=None, pin: dict | None = 
     if dst.exists():
         raise RuntimeError(f"Исходники уже разложены: {dst}")
     archive = _source_zip(pin, out, progress)
+    tmp = _staging(dst)
     with zipfile.ZipFile(archive) as z:
         for rel, name in _source_members(z, archive, pin).items():
-            to = dst / rel
+            to = tmp / rel
             to.parent.mkdir(parents=True, exist_ok=True)
             to.write_bytes(z.read(name))
+    _publish(tmp, dst)
     out(f"Исходники на месте: {dst}")
     return dst
+
+
+def _staging(final: Path) -> Path:
+    """Куда раскладывать папку final, чтобы оборванная распаковка не выглядела готовой (аудит 2026-11-09): рядом,
+    уровнем ниже — servers/<id>/.unpack/<имя> (source_dir и server_build.ps1 ищут build.xml только на верхнем уровне).
+    Остаток прошлой оборванной попытки — наш же недоразложенный — убирается, как у runtimes.install."""
+    tmp = final.parent / ".unpack" / final.name
+    shutil.rmtree(tmp, ignore_errors=True)
+    if tmp.exists():
+        raise RuntimeError(f"Не убирается остаток прошлой распаковки: {tmp} — закрой то, что держит файлы, и повтори")
+    tmp.parent.mkdir(parents=True, exist_ok=True)
+    return tmp
+
+
+def _publish(tmp: Path, final: Path) -> None:
+    tmp.replace(final)
+    try:
+        tmp.parent.rmdir()
+    except OSError:
+        pass
 
 
 def reset_sources(p: dict, src: Path, base: Path, out: Out = print) -> None:
@@ -245,6 +268,26 @@ def record_patches(base: Path, patches: list[Path]) -> None:
     """После удачной сборки — какие патчи и врезки (glue.patch) в ней стоят, с SHA-256 как у Get-FileHash. По этому списку
     «Мой мир» → модуль (Api.phantoms_status) видит патч, добавленный или изменённый после сборки. Пишет и server_build.ps1."""
     (base / PATCH_MANIFEST).write_text(json.dumps({p.name: _sha(p) for p in patches}, indent=4), encoding="utf-8")
+
+
+def stale_patches(base: Path, patches: list[Path]) -> list[str]:
+    """Патчи прошлой сборки (.patches_manifest.json), которых в стопке больше нет или которые с тех пор изменились."""
+    f = base / PATCH_MANIFEST
+    if not f.is_file():
+        return []
+    old = json.loads(f.read_text(encoding="utf-8-sig"))
+    now = {p.name: _sha(p) for p in patches}
+    return sorted(n for n, sha in old.items() if str(sha).upper() != now.get(n))
+
+
+def gone_module_files(cid: str, base: Path) -> list[str]:
+    """Файлы прошлой копии модуля (.module_manifest.json), которых в phantoms/core и phantoms/<id> больше нет."""
+    f = base / ".module_manifest.json"
+    if not f.is_file() or not (paths.PHANTOMS / cid).is_dir():
+        return []
+    now = {x.relative_to(root).as_posix() for root in (paths.PHANTOMS / "core", paths.PHANTOMS / cid)
+           for top in ("java", "dist") if (root / top).is_dir() for x in (root / top).rglob("*") if x.is_file()}
+    return sorted(set(json.loads(f.read_text(encoding="utf-8-sig"))) - now)
 
 
 def chronicle_patches(cid: str) -> list[Path]:
@@ -502,14 +545,61 @@ def deploy_data_files(cid: str, src: Path, srv: Path, touched: set[str], out: Ou
         temp.unlink(missing_ok=True)
 
 
+def restore_dropped_data(cid: str, archive: Path, srv: Path, touched: set[str], out: Out = print) -> None:
+    """Файлы данных, которые прошлые сборки выкладывали из патча или модуля (индекс .data_base), а нынешняя стопка
+    уже не трогает — патч снят (аудит 2026-11-09, build.md 3). Не правленый пользователем файл возвращается к версии
+    из архива сборки, а которого в архиве нет — уходит в бэкап данных; правленый остаётся как есть, с предупреждением."""
+    home = paths.SERVERS / cid
+    index_file = home / ".data_base" / "index.json"
+    if not index_file.is_file():
+        return
+    index = json.loads(index_file.read_text(encoding="utf-8"))
+    dropped = sorted(set(index) - touched)
+    if not dropped:
+        return
+    backup = paths.BACKUPS / "data" / cid / datetime.now().strftime("%Y-%m-%d_%H-%M-%S_%f_dropped")
+    with zipfile.ZipFile(archive) as z:
+        names = set(z.namelist())
+        for rel in dropped:
+            to = srv / rel
+            cur = to.read_bytes() if to.is_file() else None
+            if cur is not None and hashlib.sha256(cur).hexdigest() != str(index[rel]).lower():
+                out(f"{rel}: патч, который его выкладывал, снят, но файл правили — оставлен как есть")
+            elif cur is not None:
+                (backup / rel).parent.mkdir(parents=True, exist_ok=True)
+                (backup / rel).write_bytes(cur)
+                if rel in names:
+                    to.write_bytes(z.read(rel))
+                    out(f"Данные снятого патча — снова как в сборке: {rel}")
+                else:
+                    to.unlink()
+                    out(f"Файл снятого патча убран из сервера (копия — {backup / rel})")
+            (home / ".data_new" / rel).unlink(missing_ok=True)
+            del index[rel]
+    temp = index_file.with_name("index-" + uuid.uuid4().hex + ".tmp")
+    try:
+        temp.write_text(json.dumps(index, ensure_ascii=False, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+        os.replace(temp, index_file)
+    finally:
+        temp.unlink(missing_ok=True)
+
+
 def server_build(p: dict, out: Out = print) -> None:
     """Исходники + модуль фантомов + патчи → Ant → jar-ы, данные и конфиги в развёрнутый сервер (или распаковка целиком)."""
     cid = p["id"]
     base = paths.SERVERS / cid
     src = source_dir(cid)
-    module = copy_module(cid, src, base, out)
-
     patches = chronicle_patches(cid)
+    # Снятый или изменённый патч стопкой не снять, а убранный из модуля файл copy_module не уберёт: их строки остались бы
+    # в дереве и компилировались дальше (аудит 2026-11-09, build.md 3). Лечится чистым деревом — сверять до copy_module.
+    stale = stale_patches(base, patches) + gone_module_files(cid, base)
+    if stale:
+        more = f" и ещё {len(stale) - 5}" if len(stale) > 5 else ""
+        out(f"После прошлой сборки сняты или изменены: {', '.join(stale[:5])}{more} — исходники заново с закреплённого коммита")
+        reset_sources(p, src, base, out)
+        module = copy_module(cid, src, base, out, fresh=True)
+    else:
+        module = copy_module(cid, src, base, out)
     try:
         apply_stack(patches, src, base, out)
     except PatchError as e:
@@ -530,8 +620,10 @@ def server_build(p: dict, out: Out = print) -> None:
     ant(src, base / "build.log")
     srv = base / "server"
     if not srv.is_dir():
+        tmp = _staging(srv)
         with zipfile.ZipFile(archive) as z:
-            z.extractall(srv)
+            z.extractall(tmp)
+        _publish(tmp, srv)
         deploy_configs(cid, archive, srv, patches, out=out)  # всё уже как в архиве — только запись о выкладке
         record_patches(base, patches)
         out(f"Сборка готова и распакована в {srv}; дальше — настройка (server_setup)")
@@ -545,6 +637,7 @@ def server_build(p: dict, out: Out = print) -> None:
 
     # Данные из патчей и модуля Ant кладёт только в архив — копируем в развёрнутый сервер; конфиги — deploy_configs.
     deploy_data_files(cid, src, srv, touched, out, prev_data)
+    restore_dropped_data(cid, archive, srv, touched, out)
     deploy_configs(cid, archive, srv, patches, prev, out)
     record_patches(base, patches)
 
@@ -566,14 +659,52 @@ def db_init(out: Out = print) -> None:
         raise RuntimeError(f"Уже инициализировано: {paths.DB_DIR}")
     paths.DATA.mkdir(parents=True, exist_ok=True)
     password = "".join(secrets.choice(PASSWORD_CHARS) for _ in range(24))
-    r = subprocess.run([str(paths.MARIA_BIN / "mariadb-install-db.exe"), f"--datadir={paths.DB_DIR}", f"--password={password}", "--port=3306"],
+    # Пароль не в командной строке (аудит 2026-11-09): её видит любой процесс, а файла опций mariadb-install-db
+    # не читает («unknown variable 'defaults-file'») — ставим без пароля и задаём его SQL-ом через stdin (_root_password).
+    r = subprocess.run([str(paths.MARIA_BIN / "mariadb-install-db.exe"), f"--datadir={paths.DB_DIR}", "--port=3306"],
                        capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW)
     if r.returncode:
         raise RuntimeError(f"mariadb-install-db завершился с кодом {r.returncode}: {r.stderr.decode('utf-8', 'replace')[-500:]}")
     _edit_lines(paths.DB_DIR / "my.ini", r"^\[mysqld\][ \t]*(\r?\n)",
                 r"[mysqld]\1bind-address=127.0.0.1\1character-set-server=utf8mb4\1collation-server=utf8mb4_unicode_ci\1")
+    try:
+        _root_password(password)
+    except Exception:
+        shutil.rmtree(paths.DB_DIR, ignore_errors=True)  # создана этим же вызовом; root без пароля оставлять нельзя
+        raise
     paths.CLIENT_CNF.write_text(f"[client]\nhost=127.0.0.1\nport=3306\nuser=root\npassword={password}\n", encoding="utf-8")
     out(f"Готово: {paths.DB_DIR}")
+
+
+def _root_password(password: str) -> None:
+    """Пароль всем root-учёткам свежей базы (localhost, 127.0.0.1, ::1, имя ПК — как делает mariadb-install-db --password).
+    Сервер поднимается без сети, только на именованном канале со случайным именем; пароль идёт в stdin клиента."""
+    pipe = f"l2hub_init_{uuid.uuid4().hex[:12]}"
+    nw = subprocess.CREATE_NO_WINDOW
+    srv = subprocess.Popen([str(paths.MARIA_BIN / "mariadbd.exe"), f"--defaults-file={paths.DB_DIR / 'my.ini'}", "--skip-networking",
+                            "--enable-named-pipe", f"--socket={pipe}"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=nw)
+    client = [str(paths.MARIA_BIN / "mariadb.exe"), "--no-defaults", "--protocol=pipe", f"--socket={pipe}", "-u", "root", "-N", "-B"]
+    try:
+        hosts, deadline = None, time.monotonic() + 180  # первый старт из свежей папки бывает около минуты (проверка 2026-11-09)
+        while time.monotonic() < deadline:
+            r = subprocess.run([*client, "-e", "SELECT host FROM mysql.global_priv WHERE user = 'root'"], capture_output=True, creationflags=nw)
+            if r.returncode == 0:
+                hosts = [h for h in r.stdout.decode("utf-8", "replace").split("\n") if h.strip()]
+                break
+            if srv.poll() is not None:
+                break
+            time.sleep(0.5)
+        if not hosts:
+            raise RuntimeError("Свежая MariaDB не ответила: пароль root не задан")
+        sql = "".join(f"ALTER USER 'root'@'{h.strip().replace(chr(39), chr(39) * 2)}' IDENTIFIED BY '{password}';\n" for h in hosts)
+        r = subprocess.run(client, input=(sql + "FLUSH PRIVILEGES;\nSHUTDOWN;\n").encode("utf-8"), capture_output=True, creationflags=nw)
+        if r.returncode:
+            raise RuntimeError(f"Не удалось задать пароль root: код {r.returncode}")  # stderr не печатаем: в нём может быть SQL с паролем
+        srv.wait(60)
+    finally:
+        if srv.poll() is None:
+            srv.kill()
+            srv.wait(30)
 
 
 def db_password() -> str:
@@ -586,6 +717,51 @@ def db_password() -> str:
 def _mysql(*args: str) -> subprocess.CompletedProcess:
     return subprocess.run([str(paths.MARIA_BIN / "mariadb.exe"), f"--defaults-extra-file={paths.CLIENT_CNF}", *args],
                           capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW)
+
+
+# Таблица-отметка «база ещё заливается» (аудит 2026-11-09): живёт от CREATE DATABASE до последнего SQL установщика.
+# Оборвалась заливка — отметка осталась, и повтор установки льёт базу заново, а не принимает недолитую за готовую.
+# Существующая база без отметки — мир (например, оставленный при удалении хроники): её по-прежнему не трогаем.
+FILLING = "_l2hub_filling"
+# Без него клиент MariaDB на ошибке внутри `source файл` пишет её в stderr, идёт дальше и выходит с кодом 0 (по умолчанию
+# abort-source-on-error FALSE): битый SQL установщика давал базу без части таблиц, а заливка считалась удачной (аудит 2026-11-09).
+SOURCE_ABORT = ("--abort-source-on-error",)
+
+
+def _query(sql: str) -> list[str]:
+    r = _mysql("-N", "-B", "-e", sql)
+    if r.returncode:
+        raise RuntimeError(f"MariaDB: {r.stderr.decode('utf-8', 'replace')[-300:]}")
+    return [x for x in r.stdout.decode("utf-8", "replace").split("\n") if x.strip()]
+
+
+def _db_state(db: str) -> str:
+    """none — базы нет; partial — недолита (отметка заливки или ни одной таблицы); ready — готова."""
+    name = db.replace("'", "''")
+    if not _query(f"SELECT SCHEMA_NAME FROM information_schema.SCHEMATA WHERE SCHEMA_NAME = '{name}'"):
+        return "none"
+    tables = {t.strip() for t in _query(f"SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = '{name}'")}
+    return "partial" if not tables or FILLING in tables else "ready"
+
+
+def _drop_partial(db: str, out: Out) -> None:
+    out(f"База {db} залита не до конца (прошлая заливка оборвалась) — заливаю заново")
+    r = _mysql("-e", f"DROP DATABASE `{db}`")
+    if r.returncode:
+        raise RuntimeError(f"Не удалось убрать недолитую базу {db}: {r.stderr.decode('utf-8', 'replace')}")
+
+
+def _create_filling(db: str) -> None:
+    r = _mysql("-e", f"CREATE DATABASE `{db}` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; "
+                     f"CREATE TABLE `{db}`.`{FILLING}` (started DATETIME NOT NULL); INSERT INTO `{db}`.`{FILLING}` VALUES (NOW())")
+    if r.returncode:
+        raise RuntimeError(f"Не удалось создать базу {db}: {r.stderr.decode('utf-8', 'replace')}")
+
+
+def _filled(db: str) -> None:
+    r = _mysql("-e", f"DROP TABLE `{db}`.`{FILLING}`")
+    if r.returncode:
+        raise RuntimeError(f"База {db} залита, но отметка заливки не снялась: {r.stderr.decode('utf-8', 'replace')}")
 
 
 IPCONFIG_LOCAL = """<?xml version="1.0" encoding="UTF-8"?>
@@ -651,11 +827,13 @@ def import_bundle(cid: str, folder: str | Path, out: Out = print) -> dict:
     if dst.exists():
         raise RuntimeError(f"Сервер уже есть: {dst}")
     out(f"Копирую сервер сборки ({kind['title']}): файлов {sum(1 for f in src.rglob('*') if f.is_file())}…")
-    shutil.copytree(src, dst)
+    tmp = _staging(dst)
+    shutil.copytree(src, tmp, dirs_exist_ok=True)
     for old, new in kind.get("rename", {}).items():
         # Части у L2Hub — папки game и login (у Lisvus гейм — gameserver): пути внутри части относительные, rename их не ломает.
-        if (dst / old).is_dir() and not (dst / new).exists():
-            (dst / old).rename(dst / new)
+        if (tmp / old).is_dir() and not (tmp / new).exists():
+            (tmp / old).rename(tmp / new)
+    _publish(tmp, dst)
     if kind.get("runtime") == "ours" and kind.get("setup") != "mobius":
         # Вид на нашей Java и MariaDB по правилам (Lisvus): своя база l2hub_<id>, настройка — setup_rules.
         proto = _prop(dst / kind["protocol"][0], kind["protocol"][1]) if kind.get("protocol") else None
@@ -703,17 +881,19 @@ def setup_rules(p: dict, out: Out = print) -> None:
     db = p["database"]
     if not servers.port_open(3306):
         raise RuntimeError("MariaDB не запущена")
-    if _mysql("-N", "-e", f"SHOW DATABASES LIKE '{db}'").stdout.strip():
+    state = _db_state(db)
+    if state == "ready":
         out(f"База {db} уже есть — заливку пропускаю")
     else:
-        r = _mysql("-e", f"CREATE DATABASE `{db}` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
-        if r.returncode:
-            raise RuntimeError(f"Не удалось создать базу {db}: {r.stderr.decode('utf-8', 'replace')}")
+        if state == "partial":
+            _drop_partial(db, out)
+        _create_filling(db)
         files = sorted((srv / spec["sql"]).glob("*.sql"), key=lambda f: f.name)
         for sql in files:
-            r = _mysql(db, "-e", f"source {sql.as_posix()}")
+            r = _mysql(*SOURCE_ABORT, db, "-e", f"source {sql.as_posix()}")
             if r.returncode:
                 raise RuntimeError(f"Ошибка в {spec['sql']}/{sql.name}: {r.stderr.decode('utf-8', 'replace')[-500:]}")
+        _filled(db)
         out(f"База {db}: залито файлов — {len(files)}")
     keys = spec["keys"]
     url, password = spec["url"].replace("{db}", db), db_password()
@@ -762,16 +942,15 @@ def generic_profile(cid: str, build: str, pin: dict) -> dict:
 def fill_database(p: dict, srv: Path, db: str, out: Out = print) -> None:
     """Новая база хроники: CREATE DATABASE и SQL установщика сборки (логин, потом гейм), умолчания нового мира под машину.
     Базы db быть не должно: её создаёт установка (server_setup) и переустановка базы (space.reinstall_db)."""
-    r = _mysql("-e", f"CREATE DATABASE `{db}` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
-    if r.returncode:
-        raise RuntimeError(f"Не удалось создать базу {db}: {r.stderr.decode('utf-8', 'replace')}")
+    _create_filling(db)
     count = 0
     for part in ("login", "game"):
         for sql in sorted((srv / "db_installer" / "sql" / part).glob("*.sql"), key=lambda f: f.name):
-            r = _mysql(db, "-e", f"source {sql.as_posix()}")
+            r = _mysql(*SOURCE_ABORT, db, "-e", f"source {sql.as_posix()}")
             if r.returncode:
                 raise RuntimeError(f"Ошибка в {part}\\{sql.name}: {r.stderr.decode('utf-8', 'replace')[-500:]}")
             count += 1
+    _filled(db)
     out(f"База {db}: залито файлов — {count}")
     # Установка из окна зовёт server_setup с профилем без "server" (профиль пишется последним шагом) — папка сервера здесь srv.
     machine.fresh_default({**p, "server": p.get("server") or str(srv)}, out)
@@ -790,9 +969,12 @@ def server_setup(p: dict, out: Out = print) -> None:
     if not m:
         raise RuntimeError(f"Не нашёл имя базы в {db_configs[0]}")
     db = m[1]
-    if _mysql("-N", "-e", f"SHOW DATABASES LIKE '{db}'").stdout.strip():
+    state = _db_state(db)
+    if state == "ready":
         out(f"База {db} уже есть — заливку пропускаю")  # часть SQL установщика делает DROP TABLE
     else:
+        if state == "partial":
+            _drop_partial(db, out)
         fill_database(p, srv, db, out)
 
     # Доступ к базе: 127.0.0.1 вместо localhost (MariaDB слушает только IPv4) и пароль из data/client.cnf.

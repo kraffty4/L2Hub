@@ -352,6 +352,28 @@ public final class PhantomCompat
 		return player.useMagic(skill, null, forceUse, dontMove);
 	}
 
+	/**
+	 * Метка текущего каста для замка реса ({@link SupportResurrection}): обычный каст ({@code SkillCaster}) — новый объект на каждый каст.
+	 * @return {@code null}, если не кастует
+	 */
+	public static Object castingToken(Player player)
+	{
+		return player.getSkillCaster(org.l2jmobius.gameserver.mechanics.skill.SkillCaster::isAnyNormalType);
+	}
+
+	/** @return id скилла текущего обычного каста или 0 */
+	public static int castingSkillId(Player player)
+	{
+		final org.l2jmobius.gameserver.mechanics.skill.SkillCaster caster = player.getSkillCaster(org.l2jmobius.gameserver.mechanics.skill.SkillCaster::isAnyNormalType);
+		return (caster == null) || (caster.getSkill() == null) ? 0 : caster.getSkill().getId();
+	}
+
+	/** Рес в core идёт через замок {@link SupportResurrection}. На Эпилоге — {@code false}: там свой путь сопровождающего ({@code 0512}). */
+	public static boolean coreResLock()
+	{
+		return true;
+	}
+
 	/** Карма как в CT: у Classic это отрицательная репутация. */
 	public static int karma(Player player)
 	{

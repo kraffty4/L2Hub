@@ -196,7 +196,7 @@ public class PhantomNeighbors
 	private static Skill usable(Player player, int skillId)
 	{
 		final Skill skill = player.getKnownSkill(skillId);
-		if ((skill == null) || player.isSkillDisabled(skill) || (player.getCurrentMp() < (skill.getMpConsume() + skill.getMpInitialConsume())))
+		if ((skill == null) || player.isSkillDisabled(skill) || (player.getCurrentMp() < (player.getStat().getMpConsume(skill) + player.getStat().getMpInitialConsume(skill))))
 		{
 			return null;
 		}

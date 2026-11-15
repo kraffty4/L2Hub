@@ -1026,7 +1026,8 @@ public class PhantomCompanionManager
 				{
 					PhantomSupport.paceHeal(phantom, now);
 				}
-				else if (target.isAutoAttackable(phantom))
+				else if (target.isAutoAttackable(phantom) && (!org.l2jmobius.gameserver.managers.world.X10World.inPveEvent(phantom)
+					|| org.l2jmobius.gameserver.managers.world.X10World.pveEnemy(phantom, target)))
 				{
 					castSkill(phantom, target);
 				}
@@ -1162,6 +1163,12 @@ public class PhantomCompanionManager
 		}
 
 		companion.deadSince = 0;
+
+		if (PhantomEvents.getInstance().drivePve(phantom, template, owner, now))
+		{
+			return;
+		}
+
 		autoBuff(companion, phantom, now);
 
 		// Не в пати с владельцем (выгнал, распустил пати или ещё не пригласил) — ждёт на месте.
@@ -1715,7 +1722,8 @@ public class PhantomCompanionManager
 		// Против игрока от моба не отвлекается: иначе маг бросал цель в PvP ради любого, кто его ткнул.
 		final Monster attacker = caster && !(PhantomHuntersConfig.HUNTER_COMBAT_FIXES && enemy.isPlayable()) ? PhantomHunterOutfit.meleeAttacker(phantom) : null;
 		final boolean melee = caster && PhantomHunterOutfit.outOfMana(phantom);
-		if (attacker != null)
+		if ((attacker != null) && (!org.l2jmobius.gameserver.managers.world.X10World.inPveEvent(phantom)
+			|| org.l2jmobius.gameserver.managers.world.X10World.pveEnemy(phantom, attacker)))
 		{
 			target = attacker;
 		}
@@ -2165,6 +2173,11 @@ public class PhantomCompanionManager
 	 */
 	private void recallDead(Companion companion, Player phantom, Player owner, long now)
 	{
+		// Охотник в пати живёт по своим правилам: ждёт реса 120 с, потом уходит из пати в город (PhantomHunterManager.died).
+		if (companion.hunter)
+		{
+			return;
+		}
 		final boolean away = (owner.getInstanceId() != phantom.getInstanceId()) || ((PhantomPartyConfig.PHANTOM_DEAD_RECALL_RANGE > 0) && (phantom.calculateDistance2D(owner) > PhantomPartyConfig.PHANTOM_DEAD_RECALL_RANGE));
 		final boolean expired = (PhantomPartyConfig.PHANTOM_DEAD_RECALL_SECONDS > 0) && ((now - companion.deadSince) > (PhantomPartyConfig.PHANTOM_DEAD_RECALL_SECONDS * 1000L));
 		if (!away && !expired)
@@ -2245,6 +2258,8 @@ public class PhantomCompanionManager
 	 */
 	static void fight(Player phantom, Creature enemy)
 	{
+		if (org.l2jmobius.gameserver.managers.world.X10World.inPveEvent(phantom)
+			&& !org.l2jmobius.gameserver.managers.world.X10World.pveEnemy(phantom, enemy)) { return; }
 		attack(phantom, enemy);
 	}
 
@@ -2434,6 +2449,334 @@ public class PhantomCompanionManager
 			failed.add("остались в мире: " + left);
 		}
 		LOGGER.info(tag + (failed.isEmpty() ? "passed." : "FAILED: " + failed));
+	}
+
+	/**
+	 * Самопроверка {@code HuntersSelfTest = BUDDYRES} (только на копии базы): владельца играет охотник, его держат на месте.
+	 * Мёртвый напарник: владелец рядом — лежит; владелец ушёл дальше {@code PhantomDeadRecallRange} — встаёт у него; реса нет {@code PhantomDeadRecallSeconds} — встаёт.
+	 * Рес в пати (ресеры и трупы — охотники по инвайту, их держат на месте): два трупа и двое с Resurrection — каждый берёт свой, на один труп двое разом не кастуют;
+	 * один труп — первым кастует хилер; приказ «рес» — тот, кому приказали.
+	 * @param online охотники в мире
+	 */
+	void resSelfTest(List<Player> online)
+	{
+		ThreadPool.execute(() -> runResSelfTest(online));
+	}
+
+	private void runResSelfTest(List<Player> online)
+	{
+		final String tag = "SelfTest BUDDYRES: ";
+		final int wasLimit = PhantomPartyConfig.PHANTOM_COMPANIONS_PER_PLAYER;
+		final int wasRange = PhantomPartyConfig.PHANTOM_DEAD_RECALL_RANGE;
+		final int wasSeconds = PhantomPartyConfig.PHANTOM_DEAD_RECALL_SECONDS;
+		final List<String> failed = new ArrayList<>();
+		int ok = 0;
+		Player owner = null;
+		for (Player player : online)
+		{
+			final PhantomTemplate template = PhantomData.getInstance().getTemplate(player.getName());
+			if ((template != null) && !template.isReaper() && !player.isDead() && !player.isInParty() && (player.getInstanceId() == 0) && !player.isInOlympiadMode() && !player.isInCombat() && ((owner == null) || (player.getLevel() > owner.getLevel())))
+			{
+				owner = player;
+			}
+		}
+		if (owner == null)
+		{
+			LOGGER.info(tag + "done: 0 ok, 1 wrong. [нет свободного охотника на роль владельца]");
+			return;
+		}
+
+		final Player boss = owner;
+		final List<Player> frozenHunters = new ArrayList<>();
+		PhantomFavors.getInstance().freeze(boss);
+		boss.stopMove(null);
+		boss.setTarget(null);
+		LOGGER.info(tag + "owner " + boss.getName() + ", level " + boss.getLevel() + ".");
+		try
+		{
+			PhantomPartyConfig.PHANTOM_COMPANIONS_PER_PLAYER = 0;
+			PhantomPartyConfig.PHANTOM_DEAD_RECALL_RANGE = 3000;
+			PhantomPartyConfig.PHANTOM_DEAD_RECALL_SECONDS = 0;
+
+			// 1. Мёртвый напарник без пати: ресать его некому, проверяется только подъём у владельца.
+			final Player healer = summonForTest(boss, "healer");
+			if (healer == null)
+			{
+				failed.add("не позвать хилера");
+				return;
+			}
+			final int ownerX = boss.getX();
+			final int ownerY = boss.getY();
+			healer.doDie(null);
+			Thread.sleep(4000);
+			// Замороженного владельца может забрать сбор Rift или Камалоки (они берут свободных по isHunting, прогон 2026-11-08): тогда пункт не про напарника.
+			if ((boss.getInstanceId() != 0) || (Math.hypot(boss.getX() - ownerX, boss.getY() - ownerY) > 500))
+			{
+				failed.add("1. владельца увели посреди пункта (Rift, Камалока?) — не засчитан");
+				return;
+			}
+			ok += resCheck(tag, failed, healer.isDead(), "1. владелец рядом — лежит и ждёт рес");
+
+			boss.teleToLocation(new Location(boss.getX() + 4000, boss.getY(), boss.getZ(), boss.getHeading()), false);
+			ok += resCheck(tag, failed, waitUntil(() -> !healer.isDead() && (healer.calculateDistance2D(boss) < 400), 10000), "2. владелец ушёл дальше " + PhantomPartyConfig.PHANTOM_DEAD_RECALL_RANGE + " — встал у владельца (до него " + (int) healer.calculateDistance2D(boss) + ")");
+
+			PhantomPartyConfig.PHANTOM_DEAD_RECALL_SECONDS = 4;
+			healer.doDie(null);
+			Thread.sleep(2000);
+			ok += resCheck(tag, failed, healer.isDead(), "3. срок 4 с не вышел — лежит");
+			ok += resCheck(tag, failed, waitUntil(() -> !healer.isDead(), 8000), "4. реса нет 4 с — встал");
+			PhantomPartyConfig.PHANTOM_DEAD_RECALL_SECONDS = 0;
+
+			// 2. Рес в пати: хилер и баффер с Resurrection и двое без него — трупы. Все — напарники владельца на его уровне
+			// (охотников подходящего уровня с ресом в тестовом мире мало), пати собирает владелец, как игрок.
+			final Player healerRes = PhantomSupport.resurrection(healer) != null ? healer : summonPick(boss, List.of(PhantomTemplate.Role.HEALER), true);
+			final Player bufferRes = summonPick(boss, List.of(PhantomTemplate.Role.BUFFER), true);
+			final Player body = summonPick(boss, List.of(PhantomTemplate.Role.TANK, PhantomTemplate.Role.DAMAGE), false);
+			final Player body2 = summonPick(boss, List.of(PhantomTemplate.Role.TANK, PhantomTemplate.Role.DAMAGE), false);
+			if ((healerRes == null) || (bufferRes == null) || (body == null) || (body2 == null))
+			{
+				failed.add("не позвать напарников: хилер с ресом " + (healerRes != null) + ", баффер с ресом " + (bufferRes != null) + ", трупы " + (body != null) + " " + (body2 != null));
+				return;
+			}
+			final List<Player> members = List.of(healerRes, bufferRes, body, body2);
+			int place = 0;
+			for (Player member : members)
+			{
+				if (!boss.isInParty() || !boss.getParty().containsPlayer(member))
+				{
+					if (member.isInParty())
+					{
+						member.leaveParty();
+					}
+					onInvited(boss, member, PartyDistributionType.FINDERS_KEEPERS);
+				}
+				member.teleToLocation(slot(boss, place++), false);
+			}
+			final boolean joined = waitUntil(() -> boss.isInParty() && members.stream().allMatch(member -> boss.getParty().containsPlayer(member)), 5000);
+			LOGGER.info(tag + "healer " + healerRes.getName() + " (" + healerRes.getLevel() + "), buffer " + bufferRes.getName() + " (" + bufferRes.getLevel() + "), bodies " + body.getName() + ", " + body2.getName() + "; party " + (boss.isInParty() ? boss.getParty().getMembers().size() : 0) + ".");
+			if (!joined)
+			{
+				failed.add("не собрать пати из напарников");
+				return;
+			}
+
+			// Два трупа, два ресера: каждый берёт свой.
+			readyToRes(healerRes, bufferRes, body, body2);
+			body.doDie(null);
+			body2.doDie(null);
+			final Map<Player, Player> two = watchRes(tag, List.of(healerRes, bufferRes), List.of(body, body2), 30000, failed, "два трупа");
+			ok += resCheck(tag, failed, (two.size() == 2) && (two.get(body) != two.get(body2)), "5. два трупа — каждый ресер взял свой: " + names(two));
+			ok += resCheck(tag, failed, waitUntil(() -> !body.isDead() && !body2.isDead(), 10000), "6. оба трупа встали");
+
+			// Один труп: первым кастует хилер, баффер ждёт.
+			readyToRes(healerRes, bufferRes, body, body2);
+			body.doDie(null);
+			final Map<Player, Player> one = watchRes(tag, List.of(healerRes, bufferRes), List.of(body), 30000, failed, "один труп");
+			ok += resCheck(tag, failed, one.get(body) == healerRes, "7. один труп — первым ресает хилер: " + names(one));
+			ok += resCheck(tag, failed, waitUntil(() -> !body.isDead(), 10000), "8. труп встал");
+
+			// Приказ «рес» баферу главнее заявок и очереди «хилер раньше».
+			readyToRes(healerRes, bufferRes, body, body2);
+			body.doDie(null);
+			final String answer = PhantomSupport.orderRes(bufferRes, boss);
+			final Map<Player, Player> ordered = watchRes(tag, List.of(healerRes, bufferRes), List.of(body), 30000, failed, "приказ");
+			ok += resCheck(tag, failed, ordered.get(body) == bufferRes, "9. приказ «рес» баферу — ресает он (" + answer + "): " + names(ordered));
+			ok += resCheck(tag, failed, waitUntil(() -> !body.isDead(), 10000), "10. труп встал");
+		}
+		catch (Exception e)
+		{
+			failed.add("исключение: " + e);
+			LOGGER.log(Level.WARNING, tag + "failed.", e);
+		}
+		finally
+		{
+			for (String name : ownedBy(boss))
+			{
+				final PhantomTemplate template = PhantomData.getInstance().getTemplate(name);
+				if (template != null)
+				{
+					dismiss(boss, template, true);
+				}
+			}
+			if (boss.isInParty())
+			{
+				boss.leaveParty();
+			}
+			PhantomFavors.getInstance().unfreeze(boss);
+			for (Player hunter : frozenHunters)
+			{
+				if (hunter.isInParty())
+				{
+					hunter.leaveParty();
+				}
+				PhantomFavors.getInstance().unfreeze(hunter);
+			}
+			PhantomPartyConfig.PHANTOM_COMPANIONS_PER_PLAYER = wasLimit;
+			PhantomPartyConfig.PHANTOM_DEAD_RECALL_RANGE = wasRange;
+			PhantomPartyConfig.PHANTOM_DEAD_RECALL_SECONDS = wasSeconds;
+			LOGGER.info(tag + "done: " + ok + " ok, " + failed.size() + " wrong." + (failed.isEmpty() ? "" : " " + failed));
+		}
+	}
+
+	/**
+	 * Самопроверка BUDDYRES: позвать владельцу свободного напарника одной из ролей — с Resurrection или без, как нужно пункту.
+	 * Не подошёл — отпустить и взять следующего.
+	 */
+	private Player summonPick(Player owner, List<PhantomTemplate.Role> roles, boolean withRes) throws InterruptedException
+	{
+		for (PhantomTemplate template : PhantomData.getInstance().getCompanions())
+		{
+			if (!roles.contains(template.getRole()) || (PersonalSavedParty.reservation(owner, template) != null) || (PhantomManager.getInstance().getPhantom(template) != null))
+			{
+				continue;
+			}
+			final Player phantom = summonedForTest(owner, ownedBy(owner), PhantomUi.handle(owner, "summon", template.getName()), template.getRole().name().toLowerCase());
+			if (phantom == null)
+			{
+				continue;
+			}
+			if ((PhantomSupport.resurrection(phantom) != null) == withRes)
+			{
+				return phantom;
+			}
+			dismiss(owner, template, true);
+		}
+		return null;
+	}
+
+	private Player summonForTest(Player owner, String role) throws InterruptedException
+	{
+		Player phantom = summonedForTest(owner, ownedBy(owner), PhantomUi.handle(owner, "summon", role), role);
+		// По роли мир мог дать напарника, закреплённого за чужой сохранённой пачкой: тогда — любой свободный этой роли по имени.
+		for (PhantomTemplate template : PhantomData.getInstance().getCompanions())
+		{
+			if (phantom != null)
+			{
+				break;
+			}
+			if (template.getRole().name().equalsIgnoreCase(role) && (PersonalSavedParty.reservation(owner, template) == null) && (PhantomManager.getInstance().getPhantom(template) == null))
+			{
+				final List<String> before = ownedBy(owner);
+				phantom = summonedForTest(owner, before, PhantomUi.handle(owner, "summon", template.getName()), role);
+			}
+		}
+		return phantom;
+	}
+
+	private Player summonedForTest(Player owner, List<String> before, String refused, String role) throws InterruptedException
+	{
+		for (String name : ownedBy(owner))
+		{
+			if (!before.contains(name))
+			{
+				final PhantomTemplate template = PhantomData.getInstance().getTemplate(name);
+				for (int attempt = 0; attempt < 20; attempt++)
+				{
+					final Player phantom = PhantomManager.getInstance().getPhantom(template);
+					if ((phantom != null) && phantom.isSpawned())
+					{
+						return phantom;
+					}
+					Thread.sleep(250);
+				}
+			}
+		}
+		LOGGER.info("SelfTest BUDDYRES: summon " + role + " refused: " + refused);
+		return null;
+	}
+
+	/** Перед пунктом реса: все живы, никто не кастует, мана полная, откат Resurrection снят. */
+	private static void readyToRes(Player... phantoms) throws InterruptedException
+	{
+		waitUntil(() ->
+		{
+			for (Player phantom : phantoms)
+			{
+				if (phantom.isDead() || phantom.isCastingNow())
+				{
+					return false;
+				}
+			}
+			return true;
+		}, 15000);
+		for (Player phantom : phantoms)
+		{
+			phantom.setCurrentHp(phantom.getMaxHp());
+			phantom.setCurrentMp(phantom.getMaxMp());
+			PhantomSupport.resetResurrection(phantom);
+		}
+	}
+
+	/**
+	 * Следит за ресом до {@code millis}: кто первым начал каст по каждому трупу; двое разом по одному трупу — ошибка.
+	 * @return труп → кто первым по нему кастовал
+	 */
+	private static Map<Player, Player> watchRes(String tag, List<Player> ressers, List<Player> corpses, long millis, List<String> failed, String what) throws InterruptedException
+	{
+		final Map<Player, Player> first = new java.util.LinkedHashMap<>();
+		final long end = System.currentTimeMillis() + millis;
+		boolean doubled = false;
+		while (System.currentTimeMillis() < end)
+		{
+			for (Player corpse : corpses)
+			{
+				int casting = 0;
+				for (Player resser : ressers)
+				{
+					if (!resser.isDead() && resser.isCastingNow() && (resser.getTarget() == corpse))
+					{
+						casting++;
+						first.putIfAbsent(corpse, resser);
+					}
+				}
+				if ((casting > 1) && !doubled)
+				{
+					doubled = true;
+					failed.add(what + ": двое разом кастуют по " + corpse.getName());
+					LOGGER.info(tag + "WRONG " + what + ": two ressers cast on " + corpse.getName() + " at once.");
+				}
+			}
+			if (corpses.stream().noneMatch(Player::isDead))
+			{
+				break;
+			}
+			Thread.sleep(100);
+		}
+		return first;
+	}
+
+	private static String names(Map<Player, Player> first)
+	{
+		final StringBuilder sb = new StringBuilder();
+		for (Map.Entry<Player, Player> entry : first.entrySet())
+		{
+			sb.append(entry.getKey().getName()).append(" ← ").append(entry.getValue() == null ? "никто" : entry.getValue().getName()).append("; ");
+		}
+		return sb.length() == 0 ? "никто не ресал" : sb.toString();
+	}
+
+	private static int resCheck(String tag, List<String> failed, boolean condition, String what)
+	{
+		LOGGER.info(tag + (condition ? "ok " : "WRONG ") + what);
+		if (!condition)
+		{
+			failed.add(what);
+		}
+		return condition ? 1 : 0;
+	}
+
+	private static boolean waitUntil(java.util.function.BooleanSupplier condition, long millis) throws InterruptedException
+	{
+		final long end = System.currentTimeMillis() + millis;
+		while (System.currentTimeMillis() < end)
+		{
+			if (condition.getAsBoolean())
+			{
+				return true;
+			}
+			Thread.sleep(200);
+		}
+		return condition.getAsBoolean();
 	}
 
 	/**

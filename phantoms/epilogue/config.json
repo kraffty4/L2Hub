@@ -1,5 +1,5 @@
 {
-  "note": "Значения ключей конфигов, которые у этой хроники свои, — поверх конфигов сборки. Подставляет выкладка конфигов (builder.deploy_configs, chronicle_configs): в сервер ложится конфиг сборки с этими значениями, правки пользователя в сервере остаются. PvpEvents — решение автора 2026-10-31 («Включать по умолчанию», docs/PLAN.md, «Решения»): TvT, Deathmatch и CtF по расписанию, старт только при живом игроке (PvpOnlyWithPlayers). Остальное — значения High Five: решение автора 2026-11-01 («Эпилог и интерлюд нужно догнать с Н5 по нашим модам», docs/EPILOGUE.md, «Догнали High Five»). HunterSiegeGarrison: при 15 % десять охотников замок не брали, при 5 % взяли (docs/PHANTOMS.md, осады). HunterClanSubUnits, HunterClanStock, HunterClanHall: подгруппы, склад клана и кланхолл охотников. HunterStrategyPerHour и HunterMaxStores: вторая сотня охотников (docs/PHANTOMS.md, 4.109), спрос на решения стратега и места под лавки те же на охотника, что были при 109; бюджет стратега в минуту прежний. HunterSuperChampionBoost: суперчемпион x100 HP и x5 атака (патч 0161), охотникам рейда на него множители РБ. HunterPartyChanceHealer: хилер нарасхват (docs/PHANTOMS.md, 4.117). HunterCombatFixes: правки боя из вклада пользователя (docs/PHANTOMS.md, 4.119).",
+  "note": "Значения ключей конфигов, которые у этой хроники свои, — поверх конфигов сборки. Подставляет выкладка конфигов (builder.deploy_configs, chronicle_configs): в сервер ложится конфиг сборки с этими значениями, правки пользователя в сервере остаются. PvpEvents — решение автора 2026-10-31 («Включать по умолчанию», docs/PLAN.md, «Решения»): TvT, Deathmatch и CtF по расписанию, старт только при живом игроке (PvpOnlyWithPlayers). Остальное — значения High Five: решение автора 2026-11-01 («Эпилог и интерлюд нужно догнать с Н5 по нашим модам», docs/EPILOGUE.md, «Догнали High Five»). HunterSiegeGarrison: при 15 % десять охотников замок не брали, при 5 % взяли (docs/PHANTOMS.md, осады). HunterClanSubUnits, HunterClanStock, HunterClanHall: подгруппы, склад клана и кланхолл охотников. HunterStrategyPerHour и HunterMaxStores: вторая сотня охотников (docs/PHANTOMS.md, 4.109), спрос на решения стратега и места под лавки те же на охотника, что были при 109; бюджет стратега в минуту прежний. HunterSuperChampionBoost: суперчемпион x100 HP и x5 атака (патч 0161), охотникам рейда на него множители РБ. HunterPartyChanceHealer: хилер нарасхват (docs/PHANTOMS.md, 4.117). HunterCombatFixes: правки боя из вклада пользователя (docs/PHANTOMS.md, 4.119). Сведение с High Five 0.5.305 (2026-11-15, решение автора свести H5, Эпилог и Интерлюд перед 1.0): те же значения HunterProfessionPrices, HunterClanLevelSaving, HunterSupportCures, HunterSpawnTickMs, HunterStrategyReserve, RestartHint, HunterSpoil, HunterPets, HunterCraft, HunterLearning, HunterSlang, HunterRift, HunterKamaloka, HunterPartyLife, HunterMentors, HunterMentorsParty (id ошейников, корма, фрагментов Рифта, навыков спойла и крафта, зелий наставников и инстанс Камалоки в датапаке CT 2.4 есть). Не включены: HunterClanInvitePriority, HunterPartyNoblesse, HunterChatBank, HunterChatBankMat — у Эпилога свой код сопровождающего (ClanPartyPriority, PartyNoblesse, LocalReplyBank), он срабатывает первым; HunterShopPrices и HunterOlympiadSkills на Эпилоге ничего не включают: свой HunterShopPrices работает без ключа, бой на Олимпиаде — его EpilogueOlympiadSkills.",
   "configs": {
     "game/config/Custom/L2HubEvents.ini": {
       "PvpEvents": "True"
@@ -13,7 +13,23 @@
       "HunterMaxStores": "8",
       "HunterSuperChampionBoost": "True",
       "HunterPartyChanceHealer": "90",
-      "HunterCombatFixes": "True"
+      "HunterCombatFixes": "True",
+      "HunterProfessionPrices": "20:0;40:100000;76:1000000",
+      "HunterClanLevelSaving": "True",
+      "HunterSupportCures": "True",
+      "HunterSpawnTickMs": "300",
+      "HunterStrategyReserve": "20",
+      "RestartHint": "True",
+      "HunterSpoil": "True",
+      "HunterPets": "True",
+      "HunterCraft": "True",
+      "HunterLearning": "True",
+      "HunterSlang": "True",
+      "HunterRift": "True",
+      "HunterKamaloka": "True",
+      "HunterPartyLife": "True",
+      "HunterMentors": "True",
+      "HunterMentorsParty": "True"
     }
   }
 }

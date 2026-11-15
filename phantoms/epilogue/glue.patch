@@ -520,7 +520,7 @@ index e37efb9dd798efe79ba105072e8dcb1d2e980f54..a12e7a9bec8470e786c1419e82f35b55
  						stm3.setInt(1, pc.getObjectId()); // Char Id
  						stm3.setLong(2, pc.getOfflineStartTime());
 diff --git a/java/org/l2jmobius/gameserver/entity/actor/Creature.java b/java/org/l2jmobius/gameserver/entity/actor/Creature.java
-index 70af30e00267c859ea6ff644e72bc8039b39a04d..164a3bb427f310213a951f625082336acfa37996 100644
+index dff5d66f03c266b60e8f54ce099a67fd6ef4ec02..d6166125c479c98f44f3e8aca6ecb38206e44f42 100644
 --- a/java/org/l2jmobius/gameserver/entity/actor/Creature.java
 +++ b/java/org/l2jmobius/gameserver/entity/actor/Creature.java
 @@ -871,11 +871,12 @@ public abstract class Creature extends WorldObject
