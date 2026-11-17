@@ -38,11 +38,13 @@ ru.DataTitle=Папка данных
 ru.DataSub=Где L2Hub держит серверы, базы, рантаймы и бэкапы
 ru.DataText=Сюда ляжет всё тяжёлое: Java, MariaDB, исходники и сборки серверов, базы и бэкапы — десятки гигабайт. Программа и папка данных живут раздельно: при удалении L2Hub данные остаются.
 ru.DataBad=Папка данных — только латиница, цифры, точка, дефис и подчёркивание, без пробелов: на кириллице и пробелах ломаются Java и MariaDB.
+ru.DataSame=Папка данных не должна совпадать с папкой программы: там лежат шаблоны хроник, и L2Hub принял бы их за установленные. Выбери другую папку — например, подпапку home внутри папки программы.
 ru.Desktop=Ярлык на рабочем столе
 en.DataTitle=Data folder
 en.DataSub=Where L2Hub keeps servers, databases, runtimes and backups
 en.DataText=Everything heavy goes here: Java, MariaDB, server sources and builds, databases and backups — tens of gigabytes. The program and the data folder are separate: uninstalling L2Hub keeps the data.
 en.DataBad=Data folder: Latin letters, digits, dot, dash and underscore only, no spaces — Java and MariaDB break on Cyrillic and spaces.
+en.DataSame=The data folder must not be the same as the program folder: chronicle templates live there, and L2Hub would take them for installed chronicles. Choose another folder — for example, a "home" subfolder inside the program folder.
 en.Desktop=Desktop shortcut
 ru.NoWebView2=Окну L2Hub нужен Microsoft Edge WebView2 Runtime, а его на этом компьютере нет (в Windows 11 он есть всегда, в Windows 10 — не всегда).%n%nОткрыть страницу загрузки Microsoft? Поставь «Evergreen Bootstrapper» и запусти L2Hub — установка продолжится в любом случае.
 en.NoWebView2=The L2Hub window needs the Microsoft Edge WebView2 Runtime, and it is not installed here (Windows 11 always has it, Windows 10 not always).%n%nOpen the Microsoft download page? Install the "Evergreen Bootstrapper", then start L2Hub — setup continues either way.
@@ -170,6 +172,14 @@ begin
   if (CurPageID = DataPage.ID) and not HomeOk(DataPage.Values[0]) then
   begin
     MsgBox(CustomMessage('DataBad'), mbError, MB_OK);
+    Result := False;
+  end
+  { Данные в папке программы: шаблоны профилей из неё лаунчер принял бы за установленные хроники (отчёт 1.0.0).
+    В тихой установке не спрашиваем: там папку данных не выбирают, а программа сама уйдёт в подпапку home. }
+  else if (CurPageID = DataPage.ID) and not WizardSilent
+    and (CompareText(RemoveBackslashUnlessRoot(DataPage.Values[0]), RemoveBackslashUnlessRoot(WizardDirValue)) = 0) then
+  begin
+    MsgBox(CustomMessage('DataSame'), mbError, MB_OK);
     Result := False;
   end;
 end;

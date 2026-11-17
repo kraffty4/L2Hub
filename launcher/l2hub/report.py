@@ -84,6 +84,8 @@ def build(running: str | None = None) -> Path:
             try:
                 lines = [f"{c['status']:<4} {c['title']}: {c['detail']}" + (f"  → {c['hint']}" if c.get("hint") else "")
                          for c in health.diagnostics(p)]
+            except FileNotFoundError as e:
+                lines = [f"сервер не установлен или неполон: нет файла {e.filename}"]
             except Exception as e:  # noqa: BLE001 — отчёт собирается и тогда, когда диагностика сама падает
                 lines = [f"диагностика упала: {type(e).__name__}: {e}"]
             z.writestr(f"{cid}/check.txt", scrub("\n".join(lines) + "\n"))

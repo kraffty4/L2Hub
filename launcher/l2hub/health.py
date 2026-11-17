@@ -76,8 +76,70 @@ def _world_online(p: dict) -> dict | None:
         return None
 
 
+START_FACTS = ("geo_regions", "registered", "loaded_s", "heap")
+HEAD_SIZE = 8 * 2**20
+_start_cache: dict[str, tuple[tuple, float, dict]] = {}
+
+
+def _head(path: Path, size: int = HEAD_SIZE) -> str:
+    try:
+        with path.open("rb") as f:
+            return f.read(size).decode("utf-8", "replace")
+    except OSError:
+        return ""
+
+
+def _rotations(log: Path) -> list[Path]:
+    """Текущий файл лога и его перевёрнутые продолжения: java0.log → java1.log… (у старых L2J java0.log.0 → java0.log.1…)."""
+    out = [log]
+    m = re.fullmatch(r"(.*?)(\d+)(\.log)", log.name) or re.fullmatch(r"(.*\.log\.)(\d+)()", log.name)
+    if m:
+        for i in range(int(m.group(2)) + 1, 20):
+            f = log.with_name(f"{m.group(1)}{i}{m.group(3)}")
+            if not f.is_file():
+                break
+            out.append(f)
+    return out
+
+
+def _start_facts(p: dict) -> dict:
+    """Строки старта гейма (геодата, регистрация на логине, время загрузки, память) из начала лога этого запуска.
+    Пишутся они один раз, а хвост в 200 КБ при сотнях пешек уезжает за минуту: «Проверить всё» показывало красное
+    «в логе нет регистрации» у работающего сервера (отчёт пользователя, 1.0.0). Лог переворачивается на 100 МБ,
+    поэтому смотрим и прежние файлы — пока они младше процесса гейма. Не нашли — повтор не чаще раза в 30 с."""
+    log = log_path(p, "game")
+    proc = servers.part_process(p, "game")
+    try:
+        born = proc.create_time() if proc else 0.0
+    except psutil.Error:
+        born = 0.0
+    key = (str(log), born)
+    cached = _start_cache.get(p["id"])
+    now = time.monotonic()
+    if cached and cached[0] == key and ("registered" in cached[2] or now - cached[1] < 30):
+        return cached[2]
+    facts: dict = {}
+    for f in _rotations(log) if born else [log]:
+        try:
+            if f != log and f.stat().st_mtime < born:
+                break  # файл прошлого запуска
+        except OSError:
+            break
+        facts = {**_parse_facts(_head(f)), **facts}
+        if "registered" in facts:
+            break
+    _start_cache[p["id"]] = (key, now, facts)
+    return facts
+
+
 def game_facts(p: dict) -> dict:
-    text = _tail(log_path(p, "game"))
+    facts = _parse_facts(_tail(log_path(p, "game")))
+    if any(k not in facts for k in START_FACTS):
+        facts = {**_start_facts(p), **facts}
+    return facts
+
+
+def _parse_facts(text: str) -> dict:
     facts = {}
     if m := list(re.finditer(r"(?:GeoEngine|GeoData): Loaded (\d+) regions", text)):
         facts["geo_regions"] = int(m[-1].group(1))

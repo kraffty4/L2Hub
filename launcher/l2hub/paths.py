@@ -4,7 +4,8 @@ APP  — ресурсы программы, только чтение: патч�
        Из исходников — корень репозитория; в собранном exe (PyInstaller) — папка рядом с ним.
 HOME — данные, сюда пишем: runtime/, servers/, data/, downloads/, profiles/. Путь — переменная L2HUB_HOME,
        иначе у собранного exe — <папка программы>\\home, если рядом с exe лежит portable.txt (портативный zip),
-       или %LOCALAPPDATA%\\L2Hub\\settings.json ({"home": "C:\\L2Hub"}, пишет установщик),
+       или %LOCALAPPDATA%\\L2Hub\\settings.json ({"home": "C:\\L2Hub"}, пишет установщик); не задана или совпала
+       с папкой программы — <папка программы>\\home (frozen_home),
        а из исходников — корень репозитория: у автора APP и HOME совпадают и всё лежит как раньше.
 HOME — латиница без пробелов: Java, Ant и MariaDB ломаются на кириллице и пробелах (check_home).
 """
@@ -32,13 +33,25 @@ def _home() -> Path:
     if PORTABLE.is_file():
         # Портативный zip: данные рядом с программой, в своей подпапке — в самой папке программы лежат шаблоны профилей.
         return APP / "home"
+    home = None
     try:
         home = json.loads(SETTINGS.read_text(encoding="utf-8")).get("home")
-        if home:
-            return Path(home)
     except (OSError, ValueError):
         pass
-    return APP
+    return frozen_home(Path(home) if home else None, APP)
+
+
+def frozen_home(home: Path | None, app: Path) -> Path:
+    """Папка данных установленного L2Hub. Не задана или совпала с папкой программы (установщик до 1.0.1 это разрешал) —
+    данные уходят в подпапку home, как у портативного zip: в самой папке программы лежат шаблоны профилей, и лаунчер
+    принял бы их за установленные хроники — все «установлены», а «Играть» ничего не делает (отчёт пользователя, 1.0.0).
+    Исключение — в папке программы уже живут настоящие данные (база или рантаймы): их не прячем."""
+    same = home is None or os.path.normcase(os.path.abspath(home)) == os.path.normcase(os.path.abspath(app))
+    if not same:
+        return home
+    if (app / "data" / "mariadb").is_dir() or (app / "runtime").is_dir():
+        return app
+    return app / "home"
 
 
 def check_home(path: Path) -> str | None:

@@ -2469,6 +2469,7 @@ window.L2_EN = {
 "непонятная строка в ханке {0}: {1}": "unrecognized line in hunk {0}: {1}",
 "Папка данных — только латиница и цифры без пробелов (на кириллице и пробелах ломаются Java и MariaDB).": "Data folder — Latin letters and digits only, without spaces (Cyrillic and spaces break Java and MariaDB).",
 "[… первые {0} байт пропущены …]": "[… first {0} bytes skipped …]",
+"сервер не установлен или неполон: нет файла {0}": "the server is not installed or incomplete: file {0} is missing",
 "диагностика упала: {0}: {1}": "diagnostics crashed: {0}: {1}",
 "Распаковываю {0}…": "Extracting {0}…",
 "{0}: готово": "{0}: done",
