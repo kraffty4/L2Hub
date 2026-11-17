@@ -1,0 +1,631 @@
+L2Hub: русские названия в списке телепортов (перенос 0416 High Five, названия по датапаку Эпилога). Список у хранителя врат (и у всех NPC со списком из data/teleporters:
+дворянские, крепости, Кетра и Варка) сервер строит в Java (TeleportHolder), поэтому русские страницы его не переводили.
+Теперь название, подтверждение (msg 811) и имя предмета платы берутся по языку игрока из
+data/lang/<язык>/TeleportNameLocalisation.xml (TeleportNameLocalisationData, по образцу NpcNameLocalisation Mobius);
+без перевода — как в data/teleporters, при en список прежний. XML Mobius не меняются: ключ — английское название.
+Почему не строки клиента (<fstring> NpcString): в исходниках Mobius их нет нигде, работа в клиенте не
+доказана, а подтверждение 811 — простой текст, туда строку клиента не подставить. Файл собирает
+tools/teleport_names.py из tools/ru_pages/teleport_names.tsv (docs/RU_PAGES.md, «Список телепортов»).
+Самопроверка: HuntersSelfTest = L2HUBRU — все названия всех списков и список Гирана (30080) при ru и en.
+Откат: удалить патч и пересобрать сервер.
+
+diff --git a/dist/game/data/lang/ru/TeleportNameLocalisation.xml b/dist/game/data/lang/ru/TeleportNameLocalisation.xml
+new file mode 100644
+index 0000000000000000000000000000000000000000..c215e39129d0c61ae0edae96f11355c6ea8b6038
+--- /dev/null
++++ b/dist/game/data/lang/ru/TeleportNameLocalisation.xml
+@@ -0,0 +1,242 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<list xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../xsd/TeleportNameLocalisation.xsd">
++	<!-- L2Hub: tools/teleport_names.py из tools/ru_pages/teleport_names.tsv; ключ - название из data/teleporters -->
++	<location name="1st Floor Lobby" translation="1-й этаж - Вестибюль" />
++	<location name="2nd Floor Human Wizard Guild" translation="2-й этаж - Гильдия Волшебников людей" />
++	<location name="3rd Floor Elven Wizard Guild" translation="3-й этаж - Гильдия Эльфийских Волшебников" />
++	<location name="4th Floor Dark Wizard Guild" translation="4-й этаж - Гильдия Темных Волшебников" />
++	<location name="Abandoned Camp" translation="Заброшенный Лагерь" />
++	<location name="Abandoned Coal Mines" translation="Заброшенные Угольные Шахты" />
++	<location name="Aden Town Square" translation="Городская площадь Адена" />
++	<location name="Alligator Island" translation="Остров Аллигаторов" />
++	<location name="Altar of Rites" translation="Алтарь Обрядов" />
++	<location name="Ancient Battleground" translation="Древнее Поле Битвы" />
++	<location name="Anghel Waterfall" translation="Водопад Ангхел" />
++	<location name="Ant Nest" translation="Муравейник" />
++	<location name="Antharas Lair" translation="Логово Антараса" />
++	<location name="Antharas Lair, Heart of Warding" translation="Логово Антараса, Heart of Warding" />
++	<location name="Bee Hive" translation="Улей" />
++	<location name="Blazing Swamp" translation="Пылающее Болото" />
++	<location name="Breka's Stronghold" translation="Крепость Брека" />
++	<location name="Cave of Trials" translation="Пещера Испытаний" />
++	<location name="Center of the Elven Ruins" translation="Центр Эльфийских Руин" />
++	<location name="Center of the Forgotten Temple" translation="Центр Забытого Храма" />
++	<location name="Center of the School of Dark Arts" translation="Центр Школы Темных Искусств" />
++	<location name="Coliseum" translation="Колизей" />
++	<location name="Cruma Marshlands" translation="Болота Крумы" />
++	<location name="Cruma Tower" translation="Башня Крумы" />
++	<location name="Crypts of Disgrace" translation="Склепы Позора" />
++	<location name="Cursed Village" translation="Проклятая Деревня" />
++	<location name="Dark Elf Village" translation="Деревня Темных Эльфов" />
++	<location name="Dark Elven Village" translation="Деревня Темных Эльфов" />
++	<location name="Dark Forest" translation="Темный Лес" />
++	<location name="Den of Evil" translation="Логово Зла" />
++	<location name="Devil's Isle" translation="Остров Дьявола" />
++	<location name="Devil's Pass" translation="Перевал Дьявола" />
++	<location name="Dion Town Square" translation="Городская площадь Диона" />
++	<location name="Dragon Valley" translation="Долина Драконов" />
++	<location name="Dragon Valley, Traders Post" translation="Долина Драконов, Торговый Пост" />
++	<location name="Dwarven Village" translation="Деревня Гномов" />
++	<location name="East Gate Entrance" translation="Вход у восточных ворот" />
++	<location name="Eastern Mining Zone (Northeastern Shore)" translation="Восточные Горные Выработки (северо-восточный берег)" />
++	<location name="Elven Forest" translation="Эльфийский Лес" />
++	<location name="Elven Fortress" translation="Эльфийская Крепость" />
++	<location name="Elven Ruins" translation="Эльфийские Руины" />
++	<location name="Elven Village" translation="Эльфийская Деревня" />
++	<location name="Enchanted Valley, Northen Region" translation="Зачарованная Долина, северная часть" />
++	<location name="Enchanted Valley, Northern Region" translation="Зачарованная Долина, северная часть" />
++	<location name="Enchanted Valley, Southern Region" translation="Зачарованная Долина, южная часть" />
++	<location name="Entrance to Floran Village" translation="Вход в Деревню Флоран" />
++	<location name="Entrance to The Giant's Cave" translation="Вход в Пещеру Гигантов" />
++	<location name="Entrance to the Forge of the Gods" translation="Вход в Кузницу Богов" />
++	<location name="Evil Hunting Grounds" translation="Охотничьи Угодья Зла" />
++	<location name="Execution Grounds" translation="Место Казни" />
++	<location name="Fellmere Harvesting Grounds" translation="Угодья Феллмир" />
++	<location name="Field of Silence" translation="Поле Безмолвия" />
++	<location name="Field of Silence (Western Section)" translation="Поле Безмолвия (западная часть)" />
++	<location name="Field of Silence Center" translation="Центр Поля Безмолвия" />
++	<location name="Field of Whispers" translation="Поле Шепота" />
++	<location name="Field of Whispers (Eastern Section)" translation="Поле Шепота (восточная часть)" />
++	<location name="Field of Whispers Center" translation="Центр Поля Шепота" />
++	<location name="Fields of Massacre" translation="Поля Резни" />
++	<location name="Floran Agricultural Area" translation="Угодья Флорана" />
++	<location name="Forest of Evil" translation="Лес Зла" />
++	<location name="Forest of Mirrors" translation="Лес Зеркал" />
++	<location name="Forest of the Dead" translation="Лес Мертвых" />
++	<location name="Forge of the Gods, Lower Level" translation="Кузница Богов, Нижний Ярус" />
++	<location name="Forge of the Gods, Top Level" translation="Кузница Богов, Верхний Ярус" />
++	<location name="Forgotten Temple" translation="Забытый Храм" />
++	<location name="Forsaken Plains" translation="Покинутые Равнины" />
++	<location name="Fortress East Gate" translation="Восточные ворота крепости" />
++	<location name="Fortress North Gate" translation="Северные ворота крепости" />
++	<location name="Fortress South Gate" translation="Южные ворота крепости" />
++	<location name="Fortress West Gate" translation="Западные ворота крепости" />
++	<location name="Fortress of Resistance" translation="Крепость Сопротивления" />
++	<location name="Four Sepulchers" translation="Четыре Гробницы" />
++	<location name="Front Of Aden Castle" translation="Замок Аден, перед входом" />
++	<location name="Front Of Dion Castle" translation="Замок Дион, перед входом" />
++	<location name="Front Of Giran Castle" translation="Замок Гиран, перед входом" />
++	<location name="Front Of Goddard Castle" translation="Замок Годдард, перед входом" />
++	<location name="Front Of Innadril Castle" translation="Замок Иннадрил, перед входом" />
++	<location name="Front Of Oren Castle" translation="Замок Орен, перед входом" />
++	<location name="Front Of Rune Castle" translation="Замок Руна, перед входом" />
++	<location name="Front Of Schuttgart Castle" translation="Замок Шутгарт, перед входом" />
++	<location name="Front of the Aden Castle Gate" translation="Перед воротами Замка Аден" />
++	<location name="Front of the Archaic Fortress" translation="Перед Древней Крепостью" />
++	<location name="Front of the Bayou Fortress" translation="Перед Болотной Крепостью" />
++	<location name="Front of the Borderland Fortress" translation="Перед Пограничной Крепостью" />
++	<location name="Front of the Dion Castle Gate" translation="Перед воротами Замка Дион" />
++	<location name="Front of the Giran Castle Gate" translation="Перед воротами Замка Гиран" />
++	<location name="Front of the Gludio Castle" translation="Замок Глудио, перед входом" />
++	<location name="Front of the Gludio Castle Gate" translation="Перед воротами Замка Глудио" />
++	<location name="Front of the Goddard Castle Gate" translation="Перед воротами Замка Годдард" />
++	<location name="Front of the Hive Fortress" translation="Перед Крепостью Улья" />
++	<location name="Front of the Innadril Castle Gate" translation="Перед воротами Замка Иннадрил" />
++	<location name="Front of the Ivory Fortress" translation="Перед Крепостью Слоновой Кости" />
++	<location name="Front of the Narsell Fortress" translation="Перед Крепостью Нарселл" />
++	<location name="Front of the Oren Castle Gate" translation="Перед воротами Замка Орен" />
++	<location name="Front of the Rune Castle Gate" translation="Перед воротами Замка Руна" />
++	<location name="Front of the Schuttgart Castle Gate" translation="Перед воротами Замка Шутгарт" />
++	<location name="Front of the Shanty Fortress" translation="Перед Лачужной Крепостью" />
++	<location name="Front of the Southern Fortress" translation="Перед Южной Крепостью" />
++	<location name="Front of the Swamp Fortress" translation="Перед Болотной Крепостью" />
++	<location name="Front of the Valley Fortress" translation="Перед Крепостью Долины" />
++	<location name="Front of the White Sands Fortress" translation="Перед Крепостью Белых Песков" />
++	<location name="Frost Lake" translation="Морозное Озеро" />
++	<location name="Frozen Waterfall" translation="Замерзший Водопад" />
++	<location name="Garden of Eva" translation="Сад Евы" />
++	<location name="Garden of Eva - 2nd Level" translation="Сад Евы - 2-й ярус" />
++	<location name="Garden of Eva - 3rd Level" translation="Сад Евы - 3-й ярус" />
++	<location name="Garden of Eva - 4th Level" translation="Сад Евы - 4-й ярус" />
++	<location name="Garden of Eva - 5th Level" translation="Сад Евы - 5-й ярус" />
++	<location name="Garden of Wild Beasts" translation="Сад Диких Зверей" />
++	<location name="Giant's Cave Lower Layer" translation="Пещера Гигантов, Нижний Ярус" />
++	<location name="Giant's Cave Upper Layer" translation="Пещера Гигантов, Верхний Ярус" />
++	<location name="Giran Arena" translation="Арена Гирана" />
++	<location name="Giran Harbor" translation="Гавань Гирана" />
++	<location name="Giran Town Square" translation="Городская площадь Гирана" />
++	<location name="Gludin Arena" translation="Арена Глудина" />
++	<location name="Gludio Town Square" translation="Городская площадь Глудио" />
++	<location name="Goddard Town Square" translation="Городская площадь Годдарда" />
++	<location name="Gorgon Flower Garden" translation="Сад Горгоны" />
++	<location name="Grave Robber Hideout" translation="Убежище Грабителей Могил" />
++	<location name="Hardin's Private Academy" translation="Частная Академия Хардина" />
++	<location name="Hardins Private Academy" translation="Частная Академия Хардина" />
++	<location name="Heine" translation="Хейн" />
++	<location name="Heine Town Square" translation="Городская площадь Хейна" />
++	<location name="Hot Springs" translation="Горячие Источники" />
++	<location name="Hunter's Village" translation="Деревня Охотников" />
++	<location name="Hunters Valley" translation="Долина Охотников" />
++	<location name="Hunters Village" translation="Деревня Охотников" />
++	<location name="Ice Merchant Cabin" translation="Хижина Торговца Льдом" />
++	<location name="Iceman's Hut" translation="Хижина Ледяного Человека" />
++	<location name="Immortal Plateau, Northern Region" translation="Плато Бессмертных, северная часть" />
++	<location name="Immortal Plateau, Southern Region" translation="Плато Бессмертных, южная часть" />
++	<location name="Imperial Tomb" translation="Императорская Гробница" />
++	<location name="Inside the Garden of Eva" translation="Внутри Сада Евы" />
++	<location name="Isle of Prayer" translation="Остров Молитв" />
++	<location name="Isle of Souls Harbor" translation="Гавань Острова Душ" />
++	<location name="Ivory Tower" translation="Башня Слоновой Кости" />
++	<location name="Kamael Village" translation="Деревня Камаэлей" />
++	<location name="Ketra Orc Outpost" translation="Аванпост Орков Кетры" />
++	<location name="Ketra Orc Village" translation="Деревня Орков Кетры" />
++	<location name="Langk Lizardman Dwelling" translation="Жилища Ящеров Лангк" />
++	<location name="Mithril Mines Eastern Entrance" translation="Мифриловые Шахты, восточный вход" />
++	<location name="Mithril Mines Western Entrance" translation="Мифриловые Шахты, западный вход" />
++	<location name="Monastery of Silence" translation="Монастырь Безмолвия" />
++	<location name="Near the frontier post" translation="У пограничного поста" />
++	<location name="Neutral Zone" translation="Нейтральная Зона" />
++	<location name="North Gate Entrance" translation="Вход у северных ворот" />
++	<location name="Obelisk of Victory" translation="Обелиск Победы" />
++	<location name="Orc Barracks" translation="Казармы Орков" />
++	<location name="Orc Village" translation="Деревня Орков" />
++	<location name="Oren Castle Town" translation="Город Орен" />
++	<location name="Oren Town Square" translation="Городская площадь Орена" />
++	<location name="Outlaw Forest" translation="Лес Изгоев" />
++	<location name="Pavel Ruins" translation="Руины Павла" />
++	<location name="Plains of Dion" translation="Равнины Диона" />
++	<location name="Plains of Glory" translation="Равнины Славы" />
++	<location name="Plains of the Lizardmen" translation="Равнины Ящеров" />
++	<location name="Plunderous Plains" translation="Равнины Грабителей" />
++	<location name="Primeval Isle Wharf" translation="Причал Первобытного Острова" />
++	<location name="Red Rock Ridge" translation="Хребет Красных Скал" />
++	<location name="Ruins of Agony" translation="Руины Агонии" />
++	<location name="Ruins of Despair" translation="Руины Отчаяния" />
++	<location name="Rune Town Square" translation="Городская площадь Руны" />
++	<location name="Rune Township" translation="Город Руна" />
++	<location name="Rune Township Guild" translation="Гильдия Города Руна" />
++	<location name="Schuttgart Town Square" translation="Городская площадь Шутгарта" />
++	<location name="Sea of Spores" translation="Море Спор" />
++	<location name="Seal of Shilen" translation="Печать Шилен" />
++	<location name="Shrine of Loyalty" translation="Святилище Верности" />
++	<location name="Shyeed's Cavern" translation="Пещера Шиид" />
++	<location name="Silent Valley" translation="Тихая Долина" />
++	<location name="Singing Waterfall" translation="Поющий Водопад" />
++	<location name="Sky Wagon Relic" translation="Обломки Небесной Повозки" />
++	<location name="South Entrance of Devastated Castle" translation="Южный вход в Разрушенный Замок" />
++	<location name="South Gate Entrance" translation="Вход у южных ворот" />
++	<location name="Spider Nest" translation="Паучье Гнездо" />
++	<location name="Stakato Nest" translation="Гнездо Стакато" />
++	<location name="Stronghold I" translation="Оплот I" />
++	<location name="Stronghold II" translation="Оплот II" />
++	<location name="Stronghold III" translation="Оплот III" />
++	<location name="Swamp of Screams" translation="Болото Криков" />
++	<location name="Swampland" translation="Болото" />
++	<location name="Talking Island Village" translation="Деревня Говорящего Острова" />
++	<location name="Talking Island, Northern Territory" translation="Говорящий Остров, северная часть" />
++	<location name="Tanor Canyon" translation="Каньон Танор" />
++	<location name="The Ant Nest" translation="Муравейник" />
++	<location name="The Center of Alligator Island" translation="Центр Острова Аллигаторов" />
++	<location name="The Center of the Abandoned Coal Mines" translation="Центр Заброшенных Угольных Шахт" />
++	<location name="The Center of the Cruma Marshlands" translation="Центр Болот Крумы" />
++	<location name="The Center of the Dark Forest" translation="Центр Темного Леса" />
++	<location name="The Center of the Enchanted Valley" translation="Центр Зачарованной Долины" />
++	<location name="The Center of the Forest of Mirrors" translation="Центр Леса Зеркал" />
++	<location name="The Center of the Forest of the Dead" translation="Центр Леса Мертвых" />
++	<location name="The Center of the Hot Springs" translation="Центр Горячих Источников" />
++	<location name="The Center of the Mithril Mines" translation="Центр Мифриловых Шахт" />
++	<location name="The Center of the Neutral Zone" translation="Центр Нейтральной Зоны" />
++	<location name="The Center of the Valley of Saints" translation="Центр Долины Святых" />
++	<location name="The Center of the Wall of Argos" translation="Центр Стены Аргоса" />
++	<location name="The Dwarven Village" translation="Деревня Гномов" />
++	<location name="The Giant's Cave Lower Layer" translation="Пещера Гигантов, Нижний Ярус" />
++	<location name="The Giant's Cave Upper Layer" translation="Пещера Гигантов, Верхний Ярус" />
++	<location name="The Immortal Plateau" translation="Плато Бессмертных" />
++	<location name="The Orc Village" translation="Деревня Орков" />
++	<location name="The Town of Dion" translation="Город Дион" />
++	<location name="The Town of Giran" translation="Город Гиран" />
++	<location name="The Town of Gludio" translation="Город Глудио" />
++	<location name="The Town of Goddard" translation="Город Годдард" />
++	<location name="The Town of Schuttgart" translation="Город Шутгарт" />
++	<location name="The Village of Gludin" translation="Деревня Глудин" />
++	<location name="Timak Outpost" translation="Аванпост Тимак" />
++	<location name="Tower of Insolence" translation="Башня Дерзости" />
++	<location name="Tower of Insolence, 10th Floor" translation="Башня Дерзости, 10-й этаж" />
++	<location name="Tower of Insolence, 13th Floor" translation="Башня Дерзости, 13-й этаж" />
++	<location name="Tower of Insolence, 3rd Floor" translation="Башня Дерзости, 3-й этаж" />
++	<location name="Tower of Insolence, 5th Floor" translation="Башня Дерзости, 5-й этаж" />
++	<location name="Tower of Insolence, 7th Floor" translation="Башня Дерзости, 7-й этаж" />
++	<location name="Town of Aden" translation="Город Аден" />
++	<location name="Town of Goddard" translation="Город Годдард" />
++	<location name="Town of Oren" translation="Город Орен" />
++	<location name="Town of Rune" translation="Город Руна" />
++	<location name="Town of Schuttgart" translation="Город Шутгарт" />
++	<location name="Underground Shopping Area" translation="Подземный Торговый Квартал" />
++	<location name="Valley of Saints" translation="Долина Святых" />
++	<location name="Varka Silenos Barracks" translation="Казармы Силенов Варки" />
++	<location name="Varka Silenos Stronghold" translation="Укрепление Силенов Варки" />
++	<location name="Varka Silenos Village" translation="Деревня Силенов Варки" />
++	<location name="Village Square" translation="Деревенская площадь" />
++	<location name="Wall of Argos" translation="Стена Аргоса" />
++	<location name="War-Torn Plains" translation="Разоренные Равнины" />
++	<location name="Wastelands" translation="Пустоши" />
++	<location name="Wastelands, Western Region" translation="Пустоши, западная часть" />
++	<location name="West Area of the Devastated Castle" translation="Западная часть Разрушенного Замка" />
++	<location name="West Gate Entrance" translation="Вход у западных ворот" />
++	<location name="Western Mining Zone (Central Shore)" translation="Западные Горные Выработки (центральный берег)" />
++	<location name="Wild Beast Pastures" translation="Пастбища Диких Зверей" />
++	<location name="Windawood Manor" translation="Поместье Виндавуд" />
++	<location name="Windmill Hill" translation="Холм Мельниц" />
++	<location name="Windy Hill" translation="Ветреный Холм" />
++	<item id="57" name="аден" />
++</list>
+diff --git a/dist/game/data/scripts/custom/L2HubRuPagesTest/L2HubRuPagesTest.java b/dist/game/data/scripts/custom/L2HubRuPagesTest/L2HubRuPagesTest.java
+index 3cb9fba3660bf91ee3b1bc0c5380dbfee8219760..8044d8411c44fe2fedb4eebd8b73758d2a83195e 100644
+--- a/dist/game/data/scripts/custom/L2HubRuPagesTest/L2HubRuPagesTest.java
++++ b/dist/game/data/scripts/custom/L2HubRuPagesTest/L2HubRuPagesTest.java
+@@ -6,9 +6,11 @@ import java.nio.file.Path;
+ import java.util.ArrayList;
+ import java.util.HashSet;
+ import java.util.List;
++import java.util.Map;
+ import java.util.Set;
+ import java.util.logging.Level;
+ import java.util.logging.Logger;
++import java.util.regex.Matcher;
+ import java.util.regex.Pattern;
+ import java.util.stream.Stream;
+ 
+@@ -19,6 +21,7 @@ import org.l2jmobius.gameserver.config.ServerConfig;
+ import org.l2jmobius.gameserver.config.custom.MultilingualSupportConfig;
+ import org.l2jmobius.gameserver.config.custom.PhantomHuntersConfig;
+ import org.l2jmobius.gameserver.data.SpawnTable;
++import org.l2jmobius.gameserver.data.xml.TeleporterData;
+ import org.l2jmobius.gameserver.entity.World;
+ import org.l2jmobius.gameserver.entity.actor.Npc;
+ import org.l2jmobius.gameserver.entity.actor.Player;
+@@ -27,6 +30,8 @@ import org.l2jmobius.gameserver.handler.VoicedCommandHandler;
+ import org.l2jmobius.gameserver.managers.ScriptManager;
+ import org.l2jmobius.gameserver.managers.phantom.PhantomManager;
+ import org.l2jmobius.gameserver.entity.spawns.Spawn;
++import org.l2jmobius.gameserver.entity.teleporter.TeleportHolder;
++import org.l2jmobius.gameserver.entity.teleporter.TeleportLocation;
+ import org.l2jmobius.gameserver.mechanics.script.Quest;
+ import org.l2jmobius.gameserver.network.serverpackets.NpcHtmlMessage;
+ 
+@@ -84,6 +89,7 @@ public class L2HubRuPagesTest
+ 					windows(player);
+ 					quests(player);
+ 					command(player);
++					teleports(player);
+ 				}
+ 				finally
+ 				{
+@@ -316,4 +322,101 @@ public class L2HubRuPagesTest
+ 		final boolean en = "en".equals(player.getLang()) && player.getHtmlPrefix().isEmpty() && !russian(HtmCache.getInstance().getHtm(player, path));
+ 		check(".lang ru and .lang en", ru && en);
+ 	}
++
++	private static final Pattern TELEPORT_LINK = Pattern.compile("msg=\"811;([^\"]*)\">([^<]*)</a>");
++	private static final Pattern LATIN_WORD = Pattern.compile("[A-Za-z]+");
++	private static final Set<String> ROMAN = Set.of("I", "II", "III", "IV", "V");
++
++	/**
++	 * Есть ли в названии английское слово (не в счёт римские цифры «Оплот II» и то, что глоссарий оставляет латиницей: предмет платы Olympiad Token, Heart of Warding).
++	 */
++	private static boolean english(String text)
++	{
++		final Matcher m = LATIN_WORD.matcher(text.replace("Olympiad Token", "").replace("Heart of Warding", ""));
++		while (m.find())
++		{
++			if (!ROMAN.contains(m.group()))
++			{
++				return true;
++			}
++		}
++		return false;
++	}
++
++	/**
++	 * Список телепортов (TeleportHolder.buildTeleportList, data/lang/ru/TeleportNameLocalisation.xml): при ru у каждого
++	 * названия во всех списках есть русское, и в списке Гирана (Клариса, 30080) ни ссылка, ни подтверждение 811 не английские;
++	 * при en — названия как в data/teleporters, без русских букв.
++	 */
++	private static void teleports(Player player)
++	{
++		int names = 0;
++		int bad = 0;
++		for (Map<String, TeleportHolder> lists : TeleporterData.getInstance().getAllHolders().values())
++		{
++			for (TeleportHolder holder : lists.values())
++			{
++				player.setLang("ru");
++				final String ru = holder.buildTeleportList(player, "l2hub_test");
++				player.setLang("en");
++				final String en = holder.buildTeleportList(player, "l2hub_test");
++				final Matcher mr = TELEPORT_LINK.matcher(ru);
++				final Matcher me = TELEPORT_LINK.matcher(en);
++				for (TeleportLocation loc : holder.getLocations())
++				{
++					if (!mr.find() || !me.find())
++					{
++						bad++;
++						LOGGER.warning(TAG + "teleport list " + holder.getName() + ": link of " + loc.getName() + " not found");
++						break;
++					}
++					if (loc.getName() == null)
++					{
++						continue;
++					}
++					names++;
++					final String problem = english(mr.group(1)) || english(mr.group(2)) ? "ru: " + mr.group(1) + " / " + mr.group(2) //
++						: !loc.getName().equals(me.group(1)) || !me.group(2).startsWith(loc.getName()) || russian(me.group(0)) ? "en: " + me.group(1) + " / " + me.group(2) : null;
++					if (problem != null)
++					{
++						bad++;
++						if (bad <= 20)
++						{
++							LOGGER.warning(TAG + "teleport " + loc.getName() + " (" + holder.getName() + "): " + problem);
++						}
++					}
++				}
++			}
++		}
++		check("teleport names: " + names + " in all lists, bad " + bad, (names > 1000) && (bad == 0));
++
++		final TeleportHolder giran = TeleporterData.getInstance().getHolder(30080, "NORMAL");
++		if (giran == null)
++		{
++			check("teleport list of 30080: not loaded", false);
++			return;
++		}
++		player.setLang("ru");
++		final String ru = giran.buildTeleportList(player, "l2hub_test");
++		player.setLang("en");
++		final String en = giran.buildTeleportList(player, "l2hub_test");
++		int links = 0;
++		boolean ruGood = true;
++		for (Matcher m = TELEPORT_LINK.matcher(ru); m.find(); links++)
++		{
++			ruGood &= !english(m.group(1)) && !english(m.group(2)) && russian(m.group(1));
++		}
++		final StringBuilder plain = new StringBuilder();
++		for (Matcher m = TELEPORT_LINK.matcher(en); m.find();)
++		{
++			plain.append(m.group(1)).append(';');
++		}
++		final StringBuilder expected = new StringBuilder();
++		for (TeleportLocation loc : giran.getLocations())
++		{
++			expected.append(loc.getName()).append(';');
++		}
++		LOGGER.info(TAG + "teleport list of 30080, ru: " + ru);
++		check("teleport list of 30080 (Giran): " + links + " links, ru russian, en as in data/teleporters", (links == giran.getLocations().size()) && (links > 5) && ruGood && expected.toString().equals(plain.toString()) && !russian(en));
++	}
+ }
+diff --git a/dist/game/data/xsd/TeleportNameLocalisation.xsd b/dist/game/data/xsd/TeleportNameLocalisation.xsd
+new file mode 100644
+index 0000000000000000000000000000000000000000..04415dc5846b8454d71d4f3fa735a5cddec1e23e
+--- /dev/null
++++ b/dist/game/data/xsd/TeleportNameLocalisation.xsd
+@@ -0,0 +1,20 @@
++<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
++	<xs:element name="list">
++		<xs:complexType>
++			<xs:sequence>
++				<xs:element name="location" maxOccurs="unbounded" minOccurs="0">
++					<xs:complexType>
++						<xs:attribute type="xs:string" name="name" use="required" />
++						<xs:attribute type="xs:string" name="translation" use="required" />
++					</xs:complexType>
++				</xs:element>
++				<xs:element name="item" maxOccurs="unbounded" minOccurs="0">
++					<xs:complexType>
++						<xs:attribute type="xs:int" name="id" use="required" />
++						<xs:attribute type="xs:string" name="name" use="required" />
++					</xs:complexType>
++				</xs:element>
++			</xs:sequence>
++		</xs:complexType>
++	</xs:element>
++</xs:schema>
+diff --git a/java/org/l2jmobius/gameserver/data/xml/TeleportNameLocalisationData.java b/java/org/l2jmobius/gameserver/data/xml/TeleportNameLocalisationData.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..b2fc3818240e042711560f693ae2f43078a15590
+--- /dev/null
++++ b/java/org/l2jmobius/gameserver/data/xml/TeleportNameLocalisationData.java
+@@ -0,0 +1,112 @@
++package org.l2jmobius.gameserver.data.xml;
++
++import java.io.File;
++import java.util.Map;
++import java.util.concurrent.ConcurrentHashMap;
++import java.util.logging.Logger;
++
++import org.w3c.dom.Document;
++
++import org.l2jmobius.commons.util.IXmlReader;
++import org.l2jmobius.gameserver.config.custom.MultilingualSupportConfig;
++import org.l2jmobius.gameserver.entity.actor.Player;
++import org.l2jmobius.gameserver.util.StatSet;
++
++/**
++ * L2Hub: названия точек телепорта на языке игрока — data/lang/&lt;язык&gt;/TeleportNameLocalisation.xml, как NpcNameLocalisation.<br>
++ * Ключ — английское название из data/teleporters; чего нет в файле, остаётся по-английски. Там же имя предмета платы по id.
++ * Файл собирает tools/teleport_names.py из tools/ru_pages/teleport_names.tsv (docs/RU_PAGES.md, «Список телепортов»).
++ * @author L2Hub
++ */
++public class TeleportNameLocalisationData implements IXmlReader
++{
++	private static final Logger LOGGER = Logger.getLogger(TeleportNameLocalisationData.class.getName());
++
++	private static final Map<String, Map<String, String>> NAMES = new ConcurrentHashMap<>();
++	private static final Map<String, Map<Integer, String>> ITEMS = new ConcurrentHashMap<>();
++	private String _lang;
++
++	protected TeleportNameLocalisationData()
++	{
++		load();
++	}
++
++	@Override
++	public synchronized void load()
++	{
++		NAMES.clear();
++		ITEMS.clear();
++		if (!MultilingualSupportConfig.MULTILANG_ENABLE)
++		{
++			return;
++		}
++
++		for (String lang : MultilingualSupportConfig.MULTILANG_ALLOWED)
++		{
++			final String path = "data/lang/" + lang + "/TeleportNameLocalisation.xml";
++			if (!new File(path).isFile())
++			{
++				continue;
++			}
++
++			NAMES.put(lang, new ConcurrentHashMap<>());
++			ITEMS.put(lang, new ConcurrentHashMap<>());
++			_lang = lang;
++			parseDatapackFile(path);
++			LOGGER.info(getClass().getSimpleName() + ": Loaded " + NAMES.get(lang).size() + " teleport names for [" + lang + "].");
++		}
++	}
++
++	@Override
++	public void parseDocument(Document document, File file)
++	{
++		forEach(document, "list", listNode ->
++		{
++			forEach(listNode, "location", node ->
++			{
++				final StatSet set = new StatSet(parseAttributes(node));
++				NAMES.get(_lang).put(set.getString("name"), set.getString("translation"));
++			});
++			forEach(listNode, "item", node ->
++			{
++				final StatSet set = new StatSet(parseAttributes(node));
++				ITEMS.get(_lang).put(set.getInt("id"), set.getString("name"));
++			});
++		});
++	}
++
++	/**
++	 * @param player кому показывается список
++	 * @param name название из data/teleporters
++	 * @return название на языке игрока или то же, если перевода нет
++	 */
++	public String getName(Player player, String name)
++	{
++		final Map<String, String> names = (name == null) || (player == null) || (player.getLang() == null) ? null : NAMES.get(player.getLang());
++		final String translation = names == null ? null : names.get(name);
++		return translation == null ? name : translation;
++	}
++
++	/**
++	 * @param player кому показывается список
++	 * @param itemId предмет платы
++	 * @param name имя предмета из датапака
++	 * @return имя предмета платы на языке игрока или то же, если перевода нет
++	 */
++	public String getItemName(Player player, int itemId, String name)
++	{
++		final Map<Integer, String> items = (player == null) || (player.getLang() == null) ? null : ITEMS.get(player.getLang());
++		final String translation = items == null ? null : items.get(itemId);
++		return translation == null ? name : translation;
++	}
++
++	public static TeleportNameLocalisationData getInstance()
++	{
++		return SingletonHolder.INSTANCE;
++	}
++
++	private static class SingletonHolder
++	{
++		protected static final TeleportNameLocalisationData INSTANCE = new TeleportNameLocalisationData();
++	}
++}
+diff --git a/java/org/l2jmobius/gameserver/data/xml/TeleporterData.java b/java/org/l2jmobius/gameserver/data/xml/TeleporterData.java
+index f82a6ef9c94dcd8b6396ac7bb31cffa5fbec325e..a7775e7c7d7404b7d21f31e9b99b52c4ca51f5e7 100644
+--- a/java/org/l2jmobius/gameserver/data/xml/TeleporterData.java
++++ b/java/org/l2jmobius/gameserver/data/xml/TeleporterData.java
+@@ -136,6 +136,15 @@ public class TeleporterData implements IXmlReader
+ 		return _teleporters.getOrDefault(npcId, Collections.emptyMap()).get(listName);
+ 	}
+ 	
++	/**
++	 * L2Hub: все списки всех NPC: {id NPC: {имя списка: список}} — самопроверке русских названий.
++	 * @return teleport lists by NPC template ID
++	 */
++	public Map<Integer, Map<String, TeleportHolder>> getAllHolders()
++	{
++		return Collections.unmodifiableMap(_teleporters);
++	}
++	
+ 	public static TeleporterData getInstance()
+ 	{
+ 		return SingletonHolder.INSTANCE;
+diff --git a/java/org/l2jmobius/gameserver/entity/teleporter/TeleportHolder.java b/java/org/l2jmobius/gameserver/entity/teleporter/TeleportHolder.java
+index 5ce7e5884c999d515eb0536930d96c95219a041a..12ac0d51c4e5470cdc2766a689b8d32fbaaea394 100644
+--- a/java/org/l2jmobius/gameserver/entity/teleporter/TeleportHolder.java
++++ b/java/org/l2jmobius/gameserver/entity/teleporter/TeleportHolder.java
+@@ -23,6 +23,7 @@ import java.util.logging.Logger;
+ 
+ import org.l2jmobius.gameserver.config.PlayerConfig;
+ import org.l2jmobius.gameserver.data.xml.ItemData;
++import org.l2jmobius.gameserver.data.xml.TeleportNameLocalisationData;
+ import org.l2jmobius.gameserver.entity.actor.Npc;
+ import org.l2jmobius.gameserver.entity.actor.Player;
+ import org.l2jmobius.gameserver.entity.actor.enums.player.TeleportType;
+@@ -127,31 +128,40 @@ public class TeleportHolder
+ 			return;
+ 		}
+ 		
+-		// Build html
++		// Send html message
++		final NpcHtmlMessage msg = new NpcHtmlMessage(npc.getObjectId());
++		msg.setFile(player, "data/html/teleporter/teleports.htm");
++		msg.replace("%locations%", buildTeleportList(player, bypass));
++		player.sendPacket(msg);
++	}
++	
++	/**
++	 * L2Hub: ссылки списка для %locations%. Название, подтверждение (msg 811) и имя предмета платы — на языке игрока
++	 * ({@link TeleportNameLocalisationData}: data/lang/&lt;язык&gt;/TeleportNameLocalisation.xml), без перевода — как в data/teleporters.
++	 * @param player receiver of HTML message
++	 * @param bypass bypass used while building message
++	 * @return links of all locations
++	 */
++	public String buildTeleportList(Player player, String bypass)
++	{
++		final TeleportNameLocalisationData names = TeleportNameLocalisationData.getInstance();
+ 		final StringBuilder sb = new StringBuilder();
+-		final StringBuilder sbF = new StringBuilder();
+ 		for (TeleportLocation loc : _teleportData)
+ 		{
+-			String finalName = loc.getName();
+-			String confirmDesc = loc.getName();
++			String finalName = names.getName(player, loc.getName());
++			final String confirmDesc = finalName;
+ 			if (shouldPayFee(player, loc))
+ 			{
+ 				final long fee = calculateFee(player, loc);
+ 				if (fee != 0)
+ 				{
+-					finalName += " - " + fee + " " + getItemName(loc.getFeeId());
++					finalName += " - " + fee + " " + names.getItemName(player, loc.getFeeId(), getItemName(loc.getFeeId()));
+ 				}
+ 			}
+ 			
+ 			sb.append("<a action=\"bypass -h " + bypass + " " + _name + " " + loc.getId() + "\" msg=\"811;" + confirmDesc + "\">" + finalName + "</a><br1>");
+ 		}
+-		sbF.append(sb.toString());
+-		
+-		// Send html message
+-		final NpcHtmlMessage msg = new NpcHtmlMessage(npc.getObjectId());
+-		msg.setFile(player, "data/html/teleporter/teleports.htm");
+-		msg.replace("%locations%", sbF.toString());
+-		player.sendPacket(msg);
++		return sb.toString();
+ 	}
+ 	
+ 	/**
