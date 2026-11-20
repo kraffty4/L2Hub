@@ -128,6 +128,18 @@ public final class PhantomUi
 	}
 
 	/**
+	 * Окно открыто заново (.buddy без параметров, вкладка «Напарники» доски без действия): экран сохранённой пачки и
+	 * выбора класса сервер помнит по игроку, и без сброса окно так и открывалось бы на нём — без «Позвать» и «Отпустить»
+	 * у напарников — до кнопки «Назад» или перезапуска сервера.
+	 * @param player кто открыл окно
+	 */
+	public static void reopen(Player player)
+	{
+		PersonalSavedParty.close(player);
+		PersonalBattleCatalog.back(player);
+	}
+
+	/**
 	 * @param player кто смотрит
 	 * @param bypass начало действия кнопок: {@code bypass voice .buddy} или {@code bypass _bbshubbuddy}
 	 * @return список напарников с состоянием и кнопками (без html и body)

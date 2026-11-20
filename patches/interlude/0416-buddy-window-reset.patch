@@ -1,0 +1,22 @@
+L2Hub: вкладка «Напарники» доски Alt+B, открытая заново, показывает обычный список напарников (с «Позвать» и
+«Отпустить»), а не залипший экран сохранённой пачки или выбора класса. Те экраны сервер помнил по игроку до кнопки
+«Назад» внизу экрана или перезапуска: после «Вызвать пачку», «Отозвать пачку» или «Состав пачки» и вкладка доски,
+и .buddy снова открывали экран пачки, где у помощников только «Убрать» из состава (отчёт пользователя на 1.0.2:
+«нельзя было заменить и отозвать, не было кнопок отзыва… перезагрузил сервер — заработало»).
+Сброс — PhantomUi.reopen (модуль фантомов), тот же зовёт .buddy без параметров.
+Откат: удалить патч и пересобрать сервер.
+
+diff --git a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+--- a/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
++++ b/dist/game/data/scripts/handlers/bypass/communityboard/L2HubBoard.java
+@@ -929,6 +929,10 @@
+ 				player.sendMessage(error);
+ 			}
+ 		}
++		else
++		{
++			PhantomUi.reopen(player);
++		}
+ 		return page(player, tr("Напарники"), PhantomUi.render(player, "bypass " + BUDDY));
+ 	}
+ 

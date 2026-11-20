@@ -42,6 +42,10 @@ public class Buddy implements IVoicedCommandHandler
 				player.sendMessage(error);
 			}
 		}
+		else
+		{
+			PhantomUi.reopen(player);
+		}
 
 		player.sendPacket(new NpcHtmlMessage(tr("<html><title>Напарники</title><body><center>") + PhantomUi.render(player, "bypass voice .buddy") + "</center></body></html>"));
 		return true;
