@@ -1,0 +1,148 @@
+L2Hub: переключатель английских названий в списке телепортов гейткипера. Под списком — «English names»
+(или «Русские названия», если выбраны английские): названия точек и предмета платы — как в data/teleporters, без
+перевода из data/lang/<язык>/TeleportNameLocalisation.xml (патч русских названий). Выбор помнится за персонажем
+(PlayerVariables L2HubTeleportNamesEn) и действует и у других NPC со списками (Кетра, Варка, замок), но ссылка —
+только у гейткиперов (Teleporter) и только если у языка игрока есть перевод. Просьба автора 2026-11-21: по русским
+названиям непонятно, куда телепорт.
+Откат: удалить патч и пересобрать сервер.
+
+diff --git a/java/org/l2jmobius/gameserver/data/xml/TeleportNameLocalisationData.java b/java/org/l2jmobius/gameserver/data/xml/TeleportNameLocalisationData.java
+--- a/java/org/l2jmobius/gameserver/data/xml/TeleportNameLocalisationData.java
++++ b/java/org/l2jmobius/gameserver/data/xml/TeleportNameLocalisationData.java
+@@ -25,6 +25,9 @@
+ 	private static final Map<String, Map<String, String>> NAMES = new ConcurrentHashMap<>();
+ 	private static final Map<String, Map<Integer, String>> ITEMS = new ConcurrentHashMap<>();
+ 	private String _lang;
++
++	/** L2Hub: игрок выбрал английские названия — переключатель под списком у гейткипера. */
++	public static final String VAR_ENGLISH = "L2HubTeleportNamesEn";
+ 
+ 	protected TeleportNameLocalisationData()
+ 	{
+@@ -82,7 +85,7 @@
+ 	 */
+ 	public String getName(Player player, String name)
+ 	{
+-		final Map<String, String> names = (name == null) || (player == null) || (player.getLang() == null) ? null : NAMES.get(player.getLang());
++		final Map<String, String> names = (name == null) || (player == null) || (player.getLang() == null) || isEnglish(player) ? null : NAMES.get(player.getLang());
+ 		final String translation = names == null ? null : names.get(name);
+ 		return translation == null ? name : translation;
+ 	}
+@@ -95,9 +98,36 @@
+ 	 */
+ 	public String getItemName(Player player, int itemId, String name)
+ 	{
+-		final Map<Integer, String> items = (player == null) || (player.getLang() == null) ? null : ITEMS.get(player.getLang());
++		final Map<Integer, String> items = (player == null) || (player.getLang() == null) || isEnglish(player) ? null : ITEMS.get(player.getLang());
+ 		final String translation = items == null ? null : items.get(itemId);
+ 		return translation == null ? name : translation;
++	}
++
++	/**
++	 * @param player игрок
++	 * @return есть ли перевод на язык игрока — тогда под списком у гейткипера есть переключатель на английские названия
++	 */
++	public boolean hasTranslation(Player player)
++	{
++		return (player != null) && (player.getLang() != null) && NAMES.containsKey(player.getLang());
++	}
++
++	/**
++	 * @param player игрок
++	 * @return игрок выбрал английские названия (как в data/teleporters)
++	 */
++	public boolean isEnglish(Player player)
++	{
++		return (player != null) && player.getVariables().getBoolean(VAR_ENGLISH, false);
++	}
++
++	/**
++	 * Переключить названия игрока: язык игрока ↔ английские.
++	 * @param player игрок
++	 */
++	public void toggleEnglish(Player player)
++	{
++		player.getVariables().set(VAR_ENGLISH, !isEnglish(player));
+ 	}
+ 
+ 	public static TeleportNameLocalisationData getInstance()
+diff --git a/java/org/l2jmobius/gameserver/entity/teleporter/TeleportHolder.java b/java/org/l2jmobius/gameserver/entity/teleporter/TeleportHolder.java
+--- a/java/org/l2jmobius/gameserver/entity/teleporter/TeleportHolder.java
++++ b/java/org/l2jmobius/gameserver/entity/teleporter/TeleportHolder.java
+@@ -27,6 +27,7 @@
+ import org.l2jmobius.gameserver.entity.actor.Npc;
+ import org.l2jmobius.gameserver.entity.actor.Player;
+ import org.l2jmobius.gameserver.entity.actor.enums.player.TeleportType;
++import org.l2jmobius.gameserver.entity.actor.instance.Teleporter;
+ import org.l2jmobius.gameserver.entity.item.ItemTemplate;
+ import org.l2jmobius.gameserver.entity.item.enums.ItemProcessType;
+ import org.l2jmobius.gameserver.entity.itemcontainer.Inventory;
+@@ -131,7 +132,7 @@
+ 		// Send html message
+ 		final NpcHtmlMessage msg = new NpcHtmlMessage(npc.getObjectId());
+ 		msg.setFile(player, "data/html/teleporter/teleports.htm");
+-		msg.replace("%locations%", buildTeleportList(player, bypass));
++		msg.replace("%locations%", buildTeleportList(player, bypass) + namesSwitch(player, npc));
+ 		player.sendPacket(msg);
+ 	}
+ 	
+@@ -162,6 +163,26 @@
+ 			sb.append("<a action=\"bypass -h " + bypass + " " + _name + " " + loc.getId() + "\" msg=\"811;" + confirmDesc + "\">" + finalName + "</a><br1>");
+ 		}
+ 		return sb.toString();
++	}
++	
++	/**
++	 * L2Hub: переключатель названий под списком у гейткипера: «English names» ↔ «Русские названия» (bypass teleportNames у
++	 * {@link Teleporter}). Только если у языка игрока есть перевод; у других NPC со списками (Кетра, Варка, замок) свои
++	 * bypass — у них ссылки нет, но выбор игрока действует и там.
++	 * @param player receiver of HTML message
++	 * @param npc NPC, показывающий список
++	 * @return ссылка или пустая строка
++	 */
++	private String namesSwitch(Player player, Npc npc)
++	{
++		final TeleportNameLocalisationData names = TeleportNameLocalisationData.getInstance();
++		if (!(npc instanceof Teleporter) || !names.hasTranslation(player))
++		{
++			return "";
++		}
++		
++		final String label = names.isEnglish(player) ? "Русские названия" : "English names";
++		return "<br><a action=\"bypass -h npc_" + npc.getObjectId() + "_teleportNames " + _name + "\">" + label + "</a>";
+ 	}
+ 	
+ 	/**
+diff --git a/java/org/l2jmobius/gameserver/entity/actor/instance/Teleporter.java b/java/org/l2jmobius/gameserver/entity/actor/instance/Teleporter.java
+--- a/java/org/l2jmobius/gameserver/entity/actor/instance/Teleporter.java
++++ b/java/org/l2jmobius/gameserver/entity/actor/instance/Teleporter.java
+@@ -20,6 +20,7 @@
+ import java.util.logging.Logger;
+ 
+ import org.l2jmobius.commons.util.StringUtil;
++import org.l2jmobius.gameserver.data.xml.TeleportNameLocalisationData;
+ import org.l2jmobius.gameserver.data.xml.TeleporterData;
+ import org.l2jmobius.gameserver.entity.actor.Creature;
+ import org.l2jmobius.gameserver.entity.actor.Player;
+@@ -92,6 +93,21 @@
+ 				holder.showTeleportList(player, this);
+ 				break;
+ 			}
++			case "teleportNames":
++			{
++				// L2Hub: «English names» / «Русские названия» под списком (TeleportHolder.namesSwitch).
++				final String listName = (st.hasMoreTokens()) ? st.nextToken() : TeleportType.NORMAL.name();
++				final TeleportHolder holder = TeleporterData.getInstance().getHolder(getId(), listName);
++				if (holder == null)
++				{
++					LOGGER.warning(player + " requested teleport names for list with name " + listName + " at NPC " + getId() + "!");
++					return;
++				}
++				
++				TeleportNameLocalisationData.getInstance().toggleEnglish(player);
++				holder.showTeleportList(player, this);
++				break;
++			}
+ 			case "teleport":
+ 			{
+ 				// Check for required count of params.

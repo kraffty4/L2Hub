@@ -445,3 +445,7 @@ python -X utf8 tools/teleport_names.py xml --data <dist/game/data> --out <дер
 - Врезки модуля фантомов (`phantoms_glue.py --check`) совпадают с собранными деревьями обеих хроник.
 
 Не проверено клиентом: как русские названия смотрятся в окне и в окне подтверждения 811, и не обрезает ли клиент длинные строки вроде «Тренировочный Лагерь Сел Махумов (западные ворота)».
+
+### Английские названия по выбору (2026-11-21, 1.0.5)
+
+Автор: по русским названиям непонятно, куда телепорт. Под списком у хранителя врат (`Teleporter`) теперь ссылка «English names», а при английских — «Русские названия». Выбор помнится за персонажем (`PlayerVariables` `L2HubTeleportNamesEn`): названия, подтверждение 811 и плата идут как в `data/teleporters`, и так же у остальных NPC со списками (Кетра, Варка, замок), хотя ссылки у них нет — у них свои bypass. Ссылка видна, только если у языка игрока есть `TeleportNameLocalisation.xml`: при `en` её нет. Патчи — `patches/ct26_highfive/0418-teleport-names-english.patch` и `patches/epilogue/0632-teleport-names-english.patch` (`TeleportNameLocalisationData.isEnglish`/`toggleEnglish`, `TeleportHolder.namesSwitch`, bypass `teleportNames` в `Teleporter`).
