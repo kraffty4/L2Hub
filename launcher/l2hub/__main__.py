@@ -83,6 +83,7 @@ def main() -> None:
         min_size=MIN_SIZE,
         frameless=True,
         easy_drag=False,
+        zoomable=True,  # Ctrl+колесо мыши — масштаб окна (по отзыву: мелкий текст); после перезапуска сбрасывается
         background_color=appsettings.THEMES.get(appsettings.load()["theme"], appsettings.THEMES["gold"]),
         **geo,
     )

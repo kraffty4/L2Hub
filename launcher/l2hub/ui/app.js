@@ -591,6 +591,12 @@ function showSection(name) {
 document.querySelectorAll('[data-sec]').forEach((b) => (b.onclick = () => showSection(b.dataset.sec)));
 
 // ---------- Вкладки страницы хроники ----------
+// Обложка во всю высоту — только на «Обзоре» и в высоком окне. При масштабе Ctrl+колесом окно в CSS-пикселях
+// становится низким, и большая обложка съедала бы всё место под вкладки.
+function applyCompact() {
+  $('main').classList.toggle('compact', ctab !== 'over' || window.innerHeight < 640);
+}
+window.addEventListener('resize', applyCompact);
 function showCtab(name) {
   const c = byId(selected);
   if (name !== 'over' && !c?.installed) name = 'over';
@@ -602,7 +608,7 @@ function showCtab(name) {
   store('ctab', name);
   document.querySelectorAll('.ctab').forEach((t) => t.classList.toggle('on', t.dataset.ctab === name));
   document.querySelectorAll('.cpane').forEach((x) => x.classList.toggle('on', x.id === 'cpane-' + name));
-  $('main').classList.toggle('compact', name !== 'over');
+  applyCompact();
   $('sec-chron').classList.toggle('in-set', name === 'set');
   clearInterval(logTimer);
   if (name === 'over') renderOverviewCards();
