@@ -1889,6 +1889,17 @@ class Api:
         except (ValueError, RuntimeError, OSError) as e:
             return {"ok": False, "error": str(e)}
 
+    def feedback_replies(self, refresh: bool = False) -> dict:
+        """Ответы автора на отзывы этой установки (колонка «Ответ» в таблице приёмника); unseen — сколько новых."""
+        return {"ok": True, **feedback.replies(bool(refresh))}
+
+    def feedback_replies_seen(self, keys: list) -> dict:
+        try:
+            feedback.replies_seen(list(keys or []))
+            return {"ok": True}
+        except OSError as e:
+            return {"ok": False, "error": str(e)}
+
     # ---------- Папки ----------
 
     def open_path(self, chronicle_id: str, what: str) -> dict:

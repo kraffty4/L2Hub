@@ -3,9 +3,11 @@
 
 Уходит только то, что пользователь нажал сам: id хроники, случайный номер установки, версия L2Hub; в отзыве — ещё текст,
 контакт, если он его написал, и отчёт (report.py, без паролей и ключей), если поставил галку. Свои голоса и номер
-установки — data/feedback.json."""
+установки — data/feedback.json. Ответы автора на отзывы (колонка «Ответ» в таблице) лаунчер спрашивает по номеру
+установки — replies(), какие уже показаны, помнит там же."""
 
 import base64
+import hashlib
 import json
 import os
 import time
@@ -24,9 +26,11 @@ MAX_SHOT = 5 * 1024 * 1024    # скриншот к отзыву: png или jpg
 SHOT_TYPES = {b"\x89PNG\r\n\x1a\n": ("image/png", "png"), b"\xff\xd8\xff": ("image/jpeg", "jpg")}
 MAX_TEXT = 4000
 COUNTS_TTL = 300       # счётчики голосов спрашиваем не чаще раза в 5 минут
+REPLIES_TTL = 600      # ответы на отзывы — не чаще раза в 10 минут (приёмник пускает 30 в час)
 KINDS = {"bug", "idea"}
 
 _counts = {"t": None, "votes": {}}
+_replies = {"t": None, "list": [], "error": None}
 
 
 def url() -> str:
@@ -150,3 +154,40 @@ def send(kind: str, text: str, contact: str = "", chronicle: str = "", attach: b
     if out.get("screenshot"):
         return {"report": name, "screenshot": "saved"}
     return {"report": name, "screenshot": "lost", "screenshot_error": str(out.get("screenshot_error") or "приёмник не умеет принимать скриншоты")}
+
+
+def _reply_key(r: dict) -> str:
+    return hashlib.sha1(f"{r['at']}\n{r['reply']}".encode()).hexdigest()[:16]
+
+
+def replies(refresh: bool = False) -> dict:
+    """Ответы автора на отзывы этой установки, новые сверху; new — ещё не показан (ключи показанных — replies_seen
+    в data/feedback.json). Номер установки ради вопроса не заводим: без него отзывов отсюда не было. Приёмник,
+    развёрнутый до 1.0.9, действия replies не знает — тогда ответов просто нет, без ошибки."""
+    s = _state()
+    if not url() or not s.get("install"):
+        return {"enabled": bool(url()), "replies": [], "unseen": 0}
+    if refresh or _replies["t"] is None or time.monotonic() - _replies["t"] > REPLIES_TTL:
+        _replies["t"] = time.monotonic()  # и после ошибки: не спрашивать на каждое открытие окна
+        try:
+            got = _call(query={"action": "replies", "install": s["install"]}).get("replies") or []
+            rows = []
+            for r in got if isinstance(got, list) else []:
+                if isinstance(r, dict) and str(r.get("reply") or "").strip():
+                    rows.append({"at": str(r.get("at") or "")[:40], "kind": str(r.get("kind") or "")[:20],
+                                 "chronicle": str(r.get("chronicle") or "")[:40], "text": str(r.get("text") or "")[:1000],
+                                 "reply": str(r["reply"]).strip()[:MAX_TEXT]})
+            _replies.update(list=sorted(rows, key=lambda r: r["at"], reverse=True), error=None)
+        except RuntimeError as e:
+            _replies["error"] = None if "нет такого действия" in str(e) else str(e)
+    seen = set(s.get("replies_seen", []))
+    rows = [{**r, "key": (k := _reply_key(r)), "new": k not in seen} for r in _replies["list"]]
+    out = {"enabled": True, "replies": rows, "unseen": sum(r["new"] for r in rows)}
+    return {**out, "error": _replies["error"]} if _replies["error"] else out
+
+
+def replies_seen(keys: list[str]) -> None:
+    """Ответы показаны: больше не считать их новыми."""
+    s = _state()
+    s["replies_seen"] = sorted(set(s.get("replies_seen", [])) | {str(k)[:16] for k in keys})
+    _save_state(s)

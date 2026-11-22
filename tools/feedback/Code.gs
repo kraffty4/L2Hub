@@ -4,6 +4,7 @@
  * владельцу таблицы, отчёт (zip без паролей и ключей) и скриншот (png или jpg) кладёт в папку «L2Hub — отчёты» на его Диске,
  * доступ — только у него. Скриншот не сохранился — отзыв всё равно записан, в ответе screenshot_error.
  * Развернуть: «Начать развёртывание» → «Новое развёртывание» → «Веб-приложение», запуск от своего имени, доступ — все.
+ * Ответить на отзыв — текст в колонку «Ответ» напротив него: лаунчер этой установки покажет его в окне «Отзыв».
  * Telegram — по желанию: свойства скрипта TG_TOKEN и TG_CHAT (вписывает автор сам, в код и в лаунчер они не попадают).
  */
 
@@ -14,14 +15,40 @@ const MAX_TEXT = 4000;
 const MAX_REPORT = 8 * 1024 * 1024;              // байт zip
 const MAX_SHOT = 5 * 1024 * 1024;                // байт скриншота
 const SHOT_TYPES = { 'image/png': 'png', 'image/jpeg': 'jpg' };
-const LIMITS = { vote: 60, feedback: 5 };        // запросов в час с одной установки
+const LIMITS = { vote: 60, feedback: 5, replies: 30 };  // запросов в час с одной установки
 const KINDS = { bug: 'Баг', idea: 'Идея' };
 
 function doGet(e) {
   const action = (e && e.parameter && e.parameter.action) || 'votes';
   if (action === 'votes') return json_({ ok: true, votes: counts_() });
   if (action === 'ping') return json_({ ok: true });
+  if (action === 'replies') return json_(replies_(String(e.parameter.install || '')));
   return json_({ ok: false, error: 'нет такого действия' });
+}
+
+// Ответы автора на отзывы одной установки: автор пишет текст в колонку «Ответ» листа «Отзывы» напротив отзыва,
+// лаунчер с этим номером установки показывает его в окне. Номер установки — случайные 32 hex, чужие ответы по нему не найти.
+function replies_(install) {
+  if (!/^[0-9a-f]{32}$/.test(install)) return { ok: false, error: 'нет номера установки' };
+  if (!limit_('replies', install)) return { ok: false, error: 'слишком часто — попробуй через час' };
+  const sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FEEDBACK);
+  if (!sh) return { ok: true, replies: [] };
+  const rows = sh.getDataRange().getValues();
+  const head = rows[0].map(String);
+  const col = (name) => head.indexOf(name);
+  const [at, kind, text, chronicle, inst, reply] = ['Время', 'Вид', 'Текст', 'Хроника', 'Установка', 'Ответ'].map(col);
+  if (inst < 0 || reply < 0) return { ok: true, replies: [] };
+  const out = [];
+  for (let i = 1; i < rows.length; i++) {
+    const r = rows[i];
+    const answer = String(r[reply] || '').trim();
+    if (r[inst] !== install || !answer) continue;
+    out.push({
+      at: r[at] instanceof Date ? r[at].toISOString() : String(r[at] || ''), kind: String(r[kind] || ''),
+      chronicle: String(r[chronicle] || ''), text: String(r[text] || '').slice(0, 1000), reply: answer.slice(0, MAX_TEXT),
+    });
+  }
+  return { ok: true, replies: out };
 }
 
 function doPost(e) {
@@ -73,7 +100,7 @@ function feedback_(req, install) {
     link = folder_().createFile(Utilities.newBlob(bytes, 'application/zip', name)).getUrl();
   }
   const shot = screenshot_(req.screenshot, install);
-  const sh = sheet_(FEEDBACK, ['Время', 'Вид', 'Текст', 'Контакт', 'Хроника', 'Версия L2Hub', 'Установка', 'Отчёт', 'Скриншот']);
+  const sh = sheet_(FEEDBACK, ['Время', 'Вид', 'Текст', 'Контакт', 'Хроника', 'Версия L2Hub', 'Установка', 'Отчёт', 'Скриншот', 'Ответ']);
   sh.appendRow([new Date(), KINDS[kind], cell_(text, MAX_TEXT), cell_(req.contact, 200), chronicle, cell_(req.version, 20), install, link, shot.link || shot.error || '']);
   const subject = `L2Hub: ${KINDS[kind].toLowerCase()}${chronicle ? ' — ' + chronicle : ''}`;
   const body = `${text}\n\nКонтакт: ${req.contact || '—'}\nХроника: ${chronicle || '—'}\nL2Hub ${req.version || '?'}\n`

@@ -1,5 +1,5 @@
 """«Собрать отчёт» (docs/RELEASE.md): zip для разбора проблемы — версия, система, рантаймы, «Проверить всё» и хвосты
-логов каждой установленной хроники. Без секретов: файлы с ними не берём (data/client.cnf, data/brain/*.key, конфиги
+логов каждой установленной хроники и упавших установок. Без секретов: файлы с ними не берём (data/client.cnf, data/brain/*.key, конфиги
 Database.ini), журналы разговоров ботов — тоже (это переписка игрока), а в собранном вычищаем строки с паролями,
 ключи вида sk-… и имя пользователя Windows в путях. Кладётся в data/reports, никуда не отправляется."""
 
@@ -92,6 +92,22 @@ def build(running: str | None = None) -> Path:
             for name, path in _logs(p).items():
                 if (text := _tail(path)) is not None:
                     z.writestr(f"{cid}/{name}", scrub(text))
+        # Упавшие установки (Api._install_cleanup): у неустановленной хроники профиля нет, и без этого в отчёте пусто
+        # (отчёт пользователя на 1.0.8: «не устанавливается C4» — а в zip ни строчки о причине).
+        for rec in sorted((paths.DATA / "logs").glob("install_*.json")):
+            cid = rec.stem.removeprefix("install_")
+            if (text := _tail(rec)) is not None:
+                z.writestr(f"install_failed/{cid}.json", scrub(text))
+            logs = [rec.with_suffix(".log")]
+            try:
+                ref = Path(json.loads(rec.read_text(encoding="utf-8")).get("log") or "")
+            except (OSError, ValueError):
+                ref = None
+            if ref and ref not in logs:
+                logs.append(ref)  # лог, на который сослалась ошибка (сборка Ant — servers\<id>\build.log)
+            for log in logs:
+                if (text := _tail(log)) is not None:
+                    z.writestr(f"install_failed/{cid}.{log.name}", scrub(text))
         # Лог MariaDB назван по имени компьютера — в отчёте без него.
         for i, err in enumerate(sorted(paths.DB_DIR.glob("*.err")) if paths.DB_DIR.is_dir() else ()):
             if (text := _tail(err)) is not None:

@@ -786,10 +786,45 @@ function bindWant() {
 // Скриншот (отчёт автора 2026-11-06: в баг или идею не прикрепить скрин) — файлом или Ctrl+V, png или jpg до 5 МБ.
 const FB_SHOT_MAX = 5 * 1024 * 1024;
 let fbDraft = { kind: 'bug', text: '', contact: '', shot: '' };
+
+// Ответы автора на отзывы (Api.feedback_replies: колонка «Ответ» в таблице приёмника, по номеру установки) — над формой
+// отзыва; новые подсвечены, а точка на «Отзыв» горит, пока их не открыли. Сеть — только при старте и в открытом окне.
+let fbReplies = [];
+function fbRepliesHtml(list) {
+  if (!list.length) return '';
+  const when = (s) => { const d = new Date(s); return isNaN(d) ? s : d.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }); };
+  const cut = (s) => (s.length > 220 ? `${s.slice(0, 220)}…` : s);
+  return `<div class="fb-replies-h">Ответы автора</div>${list.map((r) => `<div class="fb-reply${r.new ? ' new' : ''}">
+    <div class="m">${esc(when(r.at))}${r.kind ? ` · ${esc(r.kind)}` : ''}${r.chronicle ? ` · ${esc(byId(r.chronicle) ? listName(byId(r.chronicle)) : r.chronicle)}` : ''}${r.new ? ' · <b>новый</b>' : ''}</div>
+    <div class="fb-q">${esc(cut(r.text))}</div><div class="fb-a">${esc(r.reply)}</div></div>`).join('')}`;
+}
+function fbPip() {
+  $('fbPip').classList.toggle('on', fbReplies.some((r) => r.new));
+}
+function fbShowReplies() {
+  const box = $('fbReplies');
+  if (!box) return;
+  box.innerHTML = fbRepliesHtml(fbReplies);
+  box.hidden = !fbReplies.length;
+  const fresh = fbReplies.filter((r) => r.new).map((r) => r.key);
+  if (!fresh.length) return;
+  api.feedback_replies_seen(fresh);
+  fbReplies = fbReplies.map((r) => ({ ...r, new: false })); // в открытом окне подсветка остаётся до закрытия
+  fbPip();
+}
+async function fbLoadReplies(refresh) {
+  const r = await api.feedback_replies(refresh).catch(() => null);
+  if (!r?.enabled) return false;
+  fbReplies = r.replies || [];
+  fbPip();
+  return true;
+}
+
 async function feedbackFlow() {
   if (!fbEnabled) return toast('Приём отзывов в этой версии L2Hub не настроен.', true);
   const c = byId(selected);
   const ask = askModal({ title: 'Баг или идея', ok: 'Отправить', body: `
+    <div class="fb-replies" id="fbReplies" hidden></div>
     <div class="seg fb-kind" id="fbKind"><button data-v="bug">Баг</button><button data-v="idea">Идея</button></div>
     <textarea class="field fb-text" id="fbText" maxlength="4000"></textarea>
     <input class="field fb-contact" id="fbContact" maxlength="200" placeholder="Как ответить: Telegram, Discord, почта — не обязательно">
@@ -797,7 +832,7 @@ async function feedbackFlow() {
     <div class="fb-shot"><button class="sbtn" id="fbShotPick" type="button">Прикрепить скриншот</button><button class="sbtn" id="fbShotDel" type="button" hidden>Убрать</button>
       <input type="file" id="fbShotFile" accept="image/png,image/jpeg" hidden><span class="m" id="fbShotInfo"></span></div>
     <img class="fb-shot-img" id="fbShotImg" alt="" hidden>
-    <p class="note">Уйдёт автору L2Hub: текст, контакт, хроника (${c ? esc(listName(c)) : '—'}), версия L2Hub и случайный номер установки, с галкой — ещё отчёт, со скриншотом — картинка.</p>` });
+    <p class="note">Уйдёт автору L2Hub: текст, контакт, хроника (${c ? esc(listName(c)) : '—'}), версия L2Hub и случайный номер установки, с галкой — ещё отчёт, со скриншотом — картинка. Ответ автора появится здесь же, в «Отзыв».</p>` });
   const kinds = $('fbKind').querySelectorAll('button');
   const yes = $('uiModalBox').querySelector('[data-a="yes"]');
   const setKind = (k) => {
@@ -841,6 +876,8 @@ async function feedbackFlow() {
   $('fbContact').oninput = sync;
   sync();
   $('fbText').focus();
+  fbShowReplies();
+  fbLoadReplies(false).then((ok) => ok && fbShowReplies()); // кэш на 10 минут: сеть — только если он устарел
   const answered = await ask;
   $('uiModalBox').onpaste = null;
   if (!answered) return;
@@ -1694,6 +1731,9 @@ document.querySelectorAll('.fchip').forEach((b) => (b.onclick = () => {
     if (r?.newer) toast(`Вышла L2Hub ${r.latest} — «L2Hub» → «Обновления».`);
   }, 4000);
   document.querySelectorAll('.fb-only').forEach((el) => (el.style.display = fbEnabled ? '' : 'none'));
+  if (fbEnabled) setTimeout(async () => {
+    if (await fbLoadReplies(false) && fbReplies.some((r) => r.new)) toast('Автор ответил на твой отзыв — открой «Отзыв».');
+  }, 6000);
   if (DEV) document.title = 'L2Hub · дев-режим';
   last.running = await api.running();
   if (!byId(selected) || !visibleChron(byId(selected))) selected = last.running || 'ct26_highfive';

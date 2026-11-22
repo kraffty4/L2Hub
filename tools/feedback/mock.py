@@ -1,7 +1,9 @@
 """Заглушка приёмника L2Hub (tools/feedback/Code.gs) для проверки лаунчера: как Apps Script — POST отвечает 302 на /echo,
 ответ забирается GET-ом. Голоса — в памяти, запросы и присланные отчёты — data/feedback_mock. Запуск:
 `python -X utf8 tools/feedback/mock.py [порт]`, окно с ней — l2hub-devserver-fb в .claude/launch.json (docs/FEEDBACK.md).
-Переменная L2HUB_MOCK_OLD=1 — как приёмник до 0.5.223: скриншот молча пропускается (окно должно сказать, что скрин не дошёл)."""
+Переменная L2HUB_MOCK_OLD=1 — как приёмник до 0.5.223: скриншот молча пропускается (окно должно сказать, что скрин не дошёл),
+а ответов на отзывы он не знает. Ответы автора (action=replies) — из data/feedback_mock/replies.json: список
+{"at", "kind", "chronicle", "text", "reply"} для любой установки; нет файла — ответов нет."""
 import base64
 import json
 import os
@@ -39,8 +41,12 @@ class H(BaseHTTPRequestHandler):
         q = parse_qs(u.query)
         if u.path == "/echo":
             return self._json(answers.pop(q["id"][0], {"ok": False, "error": "нет ответа"}))
-        if q.get("action", ["votes"])[0] == "votes":
+        action = q.get("action", ["votes"])[0]
+        if action == "votes":
             return self._json({"ok": True, "votes": counts()})
+        if action == "replies" and not OLD:
+            f = DATA / "replies.json"
+            return self._json({"ok": True, "replies": json.loads(f.read_text(encoding="utf-8")) if f.is_file() else []})
         self._json({"ok": False, "error": "нет такого действия"})
 
     def do_POST(self):
