@@ -4,6 +4,8 @@
 закрывается: установщик заменит программу, папка данных не трогается.
 
 Ставить умеет только установленный L2Hub: у портативного и у запуска из исходников — только «что вышло» и ссылка.
+Портативному окно подсказывает распаковать новый zip поверх папки L2Hub: данные лежат в её подпапке home, а её
+в архиве нет (packaging/build.py, portable).
 Запрос к GitHub — без данных пользователя."""
 
 import hashlib
@@ -72,10 +74,14 @@ def can_install() -> bool:
     return paths.FROZEN and not paths.PORTABLE.is_file()
 
 
+def is_portable() -> bool:
+    return paths.FROZEN and paths.PORTABLE.is_file()
+
+
 def check() -> dict:
     if not _api():
         return {"enabled": False, "current": __version__}
-    out = {"enabled": True, "current": __version__}
+    out = {"enabled": True, "current": __version__, "portable": is_portable()}
     try:
         lt = latest()
     except urllib.error.HTTPError as e:

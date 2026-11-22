@@ -39,7 +39,7 @@
 4. Point L2Hub to your client folder with the link in the chronicle header: it searches your drives for clients.
 5. “Play”. Use any new username and password: the account is created on first login.
 
-L2Hub checks for updates by itself and installs them with one click. Bugs and ideas go to [Issues](https://github.com/kraffty4/L2Hub/issues) or to the “Feedback” button in the window. Missing a chronicle? Click “I want this chronicle” on its card: the one with the most votes gets finished first.
+L2Hub checks for updates by itself and installs them with one click. The portable zip is updated by hand: stop the server, close L2Hub and extract the new archive where the L2Hub folder is, replacing files — servers, the database and settings in its `home` subfolder stay. Bugs and ideas go to [Issues](https://github.com/kraffty4/L2Hub/issues) or to the “Feedback” button in the window. Missing a chronicle? Click “I want this chronicle” on its card: the one with the most votes gets finished first.
 
 ## What L2Hub doesn't do
 

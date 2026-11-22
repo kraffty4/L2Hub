@@ -890,7 +890,11 @@ function renderUpdate(r) {
   if (!r?.enabled) { $('updText').textContent = 'проверка выключена: репозиторий не задан (updates.json)'; b.textContent = 'Проверить'; return; }
   if (r.error) { $('updText').textContent = r.error; b.textContent = 'Проверить'; return; }
   if (!r.newer) { $('updText').textContent = `у тебя последняя — ${r.current}`; b.textContent = 'Проверить'; return; }
-  $('updText').textContent = `вышла ${r.latest}${r.size ? ` · ${mb(r.size)}` : ''}${r.canInstall ? '' : ' — скачай со страницы релиза'}`;
+  // Портативному: данные в подпапке home, её в zip нет — новый архив распаковывается поверх без потерь.
+  const how = r.canInstall ? '' : r.portable
+    ? ' — скачай portable.zip со страницы релиза, останови сервер, закрой L2Hub и распакуй архив туда же, где лежит папка L2Hub, с заменой файлов: серверы, база и настройки в её подпапке home останутся'
+    : ' — скачай со страницы релиза';
+  $('updText').textContent = `вышла ${r.latest}${r.size && r.canInstall ? ` · ${mb(r.size)}` : ''}${how}`; // размер — установщика
   b.textContent = r.canInstall ? 'Обновить' : 'Страница релиза';
 }
 $('updBtn').onclick = async () => {

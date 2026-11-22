@@ -1844,7 +1844,7 @@ class Api:
         if self.running():
             return {"ok": False, "error": "Сначала останови сервер: установщик заменит программу, а с ней — служебные процессы окна."}
         if not updates.can_install():
-            return {"ok": False, "error": "Обновлять поверх умеет установленный L2Hub; портативный — скачай заново со страницы релиза."}
+            return {"ok": False, "error": "Обновлять поверх умеет установленный L2Hub; портативный — останови сервер, закрой L2Hub и распакуй новый portable.zip туда же, где лежит папка L2Hub, с заменой файлов: данные в её подпапке home останутся."}
         got: dict = {}
         steps = [("Скачиваю новую версию L2Hub:", lambda: got.update(path=updates.download(job_note, job_cancelled))),
                  ("Запускаю установщик…", lambda: updates.launch(got["path"]))]
