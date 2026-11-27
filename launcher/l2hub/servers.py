@@ -231,6 +231,33 @@ def _bundle_cmd(p: dict, args: list[str]) -> list:
     return [catalog.server_dir(p) / args[0], *(a.replace("{port}", port) for a in args[1:])]
 
 
+MY_INI_PATHS = re.compile(r"^(datadir|plugin-dir)[ \t]*=[ \t]*(.*?)[ \t]*(\r?)$", re.M)
+
+
+def fix_my_ini() -> list[str]:
+    """Пути в data\\mariadb\\my.ini — к нынешней папке данных. mariadb-install-db пишет туда абсолютные datadir и plugin-dir,
+    и после переноса папки данных на другой диск MariaDB молча читала бы базу по старому пути — а она там, пока старую
+    папку не удалили (вопрос пользователя на 1.0.9: как перенести L2Hub с D: на E: с прогрессом). Что поправлено."""
+    ini = paths.DB_DIR / "my.ini"
+    raw = ini.read_bytes()
+    text = raw.decode("utf-8", errors="surrogateescape")
+    want = {"datadir": paths.DB_DIR.as_posix(), "plugin-dir": f"{paths.RUNTIME / 'mariadb'}/lib/plugin"}
+    fixed = []
+
+    def repl(m: re.Match) -> str:
+        key, old = m.group(1), m.group(2)
+        if os.path.normcase(os.path.normpath(old)) == os.path.normcase(os.path.normpath(want[key])):
+            return m.group(0)
+        fixed.append(f"{key}: {old} → {want[key]}")
+        return f"{key}={want[key]}{m.group(3)}"
+
+    new = MY_INI_PATHS.sub(repl, text)
+    if fixed:
+        shutil.copy2(ini, ini.with_name("my.ini.before_move"))  # прежний файл — на случай, если что-то пошло не так
+        ini.write_bytes(new.encode("utf-8", errors="surrogateescape"))
+    return fixed
+
+
 def start_db(p: dict | None = None) -> None:
     if p and own_db(p):
         _start_bundle_db(p)
@@ -239,6 +266,7 @@ def start_db(p: dict | None = None) -> None:
         return
     if not (paths.DB_DIR / "my.ini").exists():
         raise RuntimeError("База не инициализирована: запусти scripts\\db_init.ps1")
+    fix_my_ini()
     _hidden_console([paths.MARIA_BIN / "mariadbd.exe", f"--defaults-file={paths.DB_DIR / 'my.ini'}"], paths.DB_DIR)
     if not wait_port(3306, 60):
         raise RuntimeError("MariaDB не поднялась за 60 секунд, смотри data\\mariadb\\*.err")
